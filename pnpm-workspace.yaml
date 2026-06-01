@@ -6,6 +6,7 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+  workerd: true
 
 catalog:
   "@babel/core": ^7.29.7
@@ -13,6 +14,7 @@ catalog:
   "@bprogress/react": ^1.2.7
   "@commitlint/cli": ^21.0.2
   "@commitlint/config-conventional": ^21.0.2
+  "@cloudflare/vite-plugin": ^1.12.4
   "@dotenvx/dotenvx": 1.69.2
   "@fontsource-variable/geist": ^5.2.9
   "@fontsource-variable/geist-mono": ^5.2.8
@@ -86,14 +88,20 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vite-plus: 0.1.23
   vitest: npm:@voidzero-dev/vite-plus-test@latest
+  wrangler: ^4.96.0
   zod: ^4.4.3
 
 catalogMode: prefer
+
+minimumReleaseAgeExclude:
+  - miniflare@4.20260529.0
+  - wrangler@4.96.0
 
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
   drizzle-orm: "catalog:"
+  kysely: 0.28.17
 peerDependencyRules:
   allowAny:
     - vite

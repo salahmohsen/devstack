@@ -61,19 +61,19 @@
 
 Here is a non-exhaustive list of the main technologies used in this project, along with their purposes and possible alternatives they replace:
 
-| Technology                                        | Purpose                                                                                                                                                                       | Replaces/Similar Alternatives                                                      |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| [**pnpm**](https://pnpm.io/)                      | Fast, disk-efficient package manager for Node.js with package catalogs for monorepo dependecy deduplication.                                                                  | npm, yarn                                                                          |
-| [**Vite Plus (Vite+)**](https://viteplus.dev/)    | Unified toolchain for development, testing, and building the monorepo.                                                                                                        | Turborepo, Nx, Vitest, Prettier, ESLint, husky, lint-staged, lefthook, tsdown, tsc |
-| [**TanStack Start**](https://tanstack.com/router) | Modern full-stack React framework with support for SPA, SSR, ISR, and integrated with TanStack Query. It uses Vite's Nitro adapter for cross-platform deployment portability. | Next.js, Remix, React Router                                                       |
-| [**Paraglide.js**](https://paraglide.dev/)        | Compiled internationalization (i18n) library for managing translations.                                                                                                       | i18next, next-intl                                                                 |
-| [**Hono**](https://hono.dev/)                     | Lightweight web server framework built on web standards and is WinterCG-compliant for cross-platform portability.                                                             | Express.js, Fastify, Elysia.js                                                     |
-| [**oRPC**](https://orpc.dev/)                     | RPC framework to define API routes and generate OpenAPI specs and documentation with [Scalar](https://scalar.com/).                                                           | tRPC                                                                               |
-| [**Drizzle ORM**](https://orm.drizzle.team/)      | Type-safe and lightweight ORM for database interactions.                                                                                                                      | Prisma, TypeORM                                                                    |
-| [**Neon Postgres**](https://neon.com/)            | Serverless Postgres database for development and deployment.                                                                                                                  | PostgreSQL, MySQL, MariaDB                                                         |
-| [**Better Auth**](https://better-auth.com/)       | Self-hosted authentication framework with support for all major OAuth providers.                                                                                              | Auth.js                                                                            |
-| [**Docker**](https://www.docker.com/)             | Containerization for local development and deployment.                                                                                                                        | Podman                                                                             |
-| [**shadcn/ui**](https://ui.shadcn.com/)           | Accessible and customizable React component library.                                                                                                                          | Chakra UI, Material UI, Mantine UI                                                 |
+| Technology                                        | Purpose                                                                                                                                                                                    | Replaces/Similar Alternatives                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| [**pnpm**](https://pnpm.io/)                      | Fast, disk-efficient package manager for Node.js with package catalogs for monorepo dependecy deduplication.                                                                               | npm, yarn                                                                          |
+| [**Vite Plus (Vite+)**](https://viteplus.dev/)    | Unified toolchain for development, testing, and building the monorepo.                                                                                                                     | Turborepo, Nx, Vitest, Prettier, ESLint, husky, lint-staged, lefthook, tsdown, tsc |
+| [**TanStack Start**](https://tanstack.com/router) | Modern full-stack React framework with support for SPA, SSR, ISR, and integrated with TanStack Query. This branch configures it for Cloudflare Workers through the Cloudflare Vite plugin. | Next.js, Remix, React Router                                                       |
+| [**Paraglide.js**](https://paraglide.dev/)        | Compiled internationalization (i18n) library for managing translations.                                                                                                                    | i18next, next-intl                                                                 |
+| [**Hono**](https://hono.dev/)                     | Lightweight web server framework built on web standards and is WinterCG-compliant for cross-platform portability.                                                                          | Express.js, Fastify, Elysia.js                                                     |
+| [**oRPC**](https://orpc.dev/)                     | RPC framework to define API routes and generate OpenAPI specs and documentation with [Scalar](https://scalar.com/).                                                                        | tRPC                                                                               |
+| [**Drizzle ORM**](https://orm.drizzle.team/)      | Type-safe and lightweight ORM for database interactions.                                                                                                                                   | Prisma, TypeORM                                                                    |
+| [**Neon Postgres**](https://neon.com/)            | Serverless Postgres database for development and deployment.                                                                                                                               | PostgreSQL, MySQL, MariaDB                                                         |
+| [**Better Auth**](https://better-auth.com/)       | Self-hosted authentication framework with support for all major OAuth providers.                                                                                                           | Auth.js                                                                            |
+| [**Docker**](https://www.docker.com/)             | Containerization for local development and deployment.                                                                                                                                     | Podman                                                                             |
+| [**shadcn/ui**](https://ui.shadcn.com/)           | Accessible and customizable React component library.                                                                                                                                       | Chakra UI, Material UI, Mantine UI                                                 |
 
 ## Getting Started
 
@@ -196,50 +196,96 @@ Finally, set any required [environment variables](#environment-variables) in the
 
 ### Cloudflare Workers
 
-> [!TIP]
-> You can clone the [`variant/merged-cloudflare` branch](https://github.com/tsu-moe/tsu-stack/tree/variant/merged-cloudflare) for a Cloudflare Workers-compatible setup.
+Both deployable apps in this monorepo can target Cloudflare Workers:
 
-You will need to use the `@cloudflare/vite-plugin` adapter instead of `nitro`. See [this commit](https://github.com/tsu-moe/tsu-stack/commit/644ceb10a47836d8a3eb6f23c0b664e20207a9e0) for example changes.
+- `apps/web` via the Cloudflare Vite plugin
+- `apps/server` via Hono's Worker-compatible `app.fetch` entrypoint
 
-Then, you will need to switch to using a singleton `db` instance instead of a connection pool in the server app since Cloudflare Workers do not support long-lived connections. See [this commit](https://github.com/tsu-moe/tsu-stack/commit/8d6cf54b52e430ac6b3f840bbf5eecec040238b3) for example changes.
+This monorepo is not a single root-level Worker project. Configure Cloudflare to treat each app as its own Worker project:
 
-You'll need to set the secrets manually in the Cloudflare dashboard before running the deployment commands or via `pnpm wrangler secret put <VARIABLE_NAME>` one-by-one.
+- **Web Worker**
+  - Root directory: `apps/web`
+  - Wrangler config: `apps/web/wrangler.jsonc`
+- **Server Worker**
+  - Root directory: `apps/server`
+  - Wrangler config: `apps/server/wrangler.jsonc`
+- **Shared watch paths**:
+  - `apps/web/**`
+  - `apps/server/**`
+  - `packages/api/**`
+  - `packages/auth/**`
+  - `packages/core/**`
+  - `packages/db/**`
+  - `packages/env/**`
+  - `packages/i18n/**`
+  - `packages/logger/**`
+  - `packages/seo/**`
+  - `packages/ui/**`
+  - `package.json`
+  - `pnpm-lock.yaml`
+  - `pnpm-workspace.yaml`
 
-Finally, you can deploy by running the following commands:
+For local development and manual deploys:
 
 ```bash
-pnpm wrangler login # authenticate with your Cloudflare account # copy the shared env variables to the web app's env file for wrangler to read them
-vp run deploy       # run the deploy task which uses wrangler to deploy the web app to Cloudflare Workers
+cd apps/web
+pnpm wrangler login
+pnpm run dev
+pnpm run deploy
+
+cd ../server
+pnpm run dev
+pnpm run deploy
 ```
 
-> [!CAUTION]
-> I do not recommend this way of deploying because it is prone to human error.
+The web Worker keeps using the app dev command through the Cloudflare Vite plugin. The server Worker now does the same and derives its local dev port from `VITE_SERVER_URL`.
+
+> [!NOTE]
+> In local Worker dev, Cloudflare does not expose arbitrary shell env vars to `process.env` by default. This repo loads `packages/env/.env` through `dotenvx` and sets `CLOUDFLARE_INCLUDE_PROCESS_ENV=true` in the app `dev` scripts so the Worker runtime can read `DATABASE_URL`, `BETTER_AUTH_SECRET`, and the shared `VITE_*` values.
+
+> [!NOTE]
+> `apps/server` no longer needs a separate Node bootstrap for normal development. The Worker entry is driven through the Cloudflare Vite plugin and Wrangler config.
+
+> [!NOTE]
+> `apps/server` disables Vite's built-in `server.cors` in dev so Hono's own CORS middleware handles preflight requests. This follows the Hono guidance for Vite-based setups: https://hono.dev/middleware/builtin/cors
 
 #### Git-based CI/CD
 
 You can take advantage of Cloudflare's Git-based CI/CD by connecting your GitHub repository to your Cloudflare account and configuring the deployment settings to automatically deploy on pushes to your `main` branch.
 
-You will need to set up the _build environment variables_ and _variables and secrets_ manually in the Cloudflare dashboard in order for builds to succeed.
+For Workers Builds in this monorepo:
+
+1. Create or connect one Worker for `apps/web` and another for `apps/server`.
+2. Set each Worker root directory to its app directory.
+3. Keep the deploy command at the Wrangler default or set it explicitly to `npx wrangler deploy`.
+4. Add watch paths that match the shared packages used by each app.
+
+You will need to set up the Worker _variables and secrets_ manually in the Cloudflare dashboard in order for builds to succeed:
+
+- Worker variables and secrets:
+  - `VITE_SERVER_URL`
+  - `VITE_WEB_URL`
+  - `DATABASE_URL`
+  - `BETTER_AUTH_SECRET`
+  - `SOURCE_COMMIT`
+  - `VITE_IMGPROXY_URL` if used
 
 | **Build Settings**                                                       | **Secrets & Variables**                                                         |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | ![Build Settings](./assets/img/cloudflare-deployment-settings-build.png) | ![Secrets & Variables](./assets/img/cloudflare-deployment-settings-secrets.png) |
 
 > [!NOTE]
-> There isn't an automatic way to do this with my current setup. So you'll need to link the repository first and trigger a failed build, _then_ set the variables and trigger another deployment for the changes to take effect.
+> `process.env` is populated in Workers when `nodejs_compat` is enabled and the compatibility date is `2025-04-01` or later. This repo relies on that behavior for shared env loading in both Worker runtimes.
 
 ### Deploying to Other Platforms
 
-TanStack Start uses [Nitro](https://nitro.build) as its server engine, which means the **web app** can be deployed to any platform Nitro supports out of the box - Cloudflare Workers, Vercel, AWS Lambda, Deno Deploy, and [many more](https://nitro.build/deploy). Configure the target by setting the appropriate Nitro preset in `apps/web/vite.config.ts`.
-
-> [!CAUTION]
-> The **server** (`apps/server`) is a Node.js/Hono server and is not compatible with edge runtimes like Cloudflare Workers. It must be deployed to a Node.js-capable environment (e.g. a VPS, container, or serverless platform with Node.js support).
+This branch configures the **web app** for Cloudflare Workers through the Cloudflare Vite plugin and the **server app** through a standalone Hono Worker entry. If you want to target another platform again, switch the relevant app's runtime adapter or bootstrap entrypoint for that deployment target.
 
 ## Environment Variables
 
 ### Server
 
-For the Hono server, use the following environment variables:
+For the Hono server, use the following environment variables in either Node or Cloudflare Worker runtime:
 
 | Variable Name          | Required | Default Value | Description                                                                                      |
 | ---------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------ |
@@ -310,35 +356,7 @@ Then merge your web environment variables with the server ones and make sure `VI
 VITE_WEB_URL=http://localhost:3000/web
 ```
 
-You will also need to adjust the `getConnInfo` import to match your runtime environment.
-
-```diff
--import { getConnInfo } from '@hono/node-server/conninfo'
-+import { getConnInfo } from 'hono/vercel'
-```
-
-> [!WARNING]
-> `hono/vercel` works in any environment, but it may not have all the information needed for the logger middleware.
-
-Then lastly, remove the `serve()` call in `apps/server/src/index.ts` since the Hono app is now being served by the TanStack Start server.
-
-```diff
--import { serve } from "@hono/node-server";
-
-void (async () => {
-  await migrateDatabase()
-
--  serve(
--    {
--      fetch: app.fetch,
--      port: 5000,
--    },
--    (info) => {
--      logger.info(`Server is running on http://localhost:${info.port}${new URL(apiEnvServer.VITE_SERVER_URL).pathname}`)
--    },
--  )
-})()
-```
+With the current server shape, `@tsu-stack/server` already exports the shared Hono app from `apps/server/src/index.ts`, so you only need to keep that export runtime-neutral. Do not reintroduce a Node-only `serve()` bootstrap if the app is being mounted into TanStack Start.
 
 > [!WARNING]
 > You may want to refactor the logging middlewares since the TanStack Start server also logs incoming/outgoing requests, similar to the Hono app's middleware.
@@ -361,10 +379,8 @@ However, the benefit is singular deployments and lower memory usage for websites
 
 - [Router/Start issues](https://github.com/TanStack/router/issues) - TanStack Start is in RC.
 - [Devtools releases](https://github.com/TanStack/devtools/releases) - TanStack Devtools is in alpha and may still have breaking changes.
-- [Nitro v3](https://nitro.build/blog/v3-beta) - This template is configured with Nitro Nightly (3.0.1-20260128-211656-ae83c97e) by default.
-  - Currently, when using newer versions of Nitro, you may encounter CJS to ESM interop crashes on build with the error: `TypeError: Cannot destructure property '__extends' of '__toESM$1(...).default' as it is undefined.`
-  - This is similar to the issue described in [nitrojs/nitro#4113](https://github.com/nitrojs/nitro/issues/4113)
 - [Better Auth experimental Drizzle adapter](https://github.com/better-auth/better-auth/pull/9489) - We're using a separate branch of Better Auth's Drizzle adapter that supports Drizzle relations v2.
+- [Cloudflare Vite plugin docs](https://developers.cloudflare.com/workers/vite-plugin/) - The web and server Cloudflare dev paths now depend on the plugin behavior and Wrangler integration staying stable.
 - [Vite+ issues](https://github.com/voidzero-dev/vite-plus/issues) - Vite+ is in alpha.
 
 ### Pitfalls
