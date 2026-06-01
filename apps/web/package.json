@@ -7,7 +7,7 @@
     "check:fix": "vp check --fix",
     "cf-typegen": "wrangler types",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true vp dev",
-    "deploy": "pnpm dotenvx run -f ../../packages/env/.env -- wrangler deploy",
+    "deploy": "wrangler deploy",
     "preview": "pnpm dotenvx run -f ../../packages/env/.env -- vp preview",
     "start": "pnpm dotenvx run -f ../../packages/env/.env -- node .output/server/index.mjs",
     "ui": "vpx shadcn@latest"

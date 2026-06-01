@@ -11,7 +11,7 @@
   "scripts": {
     "build": "cross-env IS_BUILD=true vp build",
     "cf-typegen": "wrangler types",
-    "deploy": "pnpm --dir ../.. db:migrate && pnpm dotenvx run -f ../../packages/env/.env -- wrangler deploy",
+    "deploy": "wrangler deploy",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true vp dev"
   },
   "dependencies": {
