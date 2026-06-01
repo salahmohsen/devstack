@@ -4,6 +4,8 @@ import { createEnv } from "@t3-oss/env-core";
 import { isProduction } from "std-env";
 import { z } from "zod";
 
+import { normalizedUrlSchema } from "#@/utils/url";
+
 console.debug("⏳ [ENV_SERVER] Loading environment variables...", {
   SOURCE_COMMIT: process.env.SOURCE_COMMIT,
   VITE_SERVER_URL: process.env.VITE_SERVER_URL,
@@ -14,8 +16,12 @@ export const ENV_SERVER = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: process.env,
   server: {
-    VITE_SERVER_URL: isProduction ? z.url() : z.url().default("http://localhost:5000/server"),
-    VITE_WEB_URL: isProduction ? z.url() : z.url().default("http://localhost:3000/web"),
+    VITE_SERVER_URL: isProduction
+      ? normalizedUrlSchema
+      : normalizedUrlSchema.default("http://localhost:5000/server"),
+    VITE_WEB_URL: isProduction
+      ? normalizedUrlSchema
+      : normalizedUrlSchema.default("http://localhost:3000/web"),
     DATABASE_URL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(32),
     NODE_ENV: z.enum(["development", "production"]).default("development"),
