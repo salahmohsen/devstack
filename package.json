@@ -15,8 +15,6 @@
     "fallow": "vpx fallow --skip health",
     "tanstack": "vpx @tanstack/cli@latest",
     "db": "vp run --filter @tsu-stack/db db",
-    "db:dev:start": "vp run --filter @tsu-stack/db db:dev:start",
-    "db:dev:stop": "vp run --filter @tsu-stack/db db:dev:stop",
     "db:push": "vp run -w db push",
     "db:generate": "vp run -w db generate",
     "db:migrate": "vp run -w db migrate",

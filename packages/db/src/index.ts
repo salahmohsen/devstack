@@ -1,30 +1,23 @@
 import { join } from "node:path";
 
+import { neonConfig } from "@neondatabase/serverless";
 import "@tanstack/react-start/server-only";
 import { sql } from "drizzle-orm";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import { migrate } from "drizzle-orm/neon-serverless/migrator";
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
-import * as schemas from "#@/schema/index";
+import { authRelations } from "#@/schema/auth.schema";
 import { relations } from "#@/schema/relations";
 
 export * from "drizzle-orm/sql";
 
-const { relations: authRelations, ...schema } = schemas;
+neonConfig.webSocketConstructor = WebSocket;
 
-const client = postgres(ENV_SERVER.DATABASE_URL);
-
-export const db = drizzle({
-  client,
-  schema,
-  // IMPORTANT: authRelations must come first, since it's using defineRelations as the main relation
-  // https://orm.drizzle.team/docs/relations-v2#relations-parts
-  relations: { ...authRelations, ...relations },
-  casing: "snake_case"
+export const db = drizzle(ENV_SERVER.DATABASE_URL, {
+  relations: { ...authRelations, ...relations }
 });
 
 export async function checkIsDbReady(): Promise<boolean> {

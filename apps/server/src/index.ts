@@ -29,9 +29,9 @@ import "#@/shared/lib/logger";
 
 const serverHostname = hostname();
 
-export const app = new Hono<HonoLogVariables>().basePath(
-  new URL(ENV_SERVER.VITE_SERVER_URL).pathname
-);
+const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
+
+export const app = new Hono<HonoLogVariables>().basePath(serverBaseUrl.pathname);
 
 app.use(
   "/*",
@@ -214,7 +214,7 @@ void (async () => {
   serve(
     {
       fetch: app.fetch,
-      port: 5000
+      port: Number(serverBaseUrl.port ?? 5000)
     },
     (info) => {
       log.info(

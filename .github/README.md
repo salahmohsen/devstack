@@ -70,7 +70,7 @@ Here is a non-exhaustive list of the main technologies used in this project, alo
 | [**Hono**](https://hono.dev/)                     | Lightweight web server framework built on web standards and is WinterCG-compliant for cross-platform portability.                                                             | Express.js, Fastify, Elysia.js                                                     |
 | [**oRPC**](https://orpc.dev/)                     | RPC framework to define API routes and generate OpenAPI specs and documentation with [Scalar](https://scalar.com/).                                                           | tRPC                                                                               |
 | [**Drizzle ORM**](https://orm.drizzle.team/)      | Type-safe and lightweight ORM for database interactions.                                                                                                                      | Prisma, TypeORM                                                                    |
-| [**PostgreSQL**](https://www.postgresql.org/)     | Stable open-source relational database.                                                                                                                                       | MySQL, MariaDB                                                                     |
+| [**Neon Postgres**](https://neon.com/)            | Serverless Postgres database for development and deployment.                                                                                                                  | PostgreSQL, MySQL, MariaDB                                                         |
 | [**Better Auth**](https://better-auth.com/)       | Self-hosted authentication framework with support for all major OAuth providers.                                                                                              | Auth.js                                                                            |
 | [**Docker**](https://www.docker.com/)             | Containerization for local development and deployment.                                                                                                                        | Podman                                                                             |
 | [**shadcn/ui**](https://ui.shadcn.com/)           | Accessible and customizable React component library.                                                                                                                          | Chakra UI, Material UI, Mantine UI                                                 |
@@ -113,12 +113,13 @@ Here is a non-exhaustive list of the main technologies used in this project, alo
    vp run auth:secret
    ```
 
-4. **Start the local PostgreSQL database:**
+4. **Create an initial dev Neon database URL if `DATABASE_URL` is missing:**
 
    ```bash
-   vp run db:dev:start
-   # you can stop it later with vp run db:dev:stop
+   vp run db:setup
    ```
+
+   This is a first-time dev setup command. It wraps `vpx neon-new@latest --env ../../packages/env/.env --key DATABASE_URL --ref github:salahmohsen/portfolio --yes` in `packages/db` and writes the Neon `DATABASE_URL` to `packages/env/.env`.
 
 5. **Migrate the database**:
 
@@ -232,7 +233,7 @@ You will need to set up the _build environment variables_ and _variables and sec
 TanStack Start uses [Nitro](https://nitro.build) as its server engine, which means the **web app** can be deployed to any platform Nitro supports out of the box - Cloudflare Workers, Vercel, AWS Lambda, Deno Deploy, and [many more](https://nitro.build/deploy). Configure the target by setting the appropriate Nitro preset in `apps/web/vite.config.ts`.
 
 > [!CAUTION]
-> The **server** (`apps/server`) is a Node.js/Hono server and is not compatible with edge runtimes like Cloudflare Workers. It must be deployed to a Node.js-capable environment (e.g. a VPS, container, or serverless platform with Node.js support). This is by design - the dedicated Node.js server is cheaper to self-host for database-heavy workloads.
+> The **server** (`apps/server`) is a Node.js/Hono server and is not compatible with edge runtimes like Cloudflare Workers. It must be deployed to a Node.js-capable environment (e.g. a VPS, container, or serverless platform with Node.js support).
 
 ## Environment Variables
 
@@ -245,7 +246,7 @@ For the Hono server, use the following environment variables:
 | `VITE_SERVER_URL`      | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`. |
 | `VITE_WEB_URL`         | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.   |
 | `BETTER_AUTH_SECRET`   | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                  |
-| `DATABASE_URL`         | ✅       | -             | PostgreSQL connection string.                                                                    |
+| `DATABASE_URL`         | ✅       | -             | Neon Postgres connection string.                                                                 |
 | `ENABLE_OPEN_API_DOCS` | ❌       | `false`       | Enable OpenAPI `/docs` endpoint.                                                                 |
 
 ### Web
@@ -257,7 +258,7 @@ For the web app, use the following environment variables:
 | `VITE_SERVER_URL`    | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`.                                    |
 | `VITE_WEB_URL`       | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.                                      |
 | `BETTER_AUTH_SECRET` | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                                                     |
-| `DATABASE_URL`       | ✅       | -             | PostgreSQL connection string.                                                                                                       |
+| `DATABASE_URL`       | ✅       | -             | Neon Postgres connection string.                                                                                                    |
 | `VITE_IMGPROXY_URL`  | ❌       | -             | URL for image optimization. You'll need to deploy your own [imgproxy](https://hub.docker.com/r/darthsim/imgproxy/) container first. |
 
 ## Merging Server to Web App
