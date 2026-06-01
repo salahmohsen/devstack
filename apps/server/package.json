@@ -10,7 +10,7 @@
   },
   "scripts": {
     "cf-typegen": "wrangler types",
-    "deploy": "vp run build && wrangler deploy",
+    "deploy": "wrangler deploy",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true vp dev"
   },
   "dependencies": {
