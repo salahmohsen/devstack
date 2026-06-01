@@ -247,6 +247,9 @@ The web Worker keeps using the app dev command through the Cloudflare Vite plugi
 > `apps/server` no longer needs a separate Node bootstrap for normal development. The Worker entry is driven through the Cloudflare Vite plugin and Wrangler config.
 
 > [!NOTE]
+> `apps/server` runs `pnpm db:migrate` before `wrangler deploy` so schema changes are applied before the new Worker version starts serving traffic.
+
+> [!NOTE]
 > `apps/server` disables Vite's built-in `server.cors` in dev so Hono's own CORS middleware handles preflight requests. This follows the Hono guidance for Vite-based setups: https://hono.dev/middleware/builtin/cors
 
 #### Git-based CI/CD
