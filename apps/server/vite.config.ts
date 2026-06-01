@@ -1,13 +1,15 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig } from "vite-plus";
 
+import { normalizeUrlString } from "@tsu-stack/env/utils/url";
+
 const DEFAULT_SERVER_URL = "http://localhost:5000/server";
 const configuredServerUrl =
   process.env.VITE_SERVER_URL ??
   (process.env.NODE_ENV === "production" ? undefined : DEFAULT_SERVER_URL);
 
 const devServerPort = configuredServerUrl
-  ? Number(new URL(configuredServerUrl).port || 5000)
+  ? Number(new URL(normalizeUrlString(configuredServerUrl)).port || 5000)
   : 5000;
 
 export default defineConfig({
