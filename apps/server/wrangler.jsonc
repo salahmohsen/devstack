@@ -3,6 +3,7 @@
   "name": "portfolio-server",
   "compatibility_date": "2026-06-01",
   "compatibility_flags": ["nodejs_compat"],
+  "keep_vars": true,
   "main": "src/worker.ts",
   "observability": {
     "enabled": true
