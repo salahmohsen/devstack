@@ -13,6 +13,13 @@ const devServerPort = configuredServerUrl
   : 5000;
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: "cross-env IS_BUILD=true vp build"
+      }
+    }
+  },
   plugins: [cloudflare({ inspectorPort: false })],
   server: {
     // Hono's CORS middleware should own preflight handling in dev; Hono docs

@@ -9,9 +9,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "cross-env IS_BUILD=true vp build",
     "cf-typegen": "wrangler types",
-    "deploy": "wrangler deploy",
+    "deploy": "vp run build && wrangler deploy",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true vp dev"
   },
   "dependencies": {
