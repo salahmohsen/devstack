@@ -10,7 +10,7 @@ An opinionated Vite+ monorepo. It uses `vp` (Vite+ CLI) to run scripts across pa
 | Hono           | Node.js API server (WinterCG-compliant)            |
 | oRPC           | RPC layer + OpenAPI/Scalar docs                    |
 | Drizzle ORM    | Type-safe ORM                                      |
-| PostgreSQL     | Primary database                                   |
+| Neon Postgres  | Primary database                                   |
 | Better Auth    | Self-hosted auth                                   |
 | Paraglide.js   | Compiled i18n                                      |
 | shadcn/ui      | Component library                                  |
@@ -34,22 +34,22 @@ tools/tsconfig - Shared TypeScript base config
 
 > All scripts are run via `vp run <script>` (not `vp <script>`), because the script names overlap with Vite+ built-ins.
 
-| Command                  | Description                                              |
-| ------------------------ | -------------------------------------------------------- |
-| `vp run dev`             | Start all dev servers concurrently                       |
-| `vp run fix`             | Format, lint, and type-check (auto-runs on `git commit`) |
-| `vp run test`            | Run all tests                                            |
-| `vp run build`           | Build all packages                                       |
-| `vp run db:dev:start`    | Start local PostgreSQL (Docker)                          |
-| `vp run db:dev:stop`     | Stop local PostgreSQL                                    |
-| `vp run db:migrate`      | Run Drizzle migrations                                   |
-| `vp run db:generate`     | Generate Drizzle migration files                         |
-| `vp run db:studio`       | Open Drizzle Studio                                      |
-| `vp run auth:secret`     | Generate a Better Auth secret                            |
-| `vp run docker:up`       | Start full stack in Docker                               |
-| `vp run docker:up:build` | Rebuild and start full stack in Docker                   |
+| Command                  | Description                                                 |
+| ------------------------ | ----------------------------------------------------------- |
+| `vp run dev`             | Start all dev servers concurrently                          |
+| `vp run fix`             | Format, lint, and type-check (auto-runs on `git commit`)    |
+| `vp run test`            | Run all tests                                               |
+| `vp run build`           | Build all packages                                          |
+| `vp run db:setup`        | Create the initial dev Neon `DATABASE_URL` when none exists |
+| `vp run db:migrate`      | Run Drizzle migrations                                      |
+| `vp run db:generate`     | Generate Drizzle migration files                            |
+| `vp run db:studio`       | Open Drizzle Studio                                         |
+| `vp run auth:secret`     | Generate a Better Auth secret                               |
+| `vp run docker:up`       | Start full stack in Docker                                  |
+| `vp run docker:up:build` | Rebuild and start full stack in Docker                      |
 
 > `vpx <pkg>` is shorthand for `vp dlx <pkg>` (run a package binary without installing it).
+> `vp run db:setup` is a first-time dev bootstrap for Neon. It wraps `vpx neon-new@latest --env ../../packages/env/.env --key DATABASE_URL --ref github:salahmohsen/portfolio --yes` in `packages/db` when no dev `DATABASE_URL` exists.
 
 ## Environment Variables
 
