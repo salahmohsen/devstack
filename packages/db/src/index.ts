@@ -1,13 +1,9 @@
-import { join } from "node:path";
-
 import { neonConfig } from "@neondatabase/serverless";
 import "@tanstack/react-start/server-only";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { migrate } from "drizzle-orm/neon-serverless/migrator";
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
-import { createLogger } from "@tsu-stack/logger/server";
 
 import { authRelations } from "#@/schema/auth.schema";
 import { relations } from "#@/schema/relations";
@@ -26,55 +22,5 @@ export async function checkIsDbReady(): Promise<boolean> {
     return true;
   } catch {
     return false;
-  }
-}
-
-let migrationFnCalled = false;
-
-/**
- * Runs pending database migrations on startup.
- * Safe to call every time the server starts since Drizzle tracks applied migrations
- * in the __drizzle_migrations table and skips anything already applied.
- */
-export async function migrateDatabase(): Promise<void> {
-  const log = createLogger({ operation: "server__database_migration" });
-
-  if (migrationFnCalled) {
-    log.emit({ event: "database_migration_skipped", reason: "already_called" });
-    return;
-  }
-
-  migrationFnCalled = true;
-
-  if (ENV_SERVER.IS_BUILD) {
-    log.emit({
-      environment: ENV_SERVER.NODE_ENV,
-      event: "database_migration_skipped",
-
-      reason: "build_process"
-    });
-    return;
-  }
-
-  if (ENV_SERVER.NODE_ENV !== "production") {
-    log.emit({
-      environment: ENV_SERVER.NODE_ENV,
-      event: "database_migration_skipped",
-
-      reason: "non_production"
-    });
-    return;
-  }
-
-  try {
-    await migrate(db, {
-      migrationsFolder: join(import.meta.dirname, "migrations")
-    });
-    log.emit({ event: "database_migration_completed" });
-  } catch (error) {
-    log.error(error instanceof Error ? error : String(error), {
-      event: "database_migration_failed"
-    });
-    log.emit({ _forceKeep: true });
   }
 }

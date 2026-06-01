@@ -36,3 +36,4 @@ Env docs and templates must mirror the validated schema in `packages/env/src/`. 
 - `z.stringbool()` is used for boolean env vars (parses "true"/"false" strings)
 - Dev defaults exist for most `VITE_*` vars; `DATABASE_URL` and `BETTER_AUTH_SECRET` are always required
 - Each env file logs loading with `console.debug` — check terminal output for validation errors
+- For Cloudflare local dev, Worker code does not automatically inherit arbitrary shell env vars. In this repo, `apps/web` and `apps/server` load `packages/env/.env` via `dotenvx` and set `CLOUDFLARE_INCLUDE_PROCESS_ENV=true` in their `dev` scripts so `process.env` is available inside the Worker runtime.
