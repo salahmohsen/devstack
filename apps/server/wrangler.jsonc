@@ -2,10 +2,35 @@
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "portfolio-server",
   "compatibility_date": "2026-06-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    // Enables the Node.js API subset/polyfills used by the Hono worker bundle.
+    "nodejs_compat"
+  ],
+  "routes": [
+    {
+      "pattern": "dev.salahmohsen.com/server*",
+      "zone_name": "salahmohsen.com"
+    }
+  ],
   "keep_vars": true,
   "main": "src/worker.ts",
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  },
+  "vars": {
+    "VITE_SERVER_URL": "https://dev.salahmohsen.com/server",
+    "VITE_WEB_URL": "https://dev.salahmohsen.com"
   }
 }

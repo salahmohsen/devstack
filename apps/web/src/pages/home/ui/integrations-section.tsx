@@ -96,7 +96,7 @@ const tiles: TileData[] = [
       alt: "Vercel Logo",
       isInvertable: true,
       svg: (
-        <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <title>Vercel</title>
           <path d="m12 1.608 12 20.784H0Z" />
         </svg>
@@ -365,9 +365,8 @@ function IntegrationCard({ row, col, logo }: TileData) {
             "pointer-events-none size-8 select-none [&>svg]:size-full [&>svg]:object-contain",
             logo.isInvertable && "dark:invert"
           )}
-          role="img"
-          aria-label={logo.alt}
         >
+          <span className="sr-only">{logo.alt}</span>
           {logo.svg}
         </div>
       )}
