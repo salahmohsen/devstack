@@ -6,12 +6,14 @@
   "tailwind": {
     "config": "",
     "css": "../../packages/ui/styles/shadcn.css",
-    "baseColor": "neutral",
+    "baseColor": "stone",
     "cssVariables": true,
     "prefix": ""
   },
   "iconLibrary": "lucide",
   "rtl": false,
+  "menuColor": "default",
+  "menuAccent": "subtle",
   "aliases": {
     "components": "@/shared/ui",
     "utils": "@tsu-stack/ui/lib/utils",
@@ -19,7 +21,7 @@
     "lib": "@tsu-stack/ui/lib",
     "hooks": "@tsu-stack/ui/hooks"
   },
-  "menuColor": "default",
-  "menuAccent": "subtle",
-  "registries": {}
+  "registries": {
+    "@unlumen-ui": "https://ui.unlumen.com/r/{name}.json"
+  }
 }

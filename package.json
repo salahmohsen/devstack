@@ -31,8 +31,8 @@
     "docker:down": "pnpm dotenvx run -f .env.docker docker -- compose down",
     "ui": "vp run --filter @tsu-stack/ui ui",
     "ui:web": "vp run --filter @tsu-stack/web ui",
-    "auth:secret": "vpx auth@latest secret",
-    "auth:generate": "vp run --filter @tsu-stack/db auth:generate"
+    "auth:secret": "npx auth@latest secret",
+    "auth:generate": "pnpm --filter @tsu-stack/db run auth:generate"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",

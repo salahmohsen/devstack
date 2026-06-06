@@ -1,6 +1,6 @@
 import { join } from "node:path";
 
-import { migrate } from "drizzle-orm/neon-serverless/migrator";
+import { migrate } from "drizzle-orm/neon-http/migrator";
 
 import { db } from "#@/index";
 

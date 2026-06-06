@@ -3,14 +3,26 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
+import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { useLocation } from "@tsu-stack/i18n/tanstack-start/hooks/use-location";
 import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
 import { getRouteTreePathsLocalized } from "@tsu-stack/i18n/tanstack-start/lib/get-route-tree-paths-localized";
 import { redirect } from "@tsu-stack/i18n/tanstack-start/lib/redirect";
 import { stripLocalePrefix } from "@tsu-stack/i18n/tanstack-start/lib/strip-locale-prefix";
 import { validateNavigateTo } from "@tsu-stack/i18n/tanstack-start/lib/validate-navigate-to";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from "@tsu-stack/ui/components/breadcrumb";
+import { Separator } from "@tsu-stack/ui/components/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@tsu-stack/ui/components/sidebar";
 
 import { useLogger } from "@/shared/providers/logger-provider";
+import { AppSidebar } from "@/shared/ui/app-sidebar";
 
 import { routeTree } from "@/routeTree.gen";
 
@@ -25,7 +37,7 @@ function isGuestRoute(pathname: string): boolean {
   return matchingRoute ? matchingRoute.id.includes("(guest)") : false;
 }
 
-export const Route = createFileRoute("/{-$locale}/(root-layout)/(auth)")({
+export const Route = createFileRoute("/{-$locale}/(auth)")({
   beforeLoad: async ({ context, location }) => {
     const user = await context.queryClient.ensureQueryData({
       ...getAuthUserQueryOptions(),
@@ -60,6 +72,17 @@ function RequiresAuthLayout() {
   const location = useLocation();
   const { data: user } = useQuery(getAuthUserQueryOptions());
   const logger = useLogger();
+  const normalizedPath = stripLocalePrefix(location.pathname);
+
+  const pageTitle = (() => {
+    switch (normalizedPath) {
+      case "/dashboard/github-config":
+        return "GitHub Config";
+      case "/dashboard":
+      default:
+        return "Dashboard";
+    }
+  })();
 
   useEffect(() => {
     if (user === null) {
@@ -83,5 +106,31 @@ function RequiresAuthLayout() {
     }
   }, [user, navigate, location.href, location.pathname, logger]);
 
-  return <Outlet />;
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/80">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator className="mr-2 h-4 opacity-60" orientation="vertical" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink render={<Link to="/dashboard" />}>Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+        <div className="flex flex-1 flex-col px-4 py-6 md:px-6">
+          <Outlet />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }
