@@ -8,11 +8,13 @@
   "exports": {
     ".": "./src/index.ts",
     "./migrate": "./src/migrate.ts",
+    "./repositories": "./src/repositories/index.ts",
     "./schema": "./src/schema/index.ts"
   },
   "scripts": {
     "db": "pnpm dotenvx run -f ../env/.env -- drizzle-kit",
-    "auth:generate": "vp run -w auth:generate",
+    "auth:generate": "pnpm dotenvx run -f ../env/.env -- npx auth@latest generate --config ../auth/src/index.ts --output ./src/schema/auth.schema.ts --yes",
+    "db:generate": "pnpm run db generate",
     "db:setup": "vpx neon-new@latest --env ../../packages/env/.env --key DATABASE_URL --ref github:salahmohsen/portfolio --yes"
   },
   "dependencies": {

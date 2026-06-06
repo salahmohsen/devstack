@@ -1,8 +1,9 @@
 import { join } from "node:path/posix";
 
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
+import { passkey } from "@better-auth/passkey";
 import "@tanstack/react-start/server-only";
-import { betterAuth } from "better-auth";
+import { APIError, betterAuth } from "better-auth";
 import { openAPI } from "better-auth/plugins";
 
 import { db } from "@tsu-stack/db";
@@ -18,6 +19,20 @@ export const auth = betterAuth({
     provider: "pg",
     schema
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        before: async () => {
+          const existingUsers = await db.query.user.findMany({ limit: 1 });
+          if (existingUsers.length > 0) {
+            throw new APIError("FORBIDDEN", {
+              message: "Registration is closed"
+            });
+          }
+        }
+      }
+    }
+  },
 
   // https://www.better-auth.com/docs/concepts/session-management#session-caching
   session: {
@@ -25,11 +40,6 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: 5 * 60 // 5 minutes
     }
-  },
-
-  // https://www.better-auth.com/docs/authentication/email-password
-  emailAndPassword: {
-    enabled: true
   },
 
   experimental: {
@@ -40,11 +50,18 @@ export const auth = betterAuth({
   plugins: [
     openAPI({
       theme: "deepSpace"
-    })
+    }),
+    passkey()
   ],
 
   telemetry: {
     enabled: false
+  },
+  socialProviders: {
+    github: {
+      clientId: ENV_SERVER.GITHUB_CLIENT_ID,
+      clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET
+    }
   }
 });
 

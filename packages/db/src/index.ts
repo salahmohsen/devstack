@@ -1,19 +1,18 @@
-import { neonConfig } from "@neondatabase/serverless";
 import "@tanstack/react-start/server-only";
 import { sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
-import { authRelations } from "#@/schema/auth.schema";
-import { relations } from "#@/schema/relations";
+import * as schema from "#@/schema/index";
+import { relations as appRelations } from "#@/schema/relations";
 
 export * from "drizzle-orm/sql";
 
-neonConfig.webSocketConstructor = WebSocket;
+const { relations: authRelations } = schema;
 
 export const db = drizzle(ENV_SERVER.DATABASE_URL, {
-  relations: { ...authRelations, ...relations }
+  relations: { ...authRelations, ...appRelations }
 });
 
 export async function checkIsDbReady(): Promise<boolean> {
