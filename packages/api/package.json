@@ -18,6 +18,7 @@
     "@tsu-stack/core": "workspace:*",
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
+    "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
     "zod": "catalog:"
   },

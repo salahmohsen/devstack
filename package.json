@@ -32,7 +32,12 @@
     "ui": "vp run --filter @tsu-stack/ui ui",
     "ui:web": "vp run --filter @tsu-stack/web ui",
     "auth:secret": "npx auth@latest secret",
-    "auth:generate": "pnpm --filter @tsu-stack/db run auth:generate"
+    "auth:generate": "pnpm --filter @tsu-stack/db run auth:generate",
+    "cf-typegen": "vp run --filter @tsu-stack/server cf-typegen"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",
@@ -43,6 +48,7 @@
     "@typescript/native-preview": "catalog:",
     "eslint-plugin-fsd-lint": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
+    "oxlint-tailwindcss": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
@@ -52,5 +58,5 @@
       "@commitlint/config-conventional"
     ]
   },
-  "packageManager": "pnpm@11.3.0"
+  "packageManager": "pnpm@11.6.0"
 }

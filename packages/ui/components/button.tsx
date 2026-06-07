@@ -8,9 +8,9 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 const buttonVariants = cva(
   [
     `group relative isolate inline-flex w-fit shrink-0 transform-gpu cursor-pointer touch-none items-center justify-center gap-1.5 overflow-hidden text-sm whitespace-nowrap outline-hidden motion-reduce:transform-none`,
-    `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:focus-visible:ring-offset-secondary-foreground`,
+    `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:dark:ring-offset-secondary-foreground`,
     `disabled:scale-100 disabled:cursor-not-allowed disabled:bg-secondary disabled:opacity-60`,
-    `[transition-timing-function:cubic-bezier(.6,.04,.98,.335)] will-change-transform [transition:scale_0.1s,box-shadow_0.2s,background_0.20s,width_0.2s]`,
+    `ease-[cubic-bezier(.6,.04,.98,.335)] will-change-transform [transition:scale_0.1s,box-shadow_0.2s,background_0.20s,width_0.2s]`,
     `active:scale-98 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4`
   ],
   {
@@ -50,12 +50,12 @@ const buttonVariants = cva(
         xs: "h-6 gap-1 rounded-md px-[calc(--spacing(2)-1px)] py-[calc(--spacing(1)-1px)] text-xs [&_svg:not([class*='size-'])]:size-3"
       },
       variant: {
-        default: `bg-linear-to-b from-primary/80 to-primary text-primary-foreground hover:from-primary/75 dark:from-primary dark:hover:from-primary/95`,
+        default: `bg-linear-to-b from-primary/80 to-primary text-primary-foreground hover:from-primary/75 dark:from-primary hover:dark:from-primary/95`,
         destructive:
           "bg-destructive bg-linear-to-t from-destructive/90 to-destructive text-white hover:bg-destructive/90 focus-visible:border-destructive focus-visible:bg-destructive/90 focus-visible:ring-destructive",
         ghost: `text-primary hover:bg-primary/10 focus-visible:border-primary/25 focus-visible:bg-primary/10`,
         link: `text-primary hover:underline hover:decoration-1 hover:underline-offset-4 focus-visible:underline focus-visible:decoration-1 focus-visible:underline-offset-4`,
-        outline: `border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50`,
+        outline: `border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 hover:dark:bg-input/50`,
         secondary:
           "border-secondary bg-secondary text-secondary-foreground hover:bg-secondary/90 data-pressed:bg-secondary/90"
       }
