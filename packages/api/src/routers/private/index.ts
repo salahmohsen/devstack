@@ -1,4 +1,5 @@
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { privateGithubRouter } from "#@/routers/private/github/index";
 
 export const privateRouter = {
   data: protectedProcedure
@@ -11,5 +12,6 @@ export const privateRouter = {
         message: "This is private",
         user: context.session.user
       };
-    })
+    }),
+  github: privateGithubRouter
 };
