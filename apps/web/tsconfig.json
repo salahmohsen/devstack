@@ -10,11 +10,18 @@
     "types": ["node", "vite/client", "mdx"],
 
     /* Because paraglide.js breaks types during rebuilds on dev */
-    "allowJs": true
+    "allowJs": true,
+    "lib": ["DOM", "ES2023", "ES2024", "ESNext"]
   },
   "mdx": {
     "checkMdx": true
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../../packages/ui/components/team-switcher.tsx",
+    "../../packages/ui/components/locale-switcher.tsx",
+    "../../packages/ui/components/theme-switcher.tsx"
+  ],
   "exclude": ["node_modules"]
 }

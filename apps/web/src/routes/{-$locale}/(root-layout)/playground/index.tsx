@@ -41,7 +41,7 @@ function PlaygroundPage() {
   return (
     <Container>
       <section className="mb-8">
-        <h2 className="font-display mb-8 text-4xl">{m.playground_page__image_optimization()}</h2>
+        <h2 className="mb-8 text-4xl">{m.playground_page__image_optimization()}</h2>
         <div className="mb-4 h-64 overflow-hidden rounded-lg">
           <Image
             width={736}
@@ -64,7 +64,7 @@ function PlaygroundPage() {
         </Link>
       </section>
       <section className="mb-8">
-        <h2 className="font-display mb-8 text-4xl">{m.playground_page__test_rpc()}</h2>
+        <h2 className="mb-8 text-4xl">{m.playground_page__test_rpc()}</h2>
         <div className="rounded-lg border p-4">
           <h3 className="mb-2 font-medium">{m.playground_page__api_status()}</h3>
           <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ function PlaygroundPage() {
         </div>
       </section>
       <section className="mb-8">
-        <h2 className="font-display mb-8 text-4xl">{m.playground_page__test_error_handling()}</h2>
+        <h2 className="mb-8 text-4xl">{m.playground_page__test_error_handling()}</h2>
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => {

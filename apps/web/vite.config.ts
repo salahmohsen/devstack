@@ -51,6 +51,49 @@ const PAGES_PRERENDER_CONFIG = [
   )
 ];
 
+const plugins: unknown[] = [];
+plugins.push(
+  devtools({
+    consolePiping: { enabled: false }
+  }),
+  mdx(),
+  cloudflare({
+    viteEnvironment: { name: "ssr" }
+  }),
+  tanstackStart({
+    pages: PAGES_PRERENDER_CONFIG,
+    prerender: {
+      enabled: true,
+      // Only prerender paths defined in the PAGES_PRERENDER_CONFIG object
+      autoStaticPathsDiscovery: false,
+      // Disable crawling to avoid missing i18n routes, we are explicitly defining them in PAGES_PRERENDER_CONFIG
+      crawlLinks: false
+    },
+    server: {
+      build: {
+        // Don't allow changing of process.env.NODE_ENV at runtime
+        staticNodeEnv: true
+      }
+    }
+  }),
+  viteReact(),
+  /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
+  babel({
+    presets: [reactCompilerPreset()]
+  }),
+  paraglideVitePlugin({
+    basePath: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname
+  }),
+  tailwindcss(),
+  ohImage({
+    pl_show: true,
+    transforms: {
+      format: "webp",
+      quality: 80
+    }
+  })
+);
+
 export default defineConfig({
   run: {
     tasks: {
@@ -94,45 +137,5 @@ export default defineConfig({
   server: {
     port: 3000
   },
-  plugins: [
-    cloudflare({
-      viteEnvironment: { name: "ssr" }
-    }),
-    devtools({
-      consolePiping: { enabled: false }
-    }),
-    mdx(),
-    tanstackStart({
-      pages: PAGES_PRERENDER_CONFIG,
-      prerender: {
-        enabled: true,
-        // Only prerender paths defined in the PAGES_PRERENDER_CONFIG object
-        autoStaticPathsDiscovery: false,
-        // Disable crawling to avoid missing i18n routes, we are explicitly defining them in PAGES_PRERENDER_CONFIG
-        crawlLinks: false
-      },
-      server: {
-        build: {
-          // Don't allow changing of process.env.NODE_ENV at runtime
-          staticNodeEnv: true
-        }
-      }
-    }),
-    viteReact(),
-    /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
-    babel({
-      presets: [reactCompilerPreset()]
-    }),
-    paraglideVitePlugin({
-      basePath: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname
-    }),
-    tailwindcss(),
-    ohImage({
-      pl_show: true,
-      transforms: {
-        format: "webp",
-        quality: 80
-      }
-    })
-  ]
+  plugins: plugins as unknown as []
 });
