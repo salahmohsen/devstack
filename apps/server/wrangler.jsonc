@@ -40,7 +40,7 @@
   "kv_namespaces": [
     {
       "binding": "GITHUB_CACHE_KV",
-      "id": "github-cache-kv"
+      "id": "24c38be634a943a9bcb47f9fd133fee6"
     }
   ],
   "durable_objects": {
