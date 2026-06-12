@@ -1,5 +1,7 @@
-import { type ErrorRouteComponent } from "@tanstack/react-router";
-import { createRouter as createTanStackRouter } from "@tanstack/react-router";
+import {
+  createRouter as createTanStackRouter,
+  type ErrorRouteComponent
+} from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
@@ -7,7 +9,10 @@ import { LOG_SERVICES, initLog } from "@tsu-stack/logger/client";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { LoggerProvider } from "@/shared/providers/logger-provider";
-import { QueryClientProvider, getQueryClient } from "@/shared/providers/query-client.provider";
+import {
+  AppQueryClientProvider,
+  createAppQueryClient
+} from "@/shared/providers/query-client.provider";
 
 import { DefaultNotFoundPage } from "@/pages/default-not-found";
 
@@ -36,7 +41,7 @@ initLog({
 });
 
 export function getRouter() {
-  const queryClient = getQueryClient();
+  const queryClient = createAppQueryClient();
 
   const router = createTanStackRouter({
     /**
@@ -64,9 +69,9 @@ export function getRouter() {
     routeTree,
     scrollRestoration: true,
     Wrap: ({ children }) => (
-      <QueryClientProvider client={queryClient}>
+      <AppQueryClientProvider queryClient={queryClient}>
         <LoggerProvider>{children}</LoggerProvider>
-      </QueryClientProvider>
+      </AppQueryClientProvider>
     )
   });
 
