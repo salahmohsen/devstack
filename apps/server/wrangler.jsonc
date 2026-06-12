@@ -53,7 +53,7 @@
   },
   "migrations": [
     {
-      "new_classes": ["GitHubSignalRelay"],
+      "new_sqlite_classes": ["GitHubSignalRelay"],
       "tag": "v1"
     }
   ]
