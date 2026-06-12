@@ -1,5 +1,7 @@
 # Public GitHub Pages And Cache Plan Implementation Plan
 
+> Historical planning artifact from 2026-06-06. Treat current code under `packages/github`, `packages/api`, `apps/server`, and `apps/web` as the source of truth when this plan disagrees with the implementation.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Port DiffKit's public GitHub profile and repository read experience into `portfolio-v2`, using the existing dashboard-managed GitHub credentials and a durable server-side cache/invalidation system that matches DiffKit's core behavior.

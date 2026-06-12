@@ -238,7 +238,7 @@
           <td><code class="mono">@tsu-stack/logger/server</code></td>
           <td>One job / script call</td>
           <td>Yes (you call it)</td>
-          <td>Cron jobs, background tasks, <code>getRepoOverview</code></td>
+          <td>Cron jobs, replay scripts, background tasks</td>
         </tr>
         <tr>
           <td><strong>Global log</strong></td>
@@ -364,8 +364,8 @@
       <pre>
 import { createLogger } from "@tsu-stack/logger/server";
 
-const logger = createLogger({ source: "github.repo.getRepoOverview" });
-logger.set({ owner, repo, handler: "getRepoOverview" });
+const logger = createLogger({ source: "github.sync.replay" });
+logger.set({ owner, repo, handler: "replayGitHubSignals" });
 logger.emit({ status: 200 });  // ← Without this line, nothing happens!</pre
       >
     </section>
@@ -417,8 +417,8 @@ log.error("payment", "Payment declined");
         auto-correlates with the HTTP request (method, path, requestId, duration, status).<br />
         <strong>Use <code>log</code></strong> for one-off events that aren't part of a request
         (server startup, cron tick, health check results from a non-request context).<br />
-        <strong>Use <code>createLogger</code></strong> for self-contained multi-step work like
-        <code>getRepoOverview</code> that needs its own structured event.
+        <strong>Use <code>createLogger</code></strong> for self-contained multi-step work outside
+        request scope, such as a replay script or background sync.
       </div>
     </section>
 
@@ -586,13 +586,13 @@ log.error("payment", "Payment declined");
       <h2>Anti-patterns (Current Code Issues)</h2>
 
       <div class="flow-box">
-        <div class="title">Bug: standalone logger without .emit()</div>
-        <p><code>packages/github/src/repo/get-repo-overview.ts:16-30</code></p>
+        <div class="title">Anti-pattern: standalone logger without .emit()</div>
+        <p><code>Any background script or job using createLogger()</code></p>
         <pre>
-const logger = createLogger({ source: "github.repo.getRepoOverview" });
+const logger = createLogger({ source: "github.sync.replay" });
 // ...
-logger.set({ handler: "getRepoOverview" });
-logger.set("GitHub source...", { reason: source.reason });
+logger.set({ handler: "replayGitHubSignals" });
+logger.set({ reason: "manual backfill" });
 // 🚫 Never calls .emit() — event is silently dropped!</pre
         >
         <p>
@@ -605,10 +605,11 @@ logger.set("GitHub source...", { reason: source.reason });
         <div class="title">Missed opportunity: context.logger unused in procedures</div>
         <p>All <code>Router files in packages/api/src/routers/</code></p>
         <p>
-          Every oRPC handler receives <code>context.logger</code> (RequestLogger), but
-          <strong>none use it</strong>. The only procedure that logs (<code>health.live</code>) uses
-          the global <code>log.info()</code> instead, which doesn't correlate with the request's
-          method, path, or duration.
+          Every oRPC handler receives <code>context.logger</code> (RequestLogger). The GitHub
+          procedures now pass request context through to package helpers, but many handlers still do
+          not add explicit request sub-events of their own. The clearest remaining example is
+          <code>health.live</code>, which uses global <code>log.info()</code> instead of the
+          request-scoped logger.
         </p>
       </div>
     </section>

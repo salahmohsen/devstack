@@ -1,5 +1,7 @@
 # DiffKit GitHub Layout And Components Implementation Plan
 
+> Historical planning artifact from 2026-06-07. Treat the current implementation under `apps/web/src/widgets/layout`, `apps/web/src/pages/github-profile`, `apps/web/src/pages/github-repo`, and `packages/github` as the source of truth when this plan disagrees with the repo.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the current simplified public GitHub profile/repository UI with DiffKit's profile, repository list, repository explorer, and file-view layouts adapted to `portfolio-v2`.

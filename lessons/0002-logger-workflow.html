@@ -288,10 +288,14 @@
     <div class="container">
       <h1>The evlog Logger Workflow</h1>
       <p class="subtitle">
-        How wide events flow from Hono to your oRPC handler — and how to fix the missing
-        <code>.emit()</code>
+        How wide events flow from Hono to your oRPC handlers and GitHub package helpers
       </p>
       <p class="meta">Lesson 2 · 15–20 min · <span class="tag tag-log">logging</span></p>
+      <div class="callout">
+        <strong>Updated on 2026-06-13:</strong> the older missing-<code>.emit()</code> example in
+        <code>getRepoOverview</code> is no longer current. This lesson now describes the live
+        request-scoped logging flow and the remaining gaps.
+      </div>
 
       <section>
         <h2>Your Mission</h2>
@@ -305,8 +309,8 @@
           <li>Understand the three logger types and when to use each</li>
           <li>Trace the full flow: Hono middleware → oRPC context → your handler</li>
           <li>
-            Know why <code>getRepoOverview</code>'s logger is buggy (hint: missing
-            <code>.emit()</code>)
+            Understand why request-scoped logging is preferred for GitHub readers such as
+            <code>getRepoOverview</code>
           </li>
           <li>Be able to add proper logging to any function or oRPC procedure</li>
         </ul>
@@ -362,7 +366,7 @@ logger.emit({ status: 200 });
               dropped otherwise. No auto-populated HTTP fields.
             </p>
             <p style="font-size: 0.82em; color: var(--muted)">
-              <strong>Use inside:</strong> <code>getRepoOverview</code>, cron jobs, webhook handlers
+              <strong>Use inside:</strong> cron jobs, replay scripts, background tasks
             </p>
           </div>
           <div class="col-box">
@@ -465,107 +469,81 @@ logger.emit({ status: 200 });
         <div class="callout">
           <strong>Key insight:</strong> Steps 1-6 mean <code>context.logger</code> is available on
           literally every <code>publicProcedure</code> and <code>protectedProcedure</code> handler.
-          But currently, <strong>no procedure in the codebase uses it.</strong> The only procedure
-          that logs (<code>health.live</code>) uses the global <code>log</code> instead, which
-          doesn't correlate with the request context.
+          In the GitHub stack, handlers now pass full request context into the package readers, and
+          those readers enrich <code>context.logger</code> through helper functions. The most
+          visible remaining gap is <code>health.live</code>, which still uses global
+          <code>log</code> and therefore skips request correlation.
         </div>
       </section>
 
       <section>
-        <h2>The Bug in <code>getRepoOverview</code></h2>
+        <h2>Current State in <code>getRepoOverview</code></h2>
 
-        <p>Open <span class="file-path">packages/github/src/repo/get-repo-overview.ts</span>.</p>
-        <p>On line 16, a standalone logger is created:</p>
-        <pre>const logger = createLogger({ source: "github.repo.getRepoOverview" });</pre>
-        <p>On lines 27-30, the early-return path sets context but <strong>never emits</strong>:</p>
+        <p>
+          Open
+          <span class="file-path">packages/github/src/repo/repo-overview/get-repo-overview.ts</span
+          >.
+        </p>
+        <p>
+          The function now accepts an optional <code>OrpcContext</code> and records request-scoped
+          context through helper functions in
+          <span class="file-path">packages/github/src/repo/shared.utils.ts</span>.
+        </p>
+
         <pre>
+setRepoLoggerContext(context, "getRepoOverview", {
+  owner: input.owner,
+  repo: input.repo
+});
+
 if (!source.isConfigured) {
-  logger.set({ handler: "getRepoOverview" });
-  logger.set("GitHub source is not configured.", { reason: source.reason });
-  // 🚫 No logger.emit() here — event is silently dropped!
+  setRepoLoggerOutcome(context, "github_repo_overview_read_skipped", {
+    reason: source.reason
+  });
   return null;
 }</pre
         >
 
-        <div class="callout err">
-          <h3>Bug: Missing <code>.emit()</code></h3>
+        <div class="callout">
+          <h3>Why this is better</h3>
           <p>
-            evlog's standalone logger does <strong>not auto-flush</strong>. Without
-            <code>.emit()</code>, the context is accumulated but never sent to any drain (console,
-            Axiom, etc.). evlog emits a console warning about this, but no wide event is ever
-            produced.
+            The GitHub reader no longer owns emission. It enriches the request logger when one is
+            available, and the Hono middleware still performs the single final
+            <code>.emit()</code>.
           </p>
-          <p><strong>Fix:</strong> Add <code>logger.emit()</code> before returning.</p>
         </div>
-
-        <p>
-          Also notable: this logger is created at <strong>module scope</strong> (line 16). It's
-          reused across all calls to <code>getRepoOverview</code>, so context from one call could
-          bleed into another. Better practice: create it inside the function, or use the
-          request-scoped logger from the caller.
-        </p>
       </section>
 
       <section>
-        <h2>Fixing the Bug</h2>
-
-        <p>Here's the corrected pattern for the early-return path:</p>
-
-        <pre>
-if (!source.isConfigured) {
-  const logger = createLogger({ source: "github.repo.getRepoOverview" });
-  logger.set({ handler: "getRepoOverview", owner: input.owner, repo: input.repo });
-  logger.set("GitHub source is not configured.", { reason: source.reason });
-  logger.emit({ status: 200 });  // ← Flushes the event
-  return null;
-}</pre
-        >
-      </section>
-
-      <section>
-        <h2>The Better Pattern: Thread the RequestLogger</h2>
+        <h2>The Preferred Pattern</h2>
 
         <p>
-          Since <code>getRepoOverview</code> is
-          <strong>always called from an oRPC procedure</strong> (which has
-          <code>context.logger</code>), the ideal approach is to accept an optional RequestLogger
-          and use it when available, falling back to a standalone logger:
+          For request-backed GitHub readers, accept request context and update the shared logger
+          instead of creating a nested standalone logger. Reserve <code>createLogger()</code> for
+          work that has no request wrapper at all.
         </p>
 
         <pre>
-import { type RequestLogger } from "@tsu-stack/logger/server";
-
 export async function getRepoOverview(
   input: { owner: string; repo: string },
-  runtime?: GitHubRuntimeBindings,
-  requestLogger?: RequestLogger  // ← new param
-): Promise&lt;GitHubRepoOverview | null&gt; {
-  const log = requestLogger ?? createLogger({ source: "github.repo.getRepoOverview" });
+  context?: OrpcContext
+): Promise&lt;RepoOverview | null&gt; {
+  setRepoLoggerContext(context, "getRepoOverview", {
+    owner: input.owner,
+    repo: input.repo
+  });
 
-  const source = await resolvePublicGitHubSource();
-  if (!source.isConfigured) {
-    log.set({ handler: "getRepoOverview", owner: input.owner, repo: input.repo });
-    log.set("GitHub source is not configured.", { reason: source.reason });
-    log.emit({ status: 200 });
-    return null;
-  }
-  // ... rest of function
+  // ... continue using setRepoLoggerOutcome()/setRepoLoggerLocalFirstOutcome()
 }</pre
         >
 
-        <p>Then in the oRPC procedure, pass <code>context.logger</code>:</p>
+        <p>Then in the oRPC procedure, pass the whole request context through:</p>
 
         <pre>
 .handler(async ({ input, context }) => {
-  return getRepoOverview(input, context.github, context.logger);
+  return getRepoOverview(input, context);
 })</pre
         >
-
-        <p>
-          This way, when called from a request, the logging is correlated with the enclosing HTTP
-          request (method, path, requestId, duration). When called outside request context, the
-          standalone logger handles itself.
-        </p>
 
         <div class="callout warn">
           <h3>Caveat: RequestLogger + .emit()</h3>
@@ -584,29 +562,27 @@ export async function getRepoOverview(
       <section>
         <h2>Putting It Together: In an oRPC Procedure</h2>
 
-        <p>Here's how you'd actually use <code>context.logger</code> in a procedure handler:</p>
+        <p>Here's the current shape of a request-aware handler pattern:</p>
 
         <pre>
 getRepoOverview: publicProcedure
   .route({ method: "GET", path: "/repos/:owner/:repo/overview" })
   .input(inputSchema)
   .handler(async ({ input, context }) => {
-    // Add context to the request's wide event
     context.logger.set({
       owner: input.owner,
       repo: input.repo,
       feature: "repo-overview"
     });
 
-    // Record a sub-event inside this request
     context.logger.info("Fetching repo overview");
 
     try {
-      const result = await getRepoOverview(input, context.github);
+      const result = await getRepoOverview(input, context);
 
-      // Don't call .emit() — middleware handles it.
-      // You can still call .set() to add more context:
-      context.logger.set({ cached: result.meta?.fresh ?? false });
+      context.logger.set({
+        cacheStatus: result?.__meta?.cacheStatus ?? null
+      });
 
       return result;
     } catch (error) {
@@ -646,10 +622,11 @@ getRepoOverview: publicProcedure
             <li>
               <strong
                 ><span class="file-path"
-                  >packages/github/src/repo/get-repo-overview.ts</span
+                  >packages/github/src/repo/repo-overview/get-repo-overview.ts</span
                 ></strong
               >
-              — Find the standalone logger. What's missing? (Hint: look for <code>.emit()</code>)
+              — Confirm that the old standalone logger example is gone and that helper functions now
+              write to request context instead.
             </li>
             <li>
               <strong

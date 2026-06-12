@@ -6,47 +6,46 @@
 
 ## Context
 
-Second session studying the portfolio-v2 GitHub integration. Wanted to understand how the logging infrastructure works — specifically how `@tsu-stack/logger` (a facade over evlog v2.18) creates, propagates, and emits "wide events" throughout the request lifecycle.
+Second session studying the `portfolio-v2` GitHub integration. The goal was to understand how `@tsu-stack/logger` and evlog wide events move through Hono, oRPC, and the GitHub package helpers.
 
 ## Insight
 
 ### Three logger types, three use cases
 
-1. **`RequestLogger`** — Created by Hono middleware (`honoLoggerMiddleware`), stored as `c.get("log")`, passed through oRPC context as `context.logger`. Auto-correlated with HTTP method, path, requestId, duration, status. `.emit()` called automatically by middleware at response time.
+1. **`RequestLogger`** — Created by `honoLoggerMiddleware`, stored as `c.get("log")`, passed into oRPC as `context.logger`, and emitted automatically when the request finishes.
+2. **`createLogger()` (standalone)** — For jobs, scripts, and background work outside request scope. The caller must call `.emit()` manually.
+3. **`log` (global singleton)** — Immediate fire-and-forget logging for one-off events that do not need request correlation.
 
-2. **`createLogger()` (standalone)** — For jobs, background tasks, or functions like `getRepoOverview` that may run outside request context. Caller must call `.emit()` manually — without it the event is silently dropped.
+### Current GitHub package pattern
 
-3. **`log` (global singleton)** — Fire-and-forget facade. Each call flushes immediately. No `.emit()` needed. Best for one-off events (server startup, health check results outside requests).
+The GitHub readers no longer rely on a standalone `createLogger()` pattern for `getRepoOverview`. They now accept the optional `OrpcContext` and use helper functions from `packages/github/src/repo/shared.utils.ts`:
 
-### Key architectural flow
+- `setRepoLoggerContext(...)`
+- `setRepoLoggerOutcome(...)`
+- `setRepoLoggerLocalFirstOutcome(...)`
 
-```
-honoLoggerMiddleware → c.get("log")
-  → createContext({ context: c, logger: c.get("log") })
-    → OrpcContext.logger available in every procedure via publicProcedure
-```
+That means repo readers can enrich `context.logger` when they are called from oRPC without owning emission themselves.
 
-### Two code quality issues discovered
+### Current code quality observations
 
-1. **Missing `.emit()` in `getRepoOverview`** (`packages/github/src/repo/get-repo-overview.ts:27-30`): The standalone logger calls `.set()` but never `.emit()`. The wide event is silently dropped. Additionally, the logger is module-scoped (reused across calls) instead of function-scoped.
+1. **The old `getRepoOverview` missing-emit bug is fixed**: `getRepoOverview` now uses request-scoped logger helpers through optional `OrpcContext`, not a module-scoped standalone logger.
+2. **Most procedures still underuse `context.logger`**: the plumbing exists everywhere, but many handlers still rely on helper-level context only or no request sub-events at all.
+3. **`health.live` still uses global `log.info()`**: this works, but it loses request correlation compared with `context.logger`.
 
-2. **`context.logger` is never used in any oRPC procedure**: Every procedure receives `context.logger` but none call it. The only procedure that logs (`health.live`) uses the global `log.info()` instead, losing request correlation (method, path, requestId, duration).
+### Best practice confirmed
 
-### Best practice discovered
+For code that already runs inside an oRPC request, prefer passing context or request-scoped logging helpers through the call chain and let middleware own `.emit()`. Reserve `createLogger()` for work that genuinely has no request wrapper.
 
-When a core function like `getRepoOverview` is always called from an oRPC handler (which has `context.logger`), accept an optional `RequestLogger` parameter. Use it when available; fall back to `createLogger` otherwise. This gives request correlation when inside a request, and standalone behavior otherwise.
+### Anti-pattern still worth remembering
 
-### Anti-pattern: early `.emit()` seals the logger
-
-If you call `context.logger.emit()` manually inside a handler, the logger is sealed. The middleware's auto-emit becomes a no-op. Solution: use `.set()` and `.info()/.warn()/.error()` to accumulate context, and let middleware handle the final emit.
+Calling `context.logger.emit()` inside a handler seals the logger early. The middleware's later auto-emit becomes a no-op. Use `.set()` and `.info()/.warn()/.error()` during the request and let the middleware flush once.
 
 ## Consequences
 
-- Future work adding logging to procedures should use `context.logger.set()` and `.info()` for request-correlated events
-- The `getRepoOverview` standalone logger should be fixed to either (a) call `.emit()` or (b) accept an optional `RequestLogger` parameter
-- The health router should probably use `context.logger` instead of global `log` for request-correlated health checks
-- The standalone `createLogger` should generally be created inside a function (not at module scope) to avoid context bleeding across calls
+- Future GitHub procedures should continue enriching `context.logger` instead of creating nested standalone loggers.
+- If `health.live` needs request-correlation, move it from global `log` usage to `context.logger`.
+- Logger-focused docs should describe `getRepoOverview` as a request-scoped helper example, not as a broken standalone logger example.
 
 ## Revision Notes
 
-- (empty)
+- Updated on 2026-06-13 to reflect the current `getRepoOverview` implementation and remove the stale missing-emit claim.

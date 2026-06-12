@@ -402,17 +402,16 @@ GitHub REST + GraphQL API
 ┌─────────────────────────────────────┐
 │  @tsu-stack/github (core package)   │
 │  - Octokit client factory           │
-│  - 7 cache signal keys              │
-│  - 14 cache policies                │
-│  - 15+ data-fetching functions      │
+│  - cache policies + signal helpers  │
+│  - profile/repo read functions      │
 │  - Webhook handler (HMAC-SHA256)    │
 │  - Runtime-agnostic bindings        │
 └─────────────────────────────────────┘
         ↓
 ┌─────────────────────────────────────┐
 │  @tsu-stack/api (oRPC procedures)   │
-│  - publicGitHubRouter (15 procs)    │
-│  - privateGitHubRouter (3 procs)    │
+│  - public GitHub procedures         │
+│  - private GitHub helper procedures │
 │  - appSettings (GitHub config)      │
 └─────────────────────────────────────┘
         ↓
@@ -442,15 +441,15 @@ src/
 ├── index.ts                          # Re-exports everything
 ├── types.ts                          # All GitHub data model types
 ├── repo/
-│   ├── get-repo-activity-cards.ts    # GraphQL + REST activity sidebar
-│   ├── get-repo-branches.ts          # GraphQL refs query
-│   ├── get-repo-branch-comparison.ts # REST compareCommits
-│   ├── get-repo-commit-sparkline.ts  # REST listCommits (16 wk sparkline)
-│   ├── get-repo-file-content.ts      # REST getContent (base64)
-│   ├── get-repo-overview.ts          # GraphQL full repo + contributors
-│   ├── get-repo-ref-commit.ts        # REST listCommits (latest)
-│   ├── get-repo-tree.ts              # REST getContent (directory)
-│   └── get-tree-entry-commits.ts     # GraphQL batch commit history
+│   ├── repo-activity-cards/          # Sidebar activity readers
+│   ├── repo-branch-comparison/       # REST compareCommits
+│   ├── repo-branches/                # GraphQL refs query
+│   ├── repo-commit-sparkline/        # REST listCommits sparkline
+│   ├── repo-file-content/            # REST getContent (base64)
+│   ├── repo-overview/                # GraphQL repo overview
+│   ├── repo-ref-commit/              # REST latest ref commit
+│   ├── repo-tree/                    # REST directory tree reader
+│   └── tree-entry-commits/           # GraphQL batch commit history
 ├── user/
 │   ├── get-user-profile.ts           # REST users.getByUsername
 │   ├── get-user-contributions.ts     # GraphQL contributionCalendar

@@ -333,9 +333,9 @@
 
         <h3>Layer 1: Core Package</h3>
         <p>
-          <span class="file-path">packages/github/src/repo/get-repo-overview.ts</span>
+          <span class="file-path">packages/github/src/repo/repo-overview/get-repo-overview.ts</span>
         </p>
-        <p>This file exports <code>getRepoOverview(input, runtime?)</code>. It:</p>
+        <p>This file exports <code>getRepoOverview(input, context?)</code>. It:</p>
         <ol>
           <li>
             Calls <code>resolvePublicGitHubSource()</code> to get the configured token + owner
@@ -347,8 +347,10 @@
             The actual API call is a <strong>GraphQL query</strong> (for full repo details +
             languages + topics)
           </li>
-          <li>Followed by a REST call to <code>listContributors</code></li>
-          <li>Returns <code>GitHubRepoOverview | null</code></li>
+          <li>
+            Records request-scoped logging metadata when <code>context.logger</code> is present
+          </li>
+          <li>Returns <code>RepoOverview | null</code></li>
         </ol>
 
         <p>
@@ -366,12 +368,13 @@ getRepoOverview: oRPC
   .route({ method: "GET", path: "/repos/:owner/:repo/overview" })
   .input(getRepoOverviewSchema)
   .handler(async ({ input, context }) => {
-    return getRepoOverview(input, context.github);
+    return getRepoOverview(input, context);
   })</pre
         >
         <p>
-          It just passes the request through to the core package, injecting the runtime bindings
-          from the oRPC context. This is a <strong>thin adapter layer</strong>.
+          It passes the full oRPC context into the core package so the reader can use both runtime
+          bindings and request-scoped logging helpers. This is still a
+          <strong>thin adapter layer</strong>.
         </p>
 
         <h3>Layer 3: Server</h3>
@@ -381,9 +384,7 @@ getRepoOverview: oRPC
         <p>The Hono server mounts the oRPC handler. It also serves:</p>
         <ul>
           <li><code>POST /webhooks/github</code> — receives GitHub webhook events</li>
-          <li>
-            WebSocket upgrade at <code>/api/ws/github-signals</code> — the Durable Object relay
-          </li>
+          <li>Durable Object-backed WebSocket relay for GitHub invalidation signals</li>
         </ul>
         <p>
           The server layer is responsible for <strong>runtime bindings</strong>: KV store, Durable
@@ -407,8 +408,8 @@ export function getRepoOverviewQueryOptions(input: RepoInput) {
 }</pre
         >
         <p>
-          The route loader calls <code>context.queryClient.ensureQueryData()</code> before the page
-          renders (SSR). The component uses a standard React Query <code>useSuspenseQuery</code>.
+          Route files preload data with <code>ensureQueryData()</code> where needed, and page
+          components consume the same query options with standard React Query hooks.
         </p>
       </section>
 
@@ -507,8 +508,8 @@ getGitHubResourceLocalFirst(options):
         </ol>
 
         <p>
-          This is the loop that keeps the UI fresh without polling (though there's a 20-second
-          polling fallback in <code>useGitHubSignalPoll</code>).
+          This is the loop that keeps the UI fresh, with a 20-second fallback sync implemented
+          inside <code>useGitHubSignalStream</code> when WebSocket delivery is missed.
         </p>
       </section>
 
