@@ -10,7 +10,6 @@ allowBuilds:
 
 catalog:
   "@babel/core": ^7.29.7
-  "@better-auth/drizzle-adapter": https://pkg.pr.new/better-auth/better-auth/@better-auth/drizzle-adapter@9489
   "@bprogress/react": ^1.2.7
   "@commitlint/cli": ^21.0.2
   "@commitlint/config-conventional": ^21.0.2
@@ -107,6 +106,7 @@ catalog:
   rehype-raw: ^7.0.0
   remark-github-blockquote-alert: ^2.1.0
   react-resizable-panels: ^4.11.2
+  better-auth-drizzle-adapter: ^1.0.4
 
 catalogMode: prefer
 

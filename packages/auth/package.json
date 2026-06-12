@@ -9,9 +9,9 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "catalog:",
     "@better-auth/passkey": "catalog:",
-    "better-auth": "catalog:"
+    "better-auth": "catalog:",
+    "better-auth-drizzle-adapter": "catalog:"
   },
   "devDependencies": {
     "@tsu-stack/env": "workspace:*",
