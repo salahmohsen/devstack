@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Fingerprint } from "lucide-react";
 import { FaGithub } from "react-icons/fa6";
 import { toast } from "sonner";
 
@@ -9,6 +8,7 @@ import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
 import { type NavigateTo } from "@tsu-stack/i18n/tanstack-start/types";
+import { FingerprintIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import { FieldDescription, FieldGroup } from "@tsu-stack/ui/components/field";
@@ -105,7 +105,7 @@ export function SignInForm({
               type="button"
               variant="outline"
             >
-              <Fingerprint className="size-4" />
+              <FingerprintIcon className="size-4" />
               Continue with Passkey
             </Button>
           </FieldGroup>

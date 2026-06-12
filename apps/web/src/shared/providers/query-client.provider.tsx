@@ -1,126 +1,316 @@
-import {
-  QueryClient,
-  QueryClientProvider as QueryClientProviderRaw,
-  environmentManager
-} from "@tanstack/react-query";
-import { type PersistedClient, type Persister } from "@tanstack/react-query-persist-client";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import localforage from "localforage";
-import { type ReactNode } from "react";
+import { dehydrate, hydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        // 2 minutes so that the client doesn't refetch when it hydrates from the SSR queryClient
-        // See: https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr#initial-setup
-        refetchOnMount: false,
-        refetchOnReconnect: false,
-        refetchOnWindowFocus: false,
-        retry: (failureCount, error: unknown) => {
-          if (
-            error instanceof Error &&
-            "status" in error &&
-            [401, 403].includes((error as { status: number }).status)
-          ) {
-            return false;
-          }
-          return failureCount < 2;
-        },
-        staleTime: 1000 * 60 * 2
-      }
-    }
-  });
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
+
+// TODO
+import { readStoredTabs, type Tab, useTabs } from "@/shared/lib/tab-store";
+
+export const GITHUB_QUERY_CACHE_STORAGE_KEY = "diffkit:github-query-cache:v1";
+const GITHUB_QUERY_CACHE_MAX_AGE_MS = githubCachePolicy.viewer.gcTimeMs;
+
+type PersistedGitHubQueryCache = {
+  version: 1;
+  persistedAt: number;
+  clientState: unknown;
+};
+
+type PersistBehavior = true | "tab";
+
+type PersistableGitHubQuery = {
+  state: { data?: unknown; status: string };
+  meta?: Record<string, unknown>;
+  queryKey: readonly unknown[];
+};
+
+function isPullQueryKeyInput(
+  value: unknown
+): value is { owner: string; repo: string; pullNumber: number } {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    typeof (value as { owner?: unknown }).owner === "string" &&
+    typeof (value as { repo?: unknown }).repo === "string" &&
+    typeof (value as { pullNumber?: unknown }).pullNumber === "number"
+  );
 }
 
-let browserQueryClient: QueryClient | undefined;
-
-// On the server, create a new queryClient per-request to prevent credential leaking between SSR requests
-// On the client, use the globally-available browserQueryClient to preserve cache
-// See: https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr#initial-setup
-function getQueryClient() {
-  if (environmentManager.isServer()) {
-    // Server: always make a new query client for each request to prevent leaking data between requests
-    return createQueryClient();
-  }
-  // Browser: make a new query client if we don't already have one
-  // This is very important, so we don't re-make a new client if React
-  // suspends during the initial render. This may not be needed if we
-  // have a suspense boundary BELOW the creation of the query client
-  browserQueryClient ??= createQueryClient();
-  return browserQueryClient;
+function isIssueQueryKeyInput(
+  value: unknown
+): value is { owner: string; repo: string; issueNumber: number } {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    typeof (value as { owner?: unknown }).owner === "string" &&
+    typeof (value as { repo?: unknown }).repo === "string" &&
+    typeof (value as { issueNumber?: unknown }).issueNumber === "number"
+  );
 }
 
-// Lazy-create persister only on client side to prevent server-side leaks
-let persister: Persister | undefined;
-
-function getPersister() {
-  if (environmentManager.isServer()) {
-    return undefined;
-  }
-  persister ??= createLocalForagePersister();
-  return persister;
+function isRepoQueryKeyInput(value: unknown): value is { owner: string; repo: string } {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    typeof (value as { owner?: unknown }).owner === "string" &&
+    typeof (value as { repo?: unknown }).repo === "string"
+  );
 }
 
-function QueryClientProvider({ children, client }: { children: ReactNode; client: QueryClient }) {
-  const clientPersister = getPersister();
+function isRepoCommitQueryKeyInput(
+  value: unknown
+): value is { owner: string; repo: string; sha: string } {
+  return Boolean(
+    value &&
+    typeof value === "object" &&
+    typeof (value as { owner?: unknown }).owner === "string" &&
+    typeof (value as { repo?: unknown }).repo === "string" &&
+    typeof (value as { sha?: unknown }).sha === "string"
+  );
+}
 
-  // Only use persistence on the client, not on the server
-  if (clientPersister) {
+function matchesTabQuery(queryKey: readonly unknown[], tab: Tab) {
+  const resourceType = queryKey[2];
+  const resourceName = queryKey[3];
+  const input = queryKey[4];
+  const [owner, repo] = tab.repo.split("/");
+
+  if (tab.type === "pull") {
     return (
-      <PersistQueryClientProvider
-        client={client}
-        persistOptions={{
-          persister: clientPersister,
-          /**
-           * We need to add this or else we will get `Uncaught (in promise) DataCloneError: Failed to execute 'put' on 'IDBObjectStore': #<Object> could not be cloned.`
-           * when the query client tries to persist data that can't be structured cloned, such as a RSC payload object.
-           * By default, react-query-persist-client will attempt to persist all queries,
-           * but with this option we can filter out queries that contain unserializable data.
-           */
-          dehydrateOptions: {
-            shouldDehydrateQuery: (query) => {
-              try {
-                structuredClone(query.state.data);
-                return true;
-              } catch {
-                return false;
-              }
-            }
-          }
-        }}
-      >
-        <QueryClientProviderRaw client={client}>{children}</QueryClientProviderRaw>
-      </PersistQueryClientProvider>
+      resourceType === "pulls" &&
+      (resourceName === "page" ||
+        resourceName === "detail" ||
+        resourceName === "comments" ||
+        resourceName === "status") &&
+      isPullQueryKeyInput(input) &&
+      input.owner === owner &&
+      input.repo === repo &&
+      input.pullNumber === tab.number
     );
   }
 
-  // Server-side: no IndexedDB persistence, use only the raw provider
-  return <QueryClientProviderRaw client={client}>{children}</QueryClientProviderRaw>;
+  if (tab.type === "review") {
+    // Persist everything needed to rehydrate the review workspace instantly
+    // (toolbar PR header, sidebar tree, review threads, comments). Patches
+    // (`files`) are deliberately excluded — for a 3k-file PR they'd exceed
+    // localStorage quota and serializing them on every cache write would be
+    // expensive. Patches fall back to the server-side KV cache instead.
+    return (
+      resourceType === "pulls" &&
+      (resourceName === "page" ||
+        resourceName === "fileSummaries" ||
+        resourceName === "reviewComments" ||
+        resourceName === "reviewThreads") &&
+      isPullQueryKeyInput(input) &&
+      input.owner === owner &&
+      input.repo === repo &&
+      input.pullNumber === tab.number
+    );
+  }
+
+  if (tab.type === "commit") {
+    if (
+      resourceType !== "repo" ||
+      resourceName !== "commit" ||
+      !isRepoCommitQueryKeyInput(input) ||
+      input.owner !== owner ||
+      input.repo !== repo
+    ) {
+      return false;
+    }
+    // Commit tabs aren't keyed by a number — extract sha from the tab URL.
+    const shaMatch = tab.url.match(/\/commit\/([0-9a-f]+)/i);
+    return shaMatch ? input.sha === shaMatch[1] : false;
+  }
+
+  if (tab.type === "repo") {
+    return (
+      resourceType === "repo" &&
+      isRepoQueryKeyInput(input) &&
+      input.owner === owner &&
+      input.repo === repo
+    );
+  }
+
+  return (
+    resourceType === "issues" &&
+    (resourceName === "page" || resourceName === "detail" || resourceName === "comments") &&
+    isIssueQueryKeyInput(input) &&
+    input.owner === owner &&
+    input.repo === repo &&
+    input.issueNumber === tab.number
+  );
 }
 
-/**
- * Creates a custom localForage persister to save the cache in IndexedDB
- * @see {@link https://github.com/localForage/localForage}
- * @see {@link https://tanstack.com/query/v4/docs/framework/react/plugins/persistQueryClient#building-a-persister}
- */
-function createLocalForagePersister(idbValidKey = "cache") {
-  const reactQueryLocalForage = localforage.createInstance({
-    description: "Cached site data",
-    name: "React Query",
-    storeName: "cache",
-    version: 1
+function shouldPersistGitHubQuery(query: PersistableGitHubQuery) {
+  const persist = query.meta?.persist as PersistBehavior | undefined;
+
+  if (query.state.status !== "success" || query.queryKey[0] !== "github") {
+    return false;
+  }
+
+  if (query.state.data == null) {
+    return false;
+  }
+
+  if (persist === true) {
+    return true;
+  }
+
+  if (persist === "tab") {
+    return readStoredTabs().some((tab) => matchesTabQuery(query.queryKey, tab));
+  }
+
+  return false;
+}
+
+function pruneClosedTabQueries(queryClient: QueryClient, tabs: Tab[]) {
+  queryClient.removeQueries({
+    predicate: (query) =>
+      query.queryKey[0] === "github" &&
+      query.meta?.persist === "tab" &&
+      !tabs.some((tab) => matchesTabQuery(query.queryKey, tab))
+  });
+}
+
+function pruneNullGitHubQueries(queryClient: QueryClient) {
+  queryClient.removeQueries({
+    predicate: (query) => query.queryKey[0] === "github" && query.state.data == null
+  });
+}
+
+function usePruneClosedTabQueries(queryClient: QueryClient) {
+  const tabs = useTabs();
+  const tabsRef = useRef(tabs);
+
+  useEffect(() => {
+    if (tabsRef.current === tabs) {
+      return;
+    }
+
+    tabsRef.current = tabs;
+    pruneClosedTabQueries(queryClient, tabs);
+  }, [queryClient, tabs]);
+}
+
+function restorePersistedGitHubQueryCache(queryClient: QueryClient) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const rawState = window.localStorage.getItem(GITHUB_QUERY_CACHE_STORAGE_KEY);
+  if (!rawState) {
+    return;
+  }
+
+  try {
+    const persistedState = JSON.parse(rawState) as PersistedGitHubQueryCache;
+    const isExpired = Date.now() - persistedState.persistedAt > GITHUB_QUERY_CACHE_MAX_AGE_MS;
+
+    if (persistedState.version !== 1 || isExpired) {
+      window.localStorage.removeItem(GITHUB_QUERY_CACHE_STORAGE_KEY);
+      return;
+    }
+
+    hydrate(queryClient, persistedState.clientState);
+    pruneNullGitHubQueries(queryClient);
+  } catch {
+    window.localStorage.removeItem(GITHUB_QUERY_CACHE_STORAGE_KEY);
+  }
+}
+
+function persistGitHubQueryCache(queryClient: QueryClient) {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  let timeoutId: number | undefined;
+
+  const writeCache = () => {
+    const clientState = dehydrate(queryClient, {
+      shouldDehydrateQuery: shouldPersistGitHubQuery
+    });
+
+    if (clientState.queries.length === 0) {
+      window.localStorage.removeItem(GITHUB_QUERY_CACHE_STORAGE_KEY);
+      return;
+    }
+
+    const payload: PersistedGitHubQueryCache = {
+      version: 1,
+      persistedAt: Date.now(),
+      clientState
+    };
+
+    window.localStorage.setItem(GITHUB_QUERY_CACHE_STORAGE_KEY, JSON.stringify(payload));
+  };
+
+  const scheduleWrite = () => {
+    if (typeof timeoutId !== "undefined") {
+      window.clearTimeout(timeoutId);
+    }
+
+    timeoutId = window.setTimeout(writeCache, 250);
+  };
+
+  const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+    scheduleWrite();
   });
 
-  return {
-    persistClient: async (client: PersistedClient) => {
-      await reactQueryLocalForage.setItem(idbValidKey, client);
-    },
-    removeClient: async () => {
-      await reactQueryLocalForage.removeItem(idbValidKey);
-    },
-    restoreClient: async () => await reactQueryLocalForage.getItem<PersistedClient>(idbValidKey)
-  } as Persister;
+  const flushOnUnload = () => {
+    if (typeof timeoutId !== "undefined") {
+      window.clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+    writeCache();
+  };
+
+  window.addEventListener("beforeunload", flushOnUnload);
+
+  return () => {
+    unsubscribe();
+    window.removeEventListener("beforeunload", flushOnUnload);
+    if (typeof timeoutId !== "undefined") {
+      window.clearTimeout(timeoutId);
+    }
+  };
 }
 
-export { getQueryClient, QueryClientProvider };
+function GitHubQueryPersistence({ queryClient }: { queryClient: QueryClient }) {
+  useEffect(() => {
+    pruneClosedTabQueries(queryClient, readStoredTabs());
+    return persistGitHubQueryCache(queryClient);
+  }, [queryClient]);
+  usePruneClosedTabQueries(queryClient);
+
+  return null;
+}
+
+export function createAppQueryClient() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        networkMode: "online"
+      }
+    }
+  });
+
+  restorePersistedGitHubQueryCache(queryClient);
+
+  return queryClient;
+}
+
+export function AppQueryClientProvider({
+  children,
+  queryClient
+}: {
+  children: React.ReactNode;
+  queryClient: QueryClient;
+}) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <GitHubQueryPersistence queryClient={queryClient} />
+      {children}
+    </QueryClientProvider>
+  );
+}

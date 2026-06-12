@@ -9,7 +9,7 @@
   --base-700: oklch(0.3745 0.011 58.5);
   --base-800: oklch(0.2682 0.0095 56.24);
   --base-900: oklch(0.194 0.0063 55.99);
-  --base-950: oklch(0.1471 0.0047 54.2);
+  --base-950: oklch(0.18 0 0);
   --base-1000: oklch(0.1021 0.0032 54.78);
 
   --background: var(--color-white);

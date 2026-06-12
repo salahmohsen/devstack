@@ -247,7 +247,18 @@ The web Worker keeps using the app dev command through the Cloudflare Vite plugi
 > `apps/server` no longer needs a separate Node bootstrap for normal development. The Worker entry is driven through the Cloudflare Vite plugin and Wrangler config.
 
 > [!NOTE]
-> `apps/server` runs `pnpm db:migrate` before `wrangler deploy` so schema changes are applied before the new Worker version starts serving traffic.
+> The server Worker now expects these GitHub integration bindings when public GitHub pages are enabled:
+>
+> - `GITHUB_CACHE_KV` as a KV namespace for hot GitHub response payloads
+> - `GITHUB_SIGNAL_RELAY` as a Durable Object binding for live refresh fan-out
+> - `GITHUB_WEBHOOK_SECRET` as the webhook signature secret in the server environment
+>
+> The public GitHub username/token are intentionally not environment variables here. They remain dashboard-managed owner settings stored in `app_settings`.
+>
+> For the current milestone, the saved GitHub token is write-only in the dashboard UI but still stored as plaintext in `app_settings`. Treat that as a temporary posture until encryption-at-rest lands.
+
+> [!NOTE]
+> `apps/server`'s current `deploy` script runs `wrangler deploy` directly. Apply database migrations separately before deploys that depend on schema changes.
 
 > [!NOTE]
 > `apps/server` disables Vite's built-in `server.cors` in dev so Hono's own CORS middleware handles preflight requests. This follows the Hono guidance for Vite-based setups: https://hono.dev/middleware/builtin/cors
@@ -270,7 +281,10 @@ You will need to set up the Worker _variables and secrets_ manually in the Cloud
   - `VITE_WEB_URL`
   - `DATABASE_URL`
   - `BETTER_AUTH_SECRET`
+  - `GITHUB_CLIENT_ID`
+  - `GITHUB_CLIENT_SECRET`
   - `SOURCE_COMMIT`
+  - `GITHUB_WEBHOOK_SECRET` if webhook-driven GitHub cache invalidation is enabled
   - `VITE_IMGPROXY_URL` if used
 
 | **Build Settings**                                                       | **Secrets & Variables**                                                         |
@@ -290,25 +304,28 @@ This branch configures the **web app** for Cloudflare Workers through the Cloudf
 
 For the Hono server, use the following environment variables in either Node or Cloudflare Worker runtime:
 
-| Variable Name          | Required | Default Value | Description                                                                                      |
-| ---------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------ |
-| `VITE_SERVER_URL`      | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`. |
-| `VITE_WEB_URL`         | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.   |
-| `BETTER_AUTH_SECRET`   | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                  |
-| `DATABASE_URL`         | ✅       | -             | Neon Postgres connection string.                                                                 |
-| `ENABLE_OPEN_API_DOCS` | ❌       | `false`       | Enable OpenAPI `/docs` endpoint.                                                                 |
+| Variable Name           | Required | Default Value | Description                                                                                      |
+| ----------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| `VITE_SERVER_URL`       | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`. |
+| `VITE_WEB_URL`          | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.   |
+| `BETTER_AUTH_SECRET`    | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                  |
+| `DATABASE_URL`          | ✅       | -             | Neon Postgres connection string.                                                                 |
+| `GITHUB_CLIENT_ID`      | ✅       | -             | GitHub OAuth app client ID used by Better Auth.                                                  |
+| `GITHUB_CLIENT_SECRET`  | ✅       | -             | GitHub OAuth app client secret used by Better Auth.                                              |
+| `GITHUB_WEBHOOK_SECRET` | ❌       | -             | Secret used to verify GitHub webhook signatures for public cache invalidation when enabled.      |
+| `ENABLE_OPEN_API_DOCS`  | ❌       | `false`       | Enable OpenAPI `/docs` endpoint.                                                                 |
 
 ### Web
 
-For the web app, use the following environment variables:
+For the web app, the validated runtime env surface is much smaller than the server one. The web app reads:
 
-| Variable Name        | Required | Default Value | Description                                                                                                                         |
-| -------------------- | -------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_SERVER_URL`    | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`.                                    |
-| `VITE_WEB_URL`       | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.                                      |
-| `BETTER_AUTH_SECRET` | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                                                     |
-| `DATABASE_URL`       | ✅       | -             | Neon Postgres connection string.                                                                                                    |
-| `VITE_IMGPROXY_URL`  | ❌       | -             | URL for image optimization. You'll need to deploy your own [imgproxy](https://hub.docker.com/r/darthsim/imgproxy/) container first. |
+| Variable Name       | Required | Default Value | Description                                                                                                                         |
+| ------------------- | -------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_SERVER_URL`   | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`.                                    |
+| `VITE_WEB_URL`      | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.                                      |
+| `VITE_IMGPROXY_URL` | ❌       | -             | URL for image optimization. You'll need to deploy your own [imgproxy](https://hub.docker.com/r/darthsim/imgproxy/) container first. |
+
+Build-time/server-only values used by the web app's Node/Worker runtime are validated separately via `ENV_WEB_SERVER`: `NODE_ENV`, `SOURCE_COMMIT`, and `IS_BUILD`.
 
 ## Merging Server to Web App
 

@@ -1,3 +1,4 @@
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite-plus";
 
 const fsdEslintPluginOptions = {
@@ -136,6 +137,7 @@ export default defineConfig({
       "scripts/",
       "*.md"
     ],
+
     jsPlugins: [
       { name: "react-hooks-js", specifier: "eslint-plugin-react-hooks" },
       /**
@@ -150,8 +152,14 @@ export default defineConfig({
         name: "eslint-tanstack-query",
         specifier: "@tanstack/eslint-plugin-query"
       },
-      { name: "fsd", specifier: "eslint-plugin-fsd-lint" }
+      { name: "fsd", specifier: "eslint-plugin-fsd-lint" },
+      "oxlint-tailwindcss"
     ],
+    settings: {
+      tailwindcss: {
+        entryPoint: "./packages/ui/styles/globals.css"
+      }
+    },
     options: { typeAware: true, typeCheck: true },
     plugins: [
       "eslint",
@@ -271,7 +279,31 @@ export default defineConfig({
       "typescript/switch-exhaustiveness-check": "error",
       "unicorn/throw-new-error": "error",
       "jest/valid-title": "error",
-      "eslint/yoda": "warn"
+      "eslint/yoda": "warn",
+      "import/no-duplicates": "warn",
+      //https://oxlint-tailwindcss.pages.dev/setup
+
+      // Correctness — catch real bugs
+      "tailwindcss/no-conflicting-classes": "error",
+      "tailwindcss/no-deprecated-classes": "error",
+      "tailwindcss/no-duplicate-classes": "warn",
+      "tailwindcss/no-unknown-classes": [
+        "error",
+        {
+          allowlist: ["bg-surface-1", "bg-surface-2", "hover:bg-surface-2"]
+        }
+      ],
+
+      // Modernization — keep classes in current canonical form
+      "tailwindcss/enforce-canonical": "warn",
+      "tailwindcss/no-unnecessary-arbitrary-value": "warn",
+
+      // Style and consistency
+      "tailwindcss/enforce-sort-order": "off", // sortTailwindcss already handle this
+      "tailwindcss/consistent-variant-order": "warn",
+      "tailwindcss/enforce-consistent-important-position": "warn",
+      "tailwindcss/no-unnecessary-whitespace": "warn"
     }
-  }
+  },
+  plugins: [tailwindcss()]
 });

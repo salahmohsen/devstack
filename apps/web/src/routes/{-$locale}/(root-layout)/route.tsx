@@ -1,6 +1,17 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-import { RootLayout } from "@/widgets/layouts";
+import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { Navbar } from "@/features/navbar";
+
+function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={cn("flex min-h-screen flex-col")}>
+      <Navbar />
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/{-$locale}/(root-layout)")({
   component: () => (

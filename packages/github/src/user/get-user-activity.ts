@@ -1,0 +1,176 @@
+import { isRecord } from "@tsu-stack/core/utils";
+
+import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
+import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
+import {
+  createGitHubOctokit,
+  createGitHubResponseMetadata
+} from "#@/infrastructure/octokit/client";
+import { type GitHubRuntimeBindings } from "#@/runtime/bindings";
+import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
+import { type GitHubUserActivityEvent } from "#@/types";
+
+export async function getUserActivity(
+  input: {
+    isOwnProfile: boolean;
+    page: number;
+    username: string;
+  },
+  runtime?: GitHubRuntimeBindings
+): Promise<GitHubUserActivityEvent[]> {
+  const source = await resolvePublicGitHubSource();
+  if (!source.isConfigured) {
+    return [];
+  }
+
+  const octokit = createGitHubOctokit(source);
+  const signalKey = githubRevalidationSignalKeys.ownerActivity(input.username);
+
+  try {
+    const result = await getGitHubResourceLocalFirst<GitHubUserActivityEvent[]>({
+      fetcher: async () => {
+        const endpoint = input.isOwnProfile
+          ? "GET /users/{username}/events"
+          : "GET /users/{username}/events/public";
+        const response = await octokit.request(endpoint, {
+          page: input.page,
+          per_page: 30,
+          username: input.username
+        });
+
+        return {
+          data: response.data.map((event) => {
+            const payload = isRecord(event.payload)
+              ? (event.payload as Record<string, unknown>)
+              : {};
+            const pullRequest = isRecord(payload["pull_request"])
+              ? (payload["pull_request"] as Record<string, unknown>)
+              : null;
+            const issue = isRecord(payload["issue"])
+              ? (payload["issue"] as Record<string, unknown>)
+              : null;
+            const repoName = event.repo?.name ?? `${input.username}/unknown`;
+            const action = typeof payload["action"] === "string" ? payload["action"] : null;
+            const title =
+              typeof pullRequest?.["title"] === "string"
+                ? pullRequest["title"]
+                : typeof issue?.["title"] === "string"
+                  ? issue["title"]
+                  : typeof payload["ref"] === "string"
+                    ? payload["ref"].replace("refs/heads/", "")
+                    : null;
+            const url =
+              typeof pullRequest?.["html_url"] === "string"
+                ? pullRequest["html_url"]
+                : typeof issue?.["html_url"] === "string"
+                  ? issue["html_url"]
+                  : null;
+            const commits = Array.isArray(payload["commits"])
+              ? payload["commits"].flatMap((commit) => {
+                  if (!isRecord(commit)) {
+                    return [];
+                  }
+
+                  const sha = typeof commit["sha"] === "string" ? commit["sha"] : null;
+                  const message = typeof commit["message"] === "string" ? commit["message"] : null;
+
+                  return sha && message
+                    ? [
+                        {
+                          message,
+                          sha,
+                          url: repoName ? `https://github.com/${repoName}/commit/${sha}` : null
+                        }
+                      ]
+                    : [];
+                })
+              : null;
+            const actor =
+              event.actor?.login || event.actor?.avatar_url
+                ? {
+                    avatarUrl: event.actor?.avatar_url ?? null,
+                    login: event.actor?.login ?? null
+                  }
+                : null;
+            const repo = {
+              name: repoName,
+              url: `https://github.com/${repoName}`
+            };
+            const prState = pullRequest?.["merged_at"]
+              ? "merged"
+              : pullRequest?.["state"] === "open"
+                ? "open"
+                : pullRequest?.["state"] === "closed"
+                  ? "closed"
+                  : null;
+            const issueState =
+              issue?.["state"] === "open"
+                ? "open"
+                : issue?.["state"] === "closed"
+                  ? "closed"
+                  : null;
+
+            return {
+              action,
+              actor,
+              commentBody:
+                typeof payload["comment"] === "object" && isRecord(payload["comment"])
+                  ? typeof payload["comment"]["body"] === "string"
+                    ? payload["comment"]["body"]
+                    : null
+                  : null,
+              commits,
+              createdAt: event.created_at ?? "",
+              id: event.id,
+              issueDetail:
+                issueState &&
+                typeof issue?.["number"] === "number" &&
+                typeof issue?.["title"] === "string" &&
+                typeof issue?.["html_url"] === "string"
+                  ? {
+                      number: issue["number"],
+                      state: issueState,
+                      title: issue["title"],
+                      url: issue["html_url"]
+                    }
+                  : null,
+              prDetail:
+                prState &&
+                typeof pullRequest?.["number"] === "number" &&
+                typeof pullRequest?.["title"] === "string" &&
+                typeof pullRequest?.["html_url"] === "string"
+                  ? {
+                      number: pullRequest["number"],
+                      state: prState,
+                      title: pullRequest["title"],
+                      url: pullRequest["html_url"]
+                    }
+                  : null,
+              ref: typeof payload["ref"] === "string" ? payload["ref"] : null,
+              refType: typeof payload["ref_type"] === "string" ? payload["ref_type"] : null,
+              repo,
+              repoName,
+              title,
+              type: event.type ?? "",
+              url
+            };
+          }),
+          kind: "success",
+          metadata: createGitHubResponseMetadata(response.status, response.headers)
+        };
+      },
+      freshForMs: githubCachePolicy.userActivity.staleTimeMs,
+      namespaceKeys: [signalKey],
+      owner: source.owner,
+      params: input,
+      resource: "user.activity.v1",
+      runtime,
+      signalKeys: [signalKey]
+    });
+
+    return result.data;
+  } catch {
+    return [];
+  }
+}

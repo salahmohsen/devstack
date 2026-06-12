@@ -115,6 +115,10 @@ function GithubConfigForm({
           Manage the GitHub account and token used for public portfolio data on the home page. The
           token is write-only here and is never sent back to the browser after it is saved.
         </p>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+          Current storage posture: the saved GitHub token is stored server-side in app settings for
+          this milestone. It is hidden from the browser after save, but not yet encrypted at rest.
+        </p>
         <p className="mt-4 text-sm text-muted-foreground">Signed in as {userEmail}</p>
       </section>
 

@@ -1,9 +1,8 @@
 "use client";
 
-import { BarChart2, ChevronsUpDownIcon, Lock, LogOut } from "lucide-react";
-
 import { m } from "@tsu-stack/i18n/messages";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { BarChartIcon, ChevronsUpDownIcon, LockIcon, LogOutIcon } from "@tsu-stack/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import {
   DropdownMenu,
@@ -72,20 +71,20 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link to="/dashboard">
-                  <BarChart2 className="opacity-70" />
+                  <BarChartIcon className="opacity-70" />
                   <span>{m.user_dropdown__dashboard()}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/privacy-policy">
-                  <Lock className="opacity-70" />
+                  <LockIcon className="opacity-70" />
                   <span>{m.user_dropdown__privacy_policy()}</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void onSignOut()} variant="destructive">
-              <LogOut className="opacity-70" />
+              <LogOutIcon className="opacity-70" />
               <span>{m.user_dropdown__logout()}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

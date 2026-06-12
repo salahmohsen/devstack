@@ -1,6 +1,7 @@
-import { ChevronRightIcon, type LucideIcon } from "lucide-react";
+import { type ComponentType } from "react";
 
 import { type LinkProps, Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { ChevronRightIcon } from "@tsu-stack/icons";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,11 +23,11 @@ type RouteTo = Exclude<LinkProps["to"], undefined>;
 type NavLeafItem = {
   title: string;
   url: RouteTo;
-  icon?: LucideIcon;
+  icon?: ComponentType<{ className?: string }>;
 };
 
 type NavGroupItem = {
-  icon?: LucideIcon;
+  icon?: ComponentType<{ className?: string }>;
   items: ReadonlyArray<NavLeafItem>;
   title: string;
 };

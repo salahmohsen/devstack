@@ -1,0 +1,34 @@
+{
+  "name": "@tsu-stack/github",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#@/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./cache/github-cache-policy": "./src/infrastructure/cache/github-cache-policy.ts",
+    "./cache/github-revalidation": "./src/infrastructure/cache/github-revalidation.ts",
+    "./infrastructure/cache/*": "./src/infrastructure/cache/*",
+    "./infrastructure/octokit/*": "./src/infrastructure/octokit/*",
+    "./repo/*": "./src/repo/*",
+    "./runtime/*": "./src/runtime/*",
+    "./shared/*": "./src/shared/*",
+    "./types": "./src/types.ts",
+    "./user/*": "./src/user/*",
+    "./webhooks/*": "./src/webhooks/*"
+  },
+  "dependencies": {
+    "@tsu-stack/api": "workspace:*",
+    "@tsu-stack/core": "workspace:*",
+    "@tsu-stack/db": "workspace:*",
+    "@tsu-stack/env": "workspace:*",
+    "@tsu-stack/logger": "workspace:*",
+    "octokit": "catalog:"
+  },
+  "devDependencies": {
+    "@tsu-stack/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

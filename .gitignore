@@ -29,3 +29,5 @@ tmp
 *.njsproj
 *.sln
 *.sw?
+
+*.playwright-mcp

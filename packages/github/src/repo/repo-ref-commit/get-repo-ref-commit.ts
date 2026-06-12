@@ -1,0 +1,86 @@
+import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
+
+import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
+import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
+import {
+  createGitHubOctokit,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
+import { type GitHubRepoRefCommitItem } from "#@/repo/repo-ref-commit/repo-ref-commit.types";
+import { mapGitHubRepoLatestCommit } from "#@/repo/repo-ref-commit/repo-ref-commit.utils";
+import {
+  setRepoLoggerContext,
+  setRepoLoggerLocalFirstOutcome,
+  setRepoLoggerOutcome
+} from "#@/repo/shared.utils";
+import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
+import { type GitHubRepoLatestCommit } from "#@/types";
+
+export async function getRepoRefCommit(
+  input: {
+    owner: string;
+    ref: string;
+    repo: string;
+  },
+  context?: OrpcContext
+): Promise<GitHubRepoLatestCommit | null> {
+  setRepoLoggerContext(context, "getRepoRefCommit", {
+    owner: input.owner,
+    ref: input.ref,
+    repo: input.repo
+  });
+
+  const source = await resolvePublicGitHubSource();
+  if (!source.isConfigured) {
+    setRepoLoggerOutcome(context, "github_repo_ref_commit_read_skipped", {
+      reason: source.reason
+    });
+
+    return null;
+  }
+
+  const octokit = createGitHubOctokit(source);
+  const signalKey = githubRevalidationSignalKeys.repoCode({ owner: input.owner, repo: input.repo });
+
+  try {
+    const result = await getGitHubResourceLocalFirst<GitHubRepoLatestCommit>({
+      fetcher: async () => {
+        const response = await octokit.rest.repos.listCommits({
+          owner: input.owner,
+          per_page: 1,
+          repo: input.repo,
+          sha: input.ref
+        });
+
+        return {
+          data: mapGitHubRepoLatestCommit(response.data[0] as GitHubRepoRefCommitItem | undefined),
+          kind: "success",
+          metadata: createGitHubResponseMetadata(response.status, response.headers)
+        };
+      },
+      freshForMs: githubCachePolicy.detail.staleTimeMs,
+      namespaceKeys: [signalKey],
+      owner: source.owner,
+      params: input,
+      resource: "repo.refCommit.v1",
+      runtime: context?.github,
+      signalKeys: [signalKey]
+    });
+
+    setRepoLoggerLocalFirstOutcome(context, "github_repo_ref_commit_read_completed", result.meta, {
+      foundCommit: result.data !== null
+    });
+
+    return result.data;
+  } catch (error) {
+    if (getErrorStatusCode(error) === 404) {
+      setRepoLoggerOutcome(context, "github_repo_ref_commit_read_not_found");
+
+      return null;
+    }
+
+    throw error;
+  }
+}

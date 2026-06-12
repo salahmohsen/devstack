@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { desc, isNotNull, or, sql } from "drizzle-orm";
 
 import { db } from "#@/index";
 import { appSettings } from "#@/schema/app-settings.schema";
@@ -10,6 +10,17 @@ export type UpdateAppSettingsData = {
 };
 
 class AppSettingsRepository {
+  async findPublicGithubSourceSettings() {
+    const [settings] = await db
+      .select()
+      .from(appSettings)
+      .where(or(isNotNull(appSettings.githubToken), isNotNull(appSettings.githubUsername)))
+      .orderBy(desc(appSettings.updatedAt))
+      .limit(1);
+
+    return settings ?? null;
+  }
+
   async findByUserId(userId: string) {
     return db.query.appSettings.findFirst({
       where: { userId }

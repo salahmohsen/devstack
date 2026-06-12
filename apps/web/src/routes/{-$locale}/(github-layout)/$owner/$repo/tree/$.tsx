@@ -1,0 +1,45 @@
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
+
+import { getGithubSetupStatusQueryOptions } from "@/pages/github-profile";
+import {
+  getGithubRepoBranchesQueryOptions,
+  getGithubRepoOverviewQueryOptions,
+  GithubRepoPage
+} from "@/pages/github-repo";
+
+export const Route = createFileRoute("/{-$locale}/(github-layout)/$owner/$repo/tree/$")({
+  ssr: true,
+  beforeLoad: async ({ context, params }) => {
+    const setupStatus = await context.queryClient.ensureQueryData(
+      getGithubSetupStatusQueryOptions()
+    );
+
+    if (!setupStatus.isConfigured || !setupStatus.owner) {
+      throw notFound();
+    }
+
+    if (setupStatus.owner.toLowerCase() !== params.owner.toLowerCase()) {
+      throw redirect({
+        params: {
+          locale: params.locale
+        },
+        to: "/{-$locale}"
+      });
+    }
+
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        getGithubRepoOverviewQueryOptions(params.owner, params.repo)
+      ),
+      context.queryClient.ensureQueryData(
+        getGithubRepoBranchesQueryOptions(params.owner, params.repo)
+      )
+    ]);
+  },
+  component: GithubRepoTreeRoutePage
+});
+
+function GithubRepoTreeRoutePage() {
+  const { _splat, owner, repo } = Route.useParams();
+  return <GithubRepoPage owner={owner} repo={repo} routeSplat={_splat} view="tree" />;
+}

@@ -1,7 +1,6 @@
-import { Home } from "lucide-react";
-
 import { m } from "@tsu-stack/i18n/messages";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { HouseIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Empty,
@@ -10,8 +9,20 @@ import {
   EmptyHeader,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { CenteredLayout } from "@/widgets/layouts";
+import { Navbar } from "@/features/navbar";
+
+function CenteredLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={cn("flex min-h-screen flex-col")}>
+      <Navbar />
+      <main className="relative -top-(--navbar-height) grid flex-1 place-items-center pt-(--navbar-height)">
+        {children}
+      </main>
+    </div>
+  );
+}
 
 export function DefaultNotFoundPage() {
   return (
@@ -30,7 +41,7 @@ export function DefaultNotFoundPage() {
           <div className="flex gap-2">
             <Button light="skeuomorphic" size="lg" asChild>
               <Link to="/">
-                <Home data-icon="inline-start" />
+                <HouseIcon data-icon="inline-start" />
                 {m.error_404__go_home()}
               </Link>
             </Button>

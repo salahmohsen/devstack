@@ -1,18 +1,18 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useRouterState } from "@tanstack/react-router";
-import { LogOut, Menu, X } from "lucide-react";
 import React, { Suspense } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { LogOutIcon, MenuIcon, XIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Portal, PortalBackdrop } from "@tsu-stack/ui/components/portal";
+import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { LocaleSwitcher } from "@/shared/ui/locale-switcher";
-import { ThemeSwitcher } from "@/shared/ui/theme-switcher";
 
 import { navLinks } from "@/features/navbar/config/nav-links.config";
 import { NavbarAvatar } from "@/features/navbar/ui/navbar-avatar";
@@ -34,7 +34,7 @@ export function MobileNav() {
         size="icon"
         variant="outline"
       >
-        {open ? <X className="size-4.5" /> : <Menu className="size-4.5" />}
+        {open ? <XIcon className="size-4.5" /> : <MenuIcon className="size-4.5" />}
       </Button>
       {open && (
         <Portal className="top-(--navbar-height)" id="mobile-menu">
@@ -115,7 +115,7 @@ function MobileNavAuth({ onNavigate }: { onNavigate: () => void }) {
         <NavbarAvatar avatarImgSrc={user.image} name={user.name} email={user.email} />
       </div>
       <Button className="w-full" variant="destructive" onClick={handleSignOut}>
-        <LogOut aria-hidden="true" size={16} />
+        <LogOutIcon aria-hidden="true" size={16} />
         Logout
       </Button>
     </div>

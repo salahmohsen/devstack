@@ -1,4 +1,3 @@
-import "@tanstack/react-start/server-only";
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 
@@ -12,7 +11,7 @@ export * from "drizzle-orm/sql";
 const { relations: authRelations } = schema;
 
 export const db = drizzle(ENV_SERVER.DATABASE_URL, {
-  relations: { ...authRelations, ...appRelations }
+  relations: { ...appRelations, ...authRelations }
 });
 
 export async function checkIsDbReady(): Promise<boolean> {

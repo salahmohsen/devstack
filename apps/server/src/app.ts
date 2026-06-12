@@ -11,10 +11,14 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type ContentfulStatusCode } from "hono/utils/http-status";
 
-import { createContext } from "@tsu-stack/api/lib/context/hono/create-context";
+import {
+  createContext,
+  type OrpcContextBindings
+} from "@tsu-stack/api/lib/context/hono/create-context";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { handleGitHubWebhook } from "@tsu-stack/github";
 import { log, parseError } from "@tsu-stack/logger/server";
 import {
   honoLogIngestionMiddleware,
@@ -28,13 +32,17 @@ const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
 const allowedWebOrigin = new URL(ENV_SERVER.VITE_WEB_URL).origin;
 
 const corsOptions: NonNullable<Parameters<typeof cors>[0]> = {
-  allowHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
+  allowHeaders: ["Content-Type", "Authorization", "X-Request-Id", "x-evlog-source"],
   allowMethods: ["GET", "POST", "OPTIONS"],
   credentials: true,
   origin: (origin: string) => (origin === allowedWebOrigin ? origin : null)
 };
 
-export const app = new Hono<HonoLogVariables>().basePath(serverBaseUrl.pathname);
+type AppEnv = HonoLogVariables & {
+  Bindings: OrpcContextBindings;
+};
+
+export const app = new Hono<AppEnv>().basePath(serverBaseUrl.pathname);
 
 app.use("*", cors(corsOptions));
 app.options("*", cors(corsOptions));
@@ -83,6 +91,45 @@ app.get("/auth/open-api/generate-schema", async (c) => {
 });
 
 app.on(["POST", "GET"], "/auth/*", async (c) => auth.handler(c.req.raw));
+
+app.post("/webhooks/github", async (c) => {
+  if (!ENV_SERVER.GITHUB_WEBHOOK_SECRET) {
+    return c.json({ message: "GitHub webhook secret is not configured." }, 503);
+  }
+
+  const deliveryId = c.req.header("x-github-delivery");
+  const event = c.req.header("x-github-event");
+  const signature256 = c.req.header("x-hub-signature-256");
+
+  if (!deliveryId || !event) {
+    return c.json({ message: "Missing GitHub webhook headers." }, 400);
+  }
+
+  const rawBody = await c.req.text();
+  let payload: unknown;
+
+  try {
+    payload = JSON.parse(rawBody);
+  } catch {
+    return c.json({ message: "GitHub webhook body must be valid JSON." }, 400);
+  }
+
+  const result = await handleGitHubWebhook({
+    deliveryId,
+    event,
+    payload,
+    rawBody,
+    runtime: {
+      executionContext: c.executionCtx,
+      kv: c.env.GITHUB_CACHE_KV,
+      signalRelay: c.env.GITHUB_SIGNAL_RELAY
+    },
+    signature256: signature256 ?? null,
+    webhookSecret: ENV_SERVER.GITHUB_WEBHOOK_SECRET
+  });
+
+  return c.json({ ok: true }, result.status);
+});
 
 export const openApiHandler = new OpenAPIHandler(appRouter, {
   interceptors: [

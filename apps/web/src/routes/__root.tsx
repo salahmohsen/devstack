@@ -12,17 +12,19 @@ import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
-import { type AuthQueryResult } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
+import {
+  getAuthUserQueryOptions,
+  type AuthQueryResult
+} from "@tsu-stack/auth/react/tanstack-start/queries";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { getLocale } from "@tsu-stack/i18n/runtime";
 import { Toaster } from "@tsu-stack/ui/components/sonner";
+import { ThemeProvider } from "@tsu-stack/ui/components/theme-switcher";
 import { TooltipProvider } from "@tsu-stack/ui/components/tooltip";
 
 import { generateAppSeo } from "@/shared/lib/seo";
 import { ProgressProvider } from "@/shared/providers/progress.provider";
 import appCss from "@/shared/styles/app.css?url";
-import { ThemeProvider } from "@/shared/ui/theme-switcher";
 
 import { DefaultErrorPage } from "@/pages/default-error";
 
@@ -116,7 +118,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {/* We place the progress provider here otherwise we will get "Cannot render a <style> outside the main document" error */}
         <ThemeProvider attribute="class" defaultTheme="dark">
           <TooltipProvider>

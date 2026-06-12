@@ -1,8 +1,8 @@
-import { Home, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 
 import { m } from "@tsu-stack/i18n/messages";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { HouseIcon, RefreshCwIcon } from "@tsu-stack/icons";
 import { log } from "@tsu-stack/logger/client";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -12,10 +12,22 @@ import {
   EmptyHeader,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { CenteredLayout } from "@/widgets/layouts";
+import { Navbar } from "@/features/navbar";
 
 const loggedErrorKeys = new Set<string>();
+
+function CenteredLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={cn("flex min-h-screen flex-col")}>
+      <Navbar />
+      <main className="relative -top-(--navbar-height) grid flex-1 place-items-center pt-(--navbar-height)">
+        {children}
+      </main>
+    </div>
+  );
+}
 
 export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
@@ -60,13 +72,13 @@ export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => 
           <div className="flex gap-2">
             <Button light="skeuomorphic" asChild>
               <Link to="/">
-                <Home data-icon="inline-start" />
+                <HouseIcon data-icon="inline-start" />
                 {m.error_500__go_home()}
               </Link>
             </Button>
 
             <Button onClick={handleRefresh} variant="outline">
-              <RefreshCw data-icon="inline-start" />
+              <RefreshCwIcon data-icon="inline-start" />
               {m.error_500__try_again()}
             </Button>
           </div>

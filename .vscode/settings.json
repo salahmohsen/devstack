@@ -53,6 +53,7 @@
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.codeActionsOnSave": {
+    "source.organizeImports": "always",
     "source.format.oxc": "always",
     "source.fixAll.oxc": "always"
   },
@@ -145,5 +146,7 @@
       "fileMatch": [".fallowrc.jsonc", ".fallowrc.json"],
       "url": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json"
     }
-  ]
+  ],
+
+  "npm.scriptRunner": "vp"
 }

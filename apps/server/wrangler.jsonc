@@ -4,7 +4,11 @@
   "compatibility_date": "2026-06-01",
   "compatibility_flags": [
     // Enables the Node.js API subset/polyfills used by the Hono worker bundle.
-    "nodejs_compat"
+    "nodejs_compat",
+    // Suppresses warnings when Octokit's internal before-after-hook promises
+    // resolve after the request context has been cleaned up. Octokit uses
+    // async hooks that can outlive the request, which is harmless.
+    "no_handle_cross_request_promise_resolution"
   ],
   "routes": [
     {
@@ -32,5 +36,25 @@
   "vars": {
     "VITE_SERVER_URL": "https://dev.salahmohsen.com/server",
     "VITE_WEB_URL": "https://dev.salahmohsen.com"
-  }
+  },
+  "kv_namespaces": [
+    {
+      "binding": "GITHUB_CACHE_KV",
+      "id": "github-cache-kv"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GITHUB_SIGNAL_RELAY",
+        "class_name": "GitHubSignalRelay"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "new_classes": ["GitHubSignalRelay"],
+      "tag": "v1"
+    }
+  ]
 }
