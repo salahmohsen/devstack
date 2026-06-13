@@ -132,6 +132,15 @@ export function GithubProfilePage({ username }: { username?: string | null }) {
     return <GithubProfileSkeleton />;
   }
 
+  if (
+    profileQuery.isError ||
+    pinnedReposQuery.isError ||
+    contributionsQuery.isError ||
+    activityQuery.isError
+  ) {
+    return <GithubProfileUnavailableState />;
+  }
+
   const profile = profileQuery.data;
   if (!profile) {
     return <GithubProfileSetupState />;
@@ -342,6 +351,27 @@ function GithubProfileSetupState() {
           <EmptyDescription>
             Add the public GitHub username and token in the dashboard to render the homepage
             profile.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild>
+            <Link to="/dashboard/github-config">Open GitHub config</Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    </Container>
+  );
+}
+
+function GithubProfileUnavailableState() {
+  return (
+    <Container className="py-16">
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>GitHub profile is temporarily unavailable</EmptyTitle>
+          <EmptyDescription>
+            The public GitHub data for the homepage could not be loaded. Verify the configured
+            GitHub username and token in the dashboard, then try again.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>

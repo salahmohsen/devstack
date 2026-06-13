@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { log } from "@tsu-stack/logger/server";
+
 import { generateAppSeo } from "@/shared/lib/seo";
 
 import {
@@ -21,12 +23,22 @@ export const Route = createFileRoute("/{-$locale}/(github-layout)/")({
     );
 
     if (setupStatus.isConfigured && setupStatus.owner) {
-      await Promise.all([
-        context.queryClient.ensureQueryData(getGithubProfileQueryOptions(setupStatus.owner)),
-        context.queryClient.ensureQueryData(getGithubPinnedReposQueryOptions(setupStatus.owner)),
-        context.queryClient.ensureQueryData(getGithubContributionsQueryOptions(setupStatus.owner)),
-        context.queryClient.ensureQueryData(getGithubActivityQueryOptions(setupStatus.owner))
-      ]);
+      try {
+        await Promise.all([
+          context.queryClient.ensureQueryData(getGithubProfileQueryOptions(setupStatus.owner)),
+          context.queryClient.ensureQueryData(getGithubPinnedReposQueryOptions(setupStatus.owner)),
+          context.queryClient.ensureQueryData(
+            getGithubContributionsQueryOptions(setupStatus.owner)
+          ),
+          context.queryClient.ensureQueryData(getGithubActivityQueryOptions(setupStatus.owner))
+        ]);
+      } catch (error) {
+        log.error({
+          error,
+          event: "home_github_profile_preload_failed",
+          owner: setupStatus.owner
+        });
+      }
     }
   },
   head: ({ params }) =>
