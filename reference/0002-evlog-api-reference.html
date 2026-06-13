@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>evlog &amp; @tsu-stack/logger — API Reference</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&family=JetBrains+Mono&display=swap");
+
+      :root {
+        --bg: #faf9f8;
+        --fg: #1a1a2e;
+        --accent: #2563eb;
+        --accent-light: #dbeafe;
+        --border: #e2e8f0;
+        --muted: #64748b;
+        --code-bg: #f1f5f9;
+        --card-bg: #ffffff;
+        --success: #16a34a;
+        --warn: #d97706;
+        --error: #dc2626;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --fg: #e2e8f0;
+          --accent: #60a5fa;
+          --accent-light: #1e3a5f;
+          --border: #1e293b;
+          --muted: #94a3b8;
+          --code-bg: #1e293b;
+          --card-bg: #0f172a;
+          --success: #22c55e;
+          --warn: #f59e0b;
+          --error: #ef4444;
+        }
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        line-height: 1.6;
+        font-size: 15px;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+
+      @media print {
+        body {
+          font-size: 10pt;
+          max-width: none;
+          padding: 0.5in;
+        }
+        .no-print {
+          display: none;
+        }
+      }
+
+      h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.25rem;
+        border-bottom: 2px solid var(--accent);
+        padding-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 0.95em;
+        margin-bottom: 0.5rem;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 0.75rem;
+        color: var(--accent);
+      }
+
+      h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      p,
+      li {
+        margin-bottom: 0.4rem;
+      }
+
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85em;
+        background: var(--code-bg);
+        padding: 0.15em 0.4em;
+        border-radius: 4px;
+      }
+
+      pre {
+        background: var(--code-bg);
+        padding: 0.85rem 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 0.82em;
+        line-height: 1.5;
+        margin: 0.75rem 0;
+        border: 1px solid var(--border);
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 0.7em;
+        padding: 0.15em 0.5em;
+        border-radius: 4px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-right: 0.4em;
+      }
+
+      .badge-logger {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .badge-rlog {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .badge-global {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.88em;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .section-desc {
+        color: var(--muted);
+        font-size: 0.9em;
+        margin-bottom: 1rem;
+      }
+
+      .flow-box {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+      }
+
+      .flow-box .title {
+        font-weight: 600;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.92em;
+      }
+
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>evlog &amp; @tsu-stack/logger — API Reference</h1>
+    <p class="subtitle">
+      evlog v2.18 · The "wide event" logger powering this monorepo. Print-friendly.
+    </p>
+
+    <section>
+      <h2>Logger Types</h2>
+      <p>evlog provides three families of logger. Know which one you need:</p>
+
+      <table>
+        <tr>
+          <th>Type</th>
+          <th>Import</th>
+          <th>Scope</th>
+          <th>Need <code>.emit()</code>?</th>
+          <th>Use case</th>
+        </tr>
+        <tr>
+          <td><strong>RequestLogger</strong></td>
+          <td><code class="mono">@tsu-stack/logger/server</code></td>
+          <td>One HTTP request</td>
+          <td>Yes (auto by middleware)</td>
+          <td>oRPC procedure handlers, route handlers</td>
+        </tr>
+        <tr>
+          <td><strong>Standalone Logger</strong></td>
+          <td><code class="mono">@tsu-stack/logger/server</code></td>
+          <td>One job / script call</td>
+          <td>Yes (you call it)</td>
+          <td>Cron jobs, background tasks, <code>getRepoOverview</code></td>
+        </tr>
+        <tr>
+          <td><strong>Global log</strong></td>
+          <td><code class="mono">@tsu-stack/logger/server</code></td>
+          <td>Application-wide singleton</td>
+          <td>No (auto-flush)</td>
+          <td>One-off events, startup logs, error pages</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>RequestLogger API</h2>
+      <p class="section-desc">
+        Request-scoped wide-event logger. Created by Hono/TanStack Start middleware. Available as
+        <code>context.logger</code> in oRPC procedures.
+      </p>
+
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Signature</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code class="mono">.set()</code></td>
+          <td><code class="mono">set(ctx: object): void</code></td>
+          <td>Merge context into the wide event (deep merge). Arrays concatenate.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">.info()</code></td>
+          <td><code class="mono">info(msg: string, ctx?: object): void</code></td>
+          <td>
+            Add an info-level request log entry (sub-event in the wide event's
+            <code>requestLogs[]</code>).
+          </td>
+        </tr>
+        <tr>
+          <td><code class="mono">.warn()</code></td>
+          <td><code class="mono">warn(msg: string, ctx?: object): void</code></td>
+          <td>Add a warning-level request log entry.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">.error()</code></td>
+          <td><code class="mono">error(err: Error | string, ctx?: object): void</code></td>
+          <td>Record an error on this request. Sets <code>level: "error"</code> automatically.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">.emit()</code></td>
+          <td><code class="mono">emit(overrides?: object): WideEvent | null</code></td>
+          <td>
+            Flush the wide event to drains. <strong>Seals</strong> the logger — no more mutations
+            allowed. Returns <code>null</code> if sampled out.
+          </td>
+        </tr>
+        <tr>
+          <td><code class="mono">.setLevel()</code></td>
+          <td><code class="mono">setLevel(level: LogLevel): void</code></td>
+          <td>
+            Manually override the log level (overrides auto-detection from <code>.error()</code>).
+          </td>
+        </tr>
+        <tr>
+          <td><code class="mono">.getContext()</code></td>
+          <td><code class="mono">getContext(): object</code></td>
+          <td>Read back all accumulated context so far (useful for debugging).</td>
+        </tr>
+        <tr>
+          <td><code class="mono">.fork()</code></td>
+          <td><code class="mono">fork(label: string, fn: () => void): void</code></td>
+          <td>
+            Run background work in a child wide event with <code>operation</code> and
+            <code>_parentRequestId</code> set. Child emits when <code>fn</code> settles.
+          </td>
+        </tr>
+        <tr>
+          <td><code class="mono">.audit()</code></td>
+          <td><code class="mono">audit(input: AuditInput): void</code></td>
+          <td>
+            Record a structured audit event. Includes <code>.deny(reason, fields)</code> sub-method
+            for AuthZ denials.
+          </td>
+        </tr>
+      </table>
+
+      <div class="flow-box">
+        <div class="title">Key constraint</div>
+        After <code>.emit()</code> is called, the logger is <strong>sealed</strong>. Subsequent
+        <code>.set()</code>, <code>.info()</code>, <code>.warn()</code>, <code>.error()</code> calls
+        log a console warning and are ignored. A second <code>.emit()</code> is also a no-op.
+      </div>
+    </section>
+
+    <section>
+      <h2>Standalone Logger API (<code>createLogger</code>)</h2>
+      <p class="section-desc">
+        Not attached to any request. Caller must <code>.emit()</code> manually.
+      </p>
+
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code class="mono">createLogger({ source: "..." })</code></td>
+          <td>Create a new standalone logger. Pass <code>source</code> to identify the caller.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">.set({ key: val })</code></td>
+          <td>Accumulate structured context (same deep merge as RequestLogger).</td>
+        </tr>
+        <tr>
+          <td><code class="mono">.emit({ status?, ... })</code></td>
+          <td>Flush and seal. Without this, the event is <strong>silently dropped</strong>.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">.info() / .warn() / .error()</code></td>
+          <td>Same as RequestLogger — add sub-events (stored in <code>requestLogs[]</code>).</td>
+        </tr>
+      </table>
+
+      <pre>
+import { createLogger } from "@tsu-stack/logger/server";
+
+const logger = createLogger({ source: "github.repo.getRepoOverview" });
+logger.set({ owner, repo, handler: "getRepoOverview" });
+logger.emit({ status: 200 });  // ← Without this line, nothing happens!</pre
+      >
+    </section>
+
+    <section>
+      <h2>Global <code style="font-size: 0.85em">log</code> API</h2>
+      <p class="section-desc">
+        Singleton facade — fire and forget. No <code>.emit()</code> needed. Two call signatures:
+      </p>
+
+      <pre>
+// Object form (wide event — preferred for structured data)
+import { log } from "@tsu-stack/logger/server";
+log.info({ event: "server_started", port: 5000 });
+log.error({ event: "rpc_error", handler: "health.live", error: err.message });
+
+// Tag + message form
+log.info("auth", "User logged in");
+log.error("payment", "Payment declined");
+</pre
+      >
+
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Level</th>
+        </tr>
+        <tr>
+          <td><code class="mono">log.debug()</code></td>
+          <td>Debug</td>
+        </tr>
+        <tr>
+          <td><code class="mono">log.info()</code></td>
+          <td>Info</td>
+        </tr>
+        <tr>
+          <td><code class="mono">log.warn()</code></td>
+          <td>Warning</td>
+        </tr>
+        <tr>
+          <td><code class="mono">log.error()</code></td>
+          <td>Error</td>
+        </tr>
+      </table>
+
+      <div class="flow-box">
+        <div class="title">When to use global <code>log</code> vs RequestLogger</div>
+        <strong>Use <code>context.logger</code></strong> (RequestLogger) inside oRPC handlers — it
+        auto-correlates with the HTTP request (method, path, requestId, duration, status).<br />
+        <strong>Use <code>log</code></strong> for one-off events that aren't part of a request
+        (server startup, cron tick, health check results from a non-request context).<br />
+        <strong>Use <code>createLogger</code></strong> for self-contained multi-step work like
+        <code>getRepoOverview</code> that needs its own structured event.
+      </div>
+    </section>
+
+    <section>
+      <h2>Wide Event Structure</h2>
+      <p class="section-desc">Every emitted event has this base shape + your custom context:</p>
+
+      <pre>
+{
+  timestamp: "2026-06-10T12:00:00.000Z",
+  level: "info",
+  service: "server",
+  environment: "production",
+  version: "abc123",
+  duration: 342,           // auto-tracked (request loggers)
+  status: 200,
+  method: "GET",
+  path: "/rpc/github/repo/overview",
+  requestId: "a1b2c3d4-...",
+  ip: "203.0.113.42",
+  hostname: "api.example.com",
+
+  // Your context via .set():
+  owner: "salah",
+  repo: "portfolio-v2",
+  handler: "rpc",
+
+  // Sub-events from .info() / .warn() / .error():
+  requestLogs: [
+    { level: "info", message: "Cache HIT", timestamp: "..." }
+  ],
+
+  // Only when log.audit() is used:
+  audit: { action: "invoice.refund", actor: { ... }, outcome: "success" }
+}
+</pre
+      >
+    </section>
+
+    <section>
+      <h2>Hono Middleware Flow</h2>
+      <p class="section-desc">How <code>context.logger</code> reaches your oRPC handler:</p>
+
+      <div class="flow-box">
+        <div class="title">Flow</div>
+        <pre class="mono" style="background: none; border: none; padding: 0; font-size: 0.9em">
+1. HTTP request arrives at Hono server
+2. honoLoggerMiddleware() fires on "/*"
+   → creates RequestLogger, stores as c.get("log")
+   → starts duration timer
+3. Router matches route
+4. createContext({ context: c, logger: c.get("log") })
+   → returns { github, session, logger }
+5. rpcHandler.handle(request, { context })
+   → dispatches to matching procedure
+6. Your handler gets context.logger
+   → call .set(), .info(), .error() as needed
+7. oRPC error interceptor fires on throw
+   → context.logger.set({ handler: "rpc" })
+   → context.logger.error(error)
+8. Hono response sent
+9. evlog middleware auto-calls .emit() ← SEALS
+   → wide event goes to drains (console, Axiom, etc.)</pre
+        >
+      </div>
+    </section>
+
+    <section>
+      <h2>@tsu-stack/logger Re-exports</h2>
+      <p class="section-desc">The thin facade:</p>
+
+      <table>
+        <tr>
+          <th>Export</th>
+          <th>Source</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code class="mono">initLogger()</code></td>
+          <td>evlog</td>
+          <td>Initialize once per process. Sets env, redact, sampling.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">createLogger()</code></td>
+          <td>evlog</td>
+          <td>Standalone wide-event logger. Caller must <code>.emit()</code>.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">createRequestLogger()</code></td>
+          <td>evlog</td>
+          <td>Request-scoped logger (manual — not from middleware).</td>
+        </tr>
+        <tr>
+          <td><code class="mono">log</code></td>
+          <td>evlog</td>
+          <td>Global singleton facade. Auto-flush, no <code>.emit()</code> needed.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">createError()</code></td>
+          <td>evlog</td>
+          <td>Structured error factory: <code>{ message, status, why, fix, code }</code>.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">parseError()</code></td>
+          <td>evlog</td>
+          <td>Convert <code>unknown</code> errors into safe response objects.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">LOG_SERVICES</code></td>
+          <td>—</td>
+          <td>Enum: <code>DEFAULT, SERVER, WEB_CLIENT, WEB_SERVER</code></td>
+        </tr>
+        <tr>
+          <td><code class="mono">RequestLogger (type)</code></td>
+          <td>evlog</td>
+          <td>Type for the request-scoped logger.</td>
+        </tr>
+        <tr>
+          <td><code class="mono">ParsedError (type)</code></td>
+          <td>evlog</td>
+          <td>Type for parsed error output.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Log Levels &amp; Sampling</h2>
+
+      <table>
+        <tr>
+          <th>Level</th>
+          <th>Priority</th>
+          <th>Default sample</th>
+        </tr>
+        <tr>
+          <td><code>error</code></td>
+          <td>4 (highest)</td>
+          <td>100%</td>
+        </tr>
+        <tr>
+          <td><code>warn</code></td>
+          <td>3</td>
+          <td>100%</td>
+        </tr>
+        <tr>
+          <td><code>info</code></td>
+          <td>2</td>
+          <td>100% (can be lowered via <code>sampling.rates.info</code>)</td>
+        </tr>
+        <tr>
+          <td><code>debug</code></td>
+          <td>1 (lowest)</td>
+          <td>100%</td>
+        </tr>
+      </table>
+
+      <p>
+        Tail sampling (<code>sampling.keep</code>) can force-keep events by status, duration, or
+        path glob. See <code>apps/web/src/start.ts</code> for an example that keeps all 400+
+        responses and requests > 1000ms.
+      </p>
+    </section>
+
+    <section>
+      <h2>Anti-patterns (Current Code Issues)</h2>
+
+      <div class="flow-box">
+        <div class="title">Bug: standalone logger without .emit()</div>
+        <p><code>packages/github/src/repo/get-repo-overview.ts:16-30</code></p>
+        <pre>
+const logger = createLogger({ source: "github.repo.getRepoOverview" });
+// ...
+logger.set({ handler: "getRepoOverview" });
+logger.set("GitHub source...", { reason: source.reason });
+// 🚫 Never calls .emit() — event is silently dropped!</pre
+        >
+        <p>
+          The context is accumulated but never flushed to drains. Fix: add
+          <code>logger.emit()</code> after the last <code>.set()</code> call.
+        </p>
+      </div>
+
+      <div class="flow-box">
+        <div class="title">Missed opportunity: context.logger unused in procedures</div>
+        <p>All <code>Router files in packages/api/src/routers/</code></p>
+        <p>
+          Every oRPC handler receives <code>context.logger</code> (RequestLogger), but
+          <strong>none use it</strong>. The only procedure that logs (<code>health.live</code>) uses
+          the global <code>log.info()</code> instead, which doesn't correlate with the request's
+          method, path, or duration.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Primary Source</h2>
+      <p>
+        <a href="https://evlog.dev">evlog.dev</a> — official documentation for the evlog library.
+      </p>
+    </section>
+
+    <hr />
+    <p class="meta" style="color: var(--muted); font-size: 0.85em">
+      Created 2026-06-10 · evlog v2.18.1 ·
+      <a href="../lessons/0002-logger-workflow.html">Lesson 2: The Logger Workflow</a>
+    </p>
+  </body>
+</html>

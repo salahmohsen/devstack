@@ -37,3 +37,5 @@ Env docs and templates must mirror the validated schema in `packages/env/src/`. 
 - Dev defaults exist for most `VITE_*` vars; `DATABASE_URL` and `BETTER_AUTH_SECRET` are always required
 - Each env file logs loading with `console.debug` — check terminal output for validation errors
 - For Cloudflare local dev, Worker code does not automatically inherit arbitrary shell env vars. In this repo, `apps/web` and `apps/server` load `packages/env/.env` via `dotenvx` and set `CLOUDFLARE_INCLUDE_PROCESS_ENV=true` in their `dev` scripts so `process.env` is available inside the Worker runtime.
+- `GITHUB_WEBHOOK_SECRET` is env-owned server configuration. The public GitHub owner token and username are not env vars in this repo; they stay in the owner-managed `app_settings` table.
+- Worker bindings such as `GITHUB_CACHE_KV` and `GITHUB_SIGNAL_RELAY` live in `apps/server/wrangler.jsonc`, then flow into Hono/oRPC context from `apps/server` instead of being validated in `packages/env/src/server/env.ts`.

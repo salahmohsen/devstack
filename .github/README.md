@@ -247,6 +247,17 @@ The web Worker keeps using the app dev command through the Cloudflare Vite plugi
 > `apps/server` no longer needs a separate Node bootstrap for normal development. The Worker entry is driven through the Cloudflare Vite plugin and Wrangler config.
 
 > [!NOTE]
+> The server Worker now expects these GitHub integration bindings when public GitHub pages are enabled:
+>
+> - `GITHUB_CACHE_KV` as a KV namespace for hot GitHub response payloads
+> - `GITHUB_SIGNAL_RELAY` as a Durable Object binding for live refresh fan-out
+> - `GITHUB_WEBHOOK_SECRET` as the webhook signature secret in the server environment
+>
+> The public GitHub username/token are intentionally not environment variables here. They remain dashboard-managed owner settings stored in `app_settings`.
+>
+> For the current milestone, the saved GitHub token is write-only in the dashboard UI but still stored as plaintext in `app_settings`. Treat that as a temporary posture until encryption-at-rest lands.
+
+> [!NOTE]
 > `apps/server` runs `pnpm db:migrate` before `wrangler deploy` so schema changes are applied before the new Worker version starts serving traffic.
 
 > [!NOTE]
@@ -290,13 +301,14 @@ This branch configures the **web app** for Cloudflare Workers through the Cloudf
 
 For the Hono server, use the following environment variables in either Node or Cloudflare Worker runtime:
 
-| Variable Name          | Required | Default Value | Description                                                                                      |
-| ---------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------ |
-| `VITE_SERVER_URL`      | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`. |
-| `VITE_WEB_URL`         | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.   |
-| `BETTER_AUTH_SECRET`   | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                  |
-| `DATABASE_URL`         | ✅       | -             | Neon Postgres connection string.                                                                 |
-| `ENABLE_OPEN_API_DOCS` | ❌       | `false`       | Enable OpenAPI `/docs` endpoint.                                                                 |
+| Variable Name           | Required | Default Value | Description                                                                                      |
+| ----------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| `VITE_SERVER_URL`       | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`. |
+| `VITE_WEB_URL`          | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.   |
+| `BETTER_AUTH_SECRET`    | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                  |
+| `DATABASE_URL`          | ✅       | -             | Neon Postgres connection string.                                                                 |
+| `GITHUB_WEBHOOK_SECRET` | ✅       | -             | Secret used to verify GitHub webhook signatures for public cache invalidation.                   |
+| `ENABLE_OPEN_API_DOCS`  | ❌       | `false`       | Enable OpenAPI `/docs` endpoint.                                                                 |
 
 ### Web
 
