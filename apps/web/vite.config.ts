@@ -23,11 +23,7 @@ import { type FileRouteTypes } from "@/routeTree.gen";
  * We type it as FileRouteTypes['fullPaths'][] since prerender needs to have the `/` suffix or else we will get `Error: redirect count exceeded` on build.
  */
 const ROUTES_TO_PRERENDER: FileRouteTypes["fullPaths"][] = [
-  "/{-$locale}/",
-  "/{-$locale}/playground/",
   "/{-$locale}/privacy-policy/",
-  "/{-$locale}/sign-in/",
-  "/{-$locale}/create-an-account/",
   "/sitemap.xml",
   "/robots.txt"
 ];
