@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  getGitHubRevalidationSignals,
   getProfileRepos,
   getRepoActivityCards,
   getRepoBranchComparison,
@@ -302,7 +303,19 @@ const RepoTreeEntryCommitsInputSchema = RepoInputSchema.extend({
   ref: z.string().trim().min(1)
 });
 
+const RevalidationSignalsOutputSchema = z.array(
+  z.object({
+    signalKey: z.string(),
+    updatedAt: z.number()
+  })
+);
+
 export const publicGitHubRouter = {
+  getRevalidationSignals: publicProcedure
+    .route({ description: "Get revalidation signal timestamps", method: "GET" })
+    .input(z.object({ signalKeys: z.array(z.string()) }))
+    .output(RevalidationSignalsOutputSchema)
+    .handler(async ({ input }) => getGitHubRevalidationSignals(input.signalKeys)),
   getProfileRepos: publicProcedure
     .route({
       description: "Get the public repository list for a GitHub user",
@@ -310,7 +323,7 @@ export const publicGitHubRouter = {
     })
     .input(UserProfileInputSchema)
     .output(z.array(PublicGitHubRepoSummaryOutputSchema))
-    .handler(async ({ context, input }) => getProfileRepos(input.username, context.github)),
+    .handler(async ({ context, input }) => getProfileRepos(input.username, context)),
   getRepoActivityCards: publicProcedure
     .route({
       description: "Get public repository activity cards for a GitHub repository",
@@ -403,7 +416,7 @@ export const publicGitHubRouter = {
     })
     .input(UserActivityInputSchema)
     .output(z.array(PublicGitHubUserActivityOutputSchema))
-    .handler(async ({ context, input }) => getUserActivity(input, context.github)),
+    .handler(async ({ context, input }) => getUserActivity(input, context)),
   getUserContributions: publicProcedure
     .route({
       description: "Get the public GitHub contribution calendar for a user",
@@ -411,7 +424,7 @@ export const publicGitHubRouter = {
     })
     .input(UserProfileInputSchema)
     .output(PublicGitHubContributionCalendarOutputSchema.nullable())
-    .handler(async ({ context, input }) => getUserContributions(input.username, context.github)),
+    .handler(async ({ context, input }) => getUserContributions(input.username, context)),
   getUserPinnedRepos: publicProcedure
     .route({
       description: "Get the pinned public GitHub repositories for a user",
@@ -419,7 +432,7 @@ export const publicGitHubRouter = {
     })
     .input(UserProfileInputSchema)
     .output(z.array(PublicGitHubPinnedRepoOutputSchema))
-    .handler(async ({ context, input }) => getUserPinnedRepos(input.username, context.github)),
+    .handler(async ({ context, input }) => getUserPinnedRepos(input.username, context)),
   getUserProfile: publicProcedure
     .route({
       description: "Get the public GitHub profile for a user",
@@ -427,5 +440,5 @@ export const publicGitHubRouter = {
     })
     .input(UserProfileInputSchema)
     .output(PublicGitHubUserProfileOutputSchema.nullable())
-    .handler(async ({ context, input }) => getUserProfile(input.username, context.github))
+    .handler(async ({ context, input }) => getUserProfile(input.username, context))
 };

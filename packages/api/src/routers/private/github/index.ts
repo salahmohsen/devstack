@@ -6,25 +6,13 @@ import {
   markGitHubRevalidationSignals
 } from "@tsu-stack/github";
 
-import { protectedProcedure } from "#@/lib/procedures/factory";
-
-const RevalidationSignalsOutputSchema = z.array(
-  z.object({
-    signalKey: z.string(),
-    updatedAt: z.number()
-  })
-);
+import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 
 const RevalidationResultSchema = z.object({
   ok: z.boolean()
 });
 
 export const privateGithubRouter = {
-  getRevalidationSignals: protectedProcedure
-    .route({ description: "Get revalidation signal timestamps", method: "GET" })
-    .input(z.object({ signalKeys: z.array(z.string()) }))
-    .output(RevalidationSignalsOutputSchema)
-    .handler(async ({ input }) => getGitHubRevalidationSignals(input.signalKeys)),
   refreshInstallationAccess: protectedProcedure
     .route({ description: "Refresh installation access cache", method: "POST" })
     .output(RevalidationResultSchema)

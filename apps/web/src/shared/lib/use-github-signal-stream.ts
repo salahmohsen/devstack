@@ -2,6 +2,7 @@ import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 import { type RefObject, useEffect, useMemo, useRef } from "react";
 
 import { client } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 
 import { debug } from "@/lib/debug";
 import { githubRevalidationSignalKeys } from "@/lib/github-revalidation";
@@ -114,8 +115,12 @@ function mergeTargetsWithMyGitHubLists(
 }
 
 function getWebSocketUrl() {
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/api/ws/signals`;
+  const serverUrl = new URL(ENV_WEB_ISOMORPHIC.VITE_SERVER_URL, window.location.origin);
+  serverUrl.protocol = serverUrl.protocol === "https:" ? "wss:" : "ws:";
+  serverUrl.pathname = `${serverUrl.pathname.replace(/\/$/, "")}/api/ws/github-signals`;
+  serverUrl.search = "";
+  serverUrl.hash = "";
+  return serverUrl.toString();
 }
 
 export function invalidateTargets(
@@ -228,7 +233,7 @@ function useGitHubSignalStreamWebSocket(
           totalTargets: targetsRef.current.length
         });
 
-        const signals = await client.private.github.getRevalidationSignals({
+        const signals = await client.public.github.getRevalidationSignals({
           signalKeys: keys
         });
         if (disposed) return;
@@ -434,7 +439,7 @@ function useGitHubSignalPoll(
       if (disposed) return;
 
       try {
-        const signals = await client.private.github.getRevalidationSignals({
+        const signals = await client.public.github.getRevalidationSignals({
           signalKeys: keys
         });
 

@@ -14,7 +14,7 @@ export function getAuthUserQueryOptions() {
     refetchOnWindowFocus: "always", // To sync auth state across tabs if user signs in/out in another tab
     refetchOnMount: false,
     queryKey: authQueryKeys.user,
-    queryFn: async ({ signal }) => $getUser({ signal }),
+    queryFn: async ({ signal }) => $getUser({ signal }) ?? null,
     retry: 3, // Retry logic for transient failures under high load
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000)
   });

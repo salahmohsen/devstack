@@ -1,3 +1,5 @@
+import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
+
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
@@ -6,16 +8,29 @@ import {
   createGitHubResponseMetadata,
   getErrorStatusCode
 } from "#@/infrastructure/octokit/client";
-import { type GitHubRuntimeBindings } from "#@/runtime/bindings";
+import {
+  buildGitHubConditionalHeaders,
+  setRepoLoggerContext,
+  setRepoLoggerLocalFirstOutcome,
+  setRepoLoggerOutcome
+} from "#@/repo/shared.utils";
 import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubUserRepoSummary } from "#@/types";
 
 export async function getProfileRepos(
   username: string,
-  runtime?: GitHubRuntimeBindings
+  context?: OrpcContext
 ): Promise<GitHubUserRepoSummary[]> {
+  setRepoLoggerContext(context, "getProfileRepos", {
+    username
+  });
+
   const source = await resolvePublicGitHubSource();
   if (!source.isConfigured) {
+    setRepoLoggerOutcome(context, "github_profile_repos_read_skipped", {
+      reason: source.reason
+    });
+
     return [];
   }
 
@@ -27,7 +42,7 @@ export async function getProfileRepos(
       fetcher: async (conditionals) => {
         const response = await octokit.rest.repos.listForUser({
           headers: {
-            ...buildConditionalHeaders(conditionals)
+            ...buildGitHubConditionalHeaders(conditionals)
           },
           per_page: 100,
           sort: "updated",
@@ -68,26 +83,22 @@ export async function getProfileRepos(
       owner: source.owner,
       params: { username },
       resource: "user.profileRepos.v1",
-      runtime,
+      runtime: context?.github,
       signalKeys: [signalKey]
+    });
+
+    setRepoLoggerLocalFirstOutcome(context, "github_profile_repos_read_completed", result.meta, {
+      repoCount: result.data.length
     });
 
     return result.data;
   } catch (error) {
     if (getErrorStatusCode(error) === 404) {
+      setRepoLoggerOutcome(context, "github_profile_repos_read_not_found");
+
       return [];
     }
 
     throw error;
   }
-}
-
-function buildConditionalHeaders(conditionals: {
-  etag?: string | null;
-  lastModified?: string | null;
-}) {
-  return {
-    ...(conditionals.etag ? { "if-none-match": conditionals.etag } : {}),
-    ...(conditionals.lastModified ? { "if-modified-since": conditionals.lastModified } : {})
-  };
 }

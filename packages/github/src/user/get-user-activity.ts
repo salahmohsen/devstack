@@ -1,3 +1,4 @@
+import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { isRecord } from "@tsu-stack/core/utils";
 
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
@@ -5,9 +6,14 @@ import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
   createGitHubOctokit,
-  createGitHubResponseMetadata
+  createGitHubResponseMetadata,
+  getErrorStatusCode
 } from "#@/infrastructure/octokit/client";
-import { type GitHubRuntimeBindings } from "#@/runtime/bindings";
+import {
+  setRepoLoggerContext,
+  setRepoLoggerLocalFirstOutcome,
+  setRepoLoggerOutcome
+} from "#@/repo/shared.utils";
 import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubUserActivityEvent } from "#@/types";
 
@@ -17,10 +23,20 @@ export async function getUserActivity(
     page: number;
     username: string;
   },
-  runtime?: GitHubRuntimeBindings
+  context?: OrpcContext
 ): Promise<GitHubUserActivityEvent[]> {
+  setRepoLoggerContext(context, "getUserActivity", {
+    isOwnProfile: input.isOwnProfile,
+    page: input.page,
+    username: input.username
+  });
+
   const source = await resolvePublicGitHubSource();
   if (!source.isConfigured) {
+    setRepoLoggerOutcome(context, "github_user_activity_read_skipped", {
+      reason: source.reason
+    });
+
     return [];
   }
 
@@ -165,12 +181,24 @@ export async function getUserActivity(
       owner: source.owner,
       params: input,
       resource: "user.activity.v1",
-      runtime,
+      runtime: context?.github,
       signalKeys: [signalKey]
     });
 
+    setRepoLoggerLocalFirstOutcome(context, "github_user_activity_read_completed", result.meta, {
+      eventCount: result.data.length
+    });
+
     return result.data;
-  } catch {
+  } catch (error) {
+    const statusCode = getErrorStatusCode(error);
+
+    setRepoLoggerOutcome(
+      context,
+      statusCode === 404 ? "github_user_activity_read_not_found" : "github_user_activity_read_failed",
+      statusCode ? { statusCode } : {}
+    );
+
     return [];
   }
 }
