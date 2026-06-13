@@ -1,5 +1,7 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
+import { log } from "@tsu-stack/logger/server";
+
 import { getGithubSetupStatusQueryOptions } from "@/pages/github-profile";
 import {
   getGithubRepoBranchesQueryOptions,
@@ -27,14 +29,23 @@ export const Route = createFileRoute("/{-$locale}/(github-layout)/$owner/$repo/b
       });
     }
 
-    await Promise.all([
-      context.queryClient.ensureQueryData(
-        getGithubRepoOverviewQueryOptions(params.owner, params.repo)
-      ),
-      context.queryClient.ensureQueryData(
-        getGithubRepoBranchesQueryOptions(params.owner, params.repo)
-      )
-    ]);
+    try {
+      await Promise.all([
+        context.queryClient.ensureQueryData(
+          getGithubRepoOverviewQueryOptions(params.owner, params.repo)
+        ),
+        context.queryClient.ensureQueryData(
+          getGithubRepoBranchesQueryOptions(params.owner, params.repo)
+        )
+      ]);
+    } catch (error) {
+      log.error({
+        error,
+        event: "repo_blob_preload_failed",
+        owner: params.owner,
+        repo: params.repo
+      });
+    }
   },
   component: GithubRepoBlobRoutePage
 });

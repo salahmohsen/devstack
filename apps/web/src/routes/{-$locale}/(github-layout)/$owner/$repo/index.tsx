@@ -1,5 +1,7 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
+import { log } from "@tsu-stack/logger/server";
+
 import { getGithubSetupStatusQueryOptions } from "@/pages/github-profile";
 import {
   getGithubRepoBranchesQueryOptions,
@@ -28,18 +30,27 @@ export const Route = createFileRoute("/{-$locale}/(github-layout)/$owner/$repo/"
       });
     }
 
-    const overview = await context.queryClient.ensureQueryData(
-      getGithubRepoOverviewQueryOptions(params.owner, params.repo)
-    );
-
-    await context.queryClient.ensureQueryData(
-      getGithubRepoBranchesQueryOptions(params.owner, params.repo)
-    );
-
-    if (overview?.defaultBranch) {
-      await context.queryClient.ensureQueryData(
-        getGithubRepoTreeQueryOptions(params.owner, params.repo, overview.defaultBranch, "")
+    try {
+      const overview = await context.queryClient.ensureQueryData(
+        getGithubRepoOverviewQueryOptions(params.owner, params.repo)
       );
+
+      await context.queryClient.ensureQueryData(
+        getGithubRepoBranchesQueryOptions(params.owner, params.repo)
+      );
+
+      if (overview?.defaultBranch) {
+        await context.queryClient.ensureQueryData(
+          getGithubRepoTreeQueryOptions(params.owner, params.repo, overview.defaultBranch, "")
+        );
+      }
+    } catch (error) {
+      log.error({
+        error,
+        event: "repo_overview_preload_failed",
+        owner: params.owner,
+        repo: params.repo
+      });
     }
   },
   component: GithubRepoRoutePage
