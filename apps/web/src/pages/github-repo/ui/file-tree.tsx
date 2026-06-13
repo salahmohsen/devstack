@@ -4,8 +4,9 @@ import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { FileCodeIcon, FolderIcon } from "@tsu-stack/icons";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+
 import { useGetGithubTreeEntryCommitsQuery } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
-import { formatRelativeTime } from "@/pages/github-repo/lib/format-relative-time";
 
 type FileTreeProps = {
   directoryPath?: string;

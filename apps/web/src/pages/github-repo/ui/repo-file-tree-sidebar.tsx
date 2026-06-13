@@ -8,6 +8,12 @@ import { ChevronRightIcon, FileIcon, FolderIcon } from "@tsu-stack/icons";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import {
+  useExplorerPath,
+  useIsActivePath,
+  useIsAncestorPath
+} from "@/shared/lib/explorer-path-store";
+import { type FileSearchEntry, type FileSearchResult } from "@/shared/lib/fuzzy-file-search";
 import { useHasMounted } from "@/shared/lib/use-has-mounted";
 import { FileSearchCard } from "@/shared/ui/file-search-card";
 
@@ -15,15 +21,6 @@ import {
   getGithubRepoTreeQueryOptions,
   githubRepoTreeQueryKeys
 } from "@/pages/github-repo/api/get-github-repo-tree.query";
-import {
-  useExplorerPath,
-  useIsActivePath,
-  useIsAncestorPath
-} from "@/pages/github-repo/lib/explorer-path-store";
-import {
-  type FileSearchEntry,
-  type FileSearchResult
-} from "@/pages/github-repo/lib/fuzzy-file-search";
 
 function useAllCachedFiles(owner: string, repo: string, ref: string): FileSearchEntry[] {
   const queryClient = useQueryClient();

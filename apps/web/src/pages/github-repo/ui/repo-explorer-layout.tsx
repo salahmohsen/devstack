@@ -13,13 +13,13 @@ import {
 } from "@tsu-stack/ui/components/resizable";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 
+import { getExplorerPath, setExplorerPath } from "@/shared/lib/explorer-path-store";
 import { useHasMounted } from "@/shared/lib/use-has-mounted";
 
 import { useRegisterGithubPublicTab } from "@/widgets/layout";
 
 import { getGithubRepoOverviewQueryOptions } from "@/pages/github-repo/api/get-github-repo-overview.query";
 import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-github-repo-tree.query";
-import { getExplorerPath, setExplorerPath } from "@/pages/github-repo/lib/explorer-path-store";
 
 import { BranchComparisonBanner } from "./branch-comparison-banner";
 import { CodeExplorerToolbar } from "./code-explorer-toolbar";

@@ -8,8 +8,9 @@ import { FileIcon, FolderIcon } from "@tsu-stack/icons";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+
 import { getGithubTreeEntryCommitsQueryOptions } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
-import { formatRelativeTime } from "@/pages/github-repo/lib/format-relative-time";
 
 import { LatestCommitBar } from "./latest-commit-bar";
 import { RepoMarkdownFiles } from "./repo-markdown-files";

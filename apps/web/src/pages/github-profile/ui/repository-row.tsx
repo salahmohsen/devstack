@@ -3,7 +3,8 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { GitForkIcon, LockIcon, StarIcon } from "@tsu-stack/icons";
 import { Badge } from "@tsu-stack/ui/components/badge";
 
-import { formatGithubCount } from "@/pages/github-profile/lib/format-github-count";
+import { formatGithubCount } from "@/shared/lib/format-github-count";
+
 import { RepoCommitSparkline } from "@/pages/github-repo/ui/repo-commit-sparkline";
 
 const sparklineFallback = <div className="h-13 w-42 shrink-0 rounded-sm bg-white/4" aria-hidden />;

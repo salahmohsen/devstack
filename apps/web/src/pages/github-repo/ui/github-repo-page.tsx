@@ -5,6 +5,7 @@ import { getLocale } from "@tsu-stack/i18n/runtime";
 import { Container } from "@tsu-stack/ui/components/container";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/components/empty";
 
+import { parseRepoRouteSplat } from "@/shared/lib/parse-repo-route-splat";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
 import { SidePanelPortal, useRegisterGithubPublicTab } from "@/widgets/layout";
@@ -17,7 +18,6 @@ import {
   getGithubRepoBranchesQueryOptions,
   useGetGithubRepoBranchesQuery
 } from "@/pages/github-repo/api/get-github-repo-branches.query";
-import { getGithubRepoFileContentQueryOptions } from "@/pages/github-repo/api/get-github-repo-file-content.query";
 import {
   getGithubRepoOverviewQueryOptions,
   useGetGithubRepoOverviewQuery
@@ -27,7 +27,6 @@ import {
   getGithubRepoTreeQueryOptions,
   useGetGithubRepoTreeQuery
 } from "@/pages/github-repo/api/get-github-repo-tree.query";
-import { parseRepoRouteSplat } from "@/pages/github-repo/lib/parse-repo-route-splat";
 import { BranchComparisonBanner } from "@/pages/github-repo/ui/branch-comparison-banner";
 import { CodeExplorerToolbar } from "@/pages/github-repo/ui/code-explorer-toolbar";
 import { FileTree } from "@/pages/github-repo/ui/file-tree";

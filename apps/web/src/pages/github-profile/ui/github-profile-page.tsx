@@ -32,6 +32,13 @@ import {
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
+import { githubProfileTabs, resolveGithubProfileTab } from "@/shared/lib/profile-tabs";
+import {
+  clampRepoListPage,
+  parseRepoListPage,
+  repoListHasNextPage,
+  sliceReposForPage
+} from "@/shared/lib/repo-list-page";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 import { useHasMounted } from "@/shared/lib/use-has-mounted";
 
@@ -58,16 +65,6 @@ import {
   useGetGithubProfileQuery,
   type GithubProfileQueryResult
 } from "@/pages/github-profile/api/get-github-profile.query";
-import {
-  githubProfileTabs,
-  resolveGithubProfileTab
-} from "@/pages/github-profile/lib/profile-tabs";
-import {
-  clampRepoListPage,
-  parseRepoListPage,
-  repoListHasNextPage,
-  sliceReposForPage
-} from "@/pages/github-profile/lib/repo-list-page";
 import { PinnedRepoCard } from "@/pages/github-profile/ui/pinned-repo-card";
 import { RepositoryRow } from "@/pages/github-profile/ui/repository-row";
 import { UserActivityFeed } from "@/pages/github-profile/ui/user-activity-feed";

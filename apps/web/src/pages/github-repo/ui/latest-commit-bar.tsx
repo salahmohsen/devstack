@@ -5,8 +5,9 @@ import { GitCommitIcon } from "@tsu-stack/icons";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+
 import { getGithubRepoRefCommitQueryOptions } from "@/pages/github-repo/api/get-github-repo-ref-commit.query";
-import { formatRelativeTime } from "@/pages/github-repo/lib/format-relative-time";
 
 type RepoOverviewLatestCommit = {
   author: {

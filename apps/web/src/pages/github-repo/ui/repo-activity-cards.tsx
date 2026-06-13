@@ -1,8 +1,9 @@
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { GitPullRequestIcon, PlayCircleIcon, ShieldAlertIcon } from "@tsu-stack/icons";
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+
 import { useGetGithubRepoActivityCardsQuery } from "@/pages/github-repo/api/get-github-repo-activity-cards.query";
-import { formatRelativeTime } from "@/pages/github-repo/lib/format-relative-time";
 
 export function RepoActivityCards({ owner, repo }: { owner: string; repo: string }) {
   const query = useGetGithubRepoActivityCardsQuery(owner, repo);

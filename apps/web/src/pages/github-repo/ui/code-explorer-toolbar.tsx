@@ -22,8 +22,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { useRepoCloneProtocol } from "@/shared/lib/repo-clone-protocol-storage";
+
 import { getGithubRepoBranchesQueryOptions } from "@/pages/github-repo/api/get-github-repo-branches.query";
-import { useRepoCloneProtocol } from "@/pages/github-repo/lib/repo-clone-protocol-storage";
 
 export function CodeExplorerToolbar({
   currentRef,

@@ -2,7 +2,7 @@ import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { GitForkIcon, StarIcon } from "@tsu-stack/icons";
 import { Badge } from "@tsu-stack/ui/components/badge";
 
-import { formatGithubCount } from "@/pages/github-profile/lib/format-github-count";
+import { formatGithubCount } from "@/shared/lib/format-github-count";
 
 type PinnedRepoCardProps = {
   repo: {

@@ -9,7 +9,7 @@ import {
   type FileSearchResult,
   getMatchIndices,
   searchFiles
-} from "@/pages/github-repo/lib/fuzzy-file-search";
+} from "@/shared/lib/fuzzy-file-search";
 
 function HighlightedText({
   className,

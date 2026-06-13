@@ -14,12 +14,12 @@ import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 import { highlightCode } from "@/shared/lib/highlight-code";
 
 import { getGithubRepoFileContentQueryOptions } from "@/pages/github-repo/api/get-github-repo-file-content.query";
 import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-github-repo-tree.query";
 import { getGithubTreeEntryCommitsQueryOptions } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
-import { formatRelativeTime } from "@/pages/github-repo/lib/format-relative-time";
 
 const IMAGE_EXTENSIONS = new Set([
   "avif",
