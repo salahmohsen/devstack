@@ -10,21 +10,13 @@ import {
 } from "#@/infrastructure/octokit/client";
 import {
   buildGitHubConditionalHeaders,
-  setRepoLoggerContext,
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
 import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubUserRepoSummary } from "#@/types";
 
-export async function getProfileRepos(
-  username: string,
-  context?: OrpcContext
-): Promise<GitHubUserRepoSummary[]> {
-  setRepoLoggerContext(context, "getProfileRepos", {
-    username
-  });
-
+export async function getProfileRepos(context?: OrpcContext): Promise<GitHubUserRepoSummary[]> {
   const source = await resolvePublicGitHubSource();
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_profile_repos_read_skipped", {
@@ -35,7 +27,7 @@ export async function getProfileRepos(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.ownerRepos(username);
+  const signalKey = githubRevalidationSignalKeys.ownerRepos(source.owner);
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserRepoSummary[]>({
@@ -47,22 +39,23 @@ export async function getProfileRepos(
           per_page: 100,
           sort: "updated",
           type: "owner",
-          username
+          username: source.owner
         });
 
         const repos: GitHubUserRepoSummary[] = response.data.map((repo) => {
           return {
+            createdAt: repo.created_at ?? repo.updated_at ?? new Date(0).toISOString(),
             defaultBranch: repo.default_branch ?? "main",
             description: repo.description ?? null,
             forkCount: repo.forks_count ?? 0,
-            fullName: repo.full_name ?? `${repo.owner?.login ?? username}/${repo.name}`,
+            fullName: repo.full_name ?? `${repo.owner?.login ?? source.owner}/${repo.name}`,
             id: repo.id,
             isFork: repo.fork,
             isPrivate: repo.private,
             language: repo.language ?? null,
             languageColor: null,
             name: repo.name,
-            owner: repo.owner?.login ?? username,
+            owner: repo.owner?.login ?? source.owner,
             pushedAt: repo.pushed_at ?? null,
             stars: repo.stargazers_count ?? 0,
             updatedAt: repo.updated_at ?? repo.created_at ?? new Date(0).toISOString(),
@@ -81,8 +74,8 @@ export async function getProfileRepos(
       freshForMs: githubCachePolicy.reposList.staleTimeMs,
       namespaceKeys: [signalKey],
       owner: source.owner,
-      params: { username },
-      resource: "user.profileRepos.v1",
+      params: { username: source.owner },
+      resource: "user.profileRepos.v2",
       runtime: context?.github,
       signalKeys: [signalKey]
     });

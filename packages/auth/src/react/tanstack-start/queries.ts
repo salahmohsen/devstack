@@ -20,4 +20,4 @@ export function getAuthUserQueryOptions() {
   });
 }
 
-export type AuthQueryResult = Awaited<ReturnType<typeof getAuthUserQueryOptions>>;
+export type AuthQueryResult = Awaited<ReturnType<typeof getAuthUserQueryOptions>> | null;

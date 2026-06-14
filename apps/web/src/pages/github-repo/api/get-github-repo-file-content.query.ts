@@ -1,37 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
 export const githubRepoFileContentQueryKeys = {
-  byPath(owner: string, repo: string, ref: string, path: string) {
+  byPath(repo: string, ref: string, path: string) {
     return orpc.public.github.getRepoFileContent.queryOptions({
-      input: { owner, path, ref, repo }
+      input: { path, ref, repo }
     }).queryKey;
   }
 };
 
-export function getGithubRepoFileContentQueryOptions(
-  owner: string,
-  repo: string,
-  ref: string,
-  path: string
-) {
+export function getGithubRepoFileContentQueryOptions(repo: string, ref: string, path: string) {
   return orpc.public.github.getRepoFileContent.queryOptions({
-    input: { owner, path, ref, repo },
+    input: { path, ref, repo },
+    staleTime: githubCachePolicy.repoMeta.staleTimeMs,
+    gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoFileContentQuery(
-  owner: string,
-  repo: string,
-  ref: string,
-  path: string
-) {
+export function useGetGithubRepoFileContentQuery(repo: string, ref: string, path: string) {
   return useQuery({
-    ...getGithubRepoFileContentQueryOptions(owner, repo, ref, path),
+    ...getGithubRepoFileContentQueryOptions(repo, ref, path),
     enabled: path.length > 0
   });
 }

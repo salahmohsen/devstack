@@ -154,28 +154,24 @@ function formatFileSize(bytes: number): string {
 
 export function CodeFileView({
   currentRef,
-  owner,
   path,
   repo
 }: {
   currentRef: string;
-  owner: string;
   path: string;
   repo: string;
 }) {
-  const contentQuery = useQuery(
-    getGithubRepoFileContentQueryOptions(owner, repo, currentRef, path)
-  );
+  const contentQuery = useQuery(getGithubRepoFileContentQueryOptions(repo, currentRef, path));
 
   const fileName = path.split("/").pop() ?? path;
   const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
 
   const fileCommitQuery = useQuery(
-    getGithubTreeEntryCommitsQueryOptions(owner, repo, currentRef, parentPath, [fileName])
+    getGithubTreeEntryCommitsQueryOptions(repo, currentRef, parentPath, [fileName])
   );
 
   const parentTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(owner, repo, currentRef, parentPath),
+    ...getGithubRepoTreeQueryOptions(repo, currentRef, parentPath),
     enabled: parentPath.length > 0 || fileName.length > 0
   });
 
@@ -189,15 +185,14 @@ export function CodeFileView({
   const isSvg = path.toLowerCase().endsWith(".svg");
 
   if (isImage && !isSvg) {
-    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${currentRef}/${path}`;
+    const rawUrl = `https://raw.githubusercontent.com/${repo}/${currentRef}/${path}`;
     return (
       <div className="flex flex-col gap-4">
-        <FileCommitBar commit={commit} owner={owner} repo={repo} />
+        <FileCommitBar commit={commit} repo={repo} />
         <div className="overflow-hidden rounded-lg border">
           <FileViewHeader
             currentRef={currentRef}
             fileName={fileName}
-            owner={owner}
             path={path}
             repo={repo}
             size={fileEntry?.size ?? null}
@@ -236,7 +231,6 @@ export function CodeFileView({
         fileName={fileName}
         lang={lang}
         lineCount={lineCount}
-        owner={owner}
         path={path}
         repo={repo}
         size={fileEntry?.size ?? null}
@@ -246,14 +240,13 @@ export function CodeFileView({
 
   return (
     <div className="flex flex-col gap-4">
-      <FileCommitBar commit={commit} owner={owner} repo={repo} />
+      <FileCommitBar commit={commit} repo={repo} />
       <div className="overflow-hidden rounded-lg border">
         <FileViewHeader
           code={code}
           currentRef={currentRef}
           fileName={fileName}
           lineCount={lineCount}
-          owner={owner}
           path={path}
           repo={repo}
           size={fileEntry?.size ?? null}
@@ -275,7 +268,6 @@ function SvgFileView({
   fileName,
   lang,
   lineCount,
-  owner,
   path,
   repo,
   size
@@ -286,24 +278,22 @@ function SvgFileView({
   fileName: string;
   lang: string;
   lineCount: number;
-  owner: string;
   path: string;
   repo: string;
   size: number | null;
 }) {
   const [mode, setMode] = useState<"preview" | "code">("preview");
-  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${currentRef}/${path}`;
+  const rawUrl = `https://raw.githubusercontent.com/${repo}/${currentRef}/${path}`;
 
   return (
     <div className="flex flex-col gap-4">
-      <FileCommitBar commit={commit} owner={owner} repo={repo} />
+      <FileCommitBar commit={commit} repo={repo} />
       <div className="overflow-hidden rounded-lg border">
         <FileViewHeader
           code={code}
           currentRef={currentRef}
           fileName={fileName}
           lineCount={mode === "code" ? lineCount : undefined}
-          owner={owner}
           path={path}
           repo={repo}
           size={size}
@@ -359,7 +349,6 @@ function FileViewHeader({
   currentRef,
   fileName,
   lineCount,
-  owner,
   path,
   repo,
   size
@@ -369,7 +358,6 @@ function FileViewHeader({
   currentRef?: string;
   fileName: string;
   lineCount?: number;
-  owner?: string;
   path?: string;
   repo?: string;
   size?: number | null;
@@ -377,9 +365,9 @@ function FileViewHeader({
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = useCallback(async () => {
     if (!code) return;
-    navigator.clipboard.writeText(code);
+    await navigator.clipboard.writeText(code);
     setCopied(true);
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setCopied(false), 1500);
@@ -410,9 +398,9 @@ function FileViewHeader({
             <CopyIcon size={14} />
           </button>
         )}
-        {owner && repo && currentRef && path && (
+        {repo && currentRef && path && (
           <a
-            href={`https://raw.githubusercontent.com/${owner}/${repo}/${currentRef}/${path}`}
+            href={`https://raw.githubusercontent.com/${repo}/${currentRef}/${path}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-1 hover:text-foreground"
@@ -428,11 +416,9 @@ function FileViewHeader({
 
 function FileCommitBar({
   commit,
-  owner,
   repo
 }: {
   commit: GitHubTreeEntryCommit | null | undefined;
-  owner: string;
   repo: string;
 }) {
   if (!commit) {
@@ -450,7 +436,7 @@ function FileCommitBar({
   return (
     <div className="flex items-center gap-3 rounded-lg bg-surface-1 px-4 py-2.5 text-sm">
       <a
-        href={`https://github.com/${owner}/${repo}/commit/${commit.sha}`}
+        href={`https://github.com/${repo}/commit/${commit.sha}`}
         target="_blank"
         rel="noopener noreferrer"
         className="min-w-0 flex-1 truncate text-left text-muted-foreground transition-colors hover:text-foreground hover:underline"

@@ -16,7 +16,6 @@ import {
   ChevronRightIcon,
   GitCommitIcon,
   GitPullRequestIcon,
-  HouseIcon,
   IssuesIcon,
   PanelRightCloseIcon,
   ReviewsIcon,
@@ -174,20 +173,6 @@ export function Tabs() {
 
   return (
     <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-      <Link
-        to={rootHref as never}
-        preload={false}
-        activeOptions={{ exact: true }}
-        activeProps={{ className: "active" }}
-        className={cn(
-          "inline-flex h-8 shrink-0 items-center gap-2 rounded-full bg-white/4 px-3 text-xs font-medium text-base-300 transition-colors hover:bg-white/9 hover:text-white",
-          "[&.active]:bg-white/[0.14] [&.active]:text-white [&.active]:ring-1 [&.active]:ring-white/10"
-        )}
-      >
-        <HouseIcon className="size-3.5" />
-        Overview
-      </Link>
-
       {openTabs.length > 0 ? (
         <>
           <div className="hidden h-4 shrink-0 border-l border-white/10 md:block" />

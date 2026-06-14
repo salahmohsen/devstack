@@ -1,26 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
 export const githubRepoRefCommitQueryKeys = {
-  byRef(owner: string, repo: string, ref: string) {
+  byRef(repo: string, ref: string) {
     return orpc.public.github.getRefCommit.queryOptions({
-      input: { owner, ref, repo }
+      input: { ref, repo }
     }).queryKey;
   }
 };
 
-export function getGithubRepoRefCommitQueryOptions(owner: string, repo: string, ref: string) {
+export function getGithubRepoRefCommitQueryOptions(repo: string, ref: string) {
   return orpc.public.github.getRefCommit.queryOptions({
-    input: { owner, ref, repo },
+    input: { ref, repo },
+    staleTime: githubCachePolicy.detail.staleTimeMs,
+    gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoRefCommitQuery(owner: string, repo: string, ref: string) {
-  return useQuery(getGithubRepoRefCommitQueryOptions(owner, repo, ref));
+export function useGetGithubRepoRefCommitQuery(repo: string, ref: string) {
+  return useQuery(getGithubRepoRefCommitQueryOptions(repo, ref));
 }
 
 export type GithubRepoRefCommitQueryResult = Awaited<

@@ -9,23 +9,22 @@ import {
   executeGitHubGraphQL,
   getErrorStatusCode
 } from "#@/infrastructure/octokit/client";
-import {
-  setRepoLoggerContext,
-  setRepoLoggerLocalFirstOutcome,
-  setRepoLoggerOutcome
-} from "#@/repo/shared.utils";
+import { setRepoLoggerLocalFirstOutcome, setRepoLoggerOutcome } from "#@/repo/shared.utils";
 import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubPinnedRepo } from "#@/types";
 
-export async function getUserPinnedRepos(
-  username: string,
-  context?: OrpcContext
-): Promise<GitHubPinnedRepo[]> {
-  setRepoLoggerContext(context, "getUserPinnedRepos", {
-    username
+const DEBUG_TAG = "23478236498372";
+
+export async function getUserPinnedRepos(context?: OrpcContext): Promise<GitHubPinnedRepo[]> {
+  console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:start`);
+
+  console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:resolvePublicGitHubSource:start`);
+  const source = await resolvePublicGitHubSource();
+  console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:resolvePublicGitHubSource:ok`, {
+    isConfigured: source.isConfigured,
+    owner: source.isConfigured ? source.owner : null
   });
 
-  const source = await resolvePublicGitHubSource();
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_user_pinned_repos_read_skipped", {
       reason: source.reason
@@ -35,11 +34,18 @@ export async function getUserPinnedRepos(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.ownerPinnedRepos(username);
+  const signalKey = githubRevalidationSignalKeys.ownerPinnedRepos(source.owner);
 
   try {
+    console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:getGitHubResourceLocalFirst:start`, {
+      owner: source.owner,
+      signalKey
+    });
     const result = await getGitHubResourceLocalFirst<GitHubPinnedRepo[]>({
       fetcher: async () => {
+        console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:fetcher:executeGitHubGraphQL:start`, {
+          owner: source.owner
+        });
         const response = await executeGitHubGraphQL<{
           rateLimit: {
             remaining: number;
@@ -88,8 +94,12 @@ export async function getUserPinnedRepos(
               resetAt
             }
           }`,
-          { username }
+          { username: source.owner }
         );
+        console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:fetcher:executeGitHubGraphQL:ok`, {
+          owner: source.owner,
+          pinnedItems: response.user.pinnedItems.nodes.length
+        });
 
         return {
           data: response.user.pinnedItems.nodes.flatMap((repo) =>
@@ -121,10 +131,14 @@ export async function getUserPinnedRepos(
       freshForMs: githubCachePolicy.mine.staleTimeMs,
       namespaceKeys: [signalKey],
       owner: source.owner,
-      params: { username },
+      params: { username: source.owner },
       resource: "user.pinnedRepos.v1",
       runtime: context?.github,
       signalKeys: [signalKey]
+    });
+    console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:getGitHubResourceLocalFirst:ok`, {
+      cacheStatus: result.meta.cacheStatus,
+      repoCount: result.data.length
     });
 
     setRepoLoggerLocalFirstOutcome(
@@ -138,6 +152,7 @@ export async function getUserPinnedRepos(
 
     return result.data;
   } catch (error) {
+    console.debug(`[${DEBUG_TAG}] getUserPinnedRepos:error`, error);
     const statusCode = getErrorStatusCode(error);
 
     setRepoLoggerOutcome(

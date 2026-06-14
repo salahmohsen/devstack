@@ -5,17 +5,17 @@ import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
-export function getGithubRepoOverviewQueryOptions(owner: string, repo: string) {
+export function getGithubRepoOverviewQueryOptions(repo: string) {
   return orpc.public.github.getRepoOverview.queryOptions({
-    input: { owner, repo },
+    input: { repo },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoOverviewQuery(owner: string, repo: string) {
-  return useQuery(getGithubRepoOverviewQueryOptions(owner, repo));
+export function useGetGithubRepoOverviewQuery(repo: string) {
+  return useQuery(getGithubRepoOverviewQueryOptions(repo));
 }
 
 export type GithubRepoOverviewQueryResult = Awaited<

@@ -21,7 +21,6 @@ import { type GitHubRepoTreeEntry } from "#@/types";
 
 export async function getRepoTree(
   input: {
-    owner: string;
     path: string;
     ref: string;
     repo: string;
@@ -29,7 +28,6 @@ export async function getRepoTree(
   context?: OrpcContext
 ): Promise<GitHubRepoTreeEntry[]> {
   setRepoLoggerContext(context, "getRepoTree", {
-    owner: input.owner,
     path: input.path,
     ref: input.ref,
     repo: input.repo
@@ -45,14 +43,17 @@ export async function getRepoTree(
   }
 
   const octokit = createGitHubOctokit(source);
-  const repoCodeKey = githubRevalidationSignalKeys.repoCode(input);
+  const repoCodeKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoTreeEntry[]>({
       fetcher: async (conditionals) => {
         const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
-          owner: input.owner,
+          owner: source.owner,
           path: input.path,
           ref: input.ref,
           repo: input.repo

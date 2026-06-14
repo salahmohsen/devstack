@@ -26,7 +26,6 @@ export async function getTreeEntryCommits(
   input: {
     dirPath?: string;
     entries: string[];
-    owner: string;
     ref: string;
     repo: string;
   },
@@ -35,7 +34,6 @@ export async function getTreeEntryCommits(
   setRepoLoggerContext(context, "getTreeEntryCommits", {
     dirPath: input.dirPath ?? "",
     entryCount: input.entries.length,
-    owner: input.owner,
     ref: input.ref,
     repo: input.repo
   });
@@ -50,7 +48,10 @@ export async function getTreeEntryCommits(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.repoCode(input);
+  const signalKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
   const normalizedEntries = normalizeTreeEntryCommitEntries(input.entries);
 
   if (normalizedEntries.length === 0) {
@@ -83,10 +84,10 @@ export async function getTreeEntryCommits(
           }`;
         });
 
-        console.log(
+        context?.logger.info(
           "⏳ [getTreeEntryCommits] Fetching commits for tree entries from GitHub GraphQL API...",
           {
-            owner: input.owner,
+            owner: source.owner,
             repo: input.repo,
             ref: input.ref,
             dirPath: input.dirPath,
@@ -105,10 +106,10 @@ export async function getTreeEntryCommits(
           rateLimit { cost remaining resetAt }
         }`;
 
-        console.log("⏳ [getTreeEntryCommits] Executing GitHub GraphQL query...", {
+        context?.logger.info("⏳ [getTreeEntryCommits] Executing GitHub GraphQL query...", {
           query,
           variables: {
-            owner: input.owner,
+            owner: source.owner,
             repo: input.repo,
             ref: input.ref
           }
@@ -118,13 +119,13 @@ export async function getTreeEntryCommits(
           octokit,
           query,
           {
-            owner: input.owner,
+            owner: source.owner,
             repo: input.repo,
             ref: input.ref
           }
         );
 
-        console.log(
+        context?.logger.info(
           "✅ [getTreeEntryCommits] Successfully fetched commits for tree entries from GitHub GraphQL API",
           {
             rateLimit: response.rateLimit,

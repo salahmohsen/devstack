@@ -35,7 +35,7 @@ registerCommands([
     icon: ArchiveIcon,
     iconClassName: "text-base-400",
     shortcut: ["G", "O"],
-    action: { type: "navigate" as const, to: "/$owner" }
+    action: { type: "navigate" as const, to: "/$repo" }
   },
   {
     id: "nav:dashboard",

@@ -25,13 +25,11 @@ import { type GitHubRepoActivityCards } from "#@/types";
 
 export async function getRepoActivityCards(
   input: {
-    owner: string;
     repo: string;
   },
   context?: OrpcContext
 ): Promise<GitHubRepoActivityCards> {
   setRepoLoggerContext(context, "getRepoActivityCards", {
-    owner: input.owner,
     repo: input.repo
   });
 
@@ -45,7 +43,10 @@ export async function getRepoActivityCards(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.repoMeta(input);
+  const signalKey = githubRevalidationSignalKeys.repoMeta({
+    owner: source.owner,
+    repo: input.repo
+  });
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoActivityCards>({
@@ -92,7 +93,7 @@ export async function getRepoActivityCards(
           ),
           octokit.rest.actions
             .listWorkflowRunsForRepo({
-              owner: input.owner,
+              owner: source.owner,
               per_page: 5,
               repo: input.repo
             })

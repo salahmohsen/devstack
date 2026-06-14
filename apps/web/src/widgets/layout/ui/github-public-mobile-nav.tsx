@@ -81,8 +81,7 @@ export function GithubPublicMobileNav() {
         <HouseIcon size={22} strokeWidth={1.8} />
       </Link>
       <Link
-        to="/$owner"
-        params={{ owner: owner ?? "" }}
+        to="/repos"
         preload={false}
         activeOptions={{ exact: true }}
         activeProps={{ className: "active" }}
@@ -133,7 +132,7 @@ export function GithubPublicMobileNav() {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem asChild disabled={!owner}>
-              <Link to="/$owner" params={{ owner: owner ?? "" }}>
+              <Link to="/repos">
                 <ArchiveIcon className="size-4" />
                 Repositories
               </Link>

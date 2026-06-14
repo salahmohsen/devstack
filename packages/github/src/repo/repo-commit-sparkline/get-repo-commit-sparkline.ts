@@ -24,13 +24,11 @@ import { type GitHubRepoCommitSparkline } from "#@/types";
 
 export async function getRepoCommitSparkline(
   input: {
-    owner: string;
     repo: string;
   },
   context?: OrpcContext
 ): Promise<GitHubRepoCommitSparkline> {
   setRepoLoggerContext(context, "getRepoCommitSparkline", {
-    owner: input.owner,
     repo: input.repo
   });
 
@@ -44,14 +42,17 @@ export async function getRepoCommitSparkline(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.repoCode(input);
+  const signalKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
   const since = getRepoCommitSparklineSince();
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoCommitSparkline>({
       fetcher: async () => {
         const response = await octokit.rest.repos.listCommits({
-          owner: input.owner,
+          owner: source.owner,
           per_page: 100,
           repo: input.repo,
           since

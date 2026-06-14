@@ -16,10 +16,10 @@ export function getGithubSetupStatusQueryOptions() {
   });
 }
 
-export function useGetGithubSetupStatusQuery() {
+export function useGetGithubSetupQuery() {
   return useQuery(getGithubSetupStatusQueryOptions());
 }
 
 export type GithubSetupStatusQueryResult = Awaited<
   ReturnType<typeof client.public.github.getSetupStatus>
->;
+> | null;

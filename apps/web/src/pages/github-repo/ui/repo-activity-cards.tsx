@@ -5,8 +5,8 @@ import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 
 import { useGetGithubRepoActivityCardsQuery } from "@/pages/github-repo/api/get-github-repo-activity-cards.query";
 
-export function RepoActivityCards({ owner, repo }: { owner: string; repo: string }) {
-  const query = useGetGithubRepoActivityCardsQuery(owner, repo);
+export function RepoActivityCards({ repo }: { repo: string }) {
+  const query = useGetGithubRepoActivityCardsQuery(repo);
   const data = query.data;
 
   if (!data) {

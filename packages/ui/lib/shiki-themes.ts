@@ -1,6 +1,6 @@
 import { type ThemeRegistrationRaw } from "shiki";
 
-const lightTokens: ThemeRegistrationRaw["tokenColors"] = [
+const diffkitLightTokens: ThemeRegistrationRaw["tokenColors"] = [
   {
     scope: ["comment", "punctuation.definition.comment"],
     settings: { foreground: "#666666", fontStyle: "italic" }
@@ -62,6 +62,7 @@ const lightTokens: ThemeRegistrationRaw["tokenColors"] = [
     scope: ["markup.inserted", "punctuation.definition.inserted"],
     settings: { foreground: "#107d32" }
   },
+  // Markdown-specific scopes
   {
     scope: ["markup.heading", "markup.heading.setext", "punctuation.definition.heading"],
     settings: { foreground: "#005ff2", fontStyle: "bold" }
@@ -100,7 +101,7 @@ const lightTokens: ThemeRegistrationRaw["tokenColors"] = [
   }
 ];
 
-const darkTokens: ThemeRegistrationRaw["tokenColors"] = [
+const diffkitDarkTokens: ThemeRegistrationRaw["tokenColors"] = [
   {
     scope: ["comment", "punctuation.definition.comment"],
     settings: { foreground: "#a1a1a1", fontStyle: "italic" }
@@ -162,6 +163,7 @@ const darkTokens: ThemeRegistrationRaw["tokenColors"] = [
     scope: ["markup.inserted", "punctuation.definition.inserted"],
     settings: { foreground: "#00ca50" }
   },
+  // Markdown-specific scopes
   {
     scope: ["markup.heading", "markup.heading.setext", "punctuation.definition.heading"],
     settings: { foreground: "#47a8ff", fontStyle: "bold" }
@@ -200,24 +202,24 @@ const darkTokens: ThemeRegistrationRaw["tokenColors"] = [
   }
 ];
 
-export const shikiLight: ThemeRegistrationRaw = {
-  name: "portfolio-light",
+export const diffkitLight: ThemeRegistrationRaw = {
+  name: "diffkit-light",
   type: "light",
-  settings: lightTokens as ThemeRegistrationRaw["settings"],
+  settings: diffkitLightTokens as ThemeRegistrationRaw["settings"],
   colors: {
     "editor.background": "#ffffff",
     "editor.foreground": "#171717"
   },
-  tokenColors: lightTokens
+  tokenColors: diffkitLightTokens
 };
 
-export const shikiDark: ThemeRegistrationRaw = {
-  name: "portfolio-dark",
+export const diffkitDark: ThemeRegistrationRaw = {
+  name: "diffkit-dark",
   type: "dark",
-  settings: darkTokens as ThemeRegistrationRaw["settings"],
+  settings: diffkitDarkTokens as ThemeRegistrationRaw["settings"],
   colors: {
     "editor.background": "#1a1a1a",
     "editor.foreground": "#ededed"
   },
-  tokenColors: darkTokens
+  tokenColors: diffkitDarkTokens
 };

@@ -13,24 +13,24 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as Char123LocaleChar125RouteRouteImport } from './routes/{-$locale}/route'
 import { Route as Char123LocaleChar125rootLayoutRouteRouteImport } from './routes/{-$locale}/(root-layout)/route'
-import { Route as Char123LocaleChar125githubLayoutRouteRouteImport } from './routes/{-$locale}/(github-layout)/route'
-import { Route as Char123LocaleChar125centeredLayoutRouteRouteImport } from './routes/{-$locale}/(centered-layout)/route'
-import { Route as Char123LocaleChar125authRouteRouteImport } from './routes/{-$locale}/(auth)/route'
-import { Route as Char123LocaleChar125githubLayoutIndexRouteImport } from './routes/{-$locale}/(github-layout)/index'
+import { Route as Char123LocaleChar125layoutRouteRouteImport } from './routes/{-$locale}/(layout)/route'
+import { Route as Char123LocaleChar125layoutIndexRouteImport } from './routes/{-$locale}/(layout)/index'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
-import { Route as Char123LocaleChar125centeredLayoutguestRouteRouteImport } from './routes/{-$locale}/(centered-layout)/(guest)/route'
+import { Route as Char123LocaleChar125layoutSignInRouteRouteImport } from './routes/{-$locale}/(layout)/sign-in/route'
+import { Route as Char123LocaleChar125layout_protectedRouteRouteImport } from './routes/{-$locale}/(layout)/__protected/route'
+import { Route as Char123LocaleChar125layoutRepoRouteRouteImport } from './routes/{-$locale}/(layout)/$repo/route'
 import { Route as Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport } from './routes/{-$locale}/(root-layout)/terms-of-service/index'
 import { Route as Char123LocaleChar125rootLayoutPrivacyPolicyIndexRouteImport } from './routes/{-$locale}/(root-layout)/privacy-policy/index'
 import { Route as Char123LocaleChar125rootLayoutPlaygroundIndexRouteImport } from './routes/{-$locale}/(root-layout)/playground/index'
 import { Route as Char123LocaleChar125rootLayoutErrorIndexRouteImport } from './routes/{-$locale}/(root-layout)/error/index'
-import { Route as Char123LocaleChar125githubLayoutOwnerIndexRouteImport } from './routes/{-$locale}/(github-layout)/$owner/index'
-import { Route as Char123LocaleChar125authDashboardIndexRouteImport } from './routes/{-$locale}/(auth)/dashboard/index'
-import { Route as Char123LocaleChar125authDashboardGithubConfigRouteRouteImport } from './routes/{-$locale}/(auth)/dashboard/github-config/route'
-import { Route as Char123LocaleChar125githubLayoutOwnerRepoIndexRouteImport } from './routes/{-$locale}/(github-layout)/$owner/$repo/index'
-import { Route as Char123LocaleChar125centeredLayoutguestSignInIndexRouteImport } from './routes/{-$locale}/(centered-layout)/(guest)/sign-in/index'
-import { Route as Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRouteImport } from './routes/{-$locale}/(centered-layout)/(guest)/create-an-account/index'
-import { Route as Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRouteImport } from './routes/{-$locale}/(github-layout)/$owner/$repo/tree/$'
-import { Route as Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRouteImport } from './routes/{-$locale}/(github-layout)/$owner/$repo/blob/$'
+import { Route as Char123LocaleChar125layoutSignInIndexRouteImport } from './routes/{-$locale}/(layout)/sign-in/index'
+import { Route as Char123LocaleChar125layoutReposIndexRouteImport } from './routes/{-$locale}/(layout)/repos/index'
+import { Route as Char123LocaleChar125layoutRepoIndexRouteImport } from './routes/{-$locale}/(layout)/$repo/index'
+import { Route as Char123LocaleChar125layoutSignInCreateAnAccountIndexRouteImport } from './routes/{-$locale}/(layout)/sign-in/create-an-account/index'
+import { Route as Char123LocaleChar125layout_protectedDashboardIndexRouteImport } from './routes/{-$locale}/(layout)/__protected/dashboard/index'
+import { Route as Char123LocaleChar125layoutRepoTreeSplatRouteImport } from './routes/{-$locale}/(layout)/$repo/tree/$'
+import { Route as Char123LocaleChar125layoutRepoBlobSplatRouteImport } from './routes/{-$locale}/(layout)/$repo/blob/$'
+import { Route as Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRouteImport } from './routes/{-$locale}/(layout)/__protected/dashboard/github-config/route'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -53,36 +53,38 @@ const Char123LocaleChar125rootLayoutRouteRoute =
     id: '/(root-layout)',
     getParentRoute: () => Char123LocaleChar125RouteRoute,
   } as any)
-const Char123LocaleChar125githubLayoutRouteRoute =
-  Char123LocaleChar125githubLayoutRouteRouteImport.update({
-    id: '/(github-layout)',
+const Char123LocaleChar125layoutRouteRoute =
+  Char123LocaleChar125layoutRouteRouteImport.update({
+    id: '/(layout)',
     getParentRoute: () => Char123LocaleChar125RouteRoute,
   } as any)
-const Char123LocaleChar125centeredLayoutRouteRoute =
-  Char123LocaleChar125centeredLayoutRouteRouteImport.update({
-    id: '/(centered-layout)',
-    getParentRoute: () => Char123LocaleChar125RouteRoute,
-  } as any)
-const Char123LocaleChar125authRouteRoute =
-  Char123LocaleChar125authRouteRouteImport.update({
-    id: '/(auth)',
-    getParentRoute: () => Char123LocaleChar125RouteRoute,
-  } as any)
-const Char123LocaleChar125githubLayoutIndexRoute =
-  Char123LocaleChar125githubLayoutIndexRouteImport.update({
+const Char123LocaleChar125layoutIndexRoute =
+  Char123LocaleChar125layoutIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => Char123LocaleChar125githubLayoutRouteRoute,
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
   } as any)
 const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
   id: '/_api/health/live',
   path: '/_api/health/live',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char123LocaleChar125centeredLayoutguestRouteRoute =
-  Char123LocaleChar125centeredLayoutguestRouteRouteImport.update({
-    id: '/(guest)',
-    getParentRoute: () => Char123LocaleChar125centeredLayoutRouteRoute,
+const Char123LocaleChar125layoutSignInRouteRoute =
+  Char123LocaleChar125layoutSignInRouteRouteImport.update({
+    id: '/sign-in',
+    path: '/sign-in',
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
+  } as any)
+const Char123LocaleChar125layout_protectedRouteRoute =
+  Char123LocaleChar125layout_protectedRouteRouteImport.update({
+    id: '/__protected',
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
+  } as any)
+const Char123LocaleChar125layoutRepoRouteRoute =
+  Char123LocaleChar125layoutRepoRouteRouteImport.update({
+    id: '/$repo',
+    path: '/$repo',
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
   } as any)
 const Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute =
   Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport.update({
@@ -108,118 +110,120 @@ const Char123LocaleChar125rootLayoutErrorIndexRoute =
     path: '/error/',
     getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
   } as any)
-const Char123LocaleChar125githubLayoutOwnerIndexRoute =
-  Char123LocaleChar125githubLayoutOwnerIndexRouteImport.update({
-    id: '/$owner/',
-    path: '/$owner/',
-    getParentRoute: () => Char123LocaleChar125githubLayoutRouteRoute,
+const Char123LocaleChar125layoutSignInIndexRoute =
+  Char123LocaleChar125layoutSignInIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => Char123LocaleChar125layoutSignInRouteRoute,
   } as any)
-const Char123LocaleChar125authDashboardIndexRoute =
-  Char123LocaleChar125authDashboardIndexRouteImport.update({
+const Char123LocaleChar125layoutReposIndexRoute =
+  Char123LocaleChar125layoutReposIndexRouteImport.update({
+    id: '/repos/',
+    path: '/repos/',
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
+  } as any)
+const Char123LocaleChar125layoutRepoIndexRoute =
+  Char123LocaleChar125layoutRepoIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => Char123LocaleChar125layoutRepoRouteRoute,
+  } as any)
+const Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute =
+  Char123LocaleChar125layoutSignInCreateAnAccountIndexRouteImport.update({
+    id: '/create-an-account/',
+    path: '/create-an-account/',
+    getParentRoute: () => Char123LocaleChar125layoutSignInRouteRoute,
+  } as any)
+const Char123LocaleChar125layout_protectedDashboardIndexRoute =
+  Char123LocaleChar125layout_protectedDashboardIndexRouteImport.update({
     id: '/dashboard/',
     path: '/dashboard/',
-    getParentRoute: () => Char123LocaleChar125authRouteRoute,
+    getParentRoute: () => Char123LocaleChar125layout_protectedRouteRoute,
   } as any)
-const Char123LocaleChar125authDashboardGithubConfigRouteRoute =
-  Char123LocaleChar125authDashboardGithubConfigRouteRouteImport.update({
-    id: '/dashboard/github-config',
-    path: '/dashboard/github-config',
-    getParentRoute: () => Char123LocaleChar125authRouteRoute,
+const Char123LocaleChar125layoutRepoTreeSplatRoute =
+  Char123LocaleChar125layoutRepoTreeSplatRouteImport.update({
+    id: '/tree/$',
+    path: '/tree/$',
+    getParentRoute: () => Char123LocaleChar125layoutRepoRouteRoute,
   } as any)
-const Char123LocaleChar125githubLayoutOwnerRepoIndexRoute =
-  Char123LocaleChar125githubLayoutOwnerRepoIndexRouteImport.update({
-    id: '/$owner/$repo/',
-    path: '/$owner/$repo/',
-    getParentRoute: () => Char123LocaleChar125githubLayoutRouteRoute,
+const Char123LocaleChar125layoutRepoBlobSplatRoute =
+  Char123LocaleChar125layoutRepoBlobSplatRouteImport.update({
+    id: '/blob/$',
+    path: '/blob/$',
+    getParentRoute: () => Char123LocaleChar125layoutRepoRouteRoute,
   } as any)
-const Char123LocaleChar125centeredLayoutguestSignInIndexRoute =
-  Char123LocaleChar125centeredLayoutguestSignInIndexRouteImport.update({
-    id: '/sign-in/',
-    path: '/sign-in/',
-    getParentRoute: () => Char123LocaleChar125centeredLayoutguestRouteRoute,
-  } as any)
-const Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute =
-  Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRouteImport.update(
+const Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute =
+  Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRouteImport.update(
     {
-      id: '/create-an-account/',
-      path: '/create-an-account/',
-      getParentRoute: () => Char123LocaleChar125centeredLayoutguestRouteRoute,
+      id: '/dashboard/github-config',
+      path: '/dashboard/github-config',
+      getParentRoute: () => Char123LocaleChar125layout_protectedRouteRoute,
     } as any,
   )
-const Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute =
-  Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRouteImport.update({
-    id: '/$owner/$repo/tree/$',
-    path: '/$owner/$repo/tree/$',
-    getParentRoute: () => Char123LocaleChar125githubLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute =
-  Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRouteImport.update({
-    id: '/$owner/$repo/blob/$',
-    path: '/$owner/$repo/blob/$',
-    getParentRoute: () => Char123LocaleChar125githubLayoutRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
-  '/{-$locale}': typeof Char123LocaleChar125centeredLayoutguestRouteRouteWithChildren
+  '/{-$locale}': typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/{-$locale}/$repo': typeof Char123LocaleChar125layoutRepoRouteRouteWithChildren
+  '/{-$locale}/sign-in': typeof Char123LocaleChar125layoutSignInRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/{-$locale}/': typeof Char123LocaleChar125githubLayoutIndexRoute
-  '/{-$locale}/dashboard/github-config': typeof Char123LocaleChar125authDashboardGithubConfigRouteRoute
-  '/{-$locale}/dashboard/': typeof Char123LocaleChar125authDashboardIndexRoute
-  '/{-$locale}/$owner/': typeof Char123LocaleChar125githubLayoutOwnerIndexRoute
+  '/{-$locale}/': typeof Char123LocaleChar125layoutIndexRoute
+  '/{-$locale}/$repo/': typeof Char123LocaleChar125layoutRepoIndexRoute
+  '/{-$locale}/repos/': typeof Char123LocaleChar125layoutReposIndexRoute
+  '/{-$locale}/sign-in/': typeof Char123LocaleChar125layoutSignInIndexRoute
   '/{-$locale}/error/': typeof Char123LocaleChar125rootLayoutErrorIndexRoute
   '/{-$locale}/playground/': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
   '/{-$locale}/privacy-policy/': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
   '/{-$locale}/terms-of-service/': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
-  '/{-$locale}/create-an-account/': typeof Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute
-  '/{-$locale}/sign-in/': typeof Char123LocaleChar125centeredLayoutguestSignInIndexRoute
-  '/{-$locale}/$owner/$repo/': typeof Char123LocaleChar125githubLayoutOwnerRepoIndexRoute
-  '/{-$locale}/$owner/$repo/blob/$': typeof Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute
-  '/{-$locale}/$owner/$repo/tree/$': typeof Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute
+  '/{-$locale}/dashboard/github-config': typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute
+  '/{-$locale}/$repo/blob/$': typeof Char123LocaleChar125layoutRepoBlobSplatRoute
+  '/{-$locale}/$repo/tree/$': typeof Char123LocaleChar125layoutRepoTreeSplatRoute
+  '/{-$locale}/dashboard/': typeof Char123LocaleChar125layout_protectedDashboardIndexRoute
+  '/{-$locale}/sign-in/create-an-account/': typeof Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute
 }
 export interface FileRoutesByTo {
-  '/{-$locale}': typeof Char123LocaleChar125githubLayoutIndexRoute
+  '/{-$locale}': typeof Char123LocaleChar125layoutIndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/{-$locale}/dashboard/github-config': typeof Char123LocaleChar125authDashboardGithubConfigRouteRoute
-  '/{-$locale}/dashboard': typeof Char123LocaleChar125authDashboardIndexRoute
-  '/{-$locale}/$owner': typeof Char123LocaleChar125githubLayoutOwnerIndexRoute
+  '/{-$locale}/$repo': typeof Char123LocaleChar125layoutRepoIndexRoute
+  '/{-$locale}/repos': typeof Char123LocaleChar125layoutReposIndexRoute
+  '/{-$locale}/sign-in': typeof Char123LocaleChar125layoutSignInIndexRoute
   '/{-$locale}/error': typeof Char123LocaleChar125rootLayoutErrorIndexRoute
   '/{-$locale}/playground': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
   '/{-$locale}/privacy-policy': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
   '/{-$locale}/terms-of-service': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
-  '/{-$locale}/create-an-account': typeof Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute
-  '/{-$locale}/sign-in': typeof Char123LocaleChar125centeredLayoutguestSignInIndexRoute
-  '/{-$locale}/$owner/$repo': typeof Char123LocaleChar125githubLayoutOwnerRepoIndexRoute
-  '/{-$locale}/$owner/$repo/blob/$': typeof Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute
-  '/{-$locale}/$owner/$repo/tree/$': typeof Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute
+  '/{-$locale}/dashboard/github-config': typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute
+  '/{-$locale}/$repo/blob/$': typeof Char123LocaleChar125layoutRepoBlobSplatRoute
+  '/{-$locale}/$repo/tree/$': typeof Char123LocaleChar125layoutRepoTreeSplatRoute
+  '/{-$locale}/dashboard': typeof Char123LocaleChar125layout_protectedDashboardIndexRoute
+  '/{-$locale}/sign-in/create-an-account': typeof Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/{-$locale}': typeof Char123LocaleChar125RouteRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/{-$locale}/(auth)': typeof Char123LocaleChar125authRouteRouteWithChildren
-  '/{-$locale}/(centered-layout)': typeof Char123LocaleChar125centeredLayoutRouteRouteWithChildren
-  '/{-$locale}/(github-layout)': typeof Char123LocaleChar125githubLayoutRouteRouteWithChildren
+  '/{-$locale}/(layout)': typeof Char123LocaleChar125layoutRouteRouteWithChildren
   '/{-$locale}/(root-layout)': typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
-  '/{-$locale}/(centered-layout)/(guest)': typeof Char123LocaleChar125centeredLayoutguestRouteRouteWithChildren
+  '/{-$locale}/(layout)/$repo': typeof Char123LocaleChar125layoutRepoRouteRouteWithChildren
+  '/{-$locale}/(layout)/__protected': typeof Char123LocaleChar125layout_protectedRouteRouteWithChildren
+  '/{-$locale}/(layout)/sign-in': typeof Char123LocaleChar125layoutSignInRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/{-$locale}/(github-layout)/': typeof Char123LocaleChar125githubLayoutIndexRoute
-  '/{-$locale}/(auth)/dashboard/github-config': typeof Char123LocaleChar125authDashboardGithubConfigRouteRoute
-  '/{-$locale}/(auth)/dashboard/': typeof Char123LocaleChar125authDashboardIndexRoute
-  '/{-$locale}/(github-layout)/$owner/': typeof Char123LocaleChar125githubLayoutOwnerIndexRoute
+  '/{-$locale}/(layout)/': typeof Char123LocaleChar125layoutIndexRoute
+  '/{-$locale}/(layout)/$repo/': typeof Char123LocaleChar125layoutRepoIndexRoute
+  '/{-$locale}/(layout)/repos/': typeof Char123LocaleChar125layoutReposIndexRoute
+  '/{-$locale}/(layout)/sign-in/': typeof Char123LocaleChar125layoutSignInIndexRoute
   '/{-$locale}/(root-layout)/error/': typeof Char123LocaleChar125rootLayoutErrorIndexRoute
   '/{-$locale}/(root-layout)/playground/': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
   '/{-$locale}/(root-layout)/privacy-policy/': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
   '/{-$locale}/(root-layout)/terms-of-service/': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
-  '/{-$locale}/(centered-layout)/(guest)/create-an-account/': typeof Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute
-  '/{-$locale}/(centered-layout)/(guest)/sign-in/': typeof Char123LocaleChar125centeredLayoutguestSignInIndexRoute
-  '/{-$locale}/(github-layout)/$owner/$repo/': typeof Char123LocaleChar125githubLayoutOwnerRepoIndexRoute
-  '/{-$locale}/(github-layout)/$owner/$repo/blob/$': typeof Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute
-  '/{-$locale}/(github-layout)/$owner/$repo/tree/$': typeof Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute
+  '/{-$locale}/(layout)/__protected/dashboard/github-config': typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute
+  '/{-$locale}/(layout)/$repo/blob/$': typeof Char123LocaleChar125layoutRepoBlobSplatRoute
+  '/{-$locale}/(layout)/$repo/tree/$': typeof Char123LocaleChar125layoutRepoTreeSplatRoute
+  '/{-$locale}/(layout)/__protected/dashboard/': typeof Char123LocaleChar125layout_protectedDashboardIndexRoute
+  '/{-$locale}/(layout)/sign-in/create-an-account/': typeof Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -227,62 +231,64 @@ export interface FileRouteTypes {
     | '/{-$locale}'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/{-$locale}/$repo'
+    | '/{-$locale}/sign-in'
     | '/_api/health/live'
     | '/{-$locale}/'
-    | '/{-$locale}/dashboard/github-config'
-    | '/{-$locale}/dashboard/'
-    | '/{-$locale}/$owner/'
+    | '/{-$locale}/$repo/'
+    | '/{-$locale}/repos/'
+    | '/{-$locale}/sign-in/'
     | '/{-$locale}/error/'
     | '/{-$locale}/playground/'
     | '/{-$locale}/privacy-policy/'
     | '/{-$locale}/terms-of-service/'
-    | '/{-$locale}/create-an-account/'
-    | '/{-$locale}/sign-in/'
-    | '/{-$locale}/$owner/$repo/'
-    | '/{-$locale}/$owner/$repo/blob/$'
-    | '/{-$locale}/$owner/$repo/tree/$'
+    | '/{-$locale}/dashboard/github-config'
+    | '/{-$locale}/$repo/blob/$'
+    | '/{-$locale}/$repo/tree/$'
+    | '/{-$locale}/dashboard/'
+    | '/{-$locale}/sign-in/create-an-account/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/{-$locale}'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/_api/health/live'
-    | '/{-$locale}/dashboard/github-config'
-    | '/{-$locale}/dashboard'
-    | '/{-$locale}/$owner'
+    | '/{-$locale}/$repo'
+    | '/{-$locale}/repos'
+    | '/{-$locale}/sign-in'
     | '/{-$locale}/error'
     | '/{-$locale}/playground'
     | '/{-$locale}/privacy-policy'
     | '/{-$locale}/terms-of-service'
-    | '/{-$locale}/create-an-account'
-    | '/{-$locale}/sign-in'
-    | '/{-$locale}/$owner/$repo'
-    | '/{-$locale}/$owner/$repo/blob/$'
-    | '/{-$locale}/$owner/$repo/tree/$'
+    | '/{-$locale}/dashboard/github-config'
+    | '/{-$locale}/$repo/blob/$'
+    | '/{-$locale}/$repo/tree/$'
+    | '/{-$locale}/dashboard'
+    | '/{-$locale}/sign-in/create-an-account'
   id:
     | '__root__'
     | '/{-$locale}'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/{-$locale}/(auth)'
-    | '/{-$locale}/(centered-layout)'
-    | '/{-$locale}/(github-layout)'
+    | '/{-$locale}/(layout)'
     | '/{-$locale}/(root-layout)'
-    | '/{-$locale}/(centered-layout)/(guest)'
+    | '/{-$locale}/(layout)/$repo'
+    | '/{-$locale}/(layout)/__protected'
+    | '/{-$locale}/(layout)/sign-in'
     | '/_api/health/live'
-    | '/{-$locale}/(github-layout)/'
-    | '/{-$locale}/(auth)/dashboard/github-config'
-    | '/{-$locale}/(auth)/dashboard/'
-    | '/{-$locale}/(github-layout)/$owner/'
+    | '/{-$locale}/(layout)/'
+    | '/{-$locale}/(layout)/$repo/'
+    | '/{-$locale}/(layout)/repos/'
+    | '/{-$locale}/(layout)/sign-in/'
     | '/{-$locale}/(root-layout)/error/'
     | '/{-$locale}/(root-layout)/playground/'
     | '/{-$locale}/(root-layout)/privacy-policy/'
     | '/{-$locale}/(root-layout)/terms-of-service/'
-    | '/{-$locale}/(centered-layout)/(guest)/create-an-account/'
-    | '/{-$locale}/(centered-layout)/(guest)/sign-in/'
-    | '/{-$locale}/(github-layout)/$owner/$repo/'
-    | '/{-$locale}/(github-layout)/$owner/$repo/blob/$'
-    | '/{-$locale}/(github-layout)/$owner/$repo/tree/$'
+    | '/{-$locale}/(layout)/__protected/dashboard/github-config'
+    | '/{-$locale}/(layout)/$repo/blob/$'
+    | '/{-$locale}/(layout)/$repo/tree/$'
+    | '/{-$locale}/(layout)/__protected/dashboard/'
+    | '/{-$locale}/(layout)/sign-in/create-an-account/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -322,33 +328,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125rootLayoutRouteRouteImport
       parentRoute: typeof Char123LocaleChar125RouteRoute
     }
-    '/{-$locale}/(github-layout)': {
-      id: '/{-$locale}/(github-layout)'
+    '/{-$locale}/(layout)': {
+      id: '/{-$locale}/(layout)'
       path: ''
       fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125githubLayoutRouteRouteImport
+      preLoaderRoute: typeof Char123LocaleChar125layoutRouteRouteImport
       parentRoute: typeof Char123LocaleChar125RouteRoute
     }
-    '/{-$locale}/(centered-layout)': {
-      id: '/{-$locale}/(centered-layout)'
-      path: ''
-      fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125centeredLayoutRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125RouteRoute
-    }
-    '/{-$locale}/(auth)': {
-      id: '/{-$locale}/(auth)'
-      path: ''
-      fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125authRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125RouteRoute
-    }
-    '/{-$locale}/(github-layout)/': {
-      id: '/{-$locale}/(github-layout)/'
+    '/{-$locale}/(layout)/': {
+      id: '/{-$locale}/(layout)/'
       path: '/'
       fullPath: '/{-$locale}/'
-      preLoaderRoute: typeof Char123LocaleChar125githubLayoutIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125githubLayoutRouteRoute
+      preLoaderRoute: typeof Char123LocaleChar125layoutIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
     }
     '/_api/health/live': {
       id: '/_api/health/live'
@@ -357,12 +349,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/{-$locale}/(centered-layout)/(guest)': {
-      id: '/{-$locale}/(centered-layout)/(guest)'
+    '/{-$locale}/(layout)/sign-in': {
+      id: '/{-$locale}/(layout)/sign-in'
+      path: '/sign-in'
+      fullPath: '/{-$locale}/sign-in'
+      preLoaderRoute: typeof Char123LocaleChar125layoutSignInRouteRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
+    }
+    '/{-$locale}/(layout)/__protected': {
+      id: '/{-$locale}/(layout)/__protected'
       path: ''
       fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125centeredLayoutguestRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125centeredLayoutRouteRoute
+      preLoaderRoute: typeof Char123LocaleChar125layout_protectedRouteRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
+    }
+    '/{-$locale}/(layout)/$repo': {
+      id: '/{-$locale}/(layout)/$repo'
+      path: '/$repo'
+      fullPath: '/{-$locale}/$repo'
+      preLoaderRoute: typeof Char123LocaleChar125layoutRepoRouteRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
     }
     '/{-$locale}/(root-layout)/terms-of-service/': {
       id: '/{-$locale}/(root-layout)/terms-of-service/'
@@ -392,141 +398,146 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125rootLayoutErrorIndexRouteImport
       parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
     }
-    '/{-$locale}/(github-layout)/$owner/': {
-      id: '/{-$locale}/(github-layout)/$owner/'
-      path: '/$owner'
-      fullPath: '/{-$locale}/$owner/'
-      preLoaderRoute: typeof Char123LocaleChar125githubLayoutOwnerIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125githubLayoutRouteRoute
+    '/{-$locale}/(layout)/sign-in/': {
+      id: '/{-$locale}/(layout)/sign-in/'
+      path: '/'
+      fullPath: '/{-$locale}/sign-in/'
+      preLoaderRoute: typeof Char123LocaleChar125layoutSignInIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutSignInRouteRoute
     }
-    '/{-$locale}/(auth)/dashboard/': {
-      id: '/{-$locale}/(auth)/dashboard/'
+    '/{-$locale}/(layout)/repos/': {
+      id: '/{-$locale}/(layout)/repos/'
+      path: '/repos'
+      fullPath: '/{-$locale}/repos/'
+      preLoaderRoute: typeof Char123LocaleChar125layoutReposIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
+    }
+    '/{-$locale}/(layout)/$repo/': {
+      id: '/{-$locale}/(layout)/$repo/'
+      path: '/'
+      fullPath: '/{-$locale}/$repo/'
+      preLoaderRoute: typeof Char123LocaleChar125layoutRepoIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRepoRouteRoute
+    }
+    '/{-$locale}/(layout)/sign-in/create-an-account/': {
+      id: '/{-$locale}/(layout)/sign-in/create-an-account/'
+      path: '/create-an-account'
+      fullPath: '/{-$locale}/sign-in/create-an-account/'
+      preLoaderRoute: typeof Char123LocaleChar125layoutSignInCreateAnAccountIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutSignInRouteRoute
+    }
+    '/{-$locale}/(layout)/__protected/dashboard/': {
+      id: '/{-$locale}/(layout)/__protected/dashboard/'
       path: '/dashboard'
       fullPath: '/{-$locale}/dashboard/'
-      preLoaderRoute: typeof Char123LocaleChar125authDashboardIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125authRouteRoute
+      preLoaderRoute: typeof Char123LocaleChar125layout_protectedDashboardIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layout_protectedRouteRoute
     }
-    '/{-$locale}/(auth)/dashboard/github-config': {
-      id: '/{-$locale}/(auth)/dashboard/github-config'
+    '/{-$locale}/(layout)/$repo/tree/$': {
+      id: '/{-$locale}/(layout)/$repo/tree/$'
+      path: '/tree/$'
+      fullPath: '/{-$locale}/$repo/tree/$'
+      preLoaderRoute: typeof Char123LocaleChar125layoutRepoTreeSplatRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRepoRouteRoute
+    }
+    '/{-$locale}/(layout)/$repo/blob/$': {
+      id: '/{-$locale}/(layout)/$repo/blob/$'
+      path: '/blob/$'
+      fullPath: '/{-$locale}/$repo/blob/$'
+      preLoaderRoute: typeof Char123LocaleChar125layoutRepoBlobSplatRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRepoRouteRoute
+    }
+    '/{-$locale}/(layout)/__protected/dashboard/github-config': {
+      id: '/{-$locale}/(layout)/__protected/dashboard/github-config'
       path: '/dashboard/github-config'
       fullPath: '/{-$locale}/dashboard/github-config'
-      preLoaderRoute: typeof Char123LocaleChar125authDashboardGithubConfigRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125authRouteRoute
-    }
-    '/{-$locale}/(github-layout)/$owner/$repo/': {
-      id: '/{-$locale}/(github-layout)/$owner/$repo/'
-      path: '/$owner/$repo'
-      fullPath: '/{-$locale}/$owner/$repo/'
-      preLoaderRoute: typeof Char123LocaleChar125githubLayoutOwnerRepoIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125githubLayoutRouteRoute
-    }
-    '/{-$locale}/(centered-layout)/(guest)/sign-in/': {
-      id: '/{-$locale}/(centered-layout)/(guest)/sign-in/'
-      path: '/sign-in'
-      fullPath: '/{-$locale}/sign-in/'
-      preLoaderRoute: typeof Char123LocaleChar125centeredLayoutguestSignInIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125centeredLayoutguestRouteRoute
-    }
-    '/{-$locale}/(centered-layout)/(guest)/create-an-account/': {
-      id: '/{-$locale}/(centered-layout)/(guest)/create-an-account/'
-      path: '/create-an-account'
-      fullPath: '/{-$locale}/create-an-account/'
-      preLoaderRoute: typeof Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125centeredLayoutguestRouteRoute
-    }
-    '/{-$locale}/(github-layout)/$owner/$repo/tree/$': {
-      id: '/{-$locale}/(github-layout)/$owner/$repo/tree/$'
-      path: '/$owner/$repo/tree/$'
-      fullPath: '/{-$locale}/$owner/$repo/tree/$'
-      preLoaderRoute: typeof Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRouteImport
-      parentRoute: typeof Char123LocaleChar125githubLayoutRouteRoute
-    }
-    '/{-$locale}/(github-layout)/$owner/$repo/blob/$': {
-      id: '/{-$locale}/(github-layout)/$owner/$repo/blob/$'
-      path: '/$owner/$repo/blob/$'
-      fullPath: '/{-$locale}/$owner/$repo/blob/$'
-      preLoaderRoute: typeof Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRouteImport
-      parentRoute: typeof Char123LocaleChar125githubLayoutRouteRoute
+      preLoaderRoute: typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRouteImport
+      parentRoute: typeof Char123LocaleChar125layout_protectedRouteRoute
     }
   }
 }
 
-interface Char123LocaleChar125authRouteRouteChildren {
-  Char123LocaleChar125authDashboardGithubConfigRouteRoute: typeof Char123LocaleChar125authDashboardGithubConfigRouteRoute
-  Char123LocaleChar125authDashboardIndexRoute: typeof Char123LocaleChar125authDashboardIndexRoute
+interface Char123LocaleChar125layoutRepoRouteRouteChildren {
+  Char123LocaleChar125layoutRepoIndexRoute: typeof Char123LocaleChar125layoutRepoIndexRoute
+  Char123LocaleChar125layoutRepoBlobSplatRoute: typeof Char123LocaleChar125layoutRepoBlobSplatRoute
+  Char123LocaleChar125layoutRepoTreeSplatRoute: typeof Char123LocaleChar125layoutRepoTreeSplatRoute
 }
 
-const Char123LocaleChar125authRouteRouteChildren: Char123LocaleChar125authRouteRouteChildren =
+const Char123LocaleChar125layoutRepoRouteRouteChildren: Char123LocaleChar125layoutRepoRouteRouteChildren =
   {
-    Char123LocaleChar125authDashboardGithubConfigRouteRoute:
-      Char123LocaleChar125authDashboardGithubConfigRouteRoute,
-    Char123LocaleChar125authDashboardIndexRoute:
-      Char123LocaleChar125authDashboardIndexRoute,
+    Char123LocaleChar125layoutRepoIndexRoute:
+      Char123LocaleChar125layoutRepoIndexRoute,
+    Char123LocaleChar125layoutRepoBlobSplatRoute:
+      Char123LocaleChar125layoutRepoBlobSplatRoute,
+    Char123LocaleChar125layoutRepoTreeSplatRoute:
+      Char123LocaleChar125layoutRepoTreeSplatRoute,
   }
 
-const Char123LocaleChar125authRouteRouteWithChildren =
-  Char123LocaleChar125authRouteRoute._addFileChildren(
-    Char123LocaleChar125authRouteRouteChildren,
+const Char123LocaleChar125layoutRepoRouteRouteWithChildren =
+  Char123LocaleChar125layoutRepoRouteRoute._addFileChildren(
+    Char123LocaleChar125layoutRepoRouteRouteChildren,
   )
 
-interface Char123LocaleChar125centeredLayoutguestRouteRouteChildren {
-  Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute: typeof Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute
-  Char123LocaleChar125centeredLayoutguestSignInIndexRoute: typeof Char123LocaleChar125centeredLayoutguestSignInIndexRoute
+interface Char123LocaleChar125layout_protectedRouteRouteChildren {
+  Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute: typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute
+  Char123LocaleChar125layout_protectedDashboardIndexRoute: typeof Char123LocaleChar125layout_protectedDashboardIndexRoute
 }
 
-const Char123LocaleChar125centeredLayoutguestRouteRouteChildren: Char123LocaleChar125centeredLayoutguestRouteRouteChildren =
+const Char123LocaleChar125layout_protectedRouteRouteChildren: Char123LocaleChar125layout_protectedRouteRouteChildren =
   {
-    Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute:
-      Char123LocaleChar125centeredLayoutguestCreateAnAccountIndexRoute,
-    Char123LocaleChar125centeredLayoutguestSignInIndexRoute:
-      Char123LocaleChar125centeredLayoutguestSignInIndexRoute,
+    Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute:
+      Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute,
+    Char123LocaleChar125layout_protectedDashboardIndexRoute:
+      Char123LocaleChar125layout_protectedDashboardIndexRoute,
   }
 
-const Char123LocaleChar125centeredLayoutguestRouteRouteWithChildren =
-  Char123LocaleChar125centeredLayoutguestRouteRoute._addFileChildren(
-    Char123LocaleChar125centeredLayoutguestRouteRouteChildren,
+const Char123LocaleChar125layout_protectedRouteRouteWithChildren =
+  Char123LocaleChar125layout_protectedRouteRoute._addFileChildren(
+    Char123LocaleChar125layout_protectedRouteRouteChildren,
   )
 
-interface Char123LocaleChar125centeredLayoutRouteRouteChildren {
-  Char123LocaleChar125centeredLayoutguestRouteRoute: typeof Char123LocaleChar125centeredLayoutguestRouteRouteWithChildren
+interface Char123LocaleChar125layoutSignInRouteRouteChildren {
+  Char123LocaleChar125layoutSignInIndexRoute: typeof Char123LocaleChar125layoutSignInIndexRoute
+  Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute: typeof Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute
 }
 
-const Char123LocaleChar125centeredLayoutRouteRouteChildren: Char123LocaleChar125centeredLayoutRouteRouteChildren =
+const Char123LocaleChar125layoutSignInRouteRouteChildren: Char123LocaleChar125layoutSignInRouteRouteChildren =
   {
-    Char123LocaleChar125centeredLayoutguestRouteRoute:
-      Char123LocaleChar125centeredLayoutguestRouteRouteWithChildren,
+    Char123LocaleChar125layoutSignInIndexRoute:
+      Char123LocaleChar125layoutSignInIndexRoute,
+    Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute:
+      Char123LocaleChar125layoutSignInCreateAnAccountIndexRoute,
   }
 
-const Char123LocaleChar125centeredLayoutRouteRouteWithChildren =
-  Char123LocaleChar125centeredLayoutRouteRoute._addFileChildren(
-    Char123LocaleChar125centeredLayoutRouteRouteChildren,
+const Char123LocaleChar125layoutSignInRouteRouteWithChildren =
+  Char123LocaleChar125layoutSignInRouteRoute._addFileChildren(
+    Char123LocaleChar125layoutSignInRouteRouteChildren,
   )
 
-interface Char123LocaleChar125githubLayoutRouteRouteChildren {
-  Char123LocaleChar125githubLayoutIndexRoute: typeof Char123LocaleChar125githubLayoutIndexRoute
-  Char123LocaleChar125githubLayoutOwnerIndexRoute: typeof Char123LocaleChar125githubLayoutOwnerIndexRoute
-  Char123LocaleChar125githubLayoutOwnerRepoIndexRoute: typeof Char123LocaleChar125githubLayoutOwnerRepoIndexRoute
-  Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute: typeof Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute
-  Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute: typeof Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute
+interface Char123LocaleChar125layoutRouteRouteChildren {
+  Char123LocaleChar125layoutRepoRouteRoute: typeof Char123LocaleChar125layoutRepoRouteRouteWithChildren
+  Char123LocaleChar125layout_protectedRouteRoute: typeof Char123LocaleChar125layout_protectedRouteRouteWithChildren
+  Char123LocaleChar125layoutSignInRouteRoute: typeof Char123LocaleChar125layoutSignInRouteRouteWithChildren
+  Char123LocaleChar125layoutIndexRoute: typeof Char123LocaleChar125layoutIndexRoute
+  Char123LocaleChar125layoutReposIndexRoute: typeof Char123LocaleChar125layoutReposIndexRoute
 }
 
-const Char123LocaleChar125githubLayoutRouteRouteChildren: Char123LocaleChar125githubLayoutRouteRouteChildren =
+const Char123LocaleChar125layoutRouteRouteChildren: Char123LocaleChar125layoutRouteRouteChildren =
   {
-    Char123LocaleChar125githubLayoutIndexRoute:
-      Char123LocaleChar125githubLayoutIndexRoute,
-    Char123LocaleChar125githubLayoutOwnerIndexRoute:
-      Char123LocaleChar125githubLayoutOwnerIndexRoute,
-    Char123LocaleChar125githubLayoutOwnerRepoIndexRoute:
-      Char123LocaleChar125githubLayoutOwnerRepoIndexRoute,
-    Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute:
-      Char123LocaleChar125githubLayoutOwnerRepoBlobSplatRoute,
-    Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute:
-      Char123LocaleChar125githubLayoutOwnerRepoTreeSplatRoute,
+    Char123LocaleChar125layoutRepoRouteRoute:
+      Char123LocaleChar125layoutRepoRouteRouteWithChildren,
+    Char123LocaleChar125layout_protectedRouteRoute:
+      Char123LocaleChar125layout_protectedRouteRouteWithChildren,
+    Char123LocaleChar125layoutSignInRouteRoute:
+      Char123LocaleChar125layoutSignInRouteRouteWithChildren,
+    Char123LocaleChar125layoutIndexRoute: Char123LocaleChar125layoutIndexRoute,
+    Char123LocaleChar125layoutReposIndexRoute:
+      Char123LocaleChar125layoutReposIndexRoute,
   }
 
-const Char123LocaleChar125githubLayoutRouteRouteWithChildren =
-  Char123LocaleChar125githubLayoutRouteRoute._addFileChildren(
-    Char123LocaleChar125githubLayoutRouteRouteChildren,
+const Char123LocaleChar125layoutRouteRouteWithChildren =
+  Char123LocaleChar125layoutRouteRoute._addFileChildren(
+    Char123LocaleChar125layoutRouteRouteChildren,
   )
 
 interface Char123LocaleChar125rootLayoutRouteRouteChildren {
@@ -554,20 +565,14 @@ const Char123LocaleChar125rootLayoutRouteRouteWithChildren =
   )
 
 interface Char123LocaleChar125RouteRouteChildren {
-  Char123LocaleChar125authRouteRoute: typeof Char123LocaleChar125authRouteRouteWithChildren
-  Char123LocaleChar125centeredLayoutRouteRoute: typeof Char123LocaleChar125centeredLayoutRouteRouteWithChildren
-  Char123LocaleChar125githubLayoutRouteRoute: typeof Char123LocaleChar125githubLayoutRouteRouteWithChildren
+  Char123LocaleChar125layoutRouteRoute: typeof Char123LocaleChar125layoutRouteRouteWithChildren
   Char123LocaleChar125rootLayoutRouteRoute: typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
 }
 
 const Char123LocaleChar125RouteRouteChildren: Char123LocaleChar125RouteRouteChildren =
   {
-    Char123LocaleChar125authRouteRoute:
-      Char123LocaleChar125authRouteRouteWithChildren,
-    Char123LocaleChar125centeredLayoutRouteRoute:
-      Char123LocaleChar125centeredLayoutRouteRouteWithChildren,
-    Char123LocaleChar125githubLayoutRouteRoute:
-      Char123LocaleChar125githubLayoutRouteRouteWithChildren,
+    Char123LocaleChar125layoutRouteRoute:
+      Char123LocaleChar125layoutRouteRouteWithChildren,
     Char123LocaleChar125rootLayoutRouteRoute:
       Char123LocaleChar125rootLayoutRouteRouteWithChildren,
   }

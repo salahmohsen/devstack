@@ -72,6 +72,7 @@ const PublicGitHubPinnedRepoOutputSchema = z.object({
 });
 
 const PublicGitHubRepoSummaryOutputSchema = z.object({
+  createdAt: z.string(),
   defaultBranch: z.string(),
   description: z.string().nullable(),
   forkCount: z.number().int(),
@@ -252,18 +253,11 @@ const PublicGitHubRepoActivityCardsOutputSchema = z.object({
   )
 });
 
-const UserProfileInputSchema = z.object({
-  username: GitHubUsernameSchema
-});
-
 const UserActivityInputSchema = z.object({
-  isOwnProfile: z.boolean().default(false),
-  page: z.number().int().min(1).default(1),
-  username: GitHubUsernameSchema
+  page: z.number().int().min(1).default(1)
 });
 
 const RepoInputSchema = z.object({
-  owner: GitHubUsernameSchema,
   repo: z.string().trim().min(1)
 });
 
@@ -321,9 +315,8 @@ export const publicGitHubRouter = {
       description: "Get the public repository list for a GitHub user",
       method: "GET"
     })
-    .input(UserProfileInputSchema)
     .output(z.array(PublicGitHubRepoSummaryOutputSchema))
-    .handler(async ({ context, input }) => getProfileRepos(input.username, context)),
+    .handler(async ({ context }) => getProfileRepos(context)),
   getRepoActivityCards: publicProcedure
     .route({
       description: "Get public repository activity cards for a GitHub repository",
@@ -422,23 +415,20 @@ export const publicGitHubRouter = {
       description: "Get the public GitHub contribution calendar for a user",
       method: "GET"
     })
-    .input(UserProfileInputSchema)
     .output(PublicGitHubContributionCalendarOutputSchema.nullable())
-    .handler(async ({ context, input }) => getUserContributions(input.username, context)),
+    .handler(async ({ context }) => getUserContributions(context)),
   getUserPinnedRepos: publicProcedure
     .route({
       description: "Get the pinned public GitHub repositories for a user",
       method: "GET"
     })
-    .input(UserProfileInputSchema)
     .output(z.array(PublicGitHubPinnedRepoOutputSchema))
-    .handler(async ({ context, input }) => getUserPinnedRepos(input.username, context)),
+    .handler(async ({ context }) => getUserPinnedRepos(context)),
   getUserProfile: publicProcedure
     .route({
       description: "Get the public GitHub profile for a user",
       method: "GET"
     })
-    .input(UserProfileInputSchema)
     .output(PublicGitHubUserProfileOutputSchema.nullable())
-    .handler(async ({ context, input }) => getUserProfile(input.username, context))
+    .handler(async ({ context }) => getUserProfile(context))
 };

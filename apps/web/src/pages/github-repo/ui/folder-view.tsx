@@ -19,21 +19,19 @@ export function FolderView({
   currentPath,
   currentRef,
   entries,
-  owner,
   repo,
   repoName
 }: {
   currentPath: string;
   currentRef: string;
   entries: GitHubRepoTreeEntry[];
-  owner: string;
   repo: RepoOverview;
   repoName: string;
 }) {
   const entryNames = useMemo(() => entries.map((e) => e.name), [entries]);
 
   const commitsQuery = useQuery(
-    getGithubTreeEntryCommitsQueryOptions(owner, repoName, currentRef, currentPath, entryNames)
+    getGithubTreeEntryCommitsQueryOptions(repoName, currentRef, currentPath, entryNames)
   );
 
   return (
@@ -43,7 +41,6 @@ export function FolderView({
           branchRef={currentRef}
           defaultBranch={repo.defaultBranch ?? "main"}
           defaultBranchTip={repo.latestCommit}
-          owner={owner}
           repoName={repoName}
         />
         <div className="overflow-hidden rounded-b-lg border">
@@ -56,14 +53,13 @@ export function FolderView({
               entry={entry}
               isCommitLoading={commitsQuery.isLoading}
               isLast={index === entries.length - 1}
-              owner={owner}
               repoName={repoName}
             />
           ))}
         </div>
       </div>
 
-      <RepoMarkdownFiles currentRef={currentRef} entries={entries} owner={owner} repo={repoName} />
+      <RepoMarkdownFiles currentRef={currentRef} entries={entries} repo={repoName} />
     </div>
   );
 }
@@ -75,7 +71,6 @@ function FolderViewRow({
   entry,
   isCommitLoading,
   isLast,
-  owner,
   repoName
 }: {
   commit: GitHubTreeEntryCommit | null;
@@ -84,7 +79,6 @@ function FolderViewRow({
   entry: GitHubRepoTreeEntry;
   isCommitLoading: boolean;
   isLast: boolean;
-  owner: string;
   repoName: string;
 }) {
   const Icon = entry.type === "dir" ? FolderIcon : FileIcon;
@@ -99,9 +93,8 @@ function FolderViewRow({
       )}
     >
       <Link
-        to={isDir ? "/$owner/$repo/tree/$" : "/$owner/$repo/blob/$"}
+        to={isDir ? "/$repo/tree/$" : "/$repo/blob/$"}
         params={{
-          owner,
           repo: repoName,
           _splat: `${currentRef}/${entryPath}`
         }}
@@ -124,7 +117,7 @@ function FolderViewRow({
       <div className="min-w-0">
         {commit?.sha ? (
           <a
-            href={`https://github.com/${owner}/${repoName}/commit/${commit.sha}`}
+            href={`https://github.com/${repoName}/commit/${commit.sha}`}
             target="_blank"
             rel="noopener noreferrer"
             className="block truncate text-muted-foreground transition-colors hover:text-foreground hover:underline"

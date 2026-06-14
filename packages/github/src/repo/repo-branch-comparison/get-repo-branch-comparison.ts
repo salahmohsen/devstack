@@ -22,7 +22,6 @@ export async function getRepoBranchComparison(
   input: {
     base: string;
     head: string;
-    owner: string;
     repo: string;
   },
   context?: OrpcContext
@@ -30,7 +29,6 @@ export async function getRepoBranchComparison(
   setRepoLoggerContext(context, "getRepoBranchComparison", {
     base: input.base,
     head: input.head,
-    owner: input.owner,
     repo: input.repo
   });
 
@@ -44,7 +42,10 @@ export async function getRepoBranchComparison(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.repoCode(input);
+  const signalKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoBranchComparison>({
@@ -53,7 +54,7 @@ export async function getRepoBranchComparison(
           base: input.base,
           headers: buildGitHubConditionalHeaders(conditionals),
           head: input.head,
-          owner: input.owner,
+          owner: source.owner,
           repo: input.repo
         });
 

@@ -82,6 +82,7 @@ export type GitHubUserProfile = {
 };
 
 export type GitHubUserRepoSummary = {
+  createdAt: string;
   defaultBranch: string;
   description: string | null;
   forkCount: number;

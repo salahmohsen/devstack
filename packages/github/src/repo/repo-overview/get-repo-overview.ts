@@ -22,13 +22,11 @@ import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 
 export async function getRepoOverview(
   input: {
-    owner: string;
     repo: string;
   },
   context?: OrpcContext
 ): Promise<RepoOverview | null> {
   setRepoLoggerContext(context, "getRepoOverview", {
-    owner: input.owner,
     repo: input.repo
   });
 
@@ -42,8 +40,14 @@ export async function getRepoOverview(
   }
 
   const octokit = createGitHubOctokit(source);
-  const repoMetaKey = githubRevalidationSignalKeys.repoMeta(input);
-  const repoCodeKey = githubRevalidationSignalKeys.repoCode(input);
+  const repoMetaKey = githubRevalidationSignalKeys.repoMeta({
+    owner: source.owner,
+    repo: input.repo
+  });
+  const repoCodeKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
 
   try {
     const result = await getGitHubResourceLocalFirst<RepoOverview>({
@@ -126,13 +130,13 @@ export async function getRepoOverview(
             }
           }`,
           {
-            owner: input.owner,
+            owner: source.owner,
             repo: input.repo
           }
         );
 
         if (!response.repository) {
-          throw new Error(`GitHub repository not found: ${input.owner}/${input.repo}`);
+          throw new Error(`GitHub repository not found: ${source.owner}/${input.repo}`);
         }
 
         const overview = mapGraphQLRepoOverview(response.repository);

@@ -8,6 +8,8 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/
 import { parseRepoRouteSplat } from "@/shared/lib/parse-repo-route-splat";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
+import { useGetGithubSetupQuery } from "@/features/github/api/get-github-setup-status.query";
+
 import { SidePanelPortal, useRegisterGithubPublicTab } from "@/widgets/layout";
 
 import {
@@ -39,17 +41,18 @@ import { RepoOverviewSkeleton } from "@/pages/github-repo/ui/repo-overview-skele
 import { RepoSidebar } from "@/pages/github-repo/ui/repo-sidebar";
 
 type GithubRepoPageProps = {
-  owner: string;
   repo: string;
   routeSplat?: string;
   view?: "blob" | "repo" | "tree";
 };
 
-export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: GithubRepoPageProps) {
+export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPageProps) {
   const localePrefix = getLocale() ? `/${getLocale()}` : "";
-  const overviewQuery = useGetGithubRepoOverviewQuery(owner, repo);
-  const branchesQuery = useGetGithubRepoBranchesQuery(owner, repo);
-  useGetGithubRepoActivityCardsQuery(owner, repo);
+  const githubSetup = useGetGithubSetupQuery();
+  const owner = githubSetup.data?.owner ?? "salahmohsen";
+  const overviewQuery = useGetGithubRepoOverviewQuery(repo);
+  const branchesQuery = useGetGithubRepoBranchesQuery(repo);
+  useGetGithubRepoActivityCardsQuery(repo);
 
   const routeTarget = useMemo(
     () =>
@@ -69,7 +72,6 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
       <RepoExplorerLayout
         currentPath={routePath}
         currentRef={branchName}
-        owner={owner}
         repo={repo}
         viewMode="blob"
       />
@@ -81,7 +83,6 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
       <RepoExplorerLayout
         currentPath={routePath}
         currentRef={branchName}
-        owner={owner}
         repo={repo}
         viewMode="tree"
       />
@@ -90,7 +91,7 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
 
   const directoryPath = routePath;
 
-  const treeQuery = useGetGithubRepoTreeQuery(owner, repo, branchName, directoryPath);
+  const treeQuery = useGetGithubRepoTreeQuery(repo, branchName, directoryPath);
 
   const signalTargets = useMemo(() => {
     const repoSignalKeys = [
@@ -100,33 +101,33 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
 
     return [
       {
-        queryKey: getGithubRepoOverviewQueryOptions(owner, repo).queryKey,
+        queryKey: getGithubRepoOverviewQueryOptions(repo).queryKey,
         signalKeys: repoSignalKeys
       },
       {
-        queryKey: getGithubRepoBranchesQueryOptions(owner, repo).queryKey,
+        queryKey: getGithubRepoBranchesQueryOptions(repo).queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       },
       {
-        queryKey: getGithubRepoActivityCardsQueryOptions(owner, repo).queryKey,
+        queryKey: getGithubRepoActivityCardsQueryOptions(repo).queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoMeta({ owner, repo })]
       },
       {
-        queryKey: getGithubRepoTreeQueryOptions(owner, repo, branchName, directoryPath).queryKey,
+        queryKey: getGithubRepoTreeQueryOptions(repo, branchName, directoryPath).queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       },
       {
-        queryKey: getGithubRepoRefCommitQueryOptions(owner, repo, branchName).queryKey,
+        queryKey: getGithubRepoRefCommitQueryOptions(repo, branchName).queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       }
     ];
-  }, [branchName, directoryPath, owner, repo]);
+  }, [branchName, directoryPath, repo]);
   useGitHubSignalStream(signalTargets);
 
   const tabUrl =
     view === "tree"
-      ? `${localePrefix}/${owner}/${repo}/tree/${branchName}${routePath ? `/${routePath}` : ""}`
-      : `${localePrefix}/${owner}/${repo}`;
+      ? `${localePrefix}/${repo}/tree/${branchName}${routePath ? `/${routePath}` : ""}`
+      : `${localePrefix}/${repo}`;
   const tabTitle =
     view === "repo" || !routePath ? `${owner}/${repo}` : (routePath.split("/").at(-1) ?? routePath);
 
@@ -171,17 +172,17 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
   const handleBranchChange = (nextBranch: string) => {
     if (routePath) {
       window.location.assign(
-        `${localePrefix}/${owner}/${repo}/tree/${nextBranch}${routePath ? `/${routePath}` : ""}`
+        `${localePrefix}/${repo}/tree/${nextBranch}${routePath ? `/${routePath}` : ""}`
       );
       return;
     }
 
     if (nextBranch === overview.defaultBranch) {
-      window.location.assign(`${localePrefix}/${owner}/${repo}`);
+      window.location.assign(`${localePrefix}/${repo}`);
       return;
     }
 
-    window.location.assign(`${localePrefix}/${owner}/${repo}/tree/${nextBranch}`);
+    window.location.assign(`${localePrefix}/${repo}/tree/${nextBranch}`);
   };
 
   return (
@@ -201,7 +202,6 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
               <BranchComparisonBanner
                 currentBranch={branchName}
                 defaultBranch={overview.defaultBranch ?? "main"}
-                owner={owner}
                 repo={repo}
               />
             )}
@@ -211,7 +211,6 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
                 branchRef={branchName}
                 defaultBranch={overview.defaultBranch ?? "main"}
                 defaultBranchTip={overview.latestCommit}
-                owner={owner}
                 repoName={repo}
               />
               {treeQuery.data ? (
@@ -227,12 +226,7 @@ export function GithubRepoPage({ owner, repo, routeSplat, view = "repo" }: Githu
               )}
             </div>
 
-            <RepoMarkdownFiles
-              currentRef={branchName}
-              entries={treeQuery.data ?? []}
-              owner={owner}
-              repo={repo}
-            />
+            <RepoMarkdownFiles currentRef={branchName} entries={treeQuery.data ?? []} repo={repo} />
           </div>
 
           <RepoSidebar repo={overview} />

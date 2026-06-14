@@ -43,13 +43,11 @@ function normalizeCommit(
 }
 
 export function LatestCommitBar({
-  owner,
   repoName,
   branchRef,
   defaultBranch,
   defaultBranchTip
 }: {
-  owner: string;
   repoName: string;
   branchRef: string;
   defaultBranch: string;
@@ -57,7 +55,7 @@ export function LatestCommitBar({
 }) {
   const placeholderData = normalizeCommit(defaultBranchTip) ?? undefined;
   const tipQuery = useQuery({
-    ...getGithubRepoRefCommitQueryOptions(owner, repoName, branchRef),
+    ...getGithubRepoRefCommitQueryOptions(repoName, branchRef),
     placeholderData: branchRef === defaultBranch ? placeholderData : undefined
   });
 

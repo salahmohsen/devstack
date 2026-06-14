@@ -19,16 +19,12 @@ import { type GitHubUserActivityEvent } from "#@/types";
 
 export async function getUserActivity(
   input: {
-    isOwnProfile: boolean;
     page: number;
-    username: string;
   },
   context?: OrpcContext
 ): Promise<GitHubUserActivityEvent[]> {
   setRepoLoggerContext(context, "getUserActivity", {
-    isOwnProfile: input.isOwnProfile,
-    page: input.page,
-    username: input.username
+    page: input.page
   });
 
   const source = await resolvePublicGitHubSource();
@@ -41,18 +37,15 @@ export async function getUserActivity(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.ownerActivity(input.username);
+  const signalKey = githubRevalidationSignalKeys.ownerActivity(source.owner);
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserActivityEvent[]>({
       fetcher: async () => {
-        const endpoint = input.isOwnProfile
-          ? "GET /users/{username}/events"
-          : "GET /users/{username}/events/public";
-        const response = await octokit.request(endpoint, {
+        const response = await octokit.request("GET /users/{username}/events/public", {
           page: input.page,
           per_page: 30,
-          username: input.username
+          username: source.owner
         });
 
         return {
@@ -66,7 +59,7 @@ export async function getUserActivity(
             const issue = isRecord(payload["issue"])
               ? (payload["issue"] as Record<string, unknown>)
               : null;
-            const repoName = event.repo?.name ?? `${input.username}/unknown`;
+            const repoName = event.repo?.name ?? `${source.owner}/unknown`;
             const action = typeof payload["action"] === "string" ? payload["action"] : null;
             const title =
               typeof pullRequest?.["title"] === "string"
@@ -195,7 +188,9 @@ export async function getUserActivity(
 
     setRepoLoggerOutcome(
       context,
-      statusCode === 404 ? "github_user_activity_read_not_found" : "github_user_activity_read_failed",
+      statusCode === 404
+        ? "github_user_activity_read_not_found"
+        : "github_user_activity_read_failed",
       statusCode ? { statusCode } : {}
     );
 

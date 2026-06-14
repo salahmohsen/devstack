@@ -37,12 +37,10 @@ const TAB_LABELS: Record<string, string> = {
 
 export function RepoMarkdownFiles({
   entries,
-  owner,
   repo,
   currentRef
 }: {
   entries: GitHubRepoTreeEntry[];
-  owner: string;
   repo: string;
   currentRef: string;
 }) {
@@ -54,11 +52,9 @@ export function RepoMarkdownFiles({
   const queryClient = useQueryClient();
   useEffect(() => {
     for (const file of mdFiles) {
-      void queryClient.prefetchQuery(
-        getGithubRepoFileContentQueryOptions(owner, repo, currentRef, file)
-      );
+      void queryClient.prefetchQuery(getGithubRepoFileContentQueryOptions(repo, currentRef, file));
     }
-  }, [queryClient, mdFiles, owner, repo, currentRef]);
+  }, [queryClient, mdFiles, repo, currentRef]);
 
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const selectedFile = activeTab ?? mdFiles[0] ?? null;
@@ -87,12 +83,7 @@ export function RepoMarkdownFiles({
 
       {selectedFile && (
         <div className="overflow-hidden rounded-2xl border border-white/8">
-          <MarkdownFileContent
-            owner={owner}
-            repo={repo}
-            path={selectedFile}
-            currentRef={currentRef}
-          />
+          <MarkdownFileContent repo={repo} path={selectedFile} currentRef={currentRef} />
         </div>
       )}
     </div>
@@ -100,24 +91,22 @@ export function RepoMarkdownFiles({
 }
 
 function MarkdownFileContent({
-  owner,
   repo,
   path,
   currentRef
 }: {
-  owner: string;
   repo: string;
   path: string;
   currentRef: string;
 }) {
   const contentQuery = useQuery({
-    ...getGithubRepoFileContentQueryOptions(owner, repo, currentRef, path),
+    ...getGithubRepoFileContentQueryOptions(repo, currentRef, path),
     placeholderData: (previous) => previous
   });
 
   const resolveAssetUrl = useCallback(
-    (url: string) => resolveGitHubMarkdownAssetUrl({ owner, repo, ref: currentRef, path }, url),
-    [owner, repo, currentRef, path]
+    (url: string) => resolveGitHubMarkdownAssetUrl({ repo, ref: currentRef, path }, url),
+    [repo, currentRef, path]
   );
 
   if (contentQuery.isLoading) {
@@ -149,7 +138,7 @@ function MarkdownFileContent({
 const ABSOLUTE_MARKDOWN_URL_RE = /^[a-z][a-z\d+\-.]*:|^\/\//iu;
 
 function resolveGitHubMarkdownAssetUrl(
-  { owner, repo, ref, path }: { owner: string; repo: string; ref: string; path: string },
+  { repo, ref, path }: { repo: string; ref: string; path: string },
   url: string
 ) {
   const trimmedUrl = url.trim();
@@ -157,7 +146,7 @@ function resolveGitHubMarkdownAssetUrl(
     return trimmedUrl;
   }
 
-  const rootUrl = `https://github.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/raw/${encodePath(ref)}/`;
+  const rootUrl = `https://github.com/salahmohsen/${encodeURIComponent(repo)}/raw/${encodePath(ref)}/`;
   const directoryPath = encodePath(getDirectoryPath(path));
   const baseUrl = trimmedUrl.startsWith("/")
     ? rootUrl

@@ -21,13 +21,11 @@ import { type GitHubRepoBranch } from "#@/types";
 
 export async function getRepoBranches(
   input: {
-    owner: string;
     repo: string;
   },
   context?: OrpcContext
 ): Promise<GitHubRepoBranch[]> {
   setRepoLoggerContext(context, "getRepoBranches", {
-    owner: input.owner,
     repo: input.repo
   });
 
@@ -41,7 +39,10 @@ export async function getRepoBranches(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.repoCode(input);
+  const signalKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoBranch[]>({

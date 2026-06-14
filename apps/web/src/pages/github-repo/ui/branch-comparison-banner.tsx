@@ -7,21 +7,14 @@ import { useGetGithubRepoBranchComparisonQuery } from "@/pages/github-repo/api/g
 export function BranchComparisonBanner({
   currentBranch,
   defaultBranch,
-  owner,
   repo
 }: {
   currentBranch: string;
   defaultBranch: string;
-  owner: string;
   repo: string;
 }) {
   const isSameBranch = currentBranch === defaultBranch;
-  const comparisonQuery = useGetGithubRepoBranchComparisonQuery(
-    owner,
-    repo,
-    defaultBranch,
-    currentBranch
-  );
+  const comparisonQuery = useGetGithubRepoBranchComparisonQuery(repo, defaultBranch, currentBranch);
 
   if (isSameBranch) return null;
 
@@ -41,7 +34,7 @@ export function BranchComparisonBanner({
   const { aheadBy, behindBy } = comparison;
   if (aheadBy === 0 && behindBy === 0) return null;
 
-  const compareUrl = `https://github.com/${owner}/${repo}/compare/${defaultBranch}...${currentBranch}`;
+  const compareUrl = `https://github.com/${repo}/compare/${defaultBranch}...${currentBranch}`;
   const createPrUrl = `${compareUrl}?expand=1`;
 
   return (

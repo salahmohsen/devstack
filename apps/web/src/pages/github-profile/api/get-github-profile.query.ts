@@ -1,26 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
-export const githubProfileQueryKeys = {
-  byUsername(username: string) {
-    return orpc.public.github.getUserProfile.queryOptions({
-      input: { username }
-    }).queryKey;
-  }
-};
+export const githubProfileQueryKeys = () => orpc.public.github.getUserProfile.queryKey;
 
-export function getGithubProfileQueryOptions(username: string) {
+export function getGithubProfileQueryOptions() {
   return orpc.public.github.getUserProfile.queryOptions({
-    input: { username },
-    meta: persistedMeta
+    meta: persistedMeta,
+    staleTime: githubCachePolicy.detail.staleTimeMs,
+    gcTime: githubCachePolicy.detail.gcTimeMs
   });
 }
 
-export function useGetGithubProfileQuery(username: string) {
-  return useQuery(getGithubProfileQueryOptions(username));
+export function useGetGithubProfileQuery() {
+  return useQuery(getGithubProfileQueryOptions());
 }
 
 export type GithubProfileQueryResult = Awaited<

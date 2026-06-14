@@ -1,26 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
 export const githubRepoActivityCardsQueryKeys = {
-  byRepo(owner: string, repo: string) {
+  byRepo(repo: string) {
     return orpc.public.github.getRepoActivityCards.queryOptions({
-      input: { owner, repo }
+      input: { repo }
     }).queryKey;
   }
 };
 
-export function getGithubRepoActivityCardsQueryOptions(owner: string, repo: string) {
+export function getGithubRepoActivityCardsQueryOptions(repo: string) {
   return orpc.public.github.getRepoActivityCards.queryOptions({
-    input: { owner, repo },
+    input: { repo },
+    staleTime: githubCachePolicy.activity.staleTimeMs,
+    gcTime: githubCachePolicy.activity.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoActivityCardsQuery(owner: string, repo: string) {
-  return useQuery(getGithubRepoActivityCardsQueryOptions(owner, repo));
+export function useGetGithubRepoActivityCardsQuery(repo: string) {
+  return useQuery(getGithubRepoActivityCardsQueryOptions(repo));
 }
 
 export type GithubRepoActivityCardsQueryResult = Awaited<
