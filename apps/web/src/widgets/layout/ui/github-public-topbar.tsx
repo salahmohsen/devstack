@@ -99,20 +99,19 @@ export function Topbar() {
     () => [
       { to: "/", label: "Overview", icon: HomeIcon },
       {
-        to: "/$owner",
+        to: "/repos",
         label: "Repositories",
-        icon: ArchiveIcon,
-        params: { owner: owner ?? "" }
+        icon: ArchiveIcon
       },
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon }
     ],
-    [owner]
+    []
   );
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const routes = ["/", "/$owner", "/dashboard"];
+      const routes = ["/", "/repos", "/dashboard"];
       for (const to of routes) {
         if (cancelled) break;
         try {
@@ -152,8 +151,7 @@ export function Topbar() {
       enabled: Boolean(owner),
       onTrigger: () => {
         void navigateRef.current({
-          to: "/$owner",
-          params: { owner: owner ?? "" }
+          to: "/" as never
         });
       }
     },
@@ -228,14 +226,14 @@ export function Topbar() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild disabled={!owner}>
-                <Link to="/$owner" params={{ owner: owner ?? "" }}>
+                <Link to="/">
                   <UserCircleIcon size={16} strokeWidth={2} />
                   Profile
                   <DropdownMenuShortcut>G U</DropdownMenuShortcut>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild disabled={!owner}>
-                <Link to="/$owner" params={{ owner: owner ?? "" }}>
+                <Link to="/repos">
                   <ArchiveIcon size={16} strokeWidth={2} />
                   Repositories
                   <DropdownMenuShortcut>G O</DropdownMenuShortcut>

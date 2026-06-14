@@ -36,46 +36,52 @@ async function ensureGithubQueryData<T>({
   }
 }
 
-export const Route = createFileRoute("/{-$locale}/(github-layout)/")({
+export const Route = createFileRoute("/{-$locale}/(layout)/")({
   ssr: true,
-  beforeLoad: async ({ context }) => {
+  beforeLoad: ({ context }) =>
+    context.queryClient.ensureQueryData(getGithubSetupStatusQueryOptions()),
+  loader: async ({ context }) => {
     const setupStatus = await ensureGithubQueryData({
-      load: () => context.queryClient.ensureQueryData(getGithubSetupStatusQueryOptions()),
+      load: async () => {
+        const cachedSetupStatus = context.queryClient.getQueryData(
+          getGithubSetupStatusQueryOptions().queryKey
+        );
+
+        if (cachedSetupStatus) {
+          return cachedSetupStatus;
+        }
+
+        return context.queryClient.ensureQueryData(getGithubSetupStatusQueryOptions());
+      },
       event: "home_github_setup_status_preload_failed"
     });
 
     if (setupStatus.isConfigured && setupStatus.owner) {
       await Promise.all([
         ensureGithubQueryData({
-          load: () =>
-            context.queryClient.ensureQueryData(getGithubProfileQueryOptions(setupStatus.owner!)),
+          load: () => context.queryClient.prefetchQuery(getGithubProfileQueryOptions()),
           event: "home_github_profile_preload_failed",
           owner: setupStatus.owner
         }),
         ensureGithubQueryData({
-          load: () =>
-            context.queryClient.ensureQueryData(
-              getGithubPinnedReposQueryOptions(setupStatus.owner!)
-            ),
+          load: () => context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions()),
           event: "home_github_pinned_repos_preload_failed",
           owner: setupStatus.owner
         }),
         ensureGithubQueryData({
-          load: () =>
-            context.queryClient.ensureQueryData(
-              getGithubContributionsQueryOptions(setupStatus.owner!)
-            ),
+          load: () => context.queryClient.prefetchQuery(getGithubContributionsQueryOptions()),
           event: "home_github_contributions_preload_failed",
           owner: setupStatus.owner
         }),
         ensureGithubQueryData({
-          load: () =>
-            context.queryClient.ensureQueryData(getGithubActivityQueryOptions(setupStatus.owner!)),
+          load: () => context.queryClient.prefetchQuery(getGithubActivityQueryOptions()),
           event: "home_github_activity_preload_failed",
           owner: setupStatus.owner
         })
       ]);
     }
+
+    return setupStatus;
   },
   head: ({ params }) =>
     generateAppSeo({
@@ -89,5 +95,6 @@ export const Route = createFileRoute("/{-$locale}/(github-layout)/")({
 });
 
 function RootGithubProfilePage() {
-  return <GithubProfilePage />;
+  const setupStatus = Route.useLoaderData();
+  return <GithubProfilePage username={setupStatus.owner ?? ""} />;
 }

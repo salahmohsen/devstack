@@ -2,23 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { generateAppSeo } from "@/shared/lib/seo";
 
-import { SignInForm } from "@/features/auth";
+import { CreateAnAccountForm } from "@/features/auth";
 
 import { appConfig } from "@/config/app.config";
 
-export const Route = createFileRoute("/{-$locale}/(centered-layout)/(guest)/sign-in/")({
+export const Route = createFileRoute("/{-$locale}/(layout)/sign-in/create-an-account/")({
   head: ({ params }) =>
     generateAppSeo({
       alternates: {
-        canonicalPath: "/sign-in",
+        canonicalPath: "/create-an-account",
         locale: params.locale
       },
-      description: `Sign in to access your ${appConfig.site.shortName} account and manage your saved application data.`,
+      description: `Create a ${appConfig.site.shortName} account to save your progress and access personalized features.`,
       robots: {
         follow: false,
         index: false
       },
-      title: "Sign In"
+      title: "Create an Account"
     }),
   component: RouteComponent
 });
@@ -26,5 +26,5 @@ export const Route = createFileRoute("/{-$locale}/(centered-layout)/(guest)/sign
 function RouteComponent() {
   const { redirect } = Route.useSearch();
 
-  return <SignInForm redirectTo={redirect} />;
+  return <CreateAnAccountForm redirectTo={redirect} />;
 }

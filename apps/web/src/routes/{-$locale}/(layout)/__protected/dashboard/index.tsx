@@ -8,7 +8,7 @@ import { DashboardPage } from "@/pages/dashboard";
 
 import { appConfig } from "@/config/app.config";
 
-export const Route = createFileRoute("/{-$locale}/(auth)/dashboard/")({
+export const Route = createFileRoute("/{-$locale}/(layout)/__protected/dashboard/")({
   beforeLoad: ({ context }) => {
     void context.queryClient.ensureQueryData(orpc.appSettings.get.queryOptions());
   },

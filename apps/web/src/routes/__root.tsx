@@ -11,6 +11,7 @@ import { type QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 
 import {
   getAuthUserQueryOptions,
@@ -39,7 +40,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   shellComponent: RootDocument,
   // Consider removing this if you don't need the auth state everywhere
   // An example of when to KEEP it is when you conditionally display a sign-up button in the header based on the auth state
-  beforeLoad: ({ context, preload }) => {
+  beforeLoad: async ({ context, preload }) => {
     // Don't prefetch during preload to prevent spamming the server with getSession requests
     if (!preload) {
       // Prefetch (don't await) the user data on app load to have it ready for any route that needs it, and to set the auth state early
@@ -123,8 +124,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="dark">
           <TooltipProvider>
             <ProgressProvider>
-              {children}
-              <Toaster richColors />
+              <NuqsAdapter>
+                {children}
+                <Toaster richColors />
+              </NuqsAdapter>
               <TanStackDevtools
                 plugins={[
                   {

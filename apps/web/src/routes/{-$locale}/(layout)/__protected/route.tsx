@@ -37,7 +37,7 @@ function isGuestRoute(pathname: string): boolean {
   return matchingRoute ? matchingRoute.id.includes("(guest)") : false;
 }
 
-export const Route = createFileRoute("/{-$locale}/(auth)")({
+export const Route = createFileRoute("/{-$locale}/(layout)/__protected")({
   beforeLoad: async ({ context, location }) => {
     const user = await context.queryClient.ensureQueryData({
       ...getAuthUserQueryOptions(),
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/{-$locale}/(auth)")({
       const redirectTo = validateNavigateTo({
         fallbackTo: "/",
         routeTree,
-        shouldIncludeRoute: (route) => !route.id.includes("(guest)"),
+        shouldIncludeRoute: (route) => !route.id.includes("(auth)"),
         to: currentHref
       });
 
@@ -72,17 +72,6 @@ function RequiresAuthLayout() {
   const location = useLocation();
   const { data: user } = useQuery(getAuthUserQueryOptions());
   const logger = useLogger();
-  const normalizedPath = stripLocalePrefix(location.pathname);
-
-  const pageTitle = (() => {
-    switch (normalizedPath) {
-      case "/dashboard/github-config":
-        return "GitHub Config";
-      case "/dashboard":
-      default:
-        return "Dashboard";
-    }
-  })();
 
   useEffect(() => {
     if (user === null) {
@@ -121,7 +110,7 @@ function RequiresAuthLayout() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+                  <BreadcrumbPage>TITTTTLE</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>

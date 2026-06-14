@@ -6,7 +6,6 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { useHasMounted } from "@/shared/lib/use-has-mounted";
 import { useMediaQuery } from "@/shared/lib/use-media-query";
 
-import { AlphaNoticeDialog } from "./alpha-notice-dialog";
 import { CommandPalette } from "./command-palette";
 import { DashboardBottomBar } from "./dashboard-bottombar";
 import {
@@ -65,7 +64,6 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
 
       <DashboardBottomBar />
       <GithubPublicMobileNav />
-      <AlphaNoticeDialog />
       <GitHubAccessDialog />
       <CommandPalette />
     </div>
