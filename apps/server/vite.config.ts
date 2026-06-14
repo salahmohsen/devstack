@@ -3,7 +3,7 @@ import { defineConfig } from "vite-plus";
 
 import { normalizeUrlString } from "@tsu-stack/env/utils/url";
 
-const DEFAULT_SERVER_URL = "http://localhost:5000/server";
+const DEFAULT_SERVER_URL = "http://localhost:5001";
 const configuredServerUrl =
   process.env.VITE_SERVER_URL ??
   (process.env.NODE_ENV === "production" ? undefined : DEFAULT_SERVER_URL);

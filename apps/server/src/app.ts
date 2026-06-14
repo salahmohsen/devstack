@@ -59,6 +59,17 @@ app.use(
 
 app.post("/_logs/ingest", honoLogIngestionMiddleware());
 
+app.get("/api/ws/github-signals", (c) => {
+  const relay = c.env.GITHUB_SIGNAL_RELAY;
+  if (!relay) {
+    return c.json({ message: "GitHub signal relay is not configured." }, 503);
+  }
+
+  const id = relay.idFromName("global");
+  const stub = relay.get(id);
+  return stub.fetch("https://internal/connect", c.req.raw);
+});
+
 app.onError((error, c) => {
   const requestLog = c.get("log");
   if (requestLog) {
@@ -180,7 +191,7 @@ export const openApiHandler = new OpenAPIHandler(appRouter, {
         info: {
           description: `This is the API for @tsu-stack/server.\n## Usage\nFor authentication, you can sign in via the \`/sign-in\` endpoint in [the Auth Reference](${ENV_SERVER.VITE_SERVER_URL}/docs#auth-api-reference). Include the session cookie in subsequent requests to access protected endpoints.\n## Resources\n - [Official Website](${ENV_SERVER.VITE_WEB_URL})\n - [Auth API Reference](${ENV_SERVER.VITE_SERVER_URL}/docs#auth-api-reference)`,
           title: "@tsu-stack/server API",
-          version: ENV_SERVER.SOURCE_COMMIT
+          version: ENV_SERVER.WORKERS_CI_COMMIT_SHA
         },
         servers: [
           {

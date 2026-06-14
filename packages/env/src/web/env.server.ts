@@ -4,7 +4,8 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 console.debug("⏳ [ENV_WEB_SERVER] Loading environment variables...", {
-  SOURCE_COMMIT: process.env.SOURCE_COMMIT
+  // https://developers.cloudflare.com/changelog/post/2025-06-10-default-env-vars/
+  SOURCE_COMMIT: process.env.WORKERS_CI_COMMIT_SHA
 });
 
 export const ENV_WEB_SERVER = createEnv({

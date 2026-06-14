@@ -30,7 +30,11 @@ const getORPCClient = createIsomorphicFn()
       fetch(url, options) {
         return fetch(url, {
           ...options,
+
           credentials: "include"
+        }).catch((error) => {
+          console.error("[rpc-fetch-failed]", { url, error });
+          throw error;
         });
       },
       url: `${ENV_WEB_ISOMORPHIC.VITE_SERVER_URL}/rpc`

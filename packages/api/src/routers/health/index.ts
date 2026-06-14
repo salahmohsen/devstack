@@ -57,7 +57,7 @@ async function runCheck(check: () => Promise<object>): Promise<HealthCheckResult
 
 function buildBaseHealth() {
   return {
-    buildSha: ENV_SERVER.SOURCE_COMMIT,
+    buildSha: ENV_SERVER.WORKERS_CI_COMMIT_SHA,
     environment: ENV_SERVER.NODE_ENV,
     timestamp: new Date().toISOString(),
     uptimeMs: Math.floor(process.uptime() * 1000),

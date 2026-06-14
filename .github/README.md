@@ -134,8 +134,8 @@ Here is a non-exhaustive list of the main technologies used in this project, alo
    ```
 
    The following applications will be running:
-   - **Web App**: `http://localhost:3000/web`
-   - **Server**: `http://localhost:5000/server`
+   - **Web App**: `http://localhost:3000`
+   - **Server**: `http://localhost:5000`
 
 > [!TIP]
 > Run `vp run fix` to lint, format, and type-check your code. This is also automatically run when you do `git commit`.

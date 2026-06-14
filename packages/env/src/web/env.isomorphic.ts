@@ -14,10 +14,10 @@ export const ENV_WEB_ISOMORPHIC = createEnv({
     VITE_IMGPROXY_URL: z.url().optional(),
     VITE_SERVER_URL: isProduction
       ? normalizedUrlSchema
-      : normalizedUrlSchema.default("http://localhost:5000/server"),
+      : normalizedUrlSchema.default("http://localhost:5001"),
     VITE_WEB_URL: isProduction
       ? normalizedUrlSchema
-      : normalizedUrlSchema.default("http://localhost:3000/web")
+      : normalizedUrlSchema.default("http://localhost:3000")
   },
   clientPrefix: "VITE_",
   emptyStringAsUndefined: true,
