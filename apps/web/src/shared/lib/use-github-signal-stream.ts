@@ -1,5 +1,5 @@
 import { type QueryKey, useQueryClient } from "@tanstack/react-query";
-import { type RefObject, useEffect, useMemo, useRef } from "react";
+import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import { client } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
@@ -17,6 +17,8 @@ type SignalMessage = {
   type: "signals";
   keys: string[];
 };
+
+type GitHubSignalStreamStatus = "connecting" | "connected" | "disconnected";
 
 function isSignalMessage(data: unknown): data is SignalMessage {
   return (
@@ -207,9 +209,10 @@ function useGitHubSignalStreamWebSocket(
   targets: readonly GitHubSignalStreamTarget[],
   signalKeysKey: string,
   lastSeenTimestampsRef: RefObject<Map<string, number>>
-) {
+): GitHubSignalStreamStatus {
   const queryClient = useQueryClient();
   const targetsRef = useRef(targets);
+  const [status, setStatus] = useState<GitHubSignalStreamStatus>("connecting");
 
   useEffect(() => {
     targetsRef.current = targets;
@@ -217,6 +220,12 @@ function useGitHubSignalStreamWebSocket(
 
   useEffect(() => {
     if (signalKeysKey.length === 0) {
+      setStatus("disconnected");
+      return;
+    }
+
+    if (typeof WebSocket === "undefined") {
+      setStatus("disconnected");
       return;
     }
 
@@ -342,6 +351,7 @@ function useGitHubSignalStreamWebSocket(
     function connect() {
       if (disposed) return;
 
+      setStatus("connecting");
       debug("github-signal-stream", "connecting", {
         url: getWebSocketUrl()
       });
@@ -349,6 +359,7 @@ function useGitHubSignalStreamWebSocket(
       ws = new WebSocket(getWebSocketUrl());
 
       ws.addEventListener("open", () => {
+        setStatus("connected");
         debug("github-signal-stream", "connected");
         if (ws) sendSubscription(ws);
         void syncSignalsFromServer("github-signal-ws-catchup");
@@ -363,6 +374,9 @@ function useGitHubSignalStreamWebSocket(
           wasClean: event.wasClean
         });
         ws = null;
+        if (!disposed) {
+          setStatus("disconnected");
+        }
         scheduleReconnect();
       });
 
@@ -412,12 +426,15 @@ function useGitHubSignalStreamWebSocket(
       }
     };
   }, [signalKeysKey, queryClient, lastSeenTimestampsRef]);
+
+  return status;
 }
 
 function useGitHubSignalPoll(
   targets: readonly GitHubSignalStreamTarget[],
   signalKeysKey: string,
-  lastSeenTimestampsRef: RefObject<Map<string, number>>
+  lastSeenTimestampsRef: RefObject<Map<string, number>>,
+  enabled: boolean
 ) {
   const queryClient = useQueryClient();
   const targetsRef = useRef(targets);
@@ -427,7 +444,7 @@ function useGitHubSignalPoll(
   }, [targets]);
 
   useEffect(() => {
-    if (signalKeysKey.length === 0) {
+    if (!enabled || signalKeysKey.length === 0) {
       return;
     }
 
@@ -493,7 +510,7 @@ function useGitHubSignalPoll(
         clearTimeout(pollTimer);
       }
     };
-  }, [signalKeysKey, queryClient, lastSeenTimestampsRef]);
+  }, [enabled, signalKeysKey, queryClient, lastSeenTimestampsRef]);
 }
 
 export function useGitHubSignalStream(targets: readonly GitHubSignalStreamTarget[]) {
@@ -523,6 +540,15 @@ export function useGitHubSignalStream(targets: readonly GitHubSignalStreamTarget
     lastSeenTimestampsRef.current = new Map();
   }, [signalKeysKey, mergedTargetsIdentity]);
 
-  useGitHubSignalStreamWebSocket(mergedTargets, signalKeysKey, lastSeenTimestampsRef);
-  useGitHubSignalPoll(mergedTargets, signalKeysKey, lastSeenTimestampsRef);
+  const streamStatus = useGitHubSignalStreamWebSocket(
+    mergedTargets,
+    signalKeysKey,
+    lastSeenTimestampsRef
+  );
+  useGitHubSignalPoll(
+    mergedTargets,
+    signalKeysKey,
+    lastSeenTimestampsRef,
+    streamStatus === "disconnected"
+  );
 }

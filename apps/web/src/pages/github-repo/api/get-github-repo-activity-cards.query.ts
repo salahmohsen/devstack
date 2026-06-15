@@ -18,6 +18,7 @@ export function getGithubRepoActivityCardsQueryOptions(repo: string) {
     input: { repo },
     staleTime: githubCachePolicy.activity.staleTimeMs,
     gcTime: githubCachePolicy.activity.gcTimeMs,
+    retry: false,
     meta: persistedMeta
   });
 }

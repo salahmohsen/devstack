@@ -23,6 +23,7 @@ export function getGithubTreeEntryCommitsQueryOptions(
     input: { dirPath, entries, ref, repo },
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs,
+    retry: false,
     meta: persistedMeta
   });
 }

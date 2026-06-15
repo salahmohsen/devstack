@@ -16,7 +16,7 @@ import { Image } from "@/shared/ui/image";
 
 import { appConfig } from "@/config/app.config";
 
-export const Route = createFileRoute("/{-$locale}/(root-layout)/playground/")({
+export const Route = createFileRoute("/{-$locale}/(layout)/playground/")({
   head: ({ params }) =>
     generateAppSeo({
       alternates: {
@@ -104,9 +104,6 @@ function PlaygroundPage() {
           </Button>
           <Button variant="outline" asChild>
             <Link to={"/not-found" as To}>{m.playground_page__visit_not_found_page()}</Link>
-          </Button>
-          <Button variant="destructive" asChild>
-            <Link to="/error">{m.playground_page__visit_error_page()}</Link>
           </Button>
         </div>
       </section>

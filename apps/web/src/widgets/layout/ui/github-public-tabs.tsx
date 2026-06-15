@@ -9,7 +9,6 @@ import {
   type SVGProps
 } from "react";
 
-import { getLocale } from "@tsu-stack/i18n/runtime";
 import {
   ActionsIcon,
   ArchiveIcon,
@@ -113,7 +112,6 @@ export function Tabs() {
   } | null>(null);
   const { scrollRef, canScrollLeft, canScrollRight, updateScrollState, handleWheel } =
     useScrollShadows(openTabs.length);
-  const rootHref = getLocale() ? `/${getLocale()}` : "/";
 
   const handleDragStart = useCallback((id: string) => {
     dragTabRef.current = id;

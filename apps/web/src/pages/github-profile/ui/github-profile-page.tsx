@@ -21,14 +21,6 @@ import { getLocale } from "@tsu-stack/i18n/runtime";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Container } from "@tsu-stack/ui/components/container";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle
-} from "@tsu-stack/ui/components/empty";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
@@ -70,12 +62,13 @@ import { PinnedRepoCard } from "@/pages/github-profile/ui/pinned-repo-card";
 import { RepositoryRow } from "@/pages/github-profile/ui/repository-row";
 import { UserActivityFeed } from "@/pages/github-profile/ui/user-activity-feed";
 
-export function GithubProfilePage({ username }: { username: string }) {
+export function GithubProfilePage() {
   const hasMounted = useHasMounted();
   const location = useRouterState({
     select: (state) => state.location
   });
   const setupStatusQuery = useGetGithubSetupStatusQuery();
+  const owner = setupStatusQuery.data?.owner ?? "salahnmohsen";
   const currentSearch = new URLSearchParams(location.searchStr);
   const activeTab = resolveGithubProfileTab(currentSearch.get("tab"));
   const isRepositoriesTab = activeTab === githubProfileTabs.repositories;
@@ -90,26 +83,26 @@ export function GithubProfilePage({ username }: { username: string }) {
       [
         {
           queryKey: getGithubProfileQueryOptions().queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerProfile(username)]
+          signalKeys: [githubRevalidationSignalKeys.ownerProfile(owner)]
         },
         {
           queryKey: getGithubContributionsQueryOptions().queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerContributions(username)]
+          signalKeys: [githubRevalidationSignalKeys.ownerContributions(owner)]
         },
         {
           queryKey: getGithubPinnedReposQueryOptions().queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerPinnedRepos(username)]
+          signalKeys: [githubRevalidationSignalKeys.ownerPinnedRepos(owner)]
         },
         {
           queryKey: getGithubProfileReposQueryOptions().queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerRepos(username)]
+          signalKeys: [githubRevalidationSignalKeys.ownerRepos(owner)]
         },
         {
           queryKey: getGithubActivityQueryOptions().queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerActivity(username)]
+          signalKeys: [githubRevalidationSignalKeys.ownerActivity(owner)]
         }
       ] as const,
-    []
+    [owner]
   );
   useGitHubSignalStream(signalTargets);
 
@@ -120,8 +113,8 @@ export function GithubProfilePage({ username }: { username: string }) {
     return <GithubProfileSkeleton />;
   }
 
-  if (!setupStatusQuery.data?.isConfigured || !username) {
-    return <GithubProfileSetupState />;
+  if (!setupStatusQuery.data?.isConfigured || !owner) {
+    return <GithubProfileUnavailableState />;
   }
 
   if (profileQuery.isLoading && !profileQuery.data) {
@@ -134,23 +127,19 @@ export function GithubProfilePage({ username }: { username: string }) {
     contributionsQuery.isError ||
     activityQuery.isError
   ) {
-    console.log("profileQuery.error", profileQuery.error);
-    console.log("pinnedReposQuery.error", pinnedReposQuery.error);
-    console.log("contributionsQuery.error", contributionsQuery.error);
-    console.log("activityQuery.error", activityQuery.error);
     return <GithubProfileUnavailableState />;
   }
 
   const profile = profileQuery.data;
   if (!profile) {
-    return <GithubProfileSetupState />;
+    return <GithubProfileUnavailableState />;
   }
 
   const repos = reposQuery.data ?? [];
   const safePage = clampRepoListPage(currentPage, repos.length);
   const pagedRepos = sliceReposForPage(repos, safePage);
-  const overviewHref = resolvedProfileHref(username, localePrefix);
-  const repositoriesHref = buildRepositoriesHref(username, localePrefix, 1);
+  const overviewHref = resolvedProfileHref(owner, localePrefix);
+  const repositoriesHref = buildRepositoriesHref(owner, localePrefix, 1);
 
   return (
     <div className="overflow-hidden pb-16">
@@ -323,7 +312,7 @@ export function GithubProfilePage({ username }: { username: string }) {
                         size="sm"
                         className="mx-auto mt-6 rounded-full bg-white/8 text-white hover:bg-white/12"
                       >
-                        <a href={buildRepositoriesHref(username, localePrefix, safePage + 1)}>
+                        <a href={buildRepositoriesHref(owner, localePrefix, safePage + 1)}>
                           <ChevronDownIcon className="size-4" />
                           Load more
                         </a>
@@ -337,27 +326,6 @@ export function GithubProfilePage({ username }: { username: string }) {
         </div>
       </div>
     </div>
-  );
-}
-
-function GithubProfileSetupState() {
-  return (
-    <Container className="py-16">
-      <Empty>
-        <EmptyHeader>
-          <EmptyTitle>GitHub profile is not configured</EmptyTitle>
-          <EmptyDescription>
-            Add the public GitHub username and token in the dashboard to render the homepage
-            profile.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button asChild>
-            <Link to="/dashboard/github-config">Open GitHub config</Link>
-          </Button>
-        </EmptyContent>
-      </Empty>
-    </Container>
   );
 }
 

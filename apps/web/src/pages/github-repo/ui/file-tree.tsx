@@ -15,12 +15,11 @@ type FileTreeProps = {
     path: string;
     type: "dir" | "file" | "submodule";
   }>;
-  owner: string;
   refName: string;
   repo: string;
 };
 
-export function FileTree({ directoryPath, entries, owner, refName, repo }: FileTreeProps) {
+export function FileTree({ directoryPath, entries, refName, repo }: FileTreeProps) {
   const entryNames = useMemo(() => entries.map((entry) => entry.name), [entries]);
   const commitsQuery = useGetGithubTreeEntryCommitsQuery(
     repo,
@@ -35,7 +34,6 @@ export function FileTree({ directoryPath, entries, owner, refName, repo }: FileT
         <FileTreeRow
           key={entry.path}
           entry={entry}
-          owner={owner}
           repo={repo}
           refName={refName}
           commit={commitsQuery.data?.[entry.name] ?? null}
@@ -49,7 +47,6 @@ export function FileTree({ directoryPath, entries, owner, refName, repo }: FileT
 
 function FileTreeRow({
   entry,
-  owner,
   repo,
   refName,
   commit,
@@ -57,7 +54,6 @@ function FileTreeRow({
   isLast
 }: {
   entry: FileTreeProps["entries"][number];
-  owner: string;
   repo: string;
   refName: string;
   commit: { message: string | null; date: string | null } | null;
