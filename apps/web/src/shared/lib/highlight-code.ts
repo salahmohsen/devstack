@@ -5,46 +5,21 @@ import {
   shikiBundledLangSet
 } from "@tsu-stack/ui/lib/shiki-bundle";
 
-const FENCE_LANG_ALIASES: Record<string, string> = {
-  bash: "bash",
-  cjs: "javascript",
-  cfg: "ini",
-  conf: "ini",
-  console: "shellscript",
-  cs: "csharp",
-  cts: "typescript",
-  cxx: "cpp",
-  dockerfile: "dockerfile",
-  env: "bash",
-  erb: "ruby",
-  fish: "bash",
-  gql: "graphql",
-  h: "c",
-  hpp: "cpp",
-  htm: "html",
-  hxx: "cpp",
-  js: "javascript",
-  json5: "json",
-  jsonc: "json",
-  kts: "kotlin",
-  md: "markdown",
-  mjs: "javascript",
-  mts: "typescript",
-  patch: "diff",
-  pm: "perl",
-  ps1: "powershell",
-  py: "python",
-  rb: "ruby",
-  rs: "rust",
-  sh: "shellscript",
+const FENCE_LANG_ALIASES: Record<string, ShikiBundledLang> = {
   shell: "shellscript",
-  svg: "html",
-  tf: "hcl",
-  tfvars: "hcl",
+  sh: "shellscript",
+  zsh: "shellscript",
+  console: "shellscript",
+  js: "javascript",
   ts: "typescript",
-  xhtml: "html",
+  py: "python",
+  rs: "rust",
+  rb: "ruby",
+  kt: "kotlin",
+  cs: "csharp",
   yml: "yaml",
-  zsh: "shellscript"
+  gql: "graphql",
+  md: "markdown"
 };
 
 const highlighterPromise: Promise<MarkdownHighlighter> =
@@ -67,7 +42,7 @@ export function highlightCode(code: string, lang: string): Promise<string> {
     return highlighter.codeToHtml(code, {
       defaultColor: false,
       lang: effectiveLang,
-      themes: { dark: "portfolio-dark", light: "portfolio-light" }
+      themes: { light: "diffkit-light", dark: "diffkit-dark" }
     });
   });
   htmlCache.set(key, promise);

@@ -80,6 +80,25 @@
   }
 }
 
+/* Shiki syntax highlighting — dual theme support */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+}
+
+.shiki {
+  background-color: var(--background);
+}
+
+.dark .shiki.shiki,
+.dark .shiki .line span {
+  color: var(--shiki-dark);
+}
+
+.dark .shiki.shiki {
+  background-color: var(--surface-1);
+}
+
 @utility container {
   width: 100%;
   @media (width >= 40rem /* 640px sm */) {

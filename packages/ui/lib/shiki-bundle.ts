@@ -1,8 +1,12 @@
 import { createHighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 
-import { shikiDark, shikiLight } from "@tsu-stack/ui/lib/shiki-themes";
+import { diffkitDark, diffkitLight } from "./shiki-themes";
 
+/**
+ * Fine-grained Shiki bundle: only these grammars are ever loaded (see shiki.style/guide/bundles).
+ * Unknown fence languages fall back to unstyled output via `text` in highlight callers.
+ */
 export const SHIKI_BUNDLED_LANGS = [
   "javascript",
   "typescript",
@@ -75,7 +79,7 @@ export type MarkdownHighlighter = Awaited<ReturnType<typeof createHighlighterCor
 
 export function createMarkdownHighlighter(): Promise<MarkdownHighlighter> {
   return createHighlighterCore({
-    themes: [shikiLight, shikiDark],
+    themes: [diffkitLight, diffkitDark],
     langs: SHIKI_BUNDLED_LANGS.map((id) => LANG_IMPORTS[id]),
     engine: createJavaScriptRegexEngine()
   });
