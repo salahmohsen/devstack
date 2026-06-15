@@ -20,8 +20,8 @@ type PinnedRepoCardProps = {
 export function PinnedRepoCard({ repo }: PinnedRepoCardProps) {
   return (
     <Link
-      to={`/$owner/$repo`}
-      params={{ owner: repo.owner, repo: repo.name }}
+      to={`/$repo`}
+      params={{ repo: repo.name }}
       className="flex min-h-36 flex-col gap-3 rounded-2xl border border-white/8 bg-white/4 p-4 transition-colors hover:bg-white/6"
     >
       <div className="flex min-w-0 items-center gap-2">

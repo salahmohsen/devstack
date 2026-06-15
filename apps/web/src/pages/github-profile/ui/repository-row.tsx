@@ -101,7 +101,7 @@ export function RepositoryRow({ repo }: RepositoryRowProps) {
       <div ref={containerRef} className="flex items-start justify-end">
         {showChart ? (
           <Suspense fallback={sparklineFallback}>
-            <RepoCommitSparkline owner={repo.owner} repo={repo.name} />
+            <RepoCommitSparkline repo={repo.name} />
           </Suspense>
         ) : (
           sparklineFallback
