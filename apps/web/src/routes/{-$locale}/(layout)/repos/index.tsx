@@ -1,9 +1,9 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryState } from "nuqs";
-import { createElement, useEffect, useMemo, useRef, type ComponentType } from "react";
+import { createElement, useEffect, useMemo, useRef } from "react";
 
-import { ArchiveIcon, ChevronDownIcon, FilterIcon, LockIcon, ViewIcon } from "@tsu-stack/icons";
+import { ChevronDownIcon, FilterIcon, LockIcon, ViewIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
@@ -17,16 +17,16 @@ import {
   type FilterDefinition,
   getFilterCookie,
   githubReposHubQueryOptions,
-  type ReposHubInput,
   REPO_LIST_PAGE_SIZE,
   repoListHasNextPage,
   repoListPageQueryParser,
+  type ReposHubInput,
   RepositoryRow,
   safeRepoListPage,
   type SortOption,
-  type UserRepoSummary,
   useDebouncedValue,
-  useListFilters
+  useListFilters,
+  type UserRepoSummary
 } from "@/pages/github-repos";
 import { buildReposHubPrefetchInput } from "@/pages/github-repos/lib/repos-hub-filter";
 
@@ -215,7 +215,7 @@ function RepositoriesPage() {
 
   if (!setupStatusQuery.data?.isConfigured || !setupStatusQuery.data.owner) {
     return (
-      <div className="overflow-stable h-full overflow-auto py-10">
+      <div className="h-full overflow-auto py-10">
         <div className="mx-auto grid max-w-7xl gap-14 px-3 md:px-6 xl:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]">
           <aside className="flex h-fit flex-col gap-5 xl:sticky xl:top-0">
             <div className="flex flex-col gap-2">
@@ -236,7 +236,7 @@ function RepositoriesPage() {
   const displayedRepos = hub?.repos ?? [];
 
   return (
-    <div className="overflow-stable h-full overflow-auto py-10">
+    <div className="h-full overflow-auto py-10">
       <div className="mx-auto grid max-w-7xl gap-14 px-3 md:px-6 xl:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]">
         <aside className="flex h-fit flex-col gap-5 xl:sticky xl:top-0">
           <div className="flex flex-col gap-2">
@@ -244,12 +244,6 @@ function RepositoriesPage() {
             <p className="text-sm text-muted-foreground">
               Browse and filter the repositories you can access.
             </p>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <RepositoryMetricCard icon={ArchiveIcon} label="All repositories" value={totals.all} />
-            <RepositoryMetricCard icon={ViewIcon} label="Public" value={totals.public} />
-            <RepositoryMetricCard icon={LockIcon} label="Private" value={totals.private} />
           </div>
         </aside>
 
@@ -297,28 +291,6 @@ function RepositoriesPage() {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function RepositoryMetricCard({
-  icon: Icon,
-  label,
-  value
-}: {
-  icon: ComponentType<{ size?: number; strokeWidth?: number }>;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-xl bg-surface-1 px-3.5 py-3">
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="shrink-0 text-muted-foreground">
-          <Icon size={15} strokeWidth={1.9} />
-        </div>
-        <p className="truncate text-sm font-medium">{label}</p>
-      </div>
-      <p className="leading-tight font-semibold tabular-nums">{value}</p>
     </div>
   );
 }

@@ -115,11 +115,11 @@ export const RepositoryRow = memo(function RepositoryRow({
       className="grid w-full grid-cols-1 items-center gap-x-4 gap-y-2 px-4 py-3 text-left transition-colors hover:bg-surface-2 md:grid-cols-[minmax(10rem,22%)_minmax(0,1fr)_minmax(10rem,auto)_11rem] md:gap-y-1"
     >
       <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="flex max-w-full min-w-0 items-center gap-x-2">
+        <div className="flex max-w-full min-w-0 items-center justify-between gap-x-2">
           <p className="flex min-w-0 items-baseline text-sm font-medium" title={repo.fullName}>
             <span className="min-w-0 flex-1 truncate text-muted-foreground">{repo.owner}</span>
             <span className="shrink-0 text-muted-foreground">/</span>
-            <span className="shrink-0 truncate">{repo.name}</span>
+            <span className="truncate">{repo.name}</span>
           </p>
           <VisibilityBadge visibility={repo.visibility} />
         </div>
@@ -147,12 +147,12 @@ export const RepositoryRow = memo(function RepositoryRow({
           <span className="text-xs text-muted-foreground/40">-</span>
         </div>
       )}
-      <LazyRepoCommitSparkline owner={repo.owner} repo={repo.name} />
+      <LazyRepoCommitSparkline repo={repo.name} />
     </Link>
   );
 });
 
-function LazyRepoCommitSparkline({ owner, repo }: { owner: string; repo: string }) {
+function LazyRepoCommitSparkline({ repo }: { repo: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showChart, setShowChart] = useState(false);
 
