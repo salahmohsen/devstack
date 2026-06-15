@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
@@ -12,15 +13,16 @@ export const githubContributionsQueryKeys = {
   }
 };
 
-export function getGithubContributionsQueryOptions(username: string) {
+export function getGithubContributionsQueryOptions() {
   return orpc.public.github.getUserContributions.queryOptions({
-    input: { username },
-    meta: persistedMeta
+    meta: persistedMeta,
+    staleTime: githubCachePolicy.contributions.staleTimeMs,
+    gcTime: githubCachePolicy.contributions.gcTimeMs
   });
 }
 
-export function useGetGithubContributionsQuery(username: string) {
-  return useQuery(getGithubContributionsQueryOptions(username));
+export function useGetGithubContributionsQuery() {
+  return useQuery(getGithubContributionsQueryOptions());
 }
 
 export type GithubContributionsQueryResult = Awaited<

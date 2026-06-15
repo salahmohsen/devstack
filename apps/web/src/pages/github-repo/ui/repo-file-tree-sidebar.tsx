@@ -22,10 +22,10 @@ import {
   githubRepoTreeQueryKeys
 } from "@/pages/github-repo/api/get-github-repo-tree.query";
 
-function useAllCachedFiles(owner: string, repo: string, ref: string): FileSearchEntry[] {
+function useAllCachedFiles(repo: string, ref: string): FileSearchEntry[] {
   const queryClient = useQueryClient();
 
-  const keyPrefix = githubRepoTreeQueryKeys.byPath(owner, repo, ref, "");
+  const keyPrefix = githubRepoTreeQueryKeys.byPath(repo, ref, "");
   const allFiles: FileSearchEntry[] = [];
 
   const cache = queryClient.getQueriesData<GitHubRepoTreeEntry[]>({
@@ -49,17 +49,15 @@ function useAllCachedFiles(owner: string, repo: string, ref: string): FileSearch
 export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
   currentRef,
   entries,
-  owner,
   repoName
 }: {
   currentRef: string;
   entries: GitHubRepoTreeEntry[];
-  owner: string;
   repoName: string;
 }) {
   const navigate = useNavigate();
   const currentPath = useExplorerPath();
-  const allFiles = useAllCachedFiles(owner, repoName, currentRef);
+  const allFiles = useAllCachedFiles(repoName, currentRef);
 
   const defaultEntries = useMemo(
     () => allFiles.filter((f) => f.type === "file" && f.path.includes("/")),
@@ -71,14 +69,13 @@ export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
       const isDir = entry.type === "dir";
       void navigate({
         params: {
-          owner,
           repo: repoName,
           _splat: `${currentRef}/${entry.path}`
         },
-        to: isDir ? "/$owner/$repo/tree/$" : "/$owner/$repo/blob/$"
+        to: isDir ? "/$repo/tree/$" : "/$repo/blob/$"
       });
     },
-    [navigate, owner, repoName, currentRef]
+    [navigate, repoName, currentRef]
   );
 
   return (
@@ -98,7 +95,6 @@ export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
             currentRef={currentRef}
             depth={0}
             entry={entry}
-            owner={owner}
             parentPath=""
             repoName={repoName}
           />
@@ -112,14 +108,12 @@ const TreeNode = memo(function TreeNode({
   currentRef,
   depth,
   entry,
-  owner,
   parentPath,
   repoName
 }: {
   currentRef: string;
   depth: number;
   entry: GitHubRepoTreeEntry;
-  owner: string;
   parentPath: string;
   repoName: string;
 }) {
@@ -133,7 +127,6 @@ const TreeNode = memo(function TreeNode({
         depth={depth}
         entry={entry}
         entryPath={entryPath}
-        owner={owner}
         repoName={repoName}
       />
     );
@@ -145,7 +138,6 @@ const TreeNode = memo(function TreeNode({
       depth={depth}
       entry={entry}
       entryPath={entryPath}
-      owner={owner}
       repoName={repoName}
     />
   );
@@ -156,14 +148,12 @@ const DirectoryNode = memo(function DirectoryNode({
   depth,
   entry,
   entryPath,
-  owner,
   repoName
 }: {
   currentRef: string;
   depth: number;
   entry: GitHubRepoTreeEntry;
   entryPath: string;
-  owner: string;
   repoName: string;
 }) {
   const isActive = useIsActivePath(entryPath);
@@ -172,7 +162,7 @@ const DirectoryNode = memo(function DirectoryNode({
   const hasMounted = useHasMounted();
 
   const treeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(owner, repoName, currentRef, entryPath),
+    ...getGithubRepoTreeQueryOptions(repoName, currentRef, entryPath),
     enabled: hasMounted && isOpen
   });
 
@@ -196,9 +186,8 @@ const DirectoryNode = memo(function DirectoryNode({
           />
         </button>
         <Link
-          to="/$owner/$repo/tree/$"
+          to="/$repo/tree/$"
           params={{
-            owner,
             repo: repoName,
             _splat: `${currentRef}/${entryPath}`
           }}
@@ -234,7 +223,6 @@ const DirectoryNode = memo(function DirectoryNode({
               currentRef={currentRef}
               depth={depth + 1}
               entry={child}
-              owner={owner}
               parentPath={entryPath}
               repoName={repoName}
             />
@@ -250,23 +238,20 @@ const FileNode = memo(function FileNode({
   depth,
   entry,
   entryPath,
-  owner,
   repoName
 }: {
   currentRef: string;
   depth: number;
   entry: GitHubRepoTreeEntry;
   entryPath: string;
-  owner: string;
   repoName: string;
 }) {
   const isActive = useIsActivePath(entryPath);
 
   return (
     <Link
-      to="/$owner/$repo/blob/$"
+      to="/$repo/blob/$"
       params={{
-        owner,
         repo: repoName,
         _splat: `${currentRef}/${entryPath}`
       }}

@@ -9,7 +9,7 @@ const BATCH_SIZE = 3;
 const BATCH_DELAY_MS = 150;
 
 export function usePrefetchTree(
-  input: { owner: string; ref: string; repo: string },
+  input: { ref: string; repo: string },
   rootEntries: GitHubRepoTreeEntry[] | undefined
 ) {
   const queryClient = useQueryClient();
@@ -38,7 +38,7 @@ export function usePrefetchTree(
 
       const results = await Promise.all(
         batch.map((path) => {
-          const options = getGithubRepoTreeQueryOptions(input.owner, input.repo, input.ref, path);
+          const options = getGithubRepoTreeQueryOptions(input.repo, input.ref, path);
 
           if (queryClient.getQueryData(options.queryKey)) {
             return queryClient.getQueryData(options.queryKey) as GitHubRepoTreeEntry[] | undefined;

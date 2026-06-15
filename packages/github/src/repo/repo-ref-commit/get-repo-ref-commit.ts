@@ -20,14 +20,12 @@ import { type GitHubRepoLatestCommit } from "#@/types";
 
 export async function getRepoRefCommit(
   input: {
-    owner: string;
     ref: string;
     repo: string;
   },
   context?: OrpcContext
 ): Promise<GitHubRepoLatestCommit | null> {
   setRepoLoggerContext(context, "getRepoRefCommit", {
-    owner: input.owner,
     ref: input.ref,
     repo: input.repo
   });
@@ -42,13 +40,16 @@ export async function getRepoRefCommit(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.repoCode({ owner: input.owner, repo: input.repo });
+  const signalKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoLatestCommit>({
       fetcher: async () => {
         const response = await octokit.rest.repos.listCommits({
-          owner: input.owner,
+          owner: source.owner,
           per_page: 1,
           repo: input.repo,
           sha: input.ref

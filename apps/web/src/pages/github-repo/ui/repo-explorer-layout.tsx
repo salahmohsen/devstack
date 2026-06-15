@@ -44,13 +44,11 @@ function useIsDesktop() {
 export function RepoExplorerLayout({
   currentPath,
   currentRef: currentRefProp,
-  owner,
   repo: repoName,
   viewMode
 }: {
   currentPath: string;
   currentRef: string | null;
-  owner: string;
   repo: string;
   viewMode: "blob" | "tree";
 }) {
@@ -60,7 +58,7 @@ export function RepoExplorerLayout({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const overviewQuery = useQuery({
-    ...getGithubRepoOverviewQueryOptions(owner, repoName),
+    ...getGithubRepoOverviewQueryOptions(repoName),
     enabled: hasMounted
   });
 
@@ -73,26 +71,26 @@ export function RepoExplorerLayout({
     repoData
       ? {
           avatarUrl: repoData.ownerAvatarUrl ?? undefined,
-          repo: `${owner}/${repoName}`,
-          title: `${owner}/${repoData.name}`,
+          repo: repoName,
+          title: repoData.name,
           type: "repo",
-          url: `/${owner}/${repoName}`
+          url: `/${repoName}`
         }
       : null
   );
 
   const rootTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(owner, repoName, activeRef),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef),
     enabled: hasMounted && !!repoData
   });
 
   const prefetchInput = useMemo(() => {
-    return { owner, ref: activeRef, repo: repoName };
-  }, [owner, repoName, activeRef]);
+    return { ref: activeRef, repo: repoName };
+  }, [repoName, activeRef]);
   usePrefetchTree(prefetchInput, rootTreeQuery.data);
 
   const currentTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(owner, repoName, activeRef, currentPath),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef, currentPath),
     enabled: hasMounted && !!repoData && viewMode === "tree" && currentPath !== ""
   });
 
@@ -102,20 +100,19 @@ export function RepoExplorerLayout({
       if (path) {
         void navigate({
           params: {
-            owner,
             repo: repoName,
             _splat: `${branch}/${path}`
           },
-          to: viewMode === "blob" ? "/$owner/$repo/blob/$" : "/$owner/$repo/tree/$"
+          to: viewMode === "blob" ? "/$repo/blob/$" : "/$repo/tree/$"
         });
       } else {
         void navigate({
-          params: { owner, repo: repoName },
-          to: "/$owner/$repo"
+          params: { repo: repoName },
+          to: "/$repo"
         });
       }
     },
-    [navigate, owner, repoName, viewMode]
+    [navigate, repoName, viewMode]
   );
 
   const handleOpenFileSheet = useCallback(() => setDrawerOpen(true), []);
@@ -129,7 +126,7 @@ export function RepoExplorerLayout({
   const contentPane =
     viewMode === "blob" ? (
       <div className="h-full overflow-y-auto p-4">
-        <CodeFileView currentRef={activeRef} owner={owner} path={currentPath} repo={repoName} />
+        <CodeFileView currentRef={activeRef} path={currentPath} repo={repoName} />
       </div>
     ) : treeEntries ? (
       <div className="h-full overflow-y-auto p-4">
@@ -137,7 +134,6 @@ export function RepoExplorerLayout({
           currentPath={currentPath}
           currentRef={activeRef}
           entries={treeEntries}
-          owner={owner}
           repo={repoData}
           repoName={repoName}
         />
@@ -149,12 +145,7 @@ export function RepoExplorerLayout({
     );
 
   const sidebarContent = rootTreeQuery.data ? (
-    <RepoFileTreeSidebar
-      currentRef={activeRef}
-      entries={rootTreeQuery.data}
-      owner={owner}
-      repoName={repoName}
-    />
+    <RepoFileTreeSidebar currentRef={activeRef} entries={rootTreeQuery.data} repoName={repoName} />
   ) : null;
 
   return (
@@ -164,7 +155,6 @@ export function RepoExplorerLayout({
         isDesktop={isDesktop}
         onBranchChange={handleBranchChange}
         onOpenFileSheet={handleOpenFileSheet}
-        owner={owner}
         repo={repoData}
         repoName={repoName}
       />
@@ -174,7 +164,6 @@ export function RepoExplorerLayout({
           <BranchComparisonBanner
             currentBranch={activeRef}
             defaultBranch={repoData.defaultBranch ?? "main"}
-            owner={owner}
             repo={repoName}
           />
         </div>
@@ -210,7 +199,6 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   isDesktop,
   onBranchChange,
   onOpenFileSheet,
-  owner,
   repo,
   repoName
 }: {
@@ -218,7 +206,6 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   isDesktop: boolean;
   onBranchChange: (branch: string) => void;
   onOpenFileSheet: () => void;
-  owner: string;
   repo: RepoOverview;
   repoName: string;
 }) {
@@ -236,14 +223,12 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
       )}
 
       <Link
-        to="/$owner/$repo"
-        params={{ owner, repo: repoName }}
+        to="/$repo"
+        params={{ repo: repoName }}
         className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeftIcon size={16} />
-        <span className="font-medium">
-          {owner}/{repoName}
-        </span>
+        <span className="font-medium">{repoName}</span>
       </Link>
 
       <div className="ml-auto">

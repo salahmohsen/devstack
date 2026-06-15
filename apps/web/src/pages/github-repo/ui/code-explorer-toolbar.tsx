@@ -54,7 +54,7 @@ function BranchSelector({
 }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const branchesOptions = getGithubRepoBranchesQueryOptions(repo.owner, repo.name);
+  const branchesOptions = getGithubRepoBranchesQueryOptions(repo.name);
 
   const branchesQuery = useQuery({
     ...branchesOptions,

@@ -19,7 +19,6 @@ import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 
 export async function getRepoFileContent(
   input: {
-    owner: string;
     path: string;
     ref: string;
     repo: string;
@@ -27,7 +26,6 @@ export async function getRepoFileContent(
   context?: OrpcContext
 ): Promise<string | null> {
   setRepoLoggerContext(context, "getRepoFileContent", {
-    owner: input.owner,
     path: input.path,
     ref: input.ref,
     repo: input.repo
@@ -43,14 +41,17 @@ export async function getRepoFileContent(
   }
 
   const octokit = createGitHubOctokit(source);
-  const repoCodeKey = githubRevalidationSignalKeys.repoCode(input);
+  const repoCodeKey = githubRevalidationSignalKeys.repoCode({
+    owner: source.owner,
+    repo: input.repo
+  });
 
   try {
     const result = await getGitHubResourceLocalFirst<string | null>({
       fetcher: async (conditionals) => {
         const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
-          owner: input.owner,
+          owner: source.owner,
           path: input.path,
           ref: input.ref,
           repo: input.repo

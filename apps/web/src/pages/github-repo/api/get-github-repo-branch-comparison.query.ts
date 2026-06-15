@@ -1,37 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
 export const githubRepoBranchComparisonQueryKeys = {
-  byBranches(owner: string, repo: string, base: string, head: string) {
+  byBranches(repo: string, base: string, head: string) {
     return orpc.public.github.getRepoBranchComparison.queryOptions({
-      input: { base, head, owner, repo }
+      input: { base, head, repo }
     }).queryKey;
   }
 };
 
 export function getGithubRepoBranchComparisonQueryOptions(
-  owner: string,
   repo: string,
   base: string,
   head: string
 ) {
   return orpc.public.github.getRepoBranchComparison.queryOptions({
-    input: { base, head, owner, repo },
+    input: { base, head, repo },
+    staleTime: githubCachePolicy.detail.staleTimeMs,
+    gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoBranchComparisonQuery(
-  owner: string,
-  repo: string,
-  base: string,
-  head: string
-) {
+export function useGetGithubRepoBranchComparisonQuery(repo: string, base: string, head: string) {
   return useQuery({
-    ...getGithubRepoBranchComparisonQueryOptions(owner, repo, base, head),
+    ...getGithubRepoBranchComparisonQueryOptions(repo, base, head),
     enabled: base !== head
   });
 }

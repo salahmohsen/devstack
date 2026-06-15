@@ -1,5 +1,4 @@
 export * from "#@/infrastructure/cache/github-cache";
-export * from "#@/infrastructure/cache/github-cache-policy";
 export * from "#@/infrastructure/cache/github-revalidation";
 export * from "#@/infrastructure/octokit/client";
 export * from "#@/repo/repo-activity-cards/get-repo-activity-cards";

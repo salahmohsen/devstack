@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
@@ -12,15 +13,16 @@ export const githubPinnedReposQueryKeys = {
   }
 };
 
-export function getGithubPinnedReposQueryOptions(username: string) {
+export function getGithubPinnedReposQueryOptions() {
   return orpc.public.github.getUserPinnedRepos.queryOptions({
-    input: { username },
-    meta: persistedMeta
+    meta: persistedMeta,
+    staleTime: githubCachePolicy.reposList.staleTimeMs,
+    gcTime: githubCachePolicy.reposList.gcTimeMs
   });
 }
 
-export function useGetGithubPinnedReposQuery(username: string) {
-  return useQuery(getGithubPinnedReposQueryOptions(username));
+export function useGetGithubPinnedReposQuery() {
+  return useQuery(getGithubPinnedReposQueryOptions());
 }
 
 export type GithubPinnedReposQueryResult = Awaited<

@@ -10,21 +10,13 @@ import {
 } from "#@/infrastructure/octokit/client";
 import {
   buildGitHubConditionalHeaders,
-  setRepoLoggerContext,
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
 import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubUserProfile } from "#@/types";
 
-export async function getUserProfile(
-  username: string,
-  context?: OrpcContext
-): Promise<GitHubUserProfile | null> {
-  setRepoLoggerContext(context, "getUserProfile", {
-    username
-  });
-
+export async function getUserProfile(context?: OrpcContext): Promise<GitHubUserProfile | null> {
   const source = await resolvePublicGitHubSource();
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_user_profile_read_skipped", {
@@ -35,14 +27,14 @@ export async function getUserProfile(
   }
 
   const octokit = createGitHubOctokit(source);
-  const ownerProfileKey = githubRevalidationSignalKeys.ownerProfile(username);
+  const ownerProfileKey = githubRevalidationSignalKeys.ownerProfile(source.owner);
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserProfile>({
       fetcher: async (conditionals) => {
         const response = await octokit.rest.users.getByUsername({
           headers: buildGitHubConditionalHeaders(conditionals),
-          username
+          username: source.owner
         });
         const user = response.data;
 
@@ -70,7 +62,7 @@ export async function getUserProfile(
       freshForMs: githubCachePolicy.mine.staleTimeMs,
       namespaceKeys: [ownerProfileKey],
       owner: source.owner,
-      params: { username },
+      params: { username: source.owner },
       resource: "user.profile.v1",
       runtime: context?.github,
       signalKeys: [ownerProfileKey]

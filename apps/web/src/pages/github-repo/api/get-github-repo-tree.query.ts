@@ -1,26 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
 export const githubRepoTreeQueryKeys = {
-  byPath(owner: string, repo: string, ref: string, path = "") {
+  byPath(repo: string, ref: string, path = "") {
     return orpc.public.github.getRepoTree.queryOptions({
-      input: { owner, path, ref, repo }
+      input: { path, ref, repo }
     }).queryKey;
   }
 };
 
-export function getGithubRepoTreeQueryOptions(owner: string, repo: string, ref: string, path = "") {
+export function getGithubRepoTreeQueryOptions(repo: string, ref: string, path = "") {
   return orpc.public.github.getRepoTree.queryOptions({
-    input: { owner, path, ref, repo },
+    input: { path, ref, repo },
+    staleTime: githubCachePolicy.detail.staleTimeMs,
+    gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoTreeQuery(owner: string, repo: string, ref: string, path = "") {
-  return useQuery(getGithubRepoTreeQueryOptions(owner, repo, ref, path));
+export function useGetGithubRepoTreeQuery(repo: string, ref: string, path = "") {
+  return useQuery(getGithubRepoTreeQueryOptions(repo, ref, path));
 }
 
 export type GithubRepoTreeQueryResult = Awaited<

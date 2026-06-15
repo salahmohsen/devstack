@@ -23,7 +23,6 @@ type FileTreeProps = {
 export function FileTree({ directoryPath, entries, owner, refName, repo }: FileTreeProps) {
   const entryNames = useMemo(() => entries.map((entry) => entry.name), [entries]);
   const commitsQuery = useGetGithubTreeEntryCommitsQuery(
-    owner,
     repo,
     refName,
     directoryPath ?? "",
@@ -81,8 +80,8 @@ function FileTreeRow({
           <FileCodeIcon className="size-4 shrink-0 text-base-500" />
         )}
         <Link
-          to={isDir ? "/$owner/$repo/tree/$" : "/$owner/$repo/blob/$"}
-          params={{ owner, repo, _splat: `${refName}/${entry.path}` }}
+          to={isDir ? "/$repo/tree/$" : "/$repo/blob/$"}
+          params={{ repo, _splat: `${refName}/${entry.path}` }}
           className="truncate text-base-200 hover:underline"
         >
           {entry.name}

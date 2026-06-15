@@ -9,22 +9,13 @@ import {
   executeGitHubGraphQL,
   getErrorStatusCode
 } from "#@/infrastructure/octokit/client";
-import {
-  setRepoLoggerContext,
-  setRepoLoggerLocalFirstOutcome,
-  setRepoLoggerOutcome
-} from "#@/repo/shared.utils";
+import { setRepoLoggerLocalFirstOutcome, setRepoLoggerOutcome } from "#@/repo/shared.utils";
 import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubContributionCalendar } from "#@/types";
 
 export async function getUserContributions(
-  username: string,
   context?: OrpcContext
 ): Promise<GitHubContributionCalendar | null> {
-  setRepoLoggerContext(context, "getUserContributions", {
-    username
-  });
-
   const source = await resolvePublicGitHubSource();
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_user_contributions_read_skipped", {
@@ -35,7 +26,7 @@ export async function getUserContributions(
   }
 
   const octokit = createGitHubOctokit(source);
-  const signalKey = githubRevalidationSignalKeys.ownerContributions(username);
+  const signalKey = githubRevalidationSignalKeys.ownerContributions(source.owner);
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubContributionCalendar>({
@@ -86,7 +77,7 @@ export async function getUserContributions(
               resetAt
             }
           }`,
-          { username }
+          { username: source.owner }
         );
 
         const levelMap: Record<string, 0 | 1 | 2 | 3 | 4> = {
@@ -125,7 +116,7 @@ export async function getUserContributions(
       freshForMs: githubCachePolicy.contributions.staleTimeMs,
       namespaceKeys: [signalKey],
       owner: source.owner,
-      params: { username },
+      params: { username: source.owner },
       resource: "user.contributions.v1",
       runtime: context?.github,
       signalKeys: [signalKey]

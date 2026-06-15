@@ -19,7 +19,7 @@ initLogger({
   sampling: {
     keep: [{ status: 400 }, { duration: 1000 }],
     rates: {
-      info: 0
+      info: 100
     }
   }
 });

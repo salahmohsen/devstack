@@ -1,26 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/lib/github.query";
 
 export const githubRepoCommitSparklineQueryKeys = {
-  byRepo(owner: string, repo: string) {
+  byRepo(repo: string) {
     return orpc.public.github.getRepoCommitSparkline.queryOptions({
-      input: { owner, repo }
+      input: { repo }
     }).queryKey;
   }
 };
 
-export function getGithubRepoCommitSparklineQueryOptions(owner: string, repo: string) {
+export function getGithubRepoCommitSparklineQueryOptions(repo: string) {
   return orpc.public.github.getRepoCommitSparkline.queryOptions({
-    input: { owner, repo },
+    input: { repo },
+    staleTime: githubCachePolicy.detail.staleTimeMs,
+    gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoCommitSparklineQuery(owner: string, repo: string) {
-  return useQuery(getGithubRepoCommitSparklineQueryOptions(owner, repo));
+export function useGetGithubRepoCommitSparklineQuery(repo: string) {
+  return useQuery(getGithubRepoCommitSparklineQueryOptions(repo));
 }
 
 export type GithubRepoCommitSparklineQueryResult = Awaited<
