@@ -1,12 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-adapter";
+import z from "zod";
+
+import { validateNavigateTo } from "@tsu-stack/i18n/tanstack-start/lib/validate-navigate-to";
 
 import { generateAppSeo } from "@/shared/lib/seo";
 
 import { CreateAnAccountForm } from "@/features/auth";
 
 import { appConfig } from "@/config/app.config";
+import { routeTree } from "@/routeTree.gen";
+
+const guestSearchSchema = z.object({
+  redirect: z
+    .string()
+    .optional()
+    .catch(undefined)
+    .transform((val) =>
+      validateNavigateTo({
+        fallbackTo: "/",
+        routeTree,
+        shouldIncludeRoute: (route) => !route.id.includes("(auth)"),
+        to: val
+      })
+    )
+});
 
 export const Route = createFileRoute("/{-$locale}/(layout)/sign-in/create-an-account/")({
+  validateSearch: zodValidator(guestSearchSchema),
+
   head: ({ params }) =>
     generateAppSeo({
       alternates: {
