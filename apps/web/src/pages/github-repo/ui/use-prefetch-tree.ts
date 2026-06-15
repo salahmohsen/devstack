@@ -8,6 +8,12 @@ import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-githu
 const BATCH_SIZE = 3;
 const BATCH_DELAY_MS = 150;
 
+/**
+ * Progressively prefetch all directory subtrees in BFS order.
+ * Starts from the root entries and walks deeper level by level,
+ * fetching BATCH_SIZE directories at a time with a small delay
+ * between batches to avoid flooding the network.
+ */
 export function usePrefetchTree(
   input: { ref: string; repo: string },
   rootEntries: GitHubRepoTreeEntry[] | undefined
@@ -37,9 +43,11 @@ export function usePrefetchTree(
       cursor += batch.length;
 
       const results = await Promise.all(
+        // oxlint-disable-next-line typescript/await-thenable
         batch.map((path) => {
           const options = getGithubRepoTreeQueryOptions(input.repo, input.ref, path);
 
+          // Skip if already cached
           if (queryClient.getQueryData(options.queryKey)) {
             return queryClient.getQueryData(options.queryKey) as GitHubRepoTreeEntry[] | undefined;
           }
@@ -50,6 +58,7 @@ export function usePrefetchTree(
 
       if (runIdRef.current !== runId) return;
 
+      // Enqueue child directories discovered in this batch
       for (let i = 0; i < batch.length; i++) {
         const parentPath = batch[i];
         const children = results[i];
@@ -62,14 +71,16 @@ export function usePrefetchTree(
         }
       }
 
+      // Schedule next batch
       if (cursor < queue.length) {
         setTimeout(processNextBatch, BATCH_DELAY_MS);
       }
     }
 
-    processNextBatch();
+    void processNextBatch();
 
     return () => {
+      // oxlint-disable-next-line react-hooks/exhaustive-deps
       runIdRef.current++;
     };
   }, [rootEntries, input, queryClient]);

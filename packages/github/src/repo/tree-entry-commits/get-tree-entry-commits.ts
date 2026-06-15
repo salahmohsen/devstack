@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  executeGitHubGraphQL,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import {
   createGraphQLResponseMetadata,
   setRepoLoggerContext,
@@ -19,7 +15,6 @@ import {
   mapGraphQLTreeEntryCommits,
   normalizeTreeEntryCommitEntries
 } from "#@/repo/tree-entry-commits/tree-entry-commits.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubTreeEntryCommit } from "#@/types";
 
 export async function getTreeEntryCommits(
@@ -29,7 +24,7 @@ export async function getTreeEntryCommits(
     ref: string;
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<Record<string, GitHubTreeEntryCommit | null>> {
   setRepoLoggerContext(context, "getTreeEntryCommits", {
     dirPath: input.dirPath ?? "",
@@ -38,7 +33,7 @@ export async function getTreeEntryCommits(
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_tree_entry_commits_read_skipped", {
       reason: source.reason
@@ -47,7 +42,6 @@ export async function getTreeEntryCommits(
     return {};
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -84,17 +78,6 @@ export async function getTreeEntryCommits(
           }`;
         });
 
-        context?.logger.info(
-          "⏳ [getTreeEntryCommits] Fetching commits for tree entries from GitHub GraphQL API...",
-          {
-            owner: source.owner,
-            repo: input.repo,
-            ref: input.ref,
-            dirPath: input.dirPath,
-            entries: normalizedEntries
-          }
-        );
-
         const query = `query($owner: String!, $repo: String!, $ref: String!) {
           repository(owner: $owner, name: $repo) {
             object(expression: $ref) {
@@ -106,32 +89,14 @@ export async function getTreeEntryCommits(
           rateLimit { cost remaining resetAt }
         }`;
 
-        context?.logger.info("⏳ [getTreeEntryCommits] Executing GitHub GraphQL query...", {
-          query,
-          variables: {
-            owner: source.owner,
-            repo: input.repo,
-            ref: input.ref
-          }
-        });
-
         const response = await executeGitHubGraphQL<GitHubGraphQLTreeEntryCommitsResponse>(
-          octokit,
+          context.github,
+          "getTreeEntryCommits.graphql",
           query,
           {
             owner: source.owner,
             repo: input.repo,
             ref: input.ref
-          }
-        );
-
-        context?.logger.info(
-          "✅ [getTreeEntryCommits] Successfully fetched commits for tree entries from GitHub GraphQL API",
-          {
-            rateLimit: response.rateLimit,
-            repositoryObjectType: response.repository?.object
-              ? response.repository.object.__typename
-              : null
           }
         );
 
@@ -149,7 +114,7 @@ export async function getTreeEntryCommits(
         entries: normalizedEntries
       },
       resource: "repo.treeEntryCommits.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

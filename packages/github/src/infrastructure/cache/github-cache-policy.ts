@@ -41,7 +41,7 @@ export const githubCachePolicy = {
     gcTimeMs: 24 * 60 * 60 * 1000
   },
   repoMeta: {
-    staleTimeMs: 5 * 60 * 1000,
+    staleTimeMs: 60 * 60 * 1000,
     gcTimeMs: 24 * 60 * 60 * 1000
   },
   repoParticipation: {

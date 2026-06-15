@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  createGitHubResponseMetadata,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { type GitHubRepoTreeItem } from "#@/repo/repo-tree/repo-tree.types";
 import { mapGitHubRepoTreeEntries } from "#@/repo/repo-tree/repo-tree.utils";
 import {
@@ -16,7 +12,6 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubRepoTreeEntry } from "#@/types";
 
 export async function getRepoTree(
@@ -25,7 +20,7 @@ export async function getRepoTree(
     ref: string;
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubRepoTreeEntry[]> {
   setRepoLoggerContext(context, "getRepoTree", {
     path: input.path,
@@ -33,7 +28,7 @@ export async function getRepoTree(
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_tree_read_skipped", {
       reason: source.reason
@@ -42,7 +37,6 @@ export async function getRepoTree(
     return [];
   }
 
-  const octokit = createGitHubOctokit(source);
   const repoCodeKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -51,7 +45,7 @@ export async function getRepoTree(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoTreeEntry[]>({
       fetcher: async (conditionals) => {
-        const response = await octokit.rest.repos.getContent({
+        const response = await context.github.octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
           owner: source.owner,
           path: input.path,
@@ -72,7 +66,7 @@ export async function getRepoTree(
       owner: source.owner,
       params: input,
       resource: "repo.tree.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [repoCodeKey]
     });
 

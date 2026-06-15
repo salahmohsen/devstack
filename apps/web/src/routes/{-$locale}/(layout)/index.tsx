@@ -95,6 +95,5 @@ export const Route = createFileRoute("/{-$locale}/(layout)/")({
 });
 
 function RootGithubProfilePage() {
-  const setupStatus = Route.useLoaderData();
-  return <GithubProfilePage username={setupStatus.owner ?? ""} />;
+  return <GithubProfilePage />;
 }

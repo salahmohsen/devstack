@@ -15,8 +15,7 @@ import {
   getUserActivity,
   getUserContributions,
   getUserPinnedRepos,
-  getUserProfile,
-  resolvePublicGitHubSource
+  getUserProfile
 } from "@tsu-stack/github";
 
 import { publicProcedure } from "#@/lib/procedures/factory";
@@ -395,8 +394,8 @@ export const publicGitHubRouter = {
       method: "GET"
     })
     .output(PublicGitHubStatusOutputSchema)
-    .handler(async () => {
-      const source = await resolvePublicGitHubSource();
+    .handler(async ({ context }) => {
+      const source = context.github.source;
       return {
         isConfigured: source.isConfigured,
         owner: source.isConfigured ? source.owner : null

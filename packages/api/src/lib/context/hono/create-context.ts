@@ -1,7 +1,9 @@
 import { type Context as HonoContext } from "hono";
 
 import { auth } from "@tsu-stack/auth/index";
-import { type GitHubRuntimeBindings } from "@tsu-stack/github";
+import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/client";
+import { type GitHubRuntimeBindings } from "@tsu-stack/github/runtime/bindings";
+import { resolvePublicGitHubSource } from "@tsu-stack/github/shared/public-github-source";
 import { type RequestLogger } from "@tsu-stack/logger/server";
 
 import { type OrpcContext } from "#@/lib/context/types";
@@ -23,11 +25,18 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
   const session = await auth.api.getSession({
     headers: context.req.raw.headers
   });
+  const githubBinding = {
+    executionContext: context.executionCtx,
+    kv: context.env.GITHUB_CACHE_KV,
+    signalRelay: context.env.GITHUB_SIGNAL_RELAY
+  };
+  const githubSource = await resolvePublicGitHubSource();
+
   return {
     github: {
-      executionContext: context.executionCtx,
-      kv: context.env.GITHUB_CACHE_KV,
-      signalRelay: context.env.GITHUB_SIGNAL_RELAY
+      binding: githubBinding,
+      octokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+      source: githubSource
     },
     logger,
     session

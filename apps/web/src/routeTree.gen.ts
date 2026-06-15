@@ -12,19 +12,17 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as Char123LocaleChar125RouteRouteImport } from './routes/{-$locale}/route'
-import { Route as Char123LocaleChar125rootLayoutRouteRouteImport } from './routes/{-$locale}/(root-layout)/route'
 import { Route as Char123LocaleChar125layoutRouteRouteImport } from './routes/{-$locale}/(layout)/route'
 import { Route as Char123LocaleChar125layoutIndexRouteImport } from './routes/{-$locale}/(layout)/index'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as Char123LocaleChar125layoutSignInRouteRouteImport } from './routes/{-$locale}/(layout)/sign-in/route'
 import { Route as Char123LocaleChar125layout_protectedRouteRouteImport } from './routes/{-$locale}/(layout)/__protected/route'
 import { Route as Char123LocaleChar125layoutRepoRouteRouteImport } from './routes/{-$locale}/(layout)/$repo/route'
-import { Route as Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport } from './routes/{-$locale}/(root-layout)/terms-of-service/index'
-import { Route as Char123LocaleChar125rootLayoutPrivacyPolicyIndexRouteImport } from './routes/{-$locale}/(root-layout)/privacy-policy/index'
-import { Route as Char123LocaleChar125rootLayoutPlaygroundIndexRouteImport } from './routes/{-$locale}/(root-layout)/playground/index'
-import { Route as Char123LocaleChar125rootLayoutErrorIndexRouteImport } from './routes/{-$locale}/(root-layout)/error/index'
+import { Route as Char123LocaleChar125layoutTermsOfServiceIndexRouteImport } from './routes/{-$locale}/(layout)/terms-of-service/index'
 import { Route as Char123LocaleChar125layoutSignInIndexRouteImport } from './routes/{-$locale}/(layout)/sign-in/index'
 import { Route as Char123LocaleChar125layoutReposIndexRouteImport } from './routes/{-$locale}/(layout)/repos/index'
+import { Route as Char123LocaleChar125layoutPrivacyPolicyIndexRouteImport } from './routes/{-$locale}/(layout)/privacy-policy/index'
+import { Route as Char123LocaleChar125layoutPlaygroundIndexRouteImport } from './routes/{-$locale}/(layout)/playground/index'
 import { Route as Char123LocaleChar125layoutRepoIndexRouteImport } from './routes/{-$locale}/(layout)/$repo/index'
 import { Route as Char123LocaleChar125layoutSignInCreateAnAccountIndexRouteImport } from './routes/{-$locale}/(layout)/sign-in/create-an-account/index'
 import { Route as Char123LocaleChar125layout_protectedDashboardIndexRouteImport } from './routes/{-$locale}/(layout)/__protected/dashboard/index'
@@ -47,11 +45,6 @@ const Char123LocaleChar125RouteRoute =
     id: '/{-$locale}',
     path: '/{-$locale}',
     getParentRoute: () => rootRouteImport,
-  } as any)
-const Char123LocaleChar125rootLayoutRouteRoute =
-  Char123LocaleChar125rootLayoutRouteRouteImport.update({
-    id: '/(root-layout)',
-    getParentRoute: () => Char123LocaleChar125RouteRoute,
   } as any)
 const Char123LocaleChar125layoutRouteRoute =
   Char123LocaleChar125layoutRouteRouteImport.update({
@@ -86,29 +79,11 @@ const Char123LocaleChar125layoutRepoRouteRoute =
     path: '/$repo',
     getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
   } as any)
-const Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute =
-  Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport.update({
+const Char123LocaleChar125layoutTermsOfServiceIndexRoute =
+  Char123LocaleChar125layoutTermsOfServiceIndexRouteImport.update({
     id: '/terms-of-service/',
     path: '/terms-of-service/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute =
-  Char123LocaleChar125rootLayoutPrivacyPolicyIndexRouteImport.update({
-    id: '/privacy-policy/',
-    path: '/privacy-policy/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutPlaygroundIndexRoute =
-  Char123LocaleChar125rootLayoutPlaygroundIndexRouteImport.update({
-    id: '/playground/',
-    path: '/playground/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutErrorIndexRoute =
-  Char123LocaleChar125rootLayoutErrorIndexRouteImport.update({
-    id: '/error/',
-    path: '/error/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
   } as any)
 const Char123LocaleChar125layoutSignInIndexRoute =
   Char123LocaleChar125layoutSignInIndexRouteImport.update({
@@ -120,6 +95,18 @@ const Char123LocaleChar125layoutReposIndexRoute =
   Char123LocaleChar125layoutReposIndexRouteImport.update({
     id: '/repos/',
     path: '/repos/',
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
+  } as any)
+const Char123LocaleChar125layoutPrivacyPolicyIndexRoute =
+  Char123LocaleChar125layoutPrivacyPolicyIndexRouteImport.update({
+    id: '/privacy-policy/',
+    path: '/privacy-policy/',
+    getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
+  } as any)
+const Char123LocaleChar125layoutPlaygroundIndexRoute =
+  Char123LocaleChar125layoutPlaygroundIndexRouteImport.update({
+    id: '/playground/',
+    path: '/playground/',
     getParentRoute: () => Char123LocaleChar125layoutRouteRoute,
   } as any)
 const Char123LocaleChar125layoutRepoIndexRoute =
@@ -162,7 +149,7 @@ const Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute =
   )
 
 export interface FileRoutesByFullPath {
-  '/{-$locale}': typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
+  '/{-$locale}': typeof Char123LocaleChar125layoutRouteRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}/$repo': typeof Char123LocaleChar125layoutRepoRouteRouteWithChildren
@@ -170,12 +157,11 @@ export interface FileRoutesByFullPath {
   '/_api/health/live': typeof ApiHealthLiveRoute
   '/{-$locale}/': typeof Char123LocaleChar125layoutIndexRoute
   '/{-$locale}/$repo/': typeof Char123LocaleChar125layoutRepoIndexRoute
+  '/{-$locale}/playground/': typeof Char123LocaleChar125layoutPlaygroundIndexRoute
+  '/{-$locale}/privacy-policy/': typeof Char123LocaleChar125layoutPrivacyPolicyIndexRoute
   '/{-$locale}/repos/': typeof Char123LocaleChar125layoutReposIndexRoute
   '/{-$locale}/sign-in/': typeof Char123LocaleChar125layoutSignInIndexRoute
-  '/{-$locale}/error/': typeof Char123LocaleChar125rootLayoutErrorIndexRoute
-  '/{-$locale}/playground/': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  '/{-$locale}/privacy-policy/': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  '/{-$locale}/terms-of-service/': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
+  '/{-$locale}/terms-of-service/': typeof Char123LocaleChar125layoutTermsOfServiceIndexRoute
   '/{-$locale}/dashboard/github-config': typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute
   '/{-$locale}/$repo/blob/$': typeof Char123LocaleChar125layoutRepoBlobSplatRoute
   '/{-$locale}/$repo/tree/$': typeof Char123LocaleChar125layoutRepoTreeSplatRoute
@@ -188,12 +174,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
   '/{-$locale}/$repo': typeof Char123LocaleChar125layoutRepoIndexRoute
+  '/{-$locale}/playground': typeof Char123LocaleChar125layoutPlaygroundIndexRoute
+  '/{-$locale}/privacy-policy': typeof Char123LocaleChar125layoutPrivacyPolicyIndexRoute
   '/{-$locale}/repos': typeof Char123LocaleChar125layoutReposIndexRoute
   '/{-$locale}/sign-in': typeof Char123LocaleChar125layoutSignInIndexRoute
-  '/{-$locale}/error': typeof Char123LocaleChar125rootLayoutErrorIndexRoute
-  '/{-$locale}/playground': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  '/{-$locale}/privacy-policy': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  '/{-$locale}/terms-of-service': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
+  '/{-$locale}/terms-of-service': typeof Char123LocaleChar125layoutTermsOfServiceIndexRoute
   '/{-$locale}/dashboard/github-config': typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute
   '/{-$locale}/$repo/blob/$': typeof Char123LocaleChar125layoutRepoBlobSplatRoute
   '/{-$locale}/$repo/tree/$': typeof Char123LocaleChar125layoutRepoTreeSplatRoute
@@ -206,19 +191,17 @@ export interface FileRoutesById {
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/{-$locale}/(layout)': typeof Char123LocaleChar125layoutRouteRouteWithChildren
-  '/{-$locale}/(root-layout)': typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
   '/{-$locale}/(layout)/$repo': typeof Char123LocaleChar125layoutRepoRouteRouteWithChildren
   '/{-$locale}/(layout)/__protected': typeof Char123LocaleChar125layout_protectedRouteRouteWithChildren
   '/{-$locale}/(layout)/sign-in': typeof Char123LocaleChar125layoutSignInRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
   '/{-$locale}/(layout)/': typeof Char123LocaleChar125layoutIndexRoute
   '/{-$locale}/(layout)/$repo/': typeof Char123LocaleChar125layoutRepoIndexRoute
+  '/{-$locale}/(layout)/playground/': typeof Char123LocaleChar125layoutPlaygroundIndexRoute
+  '/{-$locale}/(layout)/privacy-policy/': typeof Char123LocaleChar125layoutPrivacyPolicyIndexRoute
   '/{-$locale}/(layout)/repos/': typeof Char123LocaleChar125layoutReposIndexRoute
   '/{-$locale}/(layout)/sign-in/': typeof Char123LocaleChar125layoutSignInIndexRoute
-  '/{-$locale}/(root-layout)/error/': typeof Char123LocaleChar125rootLayoutErrorIndexRoute
-  '/{-$locale}/(root-layout)/playground/': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  '/{-$locale}/(root-layout)/privacy-policy/': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  '/{-$locale}/(root-layout)/terms-of-service/': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
+  '/{-$locale}/(layout)/terms-of-service/': typeof Char123LocaleChar125layoutTermsOfServiceIndexRoute
   '/{-$locale}/(layout)/__protected/dashboard/github-config': typeof Char123LocaleChar125layout_protectedDashboardGithubConfigRouteRoute
   '/{-$locale}/(layout)/$repo/blob/$': typeof Char123LocaleChar125layoutRepoBlobSplatRoute
   '/{-$locale}/(layout)/$repo/tree/$': typeof Char123LocaleChar125layoutRepoTreeSplatRoute
@@ -236,11 +219,10 @@ export interface FileRouteTypes {
     | '/_api/health/live'
     | '/{-$locale}/'
     | '/{-$locale}/$repo/'
-    | '/{-$locale}/repos/'
-    | '/{-$locale}/sign-in/'
-    | '/{-$locale}/error/'
     | '/{-$locale}/playground/'
     | '/{-$locale}/privacy-policy/'
+    | '/{-$locale}/repos/'
+    | '/{-$locale}/sign-in/'
     | '/{-$locale}/terms-of-service/'
     | '/{-$locale}/dashboard/github-config'
     | '/{-$locale}/$repo/blob/$'
@@ -254,11 +236,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_api/health/live'
     | '/{-$locale}/$repo'
-    | '/{-$locale}/repos'
-    | '/{-$locale}/sign-in'
-    | '/{-$locale}/error'
     | '/{-$locale}/playground'
     | '/{-$locale}/privacy-policy'
+    | '/{-$locale}/repos'
+    | '/{-$locale}/sign-in'
     | '/{-$locale}/terms-of-service'
     | '/{-$locale}/dashboard/github-config'
     | '/{-$locale}/$repo/blob/$'
@@ -271,19 +252,17 @@ export interface FileRouteTypes {
     | '/robots.txt'
     | '/sitemap.xml'
     | '/{-$locale}/(layout)'
-    | '/{-$locale}/(root-layout)'
     | '/{-$locale}/(layout)/$repo'
     | '/{-$locale}/(layout)/__protected'
     | '/{-$locale}/(layout)/sign-in'
     | '/_api/health/live'
     | '/{-$locale}/(layout)/'
     | '/{-$locale}/(layout)/$repo/'
+    | '/{-$locale}/(layout)/playground/'
+    | '/{-$locale}/(layout)/privacy-policy/'
     | '/{-$locale}/(layout)/repos/'
     | '/{-$locale}/(layout)/sign-in/'
-    | '/{-$locale}/(root-layout)/error/'
-    | '/{-$locale}/(root-layout)/playground/'
-    | '/{-$locale}/(root-layout)/privacy-policy/'
-    | '/{-$locale}/(root-layout)/terms-of-service/'
+    | '/{-$locale}/(layout)/terms-of-service/'
     | '/{-$locale}/(layout)/__protected/dashboard/github-config'
     | '/{-$locale}/(layout)/$repo/blob/$'
     | '/{-$locale}/(layout)/$repo/tree/$'
@@ -320,13 +299,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/{-$locale}'
       preLoaderRoute: typeof Char123LocaleChar125RouteRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/{-$locale}/(root-layout)': {
-      id: '/{-$locale}/(root-layout)'
-      path: ''
-      fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125RouteRoute
     }
     '/{-$locale}/(layout)': {
       id: '/{-$locale}/(layout)'
@@ -370,33 +342,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char123LocaleChar125layoutRepoRouteRouteImport
       parentRoute: typeof Char123LocaleChar125layoutRouteRoute
     }
-    '/{-$locale}/(root-layout)/terms-of-service/': {
-      id: '/{-$locale}/(root-layout)/terms-of-service/'
+    '/{-$locale}/(layout)/terms-of-service/': {
+      id: '/{-$locale}/(layout)/terms-of-service/'
       path: '/terms-of-service'
       fullPath: '/{-$locale}/terms-of-service/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/(root-layout)/privacy-policy/': {
-      id: '/{-$locale}/(root-layout)/privacy-policy/'
-      path: '/privacy-policy'
-      fullPath: '/{-$locale}/privacy-policy/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/(root-layout)/playground/': {
-      id: '/{-$locale}/(root-layout)/playground/'
-      path: '/playground'
-      fullPath: '/{-$locale}/playground/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutPlaygroundIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/(root-layout)/error/': {
-      id: '/{-$locale}/(root-layout)/error/'
-      path: '/error'
-      fullPath: '/{-$locale}/error/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutErrorIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
+      preLoaderRoute: typeof Char123LocaleChar125layoutTermsOfServiceIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
     }
     '/{-$locale}/(layout)/sign-in/': {
       id: '/{-$locale}/(layout)/sign-in/'
@@ -410,6 +361,20 @@ declare module '@tanstack/react-router' {
       path: '/repos'
       fullPath: '/{-$locale}/repos/'
       preLoaderRoute: typeof Char123LocaleChar125layoutReposIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
+    }
+    '/{-$locale}/(layout)/privacy-policy/': {
+      id: '/{-$locale}/(layout)/privacy-policy/'
+      path: '/privacy-policy'
+      fullPath: '/{-$locale}/privacy-policy/'
+      preLoaderRoute: typeof Char123LocaleChar125layoutPrivacyPolicyIndexRouteImport
+      parentRoute: typeof Char123LocaleChar125layoutRouteRoute
+    }
+    '/{-$locale}/(layout)/playground/': {
+      id: '/{-$locale}/(layout)/playground/'
+      path: '/playground'
+      fullPath: '/{-$locale}/playground/'
+      preLoaderRoute: typeof Char123LocaleChar125layoutPlaygroundIndexRouteImport
       parentRoute: typeof Char123LocaleChar125layoutRouteRoute
     }
     '/{-$locale}/(layout)/$repo/': {
@@ -519,7 +484,10 @@ interface Char123LocaleChar125layoutRouteRouteChildren {
   Char123LocaleChar125layout_protectedRouteRoute: typeof Char123LocaleChar125layout_protectedRouteRouteWithChildren
   Char123LocaleChar125layoutSignInRouteRoute: typeof Char123LocaleChar125layoutSignInRouteRouteWithChildren
   Char123LocaleChar125layoutIndexRoute: typeof Char123LocaleChar125layoutIndexRoute
+  Char123LocaleChar125layoutPlaygroundIndexRoute: typeof Char123LocaleChar125layoutPlaygroundIndexRoute
+  Char123LocaleChar125layoutPrivacyPolicyIndexRoute: typeof Char123LocaleChar125layoutPrivacyPolicyIndexRoute
   Char123LocaleChar125layoutReposIndexRoute: typeof Char123LocaleChar125layoutReposIndexRoute
+  Char123LocaleChar125layoutTermsOfServiceIndexRoute: typeof Char123LocaleChar125layoutTermsOfServiceIndexRoute
 }
 
 const Char123LocaleChar125layoutRouteRouteChildren: Char123LocaleChar125layoutRouteRouteChildren =
@@ -531,8 +499,14 @@ const Char123LocaleChar125layoutRouteRouteChildren: Char123LocaleChar125layoutRo
     Char123LocaleChar125layoutSignInRouteRoute:
       Char123LocaleChar125layoutSignInRouteRouteWithChildren,
     Char123LocaleChar125layoutIndexRoute: Char123LocaleChar125layoutIndexRoute,
+    Char123LocaleChar125layoutPlaygroundIndexRoute:
+      Char123LocaleChar125layoutPlaygroundIndexRoute,
+    Char123LocaleChar125layoutPrivacyPolicyIndexRoute:
+      Char123LocaleChar125layoutPrivacyPolicyIndexRoute,
     Char123LocaleChar125layoutReposIndexRoute:
       Char123LocaleChar125layoutReposIndexRoute,
+    Char123LocaleChar125layoutTermsOfServiceIndexRoute:
+      Char123LocaleChar125layoutTermsOfServiceIndexRoute,
   }
 
 const Char123LocaleChar125layoutRouteRouteWithChildren =
@@ -540,41 +514,14 @@ const Char123LocaleChar125layoutRouteRouteWithChildren =
     Char123LocaleChar125layoutRouteRouteChildren,
   )
 
-interface Char123LocaleChar125rootLayoutRouteRouteChildren {
-  Char123LocaleChar125rootLayoutErrorIndexRoute: typeof Char123LocaleChar125rootLayoutErrorIndexRoute
-  Char123LocaleChar125rootLayoutPlaygroundIndexRoute: typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute: typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute: typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
-}
-
-const Char123LocaleChar125rootLayoutRouteRouteChildren: Char123LocaleChar125rootLayoutRouteRouteChildren =
-  {
-    Char123LocaleChar125rootLayoutErrorIndexRoute:
-      Char123LocaleChar125rootLayoutErrorIndexRoute,
-    Char123LocaleChar125rootLayoutPlaygroundIndexRoute:
-      Char123LocaleChar125rootLayoutPlaygroundIndexRoute,
-    Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute:
-      Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute,
-    Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute:
-      Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute,
-  }
-
-const Char123LocaleChar125rootLayoutRouteRouteWithChildren =
-  Char123LocaleChar125rootLayoutRouteRoute._addFileChildren(
-    Char123LocaleChar125rootLayoutRouteRouteChildren,
-  )
-
 interface Char123LocaleChar125RouteRouteChildren {
   Char123LocaleChar125layoutRouteRoute: typeof Char123LocaleChar125layoutRouteRouteWithChildren
-  Char123LocaleChar125rootLayoutRouteRoute: typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
 }
 
 const Char123LocaleChar125RouteRouteChildren: Char123LocaleChar125RouteRouteChildren =
   {
     Char123LocaleChar125layoutRouteRoute:
       Char123LocaleChar125layoutRouteRouteWithChildren,
-    Char123LocaleChar125rootLayoutRouteRoute:
-      Char123LocaleChar125rootLayoutRouteRouteWithChildren,
   }
 
 const Char123LocaleChar125RouteRouteWithChildren =

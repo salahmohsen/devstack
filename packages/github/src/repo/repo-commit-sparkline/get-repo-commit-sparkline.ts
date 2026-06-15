@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  createGitHubResponseMetadata,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { type GitHubRepoCommitListItem } from "#@/repo/repo-commit-sparkline/repo-commit-sparkline.types";
 import {
   emptyRepoCommitSparkline,
@@ -19,20 +15,19 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubRepoCommitSparkline } from "#@/types";
 
 export async function getRepoCommitSparkline(
   input: {
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubRepoCommitSparkline> {
   setRepoLoggerContext(context, "getRepoCommitSparkline", {
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_commit_sparkline_read_skipped", {
       reason: source.reason
@@ -41,7 +36,6 @@ export async function getRepoCommitSparkline(
     return emptyRepoCommitSparkline();
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -51,7 +45,7 @@ export async function getRepoCommitSparkline(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoCommitSparkline>({
       fetcher: async () => {
-        const response = await octokit.rest.repos.listCommits({
+        const response = await context.github.octokit.rest.repos.listCommits({
           owner: source.owner,
           per_page: 100,
           repo: input.repo,
@@ -69,7 +63,7 @@ export async function getRepoCommitSparkline(
       owner: source.owner,
       params: input,
       resource: "repo.commitSparkline.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

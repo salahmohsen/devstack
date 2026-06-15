@@ -1,9 +1,9 @@
 import { type AuthSession } from "@tsu-stack/auth/index";
-import { type GitHubRuntimeBindings } from "@tsu-stack/github";
+import { type GitHubContext } from "@tsu-stack/github/infrastructure/octokit/client";
 import { type RequestLogger } from "@tsu-stack/logger/server";
 
 export type OrpcContext = {
-  github: GitHubRuntimeBindings;
+  github: GitHubContext;
   session: AuthSession | null;
   logger: RequestLogger;
 };

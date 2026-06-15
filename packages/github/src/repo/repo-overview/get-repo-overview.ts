@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  executeGitHubGraphQL,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoOverviewResponse } from "#@/repo/repo-overview/repo-overview.types";
 import { mapGraphQLRepoOverview } from "#@/repo/repo-overview/repo-overview.utils";
 import { type RepoOverview } from "#@/repo/shared.types";
@@ -18,19 +14,18 @@ import {
   setRepoLoggerOutcome,
   withLocalFirstMeta
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 
 export async function getRepoOverview(
   input: {
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<RepoOverview | null> {
   setRepoLoggerContext(context, "getRepoOverview", {
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_overview_read_skipped", {
       reason: source.reason
@@ -39,7 +34,6 @@ export async function getRepoOverview(
     return null;
   }
 
-  const octokit = createGitHubOctokit(source);
   const repoMetaKey = githubRevalidationSignalKeys.repoMeta({
     owner: source.owner,
     repo: input.repo
@@ -53,7 +47,8 @@ export async function getRepoOverview(
     const result = await getGitHubResourceLocalFirst<RepoOverview>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<GitHubGraphQLRepoOverviewResponse>(
-          octokit,
+          context.github,
+          "getRepoOverview.graphql",
           `query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
               databaseId
@@ -109,10 +104,10 @@ export async function getRepoOverview(
               tags: refs(refPrefix: "refs/tags/", first: 1) {
                 totalCount
               }
-              pullRequests(states: OPEN, first: 1) {
+              pullRequests(states: [OPEN], first: 1) {
                 totalCount
               }
-              issues(states: OPEN, first: 1) {
+              issues(states: [OPEN], first: 1) {
                 totalCount
               }
               hasDiscussionsEnabled
@@ -153,7 +148,7 @@ export async function getRepoOverview(
       owner: source.owner,
       params: input,
       resource: "repo.overview.v2",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [repoMetaKey, repoCodeKey]
     });
 

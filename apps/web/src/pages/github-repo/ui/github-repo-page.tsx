@@ -8,6 +8,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/
 import { parseRepoRouteSplat } from "@/shared/lib/parse-repo-route-splat";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
+// oxlint-disable-next-line fsd/no-public-api-sidestep
 import { useGetGithubSetupQuery } from "@/features/github/api/get-github-setup-status.query";
 
 import { SidePanelPortal, useRegisterGithubPublicTab } from "@/widgets/layout";
@@ -121,7 +122,7 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       }
     ];
-  }, [branchName, directoryPath, repo]);
+  }, [branchName, directoryPath, repo, owner]);
   useGitHubSignalStream(signalTargets);
 
   const tabUrl =
@@ -129,13 +130,13 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
       ? `${localePrefix}/${repo}/tree/${branchName}${routePath ? `/${routePath}` : ""}`
       : `${localePrefix}/${repo}`;
   const tabTitle =
-    view === "repo" || !routePath ? `${owner}/${repo}` : (routePath.split("/").at(-1) ?? routePath);
+    view === "repo" || !routePath ? `${repo}` : (routePath.split("/").at(-1) ?? routePath);
 
   useRegisterGithubPublicTab(
     overviewQuery.data
       ? {
           avatarUrl: overviewQuery.data.ownerAvatarUrl ?? undefined,
-          repo: `${owner}/${repo}`,
+          repo: `${repo}`,
           tabId:
             view === "repo"
               ? undefined
@@ -217,7 +218,6 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
                 <FileTree
                   directoryPath={directoryPath}
                   entries={treeQuery.data}
-                  owner={owner}
                   refName={branchName}
                   repo={repo}
                 />
@@ -233,7 +233,7 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
         </div>
       </div>
       <SidePanelPortal>
-        <RepoActivityCards owner={owner} repo={repo} />
+        <RepoActivityCards repo={repo} />
       </SidePanelPortal>
     </>
   );

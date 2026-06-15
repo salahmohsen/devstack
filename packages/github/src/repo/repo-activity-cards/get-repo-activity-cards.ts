@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  executeGitHubGraphQL,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoActivityCardsResponse } from "#@/repo/repo-activity-cards/repo-activity-cards.types";
 import {
   createRepoActivityCardsMetadata,
@@ -20,20 +16,19 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubRepoActivityCards } from "#@/types";
 
 export async function getRepoActivityCards(
   input: {
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubRepoActivityCards> {
   setRepoLoggerContext(context, "getRepoActivityCards", {
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_activity_cards_read_skipped", {
       reason: source.reason
@@ -42,7 +37,6 @@ export async function getRepoActivityCards(
     return emptyActivityCards();
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.repoMeta({
     owner: source.owner,
     repo: input.repo
@@ -53,7 +47,8 @@ export async function getRepoActivityCards(
       fetcher: async () => {
         const [graph, workflowRuns] = await Promise.all([
           executeGitHubGraphQL<GitHubGraphQLRepoActivityCardsResponse>(
-            octokit,
+            context.github,
+            "getRepoActivityCards.graphql",
             `query($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
                 pullRequests(first: 5, states: OPEN, orderBy: { field: UPDATED_AT, direction: DESC }) {
@@ -89,9 +84,12 @@ export async function getRepoActivityCards(
                 resetAt
               }
             }`,
-            input
+            {
+              owner: source.owner,
+              repo: input.repo
+            }
           ),
-          octokit.rest.actions
+          context.github.octokit.rest.actions
             .listWorkflowRunsForRepo({
               owner: source.owner,
               per_page: 5,
@@ -126,7 +124,7 @@ export async function getRepoActivityCards(
       owner: source.owner,
       params: input,
       resource: "repo.activityCards.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

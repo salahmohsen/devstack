@@ -4,13 +4,18 @@ import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 import {
   getGithubRepoBranchesQueryOptions,
-  getGithubRepoOverviewQueryOptions,
-  getGithubRepoTreeQueryOptions
+  getGithubRepoOverviewQueryOptions
 } from "@/pages/github-repo";
+
+const RESERVED_NON_REPO_SEGMENTS = new Set([".well-known", "firebase-messaging-sw.js"]);
 
 export const Route = createFileRoute("/{-$locale}/(layout)/$repo")({
   component: RouteComponent,
   beforeLoad: async ({ context, params }) => {
+    if (RESERVED_NON_REPO_SEGMENTS.has(params.repo)) {
+      throw notFound();
+    }
+
     const setupStatus = await context.queryClient.ensureQueryData(
       getGithubSetupStatusQueryOptions()
     );
@@ -18,18 +23,11 @@ export const Route = createFileRoute("/{-$locale}/(layout)/$repo")({
     if (!setupStatus.isConfigured || !setupStatus.owner) {
       throw notFound();
     }
-
-    const overview = await context.queryClient.ensureQueryData(
-      getGithubRepoOverviewQueryOptions(params.repo)
-    );
+  },
+  loader: async ({ context, params }) => {
+    await context.queryClient.prefetchQuery(getGithubRepoOverviewQueryOptions(params.repo));
 
     await context.queryClient.prefetchQuery(getGithubRepoBranchesQueryOptions(params.repo));
-
-    if (overview?.defaultBranch) {
-      await context.queryClient.ensureQueryData(
-        getGithubRepoTreeQueryOptions(params.repo, overview.defaultBranch, "")
-      );
-    }
   }
 });
 

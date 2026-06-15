@@ -3,21 +3,16 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  createGitHubResponseMetadata,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import {
   buildGitHubConditionalHeaders,
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubUserProfile } from "#@/types";
 
-export async function getUserProfile(context?: OrpcContext): Promise<GitHubUserProfile | null> {
-  const source = await resolvePublicGitHubSource();
+export async function getUserProfile(context: OrpcContext): Promise<GitHubUserProfile | null> {
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_user_profile_read_skipped", {
       reason: source.reason
@@ -26,13 +21,12 @@ export async function getUserProfile(context?: OrpcContext): Promise<GitHubUserP
     return null;
   }
 
-  const octokit = createGitHubOctokit(source);
   const ownerProfileKey = githubRevalidationSignalKeys.ownerProfile(source.owner);
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserProfile>({
       fetcher: async (conditionals) => {
-        const response = await octokit.rest.users.getByUsername({
+        const response = await context.github.octokit.rest.users.getByUsername({
           headers: buildGitHubConditionalHeaders(conditionals),
           username: source.owner
         });
@@ -64,7 +58,7 @@ export async function getUserProfile(context?: OrpcContext): Promise<GitHubUserP
       owner: source.owner,
       params: { username: source.owner },
       resource: "user.profile.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [ownerProfileKey]
     });
 

@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  createGitHubResponseMetadata,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { type GitHubRepoRefCommitItem } from "#@/repo/repo-ref-commit/repo-ref-commit.types";
 import { mapGitHubRepoLatestCommit } from "#@/repo/repo-ref-commit/repo-ref-commit.utils";
 import {
@@ -15,7 +11,6 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubRepoLatestCommit } from "#@/types";
 
 export async function getRepoRefCommit(
@@ -23,14 +18,14 @@ export async function getRepoRefCommit(
     ref: string;
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubRepoLatestCommit | null> {
   setRepoLoggerContext(context, "getRepoRefCommit", {
     ref: input.ref,
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_ref_commit_read_skipped", {
       reason: source.reason
@@ -39,7 +34,6 @@ export async function getRepoRefCommit(
     return null;
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -48,7 +42,7 @@ export async function getRepoRefCommit(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoLatestCommit>({
       fetcher: async () => {
-        const response = await octokit.rest.repos.listCommits({
+        const response = await context.github.octokit.rest.repos.listCommits({
           owner: source.owner,
           per_page: 1,
           repo: input.repo,
@@ -66,7 +60,7 @@ export async function getRepoRefCommit(
       owner: source.owner,
       params: input,
       resource: "repo.refCommit.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  createGitHubResponseMetadata,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { mapGitHubRepoFileContent } from "#@/repo/repo-file-content/repo-file-content.utils";
 import {
   buildGitHubConditionalHeaders,
@@ -15,7 +11,6 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 
 export async function getRepoFileContent(
   input: {
@@ -23,7 +18,7 @@ export async function getRepoFileContent(
     ref: string;
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<string | null> {
   setRepoLoggerContext(context, "getRepoFileContent", {
     path: input.path,
@@ -31,7 +26,7 @@ export async function getRepoFileContent(
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_file_content_read_skipped", {
       reason: source.reason
@@ -40,7 +35,6 @@ export async function getRepoFileContent(
     return null;
   }
 
-  const octokit = createGitHubOctokit(source);
   const repoCodeKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -49,7 +43,7 @@ export async function getRepoFileContent(
   try {
     const result = await getGitHubResourceLocalFirst<string | null>({
       fetcher: async (conditionals) => {
-        const response = await octokit.rest.repos.getContent({
+        const response = await context.github.octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
           owner: source.owner,
           path: input.path,
@@ -68,7 +62,7 @@ export async function getRepoFileContent(
       owner: source.owner,
       params: input,
       resource: "repo.fileContent.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [repoCodeKey]
     });
 
