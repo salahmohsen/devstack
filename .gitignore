@@ -31,3 +31,5 @@ tmp
 *.sw?
 
 *.playwright-mcp
+
+docs/superpowers/*
