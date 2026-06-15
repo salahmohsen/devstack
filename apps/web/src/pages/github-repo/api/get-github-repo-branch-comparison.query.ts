@@ -3,15 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
-import { persistedMeta } from "@/lib/github.query";
-
-export const githubRepoBranchComparisonQueryKeys = {
-  byBranches(repo: string, base: string, head: string) {
-    return orpc.public.github.getRepoBranchComparison.queryOptions({
-      input: { base, head, repo }
-    }).queryKey;
-  }
-};
+import { persistedMeta } from "@/shared/lib/query-persistence";
 
 export function getGithubRepoBranchComparisonQueryOptions(
   repo: string,

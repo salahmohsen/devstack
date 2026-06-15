@@ -12,7 +12,6 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@tsu-stack/db": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

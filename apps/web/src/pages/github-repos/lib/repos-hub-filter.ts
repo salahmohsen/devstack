@@ -1,3 +1,6 @@
+import { type UserRepoSummary } from "@tsu-stack/github/types";
+export type { UserRepoSummary };
+
 import { type SerializedFilterStore } from "@/pages/github-repos/ui/filter-cookie";
 
 import { REPO_LIST_PAGE_SIZE } from "./repo-list-page";
@@ -5,27 +8,6 @@ import { REPO_LIST_PAGE_SIZE } from "./repo-list-page";
 const REPOS_FILTER_PAGE_ID = "repos";
 const DEFAULT_REPOS_SORT = "updated";
 const VALID_REPOS_SORT_IDS = new Set(["updated", "created", "created-asc", "title"]);
-
-export type UserRepoSummary = {
-  createdAt: string;
-  defaultBranch: string;
-  description: string | null;
-  forks: number;
-  forkCount: number;
-  fullName: string;
-  id: number;
-  isFork: boolean;
-  isPrivate: boolean;
-  language: string | null;
-  languageColor: string | null;
-  name: string;
-  owner: string;
-  pushedAt: string | null;
-  stars: number;
-  updatedAt: string;
-  url: string;
-  visibility: "internal" | "private" | "public";
-};
 
 export type ReposHubResult = {
   totals: { all: number; public: number; private: number };

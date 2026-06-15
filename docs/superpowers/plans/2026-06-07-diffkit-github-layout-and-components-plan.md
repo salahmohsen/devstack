@@ -104,7 +104,7 @@ This plan uses `tanstack-start-best-practices` for the route/layout work:
 - `apps/web/src/pages/github-profile/ui/pinned-repo-card.tsx`
 - `apps/web/src/pages/github-profile/ui/user-activity-feed.tsx`
 - `apps/web/src/pages/github-profile/ui/repository-row.tsx`
-- `apps/web/src/pages/github-repo/lib/format-relative-time.ts`
+- `apps/web/src/lib/format-relative-time.ts` (deleted 2026-06-15 — dead code)
 - `apps/web/src/pages/github-repo/lib/repo-clone-protocol-storage.ts`
 - `apps/web/src/pages/github-repo/ui/repo-header.tsx`
 - `apps/web/src/pages/github-repo/ui/repo-star-fork-actions.tsx`
@@ -114,7 +114,7 @@ This plan uses `tanstack-start-best-practices` for the route/layout work:
 - `apps/web/src/pages/github-repo/ui/repo-markdown-files.tsx`
 - `apps/web/src/pages/github-repo/ui/repo-sidebar.tsx`
 - `apps/web/src/pages/github-repo/ui/repo-activity-cards.tsx`
-- `apps/web/src/pages/github-repo/ui/repo-commit-sparkline.tsx`
+- `apps/web/src/shared/ui/repo-commit-sparkline.tsx`
 - `apps/web/src/pages/github-repo/ui/repo-overview-skeleton.tsx`
 - `apps/web/src/routes/{-$locale}/(github-layout)/route.tsx`
 - `apps/web/src/routes/{-$locale}/(github-layout)/index.tsx`
@@ -257,7 +257,7 @@ git commit -m "feat(ui): add primitives for github public pages"
 
 - Create: `apps/web/src/pages/github-repo/api/get-github-repo-branches.query.ts`
 - Create: `apps/web/src/pages/github-repo/api/get-github-tree-entry-commits.query.ts`
-- Create: `apps/web/src/pages/github-repo/api/get-github-repo-commit-sparkline.query.ts`
+- Create: `apps/web/src/shared/lib/github-repo-commit-sparkline.query.ts` (moved from `pages/github-repo/api/` on 2026-06-15 per FSD rules)
 - Create: `apps/web/src/pages/github-repo/api/get-github-repo-activity-cards.query.ts`
 - Modify: `apps/web/src/pages/github-repo/index.ts`
 - Modify: existing `apps/web/src/pages/github-profile/api/*.query.ts` only if output types changed
@@ -323,8 +323,7 @@ git commit -m "feat(ui): add primitives for github public pages"
 - [ ] Make the `Overview` pill link to the canonical public profile route `/`.
 - [ ] Keep the dynamic detail-tab strip to the right of `Overview`, with close, close others, close tabs to the right, drag reorder, horizontal wheel scrolling, scroll shadows, and active-tab scrolling.
 - [ ] Add a far-right control cluster in the topbar after the dynamic tab strip.
-- [ ] Put `LocaleSwitcher` from `apps/web/src/shared/ui/locale-switcher.tsx` in that far-right cluster.
-- [ ] Put `ThemeSwitcher` from `apps/web/src/shared/ui/theme-switcher.tsx` in that far-right cluster.
+- [ ] (skipped — `locale-switcher.tsx` and `theme-switcher.tsx` were removed as dead code on 2026-06-15; the GitHub topbar uses inline locale/theme controls instead)
 - [ ] Keep the far-right controls visible on desktop even when many dynamic tabs are open; tabs should shrink/scroll before the language/theme controls are pushed off screen.
 - [ ] On mobile, include language and theme controls in the reduced avatar menu or mobile nav action area so they remain reachable without crowding the bottom nav.
 - [ ] Remove the "Close merged" context menu item because pull/review tabs are not part of this app shell.
@@ -400,7 +399,7 @@ git commit -m "feat(ui): add primitives for github public pages"
 
 **Files:**
 
-- Create: `apps/web/src/pages/github-repo/lib/format-relative-time.ts`
+- (not created — `format-relative-time` was removed as dead code on 2026-06-15)
 - Create: `apps/web/src/pages/github-repo/lib/repo-clone-protocol-storage.ts`
 - Create: `apps/web/src/pages/github-repo/ui/repo-header.tsx`
 - Create: `apps/web/src/pages/github-repo/ui/repo-star-fork-actions.tsx`
@@ -410,7 +409,7 @@ git commit -m "feat(ui): add primitives for github public pages"
 - Create: `apps/web/src/pages/github-repo/ui/repo-markdown-files.tsx`
 - Create: `apps/web/src/pages/github-repo/ui/repo-sidebar.tsx`
 - Create: `apps/web/src/pages/github-repo/ui/repo-activity-cards.tsx`
-- Create: `apps/web/src/pages/github-repo/ui/repo-commit-sparkline.tsx`
+- Create: `apps/web/src/shared/ui/repo-commit-sparkline.tsx` (moved from `pages/github-repo/ui/` on 2026-06-15)
 - Create: `apps/web/src/pages/github-repo/ui/repo-overview-skeleton.tsx`
 - Modify: `apps/web/src/pages/github-repo/ui/github-repo-page.tsx`
 - Modify: `apps/web/src/pages/github-repo/index.ts`
@@ -523,7 +522,7 @@ vp run dev
 
 - The current simplified pages are placeholders. Replace them rather than layering DiffKit UI inside the old card-based layout.
 - Keep all GitHub reads in `packages/github`; the web app should only call oRPC query wrappers.
-- Browser code may import `@tsu-stack/github/cache/github-revalidation`, but must not import `@tsu-stack/github` root because the root exports server-only code.
+- Browser code **must** use deep imports like `@tsu-stack/github/cache/github-revalidation` or `@tsu-stack/github/types`, not the `@tsu-stack/github` root barrel, because the root exports server-only code. (Confirmed: all 11 barrel imports were replaced with deep imports on 2026-06-15.)
 - DiffKit's persistent tab registry should be ported for public repo/file tabs. DiffKit's `SidePanelPortal`, current user viewer checks, and private installation behavior should be pruned unless a public-safe equivalent exists.
 - Use route search state directly through TanStack Router if possible. If adding `nuqs`, justify it in the implementation notes and add it deliberately to `apps/web/package.json`.
 - Use Lucide icon replacements consistently. Do not vendor or install `@diffkit/icons`.

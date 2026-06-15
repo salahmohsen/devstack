@@ -12,9 +12,9 @@ import {
   ResizablePanelGroup
 } from "@tsu-stack/ui/components/resizable";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
+import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { getExplorerPath, setExplorerPath } from "@/shared/lib/explorer-path-store";
-import { useHasMounted } from "@/shared/lib/use-has-mounted";
 
 import { useRegisterGithubPublicTab } from "@/widgets/layout";
 
@@ -52,7 +52,7 @@ export function RepoExplorerLayout({
   repo: string;
   viewMode: "blob" | "tree";
 }) {
-  const hasMounted = useHasMounted();
+  const hasMounted = useIsClient();
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const [drawerOpen, setDrawerOpen] = useState(false);

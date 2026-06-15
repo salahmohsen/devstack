@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
-import { persistedMeta } from "@/lib/github.query";
+import { persistedMeta } from "@/shared/lib/query-persistence";
 
 export const githubRepoTreeQueryKeys = {
   byPath(repo: string, ref: string, path = "") {

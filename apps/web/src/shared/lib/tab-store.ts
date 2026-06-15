@@ -128,13 +128,6 @@ export function isMergedTab(t: Tab): boolean {
   );
 }
 
-export function removeMergedTabs() {
-  const next = tabs.filter((t) => !isMergedTab(t));
-  if (next.length === tabs.length) return;
-  tabs = next;
-  emitChange();
-}
-
 export function reorderTabs(newOrder: Tab[]) {
   tabs = newOrder;
   emitChange();

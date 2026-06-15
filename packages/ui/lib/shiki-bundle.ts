@@ -1,7 +1,7 @@
 import { createHighlighterCore } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 
-import { diffkitDark, diffkitLight } from "./shiki-themes";
+import { diffkitDark, diffkitLight } from "#@/lib/shiki-themes";
 
 /**
  * Fine-grained Shiki bundle: only these grammars are ever loaded (see shiki.style/guide/bundles).

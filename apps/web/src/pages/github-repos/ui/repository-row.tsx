@@ -1,23 +1,12 @@
-import { Fragment, lazy, memo, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, memo, type ReactNode } from "react";
 
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { GitForkIcon, SquareLock02Icon, StarIcon, ViewIcon } from "@tsu-stack/icons";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+import { LazyRepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline-lazy";
 
 import { type UserRepoSummary } from "@/pages/github-repos/lib/repos-hub-filter";
-
-const RepoCommitSparkline = lazy(() =>
-  import("@/pages/github-repo/ui/repo-commit-sparkline").then((mod) => {
-    return {
-      default: mod.RepoCommitSparkline
-    };
-  })
-);
-
-const SparklinePlaceholder = (
-  <div className="h-13 w-42 shrink-0 rounded-sm bg-muted/15" aria-hidden />
-);
 
 const languageColors: Record<string, string> = {
   Astro: "#ff5a03",
@@ -151,43 +140,6 @@ export const RepositoryRow = memo(function RepositoryRow({
     </Link>
   );
 });
-
-function LazyRepoCommitSparkline({ repo }: { repo: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [showChart, setShowChart] = useState(false);
-
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShowChart(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "240px 0px", threshold: 0 }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={containerRef} className="flex items-start justify-end">
-      {showChart ? (
-        <Suspense fallback={SparklinePlaceholder}>
-          <RepoCommitSparkline repo={repo} />
-        </Suspense>
-      ) : (
-        SparklinePlaceholder
-      )}
-    </div>
-  );
-}
 
 function formatCount(count: number): string {
   if (count >= 1000) {

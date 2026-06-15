@@ -2,6 +2,9 @@
   "name": "@tsu-stack/ui",
   "private": true,
   "type": "module",
+  "imports": {
+    "#@/*": "./*.ts"
+  },
   "exports": {
     "./*": "./*.ts",
     "./styles/globals.css": "./styles/globals.css",
@@ -13,13 +16,11 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@lonik/oh-image": "catalog:",
-    "@shikijs/core": "^4.0.2",
     "@shikijs/langs": "^4.0.2",
     "@tanstack/react-router": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "lucide-react": "catalog:",
-    "motion": "catalog:",
     "next-themes": "catalog:",
     "radix-ui": "catalog:",
     "react-resizable-panels": "catalog:",

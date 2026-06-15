@@ -23,6 +23,7 @@ export function LogoIcon(props: React.SVGProps<SVGSVGElement> & { className?: st
   );
 }
 
+// fallow-ignore-next-line unused-export
 export function LogoWordmark(props: React.ComponentProps<"div">) {
   return (
     <div

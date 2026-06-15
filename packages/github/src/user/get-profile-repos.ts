@@ -42,6 +42,7 @@ export async function getProfileRepos(context: OrpcContext): Promise<GitHubUserR
             defaultBranch: repo.default_branch ?? "main",
             description: repo.description ?? null,
             forkCount: repo.forks_count ?? 0,
+            forks: repo.forks_count ?? 0,
             fullName: repo.full_name ?? `${repo.owner?.login ?? source.owner}/${repo.name}`,
             id: repo.id,
             isFork: repo.fork,

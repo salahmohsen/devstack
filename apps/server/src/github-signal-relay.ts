@@ -18,6 +18,7 @@ function isSubscribeMessage(data: unknown): data is SubscribeMessage {
 export class GitHubSignalRelay {
   private subscriptions = new Map<WebSocket, Set<string>>();
 
+  // fallow-ignore-next-line unused-class-member
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 

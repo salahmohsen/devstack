@@ -9,6 +9,8 @@ import {
   StarIcon
 } from "@tsu-stack/icons";
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+
 import { type GithubActivityQueryResult } from "@/pages/github-profile/api/get-github-activity.query";
 
 type UserActivityFeedProps = {
@@ -81,7 +83,7 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-[13px] text-base-400">{getEventDescription(event)}</span>
           <span className="shrink-0 text-xs text-base-500">
-            {formatRelativeTime(event.createdAt)}
+            {compactRelativeTime(event.createdAt)}
           </span>
         </div>
         {event.prDetail ? (
@@ -199,22 +201,8 @@ function getEventDescription(event: GithubActivityQueryResult[number]) {
   }
 }
 
-function formatRelativeTime(dateString: string) {
-  const date = new Date(dateString);
-  const diffMs = Date.now() - date.getTime();
-  const diffDays = Math.max(1, Math.round(diffMs / (24 * 60 * 60 * 1000)));
-
-  if (diffDays >= 365) {
-    return `${Math.round(diffDays / 365)}y`;
-  }
-  if (diffDays >= 30) {
-    return `${Math.round(diffDays / 30)}mo`;
-  }
-  if (diffDays >= 7) {
-    return `${Math.round(diffDays / 7)}w`;
-  }
-
-  return `${diffDays}d`;
+function compactRelativeTime(dateString: string) {
+  return formatRelativeTime(dateString).replace(/ ago$/, "");
 }
 
 function capitalize(value: string | null) {

@@ -4,7 +4,7 @@ import { AnimatePresence, animate, motion, useMotionValue } from "motion/react";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { type GitHubContributionCalendar } from "@tsu-stack/github";
+import { type GitHubContributionCalendar } from "@tsu-stack/github/types";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 type ContributionGraphProps = {

@@ -86,6 +86,7 @@ export type GitHubUserRepoSummary = {
   defaultBranch: string;
   description: string | null;
   forkCount: number;
+  forks: number;
   fullName: string;
   id: number;
   isFork: boolean;
@@ -189,6 +190,8 @@ export type GitHubLocalFirstMeta = {
   fetchedAt: string | null;
   isRevalidating: boolean;
 };
+
+export type UserRepoSummary = GitHubUserRepoSummary;
 
 export type GitHubLocalFirstResult<TData> = {
   data: TData;

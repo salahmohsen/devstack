@@ -9,21 +9,12 @@ import {
   EmptyHeader,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
-import { cn } from "@tsu-stack/ui/lib/utils";
 
-function CenteredLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className={cn("flex min-h-screen flex-col")}>
-      <main className="relative -top-(--navbar-height) grid flex-1 place-items-center pt-(--navbar-height)">
-        {children}
-      </main>
-    </div>
-  );
-}
+import { ErrorLayout } from "@/shared/ui/error-layout";
 
 export function DefaultNotFoundPage() {
   return (
-    <CenteredLayout>
+    <ErrorLayout>
       <Empty>
         <EmptyHeader>
           <EmptyTitle className="mask-b-from-20% mask-b-to-80% text-9xl font-extrabold">
@@ -45,6 +36,6 @@ export function DefaultNotFoundPage() {
           </div>
         </EmptyContent>
       </Empty>
-    </CenteredLayout>
+    </ErrorLayout>
   );
 }

@@ -1,3 +1,5 @@
+import { type GitHubActor } from "#@/types";
+
 export type RepositoryRef = {
   name: string;
   owner: string;
@@ -5,13 +7,6 @@ export type RepositoryRef = {
   url: string;
   /** `null` means the visibility is unknown (e.g. REST search doesn't return it). */
   isPrivate: boolean | null;
-};
-
-export type GitHubActor = {
-  login: string;
-  avatarUrl: string;
-  url: string;
-  type: string;
 };
 
 export type GitHubAccountSummary = {
@@ -36,23 +31,6 @@ export type GitHubLabel = {
 /** Weekly total commit counts; index `0` is oldest week, last index is most recent (GitHub participation API). */
 export type RepoParticipationStats = {
   weeklyCommits: number[];
-};
-
-export type UserRepoSummary = {
-  id: number;
-  name: string;
-  fullName: string;
-  description: string | null;
-  stars: number;
-  forks: number;
-  language: string | null;
-  updatedAt: string | null;
-  createdAt: string | null;
-  isPrivate: boolean;
-  /** GitHub visibility (`internal` on Enterprise); derived when the API omits `visibility`. */
-  visibility: "public" | "private" | "internal";
-  url: string;
-  owner: string;
 };
 
 export type PullSummary = {

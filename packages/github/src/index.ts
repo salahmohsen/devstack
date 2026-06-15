@@ -13,6 +13,14 @@ export * from "#@/repo/tree-entry-commits/get-tree-entry-commits";
 export * from "#@/runtime/bindings";
 export * from "#@/shared/public-github-source";
 export * from "#@/types";
+export type {
+  CommandPaletteSearchResult,
+  IssueSummary,
+  MyIssuesResult,
+  MyPullsResult,
+  PullSummary,
+  RepositoryRef
+} from "#@/repo/shared.types";
 export * from "#@/user/get-profile-repos";
 export * from "#@/user/get-user-activity";
 export * from "#@/user/get-user-contributions";

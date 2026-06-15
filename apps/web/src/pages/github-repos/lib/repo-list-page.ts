@@ -15,12 +15,6 @@ export function safeRepoListPage(page: number, itemCount: number): number {
   return Math.min(Math.max(1, page), max);
 }
 
-export function sliceReposForPage<T>(items: T[], page: number): T[] {
-  const safe = safeRepoListPage(page, items.length);
-  const end = Math.min(items.length, safe * REPO_LIST_PAGE_SIZE);
-  return items.slice(0, end);
-}
-
 export function repoListHasNextPage(page: number, itemCount: number): boolean {
   const safe = safeRepoListPage(page, itemCount);
   return safe * REPO_LIST_PAGE_SIZE < itemCount;

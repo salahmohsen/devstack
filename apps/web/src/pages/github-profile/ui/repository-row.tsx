@@ -1,13 +1,8 @@
-import { Suspense, useEffect, useRef, useState } from "react";
-
 import { GitForkIcon, LockIcon, StarIcon } from "@tsu-stack/icons";
 import { Badge } from "@tsu-stack/ui/components/badge";
 
 import { formatGithubCount } from "@/shared/lib/format-github-count";
-
-import { RepoCommitSparkline } from "@/pages/github-repo/ui/repo-commit-sparkline";
-
-const sparklineFallback = <div className="h-13 w-42 shrink-0 rounded-sm bg-white/4" aria-hidden />;
+import { LazyRepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline-lazy";
 
 type RepositoryRowProps = {
   repo: {
@@ -25,29 +20,6 @@ type RepositoryRowProps = {
 };
 
 export function RepositoryRow({ repo }: RepositoryRowProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [showChart, setShowChart] = useState(false);
-
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setShowChart(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "240px 0px", threshold: 0 }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <a
       href={`/${repo.owner}/${repo.name}`}
@@ -98,32 +70,16 @@ export function RepositoryRow({ repo }: RepositoryRowProps) {
         ) : null}
       </div>
 
-      <div ref={containerRef} className="flex items-start justify-end">
-        {showChart ? (
-          <Suspense fallback={sparklineFallback}>
-            <RepoCommitSparkline repo={repo.name} />
-          </Suspense>
-        ) : (
-          sparklineFallback
-        )}
-      </div>
+      <LazyRepoCommitSparkline
+        repo={repo.name}
+        placeholderClassName="h-13 w-42 shrink-0 rounded-sm bg-white/4"
+      />
     </a>
   );
 }
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+
 function formatCompactRelativeTime(dateString: string) {
-  const diffMs = Date.now() - new Date(dateString).getTime();
-  const diffDays = Math.max(1, Math.round(diffMs / (24 * 60 * 60 * 1000)));
-
-  if (diffDays >= 365) {
-    return `${Math.round(diffDays / 365)}y`;
-  }
-  if (diffDays >= 30) {
-    return `${Math.round(diffDays / 30)}mo`;
-  }
-  if (diffDays >= 7) {
-    return `${Math.round(diffDays / 7)}w`;
-  }
-
-  return `${diffDays}d`;
+  return formatRelativeTime(dateString).replace(/ ago$/, "");
 }

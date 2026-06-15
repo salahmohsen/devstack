@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { type GitHubRepoLatestCommit } from "@tsu-stack/github";
+import { type GitHubRepoLatestCommit } from "@tsu-stack/github/types";
 import { GitCommitIcon } from "@tsu-stack/icons";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";

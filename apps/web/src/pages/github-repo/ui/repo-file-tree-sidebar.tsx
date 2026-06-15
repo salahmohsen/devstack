@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { memo, useCallback, useMemo, useState } from "react";
 
-import { type GitHubRepoTreeEntry } from "@tsu-stack/github";
+import { type GitHubRepoTreeEntry } from "@tsu-stack/github/types";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
 import { ChevronRightIcon, FileIcon, FolderIcon } from "@tsu-stack/icons";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
+import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -14,7 +15,6 @@ import {
   useIsAncestorPath
 } from "@/shared/lib/explorer-path-store";
 import { type FileSearchEntry, type FileSearchResult } from "@/shared/lib/fuzzy-file-search";
-import { useHasMounted } from "@/shared/lib/use-has-mounted";
 import { FileSearchCard } from "@/shared/ui/file-search-card";
 
 import {
@@ -159,7 +159,7 @@ const DirectoryNode = memo(function DirectoryNode({
   const isActive = useIsActivePath(entryPath);
   const isAncestor = useIsAncestorPath(entryPath);
   const [isOpen, setIsOpen] = useState(isAncestor || isActive);
-  const hasMounted = useHasMounted();
+  const hasMounted = useIsClient();
 
   const treeQuery = useQuery({
     ...getGithubRepoTreeQueryOptions(repoName, currentRef, entryPath),

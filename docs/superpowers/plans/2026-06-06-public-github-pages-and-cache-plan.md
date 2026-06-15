@@ -49,8 +49,8 @@ The public root route should stop rendering the current marketing landing page a
 Keep the existing navbar shell and controls that already exist in `portfolio-v2`:
 
 - `apps/web/src/features/navbar/config/nav-links.config.ts` already provides the links for `Playground`, `Dashboard`, and `API Docs`
-- `apps/web/src/shared/ui/locale-switcher.tsx` already provides the localisation button
-- `apps/web/src/shared/ui/theme-switcher.tsx` already provides the theme mode button
+- `apps/web/src/shared/ui/locale-switcher.tsx` already provided the localisation button (removed 2026-06-15 — dead code)
+- `apps/web/src/shared/ui/theme-switcher.tsx` already provided the theme mode button (removed 2026-06-15 — dead code)
 - `apps/web/src/features/navbar/ui/user-dropdown.tsx` already provides the user button
 
 That means the home-page work is primarily:
@@ -115,18 +115,18 @@ Do **not** start by copying DiffKit's auth-specific or installation-token-specif
 - `packages/github/package.json`
 - `packages/github/tsconfig.json`
 - `packages/github/src/index.ts`
-- `packages/github/src/config/public-github-source.ts`
-- `packages/github/src/octokit/client.ts`
+- `packages/github/src/shared/public-github-source.ts`
+- `packages/github/src/infrastructure/octokit/client.ts`
 - `packages/github/src/runtime/bindings.ts`
-- `packages/github/src/cache/github-cache-policy.ts`
-- `packages/github/src/cache/github-revalidation.ts`
-- `packages/github/src/cache/github-cache.ts`
-- `packages/github/src/cache/get-github-resource-local-first.ts`
-- `packages/github/src/profile/get-user-profile.ts`
-- `packages/github/src/profile/get-user-contributions.ts`
-- `packages/github/src/profile/get-user-pinned-repos.ts`
-- `packages/github/src/profile/get-profile-repos.ts`
-- `packages/github/src/profile/get-user-activity.ts`
+- `packages/github/src/infrastructure/cache/github-cache-policy.ts`
+- `packages/github/src/infrastructure/cache/github-revalidation.ts`
+- `packages/github/src/infrastructure/cache/github-cache.ts`
+- `packages/github/src/infrastructure/cache/get-github-resource-local-first.ts`
+- `packages/github/src/user/get-user-profile.ts`
+- `packages/github/src/user/get-user-contributions.ts`
+- `packages/github/src/user/get-user-pinned-repos.ts`
+- `packages/github/src/user/get-profile-repos.ts`
+- `packages/github/src/user/get-user-activity.ts`
 - `packages/github/src/repo/get-repo-overview.ts`
 - `packages/github/src/repo/get-repo-tree.ts`
 - `packages/github/src/repo/get-repo-file-content.ts`
@@ -259,11 +259,11 @@ Because you want to mirror DiffKit's WebSocket behavior immediately, include thi
 
 **Files:**
 
-- Create: `packages/github/src/cache/github-cache-policy.ts`
-- Create: `packages/github/src/cache/github-revalidation.ts`
-- Create: `packages/github/src/cache/github-cache.ts`
-- Create: `packages/github/src/cache/get-github-resource-local-first.ts`
-- Create: `packages/github/src/octokit/client.ts`
+- Create: `packages/github/src/infrastructure/cache/github-cache-policy.ts`
+- Create: `packages/github/src/infrastructure/cache/github-revalidation.ts`
+- Create: `packages/github/src/infrastructure/cache/github-cache.ts`
+- Create: `packages/github/src/infrastructure/cache/get-github-resource-local-first.ts`
+- Create: `packages/github/src/infrastructure/octokit/client.ts`
 
 - [ ] Copy the architectural ideas from DiffKit's `apps/dashboard/src/lib/github-cache.ts`, `github-cache-policy.ts`, and `github-revalidation.ts`, but adapt them to Postgres repositories and the server Worker KV binding.
 - [ ] Pass KV and background execution handles into cache helpers explicitly through a runtime context object. Do not hide binding reads deep inside generic package code; this keeps package-local validation and future non-Worker execution understandable.

@@ -2,6 +2,14 @@ import { type QueryClient, useQuery, useQueryClient } from "@tanstack/react-quer
 import { useSyncExternalStore } from "react";
 
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
+import {
+  type CommandPaletteSearchResult,
+  type IssueSummary,
+  type MyIssuesResult,
+  type MyPullsResult,
+  type PullSummary
+} from "@tsu-stack/github/repo/shared.types.js";
+import { type UserRepoSummary } from "@tsu-stack/github/types";
 
 import {
   CodeIcon,
@@ -15,14 +23,6 @@ import {
 } from "@/lib/command-palette-icons";
 import { type GitHubQueryScope } from "@/lib/github.query";
 import { githubQueryKeys } from "@/lib/github.query";
-import {
-  type CommandPaletteSearchResult,
-  type IssueSummary,
-  type MyIssuesResult,
-  type MyPullsResult,
-  type PullSummary,
-  type UserRepoSummary
-} from "@/lib/github.types";
 
 import { getRegisteredCommands, subscribeCommands } from "./registry";
 import { type CommandItem } from "./types";
@@ -200,100 +200,4 @@ export function useCommandItems(): CommandItem[] {
   });
 
   return [...staticCommands, ...dynamicItems];
-}
-
-export function getCommandSearchItems(
-  result: CommandPaletteSearchResult | undefined
-): CommandItem[] {
-  if (!result) {
-    return [];
-  }
-
-  const items: CommandItem[] = [];
-
-  for (const pr of result.pulls) {
-    const prState = getPrIcon(pr);
-    items.push({
-      id: `pull:${pr.id}`,
-      label: `#${pr.number} ${pr.title}`,
-      group: "Pull Requests",
-      icon: prState.icon,
-      iconClassName: prState.iconClassName,
-      keywords: [
-        pr.repository.name,
-        pr.repository.owner,
-        pr.author?.login ?? "",
-        String(pr.number)
-      ].filter(Boolean),
-      action: {
-        type: "navigate",
-        to: `/${pr.repository.owner}/${pr.repository.name}/pull/${pr.number}`
-      },
-      meta: {
-        repo: pr.repository.fullName,
-        comments: pr.comments,
-        updatedAt: pr.updatedAt
-      }
-    });
-  }
-
-  for (const issue of result.issues) {
-    const issueState = getIssueIcon(issue);
-    items.push({
-      id: `issue:${issue.id}`,
-      label: `#${issue.number} ${issue.title}`,
-      group: "Issues",
-      icon: issueState.icon,
-      iconClassName: issueState.iconClassName,
-      keywords: [
-        issue.repository.name,
-        issue.repository.owner,
-        issue.author?.login ?? "",
-        String(issue.number)
-      ].filter(Boolean),
-      action: {
-        type: "navigate",
-        to: `/${issue.repository.owner}/${issue.repository.name}/issues/${issue.number}`
-      },
-      meta: {
-        repo: issue.repository.fullName,
-        comments: issue.comments,
-        updatedAt: issue.updatedAt
-      }
-    });
-  }
-
-  return items;
-}
-
-export function cacheSearchResults(
-  queryClient: QueryClient,
-  scope: GitHubQueryScope,
-  result: CommandPaletteSearchResult
-) {
-  if (result.pulls.length > 0) {
-    queryClient.setQueryData<MyPullsResult>(githubQueryKeys.pulls.mine(scope), (prev) => {
-      if (!prev) return prev;
-      const existingIds = new Set(prev.involved.map((p) => p.id));
-      const newPulls = result.pulls.filter((p) => !existingIds.has(p.id));
-      if (newPulls.length === 0) return prev;
-      return {
-        ...prev,
-        involved: [...prev.involved, ...newPulls]
-      };
-    });
-  }
-
-  if (result.issues.length > 0) {
-    queryClient.setQueryData<MyIssuesResult>(githubQueryKeys.issues.mine(scope), (prev) => {
-      if (!prev) return prev;
-      const existingIds = new Set(prev.mentioned.map((i) => i.id));
-      const newIssues = result.issues.filter((i) => !existingIds.has(i.id));
-      if (newIssues.length === 0) return prev;
-      return {
-        ...prev,
-        mentioned: [...prev.mentioned, ...newIssues]
-      };
-    });
-  }
 }

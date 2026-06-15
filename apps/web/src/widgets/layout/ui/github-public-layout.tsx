@@ -1,9 +1,9 @@
 import { motion } from "motion/react";
 import { type PropsWithChildren } from "react";
 
+import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useHasMounted } from "@/shared/lib/use-has-mounted";
 import { useMediaQuery } from "@/shared/lib/use-media-query";
 
 import { CommandPalette } from "./command-palette";
@@ -20,7 +20,7 @@ import { GithubPublicMobileNav } from "./github-public-mobile-nav";
 import { Topbar } from "./github-public-topbar";
 
 export function GithubPublicLayout({ children }: PropsWithChildren) {
-  const hasMounted = useHasMounted();
+  const hasMounted = useIsClient();
   const sidePanel = useSidePanelSlot();
   const isXl = useMediaQuery("(min-width: 1280px)");
   const showPanel = hasMounted && isXl && sidePanel.hasContent && !sidePanel.collapsed;

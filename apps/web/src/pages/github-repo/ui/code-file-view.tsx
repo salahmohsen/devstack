@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Suspense, use, useCallback, useMemo, useRef, useState } from "react";
 
-import { type GitHubTreeEntryCommit } from "@tsu-stack/github";
+import { type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
 import {
   CodeIcon,
   CopyIcon,

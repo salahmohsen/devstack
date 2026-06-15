@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/av
 import { Button } from "@tsu-stack/ui/components/button";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
+import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { githubProfileTabs, resolveGithubProfileTab } from "@/shared/lib/profile-tabs";
 import {
@@ -32,7 +33,6 @@ import {
   sliceReposForPage
 } from "@/shared/lib/repo-list-page";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
-import { useHasMounted } from "@/shared/lib/use-has-mounted";
 
 import { useGetGithubSetupStatusQuery } from "@/features/github";
 
@@ -63,7 +63,7 @@ import { RepositoryRow } from "@/pages/github-profile/ui/repository-row";
 import { UserActivityFeed } from "@/pages/github-profile/ui/user-activity-feed";
 
 export function GithubProfilePage() {
-  const hasMounted = useHasMounted();
+  const hasMounted = useIsClient();
   const location = useRouterState({
     select: (state) => state.location
   });
