@@ -4,30 +4,25 @@ import { isRecord } from "@tsu-stack/core/utils";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  createGitHubResponseMetadata,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import {
   setRepoLoggerContext,
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubUserActivityEvent } from "#@/types";
 
 export async function getUserActivity(
   input: {
     page: number;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubUserActivityEvent[]> {
   setRepoLoggerContext(context, "getUserActivity", {
     page: input.page
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_user_activity_read_skipped", {
       reason: source.reason
@@ -36,17 +31,19 @@ export async function getUserActivity(
     return [];
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.ownerActivity(source.owner);
 
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserActivityEvent[]>({
       fetcher: async () => {
-        const response = await octokit.request("GET /users/{username}/events/public", {
-          page: input.page,
-          per_page: 30,
-          username: source.owner
-        });
+        const response = await context.github.octokit.request(
+          "GET /users/{username}/events/public",
+          {
+            page: input.page,
+            per_page: 30,
+            username: source.owner
+          }
+        );
 
         return {
           data: response.data.map((event) => {
@@ -174,7 +171,7 @@ export async function getUserActivity(
       owner: source.owner,
       params: input,
       resource: "user.activity.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

@@ -42,7 +42,6 @@ type CachedGitHubEntry<TData> = {
 
 const DEFAULT_KV_EXPIRATION_SECONDS = 7 * 24 * 60 * 60;
 const STALE_IF_RATE_LIMITED_FALLBACK_MS = 60 * 1000;
-const DEBUG_TAG = "23478236498372";
 
 export async function bumpGitHubCacheNamespaces(namespaceKeys: string[]) {
   const uniqueKeys = [...new Set(namespaceKeys)];
@@ -75,38 +74,9 @@ export async function getGitHubRevalidationSignals(
 export async function getGitHubResourceLocalFirst<TData>(
   options: GitHubCacheOptions<TData>
 ): Promise<GitHubLocalFirstResult<TData>> {
-  console.debug(`[${DEBUG_TAG}] github-cache:getGitHubResourceLocalFirst:start`, {
-    owner: options.owner,
-    resource: options.resource
-  });
-  console.debug(`[${DEBUG_TAG}] github-cache:readCachedEntry:start`, {
-    owner: options.owner,
-    resource: options.resource
-  });
   const cached = await readCachedEntry<TData>(options);
-  console.debug(`[${DEBUG_TAG}] github-cache:readCachedEntry:ok`, {
-    cacheHit: Boolean(cached),
-    owner: options.owner,
-    resource: options.resource
-  });
-  console.debug(`[${DEBUG_TAG}] github-cache:getLatestSignalUpdatedAt:start`, {
-    signalKeys: options.signalKeys ?? []
-  });
   const latestSignalAt = await getLatestSignalUpdatedAt(options.signalKeys ?? []);
-  console.debug(`[${DEBUG_TAG}] github-cache:getLatestSignalUpdatedAt:ok`, {
-    latestSignalAt,
-    owner: options.owner,
-    resource: options.resource
-  });
-  console.debug(`[${DEBUG_TAG}] github-cache:getCurrentNamespaceVersion:start`, {
-    namespaceKeys: options.namespaceKeys ?? []
-  });
   const currentNamespaceVersion = await getCurrentNamespaceVersion(options.namespaceKeys ?? []);
-  console.debug(`[${DEBUG_TAG}] github-cache:getCurrentNamespaceVersion:ok`, {
-    currentNamespaceVersion,
-    owner: options.owner,
-    resource: options.resource
-  });
   const staleBecauseNamespace = cached
     ? cached.namespaceVersion !== currentNamespaceVersion
     : false;
@@ -118,19 +88,7 @@ export async function getGitHubResourceLocalFirst<TData>(
 
   if (!cached || isStale) {
     try {
-      console.debug(`[${DEBUG_TAG}] github-cache:fetchAndPersist:start`, {
-        cacheHit: Boolean(cached),
-        isStale,
-        owner: options.owner,
-        resource: options.resource
-      });
       const fresh = await fetchAndPersist(options, cached, currentNamespaceVersion);
-      console.debug(`[${DEBUG_TAG}] github-cache:fetchAndPersist:ok`, {
-        cacheHit: Boolean(cached),
-        fetchedAt: fresh.fetchedAt.toISOString(),
-        owner: options.owner,
-        resource: options.resource
-      });
       return {
         data: fresh.data,
         meta: {
@@ -182,45 +140,21 @@ async function fetchAndPersist<TData>(
     etag: cachedEntry?.etag ?? null,
     lastModified: cachedEntry?.lastModified ?? null
   };
-  console.debug(`[${DEBUG_TAG}] github-cache:options.fetcher:start`, {
-    owner: options.owner,
-    resource: options.resource
-  });
-  const result = await options
-    .fetcher(conditionals)
-    .then((value) => {
-      console.debug(`[${DEBUG_TAG}] github-cache:options.fetcher:ok`, {
-        kind: value.kind,
-        owner: options.owner,
-        resource: options.resource
-      });
-      return value;
-    })
-    .catch((error: unknown) => {
-      console.debug(`[${DEBUG_TAG}] github-cache:options.fetcher:error`, {
-        error,
-        owner: options.owner,
-        resource: options.resource
-      });
-      if (getErrorStatusCode(error) === 304 && cachedEntry) {
-        return {
-          kind: "not-modified" as const,
-          metadata: createGitHubResponseMetadata(304, getErrorHeaders(error))
-        };
-      }
+  const result = await options.fetcher(conditionals).catch((error: unknown) => {
+    if (getErrorStatusCode(error) === 304 && cachedEntry) {
+      return {
+        kind: "not-modified" as const,
+        metadata: createGitHubResponseMetadata(304, getErrorHeaders(error))
+      };
+    }
 
-      throw error;
-    });
+    throw error;
+  });
 
   if (result.kind === "not-modified" && cachedEntry) {
     const staleAt = new Date(Date.now() + getFreshWindowMs(options.freshForMs, result.metadata));
     const expiresAt = new Date(staleAt.getTime() + DEFAULT_KV_EXPIRATION_SECONDS * 1000);
 
-    console.debug(`[${DEBUG_TAG}] github-cache:upsertResponseCacheEntry:start`, {
-      owner: options.owner,
-      resource: options.resource,
-      mode: "not-modified"
-    });
     const updated = await githubCacheRepository.upsertResponseCacheEntry({
       cacheKey: buildCacheKey(options.owner, options.resource, options.params),
       etag: cachedEntry.etag,
@@ -233,22 +167,7 @@ async function fetchAndPersist<TData>(
       staleAt,
       status: result.metadata.statusCode
     });
-    console.debug(`[${DEBUG_TAG}] github-cache:upsertResponseCacheEntry:ok`, {
-      owner: options.owner,
-      resource: options.resource,
-      mode: "not-modified"
-    });
-    console.debug(`[${DEBUG_TAG}] github-cache:putKvEntry:start`, {
-      owner: options.owner,
-      resource: options.resource,
-      mode: "not-modified"
-    });
     await putKvEntry(options.runtime, updated);
-    console.debug(`[${DEBUG_TAG}] github-cache:putKvEntry:ok`, {
-      owner: options.owner,
-      resource: options.resource,
-      mode: "not-modified"
-    });
 
     return {
       data: cachedEntry.payload as TData,
@@ -262,11 +181,6 @@ async function fetchAndPersist<TData>(
 
   const staleAt = new Date(Date.now() + getFreshWindowMs(options.freshForMs, result.metadata));
   const expiresAt = new Date(staleAt.getTime() + DEFAULT_KV_EXPIRATION_SECONDS * 1000);
-  console.debug(`[${DEBUG_TAG}] github-cache:upsertResponseCacheEntry:start`, {
-    owner: options.owner,
-    resource: options.resource,
-    mode: "success"
-  });
   const entry = await githubCacheRepository.upsertResponseCacheEntry({
     cacheKey: buildCacheKey(options.owner, options.resource, options.params),
     etag: result.metadata.etag,
@@ -279,22 +193,7 @@ async function fetchAndPersist<TData>(
     staleAt,
     status: result.metadata.statusCode
   });
-  console.debug(`[${DEBUG_TAG}] github-cache:upsertResponseCacheEntry:ok`, {
-    owner: options.owner,
-    resource: options.resource,
-    mode: "success"
-  });
-  console.debug(`[${DEBUG_TAG}] github-cache:putKvEntry:start`, {
-    owner: options.owner,
-    resource: options.resource,
-    mode: "success"
-  });
   await putKvEntry(options.runtime, entry);
-  console.debug(`[${DEBUG_TAG}] github-cache:putKvEntry:ok`, {
-    owner: options.owner,
-    resource: options.resource,
-    mode: "success"
-  });
 
   return {
     data: result.data,
@@ -348,10 +247,6 @@ async function getLatestSignalUpdatedAt(signalKeys: string[]) {
 
 async function readCachedEntry<TData>(options: GitHubCacheOptions<TData>) {
   const cacheKey = buildCacheKey(options.owner, options.resource, options.params);
-  console.debug(`[${DEBUG_TAG}] github-cache:runtime.kv.get:start`, {
-    cacheKey,
-    hasKv: Boolean(options.runtime?.kv)
-  });
   const kvEntry = await options.runtime?.kv?.get<{
     etag: string | null;
     fetchedAt: string;
@@ -360,10 +255,6 @@ async function readCachedEntry<TData>(options: GitHubCacheOptions<TData>) {
     payload: TData;
     staleAt: string | null;
   }>(cacheKey, "json");
-  console.debug(`[${DEBUG_TAG}] github-cache:runtime.kv.get:ok`, {
-    cacheKey,
-    hit: Boolean(kvEntry)
-  });
 
   if (kvEntry) {
     return {
@@ -376,14 +267,7 @@ async function readCachedEntry<TData>(options: GitHubCacheOptions<TData>) {
     };
   }
 
-  console.debug(`[${DEBUG_TAG}] github-cache:findResponseCacheEntry:start`, {
-    cacheKey
-  });
   const dbEntry = await githubCacheRepository.findResponseCacheEntry(cacheKey);
-  console.debug(`[${DEBUG_TAG}] github-cache:findResponseCacheEntry:ok`, {
-    cacheKey,
-    hit: Boolean(dbEntry)
-  });
   if (!dbEntry) {
     return null;
   }
@@ -412,9 +296,6 @@ async function putKvEntry(
   }
 ) {
   if (!runtime?.kv) {
-    console.debug(`[${DEBUG_TAG}] github-cache:putKvEntry:skip-no-kv`, {
-      cacheKey: entry.cacheKey
-    });
     return;
   }
 

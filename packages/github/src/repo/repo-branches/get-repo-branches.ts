@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  executeGitHubGraphQL,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoBranchesResponse } from "#@/repo/repo-branches/repo-branches.types";
 import { mapGraphQLRepoBranches } from "#@/repo/repo-branches/repo-branches.utils";
 import {
@@ -16,20 +12,19 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubRepoBranch } from "#@/types";
 
 export async function getRepoBranches(
   input: {
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubRepoBranch[]> {
   setRepoLoggerContext(context, "getRepoBranches", {
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_branches_read_skipped", {
       reason: source.reason
@@ -38,7 +33,6 @@ export async function getRepoBranches(
     return [];
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -48,7 +42,8 @@ export async function getRepoBranches(
     const result = await getGitHubResourceLocalFirst<GitHubRepoBranch[]>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<GitHubGraphQLRepoBranchesResponse>(
-          octokit,
+          context.github,
+          "getRepoBranches.graphql",
           `query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
               defaultBranchRef {
@@ -72,7 +67,10 @@ export async function getRepoBranches(
               resetAt
             }
           }`,
-          input
+          {
+            owner: source.owner,
+            repo: input.repo
+          }
         );
 
         return {
@@ -86,7 +84,7 @@ export async function getRepoBranches(
       owner: source.owner,
       params: input,
       resource: "repo.branches.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

@@ -4,19 +4,17 @@ import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
-  createGitHubOctokit,
   createGitHubResponseMetadata,
   executeGitHubGraphQL,
   getErrorStatusCode
 } from "#@/infrastructure/octokit/client";
 import { setRepoLoggerLocalFirstOutcome, setRepoLoggerOutcome } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubContributionCalendar } from "#@/types";
 
 export async function getUserContributions(
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubContributionCalendar | null> {
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_user_contributions_read_skipped", {
       reason: source.reason
@@ -25,7 +23,6 @@ export async function getUserContributions(
     return null;
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.ownerContributions(source.owner);
 
   try {
@@ -56,7 +53,8 @@ export async function getUserContributions(
             };
           };
         }>(
-          octokit,
+          context.github,
+          "getUserContributions.graphql",
           `query($username: String!) {
             user(login: $username) {
               contributionsCollection {
@@ -118,7 +116,7 @@ export async function getUserContributions(
       owner: source.owner,
       params: { username: source.owner },
       resource: "user.contributions.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

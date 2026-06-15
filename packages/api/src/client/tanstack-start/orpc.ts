@@ -17,8 +17,18 @@ const getORPCClient = createIsomorphicFn()
       context: async () => {
         const headers = getRequestHeaders();
         const session = await auth.api.getSession({ headers });
+        const [{ createGitHubOctokit }, { resolvePublicGitHubSource }] = await Promise.all([
+          import("@tsu-stack/github/infrastructure/octokit/client"),
+          import("@tsu-stack/github/shared/public-github-source")
+        ]);
+        const githubSource = await resolvePublicGitHubSource();
+
         return {
-          github: {},
+          github: {
+            binding: {},
+            octokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+            source: githubSource
+          },
           logger: createLogger({ operation: "web__client__orpc" }),
           session
         };

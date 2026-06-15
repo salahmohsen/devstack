@@ -3,11 +3,7 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import {
-  createGitHubOctokit,
-  createGitHubResponseMetadata,
-  getErrorStatusCode
-} from "#@/infrastructure/octokit/client";
+import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
 import { mapGitHubRepoBranchComparison } from "#@/repo/repo-branch-comparison/repo-branch-comparison.utils";
 import {
   buildGitHubConditionalHeaders,
@@ -15,7 +11,6 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
-import { resolvePublicGitHubSource } from "#@/shared/public-github-source";
 import { type GitHubRepoBranchComparison } from "#@/types";
 
 export async function getRepoBranchComparison(
@@ -24,7 +19,7 @@ export async function getRepoBranchComparison(
     head: string;
     repo: string;
   },
-  context?: OrpcContext
+  context: OrpcContext
 ): Promise<GitHubRepoBranchComparison | null> {
   setRepoLoggerContext(context, "getRepoBranchComparison", {
     base: input.base,
@@ -32,7 +27,7 @@ export async function getRepoBranchComparison(
     repo: input.repo
   });
 
-  const source = await resolvePublicGitHubSource();
+  const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_branch_comparison_read_skipped", {
       reason: source.reason
@@ -41,7 +36,6 @@ export async function getRepoBranchComparison(
     return null;
   }
 
-  const octokit = createGitHubOctokit(source);
   const signalKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -50,7 +44,7 @@ export async function getRepoBranchComparison(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoBranchComparison>({
       fetcher: async (conditionals) => {
-        const response = await octokit.rest.repos.compareCommits({
+        const response = await context.github.octokit.rest.repos.compareCommits({
           base: input.base,
           headers: buildGitHubConditionalHeaders(conditionals),
           head: input.head,
@@ -69,7 +63,7 @@ export async function getRepoBranchComparison(
       owner: source.owner,
       params: input,
       resource: "repo.branch-comparison.v1",
-      runtime: context?.github,
+      runtime: context.github.binding,
       signalKeys: [signalKey]
     });
 

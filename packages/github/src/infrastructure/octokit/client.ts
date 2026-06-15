@@ -1,6 +1,14 @@
-import { Octokit } from "octokit";
+import { Octokit, type Octokit as OctokitType } from "octokit";
 
+import { type GitHubRuntimeBindings } from "#@/runtime/bindings";
 import { type PublicGitHubSource } from "#@/shared/public-github-source";
+
+export type GitHubClient = OctokitType;
+export type GitHubContext = {
+  binding: GitHubRuntimeBindings;
+  octokit: GitHubClient;
+  source: PublicGitHubSource;
+};
 
 export type GitHubConditionalHeaders = {
   etag?: string | null;
@@ -15,9 +23,13 @@ export type GitHubResponseMetadata = {
   statusCode: number;
 };
 
-export function createGitHubOctokit(source: Extract<PublicGitHubSource, { isConfigured: true }>) {
+const GITHUB_OPERATION_TIMEOUT_MS = 15_000;
+
+export function createGitHubOctokit(
+  source?: Extract<PublicGitHubSource, { isConfigured: true }>
+): GitHubClient {
   return new Octokit({
-    auth: source.token
+    auth: source?.token
   });
 }
 
@@ -43,12 +55,58 @@ export function createGitHubResponseMetadata(
   };
 }
 
+class GitHubOperationTimeoutError extends Error {
+  constructor(
+    label: string,
+    readonly timeoutMs: number
+  ) {
+    super(`${label} timed out after ${timeoutMs}ms`);
+    this.name = "GitHubOperationTimeoutError";
+  }
+}
+
+async function withGitHubOperationTimeout<T>(
+  label: string,
+  timeoutMs: number,
+  task: (signal: AbortSignal) => Promise<T>
+): Promise<T> {
+  if (timeoutMs <= 0) {
+    throw new GitHubOperationTimeoutError(label, timeoutMs);
+  }
+
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const taskPromise = task(controller.signal);
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new GitHubOperationTimeoutError(label, timeoutMs));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([taskPromise, timeoutPromise]);
+  } finally {
+    taskPromise.catch(() => {});
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    controller.abort();
+  }
+}
+
 export async function executeGitHubGraphQL<TResponse>(
-  octokit: Octokit,
+  context: GitHubContext,
+  label: string,
   query: string,
   variables: Record<string, unknown>
 ): Promise<TResponse> {
-  return octokit.graphql<TResponse>(query, variables);
+  return withGitHubOperationTimeout(label, GITHUB_OPERATION_TIMEOUT_MS, (signal) =>
+    context.octokit.graphql<TResponse>(query, {
+      ...variables,
+      request: { signal }
+    })
+  );
 }
 
 export function getErrorStatusCode(error: unknown) {
