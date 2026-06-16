@@ -24,7 +24,7 @@ registerCommands([
     label: "Go to Overview",
     group: "Pages",
     icon: HouseIcon,
-    iconClassName: "text-base-400",
+    iconClassName: "text-muted-foreground",
     shortcut: ["G", "H"],
     action: { type: "navigate" as const, to: "/" }
   },
@@ -33,7 +33,7 @@ registerCommands([
     label: "Go to Repositories",
     group: "Pages",
     icon: ArchiveIcon,
-    iconClassName: "text-base-400",
+    iconClassName: "text-muted-foreground",
     shortcut: ["G", "O"],
     action: { type: "navigate" as const, to: "/$repo" }
   },
@@ -42,7 +42,7 @@ registerCommands([
     label: "Go to Dashboard",
     group: "Pages",
     icon: LayoutDashboardIcon,
-    iconClassName: "text-base-400",
+    iconClassName: "text-muted-foreground",
     shortcut: ["G", "D"],
     action: { type: "navigate" as const, to: "/dashboard" }
   }

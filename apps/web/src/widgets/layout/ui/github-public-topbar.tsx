@@ -31,6 +31,7 @@ import {
 } from "@tsu-stack/ui/components/dropdown-menu";
 import { LocaleSwitcher } from "@tsu-stack/ui/components/locale-switcher";
 import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
+import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
@@ -63,8 +64,9 @@ export function Topbar() {
   }, [router]);
 
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user: admin } = useAuth();
   const setupStatus = queryClient.getQueryData(getGithubSetupStatusQueryOptions().queryKey);
+  const isClient = useIsClient();
   const openTabs = useTabs();
 
   const owner = setupStatus?.owner ?? null;
@@ -83,7 +85,7 @@ export function Topbar() {
     });
   };
 
-  const displayName = user?.name ?? user?.email ?? "Guest";
+  const displayName = admin?.name ?? admin?.email ?? "Guest";
   const initials = useMemo(
     () =>
       displayName
@@ -196,74 +198,79 @@ export function Topbar() {
 
   return (
     <nav className="flex min-w-0 items-center gap-3 overflow-hidden px-3 py-2">
-      <div className="hidden md:block">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button type="button" className="flex size-8 items-center justify-center rounded-full">
-              <Avatar className="size-7 border border-border">
-                <AvatarImage src={user?.image ?? undefined} alt={displayName} />
-                <AvatarFallback delayMs={user?.image ? 400 : 0} className="text-xs">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel className="flex items-center gap-3 py-2">
-              <Avatar className="size-8 border border-border">
-                <AvatarImage src={user?.image ?? undefined} alt={displayName} />
-                <AvatarFallback delayMs={user?.image ? 400 : 0} className="text-xs">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-foreground">{displayName}</span>
-                {owner && (
-                  <span className="text-xs font-normal text-muted-foreground">@{owner}</span>
-                )}
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild disabled={!owner}>
-                <Link to="/">
-                  <UserCircleIcon size={16} strokeWidth={2} />
-                  Profile
-                  <DropdownMenuShortcut>G U</DropdownMenuShortcut>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild disabled={!owner}>
-                <Link to="/repos">
-                  <ArchiveIcon size={16} strokeWidth={2} />
-                  Repositories
-                  <DropdownMenuShortcut>G O</DropdownMenuShortcut>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard">
-                  <LayoutDashboardIcon size={16} strokeWidth={2} />
-                  Dashboard
-                  <DropdownMenuShortcut>G D</DropdownMenuShortcut>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            {user ? (
-              <DropdownMenuItem onSelect={() => void handleSignOut()}>
-                <LogOutIcon size={16} strokeWidth={2} />
-                Sign out
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem asChild>
-                <Link to="/sign-in">
-                  <UserCircleIcon size={16} strokeWidth={2} />
-                  Sign in
-                </Link>
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      {admin && (
+        <div className="hidden md:block">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex size-8 items-center justify-center rounded-full"
+              >
+                <Avatar className="size-7 border border-border">
+                  <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
+                  <AvatarFallback delayMs={admin?.image ? 400 : 0} className="text-xs">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel className="flex items-center gap-3 py-2">
+                <Avatar className="size-8 border border-border">
+                  <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
+                  <AvatarFallback delayMs={admin?.image ? 400 : 0} className="text-xs">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-foreground">{displayName}</span>
+                  {owner && (
+                    <span className="text-xs font-normal text-muted-foreground">@{owner}</span>
+                  )}
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem asChild disabled={!owner}>
+                  <Link to="/">
+                    <UserCircleIcon size={16} strokeWidth={2} />
+                    Profile
+                    <DropdownMenuShortcut>G U</DropdownMenuShortcut>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild disabled={!owner}>
+                  <Link to="/repos">
+                    <ArchiveIcon size={16} strokeWidth={2} />
+                    Repositories
+                    <DropdownMenuShortcut>G O</DropdownMenuShortcut>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard">
+                    <LayoutDashboardIcon size={16} strokeWidth={2} />
+                    Dashboard
+                    <DropdownMenuShortcut>G D</DropdownMenuShortcut>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              {admin ? (
+                <DropdownMenuItem onSelect={() => void handleSignOut()}>
+                  <LogOutIcon size={16} strokeWidth={2} />
+                  Sign out
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem asChild>
+                  <Link to="/sign-in">
+                    <UserCircleIcon size={16} strokeWidth={2} />
+                    Sign in
+                  </Link>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
 
       <div className="hidden shrink-0 items-center gap-0.5 md:flex">
         {navItems.map((item) => (
@@ -289,7 +296,7 @@ export function Topbar() {
       </div>
 
       <div className="min-w-0 flex-1 overflow-hidden">
-        <Tabs />
+        <Tabs tabsReady={isClient} routerRef={routerRef} />
       </div>
 
       <div className="hidden shrink-0 items-center gap-1 md:flex">
