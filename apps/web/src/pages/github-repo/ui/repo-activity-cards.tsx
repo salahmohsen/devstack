@@ -17,7 +17,7 @@ export function RepoActivityCards({ repo }: { repo: string }) {
     <div className="space-y-4">
       <ActivityCard
         title="Pull Requests"
-        icon={<GitPullRequestIcon className="size-4 text-base-400" />}
+        icon={<GitPullRequestIcon className="size-4 text-muted-foreground" />}
         items={data.pullRequests.map((pr) => {
           return {
             href: pr.url,
@@ -28,7 +28,7 @@ export function RepoActivityCards({ repo }: { repo: string }) {
       />
       <ActivityCard
         title="Issues"
-        icon={<ShieldAlertIcon className="size-4 text-base-400" />}
+        icon={<ShieldAlertIcon className="size-4 text-muted-foreground" />}
         items={data.issues.map((issue) => {
           return {
             href: issue.url,
@@ -39,7 +39,7 @@ export function RepoActivityCards({ repo }: { repo: string }) {
       />
       <ActivityCard
         title="Actions"
-        icon={<PlayCircleIcon className="size-4 text-base-400" />}
+        icon={<PlayCircleIcon className="size-4 text-muted-foreground" />}
         items={data.actions.map((action) => {
           return {
             href: action.url ?? "#",

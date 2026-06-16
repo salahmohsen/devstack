@@ -22,22 +22,22 @@ export function PinnedRepoCard({ repo }: PinnedRepoCardProps) {
     <Link
       to={`/$repo`}
       params={{ repo: repo.name }}
-      className="flex min-h-36 flex-col gap-3 rounded-2xl border border-white/8 bg-white/4 p-4 transition-colors hover:bg-white/6"
+      className="flex min-h-36 flex-col gap-3 rounded-md border bg-surface-1 p-4 transition-colors"
     >
       <div className="flex min-w-0 items-center gap-2">
-        <span className="truncate text-sm font-semibold text-white">{repo.name}</span>
+        <span className="truncate text-sm font-semibold">{repo.name}</span>
         {repo.isPrivate ? (
-          <Badge variant="outline" className="border-white/10 text-[10px] text-base-300">
+          <Badge variant="outline" className="text-[10px]">
             Private
           </Badge>
         ) : null}
       </div>
 
-      <p className="line-clamp-2 text-xs leading-relaxed text-base-400">
+      <p className="line-clamp-2 text-xs leading-relaxed text-foreground">
         {repo.description ?? "No repository description."}
       </p>
 
-      <div className="mt-auto flex flex-wrap items-center gap-3 text-xs text-base-400">
+      <div className="mt-auto flex flex-wrap items-center gap-3 text-xs">
         {repo.language ? (
           <span className="flex items-center gap-1.5">
             <span

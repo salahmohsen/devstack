@@ -18,8 +18,6 @@
     "db:setup": "vpx neon-new@latest --env ../../packages/env/.env --key DATABASE_URL --ref github:salahmohsen/portfolio --yes"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.0",
-    "@tsu-stack/logger": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {

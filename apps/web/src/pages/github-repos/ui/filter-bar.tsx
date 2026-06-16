@@ -4,7 +4,6 @@ import {
   CheckIcon,
   ChevronDownIcon,
   CloseIcon,
-  PlusSignIcon,
   Remove01Icon,
   SearchIcon,
   SortIcon
@@ -54,13 +53,7 @@ export const FilterBar = memo(function FilterBar<T extends FilterableItem>({
             />
           );
         })}
-        <AddFilterButton
-          filterDefs={state.filterDefs}
-          activeFilters={state.activeFilters}
-          availableOptions={state.availableOptions}
-          onAdd={state.addFilter}
-          onRemoveValue={state.removeFilterValue}
-        />
+
         {state.hasActiveFilters && (
           <button
             type="button"
@@ -238,92 +231,6 @@ function FilterPill({
           onClose={() => setOpen(false)}
           anchorRef={ref}
         />
-      )}
-    </div>
-  );
-}
-
-function AddFilterButton({
-  filterDefs,
-  activeFilters,
-  availableOptions,
-  onAdd,
-  onRemoveValue
-}: {
-  filterDefs: FilterDefinition[];
-  activeFilters: ActiveFilter[];
-  availableOptions: Map<string, FilterOption[]>;
-  onAdd: (fieldId: string, value: string) => void;
-  onRemoveValue: (fieldId: string, value: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
-  const directFilterDef = filterDefs.length === 1 ? filterDefs[0] : null;
-  const close = () => {
-    setOpen(false);
-    setSelectedFieldId(null);
-  };
-
-  const activeFieldIds = new Set(activeFilters.map((filter) => filter.fieldId));
-  const activeFieldId = directFilterDef?.id ?? selectedFieldId;
-  const selectedOptions = activeFieldId ? (availableOptions.get(activeFieldId) ?? []) : [];
-  const selectedValues =
-    activeFilters.find((filter) => filter.fieldId === activeFieldId)?.values ?? new Set<string>();
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => {
-          setOpen(!open);
-          setSelectedFieldId(null);
-        }}
-        className="flex items-center gap-1 rounded-md border border-dashed border-border/60 px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
-      >
-        <PlusSignIcon size={13} />
-        <span>Filter</span>
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={close} />
-          <div className="absolute top-full left-0 z-50 mt-1.5 flex gap-1">
-            {directFilterDef ? (
-              <ValuePickerInline
-                options={selectedOptions}
-                selectedValues={selectedValues}
-                onToggle={(value) => {
-                  if (selectedValues.has(value)) {
-                    onRemoveValue(directFilterDef.id, value);
-                  } else {
-                    onAdd(directFilterDef.id, value);
-                  }
-                }}
-              />
-            ) : (
-              <FieldPickerInline
-                filterDefs={filterDefs}
-                activeFieldIds={activeFieldIds}
-                selectedFieldId={selectedFieldId}
-                onSelect={setSelectedFieldId}
-              />
-            )}
-            {!directFilterDef && selectedFieldId && (
-              <ValuePickerInline
-                key={selectedFieldId}
-                options={selectedOptions}
-                selectedValues={selectedValues}
-                onToggle={(value) => {
-                  if (selectedValues.has(value)) {
-                    onRemoveValue(selectedFieldId, value);
-                  } else {
-                    onAdd(selectedFieldId, value);
-                  }
-                }}
-              />
-            )}
-          </div>
-        </>
       )}
     </div>
   );

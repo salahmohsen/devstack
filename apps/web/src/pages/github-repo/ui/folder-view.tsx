@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { type GitHubRepoTreeEntry, type GitHubTreeEntryCommit } from "@tsu-stack/github";
 import { type RepoOverview } from "@tsu-stack/github/repo/shared.types.js";
+import { type GitHubRepoTreeEntry, type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { FileIcon, FolderIcon } from "@tsu-stack/icons";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";

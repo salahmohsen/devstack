@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
-import { persistedMeta } from "@/lib/github.query";
-
-export const githubProfileReposQueryKeys = () => orpc.public.github.getProfileRepos.queryKey;
+import { persistedMeta } from "@/shared/lib/query-persistence";
 
 export function getGithubProfileReposQueryOptions() {
   return orpc.public.github.getProfileRepos.queryOptions({
@@ -21,7 +19,3 @@ export function useGetGithubProfileReposQuery(enabled = true) {
     enabled
   });
 }
-
-export type GithubProfileReposQueryResult = Awaited<
-  ReturnType<typeof client.public.github.getProfileRepos>
->;

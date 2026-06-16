@@ -9,6 +9,8 @@ import {
   StarIcon
 } from "@tsu-stack/icons";
 
+import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+
 import { type GithubActivityQueryResult } from "@/pages/github-profile/api/get-github-activity.query";
 
 type UserActivityFeedProps = {
@@ -17,7 +19,7 @@ type UserActivityFeedProps = {
 
 export function UserActivityFeed({ events }: UserActivityFeedProps) {
   if (events.length === 0) {
-    return <p className="py-6 text-center text-sm text-base-400">No recent activity.</p>;
+    return <p className="py-6 text-center text-sm text-muted-foreground">No recent activity.</p>;
   }
 
   const groups = buildMonthGroups(events);
@@ -31,7 +33,7 @@ export function UserActivityFeed({ events }: UserActivityFeedProps) {
               groupIndex === 0 ? "relative z-10 pt-4 pb-2 pl-5" : "relative z-10 pt-5 pb-2 pl-5"
             }
           >
-            <span className="inline-block rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-base-400">
+            <span className="inline-block rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
               {group.label}
             </span>
           </div>
@@ -79,9 +81,9 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2 pt-px">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-[13px] text-base-400">{getEventDescription(event)}</span>
+          <span className="text-[13px] text-muted-foreground">{getEventDescription(event)}</span>
           <span className="shrink-0 text-xs text-base-500">
-            {formatRelativeTime(event.createdAt)}
+            {compactRelativeTime(event.createdAt)}
           </span>
         </div>
         {event.prDetail ? (
@@ -90,7 +92,7 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
             className="rounded-xl border border-white/8 bg-white/4 p-3"
           >
             <p className="text-xs font-medium text-white">{event.prDetail.title}</p>
-            <p className="mt-1 text-[11px] text-base-400">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               PR #{event.prDetail.number} · {event.prDetail.state}
             </p>
           </Link>
@@ -101,7 +103,7 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
             className="rounded-xl border border-white/8 bg-white/4 p-3"
           >
             <p className="text-xs font-medium text-white">{event.issueDetail.title}</p>
-            <p className="mt-1 text-[11px] text-base-400">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               Issue #{event.issueDetail.number} · {event.issueDetail.state}
             </p>
           </a>
@@ -115,7 +117,7 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
 }
 
 function getEventIcon(event: GithubActivityQueryResult[number]) {
-  const className = "text-base-400 size-3";
+  const className = "text-muted-foreground size-3";
 
   switch (event.type) {
     case "PushEvent":
@@ -199,22 +201,8 @@ function getEventDescription(event: GithubActivityQueryResult[number]) {
   }
 }
 
-function formatRelativeTime(dateString: string) {
-  const date = new Date(dateString);
-  const diffMs = Date.now() - date.getTime();
-  const diffDays = Math.max(1, Math.round(diffMs / (24 * 60 * 60 * 1000)));
-
-  if (diffDays >= 365) {
-    return `${Math.round(diffDays / 365)}y`;
-  }
-  if (diffDays >= 30) {
-    return `${Math.round(diffDays / 30)}mo`;
-  }
-  if (diffDays >= 7) {
-    return `${Math.round(diffDays / 7)}w`;
-  }
-
-  return `${diffDays}d`;
+function compactRelativeTime(dateString: string) {
+  return formatRelativeTime(dateString).replace(/ ago$/, "");
 }
 
 function capitalize(value: string | null) {

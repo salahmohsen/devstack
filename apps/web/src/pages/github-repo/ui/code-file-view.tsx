@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Suspense, use, useCallback, useMemo, useRef, useState } from "react";
 
-import { type GitHubTreeEntryCommit } from "@tsu-stack/github";
+import { type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
 import {
   CodeIcon,
   CopyIcon,
@@ -197,7 +197,7 @@ export function CodeFileView({
             repo={repo}
             size={fileEntry?.size ?? null}
           />
-          <div className="flex items-center justify-center bg-surface-0 p-8">
+          <div className="flex items-center justify-center bg-surface-1 p-8">
             <img src={rawUrl} alt={fileName} className="max-h-[70vh] max-w-full object-contain" />
           </div>
         </div>
@@ -328,7 +328,7 @@ function SvgFileView({
           </div>
         </FileViewHeader>
         {mode === "preview" ? (
-          <div className="flex items-center justify-center bg-surface-0 p-8">
+          <div className="flex items-center justify-center bg-surface-1 p-8">
             <img src={rawUrl} alt={fileName} className="max-h-[70vh] max-w-full object-contain" />
           </div>
         ) : (
@@ -374,7 +374,7 @@ function FileViewHeader({
   }, [code]);
 
   return (
-    <div className="flex items-center gap-2 border-b bg-surface-0 px-4 py-2.5 text-sm">
+    <div className="flex items-center gap-2 border-b bg-surface-1 px-4 py-2.5 text-sm">
       <FileIcon size={14} className="shrink-0 text-muted-foreground" />
       <span className="font-medium text-foreground">{fileName}</span>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -461,7 +461,7 @@ function FileCommitBar({
 
 function LineNumbers({ count }: { count: number }) {
   return (
-    <div className="sticky left-0 z-10 flex flex-col items-end border-r bg-surface-0 px-3 py-3 text-muted-foreground select-none">
+    <div className="sticky left-0 z-10 flex flex-col items-end border-r bg-surface-1 px-3 py-3 text-muted-foreground select-none">
       {Array.from({ length: count }, (_, i) => (
         <span key={i} className="leading-5">
           {i + 1}

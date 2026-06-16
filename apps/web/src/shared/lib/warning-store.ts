@@ -57,6 +57,7 @@ export function useWarnings() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+// fallow-ignore-next-line unused-export
 export function surfaceForbiddenOrgWarnings(orgs: string[] | undefined) {
   if (!orgs || orgs.length === 0) return;
 
@@ -76,6 +77,7 @@ export function surfaceForbiddenOrgWarnings(orgs: string[] | undefined) {
 
 const GITHUB_API_TIMEOUT_WARNING_ID = "github-api-timeout";
 
+// fallow-ignore-next-line unused-export
 export function surfaceTimeoutWarning(timedOut: boolean | undefined) {
   if (!timedOut) {
     removeWarning(GITHUB_API_TIMEOUT_WARNING_ID);
@@ -90,6 +92,7 @@ export function surfaceTimeoutWarning(timedOut: boolean | undefined) {
   });
 }
 
+// fallow-ignore-next-line unused-export
 export function checkPermissionWarning(
   result: { ok: boolean; error?: string; installUrl?: string },
   repo: string

@@ -52,7 +52,7 @@ export function GitHubAccessDialog() {
 
         <div className="px-5 pb-5">
           <div className="rounded-xl border border-white/10 px-4 py-8">
-            <p className="text-center text-sm text-base-400">
+            <p className="text-center text-sm text-muted-foreground">
               GitHub access is managed from the{" "}
               <Link
                 to="/dashboard/github-config"

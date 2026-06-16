@@ -1,9 +1,9 @@
 import { motion } from "motion/react";
 import { type PropsWithChildren } from "react";
 
+import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useHasMounted } from "@/shared/lib/use-has-mounted";
 import { useMediaQuery } from "@/shared/lib/use-media-query";
 
 import { CommandPalette } from "./command-palette";
@@ -20,14 +20,17 @@ import { GithubPublicMobileNav } from "./github-public-mobile-nav";
 import { Topbar } from "./github-public-topbar";
 
 export function GithubPublicLayout({ children }: PropsWithChildren) {
-  const hasMounted = useHasMounted();
+  const hasMounted = useIsClient();
   const sidePanel = useSidePanelSlot();
   const isXl = useMediaQuery("(min-width: 1280px)");
   const showPanel = hasMounted && isXl && sidePanel.hasContent && !sidePanel.collapsed;
 
   return (
     <div
-      className={cn("flex min-h-screen flex-col", "selection:bg-base-500/30 selection:text-white")}
+      className={cn(
+        "flex min-h-screen flex-col",
+        "bg-container text-primary selection:bg-[#C0E7C8] selection:text-primary"
+      )}
     >
       <Topbar />
 
@@ -49,7 +52,7 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
           transition={{ type: "spring", stiffness: 400, damping: 35 }}
           className="grid flex-1 overflow-hidden p-2 pt-0"
         >
-          <div className="relative overflow-hidden rounded-xl border border-white/8 shadow-[0_1px_4px_0_rgba(0,0,0,0.3)]">
+          <div className="relative overflow-hidden rounded-xl border bg-background shadow-xs">
             <main className="h-full">{children}</main>
             <SidePanelToggle />
           </div>

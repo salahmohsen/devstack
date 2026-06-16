@@ -36,13 +36,13 @@
     "cf-typegen": "vp run --filter @tsu-stack/server cf-typegen"
   },
   "dependencies": {
-    "@tailwindcss/vite": "catalog:",
     "tailwindcss": "catalog:"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
     "@dotenvx/dotenvx": "catalog:",
+    "@tailwindcss/vite": "catalog:",
     "@tanstack/eslint-plugin-query": "catalog:",
     "@tanstack/eslint-plugin-router": "catalog:",
     "@typescript/native-preview": "catalog:",

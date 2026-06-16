@@ -11,7 +11,9 @@ import { type LinkProps } from "#@/tanstack-start/types/index";
 export type { LinkProps };
 
 function isExternalLink(props: LinkProps): props is LinkProps & { href: string } {
-  return "href" in props && typeof props.href === "string";
+  return (
+    "href" in props && typeof props.href === "string" && /^(https?:|mailto:|tel:)/.test(props.href)
+  );
 }
 
 export const Link: FC<LinkProps> = (props) => {

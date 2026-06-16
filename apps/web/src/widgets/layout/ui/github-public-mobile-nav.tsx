@@ -110,7 +110,7 @@ export function GithubPublicMobileNav() {
           <DropdownMenuLabel className="flex items-center justify-between">
             <div>
               <p>{displayName}</p>
-              <p className="font-normal text-base-400">{user?.email}</p>
+              <p className="font-normal text-muted-foreground">{user?.email}</p>
             </div>
             <div className="flex items-center gap-0.5 rounded-md border border-white/10 p-0.5">
               {themeOptions.map((opt) => (
@@ -120,7 +120,9 @@ export function GithubPublicMobileNav() {
                   onClick={() => setTheme(opt.value)}
                   className={cn(
                     "flex size-6 items-center justify-center rounded-sm transition-colors",
-                    theme === opt.value ? "bg-white/8 text-white" : "text-base-400 hover:text-white"
+                    theme === opt.value
+                      ? "bg-white/8 text-white"
+                      : "text-muted-foreground hover:text-white"
                   )}
                   title={opt.label}
                 >

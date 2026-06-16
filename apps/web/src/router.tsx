@@ -6,13 +6,13 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { LOG_SERVICES, initLog } from "@tsu-stack/logger/client";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { LoggerProvider } from "@/shared/providers/logger-provider";
 import {
   AppQueryClientProvider,
   createAppQueryClient
 } from "@/shared/providers/query-client.provider";
+import { HelloLoader } from "@/shared/ui/hello-loader";
 
 import { DefaultNotFoundPage } from "@/pages/default-not-found";
 
@@ -54,7 +54,7 @@ export function getRouter() {
     }) satisfies ErrorRouteComponent,
     defaultNotFoundComponent: DefaultNotFoundPage,
     defaultPendingComponent: () => (
-      <Spinner className="fixed inset-0 -top-(--navbar-height) m-auto flex items-center justify-center" />
+      <HelloLoader className="fixed inset-0 -top-(--navbar-height) m-auto flex items-center justify-center" />
     ),
     // Prefetch <Link> on hover and touch
     defaultPreload: "intent",

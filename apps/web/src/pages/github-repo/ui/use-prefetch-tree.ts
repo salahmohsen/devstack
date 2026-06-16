@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
-import { type GitHubRepoTreeEntry } from "@tsu-stack/github";
+import { type GitHubRepoTreeEntry } from "@tsu-stack/github/types";
 
 import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-github-repo-tree.query";
 

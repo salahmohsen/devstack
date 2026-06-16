@@ -3,9 +3,9 @@ import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import { client } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
+import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 
 import { debug } from "@/lib/debug";
-import { githubRevalidationSignalKeys } from "@/lib/github-revalidation";
 import { type GitHubQueryScope, githubQueryKeys } from "@/lib/github.query";
 
 export type GitHubSignalStreamTarget = {

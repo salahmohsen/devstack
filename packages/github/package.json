@@ -17,6 +17,7 @@
     "./runtime/*": "./src/runtime/*",
     "./shared/public-github-source": "./src/shared/public-github-source.ts",
     "./shared/*": "./src/shared/*",
+    "./schemas": "./src/schemas.ts",
     "./types": "./src/types.ts",
     "./user/*": "./src/user/*",
     "./webhooks/*": "./src/webhooks/*"
@@ -26,8 +27,8 @@
     "@tsu-stack/core": "workspace:*",
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
-    "@tsu-stack/logger": "workspace:*",
-    "octokit": "catalog:"
+    "octokit": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@tsu-stack/tsconfig": "workspace:*",

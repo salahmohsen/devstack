@@ -50,6 +50,7 @@ const PAGES_PRERENDER_CONFIG = [
 // Stub out shiki in the SSR (Cloudflare Worker) environment to prevent all
 // language grammars (~1.5 MB) from being bundled. Shiki is only used
 // client-side so the server never needs the real implementation.
+// oxlint-disable-next-line typescript/consistent-type-imports
 function shikiSSRStub(): import("vite").Plugin {
   const SHIKI_RE = /^(shiki|@shikijs\/)/;
   const DEFAULT_STUB = `

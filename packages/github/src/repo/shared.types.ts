@@ -1,3 +1,7 @@
+import { type GitHubLocalFirstMeta, type RepoOverview } from "#@/schemas";
+export { type GitHubLocalFirstMeta, type RepoOverview } from "#@/schemas";
+import { type GitHubActor } from "#@/types";
+
 export type RepositoryRef = {
   name: string;
   owner: string;
@@ -5,13 +9,6 @@ export type RepositoryRef = {
   url: string;
   /** `null` means the visibility is unknown (e.g. REST search doesn't return it). */
   isPrivate: boolean | null;
-};
-
-export type GitHubActor = {
-  login: string;
-  avatarUrl: string;
-  url: string;
-  type: string;
 };
 
 export type GitHubAccountSummary = {
@@ -36,23 +33,6 @@ export type GitHubLabel = {
 /** Weekly total commit counts; index `0` is oldest week, last index is most recent (GitHub participation API). */
 export type RepoParticipationStats = {
   weeklyCommits: number[];
-};
-
-export type UserRepoSummary = {
-  id: number;
-  name: string;
-  fullName: string;
-  description: string | null;
-  stars: number;
-  forks: number;
-  language: string | null;
-  updatedAt: string | null;
-  createdAt: string | null;
-  isPrivate: boolean;
-  /** GitHub visibility (`internal` on Enterprise); derived when the API omits `visibility`. */
-  visibility: "public" | "private" | "internal";
-  url: string;
-  owner: string;
 };
 
 export type PullSummary = {
@@ -618,43 +598,6 @@ export type PinnedRepo = {
   forks: number;
 };
 
-export type RepoOverview = {
-  id: number;
-  name: string;
-  fullName: string;
-  description: string | null;
-  isPrivate: boolean;
-  isFork: boolean;
-  /** Whether the authenticated user has starred this repository */
-  viewerHasStarred: boolean;
-  defaultBranch: string;
-  stars: number;
-  forks: number;
-  watchers: number;
-  language: string | null;
-  license: string | null;
-  topics: string[];
-  url: string;
-  owner: string;
-  ownerAvatarUrl: string;
-  branchCount: number;
-  tagCount: number;
-  openPullCount: number;
-  openIssueCount: number;
-  hasDiscussions: boolean;
-  /** Present when `isFork`; upstream `owner/name` */
-  forkParentFullName: string | null;
-  /** Upstream owner avatar from the same overview query (no extra request) */
-  forkParentOwnerAvatarUrl: string | null;
-  latestCommit: {
-    sha: string;
-    message: string;
-    date: string;
-    author: GitHubActor | null;
-  } | null;
-  __meta?: GitHubLocalFirstMeta;
-};
-
 export type RepoTreeEntry = {
   name: string;
   type: "file" | "dir" | "submodule";
@@ -806,12 +749,6 @@ export type NotificationItem = {
   updatedAt: string;
   lastReadAt: string | null;
   url: string;
-};
-
-export type GitHubLocalFirstMeta = {
-  cacheStatus: "fresh" | "stale" | "miss";
-  fetchedAt: number | null;
-  isRevalidating: boolean;
 };
 
 export type NotificationsResult = {

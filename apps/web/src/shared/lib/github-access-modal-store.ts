@@ -25,6 +25,7 @@ function getSnapshot() {
   return prompt;
 }
 
+// fallow-ignore-next-line unused-export
 export function openGitHubAccessPrompt(nextPrompt: GitHubAccessPrompt) {
   prompt = nextPrompt;
   emitChange();

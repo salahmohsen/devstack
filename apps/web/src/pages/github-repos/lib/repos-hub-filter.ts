@@ -1,36 +1,17 @@
-import { type SerializedFilterStore } from "@/pages/github-repos/ui/filter-cookie";
+import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 
-import { REPO_LIST_PAGE_SIZE } from "./repo-list-page";
+import { REPO_LIST_PAGE_SIZE } from "@/shared/lib/repo-list-utils";
+
+import { type SerializedFilterStore } from "@/pages/github-repos/ui/filter-cookie";
 
 const REPOS_FILTER_PAGE_ID = "repos";
 const DEFAULT_REPOS_SORT = "updated";
 const VALID_REPOS_SORT_IDS = new Set(["updated", "created", "created-asc", "title"]);
 
-export type UserRepoSummary = {
-  createdAt: string;
-  defaultBranch: string;
-  description: string | null;
-  forks: number;
-  forkCount: number;
-  fullName: string;
-  id: number;
-  isFork: boolean;
-  isPrivate: boolean;
-  language: string | null;
-  languageColor: string | null;
-  name: string;
-  owner: string;
-  pushedAt: string | null;
-  stars: number;
-  updatedAt: string;
-  url: string;
-  visibility: "internal" | "private" | "public";
-};
-
 export type ReposHubResult = {
   totals: { all: number; public: number; private: number };
   matchingCount: number;
-  repos: UserRepoSummary[];
+  repos: GitHubUserRepoSummary[];
 };
 
 export type ReposHubInput = {
@@ -77,7 +58,7 @@ export function buildReposHubPrefetchInput(
 }
 
 export function buildReposHubResult(
-  repos: UserRepoSummary[],
+  repos: GitHubUserRepoSummary[],
   input: ReposHubInput
 ): ReposHubResult {
   const totals = {
@@ -98,17 +79,18 @@ function getTime(value: string | null): number {
   return value ? Date.parse(value) || 0 : 0;
 }
 
-const sortCompare: Record<string, (a: UserRepoSummary, b: UserRepoSummary) => number> = {
-  updated: (a, b) => getTime(b.updatedAt) - getTime(a.updatedAt),
-  created: (a, b) => getTime(b.createdAt) - getTime(a.createdAt),
-  "created-asc": (a, b) => getTime(a.createdAt) - getTime(b.createdAt),
-  title: (a, b) => a.name.localeCompare(b.name)
-};
+const sortCompare: Record<string, (a: GitHubUserRepoSummary, b: GitHubUserRepoSummary) => number> =
+  {
+    updated: (a, b) => getTime(b.updatedAt) - getTime(a.updatedAt),
+    created: (a, b) => getTime(b.createdAt) - getTime(a.createdAt),
+    "created-asc": (a, b) => getTime(a.createdAt) - getTime(b.createdAt),
+    title: (a, b) => a.name.localeCompare(b.name)
+  };
 
 export function filterUserRepoSummaries(
-  repos: UserRepoSummary[],
+  repos: GitHubUserRepoSummary[],
   input: Omit<ReposHubInput, "limit">
-): UserRepoSummary[] {
+): GitHubUserRepoSummary[] {
   let result = repos;
   const query = input.searchQuery.toLowerCase().trim();
   if (query) {

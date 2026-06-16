@@ -1,3 +1,5 @@
+import { log } from "@tsu-stack/logger/client";
+
 type DebugDetails = Record<string, unknown> | undefined;
 
 function isDevEnvironment() {
@@ -10,9 +12,9 @@ export function debug(scope: string, message: string, details?: DebugDetails) {
   }
 
   if (typeof details === "undefined") {
-    console.log(`[debug:${scope}] ${message}`);
+    log.info({ scope: scope, message: message });
     return;
   }
 
-  console.log(`[debug:${scope}] ${message}`, details);
+  log.info({ scope: scope, message: message, details });
 }

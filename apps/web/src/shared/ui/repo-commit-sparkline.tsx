@@ -1,15 +1,14 @@
 import { useId } from "react";
 import { Area, AreaChart } from "recharts";
 
-import { useHasMounted } from "@/shared/lib/use-has-mounted";
+import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
-import { useGetGithubRepoCommitSparklineQuery } from "@/pages/github-repo/api/get-github-repo-commit-sparkline.query";
+import { useGetGithubRepoCommitSparklineQuery } from "@/shared/lib/github-repo-commit-sparkline.query";
 
 const CHART_W = 168;
 const CHART_H = 52;
 const ACTIVE_LINE = "#60C679";
 
-/** Inactive series: theme foreground so contrast tracks light/dark; opacity keeps it subdued vs text. */
 const INACTIVE_STROKE = "var(--foreground)";
 
 const ACTIVE_GRADIENT_STOPS = [
@@ -24,10 +23,9 @@ const INACTIVE_GRADIENT_STOPS = [
   { offset: "100%", opacity: 0 }
 ] as const;
 
-/** Weekly commit sparkline; muted when there are no commits in the loaded range. */
 export function RepoCommitSparkline({ repo }: { repo: string }) {
   const fillGradientId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const hasMounted = useHasMounted();
+  const hasMounted = useIsClient();
   const query = useGetGithubRepoCommitSparklineQuery(repo);
 
   if (!hasMounted || query.isLoading) {

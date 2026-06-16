@@ -225,30 +225,3 @@ export function useListFilters<T extends FilterableItem>({
 }
 
 export type ListFilterState<T extends FilterableItem> = ReturnType<typeof useListFilters<T>>;
-
-export function applyFilters<T extends FilterableItem>(items: T[], state: ListFilterState<T>): T[] {
-  const query = state.searchQuery.toLowerCase().trim();
-  const sortFn =
-    state.sortOptions.find((sort) => sort.id === state.sortId)?.compare ??
-    state.sortOptions[0].compare;
-
-  let result: T[] = items;
-
-  if (query) {
-    result = result.filter(
-      (item) =>
-        item.title.toLowerCase().includes(query) ||
-        item.repository.fullName.toLowerCase().includes(query) ||
-        (item.author?.login.toLowerCase().includes(query) ?? false)
-    );
-  }
-
-  for (const filter of state.activeFilters) {
-    if (filter.values.size === 0) continue;
-    const def = state.filterDefs.find((candidate) => candidate.id === filter.fieldId);
-    if (!def) continue;
-    result = result.filter((item) => def.match(item, filter.values));
-  }
-
-  return [...result].toSorted(sortFn);
-}

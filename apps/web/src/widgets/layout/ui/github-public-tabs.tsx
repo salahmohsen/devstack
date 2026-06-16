@@ -1,24 +1,24 @@
-import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { Link, type useRouter, useRouterState } from "@tanstack/react-router";
 import {
+  type ComponentType,
   memo,
+  type SVGProps,
   useCallback,
   useEffect,
   useRef,
-  useState,
-  type ComponentType,
-  type SVGProps
+  useState
 } from "react";
 
 import {
   ActionsIcon,
   ArchiveIcon,
   ChevronRightIcon,
+  CloseIcon,
   GitCommitIcon,
   GitPullRequestIcon,
   IssuesIcon,
-  PanelRightCloseIcon,
-  ReviewsIcon,
-  XIcon
+  Remove01Icon,
+  ReviewsIcon
 } from "@tsu-stack/icons";
 import {
   ContextMenu,
@@ -30,12 +30,13 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import {
+  isMergedTab,
   removeOtherTabs,
   removeTab,
   removeTabsToRight,
   reorderTabs,
-  useTabs,
-  type Tab
+  type Tab,
+  useTabs
 } from "@/shared/lib/tab-store";
 
 const tabIconMap = {
@@ -96,14 +97,12 @@ function useScrollShadows(tabCount: number) {
   };
 }
 
-export function Tabs() {
-  const router = useRouter();
-  const routerRef = useRef(router);
+type TabsProps = {
+  tabsReady: boolean;
+  routerRef: React.RefObject<ReturnType<typeof useRouter>>;
+};
 
-  useEffect(() => {
-    routerRef.current = router;
-  }, [router]);
-
+export function Tabs({ tabsReady, routerRef }: TabsProps) {
   const openTabs = useTabs();
   const dragTabRef = useRef<string | null>(null);
   const [contextTab, setContextTab] = useState<{
@@ -169,82 +168,110 @@ export function Tabs() {
     removeTabsToRight(contextTab.tab.id);
   }, [contextTab]);
 
+  // const handleContextCloseMerged = useCallback(() => {
+  //   const currentPath = routerRef.current.state.location.pathname;
+  //   const activeTabWillClose = openTabs.find((t) => currentPath === t.url && isMergedTab(t));
+  //   removeMergedTabs();
+  //   if (activeTabWillClose) {
+  //     const remaining = openTabs.filter((t) => !isMergedTab(t));
+  //     void routerRef.current.navigate({
+  //       to: remaining[0]?.url ?? ("/" as never)
+  //     });
+  //   }
+  // }, [openTabs, routerRef]);
+
+  const hasMergedTabs = openTabs.some(isMergedTab);
+
+  if (openTabs.length === 0) return null;
+
   return (
-    <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-      {openTabs.length > 0 ? (
-        <>
-          <div className="hidden h-4 shrink-0 border-l border-white/10 md:block" />
-          <ContextMenu>
-            <ContextMenuTrigger asChild>
-              <div className="relative min-w-0 flex-1 overflow-hidden">
-                <div
-                  className={cn(
-                    "pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-[#0d1117] to-transparent transition-opacity",
-                    canScrollLeft ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                <div
-                  className={cn(
-                    "pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-[#0d1117] to-transparent transition-opacity",
-                    canScrollRight ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                <div
-                  ref={scrollRef}
-                  onScroll={updateScrollState}
-                  onWheel={handleWheel}
-                  onMouseEnter={updateScrollState}
-                  className="no-scrollbar flex w-0 min-w-full items-center gap-0.5 overflow-x-auto"
-                >
-                  <ScrollActiveTabIntoView
-                    scrollRef={scrollRef}
-                    updateScrollState={updateScrollState}
+    <div
+      aria-hidden={!tabsReady}
+      className={cn(
+        "flex min-w-0 items-center gap-3 overflow-hidden transition-[opacity,transform] duration-300 ease-out",
+        tabsReady ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-0.5 opacity-0"
+      )}
+    >
+      <div className="hidden h-4 shrink-0 border-l border-white/10 md:block" />
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div className="relative min-w-0 flex-1 overflow-hidden">
+            <div
+              className={cn(
+                "pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-[#0d1117] to-transparent transition-opacity",
+                canScrollLeft ? "opacity-100" : "opacity-0"
+              )}
+            />
+            <div
+              className={cn(
+                "pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-[#0d1117] to-transparent transition-opacity",
+                canScrollRight ? "opacity-100" : "opacity-0"
+              )}
+            />
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: scroll container needs onScroll for gradient visibility */}
+            <div
+              ref={scrollRef}
+              onScroll={updateScrollState}
+              onWheel={handleWheel}
+              onMouseEnter={updateScrollState}
+              className="no-scrollbar flex w-0 min-w-full items-center gap-0.5 overflow-x-auto"
+            >
+              <ScrollActiveTabIntoView
+                scrollRef={scrollRef}
+                updateScrollState={updateScrollState}
+              />
+              {openTabs.map((tab, index) => {
+                const Icon = tabIconMap[tab.type];
+                return (
+                  <DetailTab
+                    key={tab.id}
+                    tab={tab}
+                    icon={Icon}
+                    onClose={handleCloseTab}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
+                    onContextMenu={() => {
+                      setContextTab({ tab, index });
+                    }}
+                    routerRef={routerRef}
                   />
-                  {openTabs.map((tab, index) => {
-                    const Icon = tabIconMap[tab.type];
-                    return (
-                      <DetailTab
-                        key={tab.id}
-                        tab={tab}
-                        icon={Icon}
-                        onClose={handleCloseTab}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDragEnd={handleDragEnd}
-                        onContextMenu={() => {
-                          setContextTab({ tab, index });
-                        }}
-                        routerRef={routerRef}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </ContextMenuTrigger>
-            <ContextMenuContent>
-              <ContextMenuItem onSelect={handleContextClose}>
-                <XIcon size={14} />
-                Close
-              </ContextMenuItem>
-              <ContextMenuItem onSelect={handleContextCloseOthers} disabled={openTabs.length <= 1}>
-                <PanelRightCloseIcon size={14} />
-                Close other tabs
-              </ContextMenuItem>
-              <ContextMenuItem
-                onSelect={handleContextCloseRight}
-                disabled={!contextTab || contextTab.index === openTabs.length - 1}
-              >
-                <ChevronRightIcon size={14} />
-                Close tabs to the right
-              </ContextMenuItem>
-            </ContextMenuContent>
-          </ContextMenu>
-        </>
-      ) : null}
+                );
+              })}
+            </div>
+          </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onSelect={handleContextClose}>
+            <CloseIcon size={14} strokeWidth={2} />
+            Close
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={handleContextCloseOthers} disabled={openTabs.length <= 1}>
+            <Remove01Icon size={14} strokeWidth={2} />
+            Close other tabs
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={handleContextCloseRight}
+            disabled={!contextTab || contextTab.index === openTabs.length - 1}
+          >
+            <ChevronRightIcon size={14} strokeWidth={2} />
+            Close tabs to the right
+          </ContextMenuItem>
+          {/* <ContextMenuItem onSelect={handleContextCloseMerged} disabled={!hasMergedTabs}>
+            <GitPullRequestIcon size={14} strokeWidth={2} />
+            Close merged
+          </ContextMenuItem> */}
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   );
 }
 
+/**
+ * Isolated component that subscribes to pathname changes to scroll the active
+ * tab into view. Extracted so the parent Tabs doesn't re-render on
+ * every navigation — only this tiny renderless component does.
+ */
 function ScrollActiveTabIntoView({
   scrollRef,
   updateScrollState
@@ -254,6 +281,7 @@ function ScrollActiveTabIntoView({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname triggers scroll-into-view on route change
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -320,14 +348,23 @@ const DetailTab = memo(function DetailTab({
       onContextMenu={onContextMenu}
       activeOptions={{ exact: true }}
       activeProps={{ className: "active" }}
-      className="group relative flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white/4 px-3 text-xs font-medium text-base-300 transition-colors hover:bg-white/9 hover:text-white [&.active]:bg-white/[0.14] [&.active]:text-white [&.active]:ring-1 [&.active]:ring-white/10"
+      className="group relative flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-3 text-xs font-medium text-base-300 transition-colors hover:bg-white/9 hover:text-white [&.active]:bg-white/[0.14] [&.active]:text-white [&.active]:ring-1 [&.active]:ring-white/10"
     >
       {tab.avatarUrl ? (
         <img src={tab.avatarUrl} alt="" className="size-3.5 shrink-0 rounded-sm" />
       ) : (
-        <Icon size={13} strokeWidth={2} className="shrink-0" />
+        <Icon size={13} strokeWidth={2} className={cn("shrink-0", tab.iconColor)} />
       )}
       <span className="max-w-32 truncate">{tab.title}</span>
+      {tab.type === "review" || tab.type === "commit" ? (
+        <span className="flex items-center gap-1 font-mono text-[11px] font-medium tabular-nums">
+          {tab.additions != null && <span>+{tab.additions}</span>}
+          {tab.deletions != null && <span>-{tab.deletions}</span>}
+        </span>
+      ) : tab.number != null ? (
+        <span className="text-[11px] text-base-300 tabular-nums">#{tab.number}</span>
+      ) : null}
+      {/* Mobile: inline close button in flow — oversized touch target */}
       <button
         type="button"
         onClick={(e) => {
@@ -335,11 +372,12 @@ const DetailTab = memo(function DetailTab({
           e.stopPropagation();
           onClose(tab.id, tab.url);
         }}
-        className="-mr-1.5 flex size-8 shrink-0 items-center justify-center rounded-md md:hidden"
+        className="-mr-1.5 flex size-8 shrink-0 items-center justify-center rounded-sm md:hidden"
         aria-label={`Close ${tab.title}`}
       >
-        <XIcon size={12} className="text-base-400" />
+        <CloseIcon size={12} strokeWidth={2} className="text-muted-foreground" />
       </button>
+      {/* Desktop: overlay close button on hover */}
       <button
         type="button"
         onClick={(e) => {
@@ -347,12 +385,12 @@ const DetailTab = memo(function DetailTab({
           e.stopPropagation();
           onClose(tab.id, tab.url);
         }}
-        className="absolute inset-y-0 right-0 hidden items-center rounded-r-full bg-white/6 pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+        className="absolute inset-y-0 right-0 hidden items-center rounded-r-sm bg-muted pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
         aria-label={`Close ${tab.title}`}
       >
-        <span className="absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent to-white/6" />
-        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-white/10">
-          <XIcon size={10} />
+        <span className="absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent to-muted" />
+        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-muted">
+          <CloseIcon size={10} strokeWidth={2} />
         </span>
       </button>
     </Link>

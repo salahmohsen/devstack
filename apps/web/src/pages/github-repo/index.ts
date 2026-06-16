@@ -1,6 +1,5 @@
 export * from "@/pages/github-repo/api/get-github-repo-activity-cards.query";
 export * from "@/pages/github-repo/api/get-github-repo-branches.query";
-export * from "@/pages/github-repo/api/get-github-repo-commit-sparkline.query";
 export * from "@/pages/github-repo/api/get-github-repo-file-content.query";
 export * from "@/pages/github-repo/api/get-github-repo-overview.query";
 export * from "@/pages/github-repo/api/get-github-repo-tree.query";

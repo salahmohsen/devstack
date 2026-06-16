@@ -12,19 +12,10 @@ import {
   EmptyHeader,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
-import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { ErrorLayout } from "@/shared/ui/error-layout";
 
 const loggedErrorKeys = new Set<string>();
-
-function CenteredLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className={cn("flex min-h-screen flex-col")}>
-      <main className="relative -top-(--navbar-height) grid flex-1 place-items-center pt-(--navbar-height)">
-        {children}
-      </main>
-    </div>
-  );
-}
 
 export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
@@ -54,7 +45,7 @@ export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => 
   // sendErrorToService(error)
 
   return (
-    <CenteredLayout>
+    <ErrorLayout>
       <Empty>
         <EmptyHeader>
           <EmptyTitle className="mask-b-from-20% mask-b-to-80% text-9xl font-extrabold">
@@ -81,6 +72,6 @@ export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => 
           </div>
         </EmptyContent>
       </Empty>
-    </CenteredLayout>
+    </ErrorLayout>
   );
 }

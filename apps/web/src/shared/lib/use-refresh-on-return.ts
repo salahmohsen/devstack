@@ -29,9 +29,6 @@ export function useRefreshOnReturn({
       void queryClient.invalidateQueries({
         queryKey: githubQueryKeys.all
       });
-      void queryClient.invalidateQueries({
-        queryKey: ["github-app-access-state"]
-      });
       void router.invalidate();
     }
   }, [queryClient, router]);

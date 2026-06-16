@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
-import { getLocale } from "@tsu-stack/i18n/runtime";
+import { baseLocale, getLocale } from "@tsu-stack/i18n/runtime";
 import { Container } from "@tsu-stack/ui/components/container";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/components/empty";
 
@@ -48,7 +48,7 @@ type GithubRepoPageProps = {
 };
 
 export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPageProps) {
-  const localePrefix = getLocale() ? `/${getLocale()}` : "";
+  const localePrefix = getLocale() !== baseLocale ? `/${getLocale()}` : "";
   const githubSetup = useGetGithubSetupQuery();
   const owner = githubSetup.data?.owner ?? "salahmohsen";
   const overviewQuery = useGetGithubRepoOverviewQuery(repo);
