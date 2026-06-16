@@ -1,3 +1,5 @@
+import { type GitHubLocalFirstMeta, type RepoOverview } from "#@/schemas";
+export { type GitHubLocalFirstMeta, type RepoOverview } from "#@/schemas";
 import { type GitHubActor } from "#@/types";
 
 export type RepositoryRef = {
@@ -596,43 +598,6 @@ export type PinnedRepo = {
   forks: number;
 };
 
-export type RepoOverview = {
-  id: number;
-  name: string;
-  fullName: string;
-  description: string | null;
-  isPrivate: boolean;
-  isFork: boolean;
-  /** Whether the authenticated user has starred this repository */
-  viewerHasStarred: boolean;
-  defaultBranch: string;
-  stars: number;
-  forks: number;
-  watchers: number;
-  language: string | null;
-  license: string | null;
-  topics: string[];
-  url: string;
-  owner: string;
-  ownerAvatarUrl: string;
-  branchCount: number;
-  tagCount: number;
-  openPullCount: number;
-  openIssueCount: number;
-  hasDiscussions: boolean;
-  /** Present when `isFork`; upstream `owner/name` */
-  forkParentFullName: string | null;
-  /** Upstream owner avatar from the same overview query (no extra request) */
-  forkParentOwnerAvatarUrl: string | null;
-  latestCommit: {
-    sha: string;
-    message: string;
-    date: string;
-    author: GitHubActor | null;
-  } | null;
-  __meta?: GitHubLocalFirstMeta;
-};
-
 export type RepoTreeEntry = {
   name: string;
   type: "file" | "dir" | "submodule";
@@ -784,12 +749,6 @@ export type NotificationItem = {
   updatedAt: string;
   lastReadAt: string | null;
   url: string;
-};
-
-export type GitHubLocalFirstMeta = {
-  cacheStatus: "fresh" | "stale" | "miss";
-  fetchedAt: number | null;
-  isRevalidating: boolean;
 };
 
 export type NotificationsResult = {

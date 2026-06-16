@@ -1,12 +1,8 @@
 import { z } from "zod";
 
-import {
-  bumpGitHubCacheNamespaces,
-  getGitHubRevalidationSignals,
-  markGitHubRevalidationSignals
-} from "@tsu-stack/github";
+import { bumpGitHubCacheNamespaces, markGitHubRevalidationSignals } from "@tsu-stack/github";
 
-import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { protectedProcedure } from "#@/lib/procedures/factory";
 
 const RevalidationResultSchema = z.object({
   ok: z.boolean()

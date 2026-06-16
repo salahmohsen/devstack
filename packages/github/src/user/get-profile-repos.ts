@@ -41,7 +41,6 @@ export async function getProfileRepos(context: OrpcContext): Promise<GitHubUserR
             createdAt: repo.created_at ?? repo.updated_at ?? new Date(0).toISOString(),
             defaultBranch: repo.default_branch ?? "main",
             description: repo.description ?? null,
-            forkCount: repo.forks_count ?? 0,
             forks: repo.forks_count ?? 0,
             fullName: repo.full_name ?? `${repo.owner?.login ?? source.owner}/${repo.name}`,
             id: repo.id,
@@ -70,7 +69,7 @@ export async function getProfileRepos(context: OrpcContext): Promise<GitHubUserR
       namespaceKeys: [signalKey],
       owner: source.owner,
       params: { username: source.owner },
-      resource: "user.profileRepos.v2",
+      resource: "user.profileRepos.v3",
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });

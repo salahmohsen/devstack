@@ -36,6 +36,9 @@ catalogs:
     '@fontsource-variable/geist-mono':
       specifier: ^5.2.8
       version: 5.2.8
+    '@fontsource/lateef':
+      specifier: ^5.2.8
+      version: 5.2.8
     '@hugeicons/core-free-icons':
       specifier: ^4.2.0
       version: 4.2.0
@@ -391,6 +394,9 @@ importers:
       '@fontsource-variable/geist-mono':
         specifier: 'catalog:'
         version: 5.2.8
+      '@fontsource/lateef':
+        specifier: 'catalog:'
+        version: 5.2.8
       '@lonik/oh-image':
         specifier: 'catalog:'
         version: 3.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sharp@0.34.5)
@@ -736,6 +742,9 @@ importers:
       octokit:
         specifier: 'catalog:'
         version: 4.1.4
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
     devDependencies:
       '@tsu-stack/tsconfig':
         specifier: workspace:*
@@ -872,6 +881,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 1.17.0(react@19.2.7)
+      motion:
+        specifier: 'catalog:'
+        version: 12.40.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       next-themes:
         specifier: 'catalog:'
         version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -1654,6 +1666,9 @@ packages:
 
   '@fontsource-variable/geist@5.2.9':
     resolution: {integrity: sha512-TP+QSBG3wxKGPE33CbMy/L0Nu3qvJ6Fy81Yc4LnQ95xH+i+cfEp8fyU8/kfV14YwszxIFPhnoMTbjL71waVpyQ==}
+
+  '@fontsource/lateef@5.2.8':
+    resolution: {integrity: sha512-HRo8WD/t0aVdT6P+zAPwYfojV0rcUuhyZzY+qQbBeWFhu8r7VOJds08f/HyRTZVaRnK8kkqtm28tdLVUeeaajg==}
 
   '@hexagon/base64@1.1.28':
     resolution: {integrity: sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw==}
@@ -7538,6 +7553,8 @@ snapshots:
   '@fontsource-variable/geist-mono@5.2.8': {}
 
   '@fontsource-variable/geist@5.2.9': {}
+
+  '@fontsource/lateef@5.2.8': {}
 
   '@hexagon/base64@1.1.28': {}
 
