@@ -130,7 +130,7 @@ export function CreateAnAccountForm({
                   placeholder={m.auth__name_placeholder()}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p className="text-sm text-destructive" key={error?.message}>
+                  <p className="text-destructive text-sm" key={error?.message}>
                     {error?.message}
                   </p>
                 ))}
@@ -152,7 +152,7 @@ export function CreateAnAccountForm({
                   placeholder={m.auth__email_placeholder()}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p className="text-sm text-destructive" key={error?.message}>
+                  <p className="text-destructive text-sm" key={error?.message}>
                     {error?.message}
                   </p>
                 ))}
@@ -173,7 +173,7 @@ export function CreateAnAccountForm({
                   value={field.state.value}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p className="text-sm text-destructive" key={error?.message}>
+                  <p className="text-destructive text-sm" key={error?.message}>
                     {error?.message}
                   </p>
                 ))}
@@ -194,7 +194,7 @@ export function CreateAnAccountForm({
                   value={field.state.value}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p className="text-sm text-destructive" key={error?.message}>
+                  <p className="text-destructive text-sm" key={error?.message}>
                     {error?.message}
                   </p>
                 ))}

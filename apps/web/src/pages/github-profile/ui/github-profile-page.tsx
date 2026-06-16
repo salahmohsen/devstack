@@ -6,7 +6,6 @@ import {
   ChevronDownIcon,
   EditIcon,
   ExternalLinkIcon,
-  FollowersIcon,
   MapPinIcon
 } from "@tsu-stack/icons";
 
@@ -16,8 +15,8 @@ const ContributionGraph = lazy(() =>
   })
 );
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
-import { getLocale } from "@tsu-stack/i18n/runtime";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -31,15 +30,13 @@ import {
   parseRepoListPage,
   repoListHasNextPage,
   sliceReposForPage
-} from "@/shared/lib/repo-list-page";
+} from "@/shared/lib/repo-list-utils";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
+import { RepositoryRow } from "@/shared/ui/repository-row";
 
 import { useGetGithubSetupStatusQuery } from "@/features/github";
 
-import {
-  getGithubActivityQueryOptions,
-  useGetGithubActivityQuery
-} from "@/pages/github-profile/api/get-github-activity.query";
+import { useGetGithubActivityQuery } from "@/pages/github-profile/api/get-github-activity.query";
 import {
   getGithubContributionsQueryOptions,
   useGetGithubContributionsQuery
@@ -59,8 +56,6 @@ import {
 } from "@/pages/github-profile/api/get-github-profile.query";
 import { GithubProfileUnavailableState } from "@/pages/github-profile/ui/github-setup-component";
 import { PinnedRepoCard } from "@/pages/github-profile/ui/pinned-repo-card";
-import { RepositoryRow } from "@/pages/github-profile/ui/repository-row";
-import { UserActivityFeed } from "@/pages/github-profile/ui/user-activity-feed";
 
 export function GithubProfilePage() {
   const hasMounted = useIsClient();
@@ -74,6 +69,7 @@ export function GithubProfilePage() {
   const isRepositoriesTab = activeTab === githubProfileTabs.repositories;
   const profileQuery = useGetGithubProfileQuery();
   const contributionsQuery = useGetGithubContributionsQuery();
+  const admin = useAuth();
 
   const pinnedReposQuery = useGetGithubPinnedReposQuery();
   const reposQuery = useGetGithubProfileReposQuery(isRepositoriesTab);
@@ -96,10 +92,6 @@ export function GithubProfilePage() {
         {
           queryKey: getGithubProfileReposQueryOptions().queryKey,
           signalKeys: [githubRevalidationSignalKeys.ownerRepos(owner)]
-        },
-        {
-          queryKey: getGithubActivityQueryOptions().queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerActivity(owner)]
         }
       ] as const,
     [owner]
@@ -107,7 +99,6 @@ export function GithubProfilePage() {
   useGitHubSignalStream(signalTargets);
 
   const currentPage = parseRepoListPage(currentSearch.get("page"));
-  const localePrefix = getLocale() ? `/${getLocale()}` : "";
 
   if (setupStatusQuery.isLoading && !setupStatusQuery.data) {
     return <GithubProfileSkeleton />;
@@ -138,8 +129,7 @@ export function GithubProfilePage() {
   const repos = reposQuery.data ?? [];
   const safePage = clampRepoListPage(currentPage, repos.length);
   const pagedRepos = sliceReposForPage(repos, safePage);
-  const overviewHref = resolvedProfileHref(owner, localePrefix);
-  const repositoriesHref = buildRepositoriesHref(owner, localePrefix, 1);
+  const repositoriesHref = buildRepositoriesHref(1);
 
   return (
     <div className="overflow-hidden pb-16">
@@ -156,7 +146,7 @@ export function GithubProfilePage() {
           </>
         ) : (
           <>
-            <div className="h-full bg-[radial-gradient(circle_at_top,rgba(35,134,54,0.22),transparent_35%),linear-gradient(180deg,#161b22_0%,var(--color-background)_50%)]" />
+            <div className="h-full bg-[radial-gradient(circle_at_top,var(--background),transparent_35%),linear-gradient(180deg,var(--color-background)_0%,var(--color-background)_50%)]" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-(--background) to-transparent" />
           </>
         )}
@@ -164,167 +154,121 @@ export function GithubProfilePage() {
 
       <div className="relative mx-auto max-w-3xl px-6">
         <div className="-mt-16 flex items-end justify-between sm:-mt-20">
-          <Avatar className="size-28 border-4 border-[#0d1117] sm:size-32">
+          <Avatar className="size-28 border sm:size-32">
             <AvatarImage alt={profile.login} src={profile.avatarUrl} />
             <AvatarFallback>
               {(profile.name ?? profile.login).charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
-          <Button
-            asChild
-            variant="ghost"
-            size="icon-sm"
-            className="mb-1 size-8 rounded-full text-base-300 hover:bg-white/5 hover:text-white"
-          >
-            <Link href="https://github.com/settings/profile" target="_blank" rel="noreferrer">
-              <EditIcon className="size-3.5" />
-            </Link>
-          </Button>
-        </div>
-
-        <div className="mt-3 flex flex-col gap-3 pb-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <h1 className="text-2xl font-semibold tracking-tight text-white">
-                {profile.name ?? profile.login}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-base text-base-400">
-                <span>@{profile.login}</span>
-                <span className="text-white/20">·</span>
-                <span className="text-sm">
-                  Joined{" "}
-                  {new Date(profile.createdAt).toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric"
-                  })}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex h-7 w-full items-center justify-start gap-0 rounded-lg bg-white/4 p-0.5 sm:w-auto sm:shrink-0">
-              <Link
-                href={overviewHref}
-                className={
-                  activeTab === githubProfileTabs.overview
-                    ? "inline-flex h-6 items-center justify-center rounded-md bg-white/10 px-2.5 py-0 text-[11px] leading-none font-medium text-white"
-                    : "inline-flex h-6 items-center justify-center rounded-md px-2.5 py-0 text-[11px] leading-none font-medium text-base-300 transition-colors hover:text-white"
-                }
-              >
-                Overview
-              </Link>
-              <Link
-                href={repositoriesHref}
-                className={
-                  activeTab === githubProfileTabs.repositories
-                    ? "inline-flex h-6 items-center justify-center rounded-md bg-white/10 px-2.5 py-0 text-[11px] leading-none font-medium text-white"
-                    : "inline-flex h-6 items-center justify-center rounded-md px-2.5 py-0 text-[11px] leading-none font-medium text-base-300 transition-colors hover:text-white"
-                }
-              >
-                Repositories
-              </Link>
-            </div>
-          </div>
-
-          {profile.bio ? (
-            <p className="max-w-lg text-sm leading-relaxed text-base-300">{profile.bio}</p>
-          ) : null}
-
-          <ProfileMetadata profile={profile} />
-
-          <div className="flex items-center gap-4 text-sm">
-            <Link
-              href={`https://github.com/${profile.login}?tab=followers`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 text-base-400 transition-colors hover:text-white"
+          {admin.user && !admin.isPending && (
+            <Button
+              asChild
+              variant="ghost"
+              size="icon-sm"
+              className="mb-1 size-8 rounded-full hover:bg-white/5"
             >
-              <FollowersIcon className="size-4" />
-              <span className="font-semibold text-white">{formatCount(profile.followers)}</span>
-              <span>{profile.followers === 1 ? "follower" : "followers"}</span>
-            </Link>
-            <span className="text-white/20">·</span>
-            <a
-              href={`https://github.com/${profile.login}?tab=following`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-base-400 transition-colors hover:text-white"
-            >
-              <span className="font-semibold text-white">{formatCount(profile.following)}</span>{" "}
-              following
-            </a>
-          </div>
-
-          {activeTab === githubProfileTabs.overview ? (
-            <>
-              {(pinnedReposQuery.data ?? []).length > 0 ? (
-                <section className="flex flex-col gap-2 pt-6">
-                  <h2 className="text-sm font-medium text-base-500">Pinned</h2>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {(pinnedReposQuery.data ?? []).map((repo) => (
-                      <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {(activityQuery.data ?? []).length > 0 ? (
-                <section className="flex flex-col pt-6">
-                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white/4 px-4 py-2.5">
-                    <h2 className="text-xs font-medium text-white">Recent activity</h2>
-                    <span className="text-xs text-base-500 tabular-nums">
-                      {(activityQuery.data ?? []).length}
-                    </span>
-                  </div>
-                  <UserActivityFeed events={activityQuery.data ?? []} />
-                </section>
-              ) : null}
-            </>
-          ) : (
-            <section className="-mx-[max(0,calc((100vw-100%)/2))] flex flex-col pt-20">
-              <div className="mx-auto w-full max-w-4xl px-3 md:px-6">
-                {reposQuery.isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <Spinner className="size-6 text-base-400" />
-                  </div>
-                ) : repos.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-base-400">No repositories to show.</p>
-                ) : (
-                  <>
-                    <div className="space-y-3">
-                      {pagedRepos.map((repo) => (
-                        <div
-                          key={repo.id}
-                          style={{
-                            contentVisibility: "auto",
-                            containIntrinsicSize: "auto 72px"
-                          }}
-                        >
-                          <RepositoryRow repo={repo} />
-                        </div>
-                      ))}
-                    </div>
-                    {repoListHasNextPage(safePage, repos.length) ? (
-                      <Button
-                        asChild
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="mx-auto mt-6 rounded-full bg-white/8 text-white hover:bg-white/12"
-                      >
-                        <a href={buildRepositoriesHref(owner, localePrefix, safePage + 1)}>
-                          <ChevronDownIcon className="size-4" />
-                          Load more
-                        </a>
-                      </Button>
-                    ) : null}
-                  </>
-                )}
-              </div>
-            </section>
+              <Link href="https://github.com/settings/profile" target="_blank" rel="noreferrer">
+                <EditIcon className="size-3.5" />
+              </Link>
+            </Button>
           )}
         </div>
       </div>
+      <div className="mx-auto mt-3 flex max-w-3xl flex-col gap-3 pb-8">
+        <div className="flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <h1 className="text-2xl font-semibold tracking-tight capitalize">
+              {profile.name ?? profile.login}
+            </h1>
+          </div>
+
+          <div className="flex h-7 w-full items-center justify-start gap-0 rounded-md bg-muted p-0.5 text-muted-foreground sm:w-auto sm:shrink-0">
+            <Link
+              to={"/"}
+              className={
+                activeTab === githubProfileTabs.overview
+                  ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
+                  : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
+              }
+            >
+              Overview
+            </Link>
+            <Link
+              href={repositoriesHref}
+              className={
+                activeTab === githubProfileTabs.repositories
+                  ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
+                  : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
+              }
+            >
+              Repositories
+            </Link>
+          </div>
+        </div>
+
+        {profile.bio ? (
+          <p className="max-w-lg text-sm leading-relaxed text-primary/80">{profile.bio}</p>
+        ) : null}
+
+        <ProfileMetadata profile={profile} />
+      </div>
+      {activeTab === githubProfileTabs.overview ? (
+        <div className="mx-auto max-w-3xl">
+          {(pinnedReposQuery.data ?? []).length > 0 ? (
+            <section className="flex flex-col gap-2 pt-6">
+              <h2 className="text-sm font-medium text-base-500">Pinned</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(pinnedReposQuery.data ?? []).map((repo) => (
+                  <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+      ) : (
+        <section className="-mx-[max(0,calc((100vw-100%)/2))] mx-auto flex max-w-4xl flex-col pt-20">
+          <div className="w-full px-3 md:px-6">
+            {reposQuery.isLoading ? (
+              <div className="flex justify-center py-12">
+                <Spinner className="size-6 text-muted-foreground" />
+              </div>
+            ) : repos.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No repositories to show.
+              </p>
+            ) : (
+              <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface-1">
+                {pagedRepos.map((repo) => (
+                  <div
+                    key={repo.id}
+                    style={{
+                      contentVisibility: "auto",
+                      containIntrinsicSize: "auto 72px"
+                    }}
+                  >
+                    <RepositoryRow repo={repo} />
+                  </div>
+                ))}
+                {repoListHasNextPage(safePage, repos.length) ? (
+                  <Button
+                    asChild
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="mx-auto mt-6"
+                  >
+                    <a href={buildRepositoriesHref(safePage + 1)}>
+                      <ChevronDownIcon className="size-4" />
+                      Load more
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -357,11 +301,11 @@ function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryR
   if (profile.location) {
     items.push({ icon: MapPinIcon, label: profile.location });
   }
-  if (profile.blog) {
-    const href = profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`;
-    const displayUrl = profile.blog.replace(/^https?:\/\//, "").replace(/\/$/, "");
-    items.push({ icon: ExternalLinkIcon, label: displayUrl, href });
-  }
+  // if (profile.blog) {
+  //   const href = profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`;
+  //   const displayUrl = profile.blog.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  //   items.push({ icon: ExternalLinkIcon, label: displayUrl, href });
+  // }
   if (profile.twitterUsername) {
     items.push({
       icon: ExternalLinkIcon,
@@ -375,7 +319,7 @@ function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryR
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-400">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
       {items.map((item) => {
         const content = (
           <span className="flex items-center gap-1.5">
@@ -391,7 +335,7 @@ function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryR
               href={item.href}
               target="_blank"
               rel="noreferrer"
-              className="transition-colors hover:text-white"
+              className="transition-colors"
             >
               {content}
             </a>
@@ -406,7 +350,7 @@ function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryR
 
 function ProfileSkeleton() {
   return (
-    <div className="mt-3 flex flex-col gap-3 pb-8">
+    <div className="mx-auto mt-3 flex max-w-3xl flex-col gap-3 pb-8">
       <div className="flex flex-col gap-1.5">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-5 w-32" />
@@ -425,23 +369,7 @@ function ProfileSkeleton() {
   );
 }
 
-function formatCount(count: number) {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1).replace(/\\.0$/, "")}k`;
-  }
-
-  return count.toString();
-}
-
-function resolvedProfileHref(username: string | null, localePrefix: string) {
-  if (!username) {
-    return localePrefix || "/";
-  }
-
-  return `${localePrefix}/${username}`;
-}
-
-function buildRepositoriesHref(username: string | null, localePrefix: string, page: number) {
-  const baseHref = `${resolvedProfileHref(username, localePrefix)}?tab=repositories`;
+function buildRepositoriesHref(page: number) {
+  const baseHref = `?tab=repositories`;
   return page > 1 ? `${baseHref}&page=${page}` : baseHref;
 }
