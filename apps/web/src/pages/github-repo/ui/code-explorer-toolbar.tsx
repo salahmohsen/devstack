@@ -214,7 +214,7 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
           <a
             href={zipUrl}
             download
-            className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-surface-0"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-surface-1"
           >
             <DownloadIcon size={15} className="text-muted-foreground" />
             Download ZIP
@@ -236,7 +236,7 @@ function CloneInput({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <code className="flex-1 truncate rounded-md border bg-surface-0 px-2.5 py-1.5 text-xs">
+      <code className="flex-1 truncate rounded-md border bg-surface-1 px-2.5 py-1.5 text-xs">
         {value}
       </code>
       <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={onCopy}>

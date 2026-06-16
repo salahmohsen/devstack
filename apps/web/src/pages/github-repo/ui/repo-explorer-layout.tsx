@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { memo, useCallback, useMemo, useState, useSyncExternalStore } from "react";
 
 import { type RepoOverview } from "@tsu-stack/github/repo/shared.types.js";
+import { baseLocale, getLocale } from "@tsu-stack/i18n/runtime";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
 import { ChevronLeftIcon, PanelLeftIcon } from "@tsu-stack/icons";
@@ -67,6 +68,8 @@ export function RepoExplorerLayout({
 
   setExplorerPath(currentPath);
 
+  const localePrefix = getLocale() !== baseLocale ? `/${getLocale()}` : "";
+
   useRegisterGithubPublicTab(
     repoData
       ? {
@@ -74,7 +77,7 @@ export function RepoExplorerLayout({
           repo: repoName,
           title: repoData.name,
           type: "repo",
-          url: `/${repoName}`
+          url: `${localePrefix}/${repoName}`
         }
       : null
   );
@@ -160,7 +163,7 @@ export function RepoExplorerLayout({
       />
 
       {activeRef !== repoData.defaultBranch && (
-        <div className="shrink-0 border-b bg-surface-0 px-3 py-2 md:px-4">
+        <div className="shrink-0 border-b bg-surface-1 px-3 py-2 md:px-4">
           <BranchComparisonBanner
             currentBranch={activeRef}
             defaultBranch={repoData.defaultBranch ?? "main"}
@@ -210,7 +213,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   repoName: string;
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b bg-surface-0 px-3 py-2 md:gap-3 md:px-4">
+    <div className="flex shrink-0 items-center gap-2 border-b bg-surface-1 px-3 py-2 md:gap-3 md:px-4">
       {!isDesktop && (
         <button
           type="button"
@@ -241,7 +244,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
 function ExplorerSkeleton() {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center gap-3 border-b bg-surface-0 px-4 py-2">
+      <div className="flex shrink-0 items-center gap-3 border-b bg-surface-1 px-4 py-2">
         <Skeleton className="h-5 w-32 rounded" />
         <div className="ml-auto">
           <Skeleton className="h-8 w-24 rounded-md" />

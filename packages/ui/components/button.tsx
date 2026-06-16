@@ -52,7 +52,7 @@ const buttonVariants = cva(
       variant: {
         default: `bg-linear-to-b from-primary/80 to-primary text-primary-foreground hover:from-primary/75 dark:from-primary hover:dark:from-primary/95`,
         destructive:
-          "bg-destructive bg-linear-to-t from-destructive/90 to-destructive text-white hover:bg-destructive/90 focus-visible:border-destructive focus-visible:bg-destructive/90 focus-visible:ring-destructive",
+          "bg-destructive from-destructive/90 to-destructive hover:bg-destructive/90 focus-visible:border-destructive focus-visible:bg-destructive/90 focus-visible:ring-destructive bg-linear-to-t text-white",
         ghost: `text-primary hover:bg-primary/10 focus-visible:border-primary/25 focus-visible:bg-primary/10`,
         link: `text-primary hover:underline hover:decoration-1 hover:underline-offset-4 focus-visible:underline focus-visible:decoration-1 focus-visible:underline-offset-4`,
         outline: `border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 hover:dark:bg-input/50`,

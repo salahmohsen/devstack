@@ -1,6 +1,5 @@
 import { createContext, Suspense, use, useCallback, useContext, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import { type Components } from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { remarkAlert } from "remark-github-blockquote-alert";
@@ -58,7 +57,7 @@ function CopyButton({ code }: { code: string }) {
     <button
       type="button"
       onClick={handleClick}
-      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-white/4 text-base-400 opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-base-200"
+      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-white/4 text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-base-200"
     >
       {copied ? <CheckIcon size={14} /> : <ClipboardCopyIcon size={14} />}
     </button>
@@ -147,7 +146,7 @@ const components: Record<string, React.FC<any>> = {
   ),
   blockquote: ({ node: _node, children, ...props }) => (
     <blockquote
-      className="mb-2 border-l-2 border-white/20 pl-3 text-sm text-base-400 italic"
+      className="mb-2 border-l-2 border-white/20 pl-3 text-sm text-muted-foreground italic"
       {...props}
     >
       {children}
@@ -222,7 +221,7 @@ const components: Record<string, React.FC<any>> = {
   ),
   th: ({ node: _node, children, ...props }) => (
     <th
-      className="border-r border-b border-white/8 px-3 py-1.5 text-left text-xs font-medium text-base-400 last:border-r-0"
+      className="border-r border-b border-white/8 px-3 py-1.5 text-left text-xs font-medium text-muted-foreground last:border-r-0"
       {...props}
     >
       {children}
@@ -261,7 +260,7 @@ const components: Record<string, React.FC<any>> = {
     </em>
   ),
   del: ({ node: _node, children, ...props }) => (
-    <del className="text-base-400 line-through" {...props}>
+    <del className="text-muted-foreground line-through" {...props}>
       {children}
     </del>
   ),
@@ -276,7 +275,7 @@ const components: Record<string, React.FC<any>> = {
       {...props}
     >
       <svg
-        className="size-3.5 shrink-0 text-base-400 transition-transform group-open/details:rotate-90"
+        className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open/details:rotate-90"
         viewBox="0 0 16 16"
         fill="none"
         stroke="currentColor"

@@ -171,7 +171,7 @@ export const FileSearchCard = memo(function FileSearchCard({
       <div
         ref={cardRef}
         className={cn(
-          "absolute overflow-hidden rounded-lg border bg-surface-0 transition-[inset-inline,top,box-shadow] duration-150 ease-out",
+          "absolute overflow-hidden rounded-lg border bg-surface-1 transition-[inset-inline,top,box-shadow] duration-150 ease-out",
           isExpanded ? "inset-x-2 top-3 shadow-lg ring-1 ring-accent/20" : "inset-x-3 top-4"
         )}
       >

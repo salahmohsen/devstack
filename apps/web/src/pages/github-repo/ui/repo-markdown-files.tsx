@@ -73,7 +73,7 @@ export function RepoMarkdownFiles({
               "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               file === selectedFile
                 ? "bg-white/10 text-white"
-                : "text-base-400 hover:bg-white/4 hover:text-base-200"
+                : "text-muted-foreground hover:bg-white/4 hover:text-base-200"
             )}
           >
             {TAB_LABELS[file] ?? file}

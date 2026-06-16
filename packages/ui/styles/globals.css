@@ -5,7 +5,6 @@
 @import "./base-theme.css";
 @import "./scrollbar.css";
 @import "./prose.css";
-@import "./colors.css";
 
 @source "../**/*.{ts,tsx}";
 
@@ -67,16 +66,6 @@
   a {
     /* Make all links show a pointer cursor (consistency across browsers) */
     cursor: pointer;
-  }
-}
-
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
   }
 }
 

@@ -8,7 +8,7 @@
   /* Base colors */
   --color-base-*: initial;
   --color-surface-*: initial;
-  --color-surface-0: initial;
+  --color-surface-1: initial;
   --color-surface-1: initial;
   --color-surface-2: initial;
   --color-primary-*: initial;
@@ -54,7 +54,7 @@
 }
 
 :root {
-  --surface-0: oklch(0.967 0.001 286.375);
+  --surface-1: oklch(0.967 0.001 286.375);
   --surface-1: oklch(0.945 0.002 286.375);
   --surface-2: oklch(0.925 0.003 286.375);
   --base-50: oklch(0.992 0.0018 67.8);
@@ -104,7 +104,7 @@
 }
 
 @theme inline {
-  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
 

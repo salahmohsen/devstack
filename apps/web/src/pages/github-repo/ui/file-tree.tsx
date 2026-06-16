@@ -71,7 +71,7 @@ function FileTreeRow({
     >
       <div className="flex min-w-0 items-center gap-2.5">
         {isDir ? (
-          <FolderIcon className="size-4 shrink-0 text-base-400" />
+          <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
         ) : (
           <FileCodeIcon className="size-4 shrink-0 text-base-500" />
         )}
@@ -83,7 +83,7 @@ function FileTreeRow({
           {entry.name}
         </Link>
       </div>
-      <span className="truncate text-base-400">
+      <span className="truncate text-muted-foreground">
         {commit?.message ? commit.message.split("\n")[0] : isCommitLoading ? "Loading..." : null}
       </span>
       <span className="text-right text-xs text-base-500">

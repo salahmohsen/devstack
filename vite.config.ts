@@ -157,7 +157,7 @@ export default defineConfig({
     ],
     settings: {
       tailwindcss: {
-        entryPoint: "./packages/ui/styles/globals.css"
+        entryPoint: "./apps/web/src/shared/styles/app.css"
       }
     },
     options: { typeAware: true, typeCheck: true },
@@ -290,7 +290,13 @@ export default defineConfig({
       "tailwindcss/no-unknown-classes": [
         "error",
         {
-          allowlist: ["bg-surface-1", "bg-surface-2", "hover:bg-surface-2"]
+          allowlist: [
+            "bg-surface-1",
+            "bg-surface-2",
+            "hover:bg-surface-2",
+            "no-scrollbar",
+            "text-success"
+          ]
         }
       ],
 

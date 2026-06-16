@@ -1,6 +1,4 @@
 @import "@tsu-stack/ui/styles/globals.css";
-@source "./";
-
 @import "./fonts.css";
 @import "./theme.css";
 
@@ -11,16 +9,4 @@
     * and offsetting the content to center it vertically when using <CenteredLayout>
     */
   --navbar-height: 68px;
-
-  --container: #fff;
-  --surface-0: oklch(0.967 0.001 286.375);
-  --surface-1: oklch(0.945 0.002 286.375);
-  --surface-2: oklch(0.925 0.003 286.375);
-}
-
-.dark {
-  --container: oklch(0.2264 0 0);
-  --surface-0: oklch(0.21 0.006 286.033);
-  --surface-1: oklch(0.245 0.006 286.033);
-  --surface-2: oklch(0.28 0.006 286.033);
 }

@@ -27,7 +27,7 @@ export function RepoHeader({ repo }: RepoHeaderProps) {
             <img alt={repo.owner} className="size-8 rounded-lg" src={repo.ownerAvatarUrl} />
           ) : (
             <div className="flex size-8 items-center justify-center rounded-lg border border-white/10 bg-white/4">
-              <ArchiveIcon className="size-4 text-base-400" />
+              <ArchiveIcon className="size-4 text-muted-foreground" />
             </div>
           )}
           <div className="min-w-0">
@@ -45,13 +45,13 @@ export function RepoHeader({ repo }: RepoHeaderProps) {
               </Badge>
             </div>
             {repo.description ? (
-              <p className="mt-1 text-sm text-base-400">{repo.description}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{repo.description}</p>
             ) : null}
           </div>
         </div>
 
         {repo.isFork && repo.forkParentFullName ? (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-base-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <ArrowRightIcon className="size-3.5" />
             forked from
             <a

@@ -17,7 +17,7 @@ export function RepoSidebar({ repo }: RepoSidebarProps) {
     <aside className="space-y-4">
       <div className="rounded-2xl border border-white/8 bg-white/3 p-4">
         <h3 className="text-sm font-semibold text-base-200">Repository details</h3>
-        <div className="mt-3 space-y-2 text-sm text-base-400">
+        <div className="mt-3 space-y-2 text-sm text-muted-foreground">
           <SidebarRow label="Branches" value={repo.branchCount} />
           <SidebarRow label="Watchers" value={repo.watchers} />
           <SidebarRow label="Open pull requests" value={repo.openPullCount} />

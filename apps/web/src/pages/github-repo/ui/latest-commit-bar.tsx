@@ -91,7 +91,7 @@ export function LatestCommitBar({
         href={commit.url ?? "#"}
         target="_blank"
         rel="noopener noreferrer"
-        className="min-w-0 flex-1 truncate text-left text-base-400 transition-colors hover:text-white hover:underline"
+        className="min-w-0 flex-1 truncate text-left text-muted-foreground transition-colors hover:text-white hover:underline"
       >
         {firstLine}
       </a>
