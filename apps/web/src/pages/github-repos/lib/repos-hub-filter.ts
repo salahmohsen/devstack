@@ -1,9 +1,8 @@
-import { type UserRepoSummary } from "@tsu-stack/github/types";
-export type { UserRepoSummary };
+import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
+
+import { REPO_LIST_PAGE_SIZE } from "@/shared/lib/repo-list-utils";
 
 import { type SerializedFilterStore } from "@/pages/github-repos/ui/filter-cookie";
-
-import { REPO_LIST_PAGE_SIZE } from "./repo-list-page";
 
 const REPOS_FILTER_PAGE_ID = "repos";
 const DEFAULT_REPOS_SORT = "updated";
@@ -12,7 +11,7 @@ const VALID_REPOS_SORT_IDS = new Set(["updated", "created", "created-asc", "titl
 export type ReposHubResult = {
   totals: { all: number; public: number; private: number };
   matchingCount: number;
-  repos: UserRepoSummary[];
+  repos: GitHubUserRepoSummary[];
 };
 
 export type ReposHubInput = {
@@ -59,7 +58,7 @@ export function buildReposHubPrefetchInput(
 }
 
 export function buildReposHubResult(
-  repos: UserRepoSummary[],
+  repos: GitHubUserRepoSummary[],
   input: ReposHubInput
 ): ReposHubResult {
   const totals = {
@@ -80,17 +79,18 @@ function getTime(value: string | null): number {
   return value ? Date.parse(value) || 0 : 0;
 }
 
-const sortCompare: Record<string, (a: UserRepoSummary, b: UserRepoSummary) => number> = {
-  updated: (a, b) => getTime(b.updatedAt) - getTime(a.updatedAt),
-  created: (a, b) => getTime(b.createdAt) - getTime(a.createdAt),
-  "created-asc": (a, b) => getTime(a.createdAt) - getTime(b.createdAt),
-  title: (a, b) => a.name.localeCompare(b.name)
-};
+const sortCompare: Record<string, (a: GitHubUserRepoSummary, b: GitHubUserRepoSummary) => number> =
+  {
+    updated: (a, b) => getTime(b.updatedAt) - getTime(a.updatedAt),
+    created: (a, b) => getTime(b.createdAt) - getTime(a.createdAt),
+    "created-asc": (a, b) => getTime(a.createdAt) - getTime(b.createdAt),
+    title: (a, b) => a.name.localeCompare(b.name)
+  };
 
 export function filterUserRepoSummaries(
-  repos: UserRepoSummary[],
+  repos: GitHubUserRepoSummary[],
   input: Omit<ReposHubInput, "limit">
-): UserRepoSummary[] {
+): GitHubUserRepoSummary[] {
   let result = repos;
   const query = input.searchQuery.toLowerCase().trim();
   if (query) {

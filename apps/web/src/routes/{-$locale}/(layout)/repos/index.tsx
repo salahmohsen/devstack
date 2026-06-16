@@ -5,11 +5,10 @@ import { generateAppSeo } from "@/shared/lib/seo";
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 import {
-  getFilterCookie,
-  RepositoriesPage,
-  DashboardContentLoading,
   buildReposHubPrefetchInput,
-  githubReposHubQueryOptions
+  getFilterCookie,
+  githubReposHubQueryOptions,
+  RepositoriesPage
 } from "@/pages/github-repos";
 
 export const Route = createFileRoute("/{-$locale}/(layout)/repos/")({
@@ -35,14 +34,11 @@ export const Route = createFileRoute("/{-$locale}/(layout)/repos/")({
     const hubPrefetchInput = buildReposHubPrefetchInput(filterStore, urlPage);
 
     if (setupStatus.isConfigured && setupStatus.owner) {
-      await context.queryClient.prefetchQuery(
-        githubReposHubQueryOptions(setupStatus.owner, hubPrefetchInput)
-      );
+      await context.queryClient.prefetchQuery(githubReposHubQueryOptions(hubPrefetchInput));
     }
 
     return { filterStore };
   },
-  pendingComponent: DashboardContentLoading,
   head: ({ params }) =>
     generateAppSeo({
       alternates: {

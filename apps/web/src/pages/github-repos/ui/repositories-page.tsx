@@ -2,37 +2,34 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { createElement, useEffect, useMemo, useRef } from "react";
 
+import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { ChevronDownIcon, FilterIcon, LockIcon, ViewIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
 
+import {
+  REPO_LIST_PAGE_SIZE,
+  repoListHasNextPage,
+  repoListPageQueryParser,
+  safeRepoListPage
+} from "@/shared/lib/repo-list-utils";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
+import { RepositoryRow } from "@/shared/ui/repository-row";
 
 import { useGetGithubSetupStatusQuery } from "@/features/github";
 
 import { githubReposHubQueryOptions } from "@/pages/github-repos/api/get-github-repos-hub.query";
-import {
-  REPO_LIST_PAGE_SIZE,
-  repoListPageQueryParser,
-  safeRepoListPage,
-  repoListHasNextPage
-} from "@/pages/github-repos/lib/repo-list-page";
-import {
-  type ReposHubInput,
-  type UserRepoSummary
-} from "@/pages/github-repos/lib/repos-hub-filter";
+import { type ReposHubInput } from "@/pages/github-repos/lib/repos-hub-filter";
 import { FilterBar } from "@/pages/github-repos/ui/filter-bar";
 import { type SerializedFilterStore } from "@/pages/github-repos/ui/filter-cookie";
-import { RepositoryRow } from "@/pages/github-repos/ui/repository-row";
 import {
+  useListFilters,
   type FilterableItem,
   type FilterDefinition,
   type SortOption
 } from "@/pages/github-repos/ui/use-list-filters";
-import { useListFilters } from "@/pages/github-repos/ui/use-list-filters";
 
 type RepositoryFilterItem = FilterableItem & {
-  repo: UserRepoSummary;
+  repo: GitHubUserRepoSummary;
   isPrivate: boolean;
 };
 
@@ -90,10 +87,7 @@ const EMPTY_REPO_ITEMS: RepositoryFilterItem[] = [];
 
 export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilterStore }) {
   const setupStatusQuery = useGetGithubSetupStatusQuery();
-  const owner = setupStatusQuery.data?.owner ?? "";
-  const scope = useMemo(() => {
-    return { userId: owner };
-  }, [owner]);
+
   const [page, setPage] = useQueryState("page", repoListPageQueryParser);
 
   const filterState = useListFilters({
@@ -126,7 +120,7 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
   }, [debouncedSearch, visibilityValues, filterState.sortId, limit]);
 
   const hubQuery = useQuery({
-    ...githubReposHubQueryOptions(owner, hubInput),
+    ...githubReposHubQueryOptions(hubInput),
     placeholderData: keepPreviousData
   });
 
@@ -158,13 +152,6 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
   }, [hubQuery.isSuccess, hubQuery.data, page, setPage]);
 
   if (hubQuery.error) throw hubQuery.error;
-
-  if (
-    (setupStatusQuery.isLoading && !setupStatusQuery.data) ||
-    (!hubQuery.data && hubQuery.isPending)
-  ) {
-    return <DashboardContentLoading />;
-  }
 
   if (!setupStatusQuery.data?.isConfigured || !setupStatusQuery.data.owner) {
     return (
@@ -222,7 +209,7 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
                       containIntrinsicSize: "auto 72px"
                     }}
                   >
-                    <RepositoryRow repo={repo} scope={scope} />
+                    <RepositoryRow repo={repo} />
                   </div>
                 ))}
               </div>
@@ -244,14 +231,6 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-export function DashboardContentLoading() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <Spinner className="size-6 text-muted-foreground" />
     </div>
   );
 }

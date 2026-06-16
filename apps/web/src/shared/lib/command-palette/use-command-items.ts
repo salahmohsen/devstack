@@ -1,15 +1,14 @@
-import { type QueryClient, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import {
-  type CommandPaletteSearchResult,
   type IssueSummary,
   type MyIssuesResult,
   type MyPullsResult,
   type PullSummary
 } from "@tsu-stack/github/repo/shared.types.js";
-import { type UserRepoSummary } from "@tsu-stack/github/types";
+import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 
 import {
   CodeIcon,
@@ -21,7 +20,6 @@ import {
   RefreshCwIcon,
   UserCircleIcon
 } from "@/lib/command-palette-icons";
-import { type GitHubQueryScope } from "@/lib/github.query";
 import { githubQueryKeys } from "@/lib/github.query";
 
 import { getRegisteredCommands, subscribeCommands } from "./registry";
@@ -66,7 +64,9 @@ export function useCommandItems(): CommandItem[] {
     getRegisteredCommands
   );
 
-  const repos = queryClient.getQueryData<UserRepoSummary[]>(githubQueryKeys.repos.list(scope));
+  const repos = queryClient.getQueryData<GitHubUserRepoSummary[]>(
+    githubQueryKeys.repos.list(scope)
+  );
   const pulls = queryClient.getQueryData<MyPullsResult>(githubQueryKeys.pulls.mine(scope));
   const issues = queryClient.getQueryData<MyIssuesResult>(githubQueryKeys.issues.mine(scope));
   const viewer = queryClient.getQueryData<{ login: string } | null>(githubQueryKeys.viewer(scope));
