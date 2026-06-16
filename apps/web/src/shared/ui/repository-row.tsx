@@ -1,12 +1,11 @@
 import { Fragment, memo, type ReactNode } from "react";
 
+import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { GitForkIcon, SquareLock02Icon, StarIcon, ViewIcon } from "@tsu-stack/icons";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 import { LazyRepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline-lazy";
-
-import { type UserRepoSummary } from "@/pages/github-repos/lib/repos-hub-filter";
 
 const languageColors: Record<string, string> = {
   Astro: "#ff5a03",
@@ -22,13 +21,13 @@ const languageColors: Record<string, string> = {
   TypeScript: "#3178c6"
 };
 
-const visibilityAria: Record<UserRepoSummary["visibility"], string> = {
+const visibilityAria: Record<GitHubUserRepoSummary["visibility"], string> = {
   public: "Public repository",
   private: "Private repository",
   internal: "Internal repository"
 };
 
-function VisibilityBadge({ visibility }: { visibility: UserRepoSummary["visibility"] }) {
+function VisibilityBadge({ visibility }: { visibility: GitHubUserRepoSummary["visibility"] }) {
   const label = visibilityAria[visibility];
   const Icon = visibility === "public" ? ViewIcon : SquareLock02Icon;
 
@@ -45,11 +44,9 @@ function VisibilityBadge({ visibility }: { visibility: UserRepoSummary["visibili
 }
 
 export const RepositoryRow = memo(function RepositoryRow({
-  repo,
-  scope: _scope
+  repo
 }: {
-  repo: UserRepoSummary;
-  scope: { userId: string };
+  repo: GitHubUserRepoSummary;
 }) {
   const metaEntries: { key: string; node: ReactNode }[] = [];
   if (repo.language) {
@@ -101,7 +98,7 @@ export const RepositoryRow = memo(function RepositoryRow({
     <Link
       to="/$repo"
       params={{ repo: repo.name }}
-      className="grid w-full grid-cols-1 items-center gap-x-4 gap-y-2 px-4 py-3 text-left transition-colors hover:bg-surface-2 md:grid-cols-[minmax(10rem,22%)_minmax(0,1fr)_minmax(10rem,auto)_11rem] md:gap-y-1"
+      className="grid w-full grid-cols-1 items-center gap-x-4 gap-y-2 px-4 py-3 text-left transition-colors hover:bg-background md:grid-cols-[minmax(10rem,22%)_minmax(0,1fr)_minmax(10rem,auto)_11rem] md:gap-y-1"
     >
       <div className="flex min-w-0 flex-col gap-0.5">
         <div className="flex max-w-full min-w-0 items-center justify-between gap-x-2">
