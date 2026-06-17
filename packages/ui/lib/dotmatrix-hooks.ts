@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { DotMatrixPhase } from "@tsu-stack/ui/components/dotmatrix-core";
+import { type DotMatrixPhase } from "@tsu-stack/ui/components/dotmatrix-core";
 
 export function usePrefersReducedMotion(): boolean {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -25,11 +25,11 @@ export function usePrefersReducedMotion(): boolean {
   return prefersReducedMotion;
 }
 
-export interface UseCyclePhaseOptions {
+export type UseCyclePhaseOptions = {
   active: boolean;
   cycleMsBase: number;
   speed?: number;
-}
+};
 
 export function useCyclePhase({ active, cycleMsBase, speed = 1 }: UseCyclePhaseOptions): number {
   const [phase, setPhase] = useState(0);
@@ -47,7 +47,7 @@ export function useCyclePhase({ active, cycleMsBase, speed = 1 }: UseCyclePhaseO
     let rafId = 0;
 
     const tick = (now: number) => {
-      const elapsed = ((now - start) % cycleMs + cycleMs) % cycleMs;
+      const elapsed = (((now - start) % cycleMs) + cycleMs) % cycleMs;
       setPhase(elapsed / cycleMs);
       rafId = requestAnimationFrame(tick);
     };
@@ -59,13 +59,13 @@ export function useCyclePhase({ active, cycleMsBase, speed = 1 }: UseCyclePhaseO
   return phase;
 }
 
-interface UseSteppedCycleOptions {
+type UseSteppedCycleOptions = {
   active: boolean;
   cycleMsBase: number;
   steps: number;
   speed?: number;
   idleStep?: number;
-}
+};
 
 type FrameListener = (now: number) => void;
 
@@ -149,17 +149,17 @@ export function useSteppedCycle({
   return active ? step : idleStep;
 }
 
-interface UseDotMatrixPhasesOptions {
+type UseDotMatrixPhasesOptions = {
   animated?: boolean;
   hoverAnimated?: boolean;
   speed?: number;
-}
+};
 
-interface DotMatrixPhasesResult {
+type DotMatrixPhasesResult = {
   phase: DotMatrixPhase;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
-}
+};
 
 export function useDotMatrixPhases({
   animated = false,
@@ -213,12 +213,11 @@ export function useDotMatrixPhases({
 
   const phase: DotMatrixPhase = autoRun ? "loadingRipple" : hoverAnimated ? hoverPhase : "idle";
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    return {
       phase,
       onMouseEnter,
       onMouseLeave
-    }),
-    [phase, onMouseEnter, onMouseLeave]
-  );
+    };
+  }, [phase, onMouseEnter, onMouseLeave]);
 }

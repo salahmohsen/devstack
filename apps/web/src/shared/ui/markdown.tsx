@@ -57,7 +57,7 @@ function CopyButton({ code }: { code: string }) {
     <button
       type="button"
       onClick={handleClick}
-      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-white/4 text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-base-200"
+      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-white/4 text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-accent-foreground"
     >
       {copied ? <CheckIcon size={14} /> : <ClipboardCopyIcon size={14} />}
     </button>
@@ -80,7 +80,7 @@ function ShikiCode({ code, lang }: { code: string; lang: string }) {
     <Suspense
       fallback={
         <div className="group/code relative mb-2">
-          <pre className="overflow-x-auto rounded-lg bg-white/4 p-3 text-xs text-base-200">
+          <pre className="overflow-x-auto rounded-lg bg-white/4 p-3 text-xs text-accent-foreground">
             <code>{code}</code>
           </pre>
         </div>
@@ -176,14 +176,14 @@ const components: Record<string, React.FC<any>> = {
     }
     return (
       <pre
-        className="mb-2 overflow-x-auto rounded-lg bg-white/4 p-3 text-xs text-base-200"
+        className="mb-2 overflow-x-auto rounded-lg bg-white/4 p-3 text-xs text-accent-foreground"
         {...props}
       >
         {children}
       </pre>
     );
   },
-  hr: ({ node: _node, ...props }) => <hr className="my-4 border-white/8" {...props} />,
+  hr: ({ node: _node, ...props }) => <hr className="my-4 border-border" {...props} />,
   img: ({ node: _node, alt, src, ...props }) => (
     <img
       className="my-2 inline-block max-w-full rounded-lg"
@@ -208,7 +208,7 @@ const components: Record<string, React.FC<any>> = {
     return <source src={useResolvedAssetUrl(src)} srcSet={resolvedSrcSet} {...props} />;
   },
   table: ({ node: _node, children, ...props }) => (
-    <div className="mb-2 flex flex-col overflow-hidden rounded-lg border border-white/8">
+    <div className="mb-2 flex flex-col overflow-hidden rounded-lg border border-border">
       <table className="w-full border-collapse text-sm" {...props}>
         {children}
       </table>
@@ -221,7 +221,7 @@ const components: Record<string, React.FC<any>> = {
   ),
   th: ({ node: _node, children, ...props }) => (
     <th
-      className="border-r border-b border-white/8 px-3 py-1.5 text-left text-xs font-medium text-muted-foreground last:border-r-0"
+      className="border-r border-b border-border px-3 py-1.5 text-left text-xs font-medium text-muted-foreground last:border-r-0"
       {...props}
     >
       {children}
@@ -229,7 +229,7 @@ const components: Record<string, React.FC<any>> = {
   ),
   td: ({ node: _node, children, ...props }) => (
     <td
-      className="border-r border-b border-white/8 px-3 py-1.5 text-xs last:border-r-0 [tr:last-child_&]:border-b-0"
+      className="border-r border-b border-border px-3 py-1.5 text-xs last:border-r-0 [tr:last-child_&]:border-b-0"
       {...props}
     >
       {children}
@@ -242,7 +242,7 @@ const components: Record<string, React.FC<any>> = {
           type="checkbox"
           checked={checked}
           readOnly
-          className="mr-1.5 rounded border-white/8"
+          className="mr-1.5 rounded border-border"
           {...props}
         />
       );
@@ -271,7 +271,7 @@ const components: Record<string, React.FC<any>> = {
   ),
   summary: ({ node: _node, children, ...props }) => (
     <summary
-      className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-lg border border-white/8 bg-white/4 px-3 py-1.5 text-[13px] font-medium select-none hover:bg-white/6 [&::-webkit-details-marker]:hidden"
+      className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-lg border border-border bg-white/4 px-3 py-1.5 text-[13px] font-medium select-none hover:bg-white/6 [&::-webkit-details-marker]:hidden"
       {...props}
     >
       <svg

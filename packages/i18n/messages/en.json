@@ -12,6 +12,8 @@
   "home_page__cta_description": "Read our documentation to get started with tsu-stack or check out our GitHub repository.",
   "home_page__cta_github": "GitHub",
   "home_page__cta_documentation": "View Documentation",
+  "home_page__portfolio_heading": "Experience & Projects",
+  "home_page__portfolio_description": "A timeline of my professional journey and what I've been working on.",
   "playground_page__refetch": "Refetch",
   "playground_page__image_optimization": "Image Optimization",
   "playground_page__test_rpc": "Test RPC",
