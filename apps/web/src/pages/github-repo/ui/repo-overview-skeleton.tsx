@@ -10,11 +10,11 @@ export function RepoOverviewSkeleton() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-4">
           <Skeleton className="h-10 w-56 rounded-xl" />
-          <div className="overflow-hidden rounded-2xl border border-white/8">
+          <div className="overflow-hidden rounded-2xl border border-border">
             {skeletonRows.map((row) => (
               <div
                 key={row}
-                className="flex items-center gap-4 border-b border-white/8 px-4 py-3 last:border-b-0"
+                className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0"
               >
                 <Skeleton className="size-4 rounded" />
                 <Skeleton className="h-4 w-36 rounded" />

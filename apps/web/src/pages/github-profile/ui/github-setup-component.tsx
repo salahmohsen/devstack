@@ -21,9 +21,7 @@ export function GithubProfileUnavailableState() {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button asChild>
-            <Link to="/dashboard/github-config">Open GitHub config</Link>
-          </Button>
+          <Button render={<Link to="/dashboard/github-config" />}>Open GitHub config</Button>
         </EmptyContent>
       </Empty>
     </Container>

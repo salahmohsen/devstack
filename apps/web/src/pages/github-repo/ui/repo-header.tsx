@@ -33,14 +33,14 @@ export function RepoHeader({ repo }: RepoHeaderProps) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-lg">
               <a
-                className="truncate font-medium text-base-300 hover:underline"
+                className="truncate font-medium text-accent-foreground hover:underline"
                 href={`/${repo.owner}`}
               >
                 {repo.owner}
               </a>
               <span className="text-base-600">/</span>
-              <span className="truncate font-semibold text-white">{repo.name}</span>
-              <Badge variant="outline" className="border-white/10 text-[10px] text-base-300">
+              <span className="truncate font-semibold">{repo.name}</span>
+              <Badge variant="outline" className="text-[10px] text-accent-foreground">
                 {repo.isPrivate ? "Private" : "Public"}
               </Badge>
             </div>
@@ -55,7 +55,7 @@ export function RepoHeader({ repo }: RepoHeaderProps) {
             <ArrowRightIcon className="size-3.5" />
             forked from
             <a
-              className="font-medium text-base-200 hover:underline"
+              className="font-medium text-accent-foreground hover:underline"
               href={`/${repo.forkParentFullName}`}
             >
               {repo.forkParentFullName}

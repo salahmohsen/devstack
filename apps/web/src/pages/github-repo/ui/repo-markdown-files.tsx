@@ -72,8 +72,8 @@ export function RepoMarkdownFiles({
             className={cn(
               "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               file === selectedFile
-                ? "bg-white/10 text-white"
-                : "text-muted-foreground hover:bg-white/4 hover:text-base-200"
+                ? "bg-white/10"
+                : "text-muted-foreground hover:bg-white/4 hover:text-accent-foreground"
             )}
           >
             {TAB_LABELS[file] ?? file}
@@ -82,7 +82,7 @@ export function RepoMarkdownFiles({
       </div>
 
       {selectedFile && (
-        <div className="overflow-hidden rounded-2xl border border-white/8">
+        <div className="overflow-hidden rounded-2xl border border-border">
           <MarkdownFileContent repo={repo} path={selectedFile} currentRef={currentRef} />
         </div>
       )}

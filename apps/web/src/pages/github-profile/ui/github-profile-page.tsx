@@ -132,7 +132,7 @@ export function GithubProfilePage() {
   const repositoriesHref = buildRepositoriesHref(1);
 
   return (
-    <div className="overflow-hidden pb-16">
+    <div className="w-full overflow-hidden pb-16">
       <div className="relative h-48 w-screen overflow-hidden sm:h-56">
         {contributionsQuery.data && hasMounted ? (
           <>
@@ -164,14 +164,14 @@ export function GithubProfilePage() {
 
           {admin.user && !admin.isPending && (
             <Button
-              asChild
               variant="ghost"
               size="icon-sm"
               className="mb-1 size-8 rounded-full hover:bg-white/5"
+              render={
+                <Link href="https://github.com/settings/profile" target="_blank" rel="noreferrer" />
+              }
             >
-              <Link href="https://github.com/settings/profile" target="_blank" rel="noreferrer">
-                <EditIcon className="size-3.5" />
-              </Link>
+              <EditIcon className="size-3.5" />
             </Button>
           )}
         </div>
@@ -253,16 +253,14 @@ export function GithubProfilePage() {
                   ))}
                   {repoListHasNextPage(safePage, repos.length) ? (
                     <Button
-                      asChild
                       type="button"
                       variant="secondary"
                       size="sm"
                       className="mx-auto mt-6"
+                      render={<a href={buildRepositoriesHref(safePage + 1)} />}
                     >
-                      <a href={buildRepositoriesHref(safePage + 1)}>
-                        <ChevronDownIcon className="size-4" />
-                        Load more
-                      </a>
+                      <ChevronDownIcon className="size-4" />
+                      Load more
                     </Button>
                   ) : null}
                 </div>
@@ -277,11 +275,11 @@ export function GithubProfilePage() {
 
 function GithubProfileSkeleton() {
   return (
-    <div className="overflow-hidden pb-16">
-      <div className="h-48 bg-[linear-gradient(180deg,#161b22_0%,#0d1117_100%)] sm:h-56" />
+    <div className="w-full overflow-hidden pb-16">
+      <div className="h-48 sm:h-56" />
       <div className="relative mx-auto max-w-3xl px-6">
         <div className="-mt-16 flex items-end justify-between sm:-mt-20">
-          <Skeleton className="size-28 rounded-full border-4 border-[#0d1117] sm:size-32" />
+          <Skeleton className="size-28 rounded-full border-4 border-background sm:size-32" />
           <Skeleton className="mb-1 size-8 rounded-full" />
         </div>
         <ProfileSkeleton />

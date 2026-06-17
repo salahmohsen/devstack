@@ -243,11 +243,11 @@ const skeletonRows = ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7"];
 
 function FileTreeSkeleton() {
   return (
-    <div className="overflow-hidden rounded-b-2xl border border-white/8">
+    <div className="overflow-hidden rounded-b-2xl border border-border">
       {skeletonRows.map((key) => (
         <div
           key={key}
-          className="flex items-center gap-4 border-b border-white/8 px-4 py-2.5 last:border-b-0"
+          className="flex items-center gap-4 border-b border-border px-4 py-2.5 last:border-b-0"
         >
           <div className="size-4 shrink-0 animate-pulse rounded bg-white/4" />
           <div className="h-4 w-32 animate-pulse rounded-md bg-white/4" />

@@ -81,8 +81,8 @@ export function PlaygroundPage() {
           >
             {m.playground_page__test_toast()}
           </Button>
-          <Button variant="outline" asChild>
-            <Link to={"/not-found" as To}>{m.playground_page__visit_not_found_page()}</Link>
+          <Button variant="outline" render={<Link to={"/not-found" as To} />}>
+            {m.playground_page__visit_not_found_page()}
           </Button>
         </div>
       </section>
