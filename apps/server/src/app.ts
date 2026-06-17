@@ -17,6 +17,7 @@ import {
 } from "@tsu-stack/api/lib/context/hono/create-context";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
+import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { handleGitHubWebhook } from "@tsu-stack/github";
 import { log, parseError } from "@tsu-stack/logger/server";
@@ -44,8 +45,8 @@ type AppEnv = HonoLogVariables & {
 
 export const app = new Hono<AppEnv>().basePath(serverBaseUrl.pathname);
 
-app.use("*", cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.use("*", async (c, next) => cors(corsOptions)(c, next));
+app.options("*", async (c, next) => cors(corsOptions)(c, next));
 
 app.use(
   "/*",
@@ -219,36 +220,44 @@ export const rpcHandler = new RPCHandler(appRouter, {
 });
 
 app.use("/*", async (c, next) => {
-  const context = await createContext({ context: c, logger: c.get("log") });
+  // Per-request Neon WebSocket Pool. Required by Cloudflare Workers: the
+  // serverless driver's WebSocket connection cannot outlive a single request,
+  // and a module-level Pool gets reused across requests → "Connection terminated"
+  // (see Neon's "Pool and Client" docs).
+  const db = createDb();
 
-  const rpcResult = await rpcHandler.handle(c.req.raw, {
-    context,
-    prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "rpc") as `/${string}`
-  });
+  return runWithDb(db, async () => {
+    const context = await createContext({ context: c, logger: c.get("log") });
 
-  if (rpcResult.matched) {
-    return c.newResponse(rpcResult.response.body, rpcResult.response);
-  }
-
-  if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
-    const docsResult = await openApiHandler.handle(c.req.raw, {
+    const rpcResult = await rpcHandler.handle(c.req.raw, {
       context,
-      prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "docs") as `/${string}`
+      prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "rpc") as `/${string}`
     });
 
-    if (docsResult.matched) {
-      return c.newResponse(docsResult.response.body, docsResult.response);
+    if (rpcResult.matched) {
+      return c.newResponse(rpcResult.response.body, rpcResult.response);
     }
-  }
 
-  const openApiResult = await openApiHandler.handle(c.req.raw, {
-    context,
-    prefix: new URL(ENV_SERVER.VITE_SERVER_URL).pathname as `/${string}`
+    if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
+      const docsResult = await openApiHandler.handle(c.req.raw, {
+        context,
+        prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "docs") as `/${string}`
+      });
+
+      if (docsResult.matched) {
+        return c.newResponse(docsResult.response.body, docsResult.response);
+      }
+    }
+
+    const openApiResult = await openApiHandler.handle(c.req.raw, {
+      context,
+      prefix: new URL(ENV_SERVER.VITE_SERVER_URL).pathname as `/${string}`
+    });
+
+    if (openApiResult.matched) {
+      return c.newResponse(openApiResult.response.body, openApiResult.response);
+    }
+
+    await next();
   });
-
-  if (openApiResult.matched) {
-    return c.newResponse(openApiResult.response.body, openApiResult.response);
-  }
-
-  await next();
 });
