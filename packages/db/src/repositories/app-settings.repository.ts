@@ -1,6 +1,6 @@
 import { desc, isNotNull, or, sql } from "drizzle-orm";
 
-import { db } from "#@/index";
+import { getDb } from "#@/index";
 import { appSettings } from "#@/schema/app-settings.schema";
 
 export type UpdateAppSettingsData = {
@@ -11,7 +11,7 @@ export type UpdateAppSettingsData = {
 
 class AppSettingsRepository {
   async findPublicGithubSourceSettings() {
-    const [settings] = await db
+    const [settings] = await getDb()
       .select()
       .from(appSettings)
       .where(or(isNotNull(appSettings.githubToken), isNotNull(appSettings.githubUsername)))
@@ -22,7 +22,7 @@ class AppSettingsRepository {
   }
 
   async findByUserId(userId: string) {
-    return db.query.appSettings.findFirst({
+    return getDb().query.appSettings.findFirst({
       where: { userId }
     });
   }
@@ -38,7 +38,7 @@ class AppSettingsRepository {
         : (existingSettings?.githubToken ?? null);
 
     if (existingSettings) {
-      const [updatedSettings] = await db
+      const [updatedSettings] = await getDb()
         .update(appSettings)
         .set({
           githubToken,
@@ -50,7 +50,7 @@ class AppSettingsRepository {
       return updatedSettings;
     }
 
-    const [createdSettings] = await db
+    const [createdSettings] = await getDb()
       .insert(appSettings)
       .values({
         githubToken,
