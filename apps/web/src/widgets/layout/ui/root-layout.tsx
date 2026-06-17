@@ -1,7 +1,6 @@
 import { motion } from "motion/react";
 import { type PropsWithChildren } from "react";
 
-import { SidebarProvider } from "@tsu-stack/ui/components/sidebar";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -34,38 +33,37 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
       )}
     >
       <Topbar />
-      <SidebarProvider>
-        <SidePanelProvider
-          value={{
-            node: sidePanel.node,
-            collapsed: sidePanel.collapsed,
-            hasContent: sidePanel.hasContent,
-            toggle: sidePanel.toggle
-          }}
-        >
-          <motion.div
-            initial={false}
-            animate={{
-              gridTemplateColumns: showPanel
-                ? `minmax(0, 1fr) ${SIDE_PANEL_WIDTH}px`
-                : "minmax(0, 1fr) 0px"
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 35 }}
-            className="grid flex-1 overflow-hidden p-2 pt-0"
-          >
-            <div className="relative overflow-hidden rounded-xl border bg-background shadow-xs">
-              <main className="flex h-full">{children}</main>
-              <SidePanelToggle />
-            </div>
 
-            <SidePanelSlot
-              slotRef={sidePanel.setNode}
-              collapsed={sidePanel.collapsed}
-              onHasContent={sidePanel.setHasContent}
-            />
-          </motion.div>
-        </SidePanelProvider>
-      </SidebarProvider>
+      <SidePanelProvider
+        value={{
+          node: sidePanel.node,
+          collapsed: sidePanel.collapsed,
+          hasContent: sidePanel.hasContent,
+          toggle: sidePanel.toggle
+        }}
+      >
+        <motion.div
+          initial={false}
+          animate={{
+            gridTemplateColumns: showPanel
+              ? `minmax(0, 1fr) ${SIDE_PANEL_WIDTH}px`
+              : "minmax(0, 1fr) 0px"
+          }}
+          transition={{ type: "spring", stiffness: 400, damping: 35 }}
+          className="grid flex-1 overflow-hidden p-2 pt-0"
+        >
+          <div className="relative overflow-hidden rounded-xl border bg-background shadow-xs">
+            <main className="flex h-full">{children}</main>
+            <SidePanelToggle />
+          </div>
+
+          <SidePanelSlot
+            slotRef={sidePanel.setNode}
+            collapsed={sidePanel.collapsed}
+            onHasContent={sidePanel.setHasContent}
+          />
+        </motion.div>
+      </SidePanelProvider>
 
       <DashboardBottomBar />
       <GithubPublicMobileNav />

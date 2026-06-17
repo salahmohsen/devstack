@@ -70,10 +70,11 @@ export function GitHubAccessDialog() {
           <Button type="button" variant="ghost" size="sm" onClick={() => handleOpenChange(false)}>
             Close
           </Button>
-          <Button size="sm" asChild>
-            <Link to="/dashboard/github-config" onClick={() => handleOpenChange(false)}>
-              Configure access
-            </Link>
+          <Button
+            size="sm"
+            render={<Link to="/dashboard/github-config" onClick={() => handleOpenChange(false)} />}
+          >
+            Configure access
           </Button>
         </DialogFooter>
       </DialogContent>

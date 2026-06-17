@@ -6,6 +6,7 @@ import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { useLocation } from "@tsu-stack/i18n/tanstack-start/hooks/use-location";
 import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
 import {
   ArchiveIcon,
@@ -54,6 +55,10 @@ export function Topbar() {
   const router = useRouter();
   const rawNavigate = useNavigate();
   const navigateRef = useRef(rawNavigate);
+  const pathname = useLocation({
+    select: (location) => location.pathname
+  });
+
   useEffect(() => {
     navigateRef.current = rawNavigate;
   }, [rawNavigate]);
@@ -198,7 +203,7 @@ export function Topbar() {
 
   return (
     <nav className="flex h-(--navbar-height) min-w-0 items-center gap-3 overflow-hidden px-3 py-2">
-      {admin && (
+      {admin && !pathname.includes("dashboard") && (
         <div className="hidden md:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -272,26 +277,29 @@ export function Topbar() {
         </div>
       )}
 
+      {pathname.includes("dashboard") && <span className="w-8" />}
+
       <div className="hidden shrink-0 items-center gap-0.5 md:flex">
         {navItems.map((item) => (
           <Button
             key={item.label}
             variant="ghost"
             size="sm"
-            asChild
+            nativeButton={false}
             className="text-muted-foreground [&.active]:bg-surface-1 [&.active]:text-foreground"
-          >
-            <Link
-              to={item.to as never}
-              params={item.params}
-              preload={false}
-              activeOptions={{ exact: true }}
-              activeProps={{ className: "active" }}
-            >
-              <item.icon size={15} strokeWidth={2} />
-              <span>{item.label}</span>
-            </Link>
-          </Button>
+            render={
+              <Link
+                to={item.to as never}
+                params={item.params}
+                preload={false}
+                activeOptions={{ exact: true }}
+                activeProps={{ className: "active" }}
+              >
+                <item.icon size={15} strokeWidth={2} />
+                <span>{item.label}</span>
+              </Link>
+            }
+          />
         ))}
       </div>
 
