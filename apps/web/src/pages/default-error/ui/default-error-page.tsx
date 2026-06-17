@@ -58,12 +58,14 @@ export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => 
         </EmptyHeader>
         <EmptyContent>
           <div className="flex gap-2">
-            <Button light="skeuomorphic" asChild>
-              <Link to="/">
-                <HouseIcon data-icon="inline-start" />
-                {m.error_500__go_home()}
-              </Link>
-            </Button>
+            <Button
+              render={
+                <Link to="/">
+                  <HouseIcon data-icon="inline-start" />
+                  {m.error_500__go_home()}
+                </Link>
+              }
+            />
 
             <Button onClick={handleRefresh} variant="outline">
               <RefreshCwIcon data-icon="inline-start" />
