@@ -11,7 +11,6 @@ import {
 } from "@tsu-stack/core/health";
 import { checkIsDbReady } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
-import { log } from "@tsu-stack/logger/server";
 
 import { publicProcedure } from "#@/lib/procedures/factory";
 
@@ -89,15 +88,7 @@ export const healthRouter = {
     })
     .errors({})
     .output(HealthLiveOutputSchema)
-    .handler(() => {
-      log.info({
-        event: "rpc_health_live_completed",
-        procedure: "health.live",
-        url: ENV_SERVER.VITE_SERVER_URL
-      });
-
-      return { status: "healthy", ...buildBaseHealth() };
-    }),
+    .handler(() => ({ status: "healthy", ...buildBaseHealth() })),
   ready: publicProcedure
     .route({
       description:
