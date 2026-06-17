@@ -17,7 +17,9 @@ export type {
   GitHubRepoActivityCardIssue,
   GitHubRepoActivityCardAction,
   GitHubRepoActivityCards,
-  GitHubLocalFirstMeta
+  GitHubLocalFirstMeta,
+  RepoContributor,
+  RepoContributorsResult
 } from "#@/schemas";
 
 export type GitHubLocalFirstResult<TData> = {
