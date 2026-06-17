@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { Container } from "@/shared/ui/container";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 
 export function DashboardPage() {
   const { user } = useAuthSuspense();
@@ -13,7 +13,7 @@ export function DashboardPage() {
   if (appSettingsQuery.isLoading && !appSettingsQuery.data) {
     return (
       <Container className="py-16">
-        <Spinner className="mx-auto" />
+        <DefaultLoader className="mx-auto" />
       </Container>
     );
   }
