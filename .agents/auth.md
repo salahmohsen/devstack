@@ -17,16 +17,22 @@ Auth user query is defined in `@tsu-stack/auth`:
 
 ## Route Guards
 
-### Protected routes (`(auth)/` layout group)
+Route groups live in the file system as pathless layouts. `__protected/` and `(guest)/` are not part of the URL — TanStack Router strips them from the matched path.
 
+### Protected routes (`__protected/` layout group)
+
+- `__protected/route.tsx` is the auth guard, sitting directly under `{-$locale}/` (NOT inside `(github-layout)/`), so the dashboard does not inherit the public navbar/footer
 - `beforeLoad` calls `ensureQueryData(getAuthUserQueryOptions())` with `revalidateIfStale: true`
 - No user → redirects to `/sign-in?redirect=<current-path>`
+- The `?redirect` param is validated against the route tree and any route whose id contains `__protected` is excluded (so guests never bounce back into a protected route)
 - Client-side `useEffect` re-checks auth for session expiry
+- Dashboard has its own sidebar layout via `__protected/dashboard/route.tsx`
 
-### Guest-only routes (`(guest)/` layout group)
+### Guest-only routes (`(guest)/` pathless layout under `(github-layout)/`)
 
-- Authenticated users → redirected to stored redirect path
-- `?redirect` param validated against route tree (sanitized)
+- `sign-in/` and `sign-in/create-an-account/` are wrapped by `(guest)/` to mark them as guest-only
+- Authenticated users → redirected to a non-guest route (the `?redirect` param is validated against the route tree and any route whose id contains `(guest)` is excluded)
+- The `?redirect` param is also sanitized to exclude `__protected/` routes (see `sign-in/index.tsx` and `create-an-account/index.tsx`)
 
 ## Middleware
 
@@ -49,10 +55,17 @@ When extending the Better Auth `user` or `session` schema, update all three laye
 
 For DB-backed auth fields, also generate and apply a Drizzle migration after the schema change.
 
+### `auth.schema.ts` is auto-generated
+
+`packages/db/src/schema/auth.schema.ts` is produced by the Better Auth CLI via `vp run --filter @tsu-stack/db auth:generate` (see `packages/db/package.json`). Do not hand-edit it: any custom column you add will be wiped on the next regeneration. To extend the auth tables, change the auth config in `packages/auth/src/index.ts` and re-run the generator. The same file also exports the `relations` for the auth tables (user/session/account/verification/passkey) using the full `defineRelations(...)` API.
+
+### Composing auth relations with app relations
+
+The auto-generated auth relations and the hand-written app relations in `packages/db/src/schema/relations.ts` (which uses `defineRelationsPart(...)` over the full schema) are merged in `packages/db/src/index.ts` by spreading both into a single `relations` config and passing that to `drizzle()`. This is the canonical Drizzle v2 pattern for composing relations across files when one of the relation sources is auto-generated: keep the auto-generated relations in the generated file, keep hand-written app relations in `relations.ts`, and compose the two in the db entrypoint. Do not try to rewrite the auto-generated file or hand-port its relations into `relations.ts` — the next CLI run will desync them.
+
 ## Gotchas
 
 - Cross-domain auth setups still require deliberate cookie/domain/CORS configuration even with Better Auth defaults
 - `SameSite=Strict` is usually too brittle for OAuth, email links, and other redirect-based auth flows
 - The auth query uses `refetchOnWindowFocus: "always"` for cross-tab session sync
 - Better Auth custom fields are not complete if you only add the DB column; the auth config and client inference must be updated too
-- In this repo, keep auth Drizzle relations with the auth schema in `packages/db/src/schema/auth.schema.ts` and pass the resulting relation config directly to the Neon Drizzle connection. Avoid ad hoc merged relation objects that can leave relation targets undefined at runtime.

@@ -44,10 +44,10 @@ segment-name/
 ### Route Hierarchy
 
 - `{-$locale}/` — i18n locale prefix (optional param, base locale omits it)
-- `(root-layout)/` — Navbar + Footer wrapper
-- `(centered-layout)/` — Centered content wrapper
-- `(auth)/` — Protected routes (auto-redirects to sign-in)
-- `(guest)/` — Guest-only routes (auto-redirects authenticated users)
+- `(github-layout)/` — Navbar + Footer wrapper for public marketing pages and the guest auth surface (`(guest)/sign-in`, `(guest)/create-an-account`)
+- `(guest)/` — Pathless layout nested under `(github-layout)/`; marks `sign-in` and `sign-in/create-an-account` as guest-only so `validateNavigateTo` can filter them out
+- `__protected/` — Auth guard + Suspense boundary (sits directly under `{-$locale}`, NOT inside `(github-layout)/`, so dashboard does not inherit navbar/footer)
+- Dashboard has its own sidebar layout via `__protected/dashboard/route.tsx`
 
 ### Adding a Route
 
