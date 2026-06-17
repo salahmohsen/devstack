@@ -1,6 +1,6 @@
-import { SearchIcon } from "lucide-react";
 import * as React from "react";
 
+import { SearchIcon } from "@tsu-stack/icons";
 import { Dialog, DialogContent } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 

@@ -1,7 +1,6 @@
-import { Check, Languages } from "lucide-react";
-
 import { m } from "@tsu-stack/i18n/messages";
 import { getLocale, locales, setLocale } from "@tsu-stack/i18n/runtime";
+import { CheckIcon, LanguageIcon } from "@tsu-stack/icons";
 import { type ButtonProps } from "@tsu-stack/ui/components/button";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -29,7 +28,7 @@ export function LocaleSwitcher({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button aria-label="Switch language" className={className} size={size} variant={variant}>
-          <Languages aria-hidden="true" size={18} />
+          <LanguageIcon aria-hidden="true" size={18} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -42,7 +41,7 @@ export function LocaleSwitcher({
               onClick={() => setLocale(locale)}
             >
               <span className="flex-1">{m.language_name(undefined, { locale })}</span>
-              {isActive && <Check aria-hidden="true" className="opacity-60" />}
+              {isActive && <CheckIcon aria-hidden="true" className="opacity-60" />}
             </DropdownMenuItem>
           );
         })}

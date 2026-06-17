@@ -1,9 +1,9 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
 
+import { PanelLeftIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Separator } from "@tsu-stack/ui/components/separator";
