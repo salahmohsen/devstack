@@ -1,4 +1,5 @@
-import { useForm } from "@tanstack/react-form";
+"use client";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -10,19 +11,12 @@ import { m } from "@tsu-stack/i18n/messages";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
 import { type NavigateTo } from "@tsu-stack/i18n/tanstack-start/types";
-import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator
-} from "@tsu-stack/ui/components/field";
-import { Input } from "@tsu-stack/ui/components/input";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
+import { FieldDescription, FieldGroup, FieldSeparator } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { useAppForm } from "@/shared/form";
 import { Container } from "@/shared/ui/container";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 import { LogoIcon } from "@/shared/ui/logo";
 
 import { appConfig } from "@/config/app.config";
@@ -54,7 +48,6 @@ export function CreateAnAccountForm({
       toast.error(error.message || m.auth__sign_up_failed());
     },
     onSuccess: async () => {
-      // Invalidate auth cache to force refetch with new user data
       await queryClient.invalidateQueries(getAuthUserQueryOptions());
       await navigate({
         to: redirectTo
@@ -63,7 +56,7 @@ export function CreateAnAccountForm({
     }
   });
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       confirmPassword: "",
       email: "",
@@ -90,7 +83,7 @@ export function CreateAnAccountForm({
   });
 
   if (isPending) {
-    return <Spinner />;
+    return <DefaultLoader />;
   }
 
   return (
@@ -117,107 +110,47 @@ export function CreateAnAccountForm({
             </FieldDescription>
           </div>
 
-          <form.Field name="name">
+          <form.AppField name="name">
             {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>{m.auth__name_label()}</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  value={field.state.value}
-                  placeholder={m.auth__name_placeholder()}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p className="text-destructive text-sm" key={error?.message}>
-                    {error?.message}
-                  </p>
-                ))}
-              </Field>
+              <field.InputField
+                label={m.auth__name_label()}
+                placeholder={m.auth__name_placeholder()}
+              />
             )}
-          </form.Field>
+          </form.AppField>
 
-          <form.Field name="email">
+          <form.AppField name="email">
             {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>{m.auth__email_label()}</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  type="email"
-                  value={field.state.value}
-                  placeholder={m.auth__email_placeholder()}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p className="text-destructive text-sm" key={error?.message}>
-                    {error?.message}
-                  </p>
-                ))}
-              </Field>
+              <field.InputField
+                label={m.auth__email_label()}
+                placeholder={m.auth__email_placeholder()}
+                type="email"
+              />
             )}
-          </form.Field>
+          </form.AppField>
 
-          <form.Field name="password">
+          <form.AppField name="password">
+            {(field) => <field.InputField label={m.auth__password_label()} type="password" />}
+          </form.AppField>
+
+          <form.AppField name="confirmPassword">
             {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>{m.auth__password_label()}</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  type="password"
-                  value={field.state.value}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p className="text-destructive text-sm" key={error?.message}>
-                    {error?.message}
-                  </p>
-                ))}
-              </Field>
+              <field.InputField label={m.auth__confirm_password_label()} type="password" />
             )}
-          </form.Field>
+          </form.AppField>
 
-          <form.Field name="confirmPassword">
-            {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>{m.auth__confirm_password_label()}</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  type="password"
-                  value={field.state.value}
-                />
-                {field.state.meta.errors.map((error) => (
-                  <p className="text-destructive text-sm" key={error?.message}>
-                    {error?.message}
-                  </p>
-                ))}
-              </Field>
-            )}
-          </form.Field>
-
-          <Field>
-            <Button
-              light="skeuomorphic"
-              type="submit"
-              disabled={signUpMutation.isPending || signUpMutation.isSuccess}
-            >
+          <form.AppForm>
+            <form.SubmitButton isLoading={signUpMutation.isPending}>
               {signUpMutation.isPending ? m.auth__creating_account() : m.auth__create_account()}
-            </Button>
-          </Field>
+            </form.SubmitButton>
+          </form.AppForm>
 
           <FieldSeparator>{m.auth__or()}</FieldSeparator>
 
-          <Field className="grid gap-4 sm:grid-cols-2">
-            <Button
+          <div className="grid gap-4 sm:grid-cols-2">
+            <button
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xs border border-input bg-background px-4 py-2 text-sm shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
               onClick={() => toast.error(m.auth__not_yet_implemented())}
-              variant="outline"
               type="button"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -227,10 +160,10 @@ export function CreateAnAccountForm({
                 />
               </svg>
               {m.auth__continue_with_apple()}
-            </Button>
-            <Button
+            </button>
+            <button
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xs border border-input bg-background px-4 py-2 text-sm shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
               onClick={() => toast.error(m.auth__not_yet_implemented())}
-              variant="outline"
               type="button"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -240,8 +173,8 @@ export function CreateAnAccountForm({
                 />
               </svg>
               {m.auth__continue_with_google()}
-            </Button>
-          </Field>
+            </button>
+          </div>
         </FieldGroup>
       </form>
       <FieldDescription className="px-6 text-center">
