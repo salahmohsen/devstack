@@ -19,7 +19,7 @@ import {
   BreadcrumbSeparator
 } from "@tsu-stack/ui/components/breadcrumb";
 import { Separator } from "@tsu-stack/ui/components/separator";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@tsu-stack/ui/components/sidebar";
+import { SidebarInset, SidebarTrigger } from "@tsu-stack/ui/components/sidebar";
 
 import { useLogger } from "@/shared/providers/logger-provider";
 import { AppSidebar } from "@/shared/ui/app-sidebar";
@@ -96,7 +96,7 @@ function RequiresAuthLayout() {
   }, [user, navigate, location.href, location.pathname, logger]);
 
   return (
-    <SidebarProvider>
+    <>
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/80">
@@ -120,6 +120,6 @@ function RequiresAuthLayout() {
           <Outlet />
         </div>
       </SidebarInset>
-    </SidebarProvider>
+    </>
   );
 }

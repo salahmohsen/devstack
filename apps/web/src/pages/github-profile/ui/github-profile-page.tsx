@@ -21,7 +21,6 @@ import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { githubProfileTabs, resolveGithubProfileTab } from "@/shared/lib/profile-tabs";
@@ -32,6 +31,7 @@ import {
   sliceReposForPage
 } from "@/shared/lib/repo-list-utils";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 import { RepositoryRow } from "@/shared/ui/repository-row";
 
 import { useGetGithubSetupStatusQuery } from "@/features/github";
@@ -133,26 +133,27 @@ export function GithubProfilePage() {
 
   return (
     <div className="overflow-hidden pb-16">
-      <div className="relative h-48 overflow-hidden sm:h-56">
+      <div className="relative h-48 w-screen overflow-hidden sm:h-56">
         {contributionsQuery.data && hasMounted ? (
           <>
             <ContributionGraph
               calendar={contributionsQuery.data}
-              className="absolute inset-0 opacity-60"
+              className="absolute inset-x-0 top-0 h-full opacity-60"
+              svgProps={{ preserveAspectRatio: "xMidYMid slice" }}
             />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-(--background) to-transparent" />
-            <div className="pointer-events-none absolute top-0 left-0 h-full w-40 bg-linear-to-r from-(--background) to-transparent" />
-            <div className="pointer-events-none absolute top-0 right-0 h-full w-40 bg-linear-to-l from-(--background) to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-background to-transparent" />
+            <div className="pointer-events-none absolute top-0 left-0 h-full w-40 bg-linear-to-r from-background to-transparent" />
+            <div className="pointer-events-none absolute top-0 right-0 h-full w-40 bg-linear-to-l from-background to-transparent" />
           </>
         ) : (
           <>
             <div className="h-full bg-[radial-gradient(circle_at_top,var(--background),transparent_35%),linear-gradient(180deg,var(--color-background)_0%,var(--color-background)_50%)]" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-(--background) to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-background to-transparent" />
           </>
         )}
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-6">
+      <div className="relative mx-auto max-w-3xl space-y-5 px-6">
         <div className="-mt-16 flex items-end justify-between sm:-mt-20">
           <Avatar className="size-28 border sm:size-32">
             <AvatarImage alt={profile.login} src={profile.avatarUrl} />
@@ -174,36 +175,36 @@ export function GithubProfilePage() {
             </Button>
           )}
         </div>
-      </div>
-      <div className="mx-auto mt-3 flex max-w-3xl flex-col gap-3 pb-8">
-        <div className="flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h1 className="text-2xl font-semibold tracking-tight capitalize">
-              {profile.name ?? profile.login}
-            </h1>
-          </div>
+        <div className="mx-auto flex max-w-3xl flex-col gap-3">
+          <div className="flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <h1 className="text-2xl font-semibold tracking-tight capitalize">
+                {profile.name ?? profile.login}
+              </h1>
+            </div>
 
-          <div className="flex h-7 w-full items-center justify-start gap-0 rounded-md bg-muted p-0.5 text-muted-foreground sm:w-auto sm:shrink-0">
-            <Link
-              to={"/"}
-              className={
-                activeTab === githubProfileTabs.overview
-                  ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
-                  : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
-              }
-            >
-              Overview
-            </Link>
-            <Link
-              href={repositoriesHref}
-              className={
-                activeTab === githubProfileTabs.repositories
-                  ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
-                  : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
-              }
-            >
-              Repositories
-            </Link>
+            <div className="flex h-7 w-full max-w-fit items-center justify-start gap-0 rounded-md bg-muted p-0.5 text-muted-foreground sm:w-auto sm:shrink-0">
+              <Link
+                to={"/"}
+                className={
+                  activeTab === githubProfileTabs.overview
+                    ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
+                    : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
+                }
+              >
+                Overview
+              </Link>
+              <Link
+                href={repositoriesHref}
+                className={
+                  activeTab === githubProfileTabs.repositories
+                    ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
+                    : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
+                }
+              >
+                Repositories
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -212,63 +213,64 @@ export function GithubProfilePage() {
         ) : null}
 
         <ProfileMetadata profile={profile} />
-      </div>
-      {activeTab === githubProfileTabs.overview ? (
-        <div className="mx-auto max-w-3xl">
-          {(pinnedReposQuery.data ?? []).length > 0 ? (
-            <section className="flex flex-col gap-2 pt-6">
-              <h2 className="text-sm font-medium text-base-500">Pinned</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {(pinnedReposQuery.data ?? []).map((repo) => (
-                  <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-        </div>
-      ) : (
-        <section className="-mx-[max(0,calc((100vw-100%)/2))] mx-auto flex max-w-4xl flex-col pt-20">
-          <div className="w-full px-3 md:px-6">
-            {reposQuery.isLoading ? (
-              <div className="flex justify-center py-12">
-                <Spinner className="size-6 text-muted-foreground" />
-              </div>
-            ) : repos.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                No repositories to show.
-              </p>
-            ) : (
-              <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface-1">
-                {pagedRepos.map((repo) => (
-                  <div
-                    key={repo.id}
-                    style={{
-                      contentVisibility: "auto",
-                      containIntrinsicSize: "auto 72px"
-                    }}
-                  >
-                    <RepositoryRow repo={repo} />
-                  </div>
-                ))}
-                {repoListHasNextPage(safePage, repos.length) ? (
-                  <Button
-                    asChild
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="mx-auto mt-6"
-                  >
-                    <a href={buildRepositoriesHref(safePage + 1)}>
-                      <ChevronDownIcon className="size-4" />
-                      Load more
-                    </a>
-                  </Button>
-                ) : null}
-              </div>
-            )}
+
+        {activeTab === githubProfileTabs.overview ? (
+          <div className="mx-auto max-w-3xl">
+            {(pinnedReposQuery.data ?? []).length > 0 ? (
+              <section className="flex flex-col gap-2 pt-6">
+                <h2 className="text-sm font-medium text-base-500">Pinned</h2>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {(pinnedReposQuery.data ?? []).map((repo) => (
+                    <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
-        </section>
-      )}
+        ) : (
+          <section className="flex max-w-4xl flex-col pt-20 lg:-mx-20">
+            <div className="w-full px-3 md:px-6">
+              {reposQuery.isLoading ? (
+                <div className="flex justify-center py-12">
+                  <DefaultLoader />
+                </div>
+              ) : repos.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  No repositories to show.
+                </p>
+              ) : (
+                <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface-1">
+                  {pagedRepos.map((repo) => (
+                    <div
+                      key={repo.id}
+                      style={{
+                        contentVisibility: "auto",
+                        containIntrinsicSize: "auto 72px"
+                      }}
+                    >
+                      <RepositoryRow repo={repo} />
+                    </div>
+                  ))}
+                  {repoListHasNextPage(safePage, repos.length) ? (
+                    <Button
+                      asChild
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="mx-auto mt-6"
+                    >
+                      <a href={buildRepositoriesHref(safePage + 1)}>
+                        <ChevronDownIcon className="size-4" />
+                        Load more
+                      </a>
+                    </Button>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

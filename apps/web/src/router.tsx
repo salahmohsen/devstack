@@ -12,7 +12,7 @@ import {
   AppQueryClientProvider,
   createAppQueryClient
 } from "@/shared/providers/query-client.provider";
-import { HelloLoader } from "@/shared/ui/hello-loader";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import { DefaultNotFoundPage } from "@/pages/default-not-found";
 
@@ -54,7 +54,7 @@ export function getRouter() {
     }) satisfies ErrorRouteComponent,
     defaultNotFoundComponent: DefaultNotFoundPage,
     defaultPendingComponent: () => (
-      <HelloLoader className="fixed inset-0 -top-(--navbar-height) m-auto flex items-center justify-center" />
+      <DefaultLoader className="fixed inset-0 -top-(--navbar-height) m-auto flex items-center justify-center" />
     ),
     // Prefetch <Link> on hover and touch
     defaultPreload: "intent",

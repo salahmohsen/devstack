@@ -3,7 +3,7 @@ import { useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
-import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
+import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
@@ -64,7 +64,7 @@ export function Topbar() {
   }, [router]);
 
   const queryClient = useQueryClient();
-  const { user: admin } = useAuth();
+  const { user: admin } = useAuthSuspense();
   const setupStatus = queryClient.getQueryData(getGithubSetupStatusQueryOptions().queryKey);
   const isClient = useIsClient();
   const openTabs = useTabs();
@@ -197,7 +197,7 @@ export function Topbar() {
   ]);
 
   return (
-    <nav className="flex min-w-0 items-center gap-3 overflow-hidden px-3 py-2">
+    <nav className="flex h-(--navbar-height) min-w-0 items-center gap-3 overflow-hidden px-3 py-2">
       {admin && (
         <div className="hidden md:block">
           <DropdownMenu>
@@ -326,6 +326,12 @@ export function Topbar() {
               >
                 <BugIcon size={16} strokeWidth={2} />
                 Report an issue
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to={"/sign-in"} rel="noopener noreferrer">
+                <ExternalLinkIcon size={16} strokeWidth={2} />
+                login
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

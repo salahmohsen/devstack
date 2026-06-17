@@ -79,17 +79,17 @@ export function SignInForm({
 
   return (
     <div className={cn("w-full max-w-md space-y-5", className)} {...props}>
-      <Card className="border border-border/80 bg-background shadow-none">
+      <Card className="rounded-sm border border-border/80 bg-background shadow-none" size={"sm"}>
         <CardHeader className="items-center text-center">
           <Link className="mb-2 inline-flex" href="/">
             <span className="sr-only">{appConfig.site.shortName}</span>
           </Link>
-          <CardTitle className="text-2xl tracking-tight">Sign in</CardTitle>
+          <CardTitle className="text-xl tracking-tight">Sign in</CardTitle>
         </CardHeader>
         <CardContent>
-          <FieldGroup>
+          <FieldGroup className="gap-5">
             <Button
-              className="w-full justify-center gap-2"
+              className="w-full justify-center gap-2 rounded-xs"
               disabled={isPending}
               onClick={() => signInWithGithubMutation.mutate()}
               type="button"
@@ -99,7 +99,7 @@ export function SignInForm({
               Continue with GitHub
             </Button>
             <Button
-              className="w-full justify-center gap-2"
+              className="w-full justify-center gap-2 rounded-xs"
               disabled={isPending}
               onClick={() => signInWithPasskeyMutation.mutate()}
               type="button"

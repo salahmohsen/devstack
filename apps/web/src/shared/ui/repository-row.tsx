@@ -2,7 +2,7 @@ import { Fragment, memo, type ReactNode } from "react";
 
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { GitForkIcon, SquareLock02Icon, StarIcon, ViewIcon } from "@tsu-stack/icons";
+import { GitForkIcon, StarIcon } from "@tsu-stack/icons";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 import { LazyRepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline-lazy";
@@ -21,27 +21,27 @@ const languageColors: Record<string, string> = {
   TypeScript: "#3178c6"
 };
 
-const visibilityAria: Record<GitHubUserRepoSummary["visibility"], string> = {
-  public: "Public repository",
-  private: "Private repository",
-  internal: "Internal repository"
-};
+// const visibilityAria: Record<GitHubUserRepoSummary["visibility"], string> = {
+//   public: "Public repository",
+//   private: "Private repository",
+//   internal: "Internal repository"
+// };
 
-function VisibilityBadge({ visibility }: { visibility: GitHubUserRepoSummary["visibility"] }) {
-  const label = visibilityAria[visibility];
-  const Icon = visibility === "public" ? ViewIcon : SquareLock02Icon;
+// function VisibilityBadge({ visibility }: { visibility: GitHubUserRepoSummary["visibility"] }) {
+//   const label = visibilityAria[visibility];
+//   const Icon = visibility === "public" ? ViewIcon : SquareLock02Icon;
 
-  return (
-    <span
-      role="img"
-      className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted-foreground"
-      aria-label={label}
-      title={label}
-    >
-      <Icon size={14} strokeWidth={2} aria-hidden />
-    </span>
-  );
-}
+//   return (
+//     <span
+//       role="img"
+//       className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted-foreground"
+//       aria-label={label}
+//       title={label}
+//     >
+//       <Icon size={14} strokeWidth={2} aria-hidden />
+//     </span>
+//   );
+// }
 
 export const RepositoryRow = memo(function RepositoryRow({
   repo
@@ -103,11 +103,9 @@ export const RepositoryRow = memo(function RepositoryRow({
       <div className="flex min-w-0 flex-col gap-0.5">
         <div className="flex max-w-full min-w-0 items-center justify-between gap-x-2">
           <p className="flex min-w-0 items-baseline text-sm font-medium" title={repo.fullName}>
-            <span className="min-w-0 flex-1 truncate text-muted-foreground">{repo.owner}</span>
-            <span className="shrink-0 text-muted-foreground">/</span>
             <span className="truncate">{repo.name}</span>
           </p>
-          <VisibilityBadge visibility={repo.visibility} />
+          {/* <VisibilityBadge visibility={repo.visibility} /> */}
         </div>
       </div>
       <div className="min-w-0">

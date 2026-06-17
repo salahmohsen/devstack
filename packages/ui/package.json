@@ -8,8 +8,7 @@
   "exports": {
     "./*": "./*.ts",
     "./styles/globals.css": "./styles/globals.css",
-    "./components/*": "./components/",
-    "./components/animate-ui/*": "./components/"
+    "./components/*": "./components/"
   },
   "scripts": {
     "ui": "vpx shadcn@latest"
@@ -17,7 +16,7 @@
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@lonik/oh-image": "catalog:",
-    "@shikijs/langs": "^4.0.2",
+    "@shikijs/langs": "^4.2.0",
     "@tanstack/react-router": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
@@ -26,7 +25,7 @@
     "next-themes": "catalog:",
     "radix-ui": "catalog:",
     "react-resizable-panels": "catalog:",
-    "shiki": "^4.0.2",
+    "shiki": "^4.2.0",
     "sonner": "catalog:",
     "std-env": "catalog:",
     "tailwind-merge": "catalog:",
