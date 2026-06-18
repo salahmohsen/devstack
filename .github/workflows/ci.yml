@@ -1,7 +1,21 @@
-- uses: voidzero-dev/setup-vp@v1
-  with:
-    node-version: "24"
-    cache: true
+name: CI
 
-- run: vp install && vp run dev:setup
-- run: vp check
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: "24"
+          cache: true
+
+      - run: vp install && vp run check
+      - run: vp check
