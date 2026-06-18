@@ -277,8 +277,6 @@ export function Topbar() {
         </div>
       )}
 
-      {pathname.includes("dashboard") && <span className="w-8" />}
-
       <div className="hidden shrink-0 items-center gap-0.5 md:flex">
         {navItems.map((item) => (
           <Button

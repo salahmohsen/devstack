@@ -38,6 +38,7 @@
     "@tsu-stack/logger": "workspace:*",
     "@tsu-stack/seo": "workspace:*",
     "@tsu-stack/ui": "workspace:*",
+    "date-fns": "catalog:",
     "motion": "catalog:",
     "next-themes": "catalog:",
     "nuqs": "catalog:",

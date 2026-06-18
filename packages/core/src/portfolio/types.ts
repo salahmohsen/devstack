@@ -64,6 +64,7 @@ export const ExperienceOutputSchema = z.object({
   fromDate: z.string().nullable(),
   toDate: z.string().nullable(),
   sortOrder: z.number().int(),
+  isArchived: z.boolean(),
   projects: z.array(ProjectOutputSchema)
 });
 
@@ -74,7 +75,8 @@ export const CreateExperienceInputSchema = z.object({
   organization: z.string().min(1),
   description: z.string(),
   fromDate: z.string().nullable().optional(),
-  toDate: z.string().nullable().optional()
+  toDate: z.string().nullable().optional(),
+  isArchived: z.boolean().optional()
 });
 
 export type CreateExperienceInput = z.infer<typeof CreateExperienceInputSchema>;
@@ -84,10 +86,16 @@ export const UpdateExperienceInputSchema = z.object({
   organization: z.string().min(1).optional(),
   description: z.string(),
   fromDate: z.string().nullable().optional(),
-  toDate: z.string().nullable().optional()
+  toDate: z.string().nullable().optional(),
+  isArchived: z.boolean().optional()
 });
 
 export type UpdateExperienceInput = z.infer<typeof UpdateExperienceInputSchema>;
+
+export const ToggleExperienceArchivedResponseSchema = ExperienceOutputSchema;
+export type ToggleExperienceArchivedResponse = z.infer<
+  typeof ToggleExperienceArchivedResponseSchema
+>;
 
 export const ReorderInputSchema = z.object({
   items: z.array(

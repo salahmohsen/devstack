@@ -1,5 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
-import { lazy, useMemo, type ComponentType } from "react";
+import { lazy, Suspense, useMemo, type ComponentType } from "react";
 
 import {
   BuildingIcon,
@@ -135,7 +135,21 @@ export function GithubProfilePage() {
     <div className="w-full overflow-hidden pb-16">
       <div className="relative h-48 w-screen overflow-hidden sm:h-56">
         {contributionsQuery.data && hasMounted ? (
-          <>
+          // The `ContributionGraph` is a `lazy()` chunk, so it suspends on
+          // first render after hydration. The `<Suspense>` boundary lets the
+          // chunk resolve without tripping the root `errorComponent`; the
+          // fallback is the same gradient the `else` branch renders, so the
+          // first paint is identical to the current behaviour.
+          // `hasMounted` is still required: the graph uses `createPortal` to
+          // `document.body` and would crash during SSR.
+          <Suspense
+            fallback={
+              <>
+                <div className="h-full bg-[radial-gradient(circle_at_top,var(--background),transparent_35%),linear-gradient(180deg,var(--color-background)_0%,var(--color-background)_50%)]" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-background to-transparent" />
+              </>
+            }
+          >
             <ContributionGraph
               calendar={contributionsQuery.data}
               className="absolute inset-x-0 top-0 h-full opacity-60"
@@ -144,7 +158,7 @@ export function GithubProfilePage() {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-background to-transparent" />
             <div className="pointer-events-none absolute top-0 left-0 h-full w-40 bg-linear-to-r from-background to-transparent" />
             <div className="pointer-events-none absolute top-0 right-0 h-full w-40 bg-linear-to-l from-background to-transparent" />
-          </>
+          </Suspense>
         ) : (
           <>
             <div className="h-full bg-[radial-gradient(circle_at_top,var(--background),transparent_35%),linear-gradient(180deg,var(--color-background)_0%,var(--color-background)_50%)]" />

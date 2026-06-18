@@ -147,7 +147,7 @@ function EditExperienceForm({
             onSubmit={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              form.handleSubmit();
+              void form.handleSubmit();
             }}
           >
             <FieldGroup>
@@ -186,7 +186,11 @@ function EditExperienceForm({
                     {updateMutation.isPending ? "Saving..." : "Save"}
                   </form.SubmitButton>
                 </form.AppForm>
-                <Button nativeButton={false} variant="outline" render={<Link to="/dashboard/experiences" />}>
+                <Button
+                  nativeButton={false}
+                  variant="outline"
+                  render={<Link to="/dashboard/experiences" />}
+                >
                   Cancel
                 </Button>
               </div>

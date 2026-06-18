@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeftIcon, ChevronRightIcon } from "@tsu-stack/icons";
 
 // w-72 (288px) + pl-2 (8px)
-export const SIDE_PANEL_WIDTH = 296;
+export const SIDE_PANEL_WIDTH = 500;
 
 type SidePanelState = {
   node: HTMLDivElement | null;
@@ -125,7 +125,7 @@ export function SidePanelSlot({
       <motion.div
         animate={{ opacity: show ? 1 : 0 }}
         transition={{ duration: show ? 0.2 : 0.1, delay: show ? 0.1 : 0 }}
-        className="h-full overflow-x-hidden overflow-y-auto pb-2 pl-2"
+        className="h-full overflow-x-hidden overflow-y-auto ps-[1px] pb-2"
       >
         <div ref={refCallback} />
         <div ref={ghostRef} className="pointer-events-none" aria-hidden />

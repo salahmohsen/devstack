@@ -102,8 +102,16 @@ app.get("/auth/open-api/generate-schema", async (c) => {
   return c.json(schema);
 });
 
+// Better Auth uses the HTTP Drizzle singleton (`db` from `@tsu-stack/db`), not
+// `getDb()`. The HTTP transport is stateless, so this route does not need
+// `runWithDb` and intentionally bypasses the `/*` middleware below.
 app.on(["POST", "GET"], "/auth/*", async (c) => auth.handler(c.req.raw));
 
+// GitHub webhooks are registered before the `/*` `runWithDb` middleware (Hono
+// processes handlers in registration order, so the first match wins). Without
+// an explicit `runWithDb` scope here, `getDb()` throws inside the repository
+// and the webhook returns 500 — causing the four github_cache_* tables to
+// stay empty.
 app.post("/webhooks/github", async (c) => {
   if (!ENV_SERVER.GITHUB_WEBHOOK_SECRET) {
     return c.json({ message: "GitHub webhook secret is not configured." }, 503);
@@ -126,21 +134,31 @@ app.post("/webhooks/github", async (c) => {
     return c.json({ message: "GitHub webhook body must be valid JSON." }, 400);
   }
 
-  const result = await handleGitHubWebhook({
-    deliveryId,
-    event,
-    payload,
-    rawBody,
-    runtime: {
-      executionContext: c.executionCtx,
-      kv: c.env.GITHUB_CACHE_KV,
-      signalRelay: c.env.GITHUB_SIGNAL_RELAY
-    },
-    signature256: signature256 ?? null,
-    webhookSecret: ENV_SERVER.GITHUB_WEBHOOK_SECRET
-  });
+  // Narrow the webhook secret to `string` here so it stays narrowed inside the
+  // `runWithDb` callback (TypeScript does not propagate control-flow narrowing
+  // across function boundaries).
+  const webhookSecret = ENV_SERVER.GITHUB_WEBHOOK_SECRET;
 
-  return c.json({ ok: true }, result.status);
+  return runWithDb(createDb(), async () =>
+    c.json(
+      { ok: true },
+      (
+        await handleGitHubWebhook({
+          deliveryId,
+          event,
+          payload,
+          rawBody,
+          runtime: {
+            executionContext: c.executionCtx,
+            kv: c.env.GITHUB_CACHE_KV,
+            signalRelay: c.env.GITHUB_SIGNAL_RELAY
+          },
+          signature256: signature256 ?? null,
+          webhookSecret
+        })
+      ).status
+    )
+  );
 });
 
 export const openApiHandler = new OpenAPIHandler(appRouter, {

@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
@@ -59,6 +60,7 @@ function toExperienceOutput(exp: {
   fromDate: string | null;
   toDate: string | null;
   sortOrder: number;
+  isArchived: boolean | null;
   projects: Array<{
     id: string;
     logo: string | null;
@@ -80,6 +82,7 @@ function toExperienceOutput(exp: {
     fromDate: exp.fromDate,
     toDate: exp.toDate,
     sortOrder: exp.sortOrder,
+    isArchived: exp.isArchived ?? false,
     projects: exp.projects.map(toProjectOutput)
   };
 }
@@ -141,6 +144,20 @@ export const portfolioRouter = {
       .handler(async ({ input }) => {
         await experienceRepository.reorder(input.items);
         return { success: true };
+      }),
+    toggleArchived: protectedProcedure
+      .route({
+        description: "Toggle the archived state of an experience",
+        method: "POST"
+      })
+      .input(z.object({ id: z.string() }))
+      .output(ExperienceOutputSchema)
+      .handler(async ({ input }) => {
+        const exp = await experienceRepository.toggleArchived(input.id);
+        if (!exp) {
+          throw new ORPCError("NOT_FOUND", { message: "Experience not found" });
+        }
+        return toExperienceOutput(exp);
       }),
     delete: protectedProcedure
       .route({

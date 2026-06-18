@@ -4,7 +4,14 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
@@ -17,5 +24,18 @@ jobs:
           node-version: "24"
           cache: true
 
-      - run: vp install && vp run check
+      - run: vp install
       - run: vp check
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: "24"
+          cache: true
+
+      - run: vp install
+      - run: vp run build

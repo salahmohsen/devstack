@@ -57,7 +57,8 @@ class ExperienceRepository {
         description: input.description,
         fromDate: input.fromDate ?? null,
         toDate: input.toDate ?? null,
-        sortOrder: nextSortOrder
+        sortOrder: nextSortOrder,
+        isArchived: input.isArchived ?? false
       })
       .returning();
 
@@ -97,6 +98,28 @@ class ExperienceRepository {
           .where(eq(experience.id, item.id));
       }
     });
+  }
+
+  async toggleArchived(id: string) {
+    const [current] = await getDb()
+      .select({ isArchived: experience.isArchived })
+      .from(experience)
+      .where(eq(experience.id, id))
+      .limit(1);
+
+    if (!current) return null;
+
+    const next = !current.isArchived;
+
+    const [updated] = await getDb()
+      .update(experience)
+      .set({ isArchived: next })
+      .where(eq(experience.id, id))
+      .returning();
+
+    if (!updated) return null;
+
+    return this.findById(updated.id);
   }
 
   async delete(id: string) {

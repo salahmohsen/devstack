@@ -14,7 +14,6 @@ import {
   useSortable,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { type ReactNode, useRef } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -41,7 +40,8 @@ function SortableList<T extends { id: string }>({
 }: SortableItemProps<T>) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 4 }
+      activationConstraint: { distance: 4 },
+      axis: "y"
     })
   );
 
@@ -88,7 +88,7 @@ function SortableRow({
   const handleRef = useRef<HTMLButtonElement>(null);
 
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
     transition,
     opacity: isDragging ? 0.6 : 1
   };

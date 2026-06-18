@@ -16,8 +16,7 @@ export const appConfig = Object.freeze({
     author: "Salah Mohsen",
     basePath: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
     baseUrl: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).origin,
-    description:
-      "An opinionated Vite Plus (Vite+) monorepo featuring TanStack Start, Paraglide.js (i18n), Hono, oRPC, drizzle-orm, better-auth, and more.",
+    description: "Portfolio",
     emailSupport,
     jurisdictionCountry: "the Republic of the Philippines",
     longName: "Batteries-Included TanStack Start Monorepo Boilerplate Template | tsu!stack",

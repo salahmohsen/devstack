@@ -60,17 +60,38 @@ export async function runWithDb<T>(db: WsDb, fn: () => T | Promise<T>): Promise<
 
 /**
  * Repository call sites use this instead of importing a singleton `db`.
- * Throws if a repository is called outside of `runWithDb(...)`, which always
- * means a missing Hono middleware wrapper.
+ *
+ * Preferred path: returns the per-request Neon WebSocket Drizzle inside the
+ * `runWithDb(...)` scope opened by the server's `/*` middleware. The WebSocket
+ * pool is required for `db.transaction(...)` and prepared-statement reuse.
+ *
+ * Defensive fallback: if no scope is active (e.g. a route was registered
+ * before the `/*` middleware and forgot to wrap itself), falls back to the
+ * HTTP Drizzle singleton. The HTTP transport is stateless and safe to use
+ * without a per-request scope, so a missed `runWithDb` is no longer a hard
+ * 500 — it just logs once and continues. Callers that need
+ * `db.transaction(...)` MUST still be inside a `runWithDb` scope; the HTTP
+ * fallback will throw at runtime if you try to start a transaction on it.
  */
+let hasLoggedLazyDbFallback = false;
 export function getDb(): WsDb {
   const store = dbStorage.getStore();
-  if (!store) {
-    throw new Error(
-      "getDb() called outside of a request. Wrap the request handler with runWithDb(createDb(), ...)."
+  if (store) {
+    return store.db;
+  }
+
+  if (!hasLoggedLazyDbFallback) {
+    hasLoggedLazyDbFallback = true;
+    // This package has no logger dependency; surfacing the warning is the
+    // whole point of the fallback.
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[db] getDb() called outside runWithDb. Falling back to the HTTP Drizzle singleton. " +
+        "Wrap the request handler with runWithDb(createDb(), ...) for transaction support."
     );
   }
-  return store.db;
+
+  return db as unknown as WsDb;
 }
 
 export async function checkIsDbReady(): Promise<boolean> {
