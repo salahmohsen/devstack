@@ -1,0 +1,113 @@
+import { z } from "zod";
+
+export const ProjectStackOutputSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  iconUrl: z.string().nullable()
+});
+
+export type ProjectStackOutput = z.infer<typeof ProjectStackOutputSchema>;
+
+export const ProjectStackInputSchema = z.object({
+  name: z.string().min(1),
+  iconUrl: z.string().nullable().optional()
+});
+
+export type ProjectStackInput = z.infer<typeof ProjectStackInputSchema>;
+
+export const ProjectOutputSchema = z.object({
+  id: z.string(),
+  logo: z.string().nullable(),
+  year: z.number().int(),
+  title: z.string(),
+  description: z.string(),
+  fromDate: z.string().nullable(),
+  toDate: z.string().nullable(),
+  sortOrder: z.number().int(),
+  experienceId: z.string().nullable(),
+  stacks: z.array(ProjectStackOutputSchema)
+});
+
+export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
+
+export const CreateProjectInputSchema = z.object({
+  logo: z.string().nullable().optional(),
+  year: z.number().int(),
+  title: z.string().min(1),
+  description: z.string(),
+  fromDate: z.string().nullable().optional(),
+  toDate: z.string().nullable().optional(),
+  experienceId: z.string().nullable().optional(),
+  stacks: z.array(ProjectStackInputSchema).optional().default([])
+});
+
+export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
+
+export const UpdateProjectInputSchema = z.object({
+  logo: z.string().nullable().optional(),
+  year: z.number().int().optional(),
+  title: z.string().min(1).optional(),
+  description: z.string(),
+  fromDate: z.string().nullable().optional(),
+  toDate: z.string().nullable().optional(),
+  experienceId: z.string().nullable().optional(),
+  stacks: z.array(ProjectStackInputSchema).optional()
+});
+
+export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
+
+export const ExperienceOutputSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  organization: z.string(),
+  description: z.string(),
+  fromDate: z.string().nullable(),
+  toDate: z.string().nullable(),
+  sortOrder: z.number().int(),
+  projects: z.array(ProjectOutputSchema)
+});
+
+export type ExperienceOutput = z.infer<typeof ExperienceOutputSchema>;
+
+export const CreateExperienceInputSchema = z.object({
+  title: z.string().min(1),
+  organization: z.string().min(1),
+  description: z.string(),
+  fromDate: z.string().nullable().optional(),
+  toDate: z.string().nullable().optional()
+});
+
+export type CreateExperienceInput = z.infer<typeof CreateExperienceInputSchema>;
+
+export const UpdateExperienceInputSchema = z.object({
+  title: z.string().min(1).optional(),
+  organization: z.string().min(1).optional(),
+  description: z.string(),
+  fromDate: z.string().nullable().optional(),
+  toDate: z.string().nullable().optional()
+});
+
+export type UpdateExperienceInput = z.infer<typeof UpdateExperienceInputSchema>;
+
+export const ReorderInputSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string(),
+      sortOrder: z.number().int().min(0)
+    })
+  )
+});
+
+export type ReorderInput = z.infer<typeof ReorderInputSchema>;
+
+export const ReorderResponseSchema = z.object({ success: z.boolean() });
+export type ReorderResponse = z.infer<typeof ReorderResponseSchema>;
+
+export const ExperienceListOutputSchema = z.array(ExperienceOutputSchema);
+export type ExperienceListOutput = z.infer<typeof ExperienceListOutputSchema>;
+
+export const ProjectListOutputSchema = z.array(ProjectOutputSchema);
+export type ProjectListOutput = z.infer<typeof ProjectListOutputSchema>;
+
+export const DeleteResponseSchema = z.object({ success: z.boolean() });
+export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;

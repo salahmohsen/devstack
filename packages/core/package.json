@@ -7,7 +7,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./app-settings": "./src/app-settings/index.ts",
     "./health": "./src/health/index.ts",
+    "./portfolio": "./src/portfolio/index.ts",
     "./utils": "./src/utils/index.ts",
     "./*": "./src/*.ts"
   },

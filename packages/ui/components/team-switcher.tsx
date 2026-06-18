@@ -1,8 +1,13 @@
 "use client";
 
-import { ChevronsUpDownIcon, GalleryVerticalEndIcon, PlusIcon, TerminalIcon } from "lucide-react";
 import * as React from "react";
 
+import {
+  ChevronsUpDownIcon,
+  GalleryVerticalEndIcon,
+  PlusIcon,
+  TerminalIcon
+} from "@tsu-stack/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,

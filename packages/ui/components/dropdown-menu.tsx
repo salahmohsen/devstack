@@ -1,7 +1,7 @@
-import { Check, ChevronRight } from "lucide-react";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import * as React from "react";
 
+import { CheckIcon, ChevronRightIcon } from "@tsu-stack/icons";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 function DropdownMenu({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
@@ -61,7 +61,7 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "group/dropdown-menu-item data-[variant=destructive]:text-destructive focus:data-[variant=destructive]:bg-destructive/10 focus:data-[variant=destructive]:text-destructive focus:dark:data-[variant=destructive]:bg-destructive/20 *:data-[variant=destructive]:[svg]:text-destructive relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors duration-100 select-none not-last:mb-0.5 focus:bg-accent focus:text-accent-foreground **:focus:not-data-[variant=destructive]:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "group/dropdown-menu-item data-[variant=destructive]:text-destructive focus:data-[variant=destructive]:bg-destructive/10 focus:data-[variant=destructive]:text-destructive dark:focus:data-[variant=destructive]:bg-destructive/20 *:data-[variant=destructive]:[svg]:text-destructive relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors duration-100 select-none not-last:mb-0.5 focus:bg-accent focus:text-accent-foreground **:focus:not-data-[variant=destructive]:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -94,7 +94,7 @@ function DropdownMenuCheckboxItem({
         data-slot="dropdown-menu-checkbox-item-indicator"
       >
         <DropdownMenuPrimitive.ItemIndicator>
-          <Check />
+          <CheckIcon />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -131,7 +131,7 @@ function DropdownMenuRadioItem({
         data-slot="dropdown-menu-radio-item-indicator"
       >
         <DropdownMenuPrimitive.ItemIndicator>
-          <Check />
+          <CheckIcon />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -208,7 +208,7 @@ function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRight className="ml-auto" />
+      <ChevronRightIcon className="ml-auto" />
     </DropdownMenuPrimitive.SubTrigger>
   );
 }

@@ -62,16 +62,16 @@ function ActivityCard({
   title: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/3 p-4">
+    <div className="rounded-2xl border border-border bg-surface-1 p-4">
       <div className="flex items-center gap-2">
         {icon}
-        <h3 className="text-sm font-semibold text-base-200">{title}</h3>
+        <h3 className="text-sm font-semibold text-accent-foreground">{title}</h3>
       </div>
       <div className="mt-3 space-y-3">
         {items.length > 0 ? (
           items.map((item) => (
             <Link key={`${title}-${item.title}`} href={item.href} className="block">
-              <p className="text-sm text-white">{item.title}</p>
+              <p className="text-sm">{item.title}</p>
               <p className="mt-1 text-xs text-base-500">{item.meta}</p>
             </Link>
           ))

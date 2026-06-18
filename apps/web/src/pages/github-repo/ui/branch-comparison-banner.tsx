@@ -1,3 +1,4 @@
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { GitCompareIcon, GitPullRequestIcon } from "@tsu-stack/icons";
 import { Callout, CalloutAction, CalloutContent } from "@tsu-stack/ui/components/callout";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
@@ -15,8 +16,9 @@ export function BranchComparisonBanner({
 }) {
   const isSameBranch = currentBranch === defaultBranch;
   const comparisonQuery = useGetGithubRepoBranchComparisonQuery(repo, defaultBranch, currentBranch);
+  const isAdmin = !!useAuth().user?.id;
 
-  if (isSameBranch) return null;
+  if (isSameBranch || !isAdmin) return null;
 
   if (comparisonQuery.isPending) {
     return (

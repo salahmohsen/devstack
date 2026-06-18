@@ -8,7 +8,14 @@ import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { useLocation } from "@tsu-stack/i18n/tanstack-start/hooks/use-location";
 import { stripLocalePrefix } from "@tsu-stack/i18n/tanstack-start/lib/strip-locale-prefix";
-import { PanelLeftIcon, Settings2Icon } from "@tsu-stack/icons";
+import {
+  BuildingIcon,
+  CodeIcon,
+  FileTextIcon,
+  PackageIcon,
+  PanelLeftIcon,
+  Settings2Icon
+} from "@tsu-stack/icons";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +23,7 @@ import {
   SidebarHeader,
   SidebarRail
 } from "@tsu-stack/ui/components/sidebar";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { NavMain } from "@/shared/ui/nav-main";
 import { NavUser } from "@/shared/ui/nav-user";
@@ -35,6 +43,20 @@ const NAV_ITEMS = [
   {
     items: [
       {
+        icon: FileTextIcon,
+        items: [
+          { icon: BuildingIcon, title: "Experiences", url: "/dashboard/experiences" },
+          { icon: CodeIcon, title: "Projects", url: "/dashboard/projects" },
+          { icon: PackageIcon, title: "Stacks", url: "/dashboard/stacks" }
+        ],
+        title: "Resume"
+      }
+    ],
+    label: "Portfolio"
+  },
+  {
+    items: [
+      {
         icon: Settings2Icon,
         items: [{ title: "GitHub Config", url: "/dashboard/github-config" }],
         title: "Settings"
@@ -45,6 +67,7 @@ const NAV_ITEMS = [
 ] as const;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { className, ...restProps } = props;
   const queryClient = useQueryClient();
   const router = useRouter();
   const location = useLocation();
@@ -67,7 +90,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" className={cn("*:bg-container fixed", className)} {...restProps}>
       <SidebarHeader>
         <TeamSwitcher teams={DASHBOARD_TEAMS} />
       </SidebarHeader>

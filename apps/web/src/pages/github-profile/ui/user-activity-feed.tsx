@@ -89,9 +89,9 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
         {event.prDetail ? (
           <Link
             href={event.prDetail.url}
-            className="rounded-xl border border-white/8 bg-white/4 p-3"
+            className="rounded-xl border border-border bg-white/4 p-3"
           >
-            <p className="text-xs font-medium text-white">{event.prDetail.title}</p>
+            <p className="text-xs font-medium">{event.prDetail.title}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               PR #{event.prDetail.number} · {event.prDetail.state}
             </p>
@@ -100,9 +100,9 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
         {event.issueDetail ? (
           <a
             href={event.issueDetail.url}
-            className="rounded-xl border border-white/8 bg-white/4 p-3"
+            className="rounded-xl border border-border bg-white/4 p-3"
           >
-            <p className="text-xs font-medium text-white">{event.issueDetail.title}</p>
+            <p className="text-xs font-medium">{event.issueDetail.title}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               Issue #{event.issueDetail.number} · {event.issueDetail.state}
             </p>
@@ -142,7 +142,7 @@ function getEventIcon(event: GithubActivityQueryResult[number]) {
 
 function getEventDescription(event: GithubActivityQueryResult[number]) {
   const repo = (
-    <Link href={event.repo.url} className="font-medium text-white hover:underline">
+    <Link href={event.repo.url} className="font-medium hover:underline">
       {event.repo.name}
     </Link>
   );
@@ -152,33 +152,32 @@ function getEventDescription(event: GithubActivityQueryResult[number]) {
       return (
         <>
           Created {event.refType ?? "resource"}{" "}
-          {event.ref ? <span className="text-white">{event.ref}</span> : null} in {repo}
+          {event.ref ? <span className="">{event.ref}</span> : null} in {repo}
         </>
       );
     case "DeleteEvent":
       return (
         <>
           Deleted {event.refType ?? "resource"}{" "}
-          {event.ref ? <span className="text-white">{event.ref}</span> : null} in {repo}
+          {event.ref ? <span className="">{event.ref}</span> : null} in {repo}
         </>
       );
     case "PullRequestEvent":
       return (
         <>
-          {capitalize(event.action)} PR <span className="text-white">{event.title}</span> in {repo}
+          {capitalize(event.action)} PR <span className="">{event.title}</span> in {repo}
         </>
       );
     case "IssuesEvent":
       return (
         <>
-          {capitalize(event.action)} issue <span className="text-white">{event.title}</span> in{" "}
-          {repo}
+          {capitalize(event.action)} issue <span className="">{event.title}</span> in {repo}
         </>
       );
     case "IssueCommentEvent":
       return (
         <>
-          Commented on <span className="text-white">{event.title}</span> in {repo}
+          Commented on <span className="">{event.title}</span> in {repo}
         </>
       );
     case "WatchEvent":

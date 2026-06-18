@@ -1,19 +1,22 @@
+import {
+  AppSettingsOutputSchema,
+  GITHUB_TOKEN_MASK,
+  UpdateAppSettingsInputSchema
+} from "@tsu-stack/core/app-settings";
 import { appSettingsRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
-import {
-  AppSettingsOutputSchema,
-  UpdateAppSettingsInputSchema
-} from "#@/routers/app-settings/types";
 
 function toAppSettingsOutput(
   settings: Awaited<ReturnType<typeof appSettingsRepository.findByUserId>>
 ): {
+  githubToken: string | null;
   githubUsername: string | null;
   hasGithubToken: boolean;
   updatedAt: string | null;
 } {
   return {
+    githubToken: settings?.githubToken ? GITHUB_TOKEN_MASK : null,
     githubUsername: settings?.githubUsername ?? null,
     hasGithubToken: Boolean(settings?.githubToken),
     updatedAt: settings?.updatedAt.toISOString() ?? null
@@ -40,7 +43,10 @@ export const appSettingsRouter = {
     .input(UpdateAppSettingsInputSchema)
     .output(AppSettingsOutputSchema)
     .handler(async ({ context, input }) => {
-      const settings = await appSettingsRepository.upsert(context.session.user.id, input);
+      const settings = await appSettingsRepository.upsert(context.session.user.id, {
+        ...input,
+        githubToken: input.githubToken === GITHUB_TOKEN_MASK ? undefined : input.githubToken
+      });
 
       return toAppSettingsOutput(settings);
     })

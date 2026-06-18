@@ -29,7 +29,7 @@ export function FileTree({ directoryPath, entries, refName, repo }: FileTreeProp
   );
 
   return (
-    <div className="overflow-hidden rounded-b-2xl border border-t-0 border-white/8">
+    <div className="overflow-hidden rounded-b-2xl border border-t-0 border-border">
       {entries.map((entry, index) => (
         <FileTreeRow
           key={entry.path}
@@ -66,7 +66,7 @@ function FileTreeRow({
     <div
       className={cn(
         "grid grid-cols-[minmax(12rem,26%)_minmax(0,1fr)_7rem] items-center gap-4 px-4 py-2.5 text-sm",
-        !isLast && "border-b border-white/8"
+        !isLast && "border-b border-border"
       )}
     >
       <div className="flex min-w-0 items-center gap-2.5">
@@ -78,7 +78,7 @@ function FileTreeRow({
         <Link
           to={isDir ? "/$repo/tree/$" : "/$repo/blob/$"}
           params={{ repo, _splat: `${refName}/${entry.path}` }}
-          className="truncate text-base-200 hover:underline"
+          className="truncate text-accent-foreground hover:underline"
         >
           {entry.name}
         </Link>

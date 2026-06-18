@@ -4,6 +4,7 @@ export * from "#@/infrastructure/octokit/client";
 export * from "#@/repo/repo-activity-cards/get-repo-activity-cards";
 export * from "#@/repo/repo-branch-comparison/get-repo-branch-comparison";
 export * from "#@/repo/repo-branches/get-repo-branches";
+export * from "#@/repo/repo-contributors/get-repo-contributors";
 export * from "#@/repo/repo-commit-sparkline/get-repo-commit-sparkline";
 export * from "#@/repo/repo-file-content/get-repo-file-content";
 export * from "#@/repo/repo-overview/get-repo-overview";

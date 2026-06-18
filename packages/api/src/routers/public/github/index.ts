@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { GitHubUsernameSchema } from "@tsu-stack/core/app-settings";
 import {
   getGitHubRevalidationSignals,
   getProfileRepos,
@@ -7,6 +8,7 @@ import {
   getRepoBranchComparison,
   getRepoBranches,
   getRepoCommitSparkline,
+  getRepoContributors,
   getRepoFileContent,
   getRepoOverview,
   getRepoRefCommit,
@@ -30,11 +32,11 @@ import {
   GitHubUserActivityEventSchema,
   GitHubUserProfileSchema,
   GitHubUserRepoSummarySchema,
+  RepoContributorsResultSchema,
   RepoOverviewSchema
 } from "@tsu-stack/github/schemas";
 
 import { publicProcedure } from "#@/lib/procedures/factory";
-import { GitHubUsernameSchema } from "#@/routers/app-settings/types";
 
 const PublicGitHubStatusOutputSchema = z.object({
   isConfigured: z.boolean(),
@@ -115,6 +117,14 @@ export const publicGitHubRouter = {
     .input(RepoInputSchema)
     .output(z.array(GitHubRepoBranchSchema))
     .handler(async ({ context, input }) => getRepoBranches(input, context)),
+  getRepoContributors: publicProcedure
+    .route({
+      description: "Get the public contributors for a GitHub repository",
+      method: "GET"
+    })
+    .input(RepoInputSchema)
+    .output(RepoContributorsResultSchema)
+    .handler(async ({ context, input }) => getRepoContributors(input, context)),
   getRepoCommitSparkline: publicProcedure
     .route({
       description: "Get public commit sparkline data for a GitHub repository",

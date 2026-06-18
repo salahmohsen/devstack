@@ -1,5 +1,15 @@
-import { type GitHubLocalFirstMeta, type RepoOverview } from "#@/schemas";
-export { type GitHubLocalFirstMeta, type RepoOverview } from "#@/schemas";
+import {
+  type GitHubLocalFirstMeta,
+  type RepoContributor,
+  type RepoContributorsResult,
+  type RepoOverview
+} from "#@/schemas";
+export {
+  type GitHubLocalFirstMeta,
+  type RepoContributor,
+  type RepoContributorsResult,
+  type RepoOverview
+} from "#@/schemas";
 import { type GitHubActor } from "#@/types";
 
 export type RepositoryRef = {
@@ -632,17 +642,6 @@ export type BranchComparison = {
 export type CompareFilesMeta = {
   /** True when the GitHub API capped the file list (max 300). */
   truncated: boolean;
-};
-
-export type RepoContributor = {
-  login: string;
-  avatarUrl: string;
-  contributions: number;
-};
-
-export type RepoContributorsResult = {
-  contributors: RepoContributor[];
-  totalCount: number;
 };
 
 export type UserActivityEvent = {

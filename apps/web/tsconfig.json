@@ -4,8 +4,10 @@
     "paths": {
       "@/*": ["./src/*"],
 
-      // for shadcn CLI to resolve @tsu-stack/ui paths to the /packages/ui directory
-      "@tsu-stack/ui/*": ["../../packages/ui/*"]
+      // for shadcn CLI to resolve @tsu-stack/ui and @tsu-stack/icons paths
+      "@tsu-stack/ui/*": ["../../packages/ui/*"],
+      "@tsu-stack/icons": ["../../packages/icons/src/index.tsx"],
+      "@tsu-stack/icons/*": ["../../packages/icons/*"]
     },
     "types": ["node", "vite/client", "mdx"],
 

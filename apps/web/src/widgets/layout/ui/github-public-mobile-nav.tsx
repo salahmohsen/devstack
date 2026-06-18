@@ -74,8 +74,8 @@ export function GithubPublicMobileNav() {
         activeOptions={{ exact: true }}
         activeProps={{ className: "active" }}
         className={cn(
-          "relative flex flex-1 items-center justify-center py-3 text-base-300 transition-colors",
-          "[&.active]:bg-white/8 [&.active]:text-white"
+          "relative flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors",
+          "[&.active]: [&.active]:bg-white/8"
         )}
       >
         <HouseIcon size={22} strokeWidth={1.8} />
@@ -86,8 +86,8 @@ export function GithubPublicMobileNav() {
         activeOptions={{ exact: true }}
         activeProps={{ className: "active" }}
         className={cn(
-          "relative flex flex-1 items-center justify-center py-3 text-base-300 transition-colors",
-          "[&.active]:bg-white/8 [&.active]:text-white"
+          "relative flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors",
+          "[&.active]: [&.active]:bg-white/8"
         )}
       >
         <ArchiveIcon size={22} strokeWidth={1.8} />
@@ -97,7 +97,7 @@ export function GithubPublicMobileNav() {
           <button
             type="button"
             className={cn(
-              "flex flex-1 items-center justify-center py-3 text-base-300 transition-colors"
+              "flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors"
             )}
           >
             <Avatar className="size-6 border border-white/10">
@@ -120,9 +120,7 @@ export function GithubPublicMobileNav() {
                   onClick={() => setTheme(opt.value)}
                   className={cn(
                     "flex size-6 items-center justify-center rounded-sm transition-colors",
-                    theme === opt.value
-                      ? "bg-white/8 text-white"
-                      : "text-muted-foreground hover:text-white"
+                    theme === opt.value ? "bg-white/8" : "hover: text-muted-foreground"
                   )}
                   title={opt.label}
                 >

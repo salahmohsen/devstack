@@ -192,19 +192,19 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
         tabsReady ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-0.5 opacity-0"
       )}
     >
-      <div className="hidden h-4 shrink-0 border-l border-white/10 md:block" />
+      <div className="hidden h-4 shrink-0 border-l md:block" />
       <ContextMenu>
         <ContextMenuTrigger asChild>
           <div className="relative min-w-0 flex-1 overflow-hidden">
             <div
               className={cn(
-                "pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-[#0d1117] to-transparent transition-opacity",
+                "from-container pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r to-transparent transition-opacity",
                 canScrollLeft ? "opacity-100" : "opacity-0"
               )}
             />
             <div
               className={cn(
-                "pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-[#0d1117] to-transparent transition-opacity",
+                "from-container pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l to-transparent transition-opacity",
                 canScrollRight ? "opacity-100" : "opacity-0"
               )}
             />
@@ -348,21 +348,21 @@ const DetailTab = memo(function DetailTab({
       onContextMenu={onContextMenu}
       activeOptions={{ exact: true }}
       activeProps={{ className: "active" }}
-      className="group relative flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-3 text-xs font-medium text-base-300 transition-colors hover:bg-white/9 hover:text-white [&.active]:bg-white/[0.14] [&.active]:text-white [&.active]:ring-1 [&.active]:ring-white/10"
+      className="group [&.active]:ring-container relative flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-3 text-xs font-medium text-accent-foreground transition-colors hover:bg-foreground/9 [&.active]:bg-foreground/9 [&.active]:ring-1"
     >
       {tab.avatarUrl ? (
         <img src={tab.avatarUrl} alt="" className="size-3.5 shrink-0 rounded-sm" />
       ) : (
         <Icon size={13} strokeWidth={2} className={cn("shrink-0", tab.iconColor)} />
       )}
-      <span className="max-w-32 truncate">{tab.title}</span>
+      <span className="max-w-32 min-w-13 truncate">{tab.title}</span>
       {tab.type === "review" || tab.type === "commit" ? (
         <span className="flex items-center gap-1 font-mono text-[11px] font-medium tabular-nums">
           {tab.additions != null && <span>+{tab.additions}</span>}
           {tab.deletions != null && <span>-{tab.deletions}</span>}
         </span>
       ) : tab.number != null ? (
-        <span className="text-[11px] text-base-300 tabular-nums">#{tab.number}</span>
+        <span className="text-[11px] text-accent-foreground tabular-nums">#{tab.number}</span>
       ) : null}
       {/* Mobile: inline close button in flow — oversized touch target */}
       <button
@@ -385,11 +385,11 @@ const DetailTab = memo(function DetailTab({
           e.stopPropagation();
           onClose(tab.id, tab.url);
         }}
-        className="absolute inset-y-0 right-0 hidden items-center rounded-r-sm bg-muted pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+        className="bg-container absolute inset-y-0 right-0 hidden items-center rounded-r-sm pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
         aria-label={`Close ${tab.title}`}
       >
-        <span className="absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent to-muted" />
-        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-muted">
+        <span className="to-container absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent" />
+        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-foreground/9">
           <CloseIcon size={10} strokeWidth={2} />
         </span>
       </button>

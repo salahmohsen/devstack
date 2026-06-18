@@ -29,7 +29,7 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
     <div
       className={cn(
         "flex min-h-screen flex-col",
-        "bg-container text-primary selection:bg-[#C0E7C8] selection:text-primary"
+        "bg-container text-primary selection:bg-[#C0E7C8] selection:text-primary!"
       )}
     >
       <Topbar />
@@ -53,7 +53,7 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
           className="grid flex-1 overflow-hidden p-2 pt-0"
         >
           <div className="relative overflow-hidden rounded-xl border bg-background shadow-xs">
-            <main className="h-full">{children}</main>
+            <main className="flex h-full">{children}</main>
             <SidePanelToggle />
           </div>
 

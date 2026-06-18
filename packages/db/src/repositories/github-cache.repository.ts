@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 
-import { db } from "#@/index";
+import { getDb } from "#@/index";
 import {
   githubCacheNamespace,
   githubResponseCache,
@@ -31,13 +31,13 @@ export type RecordGitHubWebhookDeliveryInput = {
 
 class GitHubCacheRepository {
   async clearAll() {
-    await db.delete(githubResponseCache);
-    await db.delete(githubRevalidationSignal);
-    await db.delete(githubCacheNamespace);
+    await getDb().delete(githubResponseCache);
+    await getDb().delete(githubRevalidationSignal);
+    await getDb().delete(githubCacheNamespace);
   }
 
   async findNamespaceVersion(namespace: string) {
-    const [entry] = await db
+    const [entry] = await getDb()
       .select()
       .from(githubCacheNamespace)
       .where(eq(githubCacheNamespace.namespace, namespace))
@@ -47,7 +47,7 @@ class GitHubCacheRepository {
   }
 
   async findResponseCacheEntry(cacheKey: string) {
-    const [entry] = await db
+    const [entry] = await getDb()
       .select()
       .from(githubResponseCache)
       .where(eq(githubResponseCache.cacheKey, cacheKey))
@@ -61,7 +61,7 @@ class GitHubCacheRepository {
       return [];
     }
 
-    return db
+    return getDb()
       .select()
       .from(githubRevalidationSignal)
       .where(inArray(githubRevalidationSignal.signalKey, signalKeys))
@@ -69,7 +69,7 @@ class GitHubCacheRepository {
   }
 
   async markWebhookDeliveryProcessed(deliveryId: string) {
-    const [updatedEvent] = await db
+    const [updatedEvent] = await getDb()
       .update(githubWebhookEvent)
       .set({
         processedAt: new Date()
@@ -87,7 +87,7 @@ class GitHubCacheRepository {
 
     return Promise.all(
       signalKeys.map(async (signalKey) => {
-        const [entry] = await db
+        const [entry] = await getDb()
           .insert(githubRevalidationSignal)
           .values({ signalKey })
           .onConflictDoUpdate({
@@ -107,7 +107,7 @@ class GitHubCacheRepository {
     const existing = await this.findNamespaceVersion(namespace);
 
     if (!existing) {
-      const [createdEntry] = await db
+      const [createdEntry] = await getDb()
         .insert(githubCacheNamespace)
         .values({
           namespace,
@@ -118,7 +118,7 @@ class GitHubCacheRepository {
       return createdEntry;
     }
 
-    const [updatedEntry] = await db
+    const [updatedEntry] = await getDb()
       .update(githubCacheNamespace)
       .set({
         updatedAt: new Date(),
@@ -131,7 +131,7 @@ class GitHubCacheRepository {
   }
 
   async recordWebhookDelivery(input: RecordGitHubWebhookDeliveryInput) {
-    const [webhookEvent] = await db
+    const [webhookEvent] = await getDb()
       .insert(githubWebhookEvent)
       .values({
         action: input.action ?? null,
@@ -147,7 +147,7 @@ class GitHubCacheRepository {
   }
 
   async upsertResponseCacheEntry(input: UpsertGitHubResponseCacheInput) {
-    const [entry] = await db
+    const [entry] = await getDb()
       .insert(githubResponseCache)
       .values({
         cacheKey: input.cacheKey,
@@ -184,11 +184,11 @@ class GitHubCacheRepository {
   }
 
   async clearByOwner(owner: string) {
-    await db.delete(githubResponseCache).where(eq(githubResponseCache.owner, owner));
+    await getDb().delete(githubResponseCache).where(eq(githubResponseCache.owner, owner));
   }
 
   async deleteResponseCacheEntry(cacheKey: string, owner: string) {
-    await db
+    await getDb()
       .delete(githubResponseCache)
       .where(and(eq(githubResponseCache.cacheKey, cacheKey), eq(githubResponseCache.owner, owner)));
   }

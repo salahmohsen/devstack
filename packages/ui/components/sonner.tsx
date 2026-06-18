@@ -1,6 +1,13 @@
-import { AlertOctagon, AlertTriangle, CheckCircle, Info, Loader } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
+
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  DangerIcon,
+  InfoIcon,
+  LoaderCircleIcon
+} from "@tsu-stack/icons";
 
 function Toaster({ ...props }: ToasterProps) {
   const { theme = "system" } = useTheme();
@@ -10,11 +17,11 @@ function Toaster({ ...props }: ToasterProps) {
       theme={theme as ToasterProps["theme"]}
       className="group"
       icons={{
-        error: <AlertOctagon className="size-4" />,
-        info: <Info className="size-4" />,
-        loading: <Loader className="size-4 animate-spin" />,
-        success: <CheckCircle className="size-4" />,
-        warning: <AlertTriangle className="size-4" />
+        error: <DangerIcon className="size-4" />,
+        info: <InfoIcon className="size-4" />,
+        loading: <LoaderCircleIcon className="size-4 animate-spin" />,
+        success: <CheckCircleIcon className="size-4" />,
+        warning: <AlertTriangleIcon className="size-4" />
       }}
       style={
         {

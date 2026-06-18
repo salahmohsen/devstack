@@ -282,3 +282,20 @@ export const RepoOverviewSchema = z.object({
   __meta: GitHubLocalFirstMetaSchema.optional()
 });
 export type RepoOverview = z.infer<typeof RepoOverviewSchema>;
+
+// ---------------------------------------------------------------------------
+// Repo contributors
+// ---------------------------------------------------------------------------
+
+export const RepoContributorSchema = z.object({
+  login: z.string(),
+  avatarUrl: z.string(),
+  contributions: z.number()
+});
+export type RepoContributor = z.infer<typeof RepoContributorSchema>;
+
+export const RepoContributorsResultSchema = z.object({
+  contributors: z.array(RepoContributorSchema),
+  totalCount: z.number()
+});
+export type RepoContributorsResult = z.infer<typeof RepoContributorsResultSchema>;

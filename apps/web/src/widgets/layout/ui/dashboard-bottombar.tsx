@@ -20,7 +20,7 @@ export function DashboardBottomBar() {
             className={cn(
               "flex w-fit items-center gap-2 rounded-lg px-3 py-2 text-xs",
               isError
-                ? "bg-red-500 dark:bg-red-500 text-white dark:text-white"
+                ? "bg-red-500 dark:bg-red-500 dark:"
                 : "bg-yellow-500 text-yellow-950 dark:bg-yellow-500 dark:text-yellow-950"
             )}
           >

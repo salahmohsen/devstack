@@ -65,7 +65,13 @@ export function NavMain({
                     render={<SidebarMenuItem />}
                   >
                     <CollapsibleTrigger
-                      render={<SidebarMenuButton isActive={isActive} tooltip={item.title} />}
+                      render={
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          tooltip={item.title}
+                          className="rounded-xs"
+                        />
+                      }
                     >
                       {item.icon ? <item.icon /> : null}
                       <span>{item.title}</span>
@@ -73,12 +79,13 @@ export function NavMain({
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <SidebarMenuSub>
+                      <SidebarMenuSub className="ms-0">
                         {item.items.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton
                               isActive={currentPath === subItem.url}
                               render={<Link to={subItem.url} />}
+                              className="rounded-xs"
                             >
                               <span>{subItem.title}</span>
                             </SidebarMenuSubButton>
@@ -96,6 +103,7 @@ export function NavMain({
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     isActive={isActive}
+                    className="rounded-xs"
                     render={<Link to={item.url} />}
                     tooltip={item.title}
                   >

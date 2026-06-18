@@ -10,6 +10,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 type ContributionGraphProps = {
   calendar: GitHubContributionCalendar;
   className?: string;
+  svgProps?: React.SVGAttributes<SVGSVGElement>;
 };
 
 type CellData = {
@@ -24,37 +25,59 @@ const CELL_SIZE = 11;
 const CELL_GAP = 3;
 const CELL_STEP = CELL_SIZE + CELL_GAP;
 
-const LEVEL_COLORS_LIGHT = [
-  "oklch(0.93 0.003 286)",
-  "oklch(0.84 0.10 150)",
-  "oklch(0.72 0.16 150)",
-  "oklch(0.58 0.20 150)",
-  "oklch(0.42 0.19 150)"
-] as const;
+const THEMES = {
+  GREEN: {
+    LEVEL_COLORS_LIGHT: [
+      "oklch(0.93 0.003 286)",
+      "oklch(0.84 0.10 150)",
+      "oklch(0.72 0.16 150)",
+      "oklch(0.58 0.20 150)",
+      "oklch(0.42 0.19 150)"
+    ] as const,
 
-const LEVEL_COLORS_DARK = [
-  "oklch(19% 0.00 48.327)",
-  "oklch(0.32 0.09 150)",
-  "oklch(0.46 0.15 150)",
-  "oklch(0.62 0.20 150)",
-  "oklch(0.78 0.22 150)"
-] as const;
+    LEVEL_COLORS_DARK: [
+      "oklch(19% 0.00 48.327)",
+      "oklch(0.32 0.09 150)",
+      "oklch(0.46 0.15 150)",
+      "oklch(0.62 0.20 150)",
+      "oklch(0.78 0.22 150)"
+    ] as const
+  },
+
+  MONOCHROME: {
+    LEVEL_COLORS_LIGHT: [
+      "oklch(0.96 0 0)",
+      "oklch(0.80 0 0)",
+      "oklch(0.60 0 0)",
+      "oklch(0.40 0 0)",
+      "oklch(0.20 0 0)"
+    ] as const,
+
+    LEVEL_COLORS_DARK: [
+      "oklch(0.20 0 0)",
+      "oklch(0.35 0 0)",
+      "oklch(0.50 0 0)",
+      "oklch(0.65 0 0)",
+      "oklch(0.85 0 0)"
+    ] as const
+  }
+};
 
 // Hoisted — string is constant, no reason to rebuild on every render
 const CONTRIB_STYLES = `
   :root {
-    --contrib-level-0: ${LEVEL_COLORS_LIGHT[0]};
-    --contrib-level-1: ${LEVEL_COLORS_LIGHT[1]};
-    --contrib-level-2: ${LEVEL_COLORS_LIGHT[2]};
-    --contrib-level-3: ${LEVEL_COLORS_LIGHT[3]};
-    --contrib-level-4: ${LEVEL_COLORS_LIGHT[4]};
+    --contrib-level-0: ${THEMES.GREEN.LEVEL_COLORS_LIGHT[0]};
+    --contrib-level-1: ${THEMES.GREEN.LEVEL_COLORS_LIGHT[1]};
+    --contrib-level-2: ${THEMES.GREEN.LEVEL_COLORS_LIGHT[2]};
+    --contrib-level-3: ${THEMES.GREEN.LEVEL_COLORS_LIGHT[3]};
+    --contrib-level-4: ${THEMES.GREEN.LEVEL_COLORS_LIGHT[4]};
   }
   .dark {
-    --contrib-level-0: ${LEVEL_COLORS_DARK[0]};
-    --contrib-level-1: ${LEVEL_COLORS_DARK[1]};
-    --contrib-level-2: ${LEVEL_COLORS_DARK[2]};
-    --contrib-level-3: ${LEVEL_COLORS_DARK[3]};
-    --contrib-level-4: ${LEVEL_COLORS_DARK[4]};
+    --contrib-level-0: ${THEMES.GREEN.LEVEL_COLORS_DARK[0]};
+    --contrib-level-1: ${THEMES.GREEN.LEVEL_COLORS_DARK[1]};
+    --contrib-level-2: ${THEMES.GREEN.LEVEL_COLORS_DARK[2]};
+    --contrib-level-3: ${THEMES.GREEN.LEVEL_COLORS_DARK[3]};
+    --contrib-level-4: ${THEMES.GREEN.LEVEL_COLORS_DARK[4]};
   }
 `;
 
@@ -80,7 +103,7 @@ function parseDateParts(dateStr: string) {
   };
 }
 
-export function ContributionGraph({ calendar, className }: ContributionGraphProps) {
+export function ContributionGraph({ calendar, className, svgProps }: ContributionGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [activeCell, setActiveCell] = useState<CellData | null>(null);
@@ -221,8 +244,8 @@ export function ContributionGraph({ calendar, className }: ContributionGraphProp
       <svg
         ref={svgRef}
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        className="h-auto w-full"
-        preserveAspectRatio="xMidYMid meet"
+        className="h-full w-full"
+        preserveAspectRatio={svgProps?.preserveAspectRatio ?? "xMidYMid meet"}
         role="img"
         aria-label="Contribution graph"
         onMouseMove={handleMouseMove}
