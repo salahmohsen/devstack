@@ -152,7 +152,7 @@ export function RepoExplorerLayout({
   ) : null;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full w-full flex-col">
       <ExplorerToolbar
         currentRef={activeRef}
         isDesktop={isDesktop}
@@ -243,7 +243,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
 
 function ExplorerSkeleton() {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full w-full flex-col">
       <div className="flex shrink-0 items-center gap-3 border-b bg-surface-1 px-4 py-2">
         <Skeleton className="h-5 w-32 rounded" />
         <div className="ml-auto">

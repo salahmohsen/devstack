@@ -53,7 +53,7 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
           className="grid flex-1 overflow-hidden p-2 pt-0"
         >
           <div className="relative overflow-hidden rounded-xl border bg-background shadow-xs">
-            <main className="flex h-full">{children}</main>
+            <main className="flex h-full w-full">{children}</main>
             <SidePanelToggle />
           </div>
 

@@ -188,7 +188,7 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
   return (
     <>
-      <div className="h-full overflow-auto">
+      <div className="h-full w-full overflow-auto">
         <div className="mx-auto grid max-w-7xl gap-10 px-3 py-10 md:px-6 xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
           <div className="flex min-w-0 flex-col gap-6">
             <RepoHeader repo={overview} />
