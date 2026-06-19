@@ -1,6 +1,5 @@
-import { Fragment } from "react";
-
 import { useRouterState } from "@tanstack/react-router";
+import { Fragment } from "react";
 
 import { Link, type LinkProps } from "@tsu-stack/i18n/tanstack-start/components/link";
 import {

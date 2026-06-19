@@ -34,27 +34,27 @@
 
 ## 2. Critique Of v1 Plan — What Was Wrong
 
-| # | v1 flaw | Evidence | Fix |
-|---|---------|----------|-----|
-| 1 | **"No `{-$locale}` prefix in dashboard"** | The i18n `Link` (`packages/i18n/src/tanstack-start/components/link.tsx:49`) ALWAYS prepends `/{-$locale}` to every `to`. `useNavigate` does the same (`hooks/use-navigate.ts:27`). The dashboard has **16 i18n imports** across its route files. Removing the prefix means rewriting every `Link`, `useNavigate`, `useLocation`, and the auth guard's `validateNavigateTo`/`getRouteTreePathsLocalized`. | Dashboard keeps `{-$locale}` prefix and paraglide plugin. The move becomes near-copy-paste instead of a rewrite. |
-| 2 | **`@tsu-stack/app` for `Container`, `DefaultLoader`, `ErrorLayout`** | `Container` is already in `packages/ui/components/container.tsx` — the app-local `shared/ui/container.tsx` is a 1-line re-export. `DefaultLoader` is 5 lines wrapping `DotmSquare18` from `@tsu-stack/ui`. `ErrorLayout` is 13 lines but references `--navbar-height` (app CSS var). | `DefaultLoader` → `packages/ui/components/`. `Container` → already there, just standardize imports. `ErrorLayout` → stays per-app (CSS var dep). `@tsu-stack/app` shrinks to providers + config only. |
-| 3 | **`@tsu-stack/forms` framed as current need** | After the split, forms are used ONLY in `apps/dashboard` (auth + dashboard pages). The web app has zero forms. The sign-in form (`sign-in-form.tsx`) does NOT use `useAppForm` — it uses `authClient.signIn.social`/`passkey`. | Be honest: `@tsu-stack/forms` is future-proofing so the web app can add forms (e.g., contact form) without duplicating the pattern. Still worth doing, but state the real motivation. |
-| 4 | **Didn't call out that dashboard routes are NOT thin** | `projects/index.tsx` (138 lines), `projects/new.tsx` (221 lines), `projects/$projectId.tsx` (310 lines), `experiences/new.tsx`, `experiences/$experienceId.tsx`, `stacks/route.tsx` (101 lines) all have full page UI inline in route files. This violates `.agents/tanstack-patterns.md` §"Route Files Stay Thin". The public web pages follow the pattern (UI in `pages/`). | The move is the natural moment to standardize. Move inline UI to `pages/dashboard/<feature>/ui/` and keep routes thin. This is real work — size it. |
-| 5 | **Cross-app navigation not addressed** | The command palette has "Go to Dashboard" (`registry.ts:49`). The dashboard sidebar has "Overview" pointing to `/dashboard` (`app-sidebar.tsx:38`). After the split, these are cross-origin links (`<a href="https://dashboard.salahmohsen.com">`), not router `<Link>`. | Use plain `<a>` for cross-app links. Document in `.agents/tanstack-patterns.md`. |
-| 6 | **Sign-in form callback URL** | `sign-in-form.tsx:20` uses `ENV_WEB_ISOMORPHIC.VITE_WEB_URL` for the OAuth callback. In the dashboard, this must be `ENV_DASHBOARD_ISOMORPHIC.VITE_DASHBOARD_URL`. | Update the callback URL helper to use the dashboard env. |
-| 7 | **Sign-in form links to `/terms-of-service` and `/privacy-policy`** | `sign-in-form.tsx:116-122` links to web app routes. In the dashboard, these become cross-app links to the web app's URLs. | Replace with `<a>` tags pointing to the web app's canonical URLs. |
-| 8 | **`SortableList` classified as shared** | Only used in `projects/index.tsx` and `experiences/index.tsx` — both dashboard. | Moves to `apps/dashboard/src/shared/ui/sortable-list.tsx`. Not shared. |
-| 9 | **`Logo` classified as shared** | Only used in `create-an-account-form.tsx` — auth, which moves to dashboard. | Moves to `apps/dashboard/src/shared/ui/logo.tsx`. Not shared. |
-| 10 | **`Markdown` not mentioned** | Only used in `github-repo/ui/repo-markdown-files.tsx`. Stays in web. | Explicitly mark as web-only. |
-| 11 | **`Image` not mentioned** | Only used in `playground/ui/playground-page.tsx`. Stays in web. | Explicitly mark as web-only. |
-| 12 | **Two `lib/` dirs not addressed** | `src/lib/` (command-palette-icons, debug, github.query) and `src/shared/lib/` (everything else). Inconsistent with FSD. | Standardize: everything goes to `src/shared/lib/` in both apps. |
-| 13 | **Empty dirs not addressed** | `shared/api/`, `shared/query/`, `shared/types/` are all empty. | Remove during the move. |
-| 14 | **`dashboard-bottombar` and `dashboard-side-panel` are misnamed** | Both are used by the GITHUB layout (`root-layout.tsx:10,17,68`), not the dashboard layout. | Rename to `github-bottombar.tsx` and `github-side-panel.tsx` in `apps/web`. The `dashboard-breadcrumbs` IS dashboard-only and moves. |
-| 15 | **Command palette split was vague** | `shared/lib/command-palette/` has generic infrastructure (registry, types, hooks) AND web-specific commands (Go to Pulls, Go to Issues, Open on GitHub). | Infrastructure (registry core, types, use-command-items, use-command-palette) → `packages/ui/lib/command-palette/`. Web-specific command registrations + icons → stay in `apps/web`. Dashboard gets its own registrations. |
-| 16 | **`apps/web/components.json` vs `packages/ui/components.json`** | Web has its own `components.json` pointing `components` alias to `@/shared/ui` — meaning shadcn can add components locally to the app. `packages/ui/components.json` points to `@tsu-stack/ui/components`. Per `.agents/ui.md`, shared shadcn components go in `packages/ui`. | Dashboard gets its own `components.json` mirroring web's pattern. Both apps' `components` alias should point to `@tsu-stack/ui/components` to enforce extraction per `.agents/ui.md`. |
-| 17 | **Health check, sitemap, robots not addressed** | `[_]api/health/live.ts`, `sitemap[.]xml.ts`, `robots[.]txt.ts` exist in web. | Dashboard gets its own `[_]api/health/live.ts`. Dashboard `robots.txt` → `Disallow: /` (no index). No sitemap for dashboard. |
-| 18 | **`global.d.ts` and `.tanstack/` not addressed** | Each TanStack Start app needs its own generated `routeTree.gen.ts`, `.tanstack/` config, and `global.d.ts`. | Created automatically when the dashboard app is scaffolded with the tanstackStart plugin. Note it in the plan. |
-| 19 | **Docker/CI not fully addressed** | `docker-compose.yaml`, `docker-compose.coolify.yaml`, `.github/` workflows need a dashboard service. | Add dashboard service to both docker-compose files. Check CI workflows for app-specific steps. |
+| #   | v1 flaw                                                              | Evidence                                                                                                                                                                                                                                                                                                                                                                                                 | Fix                                                                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **"No `{-$locale}` prefix in dashboard"**                            | The i18n `Link` (`packages/i18n/src/tanstack-start/components/link.tsx:49`) ALWAYS prepends `/{-$locale}` to every `to`. `useNavigate` does the same (`hooks/use-navigate.ts:27`). The dashboard has **16 i18n imports** across its route files. Removing the prefix means rewriting every `Link`, `useNavigate`, `useLocation`, and the auth guard's `validateNavigateTo`/`getRouteTreePathsLocalized`. | Dashboard keeps `{-$locale}` prefix and paraglide plugin. The move becomes near-copy-paste instead of a rewrite.                                                                                                           |
+| 2   | **`@tsu-stack/app` for `Container`, `DefaultLoader`, `ErrorLayout`** | `Container` is already in `packages/ui/components/container.tsx` — the app-local `shared/ui/container.tsx` is a 1-line re-export. `DefaultLoader` is 5 lines wrapping `DotmSquare18` from `@tsu-stack/ui`. `ErrorLayout` is 13 lines but references `--navbar-height` (app CSS var).                                                                                                                     | `DefaultLoader` → `packages/ui/components/`. `Container` → already there, just standardize imports. `ErrorLayout` → stays per-app (CSS var dep). `@tsu-stack/app` shrinks to providers + config only.                      |
+| 3   | **`@tsu-stack/forms` framed as current need**                        | After the split, forms are used ONLY in `apps/dashboard` (auth + dashboard pages). The web app has zero forms. The sign-in form (`sign-in-form.tsx`) does NOT use `useAppForm` — it uses `authClient.signIn.social`/`passkey`.                                                                                                                                                                           | Be honest: `@tsu-stack/forms` is future-proofing so the web app can add forms (e.g., contact form) without duplicating the pattern. Still worth doing, but state the real motivation.                                      |
+| 4   | **Didn't call out that dashboard routes are NOT thin**               | `projects/index.tsx` (138 lines), `projects/new.tsx` (221 lines), `projects/$projectId.tsx` (310 lines), `experiences/new.tsx`, `experiences/$experienceId.tsx`, `stacks/route.tsx` (101 lines) all have full page UI inline in route files. This violates `.agents/tanstack-patterns.md` §"Route Files Stay Thin". The public web pages follow the pattern (UI in `pages/`).                            | The move is the natural moment to standardize. Move inline UI to `pages/dashboard/<feature>/ui/` and keep routes thin. This is real work — size it.                                                                        |
+| 5   | **Cross-app navigation not addressed**                               | The command palette has "Go to Dashboard" (`registry.ts:49`). The dashboard sidebar has "Overview" pointing to `/dashboard` (`app-sidebar.tsx:38`). After the split, these are cross-origin links (`<a href="https://dashboard.salahmohsen.com">`), not router `<Link>`.                                                                                                                                 | Use plain `<a>` for cross-app links. Document in `.agents/tanstack-patterns.md`.                                                                                                                                           |
+| 6   | **Sign-in form callback URL**                                        | `sign-in-form.tsx:20` uses `ENV_WEB_ISOMORPHIC.VITE_WEB_URL` for the OAuth callback. In the dashboard, this must be `ENV_DASHBOARD_ISOMORPHIC.VITE_DASHBOARD_URL`.                                                                                                                                                                                                                                       | Update the callback URL helper to use the dashboard env.                                                                                                                                                                   |
+| 7   | **Sign-in form links to `/terms-of-service` and `/privacy-policy`**  | `sign-in-form.tsx:116-122` links to web app routes. In the dashboard, these become cross-app links to the web app's URLs.                                                                                                                                                                                                                                                                                | Replace with `<a>` tags pointing to the web app's canonical URLs.                                                                                                                                                          |
+| 8   | **`SortableList` classified as shared**                              | Only used in `projects/index.tsx` and `experiences/index.tsx` — both dashboard.                                                                                                                                                                                                                                                                                                                          | Moves to `apps/dashboard/src/shared/ui/sortable-list.tsx`. Not shared.                                                                                                                                                     |
+| 9   | **`Logo` classified as shared**                                      | Only used in `create-an-account-form.tsx` — auth, which moves to dashboard.                                                                                                                                                                                                                                                                                                                              | Moves to `apps/dashboard/src/shared/ui/logo.tsx`. Not shared.                                                                                                                                                              |
+| 10  | **`Markdown` not mentioned**                                         | Only used in `github-repo/ui/repo-markdown-files.tsx`. Stays in web.                                                                                                                                                                                                                                                                                                                                     | Explicitly mark as web-only.                                                                                                                                                                                               |
+| 11  | **`Image` not mentioned**                                            | Only used in `playground/ui/playground-page.tsx`. Stays in web.                                                                                                                                                                                                                                                                                                                                          | Explicitly mark as web-only.                                                                                                                                                                                               |
+| 12  | **Two `lib/` dirs not addressed**                                    | `src/lib/` (command-palette-icons, debug, github.query) and `src/shared/lib/` (everything else). Inconsistent with FSD.                                                                                                                                                                                                                                                                                  | Standardize: everything goes to `src/shared/lib/` in both apps.                                                                                                                                                            |
+| 13  | **Empty dirs not addressed**                                         | `shared/api/`, `shared/query/`, `shared/types/` are all empty.                                                                                                                                                                                                                                                                                                                                           | Remove during the move.                                                                                                                                                                                                    |
+| 14  | **`dashboard-bottombar` and `dashboard-side-panel` are misnamed**    | Both are used by the GITHUB layout (`root-layout.tsx:10,17,68`), not the dashboard layout.                                                                                                                                                                                                                                                                                                               | Rename to `github-bottombar.tsx` and `github-side-panel.tsx` in `apps/web`. The `dashboard-breadcrumbs` IS dashboard-only and moves.                                                                                       |
+| 15  | **Command palette split was vague**                                  | `shared/lib/command-palette/` has generic infrastructure (registry, types, hooks) AND web-specific commands (Go to Pulls, Go to Issues, Open on GitHub).                                                                                                                                                                                                                                                 | Infrastructure (registry core, types, use-command-items, use-command-palette) → `packages/ui/lib/command-palette/`. Web-specific command registrations + icons → stay in `apps/web`. Dashboard gets its own registrations. |
+| 16  | **`apps/web/components.json` vs `packages/ui/components.json`**      | Web has its own `components.json` pointing `components` alias to `@/shared/ui` — meaning shadcn can add components locally to the app. `packages/ui/components.json` points to `@tsu-stack/ui/components`. Per `.agents/ui.md`, shared shadcn components go in `packages/ui`.                                                                                                                            | Dashboard gets its own `components.json` mirroring web's pattern. Both apps' `components` alias should point to `@tsu-stack/ui/components` to enforce extraction per `.agents/ui.md`.                                      |
+| 17  | **Health check, sitemap, robots not addressed**                      | `[_]api/health/live.ts`, `sitemap[.]xml.ts`, `robots[.]txt.ts` exist in web.                                                                                                                                                                                                                                                                                                                             | Dashboard gets its own `[_]api/health/live.ts`. Dashboard `robots.txt` → `Disallow: /` (no index). No sitemap for dashboard.                                                                                               |
+| 18  | **`global.d.ts` and `.tanstack/` not addressed**                     | Each TanStack Start app needs its own generated `routeTree.gen.ts`, `.tanstack/` config, and `global.d.ts`.                                                                                                                                                                                                                                                                                              | Created automatically when the dashboard app is scaffolded with the tanstackStart plugin. Note it in the plan.                                                                                                             |
+| 19  | **Docker/CI not fully addressed**                                    | `docker-compose.yaml`, `docker-compose.coolify.yaml`, `.github/` workflows need a dashboard service.                                                                                                                                                                                                                                                                                                     | Add dashboard service to both docker-compose files. Check CI workflows for app-specific steps.                                                                                                                             |
 
 ## 3. Corrected Architecture
 
@@ -121,10 +121,12 @@ packages/app/
 ```
 
 **What stays app-local:**
+
 - `apps/web/src/shared/lib/github-query-persistence.tsx` — wraps the shared `AppQueryClientProvider` locally in `apps/web/src/router.tsx`. Web-only concern (GitHub tab cache).
 - `apps/dashboard` — uses the shared provider directly, no persistence wrapper for v1.
 
 **What does NOT go in `@tsu-stack/app`:**
+
 - `Container` — already in `packages/ui/components/container.tsx`. Standardize imports to `@tsu-stack/ui/components/container` directly. Delete the 1-line re-export.
 - `DefaultLoader` — 5-line wrapper around `DotmSquare18`. Move to `packages/ui/components/default-loader.tsx`.
 - `ErrorLayout` — 13 lines, depends on `--navbar-height` CSS var (app-specific). Stays per-app.
@@ -136,21 +138,25 @@ packages/app/
 ### 3.4 Command Palette Split
 
 **Infrastructure (generic) → `packages/ui/lib/command-palette/`:**
+
 - `registry.ts` (core functions: `registerCommands`, `getRegisteredCommands`, `subscribeCommands` — WITHOUT the web-specific command registrations at the bottom)
 - `types.ts` (generic `CommandItem`, `CommandAction` types)
 - `use-command-items.ts` (generic hook)
 - `use-command-palette.ts` (generic hook)
 
 **Web-specific → stays in `apps/web/src/shared/lib/command-palette/`:**
+
 - `registry.ts` web command registrations (Go to Repos, Pulls, Issues, Reviews, Settings, Open on GitHub)
 - `use-refresh-github-data.ts`
 - `apps/web/src/lib/command-palette-icons.tsx` → move to `apps/web/src/shared/lib/command-palette-icons.tsx` (fix the dual-lib-dir issue)
 
 **Dashboard-specific → `apps/dashboard/src/shared/lib/command-palette/`:**
+
 - `registry.ts` dashboard command registrations (Go to Overview, Projects, Experiences, Stacks, Settings)
 - Dashboard-specific icons
 
 **Shell component → `packages/ui/components/command-palette.tsx`:**
+
 - The `CommandPalette` component (currently `apps/web/src/widgets/layout/ui/command-palette.tsx`) minus the static command registrations. Each app renders the shell and registers its own commands at module scope.
 
 ### 3.5 CSS And Styles
@@ -163,19 +169,20 @@ packages/app/
 
 The current dashboard route files violate `.agents/tanstack-patterns.md` §"Route Files Stay Thin". During the move, refactor each inline-page route to the thin pattern:
 
-| Current route file (inline UI) | After move: route file (thin) | After move: page file |
-|-------------------------------|-------------------------------|-----------------------|
-| `__protected/dashboard/projects/index.tsx` (138 lines) | `routes/{-$locale}/(dashboard-layout)/dashboard/projects/index.tsx` (~20 lines) | `pages/dashboard/projects/ui/projects-list-page.tsx` |
-| `__protected/dashboard/projects/new.tsx` (221 lines) | `routes/.../projects/new.tsx` (~15 lines) | `pages/dashboard/projects/ui/new-project-page.tsx` |
-| `__protected/dashboard/projects/$projectId.tsx` (310 lines) | `routes/.../projects/$projectId.tsx` (~15 lines) | `pages/dashboard/projects/ui/edit-project-page.tsx` |
-| `__protected/dashboard/experiences/index.tsx` | `routes/.../experiences/index.tsx` (~20 lines) | `pages/dashboard/experiences/ui/experiences-list-page.tsx` |
-| `__protected/dashboard/experiences/new.tsx` | `routes/.../experiences/new.tsx` (~15 lines) | `pages/dashboard/experiences/ui/new-experience-page.tsx` |
-| `__protected/dashboard/experiences/$experienceId.tsx` | `routes/.../experiences/$experienceId.tsx` (~15 lines) | `pages/dashboard/experiences/ui/edit-experience-page.tsx` |
-| `__protected/dashboard/stacks/route.tsx` (101 lines) | `routes/.../stacks/index.tsx` (~20 lines) | `pages/dashboard/stacks/ui/stacks-list-page.tsx` |
-| `__protected/dashboard/index.tsx` (already thin) | `routes/.../dashboard/index.tsx` (no change) | `pages/dashboard/ui/dashboard-page.tsx` (already exists) |
-| `__protected/dashboard/github-config/route.tsx` | `routes/.../github-config/index.tsx` (~15 lines) | `pages/dashboard/ui/github-config-form.tsx` (already exists) |
+| Current route file (inline UI)                              | After move: route file (thin)                                                   | After move: page file                                        |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `__protected/dashboard/projects/index.tsx` (138 lines)      | `routes/{-$locale}/(dashboard-layout)/dashboard/projects/index.tsx` (~20 lines) | `pages/dashboard/projects/ui/projects-list-page.tsx`         |
+| `__protected/dashboard/projects/new.tsx` (221 lines)        | `routes/.../projects/new.tsx` (~15 lines)                                       | `pages/dashboard/projects/ui/new-project-page.tsx`           |
+| `__protected/dashboard/projects/$projectId.tsx` (310 lines) | `routes/.../projects/$projectId.tsx` (~15 lines)                                | `pages/dashboard/projects/ui/edit-project-page.tsx`          |
+| `__protected/dashboard/experiences/index.tsx`               | `routes/.../experiences/index.tsx` (~20 lines)                                  | `pages/dashboard/experiences/ui/experiences-list-page.tsx`   |
+| `__protected/dashboard/experiences/new.tsx`                 | `routes/.../experiences/new.tsx` (~15 lines)                                    | `pages/dashboard/experiences/ui/new-experience-page.tsx`     |
+| `__protected/dashboard/experiences/$experienceId.tsx`       | `routes/.../experiences/$experienceId.tsx` (~15 lines)                          | `pages/dashboard/experiences/ui/edit-experience-page.tsx`    |
+| `__protected/dashboard/stacks/route.tsx` (101 lines)        | `routes/.../stacks/index.tsx` (~20 lines)                                       | `pages/dashboard/stacks/ui/stacks-list-page.tsx`             |
+| `__protected/dashboard/index.tsx` (already thin)            | `routes/.../dashboard/index.tsx` (no change)                                    | `pages/dashboard/ui/dashboard-page.tsx` (already exists)     |
+| `__protected/dashboard/github-config/route.tsx`             | `routes/.../github-config/index.tsx` (~15 lines)                                | `pages/dashboard/ui/github-config-form.tsx` (already exists) |
 
 **Also standardize mutations:** `projects/new.tsx`, `projects/$projectId.tsx`, `experiences/new.tsx`, `experiences/$experienceId.tsx` all have inline `useMutation(orpc...)`. Extract to:
+
 - `pages/dashboard/projects/api/create-project.mutation.ts`
 - `pages/dashboard/projects/api/update-project.mutation.ts`
 - `pages/dashboard/projects/api/delete-project.mutation.ts`
@@ -188,78 +195,80 @@ This matches the existing `pages/dashboard/api/update-app-settings.mutation.ts` 
 
 ### 5.1 Dashboard-bound (move to `apps/dashboard`)
 
-| Source | Destination |
-|--------|-------------|
-| `routes/{-$locale}/__protected/dashboard/**` | `routes/{-$locale}/(dashboard-layout)/dashboard/**` |
+| Source                                                 | Destination                                                     |
+| ------------------------------------------------------ | --------------------------------------------------------------- |
+| `routes/{-$locale}/__protected/dashboard/**`           | `routes/{-$locale}/(dashboard-layout)/dashboard/**`             |
 | `routes/{-$locale}/__protected/route.tsx` (auth guard) | Logic moves to `routes/{-$locale}/(dashboard-layout)/route.tsx` |
-| `pages/dashboard/**` | `pages/dashboard/**` (same structure, refactored per §4) |
-| `features/auth/**` | `features/auth/**` |
-| `widgets/layout/ui/dashboard-layout.tsx` | `widgets/layout/ui/dashboard-layout.tsx` |
-| `widgets/layout/ui/dashboard-breadcrumbs.tsx` | `widgets/layout/ui/dashboard-breadcrumbs.tsx` |
-| `widgets/layout/ui/command-palette.tsx` | `widgets/layout/ui/command-palette.tsx` (dashboard commands) |
-| `shared/ui/app-sidebar.tsx` | `shared/ui/app-sidebar.tsx` |
-| `shared/ui/nav-main.tsx` | `shared/ui/nav-main.tsx` |
-| `shared/ui/nav-user.tsx` | `shared/ui/nav-user.tsx` |
-| `shared/ui/team-switcher.tsx` | `shared/ui/team-switcher.tsx` |
-| `shared/ui/sortable-list.tsx` | `shared/ui/sortable-list.tsx` |
-| `shared/ui/logo.tsx` | `shared/ui/logo.tsx` |
-| `shared/lib/warning-store.ts` | `shared/lib/warning-store.tsx` (if dashboard needs warnings) |
-| `pages/default-error/**` | `pages/default-error/**` (copy — both apps need error pages) |
-| `pages/default-not-found/**` | `pages/default-not-found/**` (copy) |
-| `shared/styles/{app.css,fonts.css,theme.css}` | `shared/styles/` (copy) |
+| `pages/dashboard/**`                                   | `pages/dashboard/**` (same structure, refactored per §4)        |
+| `features/auth/**`                                     | `features/auth/**`                                              |
+| `widgets/layout/ui/dashboard-layout.tsx`               | `widgets/layout/ui/dashboard-layout.tsx`                        |
+| `widgets/layout/ui/dashboard-breadcrumbs.tsx`          | `widgets/layout/ui/dashboard-breadcrumbs.tsx`                   |
+| `widgets/layout/ui/command-palette.tsx`                | `widgets/layout/ui/command-palette.tsx` (dashboard commands)    |
+| `shared/ui/app-sidebar.tsx`                            | `shared/ui/app-sidebar.tsx`                                     |
+| `shared/ui/nav-main.tsx`                               | `shared/ui/nav-main.tsx`                                        |
+| `shared/ui/nav-user.tsx`                               | `shared/ui/nav-user.tsx`                                        |
+| `shared/ui/team-switcher.tsx`                          | `shared/ui/team-switcher.tsx`                                   |
+| `shared/ui/sortable-list.tsx`                          | `shared/ui/sortable-list.tsx`                                   |
+| `shared/ui/logo.tsx`                                   | `shared/ui/logo.tsx`                                            |
+| `shared/lib/warning-store.ts`                          | `shared/lib/warning-store.tsx` (if dashboard needs warnings)    |
+| `pages/default-error/**`                               | `pages/default-error/**` (copy — both apps need error pages)    |
+| `pages/default-not-found/**`                           | `pages/default-not-found/**` (copy)                             |
+| `shared/styles/{app.css,fonts.css,theme.css}`          | `shared/styles/` (copy)                                         |
 
 ### 5.2 Shared (move to packages)
 
-| Source | Destination |
-|--------|-------------|
-| `shared/form/**` | `packages/forms/src/**` |
-| `shared/lib/zod-form-validator.ts` | `packages/forms/src/zod-form-validator.ts` |
-| `shared/providers/logger-provider.tsx` | `packages/app/src/providers/logger-provider.tsx` |
-| `shared/providers/progress.provider.tsx` | `packages/app/src/providers/progress.provider.tsx` |
-| `shared/providers/query-client.provider.tsx` (factory + provider only) | `packages/app/src/providers/query-client.provider.tsx` |
-| `shared/ui/default-loader.tsx` | `packages/ui/components/default-loader.tsx` |
-| `shared/lib/use-media-query.ts` | `packages/ui/hooks/use-media-query.ts` |
-| `shared/lib/command-palette/registry.ts` (core only) | `packages/ui/lib/command-palette/registry.ts` |
-| `shared/lib/command-palette/types.ts` | `packages/ui/lib/command-palette/types.ts` |
-| `shared/lib/command-palette/use-command-items.ts` | `packages/ui/lib/command-palette/use-command-items.ts` |
-| `shared/lib/command-palette/use-command-palette.ts` | `packages/ui/lib/command-palette/use-command-palette.ts` |
-| `widgets/layout/ui/command-palette.tsx` (shell only) | `packages/ui/components/command-palette.tsx` |
+| Source                                                                 | Destination                                              |
+| ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| `shared/form/**`                                                       | `packages/forms/src/**`                                  |
+| `shared/lib/zod-form-validator.ts`                                     | `packages/forms/src/zod-form-validator.ts`               |
+| `shared/providers/logger-provider.tsx`                                 | `packages/app/src/providers/logger-provider.tsx`         |
+| `shared/providers/progress.provider.tsx`                               | `packages/app/src/providers/progress.provider.tsx`       |
+| `shared/providers/query-client.provider.tsx` (factory + provider only) | `packages/app/src/providers/query-client.provider.tsx`   |
+| `shared/ui/default-loader.tsx`                                         | `packages/ui/components/default-loader.tsx`              |
+| `shared/lib/use-media-query.ts`                                        | `packages/ui/hooks/use-media-query.ts`                   |
+| `shared/lib/command-palette/registry.ts` (core only)                   | `packages/ui/lib/command-palette/registry.ts`            |
+| `shared/lib/command-palette/types.ts`                                  | `packages/ui/lib/command-palette/types.ts`               |
+| `shared/lib/command-palette/use-command-items.ts`                      | `packages/ui/lib/command-palette/use-command-items.ts`   |
+| `shared/lib/command-palette/use-command-palette.ts`                    | `packages/ui/lib/command-palette/use-command-palette.ts` |
+| `widgets/layout/ui/command-palette.tsx` (shell only)                   | `packages/ui/components/command-palette.tsx`             |
 
 ### 5.3 Web-only (stays in `apps/web`, renamed)
 
-| Source | Change |
-|--------|--------|
-| `widgets/layout/ui/root-layout.tsx` | Rename file → `github-layout.tsx`, export → `GithubLayout` |
-| `widgets/layout/ui/dashboard-bottombar.tsx` | Rename → `github-bottombar.tsx` (used by github layout, not dashboard) |
-| `widgets/layout/ui/dashboard-side-panel.tsx` | Rename → `github-side-panel.tsx` (used by github layout, not dashboard) |
-| `widgets/layout/ui/github-public-topbar.tsx` | No change |
-| `widgets/layout/ui/github-public-mobile-nav.tsx` | No change |
-| `widgets/layout/ui/github-public-tabs.tsx` | No change |
-| `widgets/layout/ui/github-access-dialog.tsx` | No change |
-| `widgets/layout/ui/extension-install-prompt.tsx` | No change |
-| `shared/ui/container.tsx` | DELETE (1-line re-export — import from `@tsu-stack/ui/components/container` directly) |
-| `shared/ui/error-layout.tsx` | Stays (CSS var dep) |
-| `shared/ui/markdown.tsx` | Stays (web-only) |
-| `shared/ui/image.tsx` | Stays (web-only, playground) |
-| `shared/ui/repository-row.tsx` | Stays (web-only) |
-| `shared/ui/file-search-card.tsx` | Stays (web-only) |
-| `shared/ui/repo-commit-sparkline*.tsx` | Stays (web-only) |
-| `shared/lib/**` (github-specific) | Stays |
-| `src/lib/**` | Move to `src/shared/lib/` (fix dual-lib-dir issue) |
-| `shared/api/`, `shared/query/`, `shared/types/` | DELETE (empty) |
-| `routes/{-$locale}/(github-layout)/(guest)/**` | DELETE (auth removed from web) |
-| `routes/{-$locale}/__protected/**` | DELETE (moved to dashboard) |
-| `features/github/**` | Stays |
+| Source                                           | Change                                                                                |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `widgets/layout/ui/root-layout.tsx`              | Rename file → `github-layout.tsx`, export → `GithubLayout`                            |
+| `widgets/layout/ui/dashboard-bottombar.tsx`      | Rename → `github-bottombar.tsx` (used by github layout, not dashboard)                |
+| `widgets/layout/ui/dashboard-side-panel.tsx`     | Rename → `github-side-panel.tsx` (used by github layout, not dashboard)               |
+| `widgets/layout/ui/github-public-topbar.tsx`     | No change                                                                             |
+| `widgets/layout/ui/github-public-mobile-nav.tsx` | No change                                                                             |
+| `widgets/layout/ui/github-public-tabs.tsx`       | No change                                                                             |
+| `widgets/layout/ui/github-access-dialog.tsx`     | No change                                                                             |
+| `widgets/layout/ui/extension-install-prompt.tsx` | No change                                                                             |
+| `shared/ui/container.tsx`                        | DELETE (1-line re-export — import from `@tsu-stack/ui/components/container` directly) |
+| `shared/ui/error-layout.tsx`                     | Stays (CSS var dep)                                                                   |
+| `shared/ui/markdown.tsx`                         | Stays (web-only)                                                                      |
+| `shared/ui/image.tsx`                            | Stays (web-only, playground)                                                          |
+| `shared/ui/repository-row.tsx`                   | Stays (web-only)                                                                      |
+| `shared/ui/file-search-card.tsx`                 | Stays (web-only)                                                                      |
+| `shared/ui/repo-commit-sparkline*.tsx`           | Stays (web-only)                                                                      |
+| `shared/lib/**` (github-specific)                | Stays                                                                                 |
+| `src/lib/**`                                     | Move to `src/shared/lib/` (fix dual-lib-dir issue)                                    |
+| `shared/api/`, `shared/query/`, `shared/types/`  | DELETE (empty)                                                                        |
+| `routes/{-$locale}/(github-layout)/(guest)/**`   | DELETE (auth removed from web)                                                        |
+| `routes/{-$locale}/__protected/**`               | DELETE (moved to dashboard)                                                           |
+| `features/github/**`                             | Stays                                                                                 |
 
 ## 6. Env, Tooling, Deploy
 
 ### 6.1 Env
 
 New scoped objects in `packages/env/src/dashboard/`:
+
 - `ENV_DASHBOARD_ISOMORPHIC`: `VITE_DASHBOARD_URL`, `VITE_SERVER_URL`, `VITE_IMGPROXY_URL?`
 - `ENV_DASHBOARD_SERVER`: `NODE_ENV`, `SOURCE_COMMIT`, `IS_BUILD`
 
 Update in six places per `.agents/environment-variables.md`:
+
 1. `packages/env/src/dashboard/` — new Zod validation
 2. `docker-compose.yaml` + `docker-compose.coolify.yaml` — add dashboard service
 3. `apps/dashboard/Dockerfile` — `ARG` + `ENV` for dashboard vars
@@ -270,6 +279,7 @@ Update in six places per `.agents/environment-variables.md`:
 ### 6.2 Workspace scripts
 
 Update root `package.json`:
+
 - `deploy:dashboard` → `vp run --filter @tsu-stack/dashboard deploy`
 - `logs:dashboard` → `vp run --filter @tsu-stack/dashboard logs`
 - `dev` stays `pnpm -r --parallel dev` (workspace glob picks up the new app)
@@ -278,6 +288,7 @@ Update root `package.json`:
 ### 6.3 Wrangler
 
 `apps/dashboard/wrangler.jsonc`:
+
 - `name`: `portfolio-dashboard`
 - `routes`: `[{ "pattern": "dashboard.salahmohsen.com/*", "zone_name": "salahmohsen.com" }]`
 - `vars`: `VITE_SERVER_URL`, `VITE_DASHBOARD_URL`
@@ -287,6 +298,7 @@ Update root `package.json`:
 ### 6.4 Per-app files to create
 
 Each TanStack Start app needs:
+
 - `apps/dashboard/src/global.d.ts` (copy from web, adjust)
 - `apps/dashboard/.tanstack/` (auto-generated on first dev/build)
 - `apps/dashboard/src/routeTree.gen.ts` (auto-generated)
@@ -299,10 +311,10 @@ Each TanStack Start app needs:
 
 After the split, the two apps are on different origins. Router `<Link>` only works within the same app. Cross-app links use plain `<a>`:
 
-| Link | From | To | Implementation |
-|------|------|----|----------------|
-| "Dashboard" in web topbar/command palette | `apps/web` | `https://dashboard.salahmohsen.com` | `<a href={ENV_WEB_ISOMORPHIC.VITE_DASHBOARD_URL}>` |
-| "Back to site" in dashboard sidebar | `apps/dashboard` | `https://salahmohsen.com` | `<a href={ENV_DASHBOARD_ISOMORPHIC.VITE_WEB_URL}>` |
+| Link                                      | From             | To                                  | Implementation                                     |
+| ----------------------------------------- | ---------------- | ----------------------------------- | -------------------------------------------------- |
+| "Dashboard" in web topbar/command palette | `apps/web`       | `https://dashboard.salahmohsen.com` | `<a href={ENV_WEB_ISOMORPHIC.VITE_DASHBOARD_URL}>` |
+| "Back to site" in dashboard sidebar       | `apps/dashboard` | `https://salahmohsen.com`           | `<a href={ENV_DASHBOARD_ISOMORPHIC.VITE_WEB_URL}>` |
 
 Add `VITE_DASHBOARD_URL` to `ENV_WEB_ISOMORPHIC` and `VITE_WEB_URL` to `ENV_DASHBOARD_ISOMORPHIC` so each app knows the other's URL.
 
@@ -336,9 +348,9 @@ Document in `.agents/tanstack-patterns.md`: "Cross-app links use `<a>` with the 
 
 13. **Update root `package.json` scripts**: `deploy:dashboard`, `logs:dashboard`.
 
-14. **Update `.agents/` docs**: 
+14. **Update `.agents/` docs**:
     - `.agents/tanstack-patterns.md` — add multi-app section, `(dashboard-layout)` convention, cross-app `<a>` links.
-    - New `.agents/forms.md` — form pattern (useAppForm, AppField → field.*Field, createZodFormValidator).
+    - New `.agents/forms.md` — form pattern (useAppForm, AppField → field.\*Field, createZodFormValidator).
     - `.agents/ui.md` — note `DefaultLoader` and `useMediaQuery` now in `packages/ui`.
     - `.agents/auth.md` — note auth is dashboard-only, cross-app cookie gap is deferred.
     - `.agents/end-to-end-features.md` — note dashboard work is in `apps/dashboard`.

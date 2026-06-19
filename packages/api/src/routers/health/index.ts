@@ -88,7 +88,9 @@ export const healthRouter = {
     })
     .errors({})
     .output(HealthLiveOutputSchema)
-    .handler(() => ({ status: "healthy", ...buildBaseHealth() })),
+    .handler(() => {
+      return { status: "healthy", ...buildBaseHealth() };
+    }),
   ready: publicProcedure
     .route({
       description:

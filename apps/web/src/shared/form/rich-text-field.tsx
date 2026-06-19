@@ -1,5 +1,8 @@
 import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
-import { RichTextEditor, type RichTextEditorProps } from "@tsu-stack/ui/components/rich-text-editor";
+import {
+  RichTextEditor,
+  type RichTextEditorProps
+} from "@tsu-stack/ui/components/rich-text-editor";
 
 import { useFieldContext } from "./form-contexts";
 
