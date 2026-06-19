@@ -1,8 +1,4 @@
-import geistMonoCyrillic from "@fontsource-variable/geist-mono/files/geist-mono-cyrillic-wght-normal.woff2?url";
-import geistMonoLatinExt from "@fontsource-variable/geist-mono/files/geist-mono-latin-ext-wght-normal.woff2?url";
 import geistMonoLatin from "@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2?url";
-import geistVariableCyrillic from "@fontsource-variable/geist/files/geist-cyrillic-wght-normal.woff2?url";
-import geistVariableLatinExt from "@fontsource-variable/geist/files/geist-latin-ext-wght-normal.woff2?url";
 import geistVariableLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 import { a11yDevtoolsPlugin } from "@tanstack/devtools-a11y/react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
@@ -75,35 +71,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
           rel: "preload",
           as: "font",
           type: "font/woff2",
-          href: geistVariableLatinExt,
-          crossOrigin: "anonymous"
-        },
-        {
-          rel: "preload",
-          as: "font",
-          type: "font/woff2",
-          href: geistVariableCyrillic,
-          crossOrigin: "anonymous"
-        },
-        {
-          rel: "preload",
-          as: "font",
-          type: "font/woff2",
           href: geistMonoLatin,
-          crossOrigin: "anonymous"
-        },
-        {
-          rel: "preload",
-          as: "font",
-          type: "font/woff2",
-          href: geistMonoLatinExt,
-          crossOrigin: "anonymous"
-        },
-        {
-          rel: "preload",
-          as: "font",
-          type: "font/woff2",
-          href: geistMonoCyrillic,
           crossOrigin: "anonymous"
         },
         { href: appCss, rel: "stylesheet" }

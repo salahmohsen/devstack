@@ -170,7 +170,14 @@ export function GithubProfilePage() {
       <div className="relative mx-auto max-w-3xl space-y-5 px-6">
         <div className="-mt-16 flex items-end justify-between sm:-mt-20">
           <Avatar className="size-28 border sm:size-32">
-            <AvatarImage alt={profile.login} src={profile.avatarUrl} />
+            <AvatarImage
+              alt={profile.login}
+              src={profile.avatarUrl}
+              fetchPriority="high"
+              width={128}
+              height={128}
+              sizes="(min-width: 640px) 128px, 112px"
+            />
             <AvatarFallback>
               {(profile.name ?? profile.login).charAt(0).toUpperCase()}
             </AvatarFallback>
@@ -184,6 +191,7 @@ export function GithubProfilePage() {
               render={
                 <Link href="https://github.com/settings/profile" target="_blank" rel="noreferrer" />
               }
+              aria-label="Edit GitHub profile"
             >
               <EditIcon className="size-3.5" />
             </Button>
@@ -232,7 +240,7 @@ export function GithubProfilePage() {
           <div className="mx-auto max-w-3xl">
             {(pinnedReposQuery.data ?? []).length > 0 ? (
               <section className="flex flex-col gap-2 pt-6">
-                <h2 className="text-sm font-medium text-base-500">Pinned</h2>
+                <h2 className="text-sm font-medium text-base-400">Pinned</h2>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {(pinnedReposQuery.data ?? []).map((repo) => (
                     <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />

@@ -57,12 +57,13 @@ export const Route = createFileRoute("/{-$locale}/(github-layout)/")({
     });
 
     if (setupStatus.isConfigured && setupStatus.owner) {
-      await Promise.all([
-        ensureGithubQueryData({
-          load: () => context.queryClient.prefetchQuery(getGithubProfileQueryOptions()),
-          event: "home_github_profile_preload_failed",
-          owner: setupStatus.owner
-        }),
+      await ensureGithubQueryData({
+        load: () => context.queryClient.prefetchQuery(getGithubProfileQueryOptions()),
+        event: "home_github_profile_preload_failed",
+        owner: setupStatus.owner
+      });
+
+      void Promise.all([
         ensureGithubQueryData({
           load: () => context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions()),
           event: "home_github_pinned_repos_preload_failed",
@@ -78,7 +79,13 @@ export const Route = createFileRoute("/{-$locale}/(github-layout)/")({
           event: "home_github_activity_preload_failed",
           owner: setupStatus.owner
         })
-      ]);
+      ]).catch((error) => {
+        log.error({
+          error,
+          event: "home_github_deferred_preload_failed",
+          owner: setupStatus.owner
+        });
+      });
     }
 
     return setupStatus;
