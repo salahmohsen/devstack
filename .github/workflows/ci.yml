@@ -29,6 +29,18 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_SERVER_URL: ${{ vars.VITE_SERVER_URL }}
+      VITE_WEB_URL: ${{ vars.VITE_WEB_URL }}
+      SOURCE_COMMIT: ${{ github.sha }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      # GitHub Actions reserves the GITHUB_ prefix for its own tokens, so the
+      # OAuth credentials are stored under GH_ aliases in repo secrets and
+      # re-exposed under the names the app's env schema expects.
+      GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
+      GITHUB_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,4 +50,21 @@ jobs:
           cache: true
 
       - run: vp install
+
+      # The web build invokes `dotenvx run -f ../../packages/env/.env`, so the
+      # file must exist in CI. Materialize it from the job env using `%q` so
+      # values with special characters are safely quoted.
+      - name: Write packages/env/.env for build
+        run: |
+          : > packages/env/.env
+          printf 'VITE_SERVER_URL=%q\n' "$VITE_SERVER_URL" >> packages/env/.env
+          printf 'VITE_WEB_URL=%q\n' "$VITE_WEB_URL" >> packages/env/.env
+          printf 'VITE_IMGPROXY_URL=%q\n' "$VITE_IMGPROXY_URL" >> packages/env/.env
+          printf 'SOURCE_COMMIT=%q\n' "$SOURCE_COMMIT" >> packages/env/.env
+          printf 'DATABASE_URL=%q\n' "$DATABASE_URL" >> packages/env/.env
+          printf 'BETTER_AUTH_SECRET=%q\n' "$BETTER_AUTH_SECRET" >> packages/env/.env
+          printf 'GITHUB_CLIENT_ID=%q\n' "$GITHUB_CLIENT_ID" >> packages/env/.env
+          printf 'GITHUB_CLIENT_SECRET=%q\n' "$GITHUB_CLIENT_SECRET" >> packages/env/.env
+          printf 'GITHUB_WEBHOOK_SECRET=%q\n' "$GITHUB_WEBHOOK_SECRET" >> packages/env/.env
+
       - run: vp run build
