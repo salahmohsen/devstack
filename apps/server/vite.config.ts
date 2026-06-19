@@ -21,6 +21,7 @@ export default defineConfig({
     }
   },
   plugins: [cloudflare({ inspectorPort: false })],
+
   server: {
     // Hono's CORS middleware should own preflight handling in dev; Hono docs
     // recommend disabling Vite's built-in CORS when using Hono with Vite:

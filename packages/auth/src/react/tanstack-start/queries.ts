@@ -3,7 +3,8 @@ import { queryOptions } from "@tanstack/react-query";
 import { $getUser } from "#@/react/tanstack-start/functions";
 
 export const authQueryKeys = {
-  user: ["user"]
+  user: ["user"],
+  currentToken: ["user", "current-token"]
 };
 
 export function getAuthUserQueryOptions() {

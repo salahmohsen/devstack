@@ -58,7 +58,11 @@ const NAV_ITEMS = [
     items: [
       {
         icon: Settings2Icon,
-        items: [{ title: "GitHub Config", url: "/dashboard/github-config" }],
+        items: [
+          { title: "Profile", url: "/dashboard/settings/profile" },
+          { title: "Account", url: "/dashboard/settings/account" },
+          { title: "Github", url: "/dashboard/settings/github" }
+        ],
         title: "Settings"
       }
     ],

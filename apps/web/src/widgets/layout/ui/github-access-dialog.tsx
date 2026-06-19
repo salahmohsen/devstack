@@ -55,7 +55,7 @@ export function GitHubAccessDialog() {
             <p className="text-center text-sm text-muted-foreground">
               GitHub access is managed from the{" "}
               <Link
-                to="/dashboard/github-config"
+                to="/dashboard/settings/github"
                 className="text-accent-foreground hover:underline"
                 onClick={() => handleOpenChange(false)}
               >
@@ -72,7 +72,9 @@ export function GitHubAccessDialog() {
           </Button>
           <Button
             size="sm"
-            render={<Link to="/dashboard/github-config" onClick={() => handleOpenChange(false)} />}
+            render={
+              <Link to="/dashboard/settings/github" onClick={() => handleOpenChange(false)} />
+            }
           >
             Configure access
           </Button>

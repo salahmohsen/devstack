@@ -30,7 +30,9 @@ export const ENV_SERVER = createEnv({
     IS_BUILD: z.stringbool().default(false), // set to 'true' during build, can be used to conditionally disable features that should only run during runtime and not during build/prerendering
     GITHUB_WEBHOOK_SECRET: z.string().min(1).optional(),
     GITHUB_CLIENT_ID: z.string().min(1),
-    GITHUB_CLIENT_SECRET: z.string().min(1)
+    GITHUB_CLIENT_SECRET: z.string().min(1),
+    RESEND_API_KEY: z.string().optional(),
+    EMAIL_FROM: z.string().optional()
   }
 });
 

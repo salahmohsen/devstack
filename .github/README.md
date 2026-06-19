@@ -304,16 +304,18 @@ This branch configures the **web app** for Cloudflare Workers through the Cloudf
 
 For the Hono server, use the following environment variables in either Node or Cloudflare Worker runtime:
 
-| Variable Name           | Required | Default Value | Description                                                                                      |
-| ----------------------- | -------- | ------------- | ------------------------------------------------------------------------------------------------ |
-| `VITE_SERVER_URL`       | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`. |
-| `VITE_WEB_URL`          | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.   |
-| `BETTER_AUTH_SECRET`    | ✅       | -             | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                  |
-| `DATABASE_URL`          | ✅       | -             | Neon Postgres connection string.                                                                 |
-| `GITHUB_CLIENT_ID`      | ✅       | -             | GitHub OAuth app client ID used by Better Auth.                                                  |
-| `GITHUB_CLIENT_SECRET`  | ✅       | -             | GitHub OAuth app client secret used by Better Auth.                                              |
-| `GITHUB_WEBHOOK_SECRET` | ❌       | -             | Secret used to verify GitHub webhook signatures for public cache invalidation when enabled.      |
-| `ENABLE_OPEN_API_DOCS`  | ❌       | `false`       | Enable OpenAPI `/docs` endpoint.                                                                 |
+| Variable Name           | Required | Default Value         | Description                                                                                                      |
+| ----------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `VITE_SERVER_URL`       | ✅       | -                     | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`.                 |
+| `VITE_WEB_URL`          | ✅       | -                     | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.                   |
+| `BETTER_AUTH_SECRET`    | ✅       | -                     | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                                  |
+| `DATABASE_URL`          | ✅       | -                     | Neon Postgres connection string.                                                                                 |
+| `GITHUB_CLIENT_ID`      | ✅       | -                     | GitHub OAuth app client ID used by Better Auth.                                                                  |
+| `GITHUB_CLIENT_SECRET`  | ✅       | -                     | GitHub OAuth app client secret used by Better Auth.                                                              |
+| `GITHUB_WEBHOOK_SECRET` | ❌       | -                     | Secret used to verify GitHub webhook signatures for public cache invalidation when enabled.                      |
+| `RESEND_API_KEY`        | ❌       | -                     | Resend API key for transactional email (verification, etc.). If unset, email delivery is skipped with a warning. |
+| `EMAIL_FROM`            | ❌       | `noreply@example.com` | From address used for outgoing transactional email. ex: `Portfolio <noreply@yourdomain.com>`.                    |
+| `ENABLE_OPEN_API_DOCS`  | ❌       | `false`               | Enable OpenAPI `/docs` endpoint.                                                                                 |
 
 ### Web
 

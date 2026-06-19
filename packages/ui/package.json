@@ -8,7 +8,7 @@
   "exports": {
     "./*": "./*.ts",
     "./styles/globals.css": "./styles/globals.css",
-    "./components/*": "./components/"
+    "./components/*": "./components/*"
   },
   "scripts": {
     "ui": "vpx shadcn@latest"
@@ -28,6 +28,7 @@
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "date-fns": "catalog:",
+    "lucide-react": "catalog:",
     "motion": "catalog:",
     "next-themes": "catalog:",
     "radix-ui": "catalog:",

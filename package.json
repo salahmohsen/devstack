@@ -14,6 +14,7 @@
     "deploy:web": "vp run --filter @tsu-stack/web deploy",
     "logs": "vp run -r --parallel logs",
     "logs:server": "vp run --filter @tsu-stack/server logs",
+    "email:dev": "vp run --filter @tsu-stack/email email:dev",
     "logs:web": "vp run --filter @tsu-stack/web logs",
     "prepare": "vp config",
     "deps": "vpx taze@latest -Ilwr",
@@ -48,6 +49,7 @@
     "@typescript/native-preview": "catalog:",
     "eslint-plugin-fsd-lint": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
+    "oxlint": "catalog:",
     "oxlint-tailwindcss": "catalog:",
     "oxlint-tsgolint": "catalog:",
     "vite-plus": "catalog:",
@@ -58,5 +60,5 @@
       "@commitlint/config-conventional"
     ]
   },
-  "packageManager": "pnpm@11.7.0"
+  "packageManager": "pnpm@11.8.0"
 }

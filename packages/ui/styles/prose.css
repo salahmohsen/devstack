@@ -1,7 +1,7 @@
 /* from https://github.com/gridatek/tailwind-typography/tree/main */
 @theme {
   /* Required theme variables for tw-prose */
-  --tw-prose-body: var(--color-base-100);
+  --tw-prose-body: var(--color-base-900);
   --tw-prose-headings: var(--color-white);
   --tw-prose-lead: var(--color-base-500);
   --tw-prose-links: var(--color-primary);

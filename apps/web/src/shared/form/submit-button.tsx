@@ -18,7 +18,7 @@ function SubmitButton({ children, isLoading, ...props }: SubmitButtonProps) {
   return (
     <form.Subscribe selector={(state) => [state.isSubmitting]}>
       {([isSubmitting]) => (
-        <Button type="submit" disabled={isLoading || isSubmitting} {...props}>
+        <Button type="submit" disabled={isLoading ?? isSubmitting} {...props}>
           {children}
         </Button>
       )}

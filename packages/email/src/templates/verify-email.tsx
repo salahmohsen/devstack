@@ -1,0 +1,24 @@
+import { Button, Text } from "react-email";
+
+import { EmailLayout } from "#@/templates/layout-email";
+
+// TODO: add a template for the email using React EMAIL instead of plain text
+const VerifyEmail = ({ url, username }: { url: string; username: string }) => (
+  <EmailLayout preview="Verify your email address">
+    <Text className="text-gray-800 text-2xl font-bold">Verify your email</Text>
+    <Text className="text-gray-600">Hi {username},</Text>
+    <Text className="text-gray-600">
+      Please click the button below to verify your email address:
+    </Text>
+    <Button className="bg-blue-600 rounded-md px-6 py-3 font-medium text-white" href={url}>
+      Verify Email
+    </Button>
+  </EmailLayout>
+);
+
+export default VerifyEmail;
+
+VerifyEmail.PreviewProps = {
+  url: "https://example.com/verify-email",
+  username: "John Doe"
+};

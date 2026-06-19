@@ -2,7 +2,6 @@ import { useRef } from "react";
 
 import { useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
 import { ItemSkeleton } from "@/widgets/items-page/ui/item-skeleton";
-import { ItemsEmpty } from "@/widgets/items-page/ui/items-empty";
 
 type ItemsListProps<T> = {
   items: readonly T[] | null;

@@ -19,6 +19,8 @@ services:
       - "DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}"
       - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-replace_me_run_pnpm_auth_secret_to_generate_a_real_value_here}"
       - "ENABLE_OPEN_API_DOCS=${ENABLE_OPEN_API_DOCS:-false}"
+      - "RESEND_API_KEY=${RESEND_API_KEY:-}"
+      - "EMAIL_FROM=${EMAIL_FROM:-}"
     healthcheck:
       test:
         [

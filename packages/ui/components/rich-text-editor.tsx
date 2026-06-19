@@ -189,7 +189,7 @@ function RichTextEditor({
   useEffect(() => {
     if (!editor) return;
     if (value !== editor.getHTML() && !(value === "" && editor.getHTML() === "<p></p>")) {
-      editor.commands.setContent(value || "", false);
+      editor.commands.setContent(value || "");
     }
   }, [editor, value]);
 

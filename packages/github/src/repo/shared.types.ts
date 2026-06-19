@@ -1,16 +1,9 @@
-import {
-  type GitHubLocalFirstMeta,
-  type RepoContributor,
-  type RepoContributorsResult,
-  type RepoOverview
-} from "#@/schemas";
-export {
-  type GitHubLocalFirstMeta,
-  type RepoContributor,
-  type RepoContributorsResult,
-  type RepoOverview
-} from "#@/schemas";
+import { type GitHubLocalFirstMeta } from "#@/schemas";
 import { type GitHubActor } from "#@/types";
+
+export { type RepoContributor, type RepoContributorsResult, type RepoOverview } from "#@/schemas";
+
+export type { GitHubLocalFirstMeta };
 
 export type RepositoryRef = {
   name: string;

@@ -10,14 +10,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/componen
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import {
+  ItemSkeleton,
   ItemsEmpty,
-  ItemsInfoPanel,
   ItemsNavProvider,
-  ItemsPageHeader,
+  PageHeader,
   isAnyItemSelected,
   useItemsNavigation,
   useItemsTabUrlSync
 } from "@/widgets/items-page";
+import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useExperienceStore } from "./_lib/experience.slice";
 import { ExperienceTabs, isExperienceTab } from "./_lib/experience.types";
@@ -120,8 +121,8 @@ export function ExperiencesPage() {
   );
 
   function renderList() {
+    if (experiencesQuery.isLoading) return <ItemSkeleton />;
     if (visibleExperiences.length === 0) return emptyState;
-    if (experiencesQuery.isLoading) return null;
 
     return (
       <SortableList
@@ -139,7 +140,7 @@ export function ExperiencesPage() {
   return (
     <ItemsNavProvider value={{ handleNext, handlePrev }}>
       <div className="flex min-h-0 flex-col gap-5">
-        <ItemsPageHeader
+        <PageHeader
           title="Experiences"
           description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
           actions={<ExperienceItemAddButton />}

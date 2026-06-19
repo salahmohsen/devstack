@@ -1,0 +1,30 @@
+{
+  "name": "@tsu-stack/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#@/*": "./src/*.tsx"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "email:dev": "email dev --dir src/templates --port 3010"
+  },
+  "dependencies": {
+    "@tanstack/react-start": "catalog:",
+    "@tsu-stack/env": "workspace:*",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-email": "catalog:",
+    "resend": "catalog:"
+  },
+  "devDependencies": {
+    "@react-email/ui": "catalog:",
+    "@tsu-stack/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
+  }
+}

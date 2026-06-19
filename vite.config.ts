@@ -1,5 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite-plus";
+import { defineConfig, type PluginOption } from "vite-plus";
 
 const fsdEslintPluginOptions = {
   rootPath: "/apps/web/src/",
@@ -157,7 +157,11 @@ export default defineConfig({
     ],
     settings: {
       tailwindcss: {
-        entryPoint: "./apps/web/src/shared/styles/app.css"
+        entryPoint: [
+          { files: "packages/ui/**", use: "./packages/ui/styles/globals.css" },
+          { files: "apps/web/**", use: "./apps/web/src/shared/styles/app.css" },
+          { files: "**", use: "./packages/ui/styles/globals.css" }
+        ]
       }
     },
     options: { typeAware: true, typeCheck: true },
@@ -311,5 +315,5 @@ export default defineConfig({
       "tailwindcss/no-unnecessary-whitespace": "warn"
     }
   },
-  plugins: [tailwindcss()]
+  plugins: [tailwindcss() as PluginOption]
 });

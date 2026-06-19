@@ -13,6 +13,8 @@ services:
         - "DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}"
         - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-replace_me_run_pnpm_auth_secret_to_generate_a_real_value_here}"
         - "GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:-}"
+        - "RESEND_API_KEY=${RESEND_API_KEY:-}"
+        - "EMAIL_FROM=${EMAIL_FROM:-}"
     ports:
       - "${SERVER_PORT:-5000}:5000"
     environment:
@@ -22,6 +24,8 @@ services:
       - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-replace_me_run_pnpm_auth_secret_to_generate_a_real_value_here}"
       - "ENABLE_OPEN_API_DOCS=${ENABLE_OPEN_API_DOCS:-false}"
       - "GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:-}"
+      - "RESEND_API_KEY=${RESEND_API_KEY:-}"
+      - "EMAIL_FROM=${EMAIL_FROM:-}"
     healthcheck:
       test:
         [

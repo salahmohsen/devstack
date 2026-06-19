@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FaGithub } from "react-icons/fa6";
 import { toast } from "sonner";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
@@ -95,7 +94,6 @@ export function SignInForm({
               type="button"
               variant="outline"
             >
-              <FaGithub className="size-4" />
               Continue with GitHub
             </Button>
             <Button

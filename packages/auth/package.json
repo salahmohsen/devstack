@@ -6,17 +6,23 @@
     "#@/*": "./src/*.ts"
   },
   "exports": {
-    "./*": "./src/*.ts"
+    ".": "./src/index.ts",
+    "./index": "./src/index.ts",
+    "./react": "./src/react/index.ts",
+    "./react/*": "./src/react/*.ts"
   },
   "dependencies": {
     "@better-auth/passkey": "catalog:",
+    "@tsu-stack/email": "workspace:*",
+    "@tsu-stack/env": "workspace:*",
     "better-auth": "catalog:",
     "better-auth-drizzle-adapter": "catalog:"
   },
   "devDependencies": {
-    "@tsu-stack/env": "workspace:*",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "react": "catalog:",
     "typescript": "catalog:"
   },
   "peerDependencies": {

@@ -7,6 +7,8 @@ import { Badge } from "@tsu-stack/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/components/empty";
 
+import { DefaultLoader } from "@/shared/ui/default-loader";
+
 export const Route = createFileRoute("/{-$locale}/__protected/dashboard/stacks")({
   component: StacksListPage
 });

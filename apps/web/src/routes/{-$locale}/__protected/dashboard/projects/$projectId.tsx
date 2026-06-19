@@ -25,6 +25,7 @@ import { Separator } from "@tsu-stack/ui/components/separator";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 
 export const Route = createFileRoute("/{-$locale}/__protected/dashboard/projects/$projectId")({
   component: EditProjectPage
