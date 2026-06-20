@@ -29,6 +29,7 @@ catalog:
   "@orpc/server": ^1.14.6
   "@orpc/tanstack-query": ^1.14.6
   "@orpc/zod": ^1.14.6
+  "vite-plugin-checker": "^0.14.4"
 
   "@rolldown/plugin-babel": ^0.2.3
   "@t3-oss/env-core": ^0.13.11
@@ -132,6 +133,8 @@ overrides:
   vitest: "catalog:"
   drizzle-orm: "catalog:"
   kysely: 0.28.17
+patchedDependencies:
+  "@cloudflare/vite-plugin": patches/@cloudflare__vite-plugin.patch
 peerDependencyRules:
   allowAny:
     - vite

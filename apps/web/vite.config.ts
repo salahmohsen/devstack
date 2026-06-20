@@ -8,6 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
+import checker from "vite-plugin-checker";
 import { defineConfig } from "vite-plus";
 
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
@@ -135,8 +136,6 @@ plugins.push(
   devtools({
     consolePiping: { enabled: false }
   }),
-  shikiSSRStub(),
-  mdx(),
   cloudflare({
     viteEnvironment: { name: "ssr" }
   }),
@@ -156,6 +155,8 @@ plugins.push(
       }
     }
   }),
+  shikiSSRStub(),
+  mdx(),
   viteReact(),
   /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
   babel({
@@ -171,6 +172,9 @@ plugins.push(
       format: "webp",
       quality: 80
     }
+  }),
+  checker({
+    typescript: true
   })
 );
 
