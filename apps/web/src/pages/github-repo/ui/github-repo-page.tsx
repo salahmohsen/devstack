@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
-import { baseLocale, getLocale } from "@tsu-stack/i18n/runtime";
 import { Container } from "@tsu-stack/ui/components/container";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/components/empty";
 
@@ -48,7 +47,6 @@ type GithubRepoPageProps = {
 };
 
 export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPageProps) {
-  const localePrefix = getLocale() !== baseLocale ? `/${getLocale()}` : "";
   const githubSetup = useGetGithubSetupQuery();
   const owner = githubSetup.data?.owner ?? "salahmohsen";
   const overviewQuery = useGetGithubRepoOverviewQuery(repo);
@@ -126,9 +124,7 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
   useGitHubSignalStream(signalTargets);
 
   const tabUrl =
-    view === "tree"
-      ? `${localePrefix}/${repo}/tree/${branchName}${routePath ? `/${routePath}` : ""}`
-      : `${localePrefix}/${repo}`;
+    view === "tree" ? `${repo}/tree/${branchName}${routePath ? `/${routePath}` : ""}` : `${repo}`;
   const tabTitle =
     view === "repo" || !routePath ? `${repo}` : (routePath.split("/").at(-1) ?? routePath);
 
@@ -172,18 +168,16 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
   const handleBranchChange = (nextBranch: string) => {
     if (routePath) {
-      window.location.assign(
-        `${localePrefix}/${repo}/tree/${nextBranch}${routePath ? `/${routePath}` : ""}`
-      );
+      window.location.assign(`${repo}/tree/${nextBranch}${routePath ? `/${routePath}` : ""}`);
       return;
     }
 
     if (nextBranch === overview.defaultBranch) {
-      window.location.assign(`${localePrefix}/${repo}`);
+      window.location.assign(`${repo}`);
       return;
     }
 
-    window.location.assign(`${localePrefix}/${repo}/tree/${nextBranch}`);
+    window.location.assign(`${repo}/tree/${nextBranch}`);
   };
 
   return (

@@ -1,7 +1,6 @@
-import { useRouterState } from "@tanstack/react-router";
+import { Link, type NavigateOptions, useRouterState } from "@tanstack/react-router";
 import { Fragment } from "react";
 
-import { Link, type LinkProps } from "@tsu-stack/i18n/tanstack-start/components/link";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -81,7 +80,7 @@ export function DashboardBreadcrumbs() {
               ) : (
                 <BreadcrumbLink
                   className="hidden md:block"
-                  render={<Link to={crumb.path as LinkProps["to"]} />}
+                  render={<Link to={crumb.path as NavigateOptions["to"]} />}
                 >
                   {crumb.label}
                 </BreadcrumbLink>

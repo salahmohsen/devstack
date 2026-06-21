@@ -1,13 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, type NavigateOptions, useNavigate } from "@tanstack/react-router";
+import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
-import { type NavigateTo } from "@tsu-stack/i18n/tanstack-start/types";
-import { FingerprintIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import { FieldDescription, FieldGroup } from "@tsu-stack/ui/components/field";
@@ -15,9 +13,9 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { appConfig } from "@/config/app.config";
 
-function createWebCallbackUrl(redirectTo: NavigateTo): string {
+function createWebCallbackUrl(redirectTo: NavigateOptions["to"]): string {
   const baseUrl = ENV_WEB_ISOMORPHIC.VITE_WEB_URL.replace(/\/$/, "");
-  const path = redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`;
+  const path = redirectTo?.startsWith("/") ? redirectTo : `/${redirectTo}`;
 
   return `${baseUrl}${path}`;
 }
@@ -26,7 +24,7 @@ export function SignInForm({
   redirectTo = "/",
   className,
   ...props
-}: React.ComponentProps<"div"> & { redirectTo?: NavigateTo }) {
+}: React.ComponentProps<"div"> & { redirectTo?: NavigateOptions["to"] }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -80,7 +78,7 @@ export function SignInForm({
     <div className={cn("w-full max-w-md space-y-5", className)} {...props}>
       <Card className="rounded-sm border border-border/80 bg-background shadow-none" size={"sm"}>
         <CardHeader className="items-center text-center">
-          <Link className="mb-2 inline-flex" href="/">
+          <Link className="mb-2 inline-flex" to="/">
             <span className="sr-only">{appConfig.site.shortName}</span>
           </Link>
           <CardTitle className="text-xl tracking-tight">Sign in</CardTitle>
@@ -103,7 +101,7 @@ export function SignInForm({
               type="button"
               variant="outline"
             >
-              <FingerprintIcon className="size-4" />
+              <KeyRound className="size-4" />
               Continue with Passkey
             </Button>
           </FieldGroup>

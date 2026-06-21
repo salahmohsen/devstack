@@ -1,5 +1,5 @@
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { GitPullRequestIcon, PlayCircleIcon, ShieldAlertIcon } from "@tsu-stack/icons";
+import { Link } from "@tanstack/react-router";
+import { GitPullRequest, PlayCircle, ShieldAlert } from "lucide-react";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 
@@ -17,7 +17,7 @@ export function RepoActivityCards({ repo }: { repo: string }) {
     <div className="space-y-4">
       <ActivityCard
         title="Pull Requests"
-        icon={<GitPullRequestIcon className="size-4 text-muted-foreground" />}
+        icon={<GitPullRequest className="size-4 text-muted-foreground" />}
         items={data.pullRequests.map((pr) => {
           return {
             href: pr.url,
@@ -28,7 +28,7 @@ export function RepoActivityCards({ repo }: { repo: string }) {
       />
       <ActivityCard
         title="Issues"
-        icon={<ShieldAlertIcon className="size-4 text-muted-foreground" />}
+        icon={<ShieldAlert className="size-4 text-muted-foreground" />}
         items={data.issues.map((issue) => {
           return {
             href: issue.url,
@@ -39,7 +39,7 @@ export function RepoActivityCards({ repo }: { repo: string }) {
       />
       <ActivityCard
         title="Actions"
-        icon={<PlayCircleIcon className="size-4 text-muted-foreground" />}
+        icon={<PlayCircle className="size-4 text-muted-foreground" />}
         items={data.actions.map((action) => {
           return {
             href: action.url ?? "#",
@@ -70,7 +70,7 @@ function ActivityCard({
       <div className="mt-3 space-y-3">
         {items.length > 0 ? (
           items.map((item) => (
-            <Link key={`${title}-${item.title}`} href={item.href} className="block">
+            <Link key={`${title}-${item.title}`} to={item.href} className="block">
               <p className="text-sm">{item.title}</p>
               <p className="mt-1 text-xs text-base-500">{item.meta}</p>
             </Link>

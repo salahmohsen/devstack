@@ -1,8 +1,8 @@
+import { Link } from "@tanstack/react-router";
+import { GitFork, Star } from "lucide-react";
 import { Fragment, memo, type ReactNode } from "react";
 
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { GitForkIcon, StarIcon } from "@tsu-stack/icons";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 import { LazyRepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline-lazy";
@@ -76,7 +76,7 @@ export const RepositoryRow = memo(function RepositoryRow({
       key: "stars",
       node: (
         <span className="flex shrink-0 items-center gap-1 tabular-nums">
-          <StarIcon size={13} strokeWidth={2} />
+          <Star size={13} strokeWidth={2} />
           {formatCount(repo.stars)}
         </span>
       )
@@ -87,7 +87,7 @@ export const RepositoryRow = memo(function RepositoryRow({
       key: "forks",
       node: (
         <span className="flex shrink-0 items-center gap-1 tabular-nums">
-          <GitForkIcon size={13} strokeWidth={2} />
+          <GitFork size={13} strokeWidth={2} />
           {formatCount(repo.forks)}
         </span>
       )

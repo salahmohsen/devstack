@@ -1,8 +1,7 @@
+import { Link } from "@tanstack/react-router";
+import { House, RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 
-import { m } from "@tsu-stack/i18n/messages";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { HouseIcon, RefreshCwIcon } from "@tsu-stack/icons";
 import { log } from "@tsu-stack/logger/client";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -49,11 +48,11 @@ export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => 
       <Empty>
         <EmptyHeader>
           <EmptyTitle className="mask-b-from-20% mask-b-to-80% text-9xl font-extrabold">
-            {m.error_500__title()}
+            500
           </EmptyTitle>
           <EmptyDescription className="-mt-8 text-nowrap text-foreground/80">
-            {m.error_500__description_line_1()} <br />
-            {m.error_500__description_line_2()}
+            An unexpected error has occurred. <br />
+            Please try refreshing the page, or go back home.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -61,15 +60,15 @@ export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => 
             <Button
               render={
                 <Link to="/">
-                  <HouseIcon data-icon="inline-start" />
-                  {m.error_500__go_home()}
+                  <House data-icon="inline-start" />
+                  Go Home
                 </Link>
               }
             />
 
             <Button onClick={handleRefresh} variant="outline">
-              <RefreshCwIcon data-icon="inline-start" />
-              {m.error_500__try_again()}
+              <RefreshCw data-icon="inline-start" />
+              Try Again
             </Button>
           </div>
         </EmptyContent>

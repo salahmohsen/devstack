@@ -1,6 +1,6 @@
 import { format } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { ChevronLeftIcon, ChevronRightIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { CardFooter } from "@tsu-stack/ui/components/card";
 
@@ -31,10 +31,10 @@ export function ItemsInfoFooter({
       ) : null}
       <div className="ml-auto flex items-center gap-1">
         <Button size="icon-sm" variant="outline" onClick={handlePrev} aria-label={prevLabel}>
-          <ChevronLeftIcon />
+          <ChevronLeft />
         </Button>
         <Button size="icon-sm" variant="outline" onClick={handleNext} aria-label={nextLabel}>
-          <ChevronRightIcon />
+          <ChevronRight />
         </Button>
       </div>
     </CardFooter>

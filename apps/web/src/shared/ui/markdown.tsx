@@ -1,10 +1,10 @@
+import { Check, ClipboardCopy } from "lucide-react";
 import { createContext, Suspense, use, useCallback, useContext, useRef, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { remarkAlert } from "remark-github-blockquote-alert";
 
-import { CheckIcon, ClipboardCopyIcon } from "@tsu-stack/icons";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { highlightCode } from "@/shared/lib/highlight-code";
@@ -59,7 +59,7 @@ function CopyButton({ code }: { code: string }) {
       onClick={handleClick}
       className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-white/4 text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-accent-foreground"
     >
-      {copied ? <CheckIcon size={14} /> : <ClipboardCopyIcon size={14} />}
+      {copied ? <Check size={14} /> : <ClipboardCopy size={14} />}
     </button>
   );
 }

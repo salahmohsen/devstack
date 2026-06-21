@@ -1,7 +1,7 @@
+import { Link, type NavigateOptions } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import { type ComponentType } from "react";
 
-import { type LinkProps, Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { ChevronRightIcon } from "@tsu-stack/icons";
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,7 +18,7 @@ import {
   SidebarMenuSubItem
 } from "@tsu-stack/ui/components/sidebar";
 
-type RouteTo = Exclude<LinkProps["to"], undefined>;
+type RouteTo = Exclude<NavigateOptions["to"], undefined>;
 
 type NavLeafItem = {
   title: string;
@@ -75,7 +75,7 @@ export function NavMain({
                     >
                       {item.icon ? <item.icon /> : null}
                       <span>{item.title}</span>
-                      <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-open/collapsible:rotate-90" />
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>

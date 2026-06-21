@@ -1,15 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { Code, Copy, Download, File, GitCommitHorizontal, Eye } from "lucide-react";
 import { Suspense, use, useCallback, useMemo, useRef, useState } from "react";
 
 import { type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
-import {
-  CodeIcon,
-  CopyIcon,
-  DownloadIcon,
-  FileIcon,
-  GitCommitIcon,
-  ViewIcon
-} from "@tsu-stack/icons";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -309,7 +302,7 @@ function SvgFileView({
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <ViewIcon size={13} />
+              <Eye size={13} />
               Preview
             </button>
             <button
@@ -322,7 +315,7 @@ function SvgFileView({
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <CodeIcon size={13} />
+              <Code size={13} />
               Code
             </button>
           </div>
@@ -375,7 +368,7 @@ function FileViewHeader({
 
   return (
     <div className="flex items-center gap-2 border-b bg-surface-1 px-4 py-2.5 text-sm">
-      <FileIcon size={14} className="shrink-0 text-muted-foreground" />
+      <File size={14} className="shrink-0 text-muted-foreground" />
       <span className="font-medium text-foreground">{fileName}</span>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {lineCount != null && (
@@ -395,7 +388,7 @@ function FileViewHeader({
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-1 hover:text-foreground"
             title={copied ? "Copied!" : "Copy file content"}
           >
-            <CopyIcon size={14} />
+            <Copy size={14} />
           </button>
         )}
         {repo && currentRef && path && (
@@ -406,7 +399,7 @@ function FileViewHeader({
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-1 hover:text-foreground"
             title="View raw"
           >
-            <DownloadIcon size={14} />
+            <Download size={14} />
           </a>
         )}
       </div>
@@ -446,7 +439,7 @@ function FileCommitBar({
       <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
         <Tooltip>
           <TooltipTrigger render={<span className="flex items-center gap-1" />}>
-            <GitCommitIcon size={14} />
+            <GitCommitHorizontal size={14} />
             <code>{shortSha}</code>
           </TooltipTrigger>
           <TooltipContent side="bottom">

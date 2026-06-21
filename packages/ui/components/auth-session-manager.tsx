@@ -191,7 +191,7 @@ function SessionItem({ session, onRevoke, isLoading }: SessionItemProps) {
             </>
           )}
           {session.os && <span>{session.os}</span>}
-          {(session.browser || session.os) && session.location && <span aria-hidden="true">•</span>}
+          {(session.browser ?? session.os) && session.location && <span aria-hidden="true">•</span>}
           {session.location && <span>{session.location}</span>}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

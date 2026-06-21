@@ -1,13 +1,13 @@
+import {
+  Check,
+  ChevronDown,
+  X, // also used as Remove01Icon
+  X as Remove01Icon,
+  Search,
+  ArrowUpDown
+} from "lucide-react";
 import { memo, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  CloseIcon,
-  Remove01Icon,
-  SearchIcon,
-  SortIcon
-} from "@tsu-stack/icons";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -84,7 +84,7 @@ function SearchInput({
 }) {
   return (
     <div className="flex w-70 items-center gap-2 rounded-lg border border-border/50 bg-surface-1 px-3 py-1.5 transition-colors focus-within:border-border">
-      <SearchIcon size={14} className="shrink-0 text-muted-foreground" />
+      <Search size={14} className="shrink-0 text-muted-foreground" />
       <input
         type="text"
         value={value}
@@ -98,7 +98,7 @@ function SearchInput({
           onClick={() => onChange("")}
           className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <CloseIcon size={13} />
+          <X size={13} />
         </button>
       )}
     </div>
@@ -125,9 +125,9 @@ function SortDropdown({
         onClick={() => setOpen(!open)}
         className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/50 bg-surface-1 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        <SortIcon size={14} strokeWidth={1.9} />
+        <ArrowUpDown size={14} strokeWidth={1.9} />
         <span className="whitespace-nowrap">{current?.label ?? "Sort"}</span>
-        <ChevronDownIcon size={13} className={cn("transition-transform", open && "rotate-180")} />
+        <ChevronDown size={13} className={cn("transition-transform", open && "rotate-180")} />
       </button>
       {open && (
         <DropdownPanel onClose={() => setOpen(false)} anchorRef={ref}>
@@ -146,7 +146,7 @@ function SortDropdown({
               )}
             >
               <span className="flex-1">{option.label}</span>
-              {option.id === value && <CheckIcon size={13} className="shrink-0" />}
+              {option.id === value && <Check size={13} className="shrink-0" />}
             </button>
           ))}
         </DropdownPanel>
@@ -215,7 +215,7 @@ function FilterPill({
         onClick={() => onRemove(filter.fieldId)}
         className="flex items-center self-stretch rounded-r-md border border-l-0 border-border/60 bg-surface-1 px-1.5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
       >
-        <CloseIcon size={12} />
+        <X size={12} />
       </button>
       {open && (
         <ValuePicker
@@ -232,134 +232,6 @@ function FilterPill({
           anchorRef={ref}
         />
       )}
-    </div>
-  );
-}
-
-function FieldPickerInline({
-  filterDefs,
-  activeFieldIds,
-  selectedFieldId,
-  onSelect
-}: {
-  filterDefs: FilterDefinition[];
-  activeFieldIds: Set<string>;
-  selectedFieldId: string | null;
-  onSelect: (fieldId: string) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-  const filtered = filterDefs.filter((def) =>
-    def.label.toLowerCase().includes(query.toLowerCase())
-  );
-
-  return (
-    <div className="min-w-45 rounded-lg border border-border/60 bg-popover p-2 shadow-lg">
-      <div className="-mx-2 flex items-center gap-2 border-b border-border/40 px-2 pb-2">
-        <SearchIcon size={13} className="shrink-0 text-muted-foreground" />
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Filter..."
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
-        />
-      </div>
-      <div className="flex flex-col gap-0.5 pt-1">
-        {filtered.map((def) => (
-          <button
-            key={def.id}
-            type="button"
-            onClick={() => onSelect(def.id)}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-2",
-              def.id === selectedFieldId && "bg-surface-2",
-              activeFieldIds.has(def.id) && "text-muted-foreground"
-            )}
-          >
-            <def.icon size={14} strokeWidth={1.9} />
-            <span>{def.label}</span>
-            {activeFieldIds.has(def.id) && (
-              <CheckIcon size={13} className="ml-auto shrink-0 text-muted-foreground" />
-            )}
-          </button>
-        ))}
-        {filtered.length === 0 && (
-          <p className="px-2.5 py-3 text-center text-xs text-muted-foreground">
-            No matching filters
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ValuePickerInline({
-  options,
-  selectedValues,
-  onToggle
-}: {
-  options: FilterOption[];
-  selectedValues: Set<string>;
-  onToggle: (value: string) => void;
-}) {
-  const [query, setQuery] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-  const filtered = options.filter((option) =>
-    option.label.toLowerCase().includes(query.toLowerCase())
-  );
-
-  return (
-    <div className="min-w-50 rounded-lg border border-border/60 bg-popover p-2 shadow-lg">
-      <div className="-mx-2 flex items-center gap-2 border-b border-border/40 px-2 pb-2">
-        <SearchIcon size={13} className="shrink-0 text-muted-foreground" />
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search..."
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
-        />
-      </div>
-      <div className="flex max-h-60 flex-col gap-0.5 overflow-y-auto pt-1">
-        {filtered.map((option) => {
-          const isSelected = selectedValues.has(option.value);
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onToggle(option.value)}
-              className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-2"
-            >
-              <span
-                className={cn(
-                  "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
-                  isSelected
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border/60"
-                )}
-              >
-                {isSelected && <CheckIcon size={11} />}
-              </span>
-              {option.icon && <span className="shrink-0">{option.icon}</span>}
-              <span className="min-w-0 flex-1 truncate">{option.label}</span>
-            </button>
-          );
-        })}
-        {filtered.length === 0 && (
-          <p className="px-2.5 py-3 text-center text-xs text-muted-foreground">
-            No matching options
-          </p>
-        )}
-      </div>
     </div>
   );
 }
@@ -389,7 +261,7 @@ function ValuePicker({
   return (
     <DropdownPanel onClose={onClose} anchorRef={anchorRef}>
       <div className="-mx-2 flex items-center gap-2 border-b border-border/40 px-2 pb-2">
-        <SearchIcon size={13} className="shrink-0 text-muted-foreground" />
+        <Search size={13} className="shrink-0 text-muted-foreground" />
         <input
           ref={inputRef}
           type="text"
@@ -417,7 +289,7 @@ function ValuePicker({
                     : "border-border/60"
                 )}
               >
-                {isSelected && <CheckIcon size={11} />}
+                {isSelected && <Check size={11} />}
               </span>
               {option.icon && <span className="shrink-0">{option.icon}</span>}
               <span className="min-w-0 flex-1 truncate">{option.label}</span>

@@ -1,23 +1,20 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import {
+  Archive,
+  Bug,
+  ExternalLink,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  MoreHorizontal,
+  UserCircle
+} from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { useLocation } from "@tsu-stack/i18n/tanstack-start/hooks/use-location";
-import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
-import {
-  ArchiveIcon,
-  BugIcon,
-  ExternalLinkIcon,
-  HomeIcon,
-  LayoutDashboardIcon,
-  LogOutIcon,
-  MoreHorizontalIcon,
-  UserCircleIcon
-} from "@tsu-stack/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -30,7 +27,6 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger
 } from "@tsu-stack/ui/components/dropdown-menu";
-import { LocaleSwitcher } from "@tsu-stack/ui/components/locale-switcher";
 import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
@@ -45,7 +41,7 @@ import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
 const MAX_TAB_SHORTCUTS = 9;
 
 type NavItem = {
-  icon: typeof HomeIcon;
+  icon: typeof Home;
   label: string;
   params?: Record<string, string>;
   to: string;
@@ -104,13 +100,13 @@ export function Topbar() {
 
   const navItems = useMemo<NavItem[]>(
     () => [
-      { to: "/", label: "Overview", icon: HomeIcon },
+      { to: "/", label: "Overview", icon: Home },
       {
         to: "/repos",
         label: "Repositories",
-        icon: ArchiveIcon
+        icon: Archive
       },
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon }
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }
     ],
     []
   );
@@ -238,21 +234,21 @@ export function Topbar() {
               <DropdownMenuGroup>
                 <DropdownMenuItem asChild disabled={!owner}>
                   <Link to="/">
-                    <UserCircleIcon size={16} strokeWidth={2} />
+                    <UserCircle size={16} strokeWidth={2} />
                     Profile
                     <DropdownMenuShortcut>G U</DropdownMenuShortcut>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild disabled={!owner}>
                   <Link to="/repos">
-                    <ArchiveIcon size={16} strokeWidth={2} />
+                    <Archive size={16} strokeWidth={2} />
                     Repositories
                     <DropdownMenuShortcut>G O</DropdownMenuShortcut>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard">
-                    <LayoutDashboardIcon size={16} strokeWidth={2} />
+                    <LayoutDashboard size={16} strokeWidth={2} />
                     Dashboard
                     <DropdownMenuShortcut>G D</DropdownMenuShortcut>
                   </Link>
@@ -261,13 +257,13 @@ export function Topbar() {
               <DropdownMenuSeparator />
               {admin ? (
                 <DropdownMenuItem onSelect={() => void handleSignOut()}>
-                  <LogOutIcon size={16} strokeWidth={2} />
+                  <LogOut size={16} strokeWidth={2} />
                   Sign out
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem asChild>
                   <Link to="/sign-in">
-                    <UserCircleIcon size={16} strokeWidth={2} />
+                    <UserCircle size={16} strokeWidth={2} />
                     Sign in
                   </Link>
                 </DropdownMenuItem>
@@ -287,7 +283,7 @@ export function Topbar() {
             className="text-muted-foreground [&.active]:bg-surface-1 [&.active]:text-foreground"
             render={
               <Link
-                to={item.to as never}
+                to={item.to}
                 params={item.params}
                 preload={false}
                 activeOptions={{ exact: true }}
@@ -314,35 +310,34 @@ export function Topbar() {
               className="size-8 text-muted-foreground hover:bg-surface-1"
               aria-label="More actions"
             >
-              <MoreHorizontalIcon className="size-5" strokeWidth={2} />
+              <MoreHorizontal className="size-5" strokeWidth={2} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
-              <Link href="https://github.com/salahmohsen" target="_blank" rel="noopener noreferrer">
-                <ExternalLinkIcon size={16} strokeWidth={2} />
+              <a href="https://github.com/salahmohsen" target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={16} strokeWidth={2} />
                 View GitHub profile
-              </Link>
+              </a>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link
+              <a
                 href="https://github.com/salahmohsen/portfolio-v2/issues/new"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <BugIcon size={16} strokeWidth={2} />
+                <Bug size={16} strokeWidth={2} />
                 Report an issue
-              </Link>
+              </a>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to={"/sign-in"} rel="noopener noreferrer">
-                <ExternalLinkIcon size={16} strokeWidth={2} />
+                <ExternalLink size={16} strokeWidth={2} />
                 login
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <LocaleSwitcher />
         <ThemeSwitcher variant="ghost" />
       </div>
     </nav>

@@ -13,40 +13,17 @@ import { defineConfig } from "vite-plus";
 
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
-import { locales } from "@tsu-stack/i18n/runtime";
-import { paraglideVitePlugin } from "@tsu-stack/i18n/vite/plugin";
 
 import { type FileRouteTypes } from "@/routeTree.gen";
 
-/**
- * IMPORTANT: We define this explicitly here instead of crawling from the root (/) because
- * crawling can sometimes miss i18n routes that are not directly linked from the root.
- * We type it as FileRouteTypes['fullPaths'][] since prerender needs to have the `/` suffix or else we will get `Error: redirect count exceeded` on build.
- */
-const ROUTES_TO_PRERENDER: FileRouteTypes["fullPaths"][] = [
-  "/{-$locale}/privacy-policy/",
-  "/sitemap.xml",
-  "/robots.txt"
-];
+const ROUTES_TO_PRERENDER: FileRouteTypes["fullPaths"][] = ["/sitemap.xml", "/robots.txt"];
 
-const PAGES_PRERENDER_CONFIG = [
-  // Also prerender the default locale without the locale prefix
-  ...ROUTES_TO_PRERENDER.map((path) => {
-    return {
-      path: path.replace("{-$locale}/", ""),
-      prerender: { enabled: true }
-    };
-  }),
-  // Prerender all locales with their locale prefix (including base locale since the prefix is removed on the client via router)
-  ...locales.flatMap((loc) =>
-    ROUTES_TO_PRERENDER.map((path) => {
-      return {
-        path: path.replace("{-$locale}", loc),
-        prerender: { enabled: true }
-      };
-    })
-  )
-];
+const PAGES_PRERENDER_CONFIG = ROUTES_TO_PRERENDER.map((path) => {
+  return {
+    path: path,
+    prerender: { enabled: true }
+  };
+});
 
 // Stub out shiki in the SSR (Cloudflare Worker) environment to prevent all
 // language grammars (~1.5 MB) from being bundled. Shiki is only used
@@ -145,7 +122,6 @@ plugins.push(
       enabled: true,
       // Only prerender paths defined in the PAGES_PRERENDER_CONFIG object
       autoStaticPathsDiscovery: false,
-      // Disable crawling to avoid missing i18n routes, we are explicitly defining them in PAGES_PRERENDER_CONFIG
       crawlLinks: false
     },
     server: {
@@ -162,9 +138,6 @@ plugins.push(
   babel({
     presets: [reactCompilerPreset()]
   }),
-  paraglideVitePlugin({
-    basePath: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname
-  }),
   tailwindcss(),
   ohImage({
     pl_show: true,
@@ -173,9 +146,13 @@ plugins.push(
       quality: 80
     }
   }),
-  checker({
-    typescript: true
-  })
+  ...(!process.env.IS_BUILD
+    ? [
+        checker({
+          typescript: true
+        })
+      ]
+    : [])
 );
 
 export default defineConfig({
@@ -184,7 +161,6 @@ export default defineConfig({
       build: {
         command:
           "cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true IS_BUILD=true pnpm dotenvx run -f ../../packages/env/.env -- vp build",
-        dependsOn: ["@tsu-stack/i18n#build"],
         // These environment variables are dependencies of the build process and need to be passed here to be picked up by the Vite Task runner.
         // CAUTION: These are hardcoded into the image. You should consider Build Secrets for sensitive values.
         //          In Coolify, you need to check "Use Docker Build Secrets" in the Environment Variables tab.
@@ -209,6 +185,15 @@ export default defineConfig({
     host: "127.0.0.1"
   },
   base: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        const msg = typeof warning === "string" ? warning : (warning.message ?? "");
+        if (msg.includes("externalized for browser compatibility") && msg.includes("evlog")) return;
+        warn(warning);
+      }
+    }
+  },
   // Restart the dev server when env files in this directory change
   envDir: resolve(import.meta.dirname, "../../packages/env"),
   resolve: {

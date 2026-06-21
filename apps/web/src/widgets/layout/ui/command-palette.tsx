@@ -1,7 +1,7 @@
 import { useRouter } from "@tanstack/react-router";
+import { Archive, House, LayoutDashboard } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { ArchiveIcon, HouseIcon, LayoutDashboardIcon } from "@tsu-stack/icons";
 import {
   CommandDialog,
   CommandEmpty,
@@ -23,7 +23,7 @@ registerCommands([
     id: "nav:overview",
     label: "Go to Overview",
     group: "Pages",
-    icon: HouseIcon,
+    icon: House,
     iconClassName: "text-muted-foreground",
     shortcut: ["G", "H"],
     action: { type: "navigate" as const, to: "/" }
@@ -32,7 +32,7 @@ registerCommands([
     id: "nav:repos",
     label: "Go to Repositories",
     group: "Pages",
-    icon: ArchiveIcon,
+    icon: Archive,
     iconClassName: "text-muted-foreground",
     shortcut: ["G", "O"],
     action: { type: "navigate" as const, to: "/$repo" }
@@ -41,7 +41,7 @@ registerCommands([
     id: "nav:dashboard",
     label: "Go to Dashboard",
     group: "Pages",
-    icon: LayoutDashboardIcon,
+    icon: LayoutDashboard,
     iconClassName: "text-muted-foreground",
     shortcut: ["G", "D"],
     action: { type: "navigate" as const, to: "/dashboard" }

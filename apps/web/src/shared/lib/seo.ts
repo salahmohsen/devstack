@@ -1,7 +1,6 @@
 import {
   generateTanStackStartSeo,
   type GenerateTanStackStartSeoParams,
-  type TanStackStartSeoAlternates,
   type TanStackStartSeoSite
 } from "@tsu-stack/seo";
 
@@ -25,20 +24,11 @@ const site = {
   titleTemplate: `%s | ${appConfig.site.shortName}`
 } satisfies TanStackStartSeoSite;
 
-type AppSeoOptions = Omit<GenerateTanStackStartSeoParams, "alternates" | "site"> & {
-  alternates?: Omit<TanStackStartSeoAlternates, "baseLocale" | "locales">;
-};
+type AppSeoOptions = Omit<GenerateTanStackStartSeoParams, "site">;
 
-export function generateAppSeo({ alternates, ...options }: AppSeoOptions) {
+export function generateAppSeo(options: AppSeoOptions) {
   return generateTanStackStartSeo({
     ...options,
-    alternates: alternates
-      ? {
-          ...alternates,
-          baseLocale: appConfig.i18n.baseLocale,
-          locales: appConfig.i18n.locales
-        }
-      : undefined,
     site
   });
 }

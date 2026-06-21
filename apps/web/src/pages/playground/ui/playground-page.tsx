@@ -1,10 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { m } from "@tsu-stack/i18n/messages";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { type To } from "@tsu-stack/i18n/tanstack-start/types";
 import { Button } from "@tsu-stack/ui/components/button";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
@@ -20,7 +18,7 @@ export function PlaygroundPage() {
   return (
     <Container>
       <section className="mb-8">
-        <h2 className="mb-8 text-4xl">{m.playground_page__image_optimization()}</h2>
+        <h2 className="mb-8 text-4xl">Image Optimization</h2>
         <div className="mb-4 h-64 overflow-hidden rounded-lg">
           <Image
             width={736}
@@ -29,39 +27,39 @@ export function PlaygroundPage() {
             priority
             className="size-full object-cover"
             src="/img/bg.jpg"
-            alt={m.playground_page__background()}
+            alt="Background"
             placeholder="blur"
           />
         </div>
-        <Link
+        <a
           href="https://www.freepik.com/free-photo/natural-background-with-bright-orange-flowers-foliage_29320322.htm#fromView=search&page=2&position=2&uuid=9d458c3a-fcfb-4920-9494-09b6b6ad3d5a&query=orange+flowers+landscape"
           className="text-sm text-muted-foreground hover:underline"
           target="_blank"
           rel="noopener noreferrer"
         >
           Image by pvproductions on Freepik
-        </Link>
+        </a>
       </section>
       <section className="mb-8">
-        <h2 className="mb-8 text-4xl">{m.playground_page__test_rpc()}</h2>
+        <h2 className="mb-8 text-4xl">Test RPC</h2>
         <div className="rounded-lg border p-4">
-          <h3 className="mb-2 font-medium">{m.playground_page__api_status()}</h3>
+          <h3 className="mb-2 font-medium">API Status</h3>
           <div className="flex items-center gap-2">
             <div
               className={`h-2 w-2 rounded-full ${isClient && healthCheck.data && !healthCheck.isLoading ? `bg-success` : `bg-destructive`}`}
             />
             <span className="text-sm text-muted-foreground">
               {!isClient || healthCheck.isLoading
-                ? m.playground_page__checking()
+                ? "Checking..."
                 : healthCheck.data
-                  ? m.playground_page__connected()
-                  : m.playground_page__disconnected()}
+                  ? "Connected"
+                  : "Disconnected"}
             </span>
           </div>
         </div>
       </section>
       <section className="mb-8">
-        <h2 className="mb-8 text-4xl">{m.playground_page__test_error_handling()}</h2>
+        <h2 className="mb-8 text-4xl">Test Error Handling</h2>
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => {
@@ -71,18 +69,18 @@ export function PlaygroundPage() {
               logger.debug("playground", "Error thrown!");
             }}
           >
-            {m.playground_page__throw_error()}
+            Throw Error
           </Button>
           <Button
             variant="secondary"
             onClick={() => {
-              toast.info(m.playground_page__test_toast_message);
+              toast.info("This is a test toast!");
             }}
           >
-            {m.playground_page__test_toast()}
+            Show Toast
           </Button>
-          <Button variant="outline" render={<Link to={"/not-found" as To} />}>
-            {m.playground_page__visit_not_found_page()}
+          <Button variant="outline" render={<Link to="/privacy-policy" />}>
+            Visit Privacy Policy
           </Button>
         </div>
       </section>

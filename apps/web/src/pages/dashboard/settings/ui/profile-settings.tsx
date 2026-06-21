@@ -1,9 +1,9 @@
+import { Calendar, Check, Edit, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
-import { CalendarIcon, CheckIcon, EditIcon, XIcon } from "@tsu-stack/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -95,7 +95,7 @@ export function ProfileSettings() {
                   size="sm"
                   type="button"
                 >
-                  <EditIcon className="size-4" />
+                  <Edit className="size-4" />
                 </Button>
               </div>
 
@@ -107,19 +107,19 @@ export function ProfileSettings() {
                   <p className="text-muted-foreground">{values.email || session?.user?.email}</p>
                   {session?.user?.emailVerified ? (
                     <Badge variant="secondary">
-                      <CheckIcon className="mr-1 h-3 w-3" />
+                      <Check className="mr-1 h-3 w-3" />
                       Verified
                     </Badge>
                   ) : (
                     <Badge variant="destructive">
-                      <XIcon className="mr-1 h-3 w-3" />
+                      <X className="mr-1 h-3 w-3" />
                       unverified
                     </Badge>
                   )}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <CalendarIcon className="h-4 w-4" />
+                    <Calendar className="h-4 w-4" />
                     Member since{" "}
                     {session?.user?.createdAt
                       ? new Date(session.user.createdAt).getFullYear()

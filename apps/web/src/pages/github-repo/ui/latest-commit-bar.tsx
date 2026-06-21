@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { GitCommitHorizontal } from "lucide-react";
 
 import { type GitHubRepoLatestCommit } from "@tsu-stack/github/types";
-import { GitCommitIcon } from "@tsu-stack/icons";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 
@@ -98,7 +98,7 @@ export function LatestCommitBar({
       <div className="flex shrink-0 items-center gap-3 text-xs text-base-500">
         <Tooltip>
           <TooltipTrigger render={<span className="flex gap-1" />}>
-            <GitCommitIcon className="size-3.5" />
+            <GitCommitHorizontal className="size-3.5" />
             <code className="font-mono">{shortSha}</code>
           </TooltipTrigger>
           <TooltipContent side="bottom">

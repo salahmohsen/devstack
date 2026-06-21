@@ -1,5 +1,4 @@
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
-import { baseLocale, locales } from "@tsu-stack/i18n/runtime";
 
 const emailSupport = `contact@${new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).host}`;
 
@@ -7,11 +6,6 @@ const emailSupport = `contact@${new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).host}`;
 declare const __BUILD_SOURCE_COMMIT__: string;
 
 export const appConfig = Object.freeze({
-  i18n: {
-    baseLocale,
-    cookieName: "LOCALE",
-    locales
-  },
   site: {
     author: "Salah Mohsen",
     basePath: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,

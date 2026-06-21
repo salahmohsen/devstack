@@ -56,11 +56,11 @@ export function createGitHubResponseMetadata(
 }
 
 class GitHubOperationTimeoutError extends Error {
-  constructor(
-    label: string,
-    readonly timeoutMs: number
-  ) {
+  timeoutMs: number;
+
+  constructor(label: string, timeoutMs: number) {
     super(`${label} timed out after ${timeoutMs}ms`);
+    this.timeoutMs = timeoutMs;
     this.name = "GitHubOperationTimeoutError";
   }
 }

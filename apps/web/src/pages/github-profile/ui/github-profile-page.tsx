@@ -1,23 +1,15 @@
-import { useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
-
-import {
-  BuildingIcon,
-  ChevronDownIcon,
-  EditIcon,
-  ExternalLinkIcon,
-  MapPinIcon
-} from "@tsu-stack/icons";
 
 const ContributionGraph = lazy(() =>
   import("@/pages/github-profile/ui/contribution-graph").then((m) => {
     return { default: m.ContributionGraph };
   })
 );
+import { Building, ChevronDown, Edit, ExternalLink, MapPin } from "lucide-react";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
@@ -129,7 +121,7 @@ export function GithubProfilePage() {
   const repos = reposQuery.data ?? [];
   const safePage = clampRepoListPage(currentPage, repos.length);
   const pagedRepos = sliceReposForPage(repos, safePage);
-  const repositoriesHref = buildRepositoriesHref(1);
+  const repositoriesHref = buildRepositoriesHref(1) as never;
 
   return (
     <div className="w-full overflow-hidden pb-16">
@@ -189,11 +181,11 @@ export function GithubProfilePage() {
               size="icon-sm"
               className="mb-1 size-8 rounded-full hover:bg-white/5"
               render={
-                <Link href="https://github.com/settings/profile" target="_blank" rel="noreferrer" />
+                <a href="https://github.com/settings/profile" target="_blank" rel="noreferrer" />
               }
               aria-label="Edit GitHub profile"
             >
-              <EditIcon className="size-3.5" />
+              <Edit className="size-3.5" />
             </Button>
           )}
         </div>
@@ -217,7 +209,7 @@ export function GithubProfilePage() {
                 Overview
               </Link>
               <Link
-                href={repositoriesHref}
+                to={repositoriesHref}
                 className={
                   activeTab === githubProfileTabs.repositories
                     ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
@@ -281,7 +273,7 @@ export function GithubProfilePage() {
                       className="mx-auto mt-6"
                       render={<a href={buildRepositoriesHref(safePage + 1)} />}
                     >
-                      <ChevronDownIcon className="size-4" />
+                      <ChevronDown className="size-4" />
                       Load more
                     </Button>
                   ) : null}
@@ -318,19 +310,19 @@ function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryR
   }> = [];
 
   if (profile.company) {
-    items.push({ icon: BuildingIcon, label: profile.company });
+    items.push({ icon: Building, label: profile.company });
   }
   if (profile.location) {
-    items.push({ icon: MapPinIcon, label: profile.location });
+    items.push({ icon: MapPin, label: profile.location });
   }
   // if (profile.blog) {
   //   const href = profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`;
   //   const displayUrl = profile.blog.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  //   items.push({ icon: ExternalLinkIcon, label: displayUrl, href });
+  //   items.push({ icon: ExternalLink, label: displayUrl, href });
   // }
   if (profile.twitterUsername) {
     items.push({
-      icon: ExternalLinkIcon,
+      icon: ExternalLink,
       label: `@${profile.twitterUsername}`,
       href: `https://x.com/${profile.twitterUsername}`
     });

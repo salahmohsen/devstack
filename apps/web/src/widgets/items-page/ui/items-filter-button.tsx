@@ -1,6 +1,6 @@
+import { Check, Filter } from "lucide-react";
 import { useState } from "react";
 
-import { CheckIcon, FilterIcon } from "@tsu-stack/icons";
 import { buttonVariants } from "@tsu-stack/ui/components/button";
 import {
   Command,
@@ -54,7 +54,7 @@ export function ItemsFilterButton<Filter extends string>({
         )}
         aria-label={`${label} ${current?.label ?? ""}`.trim()}
       >
-        <FilterIcon className="size-3.5" />
+        <Filter className="size-3.5" />
         {label}
         <span className="font-medium text-foreground">{current?.label}</span>
       </PopoverTrigger>
@@ -74,7 +74,7 @@ export function ItemsFilterButton<Filter extends string>({
                   }}
                 >
                   {option.label}
-                  <CheckIcon
+                  <Check
                     className={cn(
                       "ml-auto size-4",
                       value === option.value ? "opacity-100" : "opacity-0"

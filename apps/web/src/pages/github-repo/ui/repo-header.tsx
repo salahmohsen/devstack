@@ -1,4 +1,5 @@
-import { ArchiveIcon, ArrowRightIcon } from "@tsu-stack/icons";
+import { Archive, ArrowRight } from "lucide-react";
+
 import { Badge } from "@tsu-stack/ui/components/badge";
 
 import { RepoStarForkActions } from "@/pages/github-repo/ui/repo-star-fork-actions";
@@ -27,7 +28,7 @@ export function RepoHeader({ repo }: RepoHeaderProps) {
             <img alt={repo.owner} className="size-8 rounded-lg" src={repo.ownerAvatarUrl} />
           ) : (
             <div className="flex size-8 items-center justify-center rounded-lg border border-white/10 bg-white/4">
-              <ArchiveIcon className="size-4 text-muted-foreground" />
+              <Archive className="size-4 text-muted-foreground" />
             </div>
           )}
           <div className="min-w-0">
@@ -52,7 +53,7 @@ export function RepoHeader({ repo }: RepoHeaderProps) {
 
         {repo.isFork && repo.forkParentFullName ? (
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <ArrowRightIcon className="size-3.5" />
+            <ArrowRight className="size-3.5" />
             forked from
             <a
               className="font-medium text-accent-foreground hover:underline"

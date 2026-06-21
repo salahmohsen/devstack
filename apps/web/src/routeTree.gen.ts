@@ -11,38 +11,37 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
-import { Route as Char123LocaleChar125RouteRouteImport } from './routes/{-$locale}/route'
-import { Route as Char123LocaleChar125_protectedRouteRouteImport } from './routes/{-$locale}/__protected/route'
-import { Route as Char123LocaleChar125rootLayoutRouteRouteImport } from './routes/{-$locale}/(root-layout)/route'
-import { Route as Char123LocaleChar125rootLayoutIndexRouteImport } from './routes/{-$locale}/(root-layout)/index'
+import { Route as _protectedRouteRouteImport } from './routes/__protected/route'
+import { Route as rootLayoutRouteRouteImport } from './routes/(root-layout)/route'
+import { Route as rootLayoutIndexRouteImport } from './routes/(root-layout)/index'
+import { Route as _protectedDashboardRouteRouteImport } from './routes/__protected/dashboard/route'
+import { Route as rootLayoutRepoRouteRouteImport } from './routes/(root-layout)/$repo/route'
+import { Route as _protectedDashboardIndexRouteImport } from './routes/__protected/dashboard/index'
+import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(root-layout)/terms-of-service/index'
+import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
+import { Route as rootLayoutPrivacyPolicyIndexRouteImport } from './routes/(root-layout)/privacy-policy/index'
+import { Route as rootLayoutPlaygroundIndexRouteImport } from './routes/(root-layout)/playground/index'
+import { Route as rootLayoutRepoIndexRouteImport } from './routes/(root-layout)/$repo/index'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
-import { Route as Char123LocaleChar125_protectedDashboardRouteRouteImport } from './routes/{-$locale}/__protected/dashboard/route'
-import { Route as Char123LocaleChar125rootLayoutRepoRouteRouteImport } from './routes/{-$locale}/(root-layout)/$repo/route'
-import { Route as Char123LocaleChar125_protectedDashboardIndexRouteImport } from './routes/{-$locale}/__protected/dashboard/index'
-import { Route as Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport } from './routes/{-$locale}/(root-layout)/terms-of-service/index'
-import { Route as Char123LocaleChar125rootLayoutReposIndexRouteImport } from './routes/{-$locale}/(root-layout)/repos/index'
-import { Route as Char123LocaleChar125rootLayoutPrivacyPolicyIndexRouteImport } from './routes/{-$locale}/(root-layout)/privacy-policy/index'
-import { Route as Char123LocaleChar125rootLayoutPlaygroundIndexRouteImport } from './routes/{-$locale}/(root-layout)/playground/index'
-import { Route as Char123LocaleChar125rootLayoutRepoIndexRouteImport } from './routes/{-$locale}/(root-layout)/$repo/index'
-import { Route as Char123LocaleChar125_protectedDashboardStacksRouteRouteImport } from './routes/{-$locale}/__protected/dashboard/stacks/route'
-import { Route as Char123LocaleChar125_protectedDashboardSettingsRouteRouteImport } from './routes/{-$locale}/__protected/dashboard/settings/route'
-import { Route as Char123LocaleChar125_protectedDashboardProjectsRouteRouteImport } from './routes/{-$locale}/__protected/dashboard/projects/route'
-import { Route as Char123LocaleChar125_protectedDashboardExperiencesRouteRouteImport } from './routes/{-$locale}/__protected/dashboard/experiences/route'
-import { Route as Char123LocaleChar125rootLayoutguestSignInRouteRouteImport } from './routes/{-$locale}/(root-layout)/(guest)/sign-in/route'
-import { Route as Char123LocaleChar125_protectedDashboardResumeIndexRouteImport } from './routes/{-$locale}/__protected/dashboard/resume/index'
-import { Route as Char123LocaleChar125_protectedDashboardProjectsIndexRouteImport } from './routes/{-$locale}/__protected/dashboard/projects/index'
-import { Route as Char123LocaleChar125_protectedDashboardExperiencesIndexRouteImport } from './routes/{-$locale}/__protected/dashboard/experiences/index'
-import { Route as Char123LocaleChar125rootLayoutguestSignInIndexRouteImport } from './routes/{-$locale}/(root-layout)/(guest)/sign-in/index'
-import { Route as Char123LocaleChar125_protectedDashboardProjectsNewRouteImport } from './routes/{-$locale}/__protected/dashboard/projects/new'
-import { Route as Char123LocaleChar125_protectedDashboardProjectsProjectIdRouteImport } from './routes/{-$locale}/__protected/dashboard/projects/$projectId'
-import { Route as Char123LocaleChar125_protectedDashboardExperiencesNewRouteImport } from './routes/{-$locale}/__protected/dashboard/experiences/new'
-import { Route as Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRouteImport } from './routes/{-$locale}/__protected/dashboard/experiences/$experienceId'
-import { Route as Char123LocaleChar125rootLayoutRepoTreeSplatRouteImport } from './routes/{-$locale}/(root-layout)/$repo/tree/$'
-import { Route as Char123LocaleChar125rootLayoutRepoBlobSplatRouteImport } from './routes/{-$locale}/(root-layout)/$repo/blob/$'
-import { Route as Char123LocaleChar125_protectedDashboardSettingsProfileIndexRouteImport } from './routes/{-$locale}/__protected/dashboard/settings/profile/index'
-import { Route as Char123LocaleChar125_protectedDashboardSettingsGithubIndexRouteImport } from './routes/{-$locale}/__protected/dashboard/settings/github/index'
-import { Route as Char123LocaleChar125_protectedDashboardSettingsAccountIndexRouteImport } from './routes/{-$locale}/__protected/dashboard/settings/account/index'
-import { Route as Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/{-$locale}/(root-layout)/(guest)/sign-in/create-an-account/index'
+import { Route as _protectedDashboardStacksRouteRouteImport } from './routes/__protected/dashboard/stacks/route'
+import { Route as _protectedDashboardSettingsRouteRouteImport } from './routes/__protected/dashboard/settings/route'
+import { Route as _protectedDashboardProjectsRouteRouteImport } from './routes/__protected/dashboard/projects/route'
+import { Route as _protectedDashboardExperiencesRouteRouteImport } from './routes/__protected/dashboard/experiences/route'
+import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
+import { Route as _protectedDashboardResumeIndexRouteImport } from './routes/__protected/dashboard/resume/index'
+import { Route as _protectedDashboardProjectsIndexRouteImport } from './routes/__protected/dashboard/projects/index'
+import { Route as _protectedDashboardExperiencesIndexRouteImport } from './routes/__protected/dashboard/experiences/index'
+import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
+import { Route as _protectedDashboardProjectsNewRouteImport } from './routes/__protected/dashboard/projects/new'
+import { Route as _protectedDashboardProjectsProjectIdRouteImport } from './routes/__protected/dashboard/projects/$projectId'
+import { Route as _protectedDashboardExperiencesNewRouteImport } from './routes/__protected/dashboard/experiences/new'
+import { Route as _protectedDashboardExperiencesExperienceIdRouteImport } from './routes/__protected/dashboard/experiences/$experienceId'
+import { Route as rootLayoutRepoTreeSplatRouteImport } from './routes/(root-layout)/$repo/tree/$'
+import { Route as rootLayoutRepoBlobSplatRouteImport } from './routes/(root-layout)/$repo/blob/$'
+import { Route as _protectedDashboardSettingsProfileIndexRouteImport } from './routes/__protected/dashboard/settings/profile/index'
+import { Route as _protectedDashboardSettingsGithubIndexRouteImport } from './routes/__protected/dashboard/settings/github/index'
+import { Route as _protectedDashboardSettingsAccountIndexRouteImport } from './routes/__protected/dashboard/settings/account/index'
+import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -54,415 +53,381 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char123LocaleChar125RouteRoute =
-  Char123LocaleChar125RouteRouteImport.update({
-    id: '/{-$locale}',
-    path: '/{-$locale}',
-    getParentRoute: () => rootRouteImport,
+const _protectedRouteRoute = _protectedRouteRouteImport.update({
+  id: '/__protected',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const rootLayoutRouteRoute = rootLayoutRouteRouteImport.update({
+  id: '/(root-layout)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const rootLayoutIndexRoute = rootLayoutIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootLayoutRouteRoute,
+} as any)
+const _protectedDashboardRouteRoute =
+  _protectedDashboardRouteRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => _protectedRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedRouteRoute =
-  Char123LocaleChar125_protectedRouteRouteImport.update({
-    id: '/__protected',
-    getParentRoute: () => Char123LocaleChar125RouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutRouteRoute =
-  Char123LocaleChar125rootLayoutRouteRouteImport.update({
-    id: '/(root-layout)',
-    getParentRoute: () => Char123LocaleChar125RouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutIndexRoute =
-  Char123LocaleChar125rootLayoutIndexRouteImport.update({
+const rootLayoutRepoRouteRoute = rootLayoutRepoRouteRouteImport.update({
+  id: '/$repo',
+  path: '/$repo',
+  getParentRoute: () => rootLayoutRouteRoute,
+} as any)
+const _protectedDashboardIndexRoute =
+  _protectedDashboardIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
+    getParentRoute: () => _protectedDashboardRouteRoute,
   } as any)
+const rootLayoutTermsOfServiceIndexRoute =
+  rootLayoutTermsOfServiceIndexRouteImport.update({
+    id: '/terms-of-service/',
+    path: '/terms-of-service/',
+    getParentRoute: () => rootLayoutRouteRoute,
+  } as any)
+const rootLayoutReposIndexRoute = rootLayoutReposIndexRouteImport.update({
+  id: '/repos/',
+  path: '/repos/',
+  getParentRoute: () => rootLayoutRouteRoute,
+} as any)
+const rootLayoutPrivacyPolicyIndexRoute =
+  rootLayoutPrivacyPolicyIndexRouteImport.update({
+    id: '/privacy-policy/',
+    path: '/privacy-policy/',
+    getParentRoute: () => rootLayoutRouteRoute,
+  } as any)
+const rootLayoutPlaygroundIndexRoute =
+  rootLayoutPlaygroundIndexRouteImport.update({
+    id: '/playground/',
+    path: '/playground/',
+    getParentRoute: () => rootLayoutRouteRoute,
+  } as any)
+const rootLayoutRepoIndexRoute = rootLayoutRepoIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootLayoutRepoRouteRoute,
+} as any)
 const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
   id: '/_api/health/live',
   path: '/_api/health/live',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char123LocaleChar125_protectedDashboardRouteRoute =
-  Char123LocaleChar125_protectedDashboardRouteRouteImport.update({
-    id: '/dashboard',
-    path: '/dashboard',
-    getParentRoute: () => Char123LocaleChar125_protectedRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutRepoRouteRoute =
-  Char123LocaleChar125rootLayoutRepoRouteRouteImport.update({
-    id: '/$repo',
-    path: '/$repo',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125_protectedDashboardIndexRoute =
-  Char123LocaleChar125_protectedDashboardIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => Char123LocaleChar125_protectedDashboardRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute =
-  Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport.update({
-    id: '/terms-of-service/',
-    path: '/terms-of-service/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutReposIndexRoute =
-  Char123LocaleChar125rootLayoutReposIndexRouteImport.update({
-    id: '/repos/',
-    path: '/repos/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute =
-  Char123LocaleChar125rootLayoutPrivacyPolicyIndexRouteImport.update({
-    id: '/privacy-policy/',
-    path: '/privacy-policy/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutPlaygroundIndexRoute =
-  Char123LocaleChar125rootLayoutPlaygroundIndexRouteImport.update({
-    id: '/playground/',
-    path: '/playground/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
-  } as any)
-const Char123LocaleChar125rootLayoutRepoIndexRoute =
-  Char123LocaleChar125rootLayoutRepoIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRepoRouteRoute,
-  } as any)
-const Char123LocaleChar125_protectedDashboardStacksRouteRoute =
-  Char123LocaleChar125_protectedDashboardStacksRouteRouteImport.update({
+const _protectedDashboardStacksRouteRoute =
+  _protectedDashboardStacksRouteRouteImport.update({
     id: '/stacks',
     path: '/stacks',
-    getParentRoute: () => Char123LocaleChar125_protectedDashboardRouteRoute,
+    getParentRoute: () => _protectedDashboardRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardSettingsRouteRoute =
-  Char123LocaleChar125_protectedDashboardSettingsRouteRouteImport.update({
+const _protectedDashboardSettingsRouteRoute =
+  _protectedDashboardSettingsRouteRouteImport.update({
     id: '/settings',
     path: '/settings',
-    getParentRoute: () => Char123LocaleChar125_protectedDashboardRouteRoute,
+    getParentRoute: () => _protectedDashboardRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardProjectsRouteRoute =
-  Char123LocaleChar125_protectedDashboardProjectsRouteRouteImport.update({
+const _protectedDashboardProjectsRouteRoute =
+  _protectedDashboardProjectsRouteRouteImport.update({
     id: '/projects',
     path: '/projects',
-    getParentRoute: () => Char123LocaleChar125_protectedDashboardRouteRoute,
+    getParentRoute: () => _protectedDashboardRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardExperiencesRouteRoute =
-  Char123LocaleChar125_protectedDashboardExperiencesRouteRouteImport.update({
+const _protectedDashboardExperiencesRouteRoute =
+  _protectedDashboardExperiencesRouteRouteImport.update({
     id: '/experiences',
     path: '/experiences',
-    getParentRoute: () => Char123LocaleChar125_protectedDashboardRouteRoute,
+    getParentRoute: () => _protectedDashboardRouteRoute,
   } as any)
-const Char123LocaleChar125rootLayoutguestSignInRouteRoute =
-  Char123LocaleChar125rootLayoutguestSignInRouteRouteImport.update({
+const rootLayoutguestSignInRouteRoute =
+  rootLayoutguestSignInRouteRouteImport.update({
     id: '/(guest)/sign-in',
     path: '/sign-in',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRouteRoute,
+    getParentRoute: () => rootLayoutRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardResumeIndexRoute =
-  Char123LocaleChar125_protectedDashboardResumeIndexRouteImport.update({
+const _protectedDashboardResumeIndexRoute =
+  _protectedDashboardResumeIndexRouteImport.update({
     id: '/resume/',
     path: '/resume/',
-    getParentRoute: () => Char123LocaleChar125_protectedDashboardRouteRoute,
+    getParentRoute: () => _protectedDashboardRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardProjectsIndexRoute =
-  Char123LocaleChar125_protectedDashboardProjectsIndexRouteImport.update({
+const _protectedDashboardProjectsIndexRoute =
+  _protectedDashboardProjectsIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () =>
-      Char123LocaleChar125_protectedDashboardProjectsRouteRoute,
+    getParentRoute: () => _protectedDashboardProjectsRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardExperiencesIndexRoute =
-  Char123LocaleChar125_protectedDashboardExperiencesIndexRouteImport.update({
+const _protectedDashboardExperiencesIndexRoute =
+  _protectedDashboardExperiencesIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () =>
-      Char123LocaleChar125_protectedDashboardExperiencesRouteRoute,
+    getParentRoute: () => _protectedDashboardExperiencesRouteRoute,
   } as any)
-const Char123LocaleChar125rootLayoutguestSignInIndexRoute =
-  Char123LocaleChar125rootLayoutguestSignInIndexRouteImport.update({
+const rootLayoutguestSignInIndexRoute =
+  rootLayoutguestSignInIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => Char123LocaleChar125rootLayoutguestSignInRouteRoute,
+    getParentRoute: () => rootLayoutguestSignInRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardProjectsNewRoute =
-  Char123LocaleChar125_protectedDashboardProjectsNewRouteImport.update({
+const _protectedDashboardProjectsNewRoute =
+  _protectedDashboardProjectsNewRouteImport.update({
     id: '/new',
     path: '/new',
-    getParentRoute: () =>
-      Char123LocaleChar125_protectedDashboardProjectsRouteRoute,
+    getParentRoute: () => _protectedDashboardProjectsRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute =
-  Char123LocaleChar125_protectedDashboardProjectsProjectIdRouteImport.update({
+const _protectedDashboardProjectsProjectIdRoute =
+  _protectedDashboardProjectsProjectIdRouteImport.update({
     id: '/$projectId',
     path: '/$projectId',
-    getParentRoute: () =>
-      Char123LocaleChar125_protectedDashboardProjectsRouteRoute,
+    getParentRoute: () => _protectedDashboardProjectsRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardExperiencesNewRoute =
-  Char123LocaleChar125_protectedDashboardExperiencesNewRouteImport.update({
+const _protectedDashboardExperiencesNewRoute =
+  _protectedDashboardExperiencesNewRouteImport.update({
     id: '/new',
     path: '/new',
-    getParentRoute: () =>
-      Char123LocaleChar125_protectedDashboardExperiencesRouteRoute,
+    getParentRoute: () => _protectedDashboardExperiencesRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute =
-  Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRouteImport.update(
-    {
-      id: '/$experienceId',
-      path: '/$experienceId',
-      getParentRoute: () =>
-        Char123LocaleChar125_protectedDashboardExperiencesRouteRoute,
-    } as any,
-  )
-const Char123LocaleChar125rootLayoutRepoTreeSplatRoute =
-  Char123LocaleChar125rootLayoutRepoTreeSplatRouteImport.update({
-    id: '/tree/$',
-    path: '/tree/$',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRepoRouteRoute,
+const _protectedDashboardExperiencesExperienceIdRoute =
+  _protectedDashboardExperiencesExperienceIdRouteImport.update({
+    id: '/$experienceId',
+    path: '/$experienceId',
+    getParentRoute: () => _protectedDashboardExperiencesRouteRoute,
   } as any)
-const Char123LocaleChar125rootLayoutRepoBlobSplatRoute =
-  Char123LocaleChar125rootLayoutRepoBlobSplatRouteImport.update({
-    id: '/blob/$',
-    path: '/blob/$',
-    getParentRoute: () => Char123LocaleChar125rootLayoutRepoRouteRoute,
+const rootLayoutRepoTreeSplatRoute = rootLayoutRepoTreeSplatRouteImport.update({
+  id: '/tree/$',
+  path: '/tree/$',
+  getParentRoute: () => rootLayoutRepoRouteRoute,
+} as any)
+const rootLayoutRepoBlobSplatRoute = rootLayoutRepoBlobSplatRouteImport.update({
+  id: '/blob/$',
+  path: '/blob/$',
+  getParentRoute: () => rootLayoutRepoRouteRoute,
+} as any)
+const _protectedDashboardSettingsProfileIndexRoute =
+  _protectedDashboardSettingsProfileIndexRouteImport.update({
+    id: '/profile/',
+    path: '/profile/',
+    getParentRoute: () => _protectedDashboardSettingsRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute =
-  Char123LocaleChar125_protectedDashboardSettingsProfileIndexRouteImport.update(
-    {
-      id: '/profile/',
-      path: '/profile/',
-      getParentRoute: () =>
-        Char123LocaleChar125_protectedDashboardSettingsRouteRoute,
-    } as any,
-  )
-const Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute =
-  Char123LocaleChar125_protectedDashboardSettingsGithubIndexRouteImport.update({
+const _protectedDashboardSettingsGithubIndexRoute =
+  _protectedDashboardSettingsGithubIndexRouteImport.update({
     id: '/github/',
     path: '/github/',
-    getParentRoute: () =>
-      Char123LocaleChar125_protectedDashboardSettingsRouteRoute,
+    getParentRoute: () => _protectedDashboardSettingsRouteRoute,
   } as any)
-const Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute =
-  Char123LocaleChar125_protectedDashboardSettingsAccountIndexRouteImport.update(
-    {
-      id: '/account/',
-      path: '/account/',
-      getParentRoute: () =>
-        Char123LocaleChar125_protectedDashboardSettingsRouteRoute,
-    } as any,
-  )
-const Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute =
-  Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRouteImport.update(
-    {
-      id: '/create-an-account/',
-      path: '/create-an-account/',
-      getParentRoute: () => Char123LocaleChar125rootLayoutguestSignInRouteRoute,
-    } as any,
-  )
+const _protectedDashboardSettingsAccountIndexRoute =
+  _protectedDashboardSettingsAccountIndexRouteImport.update({
+    id: '/account/',
+    path: '/account/',
+    getParentRoute: () => _protectedDashboardSettingsRouteRoute,
+  } as any)
+const rootLayoutguestSignInCreateAnAccountIndexRoute =
+  rootLayoutguestSignInCreateAnAccountIndexRouteImport.update({
+    id: '/create-an-account/',
+    path: '/create-an-account/',
+    getParentRoute: () => rootLayoutguestSignInRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/{-$locale}': typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
+  '/': typeof rootLayoutIndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/{-$locale}/$repo': typeof Char123LocaleChar125rootLayoutRepoRouteRouteWithChildren
-  '/{-$locale}/dashboard': typeof Char123LocaleChar125_protectedDashboardRouteRouteWithChildren
+  '/$repo': typeof rootLayoutRepoRouteRouteWithChildren
+  '/dashboard': typeof _protectedDashboardRouteRouteWithChildren
+  '/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
+  '/dashboard/experiences': typeof _protectedDashboardExperiencesRouteRouteWithChildren
+  '/dashboard/projects': typeof _protectedDashboardProjectsRouteRouteWithChildren
+  '/dashboard/settings': typeof _protectedDashboardSettingsRouteRouteWithChildren
+  '/dashboard/stacks': typeof _protectedDashboardStacksRouteRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/{-$locale}/': typeof Char123LocaleChar125rootLayoutIndexRoute
-  '/{-$locale}/sign-in': typeof Char123LocaleChar125rootLayoutguestSignInRouteRouteWithChildren
-  '/{-$locale}/dashboard/experiences': typeof Char123LocaleChar125_protectedDashboardExperiencesRouteRouteWithChildren
-  '/{-$locale}/dashboard/projects': typeof Char123LocaleChar125_protectedDashboardProjectsRouteRouteWithChildren
-  '/{-$locale}/dashboard/settings': typeof Char123LocaleChar125_protectedDashboardSettingsRouteRouteWithChildren
-  '/{-$locale}/dashboard/stacks': typeof Char123LocaleChar125_protectedDashboardStacksRouteRoute
-  '/{-$locale}/$repo/': typeof Char123LocaleChar125rootLayoutRepoIndexRoute
-  '/{-$locale}/playground/': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  '/{-$locale}/privacy-policy/': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  '/{-$locale}/repos/': typeof Char123LocaleChar125rootLayoutReposIndexRoute
-  '/{-$locale}/terms-of-service/': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
-  '/{-$locale}/dashboard/': typeof Char123LocaleChar125_protectedDashboardIndexRoute
-  '/{-$locale}/$repo/blob/$': typeof Char123LocaleChar125rootLayoutRepoBlobSplatRoute
-  '/{-$locale}/$repo/tree/$': typeof Char123LocaleChar125rootLayoutRepoTreeSplatRoute
-  '/{-$locale}/dashboard/experiences/$experienceId': typeof Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute
-  '/{-$locale}/dashboard/experiences/new': typeof Char123LocaleChar125_protectedDashboardExperiencesNewRoute
-  '/{-$locale}/dashboard/projects/$projectId': typeof Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute
-  '/{-$locale}/dashboard/projects/new': typeof Char123LocaleChar125_protectedDashboardProjectsNewRoute
-  '/{-$locale}/sign-in/': typeof Char123LocaleChar125rootLayoutguestSignInIndexRoute
-  '/{-$locale}/dashboard/experiences/': typeof Char123LocaleChar125_protectedDashboardExperiencesIndexRoute
-  '/{-$locale}/dashboard/projects/': typeof Char123LocaleChar125_protectedDashboardProjectsIndexRoute
-  '/{-$locale}/dashboard/resume/': typeof Char123LocaleChar125_protectedDashboardResumeIndexRoute
-  '/{-$locale}/sign-in/create-an-account/': typeof Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute
-  '/{-$locale}/dashboard/settings/account/': typeof Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute
-  '/{-$locale}/dashboard/settings/github/': typeof Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute
-  '/{-$locale}/dashboard/settings/profile/': typeof Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute
+  '/$repo/': typeof rootLayoutRepoIndexRoute
+  '/playground/': typeof rootLayoutPlaygroundIndexRoute
+  '/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
+  '/repos/': typeof rootLayoutReposIndexRoute
+  '/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
+  '/dashboard/': typeof _protectedDashboardIndexRoute
+  '/$repo/blob/$': typeof rootLayoutRepoBlobSplatRoute
+  '/$repo/tree/$': typeof rootLayoutRepoTreeSplatRoute
+  '/dashboard/experiences/$experienceId': typeof _protectedDashboardExperiencesExperienceIdRoute
+  '/dashboard/experiences/new': typeof _protectedDashboardExperiencesNewRoute
+  '/dashboard/projects/$projectId': typeof _protectedDashboardProjectsProjectIdRoute
+  '/dashboard/projects/new': typeof _protectedDashboardProjectsNewRoute
+  '/sign-in/': typeof rootLayoutguestSignInIndexRoute
+  '/dashboard/experiences/': typeof _protectedDashboardExperiencesIndexRoute
+  '/dashboard/projects/': typeof _protectedDashboardProjectsIndexRoute
+  '/dashboard/resume/': typeof _protectedDashboardResumeIndexRoute
+  '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/dashboard/settings/account/': typeof _protectedDashboardSettingsAccountIndexRoute
+  '/dashboard/settings/github/': typeof _protectedDashboardSettingsGithubIndexRoute
+  '/dashboard/settings/profile/': typeof _protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRoutesByTo {
-  '/{-$locale}': typeof Char123LocaleChar125rootLayoutIndexRoute
+  '/': typeof rootLayoutIndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/dashboard/settings': typeof _protectedDashboardSettingsRouteRouteWithChildren
+  '/dashboard/stacks': typeof _protectedDashboardStacksRouteRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/{-$locale}/dashboard/settings': typeof Char123LocaleChar125_protectedDashboardSettingsRouteRouteWithChildren
-  '/{-$locale}/dashboard/stacks': typeof Char123LocaleChar125_protectedDashboardStacksRouteRoute
-  '/{-$locale}/$repo': typeof Char123LocaleChar125rootLayoutRepoIndexRoute
-  '/{-$locale}/playground': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  '/{-$locale}/privacy-policy': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  '/{-$locale}/repos': typeof Char123LocaleChar125rootLayoutReposIndexRoute
-  '/{-$locale}/terms-of-service': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
-  '/{-$locale}/dashboard': typeof Char123LocaleChar125_protectedDashboardIndexRoute
-  '/{-$locale}/$repo/blob/$': typeof Char123LocaleChar125rootLayoutRepoBlobSplatRoute
-  '/{-$locale}/$repo/tree/$': typeof Char123LocaleChar125rootLayoutRepoTreeSplatRoute
-  '/{-$locale}/dashboard/experiences/$experienceId': typeof Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute
-  '/{-$locale}/dashboard/experiences/new': typeof Char123LocaleChar125_protectedDashboardExperiencesNewRoute
-  '/{-$locale}/dashboard/projects/$projectId': typeof Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute
-  '/{-$locale}/dashboard/projects/new': typeof Char123LocaleChar125_protectedDashboardProjectsNewRoute
-  '/{-$locale}/sign-in': typeof Char123LocaleChar125rootLayoutguestSignInIndexRoute
-  '/{-$locale}/dashboard/experiences': typeof Char123LocaleChar125_protectedDashboardExperiencesIndexRoute
-  '/{-$locale}/dashboard/projects': typeof Char123LocaleChar125_protectedDashboardProjectsIndexRoute
-  '/{-$locale}/dashboard/resume': typeof Char123LocaleChar125_protectedDashboardResumeIndexRoute
-  '/{-$locale}/sign-in/create-an-account': typeof Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute
-  '/{-$locale}/dashboard/settings/account': typeof Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute
-  '/{-$locale}/dashboard/settings/github': typeof Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute
-  '/{-$locale}/dashboard/settings/profile': typeof Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute
+  '/$repo': typeof rootLayoutRepoIndexRoute
+  '/playground': typeof rootLayoutPlaygroundIndexRoute
+  '/privacy-policy': typeof rootLayoutPrivacyPolicyIndexRoute
+  '/repos': typeof rootLayoutReposIndexRoute
+  '/terms-of-service': typeof rootLayoutTermsOfServiceIndexRoute
+  '/dashboard': typeof _protectedDashboardIndexRoute
+  '/$repo/blob/$': typeof rootLayoutRepoBlobSplatRoute
+  '/$repo/tree/$': typeof rootLayoutRepoTreeSplatRoute
+  '/dashboard/experiences/$experienceId': typeof _protectedDashboardExperiencesExperienceIdRoute
+  '/dashboard/experiences/new': typeof _protectedDashboardExperiencesNewRoute
+  '/dashboard/projects/$projectId': typeof _protectedDashboardProjectsProjectIdRoute
+  '/dashboard/projects/new': typeof _protectedDashboardProjectsNewRoute
+  '/sign-in': typeof rootLayoutguestSignInIndexRoute
+  '/dashboard/experiences': typeof _protectedDashboardExperiencesIndexRoute
+  '/dashboard/projects': typeof _protectedDashboardProjectsIndexRoute
+  '/dashboard/resume': typeof _protectedDashboardResumeIndexRoute
+  '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/dashboard/settings/account': typeof _protectedDashboardSettingsAccountIndexRoute
+  '/dashboard/settings/github': typeof _protectedDashboardSettingsGithubIndexRoute
+  '/dashboard/settings/profile': typeof _protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/{-$locale}': typeof Char123LocaleChar125RouteRouteWithChildren
+  '/(root-layout)': typeof rootLayoutRouteRouteWithChildren
+  '/__protected': typeof _protectedRouteRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/{-$locale}/(root-layout)': typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
-  '/{-$locale}/__protected': typeof Char123LocaleChar125_protectedRouteRouteWithChildren
-  '/{-$locale}/(root-layout)/$repo': typeof Char123LocaleChar125rootLayoutRepoRouteRouteWithChildren
-  '/{-$locale}/__protected/dashboard': typeof Char123LocaleChar125_protectedDashboardRouteRouteWithChildren
+  '/(root-layout)/$repo': typeof rootLayoutRepoRouteRouteWithChildren
+  '/__protected/dashboard': typeof _protectedDashboardRouteRouteWithChildren
+  '/(root-layout)/': typeof rootLayoutIndexRoute
+  '/(root-layout)/(guest)/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
+  '/__protected/dashboard/experiences': typeof _protectedDashboardExperiencesRouteRouteWithChildren
+  '/__protected/dashboard/projects': typeof _protectedDashboardProjectsRouteRouteWithChildren
+  '/__protected/dashboard/settings': typeof _protectedDashboardSettingsRouteRouteWithChildren
+  '/__protected/dashboard/stacks': typeof _protectedDashboardStacksRouteRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/{-$locale}/(root-layout)/': typeof Char123LocaleChar125rootLayoutIndexRoute
-  '/{-$locale}/(root-layout)/(guest)/sign-in': typeof Char123LocaleChar125rootLayoutguestSignInRouteRouteWithChildren
-  '/{-$locale}/__protected/dashboard/experiences': typeof Char123LocaleChar125_protectedDashboardExperiencesRouteRouteWithChildren
-  '/{-$locale}/__protected/dashboard/projects': typeof Char123LocaleChar125_protectedDashboardProjectsRouteRouteWithChildren
-  '/{-$locale}/__protected/dashboard/settings': typeof Char123LocaleChar125_protectedDashboardSettingsRouteRouteWithChildren
-  '/{-$locale}/__protected/dashboard/stacks': typeof Char123LocaleChar125_protectedDashboardStacksRouteRoute
-  '/{-$locale}/(root-layout)/$repo/': typeof Char123LocaleChar125rootLayoutRepoIndexRoute
-  '/{-$locale}/(root-layout)/playground/': typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  '/{-$locale}/(root-layout)/privacy-policy/': typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  '/{-$locale}/(root-layout)/repos/': typeof Char123LocaleChar125rootLayoutReposIndexRoute
-  '/{-$locale}/(root-layout)/terms-of-service/': typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
-  '/{-$locale}/__protected/dashboard/': typeof Char123LocaleChar125_protectedDashboardIndexRoute
-  '/{-$locale}/(root-layout)/$repo/blob/$': typeof Char123LocaleChar125rootLayoutRepoBlobSplatRoute
-  '/{-$locale}/(root-layout)/$repo/tree/$': typeof Char123LocaleChar125rootLayoutRepoTreeSplatRoute
-  '/{-$locale}/__protected/dashboard/experiences/$experienceId': typeof Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute
-  '/{-$locale}/__protected/dashboard/experiences/new': typeof Char123LocaleChar125_protectedDashboardExperiencesNewRoute
-  '/{-$locale}/__protected/dashboard/projects/$projectId': typeof Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute
-  '/{-$locale}/__protected/dashboard/projects/new': typeof Char123LocaleChar125_protectedDashboardProjectsNewRoute
-  '/{-$locale}/(root-layout)/(guest)/sign-in/': typeof Char123LocaleChar125rootLayoutguestSignInIndexRoute
-  '/{-$locale}/__protected/dashboard/experiences/': typeof Char123LocaleChar125_protectedDashboardExperiencesIndexRoute
-  '/{-$locale}/__protected/dashboard/projects/': typeof Char123LocaleChar125_protectedDashboardProjectsIndexRoute
-  '/{-$locale}/__protected/dashboard/resume/': typeof Char123LocaleChar125_protectedDashboardResumeIndexRoute
-  '/{-$locale}/(root-layout)/(guest)/sign-in/create-an-account/': typeof Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute
-  '/{-$locale}/__protected/dashboard/settings/account/': typeof Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute
-  '/{-$locale}/__protected/dashboard/settings/github/': typeof Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute
-  '/{-$locale}/__protected/dashboard/settings/profile/': typeof Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute
+  '/(root-layout)/$repo/': typeof rootLayoutRepoIndexRoute
+  '/(root-layout)/playground/': typeof rootLayoutPlaygroundIndexRoute
+  '/(root-layout)/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
+  '/(root-layout)/repos/': typeof rootLayoutReposIndexRoute
+  '/(root-layout)/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
+  '/__protected/dashboard/': typeof _protectedDashboardIndexRoute
+  '/(root-layout)/$repo/blob/$': typeof rootLayoutRepoBlobSplatRoute
+  '/(root-layout)/$repo/tree/$': typeof rootLayoutRepoTreeSplatRoute
+  '/__protected/dashboard/experiences/$experienceId': typeof _protectedDashboardExperiencesExperienceIdRoute
+  '/__protected/dashboard/experiences/new': typeof _protectedDashboardExperiencesNewRoute
+  '/__protected/dashboard/projects/$projectId': typeof _protectedDashboardProjectsProjectIdRoute
+  '/__protected/dashboard/projects/new': typeof _protectedDashboardProjectsNewRoute
+  '/(root-layout)/(guest)/sign-in/': typeof rootLayoutguestSignInIndexRoute
+  '/__protected/dashboard/experiences/': typeof _protectedDashboardExperiencesIndexRoute
+  '/__protected/dashboard/projects/': typeof _protectedDashboardProjectsIndexRoute
+  '/__protected/dashboard/resume/': typeof _protectedDashboardResumeIndexRoute
+  '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/__protected/dashboard/settings/account/': typeof _protectedDashboardSettingsAccountIndexRoute
+  '/__protected/dashboard/settings/github/': typeof _protectedDashboardSettingsGithubIndexRoute
+  '/__protected/dashboard/settings/profile/': typeof _protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/{-$locale}'
+    | '/'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/{-$locale}/$repo'
-    | '/{-$locale}/dashboard'
+    | '/$repo'
+    | '/dashboard'
+    | '/sign-in'
+    | '/dashboard/experiences'
+    | '/dashboard/projects'
+    | '/dashboard/settings'
+    | '/dashboard/stacks'
     | '/_api/health/live'
-    | '/{-$locale}/'
-    | '/{-$locale}/sign-in'
-    | '/{-$locale}/dashboard/experiences'
-    | '/{-$locale}/dashboard/projects'
-    | '/{-$locale}/dashboard/settings'
-    | '/{-$locale}/dashboard/stacks'
-    | '/{-$locale}/$repo/'
-    | '/{-$locale}/playground/'
-    | '/{-$locale}/privacy-policy/'
-    | '/{-$locale}/repos/'
-    | '/{-$locale}/terms-of-service/'
-    | '/{-$locale}/dashboard/'
-    | '/{-$locale}/$repo/blob/$'
-    | '/{-$locale}/$repo/tree/$'
-    | '/{-$locale}/dashboard/experiences/$experienceId'
-    | '/{-$locale}/dashboard/experiences/new'
-    | '/{-$locale}/dashboard/projects/$projectId'
-    | '/{-$locale}/dashboard/projects/new'
-    | '/{-$locale}/sign-in/'
-    | '/{-$locale}/dashboard/experiences/'
-    | '/{-$locale}/dashboard/projects/'
-    | '/{-$locale}/dashboard/resume/'
-    | '/{-$locale}/sign-in/create-an-account/'
-    | '/{-$locale}/dashboard/settings/account/'
-    | '/{-$locale}/dashboard/settings/github/'
-    | '/{-$locale}/dashboard/settings/profile/'
+    | '/$repo/'
+    | '/playground/'
+    | '/privacy-policy/'
+    | '/repos/'
+    | '/terms-of-service/'
+    | '/dashboard/'
+    | '/$repo/blob/$'
+    | '/$repo/tree/$'
+    | '/dashboard/experiences/$experienceId'
+    | '/dashboard/experiences/new'
+    | '/dashboard/projects/$projectId'
+    | '/dashboard/projects/new'
+    | '/sign-in/'
+    | '/dashboard/experiences/'
+    | '/dashboard/projects/'
+    | '/dashboard/resume/'
+    | '/sign-in/create-an-account/'
+    | '/dashboard/settings/account/'
+    | '/dashboard/settings/github/'
+    | '/dashboard/settings/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/{-$locale}'
+    | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/dashboard/settings'
+    | '/dashboard/stacks'
     | '/_api/health/live'
-    | '/{-$locale}/dashboard/settings'
-    | '/{-$locale}/dashboard/stacks'
-    | '/{-$locale}/$repo'
-    | '/{-$locale}/playground'
-    | '/{-$locale}/privacy-policy'
-    | '/{-$locale}/repos'
-    | '/{-$locale}/terms-of-service'
-    | '/{-$locale}/dashboard'
-    | '/{-$locale}/$repo/blob/$'
-    | '/{-$locale}/$repo/tree/$'
-    | '/{-$locale}/dashboard/experiences/$experienceId'
-    | '/{-$locale}/dashboard/experiences/new'
-    | '/{-$locale}/dashboard/projects/$projectId'
-    | '/{-$locale}/dashboard/projects/new'
-    | '/{-$locale}/sign-in'
-    | '/{-$locale}/dashboard/experiences'
-    | '/{-$locale}/dashboard/projects'
-    | '/{-$locale}/dashboard/resume'
-    | '/{-$locale}/sign-in/create-an-account'
-    | '/{-$locale}/dashboard/settings/account'
-    | '/{-$locale}/dashboard/settings/github'
-    | '/{-$locale}/dashboard/settings/profile'
+    | '/$repo'
+    | '/playground'
+    | '/privacy-policy'
+    | '/repos'
+    | '/terms-of-service'
+    | '/dashboard'
+    | '/$repo/blob/$'
+    | '/$repo/tree/$'
+    | '/dashboard/experiences/$experienceId'
+    | '/dashboard/experiences/new'
+    | '/dashboard/projects/$projectId'
+    | '/dashboard/projects/new'
+    | '/sign-in'
+    | '/dashboard/experiences'
+    | '/dashboard/projects'
+    | '/dashboard/resume'
+    | '/sign-in/create-an-account'
+    | '/dashboard/settings/account'
+    | '/dashboard/settings/github'
+    | '/dashboard/settings/profile'
   id:
     | '__root__'
-    | '/{-$locale}'
+    | '/(root-layout)'
+    | '/__protected'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/{-$locale}/(root-layout)'
-    | '/{-$locale}/__protected'
-    | '/{-$locale}/(root-layout)/$repo'
-    | '/{-$locale}/__protected/dashboard'
+    | '/(root-layout)/$repo'
+    | '/__protected/dashboard'
+    | '/(root-layout)/'
+    | '/(root-layout)/(guest)/sign-in'
+    | '/__protected/dashboard/experiences'
+    | '/__protected/dashboard/projects'
+    | '/__protected/dashboard/settings'
+    | '/__protected/dashboard/stacks'
     | '/_api/health/live'
-    | '/{-$locale}/(root-layout)/'
-    | '/{-$locale}/(root-layout)/(guest)/sign-in'
-    | '/{-$locale}/__protected/dashboard/experiences'
-    | '/{-$locale}/__protected/dashboard/projects'
-    | '/{-$locale}/__protected/dashboard/settings'
-    | '/{-$locale}/__protected/dashboard/stacks'
-    | '/{-$locale}/(root-layout)/$repo/'
-    | '/{-$locale}/(root-layout)/playground/'
-    | '/{-$locale}/(root-layout)/privacy-policy/'
-    | '/{-$locale}/(root-layout)/repos/'
-    | '/{-$locale}/(root-layout)/terms-of-service/'
-    | '/{-$locale}/__protected/dashboard/'
-    | '/{-$locale}/(root-layout)/$repo/blob/$'
-    | '/{-$locale}/(root-layout)/$repo/tree/$'
-    | '/{-$locale}/__protected/dashboard/experiences/$experienceId'
-    | '/{-$locale}/__protected/dashboard/experiences/new'
-    | '/{-$locale}/__protected/dashboard/projects/$projectId'
-    | '/{-$locale}/__protected/dashboard/projects/new'
-    | '/{-$locale}/(root-layout)/(guest)/sign-in/'
-    | '/{-$locale}/__protected/dashboard/experiences/'
-    | '/{-$locale}/__protected/dashboard/projects/'
-    | '/{-$locale}/__protected/dashboard/resume/'
-    | '/{-$locale}/(root-layout)/(guest)/sign-in/create-an-account/'
-    | '/{-$locale}/__protected/dashboard/settings/account/'
-    | '/{-$locale}/__protected/dashboard/settings/github/'
-    | '/{-$locale}/__protected/dashboard/settings/profile/'
+    | '/(root-layout)/$repo/'
+    | '/(root-layout)/playground/'
+    | '/(root-layout)/privacy-policy/'
+    | '/(root-layout)/repos/'
+    | '/(root-layout)/terms-of-service/'
+    | '/__protected/dashboard/'
+    | '/(root-layout)/$repo/blob/$'
+    | '/(root-layout)/$repo/tree/$'
+    | '/__protected/dashboard/experiences/$experienceId'
+    | '/__protected/dashboard/experiences/new'
+    | '/__protected/dashboard/projects/$projectId'
+    | '/__protected/dashboard/projects/new'
+    | '/(root-layout)/(guest)/sign-in/'
+    | '/__protected/dashboard/experiences/'
+    | '/__protected/dashboard/projects/'
+    | '/__protected/dashboard/resume/'
+    | '/(root-layout)/(guest)/sign-in/create-an-account/'
+    | '/__protected/dashboard/settings/account/'
+    | '/__protected/dashboard/settings/github/'
+    | '/__protected/dashboard/settings/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  Char123LocaleChar125RouteRoute: typeof Char123LocaleChar125RouteRouteWithChildren
+  rootLayoutRouteRoute: typeof rootLayoutRouteRouteWithChildren
+  _protectedRouteRoute: typeof _protectedRouteRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
@@ -484,33 +449,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/{-$locale}': {
-      id: '/{-$locale}'
-      path: '/{-$locale}'
-      fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125RouteRouteImport
+    '/__protected': {
+      id: '/__protected'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof _protectedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/{-$locale}/__protected': {
-      id: '/{-$locale}/__protected'
+    '/(root-layout)': {
+      id: '/(root-layout)'
       path: ''
-      fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125RouteRoute
+      fullPath: ''
+      preLoaderRoute: typeof rootLayoutRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/{-$locale}/(root-layout)': {
-      id: '/{-$locale}/(root-layout)'
-      path: ''
-      fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125RouteRoute
-    }
-    '/{-$locale}/(root-layout)/': {
-      id: '/{-$locale}/(root-layout)/'
+    '/(root-layout)/': {
+      id: '/(root-layout)/'
       path: '/'
-      fullPath: '/{-$locale}/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
+      fullPath: '/'
+      preLoaderRoute: typeof rootLayoutIndexRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/__protected/dashboard': {
+      id: '/__protected/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof _protectedDashboardRouteRouteImport
+      parentRoute: typeof _protectedRouteRoute
+    }
+    '/(root-layout)/$repo': {
+      id: '/(root-layout)/$repo'
+      path: '/$repo'
+      fullPath: '/$repo'
+      preLoaderRoute: typeof rootLayoutRepoRouteRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/__protected/dashboard/': {
+      id: '/__protected/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof _protectedDashboardIndexRouteImport
+      parentRoute: typeof _protectedDashboardRouteRoute
+    }
+    '/(root-layout)/terms-of-service/': {
+      id: '/(root-layout)/terms-of-service/'
+      path: '/terms-of-service'
+      fullPath: '/terms-of-service/'
+      preLoaderRoute: typeof rootLayoutTermsOfServiceIndexRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/(root-layout)/repos/': {
+      id: '/(root-layout)/repos/'
+      path: '/repos'
+      fullPath: '/repos/'
+      preLoaderRoute: typeof rootLayoutReposIndexRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/(root-layout)/privacy-policy/': {
+      id: '/(root-layout)/privacy-policy/'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy/'
+      preLoaderRoute: typeof rootLayoutPrivacyPolicyIndexRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/(root-layout)/playground/': {
+      id: '/(root-layout)/playground/'
+      path: '/playground'
+      fullPath: '/playground/'
+      preLoaderRoute: typeof rootLayoutPlaygroundIndexRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/(root-layout)/$repo/': {
+      id: '/(root-layout)/$repo/'
+      path: '/'
+      fullPath: '/$repo/'
+      preLoaderRoute: typeof rootLayoutRepoIndexRouteImport
+      parentRoute: typeof rootLayoutRepoRouteRoute
     }
     '/_api/health/live': {
       id: '/_api/health/live'
@@ -519,398 +533,302 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/{-$locale}/__protected/dashboard': {
-      id: '/{-$locale}/__protected/dashboard'
-      path: '/dashboard'
-      fullPath: '/{-$locale}/dashboard'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedRouteRoute
-    }
-    '/{-$locale}/(root-layout)/$repo': {
-      id: '/{-$locale}/(root-layout)/$repo'
-      path: '/$repo'
-      fullPath: '/{-$locale}/$repo'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutRepoRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/__protected/dashboard/': {
-      id: '/{-$locale}/__protected/dashboard/'
-      path: '/'
-      fullPath: '/{-$locale}/dashboard/'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardRouteRoute
-    }
-    '/{-$locale}/(root-layout)/terms-of-service/': {
-      id: '/{-$locale}/(root-layout)/terms-of-service/'
-      path: '/terms-of-service'
-      fullPath: '/{-$locale}/terms-of-service/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/(root-layout)/repos/': {
-      id: '/{-$locale}/(root-layout)/repos/'
-      path: '/repos'
-      fullPath: '/{-$locale}/repos/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutReposIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/(root-layout)/privacy-policy/': {
-      id: '/{-$locale}/(root-layout)/privacy-policy/'
-      path: '/privacy-policy'
-      fullPath: '/{-$locale}/privacy-policy/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/(root-layout)/playground/': {
-      id: '/{-$locale}/(root-layout)/playground/'
-      path: '/playground'
-      fullPath: '/{-$locale}/playground/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutPlaygroundIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
-    }
-    '/{-$locale}/(root-layout)/$repo/': {
-      id: '/{-$locale}/(root-layout)/$repo/'
-      path: '/'
-      fullPath: '/{-$locale}/$repo/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutRepoIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRepoRouteRoute
-    }
-    '/{-$locale}/__protected/dashboard/stacks': {
-      id: '/{-$locale}/__protected/dashboard/stacks'
+    '/__protected/dashboard/stacks': {
+      id: '/__protected/dashboard/stacks'
       path: '/stacks'
-      fullPath: '/{-$locale}/dashboard/stacks'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardStacksRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardRouteRoute
+      fullPath: '/dashboard/stacks'
+      preLoaderRoute: typeof _protectedDashboardStacksRouteRouteImport
+      parentRoute: typeof _protectedDashboardRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/settings': {
-      id: '/{-$locale}/__protected/dashboard/settings'
+    '/__protected/dashboard/settings': {
+      id: '/__protected/dashboard/settings'
       path: '/settings'
-      fullPath: '/{-$locale}/dashboard/settings'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardSettingsRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardRouteRoute
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof _protectedDashboardSettingsRouteRouteImport
+      parentRoute: typeof _protectedDashboardRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/projects': {
-      id: '/{-$locale}/__protected/dashboard/projects'
+    '/__protected/dashboard/projects': {
+      id: '/__protected/dashboard/projects'
       path: '/projects'
-      fullPath: '/{-$locale}/dashboard/projects'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardProjectsRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardRouteRoute
+      fullPath: '/dashboard/projects'
+      preLoaderRoute: typeof _protectedDashboardProjectsRouteRouteImport
+      parentRoute: typeof _protectedDashboardRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/experiences': {
-      id: '/{-$locale}/__protected/dashboard/experiences'
+    '/__protected/dashboard/experiences': {
+      id: '/__protected/dashboard/experiences'
       path: '/experiences'
-      fullPath: '/{-$locale}/dashboard/experiences'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardRouteRoute
+      fullPath: '/dashboard/experiences'
+      preLoaderRoute: typeof _protectedDashboardExperiencesRouteRouteImport
+      parentRoute: typeof _protectedDashboardRouteRoute
     }
-    '/{-$locale}/(root-layout)/(guest)/sign-in': {
-      id: '/{-$locale}/(root-layout)/(guest)/sign-in'
+    '/(root-layout)/(guest)/sign-in': {
+      id: '/(root-layout)/(guest)/sign-in'
       path: '/sign-in'
-      fullPath: '/{-$locale}/sign-in'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutguestSignInRouteRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRouteRoute
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof rootLayoutguestSignInRouteRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/resume/': {
-      id: '/{-$locale}/__protected/dashboard/resume/'
+    '/__protected/dashboard/resume/': {
+      id: '/__protected/dashboard/resume/'
       path: '/resume'
-      fullPath: '/{-$locale}/dashboard/resume/'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardResumeIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardRouteRoute
+      fullPath: '/dashboard/resume/'
+      preLoaderRoute: typeof _protectedDashboardResumeIndexRouteImport
+      parentRoute: typeof _protectedDashboardRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/projects/': {
-      id: '/{-$locale}/__protected/dashboard/projects/'
+    '/__protected/dashboard/projects/': {
+      id: '/__protected/dashboard/projects/'
       path: '/'
-      fullPath: '/{-$locale}/dashboard/projects/'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardProjectsIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardProjectsRouteRoute
+      fullPath: '/dashboard/projects/'
+      preLoaderRoute: typeof _protectedDashboardProjectsIndexRouteImport
+      parentRoute: typeof _protectedDashboardProjectsRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/experiences/': {
-      id: '/{-$locale}/__protected/dashboard/experiences/'
+    '/__protected/dashboard/experiences/': {
+      id: '/__protected/dashboard/experiences/'
       path: '/'
-      fullPath: '/{-$locale}/dashboard/experiences/'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesRouteRoute
+      fullPath: '/dashboard/experiences/'
+      preLoaderRoute: typeof _protectedDashboardExperiencesIndexRouteImport
+      parentRoute: typeof _protectedDashboardExperiencesRouteRoute
     }
-    '/{-$locale}/(root-layout)/(guest)/sign-in/': {
-      id: '/{-$locale}/(root-layout)/(guest)/sign-in/'
+    '/(root-layout)/(guest)/sign-in/': {
+      id: '/(root-layout)/(guest)/sign-in/'
       path: '/'
-      fullPath: '/{-$locale}/sign-in/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutguestSignInIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutguestSignInRouteRoute
+      fullPath: '/sign-in/'
+      preLoaderRoute: typeof rootLayoutguestSignInIndexRouteImport
+      parentRoute: typeof rootLayoutguestSignInRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/projects/new': {
-      id: '/{-$locale}/__protected/dashboard/projects/new'
+    '/__protected/dashboard/projects/new': {
+      id: '/__protected/dashboard/projects/new'
       path: '/new'
-      fullPath: '/{-$locale}/dashboard/projects/new'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardProjectsNewRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardProjectsRouteRoute
+      fullPath: '/dashboard/projects/new'
+      preLoaderRoute: typeof _protectedDashboardProjectsNewRouteImport
+      parentRoute: typeof _protectedDashboardProjectsRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/projects/$projectId': {
-      id: '/{-$locale}/__protected/dashboard/projects/$projectId'
+    '/__protected/dashboard/projects/$projectId': {
+      id: '/__protected/dashboard/projects/$projectId'
       path: '/$projectId'
-      fullPath: '/{-$locale}/dashboard/projects/$projectId'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardProjectsProjectIdRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardProjectsRouteRoute
+      fullPath: '/dashboard/projects/$projectId'
+      preLoaderRoute: typeof _protectedDashboardProjectsProjectIdRouteImport
+      parentRoute: typeof _protectedDashboardProjectsRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/experiences/new': {
-      id: '/{-$locale}/__protected/dashboard/experiences/new'
+    '/__protected/dashboard/experiences/new': {
+      id: '/__protected/dashboard/experiences/new'
       path: '/new'
-      fullPath: '/{-$locale}/dashboard/experiences/new'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesNewRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesRouteRoute
+      fullPath: '/dashboard/experiences/new'
+      preLoaderRoute: typeof _protectedDashboardExperiencesNewRouteImport
+      parentRoute: typeof _protectedDashboardExperiencesRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/experiences/$experienceId': {
-      id: '/{-$locale}/__protected/dashboard/experiences/$experienceId'
+    '/__protected/dashboard/experiences/$experienceId': {
+      id: '/__protected/dashboard/experiences/$experienceId'
       path: '/$experienceId'
-      fullPath: '/{-$locale}/dashboard/experiences/$experienceId'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesRouteRoute
+      fullPath: '/dashboard/experiences/$experienceId'
+      preLoaderRoute: typeof _protectedDashboardExperiencesExperienceIdRouteImport
+      parentRoute: typeof _protectedDashboardExperiencesRouteRoute
     }
-    '/{-$locale}/(root-layout)/$repo/tree/$': {
-      id: '/{-$locale}/(root-layout)/$repo/tree/$'
+    '/(root-layout)/$repo/tree/$': {
+      id: '/(root-layout)/$repo/tree/$'
       path: '/tree/$'
-      fullPath: '/{-$locale}/$repo/tree/$'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutRepoTreeSplatRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRepoRouteRoute
+      fullPath: '/$repo/tree/$'
+      preLoaderRoute: typeof rootLayoutRepoTreeSplatRouteImport
+      parentRoute: typeof rootLayoutRepoRouteRoute
     }
-    '/{-$locale}/(root-layout)/$repo/blob/$': {
-      id: '/{-$locale}/(root-layout)/$repo/blob/$'
+    '/(root-layout)/$repo/blob/$': {
+      id: '/(root-layout)/$repo/blob/$'
       path: '/blob/$'
-      fullPath: '/{-$locale}/$repo/blob/$'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutRepoBlobSplatRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutRepoRouteRoute
+      fullPath: '/$repo/blob/$'
+      preLoaderRoute: typeof rootLayoutRepoBlobSplatRouteImport
+      parentRoute: typeof rootLayoutRepoRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/settings/profile/': {
-      id: '/{-$locale}/__protected/dashboard/settings/profile/'
+    '/__protected/dashboard/settings/profile/': {
+      id: '/__protected/dashboard/settings/profile/'
       path: '/profile'
-      fullPath: '/{-$locale}/dashboard/settings/profile/'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardSettingsProfileIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardSettingsRouteRoute
+      fullPath: '/dashboard/settings/profile/'
+      preLoaderRoute: typeof _protectedDashboardSettingsProfileIndexRouteImport
+      parentRoute: typeof _protectedDashboardSettingsRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/settings/github/': {
-      id: '/{-$locale}/__protected/dashboard/settings/github/'
+    '/__protected/dashboard/settings/github/': {
+      id: '/__protected/dashboard/settings/github/'
       path: '/github'
-      fullPath: '/{-$locale}/dashboard/settings/github/'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardSettingsGithubIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardSettingsRouteRoute
+      fullPath: '/dashboard/settings/github/'
+      preLoaderRoute: typeof _protectedDashboardSettingsGithubIndexRouteImport
+      parentRoute: typeof _protectedDashboardSettingsRouteRoute
     }
-    '/{-$locale}/__protected/dashboard/settings/account/': {
-      id: '/{-$locale}/__protected/dashboard/settings/account/'
+    '/__protected/dashboard/settings/account/': {
+      id: '/__protected/dashboard/settings/account/'
       path: '/account'
-      fullPath: '/{-$locale}/dashboard/settings/account/'
-      preLoaderRoute: typeof Char123LocaleChar125_protectedDashboardSettingsAccountIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125_protectedDashboardSettingsRouteRoute
+      fullPath: '/dashboard/settings/account/'
+      preLoaderRoute: typeof _protectedDashboardSettingsAccountIndexRouteImport
+      parentRoute: typeof _protectedDashboardSettingsRouteRoute
     }
-    '/{-$locale}/(root-layout)/(guest)/sign-in/create-an-account/': {
-      id: '/{-$locale}/(root-layout)/(guest)/sign-in/create-an-account/'
+    '/(root-layout)/(guest)/sign-in/create-an-account/': {
+      id: '/(root-layout)/(guest)/sign-in/create-an-account/'
       path: '/create-an-account'
-      fullPath: '/{-$locale}/sign-in/create-an-account/'
-      preLoaderRoute: typeof Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125rootLayoutguestSignInRouteRoute
+      fullPath: '/sign-in/create-an-account/'
+      preLoaderRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRouteImport
+      parentRoute: typeof rootLayoutguestSignInRouteRoute
     }
   }
 }
 
-interface Char123LocaleChar125rootLayoutRepoRouteRouteChildren {
-  Char123LocaleChar125rootLayoutRepoIndexRoute: typeof Char123LocaleChar125rootLayoutRepoIndexRoute
-  Char123LocaleChar125rootLayoutRepoBlobSplatRoute: typeof Char123LocaleChar125rootLayoutRepoBlobSplatRoute
-  Char123LocaleChar125rootLayoutRepoTreeSplatRoute: typeof Char123LocaleChar125rootLayoutRepoTreeSplatRoute
+interface rootLayoutRepoRouteRouteChildren {
+  rootLayoutRepoIndexRoute: typeof rootLayoutRepoIndexRoute
+  rootLayoutRepoBlobSplatRoute: typeof rootLayoutRepoBlobSplatRoute
+  rootLayoutRepoTreeSplatRoute: typeof rootLayoutRepoTreeSplatRoute
 }
 
-const Char123LocaleChar125rootLayoutRepoRouteRouteChildren: Char123LocaleChar125rootLayoutRepoRouteRouteChildren =
-  {
-    Char123LocaleChar125rootLayoutRepoIndexRoute:
-      Char123LocaleChar125rootLayoutRepoIndexRoute,
-    Char123LocaleChar125rootLayoutRepoBlobSplatRoute:
-      Char123LocaleChar125rootLayoutRepoBlobSplatRoute,
-    Char123LocaleChar125rootLayoutRepoTreeSplatRoute:
-      Char123LocaleChar125rootLayoutRepoTreeSplatRoute,
-  }
-
-const Char123LocaleChar125rootLayoutRepoRouteRouteWithChildren =
-  Char123LocaleChar125rootLayoutRepoRouteRoute._addFileChildren(
-    Char123LocaleChar125rootLayoutRepoRouteRouteChildren,
-  )
-
-interface Char123LocaleChar125rootLayoutguestSignInRouteRouteChildren {
-  Char123LocaleChar125rootLayoutguestSignInIndexRoute: typeof Char123LocaleChar125rootLayoutguestSignInIndexRoute
-  Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute: typeof Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute
+const rootLayoutRepoRouteRouteChildren: rootLayoutRepoRouteRouteChildren = {
+  rootLayoutRepoIndexRoute: rootLayoutRepoIndexRoute,
+  rootLayoutRepoBlobSplatRoute: rootLayoutRepoBlobSplatRoute,
+  rootLayoutRepoTreeSplatRoute: rootLayoutRepoTreeSplatRoute,
 }
 
-const Char123LocaleChar125rootLayoutguestSignInRouteRouteChildren: Char123LocaleChar125rootLayoutguestSignInRouteRouteChildren =
-  {
-    Char123LocaleChar125rootLayoutguestSignInIndexRoute:
-      Char123LocaleChar125rootLayoutguestSignInIndexRoute,
-    Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute:
-      Char123LocaleChar125rootLayoutguestSignInCreateAnAccountIndexRoute,
-  }
+const rootLayoutRepoRouteRouteWithChildren =
+  rootLayoutRepoRouteRoute._addFileChildren(rootLayoutRepoRouteRouteChildren)
 
-const Char123LocaleChar125rootLayoutguestSignInRouteRouteWithChildren =
-  Char123LocaleChar125rootLayoutguestSignInRouteRoute._addFileChildren(
-    Char123LocaleChar125rootLayoutguestSignInRouteRouteChildren,
-  )
-
-interface Char123LocaleChar125rootLayoutRouteRouteChildren {
-  Char123LocaleChar125rootLayoutRepoRouteRoute: typeof Char123LocaleChar125rootLayoutRepoRouteRouteWithChildren
-  Char123LocaleChar125rootLayoutIndexRoute: typeof Char123LocaleChar125rootLayoutIndexRoute
-  Char123LocaleChar125rootLayoutguestSignInRouteRoute: typeof Char123LocaleChar125rootLayoutguestSignInRouteRouteWithChildren
-  Char123LocaleChar125rootLayoutPlaygroundIndexRoute: typeof Char123LocaleChar125rootLayoutPlaygroundIndexRoute
-  Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute: typeof Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute
-  Char123LocaleChar125rootLayoutReposIndexRoute: typeof Char123LocaleChar125rootLayoutReposIndexRoute
-  Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute: typeof Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute
+interface rootLayoutguestSignInRouteRouteChildren {
+  rootLayoutguestSignInIndexRoute: typeof rootLayoutguestSignInIndexRoute
+  rootLayoutguestSignInCreateAnAccountIndexRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRoute
 }
 
-const Char123LocaleChar125rootLayoutRouteRouteChildren: Char123LocaleChar125rootLayoutRouteRouteChildren =
+const rootLayoutguestSignInRouteRouteChildren: rootLayoutguestSignInRouteRouteChildren =
   {
-    Char123LocaleChar125rootLayoutRepoRouteRoute:
-      Char123LocaleChar125rootLayoutRepoRouteRouteWithChildren,
-    Char123LocaleChar125rootLayoutIndexRoute:
-      Char123LocaleChar125rootLayoutIndexRoute,
-    Char123LocaleChar125rootLayoutguestSignInRouteRoute:
-      Char123LocaleChar125rootLayoutguestSignInRouteRouteWithChildren,
-    Char123LocaleChar125rootLayoutPlaygroundIndexRoute:
-      Char123LocaleChar125rootLayoutPlaygroundIndexRoute,
-    Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute:
-      Char123LocaleChar125rootLayoutPrivacyPolicyIndexRoute,
-    Char123LocaleChar125rootLayoutReposIndexRoute:
-      Char123LocaleChar125rootLayoutReposIndexRoute,
-    Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute:
-      Char123LocaleChar125rootLayoutTermsOfServiceIndexRoute,
+    rootLayoutguestSignInIndexRoute: rootLayoutguestSignInIndexRoute,
+    rootLayoutguestSignInCreateAnAccountIndexRoute:
+      rootLayoutguestSignInCreateAnAccountIndexRoute,
   }
 
-const Char123LocaleChar125rootLayoutRouteRouteWithChildren =
-  Char123LocaleChar125rootLayoutRouteRoute._addFileChildren(
-    Char123LocaleChar125rootLayoutRouteRouteChildren,
+const rootLayoutguestSignInRouteRouteWithChildren =
+  rootLayoutguestSignInRouteRoute._addFileChildren(
+    rootLayoutguestSignInRouteRouteChildren,
   )
 
-interface Char123LocaleChar125_protectedDashboardExperiencesRouteRouteChildren {
-  Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute
-  Char123LocaleChar125_protectedDashboardExperiencesNewRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesNewRoute
-  Char123LocaleChar125_protectedDashboardExperiencesIndexRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesIndexRoute
+interface rootLayoutRouteRouteChildren {
+  rootLayoutRepoRouteRoute: typeof rootLayoutRepoRouteRouteWithChildren
+  rootLayoutIndexRoute: typeof rootLayoutIndexRoute
+  rootLayoutguestSignInRouteRoute: typeof rootLayoutguestSignInRouteRouteWithChildren
+  rootLayoutPlaygroundIndexRoute: typeof rootLayoutPlaygroundIndexRoute
+  rootLayoutPrivacyPolicyIndexRoute: typeof rootLayoutPrivacyPolicyIndexRoute
+  rootLayoutReposIndexRoute: typeof rootLayoutReposIndexRoute
+  rootLayoutTermsOfServiceIndexRoute: typeof rootLayoutTermsOfServiceIndexRoute
 }
 
-const Char123LocaleChar125_protectedDashboardExperiencesRouteRouteChildren: Char123LocaleChar125_protectedDashboardExperiencesRouteRouteChildren =
-  {
-    Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute:
-      Char123LocaleChar125_protectedDashboardExperiencesExperienceIdRoute,
-    Char123LocaleChar125_protectedDashboardExperiencesNewRoute:
-      Char123LocaleChar125_protectedDashboardExperiencesNewRoute,
-    Char123LocaleChar125_protectedDashboardExperiencesIndexRoute:
-      Char123LocaleChar125_protectedDashboardExperiencesIndexRoute,
-  }
-
-const Char123LocaleChar125_protectedDashboardExperiencesRouteRouteWithChildren =
-  Char123LocaleChar125_protectedDashboardExperiencesRouteRoute._addFileChildren(
-    Char123LocaleChar125_protectedDashboardExperiencesRouteRouteChildren,
-  )
-
-interface Char123LocaleChar125_protectedDashboardProjectsRouteRouteChildren {
-  Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute: typeof Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute
-  Char123LocaleChar125_protectedDashboardProjectsNewRoute: typeof Char123LocaleChar125_protectedDashboardProjectsNewRoute
-  Char123LocaleChar125_protectedDashboardProjectsIndexRoute: typeof Char123LocaleChar125_protectedDashboardProjectsIndexRoute
+const rootLayoutRouteRouteChildren: rootLayoutRouteRouteChildren = {
+  rootLayoutRepoRouteRoute: rootLayoutRepoRouteRouteWithChildren,
+  rootLayoutIndexRoute: rootLayoutIndexRoute,
+  rootLayoutguestSignInRouteRoute: rootLayoutguestSignInRouteRouteWithChildren,
+  rootLayoutPlaygroundIndexRoute: rootLayoutPlaygroundIndexRoute,
+  rootLayoutPrivacyPolicyIndexRoute: rootLayoutPrivacyPolicyIndexRoute,
+  rootLayoutReposIndexRoute: rootLayoutReposIndexRoute,
+  rootLayoutTermsOfServiceIndexRoute: rootLayoutTermsOfServiceIndexRoute,
 }
 
-const Char123LocaleChar125_protectedDashboardProjectsRouteRouteChildren: Char123LocaleChar125_protectedDashboardProjectsRouteRouteChildren =
-  {
-    Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute:
-      Char123LocaleChar125_protectedDashboardProjectsProjectIdRoute,
-    Char123LocaleChar125_protectedDashboardProjectsNewRoute:
-      Char123LocaleChar125_protectedDashboardProjectsNewRoute,
-    Char123LocaleChar125_protectedDashboardProjectsIndexRoute:
-      Char123LocaleChar125_protectedDashboardProjectsIndexRoute,
-  }
+const rootLayoutRouteRouteWithChildren = rootLayoutRouteRoute._addFileChildren(
+  rootLayoutRouteRouteChildren,
+)
 
-const Char123LocaleChar125_protectedDashboardProjectsRouteRouteWithChildren =
-  Char123LocaleChar125_protectedDashboardProjectsRouteRoute._addFileChildren(
-    Char123LocaleChar125_protectedDashboardProjectsRouteRouteChildren,
-  )
-
-interface Char123LocaleChar125_protectedDashboardSettingsRouteRouteChildren {
-  Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute: typeof Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute
-  Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute: typeof Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute
-  Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute: typeof Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute
+interface _protectedDashboardExperiencesRouteRouteChildren {
+  _protectedDashboardExperiencesExperienceIdRoute: typeof _protectedDashboardExperiencesExperienceIdRoute
+  _protectedDashboardExperiencesNewRoute: typeof _protectedDashboardExperiencesNewRoute
+  _protectedDashboardExperiencesIndexRoute: typeof _protectedDashboardExperiencesIndexRoute
 }
 
-const Char123LocaleChar125_protectedDashboardSettingsRouteRouteChildren: Char123LocaleChar125_protectedDashboardSettingsRouteRouteChildren =
+const _protectedDashboardExperiencesRouteRouteChildren: _protectedDashboardExperiencesRouteRouteChildren =
   {
-    Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute:
-      Char123LocaleChar125_protectedDashboardSettingsAccountIndexRoute,
-    Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute:
-      Char123LocaleChar125_protectedDashboardSettingsGithubIndexRoute,
-    Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute:
-      Char123LocaleChar125_protectedDashboardSettingsProfileIndexRoute,
+    _protectedDashboardExperiencesExperienceIdRoute:
+      _protectedDashboardExperiencesExperienceIdRoute,
+    _protectedDashboardExperiencesNewRoute:
+      _protectedDashboardExperiencesNewRoute,
+    _protectedDashboardExperiencesIndexRoute:
+      _protectedDashboardExperiencesIndexRoute,
   }
 
-const Char123LocaleChar125_protectedDashboardSettingsRouteRouteWithChildren =
-  Char123LocaleChar125_protectedDashboardSettingsRouteRoute._addFileChildren(
-    Char123LocaleChar125_protectedDashboardSettingsRouteRouteChildren,
+const _protectedDashboardExperiencesRouteRouteWithChildren =
+  _protectedDashboardExperiencesRouteRoute._addFileChildren(
+    _protectedDashboardExperiencesRouteRouteChildren,
   )
 
-interface Char123LocaleChar125_protectedDashboardRouteRouteChildren {
-  Char123LocaleChar125_protectedDashboardExperiencesRouteRoute: typeof Char123LocaleChar125_protectedDashboardExperiencesRouteRouteWithChildren
-  Char123LocaleChar125_protectedDashboardProjectsRouteRoute: typeof Char123LocaleChar125_protectedDashboardProjectsRouteRouteWithChildren
-  Char123LocaleChar125_protectedDashboardSettingsRouteRoute: typeof Char123LocaleChar125_protectedDashboardSettingsRouteRouteWithChildren
-  Char123LocaleChar125_protectedDashboardStacksRouteRoute: typeof Char123LocaleChar125_protectedDashboardStacksRouteRoute
-  Char123LocaleChar125_protectedDashboardIndexRoute: typeof Char123LocaleChar125_protectedDashboardIndexRoute
-  Char123LocaleChar125_protectedDashboardResumeIndexRoute: typeof Char123LocaleChar125_protectedDashboardResumeIndexRoute
+interface _protectedDashboardProjectsRouteRouteChildren {
+  _protectedDashboardProjectsProjectIdRoute: typeof _protectedDashboardProjectsProjectIdRoute
+  _protectedDashboardProjectsNewRoute: typeof _protectedDashboardProjectsNewRoute
+  _protectedDashboardProjectsIndexRoute: typeof _protectedDashboardProjectsIndexRoute
 }
 
-const Char123LocaleChar125_protectedDashboardRouteRouteChildren: Char123LocaleChar125_protectedDashboardRouteRouteChildren =
+const _protectedDashboardProjectsRouteRouteChildren: _protectedDashboardProjectsRouteRouteChildren =
   {
-    Char123LocaleChar125_protectedDashboardExperiencesRouteRoute:
-      Char123LocaleChar125_protectedDashboardExperiencesRouteRouteWithChildren,
-    Char123LocaleChar125_protectedDashboardProjectsRouteRoute:
-      Char123LocaleChar125_protectedDashboardProjectsRouteRouteWithChildren,
-    Char123LocaleChar125_protectedDashboardSettingsRouteRoute:
-      Char123LocaleChar125_protectedDashboardSettingsRouteRouteWithChildren,
-    Char123LocaleChar125_protectedDashboardStacksRouteRoute:
-      Char123LocaleChar125_protectedDashboardStacksRouteRoute,
-    Char123LocaleChar125_protectedDashboardIndexRoute:
-      Char123LocaleChar125_protectedDashboardIndexRoute,
-    Char123LocaleChar125_protectedDashboardResumeIndexRoute:
-      Char123LocaleChar125_protectedDashboardResumeIndexRoute,
+    _protectedDashboardProjectsProjectIdRoute:
+      _protectedDashboardProjectsProjectIdRoute,
+    _protectedDashboardProjectsNewRoute: _protectedDashboardProjectsNewRoute,
+    _protectedDashboardProjectsIndexRoute:
+      _protectedDashboardProjectsIndexRoute,
   }
 
-const Char123LocaleChar125_protectedDashboardRouteRouteWithChildren =
-  Char123LocaleChar125_protectedDashboardRouteRoute._addFileChildren(
-    Char123LocaleChar125_protectedDashboardRouteRouteChildren,
+const _protectedDashboardProjectsRouteRouteWithChildren =
+  _protectedDashboardProjectsRouteRoute._addFileChildren(
+    _protectedDashboardProjectsRouteRouteChildren,
   )
 
-interface Char123LocaleChar125_protectedRouteRouteChildren {
-  Char123LocaleChar125_protectedDashboardRouteRoute: typeof Char123LocaleChar125_protectedDashboardRouteRouteWithChildren
+interface _protectedDashboardSettingsRouteRouteChildren {
+  _protectedDashboardSettingsAccountIndexRoute: typeof _protectedDashboardSettingsAccountIndexRoute
+  _protectedDashboardSettingsGithubIndexRoute: typeof _protectedDashboardSettingsGithubIndexRoute
+  _protectedDashboardSettingsProfileIndexRoute: typeof _protectedDashboardSettingsProfileIndexRoute
 }
 
-const Char123LocaleChar125_protectedRouteRouteChildren: Char123LocaleChar125_protectedRouteRouteChildren =
+const _protectedDashboardSettingsRouteRouteChildren: _protectedDashboardSettingsRouteRouteChildren =
   {
-    Char123LocaleChar125_protectedDashboardRouteRoute:
-      Char123LocaleChar125_protectedDashboardRouteRouteWithChildren,
+    _protectedDashboardSettingsAccountIndexRoute:
+      _protectedDashboardSettingsAccountIndexRoute,
+    _protectedDashboardSettingsGithubIndexRoute:
+      _protectedDashboardSettingsGithubIndexRoute,
+    _protectedDashboardSettingsProfileIndexRoute:
+      _protectedDashboardSettingsProfileIndexRoute,
   }
 
-const Char123LocaleChar125_protectedRouteRouteWithChildren =
-  Char123LocaleChar125_protectedRouteRoute._addFileChildren(
-    Char123LocaleChar125_protectedRouteRouteChildren,
+const _protectedDashboardSettingsRouteRouteWithChildren =
+  _protectedDashboardSettingsRouteRoute._addFileChildren(
+    _protectedDashboardSettingsRouteRouteChildren,
   )
 
-interface Char123LocaleChar125RouteRouteChildren {
-  Char123LocaleChar125rootLayoutRouteRoute: typeof Char123LocaleChar125rootLayoutRouteRouteWithChildren
-  Char123LocaleChar125_protectedRouteRoute: typeof Char123LocaleChar125_protectedRouteRouteWithChildren
+interface _protectedDashboardRouteRouteChildren {
+  _protectedDashboardExperiencesRouteRoute: typeof _protectedDashboardExperiencesRouteRouteWithChildren
+  _protectedDashboardProjectsRouteRoute: typeof _protectedDashboardProjectsRouteRouteWithChildren
+  _protectedDashboardSettingsRouteRoute: typeof _protectedDashboardSettingsRouteRouteWithChildren
+  _protectedDashboardStacksRouteRoute: typeof _protectedDashboardStacksRouteRoute
+  _protectedDashboardIndexRoute: typeof _protectedDashboardIndexRoute
+  _protectedDashboardResumeIndexRoute: typeof _protectedDashboardResumeIndexRoute
 }
 
-const Char123LocaleChar125RouteRouteChildren: Char123LocaleChar125RouteRouteChildren =
+const _protectedDashboardRouteRouteChildren: _protectedDashboardRouteRouteChildren =
   {
-    Char123LocaleChar125rootLayoutRouteRoute:
-      Char123LocaleChar125rootLayoutRouteRouteWithChildren,
-    Char123LocaleChar125_protectedRouteRoute:
-      Char123LocaleChar125_protectedRouteRouteWithChildren,
+    _protectedDashboardExperiencesRouteRoute:
+      _protectedDashboardExperiencesRouteRouteWithChildren,
+    _protectedDashboardProjectsRouteRoute:
+      _protectedDashboardProjectsRouteRouteWithChildren,
+    _protectedDashboardSettingsRouteRoute:
+      _protectedDashboardSettingsRouteRouteWithChildren,
+    _protectedDashboardStacksRouteRoute: _protectedDashboardStacksRouteRoute,
+    _protectedDashboardIndexRoute: _protectedDashboardIndexRoute,
+    _protectedDashboardResumeIndexRoute: _protectedDashboardResumeIndexRoute,
   }
 
-const Char123LocaleChar125RouteRouteWithChildren =
-  Char123LocaleChar125RouteRoute._addFileChildren(
-    Char123LocaleChar125RouteRouteChildren,
+const _protectedDashboardRouteRouteWithChildren =
+  _protectedDashboardRouteRoute._addFileChildren(
+    _protectedDashboardRouteRouteChildren,
   )
+
+interface _protectedRouteRouteChildren {
+  _protectedDashboardRouteRoute: typeof _protectedDashboardRouteRouteWithChildren
+}
+
+const _protectedRouteRouteChildren: _protectedRouteRouteChildren = {
+  _protectedDashboardRouteRoute: _protectedDashboardRouteRouteWithChildren,
+}
+
+const _protectedRouteRouteWithChildren = _protectedRouteRoute._addFileChildren(
+  _protectedRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  Char123LocaleChar125RouteRoute: Char123LocaleChar125RouteRouteWithChildren,
+  rootLayoutRouteRoute: rootLayoutRouteRouteWithChildren,
+  _protectedRouteRoute: _protectedRouteRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,

@@ -115,7 +115,7 @@ function GithubSettingsForm({ appSettings }: { appSettings?: AppSettingsOutput }
               {(field) => (
                 <field.PasswordInputField
                   label="Public GitHub token"
-                  placeholder={hasGithubToken ? "" : "github_pat_..."}
+                  placeholder={hasGithubToken ? "" : "ghp_..."}
                   description={
                     hasGithubToken
                       ? "The saved token is masked. Enter a new value to rotate it."

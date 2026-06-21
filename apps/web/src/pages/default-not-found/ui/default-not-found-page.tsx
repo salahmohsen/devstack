@@ -1,6 +1,6 @@
-import { m } from "@tsu-stack/i18n/messages";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { HouseIcon } from "@tsu-stack/icons";
+import { Link } from "@tanstack/react-router";
+import { House } from "lucide-react";
+
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Empty,
@@ -18,18 +18,18 @@ export function DefaultNotFoundPage() {
       <Empty>
         <EmptyHeader>
           <EmptyTitle className="mask-b-from-20% mask-b-to-80% text-9xl font-extrabold">
-            {m.error_404__title()}
+            404
           </EmptyTitle>
           <EmptyDescription className="-mt-8 text-nowrap text-foreground/80">
-            {m.error_404__description_line_1()} <br />
-            {m.error_404__description_line_2()}
+            The page you're looking for might have been <br />
+            moved or doesn't exist.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <div className="flex gap-2">
             <Button size="lg" render={<Link to="/" />}>
-              <HouseIcon data-icon="inline-start" />
-              {m.error_404__go_home()}
+              <House data-icon="inline-start" />
+              Go Home
             </Button>
           </div>
         </EmptyContent>

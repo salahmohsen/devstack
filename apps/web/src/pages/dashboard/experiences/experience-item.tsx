@@ -1,18 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
+import { Archive, Edit, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import {
-  ArchiveIcon,
-  Delete01Icon,
-  EditIcon,
-  GripVerticalIcon,
-  PlusSignIcon
-} from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import {
@@ -120,7 +114,7 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
                   aria-label="Drag to reorder"
                   className={dragHandleProps.className}
                 >
-                  <GripVerticalIcon />
+                  <GripVertical />
                 </button>
               ) : null}
               <div className="min-w-0">
@@ -142,7 +136,7 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
                 onClick={(event: React.MouseEvent) => event.stopPropagation()}
                 aria-label="Edit experience"
               >
-                <EditIcon />
+                <Edit />
               </Button>
               <Button
                 variant="outline"
@@ -150,14 +144,14 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
                 disabled={toggleArchivedMutation.isPending}
                 aria-label={experience.isArchived ? "Unarchive experience" : "Archive experience"}
               >
-                <ArchiveIcon />
+                <Archive />
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => setDeleteDialogOpen(true)}
                 disabled={deleteMutation.isPending}
               >
-                <Delete01Icon />
+                <Trash2 />
               </Button>
             </div>
           </div>
@@ -193,7 +187,7 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
 export function ExperienceItemAddButton() {
   return (
     <Button render={<Link to="/dashboard/experiences/new" />}>
-      <PlusSignIcon />
+      <Plus />
       Add Experience
     </Button>
   );

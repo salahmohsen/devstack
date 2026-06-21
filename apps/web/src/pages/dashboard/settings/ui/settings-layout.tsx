@@ -1,6 +1,5 @@
-import { Outlet, useLocation } from "@tanstack/react-router";
+import { Link, Outlet, useLocation } from "@tanstack/react-router";
 
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { PageHeader, PageLayout } from "@/widgets/items-page";

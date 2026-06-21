@@ -14,7 +14,6 @@ import {
   type AuthQueryResult
 } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
-import { getLocale } from "@tsu-stack/i18n/runtime";
 import { Toaster } from "@tsu-stack/ui/components/sonner";
 import { ThemeProvider } from "@tsu-stack/ui/components/theme-switcher";
 import { TooltipProvider } from "@tsu-stack/ui/components/tooltip";
@@ -83,22 +82,16 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html suppressHydrationWarning lang={getLocale()}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
         {/*
-         * The Vite HMR client opens the WebSocket to `vite-hmr` and is what
          * `vite-plugin-checker` pushes TypeScript errors to. TanStack Start's
          * dev client hydrates React but does not load it, so without this
          * injection the browser never connects to HMR and the checker overlay
          * never appears. Dev-only; Vite tree-shakes the import in builds.
          */}
-        {import.meta.env.DEV ? (
-          <>
-            <script type="module" src="/@vite/client" />
-            <script type="module" src="/@vite-plugin-checker-runtime-entry" />
-          </>
-        ) : null}
+        {import.meta.env.DEV && <script type="module" src="/@vite-plugin-checker-runtime-entry" />}
       </head>
       <body suppressHydrationWarning>
         {/* We place the progress provider here otherwise we will get "Cannot render a <style> outside the main document" error */}

@@ -28,7 +28,7 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
   return (
     <div
       className={cn(
-        "flex min-h-screen flex-col",
+        "flex min-h-screen w-full flex-col",
         "bg-container text-primary selection:bg-[#C0E7C8] selection:text-primary!"
       )}
     >

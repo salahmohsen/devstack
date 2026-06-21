@@ -1,13 +1,13 @@
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { Link } from "@tanstack/react-router";
 import {
-  CircleIcon,
-  GitBranchIcon,
-  GitCommitIcon,
-  GitForkIcon,
-  GitPullRequestIcon,
-  MessageSquareIcon,
-  StarIcon
-} from "@tsu-stack/icons";
+  Circle,
+  GitBranch,
+  GitCommitHorizontal,
+  GitFork,
+  GitPullRequest,
+  MessageSquare,
+  Star
+} from "lucide-react";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 
@@ -87,10 +87,7 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
           </span>
         </div>
         {event.prDetail ? (
-          <Link
-            href={event.prDetail.url}
-            className="rounded-xl border border-border bg-white/4 p-3"
-          >
+          <Link to={event.prDetail.url} className="rounded-xl border border-border bg-white/4 p-3">
             <p className="text-xs font-medium">{event.prDetail.title}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               PR #{event.prDetail.number} · {event.prDetail.state}
@@ -121,28 +118,28 @@ function getEventIcon(event: GithubActivityQueryResult[number]) {
 
   switch (event.type) {
     case "PushEvent":
-      return <GitCommitIcon className={className} />;
+      return <GitCommitHorizontal className={className} />;
     case "CreateEvent":
     case "DeleteEvent":
-      return <GitBranchIcon className={className} />;
+      return <GitBranch className={className} />;
     case "PullRequestEvent":
     case "PullRequestReviewEvent":
-      return <GitPullRequestIcon className={className} />;
+      return <GitPullRequest className={className} />;
     case "IssueCommentEvent":
     case "IssuesEvent":
-      return <MessageSquareIcon className={className} />;
+      return <MessageSquare className={className} />;
     case "WatchEvent":
-      return <StarIcon className={className} />;
+      return <Star className={className} />;
     case "ForkEvent":
-      return <GitForkIcon className={className} />;
+      return <GitFork className={className} />;
     default:
-      return <CircleIcon className={className} />;
+      return <Circle className={className} />;
   }
 }
 
 function getEventDescription(event: GithubActivityQueryResult[number]) {
   const repo = (
-    <Link href={event.repo.url} className="font-medium hover:underline">
+    <Link to={event.repo.url} className="font-medium hover:underline">
       {event.repo.name}
     </Link>
   );

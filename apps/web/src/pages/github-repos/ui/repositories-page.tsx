@@ -1,9 +1,9 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { ChevronDown, Filter, Lock, Eye } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { createElement, useEffect, useMemo, useRef } from "react";
 
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
-import { ChevronDownIcon, FilterIcon, LockIcon, ViewIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 
 import {
@@ -37,12 +37,12 @@ const repositoryFilterDefs: FilterDefinition[] = [
   {
     id: "visibility",
     label: "Visibility",
-    icon: FilterIcon,
+    icon: Filter,
     extractOptions: () => [
       {
         value: "public",
         label: "Public",
-        icon: createElement(ViewIcon, {
+        icon: createElement(Eye, {
           size: 14,
           className: "text-muted-foreground"
         })
@@ -50,7 +50,7 @@ const repositoryFilterDefs: FilterDefinition[] = [
       {
         value: "private",
         label: "Private",
-        icon: createElement(LockIcon, {
+        icon: createElement(Lock, {
           size: 14,
           className: "text-muted-foreground"
         })
@@ -223,7 +223,7 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
                     void setPage(safePage + 1);
                   }}
                 >
-                  <ChevronDownIcon size={14} strokeWidth={2} />
+                  <ChevronDown size={14} strokeWidth={2} />
                   Load more
                 </Button>
               ) : null}

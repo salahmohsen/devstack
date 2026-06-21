@@ -1,20 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
+import { Archive, House, LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import {
-  ArchiveIcon,
-  HouseIcon,
-  LogOutIcon,
-  MoonIcon,
-  SettingsIcon,
-  SunIcon,
-  SystemIcon
-} from "@tsu-stack/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import {
   DropdownMenu,
@@ -30,9 +21,9 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { getGithubSetupStatusQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
 
 const themeOptions = [
-  { value: "light", icon: SunIcon, label: "Light" },
-  { value: "dark", icon: MoonIcon, label: "Dark" },
-  { value: "system", icon: SystemIcon, label: "System" }
+  { value: "light", icon: Sun, label: "Light" },
+  { value: "dark", icon: Moon, label: "Dark" },
+  { value: "system", icon: Monitor, label: "System" }
 ] as const;
 
 export function GithubPublicMobileNav() {
@@ -75,10 +66,10 @@ export function GithubPublicMobileNav() {
         activeProps={{ className: "active" }}
         className={cn(
           "relative flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors",
-          "[&.active]: [&.active]:bg-white/8"
+          "[&.active]:bg-white/8"
         )}
       >
-        <HouseIcon size={22} strokeWidth={1.8} />
+        <House size={22} strokeWidth={1.8} />
       </Link>
       <Link
         to="/repos"
@@ -87,10 +78,10 @@ export function GithubPublicMobileNav() {
         activeProps={{ className: "active" }}
         className={cn(
           "relative flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors",
-          "[&.active]: [&.active]:bg-white/8"
+          "[&.active]:bg-white/8"
         )}
       >
-        <ArchiveIcon size={22} strokeWidth={1.8} />
+        <Archive size={22} strokeWidth={1.8} />
       </Link>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -120,7 +111,7 @@ export function GithubPublicMobileNav() {
                   onClick={() => setTheme(opt.value)}
                   className={cn(
                     "flex size-6 items-center justify-center rounded-sm transition-colors",
-                    theme === opt.value ? "bg-white/8" : "hover: text-muted-foreground"
+                    theme === opt.value ? "bg-white/8" : "hover:text-muted-foreground"
                   )}
                   title={opt.label}
                 >
@@ -133,13 +124,13 @@ export function GithubPublicMobileNav() {
           <DropdownMenuGroup>
             <DropdownMenuItem asChild disabled={!owner}>
               <Link to="/repos">
-                <ArchiveIcon className="size-4" />
+                <Archive className="size-4" />
                 Repositories
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/dashboard">
-                <SettingsIcon className="size-4" />
+                <Settings className="size-4" />
                 Settings
               </Link>
             </DropdownMenuItem>
@@ -147,7 +138,7 @@ export function GithubPublicMobileNav() {
           <DropdownMenuSeparator />
           {user ? (
             <DropdownMenuItem onClick={() => void handleSignOut()}>
-              <LogOutIcon className="size-4" />
+              <LogOut className="size-4" />
               Sign out
             </DropdownMenuItem>
           ) : null}

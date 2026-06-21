@@ -1,21 +1,12 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { useLocation, useRouter } from "@tanstack/react-router";
+import { Building, Code, FileText, Package, PanelLeft, Settings2 } from "lucide-react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { useLocation } from "@tsu-stack/i18n/tanstack-start/hooks/use-location";
-import { stripLocalePrefix } from "@tsu-stack/i18n/tanstack-start/lib/strip-locale-prefix";
-import {
-  BuildingIcon,
-  CodeIcon,
-  FileTextIcon,
-  PackageIcon,
-  PanelLeftIcon,
-  Settings2Icon
-} from "@tsu-stack/icons";
 import {
   Sidebar,
   SidebarContent,
@@ -33,7 +24,7 @@ const NAV_ITEMS = [
   {
     items: [
       {
-        icon: PanelLeftIcon,
+        icon: PanelLeft,
         title: "Overview",
         url: "/dashboard"
       }
@@ -43,11 +34,11 @@ const NAV_ITEMS = [
   {
     items: [
       {
-        icon: FileTextIcon,
+        icon: FileText,
         items: [
-          { icon: BuildingIcon, title: "Experiences", url: "/dashboard/experiences" },
-          { icon: CodeIcon, title: "Projects", url: "/dashboard/projects" },
-          { icon: PackageIcon, title: "Stacks", url: "/dashboard/stacks" }
+          { icon: Building, title: "Experiences", url: "/dashboard/experiences" },
+          { icon: Code, title: "Projects", url: "/dashboard/projects" },
+          { icon: Package, title: "Stacks", url: "/dashboard/stacks" }
         ],
         title: "Resume"
       }
@@ -57,7 +48,7 @@ const NAV_ITEMS = [
   {
     items: [
       {
-        icon: Settings2Icon,
+        icon: Settings2,
         items: [
           { title: "Profile", url: "/dashboard/settings/profile" },
           { title: "Account", url: "/dashboard/settings/account" },
@@ -76,7 +67,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const location = useLocation();
   const { user } = useAuthSuspense();
-  const normalizedPath = stripLocalePrefix(location.pathname);
 
   if (!user) {
     return null;
@@ -100,7 +90,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain currentPath={normalizedPath} sections={NAV_ITEMS} />
+        <NavMain currentPath={location.pathname} sections={NAV_ITEMS} />
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border/70">

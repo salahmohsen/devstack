@@ -1,4 +1,4 @@
-export type ItemsUIConfig<T extends { id: string }, Tab extends string, Filter extends string> = {
+export type ItemsUIConfig<_T extends { id: string }, Tab extends string, Filter extends string> = {
   initialTab: Tab;
   initialFilter: Filter;
   /**

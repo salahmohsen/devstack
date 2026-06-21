@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ChevronRight, File, Folder } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 
 import { type GitHubRepoTreeEntry } from "@tsu-stack/github/types";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
-import { ChevronRightIcon, FileIcon, FolderIcon } from "@tsu-stack/icons";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -180,7 +179,7 @@ const DirectoryNode = memo(function DirectoryNode({
           className="shrink-0 py-1.5 pl-3 text-muted-foreground"
           style={{ paddingLeft: `${depth * 12 + 12}px` }}
         >
-          <ChevronRightIcon
+          <ChevronRight
             size={12}
             className={cn("shrink-0 transition-transform", isOpen && "rotate-90")}
           />
@@ -201,7 +200,7 @@ const DirectoryNode = memo(function DirectoryNode({
           }}
           className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 pr-3 pl-1.5"
         >
-          <FolderIcon size={15} strokeWidth={1.8} className="shrink-0 text-accent-foreground" />
+          <Folder size={15} strokeWidth={1.8} className="shrink-0 text-accent-foreground" />
           <span className="truncate text-foreground">{entry.name}</span>
         </Link>
       </div>
@@ -264,7 +263,7 @@ const FileNode = memo(function FileNode({
       )}
       style={{ paddingLeft: `${depth * 12 + 26}px` }}
     >
-      <FileIcon size={15} strokeWidth={1.8} className="shrink-0 text-muted-foreground" />
+      <File size={15} strokeWidth={1.8} className="shrink-0 text-muted-foreground" />
       <span className={cn("truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
         {entry.name}
       </span>

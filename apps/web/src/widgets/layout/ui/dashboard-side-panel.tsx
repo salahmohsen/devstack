@@ -1,8 +1,7 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
-import { ChevronLeftIcon, ChevronRightIcon } from "@tsu-stack/icons";
 
 // w-72 (288px) + pl-2 (8px)
 export const SIDE_PANEL_WIDTH = 500;
@@ -145,9 +144,9 @@ export function SidePanelToggle() {
       className="absolute top-1/2 right-0 hidden -translate-y-1/2 items-center justify-center rounded-l-md border border-r-0 bg-surface-1 py-2.5 pr-1 pl-0.5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground xl:flex"
     >
       {collapsed ? (
-        <ChevronLeftIcon size={12} strokeWidth={2} />
+        <ChevronLeft size={12} strokeWidth={2} />
       ) : (
-        <ChevronRightIcon size={12} strokeWidth={2} />
+        <ChevronRight size={12} strokeWidth={2} />
       )}
     </button>
   );

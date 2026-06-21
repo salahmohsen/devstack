@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { Eye, GitBranch, GitFork, Star } from "lucide-react";
 
 import { type RepoOverview } from "@tsu-stack/github/schemas";
-import { GitBranchIcon, GitForkIcon, StarIcon, ViewIcon } from "@tsu-stack/icons";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import {
   DetailSidebar,
@@ -50,16 +50,16 @@ export function RepoSidebar({ repo, scope }: { repo: RepoOverview; scope?: GitHu
 
       {/* Stats */}
       <DetailSidebarSection title="Stats">
-        <DetailSidebarRow icon={StarIcon} label="Stars">
+        <DetailSidebarRow icon={Star} label="Stars">
           {formatCount(repo.stars)}
         </DetailSidebarRow>
-        <DetailSidebarRow icon={ViewIcon} label="Watching">
+        <DetailSidebarRow icon={Eye} label="Watching">
           {formatCount(repo.watchers)}
         </DetailSidebarRow>
-        <DetailSidebarRow icon={GitForkIcon} label="Forks">
+        <DetailSidebarRow icon={GitFork} label="Forks">
           {formatCount(repo.forks)}
         </DetailSidebarRow>
-        <DetailSidebarRow icon={GitBranchIcon} label="Branches">
+        <DetailSidebarRow icon={GitBranch} label="Branches">
           {repo.branchCount}
         </DetailSidebarRow>
       </DetailSidebarSection>

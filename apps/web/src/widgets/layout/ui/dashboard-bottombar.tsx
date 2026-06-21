@@ -1,4 +1,5 @@
-import { AlertCircleIcon, XIcon } from "@tsu-stack/icons";
+import { AlertCircle, X } from "lucide-react";
+
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { removeWarning, useWarnings } from "@/shared/lib/warning-store";
@@ -20,11 +21,11 @@ export function DashboardBottomBar() {
             className={cn(
               "flex w-fit items-center gap-2 rounded-lg px-3 py-2 text-xs",
               isError
-                ? "bg-red-500 dark:bg-red-500 dark:"
+                ? "bg-red-500 dark:bg-red-500"
                 : "bg-yellow-500 text-yellow-950 dark:bg-yellow-500 dark:text-yellow-950"
             )}
           >
-            <AlertCircleIcon size={14} strokeWidth={2} className="shrink-0" />
+            <AlertCircle size={14} strokeWidth={2} className="shrink-0" />
             <span className="min-w-0 flex-1">{warning.message}</span>
             {warning.action
               ? (() => {
@@ -68,7 +69,7 @@ export function DashboardBottomBar() {
                   isError ? "hover:bg-white/15" : "hover:bg-yellow-600/20"
                 )}
               >
-                <XIcon size={12} strokeWidth={2} />
+                <X size={12} strokeWidth={2} />
               </button>
             )}
           </div>

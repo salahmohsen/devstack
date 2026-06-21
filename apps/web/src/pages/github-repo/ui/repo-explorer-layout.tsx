@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ChevronLeft, PanelLeft } from "lucide-react";
 import { memo, useCallback, useMemo, useState, useSyncExternalStore } from "react";
 
 import { type RepoOverview } from "@tsu-stack/github/repo/shared.types.js";
-import { baseLocale, getLocale } from "@tsu-stack/i18n/runtime";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
-import { ChevronLeftIcon, PanelLeftIcon } from "@tsu-stack/icons";
 import { Drawer, DrawerContent, DrawerTitle } from "@tsu-stack/ui/components/drawer";
 import {
   ResizableHandle,
@@ -68,8 +66,6 @@ export function RepoExplorerLayout({
 
   setExplorerPath(currentPath);
 
-  const localePrefix = getLocale() !== baseLocale ? `/${getLocale()}` : "";
-
   useRegisterGithubPublicTab(
     repoData
       ? {
@@ -77,7 +73,7 @@ export function RepoExplorerLayout({
           repo: repoName,
           title: repoData.name,
           type: "repo",
-          url: `${localePrefix}/${repoName}`
+          url: `${repoName}`
         }
       : null
   );
@@ -221,7 +217,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
           className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-1 hover:text-foreground"
           aria-label="Open file tree"
         >
-          <PanelLeftIcon size={16} strokeWidth={2} />
+          <PanelLeft size={16} strokeWidth={2} />
         </button>
       )}
 
@@ -230,7 +226,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
         params={{ repo: repoName }}
         className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        <ChevronLeftIcon size={16} />
+        <ChevronLeft size={16} />
         <span className="font-medium">{repoName}</span>
       </Link>
 

@@ -1,4 +1,5 @@
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
+import { Link } from "@tanstack/react-router";
+
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { File, Folder } from "lucide-react";
 import { useMemo } from "react";
 
 import { type RepoOverview } from "@tsu-stack/github/repo/shared.types.js";
 import { type GitHubRepoTreeEntry, type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { FileIcon, FolderIcon } from "@tsu-stack/icons";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -81,7 +81,7 @@ function FolderViewRow({
   isLast: boolean;
   repoName: string;
 }) {
-  const Icon = entry.type === "dir" ? FolderIcon : FileIcon;
+  const Icon = entry.type === "dir" ? Folder : File;
   const isDir = entry.type === "dir";
   const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
 

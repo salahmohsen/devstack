@@ -1,37 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { getRouteTreePathsLocalized } from "@tsu-stack/i18n/tanstack-start/lib/get-route-tree-paths-localized";
-import { stripLocalePrefix } from "@tsu-stack/i18n/tanstack-start/lib/strip-locale-prefix";
-import { type NavigateTo } from "@tsu-stack/i18n/tanstack-start/types";
-
 import { appConfig } from "@/config/app.config";
 import { routeTree } from "@/routeTree.gen";
 
-// TODO: Add routes you don't want included in the sitemap to this blacklist. Useful for routes that don't represent actual pages (e.g. redirect routes) or that you want to exclude for any reason.
-const ROUTE_BLACKLIST = [] as const satisfies ReadonlyArray<NavigateTo>;
+const ROUTE_BLACKLIST = [] as const satisfies ReadonlyArray<string>;
 const ROUTE_BLACKLIST_SET = new Set<string>(ROUTE_BLACKLIST);
 
-/**
- * If you're using subpaths, on your root domain, you need to make a sitemap index to link the subpath sitemaps.
- * See: https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap#sitemap-index
- */
 export const Route = createFileRoute("/sitemap.xml")({
   preload: false,
   server: {
     handlers: {
       GET: () => {
-        const allRoutes = getRouteTreePathsLocalized(routeTree);
+        const allRoutes = getRouteTreePaths(routeTree);
         const { baseUrl } = appConfig.site;
         const { basePath } = appConfig.site;
         const lastmod = new Date().toISOString().split("T")[0];
 
-        // Filter routes that should be included in sitemap
         const routes = allRoutes.filter(shouldIncludeInSitemap);
 
-        // Remove duplicates (keep unique URLs only)
         const uniqueUrls = new Map<string, (typeof routes)[0]>();
         for (const route of routes) {
-          const url = normalizeUrl(baseUrl, basePath, route.path);
+          const url = normalizeUrl(baseUrl, basePath, route.fullPath);
           if (!uniqueUrls.has(url)) {
             uniqueUrls.set(url, route);
           }
@@ -94,32 +83,58 @@ function normalizeUrl(baseUrl: string, basePath: string, path: string): string {
   return url.replace(BASE_PATH_REGEX, "");
 }
 
-function shouldIncludeInSitemap(route: { id: string; path: string }): boolean {
-  if (ROUTE_BLACKLIST_SET.has(stripLocalePrefix(route.path))) {
+function shouldIncludeInSitemap(route: { id: string; fullPath: string }): boolean {
+  if (ROUTE_BLACKLIST_SET.has(route.fullPath)) {
     return false;
   }
 
-  const path = route.path.toLowerCase();
+  const lowerPath = route.fullPath.toLowerCase();
 
   // Exclude API routes
-  if (path.includes("/_api/") || path.endsWith("/_api")) {
+  if (lowerPath.includes("/_api/") || lowerPath.endsWith("/_api")) {
     return false;
   }
 
   // Exclude file routes (sitemap, robots, etc)
-  if (path.includes(".")) {
+  if (lowerPath.includes(".")) {
     return false;
   }
 
-  // Exclude routes with dynamic segments that aren't in {-$locale}
-  if (path.includes("$") || path.includes(":")) {
+  if (lowerPath.includes("$") || lowerPath.includes(":")) {
     return false;
   }
 
-  // Exclude routes with special characters that might indicate internals
-  if (path.includes("_")) {
+  if (lowerPath.includes("_")) {
     return false;
   }
 
   return true;
+}
+
+type RouteTreeNode = {
+  id: string;
+  fullPath: string;
+  children?: unknown;
+};
+
+function getRouteTreePaths(tree: RouteTreeNode): Array<{ id: string; fullPath: string }> {
+  const routes: Array<{ id: string; fullPath: string }> = [];
+
+  function walk(route: RouteTreeNode | undefined) {
+    if (!route) return;
+
+    if (route.fullPath && route.id) {
+      routes.push({ id: route.id, fullPath: route.fullPath });
+    }
+
+    const children = route.children;
+    if (children != null && Array.isArray(children)) {
+      for (const child of children) {
+        walk(child as RouteTreeNode);
+      }
+    }
+  }
+
+  walk(tree);
+  return routes;
 }

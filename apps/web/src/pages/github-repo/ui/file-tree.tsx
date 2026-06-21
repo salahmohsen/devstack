@@ -1,7 +1,7 @@
+import { Link } from "@tanstack/react-router";
+import { FileCode, Folder } from "lucide-react";
 import { useMemo } from "react";
 
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { FileCodeIcon, FolderIcon } from "@tsu-stack/icons";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
@@ -71,9 +71,9 @@ function FileTreeRow({
     >
       <div className="flex min-w-0 items-center gap-2.5">
         {isDir ? (
-          <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
+          <Folder className="size-4 shrink-0 text-muted-foreground" />
         ) : (
-          <FileCodeIcon className="size-4 shrink-0 text-base-500" />
+          <FileCode className="size-4 shrink-0 text-base-500" />
         )}
         <Link
           to={isDir ? "/$repo/tree/$" : "/$repo/blob/$"}

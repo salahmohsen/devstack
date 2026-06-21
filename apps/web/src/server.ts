@@ -1,7 +1,6 @@
 import handler from "@tanstack/react-start/server-entry";
 
 import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
-import { paraglideMiddleware } from "@tsu-stack/i18n/server";
 import { LOG_SERVICES, createRequestLogger, initLogger } from "@tsu-stack/logger/server";
 
 initLogger({
@@ -27,7 +26,7 @@ export default {
     });
 
     try {
-      const response = await paraglideMiddleware(req, () => handler.fetch(req));
+      const response = await handler.fetch(req);
       requestLog.emit({ status: response.status });
       return response;
     } catch (error) {

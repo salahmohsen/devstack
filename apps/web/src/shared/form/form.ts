@@ -9,17 +9,18 @@ import { PasswordInputField } from "./password-input-field";
 import { RichTextField } from "./rich-text-field";
 import { SubmitButton } from "./submit-button";
 
-export const { useAppForm, withForm, withFieldGroup } = createFormHook({
-  fieldComponents: {
-    DatePickerField,
-    InputField,
-    PasswordInputField,
-    RichTextField,
-    InputGroupField
-  },
-  fieldContext,
-  formComponents: {
-    SubmitButton
-  },
-  formContext
-});
+export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppFormContext } =
+  createFormHook({
+    fieldComponents: {
+      DatePickerField,
+      InputField,
+      PasswordInputField,
+      RichTextField,
+      InputGroupField
+    },
+    fieldContext,
+    formComponents: {
+      SubmitButton
+    },
+    formContext
+  });

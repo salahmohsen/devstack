@@ -1,4 +1,4 @@
-import { GitForkIcon, StarIcon } from "@tsu-stack/icons";
+import { GitFork, Star } from "lucide-react";
 
 type RepoStarForkActionsProps = {
   forkCount: number;
@@ -15,7 +15,7 @@ export function RepoStarForkActions({ forkCount, repoUrl, stars }: RepoStarForkA
         rel="noreferrer"
         className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-4 py-2 hover:bg-white/8"
       >
-        <StarIcon className="size-4" />
+        <Star className="size-4" />
         {stars.toLocaleString()}
       </a>
       <a
@@ -24,7 +24,7 @@ export function RepoStarForkActions({ forkCount, repoUrl, stars }: RepoStarForkA
         rel="noreferrer"
         className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-4 py-2 hover:bg-white/8"
       >
-        <GitForkIcon className="size-4" />
+        <GitFork className="size-4" />
         {forkCount.toLocaleString()}
       </a>
     </div>

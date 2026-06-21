@@ -1,15 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronDown, Code, Copy, Download, GitPullRequest } from "lucide-react";
 import { useCallback, useState } from "react";
 
 import { type RepoOverview } from "@tsu-stack/github/repo/shared.types.js";
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  CodeIcon,
-  CopyIcon,
-  DownloadIcon,
-  GitPullRequestIcon
-} from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Command,
@@ -77,9 +70,9 @@ function BranchSelector({
           onFocus={prefetchBranches}
           className="max-w-55 border border-border dark:border-transparent"
         >
-          <GitPullRequestIcon size={14} />
+          <GitPullRequest size={14} />
           <span className="truncate">{currentRef}</span>
-          <ChevronDownIcon size={14} className="shrink-0 opacity-60" />
+          <ChevronDown size={14} className="shrink-0 opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
@@ -97,7 +90,7 @@ function BranchSelector({
               }}
               className={cn(defaultBranch === currentRef && "font-medium text-foreground")}
             >
-              <CheckIcon
+              <Check
                 size={14}
                 className={cn(
                   "shrink-0",
@@ -118,7 +111,7 @@ function BranchSelector({
                   }}
                   className={cn(branch.name === currentRef && "font-medium text-foreground")}
                 >
-                  <CheckIcon
+                  <Check
                     size={14}
                     className={cn(
                       "shrink-0",
@@ -171,9 +164,9 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="default" size="sm">
-          <CodeIcon size={14} />
+          <Code size={14} />
           Code
-          <ChevronDownIcon size={14} className="opacity-60" />
+          <ChevronDown size={14} className="opacity-60" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-96 overflow-hidden p-0">
@@ -216,7 +209,7 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
             download
             className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-surface-1"
           >
-            <DownloadIcon size={15} className="text-muted-foreground" />
+            <Download size={15} className="text-muted-foreground" />
             Download ZIP
           </a>
         </div>
@@ -240,7 +233,7 @@ function CloneInput({
         {value}
       </code>
       <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={onCopy}>
-        {copied ? <CheckIcon size={14} className="text-success" /> : <CopyIcon size={14} />}
+        {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
       </Button>
     </div>
   );

@@ -1,7 +1,7 @@
+import { File, Folder, Search, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
-import { FileIcon, FolderIcon, SearchIcon, XIcon } from "@tsu-stack/icons";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -189,7 +189,7 @@ export const FileSearchCard = memo(function FileSearchCard({
               isExpanded ? "left-3.5" : "left-2.5"
             )}
           >
-            <SearchIcon size={14} />
+            <Search size={14} />
           </motion.span>
           <input
             ref={inputRef}
@@ -213,7 +213,7 @@ export const FileSearchCard = memo(function FileSearchCard({
                 isExpanded ? "right-3" : "right-2"
               )}
             >
-              <XIcon size={14} />
+              <X size={14} />
             </button>
           ) : (
             <AnimatePresence>
@@ -283,7 +283,7 @@ const SearchResultRow = memo(function SearchResultRow({
   result: FileSearchResult;
 }) {
   const isDir = result.type === "dir";
-  const Icon = isDir ? FolderIcon : FileIcon;
+  const Icon = isDir ? Folder : File;
   const dir = result.path.includes("/") ? result.path.slice(0, result.path.lastIndexOf("/")) : null;
   const ref = useRef<HTMLButtonElement>(null);
   const nameIndices = useMemo(() => getMatchIndices(query, result.name), [query, result.name]);

@@ -1,16 +1,13 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, type NavigateOptions, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { m } from "@tsu-stack/i18n/messages";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { useNavigate } from "@tsu-stack/i18n/tanstack-start/hooks/use-navigate";
-import { type NavigateTo } from "@tsu-stack/i18n/tanstack-start/types";
 import { FieldDescription, FieldGroup, FieldSeparator } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -25,7 +22,7 @@ export function CreateAnAccountForm({
   redirectTo = "/",
   className,
   ...props
-}: React.ComponentProps<"div"> & { redirectTo?: NavigateTo }) {
+}: React.ComponentProps<"div"> & { redirectTo?: NavigateOptions["to"] }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isPending } = useAuth();
@@ -39,20 +36,20 @@ export function CreateAnAccountForm({
       });
 
       if (!result.data) {
-        throw new Error(result.error?.message ?? m.auth__sign_up_failed());
+        throw new Error(result.error?.message ?? "Sign up failed");
       }
 
       return result;
     },
     onError: (error: Error) => {
-      toast.error(error.message || m.auth__sign_up_failed());
+      toast.error(error.message || "Sign up failed");
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries(getAuthUserQueryOptions());
       await navigate({
         to: redirectTo
       });
-      toast.success(m.auth__sign_up_successful());
+      toast.success("Sign up successful");
     }
   });
 
@@ -71,12 +68,12 @@ export function CreateAnAccountForm({
       onSubmit: z
         .object({
           confirmPassword: z.string(),
-          email: z.email(m.auth__invalid_email()),
-          name: z.string().min(2, m.auth__name_min_length()),
-          password: z.string().min(8, m.auth__password_min_length())
+          email: z.email("Invalid email address"),
+          name: z.string().min(2, "Name must be at least 2 characters"),
+          password: z.string().min(8, "Password must be at least 8 characters")
         })
         .refine((data) => data.password === data.confirmPassword, {
-          message: m.auth__passwords_no_match(),
+          message: "Passwords do not match",
           path: ["confirmPassword"]
         })
     }
@@ -97,73 +94,49 @@ export function CreateAnAccountForm({
       >
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <Link href="/" className="flex flex-col items-center gap-2 font-medium">
+            <Link to="/" className="flex flex-col items-center gap-2 font-medium">
               <LogoIcon className="flex size-8 items-center justify-center rounded-md" />
               <span className="sr-only">{appConfig.site.shortName}</span>
             </Link>
-            <h1 className="text-xl font-bold">{m.auth__create_account_title()}</h1>
+            <h1 className="text-xl font-bold">Create an account</h1>
             <FieldDescription>
-              {m.auth__already_have_account()}{" "}
+              Already have an account?{" "}
               <Link to="/sign-in" search={{ redirect: redirectTo }}>
-                {m.auth__sign_in_link()}
+                Sign in
               </Link>
             </FieldDescription>
           </div>
 
           <form.AppField name="name">
-            {(field) => (
-              <field.InputField
-                label={m.auth__name_label()}
-                placeholder={m.auth__name_placeholder()}
-              />
-            )}
+            {(field) => <field.InputField label="Name" placeholder="John Doe" />}
           </form.AppField>
 
           <form.AppField name="email">
             {(field) => (
-              <field.InputField
-                label={m.auth__email_label()}
-                placeholder={m.auth__email_placeholder()}
-                type="email"
-              />
+              <field.InputField label="Email" placeholder="john-doe@example.com" type="email" />
             )}
           </form.AppField>
 
           <form.AppField name="password">
-            {(field) => <field.InputField label={m.auth__password_label()} type="password" />}
+            {(field) => <field.InputField label="Password" type="password" />}
           </form.AppField>
 
           <form.AppField name="confirmPassword">
-            {(field) => (
-              <field.InputField label={m.auth__confirm_password_label()} type="password" />
-            )}
+            {(field) => <field.InputField label="Confirm Password" type="password" />}
           </form.AppField>
 
           <form.AppForm>
             <form.SubmitButton isLoading={signUpMutation.isPending}>
-              {signUpMutation.isPending ? m.auth__creating_account() : m.auth__create_account()}
+              {signUpMutation.isPending ? "Creating account..." : "Create Account"}
             </form.SubmitButton>
           </form.AppForm>
 
-          <FieldSeparator>{m.auth__or()}</FieldSeparator>
+          <FieldSeparator>Or</FieldSeparator>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <button
               className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xs border border-input bg-background px-4 py-2 text-sm shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-              onClick={() => toast.error(m.auth__not_yet_implemented())}
-              type="button"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                  d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"
-                  fill="currentColor"
-                />
-              </svg>
-              {m.auth__continue_with_apple()}
-            </button>
-            <button
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xs border border-input bg-background px-4 py-2 text-sm shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-              onClick={() => toast.error(m.auth__not_yet_implemented())}
+              onClick={() => toast.error("Not yet implemented.")}
               type="button"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -172,14 +145,14 @@ export function CreateAnAccountForm({
                   fill="currentColor"
                 />
               </svg>
-              {m.auth__continue_with_google()}
+              Continue with Google
             </button>
           </div>
         </FieldGroup>
       </form>
       <FieldDescription className="px-6 text-center">
-        {m.auth__terms_agreement()} <Link to="/terms-of-service">{m.auth__terms_of_service()}</Link>{" "}
-        {m.auth__and()} <Link to="/privacy-policy">{m.auth__privacy_policy()}</Link>.
+        By clicking continue, you agree to our <Link to="/terms-of-service">Terms of Service</Link>{" "}
+        and <Link to="/privacy-policy">Privacy Policy</Link>.
       </FieldDescription>
     </Container>
   );

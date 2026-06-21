@@ -1,5 +1,6 @@
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { GitForkIcon, StarIcon } from "@tsu-stack/icons";
+import { Link } from "@tanstack/react-router";
+import { GitFork, Star } from "lucide-react";
+
 import { Badge } from "@tsu-stack/ui/components/badge";
 
 import { formatGithubCount } from "@/shared/lib/format-github-count";
@@ -49,13 +50,13 @@ export function PinnedRepoCard({ repo }: PinnedRepoCardProps) {
         ) : null}
         {repo.stars > 0 ? (
           <span className="flex items-center gap-1">
-            <StarIcon className="size-3.5" />
+            <Star className="size-3.5" />
             {formatGithubCount(repo.stars)}
           </span>
         ) : null}
         {repo.forks > 0 ? (
           <span className="flex items-center gap-1">
-            <GitForkIcon className="size-3.5" />
+            <GitFork className="size-3.5" />
             {formatGithubCount(repo.forks)}
           </span>
         ) : null}

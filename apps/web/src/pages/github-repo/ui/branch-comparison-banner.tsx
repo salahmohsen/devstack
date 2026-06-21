@@ -1,5 +1,6 @@
+import { GitCompare, GitPullRequest } from "lucide-react";
+
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
-import { GitCompareIcon, GitPullRequestIcon } from "@tsu-stack/icons";
 import { Callout, CalloutAction, CalloutContent } from "@tsu-stack/ui/components/callout";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 
@@ -78,7 +79,7 @@ export function BranchComparisonBanner({
           aria-label="Open compare view"
           className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
         >
-          <GitCompareIcon size={14} />
+          <GitCompare size={14} />
         </a>
         {aheadBy > 0 && (
           <a
@@ -87,7 +88,7 @@ export function BranchComparisonBanner({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1 text-xs font-medium text-background transition-opacity hover:opacity-90"
           >
-            <GitPullRequestIcon size={13} />
+            <GitPullRequest size={13} />
             Create pull request
           </a>
         )}

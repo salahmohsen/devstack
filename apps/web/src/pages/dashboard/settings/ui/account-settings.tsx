@@ -6,7 +6,7 @@ import AuthSessionManager from "@tsu-stack/ui/components/auth-session-manager";
 
 export const AccountSettings = () => {
   const sessions = useLoaderData({
-    from: "/{-$locale}/__protected/dashboard/settings/account/"
+    from: "/__protected/dashboard/settings/account/"
   });
 
   const revokeSession = useMutation({

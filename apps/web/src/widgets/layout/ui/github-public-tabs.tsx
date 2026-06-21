@@ -1,5 +1,13 @@
 import { Link, type useRouter, useRouterState } from "@tanstack/react-router";
 import {
+  PlaySquare,
+  Archive,
+  ChevronRight,
+  X,
+  GitCommitHorizontal,
+  GitPullRequest
+} from "lucide-react";
+import {
   type ComponentType,
   memo,
   type SVGProps,
@@ -10,17 +18,6 @@ import {
 } from "react";
 
 import {
-  ActionsIcon,
-  ArchiveIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  GitCommitIcon,
-  GitPullRequestIcon,
-  IssuesIcon,
-  Remove01Icon,
-  ReviewsIcon
-} from "@tsu-stack/icons";
-import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
@@ -30,7 +27,6 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import {
-  isMergedTab,
   removeOtherTabs,
   removeTab,
   removeTabsToRight,
@@ -39,13 +35,15 @@ import {
   useTabs
 } from "@/shared/lib/tab-store";
 
+import { IssuesIcon, ReviewsIcon } from "@/lib/command-palette-icons";
+
 const tabIconMap = {
-  pull: GitPullRequestIcon,
+  pull: GitPullRequest,
   issue: IssuesIcon,
   review: ReviewsIcon,
-  repo: ArchiveIcon,
-  commit: GitCommitIcon,
-  actions: ActionsIcon
+  repo: Archive,
+  commit: GitCommitHorizontal,
+  actions: PlaySquare
 } as const;
 
 function useScrollShadows(tabCount: number) {
@@ -180,8 +178,6 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
   //   }
   // }, [openTabs, routerRef]);
 
-  const hasMergedTabs = openTabs.some(isMergedTab);
-
   if (openTabs.length === 0) return null;
 
   return (
@@ -243,22 +239,22 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
         </ContextMenuTrigger>
         <ContextMenuContent>
           <ContextMenuItem onSelect={handleContextClose}>
-            <CloseIcon size={14} strokeWidth={2} />
+            <X size={14} strokeWidth={2} />
             Close
           </ContextMenuItem>
           <ContextMenuItem onSelect={handleContextCloseOthers} disabled={openTabs.length <= 1}>
-            <Remove01Icon size={14} strokeWidth={2} />
+            <X size={14} strokeWidth={2} />
             Close other tabs
           </ContextMenuItem>
           <ContextMenuItem
             onSelect={handleContextCloseRight}
             disabled={!contextTab || contextTab.index === openTabs.length - 1}
           >
-            <ChevronRightIcon size={14} strokeWidth={2} />
+            <ChevronRight size={14} strokeWidth={2} />
             Close tabs to the right
           </ContextMenuItem>
           {/* <ContextMenuItem onSelect={handleContextCloseMerged} disabled={!hasMergedTabs}>
-            <GitPullRequestIcon size={14} strokeWidth={2} />
+            <GitPullRequest size={14} strokeWidth={2} />
             Close merged
           </ContextMenuItem> */}
         </ContextMenuContent>
@@ -312,7 +308,7 @@ const DetailTab = memo(function DetailTab({
 }: {
   tab: Tab;
   icon:
-    | typeof GitPullRequestIcon
+    | typeof GitPullRequest
     | ComponentType<
         SVGProps<SVGSVGElement> & { size?: string | number; strokeWidth?: string | number }
       >;
@@ -375,7 +371,7 @@ const DetailTab = memo(function DetailTab({
         className="-mr-1.5 flex size-8 shrink-0 items-center justify-center rounded-sm md:hidden"
         aria-label={`Close ${tab.title}`}
       >
-        <CloseIcon size={12} strokeWidth={2} className="text-muted-foreground" />
+        <X size={12} strokeWidth={2} className="text-muted-foreground" />
       </button>
       {/* Desktop: overlay close button on hover */}
       <button
@@ -390,7 +386,7 @@ const DetailTab = memo(function DetailTab({
       >
         <span className="to-container absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent" />
         <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-foreground/9">
-          <CloseIcon size={10} strokeWidth={2} />
+          <X size={10} strokeWidth={2} />
         </span>
       </button>
     </Link>

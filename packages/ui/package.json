@@ -24,7 +24,6 @@
     "@tiptap/pm": "catalog:",
     "@tiptap/react": "catalog:",
     "@tiptap/starter-kit": "catalog:",
-    "@tsu-stack/icons": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "date-fns": "catalog:",
@@ -42,7 +41,6 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@tsu-stack/i18n": "workspace:*",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",

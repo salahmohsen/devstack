@@ -1,8 +1,8 @@
 "use client";
 
-import { m } from "@tsu-stack/i18n/messages";
-import { Link } from "@tsu-stack/i18n/tanstack-start/components/link";
-import { BarChartIcon, ChevronsUpDownIcon, LockIcon, LogOutIcon } from "@tsu-stack/icons";
+import { Link } from "@tanstack/react-router";
+import { BarChart3, ChevronsUpDown, Lock, LogOut } from "lucide-react";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import {
   DropdownMenu,
@@ -51,7 +51,7 @@ export function NavUser({
                 <span className="truncate font-medium">{user.name ?? "Account"}</span>
                 <span className="truncate text-xs text-sidebar-foreground/70">{user.email}</span>
               </div>
-              <ChevronsUpDownIcon className="ml-auto size-4" />
+              <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 
@@ -71,21 +71,21 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link to="/dashboard">
-                  <BarChartIcon className="opacity-70" />
-                  <span>{m.user_dropdown__dashboard()}</span>
+                  <BarChart3 className="opacity-70" />
+                  <span>Dashboard</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/privacy-policy">
-                  <LockIcon className="opacity-70" />
-                  <span>{m.user_dropdown__privacy_policy()}</span>
+                  <Lock className="opacity-70" />
+                  <span>Privacy Policy</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => void onSignOut()} variant="destructive">
-              <LogOutIcon className="opacity-70" />
-              <span>{m.user_dropdown__logout()}</span>
+              <LogOut className="opacity-70" />
+              <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
