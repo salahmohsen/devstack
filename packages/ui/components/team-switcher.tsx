@@ -1,13 +1,8 @@
 "use client";
 
+import { ChevronsUpDown, GalleryVerticalEnd, Plus, Terminal } from "lucide-react";
 import * as React from "react";
 
-import {
-  ChevronsUpDownIcon,
-  GalleryVerticalEndIcon,
-  PlusIcon,
-  TerminalIcon
-} from "@tsu-stack/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,7 +52,7 @@ export function TeamSwitcher({
                 <span className="truncate font-medium">{activeTeam.name}</span>
                 <span className="truncate text-xs">{activeTeam.plan}</span>
               </div>
-              <ChevronsUpDownIcon className="ml-auto" />
+              <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -88,7 +83,7 @@ export function TeamSwitcher({
             <DropdownMenuGroup>
               <DropdownMenuItem className="gap-2 p-2">
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <PlusIcon className="size-4" />
+                  <Plus className="size-4" />
                 </div>
                 <div className="font-medium text-muted-foreground">Add tenant</div>
               </DropdownMenuItem>
@@ -102,12 +97,12 @@ export function TeamSwitcher({
 
 export const DASHBOARD_TEAMS = [
   {
-    logo: <GalleryVerticalEndIcon />,
+    logo: <GalleryVerticalEnd />,
     name: "Portfolio HQ",
     plan: "Production"
   },
   {
-    logo: <TerminalIcon />,
+    logo: <Terminal />,
     name: "Sandbox",
     plan: "Preview"
   }

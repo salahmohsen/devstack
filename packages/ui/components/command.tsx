@@ -1,6 +1,6 @@
+import { Search } from "lucide-react";
 import * as React from "react";
 
-import { SearchIcon } from "@tsu-stack/icons";
 import { Dialog, DialogContent } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -42,7 +42,7 @@ function CommandInput({ className, onChange, value, ...props }: React.ComponentP
 
   return (
     <div className="flex items-center gap-2 border-b px-3" data-slot="command-input-wrapper">
-      <SearchIcon className="size-4 text-muted-foreground" />
+      <Search className="size-4 text-muted-foreground" />
       <input
         className={cn(
           "flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",

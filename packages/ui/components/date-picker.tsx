@@ -1,11 +1,11 @@
 "use client";
 
 import { format as dateFnsFormat } from "date-fns";
+import { Calendar } from "lucide-react";
 import { useState } from "react";
 
-import { CalendarIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Calendar } from "@tsu-stack/ui/components/calendar";
+import { Calendar as CalendarView } from "@tsu-stack/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -51,12 +51,12 @@ function DatePicker({
             className
           )}
         >
-          <CalendarIcon />
+          <Calendar />
           {date ? dateFnsFormat(date, displayFormat) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={handleSelect} />
+        <CalendarView mode="single" selected={date} onSelect={handleSelect} />
       </PopoverContent>
     </Popover>
   );

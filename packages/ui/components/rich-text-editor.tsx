@@ -3,24 +3,24 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import {
+  TextQuote,
+  Code,
+  Heading2,
+  Heading3,
+  Link as LinkIcon, // Alias needed: Link already imported from @tiptap/extension-link
+  List,
+  ListOrdered,
+  Pilcrow,
+  Redo2,
+  Bold,
+  Italic,
+  Strikethrough,
+  Underline,
+  Undo2
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
-import {
-  BlockQuoteIcon,
-  CodeIcon,
-  Heading02Icon,
-  Heading03Icon,
-  LinkIcon,
-  ListBulletIcon,
-  ListOrderedIcon,
-  ParagraphIcon,
-  RedoIcon,
-  TextBoldIcon,
-  TextItalicIcon,
-  TextStrikethroughIcon,
-  TextUnderlineIcon,
-  UndoIcon
-} from "@tsu-stack/icons";
 import { Button, buttonVariants } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -233,7 +233,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editor.isEditable}
         >
-          <TextBoldIcon size={14} strokeWidth={2.25} />
+          <Bold size={14} strokeWidth={2.25} />
         </ToolbarButton>
         <ToolbarButton
           label="Italic"
@@ -241,7 +241,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleItalic().run()}
           disabled={!editor.isEditable}
         >
-          <TextItalicIcon size={14} strokeWidth={2} />
+          <Italic size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Strikethrough"
@@ -249,7 +249,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleStrike().run()}
           disabled={!editor.isEditable}
         >
-          <TextStrikethroughIcon size={14} strokeWidth={2} />
+          <Strikethrough size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Underline"
@@ -257,7 +257,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleMark("underline").run()}
           disabled={!editor.isEditable}
         >
-          <TextUnderlineIcon size={14} strokeWidth={2} />
+          <Underline size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarDivider />
         <ToolbarButton
@@ -266,7 +266,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           disabled={!editor.isEditable}
         >
-          <Heading02Icon size={14} strokeWidth={2} />
+          <Heading2 size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Heading 3"
@@ -274,7 +274,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           disabled={!editor.isEditable}
         >
-          <Heading03Icon size={14} strokeWidth={2} />
+          <Heading3 size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Paragraph"
@@ -282,7 +282,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().setParagraph().run()}
           disabled={!editor.isEditable}
         >
-          <ParagraphIcon size={14} strokeWidth={2} />
+          <Pilcrow size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarDivider />
         <ToolbarButton
@@ -291,7 +291,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           disabled={!editor.isEditable}
         >
-          <ListBulletIcon size={14} strokeWidth={2} />
+          <List size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Numbered list"
@@ -299,7 +299,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           disabled={!editor.isEditable}
         >
-          <ListOrderedIcon size={14} strokeWidth={2} />
+          <ListOrdered size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Block quote"
@@ -307,7 +307,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           disabled={!editor.isEditable}
         >
-          <BlockQuoteIcon size={14} strokeWidth={2} />
+          <TextQuote size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Inline code"
@@ -315,7 +315,7 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().toggleCode().run()}
           disabled={!editor.isEditable}
         >
-          <CodeIcon size={14} strokeWidth={2} />
+          <Code size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarDivider />
         <LinkPopover editor={editor} />
@@ -325,14 +325,14 @@ function RichTextEditor({
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.isEditable || !editor.can().undo()}
         >
-          <UndoIcon size={14} strokeWidth={2} />
+          <Undo2 size={14} strokeWidth={2} />
         </ToolbarButton>
         <ToolbarButton
           label="Redo"
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.isEditable || !editor.can().redo()}
         >
-          <RedoIcon size={14} strokeWidth={2} />
+          <Redo2 size={14} strokeWidth={2} />
         </ToolbarButton>
       </div>
       <EditorContent editor={editor} />

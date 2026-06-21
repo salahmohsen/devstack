@@ -89,7 +89,7 @@ function tick(now: number) {
 
 function subscribeFrame(listener: FrameListener) {
   listeners.add(listener);
-  if (rafId === null) {
+  if ((rafId ??= null)) {
     rafId = window.requestAnimationFrame(tick);
   }
   return () => {

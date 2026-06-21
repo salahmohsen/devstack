@@ -1,7 +1,7 @@
+import { X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import * as React from "react";
 
-import { XIcon } from "@tsu-stack/icons";
 import { Button } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -56,7 +56,7 @@ function DialogContent({
         {children}
         <DialogPrimitive.Close data-slot="dialog-close" asChild>
           <Button variant="ghost" className="absolute top-4 right-4" size="icon-sm">
-            <XIcon />
+            <X />
             <span className="sr-only">Close</span>
           </Button>
         </DialogPrimitive.Close>
@@ -111,8 +111,8 @@ export {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogOverlay,
   DialogPortal,
   DialogTitle,
-  DialogOverlay,
   DialogTrigger
 };
