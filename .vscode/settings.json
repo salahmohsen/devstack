@@ -139,10 +139,6 @@
       "url": "https://ui.shadcn.com/schema.json"
     },
     {
-      "fileMatch": ["packages/i18n/messages/*.json"],
-      "url": "https://inlang.com/schema/inlang-message-format"
-    },
-    {
       "fileMatch": [".fallowrc.jsonc", ".fallowrc.json"],
       "url": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json"
     }

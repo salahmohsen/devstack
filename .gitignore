@@ -11,8 +11,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-**/project.inlang/cache
-**/project.inlang/project_id
+
 .env
 .env.docker
 *.local
