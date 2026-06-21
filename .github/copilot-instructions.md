@@ -12,8 +12,8 @@ An opinionated Vite+ monorepo. It uses `vp` (Vite+ CLI) to run scripts across pa
 | Drizzle ORM    | Type-safe ORM                                      |
 | Neon Postgres  | Primary database                                   |
 | Better Auth    | Self-hosted auth                                   |
-| Paraglide.js   | Compiled i18n                                      |
-| shadcn/ui      | Component library                                  |
+
+| shadcn/ui | Component library |
 
 ## Monorepo Structure
 
@@ -24,7 +24,7 @@ packages/api  - oRPC routers & client where all the API logic lives with OpenAPI
 packages/auth - Better Auth config
 packages/db   - Drizzle schemas & migrations, run `vp run -w db:*` to manage the database
 packages/env  - Shared env validation (.env lives here)
-packages/i18n - Paraglide i18n + Vite plugin
+
 packages/logger - Logtape isomorphic logger (client + server) with designated categories
 packages/ui   - shadcn/ui components shared across all apps/*
 tools/tsconfig - Shared TypeScript base config

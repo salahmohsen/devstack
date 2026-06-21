@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Vite Plus (Vite+) TanStack Start monorepo with Paraglide.js (i18n), Hono, oRPC, drizzle-orm, better-auth, Feature-Sliced Design (FSD), and more. Dockerized and opinionated.
+  Vite Plus (Vite+) TanStack Start monorepo with Hono, oRPC, drizzle-orm, better-auth, Feature-Sliced Design (FSD), and more. Dockerized and opinionated.
 </p>
 
 <p align="center">
@@ -66,14 +66,14 @@ Here is a non-exhaustive list of the main technologies used in this project, alo
 | [**pnpm**](https://pnpm.io/)                      | Fast, disk-efficient package manager for Node.js with package catalogs for monorepo dependecy deduplication.                                                                               | npm, yarn                                                                          |
 | [**Vite Plus (Vite+)**](https://viteplus.dev/)    | Unified toolchain for development, testing, and building the monorepo.                                                                                                                     | Turborepo, Nx, Vitest, Prettier, ESLint, husky, lint-staged, lefthook, tsdown, tsc |
 | [**TanStack Start**](https://tanstack.com/router) | Modern full-stack React framework with support for SPA, SSR, ISR, and integrated with TanStack Query. This branch configures it for Cloudflare Workers through the Cloudflare Vite plugin. | Next.js, Remix, React Router                                                       |
-| [**Paraglide.js**](https://paraglide.dev/)        | Compiled internationalization (i18n) library for managing translations.                                                                                                                    | i18next, next-intl                                                                 |
-| [**Hono**](https://hono.dev/)                     | Lightweight web server framework built on web standards and is WinterCG-compliant for cross-platform portability.                                                                          | Express.js, Fastify, Elysia.js                                                     |
-| [**oRPC**](https://orpc.dev/)                     | RPC framework to define API routes and generate OpenAPI specs and documentation with [Scalar](https://scalar.com/).                                                                        | tRPC                                                                               |
-| [**Drizzle ORM**](https://orm.drizzle.team/)      | Type-safe and lightweight ORM for database interactions.                                                                                                                                   | Prisma, TypeORM                                                                    |
-| [**Neon Postgres**](https://neon.com/)            | Serverless Postgres database for development and deployment.                                                                                                                               | PostgreSQL, MySQL, MariaDB                                                         |
-| [**Better Auth**](https://better-auth.com/)       | Self-hosted authentication framework with support for all major OAuth providers.                                                                                                           | Auth.js                                                                            |
-| [**Docker**](https://www.docker.com/)             | Containerization for local development and deployment.                                                                                                                                     | Podman                                                                             |
-| [**shadcn/ui**](https://ui.shadcn.com/)           | Accessible and customizable React component library.                                                                                                                                       | Chakra UI, Material UI, Mantine UI                                                 |
+
+| [**Hono**](https://hono.dev/) | Lightweight web server framework built on web standards and is WinterCG-compliant for cross-platform portability. | Express.js, Fastify, Elysia.js |
+| [**oRPC**](https://orpc.dev/) | RPC framework to define API routes and generate OpenAPI specs and documentation with [Scalar](https://scalar.com/). | tRPC |
+| [**Drizzle ORM**](https://orm.drizzle.team/) | Type-safe and lightweight ORM for database interactions. | Prisma, TypeORM |
+| [**Neon Postgres**](https://neon.com/) | Serverless Postgres database for development and deployment. | PostgreSQL, MySQL, MariaDB |
+| [**Better Auth**](https://better-auth.com/) | Self-hosted authentication framework with support for all major OAuth providers. | Auth.js |
+| [**Docker**](https://www.docker.com/) | Containerization for local development and deployment. | Podman |
+| [**shadcn/ui**](https://ui.shadcn.com/) | Accessible and customizable React component library. | Chakra UI, Material UI, Mantine UI |
 
 ## Getting Started
 
@@ -217,7 +217,7 @@ This monorepo is not a single root-level Worker project. Configure Cloudflare to
   - `packages/core/**`
   - `packages/db/**`
   - `packages/env/**`
-  - `packages/i18n/**`
+
   - `packages/logger/**`
   - `packages/seo/**`
   - `packages/ui/**`
@@ -340,7 +340,7 @@ Since Hono is built on web standards, you can mount the Hono App into the TanSta
 // apps/web/package.json
 "dependencies": {
   // ...
-  "@tsu-stack/i18n": "workspace:*",
+
   "@tsu-stack/server": "workspace:*", // add this to import the server app into the web app
   "@tsu-stack/ui": "workspace:*",
   // ...
@@ -418,8 +418,6 @@ However, the benefit is singular deployments and lower memory usage for websites
 - Builds are slower and more bloated in general because Vite Plus does not have a [`turbo prune`](https://turborepo.dev/docs/reference/prune) alternative
   - See this related issue: https://github.com/voidzero-dev/vite-plus/issues/839
 - On a similar note, there isn't an elegant way to install `vp` in Dockerfile images, so you need to manually bump the desired `vp` version in the `/apps/*/Dockerfile`'s `VITE_PLUS_VERSION` variable.
-- There is a hydration error when navigating to an i18n subpath like `/de`, but it subsides in subsequent navigations.
-  - Need to investigate further, but otherwise, I haven't encountered any app-breaking bugs with it.
 - `robots.txt` [needs to be at the root of the domain](https://developers.google.com/search/docs/crawling-indexing/robots/intro) to be detected by search engines (ie. `example.com/robots.txt`), but since the web app is served on a subpath (ie. `example.com/web`), you need to set up a redirect from `example.com/robots.txt` to `example.com/web/robots.txt` in order for it to be detected.
   - Other than that, you may need to set up a root sitemap index that links to as many sitemaps for every app you deploy in multiple subpaths.
     - At the moment, the `__root.tsx` points to the subpath-specific sitemap, so you may want to consider pointing it to the root if you decide to opt into that architecture.

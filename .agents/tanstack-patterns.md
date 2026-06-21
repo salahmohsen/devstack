@@ -6,7 +6,6 @@ This guide is intentionally focused on TanStack Router and TanStack Start. For o
 
 - [API fetching patterns](./api-fetching-patterns.md)
 - [oRPC patterns](./orpc.md)
-- [i18n patterns](./i18n.md)
 
 ## Routing
 
@@ -43,10 +42,9 @@ segment-name/
 
 ### Route Hierarchy
 
-- `{-$locale}/` — i18n locale prefix (optional param, base locale omits it)
 - `(github-layout)/` — Navbar + Footer wrapper for public marketing pages and the guest auth surface (`(guest)/sign-in`, `(guest)/create-an-account`)
 - `(guest)/` — Pathless layout nested under `(github-layout)/`; marks `sign-in` and `sign-in/create-an-account` as guest-only so `validateNavigateTo` can filter them out
-- `__protected/` — Auth guard + Suspense boundary (sits directly under `{-$locale}`, NOT inside `(github-layout)/`, so dashboard does not inherit navbar/footer)
+- `__protected/` — Auth guard + Suspense boundary (sits directly under root, NOT inside `(github-layout)/`, so dashboard does not inherit navbar/footer)
 - Dashboard has its own sidebar layout via `__protected/dashboard/route.tsx`
 
 ### Adding a Route
