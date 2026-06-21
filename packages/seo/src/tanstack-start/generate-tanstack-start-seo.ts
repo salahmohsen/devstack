@@ -89,12 +89,7 @@ export function generateTanStackStartSeo({
           property: "og:site_name"
         }
       : undefined,
-    alternates?.locale
-      ? {
-          content: alternates.locale,
-          property: "og:locale"
-        }
-      : undefined,
+
     canonicalUrl
       ? {
           content: canonicalUrl,

@@ -58,13 +58,10 @@ function getTitle(meta: TanStackStartSeoMetaTag[] | undefined) {
 
 describe("generateTanStackStartSeo", () => {
   describe("happy path behavior", () => {
-    it("builds a route head with templated titles, alternates, social meta, and robots tags", () => {
+    it("builds a route head with templated titles, canonical, social meta, and robots tags", () => {
       const result = createSubject({
         alternates: {
-          baseLocale: "en",
-          canonicalPath: "/articles/legendary-builds/",
-          locale: "ja",
-          locales: ["en", "ja"] as const
+          canonicalPath: "/articles/legendary-builds/"
         },
         description: "Legendary routes, builds, and pull planning.",
         images: [
@@ -106,12 +103,8 @@ describe("generateTanStackStartSeo", () => {
         property: "og:type"
       });
       expect(getMetaByProperty(result.meta, "og:url")).toEqual({
-        content: "https://example-app.example/ja/articles/legendary-builds",
+        content: "https://example-app.example/articles/legendary-builds",
         property: "og:url"
-      });
-      expect(getMetaByProperty(result.meta, "og:locale")).toEqual({
-        content: "ja",
-        property: "og:locale"
       });
       expect(getMetaByProperty(result.meta, "og:site_name")).toEqual({
         content: "Example App",
@@ -139,23 +132,8 @@ describe("generateTanStackStartSeo", () => {
       });
       expect(result.links).toEqual([
         {
-          href: "https://example-app.example/ja/articles/legendary-builds",
+          href: "https://example-app.example/articles/legendary-builds",
           rel: "canonical"
-        },
-        {
-          href: "https://example-app.example/articles/legendary-builds",
-          hrefLang: "en",
-          rel: "alternate"
-        },
-        {
-          href: "https://example-app.example/ja/articles/legendary-builds",
-          hrefLang: "ja",
-          rel: "alternate"
-        },
-        {
-          href: "https://example-app.example/articles/legendary-builds",
-          hrefLang: "x-default",
-          rel: "alternate"
         }
       ]);
     });
@@ -166,31 +144,19 @@ describe("generateTanStackStartSeo", () => {
       {
         expectedCanonical: "https://example-app.example/",
         expectedOgUrl: "https://example-app.example/",
-        locale: "en",
-        name: "base locale on root path omits the locale prefix",
-        path: "/"
-      },
-      {
-        expectedCanonical: "https://example-app.example/ja",
-        expectedOgUrl: "https://example-app.example/ja",
-        locale: "ja",
-        name: "non-base locale on root path does not add a trailing slash",
+        name: "canonical paths are normalized to remove trailing slashes",
         path: "/"
       },
       {
         expectedCanonical: "https://example-app.example/guides",
         expectedOgUrl: "https://example-app.example/guides",
-        locale: "en",
         name: "canonical paths are normalized to remove trailing slashes",
         path: "/guides/"
       }
-    ])("$name", ({ expectedCanonical, expectedOgUrl, locale, path }) => {
+    ])("$name", ({ expectedCanonical, expectedOgUrl, path }) => {
       const result = createSubject({
         alternates: {
-          baseLocale: "en",
-          canonicalPath: path as `/${string}`,
-          locale,
-          locales: ["en", "ja"] as const
+          canonicalPath: path as `/${string}`
         }
       });
 
@@ -393,24 +359,19 @@ describe("generateTanStackStartSeo", () => {
       );
     });
 
-    it("still emits og:locale even when alternates are not fully configured", () => {
+    it("emits a canonical link when alternates are configured", () => {
       const result = createSubject({
         alternates: {
-          canonicalPath: "/profile/search",
-          locale: "ja"
+          canonicalPath: "/profile/search"
         }
       });
 
       expect(result.links).toEqual([
         {
-          href: "https://example-app.example/ja/profile/search",
+          href: "https://example-app.example/profile/search",
           rel: "canonical"
         }
       ]);
-      expect(getMetaByProperty(result.meta, "og:locale")).toEqual({
-        content: "ja",
-        property: "og:locale"
-      });
     });
 
     it("serializes robots directives in a stable, crawler-friendly order", () => {
@@ -443,10 +404,7 @@ describe("generateTanStackStartSeo", () => {
 
       const result = createSubject({
         alternates: {
-          baseLocale: "en",
-          canonicalPath: "/profile/search/",
-          locale: "ja",
-          locales: ["en", "ja"] as const
+          canonicalPath: "/profile/search/"
         },
         includeDocumentMeta: true,
         robots: {

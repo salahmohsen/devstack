@@ -63,10 +63,7 @@ export type TanStackStartSeoSite = {
 };
 
 export type TanStackStartSeoAlternates = {
-  baseLocale?: string;
   canonicalPath: `/${string}`;
-  locale?: string;
-  locales?: readonly string[];
 };
 
 export type GenerateTanStackStartSeoParams = {
