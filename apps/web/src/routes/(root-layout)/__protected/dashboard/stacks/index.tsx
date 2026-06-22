@@ -21,7 +21,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/
 
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
-export const Route = createFileRoute("/(root-layout)/__protected/dashboard/stacks")({
+export const Route = createFileRoute("/(root-layout)/__protected/dashboard/stacks/")({
   component: StacksListPage
 });
 
