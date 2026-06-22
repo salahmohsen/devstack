@@ -1,19 +1,30 @@
 import { z } from "zod";
 
-export const ProjectStackOutputSchema = z.object({
+export const StackOutputSchema = z.object({
   id: z.string(),
   name: z.string(),
-  iconUrl: z.string().nullable()
+  icon: z.string().nullable(),
+  sortOrder: z.number().int()
 });
 
-export type ProjectStackOutput = z.infer<typeof ProjectStackOutputSchema>;
+export type StackOutput = z.infer<typeof StackOutputSchema>;
 
-export const ProjectStackInputSchema = z.object({
+export const StackCreateInputSchema = z.object({
   name: z.string().min(1),
-  iconUrl: z.string().nullable().optional()
+  icon: z.string().nullable().optional()
 });
 
-export type ProjectStackInput = z.infer<typeof ProjectStackInputSchema>;
+export type StackCreateInput = z.infer<typeof StackCreateInputSchema>;
+
+export const StackUpdateInputSchema = z.object({
+  name: z.string().min(1).optional(),
+  icon: z.string().nullable().optional()
+});
+
+export type StackUpdateInput = z.infer<typeof StackUpdateInputSchema>;
+
+export const StackListOutputSchema = z.array(StackOutputSchema);
+export type StackListOutput = z.infer<typeof StackListOutputSchema>;
 
 export const ProjectOutputSchema = z.object({
   id: z.string(),
@@ -25,7 +36,8 @@ export const ProjectOutputSchema = z.object({
   toDate: z.string().nullable(),
   sortOrder: z.number().int(),
   experienceId: z.string().nullable(),
-  stacks: z.array(ProjectStackOutputSchema)
+  isPresent: z.boolean(),
+  stacks: z.array(StackOutputSchema)
 });
 
 export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
@@ -38,7 +50,8 @@ export const CreateProjectInputSchema = z.object({
   fromDate: z.string().nullable().optional(),
   toDate: z.string().nullable().optional(),
   experienceId: z.string().nullable().optional(),
-  stacks: z.array(ProjectStackInputSchema).optional().default([])
+  isPresent: z.boolean().optional(),
+  stackIds: z.array(z.string()).optional().default([])
 });
 
 export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
@@ -51,7 +64,8 @@ export const UpdateProjectInputSchema = z.object({
   fromDate: z.string().nullable().optional(),
   toDate: z.string().nullable().optional(),
   experienceId: z.string().nullable().optional(),
-  stacks: z.array(ProjectStackInputSchema).optional()
+  isPresent: z.boolean().optional(),
+  stackIds: z.array(z.string()).optional()
 });
 
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
@@ -65,6 +79,7 @@ export const ExperienceOutputSchema = z.object({
   toDate: z.string().nullable(),
   sortOrder: z.number().int(),
   isArchived: z.boolean(),
+  isPresent: z.boolean(),
   projects: z.array(ProjectOutputSchema)
 });
 
@@ -76,7 +91,8 @@ export const CreateExperienceInputSchema = z.object({
   description: z.string(),
   fromDate: z.string().nullable().optional(),
   toDate: z.string().nullable().optional(),
-  isArchived: z.boolean().optional()
+  isArchived: z.boolean().optional(),
+  isPresent: z.boolean().optional()
 });
 
 export type CreateExperienceInput = z.infer<typeof CreateExperienceInputSchema>;
@@ -87,7 +103,8 @@ export const UpdateExperienceInputSchema = z.object({
   description: z.string(),
   fromDate: z.string().nullable().optional(),
   toDate: z.string().nullable().optional(),
-  isArchived: z.boolean().optional()
+  isArchived: z.boolean().optional(),
+  isPresent: z.boolean().optional()
 });
 
 export type UpdateExperienceInput = z.infer<typeof UpdateExperienceInputSchema>;

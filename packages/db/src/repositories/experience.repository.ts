@@ -20,7 +20,7 @@ class ExperienceRepository {
           orderBy: (proj, { asc }) => [asc(proj.sortOrder), asc(proj.title)],
           with: {
             stacks: {
-              orderBy: (stack, { asc }) => [asc(stack.name)]
+              with: { stack: true }
             }
           }
         }
@@ -36,7 +36,7 @@ class ExperienceRepository {
           orderBy: (proj, { asc }) => [asc(proj.sortOrder), asc(proj.title)],
           with: {
             stacks: {
-              orderBy: (stack, { asc }) => [asc(stack.name)]
+              with: { stack: true }
             }
           }
         }
@@ -58,7 +58,8 @@ class ExperienceRepository {
         fromDate: input.fromDate ?? null,
         toDate: input.toDate ?? null,
         sortOrder: nextSortOrder,
-        isArchived: input.isArchived ?? false
+        isArchived: input.isArchived ?? false,
+        isPresent: input.isPresent ?? false
       })
       .returning();
 
