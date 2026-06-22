@@ -1,7 +1,9 @@
 import { createFormHook } from "@tanstack/react-form";
 
 import { InputGroupField } from "@/shared/form/input-group-field";
+import { StackSelector } from "@/shared/form/stack-selector";
 
+import { CheckboxField } from "./checkbox-field";
 import { DatePickerField } from "./date-picker-field";
 import { fieldContext, formContext } from "./form-contexts";
 import { InputField } from "./input-field";
@@ -12,11 +14,13 @@ import { SubmitButton } from "./submit-button";
 export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppFormContext } =
   createFormHook({
     fieldComponents: {
+      CheckboxField,
       DatePickerField,
       InputField,
       PasswordInputField,
       RichTextField,
-      InputGroupField
+      InputGroupField,
+      StackSelector
     },
     fieldContext,
     formComponents: {
