@@ -1,1 +1,1 @@
-export * from "#@/app";
+export { app } from "./mastra";

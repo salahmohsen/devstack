@@ -1,7 +1,7 @@
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
-import { app } from "#@/app";
 import { GitHubSignalRelay } from "#@/github-signal-relay";
+import { app } from "#@/mastra";
 
 export default {
   fetch(request: Request, env: Cloudflare.Env, executionContext: ExecutionContext) {

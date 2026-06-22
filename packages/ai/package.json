@@ -1,0 +1,30 @@
+{
+  "name": "@tsu-stack/ai",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#@/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./mastra": "./src/mastra/index.ts",
+    "./mastra/server-adapter": "./src/mastra/server-adapter.ts"
+  },
+  "scripts": {
+    "check": "vp check",
+    "check:fix": "vp check --fix"
+  },
+  "dependencies": {
+    "@mastra/core": "catalog:",
+    "@mastra/hono": "catalog:",
+    "@tsu-stack/core": "workspace:*",
+    "@tsu-stack/env": "workspace:*",
+    "@tsu-stack/logger": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tsu-stack/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

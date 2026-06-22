@@ -118,6 +118,13 @@ catalog:
   "@react-email/ui": 6.6.3
   react-email: 6.6.3
   oxlint: ^1.70.0
+  "@mastra/core": ^1.45.0
+  "@mastra/memory": ^1.21.0
+  "@mastra/hono": ^1.5.0
+  "@mastra/pg": ^1.14.0
+  "@mastra/cloudflare-d1": ^1.1.0
+  "@mastra/observability": ^1.15.0
+  "@mastra/rag": ^2.3.0
 
 catalogMode: prefer
 
