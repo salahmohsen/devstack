@@ -15,11 +15,6 @@
   "mdx": {
     "checkMdx": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "../../packages/ui/components/team-switcher.tsx",
-    "../../packages/ui/components/theme-switcher.tsx"
-  ],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

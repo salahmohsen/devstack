@@ -7,7 +7,7 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { LOG_SERVICES, initLog } from "@tsu-stack/logger/client";
 
-import { LoggerProvider } from "@/shared/providers/logger-provider";
+import { LoggerProvider } from "@/shared/providers/logger.provider";
 import {
   AppQueryClientProvider,
   createAppQueryClient

@@ -6,7 +6,7 @@ import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { Button } from "@tsu-stack/ui/components/button";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
-import { useLogger } from "@/shared/providers/logger-provider";
+import { useLogger } from "@/shared/providers/logger.provider";
 import { Container } from "@/shared/ui/container";
 import { Image } from "@/shared/ui/image";
 
