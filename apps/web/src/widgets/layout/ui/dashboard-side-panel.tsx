@@ -120,7 +120,7 @@ export function SidePanelSlot({
   const show = hasChildren && !collapsed;
 
   return (
-    <div className="hidden overflow-hidden xl:block">
+    <div className="hidden overflow-hidden xl:block xl:h-full">
       <motion.div
         animate={{ opacity: show ? 1 : 0 }}
         transition={{ duration: show ? 0.2 : 0.1, delay: show ? 0.1 : 0 }}

@@ -1,10 +1,14 @@
+import { useLocation } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { type PropsWithChildren } from "react";
 
-import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useMediaQuery } from "@/shared/lib/use-media-query";
+import { IntersectionProvider } from "@/shared/providers/intersection.provider";
+
+import { DashboardSidebar } from "@/widgets/layout/ui/dashboard-sidebar";
+import { PublicSidebar } from "@/widgets/layout/ui/public-sidebar";
 
 import { CommandPalette } from "./command-palette";
 import { DashboardBottomBar } from "./dashboard-bottombar";
@@ -20,15 +24,15 @@ import { GithubPublicMobileNav } from "./github-public-mobile-nav";
 import { Topbar } from "./github-public-topbar";
 
 export function GithubPublicLayout({ children }: PropsWithChildren) {
-  const hasMounted = useIsClient();
   const sidePanel = useSidePanelSlot();
   const isXl = useMediaQuery("(min-width: 1280px)");
-  const showPanel = hasMounted && isXl && sidePanel.hasContent && !sidePanel.collapsed;
+  const showPanel = isXl && sidePanel.hasContent && !sidePanel.collapsed;
+  const isDashboard = useLocation().pathname.includes("dashboard");
 
   return (
     <div
       className={cn(
-        "flex min-h-screen w-full flex-col",
+        "flex h-screen w-full flex-col overflow-hidden",
         "bg-container text-primary selection:bg-[#C0E7C8] selection:text-primary!"
       )}
     >
@@ -42,27 +46,33 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
           toggle: sidePanel.toggle
         }}
       >
-        <motion.div
-          initial={false}
-          animate={{
-            gridTemplateColumns: showPanel
-              ? `minmax(0, 1fr) ${SIDE_PANEL_WIDTH}px`
-              : "minmax(0, 1fr) 0px"
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 35 }}
-          className="grid flex-1 overflow-hidden p-2 pt-0"
-        >
-          <div className="relative overflow-hidden rounded-xl border bg-background shadow-xs">
-            <main className="flex h-full w-full">{children}</main>
-            <SidePanelToggle />
-          </div>
+        <div className="flex min-h-0 flex-1 flex-row p-2 pt-0">
+          <IntersectionProvider>
+            <div className="hidden shrink-0 xl:block">
+              {!isDashboard && <PublicSidebar />}
+              {isDashboard && <DashboardSidebar />}
+            </div>
+            <div className="relative min-w-0 flex-1 overflow-y-auto rounded-xl border bg-background shadow-xs">
+              <main className="flex min-h-[calc(100%-var(--navbar-height))] w-full">
+                {children}
+              </main>
+              <SidePanelToggle />
+            </div>
+          </IntersectionProvider>
 
-          <SidePanelSlot
-            slotRef={sidePanel.setNode}
-            collapsed={sidePanel.collapsed}
-            onHasContent={sidePanel.setHasContent}
-          />
-        </motion.div>
+          <motion.div
+            initial={false}
+            animate={{ width: showPanel ? SIDE_PANEL_WIDTH : 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 35 }}
+            className="hidden max-h-[calc(100%-var(--navbar-height))] shrink-0 overflow-hidden xl:block"
+          >
+            <SidePanelSlot
+              slotRef={sidePanel.setNode}
+              collapsed={sidePanel.collapsed}
+              onHasContent={sidePanel.setHasContent}
+            />
+          </motion.div>
+        </div>
       </SidePanelProvider>
 
       <DashboardBottomBar />

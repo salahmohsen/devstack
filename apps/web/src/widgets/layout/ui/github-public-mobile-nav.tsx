@@ -58,7 +58,7 @@ export function GithubPublicMobileNav() {
     .toUpperCase();
 
   return (
-    <nav className="flex items-stretch border-t border-white/10 bg-[#0d1117] md:hidden">
+    <nav className="bg-container flex items-stretch border-t border-border md:hidden">
       <Link
         to="/"
         preload={false}
