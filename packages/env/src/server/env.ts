@@ -32,7 +32,11 @@ export const ENV_SERVER = createEnv({
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().optional(),
-    EMAIL_FROM: z.string().optional()
+    EMAIL_FROM: z.string().optional(),
+    OPENCODE_API_KEY: z.string().min(1),
+    OPENAI_API_KEY: z.string().min(1),
+    EMBEDDING_MODEL: z.string().default("openai/text-embedding-3-small"),
+    MASTRA_MODEL: z.string().default("opencode-go/qwen3.7-plus")
   }
 });
 

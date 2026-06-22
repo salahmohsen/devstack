@@ -15,8 +15,12 @@
     "check:fix": "vp check --fix"
   },
   "dependencies": {
+    "@mastra/cloudflare-d1": "catalog:",
     "@mastra/core": "catalog:",
     "@mastra/hono": "catalog:",
+    "@mastra/memory": "catalog:",
+    "@mastra/observability": "catalog:",
+    "@mastra/pg": "catalog:",
     "@tsu-stack/core": "workspace:*",
     "@tsu-stack/env": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
