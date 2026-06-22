@@ -10,8 +10,10 @@ import {
   getGithubPinnedReposQueryOptions,
   getGithubProfileQueryOptions,
   getGithubSetupStatusQueryOptions,
+  getPortfolioExperiencesQueryOptions,
+  getPortfolioProjectsQueryOptions,
   GithubProfilePage
-} from "@/pages/github-profile";
+} from "@/pages/home-page";
 
 import { appConfig } from "@/config/app.config";
 
@@ -87,6 +89,22 @@ export const Route = createFileRoute("/(root-layout)/")({
         });
       });
     }
+
+    void Promise.all([
+      ensureGithubQueryData({
+        load: () => context.queryClient.prefetchQuery(getPortfolioProjectsQueryOptions()),
+        event: "home_portfolio_projects_preload_failed"
+      }),
+      ensureGithubQueryData({
+        load: () => context.queryClient.prefetchQuery(getPortfolioExperiencesQueryOptions()),
+        event: "home_portfolio_experiences_preload_failed"
+      })
+    ]).catch((error) => {
+      log.error({
+        error,
+        event: "home_portfolio_preload_failed"
+      });
+    });
 
     return setupStatus;
   },
