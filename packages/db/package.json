@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "catalog:",
+    "@tsu-stack/core": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
