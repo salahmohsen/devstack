@@ -30,6 +30,16 @@ export const relations = defineRelationsPart(schema, (r) => {
       project: r.one.project({
         from: r.projectStack.projectId,
         to: r.project.id
+      }),
+      stack: r.one.stack({
+        from: r.projectStack.stackId,
+        to: r.stack.id
+      })
+    },
+    stack: {
+      projects: r.many.projectStack({
+        from: r.stack.id,
+        to: r.projectStack.stackId
       })
     }
   };
