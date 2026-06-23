@@ -1,3 +1,4 @@
+import { getMastra } from "@tsu-stack/ai/mastra";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { GitHubSignalRelay } from "#@/github-signal-relay";
@@ -15,6 +16,15 @@ export default {
     }
 
     return app.fetch(request, env, executionContext);
+  },
+  async scheduled(event: ScheduledController, env: Cloudflare.Env, ctx: ExecutionContext) {
+    const mastra = getMastra(env);
+    const run = await mastra.getWorkflow("refresh-identity").createRun();
+    ctx.waitUntil(
+      run.start({
+        inputData: { reason: `cron: ${event.cron}` }
+      })
+    );
   }
 };
 

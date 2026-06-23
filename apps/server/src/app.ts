@@ -13,15 +13,17 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type ContentfulStatusCode } from "hono/utils/http-status";
 
+import { getMastra } from "@tsu-stack/ai/mastra";
 import {
   createContext,
   type OrpcContextBindings
 } from "@tsu-stack/api/lib/context/hono/create-context";
+import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
-import { handleGitHubWebhook } from "@tsu-stack/github";
+import { createGitHubOctokit, handleGitHubWebhook } from "@tsu-stack/github";
 import { log, parseError } from "@tsu-stack/logger/server";
 import {
   honoLogIngestionMiddleware,
@@ -29,6 +31,7 @@ import {
   type HonoLogVariables
 } from "@tsu-stack/logger/server/hono/middleware";
 
+import { isAlreadyProcessed } from "#@/identity-refresh-dedup";
 import "#@/shared/lib/logger";
 
 const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
@@ -42,7 +45,9 @@ const corsOptions: NonNullable<Parameters<typeof cors>[0]> = {
 };
 
 type AppEnv = HonoLogVariables & {
-  Bindings: OrpcContextBindings;
+  Bindings: OrpcContextBindings & {
+    MASTRA_DB: D1Database;
+  };
   Variables: {
     requestContext: MastraRequestContext;
   };
@@ -144,26 +149,51 @@ app.post("/webhooks/github", async (c) => {
   // across function boundaries).
   const webhookSecret = ENV_SERVER.GITHUB_WEBHOOK_SECRET;
 
-  return runWithDb(createDb(), async () =>
-    c.json(
-      { ok: true },
-      (
-        await handleGitHubWebhook({
-          deliveryId,
-          event,
-          payload,
-          rawBody,
-          runtime: {
+  return runWithDb(createDb(), async () => {
+    const result = await handleGitHubWebhook({
+      deliveryId,
+      event,
+      payload,
+      rawBody,
+      runtime: {
+        executionContext: c.executionCtx,
+        kv: c.env.GITHUB_CACHE_KV,
+        signalRelay: c.env.GITHUB_SIGNAL_RELAY
+      },
+      signature256: signature256 ?? null,
+      webhookSecret
+    });
+
+    if (result.status === 200 && result.shouldRefreshIdentity) {
+      const dedupContext: OrpcContext = {
+        github: {
+          binding: {
             executionContext: c.executionCtx,
-            kv: c.env.GITHUB_CACHE_KV,
-            signalRelay: c.env.GITHUB_SIGNAL_RELAY
+            kv: c.env.GITHUB_CACHE_KV
           },
-          signature256: signature256 ?? null,
-          webhookSecret
-        })
-      ).status
-    )
-  );
+          octokit: createGitHubOctokit(),
+          source: { isConfigured: false, reason: "missing_github_settings" }
+        },
+        logger: c.get("log"),
+        session: null
+      };
+      const already = await isAlreadyProcessed(dedupContext, deliveryId);
+      if (!already) {
+        const mastra = getMastra({ MASTRA_DB: c.env.MASTRA_DB });
+        const run = await mastra.getWorkflow("refresh-identity").createRun();
+        c.executionCtx.waitUntil(
+          run.start({
+            inputData: {
+              commitSha: result.headSha ?? undefined,
+              reason: `webhook: ${event}`
+            }
+          })
+        );
+      }
+    }
+
+    return c.json({ ok: true }, result.status);
+  });
 });
 
 export const openApiHandler = new OpenAPIHandler(appRouter, {

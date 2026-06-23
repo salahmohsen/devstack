@@ -20,6 +20,8 @@ export type { D1Database } from "#@/memory/index";
 
 type MastraEnv = { MASTRA_DB: D1Database };
 
+let cachedMastra: { env: MastraEnv; instance: Mastra } | undefined;
+
 export function createMastra(env: MastraEnv): Mastra {
   return new Mastra({
     memory: { default: createMastraMemory(env.MASTRA_DB) },
@@ -46,4 +48,11 @@ export function createMastra(env: MastraEnv): Mastra {
       "refresh-identity": refreshIdentityWorkflow
     }
   });
+}
+
+export function getMastra(env: MastraEnv): Mastra {
+  if (!cachedMastra || cachedMastra.env.MASTRA_DB !== env.MASTRA_DB) {
+    cachedMastra = { env, instance: createMastra(env) };
+  }
+  return cachedMastra.instance;
 }
