@@ -15,6 +15,7 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
+    "octokit": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

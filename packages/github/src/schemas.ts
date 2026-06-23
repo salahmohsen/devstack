@@ -180,6 +180,14 @@ export const GitHubRepoLatestCommitSchema = z.object({
 });
 export type GitHubRepoLatestCommit = z.infer<typeof GitHubRepoLatestCommitSchema>;
 
+export const RepoRecentCommitSchema = z.object({
+  sha: z.string(),
+  message: z.string(),
+  authorLogin: z.string().nullable(),
+  date: z.coerce.date()
+});
+export type RepoRecentCommit = z.infer<typeof RepoRecentCommitSchema>;
+
 export const GitHubRepoTreeEntrySchema = z.object({
   name: z.string(),
   path: z.string(),

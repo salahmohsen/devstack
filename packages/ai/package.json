@@ -10,7 +10,12 @@
     "./mastra": "./src/mastra/index.ts",
     "./mastra/server-adapter": "./src/mastra/server-adapter.ts",
     "./memory": "./src/memory/index.ts",
-    "./memory/storage": "./src/memory/storage.ts"
+    "./memory/storage": "./src/memory/storage.ts",
+    "./tools": "./src/tools/index.ts",
+    "./tools/identity": "./src/tools/identity/index.ts",
+    "./tools/github": "./src/tools/github/index.ts",
+    "./lib/confidence": "./src/lib/confidence.ts",
+    "./lib/bridge": "./src/lib/bridge.ts"
   },
   "scripts": {
     "check": "vp check",
@@ -23,8 +28,11 @@
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",
     "@mastra/pg": "catalog:",
+    "@mastra/rag": "catalog:",
     "@tsu-stack/core": "workspace:*",
+    "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
+    "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
     "zod": "catalog:"
   },
