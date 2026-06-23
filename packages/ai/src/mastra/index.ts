@@ -3,7 +3,7 @@ import { Mastra } from "@mastra/core";
 import { identityAgent } from "#@/agents/identity-agent";
 import { portfolioAgent } from "#@/agents/portfolio-agent";
 import { createMastraMemory, type D1Database } from "#@/memory/index";
-import { createMastraVectorStore } from "#@/memory/storage";
+import { createMastraD1Store, createMastraVectorStore } from "#@/memory/storage";
 import { observability } from "#@/observability";
 import {
   fetchRepoContextTool,
@@ -25,6 +25,7 @@ let cachedMastra: { env: MastraEnv; instance: Mastra } | undefined;
 export function createMastra(env: MastraEnv): Mastra {
   return new Mastra({
     memory: { default: createMastraMemory(env.MASTRA_DB) },
+    storage: createMastraD1Store(env.MASTRA_DB),
     observability,
     // The vector store is registered under its `id` ("mastra-vectors") so
     // createVectorQueryTool(..., { vectorStoreName: "mastra-vectors" }) can

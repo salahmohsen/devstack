@@ -181,12 +181,18 @@ app.post("/webhooks/github", async (c) => {
       if (!already) {
         const mastra = getMastra({ MASTRA_DB: c.env.MASTRA_DB });
         const run = await mastra.getWorkflow("refresh-identity").createRun();
+        const rc = new RequestContext();
+        rc.set("orpcContext", dedupContext);
+        rc.set("resourceId", dedupContext.session?.user?.id ?? "anonymous");
+        rc.set("requestId", crypto.randomUUID());
+        rc.set("logger", c.get("log"));
         c.executionCtx.waitUntil(
           run.start({
             inputData: {
               commitSha: result.headSha ?? undefined,
               reason: `webhook: ${event}`
-            }
+            },
+            requestContext: rc
           })
         );
       }
