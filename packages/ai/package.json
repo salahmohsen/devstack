@@ -8,7 +8,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./mastra": "./src/mastra/index.ts",
-    "./mastra/server-adapter": "./src/mastra/server-adapter.ts"
+    "./mastra/server-adapter": "./src/mastra/server-adapter.ts",
+    "./memory": "./src/memory/index.ts",
+    "./memory/storage": "./src/memory/storage.ts"
   },
   "scripts": {
     "check": "vp check",

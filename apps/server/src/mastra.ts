@@ -1,7 +1,11 @@
-import { mountMastra } from "@tsu-stack/ai";
+import { type Mastra } from "@mastra/core";
+import { env } from "cloudflare:workers";
+
+import { mountMastra, createMastra } from "@tsu-stack/ai/mastra";
 
 import { app } from "#@/app";
 
-void mountMastra(app);
+const mastra: Mastra = createMastra(env);
+await mountMastra(app, mastra);
 
 export { app };

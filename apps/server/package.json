@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "catalog:",
+    "@mastra/core": "catalog:",
     "@orpc/json-schema": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",

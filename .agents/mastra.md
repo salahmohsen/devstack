@@ -203,12 +203,13 @@ Best when Mastra is the _only_ thing the worker does (own subdomain/route).
 
 ```ts
 import { Hono } from "hono";
-import { HonoBindings, HonoVariables, MastraServer } from "@mastra/hono";
-import { mastra } from "./mastra";
+import { MastraServer } from "@mastra/hono";
+import { env } from "cloudflare:workers";
+import { mastra } from "./mastra"; // fully initialized with env-resolved D1 binding
 
 const app = new Hono<{ Bindings: HonoBindings; Variables: HonoVariables }>();
 const server = new MastraServer({ app, mastra });
-await server.init(); // registers /agents, /workflows, /memory, ...
+await server.init(); // AWAITED at module load — see ADR-0007
 // then keep using the same Hono app for our own oRPC routes
 ```
 
@@ -216,6 +217,16 @@ This is the right mode for **portfolio-v2**: the Hono app in `apps/server`
 already owns auth, oRPC, webhooks, and the WebSocket relay. Mounting Mastra
 into the same Hono app shares `Cloudflare.Env` (D1, KV, Durable Objects,
 Neon), keeps CORS/auth unified, and avoids a second deployable.
+
+**Critical pattern (ADR-0007):** `MastraServer.init()` calls `app.get/post/...`
+to register routes. Hono's router matcher is built lazily on the first
+`app.fetch()` call; any route added after that throws
+`Can not add a route since the matcher is already built.` Therefore
+`init()` MUST be awaited at module load, BEFORE the first request hits
+the Hono app. The fire-and-forget pattern (`void mountMastra(app)`) and
+the lazy per-request pattern both fail. In Cloudflare Workers, the env
+is reachable at module load via `import { env } from "cloudflare:workers"`,
+which is what makes module-load init possible.
 
 ### 3.2 Cloudflare Bindings in API Routes
 

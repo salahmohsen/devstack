@@ -381,6 +381,9 @@ importers:
       '@dotenvx/dotenvx':
         specifier: 'catalog:'
         version: 1.73.1
+      '@mastra/core':
+        specifier: 'catalog:'
+        version: 1.45.0(express@5.2.1)(zod@4.4.3)
       '@orpc/json-schema':
         specifier: 'catalog:'
         version: 1.14.6(ws@8.21.0)
