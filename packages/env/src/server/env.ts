@@ -36,7 +36,13 @@ export const ENV_SERVER = createEnv({
     OPENCODE_API_KEY: z.string().min(1),
     OPENAI_API_KEY: z.string().min(1),
     EMBEDDING_MODEL: z.string().default("openai/text-embedding-3-small"),
-    MASTRA_MODEL: z.string().default("opencode-go/qwen3.7-plus")
+    MASTRA_MODEL: z.string().default("opencode-go/qwen3.7-plus"),
+    MASTRA_IDENTITY_AUTO_WRITE_THRESHOLD: z.coerce.number().min(0).max(1).default(0),
+    MASTRA_GITHUB_FILE_GLOBS: z
+      .string()
+      .default(
+        "README.md,AGENTS.md,CLAUDE.md,.cursorrules,.github/copilot-instructions.md,package.json"
+      )
   }
 });
 

@@ -1,5 +1,7 @@
 import { join } from "node:path/posix";
 
+import { RequestContext } from "@mastra/core/request-context";
+import { type RequestContext as MastraRequestContext } from "@mastra/core/request-context";
 import { SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
@@ -41,6 +43,9 @@ const corsOptions: NonNullable<Parameters<typeof cors>[0]> = {
 
 type AppEnv = HonoLogVariables & {
   Bindings: OrpcContextBindings;
+  Variables: {
+    requestContext: MastraRequestContext;
+  };
 };
 
 export const app = new Hono<AppEnv>().basePath(serverBaseUrl.pathname);
@@ -246,6 +251,17 @@ app.use("/*", async (c, next) => {
 
   return runWithDb(db, async () => {
     const context = await createContext({ context: c, logger: c.get("log") });
+
+    // Wire the per-request Mastra RequestContext. The Mastra Hono adapter
+    // (registered by mountMastra) reads `c.get("requestContext")` and reuses
+    // it as the tool-execution requestContext. Tools then access the
+    // orpcContext via `context.requestContext.get("orpcContext")`.
+    const requestContext = new RequestContext();
+    requestContext.set("orpcContext", context);
+    requestContext.set("resourceId", context.session?.user?.id ?? "anonymous");
+    requestContext.set("requestId", crypto.randomUUID());
+    requestContext.set("logger", c.get("log"));
+    c.set("requestContext", requestContext);
 
     const rpcResult = await rpcHandler.handle(c.req.raw, {
       context,
