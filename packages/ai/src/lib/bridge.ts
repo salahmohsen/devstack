@@ -1,4 +1,4 @@
-import { type Memory } from "@mastra/memory";
+import { type MastraMemory } from "@mastra/core/memory";
 
 import {
   renderIdentityTemplate,
@@ -13,14 +13,17 @@ import { identityRepository } from "@tsu-stack/db/repositories";
  * writes it to the given memory instance's working memory for the given
  * thread/resource.
  *
- * The `Memory.updateWorkingMemory` API in `@mastra/memory@1.21.0` requires
- * a `threadId` (the resource scope means working memory is shared across
- * threads for the same resource, but the API still requires a thread to
- * anchor the write). The `resourceId` identifies which resource's working
- * memory to update.
+ * The `MastraMemory.updateWorkingMemory` API requires a `threadId` (the
+ * resource scope means working memory is shared across threads for the same
+ * resource, but the API still requires a thread to anchor the write). The
+ * `resourceId` identifies which resource's working memory to update.
+ *
+ * The argument is typed as `MastraMemory` (the abstract base class) so this
+ * helper works for any concrete implementation, including the `Memory` class
+ * from `@mastra/memory` and the value returned by `mastra.getMemory(...)`.
  */
 export async function renderIdentityToWorkingMemory(
-  memory: Memory,
+  memory: MastraMemory,
   input: { resourceId: string; threadId: string }
 ): Promise<string> {
   const facets = await identityRepository.listFacets();

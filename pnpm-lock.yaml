@@ -683,6 +683,9 @@ importers:
       '@tsu-stack/logger':
         specifier: workspace:*
         version: link:../logger
+      drizzle-orm:
+        specifier: 1.0.0-rc.4-5d5b77c
+        version: 1.0.0-rc.4-5d5b77c(@cloudflare/workers-types@4.20260621.1)(@neondatabase/serverless@1.1.0)(pg@8.22.0)(zod@4.4.3)
       zod:
         specifier: 'catalog:'
         version: 4.4.3

@@ -13,6 +13,7 @@ import {
   searchIdentityTool,
   updateIdentityFacetTool
 } from "#@/tools/index";
+import { refreshIdentityWorkflow } from "#@/workflows/refresh-identity/index";
 
 export { mountMastra } from "./server-adapter";
 export type { D1Database } from "#@/memory/index";
@@ -40,6 +41,9 @@ export function createMastra(env: MastraEnv): Mastra {
     agents: {
       identityAgent,
       portfolioAgent
+    },
+    workflows: {
+      "refresh-identity": refreshIdentityWorkflow
     }
   });
 }
