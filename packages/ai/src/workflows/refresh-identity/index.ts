@@ -7,6 +7,8 @@ import { writeFacetsStep } from "#@/workflows/refresh-identity/steps/write-facet
 
 export const refreshIdentityWorkflow = createWorkflow({
   id: "refresh-identity",
+  description:
+    "Refreshes the four identity facets (headline, bio, focus_log, narrative) by reading the user's public GitHub repos, asking an LLM to propose updates, auto-writing high-confidence proposals, and re-embedding the changed facets for semantic search. Runs on a cron (scheduled) and from the GitHub webhook on push.",
   inputSchema: gatherSourcesStep.inputSchema,
   outputSchema: reindexVectorsStep.outputSchema
 })
