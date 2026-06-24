@@ -125,6 +125,8 @@ catalog:
   "@mastra/cloudflare-d1": ^1.1.0
   "@mastra/observability": ^1.15.0
   "@mastra/rag": ^2.3.0
+  "mastra": ^1.15.0
+  "ollama-ai-provider-v2": ^3.6.0
 
 catalogMode: prefer
 

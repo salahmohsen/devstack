@@ -5,6 +5,8 @@ import { type OrpcContext } from "@tsu-stack/core/ai/orpc-context";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { getProfileRepos, getRepoFileContent, getRepoRecentCommits } from "@tsu-stack/github";
 
+import { orpcContextStorage } from "#@/lib/orpc-context-storage";
+
 const RepoContextSchema = z.object({
   owner: z.string(),
   name: z.string(),
@@ -51,15 +53,19 @@ type ListRepos = () => Promise<Array<{ owner: string; name: string }>>;
  * 1. Webhook path: Hono handler set `c.set("requestContext", ...)` (via the
  *    `/*` middleware in `apps/server/src/app.ts`) and the orpcContext lives at
  *    `requestContext.get("orpcContext")`. Uses the per-request Octokit, KV, and
- *    signal relay. The webhook path itself does NOT currently set
- *    `c.set("requestContext", ...)` — that's a Task 8 follow-up. When the
- *    webhook path is updated, this step will pick it up automatically.
+ *    signal relay.
  * 2. Cron / no-context path: no orpcContext in requestContext. The
  *    `public-github-source` helper would supply an Octokit, but we don't have
  *    a "list public repos" helper yet. For v1, the step skips silently and
  *    returns an empty `repoContexts` array — the workflow still runs through
  *    the diff/write/reindex steps (with an empty input the diff returns no
  *    proposals and the workflow exits cleanly).
+ *
+ * As of fix #28, the read uses the same AsyncLocalStorage fallback as the
+ * GitHub tools (#22): the Hono `/*` middleware wraps the request in an
+ * `orpcContextStorage.run(context, ...)` scope, so even when the Mastra
+ * `RequestContext` is built later and overwrites the Hono context, the
+ * `OrpcContext` is reachable via `orpcContextStorage.getStore()`.
  *
  * Open TODO: add a "list public repos" helper in `packages/github/src/shared/`
  * so the cron path can populate `repoContexts`. The plan calls this out as a
@@ -112,7 +118,9 @@ export const gatherSourcesStep = createStep({
   }),
   execute: async ({ inputData, requestContext }) => {
     const files = parseFileList();
-    const orpcCtx = requestContext?.get?.("orpcContext") as OrpcContext | undefined;
+    const orpcCtx =
+      (requestContext?.get?.("orpcContext") as OrpcContext | undefined) ??
+      orpcContextStorage.getStore();
     const { fetchCommits, fetchFile, listRepos } = await resolveSources(orpcCtx);
 
     const repos = await listRepos();

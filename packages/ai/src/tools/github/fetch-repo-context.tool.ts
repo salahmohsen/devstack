@@ -5,6 +5,8 @@ import { type OrpcContext } from "@tsu-stack/core/ai/orpc-context";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { getRepoFileContent, getRepoRecentCommits } from "@tsu-stack/github";
 
+import { orpcContextStorage } from "#@/lib/orpc-context-storage";
+
 const DEFAULT_FILES = [
   "README.md",
   "AGENTS.md",
@@ -45,7 +47,11 @@ export const fetchRepoContextTool = createTool({
     )
   }),
   execute: async (input, context) => {
-    const orpcCtx = context.requestContext?.get?.("orpcContext") as OrpcContext | undefined;
+    // See note in fetch-repo-readme.tool.ts — the Hono requestContext is
+    // overwritten by the Mastra adapter, so fall back to the bridge.
+    const orpcCtx =
+      (context.requestContext?.get?.("orpcContext") as OrpcContext | undefined) ??
+      orpcContextStorage.getStore();
     if (!orpcCtx) {
       throw new Error("fetchRepoContextTool: missing orpcContext in requestContext");
     }

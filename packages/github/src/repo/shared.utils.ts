@@ -53,7 +53,14 @@ export function setRepoLoggerContext(
   handler: string,
   details: Record<string, unknown>
 ) {
-  context?.logger.set({
+  // The `?.` on `logger` is deliberate: when the request path is
+  // excluded from the Hono logger middleware (e.g. `/api/workflows/**`
+  // — see `honoLoggerMiddleware({ exclude: [...] })` in
+  // `apps/server/src/app.ts:74`) the Hono `c.get("log")` is undefined
+  // and `createContext` builds an `OrpcContext` with no logger. The
+  // repo utils used to throw "Cannot read properties of undefined
+  // (reading 'set')" in that case. See plan #28.
+  context?.logger?.set({
     handler,
     ...details
   });
@@ -64,7 +71,7 @@ export function setRepoLoggerOutcome(
   event: string,
   details: Record<string, unknown> = {}
 ) {
-  context?.logger.set({
+  context?.logger?.set({
     event,
     ...details
   });

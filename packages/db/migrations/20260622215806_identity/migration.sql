@@ -48,7 +48,10 @@ CREATE EXTENSION IF NOT EXISTS vector;--> statement-breakpoint
 CREATE TABLE "identity_facet_vectors" (
 	"facet_key" text PRIMARY KEY REFERENCES "portfolio_identity_facets"("key") ON DELETE CASCADE,
 	"version" integer NOT NULL,
-	"embedding" vector(1536) NOT NULL,
+	"embedding" vector(4096) NOT NULL,
 	"embedded_at" timestamp with time zone DEFAULT now() NOT NULL
 );--> statement-breakpoint
-CREATE INDEX "identity_facet_vectors_hnsw_idx" ON "identity_facet_vectors" USING hnsw ("embedding" vector_cosine_ops);
+-- No index: pgvector's HNSW and IVFFlat cap at 2000 dimensions; the chosen Ollama
+-- qwen3-embedding model emits 4096-d vectors. With only a handful of facet rows,
+-- exact (sequential) search is fast enough.
+CREATE INDEX "identity_facet_vectors_no_op" ON "identity_facet_vectors" ("facet_key");

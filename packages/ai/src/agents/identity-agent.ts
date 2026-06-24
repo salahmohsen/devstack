@@ -23,6 +23,11 @@ export const identityAgent = new Agent({
   name: "Identity Agent",
   instructions: IDENTITY_AGENT_INSTRUCTIONS,
   model: getMastraModel(),
+  // `memory` is wired in `packages/ai/src/mastra/index.ts` via
+  // `agent.__setMemory(memory)` after the Mastra instance is built. The
+  // string-key form (`memory: "default"`) does not work because the
+  // @mastra/core agent `getMemory()` does not resolve string keys against
+  // the Mastra memory registry.
   tools: {
     getIdentity: getIdentityTool,
     searchIdentity: searchIdentityTool

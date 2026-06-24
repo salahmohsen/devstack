@@ -16,6 +16,7 @@
     "./tools/github": "./src/tools/github/index.ts",
     "./lib/confidence": "./src/lib/confidence.ts",
     "./lib/bridge": "./src/lib/bridge.ts",
+    "./lib/orpc-context-storage": "./src/lib/orpc-context-storage.ts",
     "./agents/portfolio-agent": "./src/agents/portfolio-agent.ts",
     "./agents/identity-agent": "./src/agents/identity-agent.ts"
   },
@@ -37,6 +38,7 @@
     "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
     "drizzle-orm": "catalog:",
+    "ollama-ai-provider-v2": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

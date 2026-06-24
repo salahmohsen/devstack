@@ -4,6 +4,8 @@ import { z } from "zod";
 import { type OrpcContext } from "@tsu-stack/core/ai/orpc-context";
 import { getRepoRecentCommits } from "@tsu-stack/github";
 
+import { orpcContextStorage } from "#@/lib/orpc-context-storage";
+
 const commitOutputSchema = z.object({
   sha: z.string(),
   message: z.string(),
@@ -25,7 +27,11 @@ export const listRecentCommitsTool = createTool({
     commits: z.array(commitOutputSchema)
   }),
   execute: async (input, context) => {
-    const orpcCtx = context.requestContext?.get?.("orpcContext") as OrpcContext | undefined;
+    // See note in fetch-repo-readme.tool.ts — the Hono requestContext is
+    // overwritten by the Mastra adapter, so fall back to the bridge.
+    const orpcCtx =
+      (context.requestContext?.get?.("orpcContext") as OrpcContext | undefined) ??
+      orpcContextStorage.getStore();
     if (!orpcCtx) {
       throw new Error("listRecentCommitsTool: missing orpcContext in requestContext");
     }

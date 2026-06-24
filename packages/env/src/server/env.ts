@@ -34,15 +34,19 @@ export const ENV_SERVER = createEnv({
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
     OPENCODE_API_KEY: z.string().min(1),
-    OPENAI_API_KEY: z.string().min(1),
-    EMBEDDING_MODEL: z.string().default("openai/text-embedding-3-small"),
-    MASTRA_MODEL: z.string().default("opencode-go/qwen3.7-plus"),
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    OLLAMA_BASE_URL: z.url().default("https://ollama.salahmohsen.com"),
+    EMBEDDING_MODEL: z.string().default("qwen3-embedding"),
+    MASTRA_MODEL: z.string().default("opencode-go/minimax-m2.5"),
+    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().min(1).optional(),
+    MASTRA_PROJECT_ID: z.string().min(1).optional(),
     MASTRA_IDENTITY_AUTO_WRITE_THRESHOLD: z.coerce.number().min(0).max(1).default(0),
     MASTRA_GITHUB_FILE_GLOBS: z
       .string()
       .default(
         "README.md,AGENTS.md,CLAUDE.md,.cursorrules,.github/copilot-instructions.md,package.json"
-      )
+      ),
+    MASTRA_STUDIO_URL: z.url().default("http://localhost:4111")
   }
 });
 

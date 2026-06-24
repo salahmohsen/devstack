@@ -1,11 +1,11 @@
-import { ModelRouterEmbeddingModel } from "@mastra/core/llm";
 import { createStep } from "@mastra/core/workflows";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { getDb } from "@tsu-stack/db";
 import { identityRepository } from "@tsu-stack/db/repositories";
-import { ENV_SERVER } from "@tsu-stack/env/server/env";
+
+import { ollamaEmbedder } from "#@/mastra/embeddings/ollama";
 
 export const reindexVectorsStep = createStep({
   id: "reindex-vectors",
@@ -30,15 +30,10 @@ export const reindexVectorsStep = createStep({
       return { reindexedKeys: [] };
     }
 
-    const model = new ModelRouterEmbeddingModel(
-      ENV_SERVER.EMBEDDING_MODEL ?? "openai/text-embedding-3-small"
-    );
-
     // The `ai` SDK's `embedMany` is not a dependency of this package; the
-    // Mastra-provided `ModelRouterEmbeddingModel` implements
-    // `EmbeddingModelV2` directly and exposes a `doEmbed({ values })` method
-    // that returns the same `EmbedManyResult` shape.
-    const { embeddings } = await model.doEmbed({
+    // Ollama embedder implements `EmbeddingModelV2` directly and exposes
+    // `doEmbed({ values })` returning the same `EmbedManyResult` shape.
+    const { embeddings } = await ollamaEmbedder.doEmbed({
       values: toReindex.map((f) => JSON.stringify(f.value))
     });
 
@@ -48,13 +43,16 @@ export const reindexVectorsStep = createStep({
       if (!facet || !embedding) continue;
       // pgvector expects a stringified array '[1,2,3]'.
       const vecStr = `[${embedding.join(",")}]`;
+      // The `identity_facet_vectors` table follows Mastra's PgVector schema
+      // (vector_id, embedding, metadata) plus a version column — see plan #18.
       await db.execute(sql`
-        INSERT INTO identity_facet_vectors (facet_key, version, embedding)
-        VALUES (${facet.key}, ${facet.version}, ${vecStr}::vector)
-        ON CONFLICT (facet_key) DO UPDATE
+        INSERT INTO identity_facet_vectors (vector_id, version, embedding, metadata)
+        VALUES (${facet.key}, ${facet.version}, ${vecStr}::vector, ${sql.raw(`'{"facetKey":"${facet.key}"}'::jsonb`)})
+        ON CONFLICT (vector_id) DO UPDATE
           SET version = EXCLUDED.version,
               embedding = EXCLUDED.embedding,
-              embedded_at = now()
+              embedded_at = now(),
+              metadata = EXCLUDED.metadata
       `);
     }
 

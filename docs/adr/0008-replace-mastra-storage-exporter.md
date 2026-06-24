@@ -1,5 +1,11 @@
 # 0008 — Replace `MastraStorageExporter` with a no-op `BaseExporter`
 
+> **Superseded by the Mastra Cloud approach (see `.agents/mastra.md` §5 and
+> `docs/dev/mastra-studio.md`).** The `NoopExporter` was deleted; the
+> `MastraPlatformExporter` (which auto-disables when
+> `MASTRA_PLATFORM_ACCESS_TOKEN` is unset) is the new default. Kept for
+> history.
+
 `MastraStorageExporter` (in `@mastra/observability`) calls `mastra.getStorage().getStore("observability")` at init. The D1 store shipped in `@mastra/cloudflare-d1@1.1.0` implements only `BackgroundTasksStorageD1`, `MemoryStorageD1`, `ScoresStorageD1`, and `WorkflowsStorageD1` — no `ObservabilityStorageD1` domain. So the exporter logs `MastraStorageExporter disabled: Observability storage not available. Traces will not be persisted.`, bails, and does not persist any spans.
 
 Removing the exporter outright (`exporters: []`) is invalid — `Observability`'s constructor enforces at least one exporter or `bridge`. So we keep the no-op behavior by replacing it with a tiny custom `BaseExporter` subclass that satisfies the validator while doing nothing.

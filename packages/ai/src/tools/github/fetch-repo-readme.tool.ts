@@ -4,6 +4,8 @@ import { z } from "zod";
 import { type OrpcContext } from "@tsu-stack/core/ai/orpc-context";
 import { getRepoFileContent } from "@tsu-stack/github";
 
+import { orpcContextStorage } from "#@/lib/orpc-context-storage";
+
 export const fetchRepoReadmeTool = createTool({
   id: "fetch-repo-readme",
   description:
@@ -18,7 +20,14 @@ export const fetchRepoReadmeTool = createTool({
     content: z.string().nullable()
   }),
   execute: async (input, context) => {
-    const orpcCtx = context.requestContext?.get?.("orpcContext") as OrpcContext | undefined;
+    // The Mastra Hono adapter overwrites the per-request requestContext with
+    // one built from the request body, so the `orpcContext` set by the Hono
+    // `/*` middleware is not visible here. Fall back to the
+    // AsyncLocalStorage bridge that the Hono middleware maintains for
+    // exactly this case. See plans/2026-06-22-mastra-ai-test.md #22.
+    const orpcCtx =
+      (context.requestContext?.get?.("orpcContext") as OrpcContext | undefined) ??
+      orpcContextStorage.getStore();
     if (!orpcCtx) {
       throw new Error("fetchRepoReadmeTool: missing orpcContext in requestContext");
     }

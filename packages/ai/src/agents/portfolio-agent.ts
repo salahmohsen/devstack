@@ -17,6 +17,10 @@ export const portfolioAgent = new Agent({
   name: "Portfolio Agent",
   instructions: PORTFOLIO_AGENT_INSTRUCTIONS,
   model: getMastraModel(),
+  // `memory` is wired in `packages/ai/src/mastra/index.ts` via
+  // `agent.__setMemory(memory)` after the Mastra instance is built. See
+  // the matching comment in `identity-agent.ts` for why the string-key
+  // form does not work.
   tools: {
     getIdentity: getIdentityTool,
     searchIdentity: searchIdentityTool,

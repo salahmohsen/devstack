@@ -334,25 +334,46 @@ importance). Re-index on webhook (`push` event to default branch).
 ## 5. Observability
 
 ```ts
-import { Observability, MastraStorageExporter } from "@mastra/observability";
+import { Observability, MastraPlatformExporter, SensitiveDataFilter } from "@mastra/observability";
 
 new Observability({
   configs: {
     default: {
       serviceName: "portfolio-mastra",
-      exporters: [new MastraStorageExporter()],
+      exporters: [
+        new MastraPlatformExporter() // Auto-disables when MASTRA_PLATFORM_ACCESS_TOKEN is unset.
+      ],
       spanOutputProcessors: [new SensitiveDataFilter()]
     }
   }
 });
 ```
 
-- Captures traces (LLM calls, tool calls, workflow steps), structured logs
-  correlated to traces, and metrics (token use, cost, duration).
+- Traces, logs, and metrics ship to the hosted Mastra observability surface
+  at `https://observability.mastra.ai` via `MastraPlatformExporter`. The
+  exporter reads `process.env.MASTRA_PLATFORM_ACCESS_TOKEN` at construction
+  time and **auto-disables** (no-op) when the env var is missing — so dev
+  and production share the same exporter list, and a missing token is not
+  an error.
+- **The local Studio observability tab is intentionally empty in this
+  setup.** To view traces, open the Mastra Cloud project at
+  `https://mastra.ai`. Traces appear with `serviceName=portfolio-mastra`
+  once a real `MASTRA_PLATFORM_ACCESS_TOKEN` is configured.
+- Cloudflare's platform observability (`apps/server/wrangler.jsonc:21-35`)
+  still captures every span with `head_sampling_rate = 1`, independent of
+  Mastra. The Mastra Cloud path is additive, not a replacement.
 - Spans expose `observe.span(name, fn)` inside tool `execute` for
-  fine-grained tracing.
-- We already use Cloudflare Workers Logs + Traces; Mastra traces can flow
-  into the same observability surface.
+  fine-grained tracing. Sensitive data is redacted by `SensitiveDataFilter`
+  before any exporter (local or platform) sees it.
+- **No local observability storage.** Previous attempts to back the
+  `observability` domain with a Postgres v-next storage
+  (`@mastra/pg::ObservabilityStoragePostgresVNext`) required the `pg` driver,
+  which cannot open TCP sockets inside `workerd` (the Vite+ dev server runs
+  in Miniflare, which emulates Cloudflare Workers). See ADR-0008 (now
+  superseded) and ADR-0010 (rejected) for the full history. The Mastra
+  Cloud path sidesteps the runtime problem entirely — there is no
+  observability domain in the local storage, no `pg` driver, no
+  `pg-cloudflare` adapter to wire.
 
 ## 6. Model Gateway
 
