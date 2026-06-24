@@ -104,30 +104,22 @@ class GitHubCacheRepository {
   }
 
   async bumpNamespaceVersion(namespace: string) {
-    const existing = await this.findNamespaceVersion(namespace);
-
-    if (!existing) {
-      const [createdEntry] = await getDb()
-        .insert(githubCacheNamespace)
-        .values({
-          namespace,
-          version: 1
-        })
-        .returning();
-
-      return createdEntry;
-    }
-
-    const [updatedEntry] = await getDb()
-      .update(githubCacheNamespace)
-      .set({
-        updatedAt: new Date(),
-        version: sql`${githubCacheNamespace.version} + 1`
+    const [entry] = await getDb()
+      .insert(githubCacheNamespace)
+      .values({
+        namespace,
+        version: 1
       })
-      .where(eq(githubCacheNamespace.namespace, namespace))
+      .onConflictDoUpdate({
+        set: {
+          version: sql`${githubCacheNamespace.version} + 1`,
+          updatedAt: new Date()
+        },
+        target: githubCacheNamespace.namespace
+      })
       .returning();
 
-    return updatedEntry;
+    return entry;
   }
 
   async recordWebhookDelivery(input: RecordGitHubWebhookDeliveryInput) {
