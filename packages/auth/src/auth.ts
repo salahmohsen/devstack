@@ -83,12 +83,27 @@ export const auth = betterAuth({
   telemetry: {
     enabled: false
   },
-  socialProviders: {
-    github: {
-      clientId: ENV_SERVER.GITHUB_CLIENT_ID,
-      clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET
+  socialProviders: (() => {
+    // GITHUB_CLIENT_ID/SECRET are runtimeRequired (optional at build, required
+    // at runtime). At build we accept an empty provider so the bundle can be
+    // produced without secrets present; at runtime we throw so misconfiguration
+    // fails fast instead of silently breaking OAuth.
+    if (ENV_SERVER.GITHUB_CLIENT_ID && ENV_SERVER.GITHUB_CLIENT_SECRET) {
+      return {
+        github: {
+          clientId: ENV_SERVER.GITHUB_CLIENT_ID,
+          clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET
+        }
+      };
     }
-  }
+    if (!ENV_SERVER.IS_BUILD) {
+      throw new Error(
+        "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are required at runtime. " +
+          "Set both in the server environment."
+      );
+    }
+    return {};
+  })()
 });
 
 export type AuthSession = typeof auth.$Infer.Session;

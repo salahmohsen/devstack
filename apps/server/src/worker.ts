@@ -79,7 +79,8 @@ export default {
           kv: env.GITHUB_CACHE_KV,
           signalRelay: env.GITHUB_SIGNAL_RELAY
         },
-        octokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+        privateOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+        publicOctokit: createGitHubOctokit(),
         source: githubSource
       },
       logger: cronLogger,
