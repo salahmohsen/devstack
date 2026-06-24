@@ -1,4 +1,7 @@
 import { Agent } from "@mastra/core/agent";
+import { createAnswerRelevancyScorer, createToxicityScorer } from "@mastra/evals/scorers/prebuilt";
+
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { getMastraModel, PORTFOLIO_AGENT_INSTRUCTIONS } from "#@/lib/prompt-fragments";
 import {
@@ -28,5 +31,16 @@ export const portfolioAgent = new Agent({
     fetchRepoReadme: fetchRepoReadmeTool,
     fetchRepoContext: fetchRepoContextTool,
     listRecentCommits: listRecentCommitsTool
+  },
+  // See `identity-agent.ts` for sampling rationale.
+  scorers: {
+    toxicity: {
+      scorer: createToxicityScorer({ model: ENV_SERVER.MASTRA_MODEL }),
+      sampling: { type: "ratio", rate: 1 }
+    },
+    answerRelevancy: {
+      scorer: createAnswerRelevancyScorer({ model: ENV_SERVER.MASTRA_MODEL }),
+      sampling: { type: "ratio", rate: 0.5 }
+    }
   }
 });

@@ -6,6 +6,7 @@ import { identityRepository } from "@tsu-stack/db/repositories";
 
 import { IdentityProposalsOutputSchema } from "#@/agents/identity-agent";
 import { getMastraModel, IDENTITY_AGENT_INSTRUCTIONS } from "#@/lib/prompt-fragments";
+import { diffFacetsShapeScorer } from "#@/scorers/diff-facets-shape.scorer";
 
 const RepoContextSchema = z.object({
   owner: z.string(),
@@ -34,6 +35,15 @@ export const diffFacetsStep = createStep({
     currentFacets: z.record(z.string(), z.unknown()),
     proposals: IdentityProposalsOutputSchema.shape.proposals
   }),
+  // Validates the LLM's structured output is well-formed. Catches the
+  // recurring failure modes documented in plan #17 (bare-array response)
+  // and #29 (invented facet keys). Sampling 100% — no LLM cost.
+  scorers: {
+    diffFacetsShape: {
+      scorer: diffFacetsShapeScorer,
+      sampling: { type: "ratio", rate: 1 }
+    }
+  },
   execute: async ({ inputData }) => {
     const currentFacets = await identityRepository.listFacets();
     const currentByKey = Object.fromEntries(currentFacets.map((f) => [f.key, f.value]));

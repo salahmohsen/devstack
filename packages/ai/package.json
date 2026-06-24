@@ -17,6 +17,7 @@
     "./lib/confidence": "./src/lib/confidence.ts",
     "./lib/bridge": "./src/lib/bridge.ts",
     "./lib/orpc-context-storage": "./src/lib/orpc-context-storage.ts",
+    "./scorers/diff-facets-shape": "./src/scorers/diff-facets-shape.scorer.ts",
     "./agents/portfolio-agent": "./src/agents/portfolio-agent.ts",
     "./agents/identity-agent": "./src/agents/identity-agent.ts"
   },
@@ -27,6 +28,7 @@
   "dependencies": {
     "@mastra/cloudflare-d1": "catalog:",
     "@mastra/core": "catalog:",
+    "@mastra/evals": "catalog:",
     "@mastra/hono": "catalog:",
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",

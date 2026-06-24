@@ -1,7 +1,9 @@
 import { Agent } from "@mastra/core/agent";
+import { createAnswerRelevancyScorer, createToxicityScorer } from "@mastra/evals/scorers/prebuilt";
 import { z } from "zod";
 
 import { facetKeySchema } from "@tsu-stack/core/identity";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { getMastraModel, IDENTITY_AGENT_INSTRUCTIONS } from "#@/lib/prompt-fragments";
 import { getIdentityTool, searchIdentityTool } from "#@/tools/identity/index";
@@ -31,5 +33,19 @@ export const identityAgent = new Agent({
   tools: {
     getIdentity: getIdentityTool,
     searchIdentity: searchIdentityTool
+  },
+  // Live evaluation scorers. Both call MASTRA_MODEL as the LLM judge
+  // (one extra model invocation per scored turn). Toxicity runs at 100%
+  // — cheap and important for user-facing chat. Answer relevancy runs
+  // at 50% — cost-balanced QA.
+  scorers: {
+    toxicity: {
+      scorer: createToxicityScorer({ model: ENV_SERVER.MASTRA_MODEL }),
+      sampling: { type: "ratio", rate: 1 }
+    },
+    answerRelevancy: {
+      scorer: createAnswerRelevancyScorer({ model: ENV_SERVER.MASTRA_MODEL }),
+      sampling: { type: "ratio", rate: 0.5 }
+    }
   }
 });
