@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { type GitHubRepoCommitListItem } from "#@/repo/repo-commit-sparkline/repo-commit-sparkline.types";
 import {
   emptyRepoCommitSparkline,
@@ -17,11 +21,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubRepoCommitSparkline } from "#@/types";
 
-export async function getRepoCommitSparkline(
-  input: {
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoCommitSparkline(
+  input: { repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubRepoCommitSparkline> {
   setRepoLoggerContext(context, "getRepoCommitSparkline", {
     repo: input.repo
@@ -45,7 +48,7 @@ export async function getRepoCommitSparkline(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoCommitSparkline>({
       fetcher: async () => {
-        const response = await context.github.octokit.rest.repos.listCommits({
+        const response = await octokit.rest.repos.listCommits({
           owner: source.owner,
           per_page: 100,
           repo: input.repo,
@@ -86,4 +89,18 @@ export async function getRepoCommitSparkline(
 
     throw error;
   }
+}
+
+export function getRepoCommitSparkline(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoCommitSparkline> {
+  return _fetchRepoCommitSparkline(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoCommitSparkline(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoCommitSparkline> {
+  return _fetchRepoCommitSparkline(input, context, context.github.privateOctokit);
 }

@@ -6,7 +6,7 @@ import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
 export function getGithubRepoCommitSparklineQueryOptions(repo: string) {
-  return orpc.public.github.getRepoCommitSparkline.queryOptions({
+  return orpc.github.publicGetRepoCommitSparkline.queryOptions({
     input: { repo },
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs,
@@ -19,5 +19,5 @@ export function useGetGithubRepoCommitSparklineQuery(repo: string) {
 }
 
 export type GithubRepoCommitSparklineQueryResult = Awaited<
-  ReturnType<typeof client.public.github.getRepoCommitSparkline>
+  ReturnType<typeof client.github.publicGetRepoCommitSparkline>
 >;

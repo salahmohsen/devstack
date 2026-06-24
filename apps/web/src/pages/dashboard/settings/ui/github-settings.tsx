@@ -6,7 +6,10 @@ import { toast } from "sonner";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
-import { type AppSettingsOutput, UpdateAppSettingsInputSchema } from "@tsu-stack/core/app-settings";
+import {
+  type GithubConfigOutput,
+  UpdateGithubConfigInputSchema
+} from "@tsu-stack/core/github-config";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,
@@ -25,13 +28,13 @@ import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import { PageLayout } from "@/widgets/items-page";
 
-import { useUpdateAppSettingsMutation } from "@/pages/dashboard/api/update-app-settings.mutation";
+import { useUpdateGithubConfigMutation } from "@/pages/dashboard/api/update-github-config.mutation";
 
 export function GithubSettings() {
   const { user } = useAuthSuspense();
-  const appSettingsQuery = useQuery(orpc.appSettings.get.queryOptions());
+  const githubConfigQuery = useQuery(orpc.githubConfig.get.queryOptions());
 
-  if (appSettingsQuery.isLoading && !appSettingsQuery.data) {
+  if (githubConfigQuery.isLoading && !githubConfigQuery.data) {
     return (
       <Container className="py-16">
         <DefaultLoader className="mx-auto" />
@@ -43,24 +46,24 @@ export function GithubSettings() {
     return null;
   }
 
-  const appSettings = appSettingsQuery.data;
-  const settingsKey = `${appSettings?.updatedAt ?? "never"}:${appSettings?.githubUsername ?? "none"}:${
-    appSettings?.hasGithubToken ? "configured" : "missing"
+  const githubConfig = githubConfigQuery.data;
+  const settingsKey = `${githubConfig?.updatedAt ?? "never"}:${githubConfig?.githubUsername ?? "none"}:${
+    githubConfig?.hasGithubToken ? "configured" : "missing"
   }`;
 
-  return <GithubSettingsForm appSettings={appSettings} key={settingsKey} />;
+  return <GithubSettingsForm githubConfig={githubConfig} key={settingsKey} />;
 }
 
-function GithubSettingsForm({ appSettings }: { appSettings?: AppSettingsOutput }) {
+function GithubSettingsForm({ githubConfig }: { githubConfig?: GithubConfigOutput }) {
   const queryClient = useQueryClient();
-  const updateAppSettingsMutation = useUpdateAppSettingsMutation();
+  const updateGithubConfigMutation = useUpdateGithubConfigMutation();
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
-  const hasGithubToken = appSettings?.hasGithubToken ?? false;
+  const hasGithubToken = githubConfig?.hasGithubToken ?? false;
 
   const clearTokenMutation = useMutation(
-    orpc.appSettings.update.mutationOptions({
+    orpc.githubConfig.update.mutationOptions({
       onSuccess: async (settings) => {
-        queryClient.setQueryData(orpc.appSettings.get.queryOptions().queryKey, settings);
+        queryClient.setQueryData(orpc.githubConfig.get.queryOptions().queryKey, settings);
         toast.success("GitHub token cleared.");
       }
     })
@@ -69,19 +72,19 @@ function GithubSettingsForm({ appSettings }: { appSettings?: AppSettingsOutput }
   const form = useAppForm({
     defaultValues: {
       clearGithubToken: false,
-      githubToken: appSettings?.githubToken ?? "",
-      githubUsername: appSettings?.githubUsername ?? ""
+      githubToken: githubConfig?.githubToken ?? "",
+      githubUsername: githubConfig?.githubUsername ?? ""
     },
     validators: {
-      onBlur: createZodFormValidator(UpdateAppSettingsInputSchema)
+      onBlur: createZodFormValidator(UpdateGithubConfigInputSchema)
     },
     onSubmit: async ({ value }) => {
       try {
-        const settings = await updateAppSettingsMutation.mutateAsync(value);
+        const settings = await updateGithubConfigMutation.mutateAsync(value);
         form.reset({ ...value, githubToken: settings.githubToken ?? "" });
-        toast.success("App settings saved.");
+        toast.success("GitHub config saved.");
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save app settings.");
+        toast.error(error instanceof Error ? error.message : "Failed to save GitHub config.");
       }
     }
   });
@@ -126,8 +129,8 @@ function GithubSettingsForm({ appSettings }: { appSettings?: AppSettingsOutput }
             </form.AppField>
 
             <form.AppForm>
-              <form.SubmitButton variant="outline" isLoading={updateAppSettingsMutation.isPending}>
-                {updateAppSettingsMutation.isPending ? "Saving..." : "Save settings"}
+              <form.SubmitButton variant="outline" isLoading={updateGithubConfigMutation.isPending}>
+                {updateGithubConfigMutation.isPending ? "Saving..." : "Save settings"}
               </form.SubmitButton>
             </form.AppForm>
           </FieldGroup>
@@ -172,7 +175,7 @@ function GithubSettingsForm({ appSettings }: { appSettings?: AppSettingsOutput }
                     await clearTokenMutation.mutateAsync({
                       clearGithubToken: true,
                       githubToken: undefined,
-                      githubUsername: appSettings?.githubUsername ?? ""
+                      githubUsername: githubConfig?.githubUsername ?? ""
                     });
                     setClearDialogOpen(false);
                   }}

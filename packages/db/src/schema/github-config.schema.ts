@@ -2,8 +2,8 @@ import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "#@/schema/auth.schema";
 
-export const appSettings = pgTable(
-  "app_settings",
+export const githubConfig = pgTable(
+  "github_config",
   {
     userId: text("user_id")
       .primaryKey()
@@ -16,5 +16,5 @@ export const appSettings = pgTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull()
   },
-  (table) => [index("app_settings_githubUsername_idx").on(table.githubUsername)]
+  (table) => [index("github_config_githubUsername_idx").on(table.githubUsername)]
 );

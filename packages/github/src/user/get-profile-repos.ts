@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import {
   buildGitHubConditionalHeaders,
   setRepoLoggerLocalFirstOutcome,
@@ -11,7 +15,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubUserRepoSummary } from "#@/types";
 
-export async function getProfileRepos(context: OrpcContext): Promise<GitHubUserRepoSummary[]> {
+async function _fetchProfileRepos(
+  context: OrpcContext,
+  octokit: GitHubClient
+): Promise<GitHubUserRepoSummary[]> {
   const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_profile_repos_read_skipped", {
@@ -26,7 +33,7 @@ export async function getProfileRepos(context: OrpcContext): Promise<GitHubUserR
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserRepoSummary[]>({
       fetcher: async (conditionals) => {
-        const response = await context.github.octokit.rest.repos.listForUser({
+        const response = await octokit.rest.repos.listForUser({
           headers: {
             ...buildGitHubConditionalHeaders(conditionals)
           },
@@ -88,4 +95,12 @@ export async function getProfileRepos(context: OrpcContext): Promise<GitHubUserR
 
     throw error;
   }
+}
+
+export function getProfileRepos(context: OrpcContext): Promise<GitHubUserRepoSummary[]> {
+  return _fetchProfileRepos(context, context.github.publicOctokit);
+}
+
+export function getPrivateProfileRepos(context: OrpcContext): Promise<GitHubUserRepoSummary[]> {
+  return _fetchProfileRepos(context, context.github.privateOctokit);
 }

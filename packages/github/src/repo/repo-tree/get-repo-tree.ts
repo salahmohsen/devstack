@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { type GitHubRepoTreeItem } from "#@/repo/repo-tree/repo-tree.types";
 import { mapGitHubRepoTreeEntries } from "#@/repo/repo-tree/repo-tree.utils";
 import {
@@ -14,13 +18,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubRepoTreeEntry } from "#@/types";
 
-export async function getRepoTree(
-  input: {
-    path: string;
-    ref: string;
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoTree(
+  input: { path: string; ref: string; repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubRepoTreeEntry[]> {
   setRepoLoggerContext(context, "getRepoTree", {
     path: input.path,
@@ -45,7 +46,7 @@ export async function getRepoTree(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoTreeEntry[]>({
       fetcher: async (conditionals) => {
-        const response = await context.github.octokit.rest.repos.getContent({
+        const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
           owner: source.owner,
           path: input.path,
@@ -82,4 +83,18 @@ export async function getRepoTree(
 
     return [];
   }
+}
+
+export function getRepoTree(
+  input: { path: string; ref: string; repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoTreeEntry[]> {
+  return _fetchRepoTree(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoTree(
+  input: { path: string; ref: string; repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoTreeEntry[]> {
+  return _fetchRepoTree(input, context, context.github.privateOctokit);
 }

@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { mapGitHubRepoFileContent } from "#@/repo/repo-file-content/repo-file-content.utils";
 import {
   buildGitHubConditionalHeaders,
@@ -12,13 +16,10 @@ import {
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
 
-export async function getRepoFileContent(
-  input: {
-    path: string;
-    ref: string;
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoFileContent(
+  input: { path: string; ref: string; repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<string | null> {
   setRepoLoggerContext(context, "getRepoFileContent", {
     path: input.path,
@@ -43,7 +44,7 @@ export async function getRepoFileContent(
   try {
     const result = await getGitHubResourceLocalFirst<string | null>({
       fetcher: async (conditionals) => {
-        const response = await context.github.octokit.rest.repos.getContent({
+        const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
           owner: source.owner,
           path: input.path,
@@ -84,4 +85,18 @@ export async function getRepoFileContent(
 
     return null;
   }
+}
+
+export function getRepoFileContent(
+  input: { path: string; ref: string; repo: string },
+  context: OrpcContext
+): Promise<string | null> {
+  return _fetchRepoFileContent(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoFileContent(
+  input: { path: string; ref: string; repo: string },
+  context: OrpcContext
+): Promise<string | null> {
+  return _fetchRepoFileContent(input, context, context.github.privateOctokit);
 }

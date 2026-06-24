@@ -3,6 +3,7 @@ import { ChevronDown, Filter, Lock, Eye } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { createElement, useEffect, useMemo, useRef } from "react";
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { Button } from "@tsu-stack/ui/components/button";
 
@@ -119,8 +120,11 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
     };
   }, [debouncedSearch, visibilityValues, filterState.sortId, limit]);
 
+  const { user } = useAuth();
+  const isPrivate = !!user;
+
   const hubQuery = useQuery({
-    ...githubReposHubQueryOptions(hubInput),
+    ...githubReposHubQueryOptions(hubInput, isPrivate),
     placeholderData: keepPreviousData
   });
 

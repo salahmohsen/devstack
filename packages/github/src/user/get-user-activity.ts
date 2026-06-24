@@ -4,7 +4,11 @@ import { isRecord } from "@tsu-stack/core/utils";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import {
   setRepoLoggerContext,
   setRepoLoggerLocalFirstOutcome,
@@ -12,11 +16,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubUserActivityEvent } from "#@/types";
 
-export async function getUserActivity(
-  input: {
-    page: number;
-  },
-  context: OrpcContext
+async function _fetchUserActivity(
+  input: { page: number },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubUserActivityEvent[]> {
   setRepoLoggerContext(context, "getUserActivity", {
     page: input.page
@@ -36,14 +39,11 @@ export async function getUserActivity(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserActivityEvent[]>({
       fetcher: async () => {
-        const response = await context.github.octokit.request(
-          "GET /users/{username}/events/public",
-          {
-            page: input.page,
-            per_page: 30,
-            username: source.owner
-          }
-        );
+        const response = await octokit.request("GET /users/{username}/events/public", {
+          page: input.page,
+          per_page: 30,
+          username: source.owner
+        });
 
         return {
           data: response.data.map((event) => {
@@ -193,4 +193,18 @@ export async function getUserActivity(
 
     return [];
   }
+}
+
+export function getUserActivity(
+  input: { page: number },
+  context: OrpcContext
+): Promise<GitHubUserActivityEvent[]> {
+  return _fetchUserActivity(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateUserActivity(
+  input: { page: number },
+  context: OrpcContext
+): Promise<GitHubUserActivityEvent[]> {
+  return _fetchUserActivity(input, context, context.github.privateOctokit);
 }

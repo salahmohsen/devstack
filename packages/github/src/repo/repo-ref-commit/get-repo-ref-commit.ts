@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { type GitHubRepoRefCommitItem } from "#@/repo/repo-ref-commit/repo-ref-commit.types";
 import { mapGitHubRepoLatestCommit } from "#@/repo/repo-ref-commit/repo-ref-commit.utils";
 import {
@@ -13,12 +17,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubRepoLatestCommit } from "#@/types";
 
-export async function getRepoRefCommit(
-  input: {
-    ref: string;
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoRefCommit(
+  input: { ref: string; repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubRepoLatestCommit | null> {
   setRepoLoggerContext(context, "getRepoRefCommit", {
     ref: input.ref,
@@ -42,7 +44,7 @@ export async function getRepoRefCommit(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoLatestCommit>({
       fetcher: async () => {
-        const response = await context.github.octokit.rest.repos.listCommits({
+        const response = await octokit.rest.repos.listCommits({
           owner: source.owner,
           per_page: 1,
           repo: input.repo,
@@ -78,4 +80,18 @@ export async function getRepoRefCommit(
 
     throw error;
   }
+}
+
+export function getRepoRefCommit(
+  input: { ref: string; repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoLatestCommit | null> {
+  return _fetchRepoRefCommit(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoRefCommit(
+  input: { ref: string; repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoLatestCommit | null> {
+  return _fetchRepoRefCommit(input, context, context.github.privateOctokit);
 }

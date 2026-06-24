@@ -64,6 +64,7 @@ export function GithubProfilePage() {
   const profileQuery = useGetGithubProfileQuery();
   const contributionsQuery = useGetGithubContributionsQuery();
   const admin = useAuth();
+  const isPrivate = !!admin.user;
 
   const pinnedReposQuery = useGetGithubPinnedReposQuery();
   const reposQuery = useGetGithubProfileReposQuery(isRepositoriesTab);
@@ -72,19 +73,19 @@ export function GithubProfilePage() {
     () =>
       [
         {
-          queryKey: getGithubProfileQueryOptions().queryKey,
+          queryKey: getGithubProfileQueryOptions(isPrivate).queryKey,
           signalKeys: [githubRevalidationSignalKeys.ownerProfile(owner)]
         },
         {
-          queryKey: getGithubContributionsQueryOptions().queryKey,
+          queryKey: getGithubContributionsQueryOptions(isPrivate).queryKey,
           signalKeys: [githubRevalidationSignalKeys.ownerContributions(owner)]
         },
         {
-          queryKey: getGithubPinnedReposQueryOptions().queryKey,
+          queryKey: getGithubPinnedReposQueryOptions(isPrivate).queryKey,
           signalKeys: [githubRevalidationSignalKeys.ownerPinnedRepos(owner)]
         },
         {
-          queryKey: getGithubProfileReposQueryOptions().queryKey,
+          queryKey: getGithubProfileReposQueryOptions(isPrivate).queryKey,
           signalKeys: [githubRevalidationSignalKeys.ownerRepos(owner)]
         }
       ] as const,

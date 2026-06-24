@@ -1,12 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
-export function getGithubContributionsQueryOptions() {
-  return orpc.public.github.getUserContributions.queryOptions({
+export function getGithubContributionsQueryOptions(isPrivate = false) {
+  return (
+    isPrivate ? orpc.github.privateGetUserContributions : orpc.github.publicGetUserContributions
+  ).queryOptions({
     meta: persistedMeta,
     staleTime: githubCachePolicy.contributions.staleTimeMs,
     gcTime: githubCachePolicy.contributions.gcTimeMs
@@ -14,9 +17,10 @@ export function getGithubContributionsQueryOptions() {
 }
 
 export function useGetGithubContributionsQuery() {
-  return useQuery(getGithubContributionsQueryOptions());
+  const { user } = useAuth();
+  return useQuery(getGithubContributionsQueryOptions(!!user));
 }
 
 export type GithubContributionsQueryResult = Awaited<
-  ReturnType<typeof client.public.github.getUserContributions>
+  ReturnType<typeof client.github.publicGetUserContributions>
 >;

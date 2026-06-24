@@ -3,7 +3,11 @@ import { z } from "zod";
 
 import { type OrpcContext } from "@tsu-stack/core/ai/orpc-context";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
-import { getProfileRepos, getRepoFileContent, getRepoRecentCommits } from "@tsu-stack/github";
+import {
+  getPrivateProfileRepos,
+  getPrivateRepoFileContent,
+  getRepoRecentCommits
+} from "@tsu-stack/github";
 
 import { orpcContextStorage } from "#@/lib/orpc-context-storage";
 
@@ -81,15 +85,15 @@ async function resolveSources(
         return commits.map((c) => {
           return {
             sha: c.sha,
-            message: c.message,
-            date: c.date
+            date: c.date,
+            message: c.message
           };
         });
       },
       fetchFile: async (_owner, repo, path) =>
-        getRepoFileContent({ path, repo, ref: "HEAD" }, orpcCtx),
+        getPrivateRepoFileContent({ path, repo, ref: "HEAD" }, orpcCtx),
       listRepos: async () => {
-        const profileRepos = await getProfileRepos(orpcCtx);
+        const profileRepos = await getPrivateProfileRepos(orpcCtx);
         return profileRepos.map((r) => {
           return { owner: r.owner, name: r.name };
         });

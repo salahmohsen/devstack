@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Code, Copy, Download, File, GitCommitHorizontal, Eye } from "lucide-react";
 import { Suspense, use, useCallback, useMemo, useRef, useState } from "react";
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
@@ -154,17 +155,22 @@ export function CodeFileView({
   path: string;
   repo: string;
 }) {
-  const contentQuery = useQuery(getGithubRepoFileContentQueryOptions(repo, currentRef, path));
+  const { user } = useAuth();
+  const isPrivate = !!user;
+
+  const contentQuery = useQuery(
+    getGithubRepoFileContentQueryOptions(repo, currentRef, path, isPrivate)
+  );
 
   const fileName = path.split("/").pop() ?? path;
   const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
 
   const fileCommitQuery = useQuery(
-    getGithubTreeEntryCommitsQueryOptions(repo, currentRef, parentPath, [fileName])
+    getGithubTreeEntryCommitsQueryOptions(repo, currentRef, parentPath, [fileName], isPrivate)
   );
 
   const parentTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repo, currentRef, parentPath),
+    ...getGithubRepoTreeQueryOptions(repo, currentRef, parentPath, isPrivate),
     enabled: parentPath.length > 0 || fileName.length > 0
   });
 

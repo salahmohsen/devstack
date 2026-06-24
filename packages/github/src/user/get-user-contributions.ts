@@ -4,6 +4,7 @@ import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
+  type GitHubClient,
   createGitHubResponseMetadata,
   executeGitHubGraphQL,
   getErrorStatusCode
@@ -11,8 +12,9 @@ import {
 import { setRepoLoggerLocalFirstOutcome, setRepoLoggerOutcome } from "#@/repo/shared.utils";
 import { type GitHubContributionCalendar } from "#@/types";
 
-export async function getUserContributions(
-  context: OrpcContext
+async function _fetchUserContributions(
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubContributionCalendar | null> {
   const source = context.github.source;
   if (!source.isConfigured) {
@@ -53,7 +55,7 @@ export async function getUserContributions(
             };
           };
         }>(
-          context.github,
+          octokit,
           "getUserContributions.graphql",
           `query($username: String!) {
             user(login: $username) {
@@ -144,4 +146,16 @@ export async function getUserContributions(
 
     return null;
   }
+}
+
+export function getUserContributions(
+  context: OrpcContext
+): Promise<GitHubContributionCalendar | null> {
+  return _fetchUserContributions(context, context.github.publicOctokit);
+}
+
+export function getPrivateUserContributions(
+  context: OrpcContext
+): Promise<GitHubContributionCalendar | null> {
+  return _fetchUserContributions(context, context.github.privateOctokit);
 }

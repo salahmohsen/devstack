@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { mapGitHubRepoBranchComparison } from "#@/repo/repo-branch-comparison/repo-branch-comparison.utils";
 import {
   buildGitHubConditionalHeaders,
@@ -13,13 +17,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubRepoBranchComparison } from "#@/types";
 
-export async function getRepoBranchComparison(
-  input: {
-    base: string;
-    head: string;
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoBranchComparison(
+  input: { base: string; head: string; repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubRepoBranchComparison | null> {
   setRepoLoggerContext(context, "getRepoBranchComparison", {
     base: input.base,
@@ -44,7 +45,7 @@ export async function getRepoBranchComparison(
   try {
     const result = await getGitHubResourceLocalFirst<GitHubRepoBranchComparison>({
       fetcher: async (conditionals) => {
-        const response = await context.github.octokit.rest.repos.compareCommits({
+        const response = await octokit.rest.repos.compareCommits({
           base: input.base,
           headers: buildGitHubConditionalHeaders(conditionals),
           head: input.head,
@@ -87,4 +88,18 @@ export async function getRepoBranchComparison(
 
     throw error;
   }
+}
+
+export function getRepoBranchComparison(
+  input: { base: string; head: string; repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoBranchComparison | null> {
+  return _fetchRepoBranchComparison(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoBranchComparison(
+  input: { base: string; head: string; repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoBranchComparison | null> {
+  return _fetchRepoBranchComparison(input, context, context.github.privateOctokit);
 }

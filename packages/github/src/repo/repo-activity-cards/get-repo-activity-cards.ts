@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  executeGitHubGraphQL,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoActivityCardsResponse } from "#@/repo/repo-activity-cards/repo-activity-cards.types";
 import {
   createRepoActivityCardsMetadata,
@@ -18,11 +22,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubRepoActivityCards } from "#@/types";
 
-export async function getRepoActivityCards(
-  input: {
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoActivityCards(
+  input: { repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubRepoActivityCards> {
   setRepoLoggerContext(context, "getRepoActivityCards", {
     repo: input.repo
@@ -47,7 +50,7 @@ export async function getRepoActivityCards(
       fetcher: async () => {
         const [graph, workflowRuns] = await Promise.all([
           executeGitHubGraphQL<GitHubGraphQLRepoActivityCardsResponse>(
-            context.github,
+            octokit,
             "getRepoActivityCards.graphql",
             `query($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
@@ -89,7 +92,7 @@ export async function getRepoActivityCards(
               repo: input.repo
             }
           ),
-          context.github.octokit.rest.actions
+          octokit.rest.actions
             .listWorkflowRunsForRepo({
               owner: source.owner,
               per_page: 5,
@@ -149,4 +152,18 @@ export async function getRepoActivityCards(
 
     throw error;
   }
+}
+
+export function getRepoActivityCards(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoActivityCards> {
+  return _fetchRepoActivityCards(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoActivityCards(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoActivityCards> {
+  return _fetchRepoActivityCards(input, context, context.github.privateOctokit);
 }

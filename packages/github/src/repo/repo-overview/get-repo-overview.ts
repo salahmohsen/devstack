@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  executeGitHubGraphQL,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoOverviewResponse } from "#@/repo/repo-overview/repo-overview.types";
 import { mapGraphQLRepoOverview } from "#@/repo/repo-overview/repo-overview.utils";
 import { type RepoOverview } from "#@/repo/shared.types";
@@ -15,11 +19,10 @@ import {
   withLocalFirstMeta
 } from "#@/repo/shared.utils";
 
-export async function getRepoOverview(
-  input: {
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoOverview(
+  input: { repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<RepoOverview | null> {
   setRepoLoggerContext(context, "getRepoOverview", {
     repo: input.repo
@@ -47,7 +50,7 @@ export async function getRepoOverview(
     const result = await getGitHubResourceLocalFirst<RepoOverview>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<GitHubGraphQLRepoOverviewResponse>(
-          context.github,
+          octokit,
           "getRepoOverview.graphql",
           `query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
@@ -168,4 +171,18 @@ export async function getRepoOverview(
 
     throw error;
   }
+}
+
+export function getRepoOverview(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<RepoOverview | null> {
+  return _fetchRepoOverview(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoOverview(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<RepoOverview | null> {
+  return _fetchRepoOverview(input, context, context.github.privateOctokit);
 }

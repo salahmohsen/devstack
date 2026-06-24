@@ -1,14 +1,14 @@
 import {
-  AppSettingsOutputSchema,
   GITHUB_TOKEN_MASK,
-  UpdateAppSettingsInputSchema
-} from "@tsu-stack/core/app-settings";
-import { appSettingsRepository } from "@tsu-stack/db/repositories";
+  GithubConfigOutputSchema,
+  UpdateGithubConfigInputSchema
+} from "@tsu-stack/core/github-config";
+import { githubConfigRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
-function toAppSettingsOutput(
-  settings: Awaited<ReturnType<typeof appSettingsRepository.findByUserId>>
+function toGithubConfigOutput(
+  settings: Awaited<ReturnType<typeof githubConfigRepository.findByUserId>>
 ): {
   githubToken: string | null;
   githubUsername: string | null;
@@ -23,31 +23,31 @@ function toAppSettingsOutput(
   };
 }
 
-export const appSettingsRouter = {
+export const githubConfigRouter = {
   get: protectedProcedure
     .route({
-      description: "Get the current user's app settings",
+      description: "Get the current user's GitHub config",
       method: "GET"
     })
-    .output(AppSettingsOutputSchema)
+    .output(GithubConfigOutputSchema)
     .handler(async ({ context }) => {
-      const settings = await appSettingsRepository.findByUserId(context.session.user.id);
+      const settings = await githubConfigRepository.findByUserId(context.session.user.id);
 
-      return toAppSettingsOutput(settings);
+      return toGithubConfigOutput(settings);
     }),
   update: protectedProcedure
     .route({
-      description: "Create or update the current user's app settings",
+      description: "Create or update the current user's GitHub config",
       method: "POST"
     })
-    .input(UpdateAppSettingsInputSchema)
-    .output(AppSettingsOutputSchema)
+    .input(UpdateGithubConfigInputSchema)
+    .output(GithubConfigOutputSchema)
     .handler(async ({ context, input }) => {
-      const settings = await appSettingsRepository.upsert(context.session.user.id, {
+      const settings = await githubConfigRepository.upsert(context.session.user.id, {
         ...input,
         githubToken: input.githubToken === GITHUB_TOKEN_MASK ? undefined : input.githubToken
       });
 
-      return toAppSettingsOutput(settings);
+      return toGithubConfigOutput(settings);
     })
 };

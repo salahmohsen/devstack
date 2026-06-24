@@ -39,7 +39,7 @@ export async function getRepoRecentCommits(
   try {
     const result = await getGitHubResourceLocalFirst<RepoRecentCommit[]>({
       fetcher: async (conditionals) => {
-        const response = await context.github.octokit.rest.repos.listCommits({
+        const response = await context.github.privateOctokit.rest.repos.listCommits({
           owner: source.owner,
           per_page: input.perPage,
           repo: input.repo,

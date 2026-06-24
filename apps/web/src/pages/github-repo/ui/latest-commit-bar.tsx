@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { GitCommitHorizontal } from "lucide-react";
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubRepoLatestCommit } from "@tsu-stack/github/types";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
@@ -53,9 +54,11 @@ export function LatestCommitBar({
   defaultBranch: string;
   defaultBranchTip: GitHubRepoLatestCommit | RepoOverviewLatestCommit | null;
 }) {
+  const { user } = useAuth();
+  const isPrivate = !!user;
   const placeholderData = normalizeCommit(defaultBranchTip) ?? undefined;
   const tipQuery = useQuery({
-    ...getGithubRepoRefCommitQueryOptions(repoName, branchRef),
+    ...getGithubRepoRefCommitQueryOptions(repoName, branchRef, isPrivate),
     placeholderData: branchRef === defaultBranch ? placeholderData : undefined
   });
 

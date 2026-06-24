@@ -1,4 +1,4 @@
-import { appSettingsRepository } from "@tsu-stack/db/repositories";
+import { githubConfigRepository } from "@tsu-stack/db/repositories";
 
 export type PublicGitHubSource =
   | {
@@ -12,7 +12,7 @@ export type PublicGitHubSource =
     };
 
 export async function resolvePublicGitHubSource(): Promise<PublicGitHubSource> {
-  const settings = await appSettingsRepository.findPublicGithubSourceSettings();
+  const settings = await githubConfigRepository.findPublicGithubSourceSettings();
   const owner = settings?.githubUsername?.trim();
   const token = settings?.githubToken?.trim();
 

@@ -9,19 +9,19 @@ export const GitHubUsernameSchema = z
 
 export const GITHUB_TOKEN_MASK = "••••••••••••••••";
 
-export const AppSettingsOutputSchema = z.object({
+export const GithubConfigOutputSchema = z.object({
   githubToken: z.string().nullable(),
   githubUsername: GitHubUsernameSchema.nullable(),
   hasGithubToken: z.boolean(),
   updatedAt: z.iso.datetime().nullable()
 });
 
-export type AppSettingsOutput = z.infer<typeof AppSettingsOutputSchema>;
+export type GithubConfigOutput = z.infer<typeof GithubConfigOutputSchema>;
 
-export const UpdateAppSettingsInputSchema = z.object({
+export const UpdateGithubConfigInputSchema = z.object({
   clearGithubToken: z.boolean(),
   githubToken: z.string().trim().optional(),
   githubUsername: GitHubUsernameSchema
 });
 
-export type UpdateAppSettingsInput = z.infer<typeof UpdateAppSettingsInputSchema>;
+export type UpdateGithubConfigInput = z.infer<typeof UpdateGithubConfigInputSchema>;

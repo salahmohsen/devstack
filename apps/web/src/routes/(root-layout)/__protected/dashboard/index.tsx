@@ -10,7 +10,7 @@ import { appConfig } from "@/config/app.config";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/")({
   beforeLoad: ({ context }) => {
-    void context.queryClient.ensureQueryData(orpc.appSettings.get.queryOptions());
+    void context.queryClient.ensureQueryData(orpc.githubConfig.get.queryOptions());
   },
   head: () =>
     generateAppSeo({

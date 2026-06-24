@@ -96,13 +96,13 @@ async function withGitHubOperationTimeout<T>(
 }
 
 export async function executeGitHubGraphQL<TResponse>(
-  context: GitHubContext,
+  octokit: GitHubClient,
   label: string,
   query: string,
   variables: Record<string, unknown>
 ): Promise<TResponse> {
   return withGitHubOperationTimeout(label, GITHUB_OPERATION_TIMEOUT_MS, (signal) =>
-    context.octokit.graphql<TResponse>(query, {
+    octokit.graphql<TResponse>(query, {
       ...variables,
       request: { signal }
     })

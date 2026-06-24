@@ -4,6 +4,7 @@ import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
+  type GitHubClient,
   createGitHubResponseMetadata,
   executeGitHubGraphQL,
   getErrorStatusCode
@@ -11,7 +12,10 @@ import {
 import { setRepoLoggerLocalFirstOutcome, setRepoLoggerOutcome } from "#@/repo/shared.utils";
 import { type GitHubPinnedRepo } from "#@/types";
 
-export async function getUserPinnedRepos(context: OrpcContext): Promise<GitHubPinnedRepo[]> {
+async function _fetchUserPinnedRepos(
+  context: OrpcContext,
+  octokit: GitHubClient
+): Promise<GitHubPinnedRepo[]> {
   const source = context.github.source;
 
   if (!source.isConfigured) {
@@ -47,7 +51,7 @@ export async function getUserPinnedRepos(context: OrpcContext): Promise<GitHubPi
             };
           };
         }>(
-          context.github,
+          octokit,
           "getUserPinnedRepos.graphql",
           `query($username: String!) {
             user(login: $username) {
@@ -138,4 +142,12 @@ export async function getUserPinnedRepos(context: OrpcContext): Promise<GitHubPi
 
     return [];
   }
+}
+
+export function getUserPinnedRepos(context: OrpcContext): Promise<GitHubPinnedRepo[]> {
+  return _fetchUserPinnedRepos(context, context.github.publicOctokit);
+}
+
+export function getPrivateUserPinnedRepos(context: OrpcContext): Promise<GitHubPinnedRepo[]> {
+  return _fetchUserPinnedRepos(context, context.github.privateOctokit);
 }

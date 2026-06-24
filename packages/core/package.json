@@ -7,7 +7,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./app-settings": "./src/app-settings/index.ts",
+    "./github-config": "./src/github-config/index.ts",
     "./health": "./src/health/index.ts",
     "./identity": "./src/identity/index.ts",
     "./portfolio": "./src/portfolio/index.ts",

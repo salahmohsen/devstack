@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import {
   mapOctokitContributor,
   parseLinkHeaderLastPage
@@ -16,9 +20,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type RepoContributorsResult } from "#@/schemas";
 
-export async function getRepoContributors(
+async function _fetchRepoContributors(
   input: { repo: string },
-  context: OrpcContext
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<RepoContributorsResult> {
   setRepoLoggerContext(context, "getRepoContributors", {
     repo: input.repo
@@ -41,7 +46,7 @@ export async function getRepoContributors(
   try {
     const result = await getGitHubResourceLocalFirst<RepoContributorsResult>({
       fetcher: async (conditionals) => {
-        const response = await context.github.octokit.rest.repos.listContributors({
+        const response = await octokit.rest.repos.listContributors({
           headers: buildGitHubConditionalHeaders(conditionals),
           owner: source.owner,
           repo: input.repo,
@@ -91,4 +96,18 @@ export async function getRepoContributors(
 
     return { contributors: [], totalCount: 0 };
   }
+}
+
+export function getRepoContributors(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<RepoContributorsResult> {
+  return _fetchRepoContributors(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoContributors(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<RepoContributorsResult> {
+  return _fetchRepoContributors(input, context, context.github.privateOctokit);
 }

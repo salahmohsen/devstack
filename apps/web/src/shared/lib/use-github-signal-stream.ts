@@ -242,7 +242,7 @@ function useGitHubSignalStreamWebSocket(
           totalTargets: targetsRef.current.length
         });
 
-        const signals = await client.public.github.getRevalidationSignals({
+        const signals = await client.github.getRevalidationSignals({
           signalKeys: keys
         });
         if (disposed) return;
@@ -456,7 +456,7 @@ function useGitHubSignalPoll(
       if (disposed) return;
 
       try {
-        const signals = await client.public.github.getRevalidationSignals({
+        const signals = await client.github.getRevalidationSignals({
           signalKeys: keys
         });
 

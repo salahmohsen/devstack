@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  executeGitHubGraphQL,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import {
   createGraphQLResponseMetadata,
   setRepoLoggerContext,
@@ -17,14 +21,10 @@ import {
 } from "#@/repo/tree-entry-commits/tree-entry-commits.utils";
 import { type GitHubTreeEntryCommit } from "#@/types";
 
-export async function getTreeEntryCommits(
-  input: {
-    dirPath?: string;
-    entries: string[];
-    ref: string;
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchTreeEntryCommits(
+  input: { dirPath?: string; entries: string[]; ref: string; repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<Record<string, GitHubTreeEntryCommit | null>> {
   setRepoLoggerContext(context, "getTreeEntryCommits", {
     dirPath: input.dirPath ?? "",
@@ -90,7 +90,7 @@ export async function getTreeEntryCommits(
         }`;
 
         const response = await executeGitHubGraphQL<GitHubGraphQLTreeEntryCommitsResponse>(
-          context.github,
+          octokit,
           "getTreeEntryCommits.graphql",
           query,
           {
@@ -138,4 +138,18 @@ export async function getTreeEntryCommits(
 
     throw error;
   }
+}
+
+export function getTreeEntryCommits(
+  input: { dirPath?: string; entries: string[]; ref: string; repo: string },
+  context: OrpcContext
+): Promise<Record<string, GitHubTreeEntryCommit | null>> {
+  return _fetchTreeEntryCommits(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateTreeEntryCommits(
+  input: { dirPath?: string; entries: string[]; ref: string; repo: string },
+  context: OrpcContext
+): Promise<Record<string, GitHubTreeEntryCommit | null>> {
+  return _fetchTreeEntryCommits(input, context, context.github.privateOctokit);
 }

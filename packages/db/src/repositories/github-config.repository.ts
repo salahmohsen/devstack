@@ -1,33 +1,33 @@
 import { desc, isNotNull, or, sql } from "drizzle-orm";
 
 import { getDb } from "#@/index";
-import { appSettings } from "#@/schema/app-settings.schema";
+import { githubConfig } from "#@/schema/github-config.schema";
 
-export type UpdateAppSettingsData = {
+export type UpdateGithubConfigData = {
   githubToken?: string;
   clearGithubToken?: boolean;
   githubUsername: string;
 };
 
-class AppSettingsRepository {
+class GithubConfigRepository {
   async findPublicGithubSourceSettings() {
     const [settings] = await getDb()
       .select()
-      .from(appSettings)
-      .where(or(isNotNull(appSettings.githubToken), isNotNull(appSettings.githubUsername)))
-      .orderBy(desc(appSettings.updatedAt))
+      .from(githubConfig)
+      .where(or(isNotNull(githubConfig.githubToken), isNotNull(githubConfig.githubUsername)))
+      .orderBy(desc(githubConfig.updatedAt))
       .limit(1);
 
     return settings ?? null;
   }
 
   async findByUserId(userId: string) {
-    return getDb().query.appSettings.findFirst({
+    return getDb().query.githubConfig.findFirst({
       where: { userId }
     });
   }
 
-  async upsert(userId: string, input: UpdateAppSettingsData) {
+  async upsert(userId: string, input: UpdateGithubConfigData) {
     const existingSettings = await this.findByUserId(userId);
     const normalizedGithubToken = input.githubToken?.trim() ?? null;
 
@@ -39,19 +39,19 @@ class AppSettingsRepository {
 
     if (existingSettings) {
       const [updatedSettings] = await getDb()
-        .update(appSettings)
+        .update(githubConfig)
         .set({
           githubToken,
           githubUsername: input.githubUsername
         })
-        .where(sql`${appSettings.userId} = ${userId}`)
+        .where(sql`${githubConfig.userId} = ${userId}`)
         .returning();
 
       return updatedSettings;
     }
 
     const [createdSettings] = await getDb()
-      .insert(appSettings)
+      .insert(githubConfig)
       .values({
         githubToken,
         githubUsername: input.githubUsername,
@@ -63,4 +63,4 @@ class AppSettingsRepository {
   }
 }
 
-export const appSettingsRepository = new AppSettingsRepository();
+export const githubConfigRepository = new GithubConfigRepository();

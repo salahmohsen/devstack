@@ -9,9 +9,12 @@ export type GitHubQueryScope = {
 
 export function githubRepoContributorsQueryOptions(
   _scope: GitHubQueryScope,
-  input: { owner: string; repo: string }
+  input: { owner: string; repo: string },
+  isPrivate = false
 ) {
-  return orpc.public.github.getRepoContributors.queryOptions({
+  return (
+    isPrivate ? orpc.github.privateGetRepoContributors : orpc.github.publicGetRepoContributors
+  ).queryOptions({
     input: { repo: `${input.owner}/${input.repo}` },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
@@ -20,5 +23,5 @@ export function githubRepoContributorsQueryOptions(
 }
 
 export type GithubRepoContributorsQueryResult = Awaited<
-  ReturnType<typeof client.public.github.getRepoContributors>
+  ReturnType<typeof client.github.publicGetRepoContributors>
 >;

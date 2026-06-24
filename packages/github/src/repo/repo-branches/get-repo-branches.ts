@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { executeGitHubGraphQL, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  executeGitHubGraphQL,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoBranchesResponse } from "#@/repo/repo-branches/repo-branches.types";
 import { mapGraphQLRepoBranches } from "#@/repo/repo-branches/repo-branches.utils";
 import {
@@ -14,11 +18,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubRepoBranch } from "#@/types";
 
-export async function getRepoBranches(
-  input: {
-    repo: string;
-  },
-  context: OrpcContext
+async function _fetchRepoBranches(
+  input: { repo: string },
+  context: OrpcContext,
+  octokit: GitHubClient
 ): Promise<GitHubRepoBranch[]> {
   setRepoLoggerContext(context, "getRepoBranches", {
     repo: input.repo
@@ -42,7 +45,7 @@ export async function getRepoBranches(
     const result = await getGitHubResourceLocalFirst<GitHubRepoBranch[]>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<GitHubGraphQLRepoBranchesResponse>(
-          context.github,
+          octokit,
           "getRepoBranches.graphql",
           `query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
@@ -102,4 +105,18 @@ export async function getRepoBranches(
 
     throw error;
   }
+}
+
+export function getRepoBranches(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoBranch[]> {
+  return _fetchRepoBranches(input, context, context.github.publicOctokit);
+}
+
+export function getPrivateRepoBranches(
+  input: { repo: string },
+  context: OrpcContext
+): Promise<GitHubRepoBranch[]> {
+  return _fetchRepoBranches(input, context, context.github.privateOctokit);
 }

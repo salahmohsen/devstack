@@ -4,9 +4,9 @@ import * as schema from "#@/schema/index";
 
 export const relations = defineRelationsPart(schema, (r) => {
   return {
-    appSettings: {
+    githubConfig: {
       user: r.one.user({
-        from: r.appSettings.userId,
+        from: r.githubConfig.userId,
         to: r.user.id
       })
     },

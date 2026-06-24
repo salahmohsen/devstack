@@ -253,9 +253,9 @@ The web Worker keeps using the app dev command through the Cloudflare Vite plugi
 > - `GITHUB_SIGNAL_RELAY` as a Durable Object binding for live refresh fan-out
 > - `GITHUB_WEBHOOK_SECRET` as the webhook signature secret in the server environment
 >
-> The public GitHub username/token are intentionally not environment variables here. They remain dashboard-managed owner settings stored in `app_settings`.
+> The public GitHub username/token are intentionally not environment variables here. They remain dashboard-managed owner settings stored in `github_config`.
 >
-> For the current milestone, the saved GitHub token is write-only in the dashboard UI but still stored as plaintext in `app_settings`. Treat that as a temporary posture until encryption-at-rest lands.
+> For the current milestone, the saved GitHub token is write-only in the dashboard UI but still stored as plaintext in `github_config`. Treat that as a temporary posture until encryption-at-rest lands.
 
 > [!NOTE]
 > `apps/server`'s current `deploy` script runs `wrangler deploy` directly. Apply database migrations separately before deploys that depend on schema changes.

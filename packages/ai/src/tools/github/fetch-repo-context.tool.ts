@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { type OrpcContext } from "@tsu-stack/core/ai/orpc-context";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
-import { getRepoFileContent, getRepoRecentCommits } from "@tsu-stack/github";
+import { getPrivateRepoFileContent, getRepoRecentCommits } from "@tsu-stack/github";
 
 import { orpcContextStorage } from "#@/lib/orpc-context-storage";
 
@@ -58,7 +58,7 @@ export const fetchRepoContextTool = createTool({
 
     const files: Record<string, string | null> = {};
     for (const path of parseFileList()) {
-      const content = await getRepoFileContent(
+      const content = await getPrivateRepoFileContent(
         { path, repo: input.repo, ref: input.ref ?? "HEAD" },
         orpcCtx
       );

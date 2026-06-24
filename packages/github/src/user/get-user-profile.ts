@@ -3,7 +3,11 @@ import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
-import { createGitHubResponseMetadata, getErrorStatusCode } from "#@/infrastructure/octokit/client";
+import {
+  type GitHubClient,
+  createGitHubResponseMetadata,
+  getErrorStatusCode
+} from "#@/infrastructure/octokit/client";
 import {
   buildGitHubConditionalHeaders,
   setRepoLoggerLocalFirstOutcome,
@@ -11,7 +15,10 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubUserProfile } from "#@/types";
 
-export async function getUserProfile(context: OrpcContext): Promise<GitHubUserProfile | null> {
+async function _fetchUserProfile(
+  context: OrpcContext,
+  octokit: GitHubClient
+): Promise<GitHubUserProfile | null> {
   const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_user_profile_read_skipped", {
@@ -26,7 +33,7 @@ export async function getUserProfile(context: OrpcContext): Promise<GitHubUserPr
   try {
     const result = await getGitHubResourceLocalFirst<GitHubUserProfile>({
       fetcher: async (conditionals) => {
-        const response = await context.github.octokit.rest.users.getByUsername({
+        const response = await octokit.rest.users.getByUsername({
           headers: buildGitHubConditionalHeaders(conditionals),
           username: source.owner
         });
@@ -76,4 +83,12 @@ export async function getUserProfile(context: OrpcContext): Promise<GitHubUserPr
 
     throw error;
   }
+}
+
+export function getUserProfile(context: OrpcContext): Promise<GitHubUserProfile | null> {
+  return _fetchUserProfile(context, context.github.publicOctokit);
+}
+
+export function getPrivateUserProfile(context: OrpcContext): Promise<GitHubUserProfile | null> {
+  return _fetchUserProfile(context, context.github.privateOctokit);
 }

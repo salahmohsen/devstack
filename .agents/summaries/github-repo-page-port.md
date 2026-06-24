@@ -11,7 +11,7 @@ It replaces the earlier task log that drifted after the layout and data work lan
 - The public GitHub shell lives under `apps/web/src/widgets/layout/`, not `widgets/github-public-layout` or `widgets/layouts`.
 - `GithubRepoPage` renders the repo overview screen and still uses `SidePanelPortal` from `@/widgets/layout` for the activity cards side panel.
 - Branch comparison is implemented as a read-only banner in `apps/web/src/pages/github-repo/ui/branch-comparison-banner.tsx`.
-- Repo data flows through `packages/github` → `packages/api/src/routers/public/github/index.ts` → page-local query files in `apps/web/src/pages/github-repo/api`.
+- Repo data flows through `packages/github` → `packages/api/src/routers/github/index.ts` → page-local query files in `apps/web/src/pages/github-repo/api`.
 
 ## Current Constraints
 
@@ -30,7 +30,7 @@ It replaces the earlier task log that drifted after the layout and data work lan
 - `apps/web/src/widgets/layout/ui/github-public-topbar.tsx` — topbar nav and shortcuts
 - `apps/web/src/widgets/layout/ui/github-public-mobile-nav.tsx` — mobile nav
 - `packages/github/src/repo/repo-branch-comparison/get-repo-branch-comparison.ts` — branch compare reader
-- `packages/api/src/routers/public/github/index.ts` — public GitHub procedures
+- `packages/api/src/routers/github/index.ts` — GitHub procedures (public and protected, mixed)
 
 ## Known Gaps
 

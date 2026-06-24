@@ -9,9 +9,8 @@ import {
 import { identityRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
-import { identityQueries } from "#@/routers/identity/queries";
 
-type IdentityProposal = Awaited<ReturnType<typeof identityQueries.listProposals>>[number];
+type IdentityProposal = Awaited<ReturnType<typeof identityRepository.listProposals>>[number];
 
 function toProposalOutput(p: IdentityProposal) {
   return {
@@ -83,7 +82,7 @@ export const identityRouter = {
     .route({ description: "List all identity facets", method: "GET" })
     .output(z.array(FacetOutputSchema))
     .handler(async () => {
-      const facets = await identityQueries.listFacets();
+      const facets = await identityRepository.listFacets();
       return facets.map(toFacetOutput);
     }),
 
@@ -92,7 +91,7 @@ export const identityRouter = {
     .input(FacetKeyInput)
     .output(FacetOutputSchema.nullable())
     .handler(async ({ input }) => {
-      const f = await identityQueries.getFacet(input.key);
+      const f = await identityRepository.getFacet(input.key);
       return f ? toFacetOutput(f) : null;
     }),
 
@@ -115,7 +114,7 @@ export const identityRouter = {
       )
     )
     .handler(async ({ input }) => {
-      const revs = await identityQueries.getRevisions(input.key, input.limit);
+      const revs = await identityRepository.getRevisions(input.key, { limit: input.limit });
       return revs.map((r) => {
         return { ...r, createdAt: r.createdAt.toISOString() };
       });
@@ -162,7 +161,7 @@ export const identityRouter = {
     )
     .output(z.array(ProposalOutputSchema))
     .handler(async ({ input }) => {
-      const proposals = await identityQueries.listProposals(input.status);
+      const proposals = await identityRepository.listProposals({ status: input.status });
       return proposals.map(toProposalOutput);
     }),
 

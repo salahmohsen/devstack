@@ -11,7 +11,7 @@ export function useRefreshGitHubData() {
     }
 
     const task = (async () => {
-      const result = await client.private.github.clearViewerCache();
+      const result = await client.github.clearViewerCache();
       if (!result.ok) {
         throw new Error("You need to be signed in to refresh data.");
       }

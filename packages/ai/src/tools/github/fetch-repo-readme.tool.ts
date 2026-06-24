@@ -2,7 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
 import { type OrpcContext } from "@tsu-stack/core/ai/orpc-context";
-import { getRepoFileContent } from "@tsu-stack/github";
+import { getPrivateRepoFileContent } from "@tsu-stack/github";
 
 import { orpcContextStorage } from "#@/lib/orpc-context-storage";
 
@@ -38,7 +38,7 @@ export const fetchRepoReadmeTool = createTool({
     const ref: string = input.ref ?? "HEAD";
     const path: string = input.path ?? "README.md";
 
-    const content = await getRepoFileContent({ path, repo: input.repo, ref }, orpcCtx);
+    const content = await getPrivateRepoFileContent({ path, repo: input.repo, ref }, orpcCtx);
 
     return { content };
   }

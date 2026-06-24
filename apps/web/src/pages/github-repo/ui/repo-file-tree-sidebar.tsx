@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, File, Folder } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubRepoTreeEntry } from "@tsu-stack/github/types";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
@@ -159,9 +160,11 @@ const DirectoryNode = memo(function DirectoryNode({
   const isAncestor = useIsAncestorPath(entryPath);
   const [isOpen, setIsOpen] = useState(isAncestor || isActive);
   const hasMounted = useIsClient();
+  const { user } = useAuth();
+  const isPrivate = !!user;
 
   const treeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, currentRef, entryPath),
+    ...getGithubRepoTreeQueryOptions(repoName, currentRef, entryPath, isPrivate),
     enabled: hasMounted && isOpen
   });
 

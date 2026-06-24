@@ -11,6 +11,27 @@
  * The fuller `OrpcContext` constructed in
  * `packages/api/src/lib/context/hono/create-context.ts` is a subtype of this
  * shape; TypeScript's structural typing keeps the two compatible.
+ *
+ * # GitHub Octokit selection
+ *
+ * The `github` sub-object carries two Octokits so callers can pick the right
+ * one for the auth level they need:
+ *
+ * - `publicOctokit` is **always anonymous**. It cannot read private repos,
+ *   so any public-facing procedure that uses it is structurally incapable of
+ *   leaking private data.
+ * - `octokit` is the **owner-authenticated** Octokit (the portfolio owner's
+ *   PAT from `github_config`). It is used by server-side AI workflows that
+ *   need to read the owner's private repos (e.g. the identity refresh
+ *   pipeline), and by the new `privateGetXxx` oRPC procedures.
+ *
+ * # Token safety
+ *
+ * The owner's GitHub PAT lives in `source.token` and is only ever passed
+ * to `createGitHubOctokit` to build `octokit`. It must never be returned
+ * by any handler or appear in any response shape. The `publicOctokit` is
+ * built without the token, so public procedures cannot leak it even by
+ * accident.
  */
 
 import { type Octokit } from "octokit";
@@ -50,7 +71,8 @@ export type OrpcContextSession = { user: { id: string } } | null;
 export type OrpcContext = {
   github: {
     binding: OrpcContextGithubBinding;
-    octokit: Octokit;
+    privateOctokit: Octokit;
+    publicOctokit: Octokit;
     source: OrpcContextGithubSource;
   };
   logger: OrpcContextLogger;

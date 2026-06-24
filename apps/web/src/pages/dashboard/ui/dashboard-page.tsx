@@ -8,9 +8,9 @@ import { DefaultLoader } from "@/shared/ui/default-loader";
 
 export function DashboardPage() {
   const { user } = useAuthSuspense();
-  const appSettingsQuery = useQuery(orpc.appSettings.get.queryOptions());
+  const githubConfigQuery = useQuery(orpc.githubConfig.get.queryOptions());
 
-  if (appSettingsQuery.isLoading && !appSettingsQuery.data) {
+  if (githubConfigQuery.isLoading && !githubConfigQuery.data) {
     return (
       <Container className="py-16">
         <DefaultLoader className="mx-auto" />
@@ -22,10 +22,10 @@ export function DashboardPage() {
     return null;
   }
 
-  const appSettings = appSettingsQuery.data;
-  const hasGithubToken = appSettings?.hasGithubToken ?? false;
-  const updatedAt = appSettings?.updatedAt
-    ? new Date(appSettings.updatedAt).toLocaleString()
+  const githubConfig = githubConfigQuery.data;
+  const hasGithubToken = githubConfig?.hasGithubToken ?? false;
+  const updatedAt = githubConfig?.updatedAt
+    ? new Date(githubConfig.updatedAt).toLocaleString()
     : null;
 
   return (
@@ -49,7 +49,7 @@ export function DashboardPage() {
           <dl className="mt-8 grid gap-6 text-sm sm:grid-cols-3 sm:gap-4">
             <div className="space-y-1">
               <dt className="text-muted-foreground">GitHub username</dt>
-              <dd className="font-medium">{appSettings?.githubUsername ?? "Not configured"}</dd>
+              <dd className="font-medium">{githubConfig?.githubUsername ?? "Not configured"}</dd>
             </div>
             <div className="space-y-1">
               <dt className="text-muted-foreground">GitHub token</dt>

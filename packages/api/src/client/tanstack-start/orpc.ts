@@ -34,7 +34,10 @@ const getORPCClient = createIsomorphicFn()
           return {
             github: {
               binding: {},
-              octokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+              privateOctokit: createGitHubOctokit(
+                githubSource.isConfigured ? githubSource : undefined
+              ),
+              publicOctokit: createGitHubOctokit(),
               source: githubSource
             },
             logger: createLogger({ operation: "web__client__orpc" }),

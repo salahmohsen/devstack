@@ -24,7 +24,7 @@ export function useRefreshOnReturn({
 
   const refresh = useCallback(async () => {
     try {
-      await client.private.github.refreshInstallationAccess();
+      await client.github.refreshInstallationAccess();
     } finally {
       void queryClient.invalidateQueries({
         queryKey: githubQueryKeys.all

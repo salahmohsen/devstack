@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubRepoTreeEntry } from "@tsu-stack/github/types";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -50,11 +51,15 @@ export function RepoMarkdownFiles({
   }, [entries]);
 
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isPrivate = !!user;
   useEffect(() => {
     for (const file of mdFiles) {
-      void queryClient.prefetchQuery(getGithubRepoFileContentQueryOptions(repo, currentRef, file));
+      void queryClient.prefetchQuery(
+        getGithubRepoFileContentQueryOptions(repo, currentRef, file, isPrivate)
+      );
     }
-  }, [queryClient, mdFiles, repo, currentRef]);
+  }, [queryClient, mdFiles, repo, currentRef, isPrivate]);
 
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const selectedFile = activeTab ?? mdFiles[0] ?? null;
@@ -99,8 +104,10 @@ function MarkdownFileContent({
   path: string;
   currentRef: string;
 }) {
+  const { user } = useAuth();
+  const isPrivate = !!user;
   const contentQuery = useQuery({
-    ...getGithubRepoFileContentQueryOptions(repo, currentRef, path),
+    ...getGithubRepoFileContentQueryOptions(repo, currentRef, path, isPrivate),
     placeholderData: (previous) => previous
   });
 

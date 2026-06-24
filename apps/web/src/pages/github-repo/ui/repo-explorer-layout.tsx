@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, PanelLeft } from "lucide-react";
 import { memo, useCallback, useMemo, useState, useSyncExternalStore } from "react";
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type RepoOverview } from "@tsu-stack/github/repo/shared.types.js";
 import { Drawer, DrawerContent, DrawerTitle } from "@tsu-stack/ui/components/drawer";
 import {
@@ -55,9 +56,11 @@ export function RepoExplorerLayout({
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { user } = useAuth();
+  const isPrivate = !!user;
 
   const overviewQuery = useQuery({
-    ...getGithubRepoOverviewQueryOptions(repoName),
+    ...getGithubRepoOverviewQueryOptions(repoName, isPrivate),
     enabled: hasMounted
   });
 
@@ -79,17 +82,17 @@ export function RepoExplorerLayout({
   );
 
   const rootTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, activeRef),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef, "", isPrivate),
     enabled: hasMounted && !!repoData
   });
 
   const prefetchInput = useMemo(() => {
     return { ref: activeRef, repo: repoName };
   }, [repoName, activeRef]);
-  usePrefetchTree(prefetchInput, rootTreeQuery.data);
+  usePrefetchTree(prefetchInput, rootTreeQuery.data, isPrivate);
 
   const currentTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, activeRef, currentPath),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef, currentPath, isPrivate),
     enabled: hasMounted && !!repoData && viewMode === "tree" && currentPath !== ""
   });
 
