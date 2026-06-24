@@ -61,7 +61,7 @@ We standardise on 5001/4111 to keep both running side by side.
   working-memory snapshots; trigger semantic recall queries.
 - **Observability** — **not available in the local Studio.** Traces ship
   to Mastra Cloud via `MastraPlatformExporter`. To view traces, open the
-  [Mastra Cloud Studio](https://mastra.ai) and find the project for
+  [Mastmloud Studio](https://mastra.ai) and find the project for
   token `MASTRA_PLATFORM_ACCESS_TOKEN` (project ID `MASTRA_PROJECT_ID`).
   For traces to show up there, the env var must be set in `packages/env/.env`
   and the dev server must be restarted. The exporter auto-disables when
@@ -70,6 +70,44 @@ We standardise on 5001/4111 to keep both running side by side.
   Observability tab, the underlying `/api/observability/*` calls will
   return 500 because the dev server has no local observability storage
   (intentional). Ignore the 500s in the dev log.
+
+## Cloud Studio at `<slug>.studio.mastra.cloud`
+
+The cloud Studio **intentionally shows "No Agents yet", "No Workflows yet",
+"No Tools yet"** for this project. This is by design, not a bug.
+
+The deployed server at `https://personal-hub.studio.mastra.cloud` is the
+**stub** built from `src/mastra/index.ts` (the gitignored deploy stub).
+It registers zero agents/workflows/tools — its only purpose is to push the
+corrected project name, project ID, and env vars to Mastra Cloud via
+`mastra studio deploy`. See the file's own header comment for the full
+rationale.
+
+The real Mastra instance (with `identityAgent`, `portfolioAgent`,
+`refreshIdentityWorkflow`, all GitHub / identity tools) lives in
+`packages/ai/src/mastra/index.ts` and is mounted into the Hono app at
+`apps/server/src/app.ts:23` via `@mastra/hono`. That instance is deployed
+via `pnpm run deploy` (wrangler) to your Cloudflare account, not to
+Mastra Cloud. The two deployments are independent — the cloud Studio
+reads from its own (empty) deployed Mastra and never proxies to the
+Hono app.
+
+Consequence: the cloud Studio's agents/workflows/tools tabs are empty by
+construction. Traces DO show up at the cloud observability surface
+(`https://observability.mastra.ai`) because the Hono app's Mastra
+instance uses `MastraPlatformExporter` directly — it ships spans/logs
+independent of any Studio deployment.
+
+**If you want the cloud Studio to show your project's agents/workflows,
+the stub would have to bundle the real Mastra instance** (not just an
+empty `new Mastra({ storage: new InMemoryStore() })`). That requires
+deploying the full `packages/ai/src/mastra/index.ts` as a Cloudflare
+Worker with D1 bindings, env vars (OpenCode, Ollama, MASTRA_PROJECT_ID,
+etc.), and the Hono stack — significant refactor and a duplicate
+deployment. Recommended: keep the Studio for observability only, use
+the Hono app's `/api/agents/*` and `/api/workflows/*` routes for
+runtime interactions. See [ADR-0004](../adr/0004-mastra-embedded-in-hono.md)
+for why this architecture is intentional.
 
 ## Why this is dev-only
 

@@ -374,6 +374,22 @@ new Observability({
   Cloud path sidesteps the runtime problem entirely — there is no
   observability domain in the local storage, no `pg` driver, no
   `pg-cloudflare` adapter to wire.
+- **The cloud Studio at `<slug>.studio.mastra.cloud` shows "No Agents
+  yet", "No Workflows yet", "No Tools yet" by design.** The deployed
+  stub at `src/mastra/index.ts` (gitignored) is `new Mastra({ storage:
+new InMemoryStore() })` — empty by construction. The real Mastra
+  instance lives in `packages/ai/src/mastra/index.ts` and is mounted
+  into the Hono app via `@mastra/hono`; the Hono worker is deployed
+  via wrangler to your Cloudflare account, never to Mastra Cloud. The
+  cloud Studio reads from its own (empty) deployed Mastra and does not
+  proxy to the Hono app. Traces ship to
+  `https://observability.mastra.ai` directly via `MastraPlatformExporter`
+  regardless. Full rationale in
+  `docs/dev/mastra-studio.md` §"Cloud Studio". To make the cloud Studio
+  show your agents/workflows would require bundling the full real
+  Mastra instance into the deploy stub (with D1 binding, env vars,
+  Hono stack) — significant refactor and a duplicate deployment; not
+  recommended for this architecture.
 
 ## 6. Model Gateway
 
