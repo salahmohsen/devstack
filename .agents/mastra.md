@@ -203,12 +203,13 @@ Best when Mastra is the _only_ thing the worker does (own subdomain/route).
 
 ```ts
 import { Hono } from "hono";
-import { HonoBindings, HonoVariables, MastraServer } from "@mastra/hono";
-import { mastra } from "./mastra";
+import { MastraServer } from "@mastra/hono";
+import { env } from "cloudflare:workers";
+import { mastra } from "./mastra"; // fully initialized with env-resolved D1 binding
 
 const app = new Hono<{ Bindings: HonoBindings; Variables: HonoVariables }>();
 const server = new MastraServer({ app, mastra });
-await server.init(); // registers /agents, /workflows, /memory, ...
+await server.init(); // AWAITED at module load — see ADR-0007
 // then keep using the same Hono app for our own oRPC routes
 ```
 
@@ -216,6 +217,16 @@ This is the right mode for **portfolio-v2**: the Hono app in `apps/server`
 already owns auth, oRPC, webhooks, and the WebSocket relay. Mounting Mastra
 into the same Hono app shares `Cloudflare.Env` (D1, KV, Durable Objects,
 Neon), keeps CORS/auth unified, and avoids a second deployable.
+
+**Critical pattern (ADR-0007):** `MastraServer.init()` calls `app.get/post/...`
+to register routes. Hono's router matcher is built lazily on the first
+`app.fetch()` call; any route added after that throws
+`Can not add a route since the matcher is already built.` Therefore
+`init()` MUST be awaited at module load, BEFORE the first request hits
+the Hono app. The fire-and-forget pattern (`void mountMastra(app)`) and
+the lazy per-request pattern both fail. In Cloudflare Workers, the env
+is reachable at module load via `import { env } from "cloudflare:workers"`,
+which is what makes module-load init possible.
 
 ### 3.2 Cloudflare Bindings in API Routes
 
@@ -323,25 +334,62 @@ importance). Re-index on webhook (`push` event to default branch).
 ## 5. Observability
 
 ```ts
-import { Observability, MastraStorageExporter } from "@mastra/observability";
+import { Observability, MastraPlatformExporter, SensitiveDataFilter } from "@mastra/observability";
 
 new Observability({
   configs: {
     default: {
       serviceName: "portfolio-mastra",
-      exporters: [new MastraStorageExporter()],
+      exporters: [
+        new MastraPlatformExporter() // Auto-disables when MASTRA_PLATFORM_ACCESS_TOKEN is unset.
+      ],
       spanOutputProcessors: [new SensitiveDataFilter()]
     }
   }
 });
 ```
 
-- Captures traces (LLM calls, tool calls, workflow steps), structured logs
-  correlated to traces, and metrics (token use, cost, duration).
+- Traces, logs, and metrics ship to the hosted Mastra observability surface
+  at `https://observability.mastra.ai` via `MastraPlatformExporter`. The
+  exporter reads `process.env.MASTRA_PLATFORM_ACCESS_TOKEN` at construction
+  time and **auto-disables** (no-op) when the env var is missing — so dev
+  and production share the same exporter list, and a missing token is not
+  an error.
+- **The local Studio observability tab is intentionally empty in this
+  setup.** To view traces, open the Mastra Cloud project at
+  `https://mastra.ai`. Traces appear with `serviceName=portfolio-mastra`
+  once a real `MASTRA_PLATFORM_ACCESS_TOKEN` is configured.
+- Cloudflare's platform observability (`apps/server/wrangler.jsonc:21-35`)
+  still captures every span with `head_sampling_rate = 1`, independent of
+  Mastra. The Mastra Cloud path is additive, not a replacement.
 - Spans expose `observe.span(name, fn)` inside tool `execute` for
-  fine-grained tracing.
-- We already use Cloudflare Workers Logs + Traces; Mastra traces can flow
-  into the same observability surface.
+  fine-grained tracing. Sensitive data is redacted by `SensitiveDataFilter`
+  before any exporter (local or platform) sees it.
+- **No local observability storage.** Previous attempts to back the
+  `observability` domain with a Postgres v-next storage
+  (`@mastra/pg::ObservabilityStoragePostgresVNext`) required the `pg` driver,
+  which cannot open TCP sockets inside `workerd` (the Vite+ dev server runs
+  in Miniflare, which emulates Cloudflare Workers). See ADR-0008 (now
+  superseded) and ADR-0010 (rejected) for the full history. The Mastra
+  Cloud path sidesteps the runtime problem entirely — there is no
+  observability domain in the local storage, no `pg` driver, no
+  `pg-cloudflare` adapter to wire.
+- **The cloud Studio at `<slug>.studio.mastra.cloud` shows "No Agents
+  yet", "No Workflows yet", "No Tools yet" by design.** The deployed
+  stub at `src/mastra/index.ts` (gitignored) is `new Mastra({ storage:
+new InMemoryStore() })` — empty by construction. The real Mastra
+  instance lives in `packages/ai/src/mastra/index.ts` and is mounted
+  into the Hono app via `@mastra/hono`; the Hono worker is deployed
+  via wrangler to your Cloudflare account, never to Mastra Cloud. The
+  cloud Studio reads from its own (empty) deployed Mastra and does not
+  proxy to the Hono app. Traces ship to
+  `https://observability.mastra.ai` directly via `MastraPlatformExporter`
+  regardless. Full rationale in
+  `docs/dev/mastra-studio.md` §"Cloud Studio". To make the cloud Studio
+  show your agents/workflows would require bundling the full real
+  Mastra instance into the deploy stub (with D1 binding, env vars,
+  Hono stack) — significant refactor and a duplicate deployment; not
+  recommended for this architecture.
 
 ## 6. Model Gateway
 

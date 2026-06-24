@@ -16,10 +16,12 @@
   },
   "dependencies": {
     "@dotenvx/dotenvx": "catalog:",
+    "@mastra/core": "catalog:",
     "@orpc/json-schema": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "@tsu-stack/ai": "workspace:*",
     "@tsu-stack/api": "workspace:*",
     "@tsu-stack/auth": "workspace:*",
     "@tsu-stack/db": "workspace:*",

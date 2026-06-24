@@ -1,0 +1,51 @@
+{
+  "name": "@tsu-stack/ai",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#@/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./mastra": "./src/mastra/index.ts",
+    "./mastra/server-adapter": "./src/mastra/server-adapter.ts",
+    "./memory": "./src/memory/index.ts",
+    "./memory/storage": "./src/memory/storage.ts",
+    "./tools": "./src/tools/index.ts",
+    "./tools/identity": "./src/tools/identity/index.ts",
+    "./tools/github": "./src/tools/github/index.ts",
+    "./lib/confidence": "./src/lib/confidence.ts",
+    "./lib/bridge": "./src/lib/bridge.ts",
+    "./lib/orpc-context-storage": "./src/lib/orpc-context-storage.ts",
+    "./scorers/diff-facets-shape": "./src/scorers/diff-facets-shape.scorer.ts",
+    "./agents/portfolio-agent": "./src/agents/portfolio-agent.ts",
+    "./agents/identity-agent": "./src/agents/identity-agent.ts"
+  },
+  "scripts": {
+    "check": "vp check",
+    "check:fix": "vp check --fix"
+  },
+  "dependencies": {
+    "@mastra/cloudflare-d1": "catalog:",
+    "@mastra/core": "catalog:",
+    "@mastra/evals": "catalog:",
+    "@mastra/hono": "catalog:",
+    "@mastra/memory": "catalog:",
+    "@mastra/observability": "catalog:",
+    "@mastra/pg": "catalog:",
+    "@mastra/rag": "catalog:",
+    "@tsu-stack/core": "workspace:*",
+    "@tsu-stack/db": "workspace:*",
+    "@tsu-stack/env": "workspace:*",
+    "@tsu-stack/github": "workspace:*",
+    "@tsu-stack/logger": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "ollama-ai-provider-v2": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@tsu-stack/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

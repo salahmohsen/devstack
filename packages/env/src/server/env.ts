@@ -32,7 +32,28 @@ export const ENV_SERVER = createEnv({
     GITHUB_CLIENT_ID: z.string().min(1),
     GITHUB_CLIENT_SECRET: z.string().min(1),
     RESEND_API_KEY: z.string().optional(),
-    EMAIL_FROM: z.string().optional()
+    EMAIL_FROM: z.string().optional(),
+    OPENCODE_API_KEY: z.string().min(1),
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    OLLAMA_BASE_URL: z.url().default("https://ollama.salahmohsen.com"),
+    EMBEDDING_MODEL: z.string().default("qwen3-embedding"),
+    MASTRA_MODEL: z.string().default("opencode-go/minimax-m2.5"),
+    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().min(1).optional(),
+    MASTRA_PROJECT_ID: z.string().min(1).optional(),
+    MASTRA_IDENTITY_AUTO_WRITE_THRESHOLD: z.coerce.number().min(0).max(1).default(0),
+    MASTRA_GITHUB_FILE_GLOBS: z
+      .string()
+      .default(
+        "README.md,AGENTS.md,CLAUDE.md,.cursorrules,.github/copilot-instructions.md,package.json"
+      ),
+    MASTRA_STUDIO_URL: z.url().default("http://localhost:4111"),
+    // Dev-only: when true, the Hono app's Mastra instance uses an
+    // InMemoryStore for the observability domain + MastraStorageExporter,
+    // so the local Studio at MASTRA_STUDIO_URL can show metrics. Wipes on
+    // every dev restart. Production should leave this off and use the
+    // Mastra Cloud observability surface at https://observability.mastra.ai
+    // (shipped via MastraPlatformExporter, gated by MASTRA_PLATFORM_ACCESS_TOKEN).
+    MASTRA_LOCAL_METRICS_ENABLED: z.stringbool().default(false)
   }
 });
 

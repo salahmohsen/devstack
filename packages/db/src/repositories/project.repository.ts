@@ -52,6 +52,7 @@ class ProjectRepository {
       .values({
         id: projectId,
         logo: input.logo ?? null,
+        githubUrl: input.githubUrl ?? null,
         year: input.year,
         title: input.title,
         description: input.description,
@@ -74,6 +75,9 @@ class ProjectRepository {
 
     const updateData: Record<string, unknown> = {};
     if (projectFields.logo !== undefined) updateData.logo = projectFields.logo;
+    if (projectFields.githubUrl !== undefined) {
+      updateData.githubUrl = projectFields.githubUrl;
+    }
     if (projectFields.year !== undefined) updateData.year = projectFields.year;
     if (projectFields.title !== undefined) updateData.title = projectFields.title;
     if (projectFields.description !== undefined) updateData.description = projectFields.description;

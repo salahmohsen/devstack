@@ -8,6 +8,7 @@ export * from "#@/repo/repo-contributors/get-repo-contributors";
 export * from "#@/repo/repo-commit-sparkline/get-repo-commit-sparkline";
 export * from "#@/repo/repo-file-content/get-repo-file-content";
 export * from "#@/repo/repo-overview/get-repo-overview";
+export * from "#@/repo/repo-recent-commits/get-repo-recent-commits";
 export * from "#@/repo/repo-ref-commit/get-repo-ref-commit";
 export * from "#@/repo/repo-tree/get-repo-tree";
 export * from "#@/repo/tree-entry-commits/get-tree-entry-commits";

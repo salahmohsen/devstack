@@ -21,6 +21,18 @@ const SUPPORTED_GITHUB_WEBHOOK_EVENTS = new Set([
   "watch"
 ]);
 
+const IDENTITY_REFRESH_TRIGGER_FILES = new Set([
+  "AGENTS.md",
+  "CLAUDE.md",
+  ".cursorrules",
+  ".github/copilot-instructions.md"
+]);
+
+export type HandleGitHubWebhookResult =
+  | { status: 401 }
+  | { headSha: string | null; shouldRefreshIdentity: boolean; status: 200 }
+  | { status: 202 };
+
 export async function handleGitHubWebhook(input: {
   deliveryId: string;
   event: string;
@@ -29,10 +41,10 @@ export async function handleGitHubWebhook(input: {
   runtime?: GitHubRuntimeBindings;
   signature256: string | null;
   webhookSecret: string;
-}) {
+}): Promise<HandleGitHubWebhookResult> {
   if (!verifyGitHubWebhookSignature(input.rawBody, input.signature256, input.webhookSecret)) {
     return {
-      status: 401 as const
+      status: 401
     };
   }
 
@@ -45,7 +57,7 @@ export async function handleGitHubWebhook(input: {
   if (!SUPPORTED_GITHUB_WEBHOOK_EVENTS.has(input.event)) {
     await githubCacheRepository.markWebhookDeliveryProcessed(input.deliveryId);
     return {
-      status: 202 as const
+      status: 202
     };
   }
 
@@ -67,7 +79,9 @@ export async function handleGitHubWebhook(input: {
   }
 
   return {
-    status: 202 as const
+    headSha: getPushHeadSha(input.event, input.payload),
+    shouldRefreshIdentity: hasIdentityRefreshTriggerFile(input.event, input.payload),
+    status: 200
   };
 }
 
@@ -158,4 +172,47 @@ function verifyGitHubWebhookSignature(
   const actual = Buffer.from(signature256);
 
   return expected.length === actual.length && timingSafeEqual(expected, actual);
+}
+
+function getPushHeadSha(event: string, payload: unknown): string | null {
+  if (event !== "push" || !payload || typeof payload !== "object") return null;
+  const p = payload as Record<string, unknown>;
+  if (
+    "head_commit" in p &&
+    p.head_commit &&
+    typeof p.head_commit === "object" &&
+    "id" in p.head_commit &&
+    typeof p.head_commit.id === "string"
+  ) {
+    return p.head_commit.id;
+  }
+  if ("after" in p && typeof p.after === "string") {
+    return p.after;
+  }
+  return null;
+}
+
+function hasIdentityRefreshTriggerFile(event: string, payload: unknown): boolean {
+  if (event !== "push") return false;
+  if (!payload || typeof payload !== "object") return false;
+  const p = payload as Record<string, unknown>;
+  if (!("head_commit" in p) || !p.head_commit || typeof p.head_commit !== "object") {
+    return false;
+  }
+  const headCommit = p.head_commit as Record<string, unknown>;
+  for (const key of ["modified", "added", "removed"] as const) {
+    const list = headCommit[key];
+    if (!Array.isArray(list)) continue;
+    for (const path of list) {
+      if (typeof path !== "string") continue;
+      if (IDENTITY_REFRESH_TRIGGER_FILES.has(path)) return true;
+      if (isReadmePath(path)) return true;
+    }
+  }
+  return false;
+}
+
+function isReadmePath(path: string): boolean {
+  const basename = path.split("/").pop() ?? path;
+  return basename.toLowerCase() === "readme.md";
 }

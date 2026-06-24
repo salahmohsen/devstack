@@ -1,5 +1,7 @@
 import { join } from "node:path/posix";
 
+import { RequestContext } from "@mastra/core/request-context";
+import { type RequestContext as MastraRequestContext } from "@mastra/core/request-context";
 import { SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
@@ -11,15 +13,21 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type ContentfulStatusCode } from "hono/utils/http-status";
 
+import { getMastra, orpcContextStorage } from "@tsu-stack/ai/mastra";
 import {
   createContext,
   type OrpcContextBindings
 } from "@tsu-stack/api/lib/context/hono/create-context";
+import { type OrpcContext } from "@tsu-stack/api/lib/context/types";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
-import { handleGitHubWebhook } from "@tsu-stack/github";
+import {
+  createGitHubOctokit,
+  handleGitHubWebhook,
+  resolvePublicGitHubSource
+} from "@tsu-stack/github";
 import { log, parseError } from "@tsu-stack/logger/server";
 import {
   honoLogIngestionMiddleware,
@@ -27,20 +35,36 @@ import {
   type HonoLogVariables
 } from "@tsu-stack/logger/server/hono/middleware";
 
+import { isAlreadyProcessed } from "#@/identity-refresh-dedup";
 import "#@/shared/lib/logger";
 
 const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
-const allowedWebOrigin = new URL(ENV_SERVER.VITE_WEB_URL).origin;
+const allowedOrigins = new Set([
+  new URL(ENV_SERVER.VITE_WEB_URL).origin,
+  new URL(ENV_SERVER.MASTRA_STUDIO_URL).origin
+]);
 
 const corsOptions: NonNullable<Parameters<typeof cors>[0]> = {
-  allowHeaders: ["Content-Type", "Authorization", "X-Request-Id", "x-evlog-source"],
+  allowHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Request-Id",
+    "x-evlog-source",
+    "x-mastra-client-type",
+    "x-mastra-dev-playground"
+  ],
   allowMethods: ["GET", "POST", "OPTIONS"],
   credentials: true,
-  origin: (origin: string) => (origin === allowedWebOrigin ? origin : null)
+  origin: (origin: string) => (allowedOrigins.has(origin) ? origin : null)
 };
 
 type AppEnv = HonoLogVariables & {
-  Bindings: OrpcContextBindings;
+  Bindings: OrpcContextBindings & {
+    MASTRA_DB: D1Database;
+  };
+  Variables: {
+    requestContext: MastraRequestContext;
+  };
 };
 
 export const app = new Hono<AppEnv>().basePath(serverBaseUrl.pathname);
@@ -51,7 +75,7 @@ app.options("*", async (c, next) => cors(corsOptions)(c, next));
 app.use(
   "/*",
   honoLoggerMiddleware({
-    exclude: ["**/health/**", "**/_logs/ingest"],
+    exclude: ["**/health/**", "**/_logs/ingest", "**/api/agents/**", "**/api/workflows/**"],
     enrich: (ctx) => {
       ctx.event.hostname = serverBaseUrl.hostname;
     }
@@ -59,6 +83,25 @@ app.use(
 );
 
 app.post("/_logs/ingest", honoLogIngestionMiddleware());
+
+/**
+ * Root health-check. The Hono app is a backend (oRPC + Better Auth +
+ * Mastra + GitHub webhooks) — there is no UI at `/`. The previous
+ * notFoundHandler was returning 404 in 4-10s because the request still
+ * walked the `/*` `runWithDb` middleware before falling through.
+ * Registering `app.get("/")` here, before the `/*` middleware, short-
+ * circuits the root path and gives a useful 200 for the health checks
+ * Studio (and any browser pointing at the server URL) makes on
+ * startup. The response intentionally exposes only static server info —
+ * not the env, bindings, or any per-request data.
+ */
+app.get("/", (c) =>
+  c.json({
+    name: "tsu-stack-server",
+    status: "ok",
+    timestamp: new Date().toISOString()
+  })
+);
 
 app.get("/api/ws/github-signals", (c) => {
   const relay = c.env.GITHUB_SIGNAL_RELAY;
@@ -139,26 +182,66 @@ app.post("/webhooks/github", async (c) => {
   // across function boundaries).
   const webhookSecret = ENV_SERVER.GITHUB_WEBHOOK_SECRET;
 
-  return runWithDb(createDb(), async () =>
-    c.json(
-      { ok: true },
-      (
-        await handleGitHubWebhook({
-          deliveryId,
-          event,
-          payload,
-          rawBody,
-          runtime: {
+  return runWithDb(createDb(), async () => {
+    const result = await handleGitHubWebhook({
+      deliveryId,
+      event,
+      payload,
+      rawBody,
+      runtime: {
+        executionContext: c.executionCtx,
+        kv: c.env.GITHUB_CACHE_KV,
+        signalRelay: c.env.GITHUB_SIGNAL_RELAY
+      },
+      signature256: signature256 ?? null,
+      webhookSecret
+    });
+
+    if (result.status === 200 && result.shouldRefreshIdentity) {
+      // Build a real OrpcContext so the workflow can actually fetch repos
+      // and files. The previous hard-coded `source.isConfigured: false`
+      // made `getProfileRepos` (and every other Octokit-backed call inside
+      // the workflow) return `[]` — see plan #28.
+      const githubSource = await resolvePublicGitHubSource();
+      const dedupContext: OrpcContext = {
+        github: {
+          binding: {
             executionContext: c.executionCtx,
             kv: c.env.GITHUB_CACHE_KV,
             signalRelay: c.env.GITHUB_SIGNAL_RELAY
           },
-          signature256: signature256 ?? null,
-          webhookSecret
-        })
-      ).status
-    )
-  );
+          octokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+          source: githubSource
+        },
+        logger: c.get("log"),
+        session: null
+      };
+      const already = await isAlreadyProcessed(dedupContext, deliveryId);
+      if (!already) {
+        const mastra = await getMastra({ MASTRA_DB: c.env.MASTRA_DB });
+        const run = await mastra.getWorkflow("refresh-identity").createRun();
+        const rc = new RequestContext();
+        rc.set("orpcContext", dedupContext);
+        rc.set("resourceId", dedupContext.session?.user?.id ?? "anonymous");
+        rc.set("requestId", crypto.randomUUID());
+        rc.set("logger", c.get("log"));
+        // waitUntil keeps the isolate (and this request's WebSocket pool) alive
+        // until the workflow resolves. runWithDb no longer closes the pool
+        // eagerly. See docs/adr/0009.
+        c.executionCtx.waitUntil(
+          run.start({
+            inputData: {
+              commitSha: result.headSha ?? undefined,
+              reason: `webhook: ${event}`
+            },
+            requestContext: rc
+          })
+        );
+      }
+    }
+
+    return c.json({ ok: true }, result.status);
+  });
 });
 
 export const openApiHandler = new OpenAPIHandler(appRouter, {
@@ -247,35 +330,56 @@ app.use("/*", async (c, next) => {
   return runWithDb(db, async () => {
     const context = await createContext({ context: c, logger: c.get("log") });
 
-    const rpcResult = await rpcHandler.handle(c.req.raw, {
-      context,
-      prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "rpc") as `/${string}`
-    });
+    // The Hono `/*` middleware also stores the per-request orpcContext
+    // in `orpcContextStorage` (an AsyncLocalStorage) so that tools which
+    // need the live `octokit` / `kv` / `signalRelay` can read it even
+    // when the Mastra Hono adapter's `createContextMiddleware` has
+    // overwritten the per-request Hono `requestContext` with one built
+    // from the request body. See plans/2026-06-22-mastra-ai-test.md #22.
+    return orpcContextStorage.run(context, async () => {
+      // The Mastra Hono adapter's `createContextMiddleware` (registered by
+      // `mountMastra`) creates its own `RequestContext` from the body and
+      // overwrites `c.get("requestContext")`, so the value we set here
+      // would be lost — tools read the orpcContext from
+      // `orpcContextStorage` as a fallback instead. We still build a
+      // `RequestContext` so the cron path and tests that build the
+      // same way get a consistent surface.
+      const requestContext = new RequestContext();
+      requestContext.set("orpcContext", context);
+      requestContext.set("resourceId", context.session?.user?.id ?? "anonymous");
+      requestContext.set("requestId", crypto.randomUUID());
+      requestContext.set("logger", c.get("log"));
 
-    if (rpcResult.matched) {
-      return c.newResponse(rpcResult.response.body, rpcResult.response);
-    }
-
-    if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
-      const docsResult = await openApiHandler.handle(c.req.raw, {
+      const rpcResult = await rpcHandler.handle(c.req.raw, {
         context,
-        prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "docs") as `/${string}`
+        prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "rpc") as `/${string}`
       });
 
-      if (docsResult.matched) {
-        return c.newResponse(docsResult.response.body, docsResult.response);
+      if (rpcResult.matched) {
+        return c.newResponse(rpcResult.response.body, rpcResult.response);
       }
-    }
 
-    const openApiResult = await openApiHandler.handle(c.req.raw, {
-      context,
-      prefix: new URL(ENV_SERVER.VITE_SERVER_URL).pathname as `/${string}`
+      if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
+        const docsResult = await openApiHandler.handle(c.req.raw, {
+          context,
+          prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "docs") as `/${string}`
+        });
+
+        if (docsResult.matched) {
+          return c.newResponse(docsResult.response.body, docsResult.response);
+        }
+      }
+
+      const openApiResult = await openApiHandler.handle(c.req.raw, {
+        context,
+        prefix: new URL(ENV_SERVER.VITE_SERVER_URL).pathname as `/${string}`
+      });
+
+      if (openApiResult.matched) {
+        return c.newResponse(openApiResult.response.body, openApiResult.response);
+      }
+
+      await next();
     });
-
-    if (openApiResult.matched) {
-      return c.newResponse(openApiResult.response.body, openApiResult.response);
-    }
-
-    await next();
   });
 });

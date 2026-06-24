@@ -46,6 +46,7 @@ function toStackOutput(s: {
 function toProjectOutput(proj: {
   id: string;
   logo: string | null;
+  githubUrl: string | null;
   year: number;
   title: string;
   description: string;
@@ -69,6 +70,7 @@ function toProjectOutput(proj: {
   return {
     id: proj.id,
     logo: proj.logo,
+    githubUrl: proj.githubUrl,
     year: proj.year,
     title: proj.title,
     description: proj.description,
@@ -96,6 +98,7 @@ function toExperienceOutput(exp: {
   projects: Array<{
     id: string;
     logo: string | null;
+    githubUrl: string | null;
     year: number;
     title: string;
     description: string;

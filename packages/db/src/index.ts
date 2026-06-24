@@ -34,11 +34,21 @@ export const db: NeonHttpDatabase<typeof fullRelations> = drizzleHttp(ENV_SERVER
 /**
  * Per-request WebSocket Drizzle instance.
  *
- * Required for `db.transaction(...)` and the node-postgres `Pool` API. Per
- * Neon's "Pool and Client" docs, serverless WebSocket connections cannot
- * outlive a single request, so the Pool must be created inside the request
- * handler and closed at the end. Repositories use `getDb()` to read the
- * current request's instance.
+ * Required for `db.transaction(...)` and the node-postgres `Pool` API. Each
+ * request gets its own pool via `createDb()`; the pool's lifetime is the
+ * worker's lifetime, kept alive by `c.executionCtx.waitUntil(...)` when work
+ * (e.g. a Mastra workflow started via `start-async`) continues past the
+ * response. Repositories use `getDb()` to read the current request's
+ * instance from `AsyncLocalStorage`.
+ *
+ * Neon's "Pool and Client" docs warn against *sharing* a pool across
+ * requests — the WebSocket from request A may be killed by the runtime
+ * and reused for request B, causing cross-request contamination. They do
+ * not say "close the pool at the end of every request." `runWithDb` does
+ * not call `pool.end()`; the Cloudflare runtime closes the connection
+ * when the isolate is destroyed. Closing eagerly creates a race when
+ * `run.start()` resolves shallow (the workflow's later steps find a
+ * closed pool via AsyncLocalStorage). See docs/adr/0009.
  */
 export type WsDb = NeonDatabase<typeof fullRelations>;
 
@@ -51,11 +61,7 @@ export function createDb(): WsDb {
 
 export async function runWithDb<T>(db: WsDb, fn: () => T | Promise<T>): Promise<T> {
   const pool = (db as unknown as { $client: Pool }).$client;
-  try {
-    return await dbStorage.run({ db, pool }, fn);
-  } finally {
-    await pool.end();
-  }
+  return dbStorage.run({ db, pool }, fn);
 }
 
 /**
@@ -64,6 +70,11 @@ export async function runWithDb<T>(db: WsDb, fn: () => T | Promise<T>): Promise<
  * Preferred path: returns the per-request Neon WebSocket Drizzle inside the
  * `runWithDb(...)` scope opened by the server's `/*` middleware. The WebSocket
  * pool is required for `db.transaction(...)` and prepared-statement reuse.
+ *
+ * The pool's lifetime is the worker's, not the request's — see the docblock
+ * on `createDb`. A workflow started inside the request scope will see a
+ * live pool for the entire workflow run because `c.executionCtx.waitUntil`
+ * keeps the isolate alive past the response.
  *
  * Defensive fallback: if no scope is active (e.g. a route was registered
  * before the `/*` middleware and forgot to wrap itself), falls back to the

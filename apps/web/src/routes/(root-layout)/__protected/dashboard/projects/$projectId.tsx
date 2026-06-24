@@ -88,6 +88,7 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
       year: project.year,
       description: project.description ?? "",
       logo: project.logo ?? "",
+      githubUrl: project.githubUrl ?? "",
       fromDate: project.fromDate ?? "",
       toDate: project.toDate ?? "",
       isPresent: project.isPresent,
@@ -103,6 +104,7 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
           ...value,
           description: value.description,
           logo: value.logo || null,
+          githubUrl: value.githubUrl || null,
           fromDate: value.fromDate || null,
           toDate: value.toDate || null,
           experienceId: selectedExperienceId,
@@ -161,6 +163,16 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
                   {(field) => <field.InputField label="Logo URL" placeholder="https://..." />}
                 </form.AppField>
               </div>
+
+              <form.AppField name="githubUrl">
+                {(field) => (
+                  <field.InputField
+                    label="GitHub URL"
+                    placeholder="https://github.com/owner/repo"
+                    type="url"
+                  />
+                )}
+              </form.AppField>
 
               {experiencesQuery.data && experiencesQuery.data.length > 0 && (
                 <div className="flex flex-col gap-1.5">
