@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Edit, GripVertical, Plus } from "lucide-react";
+import { Edit, ExternalLink, GripVertical, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -99,7 +99,20 @@ function ProjectsListPage() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle>{proj.title}</CardTitle>
+                        <CardTitle>
+                          {proj.title}
+                          {proj.githubUrl && (
+                            <a
+                              href={proj.githubUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Open ${proj.title} on GitHub`}
+                              className="ms-1.5 inline-flex align-middle text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              <ExternalLink className="size-3.5" strokeWidth={2.25} />
+                            </a>
+                          )}
+                        </CardTitle>
                         <p className="mt-0.5 text-sm text-muted-foreground">{proj.year}</p>
                       </div>
                       <Button

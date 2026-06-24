@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ExternalLink } from "lucide-react";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
@@ -46,6 +47,17 @@ export const ProjectsItem = ({ project }: { project: ProjectOutput }) => {
           </p>
           <p className="inline-flex items-center gap-1 font-semibold tracking-widest">
             <span className="tracking-normal">{project.title}</span>
+            {project.githubUrl && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open ${project.title} on GitHub`}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ExternalLink className="size-3.5" strokeWidth={2.25} />
+              </a>
+            )}
           </p>
           <div
             className="font-normal [&_li]:mb-1 [&_ul]:list-disc [&_ul]:pl-4"

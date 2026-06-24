@@ -16,6 +16,7 @@ export const project = pgTable(
   {
     id: text("id").primaryKey(),
     logo: text("logo"),
+    githubUrl: text("github_url"),
     year: integer("year").notNull(),
     title: text("title").notNull(),
     description: text("description").notNull(),

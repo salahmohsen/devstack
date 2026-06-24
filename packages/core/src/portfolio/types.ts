@@ -29,6 +29,7 @@ export type StackListOutput = z.infer<typeof StackListOutputSchema>;
 export const ProjectOutputSchema = z.object({
   id: z.string(),
   logo: z.string().nullable(),
+  githubUrl: z.string().url().nullable(),
   year: z.number().int(),
   title: z.string(),
   description: z.string(),
@@ -44,6 +45,7 @@ export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
 
 export const CreateProjectInputSchema = z.object({
   logo: z.string().nullable().optional(),
+  githubUrl: z.string().url().nullable().optional(),
   year: z.number().int(),
   title: z.string().min(1),
   description: z.string(),
@@ -58,6 +60,7 @@ export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
 
 export const UpdateProjectInputSchema = z.object({
   logo: z.string().nullable().optional(),
+  githubUrl: z.string().url().nullable().optional(),
   year: z.number().int().optional(),
   title: z.string().min(1).optional(),
   description: z.string(),
