@@ -1,4 +1,7 @@
 import { Mastra } from "@mastra/core";
+import { InMemoryStore, MastraCompositeStore } from "@mastra/core/storage";
+
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { identityAgent } from "#@/agents/identity-agent";
 import { portfolioAgent } from "#@/agents/portfolio-agent";
@@ -24,7 +27,7 @@ type MastraEnv = { MASTRA_DB: D1Database };
 
 let cachedMastra: { env: MastraEnv; instance: Mastra } | undefined;
 
-export function createMastra(env: MastraEnv): Mastra {
+export async function createMastra(env: MastraEnv): Promise<Mastra> {
   // Build the per-binding Memory instance once and share it between the
   // Mastra instance and the agents. The @mastra/core agent `getMemory()`
   // does not resolve string keys against `mastramemory[...]`; passing the
@@ -33,6 +36,28 @@ export function createMastra(env: MastraEnv): Mastra {
   // Setting the instance directly via `__setMemory` works because
   // `getMemory()` then sees a real Memory object.
   const memory = createMastraMemory(env.MASTRA_DB);
+
+  // D1 is a relational store and does not support the OLAP-style
+  // observability domain that `MastraStorageExporter` writes to. When
+  // `MASTRA_LOCAL_METRICS_ENABLED=true` (dev only) we wrap the D1 store
+  // in a `MastraCompositeStore` that routes the `observability` domain
+  // to an `InMemoryStore`, so the local Studio at `MASTRA_STUDIO_URL`
+  // can read metrics. InMemoryStore is wiped on every dev restart
+  // (workerd reinitialises the module on HMR); that's acceptable for
+  // local dev and never enabled in production. See
+  // `docs/dev/mastra-studio.md` §"Local Studio metrics".
+  const d1Store = createMastraD1Store(env.MASTRA_DB);
+  const storage = ENV_SERVER.MASTRA_LOCAL_METRICS_ENABLED
+    ? new MastraCompositeStore({
+        id: "mastra",
+        default: d1Store,
+        domains: {
+          observability: await new InMemoryStore({
+            id: "observability"
+          }).getStore("observability")
+        }
+      })
+    : d1Store;
 
   const mastra = new Mastra({
     memory: { default: memory },
@@ -45,7 +70,7 @@ export function createMastra(env: MastraEnv): Mastra {
     gateways: {
       netlify: new DisabledNetlifyGateway()
     },
-    storage: createMastraD1Store(env.MASTRA_DB),
+    storage,
     observability,
     // The vector store is registered under its `id` ("mastra-vectors") so
     // createVectorQueryTool(..., { vectorStoreName: "mastra-vectors" }) can
@@ -81,9 +106,9 @@ export function createMastra(env: MastraEnv): Mastra {
   return mastra;
 }
 
-export function getMastra(env: MastraEnv): Mastra {
+export async function getMastra(env: MastraEnv): Promise<Mastra> {
   if (!cachedMastra || cachedMastra.env.MASTRA_DB !== env.MASTRA_DB) {
-    cachedMastra = { env, instance: createMastra(env) };
+    cachedMastra = { env, instance: await createMastra(env) };
   }
   return cachedMastra.instance;
 }

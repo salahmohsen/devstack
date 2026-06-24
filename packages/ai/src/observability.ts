@@ -1,4 +1,11 @@
-import { MastraPlatformExporter, Observability, SensitiveDataFilter } from "@mastra/observability";
+import {
+  MastraPlatformExporter,
+  MastraStorageExporter,
+  Observability,
+  SensitiveDataFilter
+} from "@mastra/observability";
+
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 /**
  * Mastra observability configuration.
@@ -10,6 +17,13 @@ import { MastraPlatformExporter, Observability, SensitiveDataFilter } from "@mas
  *   Cloud project at `https://mastra.ai` — the local Studio observability tab
  *   is intentionally empty in this setup.
  *
+ * - When `MASTRA_LOCAL_METRICS_ENABLED=true` (dev only), the
+ *   `MastraStorageExporter` is also included. It writes metrics to the
+ *   Mastra instance's local observability storage domain (an InMemoryStore;
+ *   see `packages/ai/src/mastra/index.ts`). The local Studio at
+ *   `MASTRA_STUDIO_URL` reads that domain, so its metrics tab becomes
+ *   functional. Wipes on every dev restart by design.
+ *
  * The `SensitiveDataFilter` is a span output processor that redacts secrets
  * (API keys, tokens, passwords, etc.) before they reach any exporter. It is
  * also auto-applied to every config by the `Observability` registry; we list
@@ -20,7 +34,9 @@ export const observability = new Observability({
   configs: {
     default: {
       serviceName: "portfolio-mastra",
-      exporters: [new MastraPlatformExporter()],
+      exporters: ENV_SERVER.MASTRA_LOCAL_METRICS_ENABLED
+        ? [new MastraPlatformExporter(), new MastraStorageExporter()]
+        : [new MastraPlatformExporter()],
       spanOutputProcessors: [new SensitiveDataFilter()]
     }
   }

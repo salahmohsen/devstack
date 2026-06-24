@@ -5,7 +5,7 @@ import { mountMastra, createMastra } from "@tsu-stack/ai/mastra";
 
 import { app } from "#@/app";
 
-const mastra: Mastra = createMastra(env);
+const mastra: Mastra = await createMastra(env);
 await mountMastra(app, mastra);
 
 export { app };

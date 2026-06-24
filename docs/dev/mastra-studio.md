@@ -59,17 +59,53 @@ We standardise on 5001/4111 to keep both running side by side.
   wiring it into an agent.
 - **Memory** — browse threads and messages in the D1 store; inspect
   working-memory snapshots; trigger semantic recall queries.
-- **Observability** — **not available in the local Studio.** Traces ship
-  to Mastra Cloud via `MastraPlatformExporter`. To view traces, open the
-  [Mastmloud Studio](https://mastra.ai) and find the project for
-  token `MASTRA_PLATFORM_ACCESS_TOKEN` (project ID `MASTRA_PROJECT_ID`).
-  For traces to show up there, the env var must be set in `packages/env/.env`
-  and the dev server must be restarted. The exporter auto-disables when
-  the token is missing, so a blank token is not an error — it just means
-  no traces are shipped. If you do open the local Studio and click the
-  Observability tab, the underlying `/api/observability/*` calls will
-  return 500 because the dev server has no local observability storage
-  (intentional). Ignore the 500s in the dev log.
+- **Observability** — **not available in the local Studio** unless
+  `MASTRA_LOCAL_METRICS_ENABLED=true` in `packages/env/.env` (default:
+  `false`; set to `true` for local dev). See §"Local Studio metrics" below.
+  Traces ship to Mastra Cloud via `MastraPlatformExporter`. To view traces
+  in the cloud, open the [Mastmloud Studio](https://mastra.ai) and find
+  the project for token `MASTRA_PLATFORM_ACCESS_TOKEN` (project ID
+  `MASTRA_PROJECT_ID`). The exporter auto-disables when the token is
+  missing, so a blank token is not an error — it just means no traces
+  are shipped.
+
+## Local Studio metrics
+
+By default, the local Studio at `http://localhost:4111` shows:
+
+> **Metrics are not available with your current storage**
+> Metrics require ClickHouse, DuckDB, Spanner, or in-memory storage
+> for observability. Relational databases (PostgreSQL, LibSQL) do not
+> support metrics collection.
+
+This is because the Hono server's Mastra instance uses D1 (relational)
+for the default storage domain. D1 doesn't have the OLAP-style shape
+metrics need.
+
+To enable local metrics, set `MASTRA_LOCAL_METRICS_ENABLED=true` in
+`packages/env/.env`. This:
+
+1. Wraps the D1 store in a `MastraCompositeStore` that routes the
+   `observability` domain to an `InMemoryStore` — see
+   `packages/ai/src/mastra/index.ts:42-57`.
+2. Adds `MastraStorageExporter` to the observability config alongside
+   `MastraPlatformExporter` — see `packages/ai/src/observability.ts`.
+3. The `MastraStorageExporter` writes metrics to the in-memory
+   observability domain. The local Studio reads that domain and renders
+   the metrics tab.
+
+**Trade-offs:**
+
+- In-memory storage is wiped on every dev restart (workerd reinitialises
+  the module on HMR). Acceptable for dev — re-run a workflow to
+  regenerate metrics.
+- `@mastra/duckdb` (the Mastra-recommended local metrics store) is a
+  native binary that workerd can't load. Not viable in our Cloudflare
+  Workers dev runtime.
+- Production: leave `MASTRA_LOCAL_METRICS_ENABLED` unset. Production
+  observability flows through `MastraPlatformExporter` to the cloud
+  surface at `https://observability.mastra.ai`, which has metrics
+  natively. The cloud path is the source of truth for production metrics.
 
 ## Cloud Studio at `<slug>.studio.mastra.cloud`
 
@@ -129,6 +165,8 @@ for why this architecture is intentional.
   separate worker (relevant: it is the same Hono process Studio talks to).
 - [`docs/adr/0008-replace-mastra-storage-exporter.md`](../adr/0008-replace-mastra-storage-exporter.md)
   — previous observability decision (now superseded by the Mastra Cloud path).
+- [`docs/adr/0009-workflow-run-with-db-scope.md`](../adr/0009-workflow-run-with-db-scope.md)
+  — why workflow runs share the request's `runWithDb` scope.
 - [`docs/adr/0010-observability-pg-via-composite-storage.md`](../adr/0010-observability-pg-via-composite-storage.md)
   — rejected attempt to use a local Postgres v-next observability storage.
 - [`.agents/mastra.md`](../../.agents/mastra.md) — framework reference.

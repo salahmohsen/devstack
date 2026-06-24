@@ -218,7 +218,7 @@ app.post("/webhooks/github", async (c) => {
       };
       const already = await isAlreadyProcessed(dedupContext, deliveryId);
       if (!already) {
-        const mastra = getMastra({ MASTRA_DB: c.env.MASTRA_DB });
+        const mastra = await getMastra({ MASTRA_DB: c.env.MASTRA_DB });
         const run = await mastra.getWorkflow("refresh-identity").createRun();
         const rc = new RequestContext();
         rc.set("orpcContext", dedupContext);

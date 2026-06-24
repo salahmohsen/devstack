@@ -25,7 +25,7 @@ export default {
     return app.fetch(request, env, executionContext);
   },
   async scheduled(event: ScheduledController, env: Cloudflare.Env, ctx: ExecutionContext) {
-    const mastra = getMastra(env);
+    const mastra = await getMastra(env);
     const run = await mastra.getWorkflow("refresh-identity").createRun();
     // The cron path has no Hono request, so the Hono `c.get("log")` is
     // unavailable. Build an evlog `RequestLogger` via `createRequestLogger`

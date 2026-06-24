@@ -46,7 +46,14 @@ export const ENV_SERVER = createEnv({
       .default(
         "README.md,AGENTS.md,CLAUDE.md,.cursorrules,.github/copilot-instructions.md,package.json"
       ),
-    MASTRA_STUDIO_URL: z.url().default("http://localhost:4111")
+    MASTRA_STUDIO_URL: z.url().default("http://localhost:4111"),
+    // Dev-only: when true, the Hono app's Mastra instance uses an
+    // InMemoryStore for the observability domain + MastraStorageExporter,
+    // so the local Studio at MASTRA_STUDIO_URL can show metrics. Wipes on
+    // every dev restart. Production should leave this off and use the
+    // Mastra Cloud observability surface at https://observability.mastra.ai
+    // (shipped via MastraPlatformExporter, gated by MASTRA_PLATFORM_ACCESS_TOKEN).
+    MASTRA_LOCAL_METRICS_ENABLED: z.stringbool().default(false)
   }
 });
 
