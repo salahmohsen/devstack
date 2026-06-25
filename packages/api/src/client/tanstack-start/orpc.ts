@@ -16,35 +16,39 @@ const getORPCClient = createIsomorphicFn()
   .server(() =>
     createRouterClient(appRouter, {
       context: async () => {
-        // Per-request WebSocket Pool. Required by Cloudflare Workers: the
-        // serverless driver's WebSocket connection cannot outlive a single
-        // request, and a module-level Pool gets reused across requests →
-        // "Connection terminated" (see Neon's "Pool and Client" docs).
-        const db = createDb();
+        const headers = getRequestHeaders();
+        const session = await auth.api.getSession({ headers });
+        const [{ createGitHubOctokit }, { resolvePublicGitHubSource }] = await Promise.all([
+          import("@tsu-stack/github/infrastructure/octokit/client"),
+          import("@tsu-stack/github/shared/public-github-source")
+        ]);
+        const githubSource = await resolvePublicGitHubSource();
 
-        return runWithDb(db, async () => {
-          const headers = getRequestHeaders();
-          const session = await auth.api.getSession({ headers });
-          const [{ createGitHubOctokit }, { resolvePublicGitHubSource }] = await Promise.all([
-            import("@tsu-stack/github/infrastructure/octokit/client"),
-            import("@tsu-stack/github/shared/public-github-source")
-          ]);
-          const githubSource = await resolvePublicGitHubSource();
-
-          return {
-            github: {
-              binding: {},
-              privateOctokit: createGitHubOctokit(
-                githubSource.isConfigured ? githubSource : undefined
-              ),
-              publicOctokit: createGitHubOctokit(),
-              source: githubSource
-            },
-            logger: createLogger({ operation: "web__client__orpc" }),
-            session
-          };
-        });
-      }
+        return {
+          github: {
+            binding: {},
+            privateOctokit: createGitHubOctokit(
+              githubSource.isConfigured ? githubSource : undefined
+            ),
+            publicOctokit: createGitHubOctokit(
+              githubSource.isConfigured ? githubSource : undefined
+            ),
+            source: githubSource
+          },
+          logger: createLogger({ operation: "web__client__orpc" }),
+          session
+        };
+      },
+      // Wrap the entire procedure call (context build + handler) in
+      // `runWithDb` so `getDb()` inside the handler returns the per-request
+      // WS Drizzle instance, not the HTTP singleton fallback. Mirrors the
+      // Hono middleware pattern at `apps/server/src/app.ts:324-385`.
+      interceptors: [
+        (options) => {
+          const db = createDb();
+          return runWithDb(db, () => options.next());
+        }
+      ]
     })
   )
   .client((): RouterClient<AppRouter> => {
