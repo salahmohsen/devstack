@@ -1,7 +1,11 @@
+import { DurableObject } from "cloudflare:workers";
+
 type SubscribeMessage = {
-  keys: string[];
   type: "subscribe";
+  keys: string[];
 };
+
+type SocketState = { keys: string[] };
 
 function isSubscribeMessage(data: unknown): data is SubscribeMessage {
   return (
@@ -10,15 +14,12 @@ function isSubscribeMessage(data: unknown): data is SubscribeMessage {
     "type" in data &&
     data.type === "subscribe" &&
     "keys" in data &&
-    Array.isArray(data.keys) &&
-    data.keys.every((value) => typeof value === "string")
+    Array.isArray((data as { keys: unknown }).keys) &&
+    (data as { keys: unknown[] }).keys.every((k) => typeof k === "string")
   );
 }
 
-export class GitHubSignalRelay {
-  private subscriptions = new Map<WebSocket, Set<string>>();
-
-  // fallow-ignore-next-line unused-class-member
+export class GitHubSignalRelay extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
@@ -33,73 +34,77 @@ export class GitHubSignalRelay {
     return new Response("Not found", { status: 404 });
   }
 
-  private async handleBroadcast(request: Request) {
-    const body = (await request.json()) as {
-      signalKeys?: string[];
-    };
+  private async handleBroadcast(request: Request): Promise<Response> {
+    const body = (await request.json()) as { signalKeys?: string[] };
     const signalKeys = body.signalKeys;
     if (!Array.isArray(signalKeys) || signalKeys.length === 0) {
       return new Response("Missing signalKeys", { status: 400 });
     }
 
-    const payload = JSON.stringify({
-      keys: signalKeys,
-      type: "signals"
-    });
+    const payload = JSON.stringify({ type: "signals", keys: signalKeys });
     const signalSet = new Set(signalKeys);
 
-    for (const [socket, subscribedKeys] of this.subscriptions) {
-      const hasMatch = [...subscribedKeys].some((key) => signalSet.has(key));
-      if (!hasMatch) {
+    for (const ws of this.ctx.getWebSockets()) {
+      const state = ws.deserializeAttachment() as SocketState | null;
+      if (!state?.keys.some((key) => signalSet.has(key))) {
         continue;
       }
-
       try {
-        socket.send(payload);
+        ws.send(payload);
       } catch {
-        this.subscriptions.delete(socket);
+        ws.close();
       }
     }
 
     return Response.json({ ok: true });
   }
 
-  private handleConnect(request: Request) {
+  private handleConnect(request: Request): Response {
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected websocket upgrade", { status: 426 });
     }
 
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
-
-    server.accept();
-    this.subscriptions.set(server, new Set());
-
-    server.addEventListener("message", (event) => {
-      if (typeof event.data !== "string") {
-        return;
-      }
-
-      try {
-        const payload = JSON.parse(event.data) as unknown;
-        if (isSubscribeMessage(payload)) {
-          this.subscriptions.set(server, new Set(payload.keys));
-        }
-      } catch {
-        // ignore malformed payloads
-      }
-    });
-
-    server.addEventListener("close", () => {
-      this.subscriptions.delete(server);
-    });
-    server.addEventListener("error", () => {
-      this.subscriptions.delete(server);
-    });
+    this.ctx.acceptWebSocket(server);
+    server.serializeAttachment({ keys: [] } satisfies SocketState);
 
     return new Response(null, {
       status: 101,
       webSocket: client
     } as ResponseInit);
+  }
+
+  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
+    if (typeof message !== "string") return;
+    try {
+      const payload = JSON.parse(message) as unknown;
+      if (isSubscribeMessage(payload)) {
+        ws.serializeAttachment({ keys: payload.keys } satisfies SocketState);
+      }
+    } catch {
+      // ignore malformed payloads
+    }
+  }
+
+  async webSocketClose(
+    ws: WebSocket,
+    code: number,
+    _reason: string,
+    _wasClean: boolean
+  ): Promise<void> {
+    try {
+      ws.close(code, "closing");
+    } catch {
+      // already closed
+    }
+  }
+
+  async webSocketError(ws: WebSocket, _error: unknown): Promise<void> {
+    try {
+      ws.close(1011, "internal error");
+    } catch {
+      // already closed
+    }
   }
 }
