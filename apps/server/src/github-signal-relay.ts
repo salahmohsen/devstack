@@ -1,5 +1,3 @@
-import { DurableObject } from "cloudflare:workers";
-
 type SubscribeMessage = {
   type: "subscribe";
   keys: string[];
@@ -19,7 +17,15 @@ function isSubscribeMessage(data: unknown): data is SubscribeMessage {
   );
 }
 
-export class GitHubSignalRelay extends DurableObject<Env> {
+export class GitHubSignalRelay {
+  ctx: DurableObjectState;
+  env: Env;
+
+  constructor(state: DurableObjectState, env: Env) {
+    this.ctx = state;
+    this.env = env;
+  }
+
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
