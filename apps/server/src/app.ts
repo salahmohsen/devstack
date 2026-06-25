@@ -211,7 +211,7 @@ app.post("/webhooks/github", async (c) => {
             signalRelay: c.env.GITHUB_SIGNAL_RELAY
           },
           privateOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
-          publicOctokit: createGitHubOctokit(),
+          publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
           source: githubSource
         },
         logger: c.get("log"),

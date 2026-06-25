@@ -36,7 +36,7 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
     github: {
       binding: githubBinding,
       privateOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
-      publicOctokit: createGitHubOctokit(),
+      publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
       source: githubSource
     },
     logger,

@@ -80,7 +80,7 @@ export default {
           signalRelay: env.GITHUB_SIGNAL_RELAY
         },
         privateOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
-        publicOctokit: createGitHubOctokit(),
+        publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
         source: githubSource
       },
       logger: cronLogger,
