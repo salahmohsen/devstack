@@ -191,3 +191,34 @@ the resource ID (the portfolio owner's user ID). Passed as
 `requestContext` to every `agent.generate()`, `run.start()`, and
 `tool.execute()` call from the Hono handler.
 _Avoid_: Request scope, context bag, locals.
+
+## Cache invalidation
+
+**Revalidation signal**:
+A durable row in `github_revalidation_signal` recording that a topic was
+invalidated by an external event. The row's `updated_at` is the database
+transaction-start time of the writer (`sql\`now()\``). Staleness rule: a
+cached row with `fetched*at < signal.updated_at`is stale. Used for
+per-event invalidation of topics without a natural cache-group version
+(e.g.`installationAccess`, `pulls.mine`, `notifications`).
+\_Avoid*: Event log, invalidation log, webhook log.
+
+**Cache namespace**:
+A durable row in `github_cache_namespace` whose `version` integer
+increments on every invalidation. Staleness rule: a cached row whose
+`namespace_version !== current_version` is stale (monotonic — the row
+stays stale forever once the namespace moves past it). Used for bulk
+invalidation of a known cache group (e.g. `repos.list`, the
+`pulls.*`/`issues.*` lists).
+_Avoid_: Cache group, invalidation counter.
+
+**Signal relay**:
+A Cloudflare Durable Object (binding `GITHUB_SIGNAL_RELAY`) that fans
+out recently-bumped signal keys to connected WebSocket clients. Uses
+the WebSocket Hibernation API so per-socket subscription state survives
+isolate restarts (see `0012-signal-relay-durable-hibernation`); clients
+that miss a broadcast reconcile against the durable signal rows via the
+`getRevalidationSignals` oRPC route, called from
+`use-github-signal-stream.ts` on WebSocket open, `visibilitychange`,
+`window focus`, `online`, and a 20s polling fallback when disconnected.
+_Avoid_: WebSocket hub, pub/sub relay.
