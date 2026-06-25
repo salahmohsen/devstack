@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 import { Container } from "@tsu-stack/ui/components/container";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/components/empty";
 
 import { parseRepoRouteSplat } from "@/shared/lib/parse-repo-route-splat";
+import { getGitHubCacheStatus, getGitHubDataSource } from "@/shared/lib/query-persistence";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
 // oxlint-disable-next-line fsd/no-public-api-sidestep
@@ -52,6 +53,22 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
   const overviewQuery = useGetGithubRepoOverviewQuery(repo);
   const branchesQuery = useGetGithubRepoBranchesQuery(repo);
   useGetGithubRepoActivityCardsQuery(repo);
+
+  useEffect(() => {
+    const source = getGitHubDataSource(overviewQuery.data);
+    const status = getGitHubCacheStatus(overviewQuery.data);
+    if (source && status) {
+      console.debug(`[github-repo] overview ${repo}: source=${source} status=${status}`);
+    }
+  }, [overviewQuery.data, repo]);
+
+  useEffect(() => {
+    const source = getGitHubDataSource(branchesQuery.data);
+    const status = getGitHubCacheStatus(branchesQuery.data);
+    if (source && status) {
+      console.debug(`[github-repo] branches ${repo}: source=${source} status=${status}`);
+    }
+  }, [branchesQuery.data, repo]);
 
   const routeTarget = useMemo(
     () =>
