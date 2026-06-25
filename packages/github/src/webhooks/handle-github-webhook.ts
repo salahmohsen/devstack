@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
+import { getDb } from "@tsu-stack/db";
 import { githubCacheRepository } from "@tsu-stack/db/repositories";
 
 import {
@@ -64,9 +65,11 @@ export async function handleGitHubWebhook(input: {
   const signalKeys = getGitHubWebhookSignalKeys(input.event, input.payload);
   const namespaceKeys = getGitHubWebhookNamespaceKeys(input.event, input.payload);
 
-  await markGitHubRevalidationSignals(signalKeys);
-  await bumpGitHubCacheNamespaces(namespaceKeys);
-  await githubCacheRepository.markWebhookDeliveryProcessed(input.deliveryId);
+  await getDb().transaction(async (tx) => {
+    await markGitHubRevalidationSignals(signalKeys, tx);
+    await bumpGitHubCacheNamespaces(namespaceKeys, tx);
+    await githubCacheRepository.markWebhookDeliveryProcessed(input.deliveryId, tx);
+  });
 
   if (input.runtime?.signalRelay) {
     const id = input.runtime.signalRelay.idFromName("global");

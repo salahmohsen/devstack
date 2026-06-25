@@ -25,7 +25,7 @@ export * from "drizzle-orm/sql";
  * `.agents/auth.md` for the canonical composition pattern.
  */
 const { relations: authRelations } = schema;
-const fullRelations = { ...appRelations, ...authRelations };
+export const fullRelations = { ...appRelations, ...authRelations };
 
 export const db: NeonHttpDatabase<typeof fullRelations> = drizzleHttp(ENV_SERVER.DATABASE_URL, {
   relations: fullRelations

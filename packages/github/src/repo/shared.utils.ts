@@ -5,11 +5,13 @@ import {
   type GitHubConditionalRequestState,
   type GitHubGraphQLRateLimit
 } from "#@/repo/shared.types";
+import { type GitHubDataSource } from "#@/schemas";
 
 type GitHubLocalFirstLogMeta = {
   cacheStatus: "fresh" | "stale" | "miss";
   fetchedAt: string | null;
   isRevalidating: boolean;
+  source: GitHubDataSource;
 };
 
 export function createGraphQLResponseMetadata(
@@ -30,6 +32,7 @@ export function withLocalFirstMeta<T extends object>(
     cacheStatus: "fresh" | "stale" | "miss";
     fetchedAt: string | null;
     isRevalidating: boolean;
+    source: GitHubDataSource;
   }
 ): T {
   return {
@@ -87,6 +90,7 @@ export function setRepoLoggerLocalFirstOutcome(
     cacheStatus: meta.cacheStatus,
     fetchedAt: meta.fetchedAt,
     isRevalidating: meta.isRevalidating,
+    source: meta.source,
     ...details
   });
 }

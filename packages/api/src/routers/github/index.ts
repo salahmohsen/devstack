@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { GitHubUsernameSchema } from "@tsu-stack/core/github-config";
+import { getDb } from "@tsu-stack/db";
 import {
   bumpGitHubCacheNamespaces,
   getGitHubRevalidationSignals,
@@ -124,30 +125,35 @@ export const githubRouter = {
     .route({ description: "Refresh installation access cache", method: "POST" })
     .output(RevalidationResultSchema)
     .handler(async () => {
-      await markGitHubRevalidationSignals(["installationAccess"]);
+      await getDb().transaction(async (tx) => {
+        await markGitHubRevalidationSignals(["installationAccess"], tx);
+      });
       return { ok: true };
     }),
   clearViewerCache: protectedProcedure
     .route({ description: "Clear viewer's GitHub cache", method: "POST" })
     .output(RevalidationResultSchema)
     .handler(async () => {
-      await markGitHubRevalidationSignals([
-        "installationAccess",
-        "pulls.mine",
-        "issues.mine",
-        "notifications"
-      ]);
-      await bumpGitHubCacheNamespaces([
-        "repos.list",
-        "pulls.authored",
-        "pulls.assigned",
-        "pulls.reviewRequested",
-        "pulls.mentioned",
-        "pulls.involved",
-        "issues.authored",
-        "issues.assigned",
-        "issues.mentioned"
-      ]);
+      await getDb().transaction(async (tx) => {
+        await markGitHubRevalidationSignals(
+          ["installationAccess", "pulls.mine", "issues.mine", "notifications"],
+          tx
+        );
+        await bumpGitHubCacheNamespaces(
+          [
+            "repos.list",
+            "pulls.authored",
+            "pulls.assigned",
+            "pulls.reviewRequested",
+            "pulls.mentioned",
+            "pulls.involved",
+            "issues.authored",
+            "issues.assigned",
+            "issues.mentioned"
+          ],
+          tx
+        );
+      });
       return { ok: true };
     }),
   publicGetProfileRepos: publicProcedure

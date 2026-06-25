@@ -1,3 +1,5 @@
+import { type GitHubDataSource, type GitHubLocalFirstMeta } from "#@/schemas";
+
 export type {
   GitHubContributionDay,
   GitHubContributionWeek,
@@ -17,10 +19,11 @@ export type {
   GitHubRepoActivityCardIssue,
   GitHubRepoActivityCardAction,
   GitHubRepoActivityCards,
-  GitHubLocalFirstMeta,
   RepoContributor,
   RepoContributorsResult
 } from "#@/schemas";
+
+export type { GitHubDataSource, GitHubLocalFirstMeta };
 
 export type GitHubLocalFirstResult<TData> = {
   data: TData;
@@ -28,5 +31,6 @@ export type GitHubLocalFirstResult<TData> = {
     cacheStatus: "fresh" | "stale" | "miss";
     fetchedAt: string | null;
     isRevalidating: boolean;
+    source: GitHubDataSource;
   };
 };

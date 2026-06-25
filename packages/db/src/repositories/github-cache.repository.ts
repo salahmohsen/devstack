@@ -1,12 +1,15 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { type NeonTransaction } from "drizzle-orm/neon-serverless";
 
-import { getDb } from "#@/index";
+import { type fullRelations, getDb, type WsDb } from "#@/index";
 import {
   githubCacheNamespace,
   githubResponseCache,
   githubRevalidationSignal,
   githubWebhookEvent
 } from "#@/schema/github-cache.schema";
+
+export type DbExecutor = WsDb | NeonTransaction<typeof fullRelations>;
 
 export type UpsertGitHubResponseCacheInput = {
   cacheKey: string;
@@ -36,8 +39,8 @@ class GitHubCacheRepository {
     await getDb().delete(githubCacheNamespace);
   }
 
-  async findNamespaceVersion(namespace: string) {
-    const [entry] = await getDb()
+  async findNamespaceVersion(namespace: string, executor: DbExecutor = getDb()) {
+    const [entry] = await executor
       .select()
       .from(githubCacheNamespace)
       .where(eq(githubCacheNamespace.namespace, namespace))
@@ -46,8 +49,8 @@ class GitHubCacheRepository {
     return entry ?? null;
   }
 
-  async findResponseCacheEntry(cacheKey: string) {
-    const [entry] = await getDb()
+  async findResponseCacheEntry(cacheKey: string, executor: DbExecutor = getDb()) {
+    const [entry] = await executor
       .select()
       .from(githubResponseCache)
       .where(eq(githubResponseCache.cacheKey, cacheKey))
@@ -56,23 +59,41 @@ class GitHubCacheRepository {
     return entry ?? null;
   }
 
-  async findRevalidationSignals(signalKeys: string[]) {
+  async findRevalidationSignals(signalKeys: string[], executor: DbExecutor = getDb()) {
     if (signalKeys.length === 0) {
       return [];
     }
 
-    return getDb()
+    return executor
       .select()
       .from(githubRevalidationSignal)
       .where(inArray(githubRevalidationSignal.signalKey, signalKeys))
       .orderBy(desc(githubRevalidationSignal.updatedAt));
   }
 
-  async markWebhookDeliveryProcessed(deliveryId: string) {
-    const [updatedEvent] = await getDb()
+  async findLatestRevalidationSignalAt(
+    signalKeys: string[],
+    executor: DbExecutor = getDb()
+  ): Promise<Date | null> {
+    if (signalKeys.length === 0) {
+      return null;
+    }
+
+    const [entry] = await executor
+      .select({ updatedAt: githubRevalidationSignal.updatedAt })
+      .from(githubRevalidationSignal)
+      .where(inArray(githubRevalidationSignal.signalKey, signalKeys))
+      .orderBy(desc(githubRevalidationSignal.updatedAt))
+      .limit(1);
+
+    return entry?.updatedAt ?? null;
+  }
+
+  async markWebhookDeliveryProcessed(deliveryId: string, executor: DbExecutor = getDb()) {
+    const [updatedEvent] = await executor
       .update(githubWebhookEvent)
       .set({
-        processedAt: new Date()
+        processedAt: sql`now()`
       })
       .where(eq(githubWebhookEvent.deliveryId, deliveryId))
       .returning();
@@ -80,50 +101,55 @@ class GitHubCacheRepository {
     return updatedEvent ?? null;
   }
 
-  async markRevalidationSignals(signalKeys: string[]) {
+  async markRevalidationSignals(signalKeys: string[], executor: DbExecutor = getDb()) {
     if (signalKeys.length === 0) {
       return [];
     }
 
-    return Promise.all(
-      signalKeys.map(async (signalKey) => {
-        const [entry] = await getDb()
-          .insert(githubRevalidationSignal)
-          .values({ signalKey })
-          .onConflictDoUpdate({
-            set: {
-              updatedAt: new Date()
-            },
-            target: githubRevalidationSignal.signalKey
-          })
-          .returning();
-
-        return entry;
-      })
-    );
-  }
-
-  async bumpNamespaceVersion(namespace: string) {
-    const [entry] = await getDb()
-      .insert(githubCacheNamespace)
-      .values({
-        namespace,
-        version: 1
-      })
+    return executor
+      .insert(githubRevalidationSignal)
+      .values(
+        signalKeys.map((signalKey) => {
+          return { signalKey };
+        })
+      )
       .onConflictDoUpdate({
+        target: githubRevalidationSignal.signalKey,
         set: {
-          version: sql`${githubCacheNamespace.version} + 1`,
-          updatedAt: new Date()
-        },
-        target: githubCacheNamespace.namespace
+          updatedAt: sql`now()`
+        }
       })
       .returning();
-
-    return entry;
   }
 
-  async recordWebhookDelivery(input: RecordGitHubWebhookDeliveryInput) {
-    const [webhookEvent] = await getDb()
+  async bumpNamespaceVersion(namespaces: string | string[], executor: DbExecutor = getDb()) {
+    const keys = Array.isArray(namespaces) ? namespaces : [namespaces];
+    if (keys.length === 0) {
+      return [];
+    }
+
+    return executor
+      .insert(githubCacheNamespace)
+      .values(
+        keys.map((namespace) => {
+          return { namespace, version: 1 };
+        })
+      )
+      .onConflictDoUpdate({
+        target: githubCacheNamespace.namespace,
+        set: {
+          version: sql`${githubCacheNamespace.version} + 1`,
+          updatedAt: sql`now()`
+        }
+      })
+      .returning();
+  }
+
+  async recordWebhookDelivery(
+    input: RecordGitHubWebhookDeliveryInput,
+    executor: DbExecutor = getDb()
+  ) {
+    const [webhookEvent] = await executor
       .insert(githubWebhookEvent)
       .values({
         action: input.action ?? null,
@@ -138,8 +164,11 @@ class GitHubCacheRepository {
     return webhookEvent ?? null;
   }
 
-  async upsertResponseCacheEntry(input: UpsertGitHubResponseCacheInput) {
-    const [entry] = await getDb()
+  async upsertResponseCacheEntry(
+    input: UpsertGitHubResponseCacheInput,
+    executor: DbExecutor = getDb()
+  ) {
+    const [entry] = await executor
       .insert(githubResponseCache)
       .values({
         cacheKey: input.cacheKey,
@@ -155,6 +184,7 @@ class GitHubCacheRepository {
         status: input.status
       })
       .onConflictDoUpdate({
+        target: githubResponseCache.cacheKey,
         set: {
           etag: input.etag ?? null,
           expiresAt: input.expiresAt ?? null,
@@ -167,20 +197,19 @@ class GitHubCacheRepository {
           staleAt: input.staleAt ?? null,
           status: input.status,
           updatedAt: new Date()
-        },
-        target: githubResponseCache.cacheKey
+        }
       })
       .returning();
 
     return entry;
   }
 
-  async clearByOwner(owner: string) {
-    await getDb().delete(githubResponseCache).where(eq(githubResponseCache.owner, owner));
+  async clearByOwner(owner: string, executor: DbExecutor = getDb()) {
+    await executor.delete(githubResponseCache).where(eq(githubResponseCache.owner, owner));
   }
 
-  async deleteResponseCacheEntry(cacheKey: string, owner: string) {
-    await getDb()
+  async deleteResponseCacheEntry(cacheKey: string, owner: string, executor: DbExecutor = getDb()) {
+    await executor
       .delete(githubResponseCache)
       .where(and(eq(githubResponseCache.cacheKey, cacheKey), eq(githubResponseCache.owner, owner)));
   }

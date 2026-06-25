@@ -1,4 +1,5 @@
-import { githubCacheRepository } from "@tsu-stack/db/repositories";
+import { getDb } from "@tsu-stack/db";
+import { githubCacheRepository, type DbExecutor } from "@tsu-stack/db/repositories";
 
 import {
   createGitHubResponseMetadata,
@@ -40,19 +41,33 @@ type CachedGitHubEntry<TData> = {
   staleAt: Date | null;
 };
 
+type ReadCachedEntryResult<TData> =
+  | { entry: CachedGitHubEntry<TData>; source: "kv" | "db" }
+  | { entry: null; source: "none" };
+
 const DEFAULT_KV_EXPIRATION_SECONDS = 7 * 24 * 60 * 60;
 const STALE_IF_RATE_LIMITED_FALLBACK_MS = 60 * 1000;
 
-export async function bumpGitHubCacheNamespaces(namespaceKeys: string[]) {
+export async function bumpGitHubCacheNamespaces(
+  namespaceKeys: string[],
+  executor: DbExecutor = getDb()
+) {
   const uniqueKeys = [...new Set(namespaceKeys)];
-  await Promise.all(
-    uniqueKeys.map((namespace) => githubCacheRepository.bumpNamespaceVersion(namespace))
-  );
+  if (uniqueKeys.length === 0) {
+    return;
+  }
+  await githubCacheRepository.bumpNamespaceVersion(uniqueKeys, executor);
 }
 
-export async function markGitHubRevalidationSignals(signalKeys: string[]) {
+export async function markGitHubRevalidationSignals(
+  signalKeys: string[],
+  executor: DbExecutor = getDb()
+) {
   const uniqueKeys = [...new Set(signalKeys)];
-  await githubCacheRepository.markRevalidationSignals(uniqueKeys);
+  if (uniqueKeys.length === 0) {
+    return;
+  }
+  await githubCacheRepository.markRevalidationSignals(uniqueKeys, executor);
 }
 
 export async function getGitHubRevalidationSignals(
@@ -74,7 +89,7 @@ export async function getGitHubRevalidationSignals(
 export async function getGitHubResourceLocalFirst<TData>(
   options: GitHubCacheOptions<TData>
 ): Promise<GitHubLocalFirstResult<TData>> {
-  const cached = await readCachedEntry<TData>(options);
+  const { entry: cached, source: cachedSource } = await readCachedEntry<TData>(options);
   const latestSignalAt = await getLatestSignalUpdatedAt(options.signalKeys ?? []);
   const currentNamespaceVersion = await getCurrentNamespaceVersion(options.namespaceKeys ?? []);
   const staleBecauseNamespace = cached
@@ -94,18 +109,21 @@ export async function getGitHubResourceLocalFirst<TData>(
         meta: {
           cacheStatus: cached ? "stale" : "miss",
           fetchedAt: fresh.fetchedAt.toISOString(),
-          isRevalidating: false
+          isRevalidating: false,
+          source: fresh.source
         }
       };
     } catch (error) {
-      const statusCode = getErrorStatusCode(error);
-      if (cached && (statusCode === 403 || statusCode === 429)) {
+      if (cached) {
+        const statusCode = getErrorStatusCode(error);
+        const isRateLimited = statusCode === 403 || statusCode === 429;
         return {
           data: cached.payload as TData,
           meta: {
             cacheStatus: "stale",
             fetchedAt: cached.fetchedAt.toISOString(),
-            isRevalidating: false
+            isRevalidating: false,
+            source: isRateLimited ? "rate-limited" : "stale-on-error"
           }
         };
       }
@@ -119,7 +137,8 @@ export async function getGitHubResourceLocalFirst<TData>(
     meta: {
       cacheStatus: "fresh",
       fetchedAt: cached.fetchedAt.toISOString(),
-      isRevalidating: false
+      isRevalidating: false,
+      source: cachedSource
     }
   };
 }
@@ -135,7 +154,7 @@ async function fetchAndPersist<TData>(
   options: GitHubCacheOptions<TData>,
   cachedEntry: CachedGitHubEntry<TData> | null,
   namespaceVersion: number
-) {
+): Promise<{ data: TData; fetchedAt: Date; source: "octokit" | "not-modified" }> {
   const conditionals: GitHubConditionalHeaders = {
     etag: cachedEntry?.etag ?? null,
     lastModified: cachedEntry?.lastModified ?? null
@@ -171,7 +190,8 @@ async function fetchAndPersist<TData>(
 
     return {
       data: cachedEntry.payload as TData,
-      fetchedAt: updated.fetchedAt
+      fetchedAt: updated.fetchedAt,
+      source: "not-modified"
     };
   }
 
@@ -197,7 +217,8 @@ async function fetchAndPersist<TData>(
 
   return {
     data: result.data,
-    fetchedAt: entry.fetchedAt
+    fetchedAt: entry.fetchedAt,
+    source: "octokit"
   };
 }
 
@@ -241,11 +262,15 @@ async function getLatestSignalUpdatedAt(signalKeys: string[]) {
     return null;
   }
 
-  const entries = await githubCacheRepository.findRevalidationSignals([...new Set(signalKeys)]);
-  return entries[0]?.updatedAt.getTime() ?? null;
+  const updatedAt = await githubCacheRepository.findLatestRevalidationSignalAt([
+    ...new Set(signalKeys)
+  ]);
+  return updatedAt?.getTime() ?? null;
 }
 
-async function readCachedEntry<TData>(options: GitHubCacheOptions<TData>) {
+async function readCachedEntry<TData>(
+  options: GitHubCacheOptions<TData>
+): Promise<ReadCachedEntryResult<TData>> {
   const cacheKey = buildCacheKey(options.owner, options.resource, options.params);
   const kvEntry = await options.runtime?.kv?.get<{
     etag: string | null;
@@ -258,27 +283,33 @@ async function readCachedEntry<TData>(options: GitHubCacheOptions<TData>) {
 
   if (kvEntry) {
     return {
-      etag: kvEntry.etag,
-      fetchedAt: new Date(kvEntry.fetchedAt),
-      lastModified: kvEntry.lastModified,
-      namespaceVersion: kvEntry.namespaceVersion,
-      payload: kvEntry.payload,
-      staleAt: kvEntry.staleAt ? new Date(kvEntry.staleAt) : null
+      entry: {
+        etag: kvEntry.etag,
+        fetchedAt: new Date(kvEntry.fetchedAt),
+        lastModified: kvEntry.lastModified,
+        namespaceVersion: kvEntry.namespaceVersion,
+        payload: kvEntry.payload,
+        staleAt: kvEntry.staleAt ? new Date(kvEntry.staleAt) : null
+      },
+      source: "kv"
     };
   }
 
   const dbEntry = await githubCacheRepository.findResponseCacheEntry(cacheKey);
   if (!dbEntry) {
-    return null;
+    return { entry: null, source: "none" };
   }
 
   return {
-    etag: dbEntry.etag,
-    fetchedAt: dbEntry.fetchedAt,
-    lastModified: dbEntry.lastModified,
-    namespaceVersion: dbEntry.namespaceVersion,
-    payload: dbEntry.payload as TData,
-    staleAt: dbEntry.staleAt
+    entry: {
+      etag: dbEntry.etag,
+      fetchedAt: dbEntry.fetchedAt,
+      lastModified: dbEntry.lastModified,
+      namespaceVersion: dbEntry.namespaceVersion,
+      payload: dbEntry.payload as TData,
+      staleAt: dbEntry.staleAt
+    },
+    source: "db"
   };
 }
 

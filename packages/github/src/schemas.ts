@@ -12,10 +12,21 @@ export const GitHubActorSchema = z.object({
 });
 export type GitHubActor = z.infer<typeof GitHubActorSchema>;
 
+export const GitHubDataSourceSchema = z.enum([
+  "kv",
+  "db",
+  "octokit",
+  "not-modified",
+  "rate-limited",
+  "stale-on-error"
+]);
+export type GitHubDataSource = z.infer<typeof GitHubDataSourceSchema>;
+
 export const GitHubLocalFirstMetaSchema = z.object({
   cacheStatus: z.enum(["fresh", "stale", "miss"]),
   fetchedAt: z.number().nullable(),
-  isRevalidating: z.boolean()
+  isRevalidating: z.boolean(),
+  source: GitHubDataSourceSchema
 });
 export type GitHubLocalFirstMeta = z.infer<typeof GitHubLocalFirstMetaSchema>;
 
