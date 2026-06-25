@@ -15,34 +15,37 @@ import { type AppRouter, appRouter } from "#@/routers/index";
 const getORPCClient = createIsomorphicFn()
   .server(() =>
     createRouterClient(appRouter, {
-      context: async () => {
-        const headers = getRequestHeaders();
-        const session = await auth.api.getSession({ headers });
-        const [{ createGitHubOctokit }, { resolvePublicGitHubSource }] = await Promise.all([
-          import("@tsu-stack/github/infrastructure/octokit/client"),
-          import("@tsu-stack/github/shared/public-github-source")
-        ]);
-        const githubSource = await resolvePublicGitHubSource();
+      context: async () =>
+        // The oRPC server calls this context function (bundled
+        // @orpc_server.js:406) BEFORE invoking the interceptors that wrap
+        // the procedure's main call. So both layers need their own
+        // runWithDb scope: this one for the context build (where
+        // resolvePublicGitHubSource → findPublicGithubSourceSettings reads
+        // github_config), and the interceptor below for the handler call.
+        runWithDb(createDb(), async () => {
+          const headers = getRequestHeaders();
+          const session = await auth.api.getSession({ headers });
+          const [{ createGitHubOctokit }, { resolvePublicGitHubSource }] = await Promise.all([
+            import("@tsu-stack/github/infrastructure/octokit/client"),
+            import("@tsu-stack/github/shared/public-github-source")
+          ]);
+          const githubSource = await resolvePublicGitHubSource();
 
-        return {
-          github: {
-            binding: {},
-            privateOctokit: createGitHubOctokit(
-              githubSource.isConfigured ? githubSource : undefined
-            ),
-            publicOctokit: createGitHubOctokit(
-              githubSource.isConfigured ? githubSource : undefined
-            ),
-            source: githubSource
-          },
-          logger: createLogger({ operation: "web__client__orpc" }),
-          session
-        };
-      },
-      // Wrap the entire procedure call (context build + handler) in
-      // `runWithDb` so `getDb()` inside the handler returns the per-request
-      // WS Drizzle instance, not the HTTP singleton fallback. Mirrors the
-      // Hono middleware pattern at `apps/server/src/app.ts:324-385`.
+          return {
+            github: {
+              binding: {},
+              privateOctokit: createGitHubOctokit(
+                githubSource.isConfigured ? githubSource : undefined
+              ),
+              publicOctokit: createGitHubOctokit(
+                githubSource.isConfigured ? githubSource : undefined
+              ),
+              source: githubSource
+            },
+            logger: createLogger({ operation: "web__client__orpc" }),
+            session
+          };
+        }),
       interceptors: [
         (options) => {
           const db = createDb();
