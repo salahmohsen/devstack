@@ -37,7 +37,7 @@
 import { type Octokit } from "octokit";
 
 export type OrpcContextGithubSource =
-  | { isConfigured: false; reason: "missing_github_settings" }
+  | { isConfigured: false; reason: "missing_github_configuration" }
   | { isConfigured: true; owner: string; token: string };
 
 export type OrpcContextGithubBinding = {

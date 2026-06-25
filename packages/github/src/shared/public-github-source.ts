@@ -3,7 +3,7 @@ import { githubConfigRepository } from "@tsu-stack/db/repositories";
 export type PublicGitHubSource =
   | {
       isConfigured: false;
-      reason: "missing_github_settings";
+      reason: "missing_github_configuration";
     }
   | {
       isConfigured: true;
@@ -19,7 +19,7 @@ export async function resolvePublicGitHubSource(): Promise<PublicGitHubSource> {
   if (!owner || !token) {
     return {
       isConfigured: false,
-      reason: "missing_github_settings"
+      reason: "missing_github_configuration"
     };
   }
 
