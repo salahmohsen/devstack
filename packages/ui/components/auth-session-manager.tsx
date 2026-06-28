@@ -88,7 +88,7 @@ function ErrorAlert({ message }: ErrorAlertProps) {
   return (
     <div
       aria-live="polite"
-      className="border-destructive/50 bg-destructive/10 text-destructive flex items-start gap-2 rounded-lg border p-3 text-sm"
+      className="flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
       role="alert"
     >
       <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />

@@ -1,4 +1,4 @@
-import { type ReactElement } from "react";
+import { type ReactNode } from "react";
 import { render } from "react-email";
 import { Resend } from "resend";
 
@@ -12,7 +12,10 @@ export async function sendEmail({
   to
 }: {
   subject: string;
-  template: ReactElement;
+  // Accept `ReactNode` rather than `ReactElement` so the Hono JSX
+  // `Element` type (which apps/server uses via `jsxImportSource: "hono/jsx"`)
+  // is assignable here. `react-email`'s `render()` accepts `ReactNode`.
+  template: ReactNode;
   to: string;
 }) {
   const from = ENV_SERVER.EMAIL_FROM ?? DEFAULT_FROM;

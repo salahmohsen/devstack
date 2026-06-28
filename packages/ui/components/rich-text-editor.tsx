@@ -171,7 +171,7 @@ function RichTextEditor({
     editorProps: {
       attributes: {
         class: cn(
-          "prose-sm prose min-h-30 max-w-none px-3 py-2.5 outline-none dark:prose-invert",
+          "prose prose-sm min-h-30 max-w-none px-3 py-2.5 outline-none dark:prose-invert",
           "focus-visible:outline-none"
         )
       }
@@ -218,7 +218,7 @@ function RichTextEditor({
       data-slot="rich-text-editor"
       data-disabled={disabled ? "true" : undefined}
       className={cn(
-        "aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 relative overflow-hidden rounded-md border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
+        "relative overflow-hidden rounded-md border border-input bg-transparent transition-colors focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
         className
       )}
     >

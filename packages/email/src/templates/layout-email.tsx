@@ -13,7 +13,7 @@ export const EmailLayout = ({ preview, children }: EmailLayoutProps) => (
     <Tailwind>
       <Body className="bg-gray-50 font-sans">
         <Container className="mx-auto max-w-xl px-4 py-8">
-          <Section className="border-gray-200 rounded-lg border bg-white p-6 shadow-sm">
+          <Section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             {children}
           </Section>
         </Container>
