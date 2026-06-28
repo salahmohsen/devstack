@@ -7,8 +7,7 @@ import {
 } from "@tsu-stack/ui/components/unlumen-ui/sidebar-001";
 
 import { useIntersection } from "@/shared/providers/intersection.provider";
-
-import { ContactButton, contactData } from "@/pages/home-page/ui/contact";
+import { ContactButton, contactData } from "@/shared/ui/contact-button";
 
 const navItems = [
   { href: "#projects", label: "Projects" },

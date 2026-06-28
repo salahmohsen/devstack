@@ -36,7 +36,19 @@ export function SignInForm({
       });
 
       if (!result.data) {
-        throw new Error(result.error?.message ?? "GitHub sign-in failed.");
+        // Surface the actual server error (status + body) so the toast
+        // tells the user why sign-in failed instead of a generic
+        // "GitHub sign-in failed" that hides the real cause.
+        const status = result.error?.status;
+        const code = result.error?.code;
+        const message = result.error?.message;
+        if (message) {
+          throw new Error(status ? `[${status}${code ? ` ${code}` : ""}] ${message}` : message);
+        }
+        // No data and no error message — return the full body so the
+        // user has something actionable in the toast and the dev
+        // console.
+        throw new Error(`GitHub sign-in failed (no response). ${JSON.stringify(result)}`);
       }
 
       return result;

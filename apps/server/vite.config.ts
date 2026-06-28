@@ -13,28 +13,22 @@ const devServerPort = configuredServerUrl
   : 5000;
 
 // Cloudflare Workers (with `nodejs_compat`) do not expose `require` at
-// runtime, but transitive CommonJS deps pulled in by `@mastra/core`
-// (gray-matter, probe-image-size, the embedded typescript compiler) and
-// `@mastra/memory` import Node.js built-ins (`fs`, `path`, `os`, `http`,
-// `https`, `url`, `stream`, `querystring`). Rolldown externalizes those
-// built-ins and either emits `__require("fs")` calls (which fail at
-// runtime in Workers — there's no `require`) or leaves them as ESM
-// imports that resolve to nothing in the bundle. The `nodejs_compat`
-// flag provides `node:path`, `node:os`, `node:url`, and similar modules,
-// so we redirect bare-specifier imports to the `node:`-prefixed forms
-// for the modules Workers actually supports. For modules Workers does
-// not support (`fs`, `http`, `https`, `stream`, `querystring`,
-// `child_process`, `cluster`, `worker_threads`, `dgram`, `net`, `tls`,
-// `dns`), we emit a Proxy stub: the affected packages only call these
-// on code paths we never exercise at runtime (e.g. `gray-matter.read
-// (filePath)` — we always pass strings via `readString`).
+// runtime. Rolldown externalizes Node.js built-ins and either emits
+// `__require("fs")` calls (which fail at runtime in Workers — there's
+// no `require`) or leaves them as ESM imports that resolve to nothing
+// in the bundle. The `nodejs_compat` flag provides `node:path`,
+// `node:os`, `node:url`, and similar modules, so we redirect
+// bare-specifier imports to the `node:`-prefixed forms for the modules
+// Workers actually supports. For modules Workers does not support
+// (`fs`, `http`, `https`, `stream`, `querystring`, `child_process`,
+// `cluster`, `worker_threads`, `dgram`, `net`, `tls`, `dns`), we emit
+// a Proxy stub.
 // See https://rolldown.rs/in-depth/bundling-cjs#require-external-modules.
 const STUB_MODULE_ID = "\0node-builtin-stub";
 const PATH_MODULE_ID = "\0node-path-redirect";
 
 // Cloudflare Workers has no `require` at runtime, but rolldown emits
-// `__require("fs")` calls inside inlined CJS chunks (gray-matter,
-// probe-image-size, the embedded typescript compiler) — the CJS
+// `__require("fs")` calls inside inlined CJS chunks — the CJS
 // `require` calls are not transformed away even when the package is
 // inlined via `noExternal`. The rolldown runtime's `__require` checks
 // `typeof require !== "undefined"` first; if `require` is defined, it
@@ -47,17 +41,14 @@ const REQUIRE_POLYFILL_BANNER = `
 if (typeof globalThis.require === "undefined") {
   // For Node.js built-ins not supported by Cloudflare Workers
   // (fs, child_process, stream, etc.) and for any leftover CJS
-  // requires from inlined packages (source-map-support,
-  // supports-color, etc., pulled in by @mastra/core for error
-  // formatting), we return a Proxy that yields a no-op function
-  // for any property access. The methods we DO need at runtime
-  // (path.join, os.tmpdir, url.URL, crypto, etc.) are resolved
-  // through the ESM plugin's redirects to \`node:path\` / \`node:os\`
-  // / \`node:url\` / \`node:crypto\`, which Cloudflare provides via
-  // nodejs_compat. CJS code that calls these stubs at runtime
-  // (e.g. gray-matter trying to read a file path) would return
-  // undefined — that's a runtime error, not a module-load failure,
-  // and we never exercise those code paths in the server.
+  // requires from inlined packages, we return a Proxy that yields
+  // a no-op function for any property access. The methods we DO
+  // need at runtime (path.join, os.tmpdir, url.URL, crypto, etc.)
+  // are resolved through the ESM plugin's redirects to
+  // \`node:path\` / \`node:os\` / \`node:url\` / \`node:crypto\`,
+  // which Cloudflare provides via nodejs_compat. CJS code that
+  // calls these stubs at runtime would return undefined — that's
+  // a runtime error, not a module-load failure.
   const __stubModule = new Proxy(function(){}, { get: () => () => undefined });
   globalThis.require = function() { return __stubModule; };
 }
@@ -129,21 +120,12 @@ const stubNodeBuiltinsPlugin = (): Plugin => {
         // ESM named imports need real, statically defined exports. The
         // Workers runtime has no filesystem / child_process / etc., so
         // any actual call to one of these at runtime would fail anyway
-        // — these stubs only exist so the affected CJS packages
-        // (gray-matter, probe-image-size, the embedded typescript
-        // compiler pulled in by @mastra/core; probe-image-size pulled
-        // in by @mastra/memory) can complete their module load. We
-        // enumerate every named export the rolldown bundler reports as
-        // missing and pair each with a no-op that returns the safest
-        // type. The default export is a Proxy so CJS-style
-        // `import fs from 'fs'` still resolves a usable object for
-        // arbitrary property access.
-        //
-        // If a code path we DO use ends up calling one of these (e.g.
-        // a future Mastra upgrade exercises the tsconfig loader at
-        // request time), the no-op returns undefined and the calling
-        // code surfaces a clear runtime error — preferable to the
-        // module-load failure that broke deploys.
+        // — these stubs only exist so the affected CJS packages can
+        // complete their module load. We enumerate every named export
+        // the rolldown bundler reports as missing and pair each with a
+        // no-op that returns the safest type. The default export is a
+        // Proxy so CJS-style `import fs from 'fs'` still resolves a
+        // usable object for arbitrary property access.
         return `
 const noop = () => undefined;
 const returnEmpty = () => ({});
@@ -406,10 +388,7 @@ export default defineConfig({
     // friends) as `noExternal` so the bundler inlines them as ESM
     // instead of leaving `__require` calls in the output. Cloudflare
     // Workers has no `require` at runtime, so any `__require("fs")` in
-    // the bundle would fail with a 10021 validation error. These
-    // packages are pulled in transitively by `@mastra/core` and
-    // `@mastra/memory`; the affected CJS deps are listed in
-    // pnpm-lock.yaml.
+    // the bundle would fail with a 10021 validation error.
     noExternal: [
       "gray-matter",
       "probe-image-size",
@@ -419,7 +398,19 @@ export default defineConfig({
       /^typescript/
     ]
   },
-  plugins: [stubNodeBuiltinsPlugin(), cloudflare({ inspectorPort: false })] as Plugin[],
+  plugins: [
+    stubNodeBuiltinsPlugin(),
+    cloudflare({
+      inspectorPort: false,
+      // Use a dev-specific wrangler config that omits `routes` (production
+      // routes break Miniflare's URL parser) and `migrations` (the v1 DO
+      // migration was already applied remotely). Also drops the deployed
+      // VITE_SERVER_URL/VITE_WEB_URL to localhost defaults so the Hono
+      // app's CORS/trust logic doesn't 500 on the dev port.
+      // See ADR-0014.
+      configPath: "wrangler.dev.jsonc"
+    })
+  ] as Plugin[],
 
   server: {
     // Hono's CORS middleware should own preflight handling in dev; Hono docs

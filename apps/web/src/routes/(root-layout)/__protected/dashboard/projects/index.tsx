@@ -1,18 +1,29 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Edit, ExternalLink, GripVertical, Plus } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { Badge } from "@tsu-stack/ui/components/badge";
-import { Button } from "@tsu-stack/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/components/empty";
+import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 
-import { DefaultLoader } from "@/shared/ui/default-loader";
 import { SortableList } from "@/shared/ui/sortable-list";
+
+import {
+  ItemSkeleton,
+  ItemsEmpty,
+  ItemsNavProvider,
+  PageHeader,
+  isAnyItemSelected,
+  useItemsNavigation
+} from "@/widgets/items-page";
+import { ItemsInfoPanel } from "@/widgets/layout";
+
+import { useProjectStore } from "@/pages/dashboard/projects/_lib/project.slice";
+import { ProjectInfo } from "@/pages/dashboard/projects/ui/project-info";
+import { ProjectItem } from "@/pages/dashboard/projects/ui/project-item";
+import { ProjectItemAddButton } from "@/pages/dashboard/projects/ui/project-item-add-button";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/projects/")({
   component: ProjectsListPage
@@ -22,31 +33,48 @@ function ProjectsListPage() {
   const projectsQuery = useQuery(orpc.portfolio.projects.list.queryOptions());
   const queryClient = useQueryClient();
 
+  const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useProjectStore();
+
+  const projects = useMemo<ProjectOutput[]>(() => projectsQuery.data ?? [], [projectsQuery.data]);
+
   const reorderMutation = useMutation(
     orpc.portfolio.projects.reorder.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({
+      onMutate: async (input) => {
+        const listKey = orpc.portfolio.projects.list.queryKey();
+        await queryClient.cancelQueries({ queryKey: listKey });
+
+        const previous = queryClient.getQueryData(listKey);
+
+        const nextSort = new Map(input.items.map((it) => [it.id, it.sortOrder]));
+
+        queryClient.setQueryData(listKey, (old) => {
+          if (!old) return old;
+          const reordered = old
+            .map((proj) => {
+              const sortOrder = nextSort.get(proj.id);
+              return sortOrder === undefined ? proj : { ...proj, sortOrder };
+            })
+            .toSorted((a, b) => a.sortOrder - b.sortOrder);
+          return reordered;
+        });
+
+        return { previous };
+      },
+      onError: (_error, _input, context) => {
+        if (context?.previous !== undefined) {
+          queryClient.setQueryData(orpc.portfolio.projects.list.queryKey(), context.previous);
+        }
+        toast.error("Failed to update order.");
+      },
+      onSettled: () => {
+        void queryClient.invalidateQueries({
           queryKey: orpc.portfolio.projects.list.queryKey()
         });
-        toast.success("Order updated.");
-      },
-      onError: () => {
-        toast.error("Failed to update order.");
       }
     })
   );
 
-  if (!projectsQuery.data) {
-    return (
-      <div className="flex w-full items-center justify-center">
-        <DefaultLoader />
-      </div>
-    );
-  }
-
-  const projects = projectsQuery.data;
-
-  function handleReorder(newOrder: typeof projects) {
+  function handleReorder(newOrder: ProjectOutput[]) {
     reorderMutation.mutate({
       items: newOrder.map((proj, index) => {
         return { id: proj.id, sortOrder: index };
@@ -54,108 +82,69 @@ function ProjectsListPage() {
     });
   }
 
-  return (
-    <div className="min-w-0 space-y-6 p-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-medium tracking-tight">Projects</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Drag to reorder. Manage your portfolio projects and their tech stacks.
-          </p>
-        </div>
-        <Button render={<Link to="/dashboard/projects/new" />}>
-          <Plus />
-          Add Project
-        </Button>
-      </div>
+  const containerRef = useRef<HTMLUListElement | null>(null);
 
-      {projects.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>No projects yet</EmptyTitle>
-            <EmptyDescription>Add your first project to showcase your work.</EmptyDescription>
-          </EmptyHeader>
-          <Button render={<Link to="/dashboard/projects/new" />}>
-            <Plus />
-            Add Project
-          </Button>
-        </Empty>
-      ) : (
-        <SortableList items={projects} onReorder={handleReorder}>
-          {(proj, dragHandleProps) => (
-            <Card>
-              <CardHeader>
-                <div className="flex items-start gap-2">
-                  <button
-                    {...dragHandleProps.attributes}
-                    {...dragHandleProps.listeners}
-                    aria-label="Drag to reorder"
-                    className={dragHandleProps.className}
-                    ref={dragHandleProps.ref}
-                    type="button"
-                  >
-                    <GripVertical />
-                  </button>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle>
-                          {proj.title}
-                          {proj.githubUrl && (
-                            <a
-                              href={proj.githubUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={`Open ${proj.title} on GitHub`}
-                              className="ms-1.5 inline-flex align-middle text-muted-foreground transition-colors hover:text-foreground"
-                            >
-                              <ExternalLink className="size-3.5" strokeWidth={2.25} />
-                            </a>
-                          )}
-                        </CardTitle>
-                        <p className="mt-0.5 text-sm text-muted-foreground">{proj.year}</p>
-                      </div>
-                      <Button
-                        size="icon-xs"
-                        variant="ghost"
-                        render={
-                          <Link
-                            to="/dashboard/projects/$projectId"
-                            params={{ projectId: proj.id }}
-                          />
-                        }
-                      >
-                        <Edit />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {proj.description && (
-                  <p className="mb-3 text-sm text-muted-foreground">{proj.description}</p>
-                )}
-                {proj.stacks.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {proj.stacks.map((stack) => (
-                      <Badge key={stack.id} variant="secondary">
-                        {stack.icon ? (
-                          <img
-                            src={stack.icon}
-                            alt=""
-                            className="mr-1 inline-block size-3 rounded object-contain"
-                          />
-                        ) : null}
-                        {stack.name}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </SortableList>
-      )}
-    </div>
+  const { handleNext, handlePrev } = useItemsNavigation<ProjectOutput>({
+    items: projects,
+    itemInfo,
+    isItemSelected,
+    setItemInfo,
+    setItemSelected,
+    containerRef
+  });
+
+  const isAnySelected = isAnyItemSelected(isItemSelected);
+
+  // Clear the side-panel selection when the list goes empty (e.g. after
+  // deleting the last project) so the panel doesn't show a stale item.
+  useEffect(() => {
+    if (!projectsQuery.isLoading && projects.length === 0 && itemInfo) {
+      setItemInfo(null);
+      setItemSelected(null);
+    }
+  }, [projectsQuery.isLoading, projects.length, itemInfo, setItemInfo, setItemSelected]);
+
+  const emptyState = (
+    <ItemsEmpty
+      title="No projects yet"
+      description="Add your first project to showcase your work."
+      action={<ProjectItemAddButton />}
+    />
+  );
+
+  function renderList() {
+    if (projectsQuery.isLoading) return <ItemSkeleton />;
+    if (projects.length === 0) return emptyState;
+
+    return (
+      <SortableList
+        items={projects}
+        onReorder={handleReorder}
+        disabled={reorderMutation.isPending}
+        siblingsDimOnHover
+      >
+        {(project, dragHandleProps) => (
+          <ProjectItem project={project} dragHandleProps={dragHandleProps} />
+        )}
+      </SortableList>
+    );
+  }
+
+  return (
+    <ItemsNavProvider value={{ handleNext, handlePrev }}>
+      <div className="flex min-h-0 w-full flex-col gap-5 p-5">
+        <PageHeader
+          title="Projects"
+          description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
+          actions={<ProjectItemAddButton />}
+        />
+
+        {renderList()}
+
+        <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
+          {(item: ProjectOutput) => <ProjectInfo project={item} />}
+        </ItemsInfoPanel>
+      </div>
+    </ItemsNavProvider>
   );
 }

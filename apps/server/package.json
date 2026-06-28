@@ -9,19 +9,17 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "cf-typegen": "wrangler types",
+    "cf-typegen": "wrangler types --config wrangler.dev.jsonc",
     "deploy": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true wrangler deploy",
-    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true vp dev",
+    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true VITE_SERVER_URL=http://localhost:5001/server VITE_WEB_URL=http://localhost:3000 wrangler dev --config wrangler.dev.jsonc --port 5001",
     "logs": "npx wrangler tail portfolio-server --format json"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "catalog:",
-    "@mastra/core": "catalog:",
     "@orpc/json-schema": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "@tsu-stack/ai": "workspace:*",
     "@tsu-stack/api": "workspace:*",
     "@tsu-stack/auth": "workspace:*",
     "@tsu-stack/db": "workspace:*",

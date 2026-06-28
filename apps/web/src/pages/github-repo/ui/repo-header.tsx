@@ -27,7 +27,7 @@ export function RepoHeader({ repo }: RepoHeaderProps) {
           {repo.ownerAvatarUrl ? (
             <img alt={repo.owner} className="size-8 rounded-lg" src={repo.ownerAvatarUrl} />
           ) : (
-            <div className="bg-white-4 flex size-8 items-center justify-center rounded-lg border border-white/10">
+            <div className="flex size-8 items-center justify-center rounded-lg border border-white/10 bg-white-4">
               <Archive className="size-4 text-muted-foreground" />
             </div>
           )}

@@ -1,5 +1,5 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "portfolio-web",
   "compatibility_date": "2026-06-01",
   "compatibility_flags": [

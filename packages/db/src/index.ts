@@ -37,7 +37,7 @@ export const db: NeonHttpDatabase<typeof fullRelations> = drizzleHttp(ENV_SERVER
  * Required for `db.transaction(...)` and the node-postgres `Pool` API. Each
  * request gets its own pool via `createDb()`; the pool's lifetime is the
  * worker's lifetime, kept alive by `c.executionCtx.waitUntil(...)` when work
- * (e.g. a Mastra workflow started via `start-async`) continues past the
+ * (e.g. a workflow started via `start-async`) continues past the
  * response. Repositories use `getDb()` to read the current request's
  * instance from `AsyncLocalStorage`.
  *

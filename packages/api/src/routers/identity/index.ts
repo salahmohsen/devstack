@@ -197,8 +197,7 @@ export const identityRouter = {
     .output(RefreshResponseSchema)
     .errors({
       NOT_IMPLEMENTED: {
-        message:
-          "Manual refresh from the dashboard requires a follow-up that exposes c.env (and therefore c.env.MASTRA_DB) on the oRPC context.",
+        message: "Manual refresh from the dashboard is not yet implemented.",
         status: 501
       }
     })

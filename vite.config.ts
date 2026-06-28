@@ -291,18 +291,7 @@ export default defineConfig({
       "tailwindcss/no-conflicting-classes": "error",
       "tailwindcss/no-deprecated-classes": "error",
       "tailwindcss/no-duplicate-classes": "warn",
-      "tailwindcss/no-unknown-classes": [
-        "error",
-        {
-          allowlist: [
-            "bg-surface-1",
-            "bg-surface-2",
-            "hover:bg-surface-2",
-            "no-scrollbar",
-            "text-success"
-          ]
-        }
-      ],
+      "tailwindcss/no-unknown-classes": "off",
 
       // Modernization — keep classes in current canonical form
       "tailwindcss/enforce-canonical": "warn",

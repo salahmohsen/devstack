@@ -17,21 +17,6 @@ dist-ssr
 *.local
 tmp
 
-# Mastra dev runtime artifacts
-.mastra/
-
-# Local Mastra Cloud project config (per-user: projectId, orgId, name).
-# The real file is .mastra-project.json. Use .mastra-project.json.example
-# as a template — `pnpm run deploy:studio` creates the real file via
-# `mastra auth login` + `mastra studio projects` when needed.
-.mastra-project.json
-
-# Deploy stub for `mastra studio deploy`. The Mastra CLI requires a
-# `mastra` entry point at the conventional path `<repo>/src/mastra/index.ts`.
-# The real Mastra instance is at `packages/ai/src/mastra/index.ts`; this
-# stub exists only to push the project name + env to the cloud.
-src/mastra/
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -46,4 +31,4 @@ src/mastra/
 
 *.playwright-mcp
 
-docs/superpowers/*
+docs/superpowers/*.dev.vars

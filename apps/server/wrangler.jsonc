@@ -1,5 +1,5 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "portfolio-server",
   "compatibility_date": "2026-06-01",
   "compatibility_flags": [
@@ -43,13 +43,6 @@
       "id": "24c38be634a943a9bcb47f9fd133fee6"
     }
   ],
-  "d1_databases": [
-    {
-      "binding": "MASTRA_DB",
-      "database_name": "portfolio-mastra",
-      "database_id": "1a72ed98-2781-4c80-81ab-8f2a0d3e5985"
-    }
-  ],
   "durable_objects": {
     "bindings": [
       {
@@ -63,8 +56,5 @@
       "new_sqlite_classes": ["GitHubSignalRelay"],
       "tag": "v1"
     }
-  ],
-  "triggers": {
-    "crons": ["0 6 * * *"]
-  }
+  ]
 }

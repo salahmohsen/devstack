@@ -37,10 +37,10 @@ const NavItem = ({ name }: { name: string | string[] }) => {
         rel={isExternal ? "noreferrer noopener" : undefined}
       >
         <span
-          className={`${active ? "w-16 bg-accent" : "w-8 bg-muted"} group-hover:bg-night group-focus-visible:bg-night dark:group-hover:bg-light dark:group-focus-visible:bg-light mr-4 h-px transition-all duration-200 ease-in-out group-hover:w-16 group-focus-visible:w-16`}
+          className={`${active ? "w-16 bg-accent" : "w-8 bg-muted"} mr-4 h-px transition-all duration-200 ease-in-out group-hover:w-16 group-hover:bg-night group-focus-visible:w-16 group-focus-visible:bg-night dark:group-hover:bg-light dark:group-focus-visible:bg-light`}
         ></span>
         <span
-          className={`${active ? "text-night dark:text-light" : "text-night/50 dark:text-light/50"} group-hover:text-night group-focus-visible:text-night dark:text-nightFaded dark:group-hover:text-light dark:group-focus-visible:text-light text-xs font-bold tracking-widest uppercase`}
+          className={`${active ? "text-night dark:text-light" : "text-night/50 dark:text-light/50"} dark:text-nightFaded text-xs font-bold tracking-widest uppercase group-hover:text-night group-focus-visible:text-night dark:group-hover:text-light dark:group-focus-visible:text-light`}
         >
           {liveName}
         </span>

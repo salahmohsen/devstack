@@ -1,5 +1,5 @@
 /**
- * Minimal context shape that AI tools receive via Mastra's `requestContext`.
+ * Minimal context shape that AI tools receive via the request context.
  *
  * Lives in `packages/core` so it can be imported from `packages/ai` without
  * creating an `ai -> api` dependency. `core` is a leaf in the workspace dep

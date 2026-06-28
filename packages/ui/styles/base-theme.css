@@ -13,6 +13,32 @@
   --color-surface-2: initial;
   --color-primary-*: initial;
 
+  /* Standard color scale (used by components) */
+  --color-gray-50: initial;
+  --color-gray-100: initial;
+  --color-gray-200: initial;
+  --color-gray-300: initial;
+  --color-gray-400: initial;
+  --color-gray-500: initial;
+  --color-gray-600: initial;
+  --color-gray-700: initial;
+  --color-gray-800: initial;
+  --color-gray-900: initial;
+  --color-gray-950: initial;
+  --color-red-400: initial;
+  --color-red-500: initial;
+  --color-red-600: initial;
+  --color-yellow-400: initial;
+  --color-yellow-500: initial;
+  --color-yellow-600: initial;
+  --color-yellow-950: initial;
+  --color-green-400: initial;
+  --color-green-500: initial;
+  --color-green-600: initial;
+  --color-blue-400: initial;
+  --color-blue-500: initial;
+  --color-blue-600: initial;
+
   /* Theme colors */
   --color-background: initial;
   --color-foreground: initial;
@@ -29,6 +55,7 @@
   --color-accent: initial;
   --color-accent-foreground: initial;
   --color-destructive: initial;
+  --color-destructive-foreground: initial;
   --color-border: initial;
   --color-input: initial;
   --color-ring: initial;
@@ -45,6 +72,13 @@
   --color-sidebar-accent-foreground: initial;
   --color-sidebar-border: initial;
   --color-sidebar-ring: initial;
+
+  /* Custom semantic tokens */
+  --color-accent-pro: initial;
+  --color-night: initial;
+  --color-night-faded: initial;
+  --color-light: initial;
+  --color-white-4: initial;
 
   /* Radius */
   --radius-sm: initial;
@@ -70,6 +104,35 @@
   --base-950: oklch(0.159 0.0044 62.4);
   --base-1000: oklch(0.112 0.0031 61.8);
 
+  /* Standard gray palette (mapped to base-* to keep the design system
+     consistent with the project's warm-neutral palette). */
+  --gray-50: var(--base-50);
+  --gray-100: var(--base-100);
+  --gray-200: var(--base-200);
+  --gray-300: var(--base-300);
+  --gray-400: var(--base-400);
+  --gray-500: var(--base-500);
+  --gray-600: var(--base-600);
+  --gray-700: var(--base-700);
+  --gray-800: var(--base-800);
+  --gray-900: var(--base-900);
+  --gray-950: var(--base-950);
+
+  /* Semantic color scales (OKLCH for consistent perceptual lightness). */
+  --red-400: oklch(0.704 0.191 22.216);
+  --red-500: oklch(0.637 0.237 25.331);
+  --red-600: oklch(0.577 0.245 27.325);
+  --yellow-400: oklch(0.852 0.176 89.064);
+  --yellow-500: oklch(0.795 0.184 86.047);
+  --yellow-600: oklch(0.681 0.162 75.834);
+  --yellow-950: oklch(0.286 0.066 53.813);
+  --green-400: oklch(0.792 0.209 151.711);
+  --green-500: oklch(0.723 0.219 149.579);
+  --green-600: oklch(0.627 0.194 149.214);
+  --blue-400: oklch(0.707 0.165 254.624);
+  --blue-500: oklch(0.623 0.214 259.815);
+  --blue-600: oklch(0.546 0.245 262.881);
+
   --background: var(--color-white);
   --foreground: var(--base-800);
   --card: var(--color-white);
@@ -84,6 +147,8 @@
   --muted-foreground: var(--base-600);
   --accent: var(--base-50);
   --accent-foreground: var(--base-800);
+  --destructive: var(--red-500);
+  --destructive-foreground: var(--color-white);
   --border: var(--base-200);
   --input: var(--base-300);
   --ring: var(--base-800);
@@ -101,6 +166,13 @@
   --sidebar-accent-foreground: var(--base-800);
   --sidebar-border: var(--base-200);
   --sidebar-ring: var(--base-800);
+
+  /* Custom semantic tokens used across the app */
+  --accent-pro: oklch(0.732 0.198 142.5);
+  --night: var(--base-950);
+  --night-faded: oklch(from var(--base-950) l c h / 0.5);
+  --light: oklch(0.967 0.001 286.375);
+  --white-4: oklch(1 0 0 / 0.04);
 }
 
 @theme inline {
@@ -120,6 +192,32 @@
   --color-base-900: var(--base-900);
   --color-base-950: var(--base-950);
   --color-base-1000: var(--base-1000);
+
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+  --color-gray-950: var(--gray-950);
+
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-600: var(--red-600);
+  --color-yellow-400: var(--yellow-400);
+  --color-yellow-500: var(--yellow-500);
+  --color-yellow-600: var(--yellow-600);
+  --color-yellow-950: var(--yellow-950);
+  --color-green-400: var(--green-400);
+  --color-green-500: var(--green-500);
+  --color-green-600: var(--green-600);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -141,6 +239,8 @@
   --color-border: var(--border);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive: var(--destructive);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -151,6 +251,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  --color-accent-pro: var(--accent-pro);
+  --color-night: var(--night);
+  --color-night-faded: var(--night-faded);
+  --color-light: var(--light);
+  --color-white-4: var(--white-4);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

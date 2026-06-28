@@ -198,7 +198,7 @@ function StackSelector(props: StackSelectorProps) {
               <FieldDescription>Optional image URL.</FieldDescription>
             </Field>
             {createMutation.error ? (
-              <p className="text-destructive text-sm">
+              <p className="text-sm text-destructive">
                 {createMutation.error.message || "Failed to create stack."}
               </p>
             ) : null}

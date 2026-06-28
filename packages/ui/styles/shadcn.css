@@ -78,3 +78,21 @@
     @slot;
   }
 }
+
+@custom-variant aria-invalid {
+  &:where([aria-invalid="true"]) {
+    @slot;
+  }
+}
+
+@custom-variant data-destructive {
+  &:where([data-variant="destructive"]) {
+    @slot;
+  }
+}
+
+@custom-variant data-invalid {
+  &:where([data-invalid="true"]) {
+    @slot;
+  }
+}

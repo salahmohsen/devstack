@@ -1,1 +1,1 @@
-export { app } from "./mastra";
+export { app } from "./app";

@@ -47,7 +47,7 @@ export function ExperienceInfo({ experience }: ExperienceInfoProps) {
       <CardContent className="space-y-4 text-sm">
         <ScrollArea>
           {experience.description ? (
-            <Markdown className="prose-sm prose max-w-none text-foreground dark:prose-invert">
+            <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
               {experience.description}
             </Markdown>
           ) : (

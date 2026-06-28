@@ -1,6 +1,0 @@
-{
-  "projectId": "<your-mastra-cloud-project-uuid>",
-  "projectName": "<display-name-shown-in-the-cloud-dashboard>",
-  "projectSlug": "<url-slug-used-by-personal-hub-studio-mastra-cloud>",
-  "organizationId": "<your-mastra-cloud-org-uuid>"
-}

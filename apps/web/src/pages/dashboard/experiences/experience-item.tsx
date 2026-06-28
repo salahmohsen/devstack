@@ -22,7 +22,6 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { useExperienceStore } from "./_lib/experience.slice";
 
 type DragHandleProps = {
-  ref: React.Ref<HTMLButtonElement>;
   attributes: Record<string, unknown>;
   listeners: Record<string, unknown> | undefined;
   className: string;
@@ -98,31 +97,37 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
           }
         }}
         className={cn(
-          "cursor-pointer transition-colors",
+          "cursor-pointer rounded-sm bg-transparent ring-0 transition-all duration-200",
+          // Spotlight: when any sibling is hovered, the others dim to
+          // 90% while the hovered/selected item itself stays at 100%.
+          "group-hover:opacity-60 hover:opacity-100 data-selected:opacity-100",
+          // Scale up the active item — hovered or selected.
+          "hover:scale-[1.01] data-selected:scale-[1.01]",
           selected ? "ring-2 ring-ring" : "hover:bg-muted/40"
         )}
       >
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 items-start gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               {dragHandleProps ? (
                 <button
-                  ref={dragHandleProps.ref}
-                  {...dragHandleProps.attributes}
-                  {...dragHandleProps.listeners}
                   type="button"
                   aria-label="Drag to reorder"
                   className={dragHandleProps.className}
+                  {...dragHandleProps.attributes}
+                  {...dragHandleProps.listeners}
                 >
                   <GripVertical />
                 </button>
               ) : null}
               <div className="min-w-0">
                 <CardTitle className="truncate">{experience.title}</CardTitle>
-                <p className="mt-0.5 text-sm text-muted-foreground">{experience.organization}</p>
-                <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-                  {formatRange(experience.fromDate, experience.toDate)}
-                </p>
+                <div className="flex gap-5">
+                  <p className="mt-0.5 text-sm text-muted-foreground">{experience.organization}</p>
+                  <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+                    {formatRange(experience.fromDate, experience.toDate)}
+                  </p>
+                </div>
               </div>
             </div>
             <div className="flex gap-2">

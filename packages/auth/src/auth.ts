@@ -1,7 +1,6 @@
 import { join } from "node:path/posix";
 
 import { passkey } from "@better-auth/passkey";
-import "@tanstack/react-start/server-only";
 import { APIError, betterAuth } from "better-auth";
 //TODO: update this when the pr merged https://github.com/better-auth/better-auth/issues/6766#issuecomment-4614864597
 import { drizzleAdapter } from "better-auth-drizzle-adapter";
@@ -25,10 +24,18 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async () => {
+          // Single-user portfolio: only allow the first-ever user to
+          // be created (via email/password or GitHub). Any subsequent
+          // `user.create` — which Better Auth also runs at the end
+          // of a social sign-in for a new account — is rejected.
+          // The error is surfaced to the client with code
+          // `REGISTRATION_CLOSED` so the toast can render a real
+          // message instead of the generic fallback.
           const existingUsers = await db.query.user.findMany({ limit: 1 });
           if (existingUsers.length > 0) {
             throw new APIError("FORBIDDEN", {
-              message: "Registration is closed"
+              code: "REGISTRATION_CLOSED",
+              message: "Registration is closed. Only the portfolio owner can sign in."
             });
           }
         }

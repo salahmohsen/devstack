@@ -14,7 +14,7 @@ import {
   useSortable,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -22,11 +22,17 @@ type SortableItemProps<T extends { id: string }> = {
   items: T[];
   onReorder: (items: T[]) => void;
   disabled?: boolean;
+  /**
+   * When `true`, the items container gets the `group` class so child
+   * items can use `group-hover:*` modifiers (e.g. dim siblings while
+   * the hovered item stays at full opacity and scales up). Off by
+   * default so existing usages aren't affected.
+   */
+  siblingsDimOnHover?: boolean;
   children: (item: T, dragHandleProps: DragHandleProps, isDragging: boolean) => ReactNode;
 };
 
 type DragHandleProps = {
-  ref: React.Ref<HTMLButtonElement>;
   attributes: Record<string, unknown>;
   listeners: Record<string, unknown> | undefined;
   className: string;
@@ -36,6 +42,7 @@ function SortableList<T extends { id: string }>({
   items,
   onReorder,
   disabled = false,
+  siblingsDimOnHover = false,
   children
 }: SortableItemProps<T>) {
   const sensors = useSensors(
@@ -59,7 +66,7 @@ function SortableList<T extends { id: string }>({
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-3">
+        <div className={cn("space-y-3", siblingsDimOnHover && "group")}>
           {items.map((item) => (
             <SortableRow key={item.id} id={item.id} disabled={disabled}>
               {(dragHandleProps, isDragging) => children(item, dragHandleProps, isDragging)}
@@ -85,8 +92,6 @@ function SortableRow({
     disabled
   });
 
-  const handleRef = useRef<HTMLButtonElement>(null);
-
   const style: React.CSSProperties = {
     transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
     transition,
@@ -94,7 +99,6 @@ function SortableRow({
   };
 
   const dragHandleProps: DragHandleProps = {
-    ref: handleRef,
     attributes: attributes as unknown as Record<string, unknown>,
     listeners: disabled ? undefined : (listeners as unknown as Record<string, unknown>),
     className: cn(

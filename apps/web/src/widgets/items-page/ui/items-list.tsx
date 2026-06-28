@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useState } from "react";
 
 import { useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
 import { ItemSkeleton } from "@/widgets/items-page/ui/item-skeleton";
@@ -49,11 +49,13 @@ export function ItemsList<T extends { id: string }>({
   const ctx = useItemsNavContext();
   const ref = containerRefOverride ?? ctx.containerRef;
 
-  const hasLoadedOnce = useRef(false);
-  if (items && items.length > 0) {
-    hasLoadedOnce.current = true;
-  }
-  const showSkeleton = isLoading && (showSkeletonOnRefetch || !hasLoadedOnce.current);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  useEffect(() => {
+    if (items && items.length > 0) {
+      setHasLoadedOnce(true);
+    }
+  }, [items]);
+  const showSkeleton = isLoading && (showSkeletonOnRefetch || !hasLoadedOnce);
 
   if (showSkeleton) {
     return <ItemSkeleton count={skeletonCount} />;

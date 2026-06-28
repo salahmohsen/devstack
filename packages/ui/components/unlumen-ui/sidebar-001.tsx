@@ -68,33 +68,42 @@ type HoverRect = {
 const HoverContext = createContext<{
   hovered: string | null;
   hoverRect: HoverRect | null;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  getContainerNode: () => HTMLDivElement | null;
+  setContainerNode: (node: HTMLDivElement | null) => void;
   setHovered: (id: string | null, rect?: HoverRect | null) => void;
 }>({
   hovered: null,
   hoverRect: null,
-  containerRef: { current: null },
+  getContainerNode: () => null,
+  setContainerNode: () => {},
   setHovered: () => {}
 });
 
-function HoverProvider({
-  children,
-  containerRef
-}: {
-  children: React.ReactNode;
-  containerRef: React.RefObject<HTMLDivElement | null>;
-}) {
+function HoverProvider({ children }: { children: React.ReactNode }) {
   const [hovered, setHoveredId] = useState<string | null>(null);
   const [hoverRect, setHoverRect] = useState<HoverRect | null>(null);
+
+  // Internal ref — kept inside the provider so consumers attach via
+  // `ref={setContainerNode}` and read via `getContainerNode()`. The
+  // ref never leaks through context, avoiding any `useContext` chain
+  // that the `react-hooks-js/refs` rule would treat as a render-time
+  // ref access.
+  const containerNode = useRef<HTMLDivElement | null>(null);
 
   const setHovered = useCallback((id: string | null, rect?: HoverRect | null) => {
     setHoveredId(id);
     setHoverRect(rect ?? null);
   }, []);
 
+  const setContainerNode = useCallback((node: HTMLDivElement | null) => {
+    containerNode.current = node;
+  }, []);
+
+  const getContainerNode = useCallback(() => containerNode.current, []);
+
   const value = useMemo(() => {
-    return { hovered, hoverRect, containerRef, setHovered };
-  }, [hovered, hoverRect, containerRef, setHovered]);
+    return { hovered, hoverRect, getContainerNode, setContainerNode, setHovered };
+  }, [hovered, hoverRect, getContainerNode, setContainerNode, setHovered]);
 
   return <HoverContext.Provider value={value}>{children}</HoverContext.Provider>;
 }
@@ -179,7 +188,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
   className,
   onClick
 }: Sidebar001ItemProps) {
-  const { hovered, setHovered, containerRef } = useContext(HoverContext);
+  const { hovered, setHovered, getContainerNode } = useContext(HoverContext);
   const isHovered = hovered === href;
   const itemRef = useScrollToActive(isActive);
 
@@ -191,7 +200,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
       {isActive && (
         <motion.span
           layoutId="sb001-active-bar"
-          className="bg-accent-pro pointer-events-none absolute top-1/2 left-1 z-10 h-[1.8px] -translate-y-1/2 rounded-full"
+          className="pointer-events-none absolute top-1/2 left-1 z-10 h-[1.8px] -translate-y-1/2 rounded-full bg-accent-pro"
           animate={{ width: 23 }}
           transition={{ type: "spring", stiffness: 800, damping: 40 }}
         />
@@ -217,7 +226,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
           onClick={onClick}
           onMouseEnter={() => {
             const el = itemRef.current;
-            const container = containerRef.current;
+            const container = getContainerNode();
             if (el && container) {
               const elRect = el.getBoundingClientRect();
               const containerRect = container.getBoundingClientRect();
@@ -237,7 +246,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
           )}
         >
           <span className="relative z-1 truncate">{label}</span>
-          {isNew && <span className="bg-accent-pro size-1.5 shrink-0 rounded-full" />}
+          {isNew && <span className="size-1.5 shrink-0 rounded-full bg-accent-pro" />}
         </a>
       </motion.div>
     </div>
@@ -279,7 +288,7 @@ export function Sidebar001Group({
 }: Sidebar001GroupProps) {
   const [isOpen, setIsOpen] = useState(false);
   const id = useId();
-  const { setHovered, containerRef } = useContext(HoverContext);
+  const { setHovered, getContainerNode } = useContext(HoverContext);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -289,7 +298,7 @@ export function Sidebar001Group({
 
   const handleMouseEnter = useCallback(() => {
     const el = buttonRef.current;
-    const container = containerRef.current;
+    const container = getContainerNode();
     if (el && container) {
       const elRect = el.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
@@ -301,7 +310,7 @@ export function Sidebar001Group({
     } else {
       setHovered(id);
     }
-  }, [id, setHovered, containerRef]);
+  }, [id, setHovered, getContainerNode]);
 
   const handleMouseLeave = useCallback(() => {
     setHovered(null);
@@ -392,11 +401,11 @@ export function Sidebar001Content({
   children: React.ReactNode;
   className?: string;
 }) {
-  const containerRef = useContext(HoverContext).containerRef;
+  const { setContainerNode } = useContext(HoverContext);
 
   return (
     <div className={cn("no-scrollbar flex-1 overflow-y-auto py-4", className)} data-scroll-viewport>
-      <div ref={containerRef} className="relative px-1">
+      <div ref={setContainerNode} className="relative px-1">
         <HoverHighlight />
         {children}
       </div>
@@ -426,7 +435,6 @@ export function Sidebar001({
   minWidth = 160,
   maxWidth = 400
 }: Sidebar001Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(defaultWidth);
   const dragging = useRef(false);
   const startX = useRef(0);
@@ -461,7 +469,7 @@ export function Sidebar001({
 
   return (
     <EffectsProvider defaultEnabled={defaultEffectsEnabled}>
-      <HoverProvider containerRef={containerRef}>
+      <HoverProvider>
         <aside
           className={cn("relative flex h-full shrink-0 flex-col bg-transparent", className)}
           style={{ width }}

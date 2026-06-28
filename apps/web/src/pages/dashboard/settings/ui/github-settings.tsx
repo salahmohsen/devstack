@@ -138,10 +138,10 @@ function GithubSettingsForm({ githubConfig }: { githubConfig?: GithubConfigOutpu
       </section>
 
       {hasGithubToken && (
-        <section className="border-destructive/20 bg-destructive/5 rounded-xl border p-6">
+        <section className="rounded-xl border border-destructive/20 bg-destructive/5 p-6">
           <div className="mb-4">
             <p className="text-sm text-muted-foreground">Danger zone</p>
-            <h2 className="text-destructive mt-2 text-lg font-medium">Clear saved token</h2>
+            <h2 className="mt-2 text-lg font-medium text-destructive">Clear saved token</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
               Disconnect the saved GitHub token. The username will be preserved so you can reconnect
               later without re-entering it.

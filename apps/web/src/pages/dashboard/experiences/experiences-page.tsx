@@ -129,6 +129,7 @@ export function ExperiencesPage() {
         items={visibleExperiences}
         onReorder={handleReorder}
         disabled={reorderMutation.isPending}
+        siblingsDimOnHover
       >
         {(experience, dragHandleProps) => (
           <ExperienceItem experience={experience} dragHandleProps={dragHandleProps} />
