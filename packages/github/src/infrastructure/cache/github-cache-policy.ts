@@ -4,11 +4,11 @@ export const githubCachePolicy = {
     gcTimeMs: 24 * 60 * 60 * 1000
   },
   reposList: {
-    // Short stale window so a fresh OAuth token (new `repo` scope) or a
-    // code fix to the fetcher takes effect quickly without waiting out
-    // the full 2-minute window. Once the project form is verified to
-    // list private repos end-to-end, this can be raised back up.
-    staleTimeMs: 15 * 1000,
+    // Temporary 5-second stale window so we can iterate on the GitHub
+    // token-scope / cache / fetcher changes without waiting out a long
+    // window. Once the project form is verified to list private repos
+    // end-to-end, this should be raised back to a few minutes.
+    staleTimeMs: 5 * 1000,
     gcTimeMs: 12 * 60 * 60 * 1000
   },
   list: {
