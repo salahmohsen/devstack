@@ -58,6 +58,19 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
         ? githubSource
         : undefined;
 
+  // TEMP debug: log which token the per-request privateOctokit is
+  // built with so we can see whether the session query yielded an
+  // OAuth token, or we're falling back to the static PAT.
+  if (session?.user?.id) {
+    // eslint-disable-next-line no-console
+    console.log("[create-context] github token source:", {
+      userId: session.user.id,
+      usedOAuthToken: Boolean(oauthToken),
+      usedPAT: !oauthToken && githubSource.isConfigured,
+      noTokenAtAll: !oauthToken && !githubSource.isConfigured
+    });
+  }
+
   return {
     github: {
       binding: githubBinding,
