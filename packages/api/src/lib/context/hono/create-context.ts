@@ -1,6 +1,7 @@
 import { type Context as HonoContext } from "hono";
 
 import { auth } from "@tsu-stack/auth/index";
+import { betterAuthAccountRepository, createDb, runWithDb } from "@tsu-stack/db";
 import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/client";
 import { type GitHubRuntimeBindings } from "@tsu-stack/github/runtime/bindings";
 import { resolvePublicGitHubSource } from "@tsu-stack/github/shared/public-github-source";
@@ -32,10 +33,35 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
   };
   const githubSource = await resolvePublicGitHubSource();
 
+  // The PAT in `github_config` powers the `publicOctokit` (and the
+  // cron-like background reads). For per-user authenticated reads we
+  // want the OAuth access token the user just signed in with — that
+  // token has the `repo` scope and lets `listForAuthenticatedUser`
+  // return the user's private repos. We pull it from Better Auth's
+  // `account` table inside a per-request `WsDb` scope so the request
+  // owns its own neon pool.
+  const oauthToken = session?.user?.id
+    ? await runWithDb(createDb(), () =>
+        betterAuthAccountRepository.findGitHubAccessTokenForUser(session.user.id)
+      )
+    : null;
+
+  // Build a per-user `privateOctokit` that prefers the fresh OAuth
+  // access token and falls back to the PAT (still respecting whatever
+  // scopes that PAT has). Both code paths land in `createGitHubOctokit`
+  // which is request-scoped, so no shared I/O across requests.
+  type ConfiguredSource = Extract<typeof githubSource, { isConfigured: true }>;
+  const privateSource: ConfiguredSource | undefined =
+    oauthToken && githubSource.isConfigured
+      ? { isConfigured: true, owner: githubSource.owner, token: oauthToken }
+      : githubSource.isConfigured
+        ? githubSource
+        : undefined;
+
   return {
     github: {
       binding: githubBinding,
-      privateOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+      privateOctokit: createGitHubOctokit(privateSource),
       publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
       source: githubSource
     },
