@@ -402,13 +402,17 @@ export default defineConfig({
     stubNodeBuiltinsPlugin(),
     cloudflare({
       inspectorPort: false,
-      // Use a dev-specific wrangler config that omits `routes` (production
-      // routes break Miniflare's URL parser) and `migrations` (the v1 DO
-      // migration was already applied remotely). Also drops the deployed
-      // VITE_SERVER_URL/VITE_WEB_URL to localhost defaults so the Hono
-      // app's CORS/trust logic doesn't 500 on the dev port.
-      // See ADR-0014.
-      configPath: "wrangler.dev.jsonc"
+      // The build must use the production wrangler.jsonc (real
+      // VITE_SERVER_URL / VITE_WEB_URL, real routes, real migrations)
+      // so the worker bundle Cloudflare deploys has the right env vars
+      // baked in. `wrangler.dev.jsonc` exists only for `wrangler dev`
+      // — Miniflare can't parse production `routes` patterns and the
+      // v1 DO migration throws on re-apply.
+      //
+      // `IS_BUILD=true` is set by the build task command (see the `run`
+      // block above) and by the deploy script. When it's not set (i.e.
+      // `wrangler dev`), we fall through to the dev config. See ADR-0014.
+      configPath: process.env.IS_BUILD === "true" ? "wrangler.jsonc" : "wrangler.dev.jsonc"
     })
   ] as Plugin[],
 
