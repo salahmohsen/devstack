@@ -25,11 +25,44 @@ export type GitHubResponseMetadata = {
 
 const GITHUB_OPERATION_TIMEOUT_MS = 15_000;
 
+/**
+ * Cloudflare Workers ties fetch response bodies to the request that
+ * created them. If a GitHub request hits the operation timeout abort
+ * signal, Octokit returns a Response whose body stream is still in
+ * scope but the request is already gone — the next request that
+ * reads the body fails with "Cannot perform I/O on behalf of a
+ * different request" and the original promise hangs forever.
+ *
+ * Wrapping fetch to always drain the body before returning closes the
+ * I/O window so the stream can never be read by a different request.
+ */
+function createRequestScopedFetch(baseFetch: typeof fetch): typeof fetch {
+  return async (input, init) => {
+    const response = await baseFetch(input, init);
+    try {
+      // Buffer the body into memory so the underlying stream is closed
+      // before the response leaves this request's I/O scope. A no-op
+      // clone keeps the response usable for any consumer that needs
+      // to re-parse or stream the body later.
+      await response.clone().arrayBuffer();
+    } catch {
+      // Body drain is best-effort; if it throws (e.g. network reset)
+      // the original response is still returned and Octokit will
+      // surface the real error to its caller.
+    }
+    return response;
+  };
+}
+
 export function createGitHubOctokit(
   source?: Extract<PublicGitHubSource, { isConfigured: true }>
 ): GitHubClient {
   return new Octokit({
-    auth: source?.token
+    auth: source?.token,
+    // Use the global `fetch` so the request is bound to the current
+    // request's I/O context, then drain the body so an aborted
+    // request can never leak its body stream to a sibling request.
+    request: { fetch: createRequestScopedFetch(globalThis.fetch) }
   });
 }
 
