@@ -99,7 +99,12 @@ export const auth = betterAuth({
       return {
         github: {
           clientId: ENV_SERVER.GITHUB_CLIENT_ID,
-          clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET
+          clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET,
+          // `repo` is required so the access token can list the owner's
+          // private repositories (the unauthenticated default scope returns
+          // only public repos, which made the project-form repo combobox
+          // show no private options).
+          scope: ["repo"]
         }
       };
     }
