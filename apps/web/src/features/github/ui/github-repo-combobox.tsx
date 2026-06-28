@@ -32,12 +32,22 @@ type GitHubRepoComboboxProps = {
 
 function GitHubRepoCombobox(props: GitHubRepoComboboxProps) {
   const field = useFieldContext<string>();
-  const { user } = useAuth();
+  const { user, isPending: isAuthPending } = useAuth();
   const [open, setOpen] = useState(false);
 
-  const reposQuery = useQuery(getGithubProfileReposQueryOptions(!!user));
+  // Wait for the Better Auth session query to settle before we even
+  // pick an endpoint. Without this gate the combobox renders with
+  // `user === undefined` on first paint (the session query is async),
+  // falls back to `publicGetProfileRepos`, and locks the query key
+  // for the duration of the session — so the owner never sees their
+  // private repos in the list.
+  const isPrivate = !isAuthPending && !!user;
+  const reposQuery = useQuery({
+    ...getGithubProfileReposQueryOptions(isPrivate),
+    enabled: !isAuthPending
+  });
   const repos: GitHubUserRepoSummary[] = reposQuery.data ?? [];
-  const isLoading = reposQuery.isLoading && !!user;
+  const isLoading = reposQuery.isLoading && isPrivate;
 
   const selectedUrl = field.state.value ?? "";
   const selectedRepo = repos.find((repo) => repo.url === selectedUrl);

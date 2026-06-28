@@ -46,21 +46,6 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
       )
     : null;
 
-  // TEMP debug: log the scopes on the account row so we can see
-  // whether the stored OAuth token has the `repo` scope. If it
-  // doesn't, the user must re-authorize the GitHub OAuth app.
-  if (session?.user?.id) {
-    const dbg = await runWithDb(createDb(), () =>
-      betterAuthAccountRepository.findGithubScopesForUser(session.user.id)
-    );
-    // eslint-disable-next-line no-console
-    console.log("[create-context] github account row:", {
-      userId: session.user.id,
-      oauthTokenLen: oauthToken?.length ?? 0,
-      scope: dbg
-    });
-  }
-
   // Build a per-user `privateOctokit` that prefers the fresh OAuth
   // access token and falls back to the PAT (still respecting whatever
   // scopes that PAT has). Both code paths land in `createGitHubOctokit`

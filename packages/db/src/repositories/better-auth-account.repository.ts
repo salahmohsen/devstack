@@ -22,24 +22,6 @@ class BetterAuthAccountRepository {
 
     return rows[0]?.accessToken ?? null;
   }
-
-  /**
-   * Read the `scope` column on the user's GitHub account row. The
-   * value is a space-separated list of OAuth scopes the user granted
-   * the app at sign-in time (e.g. `"repo user:email"`). If it
-   * doesn't contain `repo`, the stored access token can only read
-   * public repos — the user must re-authorize the app on GitHub to
-   * pick up the new scope.
-   */
-  async findGithubScopesForUser(userId: string): Promise<string | null> {
-    const rows = await getDb()
-      .select({ scope: account.scope })
-      .from(account)
-      .where(and(eq(account.userId, userId), eq(account.providerId, "github")))
-      .limit(1);
-
-    return rows[0]?.scope ?? null;
-  }
 }
 
 export const betterAuthAccountRepository = new BetterAuthAccountRepository();
