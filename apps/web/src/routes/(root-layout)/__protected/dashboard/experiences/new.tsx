@@ -40,7 +40,8 @@ function NewExperiencePage() {
       description: "",
       fromDate: "",
       toDate: "",
-      isPresent: false
+      isPresent: false,
+      enableAi: false
     },
     validators: {
       onBlur: createZodFormValidator(CreateExperienceInputSchema)
@@ -106,9 +107,18 @@ function NewExperiencePage() {
 
               <form.AppField name="isPresent">
                 {(field) => (
-                  <field.CheckboxField
+                  <field.SwitchField
                     label="Currently present"
                     description="Mark this experience as your current role."
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="enableAi">
+                {(field) => (
+                  <field.SwitchField
+                    label="Enable AI"
+                    description="Let AI generate or enhance this experience."
                   />
                 )}
               </form.AppField>

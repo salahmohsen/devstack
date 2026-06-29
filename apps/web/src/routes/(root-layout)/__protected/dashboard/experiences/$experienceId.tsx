@@ -98,7 +98,8 @@ function EditExperienceForm({
       description: experience.description ?? "",
       fromDate: experience.fromDate ?? "",
       toDate: experience.toDate ?? "",
-      isPresent: experience.isPresent
+      isPresent: experience.isPresent,
+      enableAi: experience.enableAi
     },
     validators: {
       onBlur: createZodFormValidator(UpdateExperienceInputSchema)
@@ -181,9 +182,18 @@ function EditExperienceForm({
 
               <form.AppField name="isPresent">
                 {(field) => (
-                  <field.CheckboxField
+                  <field.SwitchField
                     label="Currently present"
                     description="Mark this experience as your current role."
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="enableAi">
+                {(field) => (
+                  <field.SwitchField
+                    label="Enable AI"
+                    description="Let AI generate or enhance this experience."
                   />
                 )}
               </form.AppField>

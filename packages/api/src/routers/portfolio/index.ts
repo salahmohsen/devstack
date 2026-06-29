@@ -32,21 +32,25 @@ import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 function toStackOutput(s: {
   id: string;
   name: string;
+  description: string | null;
   icon: string | null;
   sortOrder: number;
+  enableAi: boolean | null;
 }): StackOutput {
   return {
     id: s.id,
     name: s.name,
+    description: s.description,
     icon: s.icon,
-    sortOrder: s.sortOrder
+    sortOrder: s.sortOrder,
+    enableAi: s.enableAi ?? false
   };
 }
 
 function toProjectOutput(proj: {
   id: string;
   logo: string | null;
-  githubUrl: string | null;
+  repo: string | null;
   year: number;
   title: string;
   description: string;
@@ -55,6 +59,7 @@ function toProjectOutput(proj: {
   sortOrder: number;
   experienceId: string | null;
   isPresent: boolean | null;
+  enableAi: boolean | null;
   stacks: Array<{
     id: string;
     projectId: string;
@@ -62,15 +67,17 @@ function toProjectOutput(proj: {
     stack: {
       id: string;
       name: string;
+      description: string | null;
       icon: string | null;
       sortOrder: number;
+      enableAi: boolean | null;
     } | null;
   }>;
 }): ProjectOutput {
   return {
     id: proj.id,
     logo: proj.logo,
-    githubUrl: proj.githubUrl,
+    repo: proj.repo,
     year: proj.year,
     title: proj.title,
     description: proj.description,
@@ -79,6 +86,7 @@ function toProjectOutput(proj: {
     sortOrder: proj.sortOrder,
     experienceId: proj.experienceId,
     isPresent: proj.isPresent ?? false,
+    enableAi: proj.enableAi ?? false,
     stacks: proj.stacks
       .map((join) => (join.stack ? toStackOutput(join.stack) : null))
       .filter((s): s is StackOutput => s !== null)
@@ -95,10 +103,11 @@ function toExperienceOutput(exp: {
   sortOrder: number;
   isArchived: boolean | null;
   isPresent: boolean | null;
+  enableAi: boolean | null;
   projects: Array<{
     id: string;
     logo: string | null;
-    githubUrl: string | null;
+    repo: string | null;
     year: number;
     title: string;
     description: string;
@@ -107,6 +116,7 @@ function toExperienceOutput(exp: {
     sortOrder: number;
     experienceId: string | null;
     isPresent: boolean | null;
+    enableAi: boolean | null;
     stacks: Array<{
       id: string;
       projectId: string;
@@ -114,8 +124,10 @@ function toExperienceOutput(exp: {
       stack: {
         id: string;
         name: string;
+        description: string | null;
         icon: string | null;
         sortOrder: number;
+        enableAi: boolean | null;
       } | null;
     }>;
   }>;
@@ -130,6 +142,7 @@ function toExperienceOutput(exp: {
     sortOrder: exp.sortOrder,
     isArchived: exp.isArchived ?? false,
     isPresent: exp.isPresent ?? false,
+    enableAi: exp.enableAi ?? false,
     projects: exp.projects.map(toProjectOutput)
   };
 }
@@ -325,8 +338,10 @@ export const portfolioRouter = {
         const nextSortOrder = all.length > 0 ? Math.max(...all.map((s) => s.sortOrder)) + 1 : 0;
         const created = await stackRepository.create({
           name: input.name,
+          description: input.description ?? null,
           icon: input.icon ?? null,
-          sortOrder: nextSortOrder
+          sortOrder: nextSortOrder,
+          enableAi: input.enableAi ?? false
         });
         return toStackOutput(created!);
       }),
