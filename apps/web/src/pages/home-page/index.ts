@@ -2,7 +2,6 @@ export * from "@/features/github";
 export * from "@/pages/home-page/api/get-github-activity.query";
 export * from "@/pages/home-page/api/get-github-contributions.query";
 export * from "@/pages/home-page/api/get-github-pinned-repos.query";
-export * from "@/pages/home-page/api/get-github-profile-repos.query";
 export * from "@/pages/home-page/api/get-github-profile.query";
 export * from "@/pages/home-page/api/get-portfolio-projects.query";
 export * from "@/pages/home-page/api/get-portfolio-experiences.query";

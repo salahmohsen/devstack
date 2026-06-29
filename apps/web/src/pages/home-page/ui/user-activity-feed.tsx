@@ -87,7 +87,10 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
           </span>
         </div>
         {event.prDetail ? (
-          <Link to={event.prDetail.url} className="rounded-xl border border-border bg-white/4 p-3">
+          <Link
+            to={event.prDetail.url}
+            className="rounded-xl border border-border bg-muted-foreground p-3"
+          >
             <p className="text-xs font-medium">{event.prDetail.title}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">
               PR #{event.prDetail.number} · {event.prDetail.state}
@@ -97,7 +100,7 @@ function ActivityEventRow({ event }: { event: GithubActivityQueryResult[number] 
         {event.issueDetail ? (
           <a
             href={event.issueDetail.url}
-            className="rounded-xl border border-border bg-white/4 p-3"
+            className="rounded-xl border border-border bg-muted-foreground p-3"
           >
             <p className="text-xs font-medium">{event.issueDetail.title}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">

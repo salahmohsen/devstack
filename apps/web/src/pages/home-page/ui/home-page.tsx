@@ -27,6 +27,10 @@ import { DefaultLoader } from "@/shared/ui/default-loader";
 import { RepositoryRow } from "@/shared/ui/repository-row";
 
 import { useGetGithubSetupStatusQuery } from "@/features/github";
+import {
+  getGithubProfileReposQueryOptions,
+  useGetGithubProfileReposQuery
+} from "@/features/github";
 
 import { useGetGithubActivityQuery } from "@/pages/home-page/api/get-github-activity.query";
 import {
@@ -37,10 +41,6 @@ import {
   getGithubPinnedReposQueryOptions,
   useGetGithubPinnedReposQuery
 } from "@/pages/home-page/api/get-github-pinned-repos.query";
-import {
-  getGithubProfileReposQueryOptions,
-  useGetGithubProfileReposQuery
-} from "@/pages/home-page/api/get-github-profile-repos.query";
 import {
   getGithubProfileQueryOptions,
   useGetGithubProfileQuery,

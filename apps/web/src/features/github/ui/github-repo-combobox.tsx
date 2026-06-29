@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Lock, X } from "lucide-react";
 import { useState } from "react";
 
-import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
+import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/schemas";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -32,22 +32,23 @@ type GitHubRepoComboboxProps = {
 
 function GitHubRepoCombobox(props: GitHubRepoComboboxProps) {
   const field = useFieldContext<string>();
-  const { user, isPending: isAuthPending } = useAuth();
+  // `useAuth()` (which uses `useQuery`) returns `user: undefined` on
+  // first render while the Better Auth session is still resolving. That
+  // race made the combobox fall back to `publicGetProfileRepos` and
+  // lock the query key for the rest of the session, so the owner
+  // never saw their private repos even after the auth query
+  // resolved. `useAuthSuspense()` uses `useSuspenseQuery`, which
+  // suspends the component until the session is confirmed —
+  // guaranteeing `user` is set (or a Suspense boundary above us
+  // catches the unauthenticated case) before we pick an endpoint.
+  const { user } = useAuthSuspense();
   const [open, setOpen] = useState(false);
 
-  // Wait for the Better Auth session query to settle before we even
-  // pick an endpoint. Without this gate the combobox renders with
-  // `user === undefined` on first paint (the session query is async),
-  // falls back to `publicGetProfileRepos`, and locks the query key
-  // for the duration of the session — so the owner never sees their
-  // private repos in the list.
-  const isPrivate = !isAuthPending && !!user;
-  const reposQuery = useQuery({
-    ...getGithubProfileReposQueryOptions(isPrivate),
-    enabled: !isAuthPending
-  });
+  const isPrivate = !!user;
+  console.log("isPrivate", isPrivate);
+  const reposQuery = useQuery(getGithubProfileReposQueryOptions(isPrivate));
   const repos: GitHubUserRepoSummary[] = reposQuery.data ?? [];
-  const isLoading = reposQuery.isLoading && isPrivate;
+  const isLoading = reposQuery.isLoading;
 
   const selectedUrl = field.state.value ?? "";
   const selectedRepo = repos.find((repo) => repo.url === selectedUrl);
