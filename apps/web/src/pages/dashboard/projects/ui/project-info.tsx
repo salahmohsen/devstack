@@ -33,9 +33,9 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
               {project.isPresent ? `${project.year} — Present` : project.year}
             </CardDescription>
           </div>
-          {project.githubUrl ? (
+          {project.repo ? (
             <a
-              href={project.githubUrl}
+              href={project.repo}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Open ${project.title} on GitHub`}

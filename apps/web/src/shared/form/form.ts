@@ -2,6 +2,7 @@ import { createFormHook } from "@tanstack/react-form";
 
 import { InputGroupField } from "@/shared/form/input-group-field";
 import { StackSelector } from "@/shared/form/stack-selector";
+import { SwitchField } from "@/shared/form/switch-field";
 
 import { CheckboxField } from "./checkbox-field";
 import { DatePickerField } from "./date-picker-field";
@@ -20,7 +21,8 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       PasswordInputField,
       RichTextField,
       InputGroupField,
-      StackSelector
+      StackSelector,
+      SwitchField
     },
     fieldContext,
     formComponents: {

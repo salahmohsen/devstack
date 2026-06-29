@@ -23,6 +23,8 @@ import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
+import { GitHubRepoCombobox } from "@/features/github";
+
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/projects/$projectId")({
   component: EditProjectPage
 });
@@ -88,10 +90,11 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
       year: project.year,
       description: project.description ?? "",
       logo: project.logo ?? "",
-      githubUrl: project.githubUrl ?? "",
+      repo: project.repo ?? "",
       fromDate: project.fromDate ?? "",
       toDate: project.toDate ?? "",
       isPresent: project.isPresent,
+      enableAi: project.enableAi,
       stackIds: project.stacks.map((s) => s.id)
     },
     validators: {
@@ -104,10 +107,11 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
           ...value,
           description: value.description,
           logo: value.logo || null,
-          githubUrl: value.githubUrl || null,
+          repo: value.repo || null,
           fromDate: value.fromDate || null,
           toDate: value.toDate || null,
           experienceId: selectedExperienceId,
+          enableAi: value.enableAi,
           stackIds: value.stackIds ?? []
         }
       });
@@ -164,12 +168,11 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
                 </form.AppField>
               </div>
 
-              <form.AppField name="githubUrl">
-                {(field) => (
-                  <field.InputField
-                    label="GitHub URL"
-                    placeholder="https://github.com/owner/repo"
-                    type="url"
+              <form.AppField name="repo">
+                {() => (
+                  <GitHubRepoCombobox
+                    label="Repository"
+                    description="Pick one of your GitHub repositories (public or private)."
                   />
                 )}
               </form.AppField>
@@ -219,9 +222,18 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
 
               <form.AppField name="isPresent">
                 {(field) => (
-                  <field.CheckboxField
+                  <field.SwitchField
                     label="Currently present"
                     description="Mark this project as ongoing."
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="enableAi">
+                {(field) => (
+                  <field.SwitchField
+                    label="Enable AI"
+                    description="Let AI generate or enhance this project."
                   />
                 )}
               </form.AppField>

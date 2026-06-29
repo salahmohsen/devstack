@@ -8,3 +8,4 @@ export { PasswordInputField } from "./password-input-field";
 export { RichTextField } from "./rich-text-field";
 export { StackSelector } from "./stack-selector";
 export { SubmitButton } from "./submit-button";
+export { SwitchField } from "./switch-field";

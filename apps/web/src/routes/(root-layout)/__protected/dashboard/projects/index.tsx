@@ -15,6 +15,7 @@ import {
   ItemsEmpty,
   ItemsNavProvider,
   PageHeader,
+  PageLayout,
   isAnyItemSelected,
   useItemsNavigation
 } from "@/widgets/items-page";
@@ -132,7 +133,7 @@ function ProjectsListPage() {
 
   return (
     <ItemsNavProvider value={{ handleNext, handlePrev }}>
-      <div className="flex min-h-0 w-full flex-col gap-5 p-5">
+      <PageLayout>
         <PageHeader
           title="Projects"
           description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
@@ -144,7 +145,7 @@ function ProjectsListPage() {
         <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
           {(item: ProjectOutput) => <ProjectInfo project={item} />}
         </ItemsInfoPanel>
-      </div>
+      </PageLayout>
     </ItemsNavProvider>
   );
 }

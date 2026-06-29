@@ -10,7 +10,7 @@ type PageHeaderProps = {
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
     <>
-      <Card className="flex-row justify-between rounded-none bg-transparent pt-0 ring-0">
+      <Card className="flex-row justify-between rounded-none bg-transparent py-0 ring-0">
         <CardHeader className="flex-1 gap-0 px-0">
           <CardTitle className="text-2xl font-semibold tracking-tight">{title}</CardTitle>
           {description ? (

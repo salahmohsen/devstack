@@ -100,9 +100,9 @@ export function ProjectItem({ project, dragHandleProps }: ProjectItemProps) {
                   <div className="min-w-0">
                     <CardTitle className="truncate">
                       {project.title}
-                      {project.githubUrl ? (
+                      {project.repo ? (
                         <a
-                          href={project.githubUrl}
+                          href={project.repo}
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={`Open ${project.title} on GitHub`}
