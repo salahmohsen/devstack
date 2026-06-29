@@ -47,9 +47,9 @@ export const ProjectsItem = ({ project }: { project: ProjectOutput }) => {
           </p>
           <p className="inline-flex items-center gap-1 font-semibold tracking-widest">
             <span className="tracking-normal">{project.title}</span>
-            {project.repo && (
+            {project.repos.length > 0 && project.repos[0] && (
               <a
-                href={project.repo}
+                href={project.repos[0]}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Open ${project.title} on GitHub`}

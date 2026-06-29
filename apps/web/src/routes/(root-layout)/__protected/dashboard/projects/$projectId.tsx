@@ -6,7 +6,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ProjectOutput, UpdateProjectInputSchema } from "@tsu-stack/core/portfolio";
+import {
+  type ProjectOutput,
+  type UpdateProjectInput,
+  UpdateProjectInputSchema
+} from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import {
@@ -23,7 +27,7 @@ import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
-import { GitHubRepoCombobox } from "@/features/github";
+import { GitHubRepoMultiCombobox } from "@/features/github";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/projects/$projectId")({
   component: EditProjectPage
@@ -88,28 +92,26 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
     defaultValues: {
       title: project.title,
       year: project.year,
+      summary: project.summary ?? "",
       description: project.description ?? "",
       logo: project.logo ?? "",
-      repo: project.repo ?? "",
-      fromDate: project.fromDate ?? "",
-      toDate: project.toDate ?? "",
+      repos: project.repos ?? [],
       isPresent: project.isPresent,
       enableAi: project.enableAi,
       stackIds: project.stacks.map((s) => s.id)
-    },
+    } as UpdateProjectInput,
     validators: {
-      onBlur: createZodFormValidator(UpdateProjectInputSchema)
+      onChange: createZodFormValidator(UpdateProjectInputSchema)
     },
     onSubmit: ({ value }) => {
       updateMutation.mutate({
         id: projectId,
         data: {
           ...value,
+          summary: value.summary,
           description: value.description,
-          logo: value.logo || null,
-          repo: value.repo || null,
-          fromDate: value.fromDate || null,
-          toDate: value.toDate || null,
+          logo: value.logo ?? null,
+          repos: value.repos ?? [],
           experienceId: selectedExperienceId,
           enableAi: value.enableAi,
           stackIds: value.stackIds ?? []
@@ -168,11 +170,11 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
                 </form.AppField>
               </div>
 
-              <form.AppField name="repo">
+              <form.AppField name="repos">
                 {() => (
-                  <GitHubRepoCombobox
-                    label="Repository"
-                    description="Pick one of your GitHub repositories (public or private)."
+                  <GitHubRepoMultiCombobox
+                    label="Repositories"
+                    description="Pick one or more of your GitHub repositories (public or private)."
                   />
                 )}
               </form.AppField>
@@ -201,6 +203,15 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
                 </div>
               )}
 
+              <form.AppField name="summary">
+                {(field) => (
+                  <field.RichTextField
+                    label="Summary"
+                    placeholder="Brief overview of the project"
+                  />
+                )}
+              </form.AppField>
+
               <form.AppField name="description">
                 {(field) => (
                   <field.RichTextField
@@ -209,16 +220,6 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
                   />
                 )}
               </form.AppField>
-
-              <div className="grid grid-cols-2 gap-4">
-                <form.AppField name="fromDate">
-                  {(field) => <field.DatePickerField label="From Date" placeholder="Start date" />}
-                </form.AppField>
-
-                <form.AppField name="toDate">
-                  {(field) => <field.DatePickerField label="To Date" placeholder="End date" />}
-                </form.AppField>
-              </div>
 
               <form.AppField name="isPresent">
                 {(field) => (

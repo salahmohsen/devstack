@@ -52,12 +52,11 @@ class ProjectRepository {
       .values({
         id: projectId,
         logo: input.logo ?? null,
-        repo: input.repo ?? null,
+        repos: input.repos ?? [],
         year: input.year,
         title: input.title,
+        summary: input.summary,
         description: input.description,
-        fromDate: input.fromDate ?? null,
-        toDate: input.toDate ?? null,
         experienceId: input.experienceId ?? null,
         isPresent: input.isPresent ?? false,
         enableAi: input.enableAi ?? false
@@ -76,14 +75,13 @@ class ProjectRepository {
 
     const updateData: Record<string, unknown> = {};
     if (projectFields.logo !== undefined) updateData.logo = projectFields.logo;
-    if (projectFields.repo !== undefined) {
-      updateData.repo = projectFields.repo;
+    if (projectFields.repos !== undefined) {
+      updateData.repos = projectFields.repos;
     }
     if (projectFields.year !== undefined) updateData.year = projectFields.year;
     if (projectFields.title !== undefined) updateData.title = projectFields.title;
+    if (projectFields.summary !== undefined) updateData.summary = projectFields.summary;
     if (projectFields.description !== undefined) updateData.description = projectFields.description;
-    if (projectFields.fromDate !== undefined) updateData.fromDate = projectFields.fromDate;
-    if (projectFields.toDate !== undefined) updateData.toDate = projectFields.toDate;
     if (projectFields.experienceId !== undefined) {
       updateData.experienceId = projectFields.experienceId;
     }

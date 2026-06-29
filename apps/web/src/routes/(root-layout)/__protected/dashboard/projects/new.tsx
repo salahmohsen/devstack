@@ -14,7 +14,7 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 
-import { GitHubRepoCombobox } from "@/features/github";
+import { GitHubRepoMultiCombobox } from "@/features/github";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/projects/new")({
   component: NewProjectPage
@@ -42,26 +42,24 @@ function NewProjectPage() {
     defaultValues: {
       title: "",
       year: new Date().getFullYear(),
+      summary: "",
       description: "",
       logo: "",
-      repo: "",
-      fromDate: "",
-      toDate: "",
+      repos: [] as string[],
       isPresent: false,
       enableAi: false,
       stackIds: [] as string[]
     },
     validators: {
-      onBlur: createZodFormValidator(CreateProjectInputSchema)
+      onChange: createZodFormValidator(CreateProjectInputSchema)
     },
     onSubmit: ({ value }) => {
       createMutation.mutate({
         ...value,
+        summary: value.summary,
         description: value.description,
-        logo: value.logo || null,
-        repo: value.repo || null,
-        fromDate: value.fromDate || null,
-        toDate: value.toDate || null,
+        logo: value.logo ?? null,
+        repos: value.repos ?? [],
         experienceId: selectedExperienceId,
         enableAi: value.enableAi,
         stackIds: value.stackIds ?? []
@@ -105,11 +103,11 @@ function NewProjectPage() {
                 </form.AppField>
               </div>
 
-              <form.AppField name="repo">
+              <form.AppField name="repos">
                 {() => (
-                  <GitHubRepoCombobox
-                    label="Repository"
-                    description="Pick one of your GitHub repositories (public or private)."
+                  <GitHubRepoMultiCombobox
+                    label="Repositories"
+                    description="Pick one or more of your GitHub repositories (public or private)."
                   />
                 )}
               </form.AppField>
@@ -138,6 +136,15 @@ function NewProjectPage() {
                 </div>
               )}
 
+              <form.AppField name="summary">
+                {(field) => (
+                  <field.RichTextField
+                    label="Summary"
+                    placeholder="Brief overview of the project"
+                  />
+                )}
+              </form.AppField>
+
               <form.AppField name="description">
                 {(field) => (
                   <field.RichTextField
@@ -146,16 +153,6 @@ function NewProjectPage() {
                   />
                 )}
               </form.AppField>
-
-              <div className="grid grid-cols-2 gap-4">
-                <form.AppField name="fromDate">
-                  {(field) => <field.DatePickerField label="From Date" placeholder="Start date" />}
-                </form.AppField>
-
-                <form.AppField name="toDate">
-                  {(field) => <field.DatePickerField label="To Date" placeholder="End date" />}
-                </form.AppField>
-              </div>
 
               <form.AppField name="isPresent">
                 {(field) => (

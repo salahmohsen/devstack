@@ -50,12 +50,11 @@ function toStackOutput(s: {
 function toProjectOutput(proj: {
   id: string;
   logo: string | null;
-  repo: string | null;
+  repos: string[] | null;
   year: number;
   title: string;
+  summary: string;
   description: string;
-  fromDate: string | null;
-  toDate: string | null;
   sortOrder: number;
   experienceId: string | null;
   isPresent: boolean | null;
@@ -77,12 +76,11 @@ function toProjectOutput(proj: {
   return {
     id: proj.id,
     logo: proj.logo,
-    repo: proj.repo,
+    repos: proj.repos ?? [],
     year: proj.year,
     title: proj.title,
+    summary: proj.summary,
     description: proj.description,
-    fromDate: proj.fromDate,
-    toDate: proj.toDate,
     sortOrder: proj.sortOrder,
     experienceId: proj.experienceId,
     isPresent: proj.isPresent ?? false,
@@ -107,12 +105,11 @@ function toExperienceOutput(exp: {
   projects: Array<{
     id: string;
     logo: string | null;
-    repo: string | null;
+    repos: string[] | null;
     year: number;
     title: string;
+    summary: string;
     description: string;
-    fromDate: string | null;
-    toDate: string | null;
     sortOrder: number;
     experienceId: string | null;
     isPresent: boolean | null;

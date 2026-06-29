@@ -16,12 +16,11 @@ export const project = pgTable(
   {
     id: text("id").primaryKey(),
     logo: text("logo"),
-    repo: text("repo"),
+    repos: text("repos").array(),
     year: integer("year").notNull(),
     title: text("title").notNull(),
+    summary: text("summary").notNull(),
     description: text("description").notNull(),
-    fromDate: text("from_date"),
-    toDate: text("to_date"),
     sortOrder: integer("sort_order").notNull().default(0),
     experienceId: text("experience_id").references(() => experience.id, {
       onDelete: "set null"
