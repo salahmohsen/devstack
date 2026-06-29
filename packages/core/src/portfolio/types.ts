@@ -69,7 +69,11 @@ export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
 export const UpdateProjectInputSchema = z.object({
   logo: z.string().nullable().optional(),
   repos: z.array(z.string().url()).optional(),
-  demoUrl: z.string().url().nullable().optional(),
+  demoUrl: z
+    .union([z.literal(""), z.string().url()])
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value)),
   year: z.coerce.number().int().optional(),
   title: z.string().min(1).optional(),
   summary: z.string(),

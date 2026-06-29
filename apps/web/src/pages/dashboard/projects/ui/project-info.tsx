@@ -1,9 +1,11 @@
+import { Link, type NavigateOptions } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import { FaGithub, FaLink } from "react-icons/fa";
 
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Badge } from "@tsu-stack/ui/components/badge";
+import { Button } from "@tsu-stack/ui/components/button.js";
 import {
   Card,
   CardContent,
@@ -68,17 +70,21 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
           {project.repos.length > 0 || project.demoUrl ? (
             <div className="flex flex-wrap gap-1.5">
               {project.repos.map((repo) => (
-                <a
+                <Button
+                  nativeButton={false}
+                  render={
+                    <Link
+                      to={`/${repo.split("/").at(-1)}` as NavigateOptions["to"]}
+                      className="inline-flex items-center rounded-md border border-transparent bg-secondary px-2 py-0.5 text-xs font-medium whitespace-nowrap text-secondary-foreground transition-colors hover:bg-secondary/80"
+                    >
+                      <FaGithub className="mr-1 size-3" />
+                      {repo.replace(/^https?:\/\/(www\.)?github\.com\//, "")}
+                    </Link>
+                  }
                   key={repo}
-                  href={repo}
-                  target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`Open repository ${repo}`}
-                  className="inline-flex items-center rounded-md border border-transparent bg-secondary px-2 py-0.5 text-xs font-medium whitespace-nowrap text-secondary-foreground transition-colors hover:bg-secondary/80"
-                >
-                  <FaGithub className="mr-1 size-3" />
-                  {repo.replace(/^https?:\/\/(www\.)?github\.com\//, "")}
-                </a>
+                ></Button>
               ))}
               {project.demoUrl ? (
                 <a
