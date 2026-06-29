@@ -95,7 +95,9 @@ function EditStackForm({ stack, stackId }: { stack: StackOutput; stackId: string
   const form = useAppForm({
     defaultValues: {
       name: stack.name,
-      icon: stack.icon ?? ""
+      description: stack.description ?? "",
+      icon: stack.icon ?? "",
+      enableAi: stack.enableAi
     },
     validators: {
       onBlur: createZodFormValidator(StackUpdateInputSchema)
@@ -105,7 +107,9 @@ function EditStackForm({ stack, stackId }: { stack: StackOutput; stackId: string
         id: stackId,
         data: {
           name: value.name,
-          icon: value.icon ? value.icon : null
+          description: value.description || null,
+          icon: value.icon ? value.icon : null,
+          enableAi: value.enableAi
         }
       });
     }
@@ -157,6 +161,24 @@ function EditStackForm({ stack, stackId }: { stack: StackOutput; stackId: string
                     label="Icon URL"
                     placeholder="https://..."
                     description="Optional image URL shown next to the stack name."
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="description">
+                {(field) => (
+                  <field.RichTextField
+                    label="Description"
+                    placeholder="Brief description of the stack"
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="enableAi">
+                {(field) => (
+                  <field.SwitchField
+                    label="Enable AI"
+                    description="Let AI generate or enhance this stack."
                   />
                 )}
               </form.AppField>

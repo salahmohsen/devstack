@@ -39,7 +39,9 @@ function NewStackPage() {
   const form = useAppForm({
     defaultValues: {
       name: "",
-      icon: ""
+      description: "",
+      icon: "",
+      enableAi: false
     },
     validators: {
       onBlur: createZodFormValidator(StackCreateInputSchema)
@@ -47,7 +49,9 @@ function NewStackPage() {
     onSubmit: ({ value }) => {
       createMutation.mutate({
         name: value.name,
-        icon: value.icon ? value.icon : null
+        description: value.description || null,
+        icon: value.icon ? value.icon : null,
+        enableAi: value.enableAi
       });
     }
   });
@@ -84,6 +88,24 @@ function NewStackPage() {
                     label="Icon URL"
                     placeholder="https://..."
                     description="Optional image URL shown next to the stack name."
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="description">
+                {(field) => (
+                  <field.RichTextField
+                    label="Description"
+                    placeholder="Brief description of the stack"
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="enableAi">
+                {(field) => (
+                  <field.SwitchField
+                    label="Enable AI"
+                    description="Let AI generate or enhance this stack."
                   />
                 )}
               </form.AppField>
