@@ -100,11 +100,50 @@ export const auth = betterAuth({
         github: {
           clientId: ENV_SERVER.GITHUB_CLIENT_ID,
           clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET,
-          // `repo` is required so the access token can list the owner's
-          // private repositories (the unauthenticated default scope returns
-          // only public repos, which made the project-form repo combobox
-          // show no private options).
-          scope: ["repo"]
+          // Request every available OAuth scope (per
+          // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps)
+          // so the access token can read private repositories and any
+          // other resource the app may need. GitHub returns a
+          // normalized list on the stored token, so requesting
+          // overlapping scopes (e.g. `user` and `user:email`) is
+          // safe — only the broader scope is kept. Order mirrors the
+          // docs for easy diffing when GitHub adds a new scope.
+          scope: [
+            "repo",
+            "repo:status",
+            "repo_deployment",
+            "public_repo",
+            "repo:invite",
+            "security_events",
+            "admin:repo_hook",
+            "write:repo_hook",
+            "read:repo_hook",
+            "admin:org",
+            "write:org",
+            "read:org",
+            "admin:public_key",
+            "write:public_key",
+            "read:public_key",
+            "admin:org_hook",
+            "gist",
+            "notifications",
+            "user",
+            "read:user",
+            "user:email",
+            "user:follow",
+            "project",
+            "read:project",
+            "delete_repo",
+            "write:packages",
+            "read:packages",
+            "delete:packages",
+            "admin:gpg_key",
+            "write:gpg_key",
+            "read:gpg_key",
+            "codespace",
+            "workflow",
+            "read:audit_log"
+          ]
         }
       };
     }

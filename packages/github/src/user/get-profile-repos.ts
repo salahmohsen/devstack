@@ -15,10 +15,37 @@ import {
 } from "#@/repo/shared.utils";
 import { type GitHubUserRepoSummary } from "#@/types";
 
-async function _fetchProfileRepos(
-  context: OrpcContext,
-  octokit: GitHubClient
-): Promise<GitHubUserRepoSummary[]> {
+type FetchOptions = {
+  context: OrpcContext;
+  octokit: GitHubClient;
+  /**
+   * Which Octokit endpoint to use. `listForUser` hits
+   * `GET /users/{username}/repos` (public repos only, no auth needed).
+   * `listForAuthenticatedUser` hits `GET /user/repos` (all repos the
+   * authenticated user can see, including private — requires `repo`
+   * scope).
+   */
+  endpoint: "listForUser" | "listForAuthenticatedUser";
+  /**
+   * Cache key suffix that distinguishes a public read from a private
+   * read. The cache is keyed on `${owner}::${resource}::${params}`
+   * and both endpoints share owner/params, so without this suffix a
+   * prior public call would poison the private cache (and vice
+   * versa) until `reposList.staleTimeMs` expired. The private path
+   * needs its own slot because the auth scope of the request is
+   * part of the data's identity — a public-only payload and a
+   * public+private payload for the same owner are different
+   * resources.
+   */
+  resourceSuffix: "public" | "private";
+};
+
+async function _fetchProfileRepos({
+  context,
+  octokit,
+  endpoint,
+  resourceSuffix
+}: FetchOptions): Promise<GitHubUserRepoSummary[]> {
   const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_profile_repos_read_skipped", {
@@ -31,17 +58,47 @@ async function _fetchProfileRepos(
   const signalKey = githubRevalidationSignalKeys.ownerRepos(source.owner);
 
   try {
+    console.log("privare repos are running!!!");
     const result = await getGitHubResourceLocalFirst<GitHubUserRepoSummary[]>({
       fetcher: async (conditionals) => {
-        const response = await octokit.rest.repos.listForUser({
+        const baseParams = {
           headers: {
             ...buildGitHubConditionalHeaders(conditionals)
           },
           per_page: 100,
-          sort: "updated",
-          type: "owner",
-          username: source.owner
-        });
+          sort: "updated" as const,
+          type: "owner" as const
+        };
+
+        const response =
+          endpoint === "listForAuthenticatedUser"
+            ? // `GET /user/repos` — includes private repos when the
+              // access token has the `repo` scope. GitHub forbids
+              // combining `type` with `affiliation` or `visibility` on
+              // this endpoint, so we strip `type` and rely on
+              // `affiliation: "owner"` to filter to repos the caller
+              // owns (including private org/team-owned repos they
+              // administer).
+              await octokit.rest.repos.listForAuthenticatedUser({
+                headers: baseParams.headers,
+                per_page: baseParams.per_page,
+                sort: baseParams.sort,
+                affiliation: "owner"
+              })
+            : // `GET /users/{username}/repos` — public repos only, no auth
+              // required. Works for any user. `type` is the only way to
+              // filter owner-vs-member repos on this endpoint.
+              await octokit.rest.repos.listForUser({
+                ...baseParams,
+                username: source.owner
+              });
+
+        console.log(
+          "response",
+          response,
+          `endpoint === "listForAuthenticatedUser": `,
+          endpoint === "listForAuthenticatedUser"
+        );
 
         const repos: GitHubUserRepoSummary[] = response.data.map((repo) => {
           return {
@@ -76,7 +133,7 @@ async function _fetchProfileRepos(
       namespaceKeys: [signalKey],
       owner: source.owner,
       params: { username: source.owner },
-      resource: "user.profileRepos.v3",
+      resource: `user.profileRepos.v3.${resourceSuffix}`,
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -98,9 +155,24 @@ async function _fetchProfileRepos(
 }
 
 export function getProfileRepos(context: OrpcContext): Promise<GitHubUserRepoSummary[]> {
-  return _fetchProfileRepos(context, context.github.publicOctokit);
+  // Public path — no auth, no private repos. Uses `GET /users/{username}/repos`.
+  return _fetchProfileRepos({
+    context,
+    octokit: context.github.publicOctokit,
+    endpoint: "listForUser",
+    resourceSuffix: "public"
+  });
 }
 
 export function getPrivateProfileRepos(context: OrpcContext): Promise<GitHubUserRepoSummary[]> {
-  return _fetchProfileRepos(context, context.github.privateOctokit);
+  // Private path — uses the owner's token with `repo` scope to hit
+  // `GET /user/repos` (includes private repos). If the token is
+  // missing or lacks the scope, GitHub returns only public repos
+  // here too, but the endpoint itself supports private.
+  return _fetchProfileRepos({
+    context,
+    octokit: context.github.privateOctokit,
+    endpoint: "listForAuthenticatedUser",
+    resourceSuffix: "private"
+  });
 }
