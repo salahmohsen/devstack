@@ -1,12 +1,22 @@
-import { index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex
+} from "drizzle-orm/pg-core";
 
 export const stack = pgTable(
   "stack",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
+    description: text("description"),
     icon: text("icon"),
     sortOrder: integer("sort_order").notNull().default(0),
+    enableAi: boolean("enable_ai").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

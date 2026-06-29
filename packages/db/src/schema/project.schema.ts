@@ -16,7 +16,7 @@ export const project = pgTable(
   {
     id: text("id").primaryKey(),
     logo: text("logo"),
-    githubUrl: text("github_url"),
+    repo: text("repo"),
     year: integer("year").notNull(),
     title: text("title").notNull(),
     description: text("description").notNull(),
@@ -27,6 +27,7 @@ export const project = pgTable(
       onDelete: "set null"
     }),
     isPresent: boolean("is_present").default(false),
+    enableAi: boolean("enable_ai").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

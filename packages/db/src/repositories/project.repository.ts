@@ -52,14 +52,15 @@ class ProjectRepository {
       .values({
         id: projectId,
         logo: input.logo ?? null,
-        githubUrl: input.githubUrl ?? null,
+        repo: input.repo ?? null,
         year: input.year,
         title: input.title,
         description: input.description,
         fromDate: input.fromDate ?? null,
         toDate: input.toDate ?? null,
         experienceId: input.experienceId ?? null,
-        isPresent: input.isPresent ?? false
+        isPresent: input.isPresent ?? false,
+        enableAi: input.enableAi ?? false
       })
       .returning();
 
@@ -75,8 +76,8 @@ class ProjectRepository {
 
     const updateData: Record<string, unknown> = {};
     if (projectFields.logo !== undefined) updateData.logo = projectFields.logo;
-    if (projectFields.githubUrl !== undefined) {
-      updateData.githubUrl = projectFields.githubUrl;
+    if (projectFields.repo !== undefined) {
+      updateData.repo = projectFields.repo;
     }
     if (projectFields.year !== undefined) updateData.year = projectFields.year;
     if (projectFields.title !== undefined) updateData.title = projectFields.title;
@@ -88,6 +89,9 @@ class ProjectRepository {
     }
     if (projectFields.isPresent !== undefined) {
       updateData.isPresent = projectFields.isPresent;
+    }
+    if (projectFields.enableAi !== undefined) {
+      updateData.enableAi = projectFields.enableAi;
     }
 
     const [updated] = await getDb()

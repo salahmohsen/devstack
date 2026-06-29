@@ -59,7 +59,8 @@ class ExperienceRepository {
         toDate: input.toDate ?? null,
         sortOrder: nextSortOrder,
         isArchived: input.isArchived ?? false,
-        isPresent: input.isPresent ?? false
+        isPresent: input.isPresent ?? false,
+        enableAi: input.enableAi ?? false
       })
       .returning();
 

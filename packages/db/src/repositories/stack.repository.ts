@@ -32,8 +32,10 @@ class StackRepository {
       .values({
         id: crypto.randomUUID(),
         name: input.name,
+        description: input.description ?? null,
         icon: input.icon ?? null,
-        sortOrder: input.sortOrder ?? 0
+        sortOrder: input.sortOrder ?? 0,
+        enableAi: input.enableAi ?? false
       })
       .returning();
 
