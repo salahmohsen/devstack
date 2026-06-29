@@ -45,7 +45,6 @@ function GitHubRepoCombobox(props: GitHubRepoComboboxProps) {
   const [open, setOpen] = useState(false);
 
   const isPrivate = !!user;
-  console.log("isPrivate", isPrivate);
   const reposQuery = useQuery(getGithubProfileReposQueryOptions(isPrivate));
   const repos: GitHubUserRepoSummary[] = reposQuery.data ?? [];
   const isLoading = reposQuery.isLoading;

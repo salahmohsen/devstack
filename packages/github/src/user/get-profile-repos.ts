@@ -58,7 +58,6 @@ async function _fetchProfileRepos({
   const signalKey = githubRevalidationSignalKeys.ownerRepos(source.owner);
 
   try {
-    console.log("privare repos are running!!!");
     const result = await getGitHubResourceLocalFirst<GitHubUserRepoSummary[]>({
       fetcher: async (conditionals) => {
         const baseParams = {
@@ -92,13 +91,6 @@ async function _fetchProfileRepos({
                 ...baseParams,
                 username: source.owner
               });
-
-        console.log(
-          "response",
-          response,
-          `endpoint === "listForAuthenticatedUser": `,
-          endpoint === "listForAuthenticatedUser"
-        );
 
         const repos: GitHubUserRepoSummary[] = response.data.map((repo) => {
           return {
