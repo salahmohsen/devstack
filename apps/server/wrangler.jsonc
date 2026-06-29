@@ -12,7 +12,7 @@
   ],
   "routes": [
     {
-      "pattern": "dev.salahmohsen.com/server*",
+      "pattern": "salahmohsen.com/server*",
       "zone_name": "salahmohsen.com"
     }
   ],
@@ -34,8 +34,8 @@
     }
   },
   "vars": {
-    "VITE_SERVER_URL": "https://dev.salahmohsen.com/server",
-    "VITE_WEB_URL": "https://dev.salahmohsen.com"
+    "VITE_SERVER_URL": "https://salahmohsen.com/server",
+    "VITE_WEB_URL": "https://salahmohsen.com"
   },
   "kv_namespaces": [
     {
