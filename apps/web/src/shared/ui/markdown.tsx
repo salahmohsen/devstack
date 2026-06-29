@@ -57,7 +57,7 @@ function CopyButton({ code }: { code: string }) {
     <button
       type="button"
       onClick={handleClick}
-      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-white/4 text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-accent-foreground"
+      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-muted-foreground text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-accent-foreground"
     >
       {copied ? <Check size={14} /> : <ClipboardCopy size={14} />}
     </button>
@@ -80,7 +80,7 @@ function ShikiCode({ code, lang }: { code: string; lang: string }) {
     <Suspense
       fallback={
         <div className="group/code relative mb-2">
-          <pre className="overflow-x-auto rounded-lg bg-white/4 p-3 text-xs text-accent-foreground">
+          <pre className="overflow-x-auto rounded-lg bg-muted-foreground p-3 text-xs text-accent-foreground">
             <code>{code}</code>
           </pre>
         </div>
@@ -176,7 +176,7 @@ const components: Record<string, React.FC<any>> = {
     }
     return (
       <pre
-        className="mb-2 overflow-x-auto rounded-lg bg-white/4 p-3 text-xs text-accent-foreground"
+        className="mb-2 overflow-x-auto rounded-lg bg-muted-foreground p-3 text-xs text-accent-foreground"
         {...props}
       >
         {children}
@@ -215,7 +215,7 @@ const components: Record<string, React.FC<any>> = {
     </div>
   ),
   thead: ({ node: _node, children, ...props }) => (
-    <thead className="bg-white/4" {...props}>
+    <thead className="bg-muted-foreground" {...props}>
       {children}
     </thead>
   ),
@@ -271,7 +271,7 @@ const components: Record<string, React.FC<any>> = {
   ),
   summary: ({ node: _node, children, ...props }) => (
     <summary
-      className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-lg border border-border bg-white/4 px-3 py-1.5 text-[13px] font-medium select-none hover:bg-white/6 [&::-webkit-details-marker]:hidden"
+      className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-lg border border-border bg-muted-foreground px-3 py-1.5 text-[13px] font-medium select-none hover:bg-white/6 [&::-webkit-details-marker]:hidden"
       {...props}
     >
       <svg

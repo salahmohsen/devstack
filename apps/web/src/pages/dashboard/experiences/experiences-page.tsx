@@ -14,6 +14,7 @@ import {
   ItemsEmpty,
   ItemsNavProvider,
   PageHeader,
+  PageLayout,
   isAnyItemSelected,
   useItemsNavigation,
   useItemsTabUrlSync
@@ -140,7 +141,7 @@ export function ExperiencesPage() {
 
   return (
     <ItemsNavProvider value={{ handleNext, handlePrev }}>
-      <div className="flex min-h-0 w-full flex-col gap-5 p-5">
+      <PageLayout>
         <PageHeader
           title="Experiences"
           description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
@@ -167,7 +168,7 @@ export function ExperiencesPage() {
         <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
           {(item) => <ExperienceInfo experience={item} />}
         </ItemsInfoPanel>
-      </div>
+      </PageLayout>
     </ItemsNavProvider>
   );
 }

@@ -13,7 +13,7 @@ export function RepoStarForkActions({ forkCount, repoUrl, stars }: RepoStarForkA
         href={`${repoUrl}/stargazers`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-4 py-2 hover:bg-white/8"
+        className="inline-flex items-center gap-2 rounded-full border border-border bg-primary px-4 py-2 text-primary-foreground hover:bg-muted hover:text-muted-foreground"
       >
         <Star className="size-4" />
         {stars.toLocaleString()}
@@ -22,7 +22,7 @@ export function RepoStarForkActions({ forkCount, repoUrl, stars }: RepoStarForkA
         href={`${repoUrl}/forks`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/4 px-4 py-2 hover:bg-white/8"
+        className="inline-flex items-center gap-2 rounded-full border border-border bg-primary px-4 py-2 text-primary-foreground hover:bg-muted hover:text-muted-foreground"
       >
         <GitFork className="size-4" />
         {forkCount.toLocaleString()}

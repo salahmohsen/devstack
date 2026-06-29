@@ -260,10 +260,10 @@ function FileTreeSkeleton() {
           key={key}
           className="flex items-center gap-4 border-b border-border px-4 py-2.5 last:border-b-0"
         >
-          <div className="size-4 shrink-0 animate-pulse rounded bg-white/4" />
-          <div className="h-4 w-32 animate-pulse rounded-md bg-white/4" />
-          <div className="h-4 flex-1 animate-pulse rounded-md bg-white/4" />
-          <div className="h-4 w-12 shrink-0 animate-pulse rounded-md bg-white/4" />
+          <div className="size-4 shrink-0 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-32 animate-pulse rounded-md bg-muted" />
+          <div className="h-4 flex-1 animate-pulse rounded-md bg-muted" />
+          <div className="h-4 w-12 shrink-0 animate-pulse rounded-md bg-muted" />
         </div>
       ))}
     </div>
