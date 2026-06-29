@@ -111,7 +111,11 @@ function StackSelector(props: StackSelectorProps) {
                     <CommandItem
                       key={stack.id}
                       value={stack.name}
-                      onSelect={() => toggleStack(stack.id)}
+                      // The local `CommandItem` is a styled <button> (not
+                      // the cmdk version), so `onSelect` is never fired.
+                      // Use the native `onClick` to actually trigger
+                      // the selection.
+                      onClick={() => toggleStack(stack.id)}
                     >
                       <Check
                         className={cn("size-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")}
