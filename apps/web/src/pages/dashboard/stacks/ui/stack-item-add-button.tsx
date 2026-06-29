@@ -5,7 +5,7 @@ import { Button } from "@tsu-stack/ui/components/button";
 
 export function StackItemAddButton() {
   return (
-    <Button render={<Link to="/dashboard/stacks/new" />}>
+    <Button nativeButton={false} render={<Link to="/dashboard/stacks/new" />}>
       <Plus />
       Add Stack
     </Button>

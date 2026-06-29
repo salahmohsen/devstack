@@ -5,7 +5,7 @@ import { Button } from "@tsu-stack/ui/components/button";
 
 export function ProjectItemAddButton() {
   return (
-    <Button render={<Link to="/dashboard/projects/new" />}>
+    <Button nativeButton={false} render={<Link to="/dashboard/projects/new" />}>
       <Plus />
       Add Project
     </Button>

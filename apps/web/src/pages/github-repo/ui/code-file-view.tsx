@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Code, Copy, Download, File, GitCommitHorizontal, Eye } from "lucide-react";
+import { Code, Copy, Download, Eye, File, GitCommitHorizontal } from "lucide-react";
 import { Suspense, use, useCallback, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";

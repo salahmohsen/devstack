@@ -117,6 +117,7 @@ export function ProjectItem({ project, dragHandleProps }: ProjectItemProps) {
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button
+                      nativeButton={false}
                       render={
                         <Link
                           to="/dashboard/projects/$projectId"

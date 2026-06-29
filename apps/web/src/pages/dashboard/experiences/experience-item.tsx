@@ -191,7 +191,7 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
 
 export function ExperienceItemAddButton() {
   return (
-    <Button render={<Link to="/dashboard/experiences/new" />}>
+    <Button render={<Link to="/dashboard/experiences/new" />} nativeButton={false}>
       <Plus />
       Add Experience
     </Button>
