@@ -17,6 +17,7 @@ export const project = pgTable(
     id: text("id").primaryKey(),
     logo: text("logo"),
     repos: text("repos").array(),
+    demoUrl: text("demo_url"),
     year: integer("year").notNull(),
     title: text("title").notNull(),
     summary: text("summary").notNull(),

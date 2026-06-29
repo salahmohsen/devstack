@@ -36,6 +36,7 @@ export const ProjectOutputSchema = z.object({
   id: z.string(),
   logo: z.string().nullable(),
   repos: z.array(z.string().url()),
+  demoUrl: z.string().url().nullable(),
   year: z.number().int(),
   title: z.string(),
   summary: z.string(),
@@ -52,6 +53,7 @@ export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
 export const CreateProjectInputSchema = z.object({
   logo: z.string().nullable().optional(),
   repos: z.array(z.string().url()).optional().default([]),
+  demoUrl: z.string().url().nullable().optional(),
   year: z.coerce.number().int(),
   title: z.string().min(1),
   summary: z.string(),
@@ -67,6 +69,7 @@ export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
 export const UpdateProjectInputSchema = z.object({
   logo: z.string().nullable().optional(),
   repos: z.array(z.string().url()).optional(),
+  demoUrl: z.string().url().nullable().optional(),
   year: z.coerce.number().int().optional(),
   title: z.string().min(1).optional(),
   summary: z.string(),

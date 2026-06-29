@@ -53,6 +53,7 @@ class ProjectRepository {
         id: projectId,
         logo: input.logo ?? null,
         repos: input.repos ?? [],
+        demoUrl: input.demoUrl ?? null,
         year: input.year,
         title: input.title,
         summary: input.summary,
@@ -77,6 +78,9 @@ class ProjectRepository {
     if (projectFields.logo !== undefined) updateData.logo = projectFields.logo;
     if (projectFields.repos !== undefined) {
       updateData.repos = projectFields.repos;
+    }
+    if (projectFields.demoUrl !== undefined) {
+      updateData.demoUrl = projectFields.demoUrl;
     }
     if (projectFields.year !== undefined) updateData.year = projectFields.year;
     if (projectFields.title !== undefined) updateData.title = projectFields.title;

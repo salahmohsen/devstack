@@ -46,6 +46,7 @@ function NewProjectPage() {
       description: "",
       logo: "",
       repos: [] as string[],
+      demoUrl: "",
       isPresent: false,
       enableAi: false,
       stackIds: [] as string[]
@@ -60,6 +61,7 @@ function NewProjectPage() {
         description: value.description,
         logo: value.logo ?? null,
         repos: value.repos ?? [],
+        demoUrl: value.demoUrl ?? null,
         experienceId: selectedExperienceId,
         enableAi: value.enableAi,
         stackIds: value.stackIds ?? []
@@ -109,6 +111,12 @@ function NewProjectPage() {
                     label="Repositories"
                     description="Pick one or more of your GitHub repositories (public or private)."
                   />
+                )}
+              </form.AppField>
+
+              <form.AppField name="demoUrl">
+                {(field) => (
+                  <field.InputField label="Demo URL" type="url" placeholder="https://example.com" />
                 )}
               </form.AppField>
 

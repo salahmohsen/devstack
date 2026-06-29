@@ -96,6 +96,7 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
       description: project.description ?? "",
       logo: project.logo ?? "",
       repos: project.repos ?? [],
+      demoUrl: project.demoUrl ?? "",
       isPresent: project.isPresent,
       enableAi: project.enableAi,
       stackIds: project.stacks.map((s) => s.id)
@@ -112,6 +113,7 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
           description: value.description,
           logo: value.logo ?? null,
           repos: value.repos ?? [],
+          demoUrl: value.demoUrl ?? null,
           experienceId: selectedExperienceId,
           enableAi: value.enableAi,
           stackIds: value.stackIds ?? []
@@ -176,6 +178,12 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
                     label="Repositories"
                     description="Pick one or more of your GitHub repositories (public or private)."
                   />
+                )}
+              </form.AppField>
+
+              <form.AppField name="demoUrl">
+                {(field) => (
+                  <field.InputField label="Demo URL" type="url" placeholder="https://example.com" />
                 )}
               </form.AppField>
 

@@ -51,6 +51,7 @@ function toProjectOutput(proj: {
   id: string;
   logo: string | null;
   repos: string[] | null;
+  demoUrl: string | null;
   year: number;
   title: string;
   summary: string;
@@ -77,6 +78,7 @@ function toProjectOutput(proj: {
     id: proj.id,
     logo: proj.logo,
     repos: proj.repos ?? [],
+    demoUrl: proj.demoUrl,
     year: proj.year,
     title: proj.title,
     summary: proj.summary,
@@ -106,6 +108,7 @@ function toExperienceOutput(exp: {
     id: string;
     logo: string | null;
     repos: string[] | null;
+    demoUrl: string | null;
     year: number;
     title: string;
     summary: string;

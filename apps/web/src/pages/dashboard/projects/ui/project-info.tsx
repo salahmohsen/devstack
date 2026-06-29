@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import { FaGithub } from "react-icons/fa";
+import { FaGithub, FaLink } from "react-icons/fa";
 
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
@@ -12,7 +12,6 @@ import {
   CardTitle
 } from "@tsu-stack/ui/components/card";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
-import { Separator } from "@tsu-stack/ui/components/separator";
 
 import { Markdown } from "@/shared/ui/markdown";
 
@@ -51,7 +50,6 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
           <p className="mt-1 text-xs text-muted-foreground">Linked to an experience</p>
         ) : null}
       </CardHeader>
-      <Separator />
       <ScrollArea className="min-h-0 flex-1">
         <CardContent className="space-y-4">
           {project.summary ? (
@@ -67,7 +65,7 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
           ) : (
             <p className="text-sm text-muted-foreground">No description.</p>
           )}
-          {project.repos.length > 0 ? (
+          {project.repos.length > 0 || project.demoUrl ? (
             <div className="flex flex-wrap gap-1.5">
               {project.repos.map((repo) => (
                 <a
@@ -82,6 +80,18 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
                   {repo.replace(/^https?:\/\/(www\.)?github\.com\//, "")}
                 </a>
               ))}
+              {project.demoUrl ? (
+                <a
+                  href={project.demoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Open demo for ${project.title}`}
+                  className="inline-flex items-center rounded-md border border-transparent bg-secondary px-2 py-0.5 text-xs font-medium whitespace-nowrap text-secondary-foreground transition-colors hover:bg-secondary/80"
+                >
+                  <FaLink className="mr-1 size-3" />
+                  Demo
+                </a>
+              ) : null}
             </div>
           ) : null}
           {project.stacks.length > 0 ? (
