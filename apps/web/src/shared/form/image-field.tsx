@@ -2,7 +2,7 @@
 
 import { useStore } from "@tanstack/react-form";
 import { useFiles } from "files-sdk/react";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useRef } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
@@ -80,7 +80,16 @@ function ImageField(props: ImageFieldProps) {
           onClick={() => inputRef.current?.click()}
           disabled={files.isUploading}
         >
-          {files.isUploading ? "Uploading..." : value ? "Replace image" : "Upload image"}
+          {files.isUploading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Uploading…
+            </>
+          ) : value ? (
+            "Replace image"
+          ) : (
+            "Upload image"
+          )}
         </Button>
         <UploadProgress files={files} />
       </div>
