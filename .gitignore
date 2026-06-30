@@ -16,6 +16,7 @@ dist-ssr
 .env.docker
 *.local
 tmp
+.dev.vars
 
 # Editor directories and files
 .vscode/*
