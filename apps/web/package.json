@@ -36,6 +36,7 @@
     "@tsu-stack/logger": "workspace:*",
     "@tsu-stack/seo": "workspace:*",
     "@tsu-stack/ui": "workspace:*",
+    "@uploadthing/react": "catalog:",
     "date-fns": "catalog:",
     "lucide-react": "catalog:",
     "motion": "catalog:",
@@ -51,6 +52,7 @@
     "remark-github-blockquote-alert": "catalog:",
     "sharp": "catalog:",
     "sonner": "catalog:",
+    "uploadthing": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

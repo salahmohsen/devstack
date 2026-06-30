@@ -45,7 +45,7 @@ export const startInstance = createStart(() => {
           environment: __BUILD_NODE_ENV__,
           version: __BUILD_SOURCE_COMMIT__
         },
-        excludePaths: ["**/_api/health/**"]
+        excludePaths: ["**/_api/health/**", "**/api/uploadthing/**"]
       })
     ]
   };
