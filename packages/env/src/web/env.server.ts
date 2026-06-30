@@ -18,7 +18,8 @@ export const ENV_WEB_SERVER = createEnv({
     R2_PUBLIC_BASE_URL:
       process.env.IS_BUILD === "true"
         ? z.string().url().default("https://placeholder.r2.dev")
-        : z.string().url()
+        : z.string().url(),
+    FILES_API_SECRET: z.string().min(1).default("dev-only-secret-do-not-use-in-production")
   }
 });
 
