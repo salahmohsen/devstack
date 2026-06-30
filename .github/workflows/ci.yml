@@ -41,6 +41,11 @@ jobs:
       GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
       GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
       GITHUB_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
+      # Required by the Cloudflare Vite plugin during prerender: the `remote: true`
+      # R2 binding triggers a wrangler remote proxy session, which needs Cloudflare
+      # credentials. Create an API token at https://dash.cloudflare.com/profile/api-tokens
+      # with the "Edit Cloudflare Workers" template scoped to this account.
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -66,5 +71,6 @@ jobs:
           printf 'GITHUB_CLIENT_ID=%q\n' "$GITHUB_CLIENT_ID" >> packages/env/.env
           printf 'GITHUB_CLIENT_SECRET=%q\n' "$GITHUB_CLIENT_SECRET" >> packages/env/.env
           printf 'GITHUB_WEBHOOK_SECRET=%q\n' "$GITHUB_WEBHOOK_SECRET" >> packages/env/.env
+          printf 'CLOUDFLARE_API_TOKEN=%q\n' "$CLOUDFLARE_API_TOKEN" >> packages/env/.env
 
       - run: vp run build
