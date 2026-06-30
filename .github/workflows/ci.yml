@@ -29,6 +29,11 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    # The Cloudflare Vite plugin's preview server (used by the TanStack Start
+    # prerender step) opens a wrangler remote proxy session that never exits on
+    # its own. The build artifacts are fully written before that point, so we
+    # let CI cap the job and move on.
+    timeout-minutes: 12
     env:
       VITE_SERVER_URL: ${{ vars.VITE_SERVER_URL }}
       VITE_WEB_URL: ${{ vars.VITE_WEB_URL }}
