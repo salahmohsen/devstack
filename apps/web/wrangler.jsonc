@@ -31,6 +31,13 @@
   },
   "vars": {
     "VITE_SERVER_URL": "https://salahmohsen.com/server",
-    "VITE_WEB_URL": "https://salahmohsen.com"
-  }
+    "VITE_WEB_URL": "https://salahmohsen.com",
+    "R2_PUBLIC_BASE_URL": "https://pub-a1ecba0fdfda4a279c58c304202f844f.r2.dev"
+  },
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "personal-hub"
+    }
+  ]
 }
