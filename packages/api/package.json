@@ -24,6 +24,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "hono": "catalog:",

@@ -121,6 +121,7 @@ catalog:
   oxlint: ^1.70.0
   "ollama-ai-provider-v2": ^3.6.0
   "files-sdk": ^2.0.0
+  "@cloudflare/workers-types": 4.20260621.1
 
 catalogMode: prefer
 

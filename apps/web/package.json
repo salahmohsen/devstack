@@ -37,6 +37,7 @@
     "@tsu-stack/seo": "workspace:*",
     "@tsu-stack/ui": "workspace:*",
     "date-fns": "catalog:",
+    "files-sdk": "catalog:",
     "lucide-react": "catalog:",
     "motion": "catalog:",
     "next-themes": "catalog:",
