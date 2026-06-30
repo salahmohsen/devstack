@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import * as React from "react";
@@ -221,8 +222,8 @@ export const Sidebar001Item = memo(function Sidebar001Item({
         transition={{ type: "spring", stiffness: 700, damping: 30 }}
         style={{ transformOrigin: "left center" }}
       >
-        <a
-          href={href}
+        <Link
+          to={href}
           onClick={onClick}
           onMouseEnter={() => {
             const el = itemRef.current;
@@ -247,7 +248,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
         >
           <span className="relative z-1 truncate">{label}</span>
           {isNew && <span className="size-1.5 shrink-0 rounded-full bg-accent-pro" />}
-        </a>
+        </Link>
       </motion.div>
     </div>
   );
