@@ -1,21 +1,20 @@
-import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
-  TextQuote,
+  Bold,
   Code,
   Heading2,
   Heading3,
+  Italic,
   Link as LinkIcon, // Alias needed: Link already imported from @tiptap/extension-link
   List,
   ListOrdered,
   Pilcrow,
   Redo2,
-  Bold,
-  Italic,
   Strikethrough,
+  TextQuote,
   Underline,
   Undo2
 } from "lucide-react";
@@ -154,14 +153,14 @@ function RichTextEditor({
     editable: !disabled,
     extensions: [
       StarterKit.configure({
-        heading: { levels: [2, 3] }
-      }),
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        HTMLAttributes: {
-          rel: "noopener noreferrer nofollow",
-          target: "_blank"
+        heading: { levels: [2, 3] },
+        link: {
+          openOnClick: false,
+          autolink: true,
+          HTMLAttributes: {
+            rel: "noopener noreferrer nofollow",
+            target: "_blank"
+          }
         }
       }),
       Placeholder.configure({ placeholder: placeholder ?? "Start writing..." }),
