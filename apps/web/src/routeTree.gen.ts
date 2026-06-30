@@ -15,7 +15,7 @@ import { Route as rootLayoutRouteRouteImport } from './routes/(root-layout)/rout
 import { Route as rootLayoutIndexRouteImport } from './routes/(root-layout)/index'
 import { Route as rootLayout_protectedRouteRouteImport } from './routes/(root-layout)/__protected/route'
 import { Route as rootLayoutRepoRouteRouteImport } from './routes/(root-layout)/$repo/route'
-import { Route as ApiUploadthingIndexRouteImport } from './routes/api/uploadthing/index'
+import { Route as ApiFilesIndexRouteImport } from './routes/api/files/index'
 import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(root-layout)/terms-of-service/index'
 import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
 import { Route as rootLayoutPrivacyPolicyIndexRouteImport } from './routes/(root-layout)/privacy-policy/index'
@@ -73,9 +73,9 @@ const rootLayoutRepoRouteRoute = rootLayoutRepoRouteRouteImport.update({
   path: '/$repo',
   getParentRoute: () => rootLayoutRouteRoute,
 } as any)
-const ApiUploadthingIndexRoute = ApiUploadthingIndexRouteImport.update({
-  id: '/api/uploadthing/',
-  path: '/api/uploadthing/',
+const ApiFilesIndexRoute = ApiFilesIndexRouteImport.update({
+  id: '/api/files/',
+  path: '/api/files/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const rootLayoutTermsOfServiceIndexRoute =
@@ -248,7 +248,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos/': typeof rootLayoutReposIndexRoute
   '/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
-  '/api/uploadthing/': typeof ApiUploadthingIndexRoute
+  '/api/files/': typeof ApiFilesIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/$repo/blob/$': typeof rootLayoutRepoBlobSplatRoute
@@ -280,7 +280,7 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos': typeof rootLayoutReposIndexRoute
   '/terms-of-service': typeof rootLayoutTermsOfServiceIndexRoute
-  '/api/uploadthing': typeof ApiUploadthingIndexRoute
+  '/api/files': typeof ApiFilesIndexRoute
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/$repo/blob/$': typeof rootLayoutRepoBlobSplatRoute
   '/$repo/tree/$': typeof rootLayoutRepoTreeSplatRoute
@@ -316,7 +316,7 @@ export interface FileRoutesById {
   '/(root-layout)/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/(root-layout)/repos/': typeof rootLayoutReposIndexRoute
   '/(root-layout)/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
-  '/api/uploadthing/': typeof ApiUploadthingIndexRoute
+  '/api/files/': typeof ApiFilesIndexRoute
   '/(root-layout)/__protected/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
   '/(root-layout)/__protected/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/(root-layout)/$repo/blob/$': typeof rootLayoutRepoBlobSplatRoute
@@ -352,7 +352,7 @@ export interface FileRouteTypes {
     | '/privacy-policy/'
     | '/repos/'
     | '/terms-of-service/'
-    | '/api/uploadthing/'
+    | '/api/files/'
     | '/dashboard/experiences'
     | '/dashboard/settings'
     | '/$repo/blob/$'
@@ -384,7 +384,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/repos'
     | '/terms-of-service'
-    | '/api/uploadthing'
+    | '/api/files'
     | '/dashboard/settings'
     | '/$repo/blob/$'
     | '/$repo/tree/$'
@@ -419,7 +419,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/privacy-policy/'
     | '/(root-layout)/repos/'
     | '/(root-layout)/terms-of-service/'
-    | '/api/uploadthing/'
+    | '/api/files/'
     | '/(root-layout)/__protected/dashboard/experiences'
     | '/(root-layout)/__protected/dashboard/settings'
     | '/(root-layout)/$repo/blob/$'
@@ -447,7 +447,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
-  ApiUploadthingIndexRoute: typeof ApiUploadthingIndexRoute
+  ApiFilesIndexRoute: typeof ApiFilesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -494,11 +494,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutRepoRouteRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
-    '/api/uploadthing/': {
-      id: '/api/uploadthing/'
-      path: '/api/uploadthing'
-      fullPath: '/api/uploadthing/'
-      preLoaderRoute: typeof ApiUploadthingIndexRouteImport
+    '/api/files/': {
+      id: '/api/files/'
+      path: '/api/files'
+      fullPath: '/api/files/'
+      preLoaderRoute: typeof ApiFilesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root-layout)/terms-of-service/': {
@@ -840,18 +840,8 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,
-  ApiUploadthingIndexRoute: ApiUploadthingIndexRoute,
+  ApiFilesIndexRoute: ApiFilesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
