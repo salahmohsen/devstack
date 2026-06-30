@@ -120,8 +120,7 @@ catalog:
   react-email: 6.6.3
   oxlint: ^1.70.0
   "ollama-ai-provider-v2": ^3.6.0
-  uploadthing: ^7.7.4
-  "@uploadthing/react": ^7.3.3
+  "files-sdk": ^2.0.0
 
 catalogMode: prefer
 
