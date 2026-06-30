@@ -1,0 +1,1 @@
+ALTER TABLE "project" ALTER COLUMN "repos" DROP NOT NULL;
