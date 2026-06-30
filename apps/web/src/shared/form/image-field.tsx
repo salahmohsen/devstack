@@ -8,8 +8,6 @@ import { useRef, useState } from "react";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
 
-import { UploadProgress } from "@/components/files-sdk/upload-progress";
-
 import { useFieldContext } from "./form-contexts";
 
 const MIN_LOADER_MS = 400;
@@ -25,12 +23,12 @@ function ImageField(props: ImageFieldProps) {
   const value = useStore(field.form.store, (state) => state.values[field.name]);
   const inputRef = useRef<HTMLInputElement>(null);
   const files = useFiles({ endpoint: "/api/files" });
-  const [showLoader, setShowLoader] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setShowLoader(true);
+    setUploading(true);
     const started = Date.now();
     try {
       const { key } = await files.upload(file);
@@ -43,7 +41,7 @@ function ImageField(props: ImageFieldProps) {
       if (elapsed < MIN_LOADER_MS) {
         await new Promise((r) => setTimeout(r, MIN_LOADER_MS - elapsed));
       }
-      setShowLoader(false);
+      setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -51,8 +49,6 @@ function ImageField(props: ImageFieldProps) {
   function handleClear() {
     field.handleChange("");
   }
-
-  const uploading = files.isUploading || showLoader;
 
   return (
     <Field>
@@ -103,7 +99,6 @@ function ImageField(props: ImageFieldProps) {
             "Upload image"
           )}
         </Button>
-        <UploadProgress files={files} />
       </div>
       {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
       {files.error ? <FieldError errors={[{ message: files.error.message }]} /> : null}
