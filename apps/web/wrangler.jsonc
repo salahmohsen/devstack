@@ -37,7 +37,8 @@
   "r2_buckets": [
     {
       "binding": "MEDIA_BUCKET",
-      "bucket_name": "personal-hub"
+      "bucket_name": "personal-hub",
+      "remote": true
     }
   ]
 }
