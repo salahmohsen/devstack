@@ -1,5 +1,6 @@
 import { createFormHook } from "@tanstack/react-form";
 
+import { ImageField } from "@/shared/form/image-field";
 import { InputGroupField } from "@/shared/form/input-group-field";
 import { StackSelector } from "@/shared/form/stack-selector";
 import { SwitchField } from "@/shared/form/switch-field";
@@ -22,7 +23,8 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       RichTextField,
       InputGroupField,
       StackSelector,
-      SwitchField
+      SwitchField,
+      ImageField
     },
     fieldContext,
     formComponents: {

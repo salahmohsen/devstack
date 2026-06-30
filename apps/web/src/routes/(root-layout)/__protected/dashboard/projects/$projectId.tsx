@@ -162,15 +162,13 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
                 )}
               </form.AppField>
 
-              <div className="grid grid-cols-2 gap-4">
-                <form.AppField name="year">
-                  {(field) => <field.InputField label="Year" type="number" />}
-                </form.AppField>
+              <form.AppField name="year">
+                {(field) => <field.InputField label="Year" type="number" />}
+              </form.AppField>
 
-                <form.AppField name="logo">
-                  {(field) => <field.InputField label="Logo URL" placeholder="https://..." />}
-                </form.AppField>
-              </div>
+              <form.AppField name="logo">
+                {(field) => <field.ImageField label="Project logo" />}
+              </form.AppField>
 
               <form.AppField name="repos">
                 {() => (
