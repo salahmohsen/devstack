@@ -55,6 +55,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/lib-storage": "catalog:",
+    "@aws-sdk/s3-presigned-post": "catalog:",
+    "@aws-sdk/s3-request-presigner": "catalog:",
     "@babel/core": "catalog:",
     "@cloudflare/vite-plugin": "catalog:",
     "@dotenvx/dotenvx": "catalog:",
