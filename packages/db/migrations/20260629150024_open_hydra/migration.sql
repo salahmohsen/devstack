@@ -1,1 +1,0 @@
-ALTER TABLE "project" ADD COLUMN "summary" text NOT NULL;
