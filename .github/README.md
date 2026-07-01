@@ -1,445 +1,211 @@
-<h1 align="center">
-    <img width="120" height="120" src="https://github.com/tsu-moe/tsu-stack/blob/main/apps/web/public/logo192.png?raw=true" alt="tsu!stack Logo"><br>
-    <a href="https://tsu-stack.tsu.moe/">tsu!stack</a>
-</h1>
+# personal-hub
 
-<p align="center">
-   <img src="https://img.shields.io/badge/NodeJS-25.8.2-green" alt="NodeJS version badge">
-   <img src="https://img.shields.io/github/license/tsu-moe/tsu-stack" alt="License badge">
-   <img src="https://img.shields.io/github/last-commit/tsu-moe/tsu-stack" alt="Last commit badge">
-   <img src="https://img.shields.io/github/stars/tsu-moe/tsu-stack?style=flat" alt="GitHub stars badge">
-   <img src="https://img.shields.io/github/forks/tsu-moe/tsu-stack?style=flat" alt="GitHub forks badge">
-   <img src="https://img.shields.io/github/issues/tsu-moe/tsu-stack" alt="GitHub issues badge">
-   <img src="https://img.shields.io/github/issues-pr/tsu-moe/tsu-stack" alt="GitHub pull requests badge">
-   <img src="https://komarev.com/ghpvc/?username=tsu-moe-tsu-stack&label=views&color=blue&style=flat" alt="Repo views badge">
-</p>
+A self-hosted portfolio platform that pulls your GitHub profile into a public site, layers an AI-driven identity on top of it, and applies to jobs on your behalf. Built on top of [tsu-stack](https://github.com/tsu-moe/tsu-stack) and derived in large part from [diffkit](https://github.com/stylessh/diffkit) — see the [Acknowledgements](#acknowledgements) section for the original attributions.
 
-<p align="center">
-  Vite Plus (Vite+) TanStack Start monorepo with Hono, oRPC, drizzle-orm, better-auth, Feature-Sliced Design (FSD), and more. Dockerized and opinionated.
-</p>
+The public site is live at **[salahmohsen.com](https://salahmohsen.com)**.
 
-<p align="center">
-  <img src="https://github.com/tsu-moe/tsu-stack/blob/main/apps/web/public/og/index.png?raw=true" alt="tsu!stack Screenshot" width="800" height="420">
-</p>
+## What it is
 
-<p align="center">
-  <strong>✨ Live Demo Deployments ✨</strong><br />
-  <a href="http://tsu-stack.tsu.moe" target="_blank">Dockerfile (Coolify)</a><br>
-  <a href="http://tsu-stack-coolify.tsu.moe" target="_blank">Docker Compose (Coolify)</a><br>
-  <a href="http://tsu-stack-merged.tsu.moe" target="_blank">Merged Web + Server with Dockerfile (Coolify)</a> | <a href="https://github.com/tsu-moe/tsu-stack/tree/variant/merged" target="_blank">see branch</a><br>
-  <a href="https://tsu-stack.tsu-moe.workers.dev" target="_blank">Merged Web + Server (Cloudflare Workers)</a> | <a href="https://github.com/tsu-moe/tsu-stack/tree/variant/merged-cloudflare" target="_blank">see branch</a>
-</p>
+personal-hub is a self-hosted portfolio platform for a single owner. The product has four surfaces:
 
-## Table of Contents
+- **Public site** at **[salahmohsen.com](https://salahmohsen.com)** — a profile page, contribution graph, pinned repos, a curated list of projects, experiences, and stacks (all sourced from the owner's GitHub data), and a full repository browser that lets visitors read any of the owner's repos (file tree, blob view, branch comparison, contributors, activity). A planned contact action will let visitors send an email to the owner, and a planned public-side AI agent will let recruiters chat with the portfolio and get answers grounded in the public data the owner has chosen to expose.
+- **Dashboard** at `/dashboard` — full CRUD for projects, experiences, and stacks; settings (account, profile, GitHub); and a planned email client for triaging the inbound contact-form messages and the outbound job-application threads. The dashboard's main page is being designed around a private agent with access to both the owner's private and public tools and workflows.
+- **AI layer** — the cross-cutting engine. The dashboard agent can read a pasted job ad, draft a tailored cover letter and a tailored resume, render the resume to a typed PDF template, and send the email with the PDF attached. Per-item "suggest better content" buttons on the experience and project edit pages use real repo data to draft stronger descriptions, summaries, and other fields. An identity agent reads READMEs, AGENTS.md, `.cursorrules`, and recent commits to propose facet changes.
+- **Deploy surface** — two Cloudflare Workers (web + server), Neon Postgres, Cloudflare R2, Resend transactional email, and the GitHub cache + webhooks plumbing.
 
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Setup](#setup)
-  - [Running with Docker Locally](#running-with-docker-locally)
-- [Deployment](#deployment)
-  - [Coolify](#coolify)
-    - [Option 1: Separate Dockerfiles](#option-1-separate-dockerfiles)
-      - [Server Deployment](#server-deployment)
-      - [Web Deployment](#web-deployment)
-    - [Option 2: Docker Compose](#option-2-docker-compose)
-  - [Cloudflare Workers](#cloudflare-workers)
-    - [Git-based CI/CD](#git-based-cicd)
-  - [Deploying to Other Platforms](#deploying-to-other-platforms)
-- [Environment Variables](#environment-variables)
-  - [Server](#server)
-  - [Web](#web)
-- [Merging Server to Web App](#merging-server-to-web-app)
-  - [Resource Usage](#resource-usage)
-- [Issue Watchlist](#issue-watchlist)
-  - [Pitfalls](#pitfalls)
-- [Contributing](#contributing)
-- [Acknowledgements](#acknowledgements)
-- [License](#license)
+The product is opinionated:
 
-## Tech Stack
+- One owner, one GitHub identity, one source of truth.
+- Every project, experience, and stack has explicit visibility controls for the public site and for the AI.
+- The AI never publishes anything on its own — it proposes, the owner decides.
+- The owner can override any AI-suggested field with a manual edit; the AI never writes without an owner action.
 
-Here is a non-exhaustive list of the main technologies used in this project, along with their purposes and possible alternatives they replace:
+## Status
 
-| Technology                                        | Purpose                                                                                                                                                                                    | Replaces/Similar Alternatives                                                      |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| [**pnpm**](https://pnpm.io/)                      | Fast, disk-efficient package manager for Node.js with package catalogs for monorepo dependecy deduplication.                                                                               | npm, yarn                                                                          |
-| [**Vite Plus (Vite+)**](https://viteplus.dev/)    | Unified toolchain for development, testing, and building the monorepo.                                                                                                                     | Turborepo, Nx, Vitest, Prettier, ESLint, husky, lint-staged, lefthook, tsdown, tsc |
-| [**TanStack Start**](https://tanstack.com/router) | Modern full-stack React framework with support for SPA, SSR, ISR, and integrated with TanStack Query. This branch configures it for Cloudflare Workers through the Cloudflare Vite plugin. | Next.js, Remix, React Router                                                       |
+The project is in active development. The list below tracks what is shipped, in flight, and planned.
 
-| [**Hono**](https://hono.dev/) | Lightweight web server framework built on web standards and is WinterCG-compliant for cross-platform portability. | Express.js, Fastify, Elysia.js |
-| [**oRPC**](https://orpc.dev/) | RPC framework to define API routes and generate OpenAPI specs and documentation with [Scalar](https://scalar.com/). | tRPC |
-| [**Drizzle ORM**](https://orm.drizzle.team/) | Type-safe and lightweight ORM for database interactions. | Prisma, TypeORM |
-| [**Neon Postgres**](https://neon.com/) | Serverless Postgres database for development and deployment. | PostgreSQL, MySQL, MariaDB |
-| [**Better Auth**](https://better-auth.com/) | Self-hosted authentication framework with support for all major OAuth providers. | Auth.js |
-| [**Docker**](https://www.docker.com/) | Containerization for local development and deployment. | Podman |
-| [**shadcn/ui**](https://ui.shadcn.com/) | Accessible and customizable React component library. | Chakra UI, Material UI, Mantine UI |
+### Shipped
 
-## Getting Started
+- **Portfolio domain** — full CRUD for `project`, `experience`, and `stack` with ordering, sort, and per-item enable/disable flags.
+- **Public homepage** — profile, contribution graph, pinned repos, projects, experience timeline, and tech stack badges.
+- **Repository browser** — `/:owner/:repo` routes for browsing any repo (file tree, blob view with syntax highlighting, branch comparison, latest commit, contributors, activity).
+- **GitHub integration** — OAuth flow, per-user token, public/anonymous + owner-authenticated Octokit split, server-side cache with namespace and signal invalidation, webhook delivery-dedup, and a Cloudflare Durable Object (`GITHUB_SIGNAL_RELAY`) that fans invalidation events out to live WebSocket clients.
+- **Authentication** — Better Auth with magic link, GitHub OAuth, passkeys, and email verification.
+- **Transactional email** — welcome, sign-in magic link, email verification, and reset-password templates via Resend.
+- **Image storage** — R2-backed uploads through `files-sdk` with progress UI, used for project logos and stack icons.
+- **Settings dashboard** — account, profile, and GitHub configuration (token, username, public visibility).
+- **Database** — Neon Postgres with Drizzle ORM, migrations, and a typed repository layer.
+- **Deployment** — two Cloudflare Workers (web + server) with a `wrangler.jsonc` per app, R2 binding, Durable Object bindings, and a GitHub Actions CI.
+
+### In progress (`feat/mastra-ai` branch)
+
+The features below live on the `feat/mastra-ai` branch and are **not** on `main`. `main` is the stable, deployable surface for the portfolio, the GitHub cache, and the public site; the AI branch is layered on top and gets merged in once the agents and workflows are production-ready.
+
+- **AI layer (Mastra)** — agents and workflows scaffolded under `packages/ai`, mounted into the Hono server, and wired to D1-backed Mastra storage and observability.
+- **Identity model** — typed facets (`headline`, `bio`, `focus_log`, `narrative`) with immutable revisions and queued proposals; every write records its source and a human-readable reason.
+- **Identity agent** — the inner, read-only LLM agent. Reads READMEs, AGENTS.md, `.cursorrules`, and recent commits to propose facet changes. Never writes directly; proposals land in the queue for the owner to accept or reject.
+- **Portfolio agent** — the dashboard's main-page agent. Has access to both the owner's private tools and the public tools and workflows. Currently powers the dashboard chat; email-sending and resume-attachment capabilities are not yet wired in.
+- **Per-item "suggest better content" buttons** — on every experience and project edit page, the owner can request a stronger draft for any field (description, summary, etc.). The agent pulls real data from the linked repos (READMEs, languages, structure, recent commits) and proposes a draft. The owner reviews and applies or discards.
+- **Refresh workflow** — `refreshIdentityWorkflow` (gather sources → diff facets → write facets → reindex vectors) driven by GitHub webhooks and a cron schedule.
+- **Working memory** — per-resource markdown cache re-rendered from the Drizzle facet rows so the LLM sees fresh identity context without paying a tool call.
+- **Scorers** — toxicity, answer-relevancy, and a custom JSON-shape scorer wired into the identity workflow.
+
+### Planned
+
+Grouped by surface so it's clear which work lands on the public site, which lands in the dashboard, and which is cross-cutting AI infrastructure.
+
+#### Public site
+
+- **Recruiter AI agent** — a chat surface on the public site that recruiters can use to ask questions about the owner. The agent answers strictly from the data the owner has marked as public (published projects, published experiences, public identity facets, public stacks). No write tools, no private data, no email-sending.
+- **Contact action** — a single button that opens a small form on the public site. A visitor types a message; the message lands in the owner's dashboard email client and is also delivered to the owner's inbox.
+
+#### Dashboard
+
+- **Email client** — a full email surface in the dashboard. Two views: **inbound** (messages from the public contact form, plus the owner's replies) and **outbound** (the threads the dashboard agent sends to recruiters on the owner's behalf). The owner can review, reply, archive, and block senders. Every agent-initiated email shows up here before it's sent, with a clear preview of the cover letter, the attached PDF, and the recipient.
+- **Email-sending for the dashboard agent** — wire the portfolio agent's main-page surface to the Resend transport so it can deliver the tailored cover letter + resume PDF it drafts. Without this, the agent is read-only on the public site and chat-only on the dashboard.
+- **Publish / unpublish flow** — replace the current "Create" / "Save Changes" buttons on the project and experience edit pages with `Publish` and `Unpublish`. The public site and the AI see only published items; drafts stay in the dashboard.
+- **AI auto-creates projects from repos** — propose a new project from a GitHub repo with summary, description, and stack suggestions; the owner accepts or rejects.
+- **AI fills the stack layer with categories** — bucket stacks into frontend / backend / infrastructure / tooling / data, etc., and keep the categorisation in sync.
+- **Email-template editor** — edit the application email template (the one the agent sends to recruiters) from the dashboard. The agent always sends the latest version.
+
+#### AI layer (cross-cutting)
+
+- **PDF resume agent** — given the identity facets, experiences, projects, and stacks, render a JSON resume schema and produce a clean, typographic PDF that follows a fixed template. The template is the same one used for the public resume download and for the attachment the dashboard agent sends. Black-and-white, zero radius, modern minimal typography.
+- **Tailored resume + cover letter** — given a pasted job ad, draft a per-application resume and cover letter that map the owner's relevant experiences and projects to the role's requirements. The cover letter goes into the email body; the resume becomes the PDF attachment.
+- **Job-search agent** — automatically find open roles, analyse the description, score the match against the user's stated goals, and surface the best fits. The owner approves which roles the application agent should target.
+- **Application email template** — the base template the dashboard agent uses when it sends a job application. Black-and-white, zero radius, modern minimal typography; the PDF matches. Editable from the dashboard.
+
+## Architecture
+
+The repository is a pnpm + Vite Plus monorepo.
+
+```
+apps/
+  web/      # TanStack Start frontend, deployed to Cloudflare Workers
+  server/   # Hono + oRPC API, deployed to Cloudflare Workers
+packages/
+  api/      # oRPC routers, procedures, and TanStack Query bindings
+  app/      # App-level form / widget patterns
+  auth/     # Better Auth configuration and adapters
+  core/     # Shared domain schemas (portfolio, identity, AI context)
+  db/       # Drizzle schema, repositories, and migrations
+  email/    # React Email templates and Resend transport
+  env/      # t3-env / @t3-oss/env-core configuration
+  forms/    # Shared form components and validators
+  github/   # Octokit wrappers, cache layer, webhook handlers
+  logger/   # Structured logging (evlog)
+  seo/      # generateAppSeo + route head() helpers
+  ui/       # shadcn/ui registry, design tokens, shared components
+tools/      # Internal tooling
+```
+
+### Tech stack
+
+- **Frontend** — TanStack Start, TanStack Router, TanStack Query, TanStack Form, React 19, Tailwind CSS 4
+- **API** — Hono, oRPC, Zod
+- **Auth** — Better Auth (magic link, GitHub OAuth, passkeys, Drizzle adapter)
+- **Database** — Neon Postgres, Drizzle ORM
+- **Storage** — Cloudflare R2 via `files-sdk`
+- **Email** — Resend + React Email
+- **AI** — Mastra (agents, workflows, observability, scorers), OpenCode Go for LLM calls, Ollama / OpenAI for embeddings
+- **Infrastructure** — Cloudflare Workers (web + server), Cloudflare Durable Objects, Cloudflare D1 (Mastra storage)
+- **Tooling** — Vite Plus, pnpm workspaces, oxlint, TypeScript, Wrangler
+
+#### What changed on the way in
+
+A few layers were swapped from their upstream defaults. Worth being explicit because it changes how you operate the project day-to-day.
+
+| Concern            | tsu-stack default                     | personal-hub choice                                                               | Why                                                                                 |
+| ------------------ | ------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Database           | Postgres (configurable)               | **Neon Postgres** (serverless)                                                    | Cold-start friendly for the Workers runtime, free tier is enough for a single owner |
+| Cache store        | Up to the consumer                    | Postgres `jsonb` columns in the same Neon DB                                      | Avoids adding a KV namespace binding for a single-owner workload                    |
+| Linting            | ESLint                                | **oxlint** + `oxlint-tailwindcss` + `oxlint-tsgolint`                             | Faster; matches the tsu-stack toolchain in its current shape                        |
+| Build orchestrator | `vp run -r build` (built in)          | Same                                                                              | —                                                                                   |
+| Iconography        | `@tsu-stack/icons` / `@diffkit/icons` | **lucide-react**                                                                  | Dropped the bespoke icon package                                                    |
+| Markdown rendering | `@diffkit/ui/markdown-editor`         | `react-markdown` + `remark-gfm` + `rehype-raw` + `remark-github-blockquote-alert` | Smaller dependency surface; owner can paste GitHub-flavoured markdown directly      |
+
+## Getting started
+
+The project targets Cloudflare Workers for both the web app and the API. The local dev environment uses Vite Plus and `wrangler dev` to emulate the Workers runtime.
 
 ### Prerequisites
 
-- **Node.js** ≥ 25
-  - install via [Node.js official website](https://nodejs.org/) or [nvm](https://github.com/nvm-sh/nvm)
-- **Vite Plus (vp)**
-  - install via `curl -fsSL https://vite.plus | bash` (macOS/Linux) or `irm https://vite.plus/ps1 | iex` (Windows)
-- **pnpm** ≥ 10
-  - install via `vp install -g pnpm`
-- **Docker**
-  - install it via their [official website](https://www.docker.com/)
+- Node.js 22+
+- pnpm 11+
+- A Cloudflare account (for the local emulator and for deployment)
+- A Neon Postgres database
+- A GitHub OAuth app (for sign-in)
+- A Resend API key (for transactional email)
+- An OpenCode Go API key (for the AI agents)
+- An OpenAI API key and / or a self-hosted Ollama instance (for embeddings)
 
-### Setup
-
-1. **Clone the repository and install dependencies:**
-
-   ```bash
-   vpx tiged https://github.com/tsu-moe/tsu-stack#main my-tsu-stack-app
-   # Available branch specifiers: `main` | `variant/merged` | `variant/merged-cloudflare`
-
-   cd my-tsu-stack-app
-   vp env install    # install Node.js version specified in package.json
-   vp install        # install all packages in the monorepo
-   ```
-
-2. **Copy the environment files:**
-
-   ```bash
-   cp packages/env/.env.example packages/env/.env
-   ```
-
-3. **Generate a Better-Auth secret** and set it as `BETTER_AUTH_SECRET` in `packages/env/.env`:
-
-   ```bash
-   vp run auth:secret
-   ```
-
-4. **Create an initial dev Neon database URL if `DATABASE_URL` is missing:**
-
-   ```bash
-   vp run db:setup
-   ```
-
-   This is a first-time dev setup command. It wraps `vpx neon-new@latest --env ../../packages/env/.env --key DATABASE_URL --ref github:salahmohsen/portfolio --yes` in `packages/db` and writes the Neon `DATABASE_URL` to `packages/env/.env`.
-
-5. **Migrate the database**:
-
-   ```bash
-   vp run db:migrate
-   ```
-
-6. **Start all development servers:**
-
-   ```bash
-   vp run dev
-   ```
-
-   The following applications will be running:
-   - **Web App**: `http://localhost:3000`
-   - **Server**: `http://localhost:5000`
-
-> [!TIP]
-> Run `vp run fix` to lint, format, and type-check your code. This is also automatically run when you do `git commit`.
-
-### Running with Docker Locally
-
-As an alternative to `vp run dev`, you can run the full stack inside Docker using the local compose file:
+### Install
 
 ```bash
-cp .env.docker.example .env.docker # And set environment variables as needed
-vp run docker:up
-vp run docker:up:build # OR: force a rebuild when you make changes to the code
+pnpm install
+pnpm prepare   # runs `vp config` to wire the Vite Plus toolchain
 ```
 
-## Deployment
+### Configure environment
 
-This project is designed to be deployed as separate applications for the server and web frontend. Below are the recommended deployment strategies and configurations.
-
-### Coolify
-
-Coolify can be used to deploy the server and web applications. Choose a strategy and follow the steps below to configure each app:
-
-#### Option 1: Separate Dockerfiles
-
-> [!WARNING]
-> This approach retains rolling updates in Coolify and has minimal downtime, but it is harder to scale compared to Docker Compose.
-
-##### Server Deployment
-
-1. **Base Directory**: Set to `/apps/server`.
-2. **Domain**: Assign a domain, e.g., `https://example.com/server`.
-3. **Port**: Expose port `5000`.
-
-##### Web Deployment
-
-1. **Base Directory**: Set to `/apps/web`.
-2. **Domain**: Assign a domain, e.g., `https://example.com/web`.
-3. **Port**: Expose port `3000`.
-
-> [!CAUTION]
-> Ensure that the `Strip Prefixes` option is unchecked in the `Advanced` settings to avoid issues with custom base paths.
-
-Finally, set any required [environment variables](#environment-variables) in the "Environment Variables" tab for each application and press the "Deploy" button to start the deployment process.
-
-#### Option 2: Docker Compose
-
-1. When creating a new application in Coolify, select "Private Repository (with GitHub App)" and select your repository with your tsu-stack app.
-2. Next, change the "Build Pack" to "Docker Compose" and set the "Docker Compose Location" to `/docker-compose.coolify.yaml`.
-3. Refer to [Server Deployment](#server-deployment) and [Web Deployment](#web-deployment) sections above for domain configurations.
-
-- you need to explicitly bind the port in the domain since Docker Compose doesn't have `Expose Port`, for example: `https://example.com:3000/web` for the web app and `https://example.com:5000/server` for the server.
-
-4. Set any required [environment variables](#environment-variables) in the "Environment Variables" tab.
-5. Press the "Deploy" button to start the deployment process.
-
-> [!CAUTION]
-> Ensure that the `Strip Prefixes` option is unchecked in the `Advanced` settings to avoid issues with custom base paths.
-
-### Cloudflare Workers
-
-Both deployable apps in this monorepo can target Cloudflare Workers:
-
-- `apps/web` via the Cloudflare Vite plugin
-- `apps/server` via Hono's Worker-compatible `app.fetch` entrypoint
-
-This monorepo is not a single root-level Worker project. Configure Cloudflare to treat each app as its own Worker project:
-
-- **Web Worker**
-  - Root directory: `apps/web`
-  - Wrangler config: `apps/web/wrangler.jsonc`
-- **Server Worker**
-  - Root directory: `apps/server`
-  - Wrangler config: `apps/server/wrangler.jsonc`
-- **Shared watch paths**:
-  - `apps/web/**`
-  - `apps/server/**`
-  - `packages/api/**`
-  - `packages/auth/**`
-  - `packages/core/**`
-  - `packages/db/**`
-  - `packages/env/**`
-
-  - `packages/logger/**`
-  - `packages/seo/**`
-  - `packages/ui/**`
-  - `package.json`
-  - `pnpm-lock.yaml`
-  - `pnpm-workspace.yaml`
-
-For local development and manual deploys:
+Copy the example env file and fill in the required values:
 
 ```bash
-cd apps/web
-pnpm wrangler login
-pnpm run dev
-pnpm run deploy
-
-cd ../server
-pnpm run dev
-pnpm run deploy
+cp packages/env/.env.example packages/env/.env
 ```
 
-The web Worker keeps using the app dev command through the Cloudflare Vite plugin. The server Worker now does the same and derives its local dev port from `VITE_SERVER_URL`.
+`packages/env/.env.example` documents every variable, the provider, and whether the value is build-time optional or runtime required. The two most important splits:
 
-> [!NOTE]
-> In local Worker dev, Cloudflare does not expose arbitrary shell env vars to `process.env` by default. This repo loads `packages/env/.env` through `dotenvx` and sets `CLOUDFLARE_INCLUDE_PROCESS_ENV=true` in the app `dev` scripts so the Worker runtime can read `DATABASE_URL`, `BETTER_AUTH_SECRET`, and the shared `VITE_*` values.
+- **Build-time optional, runtime required** — Better Auth secret, GitHub OAuth client ID and secret, OpenCode Go API key.
+- **Build-time optional, runtime optional** — Resend API key (the app logs a warning and skips sending if unset), GitHub webhook secret, R2 public base URL.
 
-> [!NOTE]
-> `apps/server` no longer needs a separate Node bootstrap for normal development. The Worker entry is driven through the Cloudflare Vite plugin and Wrangler config.
+### Database
 
-> [!NOTE]
-> The server Worker now expects these GitHub integration bindings when public GitHub pages are enabled:
->
-> - `GITHUB_CACHE_KV` as a KV namespace for hot GitHub response payloads
-> - `GITHUB_SIGNAL_RELAY` as a Durable Object binding for live refresh fan-out
-> - `GITHUB_WEBHOOK_SECRET` as the webhook signature secret in the server environment
->
-> The public GitHub username/token are intentionally not environment variables here. They remain dashboard-managed owner settings stored in `github_config`.
->
-> For the current milestone, the saved GitHub token is write-only in the dashboard UI but still stored as plaintext in `github_config`. Treat that as a temporary posture until encryption-at-rest lands.
-
-> [!NOTE]
-> `apps/server`'s current `deploy` script runs `wrangler deploy` directly. Apply database migrations separately before deploys that depend on schema changes.
-
-> [!NOTE]
-> `apps/server` disables Vite's built-in `server.cors` in dev so Hono's own CORS middleware handles preflight requests. This follows the Hono guidance for Vite-based setups: https://hono.dev/middleware/builtin/cors
-
-#### Git-based CI/CD
-
-You can take advantage of Cloudflare's Git-based CI/CD by connecting your GitHub repository to your Cloudflare account and configuring the deployment settings to automatically deploy on pushes to your `main` branch.
-
-For Workers Builds in this monorepo:
-
-1. Create or connect one Worker for `apps/web` and another for `apps/server`.
-2. Set each Worker root directory to its app directory.
-3. Keep the deploy command at the Wrangler default or set it explicitly to `npx wrangler deploy`.
-4. Add watch paths that match the shared packages used by each app.
-
-You will need to set up the Worker _variables and secrets_ manually in the Cloudflare dashboard in order for builds to succeed:
-
-- Worker variables and secrets:
-  - `VITE_SERVER_URL`
-  - `VITE_WEB_URL`
-  - `DATABASE_URL`
-  - `BETTER_AUTH_SECRET`
-  - `GITHUB_CLIENT_ID`
-  - `GITHUB_CLIENT_SECRET`
-  - `SOURCE_COMMIT`
-  - `GITHUB_WEBHOOK_SECRET` if webhook-driven GitHub cache invalidation is enabled
-  - `VITE_IMGPROXY_URL` if used
-
-| **Build Settings**                                                       | **Secrets & Variables**                                                         |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| ![Build Settings](./assets/img/cloudflare-deployment-settings-build.png) | ![Secrets & Variables](./assets/img/cloudflare-deployment-settings-secrets.png) |
-
-> [!NOTE]
-> `process.env` is populated in Workers when `nodejs_compat` is enabled and the compatibility date is `2025-04-01` or later. This repo relies on that behavior for shared env loading in both Worker runtimes.
-
-### Deploying to Other Platforms
-
-This branch configures the **web app** for Cloudflare Workers through the Cloudflare Vite plugin and the **server app** through a standalone Hono Worker entry. If you want to target another platform again, switch the relevant app's runtime adapter or bootstrap entrypoint for that deployment target.
-
-## Environment Variables
-
-### Server
-
-For the Hono server, use the following environment variables in either Node or Cloudflare Worker runtime:
-
-| Variable Name           | Required | Default Value         | Description                                                                                                                       |
-| ----------------------- | -------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_SERVER_URL`       | ✅       | -                     | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`.                                  |
-| `VITE_WEB_URL`          | ✅       | -                     | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.                                    |
-| `BETTER_AUTH_SECRET`    | ✅       | -                     | Secret key for Better-Auth. Generate with `vp run auth:secret`.                                                                   |
-| `DATABASE_URL`          | ✅       | -                     | Neon Postgres connection string.                                                                                                  |
-| `GITHUB_CLIENT_ID`      | ✅       | -                     | GitHub OAuth app client ID used by Better Auth.                                                                                   |
-| `GITHUB_CLIENT_SECRET`  | ✅       | -                     | GitHub OAuth app client secret used by Better Auth.                                                                               |
-| `GITHUB_WEBHOOK_SECRET` | ❌       | -                     | Secret used to verify GitHub webhook signatures for public cache invalidation when enabled.                                       |
-| `RESEND_API_KEY`        | ❌       | -                     | Resend API key for transactional email (verification, etc.). If unset, email delivery is skipped with a warning.                  |
-| `EMAIL_FROM`            | ❌       | `noreply@example.com` | From address used for outgoing transactional email. ex: `Portfolio <noreply@yourdomain.com>`.                                     |
-| `ENABLE_OPEN_API_DOCS`  | ❌       | `false`               | Enable OpenAPI `/docs` endpoint.                                                                                                  |
-| `OPENCODE_API_KEY`      | ✅       | -                     | OpenCode Go API key used for LLM calls in the identity and portfolio agents. Get one at https://opencode.ai/docs/zen (13 models). |
-| `OPENAI_API_KEY`        | ✅       | -                     | OpenAI API key used for embeddings only — OpenCode Go does not provide embeddings.                                                |
-| `EMBEDDING_MODEL`       | ❌       | `mxbai-embed-large`   | Embedding model used by the server. Defaults to OpenAI if no Ollama URL is set.                                                   |
-
-### Web
-
-For the web app, the validated runtime env surface is much smaller than the server one. The web app reads:
-
-| Variable Name       | Required | Default Value | Description                                                                                                                         |
-| ------------------- | -------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_SERVER_URL`   | ✅       | -             | Base URL for the server. May also include a subpath if needed, ex: `https://example.com/server`.                                    |
-| `VITE_WEB_URL`      | ✅       | -             | Base URL for the web app. May also include a subpath if needed, ex: `https://example.com/web`.                                      |
-| `VITE_IMGPROXY_URL` | ❌       | -             | URL for image optimization. You'll need to deploy your own [imgproxy](https://hub.docker.com/r/darthsim/imgproxy/) container first. |
-
-Build-time/server-only values used by the web app's Node/Worker runtime are validated separately via `ENV_WEB_SERVER`: `NODE_ENV`, `SOURCE_COMMIT`, and `IS_BUILD`.
-
-## Merging Server to Web App
-
-> [!TIP]
-> An example can be found in the [`variant/merged`](https://github.com/tsu-moe/tsu-stack/compare/variant/merged) branch. You can check [this commit](https://github.com/tsu-moe/tsu-stack/commit/cf576db302cc1380bf0f5f27017cf0951ea1c6c5) to see the changes needed.
-
-Since Hono is built on web standards, you can mount the Hono App into the TanStack Start web server.
-
-```json5
-// apps/web/package.json
-"dependencies": {
-  // ...
-
-  "@tsu-stack/server": "workspace:*", // add this to import the server app into the web app
-  "@tsu-stack/ui": "workspace:*",
-  // ...
-}
+```bash
+pnpm db:push        # push the schema to a local / dev database
+pnpm db:generate    # generate a new migration after schema changes
+pnpm db:migrate     # apply migrations
+pnpm db:studio      # open Drizzle Studio
 ```
 
-Then we can import our app from the server package.
+### Run the dev servers
 
-```ts
-// apps/web/src/routes/server/$.ts
-import { createFileRoute } from "@tanstack/react-router";
-
-import { app } from "@tsu-stack/server";
-
-export const Route = createFileRoute("/server/$")({
-  server: {
-    handlers: {
-      GET: ({ request }) => {
-        return app.fetch(request);
-      },
-
-      POST: ({ request }) => {
-        return app.fetch(request);
-      }
-    }
-  }
-});
+```bash
+pnpm dev
 ```
 
-Then merge your web environment variables with the server ones and make sure `VITE_SERVER_URL` points to the web domain's subpath.
+This starts the web app and the API in parallel through `wrangler dev` with the local Workers emulator.
 
-```diff
--VITE_SERVER_URL=http://localhost:5000/server
-+VITE_SERVER_URL=http://localhost:3000/web/server
-VITE_WEB_URL=http://localhost:3000/web
+### Deploy
+
+Both apps deploy to Cloudflare Workers. Each app has its own `wrangler.jsonc` and its own deploy script:
+
+```bash
+pnpm deploy:server
+pnpm deploy:web
 ```
 
-With the current server shape, `@tsu-stack/server` already exports the shared Hono app from `apps/server/src/index.ts`, so you only need to keep that export runtime-neutral. Do not reintroduce a Node-only `serve()` bootstrap if the app is being mounted into TanStack Start.
+The `apps/web/wrangler.jsonc` is currently routed to `salahmohsen.com/*`. Update the route pattern and `zone_name` before deploying your own instance.
 
-> [!WARNING]
-> You may want to refactor the logging middlewares since the TanStack Start server also logs incoming/outgoing requests, similar to the Hono app's middleware.
+## Project conventions
 
-> [!WARNING]
-> You may also need to adjust your Docker Compose file and the `apps/web/Dockerfile` to include build args needed in the server app such as `DATABASE_URL` and handle other environment variables.
-
-### Resource Usage
-
-When mounting the Hono app into the TanStack Start web server, you will save the resources of running a separate Node.js server.
-
-But keep in mind that all API requests will now consume resources from the web server container, leading to the web server being less responsive under heavy API load.
-
-However, the benefit is singular deployments and lower memory usage for websites that don't receive much traffic (around 70MB with a single app vs 130MB when separated on idle).
-
-> [!NOTE]
-> I personally keep them separated so that when it's time to scale, I can scale the web server independently or deploy it to another platform like Cloudflare Workers for serverless edge performance.
-
-## Issue Watchlist
-
-- [Router/Start issues](https://github.com/TanStack/router/issues) - TanStack Start is in RC.
-- [Devtools releases](https://github.com/TanStack/devtools/releases) - TanStack Devtools is in alpha and may still have breaking changes.
-- [Better Auth experimental Drizzle adapter](https://github.com/better-auth/better-auth/pull/9489) - We're using a separate branch of Better Auth's Drizzle adapter that supports Drizzle relations v2.
-- [Cloudflare Vite plugin docs](https://developers.cloudflare.com/workers/vite-plugin/) - The web and server Cloudflare dev paths now depend on the plugin behavior and Wrangler integration staying stable.
-- [Vite+ issues](https://github.com/voidzero-dev/vite-plus/issues) - Vite+ is in alpha.
-
-### Pitfalls
-
-- Better Auth uses its default cookie settings (`SameSite=Lax`) here to better support OAuth and other redirect-based flows. Cross-domain deployments still require deliberate cookie, domain, and CORS configuration. See [Better Auth cookie docs](https://better-auth.com/docs/concepts/cookies#safari-itp-and-cross-domain-setups) for context.
-- This implementation does not include security headers by default. You should add the following headers in production for improved security:
-  - `Content-Security-Policy`
-  - `Strict-Transport-Security`
-  - `X-Frame-Options`
-  - `X-Content-Type-Options: nosniff`
-  - `Referrer-Policy`
-  - `Permissions-Policy`
-- Builds are slower and more bloated in general because Vite Plus does not have a [`turbo prune`](https://turborepo.dev/docs/reference/prune) alternative
-  - See this related issue: https://github.com/voidzero-dev/vite-plus/issues/839
-- On a similar note, there isn't an elegant way to install `vp` in Dockerfile images, so you need to manually bump the desired `vp` version in the `/apps/*/Dockerfile`'s `VITE_PLUS_VERSION` variable.
-- `robots.txt` [needs to be at the root of the domain](https://developers.google.com/search/docs/crawling-indexing/robots/intro) to be detected by search engines (ie. `example.com/robots.txt`), but since the web app is served on a subpath (ie. `example.com/web`), you need to set up a redirect from `example.com/robots.txt` to `example.com/web/robots.txt` in order for it to be detected.
-  - Other than that, you may need to set up a root sitemap index that links to as many sitemaps for every app you deploy in multiple subpaths.
-    - At the moment, the `__root.tsx` points to the subpath-specific sitemap, so you may want to consider pointing it to the root if you decide to opt into that architecture.
-  - Alternatively, you can simply deploy the web app in the root so that the files are hosted in `example.com/robots.txt` and `example.com/sitemap.xml` instead of `example.com/web/robots.txt` and `example.com/web/sitemap.xml`.
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If there are any bugs, please open an issue.
-
-To get started, fork the repo, make your changes, add, commit, and push your changes to your fork. Then, open a pull request. If you're new to GitHub, [this tutorial](https://www.freecodecamp.org/news/how-to-make-your-first-pull-request-on-github-3) might help.
-
-You can support the project by giving it a star, sharing it with your friends, contributing to the project, and reporting any bugs you find.
+- **Domain placement** — every shared schema, type, or constant lives in `packages/core`. The `api` package imports from `core`; the `web` package imports from `core` through `api`.
+- **Package namespace** — workspace packages publish as `@tsu-stack/*`. The naming is inherited from [tsu-stack](https://github.com/tsu-moe/tsu-stack); the original upstream packages in [diffkit](https://github.com/stylessh/diffkit) shipped as `@diffkit/*` and were renamed during the port.
+- **Feature folders** — UI, API hooks, and feature-local helpers live next to each other under `apps/web/src/<area>/<feature>/{ui,api,lib,hooks}/` (e.g. `pages/github-repo/`, `features/identity/`, `widgets/items-page/`). This replaces the flatter `components/<feature>/` + `lib/<thing>.ts` layout that diffkit used.
+- **Forms** — every form uses the shared `@tsu-stack/forms` form pattern with a Zod validator. No ad-hoc `useState` forms.
+- **Data fetching** — every server read goes through TanStack Query with an oRPC-derived query key. No bare `fetch` calls in components. The `lib/github.query.ts` mega-file pattern from diffkit is split into per-feature `*.query.ts` files next to the consuming pages.
+- **Auth** — every protected route lives under `apps/web/src/routes/(root-layout)/__protected/` and the parent layout's `beforeLoad` enforces the session.
+- **Visibility** — every portfolio item has a public-side enable flag and an AI-side enable flag. The public site only reads public items; the AI only sees items the owner has explicitly opted in to.
 
 ## Acknowledgements
 
-This repository builds on [mugnavo/tanstarter-plus](https://github.com/mugnavo/tanstarter-plus).
+personal-hub is built on the shoulders of two open-source projects.
 
-- It will continue to be a reference for new dependency features.
+- **[diffkit](https://github.com/stylessh/diffkit)** — a GitHub wrapper built with TanStack Start by [stylessh](https://github.com/stylessh). personal-hub is not a fork, but the following were ported from diffkit and adapted for the portfolio domain: the **GitHub cache layer** (namespace + signal invalidation, ETag/Last-Modified revalidation, the `github_response_cache` / `github_revalidation_signal` / `github_cache_namespace` tables, and the Durable Object signal relay); the **repo browser** (file tree, blob view, branch comparison, contributors, activity cards, latest-commit bar, repo overview, file search); the **public profile components** (contribution graph, pinned repo card, user activity feed); the **GitHub OAuth + webhook plumbing** (per-user token, public/anonymous + owner-authenticated Octokit split, webhook delivery-dedup); and a **slice of the dashboard settings surface** for the GitHub config form. personal-hub would not exist without diffkit.
+- **[tsu-stack](https://github.com/tsu-moe/tsu-stack)** by [Luzefiru](https://github.com/Luzefiru) — the opinionated full-stack TypeScript monorepo (TanStack Start + Hono + oRPC + Drizzle + Better Auth) on which the workspace, packages, tooling, and CI are based. personal-hub is a downstream application of tsu-stack, not a fork.
+
+Thank you to both authors.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
+MIT — see [LICENSE](./LICENSE).
