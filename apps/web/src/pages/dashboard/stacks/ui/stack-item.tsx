@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { Edit, Package, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,13 +17,16 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { Icon } from "@/shared/ui/icon-picker";
+
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 
-type StackItemProps = {
+type StackItemProps = React.ComponentProps<"div"> & { size?: "default" | "sm" } & {
   stack: StackOutput;
+  onEdit: (id: string) => void;
 };
 
-export function StackItem({ stack }: StackItemProps) {
+export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
   const queryClient = useQueryClient();
   const { selectItem, isItemSelected } = useStackStore();
   const selected = isItemSelected?.[stack.id] ?? false;
@@ -74,13 +76,13 @@ export function StackItem({ stack }: StackItemProps) {
           "transition-all duration-200",
           "hover:border-border hover:bg-muted data-selected:border-foreground data-selected:bg-muted"
         )}
+        {...props}
       >
         <CardContent className="flex h-full flex-col items-center justify-center gap-3 p-4">
           {stack.icon ? (
-            <img
-              src={stack.icon}
-              alt={stack.name}
-              className="size-16 shrink-0 rounded object-contain"
+            <Icon
+              nameIcon={stack.icon}
+              propsIcon={{ className: "size-16 shrink-0 rounded object-contain" }}
             />
           ) : (
             <Package className="size-16 shrink-0 text-muted-foreground" strokeWidth={1.5} />
@@ -102,8 +104,10 @@ export function StackItem({ stack }: StackItemProps) {
         >
           <Button
             variant="secondary"
-            render={<Link to="/dashboard/stacks/$stackId" params={{ stackId: stack.id }} />}
-            onClick={(event: React.MouseEvent) => event.stopPropagation()}
+            onClick={(event: React.MouseEvent) => {
+              event.stopPropagation();
+              onEdit(stack.id);
+            }}
             aria-label={`Edit ${stack.name}`}
           >
             <Edit />

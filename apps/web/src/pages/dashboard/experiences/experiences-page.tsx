@@ -10,9 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/componen
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import {
-  ItemSkeleton,
   ItemsEmpty,
   ItemsNavProvider,
+  ListSkeleton,
   PageHeader,
   PageLayout,
   isAnyItemSelected,
@@ -125,7 +125,7 @@ export function ExperiencesPage() {
   );
 
   function renderList() {
-    if (experiencesQuery.isLoading) return <ItemSkeleton />;
+    if (experiencesQuery.isLoading) return <ListSkeleton />;
     if (visibleExperiences.length === 0) return emptyState;
 
     return (
