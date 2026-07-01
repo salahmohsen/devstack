@@ -1,36 +1,30 @@
 import { z } from "zod";
 
-import { ContactInfoSchema, type ContactInfo, ProfileOutputSchema } from "@tsu-stack/core/profile";
-import { contactRepository, getDb, userRepository, type UserEntity } from "@tsu-stack/db";
-import { contact } from "@tsu-stack/db/schema";
+import { ContactInfoSchema, ProfileOutputSchema, type ContactInfo } from "@tsu-stack/core/profile";
+import { contactRepository, userRepository, type UserEntity } from "@tsu-stack/db";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
-function normalizeContact(input: ContactInfo | undefined): {
-  website: string | null;
-  email: string | null;
-  location: string | null;
-} {
-  const clean = (v: string | null | undefined) => {
-    if (v === undefined || v === null) return null;
-    const trimmed = v.trim();
-    return trimmed.length === 0 ? null : trimmed;
-  };
-  return {
-    website: clean(input?.website),
-    email: clean(input?.email),
-    location: clean(input?.location)
-  };
+function normalizeContact(input: ContactInfo | undefined): Array<{
+  type: "website" | "email" | "location";
+  value: string;
+  icon: string;
+}> {
+  if (!input) return [];
+  const items: Array<{
+    type: "website" | "email" | "location";
+    value: string;
+    icon: string;
+  }> = [];
+  if (input.website) items.push({ type: "website", value: input.website, icon: "globe" });
+  if (input.email) items.push({ type: "email", value: input.email, icon: "mail" });
+  if (input.location) items.push({ type: "location", value: input.location, icon: "map-pin" });
+  return items;
 }
 
 function toProfileOutput(
   userRow: UserEntity,
-  contactRow: {
-    website: string | null;
-    email: string | null;
-    location: string | null;
-    updatedAt: Date;
-  } | null
+  contacts: Awaited<ReturnType<typeof contactRepository.findByUserId>>
 ) {
   return ProfileOutputSchema.parse({
     id: userRow.id,
@@ -39,12 +33,7 @@ function toProfileOutput(
     emailVerified: userRow.emailVerified,
     image: userRow.image,
     createdAt: userRow.createdAt.toISOString(),
-    contact: {
-      website: contactRow?.website ?? null,
-      email: contactRow?.email ?? null,
-      location: contactRow?.location ?? null,
-      updatedAt: (contactRow?.updatedAt ?? userRow.createdAt).toISOString()
-    }
+    contact: contacts
   });
 }
 
@@ -61,8 +50,8 @@ export const profileRouter = {
       if (!userRow) {
         throw new Error("Session references a user that no longer exists");
       }
-      const contactRow = await contactRepository.findByUserId(userId);
-      return toProfileOutput(userRow, contactRow);
+      const contacts = await contactRepository.findByUserId(userId);
+      return toProfileOutput(userRow, contacts);
     }),
 
   update: protectedProcedure
@@ -84,50 +73,36 @@ export const profileRouter = {
     })
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
-      const normalizedContact = normalizeContact(input.contact);
+      const contactItems = normalizeContact(input.contact);
       const trimmedName = input.name.trim();
       const trimmedEmail = input.email.trim();
 
-      return getDb().transaction(async (tx) => {
-        const current = await userRepository.findById(userId);
-        if (!current) {
-          throw new Error("Session references a user that no longer exists");
+      const current = await userRepository.findById(userId);
+      if (!current) {
+        throw new Error("Session references a user that no longer exists");
+      }
+
+      const emailChanged = current.email !== trimmedEmail;
+
+      if (emailChanged) {
+        const collision = await userRepository.findByEmail(trimmedEmail);
+        if (collision && collision.id !== userId) {
+          throw errors.EMAIL_TAKEN();
         }
+      }
 
-        const emailChanged = current.email !== trimmedEmail;
-
-        if (emailChanged) {
-          const collision = await userRepository.findByEmail(trimmedEmail);
-          if (collision && collision.id !== userId) {
-            throw errors.EMAIL_TAKEN();
-          }
-        }
-
-        const updatedUser = await userRepository.update(userId, {
-          name: trimmedName,
-          email: trimmedEmail,
-          // Bypassing Better Auth's email-change flow (which would
-          // re-verify via a magic link). The owner is the only user,
-          // so the verification step is unnecessary; reset the flag
-          // so the UI can offer a re-verify path.
-          ...(emailChanged ? { emailVerified: false } : {})
-        });
-        if (!updatedUser) {
-          throw new Error("Profile update did not affect any row");
-        }
-
-        // Upsert the contact row in the same transaction so the
-        // two writes commit together (or both roll back).
-        const [updatedContact] = await tx
-          .insert(contact)
-          .values({ userId, ...normalizedContact })
-          .onConflictDoUpdate({
-            target: contact.userId,
-            set: normalizedContact
-          })
-          .returning();
-
-        return toProfileOutput(updatedUser, updatedContact ?? null);
+      const updatedUser = await userRepository.update(userId, {
+        name: trimmedName,
+        email: trimmedEmail,
+        ...(emailChanged ? { emailVerified: false } : {})
       });
+      if (!updatedUser) {
+        throw new Error("Profile update did not affect any row");
+      }
+
+      await contactRepository.upsert(userId, contactItems);
+
+      const contacts = await contactRepository.findByUserId(userId);
+      return toProfileOutput(updatedUser, contacts);
     })
 };

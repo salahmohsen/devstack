@@ -41,16 +41,17 @@ export function ProfileSettings() {
   const profileQuery = useQuery(getProfileQueryOptions());
   const [isEditing, setIsEditing] = useState(false);
 
-  // Single source of truth for the server-side profile values.
-  // Used to seed the form when it mounts, when the query refetches,
-  // and when the user cancels. Falls back to the session while the
-  // profile endpoint is still in flight.
+  // Convert contact array to flat map for the form.
+  const contactMap = Object.fromEntries(
+    (profileQuery.data?.contact ?? []).map((c) => [c.type, c.value])
+  );
+
   const serverValues = {
     name: profileQuery.data?.name ?? session?.user?.name ?? "",
     email: profileQuery.data?.email ?? session?.user?.email ?? "",
-    website: profileQuery.data?.contact.website ?? "",
-    contactEmail: profileQuery.data?.contact.email ?? "",
-    location: profileQuery.data?.contact.location ?? ""
+    website: (contactMap.website as string) ?? "",
+    contactEmail: (contactMap.email as string) ?? "",
+    location: (contactMap.location as string) ?? ""
   };
 
   const form = useAppForm({
@@ -92,9 +93,12 @@ export function ProfileSettings() {
   const userImage = session?.user?.image ?? undefined;
   const displayName = profileQuery.data?.name ?? session?.user?.name ?? "";
   const displayEmail = profileQuery.data?.email ?? session?.user?.email ?? "";
-  const websiteDisplay = profileQuery.data?.contact.website ?? null;
-  const contactEmailDisplay = profileQuery.data?.contact.email ?? null;
-  const locationDisplay = profileQuery.data?.contact.location ?? null;
+  const websiteDisplay =
+    profileQuery.data?.contact.find((c) => c.type === "website")?.value ?? null;
+  const contactEmailDisplay =
+    profileQuery.data?.contact.find((c) => c.type === "email")?.value ?? null;
+  const locationDisplay =
+    profileQuery.data?.contact.find((c) => c.type === "location")?.value ?? null;
 
   return (
     <div className="space-y-6">

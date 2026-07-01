@@ -4,43 +4,27 @@ import { getDb } from "#@/index";
 import { contact } from "#@/schema/contact.schema";
 
 export type ContactEntity = InferSelectModel<typeof contact>;
-export type UpdateContactData = Pick<
-  InferInsertModel<typeof contact>,
-  "website" | "email" | "location"
->;
+export type UpdateContactData = Pick<InferInsertModel<typeof contact>, "icon" | "type" | "value">;
 
 export const contactRepository = {
-  async findByUserId(userId: string): Promise<ContactEntity | null> {
-    return (await getDb().query.contact.findFirst({ where: { userId } })) ?? null;
+  async findByUserId(userId: string): Promise<ContactEntity[]> {
+    return await getDb().query.contact.findMany({
+      where: { userId }
+    });
   },
 
-  async upsert(userId: string, input: UpdateContactData) {
-    const existing = await contactRepository.findByUserId(userId);
+  async upsert(userId: string, input: UpdateContactData[]) {
+    await getDb().delete(contact).where(eq(contact.userId, userId));
 
-    if (existing) {
-      const [updated] = await getDb()
-        .update(contact)
-        .set({
-          website: input.website ?? null,
-          email: input.email ?? null,
-          location: input.location ?? null
-        })
-        .where(eq(contact.userId, userId))
-        .returning();
+    if (input.length === 0) return [];
 
-      return updated ?? null;
-    }
-
-    const [created] = await getDb()
+    return await getDb()
       .insert(contact)
-      .values({
-        userId,
-        website: input.website ?? null,
-        email: input.email ?? null,
-        location: input.location ?? null
-      })
+      .values(
+        input.map((item) => {
+          return { userId, ...item };
+        })
+      )
       .returning();
-
-    return created ?? null;
   }
 };
