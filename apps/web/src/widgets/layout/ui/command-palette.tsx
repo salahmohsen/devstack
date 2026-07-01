@@ -94,7 +94,7 @@ export function CommandPalette() {
       <CommandInput
         placeholder="Type a command or search..."
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onValueChange={(value) => setSearch(value)}
       />
       <CommandList>
         <CommandEmpty>
