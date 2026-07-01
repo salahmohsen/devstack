@@ -15,33 +15,44 @@ import { useFieldContext } from "./form-contexts";
 type SwitchFieldProps = {
   label?: string;
   description?: string;
-  className?: string;
+  classNames?: {
+    field?: string;
+    label?: string;
+    description?: string;
+    error?: string;
+    content?: string;
+    input?: string;
+  };
 };
 
 function SwitchField(props: SwitchFieldProps) {
   const field = useFieldContext<boolean>();
 
   return (
-    <Field orientation="horizontal">
+    <Field orientation="horizontal" className={props.classNames?.field}>
       <Switch
         id={field.name}
         name={field.name}
         checked={field.state.value}
         onCheckedChange={(checked) => field.handleChange(checked)}
         onBlur={field.handleBlur}
-        className={props.className}
+        className={props.classNames?.input}
       />
       {(props.label ?? props.description) && (
-        <FieldContent>
+        <FieldContent className={props.classNames?.content}>
           {props.label ? (
-            <FieldLabel htmlFor={field.name}>
+            <FieldLabel htmlFor={field.name} className={props.classNames?.label}>
               <FieldTitle>{props.label}</FieldTitle>
             </FieldLabel>
           ) : null}
-          {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
+          {props.description ? (
+            <FieldDescription className={props.classNames?.description}>
+              {props.description}
+            </FieldDescription>
+          ) : null}
         </FieldContent>
       )}
-      <FieldError errors={field.state.meta.errors} />
+      <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );
 }

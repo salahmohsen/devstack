@@ -10,15 +10,25 @@ type InputFieldProps = {
   placeholder?: string;
   description?: string;
   type?: string;
-  className?: string;
+  classNames?: {
+    field?: string;
+    label?: string;
+    description?: string;
+    error?: string;
+    input?: string;
+  };
 };
 
 function InputField(props: InputFieldProps) {
   const field = useFieldContext<string>();
 
   return (
-    <Field>
-      {props.label ? <FieldLabel htmlFor={field.name}>{props.label}</FieldLabel> : null}
+    <Field className={props.classNames?.field}>
+      {props.label ? (
+        <FieldLabel htmlFor={field.name} className={props.classNames?.label}>
+          {props.label}
+        </FieldLabel>
+      ) : null}
       <Input
         id={field.name}
         name={field.name}
@@ -27,10 +37,14 @@ function InputField(props: InputFieldProps) {
         type={props.type ?? "text"}
         value={field.state.value ?? ""}
         placeholder={props.placeholder}
-        className={props.className}
+        className={props.classNames?.input}
       />
-      {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
-      <FieldError errors={field.state.meta.errors} />
+      {props.description ? (
+        <FieldDescription className={props.classNames?.description}>
+          {props.description}
+        </FieldDescription>
+      ) : null}
+      <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );
 }

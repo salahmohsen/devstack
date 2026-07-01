@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
-import { ItemSkeleton } from "@/widgets/items-page/ui/item-skeleton";
+import { ListSkeleton } from "@/widgets/items-page/ui/item-skeleton";
 
 type ItemsListProps<T> = {
   items: readonly T[] | null;
@@ -58,7 +58,7 @@ export function ItemsList<T extends { id: string }>({
   const showSkeleton = isLoading && (showSkeletonOnRefetch || !hasLoadedOnce);
 
   if (showSkeleton) {
-    return <ItemSkeleton count={skeletonCount} />;
+    return <ListSkeleton count={skeletonCount} />;
   }
 
   if (!items || items.length === 0) {

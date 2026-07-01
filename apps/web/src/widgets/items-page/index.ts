@@ -11,7 +11,7 @@ export { useItemsNavigation } from "@/widgets/items-page/lib/use-items-navigatio
 export { useItemsTabUrlSync } from "@/widgets/items-page/lib/use-items-tab-url-sync";
 
 // UI
-export { ItemSkeleton } from "@/widgets/items-page/ui/item-skeleton";
+export { GridSkeleton, ListSkeleton } from "@/widgets/items-page/ui/item-skeleton";
 export { ItemsEmpty } from "@/widgets/items-page/ui/items-empty";
 export { ItemsFilterButton } from "@/widgets/items-page/ui/items-filter-button";
 export type { ItemsFilterOption } from "@/widgets/items-page/ui/items-filter-button";
