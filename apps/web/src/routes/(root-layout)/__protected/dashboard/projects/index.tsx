@@ -11,9 +11,9 @@ import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import {
-  ItemSkeleton,
   ItemsEmpty,
   ItemsNavProvider,
+  ListSkeleton,
   PageHeader,
   PageLayout,
   isAnyItemSelected,
@@ -27,7 +27,10 @@ import { ProjectItem } from "@/pages/dashboard/projects/ui/project-item";
 import { ProjectItemAddButton } from "@/pages/dashboard/projects/ui/project-item-add-button";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/projects/")({
-  component: ProjectsListPage
+  component: ProjectsListPage,
+  loader: async ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
+  }
 });
 
 function ProjectsListPage() {
@@ -117,7 +120,7 @@ function ProjectsListPage() {
   );
 
   function renderList() {
-    if (projectsQuery.isLoading) return <ItemSkeleton />;
+    if (projectsQuery.isLoading) return <ListSkeleton />;
     if (projects.length === 0) return emptyState;
 
     return (

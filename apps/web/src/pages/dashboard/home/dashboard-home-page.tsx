@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
 import { Code, Package } from "lucide-react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -7,26 +6,6 @@ import { Badge } from "@tsu-stack/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import { Container } from "@tsu-stack/ui/components/container";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
-
-import { generateAppSeo } from "@/shared/lib/seo";
-
-import { appConfig } from "@/config/app.config";
-
-export const Route = createFileRoute("/(root-layout)/__protected/dashboard/resume/")({
-  head: () =>
-    generateAppSeo({
-      alternates: {
-        canonicalPath: "/dashboard/resume"
-      },
-      description: `Manage your resume content in ${appConfig.site.shortName}.`,
-      robots: {
-        follow: false,
-        index: false
-      },
-      title: "Resume"
-    }),
-  component: ResumeOverviewPage
-});
 
 function ExperienceCount({ count }: { count: number }) {
   return (
@@ -44,7 +23,7 @@ function ProjectCount({ count }: { count: number }) {
   );
 }
 
-function ResumeOverviewPage() {
+export function DashboardHomePage() {
   const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
   const projectsQuery = useQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
 

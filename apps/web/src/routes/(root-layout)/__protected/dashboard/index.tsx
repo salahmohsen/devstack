@@ -4,7 +4,7 @@ import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 import { generateAppSeo } from "@/shared/lib/seo";
 
-import { DashboardPage } from "@/pages/dashboard";
+import { DashboardHomePage } from "@/pages/dashboard/home/dashboard-home-page";
 
 import { appConfig } from "@/config/app.config";
 
@@ -17,12 +17,16 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/")({
       alternates: {
         canonicalPath: "/dashboard"
       },
-      description: `View your account dashboard and protected application data in ${appConfig.site.shortName}.`,
+      description: `Manage your resume content in ${appConfig.site.shortName}.`,
       robots: {
         follow: false,
         index: false
       },
       title: "Dashboard"
     }),
-  component: DashboardPage
+  loader: async ({ context: { queryClient } }) => {
+    queryClient.prefetchQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
+    queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
+  },
+  component: DashboardHomePage
 });
