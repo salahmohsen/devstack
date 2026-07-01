@@ -194,7 +194,12 @@ export default defineConfig({
         const msg = typeof warning === "string" ? warning : (warning.message ?? "");
         if (msg.includes("externalized for browser compatibility") && msg.includes("evlog")) return;
         warn(warning);
-      }
+      },
+      // The @aws-sdk packages are files-sdk optional peer deps. We use the
+      // r2 binding adapter, so the S3 chunk is never loaded at runtime. Mark
+      // them external in the server build to keep their chunks out of dist/ and
+      // avoid hitting the Cloudflare build env's PID limit from too many chunks.
+      external: (id) => id.startsWith("@aws-sdk/")
     }
   },
   // Restart the dev server when env files in this directory change
