@@ -163,10 +163,16 @@ export default defineConfig({
     tasks: {
       build: {
         command:
-          "cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true IS_BUILD=true pnpm dotenvx run -f ../../packages/env/.env -- vp build",
+          "cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true IS_BUILD=true NODE_OPTIONS=--max-old-space-size=4096 pnpm dotenvx run -f ../../packages/env/.env -- vp build",
         // These environment variables are dependencies of the build process and need to be passed here to be picked up by the Vite Task runner.
         // CAUTION: These are hardcoded into the image. You should consider Build Secrets for sensitive values.
         //          In Coolify, you need to check "Use Docker Build Secrets" in the Environment Variables tab.
+        // `NODE_OPTIONS` is hardcoded into the build command (not `env`) so
+        // the raised V8 heap reaches the bundler process. The Cloudflare
+        // build container hits EAGAIN (os error 11) when memory pressure
+        // prevents spawning new processes mid-emit on the larger SSR chunks.
+        // Raising the heap ceiling helps avoid the OOM condition that
+        // triggers the fork failure.
         env: [
           "NODE_ENV",
           "VITE_SERVER_URL",
