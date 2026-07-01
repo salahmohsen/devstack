@@ -9,7 +9,7 @@
     ".": "./src/index.ts",
     "./github-config": "./src/github-config/index.ts",
     "./health": "./src/health/index.ts",
-    "./identity": "./src/identity/index.ts",
+    "./orpc-context": "./src/orpc-context/index.ts",
     "./portfolio": "./src/portfolio/index.ts",
     "./profile": "./src/profile/index.ts",
     "./utils": "./src/utils/index.ts",
@@ -20,6 +20,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@tsu-stack/db": "workspace:*",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:"

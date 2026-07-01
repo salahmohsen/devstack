@@ -10,8 +10,8 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import * as schema from "#@/schema/index";
 import { relations as appRelations } from "#@/schema/relations";
 
-export * from "drizzle-orm/sql";
 export * from "#@/repositories/index";
+export * from "drizzle-orm/sql";
 
 /**
  * Singleton HTTP Drizzle instance.
