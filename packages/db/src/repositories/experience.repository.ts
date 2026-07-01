@@ -11,7 +11,7 @@ export type CreateExperienceData = Omit<
 export type UpdateExperienceData = Partial<CreateExperienceData>;
 export type ReorderExperienceItem = { id: string; sortOrder: number };
 
-class ExperienceRepository {
+export const experienceRepository = {
   async findAll() {
     return getDb().query.experience.findMany({
       orderBy: (exp, { asc }) => [asc(exp.sortOrder), asc(exp.title)],
@@ -26,7 +26,7 @@ class ExperienceRepository {
         }
       }
     });
-  }
+  },
 
   async findById(id: string) {
     return getDb().query.experience.findFirst({
@@ -42,10 +42,10 @@ class ExperienceRepository {
         }
       }
     });
-  }
+  },
 
   async create(input: CreateExperienceData) {
-    const all = await this.findAll();
+    const all = await experienceRepository.findAll();
     const nextSortOrder = all.length > 0 ? Math.max(...all.map((e) => e.sortOrder)) + 1 : 0;
 
     const [created] = await getDb()
@@ -64,8 +64,8 @@ class ExperienceRepository {
       })
       .returning();
 
-    return this.findById(created.id);
-  }
+    return experienceRepository.findById(created.id);
+  },
 
   async update(id: string, input: UpdateExperienceData) {
     const [updated] = await getDb()
@@ -76,8 +76,8 @@ class ExperienceRepository {
 
     if (!updated) return null;
 
-    return this.findById(updated.id);
-  }
+    return experienceRepository.findById(updated.id);
+  },
 
   async reorder(items: ReorderExperienceItem[]) {
     if (items.length === 0) return;
@@ -100,7 +100,7 @@ class ExperienceRepository {
           .where(eq(experience.id, item.id));
       }
     });
-  }
+  },
 
   async toggleArchived(id: string) {
     const [current] = await getDb()
@@ -121,8 +121,8 @@ class ExperienceRepository {
 
     if (!updated) return null;
 
-    return this.findById(updated.id);
-  }
+    return experienceRepository.findById(updated.id);
+  },
 
   async delete(id: string) {
     const [deleted] = await getDb()
@@ -132,6 +132,4 @@ class ExperienceRepository {
 
     return deleted ?? null;
   }
-}
-
-export const experienceRepository = new ExperienceRepository();
+};

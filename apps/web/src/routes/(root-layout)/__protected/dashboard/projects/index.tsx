@@ -5,7 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 
 import { SortableList } from "@/shared/ui/sortable-list";
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/proje
 });
 
 function ProjectsListPage() {
-  const projectsQuery = useQuery(orpc.portfolio.projects.list.queryOptions());
+  const projectsQuery = useQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
   const queryClient = useQueryClient();
 
   const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useProjectStore();
@@ -39,9 +39,9 @@ function ProjectsListPage() {
   const projects = useMemo<ProjectOutput[]>(() => projectsQuery.data ?? [], [projectsQuery.data]);
 
   const reorderMutation = useMutation(
-    orpc.portfolio.projects.reorder.mutationOptions({
+    orpcQueryClient.portfolio.projects.reorder.mutationOptions({
       onMutate: async (input) => {
-        const listKey = orpc.portfolio.projects.list.queryKey();
+        const listKey = orpcQueryClient.portfolio.projects.list.queryKey();
         await queryClient.cancelQueries({ queryKey: listKey });
 
         const previous = queryClient.getQueryData(listKey);
@@ -63,13 +63,16 @@ function ProjectsListPage() {
       },
       onError: (_error, _input, context) => {
         if (context?.previous !== undefined) {
-          queryClient.setQueryData(orpc.portfolio.projects.list.queryKey(), context.previous);
+          queryClient.setQueryData(
+            orpcQueryClient.portfolio.projects.list.queryKey(),
+            context.previous
+          );
         }
         toast.error("Failed to update order.");
       },
       onSettled: () => {
         void queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
       }
     })

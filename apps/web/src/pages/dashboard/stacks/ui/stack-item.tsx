@@ -4,7 +4,7 @@ import { Edit, Package, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
@@ -31,13 +31,13 @@ export function StackItem({ stack }: StackItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const deleteMutation = useMutation(
-    orpc.portfolio.stacks.delete.mutationOptions({
+    orpcQueryClient.portfolio.stacks.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
         toast.success("Stack deleted.");
         setDeleteDialogOpen(false);

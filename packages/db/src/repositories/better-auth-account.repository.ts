@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "#@/index";
 import { account } from "#@/schema/auth.schema";
 
-class BetterAuthAccountRepository {
+export const betterAuthAccountRepository = {
   /**
    * Look up the GitHub OAuth access token for a signed-in user.
    *
@@ -21,7 +21,7 @@ class BetterAuthAccountRepository {
       .limit(1);
 
     return rows[0]?.accessToken ?? null;
-  }
+  },
 
   /**
    * Read the `scope` column on the user's GitHub account row — a
@@ -40,6 +40,4 @@ class BetterAuthAccountRepository {
 
     return rows[0]?.scope ?? null;
   }
-}
-
-export const betterAuthAccountRepository = new BetterAuthAccountRepository();
+};

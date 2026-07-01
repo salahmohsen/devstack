@@ -10,6 +10,12 @@ export const relations = defineRelationsPart(schema, (r) => {
         to: r.user.id
       })
     },
+    contact: {
+      user: r.one.user({
+        from: r.contact.userId,
+        to: r.user.id
+      })
+    },
     experience: {
       projects: r.many.project({
         from: r.experience.id,

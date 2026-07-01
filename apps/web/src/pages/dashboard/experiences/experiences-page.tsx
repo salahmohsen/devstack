@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { SortableList } from "@/shared/ui/sortable-list";
@@ -41,7 +41,7 @@ export function ExperiencesPage() {
     setTabAndFilter(tab);
   }, [tab, setTabAndFilter]);
 
-  const experiencesQuery = useQuery(orpc.portfolio.experiences.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
   const allExperiences = experiencesQuery.data ?? [];
 
   const visibleExperiences = useMemo(() => {
@@ -52,9 +52,9 @@ export function ExperiencesPage() {
   }, [allExperiences, activeTab]);
 
   const reorderMutation = useMutation(
-    orpc.portfolio.experiences.reorder.mutationOptions({
+    orpcQueryClient.portfolio.experiences.reorder.mutationOptions({
       onMutate: async (input) => {
-        const listKey = orpc.portfolio.experiences.list.queryKey();
+        const listKey = orpcQueryClient.portfolio.experiences.list.queryKey();
         await queryClient.cancelQueries({ queryKey: listKey });
 
         const previous = queryClient.getQueryData(listKey);
@@ -76,13 +76,16 @@ export function ExperiencesPage() {
       },
       onError: (_error, _input, context) => {
         if (context?.previous !== undefined) {
-          queryClient.setQueryData(orpc.portfolio.experiences.list.queryKey(), context.previous);
+          queryClient.setQueryData(
+            orpcQueryClient.portfolio.experiences.list.queryKey(),
+            context.previous
+          );
         }
         toast.error("Failed to update order.");
       },
       onSettled: () => {
         void queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
       }
     })

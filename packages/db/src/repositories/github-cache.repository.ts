@@ -32,12 +32,12 @@ export type RecordGitHubWebhookDeliveryInput = {
   scope?: string | null;
 };
 
-class GitHubCacheRepository {
+export const githubCacheRepository = {
   async clearAll() {
     await getDb().delete(githubResponseCache);
     await getDb().delete(githubRevalidationSignal);
     await getDb().delete(githubCacheNamespace);
-  }
+  },
 
   async findNamespaceVersion(namespace: string, executor: DbExecutor = getDb()) {
     const [entry] = await executor
@@ -47,7 +47,7 @@ class GitHubCacheRepository {
       .limit(1);
 
     return entry ?? null;
-  }
+  },
 
   async findResponseCacheEntry(cacheKey: string, executor: DbExecutor = getDb()) {
     const [entry] = await executor
@@ -57,7 +57,7 @@ class GitHubCacheRepository {
       .limit(1);
 
     return entry ?? null;
-  }
+  },
 
   async findRevalidationSignals(signalKeys: string[], executor: DbExecutor = getDb()) {
     if (signalKeys.length === 0) {
@@ -69,7 +69,7 @@ class GitHubCacheRepository {
       .from(githubRevalidationSignal)
       .where(inArray(githubRevalidationSignal.signalKey, signalKeys))
       .orderBy(desc(githubRevalidationSignal.updatedAt));
-  }
+  },
 
   async findLatestRevalidationSignalAt(
     signalKeys: string[],
@@ -87,7 +87,7 @@ class GitHubCacheRepository {
       .limit(1);
 
     return entry?.updatedAt ?? null;
-  }
+  },
 
   async markWebhookDeliveryProcessed(deliveryId: string, executor: DbExecutor = getDb()) {
     const [updatedEvent] = await executor
@@ -99,7 +99,7 @@ class GitHubCacheRepository {
       .returning();
 
     return updatedEvent ?? null;
-  }
+  },
 
   async markRevalidationSignals(signalKeys: string[], executor: DbExecutor = getDb()) {
     if (signalKeys.length === 0) {
@@ -120,7 +120,7 @@ class GitHubCacheRepository {
         }
       })
       .returning();
-  }
+  },
 
   async bumpNamespaceVersion(namespaces: string | string[], executor: DbExecutor = getDb()) {
     const keys = Array.isArray(namespaces) ? namespaces : [namespaces];
@@ -143,7 +143,7 @@ class GitHubCacheRepository {
         }
       })
       .returning();
-  }
+  },
 
   async recordWebhookDelivery(
     input: RecordGitHubWebhookDeliveryInput,
@@ -162,7 +162,7 @@ class GitHubCacheRepository {
       .returning();
 
     return webhookEvent ?? null;
-  }
+  },
 
   async upsertResponseCacheEntry(
     input: UpsertGitHubResponseCacheInput,
@@ -202,17 +202,15 @@ class GitHubCacheRepository {
       .returning();
 
     return entry;
-  }
+  },
 
   async clearByOwner(owner: string, executor: DbExecutor = getDb()) {
     await executor.delete(githubResponseCache).where(eq(githubResponseCache.owner, owner));
-  }
+  },
 
   async deleteResponseCacheEntry(cacheKey: string, owner: string, executor: DbExecutor = getDb()) {
     await executor
       .delete(githubResponseCache)
       .where(and(eq(githubResponseCache.cacheKey, cacheKey), eq(githubResponseCache.owner, owner)));
   }
-}
-
-export const githubCacheRepository = new GitHubCacheRepository();
+};

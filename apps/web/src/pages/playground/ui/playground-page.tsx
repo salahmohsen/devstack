@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { Button } from "@tsu-stack/ui/components/button";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
@@ -11,7 +11,7 @@ import { Container } from "@/shared/ui/container";
 import { Image } from "@/shared/ui/image";
 
 export function PlaygroundPage() {
-  const healthCheck = useQuery(orpc.health.live.queryOptions());
+  const healthCheck = useQuery(orpcQueryClient.health.live.queryOptions());
   const isClient = useIsClient();
   const logger = useLogger();
 

@@ -9,7 +9,7 @@ export type UpdateGithubConfigData = {
   githubUsername: string;
 };
 
-class GithubConfigRepository {
+export const githubConfigRepository = {
   async findPublicGithubSourceSettings() {
     const [settings] = await getDb()
       .select()
@@ -19,16 +19,16 @@ class GithubConfigRepository {
       .limit(1);
 
     return settings ?? null;
-  }
+  },
 
   async findByUserId(userId: string) {
     return getDb().query.githubConfig.findFirst({
       where: { userId }
     });
-  }
+  },
 
   async upsert(userId: string, input: UpdateGithubConfigData) {
-    const existingSettings = await this.findByUserId(userId);
+    const existingSettings = await githubConfigRepository.findByUserId(userId);
     const normalizedGithubToken = input.githubToken?.trim() ?? null;
 
     const githubToken = input.clearGithubToken
@@ -61,6 +61,4 @@ class GithubConfigRepository {
 
     return createdSettings;
   }
-}
-
-export const githubConfigRepository = new GithubConfigRepository();
+};

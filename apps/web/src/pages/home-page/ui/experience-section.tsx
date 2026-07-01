@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { VscLinkExternal } from "react-icons/vsc";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
 
 function formatDate(dateStr: string | null): string {
@@ -26,7 +26,7 @@ function formatDuration(
 
 export function useGetExperiencesQuery() {
   return useQuery(
-    orpc.portfolio.experiences.list.queryOptions({
+    orpcQueryClient.portfolio.experiences.list.queryOptions({
       meta: { persist: true } as const
     })
   );

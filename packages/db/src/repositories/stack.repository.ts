@@ -11,20 +11,20 @@ export type CreateStackData = Omit<
 export type UpdateStackData = Partial<CreateStackData>;
 export type ReorderStackItem = { id: string; sortOrder: number };
 
-class StackRepository {
+export const stackRepository = {
   async findAll() {
     return getDb().query.stack.findMany({
       orderBy: (s, { asc }) => [asc(s.sortOrder), asc(s.name)]
     });
-  }
+  },
 
   async findById(id: string) {
     return getDb().query.stack.findFirst({ where: { id } });
-  }
+  },
 
   async findByName(name: string) {
     return getDb().query.stack.findFirst({ where: { name } });
-  }
+  },
 
   async create(input: CreateStackData) {
     const [created] = await getDb()
@@ -39,16 +39,16 @@ class StackRepository {
       })
       .returning();
 
-    return this.findById(created.id);
-  }
+    return stackRepository.findById(created.id);
+  },
 
   async update(id: string, input: UpdateStackData) {
     const [updated] = await getDb().update(stack).set(input).where(eq(stack.id, id)).returning();
 
     if (!updated) return null;
 
-    return this.findById(updated.id);
-  }
+    return stackRepository.findById(updated.id);
+  },
 
   async reorder(items: ReorderStackItem[]) {
     if (items.length === 0) return;
@@ -68,7 +68,7 @@ class StackRepository {
         await tx.update(stack).set({ sortOrder: item.sortOrder }).where(eq(stack.id, item.id));
       }
     });
-  }
+  },
 
   async delete(id: string) {
     const [deleted] = await getDb()
@@ -78,6 +78,4 @@ class StackRepository {
 
     return deleted ?? null;
   }
-}
-
-export const stackRepository = new StackRepository();
+};

@@ -5,7 +5,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperienceOutput, UpdateExperienceInputSchema } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
@@ -32,7 +32,7 @@ export const Route = createFileRoute(
 function EditExperiencePage() {
   const { experienceId } = Route.useParams();
   const experienceQuery = useQuery(
-    orpc.portfolio.experiences.get.queryOptions({ input: { id: experienceId } })
+    orpcQueryClient.portfolio.experiences.get.queryOptions({ input: { id: experienceId } })
   );
   const experience = experienceQuery.data;
 
@@ -68,10 +68,10 @@ function EditExperienceForm({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const updateMutation = useMutation(
-    orpc.portfolio.experiences.update.mutationOptions({
+    orpcQueryClient.portfolio.experiences.update.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
         toast.success("Experience updated.");
         await navigate({ to: "/dashboard/experiences" });
@@ -80,10 +80,10 @@ function EditExperienceForm({
   );
 
   const deleteMutation = useMutation(
-    orpc.portfolio.experiences.delete.mutationOptions({
+    orpcQueryClient.portfolio.experiences.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
         toast.success("Experience deleted.");
         await navigate({ to: "/dashboard/experiences" });

@@ -148,6 +148,12 @@ function toExperienceOutput(exp: {
 }
 
 export const portfolioRouter = {
+  resume: {
+    get: publicProcedure.route({
+      description: "Get the resume JSON data",
+      method: "GET"
+    })
+  },
   experiences: {
     list: publicProcedure
       .route({

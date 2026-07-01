@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 
 export function useGetProjectsQuery() {
   return useQuery(
-    orpc.portfolio.projects.list.queryOptions({
+    orpcQueryClient.portfolio.projects.list.queryOptions({
       meta: { persist: true } as const
     })
   );

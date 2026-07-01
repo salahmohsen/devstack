@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { CreateExperienceInputSchema } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
@@ -22,10 +22,10 @@ function NewExperiencePage() {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation(
-    orpc.portfolio.experiences.create.mutationOptions({
+    orpcQueryClient.portfolio.experiences.create.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
         toast.success("Experience created.");
         await navigate({ to: "/dashboard/experiences" });

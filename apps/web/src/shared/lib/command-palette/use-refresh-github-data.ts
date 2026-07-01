@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 
-import { client } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 export function useRefreshGitHubData() {
   const inFlightRef = useRef<Promise<void> | null>(null);
@@ -11,7 +11,7 @@ export function useRefreshGitHubData() {
     }
 
     const task = (async () => {
-      const result = await client.github.clearViewerCache();
+      const result = await orpcClient.github.clearViewerCache();
       if (!result.ok) {
         throw new Error("You need to be signed in to refresh data.");
       }

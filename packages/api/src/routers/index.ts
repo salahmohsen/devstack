@@ -5,13 +5,15 @@ import { githubRouter } from "#@/routers/github/index";
 import { healthRouter } from "#@/routers/health/index";
 import { identityRouter } from "#@/routers/identity/index";
 import { portfolioRouter } from "#@/routers/portfolio/index";
+import { profileRouter } from "#@/routers/profile/index";
 
 export const appRouter = {
   githubConfig: githubConfigRouter,
   github: githubRouter,
   health: healthRouter,
   identity: identityRouter,
-  portfolio: portfolioRouter
+  portfolio: portfolioRouter,
+  profile: profileRouter
 };
 
 export type AppRouter = typeof appRouter;

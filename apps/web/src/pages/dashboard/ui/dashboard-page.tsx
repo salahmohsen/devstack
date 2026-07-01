@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 
 import { Container } from "@/shared/ui/container";
@@ -8,7 +8,7 @@ import { DefaultLoader } from "@/shared/ui/default-loader";
 
 export function DashboardPage() {
   const { user } = useAuthSuspense();
-  const githubConfigQuery = useQuery(orpc.githubConfig.get.queryOptions());
+  const githubConfigQuery = useQuery(orpcQueryClient.githubConfig.get.queryOptions());
 
   if (githubConfigQuery.isLoading && !githubConfigQuery.data) {
     return (

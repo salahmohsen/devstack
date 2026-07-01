@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
@@ -14,7 +14,9 @@ export function getGithubTreeEntryCommitsQueryOptions(
   isPrivate = false
 ) {
   return (
-    isPrivate ? orpc.github.privateGetTreeEntryCommits : orpc.github.publicGetTreeEntryCommits
+    isPrivate
+      ? orpcQueryClient.github.privateGetTreeEntryCommits
+      : orpcQueryClient.github.publicGetTreeEntryCommits
   ).queryOptions({
     input: { dirPath, entries, ref, repo },
     staleTime: githubCachePolicy.detail.staleTimeMs,
@@ -35,5 +37,5 @@ export function useGetGithubTreeEntryCommitsQuery(
 }
 
 export type GithubTreeEntryCommitsQueryResult = Awaited<
-  ReturnType<typeof client.github.publicGetTreeEntryCommits>
+  ReturnType<typeof orpcClient.github.publicGetTreeEntryCommits>
 >;

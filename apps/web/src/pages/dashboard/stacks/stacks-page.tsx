@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core/portfolio";
 
 import {
@@ -23,7 +23,7 @@ import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackItemAddButton } from "@/pages/dashboard/stacks/ui/stack-item-add-button";
 
 export function StacksPage() {
-  const stacksQuery = useQuery(orpc.portfolio.stacks.list.queryOptions());
+  const stacksQuery = useQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
 
   const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useStackStore();
 

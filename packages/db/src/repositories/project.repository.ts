@@ -21,7 +21,7 @@ export type UpdateProjectData = Partial<
 
 export type ReorderProjectItem = { id: string; sortOrder: number };
 
-class ProjectRepository {
+export const projectRepository = {
   async findAll() {
     return getDb().query.project.findMany({
       orderBy: (proj, { asc }) => [asc(proj.sortOrder), asc(proj.title)],
@@ -31,7 +31,7 @@ class ProjectRepository {
         }
       }
     });
-  }
+  },
 
   async findById(id: string) {
     return getDb().query.project.findFirst({
@@ -42,7 +42,7 @@ class ProjectRepository {
         }
       }
     });
-  }
+  },
 
   async create(input: CreateProjectData) {
     const projectId = crypto.randomUUID();
@@ -65,11 +65,11 @@ class ProjectRepository {
       .returning();
 
     if (input.stackIds && input.stackIds.length > 0) {
-      await this.attachStacks(created.id, input.stackIds);
+      await projectRepository.attachStacks(created.id, input.stackIds);
     }
 
-    return this.findById(created.id);
-  }
+    return projectRepository.findById(created.id);
+  },
 
   async update(id: string, input: UpdateProjectData) {
     const { stackIds, ...projectFields } = input;
@@ -108,14 +108,14 @@ class ProjectRepository {
       await getDb().delete(projectStack).where(eq(projectStack.projectId, id));
 
       if (stackIds.length > 0) {
-        await this.attachStacks(id, stackIds);
+        await projectRepository.attachStacks(id, stackIds);
       }
     }
 
-    return this.findById(updated.id);
-  }
+    return projectRepository.findById(updated.id);
+  },
 
-  private async attachStacks(projectId: string, stackIds: string[]) {
+  async attachStacks(projectId: string, stackIds: string[]) {
     const unique = [...new Set(stackIds)];
 
     const existing = await getDb()
@@ -134,7 +134,7 @@ class ProjectRepository {
           return { id: crypto.randomUUID(), projectId, stackId };
         })
       );
-  }
+  },
 
   async reorder(items: ReorderProjectItem[]) {
     if (items.length === 0) return;
@@ -154,7 +154,7 @@ class ProjectRepository {
         await tx.update(project).set({ sortOrder: item.sortOrder }).where(eq(project.id, item.id));
       }
     });
-  }
+  },
 
   async delete(id: string) {
     const [deleted] = await getDb()
@@ -164,6 +164,4 @@ class ProjectRepository {
 
     return deleted ?? null;
   }
-}
-
-export const projectRepository = new ProjectRepository();
+};

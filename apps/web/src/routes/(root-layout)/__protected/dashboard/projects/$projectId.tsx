@@ -5,7 +5,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   type ProjectOutput,
   type UpdateProjectInput,
@@ -37,7 +37,7 @@ function EditProjectPage() {
   const { projectId } = Route.useParams();
 
   const projectQuery = useQuery(
-    orpc.portfolio.projects.get.queryOptions({ input: { id: projectId } })
+    orpcQueryClient.portfolio.projects.get.queryOptions({ input: { id: projectId } })
   );
   const project = projectQuery.data;
 
@@ -61,7 +61,7 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const experiencesQuery = useQuery(orpc.portfolio.experiences.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
 
   const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(
     project.experienceId ?? null
@@ -69,9 +69,11 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const updateMutation = useMutation(
-    orpc.portfolio.projects.update.mutationOptions({
+    orpcQueryClient.portfolio.projects.update.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: orpc.portfolio.projects.list.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+        });
         toast.success("Project updated.");
         await navigate({ to: "/dashboard/projects" });
       }
@@ -79,9 +81,11 @@ function EditProjectForm({ project, projectId }: { project: ProjectOutput; proje
   );
 
   const deleteMutation = useMutation(
-    orpc.portfolio.projects.delete.mutationOptions({
+    orpcQueryClient.portfolio.projects.delete.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: orpc.portfolio.projects.list.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+        });
         toast.success("Project deleted.");
         await navigate({ to: "/dashboard/projects" });
       }

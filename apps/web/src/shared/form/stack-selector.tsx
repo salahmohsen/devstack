@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useState } from "react";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -44,17 +44,17 @@ function StackSelector(props: StackSelectorProps) {
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("");
 
-  const stacksQuery = useQuery(orpc.portfolio.stacks.list.queryOptions());
+  const stacksQuery = useQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
   const stacks = stacksQuery.data ?? [];
 
   const selectedIds = field.state.value ?? [];
   const selectedStacks = stacks.filter((s) => selectedIds.includes(s.id));
 
   const createMutation = useMutation(
-    orpc.portfolio.stacks.create.mutationOptions({
+    orpcQueryClient.portfolio.stacks.create.mutationOptions({
       onSuccess: async (created) => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
         });
         field.handleChange([...selectedIds, created.id]);
         setCreateOpen(false);

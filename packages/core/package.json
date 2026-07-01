@@ -11,6 +11,7 @@
     "./health": "./src/health/index.ts",
     "./identity": "./src/identity/index.ts",
     "./portfolio": "./src/portfolio/index.ts",
+    "./profile": "./src/profile/index.ts",
     "./utils": "./src/utils/index.ts",
     "./*": "./src/*.ts"
   },

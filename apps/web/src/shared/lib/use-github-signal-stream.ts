@@ -1,7 +1,7 @@
 import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
-import { client } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 
@@ -242,7 +242,7 @@ function useGitHubSignalStreamWebSocket(
           totalTargets: targetsRef.current.length
         });
 
-        const signals = await client.github.getRevalidationSignals({
+        const signals = await orpcClient.github.getRevalidationSignals({
           signalKeys: keys
         });
         if (disposed) return;
@@ -456,7 +456,7 @@ function useGitHubSignalPoll(
       if (disposed) return;
 
       try {
-        const signals = await client.github.getRevalidationSignals({
+        const signals = await orpcClient.github.getRevalidationSignals({
           signalKeys: keys
         });
 

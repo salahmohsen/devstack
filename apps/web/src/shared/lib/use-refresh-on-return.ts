@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";
 
-import { client } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 import { githubQueryKeys } from "@/lib/github.query";
 
@@ -24,7 +24,7 @@ export function useRefreshOnReturn({
 
   const refresh = useCallback(async () => {
     try {
-      await client.github.refreshInstallationAccess();
+      await orpcClient.github.refreshInstallationAccess();
     } finally {
       void queryClient.invalidateQueries({
         queryKey: githubQueryKeys.all

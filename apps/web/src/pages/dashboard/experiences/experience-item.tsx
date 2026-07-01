@@ -5,7 +5,7 @@ import { Archive, Edit, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
@@ -48,10 +48,10 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const deleteMutation = useMutation(
-    orpc.portfolio.experiences.delete.mutationOptions({
+    orpcQueryClient.portfolio.experiences.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
         toast.success("Experience deleted.");
       }
@@ -59,10 +59,10 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
   );
 
   const toggleArchivedMutation = useMutation(
-    orpc.portfolio.experiences.toggleArchived.mutationOptions({
+    orpcQueryClient.portfolio.experiences.toggleArchived.mutationOptions({
       onSuccess: async (updated) => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
         toast.success(updated.isArchived ? "Experience archived." : "Experience restored to live.");
       },

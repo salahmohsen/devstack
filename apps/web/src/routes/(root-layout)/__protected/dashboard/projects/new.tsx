@@ -5,7 +5,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { CreateProjectInputSchema } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
@@ -24,14 +24,16 @@ function NewProjectPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const experiencesQuery = useQuery(orpc.portfolio.experiences.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
 
   const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(null);
 
   const createMutation = useMutation(
-    orpc.portfolio.projects.create.mutationOptions({
+    orpcQueryClient.portfolio.projects.create.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: orpc.portfolio.projects.list.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+        });
         toast.success("Project created.");
         await navigate({ to: "/dashboard/projects" });
       }

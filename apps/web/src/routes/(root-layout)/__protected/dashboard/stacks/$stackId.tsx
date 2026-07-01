@@ -5,7 +5,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput, StackUpdateInputSchema } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
@@ -29,7 +29,9 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/stack
 
 function EditStackPage() {
   const { stackId } = Route.useParams();
-  const stackQuery = useQuery(orpc.portfolio.stacks.get.queryOptions({ input: { id: stackId } }));
+  const stackQuery = useQuery(
+    orpcQueryClient.portfolio.stacks.get.queryOptions({ input: { id: stackId } })
+  );
   const stack = stackQuery.data;
 
   if (stackQuery.isLoading && !stack) {
@@ -54,16 +56,16 @@ function EditStackForm({ stack, stackId }: { stack: StackOutput; stackId: string
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const updateMutation = useMutation(
-    orpc.portfolio.stacks.update.mutationOptions({
+    orpcQueryClient.portfolio.stacks.update.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.stacks.get.queryKey({ input: { id: stackId } })
+          queryKey: orpcQueryClient.portfolio.stacks.get.queryKey({ input: { id: stackId } })
         });
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
         toast.success("Stack updated.");
         await navigate({ to: "/dashboard/stacks" });
@@ -75,13 +77,13 @@ function EditStackForm({ stack, stackId }: { stack: StackOutput; stackId: string
   );
 
   const deleteMutation = useMutation(
-    orpc.portfolio.stacks.delete.mutationOptions({
+    orpcQueryClient.portfolio.stacks.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
         toast.success("Stack deleted.");
         await navigate({ to: "/dashboard/stacks" });

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { StackCreateInputSchema } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
@@ -22,10 +22,10 @@ function NewStackPage() {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation(
-    orpc.portfolio.stacks.create.mutationOptions({
+    orpcQueryClient.portfolio.stacks.create.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
         });
         toast.success("Stack created.");
         await navigate({ to: "/dashboard/stacks" });

@@ -1,4 +1,4 @@
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 
@@ -9,8 +9,8 @@ import { buildReposHubResult, type ReposHubInput } from "@/pages/github-repos/li
 export function githubReposHubQueryOptions(input: ReposHubInput, isPrivate = false) {
   return {
     ...(isPrivate
-      ? orpc.github.privateGetProfileRepos
-      : orpc.github.publicGetProfileRepos
+      ? orpcQueryClient.github.privateGetProfileRepos
+      : orpcQueryClient.github.publicGetProfileRepos
     ).queryOptions({ meta: persistedMeta }),
     select: (repos: GitHubUserRepoSummary[]) => buildReposHubResult(repos, input)
   };

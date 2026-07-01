@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import {
   type GithubConfigOutput,
@@ -32,7 +32,7 @@ import { useUpdateGithubConfigMutation } from "@/pages/dashboard/api/update-gith
 
 export function GithubSettings() {
   const { user } = useAuthSuspense();
-  const githubConfigQuery = useQuery(orpc.githubConfig.get.queryOptions());
+  const githubConfigQuery = useQuery(orpcQueryClient.githubConfig.get.queryOptions());
 
   if (githubConfigQuery.isLoading && !githubConfigQuery.data) {
     return (
@@ -61,9 +61,12 @@ function GithubSettingsForm({ githubConfig }: { githubConfig?: GithubConfigOutpu
   const hasGithubToken = githubConfig?.hasGithubToken ?? false;
 
   const clearTokenMutation = useMutation(
-    orpc.githubConfig.update.mutationOptions({
+    orpcQueryClient.githubConfig.update.mutationOptions({
       onSuccess: async (settings) => {
-        queryClient.setQueryData(orpc.githubConfig.get.queryOptions().queryKey, settings);
+        queryClient.setQueryData(
+          orpcQueryClient.githubConfig.get.queryOptions().queryKey,
+          settings
+        );
         toast.success("GitHub token cleared.");
       }
     })

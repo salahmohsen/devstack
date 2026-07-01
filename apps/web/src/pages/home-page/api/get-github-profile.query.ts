@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
@@ -8,7 +8,9 @@ import { persistedMeta } from "@/shared/lib/query-persistence";
 
 export function getGithubProfileQueryOptions(isPrivate = false) {
   return (
-    isPrivate ? orpc.github.privateGetUserProfile : orpc.github.publicGetUserProfile
+    isPrivate
+      ? orpcQueryClient.github.privateGetUserProfile
+      : orpcQueryClient.github.publicGetUserProfile
   ).queryOptions({
     meta: persistedMeta,
     staleTime: githubCachePolicy.detail.staleTimeMs,
@@ -22,5 +24,5 @@ export function useGetGithubProfileQuery() {
 }
 
 export type GithubProfileQueryResult = Awaited<
-  ReturnType<typeof client.github.publicGetUserProfile>
+  ReturnType<typeof orpcClient.github.publicGetUserProfile>
 >;

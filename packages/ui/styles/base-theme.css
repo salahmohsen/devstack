@@ -157,7 +157,7 @@
   --chart-3: var(--base-800);
   --chart-4: var(--base-400);
   --chart-5: var(--base-300);
-  --radius: 0.05rem;
+  --radius: 0.5rem;
   --sidebar: var(--base-100);
   --sidebar-foreground: var(--base-800);
   --sidebar-primary: var(--base-950);

@@ -1,5 +1,5 @@
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 export function getRefreshMutationOptions() {
-  return orpc.identity.refresh.mutationOptions();
+  return orpcQueryClient.identity.refresh.mutationOptions();
 }

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Code, Package } from "lucide-react";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import { Container } from "@tsu-stack/ui/components/container";
@@ -45,8 +45,8 @@ function ProjectCount({ count }: { count: number }) {
 }
 
 function ResumeOverviewPage() {
-  const experiencesQuery = useQuery(orpc.portfolio.experiences.list.queryOptions());
-  const projectsQuery = useQuery(orpc.portfolio.projects.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
+  const projectsQuery = useQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
 
   if (!experiencesQuery.data || !projectsQuery.data) {
     return <ResumeOverviewSkeleton />;

@@ -4,7 +4,7 @@ import { Edit, ExternalLink, GripVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
@@ -39,10 +39,10 @@ export function ProjectItem({ project, dragHandleProps }: ProjectItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const deleteMutation = useMutation(
-    orpc.portfolio.projects.delete.mutationOptions({
+    orpcQueryClient.portfolio.projects.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpc.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
         toast.success("Project deleted.");
       },

@@ -1,4 +1,4 @@
-import { type client, orpc } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
@@ -13,7 +13,9 @@ export function githubRepoContributorsQueryOptions(
   isPrivate = false
 ) {
   return (
-    isPrivate ? orpc.github.privateGetRepoContributors : orpc.github.publicGetRepoContributors
+    isPrivate
+      ? orpcQueryClient.github.privateGetRepoContributors
+      : orpcQueryClient.github.publicGetRepoContributors
   ).queryOptions({
     input: { repo: `${input.owner}/${input.repo}` },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
@@ -23,5 +25,5 @@ export function githubRepoContributorsQueryOptions(
 }
 
 export type GithubRepoContributorsQueryResult = Awaited<
-  ReturnType<typeof client.github.publicGetRepoContributors>
+  ReturnType<typeof orpcClient.github.publicGetRepoContributors>
 >;
