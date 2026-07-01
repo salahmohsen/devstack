@@ -21,6 +21,7 @@ When a feature introduces shared contracts that should drive both API and fronte
 - Edit schemas in `packages/db/src/schema/` when the feature changes persisted data.
 - Follow [Workflow](./workflow.md) for migration generation, Neon-backed dev `DATABASE_URL` safety, and migration application.
 - Keep schema and migration work complete before defining API output shapes that depend on it.
+- generate schema types here: /packages/db/src/types
 
 ## Step 2: Shared Domain Contract
 

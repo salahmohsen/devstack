@@ -30,12 +30,9 @@ import { Route as rootLayoutRepoBlobSplatRouteImport } from './routes/(root-layo
 import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
 import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/route'
 import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
-import { Route as rootLayout_protectedDashboardResumeIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resume/index'
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
 import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
-import { Route as rootLayout_protectedDashboardStacksNewRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/new'
-import { Route as rootLayout_protectedDashboardStacksStackIdRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/$stackId'
 import { Route as rootLayout_protectedDashboardProjectsNewRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/new'
 import { Route as rootLayout_protectedDashboardProjectsProjectIdRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/$projectId'
 import { Route as rootLayout_protectedDashboardExperiencesNewRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/new'
@@ -157,12 +154,6 @@ const rootLayout_protectedDashboardStacksIndexRoute =
     path: '/dashboard/stacks/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
-const rootLayout_protectedDashboardResumeIndexRoute =
-  rootLayout_protectedDashboardResumeIndexRouteImport.update({
-    id: '/dashboard/resume/',
-    path: '/dashboard/resume/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
 const rootLayout_protectedDashboardProjectsIndexRoute =
   rootLayout_protectedDashboardProjectsIndexRouteImport.update({
     id: '/dashboard/projects/',
@@ -180,18 +171,6 @@ const rootLayoutguestSignInCreateAnAccountIndexRoute =
     id: '/create-an-account/',
     path: '/create-an-account/',
     getParentRoute: () => rootLayoutguestSignInRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardStacksNewRoute =
-  rootLayout_protectedDashboardStacksNewRouteImport.update({
-    id: '/dashboard/stacks/new',
-    path: '/dashboard/stacks/new',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardStacksStackIdRoute =
-  rootLayout_protectedDashboardStacksStackIdRouteImport.update({
-    id: '/dashboard/stacks/$stackId',
-    path: '/dashboard/stacks/$stackId',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
 const rootLayout_protectedDashboardProjectsNewRoute =
   rootLayout_protectedDashboardProjectsNewRouteImport.update({
@@ -259,12 +238,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/experiences/new': typeof rootLayout_protectedDashboardExperiencesNewRoute
   '/dashboard/projects/$projectId': typeof rootLayout_protectedDashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof rootLayout_protectedDashboardProjectsNewRoute
-  '/dashboard/stacks/$stackId': typeof rootLayout_protectedDashboardStacksStackIdRoute
-  '/dashboard/stacks/new': typeof rootLayout_protectedDashboardStacksNewRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
-  '/dashboard/resume/': typeof rootLayout_protectedDashboardResumeIndexRoute
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
@@ -290,12 +266,9 @@ export interface FileRoutesByTo {
   '/dashboard/experiences/new': typeof rootLayout_protectedDashboardExperiencesNewRoute
   '/dashboard/projects/$projectId': typeof rootLayout_protectedDashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof rootLayout_protectedDashboardProjectsNewRoute
-  '/dashboard/stacks/$stackId': typeof rootLayout_protectedDashboardStacksStackIdRoute
-  '/dashboard/stacks/new': typeof rootLayout_protectedDashboardStacksNewRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
-  '/dashboard/resume': typeof rootLayout_protectedDashboardResumeIndexRoute
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/github': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
@@ -327,12 +300,9 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/experiences/new': typeof rootLayout_protectedDashboardExperiencesNewRoute
   '/(root-layout)/__protected/dashboard/projects/$projectId': typeof rootLayout_protectedDashboardProjectsProjectIdRoute
   '/(root-layout)/__protected/dashboard/projects/new': typeof rootLayout_protectedDashboardProjectsNewRoute
-  '/(root-layout)/__protected/dashboard/stacks/$stackId': typeof rootLayout_protectedDashboardStacksStackIdRoute
-  '/(root-layout)/__protected/dashboard/stacks/new': typeof rootLayout_protectedDashboardStacksNewRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/(root-layout)/__protected/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
-  '/(root-layout)/__protected/dashboard/resume/': typeof rootLayout_protectedDashboardResumeIndexRoute
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/(root-layout)/__protected/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
@@ -363,12 +333,9 @@ export interface FileRouteTypes {
     | '/dashboard/experiences/new'
     | '/dashboard/projects/$projectId'
     | '/dashboard/projects/new'
-    | '/dashboard/stacks/$stackId'
-    | '/dashboard/stacks/new'
     | '/sign-in/create-an-account/'
     | '/dashboard/experiences/'
     | '/dashboard/projects/'
-    | '/dashboard/resume/'
     | '/dashboard/stacks/'
     | '/dashboard/settings/account/'
     | '/dashboard/settings/github/'
@@ -394,12 +361,9 @@ export interface FileRouteTypes {
     | '/dashboard/experiences/new'
     | '/dashboard/projects/$projectId'
     | '/dashboard/projects/new'
-    | '/dashboard/stacks/$stackId'
-    | '/dashboard/stacks/new'
     | '/sign-in/create-an-account'
     | '/dashboard/experiences'
     | '/dashboard/projects'
-    | '/dashboard/resume'
     | '/dashboard/stacks'
     | '/dashboard/settings/account'
     | '/dashboard/settings/github'
@@ -430,12 +394,9 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/experiences/new'
     | '/(root-layout)/__protected/dashboard/projects/$projectId'
     | '/(root-layout)/__protected/dashboard/projects/new'
-    | '/(root-layout)/__protected/dashboard/stacks/$stackId'
-    | '/(root-layout)/__protected/dashboard/stacks/new'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
     | '/(root-layout)/__protected/dashboard/experiences/'
     | '/(root-layout)/__protected/dashboard/projects/'
-    | '/(root-layout)/__protected/dashboard/resume/'
     | '/(root-layout)/__protected/dashboard/stacks/'
     | '/(root-layout)/__protected/dashboard/settings/account/'
     | '/(root-layout)/__protected/dashboard/settings/github/'
@@ -599,13 +560,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardStacksIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
-    '/(root-layout)/__protected/dashboard/resume/': {
-      id: '/(root-layout)/__protected/dashboard/resume/'
-      path: '/dashboard/resume'
-      fullPath: '/dashboard/resume/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardResumeIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
     '/(root-layout)/__protected/dashboard/projects/': {
       id: '/(root-layout)/__protected/dashboard/projects/'
       path: '/dashboard/projects'
@@ -626,20 +580,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/sign-in/create-an-account/'
       preLoaderRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRouteImport
       parentRoute: typeof rootLayoutguestSignInRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/stacks/new': {
-      id: '/(root-layout)/__protected/dashboard/stacks/new'
-      path: '/dashboard/stacks/new'
-      fullPath: '/dashboard/stacks/new'
-      preLoaderRoute: typeof rootLayout_protectedDashboardStacksNewRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/stacks/$stackId': {
-      id: '/(root-layout)/__protected/dashboard/stacks/$stackId'
-      path: '/dashboard/stacks/$stackId'
-      fullPath: '/dashboard/stacks/$stackId'
-      preLoaderRoute: typeof rootLayout_protectedDashboardStacksStackIdRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/dashboard/projects/new': {
       id: '/(root-layout)/__protected/dashboard/projects/new'
@@ -756,10 +696,7 @@ interface rootLayout_protectedRouteRouteChildren {
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
   rootLayout_protectedDashboardProjectsProjectIdRoute: typeof rootLayout_protectedDashboardProjectsProjectIdRoute
   rootLayout_protectedDashboardProjectsNewRoute: typeof rootLayout_protectedDashboardProjectsNewRoute
-  rootLayout_protectedDashboardStacksStackIdRoute: typeof rootLayout_protectedDashboardStacksStackIdRoute
-  rootLayout_protectedDashboardStacksNewRoute: typeof rootLayout_protectedDashboardStacksNewRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
-  rootLayout_protectedDashboardResumeIndexRoute: typeof rootLayout_protectedDashboardResumeIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
 }
 
@@ -775,14 +712,8 @@ const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChil
       rootLayout_protectedDashboardProjectsProjectIdRoute,
     rootLayout_protectedDashboardProjectsNewRoute:
       rootLayout_protectedDashboardProjectsNewRoute,
-    rootLayout_protectedDashboardStacksStackIdRoute:
-      rootLayout_protectedDashboardStacksStackIdRoute,
-    rootLayout_protectedDashboardStacksNewRoute:
-      rootLayout_protectedDashboardStacksNewRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:
       rootLayout_protectedDashboardProjectsIndexRoute,
-    rootLayout_protectedDashboardResumeIndexRoute:
-      rootLayout_protectedDashboardResumeIndexRoute,
     rootLayout_protectedDashboardStacksIndexRoute:
       rootLayout_protectedDashboardStacksIndexRoute,
   }
