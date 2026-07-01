@@ -47,7 +47,7 @@ export function GithubSettings() {
   }
 
   const githubConfig = githubConfigQuery.data;
-  const settingsKey = `${githubConfig?.updatedAt ?? "never"}:${githubConfig?.githubUsername ?? "none"}:${
+  const settingsKey = `${githubConfig?.updatedAt?.toISOString() ?? "never"}:${githubConfig?.githubUsername ?? "none"}:${
     githubConfig?.hasGithubToken ? "configured" : "missing"
   }`;
 

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { type GithubConfigSchemaInsert, type GithubConfigSchemaSelect } from "@tsu-stack/db/types";
+
 export const GitHubUsernameSchema = z
   .string()
   .trim()
@@ -13,8 +15,8 @@ export const GithubConfigOutputSchema = z.object({
   githubToken: z.string().nullable(),
   githubUsername: GitHubUsernameSchema.nullable(),
   hasGithubToken: z.boolean(),
-  updatedAt: z.iso.datetime().nullable()
-});
+  updatedAt: z.coerce.date()
+}) satisfies z.ZodType<Omit<GithubConfigSchemaSelect, "userId" | "createdAt">>;
 
 export type GithubConfigOutput = z.infer<typeof GithubConfigOutputSchema>;
 
@@ -22,6 +24,8 @@ export const UpdateGithubConfigInputSchema = z.object({
   clearGithubToken: z.boolean(),
   githubToken: z.string().trim().optional(),
   githubUsername: GitHubUsernameSchema
-});
+}) satisfies z.ZodType<
+  Partial<Omit<GithubConfigSchemaInsert, "userId" | "createdAt" | "updatedAt">>
+>;
 
 export type UpdateGithubConfigInput = z.infer<typeof UpdateGithubConfigInputSchema>;

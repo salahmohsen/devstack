@@ -9,17 +9,12 @@ import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toGithubConfigOutput(
   settings: Awaited<ReturnType<typeof githubConfigRepository.findByUserId>>
-): {
-  githubToken: string | null;
-  githubUsername: string | null;
-  hasGithubToken: boolean;
-  updatedAt: string | null;
-} {
+) {
   return {
     githubToken: settings?.githubToken ? GITHUB_TOKEN_MASK : null,
     githubUsername: settings?.githubUsername ?? null,
     hasGithubToken: Boolean(settings?.githubToken),
-    updatedAt: settings?.updatedAt.toISOString() ?? null
+    updatedAt: settings?.updatedAt ?? null
   };
 }
 

@@ -1,10 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Check, Edit, Globe, Mail, MapPin, X } from "lucide-react";
+import {
+  AtSign,
+  Calendar,
+  Check,
+  Edit,
+  ExternalLink,
+  GitBranch,
+  Globe,
+  Mail,
+  MapPin,
+  Play,
+  X
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import z from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
+import { contactTypeSchema, ProfileUpdateInputSchema } from "@tsu-stack/core/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -14,26 +26,13 @@ import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useAppForm } from "@/shared/form";
 
-import { getProfileQueryOptions, getUpdateProfileMutationOptions } from "@/features/profile";
+import {
+  getProfileQueryOptions,
+  getUpdateProfileMutationOptions,
+  type ProfileUpdateInput
+} from "@/features/profile";
 
-// Validation schema for the full profile form (identity + contact).
-const profileSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters"),
-  email: z.string().trim().email("Please enter a valid email address"),
-  website: z
-    .string()
-    .trim()
-    .url("Website must be a valid URL (e.g. https://example.com)")
-    .max(500)
-    .or(z.literal("")),
-  contactEmail: z
-    .string()
-    .trim()
-    .email("Please enter a valid email address")
-    .max(320)
-    .or(z.literal("")),
-  location: z.string().trim().min(1).max(200).or(z.literal(""))
-});
+const CONTACT_TYPES = contactTypeSchema.options;
 
 export function ProfileSettings() {
   const queryClient = useQueryClient();
@@ -41,34 +40,25 @@ export function ProfileSettings() {
   const profileQuery = useQuery(getProfileQueryOptions());
   const [isEditing, setIsEditing] = useState(false);
 
-  // Convert contact array to flat map for the form.
-  const contactMap = Object.fromEntries(
-    (profileQuery.data?.contact ?? []).map((c) => [c.type, c.value])
-  );
-
   const serverValues = {
     name: profileQuery.data?.name ?? session?.user?.name ?? "",
     email: profileQuery.data?.email ?? session?.user?.email ?? "",
-    website: (contactMap.website as string) ?? "",
-    contactEmail: (contactMap.email as string) ?? "",
-    location: (contactMap.location as string) ?? ""
-  };
+    contacts: profileQuery.data?.contacts ?? [{ icon: "", type: "", value: "" }]
+  } as ProfileUpdateInput;
 
   const form = useAppForm({
     defaultValues: serverValues,
     validators: {
-      onChange: profileSchema
+      onChange: ProfileUpdateInputSchema
     },
     onSubmit: async ({ value }) => {
       try {
+        const contacts = value.contacts?.filter((c) => c.value.trim().length > 0);
+
         await updateMutation.mutateAsync({
           name: value.name.trim(),
           email: value.email.trim(),
-          contact: {
-            website: value.website.trim(),
-            email: value.contactEmail.trim(),
-            location: value.location.trim()
-          }
+          contacts
         });
         setIsEditing(false);
       } catch (error) {
@@ -94,11 +84,17 @@ export function ProfileSettings() {
   const displayName = profileQuery.data?.name ?? session?.user?.name ?? "";
   const displayEmail = profileQuery.data?.email ?? session?.user?.email ?? "";
   const websiteDisplay =
-    profileQuery.data?.contact.find((c) => c.type === "website")?.value ?? null;
+    profileQuery.data?.contacts.find((c) => c.type === "website")?.value ?? null;
   const contactEmailDisplay =
-    profileQuery.data?.contact.find((c) => c.type === "email")?.value ?? null;
+    profileQuery.data?.contacts.find((c) => c.type === "email")?.value ?? null;
   const locationDisplay =
-    profileQuery.data?.contact.find((c) => c.type === "location")?.value ?? null;
+    profileQuery.data?.contacts.find((c) => c.type === "location")?.value ?? null;
+  const linkedinDisplay =
+    profileQuery.data?.contacts.find((c) => c.type === "linkedin")?.value ?? null;
+  const githubDisplay = profileQuery.data?.contacts.find((c) => c.type === "github")?.value ?? null;
+  const twitterDisplay = profileQuery.data?.contacts.find((c) => c.type === "x")?.value ?? null;
+  const youtubeDisplay =
+    profileQuery.data?.contacts.find((c) => c.type === "youtube")?.value ?? null;
 
   return (
     <div className="space-y-6">
@@ -160,7 +156,13 @@ export function ProfileSettings() {
                       : new Date().getFullYear()}
                   </div>
                 </div>
-                {(websiteDisplay ?? contactEmailDisplay ?? locationDisplay) && (
+                {(websiteDisplay ??
+                  contactEmailDisplay ??
+                  locationDisplay ??
+                  linkedinDisplay ??
+                  githubDisplay ??
+                  twitterDisplay ??
+                  youtubeDisplay) && (
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm text-muted-foreground">
                     {websiteDisplay ? (
                       <a
@@ -187,6 +189,50 @@ export function ProfileSettings() {
                         <MapPin className="h-3.5 w-3.5" />
                         {locationDisplay}
                       </span>
+                    ) : null}
+                    {linkedinDisplay ? (
+                      <a
+                        className="inline-flex items-center gap-1 hover:text-foreground"
+                        href={linkedinDisplay}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        LinkedIn
+                      </a>
+                    ) : null}
+                    {githubDisplay ? (
+                      <a
+                        className="inline-flex items-center gap-1 hover:text-foreground"
+                        href={githubDisplay}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <GitBranch className="h-3.5 w-3.5" />
+                        {githubDisplay.replace(/^https?:\/\//, "")}
+                      </a>
+                    ) : null}
+                    {twitterDisplay ? (
+                      <a
+                        className="inline-flex items-center gap-1 hover:text-foreground"
+                        href={twitterDisplay}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <AtSign className="h-3.5 w-3.5" />
+                        {twitterDisplay.replace(/^https?:\/\//, "")}
+                      </a>
+                    ) : null}
+                    {youtubeDisplay ? (
+                      <a
+                        className="inline-flex items-center gap-1 hover:text-foreground"
+                        href={youtubeDisplay}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                        {youtubeDisplay.replace(/^https?:\/\//, "")}
+                      </a>
                     ) : null}
                   </div>
                 )}
@@ -235,38 +281,80 @@ export function ProfileSettings() {
                   }}
                 >
                   <FieldSet>
-                    <FieldGroup className="grid grid-cols-2 gap-4">
-                      <form.AppField name="name">
-                        {(field) => <field.InputField label="Display Name" />}
-                      </form.AppField>
+                    <FieldGroup>
+                      <div className="grid grid-cols-2 gap-4">
+                        <form.AppField name="name">
+                          {(field) => <field.InputField label="Display Name" />}
+                        </form.AppField>
 
-                      <form.AppField name="email">
-                        {(field) => <field.InputField type="email" label="Email" />}
-                      </form.AppField>
+                        <form.AppField name="email">
+                          {(field) => <field.InputField type="email" label="Email" />}
+                        </form.AppField>
+                      </div>
 
-                      <form.AppField name="website">
+                      <form.AppField name="contacts" mode="array">
                         {(field) => (
-                          <field.InputField
-                            label="Website"
-                            placeholder="https://example.com"
-                            type="url"
-                          />
-                        )}
-                      </form.AppField>
+                          <div className="space-y-4">
+                            <div className="flex w-full items-center justify-between pt-2">
+                              <p className="text-sm font-medium text-foreground">Contact</p>
+                              <Button
+                                onClick={() =>
+                                  field.pushValue({ type: "email", value: "", icon: "" })
+                                }
+                              >
+                                add contact
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+                              {field.state.value?.map((_, i) => 
+                                (
+                                  <div className="grid grid-cols-6 gap-3 rounded-sm border p-5">
+                                    <form.AppField name={`contacts[${i}].icon`}>
+                                      {(subField) => (
+                                        <subField.IconPickerField
+                                          classNames={{
+                                            field: "col-span-1"
+                                          }}
+                                          label="Icon"
+                                        />
+                                      )}
+                                    </form.AppField>
 
-                      <form.AppField name="contactEmail">
-                        {(field) => (
-                          <field.InputField
-                            label="Contact Email"
-                            placeholder="hello@example.com"
-                            type="email"
-                          />
-                        )}
-                      </form.AppField>
+                                    <form.AppField name={`contacts[${i}].type`}>
+                                      {(subField) => (
+                                        <subField.ComboboxField
+                                          label={"Type"}
+                                          items={CONTACT_TYPES.map((t) => ({ label: t, value: t }))}
+                                          classNames={{
+                                            field: "col-span-1"
+                                          }}
+                                        />
+                                      )}
+                                    </form.AppField>
 
-                      <form.AppField name="location">
-                        {(field) => (
-                          <field.InputField label="Location" placeholder="City, Country" />
+                                    <form.AppField name={`contacts[${i}].value`}>
+                                      {(subField) => (
+                                        <subField.InputField
+                                          classNames={{ field: "col-span-3" }}
+                                          label={"Name"}
+                                        />
+                                      )}
+                                    </form.AppField>
+
+                                    <Button
+                                      className="col-span-1 h-9 self-end"
+                                      onClick={() => field.removeValue(i)}
+                                      size="sm"
+                                      type="button"
+                                      variant="destructive"
+                                    >
+                                      Delete
+                                    </Button>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
                         )}
                       </form.AppField>
                     </FieldGroup>

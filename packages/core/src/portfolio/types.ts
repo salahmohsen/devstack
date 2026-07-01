@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+import {
+  type ExperienceSchemaInsert,
+  type ExperienceSchemaSelect,
+  type ProjectSchemaInsert,
+  type ProjectSchemaSelect,
+  type StackSchemaInsert,
+  type StackSchemaSelect
+} from "@tsu-stack/db/types";
+
 export const StackOutputSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -7,7 +16,7 @@ export const StackOutputSchema = z.object({
   icon: z.string().nullable(),
   sortOrder: z.number().int(),
   enableAi: z.boolean()
-});
+}) satisfies z.ZodType<Omit<StackSchemaSelect, "createdAt" | "updatedAt">>;
 
 export type StackOutput = z.infer<typeof StackOutputSchema>;
 
@@ -16,7 +25,9 @@ export const StackCreateInputSchema = z.object({
   description: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),
   enableAi: z.boolean().optional()
-});
+}) satisfies z.ZodType<
+  Partial<Omit<StackSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+>;
 
 export type StackCreateInput = z.infer<typeof StackCreateInputSchema>;
 
@@ -25,7 +36,9 @@ export const StackUpdateInputSchema = z.object({
   description: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),
   enableAi: z.boolean().optional()
-});
+}) satisfies z.ZodType<
+  Partial<Omit<StackSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+>;
 
 export type StackUpdateInput = z.infer<typeof StackUpdateInputSchema>;
 
@@ -46,7 +59,7 @@ export const ProjectOutputSchema = z.object({
   isPresent: z.boolean(),
   enableAi: z.boolean(),
   stacks: z.array(StackOutputSchema)
-});
+}) satisfies z.ZodType<Omit<ProjectSchemaSelect, "createdAt" | "updatedAt">>;
 
 export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
 
@@ -62,7 +75,9 @@ export const CreateProjectInputSchema = z.object({
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional(),
   stackIds: z.array(z.string()).optional().default([])
-});
+}) satisfies z.ZodType<
+  Partial<Omit<ProjectSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+>;
 
 export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
 
@@ -82,7 +97,9 @@ export const UpdateProjectInputSchema = z.object({
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional(),
   stackIds: z.array(z.string()).optional()
-});
+}) satisfies z.ZodType<
+  Partial<Omit<ProjectSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+>;
 
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
 
@@ -98,7 +115,7 @@ export const ExperienceOutputSchema = z.object({
   isPresent: z.boolean(),
   enableAi: z.boolean(),
   projects: z.array(ProjectOutputSchema)
-});
+}) satisfies z.ZodType<Omit<ExperienceSchemaSelect, "createdAt" | "updatedAt">>;
 
 export type ExperienceOutput = z.infer<typeof ExperienceOutputSchema>;
 
@@ -111,7 +128,9 @@ export const CreateExperienceInputSchema = z.object({
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional()
-});
+}) satisfies z.ZodType<
+  Partial<Omit<ExperienceSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+>;
 
 export type CreateExperienceInput = z.infer<typeof CreateExperienceInputSchema>;
 
@@ -124,7 +143,9 @@ export const UpdateExperienceInputSchema = z.object({
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional()
-});
+}) satisfies z.ZodType<
+  Partial<Omit<ExperienceSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+>;
 
 export type UpdateExperienceInput = z.infer<typeof UpdateExperienceInputSchema>;
 
@@ -155,3 +176,10 @@ export type ProjectListOutput = z.infer<typeof ProjectListOutputSchema>;
 
 export const DeleteResponseSchema = z.object({ success: z.boolean() });
 export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;
+
+export type ResumeOutput = z.infer<typeof ResumeOutputSchema>;
+
+export const ResumeOutputSchema = z.object({
+  experiences: ExperienceListOutputSchema,
+  stacks: StackListOutputSchema
+});

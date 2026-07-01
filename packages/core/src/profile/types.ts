@@ -1,48 +1,44 @@
 import { z } from "zod";
 
-/**
- * Flat contact fields used by the profile form.
- *
- * Each field maps to a row in the `contact` table keyed by
- * `(userId, type)`. Empty strings are normalised server-side
- * and the row is deleted rather than written as empty.
- */
+import {
+  type ContactSchemaInsert,
+  type ContactSchemaSelect,
+  type UserSchemaInsert,
+  type UserSchemaSelect
+} from "@tsu-stack/db/types";
 
-const optionalUrl = z
-  .union([
-    z.literal(""),
-    z.url("Website must be a valid URL (e.g. https://example.com)").trim().max(500)
-  ])
-  .optional();
+export const contactTypeSchema = z.enum([
+  "website",
+  "email",
+  "location",
+  "linkedin",
+  "github",
+  "x",
+  "youtube"
+]);
 
-const optionalEmail = z
-  .union([z.literal(""), z.string().trim().email("Please enter a valid email address").max(320)])
-  .optional();
+export const contactOutputSchema = z.object({
+  type: contactTypeSchema,
+  value: z.string(),
+  icon: z.string(),
+  updatedAt: z.date()
+}) satisfies z.ZodType<Omit<ContactSchemaSelect, "userId" | "createdAt">>;
 
-const optionalLocation = z.union([z.literal(""), z.string().trim().min(1).max(200)]).optional();
-
-export const ContactInfoSchema = z.object({
-  website: optionalUrl,
-  email: optionalEmail,
-  location: optionalLocation
-});
-
-export type ContactInfo = z.infer<typeof ContactInfoSchema>;
+export const contactInputSchema = z.object({
+  type: contactTypeSchema,
+  value: z.string(),
+  icon: z.string()
+}) satisfies z.ZodType<Omit<ContactSchemaInsert, "userId" | "createdAt" | "updatedAt">>;
 
 export const ProfileUpdateInputSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   email: z.email("Please enter a valid email address").trim().max(320),
-  contact: ContactInfoSchema.optional()
-});
+  contacts: z.array(contactInputSchema).optional()
+}) satisfies z.ZodType<
+  Partial<Omit<UserSchemaInsert, "id" | "emailVerified" | "image" | "createdAt" | "updatedAt">>
+>;
 
 export type ProfileUpdateInput = z.infer<typeof ProfileUpdateInputSchema>;
-
-export const contactOutputSchema = z.object({
-  type: z.string(),
-  value: z.string(),
-  icon: z.string().nullable(),
-  updatedAt: z.string()
-});
 
 export const ProfileOutputSchema = z.object({
   id: z.string(),
@@ -50,9 +46,13 @@ export const ProfileOutputSchema = z.object({
   email: z.string(),
   emailVerified: z.boolean(),
   image: z.string().nullable(),
-  createdAt: z.string(),
-  contact: z.array(contactOutputSchema)
-});
+  createdAt: z.coerce.date(),
+  contacts: z.array(contactOutputSchema)
+}) satisfies z.ZodType<
+  Omit<UserSchemaSelect, "updatedAt"> & { contacts: z.infer<typeof contactOutputSchema>[] }
+>;
 
+export type ContactOutput = z.infer<typeof contactOutputSchema>;
+export type ContactInput = z.infer<typeof contactInputSchema>;
 export type ProfileOutput = z.infer<typeof ProfileOutputSchema>;
 export type ProfileOutputContact = z.infer<typeof contactOutputSchema>[];

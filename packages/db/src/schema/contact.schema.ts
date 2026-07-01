@@ -2,7 +2,15 @@ import { pgEnum, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-cor
 
 import { user } from "#@/schema/auth.schema";
 
-export const contactTypeEnum = pgEnum("contact_type_enum", ["website", "email", "location"]);
+export const contactTypeEnum = pgEnum("contact_type_enum", [
+  "website",
+  "email",
+  "location",
+  "linkedin",
+  "github",
+  "x",
+  "youtube"
+]);
 
 export const contact = pgTable(
   "contact",

@@ -22,6 +22,11 @@ export const userRepository = {
     return row ?? null;
   },
 
+  async findFirst(): Promise<UserEntity | null> {
+    const [row] = await getDb().select().from(user).limit(1);
+    return row ?? null;
+  },
+
   async findByEmail(email: string): Promise<UserEntity | null> {
     const [row] = await getDb().select().from(user).where(eq(user.email, email)).limit(1);
     return row ?? null;

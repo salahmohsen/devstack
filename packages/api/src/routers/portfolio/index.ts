@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
+import { contactOutputSchema } from "@tsu-stack/core";
 import {
   CreateExperienceInputSchema,
   CreateProjectInputSchema,
@@ -11,6 +12,7 @@ import {
   ProjectOutputSchema,
   ReorderInputSchema,
   ReorderResponseSchema,
+  ResumeOutputSchema,
   StackCreateInputSchema,
   StackListOutputSchema,
   StackOutputSchema,
@@ -21,6 +23,7 @@ import {
   type ProjectOutput,
   type StackOutput
 } from "@tsu-stack/core/portfolio";
+import { contactRepository, userRepository } from "@tsu-stack/db";
 import {
   experienceRepository,
   projectRepository,
@@ -149,10 +152,45 @@ function toExperienceOutput(exp: {
 
 export const portfolioRouter = {
   resume: {
-    get: publicProcedure.route({
-      description: "Get the resume JSON data",
-      method: "GET"
-    })
+    get: publicProcedure
+      .route({
+        description: "Get the resume JSON data",
+        method: "GET"
+      })
+      .output(ResumeOutputSchema)
+      .handler(async () => {
+        return {
+          experiences: [],
+          stacks: []
+        };
+      })
+  },
+  contact: {
+    get: publicProcedure
+      .route({
+        description: "Get the contact info",
+        method: "GET"
+      })
+      .output(z.array(contactOutputSchema))
+      .handler(async ({ context }) => {
+        context.logger.set({ route: "portfolio.contact.get" });
+        const userRow = await userRepository.findFirst();
+        if (!userRow) {
+          throw new Error("Session references a user that no longer exists");
+        }
+        const adminContacts = await contactRepository.findByUserId(userRow.id);
+
+        return (
+          adminContacts?.map((c) => {
+            return {
+              type: c.type,
+              value: c.value,
+              icon: c.icon,
+              updatedAt: c.updatedAt
+            };
+          }) ?? []
+        );
+      })
   },
   experiences: {
     list: publicProcedure

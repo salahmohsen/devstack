@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { ChevronDown, Filter, Lock, Eye } from "lucide-react";
+import { ChevronDown, Eye, Filter, Lock } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { createElement, useEffect, useMemo, useRef } from "react";
 
@@ -100,7 +100,7 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
     initialStore: filterStore
   });
 
-  const debouncedSearch = useDebouncedValue(filterState.searchQuery, 300);
+  const [debouncedSearch] = useDebouncedValue(filterState.searchQuery, 300);
 
   const visibilityValues = useMemo(() => {
     const filter = filterState.activeFilters.find(
