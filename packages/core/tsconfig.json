@@ -3,6 +3,6 @@
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022", "ES2023.Array"]
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

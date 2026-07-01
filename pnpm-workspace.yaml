@@ -126,6 +126,11 @@ catalog:
   "@aws-sdk/s3-presigned-post": ^3.700.0
   "@aws-sdk/s3-request-presigner": ^3.700.0
   "@aws-sdk/lib-storage": ^3.700.0
+  fuse.js: ^7.4.2
+  "@tanstack/react-virtual": ^3.14.5
+  "@loadable/component": ^5.16.7
+  "@types/loadable__component": ^5.13.10
+  cmdk: ^1.1.1
 
 catalogMode: prefer
 
