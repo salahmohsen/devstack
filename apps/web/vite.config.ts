@@ -122,7 +122,10 @@ plugins.push(
       enabled: true,
       // Only prerender paths defined in the PAGES_PRERENDER_CONFIG object
       autoStaticPathsDiscovery: false,
-      crawlLinks: false
+      crawlLinks: false,
+      // Cloudflare Pages build env has ~256 PID limit; high concurrency
+      // spawns too many child processes and hits EAGAIN.
+      concurrency: 2
     },
     server: {
       build: {
