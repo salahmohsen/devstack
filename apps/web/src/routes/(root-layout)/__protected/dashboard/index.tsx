@@ -13,8 +13,8 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/")({
     void context.queryClient.ensureQueryData(orpcQueryClient.githubConfig.get.queryOptions());
   },
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.prefetchQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
-    await queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
+    void queryClient.prefetchQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
+    void queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
   },
   head: () =>
     generateAppSeo({

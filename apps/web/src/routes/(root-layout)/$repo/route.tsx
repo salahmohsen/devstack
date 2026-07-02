@@ -25,9 +25,9 @@ export const Route = createFileRoute("/(root-layout)/$repo")({
     }
   },
   loader: async ({ context, params }) => {
-    await context.queryClient.prefetchQuery(getGithubRepoOverviewQueryOptions(params.repo));
+    void context.queryClient.prefetchQuery(getGithubRepoOverviewQueryOptions(params.repo));
 
-    await context.queryClient.prefetchQuery(getGithubRepoBranchesQueryOptions(params.repo));
+    void context.queryClient.prefetchQuery(getGithubRepoBranchesQueryOptions(params.repo));
   }
 });
 

@@ -144,6 +144,13 @@ export function ExperienceItem({
                   onEdit?.(experience.id);
                 }}
                 aria-label="Edit experience"
+                onMouseEnter={() =>
+                  void queryClient.prefetchQuery(
+                    orpcQueryClient.portfolio.experiences.get.queryOptions({
+                      input: { id: experience.id }
+                    })
+                  )
+                }
               >
                 <Edit />
               </Button>

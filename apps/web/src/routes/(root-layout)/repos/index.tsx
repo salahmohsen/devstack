@@ -34,7 +34,7 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
     const hubPrefetchInput = buildReposHubPrefetchInput(filterStore, urlPage);
 
     if (setupStatus.isConfigured && setupStatus.owner) {
-      await context.queryClient.prefetchQuery(githubReposHubQueryOptions(hubPrefetchInput));
+      void context.queryClient.prefetchQuery(githubReposHubQueryOptions(hubPrefetchInput));
     }
 
     return { filterStore };

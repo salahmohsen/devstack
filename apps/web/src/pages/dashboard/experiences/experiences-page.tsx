@@ -176,7 +176,7 @@ export function ExperiencesPage() {
             dragHandleProps={dragHandleProps}
             onEdit={openDialog}
             onMouseEnter={() => {
-              void queryClient.ensureQueryData(
+              void queryClient.prefetchQuery(
                 orpcQueryClient.portfolio.experiences.get.queryOptions({
                   input: { id: experience.id }
                 })

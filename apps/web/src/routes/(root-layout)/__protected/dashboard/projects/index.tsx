@@ -9,6 +9,6 @@ import { ProjectsPage } from "@/pages/dashboard/projects/ui/project-page";
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/projects/")({
   component: ProjectsPage,
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
+    void queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
   }
 });

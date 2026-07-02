@@ -152,7 +152,7 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
           void form.handleSubmit();
         }}
       >
-        <ScrollArea className="pe-5">
+        <ScrollArea className="max-h-[75dvh] pe-5">
           <FieldGroup>
             <form.AppField name="title">
               {(field) => <field.InputField label="Title" placeholder="e.g. My Awesome Project" />}
