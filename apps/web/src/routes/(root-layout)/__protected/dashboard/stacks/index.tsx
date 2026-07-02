@@ -6,7 +6,7 @@ import { StacksPage } from "@/pages/dashboard/stacks";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/stacks/")({
   loader: async ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
+    await queryClient.prefetchQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
   },
   component: StacksPage
 });

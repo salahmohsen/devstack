@@ -54,8 +54,8 @@ function BranchSelector({
     enabled: open
   });
 
-  const prefetchBranches = useCallback(() => {
-    void queryClient.prefetchQuery(branchesOptions);
+  const prefetchBranches = useCallback(async () => {
+    await queryClient.prefetchQuery(branchesOptions);
   }, [queryClient, branchesOptions]);
 
   const defaultBranch = repo.defaultBranch ?? "main";

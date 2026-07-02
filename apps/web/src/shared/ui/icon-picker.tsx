@@ -101,13 +101,13 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
     ref
   ) => {
     const [selectedIcon, setSelectedIcon] = useState<string | undefined>(defaultValue);
-    const [isOpen, setIsOpen] = useState(defaultOpen || false);
+    const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
     const [search, setSearch] = useDebouncedValue("", 100);
     const [isPopoverVisible, setIsPopoverVisible] = useState(false);
     const { icons } = useIconsData();
     const [isLoading, setIsLoading] = useState(true);
 
-    const iconsToUse = useMemo(() => iconsList || icons, [iconsList, icons]);
+    const iconsToUse = useMemo(() => iconsList ?? icons, [iconsList, icons]);
 
     const fuseInstance = useMemo(
       () =>
@@ -203,6 +203,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
 
     const parentRef = React.useRef<HTMLDivElement>(null);
 
+    // eslint-disable-next-line react-hooks-js/incompatible-library
     const virtualizer = useVirtualizer({
       count: virtualItems.length,
       getScrollElement: () => parentRef.current,
@@ -394,11 +395,11 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
     return (
       <Popover open={open ?? isOpen} onOpenChange={handleOpenChange} modal={modal}>
         <PopoverTrigger ref={ref} asChild {...props}>
-          {children || (
+          {children ?? (
             <Button variant="outline">
               {value || selectedIcon ? (
                 <>
-                  <Icon nameIcon={(value || selectedIcon)!} />
+                  <Icon nameIcon={(value ?? selectedIcon)!} />
                 </>
               ) : (
                 triggerPlaceholder

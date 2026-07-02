@@ -60,24 +60,27 @@ export const Route = createFileRoute("/(root-layout)/")({
 
     if (setupStatus.isConfigured && setupStatus.owner) {
       await ensureGithubQueryData({
-        load: () => context.queryClient.prefetchQuery(getGithubProfileQueryOptions()),
+        load: async () => await context.queryClient.prefetchQuery(getGithubProfileQueryOptions()),
         event: "home_github_profile_preload_failed",
         owner: setupStatus.owner
       });
 
       void Promise.all([
         ensureGithubQueryData({
-          load: () => context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions()),
+          load: async () =>
+            await context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions()),
           event: "home_github_pinned_repos_preload_failed",
           owner: setupStatus.owner
         }),
         ensureGithubQueryData({
-          load: () => context.queryClient.prefetchQuery(getGithubContributionsQueryOptions()),
+          load: async () =>
+            await context.queryClient.prefetchQuery(getGithubContributionsQueryOptions()),
           event: "home_github_contributions_preload_failed",
           owner: setupStatus.owner
         }),
         ensureGithubQueryData({
-          load: () => context.queryClient.prefetchQuery(getGithubActivityQueryOptions()),
+          load: async () =>
+            await context.queryClient.prefetchQuery(getGithubActivityQueryOptions()),
           event: "home_github_activity_preload_failed",
           owner: setupStatus.owner
         })
@@ -92,11 +95,13 @@ export const Route = createFileRoute("/(root-layout)/")({
 
     void Promise.all([
       ensureGithubQueryData({
-        load: () => context.queryClient.prefetchQuery(getPortfolioProjectsQueryOptions()),
+        load: async () =>
+          await context.queryClient.prefetchQuery(getPortfolioProjectsQueryOptions()),
         event: "home_portfolio_projects_preload_failed"
       }),
       ensureGithubQueryData({
-        load: () => context.queryClient.prefetchQuery(getPortfolioExperiencesQueryOptions()),
+        load: async () =>
+          await context.queryClient.prefetchQuery(getPortfolioExperiencesQueryOptions()),
         event: "home_portfolio_experiences_preload_failed"
       })
     ]).catch((error) => {
