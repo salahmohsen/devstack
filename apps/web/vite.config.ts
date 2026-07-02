@@ -225,6 +225,17 @@ export default defineConfig({
     // in the Cloudflare build env (256 PID limit → EAGAIN with 100+ SSR chunks).
     reportCompressedSize: false,
     rollupOptions: {
+      output: {
+        // Split large server-only dependencies into their own SSR chunks to
+        // stay under Cloudflare's 3 MiB per-module Worker size limit. The main
+        // src chunk (3.2 MiB) bundles better-auth, marked, and drizzle-orm
+        // along with all application code; these splits reclaim ~800 KiB.
+        manualChunks(id) {
+          if (id.includes("/better-auth/") || id.includes("/@better-auth/")) return "server-auth";
+          if (id.includes("/marked/") || id.includes("/prismjs/")) return "server-content";
+          if (id.includes("/drizzle-orm/")) return "server-db";
+        }
+      },
       onwarn(warning, warn) {
         const msg = typeof warning === "string" ? warning : (warning.message ?? "");
         if (msg.includes("externalized for browser compatibility") && msg.includes("evlog")) return;
