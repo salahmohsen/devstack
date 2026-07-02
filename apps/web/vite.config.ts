@@ -108,6 +108,31 @@ export function isSpecialTheme(theme) {
   };
 }
 
+// Stub out the icon group files in the SSR (Cloudflare Worker) environment to
+// prevent all 31 react-icons re-exports (~40 MiB of SSR chunks) from being
+// deployed as Worker modules. The icon-picker's loadGroup() is only called
+// from useEffect (client-only), so the SSR never needs the real icon data.
+// oxlint-disable-next-line typescript/consistent-type-imports
+function iconGroupsSSRStub(): import("vite").Plugin {
+  const GROUP_RE = /^\.\/icons\/group-\d{2}$/;
+  return {
+    name: "icon-groups-ssr-stub",
+    enforce: "pre",
+    resolveId: {
+      handler(source) {
+        if (this.environment?.name === "ssr" && GROUP_RE.test(source)) {
+          return `\0icon-group-stub:${source}`;
+        }
+      }
+    },
+    load(id) {
+      if (id.startsWith("\0icon-group-stub:")) {
+        return "export const iconLibraries = {};";
+      }
+    }
+  };
+}
+
 const plugins: unknown[] = [];
 plugins.push(
   devtools({
@@ -135,6 +160,7 @@ plugins.push(
     }
   }),
   shikiSSRStub(),
+  iconGroupsSSRStub(),
   mdx(),
   viteReact(),
   /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
