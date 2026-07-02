@@ -444,13 +444,24 @@ async function resolveIcon(nameIcon: string): Promise<IconType | null> {
   const cached = iconComponentCache.get(cacheKey);
   if (cached) return cached;
 
-  allIconsPromise ??= import("./all-icons").then((m) => {
+  allIconsPromise ??= (async () => {
+    const [m1, m2, m3] = await Promise.all([
+      import("./all-icons.1"),
+      import("./all-icons.2"),
+      import("./all-icons.3")
+    ]);
     const all: Record<string, IconType> = {};
-    for (const libModules of Object.values(m.iconLibraries)) {
+    for (const libModules of Object.values(m1.iconLibraries)) {
+      Object.assign(all, libModules);
+    }
+    for (const libModules of Object.values(m2.iconLibraries)) {
+      Object.assign(all, libModules);
+    }
+    for (const libModules of Object.values(m3.iconLibraries)) {
       Object.assign(all, libModules);
     }
     return all;
-  });
+  })();
 
   const allIcons = await allIconsPromise;
   const Comp = allIcons[nameIcon] ?? null;
