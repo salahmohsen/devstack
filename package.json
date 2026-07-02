@@ -8,7 +8,7 @@
     "test:unit:run": "pnpm dotenvx run -f ./packages/env/.env -- vp run -r test:unit",
     "test:e2e:run": "pnpm dotenvx run -f ./packages/env/.env -- vp run -r test:e2e",
     "dev": "pnpm -r --parallel dev",
-    "build": "echo '=== DIAG: RESOURCES ===' && echo PIDs:$(ps aux | wc -l) && ulimit -a 2>/dev/null | grep -E 'processes|nofile' && (head -5 /proc/meminfo 2>/dev/null || vm_stat 2>/dev/null | head -5) && echo '=== DIAG: BUILD START ===' && vp run -r build",
+    "build": "vp run -r build",
     "deploy": "pnpm run deploy:server && pnpm run deploy:web",
     "deploy:server": "vp run --filter @tsu-stack/server deploy",
     "deploy:web": "vp run --filter @tsu-stack/web deploy",
