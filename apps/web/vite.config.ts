@@ -125,7 +125,7 @@ plugins.push(
       crawlLinks: false,
       // Cloudflare Pages build env has ~256 PID limit; high concurrency
       // spawns too many child processes and hits EAGAIN.
-      concurrency: 1
+      concurrency: 2
     },
     server: {
       build: {
@@ -163,7 +163,7 @@ export default defineConfig({
     tasks: {
       build: {
         command:
-          "cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true IS_BUILD=true pnpm dotenvx run -f ../../packages/env/.env -- vp build",
+          'cross-env  NODE_OPTIONS="--max-old-space-size=2048" CLOUDFLARE_INCLUDE_PROCESS_ENV=true IS_BUILD=true  pnpm  dotenvx run -f ../../packages/env/.env -- vp build',
         // These environment variables are dependencies of the build process and need to be passed here to be picked up by the Vite Task runner.
         // CAUTION: These are hardcoded into the image. You should consider Build Secrets for sensitive values.
         //          In Coolify, you need to check "Use Docker Build Secrets" in the Environment Variables tab.
