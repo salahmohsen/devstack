@@ -124,7 +124,7 @@ export function SidePanelSlot({
       <motion.div
         animate={{ opacity: show ? 1 : 0 }}
         transition={{ duration: show ? 0.2 : 0.1, delay: show ? 0.1 : 0 }}
-        className="h-full overflow-x-hidden overflow-y-auto ps-5 pb-2"
+        className="h-full overflow-hidden ps-5 pb-2"
       >
         <div ref={refCallback} />
         <div ref={ghostRef} className="pointer-events-none" aria-hidden />

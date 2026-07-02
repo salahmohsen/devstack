@@ -29,12 +29,12 @@ export const ProjectsItem = ({ project }: { project: ProjectOutput }) => {
   const content = (
     <article className="group relative grid grid-cols-8 items-center gap-8 pb-1 transition-all duration-200 ease-in-out md:gap-4 lg:group-hover/list:opacity-50 hover:lg:opacity-100!">
       <aside className="col-span-2 hidden h-full w-full items-center justify-center sm:flex lg:justify-start">
-        <div className="relative flex aspect-square h-16 w-16 items-center justify-center rounded-full bg-muted text-3xl text-foreground transition-all duration-200 ease-linear sm:h-20 sm:w-20 lg:group-hover:scale-125 lg:group-hover:bg-accent lg:dark:group-hover:bg-accent lg:dark:group-hover:text-accent-foreground">
+        <div className="relative flex aspect-square h-16 w-16 items-center justify-center rounded-full bg-muted text-3xl text-foreground transition-all duration-200 ease-linear sm:h-20 sm:w-20 lg:group-hover:scale-125 lg:group-hover:bg-surface-1 lg:dark:group-hover:bg-surface-1 lg:dark:group-hover:text-primary-foreground">
           {project.logo && (
             <img
               src={project.logo}
               alt="project logo"
-              className="h-full w-full rounded-full object-contain p-3 saturate-0 group-hover:invert-0 group-hover:saturate-100 dark:invert"
+              className="h-full w-full rounded-full object-contain p-3 saturate-0 group-hover:invert-0 group-hover:saturate-100"
             />
           )}
         </div>

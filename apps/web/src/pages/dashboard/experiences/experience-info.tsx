@@ -33,7 +33,7 @@ export function ExperienceInfo({ experience }: ExperienceInfoProps) {
 
   return (
     <Card className="me-5 mt-px flex flex-col pt-0 shadow-none">
-      <CardHeader className="shrink-0 bg-accent py-5">
+      <CardHeader className="shrink-0 bg-muted py-5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <CardTitle className="text-lg">{experience.title}</CardTitle>
@@ -44,8 +44,8 @@ export function ExperienceInfo({ experience }: ExperienceInfoProps) {
           {experience.isArchived ? <Badge variant="secondary">Archived</Badge> : null}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm">
-        <ScrollArea>
+      <ScrollArea className="max-h-[calc(100dvh-300px)]">
+        <CardContent className="space-y-4 text-sm">
           {experience.description ? (
             <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
               {experience.description}
@@ -74,8 +74,8 @@ export function ExperienceInfo({ experience }: ExperienceInfoProps) {
               </div>
             </>
           ) : null}
-        </ScrollArea>
-      </CardContent>
+        </CardContent>
+      </ScrollArea>
       <ItemsInfoFooter />
     </Card>
   );

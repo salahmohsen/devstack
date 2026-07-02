@@ -20,7 +20,7 @@ export function ItemsInfoFooter({
   const { handlePrev, handleNext } = useItemsNavContext();
 
   return (
-    <CardFooter className="flex min-h-fit w-full flex-row items-center gap-2 border-t px-6">
+    <CardFooter className="flex h-10 w-full flex-row items-center gap-2 border-t px-6">
       {updatedAt ? (
         <div className="text-xs text-muted-foreground">
           Updated{" "}

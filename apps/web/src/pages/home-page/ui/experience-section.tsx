@@ -64,7 +64,7 @@ export const ExperienceItem = ({ experience }: { experience: ExperienceOutput })
   return (
     <li className="mb-12">
       <article className="group relative grid scale-100 pb-1 transition-all duration-200 ease-in-out sm:grid-cols-8 sm:gap-8 md:gap-4 lg:group-hover:scale-75 lg:group-hover/list:opacity-50 hover:lg:scale-105! hover:lg:opacity-100!">
-        <div className="absolute -inset-4 -z-10 hidden rounded-lg lg:-inset-x-6 lg:block lg:group-hover:border lg:group-hover:bg-transparent lg:group-hover:drop-shadow-lg lg:dark:group-hover:border-border/50 lg:dark:group-hover:bg-accent/50" />
+        <div className="absolute -inset-4 -z-10 hidden rounded-lg lg:-inset-x-6 lg:block lg:group-hover:border lg:group-hover:bg-transparent lg:group-hover:drop-shadow-lg lg:dark:group-hover:border-border/50 lg:dark:group-hover:bg-surface-1" />
         <header className="z-10 mt-1 text-xs font-semibold tracking-wide uppercase sm:col-span-2">
           {duration}
         </header>

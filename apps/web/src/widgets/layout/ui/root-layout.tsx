@@ -64,7 +64,7 @@ export function GithubPublicLayout({ children }: PropsWithChildren) {
             initial={false}
             animate={{ width: showPanel ? SIDE_PANEL_WIDTH : 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 35 }}
-            className="hidden max-h-[calc(100%-var(--navbar-height))] shrink-0 overflow-hidden xl:block"
+            className="hidden h-full max-h-[calc(100dvh-var(--navbar-height))] shrink-0 overflow-hidden xl:block"
           >
             <SidePanelSlot
               slotRef={sidePanel.setNode}

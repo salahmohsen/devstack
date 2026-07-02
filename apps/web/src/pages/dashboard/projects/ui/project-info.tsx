@@ -30,7 +30,7 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
 
   return (
     <Card className="me-5 mt-px flex flex-col pt-0 shadow-none">
-      <CardHeader className="shrink-0 bg-accent py-5">
+      <CardHeader className="shrink-0 bg-muted py-5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <CardTitle className="text-lg">{project.title}</CardTitle>
