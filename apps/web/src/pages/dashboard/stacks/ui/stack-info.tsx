@@ -11,6 +11,7 @@ import {
 } from "@tsu-stack/ui/components/card";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 
+import { Icon } from "@/shared/ui/icon-picker";
 import { Markdown } from "@/shared/ui/markdown";
 
 import { ItemsInfoFooter } from "@/widgets/items-page";
@@ -24,14 +25,13 @@ export function StackInfo({ stack }: StackInfoProps) {
 
   return (
     <Card className="me-5 mt-px flex flex-col pt-0 shadow-none">
-      <CardHeader className="shrink-0 bg-accent py-5">
+      <CardHeader className="shrink-0 bg-muted py-5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-3">
             {stack.icon ? (
-              <img
-                src={stack.icon}
-                alt={stack.name}
-                className="size-10 shrink-0 rounded object-contain"
+              <Icon
+                nameIcon={stack.icon}
+                propsIcon={{ className: "size-10 shrink-0 rounded object-contain" }}
               />
             ) : (
               <Package className="size-10 shrink-0 text-muted-foreground" strokeWidth={1.5} />

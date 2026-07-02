@@ -11,7 +11,7 @@ export function ListSkeleton({ count = 6 }: ItemSkeletonProps) {
   return (
     <ul className="space-y-2" aria-busy="true" aria-live="polite">
       {Array.from({ length: count }).map((_, index) => (
-        <li key={index} className="flex items-center gap-3 rounded-xl border bg-card p-4">
+        <li key={index} className="flex items-center gap-3 rounded-sm border bg-card p-4">
           <Skeleton className="size-10 rounded-md" />
           <div className="flex flex-1 flex-col gap-2">
             <Skeleton className="h-4 w-1/3" />

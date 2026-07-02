@@ -82,10 +82,10 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
           {stack.icon ? (
             <Icon
               nameIcon={stack.icon}
-              propsIcon={{ className: "size-16 shrink-0 rounded object-contain" }}
+              propsIcon={{ className: "size-14 shrink-0 rounded object-contain" }}
             />
           ) : (
-            <Package className="size-16 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+            <Package className="size-14 shrink-0 text-muted-foreground" strokeWidth={1.5} />
           )}
           <p
             className="warp-break-words line-clamp-2 max-w-full text-center text-sm font-medium"
