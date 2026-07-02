@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { Archive, Edit, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -30,6 +29,8 @@ type DragHandleProps = {
 type ExperienceItemProps = {
   experience: ExperienceOutput;
   dragHandleProps?: DragHandleProps;
+  onEdit?: (id: string) => void;
+  onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
 };
 
 function formatRange(fromDate: string | null, toDate: string | null): string {
@@ -40,7 +41,12 @@ function formatRange(fromDate: string | null, toDate: string | null): string {
   return `${start} — ${end}`;
 }
 
-export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemProps) {
+export function ExperienceItem({
+  experience,
+  dragHandleProps,
+  onEdit,
+  onMouseEnter
+}: ExperienceItemProps) {
   const queryClient = useQueryClient();
 
   const { selectItem, isItemSelected } = useExperienceStore();
@@ -96,6 +102,7 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
             selectItem(experience.id, experience);
           }
         }}
+        onMouseEnter={onMouseEnter}
         className={cn(
           "cursor-pointer rounded-sm bg-transparent ring-0 transition-all duration-200",
           // Spotlight: when any sibling is hovered, the others dim to
@@ -132,13 +139,10 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
             </div>
             <div className="flex gap-2">
               <Button
-                render={
-                  <Link
-                    to="/dashboard/experiences/$experienceId"
-                    params={{ experienceId: experience.id }}
-                  />
-                }
-                onClick={(event: React.MouseEvent) => event.stopPropagation()}
+                onClick={(event: React.MouseEvent) => {
+                  event.stopPropagation();
+                  onEdit?.(experience.id);
+                }}
                 aria-label="Edit experience"
               >
                 <Edit />
@@ -189,9 +193,13 @@ export function ExperienceItem({ experience, dragHandleProps }: ExperienceItemPr
   );
 }
 
-export function ExperienceItemAddButton() {
+type ExperienceItemAddButtonProps = {
+  onAdd?: () => void;
+};
+
+export function ExperienceItemAddButton({ onAdd }: ExperienceItemAddButtonProps) {
   return (
-    <Button render={<Link to="/dashboard/experiences/new" />} nativeButton={false}>
+    <Button onClick={onAdd}>
       <Plus />
       Add Experience
     </Button>

@@ -306,53 +306,53 @@ export function ProfileSettings() {
                               </Button>
                             </div>
                             <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-                              {field.state.value?.map((_, i) => 
-                                (
-                                  <div className="grid grid-cols-6 gap-3 rounded-sm border p-5">
-                                    <form.AppField name={`contacts[${i}].icon`}>
-                                      {(subField) => (
-                                        <subField.IconPickerField
-                                          classNames={{
-                                            field: "col-span-1"
-                                          }}
-                                          label="Icon"
-                                        />
-                                      )}
-                                    </form.AppField>
+                              {field.state.value?.map((_, i) => (
+                                <div className="grid grid-cols-6 gap-3 rounded-sm border p-5">
+                                  <form.AppField name={`contacts[${i}].icon`}>
+                                    {(subField) => (
+                                      <subField.IconPickerField
+                                        classNames={{
+                                          field: "col-span-1"
+                                        }}
+                                        label="Icon"
+                                      />
+                                    )}
+                                  </form.AppField>
 
-                                    <form.AppField name={`contacts[${i}].type`}>
-                                      {(subField) => (
-                                        <subField.ComboboxField
-                                          label={"Type"}
-                                          items={CONTACT_TYPES.map((t) => ({ label: t, value: t }))}
-                                          classNames={{
-                                            field: "col-span-1"
-                                          }}
-                                        />
-                                      )}
-                                    </form.AppField>
+                                  <form.AppField name={`contacts[${i}].type`}>
+                                    {(subField) => (
+                                      <subField.ComboboxField
+                                        label={"Type"}
+                                        items={CONTACT_TYPES.map((t) => {
+                                          return { label: t, value: t };
+                                        })}
+                                        classNames={{
+                                          field: "col-span-1"
+                                        }}
+                                      />
+                                    )}
+                                  </form.AppField>
 
-                                    <form.AppField name={`contacts[${i}].value`}>
-                                      {(subField) => (
-                                        <subField.InputField
-                                          classNames={{ field: "col-span-3" }}
-                                          label={"Name"}
-                                        />
-                                      )}
-                                    </form.AppField>
+                                  <form.AppField name={`contacts[${i}].value`}>
+                                    {(subField) => (
+                                      <subField.InputField
+                                        classNames={{ field: "col-span-3" }}
+                                        label={"Name"}
+                                      />
+                                    )}
+                                  </form.AppField>
 
-                                    <Button
-                                      className="col-span-1 h-9 self-end"
-                                      onClick={() => field.removeValue(i)}
-                                      size="sm"
-                                      type="button"
-                                      variant="destructive"
-                                    >
-                                      Delete
-                                    </Button>
-                                  </div>
-                                )
-                              )}
+                                  <Button
+                                    className="col-span-1 h-9 self-end"
+                                    onClick={() => field.removeValue(i)}
+                                    size="sm"
+                                    type="button"
+                                    variant="destructive"
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}

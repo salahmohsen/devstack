@@ -1,11 +1,14 @@
-import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 
-export function ProjectItemAddButton() {
+type ProjectItemAddButtonProps = {
+  onAdd?: () => void;
+};
+
+export function ProjectItemAddButton({ onAdd }: ProjectItemAddButtonProps) {
   return (
-    <Button nativeButton={false} render={<Link to="/dashboard/projects/new" />}>
+    <Button onClick={onAdd}>
       <Plus />
       Add Project
     </Button>

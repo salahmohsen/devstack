@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { Edit, ExternalLink, GripVertical, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -29,9 +28,11 @@ type DragHandleProps = {
 type ProjectItemProps = {
   project: ProjectOutput;
   dragHandleProps?: DragHandleProps;
+  onEdit?: (id: string) => void;
+  onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
 };
 
-export function ProjectItem({ project, dragHandleProps }: ProjectItemProps) {
+export function ProjectItem({ project, dragHandleProps, onEdit, onMouseEnter }: ProjectItemProps) {
   const queryClient = useQueryClient();
 
   const { selectItem, isItemSelected } = useProjectStore();
@@ -71,6 +72,7 @@ export function ProjectItem({ project, dragHandleProps }: ProjectItemProps) {
             selectItem(project.id, project);
           }
         }}
+        onMouseEnter={onMouseEnter}
         className={cn(
           "cursor-pointer rounded-sm bg-transparent ring-0 transition-all duration-200",
           // Spotlight: when any sibling is hovered, the others dim to
@@ -117,14 +119,10 @@ export function ProjectItem({ project, dragHandleProps }: ProjectItemProps) {
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button
-                      nativeButton={false}
-                      render={
-                        <Link
-                          to="/dashboard/projects/$projectId"
-                          params={{ projectId: project.id }}
-                        />
-                      }
-                      onClick={(event: React.MouseEvent) => event.stopPropagation()}
+                      onClick={(event: React.MouseEvent) => {
+                        event.stopPropagation();
+                        onEdit?.(project.id);
+                      }}
                       aria-label="Edit project"
                     >
                       <Edit />

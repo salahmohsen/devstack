@@ -8,7 +8,7 @@
   /* Base colors */
   --color-base-*: initial;
   --color-surface-*: initial;
-  --color-surface-1: initial;
+  --color-background: initial;
   --color-surface-1: initial;
   --color-surface-2: initial;
   --color-primary-*: initial;
@@ -74,7 +74,6 @@
   --color-sidebar-ring: initial;
 
   /* Custom semantic tokens */
-  --color-accent-pro: initial;
   --color-night: initial;
   --color-night-faded: initial;
   --color-light: initial;
@@ -168,7 +167,6 @@
   --sidebar-ring: var(--base-800);
 
   /* Custom semantic tokens used across the app */
-  --accent-pro: oklch(0.732 0.198 142.5);
   --night: var(--base-950);
   --night-faded: oklch(from var(--base-950) l c h / 0.5);
   --light: oklch(0.967 0.001 286.375);
@@ -252,7 +250,6 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  --color-accent-pro: var(--accent-pro);
   --color-night: var(--night);
   --color-night-faded: var(--night-faded);
   --color-light: var(--light);

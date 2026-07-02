@@ -1,17 +1,18 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { StackCreateInputSchema, StackUpdateInputSchema } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
+import { DialogFooter } from "@tsu-stack/ui/components/dialog.js";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
+import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 
 type StackFormProps = {
   id?: string;
@@ -98,16 +99,7 @@ export function StackForm({ id, onSuccess, onClose }: StackFormProps) {
     }
   });
 
-  useEffect(() => {
-    if (stack) {
-      form.reset({
-        name: stack.name,
-        description: stack.description ?? "",
-        icon: stack.icon ?? "",
-        enableAi: stack.enableAi
-      });
-    }
-  }, [stack]);
+  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, onClose);
 
   if (isEdit && stackQuery.isLoading && !stack) {
     return <DefaultLoader />;
@@ -118,54 +110,60 @@ export function StackForm({ id, onSuccess, onClose }: StackFormProps) {
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void form.handleSubmit();
-      }}
-    >
-      <FieldGroup>
-        <form.AppField name="name">
-          {(field) => <field.InputField label="Name" placeholder="e.g. React" />}
-        </form.AppField>
+    <>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void form.handleSubmit();
+        }}
+      >
+        <FieldGroup>
+          <form.AppField name="name">
+            {(field) => <field.InputField label="Name" placeholder="e.g. React" />}
+          </form.AppField>
 
-        <form.AppField name="icon">
-          {(field) => <field.IconPickerField label="Stack Icon" />}
-        </form.AppField>
+          <form.AppField name="icon">
+            {(field) => <field.IconPickerField label="Stack Icon" />}
+          </form.AppField>
 
-        <form.AppField name="description">
-          {(field) => (
-            <field.RichTextField label="Description" placeholder="Brief description of the stack" />
-          )}
-        </form.AppField>
+          <form.AppField name="description">
+            {(field) => (
+              <field.RichTextField
+                label="Description"
+                placeholder="Brief description of the stack"
+              />
+            )}
+          </form.AppField>
 
-        <form.AppField name="enableAi">
-          {(field) => (
-            <field.SwitchField
-              label="Enable AI"
-              description="Let AI generate or enhance this stack."
-            />
-          )}
-        </form.AppField>
+          <form.AppField name="enableAi">
+            {(field) => (
+              <field.SwitchField
+                label="Enable AI"
+                description="Let AI generate or enhance this stack."
+              />
+            )}
+          </form.AppField>
 
-        <div className="flex items-center gap-2">
-          <form.AppForm>
-            <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
-              {isEdit
-                ? updateMutation.isPending
-                  ? "Saving..."
-                  : "Save"
-                : createMutation.isPending
-                  ? "Creating..."
-                  : "Create"}
-            </form.SubmitButton>
-          </form.AppForm>
-          <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-        </div>
-      </FieldGroup>
-    </form>
+          <DialogFooter>
+            <form.AppForm>
+              <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
+                {isEdit
+                  ? updateMutation.isPending
+                    ? "Saving..."
+                    : "Save"
+                  : createMutation.isPending
+                    ? "Creating..."
+                    : "Create"}
+              </form.SubmitButton>
+            </form.AppForm>
+            <Button variant="outline" type="button" onClick={handleCloseAttempt}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </FieldGroup>
+      </form>
+      {alertDialog}
+    </>
   );
 }

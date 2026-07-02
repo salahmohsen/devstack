@@ -89,7 +89,7 @@ export function StacksPage() {
             stack={stack}
             onEdit={openDialog}
             onMouseEnter={() => {
-              queryClient.prefetchQuery(
+              void queryClient.ensureQueryData(
                 orpcQueryClient.portfolio.stacks.get.queryOptions({ input: { id: stack.id } })
               );
             }}

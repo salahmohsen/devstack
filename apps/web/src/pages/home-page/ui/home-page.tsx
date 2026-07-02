@@ -26,10 +26,10 @@ import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { RepositoryRow } from "@/shared/ui/repository-row";
 
-import { useGetGithubSetupStatusQuery } from "@/features/github";
 import {
   getGithubProfileReposQueryOptions,
-  useGetGithubProfileReposQuery
+  useGetGithubProfileReposQuery,
+  useGetGithubSetupStatusQuery
 } from "@/features/github";
 
 import { useGetGithubActivityQuery } from "@/pages/home-page/api/get-github-activity.query";
@@ -206,7 +206,7 @@ export function GithubProfilePage() {
                   to={"/"}
                   className={
                     activeTab === githubProfileTabs.overview
-                      ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
+                      ? "inline-flex h-6 items-center justify-center rounded-sm bg-background px-2.5 py-0 text-xs leading-none font-medium"
                       : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
                   }
                 >
@@ -216,7 +216,7 @@ export function GithubProfilePage() {
                   to={repositoriesHref}
                   className={
                     activeTab === githubProfileTabs.repositories
-                      ? "inline-flex h-6 items-center justify-center rounded-sm bg-surface-1 px-2.5 py-0 text-xs leading-none font-medium"
+                      ? "inline-flex h-6 items-center justify-center rounded-sm bg-background px-2.5 py-0 text-xs leading-none font-medium"
                       : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
                   }
                 >
@@ -267,7 +267,7 @@ export function GithubProfilePage() {
                     No repositories to show.
                   </p>
                 ) : (
-                  <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface-1">
+                  <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-background">
                     {pagedRepos.map((repo) => (
                       <div
                         key={repo.id}

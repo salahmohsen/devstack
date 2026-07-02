@@ -1,10 +1,17 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@tsu-stack/ui/components/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { SortableList } from "@/shared/ui/sortable-list";
@@ -23,6 +30,7 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useExperienceStore } from "./_lib/experience.slice";
 import { ExperienceTabs, isExperienceTab } from "./_lib/experience.types";
+import { ExperienceForm } from "./experience-form";
 import { ExperienceInfo } from "./experience-info";
 import { ExperienceItem, ExperienceItemAddButton } from "./experience-item";
 
@@ -42,7 +50,7 @@ export function ExperiencesPage() {
   }, [tab, setTabAndFilter]);
 
   const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
-  const allExperiences = experiencesQuery.data ?? [];
+  const allExperiences = useMemo(() => experiencesQuery.data ?? [], [experiencesQuery.data]);
 
   const visibleExperiences = useMemo(() => {
     if (activeTab === ExperienceTabs.Live) {
@@ -112,6 +120,33 @@ export function ExperiencesPage() {
 
   const isAnySelected = isAnyItemSelected(isItemSelected);
 
+  useEffect(() => {
+    if (!experiencesQuery.isLoading && visibleExperiences.length === 0 && itemInfo) {
+      setItemInfo(null);
+      setItemSelected(null);
+    }
+  }, [
+    experiencesQuery.isLoading,
+    visibleExperiences.length,
+    itemInfo,
+    setItemInfo,
+    setItemSelected
+  ]);
+
+  const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogKey, setDialogKey] = useState(0);
+
+  const openDialog = useCallback((id: string | null) => {
+    setEditingExperienceId(id);
+    setDialogKey((k) => k + 1);
+    setDialogOpen(true);
+  }, []);
+
+  const closeDialog = useCallback(() => {
+    setDialogOpen(false);
+  }, []);
+
   const emptyState = (
     <ItemsEmpty
       title={activeTab === ExperienceTabs.Live ? "No live experiences" : "No archived experiences"}
@@ -120,7 +155,7 @@ export function ExperiencesPage() {
           ? "Add a new experience to start tracking your active positions."
           : "Archived experiences will appear here once you archive one."
       }
-      action={<ExperienceItemAddButton />}
+      action={<ExperienceItemAddButton onAdd={() => openDialog(null)} />}
     />
   );
 
@@ -136,7 +171,18 @@ export function ExperiencesPage() {
         siblingsDimOnHover
       >
         {(experience, dragHandleProps) => (
-          <ExperienceItem experience={experience} dragHandleProps={dragHandleProps} />
+          <ExperienceItem
+            experience={experience}
+            dragHandleProps={dragHandleProps}
+            onEdit={openDialog}
+            onMouseEnter={() => {
+              void queryClient.ensureQueryData(
+                orpcQueryClient.portfolio.experiences.get.queryOptions({
+                  input: { id: experience.id }
+                })
+              );
+            }}
+          />
         )}
       </SortableList>
     );
@@ -148,7 +194,7 @@ export function ExperiencesPage() {
         <PageHeader
           title="Experiences"
           description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
-          actions={<ExperienceItemAddButton />}
+          actions={<ExperienceItemAddButton onAdd={() => openDialog(null)} />}
         />
 
         <Tabs value={activeTab} onValueChange={setTab}>
@@ -171,6 +217,27 @@ export function ExperiencesPage() {
         <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
           {(item) => <ExperienceInfo experience={item} />}
         </ItemsInfoPanel>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent key={dialogKey} className="min-w-6xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingExperienceId ? "Edit Experience" : "New Experience"}
+              </DialogTitle>
+              <DialogDescription>
+                {editingExperienceId
+                  ? "Update your position details."
+                  : "Add a new position to your resume."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <ExperienceForm
+              id={editingExperienceId ?? undefined}
+              onSuccess={closeDialog}
+              onClose={closeDialog}
+            />
+          </DialogContent>
+        </Dialog>
       </PageLayout>
     </ItemsNavProvider>
   );

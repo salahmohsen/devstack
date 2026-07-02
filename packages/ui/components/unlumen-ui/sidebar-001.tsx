@@ -153,7 +153,7 @@ function HoverHighlight() {
       {enabled && hovered && hoverRect && (
         <motion.div
           key="sb001-hover-bg"
-          className="pointer-events-none absolute z-0 rounded-md bg-accent/50"
+          className="pointer-events-none absolute z-0 rounded-md"
           style={{ right: 0 }}
           initial={false}
           animate={{
@@ -201,7 +201,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
       {isActive && (
         <motion.span
           layoutId="sb001-active-bar"
-          className="pointer-events-none absolute top-1/2 left-1 z-10 h-[1.8px] -translate-y-1/2 rounded-full bg-accent-pro"
+          className="pointer-events-none absolute top-1/2 left-1 z-10 h-[1.8px] -translate-y-1/2 rounded-full bg-accent"
           animate={{ width: 23 }}
           transition={{ type: "spring", stiffness: 800, damping: 40 }}
         />
@@ -247,7 +247,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
           )}
         >
           <span className="relative z-1 truncate">{label}</span>
-          {isNew && <span className="size-1.5 shrink-0 rounded-full bg-accent-pro" />}
+          {isNew && <span className="size-1.5 shrink-0 rounded-full bg-accent" />}
         </Link>
       </motion.div>
     </div>

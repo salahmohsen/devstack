@@ -33,10 +33,6 @@ import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
 import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
-import { Route as rootLayout_protectedDashboardProjectsNewRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/new'
-import { Route as rootLayout_protectedDashboardProjectsProjectIdRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/$projectId'
-import { Route as rootLayout_protectedDashboardExperiencesNewRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/new'
-import { Route as rootLayout_protectedDashboardExperiencesExperienceIdRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/$experienceId'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsGithubIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/github/index'
 import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
@@ -172,30 +168,6 @@ const rootLayoutguestSignInCreateAnAccountIndexRoute =
     path: '/create-an-account/',
     getParentRoute: () => rootLayoutguestSignInRouteRoute,
   } as any)
-const rootLayout_protectedDashboardProjectsNewRoute =
-  rootLayout_protectedDashboardProjectsNewRouteImport.update({
-    id: '/dashboard/projects/new',
-    path: '/dashboard/projects/new',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardProjectsProjectIdRoute =
-  rootLayout_protectedDashboardProjectsProjectIdRouteImport.update({
-    id: '/dashboard/projects/$projectId',
-    path: '/dashboard/projects/$projectId',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardExperiencesNewRoute =
-  rootLayout_protectedDashboardExperiencesNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => rootLayout_protectedDashboardExperiencesRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardExperiencesExperienceIdRoute =
-  rootLayout_protectedDashboardExperiencesExperienceIdRouteImport.update({
-    id: '/$experienceId',
-    path: '/$experienceId',
-    getParentRoute: () => rootLayout_protectedDashboardExperiencesRouteRoute,
-  } as any)
 const rootLayout_protectedDashboardSettingsProfileIndexRoute =
   rootLayout_protectedDashboardSettingsProfileIndexRouteImport.update({
     id: '/profile/',
@@ -234,10 +206,6 @@ export interface FileRoutesByFullPath {
   '/$repo/tree/$': typeof rootLayoutRepoTreeSplatRoute
   '/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
-  '/dashboard/experiences/$experienceId': typeof rootLayout_protectedDashboardExperiencesExperienceIdRoute
-  '/dashboard/experiences/new': typeof rootLayout_protectedDashboardExperiencesNewRoute
-  '/dashboard/projects/$projectId': typeof rootLayout_protectedDashboardProjectsProjectIdRoute
-  '/dashboard/projects/new': typeof rootLayout_protectedDashboardProjectsNewRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
@@ -262,10 +230,6 @@ export interface FileRoutesByTo {
   '/$repo/tree/$': typeof rootLayoutRepoTreeSplatRoute
   '/sign-in': typeof rootLayoutguestSignInIndexRoute
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
-  '/dashboard/experiences/$experienceId': typeof rootLayout_protectedDashboardExperiencesExperienceIdRoute
-  '/dashboard/experiences/new': typeof rootLayout_protectedDashboardExperiencesNewRoute
-  '/dashboard/projects/$projectId': typeof rootLayout_protectedDashboardProjectsProjectIdRoute
-  '/dashboard/projects/new': typeof rootLayout_protectedDashboardProjectsNewRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
@@ -296,10 +260,6 @@ export interface FileRoutesById {
   '/(root-layout)/$repo/tree/$': typeof rootLayoutRepoTreeSplatRoute
   '/(root-layout)/(guest)/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
-  '/(root-layout)/__protected/dashboard/experiences/$experienceId': typeof rootLayout_protectedDashboardExperiencesExperienceIdRoute
-  '/(root-layout)/__protected/dashboard/experiences/new': typeof rootLayout_protectedDashboardExperiencesNewRoute
-  '/(root-layout)/__protected/dashboard/projects/$projectId': typeof rootLayout_protectedDashboardProjectsProjectIdRoute
-  '/(root-layout)/__protected/dashboard/projects/new': typeof rootLayout_protectedDashboardProjectsNewRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/(root-layout)/__protected/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
@@ -329,10 +289,6 @@ export interface FileRouteTypes {
     | '/$repo/tree/$'
     | '/sign-in/'
     | '/dashboard/'
-    | '/dashboard/experiences/$experienceId'
-    | '/dashboard/experiences/new'
-    | '/dashboard/projects/$projectId'
-    | '/dashboard/projects/new'
     | '/sign-in/create-an-account/'
     | '/dashboard/experiences/'
     | '/dashboard/projects/'
@@ -357,10 +313,6 @@ export interface FileRouteTypes {
     | '/$repo/tree/$'
     | '/sign-in'
     | '/dashboard'
-    | '/dashboard/experiences/$experienceId'
-    | '/dashboard/experiences/new'
-    | '/dashboard/projects/$projectId'
-    | '/dashboard/projects/new'
     | '/sign-in/create-an-account'
     | '/dashboard/experiences'
     | '/dashboard/projects'
@@ -390,10 +342,6 @@ export interface FileRouteTypes {
     | '/(root-layout)/$repo/tree/$'
     | '/(root-layout)/(guest)/sign-in/'
     | '/(root-layout)/__protected/dashboard/'
-    | '/(root-layout)/__protected/dashboard/experiences/$experienceId'
-    | '/(root-layout)/__protected/dashboard/experiences/new'
-    | '/(root-layout)/__protected/dashboard/projects/$projectId'
-    | '/(root-layout)/__protected/dashboard/projects/new'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
     | '/(root-layout)/__protected/dashboard/experiences/'
     | '/(root-layout)/__protected/dashboard/projects/'
@@ -581,34 +529,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRouteImport
       parentRoute: typeof rootLayoutguestSignInRouteRoute
     }
-    '/(root-layout)/__protected/dashboard/projects/new': {
-      id: '/(root-layout)/__protected/dashboard/projects/new'
-      path: '/dashboard/projects/new'
-      fullPath: '/dashboard/projects/new'
-      preLoaderRoute: typeof rootLayout_protectedDashboardProjectsNewRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/projects/$projectId': {
-      id: '/(root-layout)/__protected/dashboard/projects/$projectId'
-      path: '/dashboard/projects/$projectId'
-      fullPath: '/dashboard/projects/$projectId'
-      preLoaderRoute: typeof rootLayout_protectedDashboardProjectsProjectIdRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/experiences/new': {
-      id: '/(root-layout)/__protected/dashboard/experiences/new'
-      path: '/new'
-      fullPath: '/dashboard/experiences/new'
-      preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesNewRouteImport
-      parentRoute: typeof rootLayout_protectedDashboardExperiencesRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/experiences/$experienceId': {
-      id: '/(root-layout)/__protected/dashboard/experiences/$experienceId'
-      path: '/$experienceId'
-      fullPath: '/dashboard/experiences/$experienceId'
-      preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesExperienceIdRouteImport
-      parentRoute: typeof rootLayout_protectedDashboardExperiencesRouteRoute
-    }
     '/(root-layout)/__protected/dashboard/settings/profile/': {
       id: '/(root-layout)/__protected/dashboard/settings/profile/'
       path: '/profile'
@@ -649,17 +569,11 @@ const rootLayoutRepoRouteRouteWithChildren =
   rootLayoutRepoRouteRoute._addFileChildren(rootLayoutRepoRouteRouteChildren)
 
 interface rootLayout_protectedDashboardExperiencesRouteRouteChildren {
-  rootLayout_protectedDashboardExperiencesExperienceIdRoute: typeof rootLayout_protectedDashboardExperiencesExperienceIdRoute
-  rootLayout_protectedDashboardExperiencesNewRoute: typeof rootLayout_protectedDashboardExperiencesNewRoute
   rootLayout_protectedDashboardExperiencesIndexRoute: typeof rootLayout_protectedDashboardExperiencesIndexRoute
 }
 
 const rootLayout_protectedDashboardExperiencesRouteRouteChildren: rootLayout_protectedDashboardExperiencesRouteRouteChildren =
   {
-    rootLayout_protectedDashboardExperiencesExperienceIdRoute:
-      rootLayout_protectedDashboardExperiencesExperienceIdRoute,
-    rootLayout_protectedDashboardExperiencesNewRoute:
-      rootLayout_protectedDashboardExperiencesNewRoute,
     rootLayout_protectedDashboardExperiencesIndexRoute:
       rootLayout_protectedDashboardExperiencesIndexRoute,
   }
@@ -694,8 +608,6 @@ interface rootLayout_protectedRouteRouteChildren {
   rootLayout_protectedDashboardExperiencesRouteRoute: typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
-  rootLayout_protectedDashboardProjectsProjectIdRoute: typeof rootLayout_protectedDashboardProjectsProjectIdRoute
-  rootLayout_protectedDashboardProjectsNewRoute: typeof rootLayout_protectedDashboardProjectsNewRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
 }
@@ -708,10 +620,6 @@ const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChil
       rootLayout_protectedDashboardSettingsRouteRouteWithChildren,
     rootLayout_protectedDashboardIndexRoute:
       rootLayout_protectedDashboardIndexRoute,
-    rootLayout_protectedDashboardProjectsProjectIdRoute:
-      rootLayout_protectedDashboardProjectsProjectIdRoute,
-    rootLayout_protectedDashboardProjectsNewRoute:
-      rootLayout_protectedDashboardProjectsNewRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:
       rootLayout_protectedDashboardProjectsIndexRoute,
     rootLayout_protectedDashboardStacksIndexRoute:

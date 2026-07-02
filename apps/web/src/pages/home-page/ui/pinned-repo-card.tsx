@@ -23,7 +23,7 @@ export function PinnedRepoCard({ repo }: PinnedRepoCardProps) {
     <Link
       to={`/$repo`}
       params={{ repo: repo.name }}
-      className="flex min-h-36 flex-col gap-3 rounded-md border bg-surface-1 p-4 transition-colors"
+      className="flex min-h-36 flex-col gap-3 rounded-md border bg-background p-4 transition-colors"
     >
       <div className="flex min-w-0 items-center gap-2">
         <span className="truncate text-sm font-semibold">{repo.name}</span>

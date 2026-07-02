@@ -12,6 +12,10 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/")({
   beforeLoad: ({ context }) => {
     void context.queryClient.ensureQueryData(orpcQueryClient.githubConfig.get.queryOptions());
   },
+  loader: async ({ context: { queryClient } }) => {
+    await queryClient.prefetchQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
+    await queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
+  },
   head: () =>
     generateAppSeo({
       alternates: {
@@ -24,9 +28,5 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/")({
       },
       title: "Dashboard"
     }),
-  loader: async ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
-    queryClient.prefetchQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
-  },
   component: DashboardHomePage
 });

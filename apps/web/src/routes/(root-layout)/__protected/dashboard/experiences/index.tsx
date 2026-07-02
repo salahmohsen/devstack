@@ -7,6 +7,6 @@ import { ExperiencesPage } from "@/pages/dashboard/experiences";
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/experiences/")({
   component: ExperiencesPage,
   loader: async ({ context: { queryClient } }) => {
-    queryClient.prefetchQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
+    await queryClient.prefetchQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
   }
 });
