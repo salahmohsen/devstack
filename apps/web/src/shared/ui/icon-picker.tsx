@@ -70,7 +70,7 @@ const useIconsData = () => {
       }
     };
 
-    loadIcons();
+    void loadIcons();
 
     return () => {
       isMounted = false;
@@ -240,7 +240,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
           }, 1);
         }
       },
-      [open, onOpenChange, virtualizer]
+      [open, onOpenChange, setSearch, virtualizer]
     );
 
     const handleIconClick = useCallback(
@@ -249,7 +249,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
         setIsOpen(false);
         setSearch("");
       },
-      [handleValueChange]
+      [handleValueChange, setSearch]
     );
 
     const handleSearchChange = useCallback(
@@ -262,7 +262,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
 
         virtualizer.scrollToOffset(0);
       },
-      [virtualizer]
+      [setSearch, virtualizer]
     );
 
     const scrollToCategory = useCallback(
@@ -430,75 +430,46 @@ type typesPropsIcon = {
   propsIcon?: IconBaseProps;
 };
 
-const iconSetImporters: Record<string, () => Promise<unknown>> = {
-  ai: () => import("react-icons/ai"),
-  bi: () => import("react-icons/bi"),
-  bs: () => import("react-icons/bs"),
-  cg: () => import("react-icons/cg"),
-  ci: () => import("react-icons/ci"),
-  di: () => import("react-icons/di"),
-  fa: () => import("react-icons/fa"),
-  fa6: () => import("react-icons/fa6"),
-  fc: () => import("react-icons/fc"),
-  fi: () => import("react-icons/fi"),
-  gi: () => import("react-icons/gi"),
-  go: () => import("react-icons/go"),
-  gr: () => import("react-icons/gr"),
-  hi: () => import("react-icons/hi"),
-  hi2: () => import("react-icons/hi2"),
-  im: () => import("react-icons/im"),
-  io: () => import("react-icons/io"),
-  io5: () => import("react-icons/io5"),
-  lia: () => import("react-icons/lia"),
-  lu: () => import("react-icons/lu"),
-  md: () => import("react-icons/md"),
-  pi: () => import("react-icons/pi"),
-  ri: () => import("react-icons/ri"),
-  rx: () => import("react-icons/rx"),
-  si: () => import("react-icons/si"),
-  sl: () => import("react-icons/sl"),
-  tb: () => import("react-icons/tb"),
-  tfi: () => import("react-icons/tfi"),
-  ti: () => import("react-icons/ti"),
-  vsc: () => import("react-icons/vsc"),
-  wi: () => import("react-icons/wi")
-};
+let allIconsPromise: Promise<Record<string, IconType>> | undefined;
 
 const iconComponentCache = new Map<string, IconType>();
 
-function Icon({ nameIcon, propsIcon }: typesPropsIcon): React.ReactElement | null {
+async function resolveIcon(nameIcon: string): Promise<IconType | null> {
   const lib = nameIcon
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .split(" ")[0]
     .toLocaleLowerCase();
 
   const cacheKey = `${lib}:${nameIcon}`;
-  const [Component, setComponent] = React.useState<IconType | null>(
-    () => iconComponentCache.get(cacheKey) ?? null
-  );
+  const cached = iconComponentCache.get(cacheKey);
+  if (cached) return cached;
+
+  allIconsPromise ??= import("./all-icons").then((m) => {
+    const all: Record<string, IconType> = {};
+    for (const libModules of Object.values(m.iconLibraries)) {
+      Object.assign(all, libModules);
+    }
+    return all;
+  });
+
+  const allIcons = await allIconsPromise;
+  const Comp = allIcons[nameIcon] ?? null;
+  if (Comp) iconComponentCache.set(cacheKey, Comp);
+  return Comp;
+}
+
+function Icon({ nameIcon, propsIcon }: typesPropsIcon): React.ReactElement | null {
+  const [Component, setComponent] = React.useState<IconType | null>(null);
 
   React.useEffect(() => {
-    if (iconComponentCache.has(cacheKey)) {
-      setComponent(() => iconComponentCache.get(cacheKey)!);
-      return;
-    }
-
-    const importer = iconSetImporters[lib];
-    if (!importer) return;
-
     let cancelled = false;
-    importer().then((mod) => {
-      if (cancelled) return;
-      const Comp = (mod as Record<string, IconType>)[nameIcon];
-      if (Comp) {
-        iconComponentCache.set(cacheKey, Comp);
-        setComponent(() => Comp);
-      }
+    void resolveIcon(nameIcon).then((comp) => {
+      if (!cancelled) setComponent(() => comp);
     });
     return () => {
       cancelled = true;
     };
-  }, [cacheKey, lib, nameIcon]);
+  }, [nameIcon]);
 
   if (!Component) return null;
   return <Component {...propsIcon} />;
