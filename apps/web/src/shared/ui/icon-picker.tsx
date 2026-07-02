@@ -445,20 +445,28 @@ async function resolveIcon(nameIcon: string): Promise<IconType | null> {
   if (cached) return cached;
 
   allIconsPromise ??= (async () => {
-    const [m1, m2, m3] = await Promise.all([
-      import("./all-icons.1"),
-      import("./all-icons.2"),
-      import("./all-icons.3")
+    const allGroups = await Promise.all([
+      import("./icons/group-01"),
+      import("./icons/group-02"),
+      import("./icons/group-03"),
+      import("./icons/group-04"),
+      import("./icons/group-05"),
+      import("./icons/group-06"),
+      import("./icons/group-07"),
+      import("./icons/group-08"),
+      import("./icons/group-09"),
+      import("./icons/group-10"),
+      import("./icons/group-11"),
+      import("./icons/group-12"),
+      import("./icons/group-13"),
+      import("./icons/group-14"),
+      import("./icons/group-15")
     ]);
     const all: Record<string, IconType> = {};
-    for (const libModules of Object.values(m1.iconLibraries)) {
-      Object.assign(all, libModules);
-    }
-    for (const libModules of Object.values(m2.iconLibraries)) {
-      Object.assign(all, libModules);
-    }
-    for (const libModules of Object.values(m3.iconLibraries)) {
-      Object.assign(all, libModules);
+    for (const m of allGroups) {
+      for (const libModules of Object.values(m.iconLibraries)) {
+        Object.assign(all, libModules);
+      }
     }
     return all;
   })();
