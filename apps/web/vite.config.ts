@@ -195,6 +195,9 @@ export default defineConfig({
   },
   base: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
   build: {
+    // Skip gzip size computation to avoid spawning child processes per chunk
+    // in the Cloudflare build env (256 PID limit → EAGAIN with 100+ SSR chunks).
+    reportCompressedSize: false,
     rollupOptions: {
       onwarn(warning, warn) {
         const msg = typeof warning === "string" ? warning : (warning.message ?? "");
