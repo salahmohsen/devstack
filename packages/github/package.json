@@ -23,7 +23,6 @@
     "./webhooks/*": "./src/webhooks/*"
   },
   "dependencies": {
-    "@tsu-stack/api": "workspace:*",
     "@tsu-stack/core": "workspace:*",
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
