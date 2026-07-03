@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { isAnyItemSelected } from "@/widgets/items-page/lib/is-any-item-selected";
 
@@ -37,7 +37,7 @@ export function useItemsNavigation<T extends { id: string }>({
   setItemSelected,
   containerRef
 }: UseItemsNavigationOptions<T>) {
-  const itemIds = items?.map((item) => item.id) ?? [];
+  const itemIds = useMemo(() => items?.map((item) => item.id) ?? [], [items]);
   const isAnySelected = isAnyItemSelected(isItemSelected);
 
   const setSelectionById = useCallback(

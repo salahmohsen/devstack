@@ -86,7 +86,7 @@ export function DashboardHomePage() {
         <h2 className="mb-4 text-lg font-medium">Recent Experiences</h2>
         <div className="space-y-3">
           {experiences.slice(0, 3).map((exp) => (
-            <Card key={exp.id} size="sm">
+            <Card key={exp.id} className="p-4">
               <CardHeader>
                 <CardTitle>{exp.title}</CardTitle>
               </CardHeader>

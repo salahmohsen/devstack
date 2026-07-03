@@ -93,7 +93,7 @@ function FolderViewRow({
       )}
     >
       <Link
-        to={isDir ? "/$repo/tree/$" : "/$repo/blob/$"}
+        to={isDir ? "/repos/$repo/tree/$" : "/repos/$repo/blob/$"}
         params={{
           repo: repoName,
           _splat: `${currentRef}/${entryPath}`

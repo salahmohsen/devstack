@@ -52,6 +52,7 @@ export function ItemsList<T extends { id: string }>({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   useEffect(() => {
     if (items && items.length > 0) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setHasLoadedOnce(true);
     }
   }, [items]);

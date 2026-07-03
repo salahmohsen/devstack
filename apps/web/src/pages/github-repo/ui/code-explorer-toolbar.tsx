@@ -11,6 +11,13 @@ import {
   CommandItem,
   CommandList
 } from "@tsu-stack/ui/components/command";
+import {
+  Frame,
+  FrameFooter,
+  FrameHeader,
+  FramePanel,
+  FrameTitle
+} from "@tsu-stack/ui/components/frame.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -62,7 +69,7 @@ function BranchSelector({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverTrigger>
         <Button
           variant="secondary"
           size="sm"
@@ -162,57 +169,59 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
+      <PopoverTrigger>
         <Button variant="default" size="sm">
           <Code size={14} />
           Code
           <ChevronDown size={14} className="opacity-60" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 overflow-hidden p-0">
-        <div className="flex items-center gap-2 border-b bg-surface-1 px-4 py-3">
-          <span className="text-sm font-semibold">Clone {repo.fullName}</span>
-        </div>
+      <PopoverContent className="w-96 overflow-hidden *:bg-transparent *:p-0!" align="end">
+        <Frame className="w-full rounded-none">
+          <FrameHeader>
+            <FrameTitle>Clone {repo.fullName}</FrameTitle>
+          </FrameHeader>
+          <FramePanel>
+            <Tabs value={selectedProtocol} onValueChange={handleProtocolChange} className="gap-0">
+              <TabsList className="h-8 w-fit">
+                <TabsTrigger value="https">HTTPS</TabsTrigger>
+                <TabsTrigger value="ssh">SSH</TabsTrigger>
+                <TabsTrigger value="cli">CLI</TabsTrigger>
+              </TabsList>
 
-        <Tabs value={selectedProtocol} onValueChange={handleProtocolChange} className="gap-0">
-          <TabsList className="mx-4 mt-3 h-8 w-fit">
-            <TabsTrigger value="https" className="text-xs">
-              HTTPS
-            </TabsTrigger>
-            <TabsTrigger value="ssh" className="text-xs">
-              SSH
-            </TabsTrigger>
-            <TabsTrigger value="cli" className="text-xs">
-              CLI
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="https" className="px-4 pt-4 pb-3">
-            <CloneInput copied={copied} onCopy={() => handleCopy(httpsUrl)} value={httpsUrl} />
-            <p className="mt-1.5 text-xs text-muted-foreground">Clone using the web URL.</p>
-          </TabsContent>
-          <TabsContent value="ssh" className="px-4 pt-4 pb-3">
-            <CloneInput copied={copied} onCopy={() => handleCopy(sshUrl)} value={sshUrl} />
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              Use a password-protected SSH key.
-            </p>
-          </TabsContent>
-          <TabsContent value="cli" className="px-4 pt-4 pb-3">
-            <CloneInput copied={copied} onCopy={() => handleCopy(cliCommand)} value={cliCommand} />
-            <p className="mt-1.5 text-xs text-muted-foreground">Work fast with the official CLI.</p>
-          </TabsContent>
-        </Tabs>
-
-        <div className="border-t">
-          <a
-            href={zipUrl}
-            download
-            className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-surface-1"
-          >
-            <Download size={15} className="text-muted-foreground" />
-            Download ZIP
-          </a>
-        </div>
+              <TabsContent value="https" className="py-4">
+                <CloneInput copied={copied} onCopy={() => handleCopy(httpsUrl)} value={httpsUrl} />
+                <p className="mt-1.5 text-xs text-muted-foreground">Clone using the web URL.</p>
+              </TabsContent>
+              <TabsContent value="ssh" className="px-4 pt-4 pb-3">
+                <CloneInput copied={copied} onCopy={() => handleCopy(sshUrl)} value={sshUrl} />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Use a password-protected SSH key.
+                </p>
+              </TabsContent>
+              <TabsContent value="cli" className="px-4 pt-4 pb-3">
+                <CloneInput
+                  copied={copied}
+                  onCopy={() => handleCopy(cliCommand)}
+                  value={cliCommand}
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Work fast with the official CLI.
+                </p>
+              </TabsContent>
+            </Tabs>
+          </FramePanel>
+          <FrameFooter className="py-2">
+            <a
+              href={zipUrl}
+              download
+              className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors hover:bg-muted"
+            >
+              <Download size={15} className="text-muted-foreground" />
+              Download ZIP
+            </a>
+          </FrameFooter>
+        </Frame>
       </PopoverContent>
     </Popover>
   );

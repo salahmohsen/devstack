@@ -15,7 +15,7 @@ function CheckboxField(props: CheckboxFieldProps) {
   const field = useFieldContext<boolean>();
 
   return (
-    <Field orientation="horizontal">
+    <Field className={cn("flex-row items-center gap-2", props.className)}>
       <input
         id={field.name}
         name={field.name}

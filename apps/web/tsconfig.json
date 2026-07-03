@@ -15,6 +15,6 @@
   "mdx": {
     "checkMdx": true
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "../../packages/ui/components/calendar-dropdown.tsx"],
   "exclude": ["node_modules"]
 }

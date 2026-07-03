@@ -33,10 +33,10 @@ export function GridSkeleton({ count = 6 }: ItemSkeletonProps) {
     >
       {Array.from({ length: count }).map((_, index) => (
         <Card
+          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
           role="button"
           tabIndex={-1}
           key={index}
-          size="sm"
           className={cn(
             "group border-px relative aspect-square cursor-pointer rounded-sm border-border bg-transparent py-0!",
             "transition-all duration-200",

@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import {
   Dialog,
   DialogContent,
@@ -35,11 +33,6 @@ export function ItemsInfoSheet<T>({
   description,
   children
 }: ItemsInfoSheetProps<T>) {
-  const [mounted, setMounted] = useState(open);
-  useEffect(() => {
-    if (open) setMounted(true);
-  }, [open]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] gap-0 overflow-hidden p-0">
@@ -48,7 +41,7 @@ export function ItemsInfoSheet<T>({
           <DialogDescription className="sr-only">{description}</DialogDescription>
         ) : null}
         <div className="max-h-[inherit] overflow-y-auto">
-          {mounted && item ? children(item) : null}
+          {open && item ? children(item) : null}
         </div>
       </DialogContent>
     </Dialog>

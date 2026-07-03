@@ -84,5 +84,5 @@ export function usePrefetchTree(
       // oxlint-disable-next-line react-hooks/exhaustive-deps
       runIdRef.current++;
     };
-  }, [rootEntries, input, queryClient]);
+  }, [rootEntries, input, queryClient, isPrivate]);
 }

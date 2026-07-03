@@ -38,7 +38,7 @@ export function DashboardSidebar() {
   const initials = (user.name ?? user.email ?? "U").slice(0, 2).toUpperCase();
 
   return (
-    <Sidebar001 defaultWidth={240}>
+    <Sidebar001>
       <Sidebar001Content>
         <Sidebar001Section>
           <Sidebar001Item href="/dashboard" label="Overview" isActive={pathname === "/dashboard"} />

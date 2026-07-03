@@ -7,7 +7,7 @@ import {
   type MyIssuesResult,
   type MyPullsResult,
   type PullSummary
-} from "@tsu-stack/github/repo/shared.types.js";
+} from "@tsu-stack/github";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 
 import {

@@ -1,11 +1,16 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-import { GithubPublicLayout } from "@/widgets/layout";
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+
+import { RootLayout } from "@/widgets/layout";
 
 export const Route = createFileRoute("/(root-layout)")({
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(orpcQueryClient.profile.getContacts.queryOptions());
+  },
   component: () => (
-    <GithubPublicLayout>
+    <RootLayout>
       <Outlet />
-    </GithubPublicLayout>
+    </RootLayout>
   )
 });

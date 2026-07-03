@@ -1,42 +1,36 @@
-import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Button } from "@tsu-stack/ui/components/button";
-import { CardFooter } from "@tsu-stack/ui/components/card";
+import { Button } from "@tsu-stack/ui/components/button.js";
+import { CardFrameFooter } from "@tsu-stack/ui/components/card.js";
+import { KbdGroup } from "@tsu-stack/ui/components/kbd.js";
 
 import { useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
 
 type ItemsInfoFooterProps = {
   updatedAt?: string | Date | null;
-  prevLabel?: string;
-  nextLabel?: string;
 };
 
-export function ItemsInfoFooter({
-  updatedAt,
-  prevLabel = "Previous",
-  nextLabel = "Next"
-}: ItemsInfoFooterProps) {
+export function ItemsInfoFooter({ updatedAt }: ItemsInfoFooterProps) {
   const { handlePrev, handleNext } = useItemsNavContext();
 
   return (
-    <CardFooter className="flex h-10 w-full flex-row items-center gap-2 border-t px-6">
+    <CardFrameFooter className="flex items-center justify-between">
+      <KbdGroup>
+        <Button variant="ghost" onClick={handlePrev} size="icon">
+          <ChevronLeft />
+        </Button>
+        <Button size="icon" onClick={handleNext} variant="ghost">
+          <ChevronRight />
+        </Button>
+      </KbdGroup>
       {updatedAt ? (
         <div className="text-xs text-muted-foreground">
           Updated{" "}
           <time dateTime={new Date(updatedAt).toISOString()}>
-            {format(new Date(updatedAt), "dd MMMM yyyy")}
+            {new Date(updatedAt).toLocaleDateString("en-CA")}
           </time>
         </div>
       ) : null}
-      <div className="ml-auto flex items-center gap-1">
-        <Button size="icon-sm" variant="outline" onClick={handlePrev} aria-label={prevLabel}>
-          <ChevronLeft />
-        </Button>
-        <Button size="icon-sm" variant="outline" onClick={handleNext} aria-label={nextLabel}>
-          <ChevronRight />
-        </Button>
-      </div>
-    </CardFooter>
+    </CardFrameFooter>
   );
 }

@@ -1,12 +1,13 @@
 import { useRouter } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import { useGlobalShortcuts } from "@/shared/lib/use-global-shortcuts";
 
+import { isOpen, setCommandPaletteOpen, useCommandPaletteOpen } from "./open-state";
 import { getRegisteredCommands } from "./registry";
 
 export function useCommandPalette() {
-  const [open, setOpen] = useState(false);
+  const open = useCommandPaletteOpen();
   const router = useRouter();
 
   useGlobalShortcuts([
@@ -14,7 +15,7 @@ export function useCommandPalette() {
       shortcut: { key: "k", mod: true },
       allowInEditable: true,
       onTrigger: () => {
-        setOpen((prev) => !prev);
+        setCommandPaletteOpen(!isOpen());
       }
     },
     ...getRegisteredCommands().flatMap((cmd) => {
@@ -37,7 +38,7 @@ export function useCommandPalette() {
     })
   ]);
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => setCommandPaletteOpen(false), []);
 
-  return { open, setOpen, close };
+  return { open, setOpen: setCommandPaletteOpen, close };
 }

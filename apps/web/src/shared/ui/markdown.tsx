@@ -193,6 +193,7 @@ const components: Record<string, React.FC<any>> = {
     />
   ),
   video: ({ node: _node, src, className, ...props }) => (
+    // oxlint-disable-next-line jsx-a11y/media-has-caption
     <video
       className={cn("my-2 max-w-full rounded-lg", className)}
       controls

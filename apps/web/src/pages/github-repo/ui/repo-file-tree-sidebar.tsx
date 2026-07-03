@@ -72,7 +72,7 @@ export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
           repo: repoName,
           _splat: `${currentRef}/${entry.path}`
         },
-        to: isDir ? "/$repo/tree/$" : "/$repo/blob/$"
+        to: isDir ? "/repos/$repo/tree/$" : "/repos/$repo/blob/$"
       });
     },
     [navigate, repoName, currentRef]
@@ -188,7 +188,7 @@ const DirectoryNode = memo(function DirectoryNode({
           />
         </button>
         <Link
-          to="/$repo/tree/$"
+          to="/repos/$repo/tree/$"
           params={{
             repo: repoName,
             _splat: `${currentRef}/${entryPath}`
@@ -252,7 +252,7 @@ const FileNode = memo(function FileNode({
 
   return (
     <Link
-      to="/$repo/blob/$"
+      to="/repos/$repo/blob/$"
       params={{
         repo: repoName,
         _splat: `${currentRef}/${entryPath}`

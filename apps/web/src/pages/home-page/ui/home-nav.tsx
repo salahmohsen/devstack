@@ -1,3 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
+
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+
 import { useIntersection } from "@/shared/providers/intersection.provider";
 
 import { Contact } from "@/pages/home-page/ui/contact";
@@ -9,16 +13,20 @@ const navItems = [
   ["Full Résumé", "/salahmohsen_frontend_resume.pdf"]
 ];
 
-export const HomeNav = () => (
-  <nav className="relative hidden min-w-max lg:block" aria-label="In-page jump links relative">
-    <ul className="mt-16 w-max">
-      {navItems.map((el, i) => (
-        <NavItem name={el} key={i} />
-      ))}
-    </ul>
-    <Contact />
-  </nav>
-);
+export const HomeNav = () => {
+  const contactsQuery = useQuery(orpcQueryClient.profile.getContacts.queryOptions());
+
+  return (
+    <nav className="relative hidden min-w-max lg:block" aria-label="In-page jump links relative">
+      <ul className="mt-16 w-max">
+        {navItems.map((el, i) => (
+          <NavItem name={el} key={i} />
+        ))}
+      </ul>
+      {contactsQuery.data ? <Contact contacts={contactsQuery.data} /> : null}
+    </nav>
+  );
+};
 
 const NavItem = ({ name }: { name: string | string[] }) => {
   const liveName = typeof name === "string" ? name : name[0];

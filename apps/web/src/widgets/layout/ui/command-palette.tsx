@@ -1,52 +1,28 @@
 import { useRouter } from "@tanstack/react-router";
-import { Archive, House, LayoutDashboard } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowDownIcon, ArrowUpIcon, CornerDownLeftIcon } from "lucide-react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 
 import {
+  Command,
+  CommandCollection,
   CommandDialog,
+  CommandDialogPopup,
   CommandEmpty,
+  CommandFooter,
+  CommandGroup,
+  CommandGroupLabel,
   CommandInput,
-  CommandItem as CommandItemUI,
+  CommandItem,
   CommandList,
+  CommandPanel,
+  CommandSeparator,
   CommandShortcut
 } from "@tsu-stack/ui/components/command";
-import { cn } from "@tsu-stack/ui/lib/utils";
+import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd.js";
 
-import { registerCommands } from "@/shared/lib/command-palette/registry";
-import { type CommandItem } from "@/shared/lib/command-palette/types";
+import { type CommandItem as CommandItemType } from "@/shared/lib/command-palette/types";
 import { useCommandItems } from "@/shared/lib/command-palette/use-command-items";
 import { useCommandPalette } from "@/shared/lib/command-palette/use-command-palette";
-
-// Register static navigation commands at module scope
-registerCommands([
-  {
-    id: "nav:overview",
-    label: "Go to Overview",
-    group: "Pages",
-    icon: House,
-    iconClassName: "text-muted-foreground",
-    shortcut: ["G", "H"],
-    action: { type: "navigate" as const, to: "/" }
-  },
-  {
-    id: "nav:repos",
-    label: "Go to Repositories",
-    group: "Pages",
-    icon: Archive,
-    iconClassName: "text-muted-foreground",
-    shortcut: ["G", "O"],
-    action: { type: "navigate" as const, to: "/$repo" }
-  },
-  {
-    id: "nav:dashboard",
-    label: "Go to Dashboard",
-    group: "Pages",
-    icon: LayoutDashboard,
-    iconClassName: "text-muted-foreground",
-    shortcut: ["G", "D"],
-    action: { type: "navigate" as const, to: "/dashboard" }
-  }
-]);
 
 export function CommandPalette() {
   const { open, setOpen, close } = useCommandPalette();
@@ -54,35 +30,29 @@ export function CommandPalette() {
   const [search, setSearch] = useState("");
   const items = useCommandItems();
 
-  const filteredItems = useMemo(() => {
-    if (!search.trim()) return items;
-    const query = search.toLowerCase();
-    return items.filter(
-      (item) =>
-        item.label.toLowerCase().includes(query) ||
-        (item.keywords ?? []).some((k) => k.toLowerCase().includes(query))
-    );
-  }, [items, search]);
-
-  const groups = useMemo(() => {
-    const map = new Map<string, CommandItem[]>();
-    for (const item of filteredItems) {
-      const list = map.get(item.group) ?? [];
+  const groupedItems = useMemo(() => {
+    const groups = new Map<string, CommandItemType[]>();
+    for (const item of items) {
+      const list = groups.get(item.group) ?? [];
       list.push(item);
-      map.set(item.group, list);
+      groups.set(item.group, list);
     }
-    return map;
-  }, [filteredItems]);
+    return Array.from(groups.entries()).map(([label, items]) => {
+      return { label, items };
+    });
+  }, [items]);
 
-  function handleSelect(item: CommandItem) {
-    setSearch("");
-    close();
-    if (item.action.type === "navigate") {
-      void router.navigate({ to: item.action.to, params: item.action.params });
-    } else {
-      void item.action.fn();
-    }
-  }
+  const handleItemClick = useCallback(
+    (item: CommandItemType) => {
+      if (item.action.type === "navigate") {
+        void router.navigate({ to: item.action.to, params: item.action.params });
+      } else {
+        void item.action.fn();
+      }
+      close();
+    },
+    [router, close]
+  );
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
@@ -91,34 +61,74 @@ export function CommandPalette() {
 
   return (
     <CommandDialog open={open} onOpenChange={handleOpenChange}>
-      <CommandInput
-        placeholder="Type a command or search..."
-        value={search}
-        onValueChange={(value) => setSearch(value)}
-      />
-      <CommandList>
-        <CommandEmpty>
-          {search.trim().length === 1
-            ? "Type at least 2 characters to search."
-            : "No results found."}
-        </CommandEmpty>
-        {Array.from(groups.entries()).map(([groupName, groupItems]) => (
-          <div key={groupName} data-slot="command-group">
-            <div data-slot="command-group-heading">{groupName}</div>
-            {groupItems.map((item) => (
-              <CommandItemUI
-                key={item.id}
-                value={`${item.label} ${(item.keywords ?? []).join(" ")}`}
-                onSelect={() => handleSelect(item)}
-              >
-                {item.icon && <item.icon className={cn("size-4 shrink-0", item.iconClassName)} />}
-                <span className="mr-4 min-w-0 flex-1 truncate text-sm">{item.label}</span>
-                {item.shortcut && <CommandShortcut>{item.shortcut.join(" ")}</CommandShortcut>}
-              </CommandItemUI>
-            ))}
-          </div>
-        ))}
-      </CommandList>
+      <CommandDialogPopup>
+        <Command
+          items={groupedItems}
+          value={search}
+          onValueChange={setSearch}
+          itemToStringValue={(item) => {
+            const cmd = item as CommandItemType;
+            return `${cmd.label} ${cmd.keywords?.join(" ") ?? ""}`;
+          }}
+        >
+          <CommandInput placeholder="Type a command or search..." />
+          <CommandPanel>
+            <CommandEmpty>
+              {search.trim().length === 1
+                ? "Type at least 2 characters to search."
+                : "No results found."}
+            </CommandEmpty>
+            <CommandList>
+              {(group: { label: string; items: CommandItemType[] }, index: number) => (
+                <Fragment key={group.label}>
+                  {index > 0 && <CommandSeparator />}
+                  <CommandGroup items={group.items}>
+                    <CommandGroupLabel>{group.label}</CommandGroupLabel>
+                    <CommandCollection>
+                      {(item: CommandItemType) => (
+                        <CommandItem value={item.id} onClick={() => handleItemClick(item)}>
+                          <div className="flex gap-2">
+                            {item.icon && <item.icon className={item.iconClassName} />}
+                            {item.label}
+                          </div>
+                          {item.shortcut && (
+                            <CommandShortcut>{item.shortcut.join(" ")}</CommandShortcut>
+                          )}
+                        </CommandItem>
+                      )}
+                    </CommandCollection>
+                  </CommandGroup>
+                </Fragment>
+              )}
+            </CommandList>
+          </CommandPanel>
+          <CommandFooter>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <KbdGroup>
+                  <Kbd>
+                    <ArrowUpIcon />
+                  </Kbd>
+                  <Kbd>
+                    <ArrowDownIcon />
+                  </Kbd>
+                </KbdGroup>
+                <span>Navigate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Kbd>
+                  <CornerDownLeftIcon />
+                </Kbd>
+                <span>Open</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Kbd>Esc</Kbd>
+              <span>Close</span>
+            </div>
+          </CommandFooter>
+        </Command>
+      </CommandDialogPopup>
     </CommandDialog>
   );
 }

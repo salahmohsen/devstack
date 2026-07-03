@@ -1,9 +1,11 @@
-import { contactData, ContactButton } from "@/shared/ui/contact-button";
+import { type ContactOutput } from "@tsu-stack/core";
 
-export const Contact = () => (
+import { ContactButton } from "@/shared/ui/contact-button";
+
+export const Contact = ({ contacts }: { contacts: ContactOutput[] }) => (
   <div className="absolute bottom-0 flex w-full justify-center gap-2">
-    {contactData.map((item) => (
-      <ContactButton key={item.id} contact={item.name} username={item.username} />
+    {contacts.map((contact) => (
+      <ContactButton key={contact.type} contact={contact} />
     ))}
   </div>
 );

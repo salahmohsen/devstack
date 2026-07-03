@@ -6,6 +6,14 @@ import { createElement, useEffect, useMemo, useRef } from "react";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { Button } from "@tsu-stack/ui/components/button";
+import { Card } from "@tsu-stack/ui/components/card.js";
+import {
+  Frame,
+  FrameDescription,
+  FrameHeader,
+  FrameTitle
+} from "@tsu-stack/ui/components/frame.js";
+import { Skeleton } from "@tsu-stack/ui/components/skeleton.js";
 
 import {
   REPO_LIST_PAGE_SIZE,
@@ -14,9 +22,8 @@ import {
   safeRepoListPage
 } from "@/shared/lib/repo-list-utils";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 import { RepositoryRow } from "@/shared/ui/repository-row";
-
-import { useGetGithubSetupStatusQuery } from "@/features/github";
 
 import { githubReposHubQueryOptions } from "@/pages/github-repos/api/get-github-repos-hub.query";
 import { type ReposHubInput } from "@/pages/github-repos/lib/repos-hub-filter";
@@ -87,8 +94,6 @@ const repositorySortOptions: SortOption[] = [
 const EMPTY_REPO_ITEMS: RepositoryFilterItem[] = [];
 
 export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilterStore }) {
-  const setupStatusQuery = useGetGithubSetupStatusQuery();
-
   const [page, setPage] = useQueryState("page", repoListPageQueryParser);
 
   const filterState = useListFilters({
@@ -121,10 +126,10 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
   }, [debouncedSearch, visibilityValues, filterState.sortId, limit]);
 
   const { user } = useAuth();
-  const isPrivate = !!user;
+  const isAdmin = !!user;
 
   const hubQuery = useQuery({
-    ...githubReposHubQueryOptions(hubInput, isPrivate),
+    ...githubReposHubQueryOptions(hubInput, isAdmin),
     placeholderData: keepPreviousData
   });
 
@@ -157,85 +162,74 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
 
   if (hubQuery.error) throw hubQuery.error;
 
-  if (!setupStatusQuery.data?.isConfigured || !setupStatusQuery.data.owner) {
-    return (
-      <div className="h-full overflow-auto py-10">
-        <div className="mx-auto grid max-w-7xl gap-14 px-3 md:px-6 xl:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]">
-          <aside className="flex h-fit flex-col gap-5 xl:sticky xl:top-0">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">Repositories</h1>
-              <p className="text-sm text-muted-foreground">
-                Browse and filter the repositories you can access.
-              </p>
-            </div>
-          </aside>
-          <p className="py-12 text-center text-sm text-muted-foreground">No repositories found.</p>
-        </div>
-      </div>
-    );
-  }
-
   const hub = hubQuery.data;
   const totals = hub?.totals ?? { all: 0, public: 0, private: 0 };
   const displayedRepos = hub?.repos ?? [];
 
+  if (hubQuery.isLoading) <DefaultLoader />;
+
   return (
-    <div className="h-full overflow-auto py-10">
-      <div className="mx-auto grid max-w-7xl gap-14 px-3 md:px-6 xl:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]">
-        <aside className="flex h-fit flex-col gap-5 xl:sticky xl:top-0">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Repositories</h1>
-            <p className="text-sm text-muted-foreground">
-              Browse and filter the repositories you can access.
-            </p>
-          </div>
-        </aside>
+    <Frame className="mx-auto grid h-full w-full max-w-7xl gap-5 bg-background p-5 px-3 py-10 md:px-6">
+      <FrameHeader className="m-0 p-0">
+        <FrameTitle>Repositories</FrameTitle>
+        <FrameDescription>Browse and filter the repositories you can access.</FrameDescription>
+      </FrameHeader>
+      <div className="flex flex-col gap-3">
+        <FilterBar state={filterState} searchPlaceholder="Search by title..." />
 
-        <div className="flex flex-col gap-2">
-          <FilterBar state={filterState} searchPlaceholder="Search by title..." />
-
-          {totals.all === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">
-              No repositories found.
-            </p>
-          ) : matchingCount === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">
-              No repositories match these filters.
-            </p>
-          ) : (
-            <>
-              <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface-1">
-                {displayedRepos.map((repo) => (
-                  <div
-                    key={repo.id}
-                    style={{
-                      contentVisibility: "auto",
-                      containIntrinsicSize: "auto 72px"
-                    }}
-                  >
-                    <RepositoryRow repo={repo} />
+        {hubQuery.isLoading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <Card
+              key={i}
+              render={
+                <div className="flex min-h-18 w-full flex-col items-center justify-between gap-x-4 p-3 md:flex-row md:gap-y-1">
+                  <Skeleton className="h-5 w-1/4" />
+                  <div className="flex w-1/3 flex-col gap-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
                   </div>
-                ))}
-              </div>
-              {repoListHasNextPage(safePage, matchingCount) ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="mx-auto mt-6 rounded-full"
-                  onClick={() => {
-                    void setPage(safePage + 1);
-                  }}
-                >
-                  <ChevronDown size={14} strokeWidth={2} />
-                  Load more
-                </Button>
-              ) : null}
-            </>
-          )}
-        </div>
+                  <Skeleton className="h-full w-1/6 self-end rounded-lg" />
+                </div>
+              }
+            />
+          ))
+        ) : totals.all === 0 ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">No repositories found.</p>
+        ) : matchingCount === 0 ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">
+            No repositories match these filters.
+          </p>
+        ) : (
+          <>
+            {displayedRepos.map((repo) => (
+              <RepositoryRow
+                key={repo.id}
+                style={{
+                  contentVisibility: "auto",
+                  containIntrinsicSize: "auto 72px"
+                }}
+                repo={repo}
+                isAdmin={isAdmin}
+              />
+            ))}
+            {repoListHasNextPage(safePage, matchingCount) ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="mx-auto mt-6 rounded-full"
+                onClick={() => {
+                  void setPage(safePage + 1);
+                }}
+              >
+                <ChevronDown size={14} strokeWidth={2} />
+                Load more
+              </Button>
+            ) : null}
+          </>
+        )}
       </div>
-    </div>
+    </Frame>
   );
 }
 

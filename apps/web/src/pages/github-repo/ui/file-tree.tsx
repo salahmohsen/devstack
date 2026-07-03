@@ -76,7 +76,7 @@ function FileTreeRow({
           <FileCode className="size-4 shrink-0 text-base-500" />
         )}
         <Link
-          to={isDir ? "/$repo/tree/$" : "/$repo/blob/$"}
+          to={isDir ? "/repos/$repo/tree/$" : "/repos/$repo/blob/$"}
           params={{ repo, _splat: `${refName}/${entry.path}` }}
           className="truncate text-accent-foreground hover:underline"
         >

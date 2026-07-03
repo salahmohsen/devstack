@@ -1,5 +1,6 @@
 import { createFormHook } from "@tanstack/react-form";
 
+import { CalendarField } from "@/shared/form/calendar-field";
 import { IconPickerField } from "@/shared/form/icon-field";
 import { ImageField } from "@/shared/form/image-field";
 import { InputGroupField } from "@/shared/form/input-group-field";
@@ -8,7 +9,6 @@ import { SwitchField } from "@/shared/form/switch-field";
 
 import { CheckboxField } from "./checkbox-field";
 import { ComboboxField } from "./combobox-field";
-import { DatePickerField } from "./date-picker-field";
 import { DropdownField } from "./dropdown-field";
 import { fieldContext, formContext } from "./form-contexts";
 import { InputField } from "./input-field";
@@ -21,7 +21,7 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
     fieldComponents: {
       CheckboxField,
       ComboboxField,
-      DatePickerField,
+      CalendarField,
       DropdownField,
       InputField,
       PasswordInputField,

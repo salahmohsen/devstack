@@ -9,7 +9,7 @@ import {
 
 const RESERVED_NON_REPO_SEGMENTS = new Set([".well-known", "firebase-messaging-sw.js"]);
 
-export const Route = createFileRoute("/(root-layout)/$repo")({
+export const Route = createFileRoute("/(root-layout)/repos/$repo")({
   component: RouteComponent,
   beforeLoad: async ({ context, params }) => {
     if (RESERVED_NON_REPO_SEGMENTS.has(params.repo)) {

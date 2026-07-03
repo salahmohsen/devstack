@@ -61,6 +61,7 @@ export function ProjectItem({ project, dragHandleProps, onEdit, onMouseEnter }: 
   return (
     <>
       <Card
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="button"
         tabIndex={0}
         aria-pressed={selected}

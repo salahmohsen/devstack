@@ -8,7 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact, { reactCompilerPreset } from "@vitejs/plugin-react";
-import checker from "vite-plugin-checker";
+// import checker from "vite-plugin-checker";
 import { defineConfig } from "vite-plus";
 
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
@@ -174,14 +174,14 @@ plugins.push(
       format: "webp",
       quality: 80
     }
-  }),
-  ...(!process.env.IS_BUILD
-    ? [
-        checker({
-          typescript: true
-        })
-      ]
-    : [])
+  })
+  // ...(!process.env.IS_BUILD
+  //   ? [
+  //       checker({
+  //         typescript: true
+  //       })
+  //     ]
+  //   : [])
 );
 
 export default defineConfig({

@@ -1,0 +1,1 @@
+export const REPO_ACTIVITY_CARDS_PER_PAGE = 5;

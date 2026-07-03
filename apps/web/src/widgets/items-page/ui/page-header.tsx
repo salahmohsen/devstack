@@ -1,27 +1,27 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
-import { Separator } from "@tsu-stack/ui/components/separator";
+import {
+  CardDescription,
+  CardFrame,
+  CardFrameAction,
+  CardFrameHeader,
+  CardTitle
+} from "@tsu-stack/ui/components/card";
 
 type PageHeaderProps = {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   actions?: React.ReactNode;
 };
 
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
-    <>
-      <Card className="flex-row justify-between rounded-none bg-transparent py-0 ring-0">
-        <CardHeader className="flex-1 gap-0 px-0">
-          <CardTitle className="text-2xl font-semibold tracking-tight">{title}</CardTitle>
-          {description ? (
-            <CardDescription className="mt-1 text-sm text-muted-foreground">
-              {description}
-            </CardDescription>
-          ) : null}
-        </CardHeader>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
-      </Card>
-      <Separator />
-    </>
+    <CardFrame>
+      <div className="me-5 flex items-center justify-between">
+        <CardFrameHeader>
+          <CardTitle>{title}</CardTitle>
+          {description ? <CardDescription>{description}</CardDescription> : null}
+        </CardFrameHeader>
+        {actions ? <CardFrameAction>{actions}</CardFrameAction> : null}
+      </div>
+    </CardFrame>
   );
 }

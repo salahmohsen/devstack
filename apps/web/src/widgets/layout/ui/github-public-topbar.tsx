@@ -4,10 +4,10 @@ import {
   Archive,
   Bug,
   ExternalLink,
-  Home,
   LayoutDashboard,
   LogOut,
   MoreHorizontal,
+  SearchIcon,
   UserCircle
 } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
@@ -27,9 +27,12 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger
 } from "@tsu-stack/ui/components/dropdown-menu";
+import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd";
+import { TextAnimate } from "@tsu-stack/ui/components/text-animate";
 import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
+import { setCommandPaletteOpen } from "@/shared/lib/command-palette/open-state";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
 import { useGlobalShortcuts } from "@/shared/lib/use-global-shortcuts";
@@ -39,13 +42,6 @@ import { getGithubSetupStatusQueryOptions } from "@/features/github";
 import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
 
 const MAX_TAB_SHORTCUTS = 9;
-
-type NavItem = {
-  icon: typeof Home;
-  label: string;
-  params?: Record<string, string>;
-  to: string;
-};
 
 export function Topbar() {
   const router = useRouter();
@@ -98,22 +94,22 @@ export function Topbar() {
     [displayName]
   );
 
-  const navItems = useMemo<NavItem[]>(
-    () => [
-      { to: "/", label: "Overview", icon: Home },
-      {
-        to: "/repos",
-        label: "Repositories",
-        icon: Archive
-      },
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }
-    ],
-    []
-  );
+  // const navItems = useMemo<NavItem[]>(
+  //   () => [
+  //     { to: "/", label: "Overview", icon: Home },
+  //     {
+  //       to: "/repos",
+  //       label: "Repositories",
+  //       icon: Archive
+  //     },
+  //     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }
+  //   ],
+  //   []
+  // );
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const routes = ["/", "/repos", "/dashboard"];
       for (const to of routes) {
         if (cancelled) break;
@@ -209,9 +205,7 @@ export function Topbar() {
               >
                 <Avatar className="size-7 border border-border">
                   <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
-                  <AvatarFallback delayMs={admin?.image ? 400 : 0} className="text-xs">
-                    {initials}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
@@ -219,9 +213,7 @@ export function Topbar() {
               <DropdownMenuLabel className="flex items-center gap-3 py-2">
                 <Avatar className="size-8 border border-border">
                   <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
-                  <AvatarFallback delayMs={admin?.image ? 400 : 0} className="text-xs">
-                    {initials}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-foreground">{displayName}</span>
@@ -273,13 +265,16 @@ export function Topbar() {
         </div>
       )}
 
-      <div className="hidden shrink-0 items-center gap-0.5 md:flex">
+      <TextAnimate animation="slideLeft" by="character">
+        Salah Mohsen
+      </TextAnimate>
+
+      {/* <div className="hidden shrink-0 items-center gap-0.5 md:flex">
         {navItems.map((item) => (
           <Button
             key={item.label}
             variant="ghost"
             size="sm"
-            nativeButton={false}
             className="text-muted-foreground [&.active]:bg-surface-1 [&.active]:text-foreground"
             render={
               <Link
@@ -295,13 +290,23 @@ export function Topbar() {
             }
           />
         ))}
-      </div>
+      </div> */}
 
       <div className="min-w-0 flex-1 overflow-hidden">
         <Tabs tabsReady={isClient} routerRef={routerRef} />
       </div>
 
       <div className="hidden shrink-0 items-center gap-1 md:flex">
+        <Button variant="outline" onClick={() => setCommandPaletteOpen(true)} aria-label="Search">
+          <SearchIcon />
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <Kbd>J</Kbd>
+          </KbdGroup>
+        </Button>
+
+        <ThemeSwitcher variant="ghost" />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -338,7 +343,6 @@ export function Topbar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <ThemeSwitcher variant="ghost" />
       </div>
     </nav>
   );

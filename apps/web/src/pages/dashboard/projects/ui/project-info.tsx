@@ -71,7 +71,6 @@ export function ProjectInfo({ project }: ProjectInfoProps) {
             <div className="flex flex-wrap gap-1.5">
               {project.repos.map((repo) => (
                 <Button
-                  nativeButton={false}
                   render={
                     <Link
                       to={`/${repo.split("/").at(-1)}` as NavigateOptions["to"]}

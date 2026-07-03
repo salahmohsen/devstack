@@ -74,9 +74,9 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
 
   useEffect(() => {
     if (project) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setSelectedExperienceId(project.experienceId ?? null);
     }
-    // eslint-disable-next-line react-hooks-js/set-state-in-effect
   }, [project]);
 
   const form = useAppForm({

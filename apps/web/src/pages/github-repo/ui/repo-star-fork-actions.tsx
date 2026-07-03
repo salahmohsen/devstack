@@ -1,5 +1,7 @@
 import { GitFork, Star } from "lucide-react";
 
+import { Button } from "@tsu-stack/ui/components/button.js";
+
 type RepoStarForkActionsProps = {
   forkCount: number;
   repoUrl: string;
@@ -9,24 +11,34 @@ type RepoStarForkActionsProps = {
 export function RepoStarForkActions({ forkCount, repoUrl, stars }: RepoStarForkActionsProps) {
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <a
-        href={`${repoUrl}/stargazers`}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-primary px-4 py-2 text-primary-foreground hover:bg-muted hover:text-muted-foreground"
+      <Button
+        render={
+          <a
+            href={`${repoUrl}/stargazers`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${stars.toLocaleString()} stargazers`}
+          />
+        }
+        variant="outline"
       >
         <Star className="size-4" />
         {stars.toLocaleString()}
-      </a>
-      <a
-        href={`${repoUrl}/forks`}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-primary px-4 py-2 text-primary-foreground hover:bg-muted hover:text-muted-foreground"
+      </Button>
+      <Button
+        render={
+          <a
+            href={`${repoUrl}/forks`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${forkCount.toLocaleString()} forks`}
+          />
+        }
+        variant="outline"
       >
         <GitFork className="size-4" />
         {forkCount.toLocaleString()}
-      </a>
+      </Button>
     </div>
   );
 }

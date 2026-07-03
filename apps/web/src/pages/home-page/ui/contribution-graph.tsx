@@ -246,6 +246,7 @@ export function ContributionGraph({ calendar, className, svgProps }: Contributio
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
         className="h-full w-full"
         preserveAspectRatio={svgProps?.preserveAspectRatio ?? "xMidYMid meet"}
+        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="img"
         aria-label="Contribution graph"
         onMouseMove={handleMouseMove}

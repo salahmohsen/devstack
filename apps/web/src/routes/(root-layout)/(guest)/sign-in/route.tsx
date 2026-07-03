@@ -6,7 +6,7 @@ export const Route = createFileRoute("/(root-layout)/(guest)/sign-in")({
 
 function RouteComponent() {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center">
+    <div className="flex min-h-full w-full flex-col items-center justify-center">
       <Outlet />
     </div>
   );

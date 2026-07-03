@@ -26,7 +26,7 @@ const themeOptions = [
   { value: "system", icon: Monitor, label: "System" }
 ] as const;
 
-export function GithubPublicMobileNav() {
+export function MobileNav() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -113,6 +113,7 @@ export function GithubPublicMobileNav() {
                     "flex size-6 items-center justify-center rounded-sm transition-colors",
                     theme === opt.value ? "bg-white/8" : "hover:text-muted-foreground"
                   )}
+                  aria-label={opt.label}
                   title={opt.label}
                 >
                   <opt.icon size={13} strokeWidth={2} />

@@ -1,13 +1,20 @@
-import {
-  Check,
-  ChevronDown,
-  X, // also used as Remove01Icon
-  X as Remove01Icon,
-  Search,
-  ArrowUpDown
-} from "lucide-react";
+import { ArrowUpDown, Check, ChevronDown, Search, SearchIcon, X } from "lucide-react";
 import { memo, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 
+import { Badge } from "@tsu-stack/ui/components/badge.js";
+import { Button } from "@tsu-stack/ui/components/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput
+} from "@tsu-stack/ui/components/input-group.js";
+import {
+  Menu,
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuTrigger
+} from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -54,17 +61,8 @@ export const FilterBar = memo(function FilterBar<T extends FilterableItem>({
           );
         })}
 
-        {state.hasActiveFilters && (
-          <button
-            type="button"
-            onClick={state.clearAllFilters}
-            title="Clear all filters"
-            aria-label="Clear all filters"
-            className="ml-1 rounded-md p-1 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
-          >
-            <Remove01Icon size={14} />
-          </button>
-        )}
+        {state.hasActiveFilters &&
+          state.activeFilters.map((filter) => <Badge key={filter.fieldId}>{filter.fieldId}</Badge>)}
       </div>
     </div>
   );
@@ -83,25 +81,23 @@ function SearchInput({
   placeholder: string;
 }) {
   return (
-    <div className="flex w-70 items-center gap-2 rounded-lg border border-border/50 bg-surface-1 px-3 py-1.5 transition-colors focus-within:border-border">
-      <Search size={14} className="shrink-0 text-muted-foreground" />
-      <input
-        type="text"
+    <InputGroup className="max-w-70">
+      <InputGroupInput
+        aria-label="Search"
+        type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
       />
+      <InputGroupAddon>
+        <SearchIcon aria-hidden="true" />
+      </InputGroupAddon>
       {value && (
-        <button
-          type="button"
-          onClick={() => onChange("")}
-          className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <X size={13} />
-        </button>
+        <InputGroupAddon align="inline-end" onClick={() => onChange("")}>
+          <X size={13} aria-hidden="true" />
+        </InputGroupAddon>
       )}
-    </div>
+    </InputGroup>
   );
 }
 
@@ -115,43 +111,28 @@ function SortDropdown({
   onChange: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const current = options.find((option) => option.id === value);
 
   return (
-    <div ref={ref} className="relative ml-auto">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/50 bg-surface-1 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+    <Menu>
+      <MenuTrigger
+        render={<Button variant="outline" onClick={() => setOpen(!open)} />}
+        className={"relative ml-auto"}
       >
         <ArrowUpDown size={14} strokeWidth={1.9} />
         <span className="whitespace-nowrap">{current?.label ?? "Sort"}</span>
         <ChevronDown size={13} className={cn("transition-transform", open && "rotate-180")} />
-      </button>
-      {open && (
-        <DropdownPanel onClose={() => setOpen(false)} anchorRef={ref}>
+      </MenuTrigger>
+      <MenuPopup>
+        <MenuRadioGroup>
           {options.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => {
-                onChange(option.id);
-                setOpen(false);
-              }}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-surface-2",
-                option.id === value && "text-foreground",
-                option.id !== value && "text-muted-foreground"
-              )}
-            >
-              <span className="flex-1">{option.label}</span>
-              {option.id === value && <Check size={13} className="shrink-0" />}
-            </button>
+            <MenuRadioItem key={option.id} value={option.id} onClick={() => onChange(option.id)}>
+              {option.label}
+            </MenuRadioItem>
           ))}
-        </DropdownPanel>
-      )}
-    </div>
+        </MenuRadioGroup>
+      </MenuPopup>
+    </Menu>
   );
 }
 
@@ -317,7 +298,18 @@ function DropdownPanel({
 }) {
   return (
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-40"
+        role="button"
+        tabIndex={-1}
+        aria-label="Close filter popover"
+        onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+            onClose();
+          }
+        }}
+      />
       <div className="absolute top-full left-0 z-50 mt-1.5 min-w-50 rounded-lg border border-border/60 bg-popover p-2 shadow-lg">
         {children}
       </div>

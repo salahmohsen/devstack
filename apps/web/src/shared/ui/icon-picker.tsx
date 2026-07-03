@@ -8,7 +8,7 @@ import { type IconBaseProps, type IconType } from "react-icons/lib";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
-import { ScrollArea, ScrollBar } from "@tsu-stack/ui/components/scroll-area.js";
+import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import {
   Tooltip,
@@ -98,7 +98,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
       modal = false,
       ...props
     },
-    ref
+    _ref
   ) => {
     const [selectedIcon, setSelectedIcon] = useState<string | undefined>(defaultValue);
     const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
@@ -322,7 +322,11 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
 
     const renderVirtualContent = useCallback(() => {
       if (filteredIcons.length === 0) {
-        return <div className="text-center text-gray-500">No icon found</div>;
+        return (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            No icon found
+          </div>
+        );
       }
 
       return (
@@ -394,7 +398,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
 
     return (
       <Popover open={open ?? isOpen} onOpenChange={handleOpenChange} modal={modal}>
-        <PopoverTrigger ref={ref} asChild {...props}>
+        <PopoverTrigger {...props}>
           {children ?? (
             <Button variant="outline">
               {value || selectedIcon ? (
@@ -407,17 +411,16 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
             </Button>
           )}
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-2">
+        <PopoverContent className="w-64">
           {searchable && <Input placeholder={searchPlaceholder} onChange={handleSearchChange} />}
           {categorized && search.trim() === "" && (
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex w-max gap-1 p-3">{categoryButtons}</div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            <div className="no-scrollbar flex w-full gap-1 overflow-x-auto py-5 whitespace-nowrap">
+              {categoryButtons}
+            </div>
           )}
-          <ScrollArea className="h-60 max-h-60 w-full" viewportRef={parentRef}>
-            {isLoading ? <IconsColumnSkeleton /> : renderVirtualContent()}
-          </ScrollArea>
+          <div ref={parentRef} className="h-60 max-h-60 w-full overflow-y-auto">
+            <ScrollArea render={isLoading ? <IconsColumnSkeleton /> : renderVirtualContent()} />
+          </div>
         </PopoverContent>
       </Popover>
     );

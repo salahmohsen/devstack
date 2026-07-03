@@ -9,6 +9,7 @@ import {
   FieldTitle
 } from "@tsu-stack/ui/components/field";
 import { Switch } from "@tsu-stack/ui/components/switch";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useFieldContext } from "./form-contexts";
 
@@ -29,7 +30,7 @@ function SwitchField(props: SwitchFieldProps) {
   const field = useFieldContext<boolean>();
 
   return (
-    <Field orientation="horizontal" className={props.classNames?.field}>
+    <Field className={cn("flex-row items-center gap-3", props.classNames?.field)}>
       <Switch
         id={field.name}
         name={field.name}

@@ -1,12 +1,6 @@
-import {
-  ArchiveIcon,
-  DashboardIcon,
-  ExternalLinkIcon,
-  GitPullRequestIcon,
-  IssuesIcon,
-  ReviewsIcon,
-  SettingsIcon
-} from "@/lib/command-palette-icons";
+import { HomeIcon } from "lucide-react";
+
+import { ArchiveIcon, SettingsIcon } from "@/lib/command-palette-icons";
 
 import { type CommandItem } from "./types";
 
@@ -41,9 +35,9 @@ export function subscribeCommands(listener: () => void): () => void {
 registerCommands([
   {
     id: "nav:overview",
-    label: "Go to Overview",
+    label: "Go to Home",
     group: "Pages",
-    icon: DashboardIcon,
+    icon: HomeIcon,
     keywords: ["home", "dashboard"],
     shortcut: ["G", "H"],
     action: { type: "navigate", to: "/" }
@@ -58,53 +52,62 @@ registerCommands([
     action: { type: "navigate", to: "/repos" }
   },
   {
-    id: "nav:pulls",
-    label: "Go to Pull Requests",
+    id: "admin:projects",
+    label: "Edit projects",
     group: "Pages",
-    icon: GitPullRequestIcon,
-    keywords: ["pr", "merge"],
+    icon: ArchiveIcon,
+    keywords: ["admin", "dashboard", "projects"],
     shortcut: ["G", "P"],
-    action: { type: "navigate", to: "/pulls" }
+    action: { type: "navigate", to: "/dashboard/projects" }
   },
+  // {
+  //   id: "nav:pulls",
+  //   label: "Go to Pull Requests",
+  //   group: "Pages",
+  //   icon: GitPullRequestIcon,
+  //   keywords: ["pr", "merge"],
+  //   shortcut: ["G", "P"],
+  //   action: { type: "navigate", to: "/pulls" }
+  // },
+  // {
+  //   id: "nav:issues",
+  //   label: "Go to Issues",
+  //   group: "Pages",
+  //   icon: IssuesIcon,
+  //   keywords: ["bug", "task"],
+  //   shortcut: ["G", "I"],
+  //   action: { type: "navigate", to: "/issues" }
+  // },
+  // {
+  //   id: "nav:reviews",
+  //   label: "Go to Reviews",
+  //   group: "Pages",
+  //   icon: ReviewsIcon,
+  //   keywords: ["review", "requested"],
+  //   shortcut: ["G", "R"],
+  //   action: { type: "navigate", to: "/reviews" }
+  // },
   {
-    id: "nav:issues",
-    label: "Go to Issues",
-    group: "Pages",
-    icon: IssuesIcon,
-    keywords: ["bug", "task"],
-    shortcut: ["G", "I"],
-    action: { type: "navigate", to: "/issues" }
-  },
-  {
-    id: "nav:reviews",
-    label: "Go to Reviews",
-    group: "Pages",
-    icon: ReviewsIcon,
-    keywords: ["review", "requested"],
-    shortcut: ["G", "R"],
-    action: { type: "navigate", to: "/reviews" }
-  },
-  {
-    id: "nav:settings",
-    label: "Go to Settings",
+    id: "nav:dashboard",
+    label: "Go to Dashboard",
     group: "Pages",
     icon: SettingsIcon,
     keywords: ["settings", "preferences", "config"],
-    shortcut: ["G", "S"],
-    action: { type: "navigate", to: "/settings" }
-  },
-  {
-    id: "action:open-current-page-on-github",
-    label: "Open Current Page on GitHub",
-    group: "Actions",
-    icon: ExternalLinkIcon,
-    keywords: ["github", "redirect", "current page", "open"],
-    shortcut: ["G", "G"],
-    action: {
-      type: "execute",
-      fn: () => {
-        window.location.href = `${window.location.origin}/api/github/redirect${window.location.pathname}${window.location.search}`;
-      }
-    }
+    shortcut: ["G", "D"],
+    action: { type: "navigate", to: "/dashboard" }
   }
+  // {
+  //   id: "action:open-current-page-on-github",
+  //   label: "Open Current Page on GitHub",
+  //   group: "Actions",
+  //   icon: ExternalLinkIcon,
+  //   keywords: ["github", "redirect", "current page", "open"],
+  //   shortcut: ["G", "G"],
+  //   action: {
+  //     type: "execute",
+  //     fn: () => {
+  //       window.location.href = `${window.location.origin}/api/github/redirect${window.location.pathname}${window.location.search}`;
+  //     }
+  //   }
+  // }
 ]);

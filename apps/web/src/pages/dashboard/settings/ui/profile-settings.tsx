@@ -307,7 +307,10 @@ export function ProfileSettings() {
                             </div>
                             <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
                               {field.state.value?.map((_, i) => (
-                                <div className="grid grid-cols-6 gap-3 rounded-sm border p-5">
+                                <div
+                                  key={i}
+                                  className="grid grid-cols-6 gap-3 rounded-sm border p-5"
+                                >
                                   <form.AppField name={`contacts[${i}].icon`}>
                                     {(subField) => (
                                       <subField.IconPickerField

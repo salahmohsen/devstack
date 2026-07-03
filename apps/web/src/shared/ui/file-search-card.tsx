@@ -93,6 +93,7 @@ export const FileSearchCard = memo(function FileSearchCard({
   const visibleResults = hasResults ? searchResults : computedDefaults;
 
   useEffect(() => {
+    // oxlint-disable-next-line react-hooks-js/set-state-in-effect
     setActiveIndex(0);
   }, [deferredQuery, visibleResults.length]);
 

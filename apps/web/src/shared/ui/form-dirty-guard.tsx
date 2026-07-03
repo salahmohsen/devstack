@@ -52,14 +52,14 @@ export function useFormDirtyGuard(form: AnyFormApi, onClose?: () => void) {
 
   const alertDialog = (
     <AlertDialog open={showAlert} onOpenChange={setShowAlert}>
-      <AlertDialogContent className="overflow-hidden rounded-sm bg-surface-1 p-0">
-        <AlertDialogHeader className="p-6">
+      <AlertDialogContent>
+        <AlertDialogHeader>
           <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
           <AlertDialogDescription>
             You have unsaved changes. Are you sure you want to discard them?
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="bg-surface-2 p-3">
+        <AlertDialogFooter>
           <AlertDialogCancel>Keep editing</AlertDialogCancel>
           <AlertDialogAction onClick={confirmClose}>Discard</AlertDialogAction>
         </AlertDialogFooter>

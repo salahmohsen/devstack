@@ -7,8 +7,14 @@ import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
-import { FieldDescription, FieldGroup } from "@tsu-stack/ui/components/field";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@tsu-stack/ui/components/card";
+import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { appConfig } from "@/config/app.config";
@@ -87,8 +93,8 @@ export function SignInForm({
   const isPending = signInWithGithubMutation.isPending || signInWithPasskeyMutation.isPending;
 
   return (
-    <div className={cn("w-full max-w-md space-y-5", className)} {...props}>
-      <Card className="rounded-sm border border-border/80 bg-background shadow-none" size={"sm"}>
+    <div className={cn("my-auto h-full w-full max-w-md space-y-5", className)} {...props}>
+      <Card>
         <CardHeader className="items-center text-center">
           <Link className="mb-2 inline-flex" to="/">
             <span className="sr-only">{appConfig.site.shortName}</span>
@@ -118,18 +124,17 @@ export function SignInForm({
             </Button>
           </FieldGroup>
         </CardContent>
+        <CardFooter className="mt-5 flex flex-wrap justify-center gap-1 px-6 text-xs leading-6">
+          By continuing, you agree to our
+          <Link className="text-foreground underline underline-offset-4" to="/terms-of-service">
+            Terms of Service
+          </Link>
+          and
+          <Link className="text-foreground underline underline-offset-4" to="/privacy-policy">
+            Privacy Policy
+          </Link>
+        </CardFooter>
       </Card>
-      <FieldDescription className="mt-6 px-6 text-center text-xs leading-6">
-        By continuing, you agree to our{" "}
-        <Link className="text-foreground underline underline-offset-4" to="/terms-of-service">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link className="text-foreground underline underline-offset-4" to="/privacy-policy">
-          Privacy Policy
-        </Link>
-        .
-      </FieldDescription>
     </div>
   );
 }

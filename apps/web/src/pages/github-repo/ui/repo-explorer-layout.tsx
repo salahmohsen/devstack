@@ -105,12 +105,12 @@ export function RepoExplorerLayout({
             repo: repoName,
             _splat: `${branch}/${path}`
           },
-          to: viewMode === "blob" ? "/$repo/blob/$" : "/$repo/tree/$"
+          to: viewMode === "blob" ? "/repos/$repo/blob/$" : "/repos/$repo/tree/$"
         });
       } else {
         void navigate({
           params: { repo: repoName },
-          to: "/$repo"
+          to: "/repos/$repo"
         });
       }
     },
@@ -225,7 +225,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
       )}
 
       <Link
-        to="/$repo"
+        to="/repos/$repo"
         params={{ repo: repoName }}
         className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >

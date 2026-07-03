@@ -155,11 +155,11 @@ export function ExperienceForm({ id, onSuccess, onClose }: ExperienceFormProps) 
 
             <div className="grid grid-cols-2 gap-4">
               <form.AppField name="fromDate">
-                {(field) => <field.DatePickerField label="From Date" placeholder="Start date" />}
+                {(field) => <field.InputField label="From Date" placeholder="Start date" />}
               </form.AppField>
 
               <form.AppField name="toDate">
-                {(field) => <field.DatePickerField label="To Date" placeholder="End date" />}
+                {(field) => <field.InputField label="To Date" placeholder="End date" />}
               </form.AppField>
             </div>
 

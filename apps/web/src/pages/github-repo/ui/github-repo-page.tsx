@@ -14,10 +14,6 @@ import { useGetGithubSetupQuery } from "@/features/github/api/get-github-setup-s
 import { SidePanelPortal, useRegisterGithubPublicTab } from "@/widgets/layout";
 
 import {
-  getGithubRepoActivityCardsQueryOptions,
-  useGetGithubRepoActivityCardsQuery
-} from "@/pages/github-repo/api/get-github-repo-activity-cards.query";
-import {
   getGithubRepoBranchesQueryOptions,
   useGetGithubRepoBranchesQuery
 } from "@/pages/github-repo/api/get-github-repo-branches.query";
@@ -52,7 +48,6 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
   const owner = githubSetup.data?.owner ?? "salahmohsen";
   const overviewQuery = useGetGithubRepoOverviewQuery(repo);
   const branchesQuery = useGetGithubRepoBranchesQuery(repo);
-  useGetGithubRepoActivityCardsQuery(repo);
 
   useEffect(() => {
     const source = getGitHubDataSource(overviewQuery.data);
@@ -125,10 +120,6 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       },
       {
-        queryKey: getGithubRepoActivityCardsQueryOptions(repo).queryKey,
-        signalKeys: [githubRevalidationSignalKeys.repoMeta({ owner, repo })]
-      },
-      {
         queryKey: getGithubRepoTreeQueryOptions(repo, branchName, directoryPath).queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       },
@@ -199,52 +190,50 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
   return (
     <>
-      <div className="h-full w-full overflow-auto">
-        <div className="mx-auto grid max-w-7xl gap-10 px-3 py-10 md:px-6 xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
-          <div className="flex min-w-0 flex-col gap-6">
-            <RepoHeader repo={overview} />
+      <div className="mx-auto grid gap-10 px-3 py-10 md:px-5 xl:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <RepoHeader repo={overview} />
 
-            <CodeExplorerToolbar
-              currentRef={routeTarget.ref}
-              onBranchChange={handleBranchChange}
-              repo={overview}
+          <CodeExplorerToolbar
+            currentRef={routeTarget.ref}
+            onBranchChange={handleBranchChange}
+            repo={overview}
+          />
+
+          {!isDefaultBranch && (
+            <BranchComparisonBanner
+              currentBranch={branchName}
+              defaultBranch={overview.defaultBranch ?? "main"}
+              repo={repo}
             />
+          )}
 
-            {!isDefaultBranch && (
-              <BranchComparisonBanner
-                currentBranch={branchName}
-                defaultBranch={overview.defaultBranch ?? "main"}
+          <div>
+            <LatestCommitBar
+              branchRef={branchName}
+              defaultBranch={overview.defaultBranch ?? "main"}
+              defaultBranchTip={overview.latestCommit}
+              repoName={repo}
+            />
+            {treeQuery.data ? (
+              <FileTree
+                directoryPath={directoryPath}
+                entries={treeQuery.data}
+                refName={branchName}
                 repo={repo}
               />
+            ) : (
+              <FileTreeSkeleton />
             )}
-
-            <div>
-              <LatestCommitBar
-                branchRef={branchName}
-                defaultBranch={overview.defaultBranch ?? "main"}
-                defaultBranchTip={overview.latestCommit}
-                repoName={repo}
-              />
-              {treeQuery.data ? (
-                <FileTree
-                  directoryPath={directoryPath}
-                  entries={treeQuery.data}
-                  refName={branchName}
-                  repo={repo}
-                />
-              ) : (
-                <FileTreeSkeleton />
-              )}
-            </div>
-
-            <RepoMarkdownFiles currentRef={branchName} entries={treeQuery.data ?? []} repo={repo} />
           </div>
 
-          <RepoSidebar repo={overview} />
+          <RepoMarkdownFiles currentRef={branchName} entries={treeQuery.data ?? []} repo={repo} />
         </div>
+
+        <RepoSidebar repo={overview} />
       </div>
       <SidePanelPortal>
-        <RepoActivityCards repo={repo} />
+        <RepoActivityCards owner={owner} repo={repo} repoData={overview} />
       </SidePanelPortal>
     </>
   );

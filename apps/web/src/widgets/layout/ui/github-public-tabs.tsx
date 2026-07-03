@@ -190,7 +190,7 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
     >
       <div className="hidden h-4 shrink-0 border-l md:block" />
       <ContextMenu>
-        <ContextMenuTrigger asChild>
+        <ContextMenuTrigger>
           <div className="relative min-w-0 flex-1 overflow-hidden">
             <div
               className={cn(

@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Building, ChevronDown, Edit, ExternalLink, MapPin } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
+import { Building, Edit, ExternalLink, MapPin } from "lucide-react";
 import { lazy, Suspense, useMemo, type ComponentType } from "react";
 
 const ContributionGraph = lazy(() =>
@@ -16,15 +16,7 @@ import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { githubProfileTabs, resolveGithubProfileTab } from "@/shared/lib/profile-tabs";
-import {
-  clampRepoListPage,
-  parseRepoListPage,
-  repoListHasNextPage,
-  sliceReposForPage
-} from "@/shared/lib/repo-list-utils";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
-import { DefaultLoader } from "@/shared/ui/default-loader";
-import { RepositoryRow } from "@/shared/ui/repository-row";
 
 import {
   getGithubProfileReposQueryOptions,
@@ -67,7 +59,7 @@ export function GithubProfilePage() {
   const isPrivate = !!admin.user;
 
   const pinnedReposQuery = useGetGithubPinnedReposQuery();
-  const reposQuery = useGetGithubProfileReposQuery(isRepositoriesTab);
+  useGetGithubProfileReposQuery(isRepositoriesTab);
   const activityQuery = useGetGithubActivityQuery(1);
   const signalTargets = useMemo(
     () =>
@@ -86,14 +78,16 @@ export function GithubProfilePage() {
         },
         {
           queryKey: getGithubProfileReposQueryOptions(isPrivate).queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerRepos(owner)]
+          signalKeys: [
+            isPrivate
+              ? githubRevalidationSignalKeys.PrivateOwnerRepos(owner)
+              : githubRevalidationSignalKeys.PublicOwnerRepos(owner)
+          ]
         }
       ] as const,
-    [owner]
+    [owner, isPrivate]
   );
   useGitHubSignalStream(signalTargets);
-
-  const currentPage = parseRepoListPage(currentSearch.get("page"));
 
   if (setupStatusQuery.isLoading && !setupStatusQuery.data) {
     return <GithubProfileSkeleton />;
@@ -120,11 +114,6 @@ export function GithubProfilePage() {
   if (!profile) {
     return <GithubProfileUnavailableState />;
   }
-
-  const repos = reposQuery.data ?? [];
-  const safePage = clampRepoListPage(currentPage, repos.length);
-  const pagedRepos = sliceReposForPage(repos, safePage);
-  const repositoriesHref = buildRepositoriesHref(1) as never;
 
   return (
     <>
@@ -185,7 +174,12 @@ export function GithubProfilePage() {
                 size="icon-sm"
                 className="mb-1 size-8 rounded-full hover:bg-white/5"
                 render={
-                  <a href="https://github.com/settings/profile" target="_blank" rel="noreferrer" />
+                  <a
+                    href="https://github.com/settings/profile"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Edit GitHub profile"
+                  />
                 }
                 aria-label="Edit GitHub profile"
               >
@@ -200,29 +194,6 @@ export function GithubProfilePage() {
                   {profile.name ?? profile.login}
                 </h1>
               </div>
-
-              <div className="flex h-7 w-full max-w-fit items-center justify-start gap-0 rounded-md bg-muted p-0.5 text-muted-foreground sm:w-auto sm:shrink-0">
-                <Link
-                  to={"/"}
-                  className={
-                    activeTab === githubProfileTabs.overview
-                      ? "inline-flex h-6 items-center justify-center rounded-sm bg-background px-2.5 py-0 text-xs leading-none font-medium"
-                      : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
-                  }
-                >
-                  Overview
-                </Link>
-                <Link
-                  to={repositoriesHref}
-                  className={
-                    activeTab === githubProfileTabs.repositories
-                      ? "inline-flex h-6 items-center justify-center rounded-sm bg-background px-2.5 py-0 text-xs leading-none font-medium"
-                      : "inline-flex h-6 items-center justify-center rounded-sm px-2.5 py-0 text-xs leading-none font-medium transition-colors"
-                  }
-                >
-                  Repositories
-                </Link>
-              </div>
             </div>
           </div>
 
@@ -232,70 +203,28 @@ export function GithubProfilePage() {
 
           <ProfileMetadata profile={profile} />
 
-          {activeTab === githubProfileTabs.overview ? (
-            <div className="mx-auto max-w-3xl">
-              {(pinnedReposQuery.data ?? []).length > 0 ? (
-                <section className="flex flex-col gap-2 pt-6">
-                  <h2 className="text-sm font-medium text-muted-foreground">Pinned</h2>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {(pinnedReposQuery.data ?? []).map((repo) => (
-                      <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              <section id="projects" className="flex flex-col gap-2 pt-16">
-                <h2 className="mb-10 text-sm font-medium text-muted-foreground">Projects</h2>
-                <ProjectsSection />
+          <div className="mx-auto max-w-3xl">
+            {(pinnedReposQuery.data ?? []).length > 0 ? (
+              <section className="flex flex-col gap-2 pt-6">
+                <h2 className="text-sm font-medium text-muted-foreground">Pinned</h2>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {(pinnedReposQuery.data ?? []).map((repo) => (
+                    <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
+                  ))}
+                </div>
               </section>
+            ) : null}
 
-              <section id="experience" className="flex flex-col gap-2 pt-16">
-                <h2 className="mb-10 text-sm font-medium text-muted-foreground">Experience</h2>
-                <Experience />
-              </section>
-            </div>
-          ) : (
-            <section className="flex max-w-4xl flex-col pt-20 lg:-mx-20">
-              <div className="w-full px-3 md:px-6">
-                {reposQuery.isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <DefaultLoader />
-                  </div>
-                ) : repos.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    No repositories to show.
-                  </p>
-                ) : (
-                  <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-background">
-                    {pagedRepos.map((repo) => (
-                      <div
-                        key={repo.id}
-                        style={{
-                          contentVisibility: "auto",
-                          containIntrinsicSize: "auto 72px"
-                        }}
-                      >
-                        <RepositoryRow repo={repo} />
-                      </div>
-                    ))}
-                    {repoListHasNextPage(safePage, repos.length) ? (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="mx-auto mt-6"
-                        render={<a href={buildRepositoriesHref(safePage + 1)} />}
-                      >
-                        <ChevronDown className="size-4" />
-                        Load more
-                      </Button>
-                    ) : null}
-                  </div>
-                )}
-              </div>
+            <section id="projects" className="flex flex-col gap-2 pt-16">
+              <h2 className="mb-10 text-sm font-medium text-muted-foreground">Projects</h2>
+              <ProjectsSection />
             </section>
-          )}
+
+            <section id="experience" className="flex flex-col gap-2 pt-16">
+              <h2 className="mb-10 text-sm font-medium text-muted-foreground">Experience</h2>
+              <Experience />
+            </section>
+          </div>
         </div>
       </div>
     </>
@@ -396,9 +325,4 @@ function ProfileSkeleton() {
       </div>
     </div>
   );
-}
-
-function buildRepositoriesHref(page: number) {
-  const baseHref = `?tab=repositories`;
-  return page > 1 ? `${baseHref}&page=${page}` : baseHref;
 }

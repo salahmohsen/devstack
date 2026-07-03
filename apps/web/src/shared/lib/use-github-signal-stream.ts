@@ -220,11 +220,13 @@ function useGitHubSignalStreamWebSocket(
 
   useEffect(() => {
     if (signalKeysKey.length === 0) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setStatus("disconnected");
       return;
     }
 
     if (typeof WebSocket === "undefined") {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setStatus("disconnected");
       return;
     }
