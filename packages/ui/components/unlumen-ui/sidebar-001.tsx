@@ -225,6 +225,9 @@ export const Sidebar001Item = memo(function Sidebar001Item({
         <Link
           to={href}
           onClick={onClick}
+          preload={false}
+          activeOptions={{ exact: true }}
+          activeProps={{ className: "active" }}
           onMouseEnter={() => {
             const el = itemRef.current;
             const container = getContainerNode();
@@ -240,7 +243,6 @@ export const Sidebar001Item = memo(function Sidebar001Item({
               setHovered(href);
             }
           }}
-          preload="intent"
           onMouseLeave={() => setHovered(null)}
           className={cn(
             "relative ml-2 flex items-center gap-2 py-1.5 pl-4 text-sm select-none",
@@ -288,15 +290,10 @@ export function Sidebar001Group({
   icon,
   className
 }: Sidebar001GroupProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const id = useId();
   const { setHovered, getContainerNode } = useContext(HoverContext);
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    setIsOpen(defaultOpen);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleMouseEnter = useCallback(() => {
     const el = buttonRef.current;
@@ -406,7 +403,10 @@ export function Sidebar001Content({
   const { setContainerNode } = useContext(HoverContext);
 
   return (
-    <div className={cn("no-scrollbar flex-1 overflow-y-auto py-4", className)} data-scroll-viewport>
+    <div
+      className={cn("flex-1 overflow-x-hidden overflow-y-auto py-4", className)}
+      data-scroll-viewport
+    >
       <div ref={setContainerNode} className="relative px-1">
         <HoverHighlight />
         {children}
@@ -433,7 +433,7 @@ export function Sidebar001({
   children,
   className,
   defaultEffectsEnabled = true,
-  defaultWidth = 240,
+  defaultWidth = 190,
   minWidth = 160,
   maxWidth = 400
 }: Sidebar001Props) {

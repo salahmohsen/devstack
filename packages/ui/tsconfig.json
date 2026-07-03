@@ -5,6 +5,11 @@
       "@tsu-stack/ui/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "../../apps/web/src/shared/ui/icon-picker.tsx"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../../apps/web/src/shared/ui/icon-picker.tsx",
+    "../../apps/web/src/shared/form/calendar-dropdown.tsx"
+  ],
   "exclude": ["node_modules"]
 }

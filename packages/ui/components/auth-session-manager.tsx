@@ -324,7 +324,7 @@ export default function AuthSessionManager({
   const handleRevokeAll = useCallback(async () => {
     setRevokingAll(true);
     try {
-      await onRevokeAll?.();
+      await Promise.resolve(onRevokeAll?.());
     } finally {
       setRevokingAll(false);
     }

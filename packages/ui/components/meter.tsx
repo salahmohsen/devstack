@@ -12,9 +12,7 @@ export function Meter({
 }: MeterPrimitive.Root.Props): React.ReactElement {
   return (
     <MeterPrimitive.Root className={cn("flex w-full flex-col gap-2", className)} {...props}>
-      {children ? (
-        children
-      ) : (
+      {children ?? (
         <MeterTrack>
           <MeterIndicator />
         </MeterTrack>

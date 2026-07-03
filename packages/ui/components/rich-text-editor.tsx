@@ -76,6 +76,7 @@ function LinkPopover({ editor }: { editor: Editor }) {
 
   useEffect(() => {
     if (open) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setUrl(editor.getAttributes("link").href ?? "");
     }
   }, [open, editor]);
@@ -96,6 +97,7 @@ function LinkPopover({ editor }: { editor: Editor }) {
   return (
     <div className="flex items-center gap-1 rounded-md border border-border bg-background p-1 shadow-sm">
       <input
+        // oxlint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
         type="url"
         placeholder="https://..."

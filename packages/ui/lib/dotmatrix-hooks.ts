@@ -36,6 +36,7 @@ export function useCyclePhase({ active, cycleMsBase, speed = 1 }: UseCyclePhaseO
 
   useEffect(() => {
     if (!active) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setPhase(0);
       return;
     }
@@ -124,6 +125,7 @@ export function useSteppedCycle({
     if (!active) {
       activeRef.current = false;
       currentStepRef.current = idleStep;
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setStep(idleStep);
       return;
     }

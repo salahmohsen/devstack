@@ -1,12 +1,15 @@
+"use client";
+
 import { Switch as SwitchPrimitive } from "@base-ui/react/switch";
+import type React from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-function Switch({ className, ...props }: SwitchPrimitive.Root.Props) {
+export function Switch({ className, ...props }: SwitchPrimitive.Root.Props): React.ReactElement {
   return (
     <SwitchPrimitive.Root
       className={cn(
-        "group/switch inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-[checked]:bg-primary data-[unchecked]:bg-input",
+        "inline-flex h-[calc(var(--thumb-size)+2px)] w-[calc(var(--thumb-size)*2-2px)] shrink-0 items-center rounded-full p-px transition-[background-color,box-shadow] duration-200 outline-none [--thumb-size:--spacing(5)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background sm:[--thumb-size:--spacing(4)] data-checked:bg-primary data-unchecked:bg-input data-disabled:cursor-not-allowed data-disabled:opacity-64",
         className
       )}
       data-slot="switch"
@@ -14,8 +17,7 @@ function Switch({ className, ...props }: SwitchPrimitive.Root.Props) {
     >
       <SwitchPrimitive.Thumb
         className={cn(
-          "pointer-events-none block size-4 rounded-full bg-background ring-0 transition-transform group-data-[checked]/switch:translate-x-4 group-data-[unchecked]/switch:translate-x-0.5",
-          "rtl:group-data-[checked]/switch:-translate-x-4"
+          "pointer-events-none block aspect-square h-full origin-left rounded-(--thumb-size) bg-background shadow-sm/5 will-change-transform [transition:translate_.15s,border-radius_.15s,scale_.1s_.1s,transform-origin_.15s] in-[[role=switch]:active,[data-slot=label]:active,[data-slot=field-label]:active]:rounded-[var(--thumb-size)/calc(var(--thumb-size)*1.1)] in-[[role=switch]:active,[data-slot=label]:active,[data-slot=field-label]:active]:not-data-disabled:scale-x-110 data-checked:origin-[var(--thumb-size)_50%] data-checked:translate-x-[calc(var(--thumb-size)-4px)]"
         )}
         data-slot="switch-thumb"
       />
@@ -23,4 +25,4 @@ function Switch({ className, ...props }: SwitchPrimitive.Root.Props) {
   );
 }
 
-export { Switch };
+export { SwitchPrimitive };

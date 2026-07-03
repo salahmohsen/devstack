@@ -277,7 +277,7 @@ export function trBlPathNormFromIndex(index: number): number {
 }
 
 function buildSnakeOrderToIndexMap(): number[] {
-  const pathOrder = new Array<number>(CELLS);
+  const pathOrder: number[] = Array.from({ length: CELLS });
   const key = (row: number, col: number) => rowMajorIndex(row, col);
   let t = 0;
   for (let row = 0; row < N; row += 1) {
@@ -307,7 +307,7 @@ export function snakePathOrderValue(index: number): number {
 }
 
 function buildSpiralInwardOrderToIndexMap(): number[] {
-  const order = new Array<number>(CELLS);
+  const order: number[] = Array.from({ length: CELLS });
   let top = 0;
   let bottom = N - 1;
   let left = 0;
@@ -359,7 +359,7 @@ export function spiralInwardOrderValue(index: number): number {
 }
 
 function buildOuterRingClockwiseOrderToIndexMap(): number[] {
-  const order = new Array<number>(CELLS).fill(-1);
+  const order: number[] = Array.from<number>({ length: CELLS }).fill(-1);
   const coords: Array<[number, number]> = [
     [0, 0],
     [0, 1],
@@ -388,7 +388,7 @@ function buildOuterRingClockwiseOrderToIndexMap(): number[] {
 }
 
 function buildMiddleRingAntiClockwiseOrderToIndexMap(): number[] {
-  const order = new Array<number>(CELLS).fill(-1);
+  const order: number[] = Array.from<number>({ length: CELLS }).fill(-1);
   const coords: Array<[number, number]> = [
     [1, 1],
     [2, 1],
@@ -431,7 +431,7 @@ export function middleRingAntiClockwiseNormFromIndex(index: number): number {
 }
 
 function buildDiagonalSnakeOrderToIndexMap(): number[] {
-  const order = new Array<number>(CELLS);
+  const order: number[] = Array.from({ length: CELLS });
   let t = 0;
 
   for (let diagonal = 0; diagonal <= (N - 1) * 2; diagonal += 1) {
@@ -467,7 +467,7 @@ export function diagonalSnakeNormFromIndex(index: number): number {
 }
 
 function buildRowWaveSnakeOrderToIndexMap(): number[] {
-  const order = new Array<number>(CELLS);
+  const order: number[] = Array.from({ length: CELLS });
   const route: Array<{ col: number; dir: "up" | "down" }> = [
     { col: 0, dir: "up" },
     { col: 2, dir: "down" },
@@ -862,8 +862,7 @@ export function DotMatrixBase({
 
   if (useWrapper) {
     return (
-      <div
-        role="status"
+      <output
         aria-live="polite"
         aria-label={ariaLabel}
         className={className}
@@ -881,13 +880,12 @@ export function DotMatrixBase({
         onMouseLeave={onMouseLeave}
       >
         {matrix}
-      </div>
+      </output>
     );
   }
 
   return (
-    <div
-      role="status"
+    <output
       aria-live="polite"
       aria-label={ariaLabel}
       className={cx(
@@ -905,7 +903,7 @@ export function DotMatrixBase({
       <div className="dmx-grid" style={{ gap }}>
         {dots}
       </div>
-    </div>
+    </output>
   );
 }
 
