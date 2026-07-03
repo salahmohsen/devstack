@@ -22,10 +22,15 @@ type ExperienceInfoProps = {
 
 function formatRange(fromDate: string | null, toDate: string | null): string {
   if (!fromDate) return "Ongoing";
-  const start = format(new Date(fromDate), "dd MMMM yyyy");
+  const start = safeFormat(fromDate, "dd MMMM yyyy");
   if (!toDate) return `${start} — Present`;
-  const end = format(new Date(toDate), "dd MMMM yyyy");
+  const end = safeFormat(toDate, "dd MMMM yyyy");
   return `${start} — ${end}`;
+}
+
+function safeFormat(value: string, pattern: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : format(date, pattern);
 }
 
 export function ExperienceInfo({ experience }: ExperienceInfoProps) {

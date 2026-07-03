@@ -110,6 +110,17 @@ export const UpdateProjectInputSchema = z.object({
 
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
 
+// Accepts undefined/null (unset), "" (empty date picker), or a strict
+// YYYY-MM-DD string. Normalises "" and undefined to null so downstream
+// storage always sees either a valid ISO date or null. Rejects free-form
+// strings like "Aug 2024" that would crash date-fns `format()` on the
+// dashboard.
+const ExperienceDateStringSchema = z
+  .union([z.string().date(), z.literal("")])
+  .nullable()
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? null : value));
+
 export const ExperienceOutputSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -132,8 +143,8 @@ export const CreateExperienceInputSchema = z.object({
   title: z.string().min(1),
   organization: z.string().min(1),
   description: z.string(),
-  fromDate: z.string().nullable().optional(),
-  toDate: z.string().nullable().optional(),
+  fromDate: ExperienceDateStringSchema,
+  toDate: ExperienceDateStringSchema,
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional()
@@ -147,8 +158,8 @@ export const UpdateExperienceInputSchema = z.object({
   title: z.string().min(1).optional(),
   organization: z.string().min(1).optional(),
   description: z.string(),
-  fromDate: z.coerce.string().nullable().optional(),
-  toDate: z.coerce.string().optional(),
+  fromDate: ExperienceDateStringSchema,
+  toDate: ExperienceDateStringSchema,
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional()
