@@ -62,6 +62,7 @@ const getORPCClient = createIsomorphicFn()
 
           credentials: "include"
         }).catch((error) => {
+          // oxlint-disable-next-line no-console
           console.error("[rpc-fetch-failed]", { url, error });
           throw error;
         });

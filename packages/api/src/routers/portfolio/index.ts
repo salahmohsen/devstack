@@ -17,6 +17,7 @@ import {
   StackListOutputSchema,
   StackOutputSchema,
   StackUpdateInputSchema,
+  ToggleProjectArchivedResponseSchema,
   UpdateExperienceInputSchema,
   UpdateProjectInputSchema,
   type ExperienceOutput,
@@ -38,7 +39,9 @@ function toStackOutput(s: {
   description: string | null;
   icon: string | null;
   sortOrder: number;
-  enableAi: boolean | null;
+  enableAi?: boolean | null;
+  updatedAt?: Date;
+  createdAt?: Date;
 }): StackOutput {
   return {
     id: s.id,
@@ -46,7 +49,9 @@ function toStackOutput(s: {
     description: s.description,
     icon: s.icon,
     sortOrder: s.sortOrder,
-    enableAi: s.enableAi ?? false
+    enableAi: s.enableAi ?? false,
+    updatedAt: s.updatedAt ?? new Date(),
+    createdAt: s.createdAt ?? new Date()
   };
 }
 
@@ -61,8 +66,9 @@ function toProjectOutput(proj: {
   description: string;
   sortOrder: number;
   experienceId: string | null;
-  isPresent: boolean | null;
-  enableAi: boolean | null;
+  isArchived?: boolean | null;
+  isPresent?: boolean | null;
+  enableAi?: boolean | null;
   stacks: Array<{
     id: string;
     projectId: string;
@@ -74,8 +80,13 @@ function toProjectOutput(proj: {
       icon: string | null;
       sortOrder: number;
       enableAi: boolean | null;
+      createdAt: Date;
+      updatedAt: Date;
     } | null;
   }>;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }): ProjectOutput {
   return {
     id: proj.id,
@@ -88,8 +99,11 @@ function toProjectOutput(proj: {
     description: proj.description,
     sortOrder: proj.sortOrder,
     experienceId: proj.experienceId,
+    isArchived: proj.isArchived ?? false,
     isPresent: proj.isPresent ?? false,
     enableAi: proj.enableAi ?? false,
+    updatedAt: proj.updatedAt ?? new Date(),
+    createdAt: proj.createdAt ?? new Date(),
     stacks: proj.stacks
       .map((join) => (join.stack ? toStackOutput(join.stack) : null))
       .filter((s): s is StackOutput => s !== null)
@@ -131,9 +145,13 @@ function toExperienceOutput(exp: {
         icon: string | null;
         sortOrder: number;
         enableAi: boolean | null;
+        createdAt: Date;
+        updatedAt: Date;
       } | null;
     }>;
   }>;
+  createdAt: Date;
+  updatedAt: Date;
 }): ExperienceOutput {
   return {
     id: exp.id,
@@ -146,7 +164,9 @@ function toExperienceOutput(exp: {
     isArchived: exp.isArchived ?? false,
     isPresent: exp.isPresent ?? false,
     enableAi: exp.enableAi ?? false,
-    projects: exp.projects.map(toProjectOutput)
+    projects: exp.projects.map(toProjectOutput),
+    createdAt: exp.createdAt,
+    updatedAt: exp.updatedAt
   };
 }
 
@@ -186,7 +206,8 @@ export const portfolioRouter = {
               type: c.type,
               value: c.value,
               icon: c.icon,
-              updatedAt: c.updatedAt
+              updatedAt: c.updatedAt,
+              createdAt: c.createdAt
             };
           }) ?? []
         );
@@ -331,6 +352,20 @@ export const portfolioRouter = {
       .handler(async ({ input }) => {
         await projectRepository.reorder(input.items);
         return { success: true };
+      }),
+    toggleArchived: protectedProcedure
+      .route({
+        description: "Toggle the archived state of a project",
+        method: "POST"
+      })
+      .input(z.object({ id: z.string() }))
+      .output(ToggleProjectArchivedResponseSchema)
+      .handler(async ({ input }) => {
+        const proj = await projectRepository.toggleArchived(input.id);
+        if (!proj) {
+          throw new ORPCError("NOT_FOUND", { message: "Project not found" });
+        }
+        return toProjectOutput(proj);
       }),
     delete: protectedProcedure
       .route({

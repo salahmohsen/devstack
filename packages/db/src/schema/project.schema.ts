@@ -23,6 +23,7 @@ export const project = pgTable(
     summary: text("summary").notNull(),
     description: text("description").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
+    isArchived: boolean("is_archived").default(false),
     experienceId: text("experience_id").references(() => experience.id, {
       onDelete: "set null"
     }),

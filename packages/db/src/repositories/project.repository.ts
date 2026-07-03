@@ -59,6 +59,7 @@ export const projectRepository = {
         summary: input.summary,
         description: input.description,
         experienceId: input.experienceId ?? null,
+        isArchived: input.isArchived ?? false,
         isPresent: input.isPresent ?? false,
         enableAi: input.enableAi ?? false
       })
@@ -88,6 +89,9 @@ export const projectRepository = {
     if (projectFields.description !== undefined) updateData.description = projectFields.description;
     if (projectFields.experienceId !== undefined) {
       updateData.experienceId = projectFields.experienceId;
+    }
+    if (projectFields.isArchived !== undefined) {
+      updateData.isArchived = projectFields.isArchived;
     }
     if (projectFields.isPresent !== undefined) {
       updateData.isPresent = projectFields.isPresent;
@@ -154,6 +158,28 @@ export const projectRepository = {
         await tx.update(project).set({ sortOrder: item.sortOrder }).where(eq(project.id, item.id));
       }
     });
+  },
+
+  async toggleArchived(id: string) {
+    const [current] = await getDb()
+      .select({ isArchived: project.isArchived })
+      .from(project)
+      .where(eq(project.id, id))
+      .limit(1);
+
+    if (!current) return null;
+
+    const next = !current.isArchived;
+
+    const [updated] = await getDb()
+      .update(project)
+      .set({ isArchived: next })
+      .where(eq(project.id, id))
+      .returning();
+
+    if (!updated) return null;
+
+    return projectRepository.findById(updated.id);
   },
 
   async delete(id: string) {

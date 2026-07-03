@@ -1,7 +1,13 @@
-import { ProfileOutputSchema, ProfileUpdateInputSchema } from "@tsu-stack/core/profile";
+import { z } from "zod";
+
+import {
+  contactOutputSchema,
+  ProfileOutputSchema,
+  ProfileUpdateInputSchema
+} from "@tsu-stack/core/profile";
 import { contactRepository, userRepository, type UserEntity } from "@tsu-stack/db";
 
-import { protectedProcedure } from "#@/lib/procedures/factory";
+import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 
 function toProfileOutput(
   userRow: UserEntity,
@@ -34,7 +40,13 @@ export const profileRouter = {
       const contacts = await contactRepository.findByUserId(userId);
       return toProfileOutput(userRow, contacts);
     }),
-
+  getContacts: publicProcedure
+    .route({
+      description: "Get admin contacts",
+      method: "GET"
+    })
+    .output(z.array(contactOutputSchema))
+    .handler(async () => contactRepository.getAdminContact() ?? []),
   update: protectedProcedure
     .route({
       description:

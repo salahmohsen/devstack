@@ -2,6 +2,7 @@ import { eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { contact } from "#@/schema/contact.schema";
+import { type ContactSchemaSelect } from "#@/types/contact.schema";
 
 export type ContactEntity = InferSelectModel<typeof contact>;
 export type UpdateContactData = Pick<InferInsertModel<typeof contact>, "icon" | "type" | "value">;
@@ -11,6 +12,9 @@ export const contactRepository = {
     return await getDb().query.contact.findMany({
       where: { userId }
     });
+  },
+  async getAdminContact(): Promise<ContactSchemaSelect[]> {
+    return await getDb().query.contact.findMany();
   },
 
   async upsert(userId: string, input: UpdateContactData[]) {
