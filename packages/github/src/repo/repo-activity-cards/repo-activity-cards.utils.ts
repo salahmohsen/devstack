@@ -30,6 +30,14 @@ export function mapWorkflowRuns(
   });
 }
 
+function hashIdToNumber(id: string): number {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
 export function mapGraphQLRepoActivityCards(
   repository: GitHubGraphQLRepoActivityCardsResponse["repository"],
   actions: GitHubRepoActivityCardAction[]
@@ -42,6 +50,7 @@ export function mapGraphQLRepoActivityCards(
           ? [
               {
                 comments: issue.comments.totalCount,
+                id: hashIdToNumber(issue.id),
                 number: issue.number,
                 state: issue.state === "OPEN" ? "open" : "closed",
                 title: issue.title,
@@ -59,6 +68,7 @@ export function mapGraphQLRepoActivityCards(
           ? [
               {
                 comments: pullRequest.comments.totalCount,
+                id: hashIdToNumber(pullRequest.id),
                 number: pullRequest.number,
                 state: pullRequest.mergedAt
                   ? "merged"

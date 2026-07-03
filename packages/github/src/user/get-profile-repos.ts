@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -55,10 +55,13 @@ async function _fetchProfileRepos({
     return [];
   }
 
-  const signalKey = githubRevalidationSignalKeys.ownerRepos(source.owner);
+  const isPrivate = endpoint === "listForAuthenticatedUser";
+  const signalKey = isPrivate
+    ? githubRevalidationSignalKeys.PrivateOwnerRepos(source.owner)
+    : githubRevalidationSignalKeys.PublicOwnerRepos(source.owner);
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubUserRepoSummary[]>({
+    const result = await getCachedGitHubRequest<GitHubUserRepoSummary[]>({
       fetcher: async (conditionals) => {
         const baseParams = {
           headers: {
@@ -69,28 +72,27 @@ async function _fetchProfileRepos({
           type: "owner" as const
         };
 
-        const response =
-          endpoint === "listForAuthenticatedUser"
-            ? // `GET /user/repos` — includes private repos when the
-              // access token has the `repo` scope. GitHub forbids
-              // combining `type` with `affiliation` or `visibility` on
-              // this endpoint, so we strip `type` and rely on
-              // `affiliation: "owner"` to filter to repos the caller
-              // owns (including private org/team-owned repos they
-              // administer).
-              await octokit.rest.repos.listForAuthenticatedUser({
-                headers: baseParams.headers,
-                per_page: baseParams.per_page,
-                sort: baseParams.sort,
-                affiliation: "owner"
-              })
-            : // `GET /users/{username}/repos` — public repos only, no auth
-              // required. Works for any user. `type` is the only way to
-              // filter owner-vs-member repos on this endpoint.
-              await octokit.rest.repos.listForUser({
-                ...baseParams,
-                username: source.owner
-              });
+        const response = isPrivate
+          ? // `GET /user/repos` — includes private repos when the
+            // access token has the `repo` scope. GitHub forbids
+            // combining `type` with `affiliation` or `visibility` on
+            // this endpoint, so we strip `type` and rely on
+            // `affiliation: "owner"` to filter to repos the caller
+            // owns (including private org/team-owned repos they
+            // administer).
+            await octokit.rest.repos.listForAuthenticatedUser({
+              headers: baseParams.headers,
+              per_page: baseParams.per_page,
+              sort: baseParams.sort,
+              affiliation: "owner"
+            })
+          : // `GET /users/{username}/repos` — public repos only, no auth
+            // required. Works for any user. `type` is the only way to
+            // filter owner-vs-member repos on this endpoint.
+            await octokit.rest.repos.listForUser({
+              ...baseParams,
+              username: source.owner
+            });
 
         const repos: GitHubUserRepoSummary[] = response.data.map((repo) => {
           return {

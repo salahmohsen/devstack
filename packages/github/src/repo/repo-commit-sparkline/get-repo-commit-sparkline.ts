@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -46,7 +46,7 @@ async function _fetchRepoCommitSparkline(
   const since = getRepoCommitSparklineSince();
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubRepoCommitSparkline>({
+    const result = await getCachedGitHubRequest<GitHubRepoCommitSparkline>({
       fetcher: async () => {
         const response = await octokit.rest.repos.listCommits({
           owner: source.owner,

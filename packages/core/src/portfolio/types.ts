@@ -15,8 +15,10 @@ export const StackOutputSchema = z.object({
   description: z.string().nullable(),
   icon: z.string().nullable(),
   sortOrder: z.number().int(),
-  enableAi: z.boolean()
-}) satisfies z.ZodType<Omit<StackSchemaSelect, "createdAt" | "updatedAt">>;
+  enableAi: z.boolean(),
+  updatedAt: z.date(),
+  createdAt: z.date()
+}) satisfies z.ZodType<StackSchemaSelect>;
 
 export type StackOutput = z.infer<typeof StackOutputSchema>;
 
@@ -56,10 +58,13 @@ export const ProjectOutputSchema = z.object({
   description: z.string(),
   sortOrder: z.number().int(),
   experienceId: z.string().nullable(),
+  isArchived: z.boolean(),
   isPresent: z.boolean(),
   enableAi: z.boolean(),
-  stacks: z.array(StackOutputSchema)
-}) satisfies z.ZodType<Omit<ProjectSchemaSelect, "createdAt" | "updatedAt">>;
+  stacks: z.array(StackOutputSchema),
+  updatedAt: z.date(),
+  createdAt: z.date()
+}) satisfies z.ZodType<ProjectSchemaSelect>;
 
 export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
 
@@ -72,11 +77,12 @@ export const CreateProjectInputSchema = z.object({
   summary: z.string(),
   description: z.string(),
   experienceId: z.string().nullable().optional(),
+  isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional(),
   stackIds: z.array(z.string()).optional().default([])
 }) satisfies z.ZodType<
-  Partial<Omit<ProjectSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+  Partial<Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt">>
 >;
 
 export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
@@ -94,11 +100,12 @@ export const UpdateProjectInputSchema = z.object({
   summary: z.string(),
   description: z.string(),
   experienceId: z.string().nullable().optional(),
+  isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional(),
   stackIds: z.array(z.string()).optional()
 }) satisfies z.ZodType<
-  Partial<Omit<ProjectSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder">>
+  Partial<Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt">>
 >;
 
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
@@ -114,8 +121,10 @@ export const ExperienceOutputSchema = z.object({
   isArchived: z.boolean(),
   isPresent: z.boolean(),
   enableAi: z.boolean(),
-  projects: z.array(ProjectOutputSchema)
-}) satisfies z.ZodType<Omit<ExperienceSchemaSelect, "createdAt" | "updatedAt">>;
+  projects: z.array(ProjectOutputSchema),
+  updatedAt: z.date(),
+  createdAt: z.date()
+}) satisfies z.ZodType<ExperienceSchemaSelect>;
 
 export type ExperienceOutput = z.infer<typeof ExperienceOutputSchema>;
 
@@ -138,8 +147,8 @@ export const UpdateExperienceInputSchema = z.object({
   title: z.string().min(1).optional(),
   organization: z.string().min(1).optional(),
   description: z.string(),
-  fromDate: z.string().nullable().optional(),
-  toDate: z.string().nullable().optional(),
+  fromDate: z.coerce.string().nullable().optional(),
+  toDate: z.coerce.string().optional(),
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
   enableAi: z.boolean().optional()
@@ -153,6 +162,9 @@ export const ToggleExperienceArchivedResponseSchema = ExperienceOutputSchema;
 export type ToggleExperienceArchivedResponse = z.infer<
   typeof ToggleExperienceArchivedResponseSchema
 >;
+
+export const ToggleProjectArchivedResponseSchema = ProjectOutputSchema;
+export type ToggleProjectArchivedResponse = z.infer<typeof ToggleProjectArchivedResponseSchema>;
 
 export const ReorderInputSchema = z.object({
   items: z.array(

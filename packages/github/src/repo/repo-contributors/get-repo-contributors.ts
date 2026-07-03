@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -44,7 +44,7 @@ async function _fetchRepoContributors(
   });
 
   try {
-    const result = await getGitHubResourceLocalFirst<RepoContributorsResult>({
+    const result = await getCachedGitHubRequest<RepoContributorsResult>({
       fetcher: async (conditionals) => {
         const response = await octokit.rest.repos.listContributors({
           headers: buildGitHubConditionalHeaders(conditionals),

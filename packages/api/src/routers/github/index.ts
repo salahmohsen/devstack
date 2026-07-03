@@ -6,30 +6,36 @@ import {
   bumpGitHubCacheNamespaces,
   getGitHubRevalidationSignals,
   getPrivateProfileRepos,
-  getPrivateRepoActivityCards,
   getPrivateRepoBranchComparison,
   getPrivateRepoBranches,
   getPrivateRepoCommitSparkline,
   getPrivateRepoContributors,
+  getPrivateRepoDiscussions,
   getPrivateRepoFileContent,
+  getPrivateRepoIssues,
   getPrivateRepoOverview,
+  getPrivateRepoPulls,
   getPrivateRepoRefCommit,
   getPrivateRepoTree,
+  getPrivateRepoWorkflowRuns,
   getPrivateTreeEntryCommits,
   getPrivateUserActivity,
   getPrivateUserContributions,
   getPrivateUserPinnedRepos,
   getPrivateUserProfile,
   getProfileRepos,
-  getRepoActivityCards,
   getRepoBranchComparison,
   getRepoBranches,
   getRepoCommitSparkline,
   getRepoContributors,
+  getRepoDiscussions,
   getRepoFileContent,
+  getRepoIssues,
   getRepoOverview,
+  getRepoPulls,
   getRepoRefCommit,
   getRepoTree,
+  getRepoWorkflowRuns,
   getTreeEntryCommits,
   getUserActivity,
   getUserContributions,
@@ -39,8 +45,10 @@ import {
 } from "@tsu-stack/github";
 import {
   GitHubContributionCalendarSchema,
+  GitHubDiscussionsResultSchema,
+  GitHubIssueSummarySchema,
   GitHubPinnedRepoSchema,
-  GitHubRepoActivityCardsSchema,
+  GitHubPullSummarySchema,
   GitHubRepoBranchComparisonSchema,
   GitHubRepoBranchSchema,
   GitHubRepoCommitSparklineSchema,
@@ -50,6 +58,7 @@ import {
   GitHubUserActivityEventSchema,
   GitHubUserProfileSchema,
   GitHubUserRepoSummarySchema,
+  GitHubWorkflowRunSchema,
   RepoContributorsResultSchema,
   RepoOverviewSchema
 } from "@tsu-stack/github/schemas";
@@ -89,6 +98,38 @@ const RepoTreeEntryCommitsInputSchema = RepoInputSchema.extend({
   dirPath: z.string().default(""),
   entries: z.array(z.string().trim().min(1)).max(50),
   ref: z.string().trim().min(1)
+});
+
+const RepoListStateSchema = z.enum(["open", "closed", "all"]).default("open");
+const RepoPullsSortSchema = z
+  .enum(["created", "long-running", "popularity", "updated"])
+  .default("updated");
+const RepoListDirectionSchema = z.enum(["asc", "desc"]).default("desc");
+const RepoIssuesSortSchema = z.enum(["comments", "created", "updated"]).default("updated");
+
+const RepoPullsInputSchema = RepoInputSchema.extend({
+  state: RepoListStateSchema,
+  sort: RepoPullsSortSchema,
+  direction: RepoListDirectionSchema,
+  page: z.number().int().min(1).default(1),
+  perPage: z.number().int().min(1).max(100).default(5)
+});
+
+const RepoIssuesInputSchema = RepoInputSchema.extend({
+  state: RepoListStateSchema,
+  sort: RepoIssuesSortSchema,
+  direction: RepoListDirectionSchema,
+  page: z.number().int().min(1).default(1),
+  perPage: z.number().int().min(1).max(100).default(5)
+});
+
+const RepoWorkflowRunsInputSchema = RepoInputSchema.extend({
+  page: z.number().int().min(1).default(1),
+  perPage: z.number().int().min(1).max(100).default(5)
+});
+
+const RepoDiscussionsInputSchema = RepoInputSchema.extend({
+  first: z.number().int().min(1).max(50).default(5)
 });
 
 const RevalidationSignalsOutputSchema = z.array(
@@ -170,22 +211,6 @@ export const githubRouter = {
     })
     .output(z.array(GitHubUserRepoSummarySchema))
     .handler(async ({ context }) => getPrivateProfileRepos(context)),
-  publicGetRepoActivityCards: publicProcedure
-    .route({
-      description: "Get public repository activity cards for a GitHub repository",
-      method: "GET"
-    })
-    .input(RepoInputSchema)
-    .output(GitHubRepoActivityCardsSchema)
-    .handler(async ({ context, input }) => getRepoActivityCards(input, context)),
-  privateGetRepoActivityCards: ownerProcedure
-    .route({
-      description: "Get repository activity cards for any of the owner's repositories",
-      method: "GET"
-    })
-    .input(RepoInputSchema)
-    .output(GitHubRepoActivityCardsSchema)
-    .handler(async ({ context, input }) => getPrivateRepoActivityCards(input, context)),
   publicGetRepoBranchComparison: publicProcedure
     .route({
       description: "Get commit comparison between two branches for a public GitHub repository",
@@ -202,6 +227,70 @@ export const githubRouter = {
     .input(RepoBranchComparisonInputSchema)
     .output(GitHubRepoBranchComparisonSchema.nullable())
     .handler(async ({ context, input }) => getPrivateRepoBranchComparison(input, context)),
+  publicGetRepoPulls: publicProcedure
+    .route({
+      description: "Get the public pull requests for a GitHub repository",
+      method: "GET"
+    })
+    .input(RepoPullsInputSchema)
+    .output(z.array(GitHubPullSummarySchema))
+    .handler(async ({ context, input }) => getRepoPulls(input, context)),
+  privateGetRepoPulls: ownerProcedure
+    .route({
+      description: "Get the pull requests for any of the owner's repositories",
+      method: "GET"
+    })
+    .input(RepoPullsInputSchema)
+    .output(z.array(GitHubPullSummarySchema))
+    .handler(async ({ context, input }) => getPrivateRepoPulls(input, context)),
+  publicGetRepoIssues: publicProcedure
+    .route({
+      description: "Get the public issues for a GitHub repository",
+      method: "GET"
+    })
+    .input(RepoIssuesInputSchema)
+    .output(z.array(GitHubIssueSummarySchema))
+    .handler(async ({ context, input }) => getRepoIssues(input, context)),
+  privateGetRepoIssues: ownerProcedure
+    .route({
+      description: "Get the issues for any of the owner's repositories",
+      method: "GET"
+    })
+    .input(RepoIssuesInputSchema)
+    .output(z.array(GitHubIssueSummarySchema))
+    .handler(async ({ context, input }) => getPrivateRepoIssues(input, context)),
+  publicGetRepoWorkflowRuns: publicProcedure
+    .route({
+      description: "Get the public GitHub Actions workflow runs for a repository",
+      method: "GET"
+    })
+    .input(RepoWorkflowRunsInputSchema)
+    .output(z.array(GitHubWorkflowRunSchema))
+    .handler(async ({ context, input }) => getRepoWorkflowRuns(input, context)),
+  privateGetRepoWorkflowRuns: ownerProcedure
+    .route({
+      description: "Get the GitHub Actions workflow runs for any of the owner's repositories",
+      method: "GET"
+    })
+    .input(RepoWorkflowRunsInputSchema)
+    .output(z.array(GitHubWorkflowRunSchema))
+    .handler(async ({ context, input }) => getPrivateRepoWorkflowRuns(input, context)),
+  publicGetRepoDiscussions: publicProcedure
+    .route({
+      description: "Get the public discussions for a GitHub repository",
+      method: "GET"
+    })
+    .input(RepoDiscussionsInputSchema)
+    .output(GitHubDiscussionsResultSchema)
+    .handler(async ({ context, input }) => getRepoDiscussions(input, context)),
+  privateGetRepoDiscussions: ownerProcedure
+    .route({
+      description: "Get the discussions for any of the owner's repositories",
+      method: "GET"
+    })
+    .input(RepoDiscussionsInputSchema)
+    .output(GitHubDiscussionsResultSchema)
+    .handler(async ({ context, input }) => getPrivateRepoDiscussions(input, context)),
   publicGetRepoBranches: publicProcedure
     .route({
       description: "Get the public branches for a GitHub repository",

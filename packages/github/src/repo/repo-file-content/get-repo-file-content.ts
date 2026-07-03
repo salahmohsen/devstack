@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -42,7 +42,7 @@ async function _fetchRepoFileContent(
   });
 
   try {
-    const result = await getGitHubResourceLocalFirst<string | null>({
+    const result = await getCachedGitHubRequest<string | null>({
       fetcher: async (conditionals) => {
         const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),

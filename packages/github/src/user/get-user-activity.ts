@@ -1,7 +1,7 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 import { isRecord } from "@tsu-stack/core/utils";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -37,7 +37,7 @@ async function _fetchUserActivity(
   const signalKey = githubRevalidationSignalKeys.ownerActivity(source.owner);
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubUserActivityEvent[]>({
+    const result = await getCachedGitHubRequest<GitHubUserActivityEvent[]>({
       fetcher: async () => {
         const response = await octokit.request("GET /users/{username}/events/public", {
           page: input.page,

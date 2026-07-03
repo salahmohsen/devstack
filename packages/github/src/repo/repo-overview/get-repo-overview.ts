@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -47,7 +47,7 @@ async function _fetchRepoOverview(
   });
 
   try {
-    const result = await getGitHubResourceLocalFirst<RepoOverview>({
+    const result = await getCachedGitHubRequest<RepoOverview>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<GitHubGraphQLRepoOverviewResponse>(
           octokit,

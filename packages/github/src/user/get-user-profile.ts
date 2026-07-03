@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -31,7 +31,7 @@ async function _fetchUserProfile(
   const ownerProfileKey = githubRevalidationSignalKeys.ownerProfile(source.owner);
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubUserProfile>({
+    const result = await getCachedGitHubRequest<GitHubUserProfile>({
       fetcher: async (conditionals) => {
         const response = await octokit.rest.users.getByUsername({
           headers: buildGitHubConditionalHeaders(conditionals),

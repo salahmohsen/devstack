@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -28,7 +28,7 @@ async function _fetchUserContributions(
   const signalKey = githubRevalidationSignalKeys.ownerContributions(source.owner);
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubContributionCalendar>({
+    const result = await getCachedGitHubRequest<GitHubContributionCalendar>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<{
           rateLimit: {

@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -42,7 +42,7 @@ async function _fetchRepoRefCommit(
   });
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubRepoLatestCommit>({
+    const result = await getCachedGitHubRequest<GitHubRepoLatestCommit>({
       fetcher: async () => {
         const response = await octokit.rest.repos.listCommits({
           owner: source.owner,

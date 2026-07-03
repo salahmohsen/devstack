@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -43,7 +43,7 @@ async function _fetchRepoBranchComparison(
   });
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubRepoBranchComparison>({
+    const result = await getCachedGitHubRequest<GitHubRepoBranchComparison>({
       fetcher: async (conditionals) => {
         const response = await octokit.rest.repos.compareCommits({
           base: input.base,

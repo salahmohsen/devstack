@@ -1,18 +1,12 @@
-import { type GitHubLocalFirstMeta } from "#@/schemas";
+import {
+  type GitHubIssueSummary as IssueSummary,
+  type GitHubLocalFirstMeta,
+  type GitHubPullSummary as PullSummary
+} from "#@/schemas";
 import { type GitHubActor } from "#@/types";
 
 export { type RepoContributor, type RepoContributorsResult, type RepoOverview } from "#@/schemas";
-
-export type { GitHubLocalFirstMeta };
-
-export type RepositoryRef = {
-  name: string;
-  owner: string;
-  fullName: string;
-  url: string;
-  /** `null` means the visibility is unknown (e.g. REST search doesn't return it). */
-  isPrivate: boolean | null;
-};
+export type { GitHubLocalFirstMeta } from "#@/schemas";
 
 export type GitHubAccountSummary = {
   id: number;
@@ -27,32 +21,9 @@ export type GitHubConditionalRequestState = {
   lastModified?: string | null;
 };
 
-export type GitHubLabel = {
-  name: string;
-  color: string;
-  description: string | null;
-};
-
 /** Weekly total commit counts; index `0` is oldest week, last index is most recent (GitHub participation API). */
 export type RepoParticipationStats = {
   weeklyCommits: number[];
-};
-
-export type PullSummary = {
-  id: number;
-  number: number;
-  title: string;
-  state: string;
-  isDraft: boolean;
-  createdAt: string;
-  updatedAt: string;
-  closedAt: string | null;
-  mergedAt: string | null;
-  comments: number;
-  url: string;
-  author: GitHubActor | null;
-  labels: GitHubLabel[];
-  repository: RepositoryRef;
 };
 
 export type RequestedTeam = {
@@ -82,22 +53,6 @@ export type PullDetail = PullSummary & {
   mergeableState?: string | null;
   requestedReviewers: GitHubActor[];
   requestedTeams: RequestedTeam[];
-};
-
-export type IssueSummary = {
-  id: number;
-  number: number;
-  title: string;
-  state: string;
-  stateReason: string | null;
-  createdAt: string;
-  updatedAt: string;
-  closedAt: string | null;
-  comments: number;
-  url: string;
-  author: GitHubActor | null;
-  labels: GitHubLabel[];
-  repository: RepositoryRef;
 };
 
 export type IssueDetail = IssueSummary & {
@@ -251,35 +206,6 @@ export type PullWorkflowApproval = {
   workflowRunId: number;
   name: string;
   event: string;
-};
-
-export type WorkflowRunPullRequestRef = {
-  number: number;
-  headRef: string;
-  baseRef: string;
-};
-
-export type WorkflowRun = {
-  id: number;
-  name: string | null;
-  displayTitle: string;
-  status: string;
-  conclusion: string | null;
-  event: string;
-  headBranch: string | null;
-  headSha: string;
-  runNumber: number;
-  runAttempt: number;
-  runStartedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  htmlUrl: string;
-  path: string;
-  workflowId: number;
-  actor: GitHubActor | null;
-  triggeringActor: GitHubActor | null;
-  pullRequests: WorkflowRunPullRequestRef[];
-  viewerCanRerun: boolean;
 };
 
 export type WorkflowRunStep = {
@@ -670,23 +596,6 @@ export type UserActivityEvent = {
     state: string;
     url: string;
   } | null;
-};
-
-export type DiscussionSummary = {
-  number: number;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  author: { login: string; avatarUrl: string } | null;
-  category: string | null;
-  comments: number;
-  isAnswered: boolean;
-  url: string;
-};
-
-export type DiscussionsResult = {
-  discussions: DiscussionSummary[];
-  totalCount: number;
 };
 
 export type NotificationSubject = {

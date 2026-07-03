@@ -231,6 +231,7 @@ export const GitHubRepoActivityCardActionSchema = z.object({
 export type GitHubRepoActivityCardAction = z.infer<typeof GitHubRepoActivityCardActionSchema>;
 
 export const GitHubRepoActivityCardIssueSchema = z.object({
+  id: z.number,
   comments: z.number(),
   number: z.number(),
   state: z.enum(["open", "closed"]),
@@ -246,7 +247,8 @@ export const GitHubRepoActivityCardPullRequestSchema = z.object({
   state: z.enum(["open", "closed", "merged"]),
   title: z.string(),
   updatedAt: z.string(),
-  url: z.string()
+  url: z.string(),
+  id: z.number()
 });
 export type GitHubRepoActivityCardPullRequest = z.infer<
   typeof GitHubRepoActivityCardPullRequestSchema
@@ -260,6 +262,116 @@ export const GitHubRepoActivityCardsSchema = z.object({
   pullRequests: z.array(GitHubRepoActivityCardPullRequestSchema)
 });
 export type GitHubRepoActivityCards = z.infer<typeof GitHubRepoActivityCardsSchema>;
+
+// ---------------------------------------------------------------------------
+// Pull / Issue / Discussion / WorkflowRun (shared repo activity types)
+// ---------------------------------------------------------------------------
+
+export const RepositoryRefSchema = z.object({
+  fullName: z.string(),
+  isPrivate: z.boolean().nullable(),
+  name: z.string(),
+  owner: z.string(),
+  url: z.string()
+});
+export type RepositoryRef = z.infer<typeof RepositoryRefSchema>;
+
+export const GitHubLabelSchema = z.object({
+  color: z.string(),
+  description: z.string().nullable(),
+  name: z.string()
+});
+export type GitHubLabel = z.infer<typeof GitHubLabelSchema>;
+
+export const GitHubPullSummarySchema = z.object({
+  author: GitHubActorSchema.nullable(),
+  closedAt: z.string().nullable(),
+  comments: z.number(),
+  createdAt: z.string(),
+  id: z.number(),
+  isDraft: z.boolean(),
+  labels: z.array(GitHubLabelSchema),
+  mergedAt: z.string().nullable(),
+  number: z.number(),
+  repository: RepositoryRefSchema,
+  state: z.string(),
+  title: z.string(),
+  updatedAt: z.string(),
+  url: z.string()
+});
+export type GitHubPullSummary = z.infer<typeof GitHubPullSummarySchema>;
+
+export const GitHubIssueSummarySchema = z.object({
+  author: GitHubActorSchema.nullable(),
+  closedAt: z.string().nullable(),
+  comments: z.number(),
+  createdAt: z.string(),
+  id: z.number(),
+  labels: z.array(GitHubLabelSchema),
+  number: z.number(),
+  repository: RepositoryRefSchema,
+  state: z.string(),
+  stateReason: z.string().nullable(),
+  title: z.string(),
+  updatedAt: z.string(),
+  url: z.string()
+});
+export type GitHubIssueSummary = z.infer<typeof GitHubIssueSummarySchema>;
+
+export const GitHubWorkflowRunPullRequestRefSchema = z.object({
+  baseRef: z.string(),
+  headRef: z.string(),
+  number: z.number()
+});
+export type GitHubWorkflowRunPullRequestRef = z.infer<typeof GitHubWorkflowRunPullRequestRefSchema>;
+
+export const GitHubWorkflowRunSchema = z.object({
+  actor: GitHubActorSchema.nullable(),
+  conclusion: z.string().nullable(),
+  createdAt: z.string(),
+  displayTitle: z.string(),
+  event: z.string(),
+  headBranch: z.string().nullable(),
+  headSha: z.string(),
+  htmlUrl: z.string(),
+  id: z.number(),
+  name: z.string().nullable(),
+  path: z.string(),
+  pullRequests: z.array(GitHubWorkflowRunPullRequestRefSchema),
+  runAttempt: z.number(),
+  runNumber: z.number(),
+  runStartedAt: z.string().nullable(),
+  status: z.string(),
+  triggeringActor: GitHubActorSchema.nullable(),
+  updatedAt: z.string(),
+  viewerCanRerun: z.boolean(),
+  workflowId: z.number()
+});
+export type GitHubWorkflowRun = z.infer<typeof GitHubWorkflowRunSchema>;
+
+export const GitHubDiscussionSummarySchema = z.object({
+  author: z
+    .object({
+      avatarUrl: z.string(),
+      login: z.string()
+    })
+    .nullable(),
+  category: z.string().nullable(),
+  comments: z.number(),
+  createdAt: z.string(),
+  isAnswered: z.boolean(),
+  number: z.number(),
+  title: z.string(),
+  updatedAt: z.string(),
+  url: z.string()
+});
+export type GitHubDiscussionSummary = z.infer<typeof GitHubDiscussionSummarySchema>;
+
+export const GitHubDiscussionsResultSchema = z.object({
+  discussions: z.array(GitHubDiscussionSummarySchema),
+  totalCount: z.number()
+});
+export type GitHubDiscussionsResult = z.infer<typeof GitHubDiscussionsResultSchema>;
 
 // ---------------------------------------------------------------------------
 // Repo overview

@@ -21,8 +21,11 @@ export const contactOutputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
   icon: z.string(),
-  updatedAt: z.date()
-}) satisfies z.ZodType<Omit<ContactSchemaSelect, "userId" | "createdAt">>;
+  updatedAt: z.date(),
+  createdAt: z.date()
+}) satisfies z.ZodType<Omit<ContactSchemaSelect, "userId">>;
+
+export type ContactOutputSchema = z.infer<typeof contactOutputSchema>;
 
 export const contactInputSchema = z.object({
   type: contactTypeSchema,

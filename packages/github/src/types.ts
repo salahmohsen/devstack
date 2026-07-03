@@ -19,6 +19,14 @@ export type {
   GitHubRepoActivityCardIssue,
   GitHubRepoActivityCardAction,
   GitHubRepoActivityCards,
+  GitHubDiscussionsResult,
+  GitHubDiscussionSummary,
+  GitHubIssueSummary,
+  GitHubLabel,
+  GitHubPullSummary,
+  GitHubWorkflowRun,
+  GitHubWorkflowRunPullRequestRef,
+  RepositoryRef,
   RepoContributor,
   RepoContributorsResult
 } from "#@/schemas";

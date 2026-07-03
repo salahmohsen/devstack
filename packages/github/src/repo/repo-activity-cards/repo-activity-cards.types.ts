@@ -7,6 +7,7 @@ export type GitHubGraphQLRepoActivityCardsResponse = {
         comments: {
           totalCount: number;
         };
+        id: string;
         number: number;
         state: "OPEN" | "CLOSED";
         title: string;
@@ -20,6 +21,7 @@ export type GitHubGraphQLRepoActivityCardsResponse = {
         comments: {
           totalCount: number;
         };
+        id: string;
         mergedAt: string | null;
         number: number;
         state: "OPEN" | "CLOSED" | "MERGED";

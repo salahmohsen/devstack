@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -29,7 +29,7 @@ async function _fetchUserPinnedRepos(
   const signalKey = githubRevalidationSignalKeys.ownerPinnedRepos(source.owner);
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubPinnedRepo[]>({
+    const result = await getCachedGitHubRequest<GitHubPinnedRepo[]>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<{
           rateLimit: {

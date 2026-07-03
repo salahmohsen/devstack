@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -57,7 +57,7 @@ async function _fetchTreeEntryCommits(
   }
 
   try {
-    const result = await getGitHubResourceLocalFirst<Record<string, GitHubTreeEntryCommit | null>>({
+    const result = await getCachedGitHubRequest<Record<string, GitHubTreeEntryCommit | null>>({
       fetcher: async () => {
         const aliases = normalizedEntries.map((name, index) => {
           const entryPath = input.dirPath ? `${input.dirPath}/${name}` : name;

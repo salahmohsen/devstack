@@ -1,1 +1,1 @@
-export { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/github-cache";
+export { getCachedGitHubRequest } from "#@/infrastructure/cache/github-cache";

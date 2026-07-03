@@ -11,7 +11,7 @@ export const BaseHealthSchema = z.object({
   buildSha: z.string().min(1),
   environment: z.string().min(1),
   status: HealthStatusSchema,
-  timestamp: z.iso.datetime(),
+  timestamp: z.string().datetime(),
   uptimeMs: z.number().int().nonnegative(),
   url: z.url()
 });

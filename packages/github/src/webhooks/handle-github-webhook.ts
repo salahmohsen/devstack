@@ -99,7 +99,8 @@ function getGitHubWebhookNamespaceKeys(event: string, payload: unknown) {
       githubRevalidationSignalKeys.ownerContributions(owner),
       githubRevalidationSignalKeys.ownerPinnedRepos(owner),
       githubRevalidationSignalKeys.ownerProfile(owner),
-      githubRevalidationSignalKeys.ownerRepos(owner)
+      githubRevalidationSignalKeys.PublicOwnerRepos(owner),
+      githubRevalidationSignalKeys.PrivateOwnerRepos(owner)
     );
   }
 

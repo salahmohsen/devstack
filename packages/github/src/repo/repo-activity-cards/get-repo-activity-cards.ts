@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -46,7 +46,7 @@ async function _fetchRepoActivityCards(
   });
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubRepoActivityCards>({
+    const result = await getCachedGitHubRequest<GitHubRepoActivityCards>({
       fetcher: async () => {
         const [graph, workflowRuns] = await Promise.all([
           executeGitHubGraphQL<GitHubGraphQLRepoActivityCardsResponse>(
@@ -55,6 +55,7 @@ async function _fetchRepoActivityCards(
             `query($owner: String!, $repo: String!) {
               repository(owner: $owner, name: $repo) {
                 pullRequests(first: 5, states: OPEN, orderBy: { field: UPDATED_AT, direction: DESC }) {
+                  id
                   totalCount
                   nodes {
                     comments {
@@ -69,6 +70,7 @@ async function _fetchRepoActivityCards(
                   }
                 }
                 issues(first: 5, states: OPEN, orderBy: { field: UPDATED_AT, direction: DESC }) {
+                  id
                   totalCount
                   nodes {
                     comments {

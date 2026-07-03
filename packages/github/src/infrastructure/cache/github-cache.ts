@@ -86,7 +86,7 @@ export async function getGitHubRevalidationSignals(
   });
 }
 
-export async function getGitHubResourceLocalFirst<TData>(
+export async function getCachedGitHubRequest<TData>(
   options: GitHubCacheOptions<TData>
 ): Promise<GitHubLocalFirstResult<TData>> {
   const { entry: cached, source: cachedSource } = await readCachedEntry<TData>(options);
@@ -146,7 +146,7 @@ export async function getGitHubResourceLocalFirst<TData>(
 export async function getOrRevalidateGitHubResource<TData>(
   options: GitHubCacheOptions<TData>
 ): Promise<TData> {
-  const result = await getGitHubResourceLocalFirst(options);
+  const result = await getCachedGitHubRequest(options);
   return result.data;
 }
 

@@ -1,6 +1,6 @@
 import { type OrpcContext } from "@tsu-stack/core/orpc-context";
 
-import { getGitHubResourceLocalFirst } from "#@/infrastructure/cache/get-github-resource-local-first";
+import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";
 import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-revalidation";
 import {
@@ -42,7 +42,7 @@ async function _fetchRepoBranches(
   });
 
   try {
-    const result = await getGitHubResourceLocalFirst<GitHubRepoBranch[]>({
+    const result = await getCachedGitHubRequest<GitHubRepoBranch[]>({
       fetcher: async () => {
         const response = await executeGitHubGraphQL<GitHubGraphQLRepoBranchesResponse>(
           octokit,
