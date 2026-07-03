@@ -132,7 +132,7 @@ export function ExperienceForm({ id, onSuccess, onClose }: ExperienceFormProps) 
           void form.handleSubmit();
         }}
       >
-        <ScrollArea className="max-h-[75dvh] pe-5">
+        <ScrollArea className="max-h-[75dvh] px-10">
           <FieldGroup>
             <form.AppField name="title">
               {(field) => (

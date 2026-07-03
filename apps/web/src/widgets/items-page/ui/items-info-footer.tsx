@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@tsu-stack/ui/components/button.js";
-import { CardFrameFooter } from "@tsu-stack/ui/components/card.js";
+import { FrameFooter } from "@tsu-stack/ui/components/frame.js";
 import { KbdGroup } from "@tsu-stack/ui/components/kbd.js";
 
 import { useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
@@ -14,7 +14,7 @@ export function ItemsInfoFooter({ updatedAt }: ItemsInfoFooterProps) {
   const { handlePrev, handleNext } = useItemsNavContext();
 
   return (
-    <CardFrameFooter className="flex items-center justify-between">
+    <FrameFooter className="flex items-center justify-between">
       <KbdGroup>
         <Button variant="ghost" onClick={handlePrev} size="icon">
           <ChevronLeft />
@@ -31,6 +31,6 @@ export function ItemsInfoFooter({ updatedAt }: ItemsInfoFooterProps) {
           </time>
         </div>
       ) : null}
-    </CardFrameFooter>
+    </FrameFooter>
   );
 }

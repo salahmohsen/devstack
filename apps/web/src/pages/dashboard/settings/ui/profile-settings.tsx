@@ -20,8 +20,15 @@ import { contactTypeSchema, ProfileUpdateInputSchema } from "@tsu-stack/core/pro
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import { Card, CardPanel } from "@tsu-stack/ui/components/card";
 import { FieldGroup, FieldSet } from "@tsu-stack/ui/components/field";
-import { Separator } from "@tsu-stack/ui/components/separator";
+import {
+  Frame,
+  FrameDescription,
+  FrameHeader,
+  FramePanel,
+  FrameTitle
+} from "@tsu-stack/ui/components/frame";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useAppForm } from "@/shared/form";
@@ -97,18 +104,57 @@ export function ProfileSettings() {
     profileQuery.data?.contacts.find((c) => c.type === "youtube")?.value ?? null;
 
   return (
-    <div className="space-y-6">
-      <form.Subscribe
-        selector={(state) => {
-          return {
-            values: state.values,
-            canSubmit: state.canSubmit,
-            isSubmitting: state.isSubmitting
-          };
-        }}
-      >
-        {({ values, canSubmit, isSubmitting }) => (
-          <>
+    <form.Subscribe
+      selector={(state) => {
+        return {
+          values: state.values,
+          canSubmit: state.canSubmit,
+          isSubmitting: state.isSubmitting
+        };
+      }}
+    >
+      {({ values, canSubmit, isSubmitting }) => (
+        <Frame>
+          <FrameHeader>
+            <div className="flex w-full items-start justify-between gap-4">
+              <div className="min-w-0">
+                <FrameTitle>Profile</FrameTitle>
+                <FrameDescription>Manage your personal information and contacts.</FrameDescription>
+              </div>
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <>
+                    <Button
+                      disabled={!canSubmit || isSubmitting}
+                      onClick={() => {
+                        void form.handleSubmit();
+                      }}
+                      size="sm"
+                      type="button"
+                    >
+                      {isSubmitting ? <Spinner /> : "Save Changes"}
+                    </Button>
+                    <Button onClick={handleCancel} size="sm" type="button" variant="outline">
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                    disabled={profileQuery.isLoading}
+                  >
+                    {profileQuery.isLoading ? <Spinner /> : <Edit />}
+                    Edit Profile
+                  </Button>
+                )}
+              </div>
+            </div>
+          </FrameHeader>
+
+          <FramePanel>
             <div className="flex items-start gap-6">
               <div className="relative">
                 <Avatar className="h-24 w-24">
@@ -237,137 +283,109 @@ export function ProfileSettings() {
                   </div>
                 )}
               </div>
-
-              <div className="flex gap-2">
-                {isEditing ? (
-                  <>
-                    <Button
-                      disabled={!canSubmit || isSubmitting}
-                      onClick={() => {
-                        void form.handleSubmit();
-                      }}
-                      size="sm"
-                      type="button"
-                    >
-                      {isSubmitting ? <Spinner /> : "Save Changes"}
-                    </Button>
-                    <Button onClick={handleCancel} size="sm" type="button" variant="outline">
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                    disabled={profileQuery.isLoading}
-                  >
-                    {profileQuery.isLoading ? <Spinner /> : <Edit />}
-                    Edit Profile
-                  </Button>
-                )}
-              </div>
             </div>
+          </FramePanel>
 
-            {isEditing && (
-              <>
-                <Separator />
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    void form.handleSubmit();
-                  }}
-                >
-                  <FieldSet>
-                    <FieldGroup>
-                      <div className="grid grid-cols-2 gap-4">
-                        <form.AppField name="name">
-                          {(field) => <field.InputField label="Display Name" />}
-                        </form.AppField>
+          {isEditing && (
+            <FramePanel>
+              <Card>
+                <CardPanel>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void form.handleSubmit();
+                    }}
+                  >
+                    <FieldSet>
+                      <FieldGroup>
+                        <div className="grid grid-cols-2 gap-4">
+                          <form.AppField name="name">
+                            {(field) => <field.InputField label="Display Name" />}
+                          </form.AppField>
 
-                        <form.AppField name="email">
-                          {(field) => <field.InputField type="email" label="Email" />}
-                        </form.AppField>
-                      </div>
+                          <form.AppField name="email">
+                            {(field) => <field.InputField type="email" label="Email" />}
+                          </form.AppField>
+                        </div>
 
-                      <form.AppField name="contacts" mode="array">
-                        {(field) => (
-                          <div className="space-y-4">
-                            <div className="flex w-full items-center justify-between pt-2">
-                              <p className="text-sm font-medium text-foreground">Contact</p>
-                              <Button
-                                onClick={() =>
-                                  field.pushValue({ type: "email", value: "", icon: "" })
-                                }
-                              >
-                                add contact
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-                              {field.state.value?.map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="grid grid-cols-6 gap-3 rounded-sm border p-5"
+                        <form.AppField name="contacts" mode="array">
+                          {(field) => (
+                            <div className="space-y-4">
+                              <div className="flex w-full items-center justify-between pt-2">
+                                <p className="text-sm font-medium text-foreground">Contact</p>
+                                <Button
+                                  onClick={() =>
+                                    field.pushValue({ type: "email", value: "", icon: "" })
+                                  }
                                 >
-                                  <form.AppField name={`contacts[${i}].icon`}>
-                                    {(subField) => (
-                                      <subField.IconPickerField
-                                        classNames={{
-                                          field: "col-span-1"
-                                        }}
-                                        label="Icon"
-                                      />
-                                    )}
-                                  </form.AppField>
-
-                                  <form.AppField name={`contacts[${i}].type`}>
-                                    {(subField) => (
-                                      <subField.ComboboxField
-                                        label={"Type"}
-                                        items={CONTACT_TYPES.map((t) => {
-                                          return { label: t, value: t };
-                                        })}
-                                        classNames={{
-                                          field: "col-span-1"
-                                        }}
-                                      />
-                                    )}
-                                  </form.AppField>
-
-                                  <form.AppField name={`contacts[${i}].value`}>
-                                    {(subField) => (
-                                      <subField.InputField
-                                        classNames={{ field: "col-span-3" }}
-                                        label={"Name"}
-                                      />
-                                    )}
-                                  </form.AppField>
-
-                                  <Button
-                                    className="col-span-1 h-9 self-end"
-                                    onClick={() => field.removeValue(i)}
-                                    size="sm"
-                                    type="button"
-                                    variant="destructive"
+                                  add contact
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+                                {field.state.value?.map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className="grid grid-cols-6 gap-3 rounded-sm border p-5"
                                   >
-                                    Delete
-                                  </Button>
-                                </div>
-                              ))}
+                                    <form.AppField name={`contacts[${i}].icon`}>
+                                      {(subField) => (
+                                        <subField.IconPickerField
+                                          classNames={{
+                                            field: "col-span-1"
+                                          }}
+                                          label="Icon"
+                                        />
+                                      )}
+                                    </form.AppField>
+
+                                    <form.AppField name={`contacts[${i}].type`}>
+                                      {(subField) => (
+                                        <subField.ComboboxField
+                                          label={"Type"}
+                                          items={CONTACT_TYPES.map((t) => {
+                                            return { label: t, value: t };
+                                          })}
+                                          classNames={{
+                                            field: "col-span-1"
+                                          }}
+                                        />
+                                      )}
+                                    </form.AppField>
+
+                                    <form.AppField name={`contacts[${i}].value`}>
+                                      {(subField) => (
+                                        <subField.InputField
+                                          classNames={{ field: "col-span-3" }}
+                                          label={"Name"}
+                                        />
+                                      )}
+                                    </form.AppField>
+
+                                    <Button
+                                      className="col-span-1 h-9 self-end"
+                                      onClick={() => field.removeValue(i)}
+                                      size="sm"
+                                      type="button"
+                                      variant="destructive"
+                                    >
+                                      Delete
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </form.AppField>
-                    </FieldGroup>
-                  </FieldSet>
-                </form>
-              </>
-            )}
-          </>
-        )}
-      </form.Subscribe>
-    </div>
+                          )}
+                        </form.AppField>
+                      </FieldGroup>
+                    </FieldSet>
+                  </form>
+                </CardPanel>
+              </Card>
+            </FramePanel>
+          )}
+        </Frame>
+      )}
+    </form.Subscribe>
   );
 }

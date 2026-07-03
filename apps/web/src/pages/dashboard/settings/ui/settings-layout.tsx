@@ -19,7 +19,7 @@ export const SettingsLayout = () => {
         description="Manage your account settings and set e-mail preferences."
       />
 
-      <Tabs value={activeTab}>
+      <Tabs value={activeTab} className="space-y-5">
         <TabsList>
           <TabsTrigger
             nativeButton={false}

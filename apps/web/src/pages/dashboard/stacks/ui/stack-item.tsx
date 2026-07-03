@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Card, CardContent } from "@tsu-stack/ui/components/card";
+import { Card, CardContent, CardFrame } from "@tsu-stack/ui/components/card";
 import {
   Dialog,
   DialogContent,
@@ -59,7 +59,6 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
       <Card
         // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="button"
-        tabIndex={0}
         aria-pressed={selected}
         aria-label={`View details for ${stack.name}`}
         data-item-id={stack.id}
@@ -71,15 +70,16 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
             selectItem(stack.id, stack);
           }
         }}
-        size="sm"
         className={cn(
-          "group border-px relative aspect-square cursor-pointer rounded-sm border-border bg-transparent py-0!",
-          "transition-all duration-200",
-          "hover:border-border hover:bg-muted data-selected:border-foreground data-selected:bg-muted"
+          "group relative aspect-square cursor-pointer overflow-hidden py-0!",
+          "**:transition-all **:duration-200"
         )}
         {...props}
       >
-        <CardContent className="flex h-full flex-col items-center justify-center gap-3 p-4">
+        <CardContent
+          data-selected={selected}
+          className="flex h-full translate-y-4 scale-100 flex-col items-center justify-center gap-3 p-4 data-selected:translate-y-0 data-selected:scale-90"
+        >
           {stack.icon ? (
             <Icon
               nameIcon={stack.icon}
@@ -89,19 +89,17 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
             <Package className="size-14 shrink-0 text-muted-foreground" strokeWidth={1.5} />
           )}
           <p
-            className="warp-break-words line-clamp-2 max-w-full text-center text-sm font-medium"
+            className="warp-break-words line-clamp-2 block max-w-full text-center text-sm font-medium data-selected:hidden"
+            data-selected={selected}
             title={stack.name}
           >
             {stack.name}
           </p>
         </CardContent>
 
-        <div
-          className={cn(
-            "pointer-events-none absolute flex size-full items-center justify-center gap-1",
-            "opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:backdrop-blur-xs",
-            "group-focus-within:pointer-events-auto group-focus-within:opacity-100"
-          )}
+        <CardFrame
+          className="mx-auto flex w-[calc(100%-10px)] translate-y-16 flex-row gap-1 p-1.5 data-selected:-translate-y-2"
+          data-selected={selected}
         >
           <Button
             variant="secondary"
@@ -109,12 +107,14 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
               event.stopPropagation();
               onEdit(stack.id);
             }}
+            className="flex-1"
             aria-label={`Edit ${stack.name}`}
           >
             <Edit />
           </Button>
           <Button
             variant="destructive"
+            className="flex-1"
             onClick={(event) => {
               event.stopPropagation();
               setDeleteDialogOpen(true);
@@ -123,7 +123,7 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
           >
             <Trash2 />
           </Button>
-        </div>
+        </CardFrame>
       </Card>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

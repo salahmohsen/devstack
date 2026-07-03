@@ -299,10 +299,7 @@ function RunItem({ run, owner, repo }: { run: WorkflowRun; owner: string; repo: 
   const state = getCheckState(run);
   const href = `/${owner}/${repo}/actions/runs/${run.id}`;
   return (
-    <Link
-      className="flex items-start gap-2.5 px-4 py-2 transition-colors hover:bg-surface-1"
-      to={href}
-    >
+    <Link className="flex items-start gap-2.5 py-2 transition-colors hover:bg-surface-1" to={href}>
       <div className="mt-0.5 shrink-0">
         <CheckStateIcon state={state} />
       </div>

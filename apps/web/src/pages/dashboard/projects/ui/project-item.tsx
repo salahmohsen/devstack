@@ -63,7 +63,6 @@ export function ProjectItem({ project, dragHandleProps, onEdit, onMouseEnter }: 
       <Card
         // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="button"
-        tabIndex={0}
         aria-pressed={selected}
         data-selected={selected}
         onClick={() => selectItem(project.id, project)}
@@ -75,13 +74,12 @@ export function ProjectItem({ project, dragHandleProps, onEdit, onMouseEnter }: 
         }}
         onMouseEnter={onMouseEnter}
         className={cn(
-          "cursor-pointer rounded-sm bg-transparent ring-0 transition-all duration-200",
+          "cursor-pointer transition-all duration-200",
           // Spotlight: when any sibling is hovered, the others dim to
           // 90% while the hovered/selected item itself stays at 100%.
           "group-hover:opacity-90 hover:opacity-100 data-selected:opacity-100",
           // Scale up the active item — hovered or selected.
-          "hover:scale-[1.01] data-selected:scale-[1.01]",
-          selected ? "ring-2 ring-ring" : "hover:bg-muted/40"
+          "hover:scale-[1.01] data-selected:scale-[1.01]"
         )}
       >
         <CardHeader>

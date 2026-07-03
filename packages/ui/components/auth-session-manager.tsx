@@ -232,7 +232,7 @@ function RevokeAllDialog({ isLoading, onRevokeAll, revokingAll }: RevokeAllDialo
             className="min-h-11 w-full touch-manipulation sm:w-auto"
             disabled={isLoading || revokingAll}
             type="button"
-            variant="outline"
+            variant="destructive-outline"
           />
         }
       >

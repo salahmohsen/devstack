@@ -142,7 +142,7 @@ export function SidePanelToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="absolute top-33 right-0 hidden -translate-y-1/2 items-center justify-center rounded-l-md border border-r-0 bg-background py-2.5 pr-1 pl-0.5 text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground xl:flex"
+      className="absolute top-14 right-0 hidden -translate-y-1/2 items-center justify-center rounded-l-md border border-r-0 bg-background py-2.5 pr-1 pl-0.5 text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground xl:flex"
     >
       {collapsed ? (
         <ChevronLeft size={12} strokeWidth={2} />
