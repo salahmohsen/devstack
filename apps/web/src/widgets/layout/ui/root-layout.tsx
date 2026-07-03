@@ -13,6 +13,9 @@ import { PublicSidebar } from "@/widgets/layout/ui/public-sidebar";
 
 import { CommandPalette } from "./command-palette";
 import { DashboardBottomBar } from "./dashboard-bottombar";
+import { GitHubAccessDialog } from "./github-access-dialog";
+import { MobileNav } from "./github-public-mobile-nav";
+import { Topbar } from "./github-public-topbar";
 import {
   DASHBOARD_SIDE_PANEL_WIDTH,
   PUBLIC_SIDE_PANEL_WIDTH,
@@ -20,10 +23,7 @@ import {
   SidePanelSlot,
   SidePanelToggle,
   useSidePanelSlot
-} from "./dashboard-side-panel";
-import { GitHubAccessDialog } from "./github-access-dialog";
-import { MobileNav } from "./github-public-mobile-nav";
-import { Topbar } from "./github-public-topbar";
+} from "./side-panel";
 
 export function RootLayout({ children }: PropsWithChildren) {
   const sidePanel = useSidePanelSlot();
@@ -55,7 +55,7 @@ export function RootLayout({ children }: PropsWithChildren) {
               {isDashboard && <DashboardSidebar />}
             </div>
             <div className="relative min-w-0 flex-1 overflow-y-hidden rounded-xl border bg-background shadow-xs">
-              <main className="flex h-[calc(100dvh-var(--navbar-height))] w-full">
+              <main className="relative flex h-[calc(100dvh-var(--navbar-height))] w-full text-card-foreground shadow-xs/5 not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
                 <ScrollArea scrollFade fill clampContentMinWidth={true}>
                   {children}
                 </ScrollArea>

@@ -18,6 +18,7 @@ import {
   FramePanel,
   FrameTitle
 } from "@tsu-stack/ui/components/frame.js";
+import { Kbd } from "@tsu-stack/ui/components/kbd.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -179,7 +180,9 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
       <PopoverContent className="w-96 overflow-hidden *:bg-transparent *:p-0!" align="end">
         <Frame className="w-full rounded-none">
           <FrameHeader>
-            <FrameTitle>Clone {repo.fullName}</FrameTitle>
+            <FrameTitle>
+              Clone <Kbd>{repo.fullName}</Kbd>
+            </FrameTitle>
           </FrameHeader>
           <FramePanel>
             <Tabs value={selectedProtocol} onValueChange={handleProtocolChange} className="gap-0">

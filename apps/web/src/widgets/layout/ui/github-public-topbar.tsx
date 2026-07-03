@@ -265,9 +265,11 @@ export function Topbar() {
         </div>
       )}
 
-      <TextAnimate animation="slideLeft" by="character">
-        Salah Mohsen
-      </TextAnimate>
+      <Link to="/">
+        <TextAnimate animation="slideLeft" by="character">
+          Salah Mohsen
+        </TextAnimate>
+      </Link>
 
       {/* <div className="hidden shrink-0 items-center gap-0.5 md:flex">
         {navItems.map((item) => (
@@ -297,15 +299,15 @@ export function Topbar() {
       </div>
 
       <div className="hidden shrink-0 items-center gap-1 md:flex">
+        <ThemeSwitcher variant="ghost" />
+
         <Button variant="outline" onClick={() => setCommandPaletteOpen(true)} aria-label="Search">
           <SearchIcon />
           <KbdGroup>
             <Kbd>⌘</Kbd>
-            <Kbd>J</Kbd>
+            <Kbd>K</Kbd>
           </KbdGroup>
         </Button>
-
-        <ThemeSwitcher variant="ghost" />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

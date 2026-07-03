@@ -17,6 +17,8 @@ import {
 } from "@tsu-stack/github";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 import { type RepoOverview } from "@tsu-stack/github/schemas";
+import { Card, CardContent, CardHeader, CardTitle } from "@tsu-stack/ui/components/card.js";
+import { Skeleton } from "@tsu-stack/ui/components/skeleton.js";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
@@ -201,12 +203,12 @@ function ActivityCard<T>({
   renderItem: (item: T) => React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card">
-      <div className="flex items-center gap-2 px-4 py-3">
+    <Card className="rounded-xl border bg-card">
+      <CardHeader className="flex items-center gap-2 px-4 py-3">
         <Icon className="text-muted-foreground" size={14} strokeWidth={2} />
-        <h3 className="flex-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+        <CardTitle className="flex-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
           {title}
-        </h3>
+        </CardTitle>
         {count != null && (
           <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
         )}
@@ -218,8 +220,8 @@ function ActivityCard<T>({
             <PlusIcon size={14} strokeWidth={2} />
           </Link>
         )}
-      </div>
-      <div className="flex flex-col">
+      </CardHeader>
+      <CardContent className="flex flex-col">
         {!items ? (
           <ActivityCardSkeleton />
         ) : (
@@ -239,8 +241,8 @@ function ActivityCard<T>({
             </Link>
           </>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -349,13 +351,13 @@ function DiscussionItem({ discussion }: { discussion: DiscussionSummary }) {
 
 function ActivityCardSkeleton() {
   return (
-    <div className="flex flex-col gap-1 px-4 pb-3">
+    <div className="flex flex-col gap-1 pb-3">
       {[0, 1, 2].map((i) => (
         <div className="flex items-start gap-2.5 py-2" key={i}>
-          <div className="mt-0.5 size-3.5 shrink-0 animate-pulse rounded-full bg-surface-1" />
+          <Skeleton className="mt-0.5 size-3.5 shrink-0 rounded-full" />
           <div className="flex-1">
-            <div className="h-4 w-full animate-pulse rounded bg-surface-1" />
-            <div className="mt-1.5 h-3 w-20 animate-pulse rounded bg-surface-1" />
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="mt-1.5 h-3 w-20 rounded" />
           </div>
         </div>
       ))}

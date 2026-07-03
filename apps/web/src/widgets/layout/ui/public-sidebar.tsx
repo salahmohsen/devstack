@@ -13,7 +13,7 @@ import { useIntersection } from "@/shared/providers/intersection.provider";
 import { ContactButton } from "@/shared/ui/contact-button";
 
 const navItems = [
-  { href: "/", label: "Home" },
+  { href: "/", label: "Portfolio" },
   { href: "/repos", label: "Repositories" }
 ] as const;
 

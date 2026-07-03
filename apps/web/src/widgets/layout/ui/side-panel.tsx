@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { createPortal } from "react-dom";
 
 // w-72 (288px) + pl-2 (8px)
-export const PUBLIC_SIDE_PANEL_WIDTH = 296;
+export const PUBLIC_SIDE_PANEL_WIDTH = 320;
 export const DASHBOARD_SIDE_PANEL_WIDTH = 500;
 
 type SidePanelState = {

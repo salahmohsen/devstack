@@ -170,7 +170,7 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
 
   return (
     <Frame className="mx-auto grid h-full w-full max-w-7xl gap-5 bg-background p-5 px-3 py-10 md:px-6">
-      <FrameHeader className="m-0 p-0">
+      <FrameHeader className="m-0 p-0 pb-0">
         <FrameTitle>Repositories</FrameTitle>
         <FrameDescription>Browse and filter the repositories you can access.</FrameDescription>
       </FrameHeader>
