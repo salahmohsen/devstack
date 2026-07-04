@@ -1,6 +1,7 @@
 import { pgEnum, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "#@/schema/auth.schema";
+import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 
 export const contactTypeEnum = pgEnum("contact_type_enum", [
   "website",
@@ -21,6 +22,9 @@ export const contact = pgTable(
     type: contactTypeEnum("type").notNull(),
     value: text("value").notNull(),
     icon: text("icon").notNull(),
+    portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
+      onDelete: "set null"
+    }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

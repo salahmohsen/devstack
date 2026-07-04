@@ -1,7 +1,6 @@
 import { Package } from "lucide-react";
 
 import { type StackOutput } from "@tsu-stack/core/portfolio";
-import { Badge } from "@tsu-stack/ui/components/badge";
 import {
   Frame,
   FrameDescription,
@@ -41,7 +40,6 @@ export function StackInfo({ stack }: StackInfoProps) {
               <FrameDescription>Sort order: {stack.sortOrder}</FrameDescription>
             </div>
           </div>
-          {stack.enableAi ? <Badge variant="secondary">AI</Badge> : null}
         </div>
       </FrameHeader>
       <FramePanel className="max-h-fit min-h-0 flex-1 p-0">

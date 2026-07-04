@@ -157,3 +157,42 @@ that miss a broadcast reconcile against the durable signal rows via the
 `use-github-signal-stream.ts` on WebSocket open, `visibilitychange`,
 `window focus`, `online`, and a 20s polling fallback when disconnected.
 _Avoid_: WebSocket hub, pub/sub relay.
+
+## Evidence
+
+**Portfolio entry**:
+A row in `portfolio_entry` representing one evidence item
+(experience, project, stack, or contact) that the owner has opted to
+expose to the public portfolio surface and to AI agents. Acts as a
+visibility gate — the row's existence, not a boolean column on the
+entity, is what makes the item visible. The owning entity holds a
+nullable `portfolio_entry_id` FK. Created and removed via the
+`portfolio.toggle` oRPC route.
+_Avoid_: Inclusion flag, visibility toggle, AI flag, include-in-portfolio.
+
+**Entity type**:
+The `type` column on `portfolio_entry`. One of
+`"experience" | "project" | "stack" | "contact"`, declared as a
+`pgEnum` so the database rejects unknown kinds. Pairs with a text
+`entity_id` column to identify the row in the corresponding entity
+table; the cross-table referential integrity is enforced in the
+toggle handler (a single Postgres column cannot FK four tables at
+once). Cascades on entity delete.
+_Avoid_: Source type, row kind, entry kind.
+
+**Portfolio filter**:
+The RSQL-style query string accepted by `portfolio.list`. Lets a
+caller narrow the returned evidence set by `type`, year range, title
+substring, etc. without the API needing to learn each new query. The
+parser in `packages/api/src/lib/rsql.ts` translates the string into a
+Drizzle `where` clause scoped to entity-table columns. Default
+behavior (no `filter` prop) returns every opted-in row of every type.
+_Avoid_: Search query, RSQL where, filter DSL.
+
+**Include-in-portfolio toggle**:
+The dashboard-side UI element that calls `portfolio.toggle` to add or
+remove a `portfolio_entry` row for the entity being edited. Replaces
+the old per-entity `enable_ai` switch. The `enable_ai` field is gone
+from `experience`, `project`, and `stack`; toggling inclusion is a
+separate action from editing the entity.
+_Avoid_: AI switch, include flag, visibility switch.

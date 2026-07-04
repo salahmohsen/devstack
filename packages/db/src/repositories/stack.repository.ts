@@ -1,4 +1,12 @@
-import { eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  eq,
+  inArray,
+  isNotNull,
+  type InferInsertModel,
+  type InferSelectModel,
+  type SQL
+} from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { stack } from "#@/schema/stack.schema";
@@ -18,6 +26,20 @@ export const stackRepository = {
     });
   },
 
+  async findOptedIn(extraWhere?: SQL) {
+    const rows = await getDb()
+      .select({ id: stack.id })
+      .from(stack)
+      .where(
+        extraWhere
+          ? and(isNotNull(stack.portfolioEntryId), extraWhere)
+          : isNotNull(stack.portfolioEntryId)
+      )
+      .orderBy(stack.sortOrder, stack.name);
+
+    return Promise.all(rows.map(({ id }) => this.findById(id)!));
+  },
+
   async findById(id: string) {
     return getDb().query.stack.findFirst({ where: { id } });
   },
@@ -35,7 +57,7 @@ export const stackRepository = {
         description: input.description ?? null,
         icon: input.icon ?? null,
         sortOrder: input.sortOrder ?? 0,
-        enableAi: input.enableAi ?? false
+        portfolioEntryId: input.portfolioEntryId ?? null
       })
       .returning();
 

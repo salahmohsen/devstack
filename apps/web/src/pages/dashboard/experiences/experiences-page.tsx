@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { SortableList } from "@/shared/ui/sortable-list";
 
@@ -16,41 +15,21 @@ import {
   PageHeader,
   PageLayout,
   isAnyItemSelected,
-  useItemsNavigation,
-  useItemsTabUrlSync
+  useItemsNavigation
 } from "@/widgets/items-page";
 import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useExperienceStore } from "./_lib/experience.slice";
-import { ExperienceTabs, isExperienceTab } from "./_lib/experience.types";
 import { ExperienceForm } from "./experience-form";
 import { ExperienceInfo } from "./experience-info";
 import { ExperienceItem, ExperienceItemAddButton } from "./experience-item";
 
 export function ExperiencesPage() {
-  const { activeTab, itemInfo, isItemSelected, setTabAndFilter, setItemInfo, setItemSelected } =
-    useExperienceStore();
+  const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useExperienceStore();
   const queryClient = useQueryClient();
 
-  const { tab, setTab } = useItemsTabUrlSync({
-    paramName: "tab",
-    defaultTab: ExperienceTabs.Live,
-    isValidTab: isExperienceTab
-  });
-
-  useEffect(() => {
-    setTabAndFilter(tab);
-  }, [tab, setTabAndFilter]);
-
   const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
-  const allExperiences = useMemo(() => experiencesQuery.data ?? [], [experiencesQuery.data]);
-
-  const visibleExperiences = useMemo(() => {
-    if (activeTab === ExperienceTabs.Live) {
-      return allExperiences.filter((exp) => !exp.isArchived);
-    }
-    return allExperiences.filter((exp) => exp.isArchived);
-  }, [allExperiences, activeTab]);
+  const visibleExperiences = useMemo(() => experiencesQuery.data ?? [], [experiencesQuery.data]);
 
   const reorderMutation = useMutation(
     orpcQueryClient.portfolio.experiences.reorder.mutationOptions({
@@ -136,12 +115,8 @@ export function ExperiencesPage() {
 
   const emptyState = (
     <ItemsEmpty
-      title={activeTab === ExperienceTabs.Live ? "No live experiences" : "No archived experiences"}
-      description={
-        activeTab === ExperienceTabs.Live
-          ? "Add a new experience to start tracking your active positions."
-          : "Archived experiences will appear here once you archive one."
-      }
+      title="No experiences yet"
+      description="Add a new experience to start tracking your work history."
       action={<ExperienceItemAddButton onAdd={() => openDialog(null)} />}
     />
   );
@@ -184,22 +159,7 @@ export function ExperiencesPage() {
           actions={<ExperienceItemAddButton onAdd={() => openDialog(null)} />}
         />
 
-        <Tabs value={activeTab} onValueChange={setTab}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <TabsList>
-              <TabsTrigger value={ExperienceTabs.Live}>Live</TabsTrigger>
-              <TabsTrigger value={ExperienceTabs.Archived}>Archived</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value={ExperienceTabs.Live} className="mt-4">
-            {renderList()}
-          </TabsContent>
-
-          <TabsContent value={ExperienceTabs.Archived} className="mt-4">
-            {renderList()}
-          </TabsContent>
-        </Tabs>
+        {renderList()}
 
         <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
           {(item) => <ExperienceInfo experience={item} />}
@@ -209,7 +169,7 @@ export function ExperiencesPage() {
           key={editingExperienceId ?? "new"}
           initialData={
             editingExperienceId
-              ? (allExperiences.find((exp) => exp.id === editingExperienceId) ?? null)
+              ? (visibleExperiences.find((exp) => exp.id === editingExperienceId) ?? null)
               : null
           }
           open={dialogOpen}

@@ -40,7 +40,9 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
   const id = initialData?.id;
 
   const experienceQuery = useQuery({
-    ...orpcQueryClient.portfolio.experiences.get.queryOptions({ input: { id: id! } }),
+    ...orpcQueryClient.portfolio.experiences.get.queryOptions({
+      input: { id: id! }
+    }),
     enabled: isEdit,
     placeholderData: initialData ?? undefined
   });
@@ -67,7 +69,9 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
           queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.get.queryKey({ input: { id: id! } })
+          queryKey: orpcQueryClient.portfolio.experiences.get.queryKey({
+            input: { id: id! }
+          })
         });
         toast.success("Experience updated.");
         onOpenChange(false);
@@ -87,8 +91,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
       description: experience?.description ?? "",
       fromDate: experience?.fromDate ?? "",
       toDate: experience?.toDate ?? "",
-      isPresent: experience?.isPresent ?? false,
-      enableAi: experience?.enableAi ?? false
+      isPresent: experience?.isPresent ?? false
     },
     validators: {
       onBlur: createZodFormValidator(
@@ -121,8 +124,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
         description: experience.description ?? "",
         fromDate: experience.fromDate ?? "",
         toDate: experience.toDate ?? "",
-        isPresent: experience.isPresent,
-        enableAi: experience.enableAi
+        isPresent: experience.isPresent
       });
     }
   }, [experience, form]);
@@ -188,15 +190,6 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
                     <field.SwitchField
                       label="Currently present"
                       description="Mark this experience as your current role."
-                    />
-                  )}
-                </form.AppField>
-
-                <form.AppField name="enableAi">
-                  {(field) => (
-                    <field.SwitchField
-                      label="Enable AI"
-                      description="Let AI generate or enhance this experience."
                     />
                   )}
                 </form.AppField>

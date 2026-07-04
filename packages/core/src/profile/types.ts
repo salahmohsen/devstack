@@ -21,6 +21,7 @@ export const contactOutputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
   icon: z.string(),
+  portfolioEntryId: z.string().nullable(),
   updatedAt: z.date(),
   createdAt: z.date()
 }) satisfies z.ZodType<Omit<ContactSchemaSelect, "userId">>;
@@ -31,7 +32,9 @@ export const contactInputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
   icon: z.string()
-}) satisfies z.ZodType<Omit<ContactSchemaInsert, "userId" | "createdAt" | "updatedAt">>;
+}) satisfies z.ZodType<
+  Omit<ContactSchemaInsert, "userId" | "createdAt" | "updatedAt" | "portfolioEntryId">
+>;
 
 export const ProfileUpdateInputSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),

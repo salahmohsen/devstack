@@ -1,14 +1,8 @@
 import { format } from "date-fns";
 
 import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
-import { Badge } from "@tsu-stack/ui/components/badge";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle
-} from "@tsu-stack/ui/components/frame";
+import { CardFrame, CardFrameHeader } from "@tsu-stack/ui/components/card.js";
+import { FrameDescription, FramePanel, FrameTitle } from "@tsu-stack/ui/components/frame";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { Separator } from "@tsu-stack/ui/components/separator";
 
@@ -37,8 +31,8 @@ export function ExperienceInfo({ experience }: ExperienceInfoProps) {
   if (!experience) return null;
 
   return (
-    <Frame className="me-5 mt-px max-h-[calc(100dvh-var(--navbar-height)-10px)]">
-      <FrameHeader>
+    <CardFrame className="me-5 mt-px max-h-[calc(100dvh-var(--navbar-height)-10px)]">
+      <CardFrameHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <FrameTitle className="text-lg">{experience.title}</FrameTitle>
@@ -46,9 +40,8 @@ export function ExperienceInfo({ experience }: ExperienceInfoProps) {
               {experience.organization} · {formatRange(experience.fromDate, experience.toDate)}
             </FrameDescription>
           </div>
-          {experience.isArchived ? <Badge variant="secondary">Archived</Badge> : null}
         </div>
-      </FrameHeader>
+      </CardFrameHeader>
       <FramePanel className="h-full min-h-0 flex-1 overflow-hidden p-0">
         <ScrollArea>
           <div className="space-y-4 p-5 text-sm">
@@ -84,6 +77,6 @@ export function ExperienceInfo({ experience }: ExperienceInfoProps) {
         </ScrollArea>
       </FramePanel>
       <ItemsInfoFooter />
-    </Frame>
+    </CardFrame>
   );
 }

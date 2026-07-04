@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { experience } from "#@/schema/experience.schema";
+import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 import { stack } from "#@/schema/stack.schema";
 
 export const project = pgTable(
@@ -28,7 +29,9 @@ export const project = pgTable(
       onDelete: "set null"
     }),
     isPresent: boolean("is_present").default(false),
-    enableAi: boolean("enable_ai").notNull().default(false),
+    portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
+      onDelete: "set null"
+    }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
@@ -37,7 +40,8 @@ export const project = pgTable(
   },
   (table) => [
     index("project_sort_order_idx").on(table.sortOrder),
-    index("project_experience_id_idx").on(table.experienceId)
+    index("project_experience_id_idx").on(table.experienceId),
+    index("project_portfolio_entry_id_idx").on(table.portfolioEntryId)
   ]
 );
 

@@ -1,4 +1,12 @@
-import { eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  eq,
+  inArray,
+  isNotNull,
+  type InferInsertModel,
+  type InferSelectModel,
+  type SQL
+} from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { project, projectStack } from "#@/schema/project.schema";
@@ -33,6 +41,20 @@ export const projectRepository = {
     });
   },
 
+  async findOptedIn(extraWhere?: SQL) {
+    const rows = await getDb()
+      .select({ id: project.id })
+      .from(project)
+      .where(
+        extraWhere
+          ? and(isNotNull(project.portfolioEntryId), extraWhere)
+          : isNotNull(project.portfolioEntryId)
+      )
+      .orderBy(project.sortOrder, project.title);
+
+    return Promise.all(rows.map(({ id }) => this.findById(id)!));
+  },
+
   async findById(id: string) {
     return getDb().query.project.findFirst({
       where: { id },
@@ -61,7 +83,7 @@ export const projectRepository = {
         experienceId: input.experienceId ?? null,
         isArchived: input.isArchived ?? false,
         isPresent: input.isPresent ?? false,
-        enableAi: input.enableAi ?? false
+        portfolioEntryId: input.portfolioEntryId ?? null
       })
       .returning();
 
@@ -96,8 +118,8 @@ export const projectRepository = {
     if (projectFields.isPresent !== undefined) {
       updateData.isPresent = projectFields.isPresent;
     }
-    if (projectFields.enableAi !== undefined) {
-      updateData.enableAi = projectFields.enableAi;
+    if (projectFields.portfolioEntryId !== undefined) {
+      updateData.portfolioEntryId = projectFields.portfolioEntryId;
     }
 
     const [updated] = await getDb()

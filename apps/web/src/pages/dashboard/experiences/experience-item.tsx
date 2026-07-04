@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Archive, Edit, GripVertical, Plus, Trash2 } from "lucide-react";
+import { Edit, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -69,28 +69,9 @@ export function ExperienceItem({
     })
   );
 
-  const toggleArchivedMutation = useMutation(
-    orpcQueryClient.portfolio.experiences.toggleArchived.mutationOptions({
-      onSuccess: async (updated) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
-        });
-        toast.success(updated.isArchived ? "Experience archived." : "Experience restored to live.");
-      },
-      onError: () => {
-        toast.error("Failed to update archive state.");
-      }
-    })
-  );
-
   function handleDelete() {
     deleteMutation.mutate({ id: experience.id });
     setDeleteDialogOpen(false);
-  }
-
-  function handleToggleArchived(event: React.MouseEvent) {
-    event.stopPropagation();
-    toggleArchivedMutation.mutate({ id: experience.id });
   }
 
   return (
@@ -157,14 +138,6 @@ export function ExperienceItem({
                 }
               >
                 <Edit />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleToggleArchived}
-                disabled={toggleArchivedMutation.isPending}
-                aria-label={experience.isArchived ? "Unarchive experience" : "Archive experience"}
-              >
-                <Archive />
               </Button>
               <Button
                 variant="destructive"

@@ -20,6 +20,7 @@
     "@tsu-stack/env": "workspace:*",
     "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
+    "drizzle-orm": "catalog:",
     "files-sdk": "catalog:",
     "zod": "catalog:"
   },

@@ -1,0 +1,1 @@
+ALTER TABLE "experience" DROP COLUMN "is_archived";

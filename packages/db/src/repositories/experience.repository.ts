@@ -1,4 +1,12 @@
-import { eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  eq,
+  inArray,
+  isNotNull,
+  type InferInsertModel,
+  type InferSelectModel,
+  type SQL
+} from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { experience } from "#@/schema/experience.schema";
@@ -26,6 +34,20 @@ export const experienceRepository = {
         }
       }
     });
+  },
+
+  async findOptedIn(extraWhere?: SQL) {
+    const rows = await getDb()
+      .select({ id: experience.id })
+      .from(experience)
+      .where(
+        extraWhere
+          ? and(isNotNull(experience.portfolioEntryId), extraWhere)
+          : isNotNull(experience.portfolioEntryId)
+      )
+      .orderBy(experience.sortOrder, experience.title);
+
+    return Promise.all(rows.map(({ id }) => this.findById(id)!));
   },
 
   async findById(id: string) {
@@ -58,9 +80,8 @@ export const experienceRepository = {
         fromDate: input.fromDate ?? null,
         toDate: input.toDate ?? null,
         sortOrder: nextSortOrder,
-        isArchived: input.isArchived ?? false,
         isPresent: input.isPresent ?? false,
-        enableAi: input.enableAi ?? false
+        portfolioEntryId: input.portfolioEntryId ?? null
       })
       .returning();
 
@@ -100,28 +121,6 @@ export const experienceRepository = {
           .where(eq(experience.id, item.id));
       }
     });
-  },
-
-  async toggleArchived(id: string) {
-    const [current] = await getDb()
-      .select({ isArchived: experience.isArchived })
-      .from(experience)
-      .where(eq(experience.id, id))
-      .limit(1);
-
-    if (!current) return null;
-
-    const next = !current.isArchived;
-
-    const [updated] = await getDb()
-      .update(experience)
-      .set({ isArchived: next })
-      .where(eq(experience.id, id))
-      .returning();
-
-    if (!updated) return null;
-
-    return experienceRepository.findById(updated.id);
   },
 
   async delete(id: string) {

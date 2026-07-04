@@ -39,7 +39,9 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
   const id = initialData?.id;
 
   const stackQuery = useQuery({
-    ...orpcQueryClient.portfolio.stacks.get.queryOptions({ input: { id: id! } }),
+    ...orpcQueryClient.portfolio.stacks.get.queryOptions({
+      input: { id: id! }
+    }),
     enabled: isEdit,
     placeholderData: initialData ?? undefined
   });
@@ -66,7 +68,9 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.stacks.get.queryKey({ input: { id: id! } })
+          queryKey: orpcQueryClient.portfolio.stacks.get.queryKey({
+            input: { id: id! }
+          })
         });
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
@@ -86,8 +90,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
     defaultValues: {
       name: stack?.name ?? "",
       description: stack?.description ?? "",
-      icon: stack?.icon ?? "",
-      enableAi: stack?.enableAi ?? false
+      icon: stack?.icon ?? ""
     },
     validators: {
       onBlur: createZodFormValidator(isEdit ? StackUpdateInputSchema : StackCreateInputSchema)
@@ -99,16 +102,14 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           data: {
             name: value.name,
             description: value.description || null,
-            icon: value.icon ? value.icon : null,
-            enableAi: value.enableAi
+            icon: value.icon ? value.icon : null
           }
         });
       } else {
         createMutation.mutate({
           name: value.name,
           description: value.description || null,
-          icon: value.icon ? value.icon : null,
-          enableAi: value.enableAi
+          icon: value.icon ? value.icon : null
         });
       }
     }
@@ -160,15 +161,6 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
                   <field.RichTextField
                     label="Description"
                     placeholder="Brief description of the stack"
-                  />
-                )}
-              </form.AppField>
-
-              <form.AppField name="enableAi">
-                {(field) => (
-                  <field.SwitchField
-                    label="Enable AI"
-                    description="Let AI generate or enhance this stack."
                   />
                 )}
               </form.AppField>

@@ -2,18 +2,11 @@ import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
 
 import { createItemsUIStore } from "@/widgets/items-page";
 
-import {
-  ExperienceFilters,
-  ExperienceTabs,
-  type ExperienceFilter,
-  type ExperienceTab
-} from "./experience.types";
+import { ExperienceFilters, type ExperienceFilter } from "./experience.types";
 
-export const useExperienceStore = createItemsUIStore<
-  ExperienceOutput,
-  ExperienceTab,
-  ExperienceFilter
->({
-  initialTab: ExperienceTabs.Live,
-  initialFilter: ExperienceFilters.All
-});
+export const useExperienceStore = createItemsUIStore<ExperienceOutput, "default", ExperienceFilter>(
+  {
+    initialTab: "default",
+    initialFilter: ExperienceFilters.All
+  }
+);

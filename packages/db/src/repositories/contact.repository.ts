@@ -1,4 +1,11 @@
-import { eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import {
+  and,
+  eq,
+  isNotNull,
+  type InferInsertModel,
+  type InferSelectModel,
+  type SQL
+} from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { contact } from "#@/schema/contact.schema";
@@ -12,6 +19,16 @@ export const contactRepository = {
     return await getDb().query.contact.findMany({
       where: { userId }
     });
+  },
+  async findOptedInByUserId(userId: string, extraWhere?: SQL): Promise<ContactEntity[]> {
+    return getDb()
+      .select()
+      .from(contact)
+      .where(
+        extraWhere
+          ? and(eq(contact.userId, userId), isNotNull(contact.portfolioEntryId), extraWhere)
+          : and(eq(contact.userId, userId), isNotNull(contact.portfolioEntryId))
+      );
   },
   async getAdminContact(): Promise<ContactSchemaSelect[]> {
     return await getDb().query.contact.findMany();

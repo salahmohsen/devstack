@@ -70,7 +70,9 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.get.queryKey({ input: { id: id! } })
+          queryKey: orpcQueryClient.portfolio.projects.get.queryKey({
+            input: { id: id! }
+          })
         });
         toast.success("Project updated.");
         onOpenChange(false);
@@ -91,7 +93,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       repos: (initialData?.repos ?? []) as string[],
       demoUrl: initialData?.demoUrl ?? "",
       isPresent: initialData?.isPresent ?? false,
-      enableAi: initialData?.enableAi ?? false,
       stackIds: (initialData?.stacks.map((s) => s.id) ?? []) as string[]
     },
     validators: {
@@ -107,7 +108,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         repos: value.repos ?? [],
         demoUrl: value.demoUrl ?? null,
         experienceId: selectedExperienceId,
-        enableAi: value.enableAi,
         stackIds: value.stackIds ?? []
       };
       if (isEdit && id) {
@@ -133,7 +133,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         repos: initialData.repos ?? [],
         demoUrl: initialData.demoUrl ?? "",
         isPresent: initialData.isPresent,
-        enableAi: initialData.enableAi,
         stackIds: initialData.stacks.map((s) => s.id)
       });
       setSelectedExperienceId(initialData.experienceId ?? null);
@@ -147,7 +146,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         repos: [],
         demoUrl: "",
         isPresent: false,
-        enableAi: false,
         stackIds: []
       });
       setSelectedExperienceId(null);
@@ -262,15 +260,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                 <field.SwitchField
                   label="Currently present"
                   description="Mark this project as ongoing."
-                />
-              )}
-            </form.AppField>
-
-            <form.AppField name="enableAi">
-              {(field) => (
-                <field.SwitchField
-                  label="Enable AI"
-                  description="Let AI generate or enhance this project."
                 />
               )}
             </form.AppField>
