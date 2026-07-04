@@ -5,13 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { SortableList } from "@/shared/ui/sortable-list";
@@ -135,16 +128,10 @@ export function ExperiencesPage() {
 
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogKey, setDialogKey] = useState(0);
 
   const openDialog = useCallback((id: string | null) => {
     setEditingExperienceId(id);
-    setDialogKey((k) => k + 1);
     setDialogOpen(true);
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    setDialogOpen(false);
   }, []);
 
   const emptyState = (
@@ -218,26 +205,16 @@ export function ExperiencesPage() {
           {(item) => <ExperienceInfo experience={item} />}
         </ItemsInfoPanel>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent key={dialogKey} className="min-w-6xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingExperienceId ? "Edit Experience" : "New Experience"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingExperienceId
-                  ? "Update your position details."
-                  : "Add a new position to your resume."}
-              </DialogDescription>
-            </DialogHeader>
-
-            <ExperienceForm
-              id={editingExperienceId ?? undefined}
-              onSuccess={closeDialog}
-              onClose={closeDialog}
-            />
-          </DialogContent>
-        </Dialog>
+        <ExperienceForm
+          key={editingExperienceId ?? "new"}
+          initialData={
+            editingExperienceId
+              ? (allExperiences.find((exp) => exp.id === editingExperienceId) ?? null)
+              : null
+          }
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+        />
       </PageLayout>
     </ItemsNavProvider>
   );

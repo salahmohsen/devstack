@@ -5,35 +5,46 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { CreateProjectInputSchema, UpdateProjectInputSchema } from "@tsu-stack/core/portfolio";
+import {
+  CreateProjectInputSchema,
+  UpdateProjectInputSchema,
+  type ProjectOutput
+} from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
-import { DialogFooter } from "@tsu-stack/ui/components/dialog.js";
-import { FieldGroup } from "@tsu-stack/ui/components/field";
-import { ScrollArea } from "@tsu-stack/ui/components/scroll-area.js";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogTitle
+} from "@tsu-stack/ui/components/dialog";
+import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
-import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
+import { Icon } from "@/shared/ui/icon-picker";
 
-import { GitHubRepoMultiCombobox } from "@/features/github";
+import { useGetGithubProfileReposQuery } from "@/features/github";
 
 type ProjectFormProps = {
-  id?: string;
-  onSuccess?: () => void;
-  onClose?: () => void;
+  initialData?: ProjectOutput | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
+export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProps) {
   const queryClient = useQueryClient();
-  const isEdit = !!id;
-
-  const projectQuery = useQuery({
-    ...orpcQueryClient.portfolio.projects.get.queryOptions({ input: { id: id! } }),
-    enabled: isEdit
-  });
+  const isEdit = !!initialData;
+  const id = initialData?.id;
 
   const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
+  const stacksQuery = useQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
+  const reposQuery = useGetGithubProfileReposQuery();
+  const stacks = stacksQuery.data ?? [];
+  const repos = reposQuery.data ?? [];
 
   const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(null);
 
@@ -44,7 +55,7 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
         toast.success("Project created.");
-        onSuccess?.();
+        onOpenChange(false);
       },
       onError: (error) => {
         toast.error(error.message || "Failed to create project.");
@@ -62,7 +73,7 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
           queryKey: orpcQueryClient.portfolio.projects.get.queryKey({ input: { id: id! } })
         });
         toast.success("Project updated.");
-        onSuccess?.();
+        onOpenChange(false);
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update project.");
@@ -70,27 +81,18 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
     })
   );
 
-  const project = projectQuery.data;
-
-  useEffect(() => {
-    if (project) {
-      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
-      setSelectedExperienceId(project.experienceId ?? null);
-    }
-  }, [project]);
-
   const form = useAppForm({
     defaultValues: {
-      title: project?.title ?? "",
-      year: project?.year ?? new Date().getFullYear(),
-      summary: project?.summary ?? "",
-      description: project?.description ?? "",
-      logo: project?.logo ?? "",
-      repos: (project?.repos ?? []) as string[],
-      demoUrl: project?.demoUrl ?? "",
-      isPresent: project?.isPresent ?? false,
-      enableAi: project?.enableAi ?? false,
-      stackIds: (project?.stacks.map((s) => s.id) ?? []) as string[]
+      title: initialData?.title ?? "",
+      year: initialData?.year ?? new Date().getFullYear(),
+      summary: initialData?.summary ?? "",
+      description: initialData?.description ?? "",
+      logo: initialData?.logo ?? "",
+      repos: (initialData?.repos ?? []) as string[],
+      demoUrl: initialData?.demoUrl ?? "",
+      isPresent: initialData?.isPresent ?? false,
+      enableAi: initialData?.enableAi ?? false,
+      stackIds: (initialData?.stacks.map((s) => s.id) ?? []) as string[]
     },
     validators: {
       onChange: createZodFormValidator(isEdit ? UpdateProjectInputSchema : CreateProjectInputSchema)
@@ -108,7 +110,7 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
         enableAi: value.enableAi,
         stackIds: value.stackIds ?? []
       };
-      if (isEdit) {
+      if (isEdit && id) {
         updateMutation.mutate({ id, data: payload });
       } else {
         createMutation.mutate(payload);
@@ -116,70 +118,70 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
     }
   });
 
-  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, onClose);
+  const handleClose = () => onOpenChange(false);
+  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
 
   useEffect(() => {
-    if (project) {
+    if (!open) return;
+    if (initialData) {
       form.reset({
-        title: project.title,
-        year: project.year,
-        summary: project.summary ?? "",
-        description: project.description ?? "",
-        logo: project.logo ?? "",
-        repos: project.repos ?? [],
-        demoUrl: project.demoUrl ?? "",
-        isPresent: project.isPresent,
-        enableAi: project.enableAi,
-        stackIds: project.stacks.map((s) => s.id)
+        title: initialData.title,
+        year: initialData.year,
+        summary: initialData.summary ?? "",
+        description: initialData.description ?? "",
+        logo: initialData.logo ?? "",
+        repos: initialData.repos ?? [],
+        demoUrl: initialData.demoUrl ?? "",
+        isPresent: initialData.isPresent,
+        enableAi: initialData.enableAi,
+        stackIds: initialData.stacks.map((s) => s.id)
       });
+      setSelectedExperienceId(initialData.experienceId ?? null);
+    } else {
+      form.reset({
+        title: "",
+        year: new Date().getFullYear(),
+        summary: "",
+        description: "",
+        logo: "",
+        repos: [],
+        demoUrl: "",
+        isPresent: false,
+        enableAi: false,
+        stackIds: []
+      });
+      setSelectedExperienceId(null);
     }
-  }, [project, form]);
-
-  if (isEdit && projectQuery.isLoading && !project) {
-    return <DefaultLoader />;
-  }
-
-  if (isEdit && !projectQuery.isLoading && !project) {
-    return <div className="py-8 text-center text-muted-foreground">Project not found.</div>;
-  }
+  }, [open, initialData, form]);
 
   return (
-    <>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          void form.handleSubmit();
-        }}
-      >
-        <ScrollArea className="max-h-[75dvh] pe-5">
-          <FieldGroup>
-            <form.AppField name="title">
-              {(field) => <field.InputField label="Title" placeholder="e.g. My Awesome Project" />}
-            </form.AppField>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="min-w-6xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Edit Project" : "New Project"}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? "Update your project details." : "Add a new project to your portfolio."}
+          </DialogDescription>
+        </DialogHeader>
 
-            <form.AppField name="year">
-              {(field) => <field.InputField label="Year" type="number" />}
-            </form.AppField>
-
+        <Form
+          className="contents"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void form.handleSubmit();
+          }}
+        >
+          <DialogPanel className="space-y-4">
             <form.AppField name="logo">
               {(field) => <field.ImageField label="Project logo" />}
             </form.AppField>
 
-            <form.AppField name="repos">
-              {() => (
-                <GitHubRepoMultiCombobox
-                  label="Repositories"
-                  description="Pick one or more of your GitHub repositories (public or private)."
-                />
-              )}
+            <form.AppField name="title">
+              {(field) => <field.InputField label="Title" placeholder="e.g. My Awesome Project" />}
             </form.AppField>
 
-            <form.AppField name="demoUrl">
-              {(field) => (
-                <field.InputField label="Demo URL" type="url" placeholder="https://example.com" />
-              )}
-            </form.AppField>
+            <form.AppField name="year">{(field) => <field.YearField label="Year" />}</form.AppField>
 
             {experiencesQuery.data && experiencesQuery.data.length > 0 && (
               <div className="flex flex-col gap-1.5">
@@ -217,6 +219,44 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
               )}
             </form.AppField>
 
+            <form.AppField name="demoUrl">
+              {(field) => (
+                <field.InputField label="Demo URL" type="url" placeholder="https://example.com" />
+              )}
+            </form.AppField>
+
+            <form.AppField name="repos">
+              {(field) => (
+                <field.ComboboxMultipleField
+                  items={repos.map((repo) => {
+                    return { label: repo.fullName, value: repo.url };
+                  })}
+                  label="Repositories"
+                  description="Pick one or more of your GitHub repositories (public or private)."
+                  placeholder="Select repositories..."
+                  emptyMessage="No repositories found."
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="stackIds">
+              {(field) => (
+                <field.ComboboxMultipleField
+                  items={stacks.map((stack) => {
+                    return {
+                      label: stack.name,
+                      value: stack.id,
+                      icon: stack.icon ? <Icon nameIcon={stack.icon} /> : undefined
+                    };
+                  })}
+                  label="Tech Stacks"
+                  description="Pick existing stacks to associate with this project."
+                  placeholder="Select stacks..."
+                  emptyMessage="No stacks found."
+                />
+              )}
+            </form.AppField>
+
             <form.AppField name="isPresent">
               {(field) => (
                 <field.SwitchField
@@ -234,35 +274,27 @@ export function ProjectForm({ id, onSuccess, onClose }: ProjectFormProps) {
                 />
               )}
             </form.AppField>
+          </DialogPanel>
 
-            <form.AppField name="stackIds">
-              {(field) => (
-                <field.StackSelector
-                  label="Tech Stacks"
-                  description="Pick existing stacks or create a new one."
-                />
-              )}
-            </form.AppField>
-          </FieldGroup>
-        </ScrollArea>
-        <DialogFooter>
-          <form.AppForm>
-            <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
-              {isEdit
-                ? updateMutation.isPending
-                  ? "Saving..."
-                  : "Save"
-                : createMutation.isPending
-                  ? "Creating..."
-                  : "Create"}
-            </form.SubmitButton>
-          </form.AppForm>
-          <Button variant="outline" type="button" onClick={handleCloseAttempt}>
-            Cancel
-          </Button>
-        </DialogFooter>
-      </form>
-      {alertDialog}
-    </>
+          <DialogFooter>
+            <form.AppForm>
+              <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
+                {isEdit
+                  ? updateMutation.isPending
+                    ? "Saving..."
+                    : "Save"
+                  : createMutation.isPending
+                    ? "Creating..."
+                    : "Create"}
+              </form.SubmitButton>
+            </form.AppForm>
+            <Button variant="outline" type="button" onClick={handleCloseAttempt}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </Form>
+        {alertDialog}
+      </DialogContent>
+    </Dialog>
   );
 }

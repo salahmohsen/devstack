@@ -6,13 +6,6 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 
 import { SortableList } from "@/shared/ui/sortable-list";
 
@@ -113,16 +106,10 @@ export function ProjectsPage() {
 
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogKey, setDialogKey] = useState(0);
 
   const openDialog = useCallback((id: string | null) => {
     setEditingProjectId(id);
-    setDialogKey((k) => k + 1);
     setDialogOpen(true);
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    setDialogOpen(false);
   }, []);
 
   const emptyState = (
@@ -175,23 +162,14 @@ export function ProjectsPage() {
           {(item: ProjectOutput) => <ProjectInfo project={item} />}
         </ItemsInfoPanel>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent key={dialogKey} className="min-w-6xl">
-            <DialogHeader>
-              <DialogTitle>{editingProjectId ? "Edit Project" : "New Project"}</DialogTitle>
-              <DialogDescription>
-                {editingProjectId
-                  ? "Update your project details."
-                  : "Add a new project to your portfolio."}
-              </DialogDescription>
-            </DialogHeader>
-            <ProjectForm
-              id={editingProjectId ?? undefined}
-              onSuccess={closeDialog}
-              onClose={closeDialog}
-            />
-          </DialogContent>
-        </Dialog>
+        <ProjectForm
+          key={editingProjectId ?? "new"}
+          initialData={
+            editingProjectId ? (projects.find((p) => p.id === editingProjectId) ?? null) : null
+          }
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+        />
       </PageLayout>
     </ItemsNavProvider>
   );

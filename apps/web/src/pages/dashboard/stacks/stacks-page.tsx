@@ -5,13 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core/portfolio";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 
 import {
   GridSkeleton,
@@ -57,16 +50,10 @@ export function StacksPage() {
 
   const [editingStackId, setEditingStackId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogKey, setDialogKey] = useState(0);
 
   const openDialog = useCallback((id: string | null) => {
     setEditingStackId(id);
-    setDialogKey((k) => k + 1);
     setDialogOpen(true);
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    setDialogOpen(false);
   }, []);
 
   const emptyState = (
@@ -114,23 +101,14 @@ export function StacksPage() {
           {(item: StackOutput) => <StackInfo stack={item} />}
         </ItemsInfoPanel>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent key={dialogKey}>
-            <DialogHeader>
-              <DialogTitle>{editingStackId ? "Edit Stack" : "New Stack"}</DialogTitle>
-              <DialogDescription>
-                {editingStackId
-                  ? "Update the name or icon. Changes apply to every project using this stack."
-                  : "Add a shared tech stack that can be attached to any project."}
-              </DialogDescription>
-            </DialogHeader>
-            <StackForm
-              id={editingStackId ?? undefined}
-              onSuccess={closeDialog}
-              onClose={closeDialog}
-            />
-          </DialogContent>
-        </Dialog>
+        <StackForm
+          key={editingStackId ?? "new"}
+          initialData={
+            editingStackId ? (stacks.find((s) => s.id === editingStackId) ?? null) : null
+          }
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+        />
       </PageLayout>
     </ItemsNavProvider>
   );

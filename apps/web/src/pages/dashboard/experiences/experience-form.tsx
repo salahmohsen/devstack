@@ -7,12 +7,21 @@ import { toast } from "sonner";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   CreateExperienceInputSchema,
-  UpdateExperienceInputSchema
+  UpdateExperienceInputSchema,
+  type ExperienceOutput
 } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
-import { DialogFooter } from "@tsu-stack/ui/components/dialog.js";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogTitle
+} from "@tsu-stack/ui/components/dialog";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
-import { ScrollArea } from "@tsu-stack/ui/components/scroll-area.js";
+import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
@@ -20,18 +29,20 @@ import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 
 type ExperienceFormProps = {
-  id?: string;
-  onSuccess?: () => void;
-  onClose?: () => void;
+  initialData?: ExperienceOutput | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-export function ExperienceForm({ id, onSuccess, onClose }: ExperienceFormProps) {
+export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFormProps) {
   const queryClient = useQueryClient();
-  const isEdit = !!id;
+  const isEdit = !!initialData;
+  const id = initialData?.id;
 
   const experienceQuery = useQuery({
     ...orpcQueryClient.portfolio.experiences.get.queryOptions({ input: { id: id! } }),
-    enabled: isEdit
+    enabled: isEdit,
+    placeholderData: initialData ?? undefined
   });
 
   const createMutation = useMutation(
@@ -41,7 +52,7 @@ export function ExperienceForm({ id, onSuccess, onClose }: ExperienceFormProps) 
           queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
         toast.success("Experience created.");
-        onSuccess?.();
+        onOpenChange(false);
       },
       onError: (error) => {
         toast.error(error.message || "Failed to create experience.");
@@ -59,7 +70,7 @@ export function ExperienceForm({ id, onSuccess, onClose }: ExperienceFormProps) 
           queryKey: orpcQueryClient.portfolio.experiences.get.queryKey({ input: { id: id! } })
         });
         toast.success("Experience updated.");
-        onSuccess?.();
+        onOpenChange(false);
       },
       onError: (error) => {
         toast.error(error.message || "Failed to update experience.");
@@ -91,15 +102,16 @@ export function ExperienceForm({ id, onSuccess, onClose }: ExperienceFormProps) 
         fromDate: value.fromDate || null,
         toDate: value.toDate || null
       };
-      if (isEdit) {
-        updateMutation.mutate({ id, data: payload });
+      if (isEdit && id) {
+        updateMutation.mutate({ id: id, data: payload });
       } else {
         createMutation.mutate(payload);
       }
     }
   });
 
-  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, onClose);
+  const handleClose = () => onOpenChange(false);
+  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
 
   useEffect(() => {
     if (experience) {
@@ -124,83 +136,93 @@ export function ExperienceForm({ id, onSuccess, onClose }: ExperienceFormProps) 
   }
 
   return (
-    <>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          void form.handleSubmit();
-        }}
-      >
-        <ScrollArea className="max-h-[75dvh] px-10">
-          <FieldGroup>
-            <form.AppField name="title">
-              {(field) => (
-                <field.InputField label="Title" placeholder="e.g. Senior Software Engineer" />
-              )}
-            </form.AppField>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="min-w-6xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Edit Experience" : "New Experience"}</DialogTitle>
+          <DialogDescription>
+            {isEdit ? "Update your position details." : "Add a new position to your resume."}
+          </DialogDescription>
+        </DialogHeader>
 
-            <form.AppField name="organization">
-              {(field) => <field.InputField label="Organization" placeholder="e.g. Acme Corp" />}
-            </form.AppField>
-
-            <form.AppField name="description">
-              {(field) => (
-                <field.RichTextField
-                  label="Description"
-                  placeholder="Brief description of your role"
-                />
-              )}
-            </form.AppField>
-
-            <div className="grid grid-cols-2 gap-4">
-              <form.AppField name="fromDate">
-                {(field) => <field.CalendarField label="From Date" />}
+        <Form
+          className="contents"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void form.handleSubmit();
+          }}
+        >
+          <DialogPanel>
+            <FieldGroup className="gap-4">
+              <form.AppField name="title">
+                {(field) => (
+                  <field.InputField label="Title" placeholder="e.g. Senior Software Engineer" />
+                )}
               </form.AppField>
 
-              <form.AppField name="toDate">
-                {(field) => <field.CalendarField label="To Date" />}
+              <form.AppField name="organization">
+                {(field) => <field.InputField label="Organization" placeholder="e.g. Acme Corp" />}
               </form.AppField>
-            </div>
 
-            <form.AppField name="isPresent">
-              {(field) => (
-                <field.SwitchField
-                  label="Currently present"
-                  description="Mark this experience as your current role."
-                />
-              )}
-            </form.AppField>
+              <form.AppField name="description">
+                {(field) => (
+                  <field.RichTextField
+                    label="Description"
+                    placeholder="Brief description of your role"
+                  />
+                )}
+              </form.AppField>
 
-            <form.AppField name="enableAi">
-              {(field) => (
-                <field.SwitchField
-                  label="Enable AI"
-                  description="Let AI generate or enhance this experience."
-                />
-              )}
-            </form.AppField>
-          </FieldGroup>
-        </ScrollArea>
+              <div className="grid grid-cols-2 gap-4">
+                <form.AppField name="fromDate">
+                  {(field) => <field.CalendarField label="From Date" />}
+                </form.AppField>
 
-        <DialogFooter>
-          <form.AppForm>
-            <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
-              {isEdit
-                ? updateMutation.isPending
-                  ? "Saving..."
-                  : "Save"
-                : createMutation.isPending
-                  ? "Creating..."
-                  : "Create"}
-            </form.SubmitButton>
-          </form.AppForm>
-          <Button variant="outline" type="button" onClick={handleCloseAttempt}>
-            Cancel
-          </Button>
-        </DialogFooter>
-      </form>
-      {alertDialog}
-    </>
+                <form.AppField name="toDate">
+                  {(field) => <field.CalendarField label="To Date" />}
+                </form.AppField>
+
+                <form.AppField name="isPresent">
+                  {(field) => (
+                    <field.SwitchField
+                      label="Currently present"
+                      description="Mark this experience as your current role."
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="enableAi">
+                  {(field) => (
+                    <field.SwitchField
+                      label="Enable AI"
+                      description="Let AI generate or enhance this experience."
+                    />
+                  )}
+                </form.AppField>
+              </div>
+            </FieldGroup>
+          </DialogPanel>
+
+          <DialogFooter>
+            <form.AppForm>
+              <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
+                {isEdit
+                  ? updateMutation.isPending
+                    ? "Saving..."
+                    : "Save"
+                  : createMutation.isPending
+                    ? "Creating..."
+                    : "Create"}
+              </form.SubmitButton>
+            </form.AppForm>
+            <Button variant="outline" type="button" onClick={handleCloseAttempt}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </Form>
+        {alertDialog}
+      </DialogContent>
+    </Dialog>
   );
 }

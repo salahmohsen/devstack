@@ -21,6 +21,7 @@ function RichTextField({ label, description, ...editorProps }: RichTextFieldProp
         value={field.state.value ?? ""}
         onChange={(html) => field.handleChange(html)}
         onBlur={field.handleBlur}
+        className="w-full"
         {...editorProps}
       />
       {description ? <FieldDescription>{description}</FieldDescription> : null}
