@@ -23,6 +23,7 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
@@ -52,6 +53,9 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
         });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
+        });
         toast.success("Stack created.");
         onOpenChange(false);
       },
@@ -74,6 +78,9 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
         });
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+        });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
         toast.success("Stack updated.");
         onOpenChange(false);

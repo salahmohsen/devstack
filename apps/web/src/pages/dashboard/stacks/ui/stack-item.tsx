@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core/portfolio";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Card, CardContent, CardFrame } from "@tsu-stack/ui/components/card";
+import { Card, CardContent } from "@tsu-stack/ui/components/card";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
 import { Icon } from "@/shared/ui/icon";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 
@@ -42,6 +43,9 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
+        });
         toast.success("Stack deleted.");
         setDeleteDialogOpen(false);
       },
@@ -56,6 +60,9 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+        });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
         toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
       },
@@ -95,13 +102,17 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
         }}
         className={cn(
           "group relative aspect-square cursor-pointer overflow-hidden py-0!",
-          "**:transition-all **:duration-200"
+          "**:transition-all **:duration-200",
+          "size-40"
         )}
         {...props}
       >
         <CardContent
           data-selected={selected}
-          className="flex h-full translate-y-4 scale-100 flex-col items-center justify-center gap-3 p-4 data-selected:translate-y-0 data-selected:scale-90"
+          className={cn(
+            "flex h-full flex-col items-center justify-center gap-3 p-4",
+            "translate-y-4 scale-100 data-selected:translate-y-0 data-selected:scale-90"
+          )}
         >
           {stack.icon ? (
             <Icon
@@ -119,9 +130,9 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
             {stack.name}
           </p>
         </CardContent>
-
-        <CardFrame
-          className="mx-auto flex w-[calc(100%-10px)] translate-y-16 justify-center p-1.5 data-selected:-translate-y-2"
+        {/* className="mx-auto flex w-[calc(100%-10px)] translate-y-16 justify-center p-1.5 data-selected:-translate-y-2" */}
+        <div
+          className="mx-auto translate-y-9 data-selected:-translate-y-2"
           data-selected={selected}
         >
           <ListItemActionButtons
@@ -139,7 +150,7 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
               isLoading: deleteMutation.isPending
             }}
           />
-        </CardFrame>
+        </div>
       </Card>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

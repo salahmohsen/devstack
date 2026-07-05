@@ -24,6 +24,7 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
@@ -53,6 +54,9 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
+        });
         toast.success("Experience created.");
         onOpenChange(false);
       },
@@ -72,6 +76,9 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
           queryKey: orpcQueryClient.portfolio.experiences.get.queryKey({
             input: { id: id! }
           })
+        });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
         toast.success("Experience updated.");
         onOpenChange(false);

@@ -28,6 +28,8 @@ import { Input } from "@tsu-stack/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
+
 import { useFieldContext } from "./form-contexts";
 
 type StackSelectorProps = {
@@ -55,6 +57,9 @@ function StackSelector(props: StackSelectorProps) {
       onSuccess: async (created) => {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+        });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
         field.handleChange([...selectedIds, created.id]);
         setCreateOpen(false);

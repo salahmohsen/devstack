@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
 import { Markdown } from "@/shared/ui/markdown";
@@ -65,6 +66,9 @@ export function ExperiencesPage() {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
         });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
+        });
         toast.success("Experience deleted.");
       }
     })
@@ -75,6 +79,9 @@ export function ExperiencesPage() {
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+        });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
         toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
       },
@@ -123,6 +130,9 @@ export function ExperiencesPage() {
       onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+        });
+        void queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
       }
     })

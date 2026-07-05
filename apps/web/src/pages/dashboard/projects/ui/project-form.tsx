@@ -23,6 +23,7 @@ import {
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 import { Icon } from "@/shared/ui/icon";
@@ -54,6 +55,9 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
+        });
         toast.success("Project created.");
         onOpenChange(false);
       },
@@ -73,6 +77,9 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           queryKey: orpcQueryClient.portfolio.projects.get.queryKey({
             input: { id: id! }
           })
+        });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
         toast.success("Project updated.");
         onOpenChange(false);

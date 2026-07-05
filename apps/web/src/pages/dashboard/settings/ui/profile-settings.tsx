@@ -31,6 +31,7 @@ import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
 import { Icon } from "@/shared/ui/icon";
 import { IconPicker } from "@/shared/ui/icon-picker";
 
@@ -104,6 +105,9 @@ export function ProfileSettings() {
     ...getUpdateProfileMutationOptions(),
     onSuccess: (data) => {
       queryClient.setQueryData(getProfileQueryOptions().queryKey, data);
+      void queryClient.invalidateQueries({
+        queryKey: getPortfolioListQueryOptions().queryKey
+      });
       toast.success("Profile updated successfully");
     }
   });

@@ -13,6 +13,7 @@ import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { FrameDescription, FrameTitle } from "@tsu-stack/ui/components/frame";
 
+import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
@@ -51,6 +52,9 @@ export function ProjectsPage() {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
         });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
+        });
         toast.success("Project deleted.");
       },
       onError: () => {
@@ -64,6 +68,9 @@ export function ProjectsPage() {
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+        });
+        await queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
         toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
       },
@@ -112,6 +119,9 @@ export function ProjectsPage() {
       onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+        });
+        void queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryOptions().queryKey
         });
       }
     })
