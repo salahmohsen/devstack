@@ -24,7 +24,7 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
-import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";

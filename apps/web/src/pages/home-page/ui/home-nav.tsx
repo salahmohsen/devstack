@@ -1,9 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-
 import { useIntersection } from "@/shared/providers/intersection.provider";
 
+import { useGetPortfolioListQuery } from "@/features/portfolio";
 import { Contact } from "@/pages/home-page/ui/contact";
 
 const navItems = [
@@ -14,7 +11,7 @@ const navItems = [
 ];
 
 export const HomeNav = () => {
-  const contactsQuery = useQuery(orpcQueryClient.profile.getContacts.queryOptions());
+  const portfolioQuery = useGetPortfolioListQuery();
 
   return (
     <nav className="relative hidden min-w-max lg:block" aria-label="In-page jump links relative">
@@ -23,7 +20,7 @@ export const HomeNav = () => {
           <NavItem name={el} key={i} />
         ))}
       </ul>
-      {contactsQuery.data ? <Contact contacts={contactsQuery.data} /> : null}
+      {portfolioQuery.data?.contacts ? <Contact contacts={portfolioQuery.data.contacts} /> : null}
     </nav>
   );
 };

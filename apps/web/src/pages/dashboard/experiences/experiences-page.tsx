@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
-import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
 import { Markdown } from "@/shared/ui/markdown";

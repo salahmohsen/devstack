@@ -1,7 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react";
 import {
   Sidebar001,
@@ -11,6 +9,7 @@ import {
   Sidebar001Section
 } from "@tsu-stack/ui/components/unlumen-ui/sidebar-001";
 
+import { useGetPortfolioListQuery } from "@/features/portfolio";
 import { ContactButton } from "@/shared/ui/contact-button";
 
 const PublicItems = [
@@ -58,7 +57,7 @@ export function PublicSidebar() {
   const { user } = useAuthSuspense();
   const isAdmin = !!user;
 
-  const contacts = useQuery(orpcQueryClient.profile.getContacts.queryOptions());
+  const portfolioQuery = useGetPortfolioListQuery();
 
   const sections = [
     ...groupBySection(PublicItems),
@@ -83,7 +82,7 @@ export function PublicSidebar() {
       </Sidebar001Content>
       <Sidebar001Footer>
         <div className="flex justify-center gap-2">
-          {contacts.data?.map((contact) => (
+          {(portfolioQuery.data?.contacts ?? []).map((contact) => (
             <ContactButton key={contact.createdAt.toISOString()} contact={contact} />
           ))}
         </div>

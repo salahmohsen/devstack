@@ -31,7 +31,7 @@ import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
-import { getPortfolioListQueryOptions } from "@/shared/lib/portfolio-list.query";
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { Icon } from "@/shared/ui/icon";
 import { IconPicker } from "@/shared/ui/icon-picker";
 

@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
 import { VscLinkExternal } from "react-icons/vsc";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
+
+import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -24,17 +24,9 @@ function formatDuration(
   return from ? `${from} — ${to}` : to;
 }
 
-export function useGetExperiencesQuery() {
-  return useQuery(
-    orpcQueryClient.portfolio.experiences.list.queryOptions({
-      meta: { persist: true } as const
-    })
-  );
-}
-
 export const Experience = () => {
-  const experiencesQuery = useGetExperiencesQuery();
-  const experiences = experiencesQuery.data ?? [];
+  const portfolioQuery = useGetPortfolioListQuery();
+  const experiences = portfolioQuery.data?.experiences ?? [];
 
   return (
     <>

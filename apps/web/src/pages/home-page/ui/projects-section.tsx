@@ -1,20 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ProjectOutput } from "@tsu-stack/core/portfolio";
 
-export function useGetProjectsQuery() {
-  return useQuery(
-    orpcQueryClient.portfolio.projects.list.queryOptions({
-      meta: { persist: true } as const
-    })
-  );
-}
+import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 export const ProjectsSection = () => {
-  const projectsQuery = useGetProjectsQuery();
-  const projects = projectsQuery.data ?? [];
+  const portfolioQuery = useGetPortfolioListQuery();
+  const projects = portfolioQuery.data?.projects ?? [];
 
   return (
     <ol className="group/list">
