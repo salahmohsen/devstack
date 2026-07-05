@@ -26,6 +26,7 @@ type TogglePortfolioConfig = {
 
 type classNames = {
   wrapper?: string;
+  trigger?: string;
 };
 
 type ListItemActionButtonsProps = {
@@ -58,6 +59,7 @@ export function ListItemActionButtons({
             disabled={menuLoading}
             onClick={(e) => e.stopPropagation()}
             aria-label="More actions"
+            className={classNames?.trigger}
           />
         }
       >

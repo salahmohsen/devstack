@@ -169,8 +169,8 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
   if (hubQuery.isLoading) <DefaultLoader />;
 
   return (
-    <Frame className="mx-auto grid h-full w-full max-w-7xl gap-5 bg-background p-5 px-3 py-10 md:px-6">
-      <FrameHeader className="m-0 p-0 pb-0">
+    <Frame className="mx-auto h-full w-full max-w-7xl gap-5 bg-background p-5 px-3 md:px-6">
+      <FrameHeader className="m-0 max-h-fit p-0 pt-5 pb-0">
         <FrameTitle>Repositories</FrameTitle>
         <FrameDescription>Browse and filter the repositories you can access.</FrameDescription>
       </FrameHeader>

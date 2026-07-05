@@ -43,7 +43,7 @@ import { GithubProfileUnavailableState } from "@/pages/home-page/ui/github-setup
 import { PinnedRepoCard } from "@/pages/home-page/ui/pinned-repo-card";
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
-export function GithubProfilePage() {
+export function HomePage() {
   const hasMounted = useIsClient();
   const location = useRouterState({
     select: (state) => state.location

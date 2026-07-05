@@ -73,7 +73,7 @@ export function StacksPage() {
     if (stacks.length === 0) return emptyState;
 
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
         {stacks.map((stack) => (
           <StackItem
             key={stack.id}
