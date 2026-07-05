@@ -187,234 +187,225 @@ export function ProfileSettings() {
             </div>
           </FrameHeader>
 
-          <FramePanel>
-            <div className="flex items-start gap-6">
-              <div className="relative shrink-0">
-                <Avatar className="size-24">
-                  <AvatarImage alt={displayName} src={userImage} />
-                  <AvatarFallback className="text-lg">{getInitials(displayName)}</AvatarFallback>
-                </Avatar>
-                <Button className="absolute -right-2 -bottom-2 rounded-full" size="icon-sm">
-                  <UserRoundPen aria-hidden="true" />
-                </Button>
-              </div>
+          <FramePanel className="flex items-start gap-6">
+            <div className="relative shrink-0">
+              <Avatar className="size-24">
+                <AvatarImage alt={displayName} src={userImage} />
+                <AvatarFallback className="text-lg">{getInitials(displayName)}</AvatarFallback>
+              </Avatar>
+              <Button className="absolute -right-2 -bottom-2 rounded-full" size="icon-sm">
+                <UserRoundPen aria-hidden="true" />
+              </Button>
+            </div>
 
-              <div className="flex min-w-0 flex-col gap-2">
-                <h3 className="truncate text-2xl font-semibold">{values.name || displayName}</h3>
+            <div className="flex min-w-0 flex-col gap-2">
+              <h3 className="truncate text-2xl font-semibold">{values.name || displayName}</h3>
 
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span className="truncate">{values.email || displayEmail}</span>
-                  {session?.user?.emailVerified ? (
-                    <Badge variant="secondary">
-                      <Check aria-hidden="true" className="size-3" />
-                      Verified
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive">
-                      <X aria-hidden="true" className="size-3" />
-                      Unverified
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar aria-hidden="true" className="size-4" />
-                  Member since{" "}
-                  {session?.user?.createdAt
-                    ? new Date(session.user.createdAt).getFullYear()
-                    : new Date().getFullYear()}
-                </div>
-
-                {contacts.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    {contacts.map((c, idx) => (
-                      <ContactLink
-                        key={idx}
-                        href={c.type === "email" ? `mailto:${c.value}` : c.value}
-                        icon={<Icon nameIcon={c.icon} propsIcon={{ className: "size-3.5" }} />}
-                      >
-                        {c.type === "linkedin" ? "LinkedIn" : c.value.replace(/^https?:\/\//, "")}
-                      </ContactLink>
-                    ))}
-                  </div>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span className="truncate">{values.email || displayEmail}</span>
+                {session?.user?.emailVerified ? (
+                  <Badge variant="secondary">
+                    <Check aria-hidden="true" className="size-3" />
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive">
+                    <X aria-hidden="true" className="size-3" />
+                    Unverified
+                  </Badge>
                 )}
               </div>
+
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Calendar aria-hidden="true" className="size-4" />
+                Member since{" "}
+                {session?.user?.createdAt
+                  ? new Date(session.user.createdAt).getFullYear()
+                  : new Date().getFullYear()}
+              </div>
+
+              {contacts.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  {contacts.map((c, idx) => (
+                    <ContactLink
+                      key={idx}
+                      href={c.type === "email" ? `mailto:${c.value}` : c.value}
+                      icon={<Icon nameIcon={c.icon} propsIcon={{ className: "size-3.5" }} />}
+                    >
+                      {c.type === "linkedin" ? "LinkedIn" : c.value.replace(/^https?:\/\//, "")}
+                    </ContactLink>
+                  ))}
+                </div>
+              )}
             </div>
           </FramePanel>
 
           {isEditing && (
-            <FramePanel>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  void form.handleSubmit();
-                }}
-              >
-                <FieldSet>
-                  <FieldGroup className="grid grid-cols-1 md:grid-cols-2">
-                    <form.AppField name="name">
-                      {(field) => <field.InputField label="Display Name" />}
-                    </form.AppField>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void form.handleSubmit();
+              }}
+              className="m-5"
+            >
+              <FieldSet>
+                <FieldGroup className="grid grid-cols-1 md:grid-cols-2">
+                  <form.AppField name="name">
+                    {(field) => <field.InputField label="Display Name" />}
+                  </form.AppField>
 
-                    <form.AppField name="email">
-                      {(field) => <field.InputField type="email" label="Email" />}
-                    </form.AppField>
-                  </FieldGroup>
-                  <FieldGroup>
-                    <form.AppField name="contacts" mode="array">
-                      {(field) => (
-                        <div className="mt-5 flex flex-col gap-4">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-foreground">Contacts</p>
-                            <Button
-                              onClick={() =>
-                                field.pushValue({ type: "email", value: "", icon: "" })
-                              }
-                              size="sm"
-                            >
-                              Add contact
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-1 gap-3">
-                            {field.state.value?.map((_, i) => (
-                              <Group
-                                key={i}
-                                aria-label="Contact entry"
-                                className="w-full rounded-lg"
-                              >
-                                <Group aria-label="Contact fields" className="flex-1">
-                                  <form.AppField name={`contacts[${i}].icon`}>
-                                    {(subField) => (
-                                      <IconPicker
-                                        value={subField.state.value}
-                                        onValueChange={(icon) => subField.handleChange(icon)}
-                                        className="overflow-hidden rounded-lg border border-input"
+                  <form.AppField name="email">
+                    {(field) => <field.InputField type="email" label="Email" />}
+                  </form.AppField>
+                </FieldGroup>
+                <FieldGroup>
+                  <form.AppField name="contacts" mode="array">
+                    {(field) => (
+                      <div className="mt-5 flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-foreground">Contacts</p>
+                          <Button
+                            onClick={() => field.pushValue({ type: "email", value: "", icon: "" })}
+                            size="sm"
+                          >
+                            Add contact
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3">
+                          {field.state.value?.map((_, i) => (
+                            <Group key={i} aria-label="Contact entry" className="w-full rounded-lg">
+                              <Group aria-label="Contact fields" className="flex-1">
+                                <form.AppField name={`contacts[${i}].icon`}>
+                                  {(subField) => (
+                                    <IconPicker
+                                      value={subField.state.value}
+                                      onValueChange={(icon) => subField.handleChange(icon)}
+                                      className="overflow-hidden rounded-lg border border-input"
+                                    >
+                                      <Button
+                                        variant="ghost"
+                                        className="size-full justify-start rounded-none border-0 px-3"
                                       >
-                                        <Button
-                                          variant="ghost"
-                                          className="size-full justify-start rounded-none border-0 px-3"
-                                        >
-                                          {subField.state.value ? (
-                                            <Icon
-                                              nameIcon={subField.state.value}
-                                              propsIcon={{ className: "size-4.5 sm:size-4" }}
-                                            />
-                                          ) : (
-                                            "Select icon"
-                                          )}
-                                        </Button>
-                                      </IconPicker>
-                                    )}
-                                  </form.AppField>
+                                        {subField.state.value ? (
+                                          <Icon
+                                            nameIcon={subField.state.value}
+                                            propsIcon={{ className: "size-4.5 sm:size-4" }}
+                                          />
+                                        ) : (
+                                          "Select icon"
+                                        )}
+                                      </Button>
+                                    </IconPicker>
+                                  )}
+                                </form.AppField>
 
-                                  <GroupSeparator />
-                                  <form.AppField name={`contacts[${i}].type`}>
-                                    {(subField) => {
-                                      const items = CONTACT_TYPES.map((t) => {
-                                        return {
-                                          label: t,
-                                          value: t
-                                        };
-                                      });
-                                      return (
-                                        <Combobox
-                                          value={subField.state.value ?? null}
-                                          onValueChange={(val) => {
-                                            if (val != null) {
-                                              subField.handleChange(val as never);
-                                            }
-                                          }}
-                                          items={items}
-                                        >
-                                          <ComboboxPrimitive.InputGroup
-                                            className="relative max-w-30 rounded-lg border border-input has-disabled:opacity-64"
-                                            data-slot="input-control"
-                                          >
-                                            <ComboboxPrimitive.Input
-                                              data-slot="combobox-input"
-                                              render={
-                                                <Input
-                                                  unstyled
-                                                  nativeInput
-                                                  size="default"
-                                                  placeholder="type"
-                                                />
-                                              }
-                                            />
-                                            <ComboboxTrigger className="absolute inset-e-0.5 top-1/2 inline-flex size-8 max-w-fit shrink -translate-y-1/2 cursor-pointer items-center justify-center rounded-md opacity-80 transition-opacity outline-none hover:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4">
-                                              <ComboboxPrimitive.Icon data-slot="combobox-icon">
-                                                <ChevronsUpDown />
-                                              </ComboboxPrimitive.Icon>
-                                            </ComboboxTrigger>
-                                          </ComboboxPrimitive.InputGroup>
-                                          <ComboboxContent>
-                                            <ComboboxEmpty>No results found.</ComboboxEmpty>
-                                            <ComboboxList>
-                                              {(item: (typeof items)[number]) => (
-                                                <ComboboxItem key={item.value} value={item.value}>
-                                                  {item.label}
-                                                </ComboboxItem>
-                                              )}
-                                            </ComboboxList>
-                                          </ComboboxContent>
-                                        </Combobox>
-                                      );
-                                    }}
-                                  </form.AppField>
-
-                                  <GroupSeparator />
-                                  <form.AppField name={`contacts[${i}].value`}>
-                                    {(subField) => (
-                                      <Input
-                                        value={subField.state.value ?? ""}
-                                        className="flex-1"
-                                        onChange={(e) => subField.handleChange(e.target.value)}
-                                        placeholder="https://github.com/salahmohsen/"
-                                      />
-                                    )}
-                                  </form.AppField>
-
-                                  <GroupSeparator />
-                                  <form.AppField name={`contacts[${i}].includedInPortfolio`}>
-                                    {(subField) => (
-                                      <span
-                                        data-slot="input-control"
-                                        className="flex items-center justify-center rounded-lg border border-input px-3"
+                                <GroupSeparator />
+                                <form.AppField name={`contacts[${i}].type`}>
+                                  {(subField) => {
+                                    const items = CONTACT_TYPES.map((t) => {
+                                      return {
+                                        label: t,
+                                        value: t
+                                      };
+                                    });
+                                    return (
+                                      <Combobox
+                                        value={subField.state.value ?? null}
+                                        onValueChange={(val) => {
+                                          if (val != null) {
+                                            subField.handleChange(val as never);
+                                          }
+                                        }}
+                                        items={items}
                                       >
-                                        <Label>
-                                          Portfolio
-                                          <Switch
-                                            checked={subField.state.value as boolean}
-                                            onCheckedChange={(checked) =>
-                                              subField.handleChange(checked)
+                                        <ComboboxPrimitive.InputGroup
+                                          className="relative max-w-30 rounded-lg border border-input has-disabled:opacity-64"
+                                          data-slot="input-control"
+                                        >
+                                          <ComboboxPrimitive.Input
+                                            data-slot="combobox-input"
+                                            render={
+                                              <Input
+                                                unstyled
+                                                nativeInput
+                                                size="default"
+                                                placeholder="type"
+                                              />
                                             }
                                           />
-                                        </Label>
-                                      </span>
-                                    )}
-                                  </form.AppField>
-                                </Group>
-                                <Group aria-label="Remove contact">
-                                  <Button
-                                    aria-label="Remove contact"
-                                    onClick={() => field.removeValue(i)}
-                                    size="icon-sm"
-                                    variant="outline"
-                                  >
-                                    <X aria-hidden="true" />
-                                  </Button>
-                                </Group>
+                                          <ComboboxTrigger className="absolute inset-e-0.5 top-1/2 inline-flex size-8 max-w-fit shrink -translate-y-1/2 cursor-pointer items-center justify-center rounded-md opacity-80 transition-opacity outline-none hover:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4">
+                                            <ComboboxPrimitive.Icon data-slot="combobox-icon">
+                                              <ChevronsUpDown />
+                                            </ComboboxPrimitive.Icon>
+                                          </ComboboxTrigger>
+                                        </ComboboxPrimitive.InputGroup>
+                                        <ComboboxContent>
+                                          <ComboboxEmpty>No results found.</ComboboxEmpty>
+                                          <ComboboxList>
+                                            {(item: (typeof items)[number]) => (
+                                              <ComboboxItem key={item.value} value={item.value}>
+                                                {item.label}
+                                              </ComboboxItem>
+                                            )}
+                                          </ComboboxList>
+                                        </ComboboxContent>
+                                      </Combobox>
+                                    );
+                                  }}
+                                </form.AppField>
+
+                                <GroupSeparator />
+                                <form.AppField name={`contacts[${i}].value`}>
+                                  {(subField) => (
+                                    <Input
+                                      value={subField.state.value ?? ""}
+                                      className="flex-1"
+                                      onChange={(e) => subField.handleChange(e.target.value)}
+                                      placeholder="https://github.com/salahmohsen/"
+                                    />
+                                  )}
+                                </form.AppField>
+
+                                <GroupSeparator />
+                                <form.AppField name={`contacts[${i}].includedInPortfolio`}>
+                                  {(subField) => (
+                                    <span
+                                      data-slot="input-control"
+                                      className="flex items-center justify-center rounded-lg border border-input px-3"
+                                    >
+                                      <Label>
+                                        Portfolio
+                                        <Switch
+                                          checked={subField.state.value as boolean}
+                                          onCheckedChange={(checked) =>
+                                            subField.handleChange(checked)
+                                          }
+                                        />
+                                      </Label>
+                                    </span>
+                                  )}
+                                </form.AppField>
                               </Group>
-                            ))}
-                          </div>
+                              <Group aria-label="Remove contact">
+                                <Button
+                                  aria-label="Remove contact"
+                                  onClick={() => field.removeValue(i)}
+                                  size="icon-sm"
+                                  variant="outline"
+                                >
+                                  <X aria-hidden="true" />
+                                </Button>
+                              </Group>
+                            </Group>
+                          ))}
                         </div>
-                      )}
-                    </form.AppField>
-                  </FieldGroup>
-                </FieldSet>
-              </form>
-            </FramePanel>
+                      </div>
+                    )}
+                  </form.AppField>
+                </FieldGroup>
+              </FieldSet>
+            </form>
           )}
         </Frame>
       )}

@@ -108,7 +108,7 @@ function GithubSettingsForm({ githubConfig }: { githubConfig?: GithubConfigOutpu
           <FrameDescription>Connect a GitHub account to fetch public data.</FrameDescription>
         </FrameHeader>
 
-        <FramePanel>
+        <FramePanel className="space-y-5">
           <Card>
             <CardPanel>
               <p className="mb-4 text-sm font-medium">GitHub Credentials</p>
@@ -158,10 +158,8 @@ function GithubSettingsForm({ githubConfig }: { githubConfig?: GithubConfigOutpu
               </form>
             </CardPanel>
           </Card>
-        </FramePanel>
 
-        {hasGithubToken && (
-          <FramePanel>
+          {hasGithubToken && (
             <Card className="bg-destructive/4">
               <CardPanel>
                 <p className="text-sm text-muted-foreground">Danger zone</p>
@@ -181,8 +179,8 @@ function GithubSettingsForm({ githubConfig }: { githubConfig?: GithubConfigOutpu
                 </Button>
               </CardPanel>
             </Card>
-          </FramePanel>
-        )}
+          )}
+        </FramePanel>
       </Frame>
 
       <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
