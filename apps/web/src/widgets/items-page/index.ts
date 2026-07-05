@@ -15,6 +15,7 @@ export { GridSkeleton, ListSkeleton } from "@/widgets/items-page/ui/item-skeleto
 export { ItemsEmpty } from "@/widgets/items-page/ui/items-empty";
 export { ItemsFilterButton } from "@/widgets/items-page/ui/items-filter-button";
 export type { ItemsFilterOption } from "@/widgets/items-page/ui/items-filter-button";
+export { ItemInfoPanel } from "@/widgets/items-page/ui/item-info-panel";
 export { ItemsInfoFooter } from "@/widgets/items-page/ui/items-info-footer";
 export { ItemsInfoSheet } from "@/widgets/items-page/ui/items-info-sheet";
 export { ItemsList } from "@/widgets/items-page/ui/items-list";

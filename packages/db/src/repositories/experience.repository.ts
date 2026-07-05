@@ -10,6 +10,7 @@ import {
 
 import { getDb } from "#@/index";
 import { experience } from "#@/schema/experience.schema";
+import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 
 export type ExperienceEntity = InferSelectModel<typeof experience>;
 export type CreateExperienceData = Omit<
@@ -66,14 +67,15 @@ export const experienceRepository = {
     });
   },
 
-  async create(input: CreateExperienceData) {
+  async create(input: CreateExperienceData, options?: { includedInPortfolio?: boolean }) {
     const all = await experienceRepository.findAll();
     const nextSortOrder = all.length > 0 ? Math.max(...all.map((e) => e.sortOrder)) + 1 : 0;
+    const id = crypto.randomUUID();
+    const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
 
-    const [created] = await getDb()
-      .insert(experience)
-      .values({
-        id: crypto.randomUUID(),
+    await getDb().transaction(async (tx) => {
+      await tx.insert(experience).values({
+        id,
         title: input.title,
         organization: input.organization,
         description: input.description,
@@ -81,23 +83,64 @@ export const experienceRepository = {
         toDate: input.toDate ?? null,
         sortOrder: nextSortOrder,
         isPresent: input.isPresent ?? false,
-        portfolioEntryId: input.portfolioEntryId ?? null
-      })
-      .returning();
+        portfolioEntryId: pid
+      });
 
-    return experienceRepository.findById(created.id);
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "experience",
+          entityId: id
+        });
+      }
+    });
+
+    return experienceRepository.findById(id);
   },
 
-  async update(id: string, input: UpdateExperienceData) {
-    const [updated] = await getDb()
-      .update(experience)
-      .set(input)
-      .where(eq(experience.id, id))
-      .returning();
+  async update(
+    id: string,
+    input: UpdateExperienceData,
+    options?: { includedInPortfolio?: boolean }
+  ) {
+    let notFound = false;
 
-    if (!updated) return null;
+    await getDb().transaction(async (tx) => {
+      const [updated] = await tx
+        .update(experience)
+        .set(input)
+        .where(eq(experience.id, id))
+        .returning();
 
-    return experienceRepository.findById(updated.id);
+      if (!updated) {
+        notFound = true;
+        return;
+      }
+
+      if (options?.includedInPortfolio !== undefined) {
+        const existing = await tx.query.portfolioEntry.findFirst({
+          where: { type: "experience", entityId: id }
+        });
+
+        if (options.includedInPortfolio && !existing) {
+          const pid = crypto.randomUUID();
+          await tx.insert(portfolioEntry).values({
+            id: pid,
+            type: "experience",
+            entityId: id
+          });
+          await tx.update(experience).set({ portfolioEntryId: pid }).where(eq(experience.id, id));
+        } else if (!options.includedInPortfolio && existing) {
+          await tx
+            .delete(portfolioEntry)
+            .where(and(eq(portfolioEntry.type, "experience"), eq(portfolioEntry.entityId, id)));
+          await tx.update(experience).set({ portfolioEntryId: null }).where(eq(experience.id, id));
+        }
+      }
+    });
+
+    if (notFound) return null;
+    return experienceRepository.findById(id);
   },
 
   async reorder(items: ReorderExperienceItem[]) {

@@ -75,6 +75,7 @@ export const StackOutputSchema = z.object({
   icon: z.string().nullable(),
   sortOrder: z.number().int(),
   portfolioEntryId: z.string().nullable(),
+  includedInPortfolio: z.boolean(),
   updatedAt: z.date(),
   createdAt: z.date()
 }) satisfies z.ZodType<StackSchemaSelect>;
@@ -84,7 +85,8 @@ export type StackOutput = z.infer<typeof StackOutputSchema>;
 export const StackCreateInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
-  icon: z.string().nullable().optional()
+  icon: z.string().nullable().optional(),
+  includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
     Omit<StackSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder" | "portfolioEntryId">
@@ -96,7 +98,8 @@ export type StackCreateInput = z.infer<typeof StackCreateInputSchema>;
 export const StackUpdateInputSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
-  icon: z.string().nullable().optional()
+  icon: z.string().nullable().optional(),
+  includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
     Omit<StackSchemaInsert, "id" | "createdAt" | "updatedAt" | "sortOrder" | "portfolioEntryId">
@@ -122,6 +125,7 @@ export const ProjectOutputSchema = z.object({
   isArchived: z.boolean(),
   isPresent: z.boolean(),
   portfolioEntryId: z.string().nullable(),
+  includedInPortfolio: z.boolean(),
   stacks: z.array(StackOutputSchema),
   updatedAt: z.date(),
   createdAt: z.date()
@@ -140,7 +144,8 @@ export const CreateProjectInputSchema = z.object({
   experienceId: z.string().nullable().optional(),
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
-  stackIds: z.array(z.string()).optional().default([])
+  stackIds: z.array(z.string()).optional().default([]),
+  includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
     Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt" | "portfolioEntryId">
@@ -164,7 +169,8 @@ export const UpdateProjectInputSchema = z.object({
   experienceId: z.string().nullable().optional(),
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
-  stackIds: z.array(z.string()).optional()
+  stackIds: z.array(z.string()).optional(),
+  includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
     Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt" | "portfolioEntryId">
@@ -189,6 +195,7 @@ export const ExperienceOutputSchema = z.object({
   sortOrder: z.number().int(),
   isPresent: z.boolean(),
   portfolioEntryId: z.string().nullable(),
+  includedInPortfolio: z.boolean(),
   projects: z.array(ProjectOutputSchema),
   updatedAt: z.date(),
   createdAt: z.date()
@@ -202,7 +209,8 @@ export const CreateExperienceInputSchema = z.object({
   description: z.string(),
   fromDate: ExperienceDateStringSchema,
   toDate: ExperienceDateStringSchema,
-  isPresent: z.boolean().optional()
+  isPresent: z.boolean().optional(),
+  includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
     Omit<
@@ -220,7 +228,8 @@ export const UpdateExperienceInputSchema = z.object({
   description: z.string(),
   fromDate: ExperienceDateStringSchema,
   toDate: ExperienceDateStringSchema,
-  isPresent: z.boolean().optional()
+  isPresent: z.boolean().optional(),
+  includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
     Omit<
@@ -257,10 +266,3 @@ export type ProjectListOutput = z.infer<typeof ProjectListOutputSchema>;
 
 export const DeleteResponseSchema = z.object({ success: z.boolean() });
 export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;
-
-export type ResumeOutput = z.infer<typeof ResumeOutputSchema>;
-
-export const ResumeOutputSchema = z.object({
-  experiences: ExperienceListOutputSchema,
-  stacks: StackListOutputSchema
-});

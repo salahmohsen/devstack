@@ -1,14 +1,20 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Building2Icon, CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
+import { HeaderActions } from "@/shared/ui/header-actions";
+import { ListItem } from "@/shared/ui/list-item";
+import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import {
+  ItemInfoPanel,
   ItemsEmpty,
   ItemsNavProvider,
   ListSkeleton,
@@ -21,15 +27,62 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useExperienceStore } from "./_lib/experience.slice";
 import { ExperienceForm } from "./experience-form";
-import { ExperienceInfo } from "./experience-info";
-import { ExperienceItem, ExperienceItemAddButton } from "./experience-item";
+
+function formatRange(fromDate: string | null, toDate: string | null): string {
+  if (!fromDate) return "Ongoing";
+  const start = safeFormat(fromDate, "MMM yyyy");
+  if (!toDate) return `${start} — Present`;
+  const end = safeFormat(toDate, "MMM yyyy");
+  return `${start} — ${end}`;
+}
+
+function formatRangeFull(fromDate: string | null, toDate: string | null): string {
+  if (!fromDate) return "Ongoing";
+  const start = safeFormat(fromDate, "dd MMMM yyyy");
+  if (!toDate) return `${start} — Present`;
+  const end = safeFormat(toDate, "dd MMMM yyyy");
+  return `${start} — ${end}`;
+}
+
+function safeFormat(value: string, pattern: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : format(date, pattern);
+}
 
 export function ExperiencesPage() {
-  const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useExperienceStore();
+  const { itemInfo, isItemSelected, setItemInfo, setItemSelected, selectItem } =
+    useExperienceStore();
+  const [isSort, setIsSort] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<typeof visibleExperiences | null>(null);
   const queryClient = useQueryClient();
 
   const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
   const visibleExperiences = useMemo(() => experiencesQuery.data ?? [], [experiencesQuery.data]);
+
+  const deleteMutation = useMutation(
+    orpcQueryClient.portfolio.experiences.delete.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+        });
+        toast.success("Experience deleted.");
+      }
+    })
+  );
+
+  const togglePortfolioMutation = useMutation(
+    orpcQueryClient.portfolio.portfolio.toggle.mutationOptions({
+      onSuccess: async (_data, variables) => {
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+        });
+        toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
+      },
+      onError: () => {
+        toast.error("Failed to update portfolio.");
+      }
+    })
+  );
 
   const reorderMutation = useMutation(
     orpcQueryClient.portfolio.experiences.reorder.mutationOptions({
@@ -63,6 +116,10 @@ export function ExperiencesPage() {
         }
         toast.error("Failed to update order.");
       },
+      onSuccess: () => {
+        setPendingOrder(null);
+        setIsSort(false);
+      },
       onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
@@ -71,12 +128,47 @@ export function ExperiencesPage() {
     })
   );
 
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
   function handleReorder(newOrder: typeof visibleExperiences) {
+    setPendingOrder(newOrder);
+  }
+
+  function handleSaveSort() {
+    const data = pendingOrder ?? visibleExperiences;
     reorderMutation.mutate({
-      items: newOrder.map((exp, index) => {
+      items: data.map((exp, index) => {
         return { id: exp.id, sortOrder: index };
       })
     });
+  }
+
+  function handleStartSort() {
+    setPendingOrder(visibleExperiences);
+    setIsSort(true);
+  }
+
+  function handleRestoreDefault() {
+    const sorted = [...(pendingOrder ?? visibleExperiences)].toSorted((a, b) => {
+      if (!a.fromDate && !b.fromDate) return 0;
+      if (!a.fromDate) return 1;
+      if (!b.fromDate) return -1;
+      return b.fromDate.localeCompare(a.fromDate);
+    });
+    setPendingOrder(sorted);
+  }
+
+  function handleCancelSort() {
+    setPendingOrder(null);
+    setIsSort(false);
+  }
+
+  function handleTogglePortfolio(experienceId: string, included: boolean) {
+    setTogglingId(experienceId);
+    togglePortfolioMutation.mutate(
+      { type: "experience", entityId: experienceId, included },
+      { onSettled: () => setTogglingId(null) }
+    );
   }
 
   const containerRef = useRef<HTMLUListElement | null>(null);
@@ -117,7 +209,7 @@ export function ExperiencesPage() {
     <ItemsEmpty
       title="No experiences yet"
       description="Add a new experience to start tracking your work history."
-      action={<ExperienceItemAddButton onAdd={() => openDialog(null)} />}
+      action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Experience" }} />}
     />
   );
 
@@ -127,16 +219,17 @@ export function ExperiencesPage() {
 
     return (
       <SortableList
-        items={visibleExperiences}
+        items={pendingOrder ?? visibleExperiences}
         onReorder={handleReorder}
-        disabled={reorderMutation.isPending}
+        disabled={reorderMutation.isPending || !isSort}
         siblingsDimOnHover
       >
         {(experience, dragHandleProps) => (
-          <ExperienceItem
-            experience={experience}
+          <ListItem
+            selected={isItemSelected?.[experience.id] ?? false}
+            onSelect={() => selectItem(experience.id, experience)}
             dragHandleProps={dragHandleProps}
-            onEdit={openDialog}
+            isSort={isSort}
             onMouseEnter={() => {
               void queryClient.prefetchQuery(
                 orpcQueryClient.portfolio.experiences.get.queryOptions({
@@ -144,6 +237,29 @@ export function ExperiencesPage() {
                 })
               );
             }}
+            onEdit={() => openDialog(experience.id)}
+            onDelete={() => deleteMutation.mutate({ id: experience.id })}
+            isDeleting={deleteMutation.isPending}
+            onTogglePortfolio={() =>
+              handleTogglePortfolio(experience.id, !experience.portfolioEntryId)
+            }
+            isTogglingPortfolio={togglingId === experience.id}
+            inPortfolio={!!experience.portfolioEntryId}
+            deleteTitle="Delete this experience?"
+            deleteDescription="This will permanently delete this experience and all its associated projects."
+            title={experience.title}
+            meta={
+              <>
+                <p className="flex items-center gap-1">
+                  <Building2Icon size={14} />
+                  <span>{experience.organization}</span>
+                </p>
+                <p className="flex items-center gap-1">
+                  <CalendarIcon size={14} />
+                  <span>{formatRange(experience.fromDate, experience.toDate)}</span>
+                </p>
+              </>
+            }
           />
         )}
       </SortableList>
@@ -156,13 +272,58 @@ export function ExperiencesPage() {
         <PageHeader
           title="Experiences"
           description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
-          actions={<ExperienceItemAddButton onAdd={() => openDialog(null)} />}
+          actions={
+            <HeaderActions
+              add={{ onAdd: () => openDialog(null), label: "Add Experience" }}
+              sort={{
+                isSort: isSort,
+                isSortPending: reorderMutation.isPending,
+                onSortStart: handleStartSort,
+                onSortSave: handleSaveSort,
+                onSortRestore: handleRestoreDefault,
+                onSortCancel: handleCancelSort
+              }}
+            />
+          }
         />
 
         {renderList()}
 
         <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
-          {(item) => <ExperienceInfo experience={item} />}
+          {(item) => {
+            if (!item) return null;
+            return (
+              <ItemInfoPanel
+                title={item.title}
+                description={`${item.organization} · ${formatRangeFull(item.fromDate, item.toDate)}`}
+              >
+                {item.description ? (
+                  <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                    {item.description}
+                  </Markdown>
+                ) : (
+                  <p className="text-muted-foreground">No description.</p>
+                )}
+                {item.projects.length > 0 ? (
+                  <>
+                    <p className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                      Projects
+                    </p>
+                    <ul className="space-y-2">
+                      {item.projects.map((project) => (
+                        <li key={project.id} className="flex items-baseline justify-between gap-3">
+                          <span className="font-medium">{project.title}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {project.year}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </ItemInfoPanel>
+            );
+          }}
         </ItemsInfoPanel>
 
         <ExperienceForm

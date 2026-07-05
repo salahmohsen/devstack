@@ -22,6 +22,7 @@ export const contactOutputSchema = z.object({
   value: z.string(),
   icon: z.string(),
   portfolioEntryId: z.string().nullable(),
+  includedInPortfolio: z.boolean(),
   updatedAt: z.date(),
   createdAt: z.date()
 }) satisfies z.ZodType<Omit<ContactSchemaSelect, "userId">>;
@@ -31,7 +32,8 @@ export type ContactOutputSchema = z.infer<typeof contactOutputSchema>;
 export const contactInputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
-  icon: z.string()
+  icon: z.string(),
+  includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Omit<ContactSchemaInsert, "userId" | "createdAt" | "updatedAt" | "portfolioEntryId">
 >;

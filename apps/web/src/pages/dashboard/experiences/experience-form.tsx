@@ -91,7 +91,8 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
       description: experience?.description ?? "",
       fromDate: experience?.fromDate ?? "",
       toDate: experience?.toDate ?? "",
-      isPresent: experience?.isPresent ?? false
+      isPresent: experience?.isPresent ?? false,
+      includedInPortfolio: !!experience?.portfolioEntryId
     },
     validators: {
       onBlur: createZodFormValidator(
@@ -101,6 +102,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
     onSubmit: ({ value }) => {
       const payload = {
         ...value,
+        includedInPortfolio: value.includedInPortfolio,
         description: value.description,
         fromDate: value.fromDate || null,
         toDate: value.toDate || null
@@ -124,7 +126,8 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
         description: experience.description ?? "",
         fromDate: experience.fromDate ?? "",
         toDate: experience.toDate ?? "",
-        isPresent: experience.isPresent
+        isPresent: experience.isPresent,
+        includedInPortfolio: !!experience.portfolioEntryId
       });
     }
   }, [experience, form]);
@@ -194,6 +197,15 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
                   )}
                 </form.AppField>
               </div>
+
+              <form.AppField name="includedInPortfolio">
+                {(field) => (
+                  <field.SwitchField
+                    label="In portfolio"
+                    description="Include this experience in your public portfolio."
+                  />
+                )}
+              </form.AppField>
             </FieldGroup>
           </DialogPanel>
 

@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm";
 
 import { getDb } from "#@/index";
+import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 import { stack } from "#@/schema/stack.schema";
 
 export type StackEntity = InferSelectModel<typeof stack>;
@@ -48,28 +49,60 @@ export const stackRepository = {
     return getDb().query.stack.findFirst({ where: { name } });
   },
 
-  async create(input: CreateStackData) {
-    const [created] = await getDb()
-      .insert(stack)
-      .values({
-        id: crypto.randomUUID(),
+  async create(input: CreateStackData, options?: { includedInPortfolio?: boolean }) {
+    const id = crypto.randomUUID();
+    const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
+
+    await getDb().transaction(async (tx) => {
+      await tx.insert(stack).values({
+        id,
         name: input.name,
         description: input.description ?? null,
         icon: input.icon ?? null,
         sortOrder: input.sortOrder ?? 0,
-        portfolioEntryId: input.portfolioEntryId ?? null
-      })
-      .returning();
+        portfolioEntryId: pid
+      });
 
-    return stackRepository.findById(created.id);
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "stack",
+          entityId: id
+        });
+      }
+    });
+
+    return stackRepository.findById(id);
   },
 
-  async update(id: string, input: UpdateStackData) {
-    const [updated] = await getDb().update(stack).set(input).where(eq(stack.id, id)).returning();
+  async update(id: string, input: UpdateStackData, options?: { includedInPortfolio?: boolean }) {
+    return getDb().transaction(async (tx) => {
+      const [updated] = await tx.update(stack).set(input).where(eq(stack.id, id)).returning();
 
-    if (!updated) return null;
+      if (!updated) return null;
 
-    return stackRepository.findById(updated.id);
+      if (options?.includedInPortfolio !== undefined) {
+        const existing = await tx.query.portfolioEntry.findFirst({
+          where: { type: "stack", entityId: id }
+        });
+
+        if (options.includedInPortfolio && !existing) {
+          const pid = crypto.randomUUID();
+          await tx.insert(portfolioEntry).values({
+            id: pid,
+            type: "stack",
+            entityId: id
+          });
+          await tx.update(stack).set({ portfolioEntryId: pid }).where(eq(stack.id, id));
+        } else if (!options.includedInPortfolio && existing) {
+          await tx
+            .delete(portfolioEntry)
+            .where(and(eq(portfolioEntry.type, "stack"), eq(portfolioEntry.entityId, id)));
+        }
+      }
+
+      return tx.query.stack.findFirst({ where: { id } });
+    });
   },
 
   async reorder(items: ReorderStackItem[]) {

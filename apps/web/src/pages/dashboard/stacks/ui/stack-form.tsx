@@ -90,7 +90,8 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
     defaultValues: {
       name: stack?.name ?? "",
       description: stack?.description ?? "",
-      icon: stack?.icon ?? ""
+      icon: stack?.icon ?? "",
+      includedInPortfolio: !!stack?.portfolioEntryId
     },
     validators: {
       onBlur: createZodFormValidator(isEdit ? StackUpdateInputSchema : StackCreateInputSchema)
@@ -102,14 +103,16 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           data: {
             name: value.name,
             description: value.description || null,
-            icon: value.icon ? value.icon : null
+            icon: value.icon ? value.icon : null,
+            includedInPortfolio: value.includedInPortfolio
           }
         });
       } else {
         createMutation.mutate({
           name: value.name,
           description: value.description || null,
-          icon: value.icon ? value.icon : null
+          icon: value.icon ? value.icon : null,
+          includedInPortfolio: value.includedInPortfolio
         });
       }
     }
@@ -161,6 +164,15 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
                   <field.RichTextField
                     label="Description"
                     placeholder="Brief description of the stack"
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="includedInPortfolio">
+                {(field) => (
+                  <field.SwitchField
+                    label="In portfolio"
+                    description="Include this stack in your public portfolio."
                   />
                 )}
               </form.AppField>

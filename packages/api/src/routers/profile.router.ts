@@ -1,3 +1,4 @@
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -5,7 +6,9 @@ import {
   ProfileOutputSchema,
   ProfileUpdateInputSchema
 } from "@tsu-stack/core/profile";
-import { contactRepository, userRepository, type UserEntity } from "@tsu-stack/db";
+import { contactRepository, getDb, userRepository, type UserEntity } from "@tsu-stack/db";
+import { portfolioEntryRepository } from "@tsu-stack/db/repositories";
+import { contact } from "@tsu-stack/db/schema";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 
@@ -20,7 +23,17 @@ function toProfileOutput(
     emailVerified: userRow.emailVerified,
     image: userRow.image,
     createdAt: userRow.createdAt,
-    contacts
+    contacts: (contacts ?? []).map((c) => {
+      return {
+        type: c.type,
+        value: c.value,
+        icon: c.icon,
+        portfolioEntryId: c.portfolioEntryId ?? null,
+        includedInPortfolio: !!c.portfolioEntryId,
+        updatedAt: c.updatedAt,
+        createdAt: c.createdAt
+      };
+    })
   });
 }
 
@@ -46,7 +59,20 @@ export const profileRouter = {
       method: "GET"
     })
     .output(z.array(contactOutputSchema))
-    .handler(async () => contactRepository.getAdminContact() ?? []),
+    .handler(async () => {
+      const contacts = await contactRepository.getAdminContact();
+      return (contacts ?? []).map((c) => {
+        return {
+          type: c.type,
+          value: c.value,
+          icon: c.icon,
+          portfolioEntryId: c.portfolioEntryId ?? null,
+          includedInPortfolio: !!c.portfolioEntryId,
+          updatedAt: c.updatedAt,
+          createdAt: c.createdAt
+        };
+      });
+    }),
   update: protectedProcedure
     .route({
       description:
@@ -86,6 +112,35 @@ export const profileRouter = {
       }
 
       await contactRepository.upsert(userId, contactItems);
+
+      for (const contactInput of contactItems) {
+        if (contactInput.includedInPortfolio) {
+          const existing = await portfolioEntryRepository.findByTypeAndEntityId(
+            "contact",
+            contactInput.type
+          );
+          if (!existing) {
+            const created = await portfolioEntryRepository.create({
+              type: "contact",
+              entityId: contactInput.type
+            });
+            if (created) {
+              await getDb()
+                .update(contact)
+                .set({ portfolioEntryId: created.id })
+                .where(and(eq(contact.userId, userId), eq(contact.type, contactInput.type)));
+            }
+          }
+        } else {
+          const existing = await portfolioEntryRepository.findByTypeAndEntityId(
+            "contact",
+            contactInput.type
+          );
+          if (existing) {
+            await portfolioEntryRepository.deleteByTypeAndEntityId("contact", contactInput.type);
+          }
+        }
+      }
 
       const contacts = await contactRepository.findByUserId(userId);
       return toProfileOutput(updatedUser, contacts);

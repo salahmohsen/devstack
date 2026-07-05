@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm";
 
 import { getDb } from "#@/index";
+import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 import { project, projectStack } from "#@/schema/project.schema";
 import { stack } from "#@/schema/stack.schema";
 
@@ -66,12 +67,12 @@ export const projectRepository = {
     });
   },
 
-  async create(input: CreateProjectData) {
+  async create(input: CreateProjectData, options?: { includedInPortfolio?: boolean }) {
     const projectId = crypto.randomUUID();
+    const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
 
-    const [created] = await getDb()
-      .insert(project)
-      .values({
+    await getDb().transaction(async (tx) => {
+      await tx.insert(project).values({
         id: projectId,
         logo: input.logo ?? null,
         repos: input.repos ?? [],
@@ -80,86 +81,124 @@ export const projectRepository = {
         title: input.title,
         summary: input.summary,
         description: input.description,
+        sortOrder: input.sortOrder ?? 0,
         experienceId: input.experienceId ?? null,
         isArchived: input.isArchived ?? false,
         isPresent: input.isPresent ?? false,
-        portfolioEntryId: input.portfolioEntryId ?? null
-      })
-      .returning();
+        portfolioEntryId: pid
+      });
 
-    if (input.stackIds && input.stackIds.length > 0) {
-      await projectRepository.attachStacks(created.id, input.stackIds);
-    }
-
-    return projectRepository.findById(created.id);
-  },
-
-  async update(id: string, input: UpdateProjectData) {
-    const { stackIds, ...projectFields } = input;
-
-    const updateData: Record<string, unknown> = {};
-    if (projectFields.logo !== undefined) updateData.logo = projectFields.logo;
-    if (projectFields.repos !== undefined) {
-      updateData.repos = projectFields.repos;
-    }
-    if (projectFields.demoUrl !== undefined) {
-      updateData.demoUrl = projectFields.demoUrl;
-    }
-    if (projectFields.year !== undefined) updateData.year = projectFields.year;
-    if (projectFields.title !== undefined) updateData.title = projectFields.title;
-    if (projectFields.summary !== undefined) updateData.summary = projectFields.summary;
-    if (projectFields.description !== undefined) updateData.description = projectFields.description;
-    if (projectFields.experienceId !== undefined) {
-      updateData.experienceId = projectFields.experienceId;
-    }
-    if (projectFields.isArchived !== undefined) {
-      updateData.isArchived = projectFields.isArchived;
-    }
-    if (projectFields.isPresent !== undefined) {
-      updateData.isPresent = projectFields.isPresent;
-    }
-    if (projectFields.portfolioEntryId !== undefined) {
-      updateData.portfolioEntryId = projectFields.portfolioEntryId;
-    }
-
-    const [updated] = await getDb()
-      .update(project)
-      .set(updateData)
-      .where(eq(project.id, id))
-      .returning();
-
-    if (!updated) return null;
-
-    if (stackIds !== undefined) {
-      await getDb().delete(projectStack).where(eq(projectStack.projectId, id));
-
-      if (stackIds.length > 0) {
-        await projectRepository.attachStacks(id, stackIds);
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "project",
+          entityId: projectId
+        });
       }
-    }
 
-    return projectRepository.findById(updated.id);
+      if (input.stackIds && input.stackIds.length > 0) {
+        const unique = [...new Set(input.stackIds)];
+        const existing = await tx
+          .select({ id: stack.id })
+          .from(stack)
+          .where(inArray(stack.id, unique));
+        if (existing.length !== unique.length) {
+          throw new Error("One or more stacks not found");
+        }
+        await tx.insert(projectStack).values(
+          unique.map((stackId) => {
+            return { id: crypto.randomUUID(), projectId, stackId };
+          })
+        );
+      }
+    });
+
+    return projectRepository.findById(projectId);
   },
 
-  async attachStacks(projectId: string, stackIds: string[]) {
-    const unique = [...new Set(stackIds)];
+  async update(id: string, input: UpdateProjectData, options?: { includedInPortfolio?: boolean }) {
+    const { stackIds, ...projectFields } = input;
+    let notFound = false;
 
-    const existing = await getDb()
-      .select({ id: stack.id })
-      .from(stack)
-      .where(inArray(stack.id, unique));
+    await getDb().transaction(async (tx) => {
+      const updateData: Record<string, unknown> = {};
+      if (projectFields.logo !== undefined) updateData.logo = projectFields.logo;
+      if (projectFields.repos !== undefined) {
+        updateData.repos = projectFields.repos;
+      }
+      if (projectFields.demoUrl !== undefined) {
+        updateData.demoUrl = projectFields.demoUrl;
+      }
+      if (projectFields.year !== undefined) updateData.year = projectFields.year;
+      if (projectFields.title !== undefined) updateData.title = projectFields.title;
+      if (projectFields.summary !== undefined) updateData.summary = projectFields.summary;
+      if (projectFields.description !== undefined) {
+        updateData.description = projectFields.description;
+      }
+      if (projectFields.experienceId !== undefined) {
+        updateData.experienceId = projectFields.experienceId;
+      }
+      if (projectFields.isArchived !== undefined) {
+        updateData.isArchived = projectFields.isArchived;
+      }
+      if (projectFields.isPresent !== undefined) {
+        updateData.isPresent = projectFields.isPresent;
+      }
 
-    if (existing.length !== unique.length) {
-      throw new Error("One or more stacks not found");
-    }
+      const [updated] = await tx
+        .update(project)
+        .set(updateData)
+        .where(eq(project.id, id))
+        .returning();
 
-    await getDb()
-      .insert(projectStack)
-      .values(
-        unique.map((stackId) => {
-          return { id: crypto.randomUUID(), projectId, stackId };
-        })
-      );
+      if (!updated) {
+        notFound = true;
+        return;
+      }
+
+      if (stackIds !== undefined) {
+        await tx.delete(projectStack).where(eq(projectStack.projectId, id));
+        if (stackIds.length > 0) {
+          const unique = [...new Set(stackIds)];
+          const existing = await tx
+            .select({ id: stack.id })
+            .from(stack)
+            .where(inArray(stack.id, unique));
+          if (existing.length !== unique.length) {
+            throw new Error("One or more stacks not found");
+          }
+          await tx.insert(projectStack).values(
+            unique.map((stackId) => {
+              return { id: crypto.randomUUID(), projectId: id, stackId };
+            })
+          );
+        }
+      }
+
+      if (options?.includedInPortfolio !== undefined) {
+        const existing = await tx.query.portfolioEntry.findFirst({
+          where: { type: "project", entityId: id }
+        });
+
+        if (options.includedInPortfolio && !existing) {
+          const pid = crypto.randomUUID();
+          await tx.insert(portfolioEntry).values({
+            id: pid,
+            type: "project",
+            entityId: id
+          });
+          await tx.update(project).set({ portfolioEntryId: pid }).where(eq(project.id, id));
+        } else if (!options.includedInPortfolio && existing) {
+          await tx
+            .delete(portfolioEntry)
+            .where(and(eq(portfolioEntry.type, "project"), eq(portfolioEntry.entityId, id)));
+          await tx.update(project).set({ portfolioEntryId: null }).where(eq(project.id, id));
+        }
+      }
+    });
+
+    if (notFound) return null;
+    return projectRepository.findById(id);
   },
 
   async reorder(items: ReorderProjectItem[]) {

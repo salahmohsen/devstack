@@ -166,9 +166,11 @@ A row in `portfolio_entry` representing one evidence item
 expose to the public portfolio surface and to AI agents. Acts as a
 visibility gate — the row's existence, not a boolean column on the
 entity, is what makes the item visible. The owning entity holds a
-nullable `portfolio_entry_id` FK. Created and removed via the
-`portfolio.toggle` oRPC route.
-_Avoid_: Inclusion flag, visibility toggle, AI flag, include-in-portfolio.
+nullable `portfolio_entry_id` FK. Created and removed synchronously
+with the entity's own create/update/toggle operations, inside the same
+database transaction, so the FK and the portfolio*entry row are always
+consistent.
+\_Avoid*: Inclusion flag, visibility toggle, AI flag, include-in-portfolio.
 
 **Entity type**:
 The `type` column on `portfolio_entry`. One of

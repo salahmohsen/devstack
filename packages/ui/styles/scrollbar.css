@@ -1,34 +1,31 @@
 @layer base {
   :root {
     --scrollbar-width: 6px;
-    --scrollbar-bg: var(--color-muted);
-    --scrollbar-thumb-bg: var(--color-foreground);
+    --scrollbar-thumb: color-mix(in srgb, var(--color-foreground) 20%, transparent);
   }
 
   /* Apply custom scrollbar only on non-touch devices */
   @media (hover: hover) and (pointer: fine) {
-    html,
-    body {
-      &::-webkit-scrollbar {
-        width: var(--scrollbar-width);
-        height: 6px;
-        background: var(--scrollbar-bg);
-      }
+    *::-webkit-scrollbar {
+      width: var(--scrollbar-width);
+      height: 6px;
+    }
 
-      &::-webkit-scrollbar-thumb {
-        background-color: var(--scrollbar-thumb-bg);
-        border-radius: 999px;
-        border: 2px solid var(--scrollbar-thumb-bg);
-        opacity: 0.5;
-      }
+    *::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
 
-      &::-webkit-scrollbar-corner,
-      &::-webkit-scrollbar-track {
-        background: transparent;
-      }
+    *::-webkit-scrollbar-corner,
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
+    * {
       scrollbar-width: thin;
-      scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-bg);
+      scrollbar-color: var(--scrollbar-thumb) transparent;
     }
 
     /* Hide horizontal scrollbar in body specifically */

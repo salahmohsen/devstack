@@ -14,7 +14,7 @@ export function ItemsInfoFooter({ updatedAt }: ItemsInfoFooterProps) {
   const { handlePrev, handleNext } = useItemsNavContext();
 
   return (
-    <FrameFooter className="flex items-center justify-between">
+    <FrameFooter className="flex items-center justify-between py-2">
       <KbdGroup>
         <Button variant="ghost" onClick={handlePrev} size="icon">
           <ChevronLeft />
