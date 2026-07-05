@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Edit, Package, Trash2 } from "lucide-react";
+import { Package } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,7 +17,8 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { Icon } from "@/shared/ui/icon-picker";
+import { Icon } from "@/shared/ui/icon";
+import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 
@@ -50,8 +51,30 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
     })
   );
 
+  const togglePortfolioMutation = useMutation(
+    orpcQueryClient.portfolio.portfolio.toggle.mutationOptions({
+      onSuccess: async (_data, variables) => {
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+        });
+        toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
+      },
+      onError: () => {
+        toast.error("Failed to update portfolio.");
+      }
+    })
+  );
+
   function handleDelete() {
     deleteMutation.mutate({ id: stack.id });
+  }
+
+  function handleTogglePortfolio() {
+    togglePortfolioMutation.mutate({
+      type: "stack",
+      entityId: stack.id,
+      included: !stack.portfolioEntryId
+    });
   }
 
   return (
@@ -98,31 +121,24 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
         </CardContent>
 
         <CardFrame
-          className="mx-auto flex w-[calc(100%-10px)] translate-y-16 flex-row gap-1 p-1.5 data-selected:-translate-y-2"
+          className="mx-auto flex w-[calc(100%-10px)] translate-y-16 justify-center p-1.5 data-selected:-translate-y-2"
           data-selected={selected}
         >
-          <Button
-            variant="secondary"
-            onClick={(event: React.MouseEvent) => {
-              event.stopPropagation();
-              onEdit(stack.id);
+          <ListItemActionButtons
+            edit={{
+              onAction: () => onEdit(stack.id),
+              isLoading: false
             }}
-            className="flex-1"
-            aria-label={`Edit ${stack.name}`}
-          >
-            <Edit />
-          </Button>
-          <Button
-            variant="destructive"
-            className="flex-1"
-            onClick={(event) => {
-              event.stopPropagation();
-              setDeleteDialogOpen(true);
+            togglePortfolio={{
+              onAction: handleTogglePortfolio,
+              initialValue: !!stack.portfolioEntryId,
+              isLoading: togglePortfolioMutation.isPending
             }}
-            aria-label={`Delete ${stack.name}`}
-          >
-            <Trash2 />
-          </Button>
+            delete={{
+              onAction: () => setDeleteDialogOpen(true),
+              isLoading: deleteMutation.isPending
+            }}
+          />
         </CardFrame>
       </Card>
 

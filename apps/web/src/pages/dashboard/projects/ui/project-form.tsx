@@ -25,7 +25,7 @@ import { Form } from "@tsu-stack/ui/components/form";
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
-import { Icon } from "@/shared/ui/icon-picker";
+import { Icon } from "@/shared/ui/icon";
 
 import { useGetGithubProfileReposQuery } from "@/features/github";
 
@@ -93,7 +93,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       repos: (initialData?.repos ?? []) as string[],
       demoUrl: initialData?.demoUrl ?? "",
       isPresent: initialData?.isPresent ?? false,
-      stackIds: (initialData?.stacks.map((s) => s.id) ?? []) as string[]
+      stackIds: (initialData?.stacks.map((s) => s.id) ?? []) as string[],
+      includedInPortfolio: !!initialData?.portfolioEntryId
     },
     validators: {
       onChange: createZodFormValidator(isEdit ? UpdateProjectInputSchema : CreateProjectInputSchema)
@@ -101,6 +102,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     onSubmit: ({ value }) => {
       const payload = {
         ...value,
+        includedInPortfolio: value.includedInPortfolio,
         year: value.year ?? new Date().getFullYear(),
         summary: value.summary,
         description: value.description,
@@ -133,7 +135,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         repos: initialData.repos ?? [],
         demoUrl: initialData.demoUrl ?? "",
         isPresent: initialData.isPresent,
-        stackIds: initialData.stacks.map((s) => s.id)
+        stackIds: initialData.stacks.map((s) => s.id),
+        includedInPortfolio: !!initialData.portfolioEntryId
       });
       setSelectedExperienceId(initialData.experienceId ?? null);
     } else {
@@ -146,7 +149,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         repos: [],
         demoUrl: "",
         isPresent: false,
-        stackIds: []
+        stackIds: [],
+        includedInPortfolio: false
       });
       setSelectedExperienceId(null);
     }
@@ -260,6 +264,15 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                 <field.SwitchField
                   label="Currently present"
                   description="Mark this project as ongoing."
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="includedInPortfolio">
+              {(field) => (
+                <field.SwitchField
+                  label="In portfolio"
+                  description="Include this project in your public portfolio."
                 />
               )}
             </form.AppField>

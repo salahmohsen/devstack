@@ -1,17 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AtSign,
-  Calendar,
-  Check,
-  Edit,
-  ExternalLink,
-  GitBranch,
-  Globe,
-  Mail,
-  MapPin,
-  Play,
-  X
-} from "lucide-react";
+import { Calendar, Check, ChevronsUpDown, Edit, UserRoundPen, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -20,7 +8,15 @@ import { contactTypeSchema, ProfileUpdateInputSchema } from "@tsu-stack/core/pro
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Card, CardPanel } from "@tsu-stack/ui/components/card";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxPrimitive,
+  ComboboxTrigger
+} from "@tsu-stack/ui/components/combobox";
 import { FieldGroup, FieldSet } from "@tsu-stack/ui/components/field";
 import {
   Frame,
@@ -29,9 +25,14 @@ import {
   FramePanel,
   FrameTitle
 } from "@tsu-stack/ui/components/frame";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { Input } from "@tsu-stack/ui/components/input";
+import { Label } from "@tsu-stack/ui/components/label";
+import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
+import { Icon } from "@/shared/ui/icon";
+import { IconPicker } from "@/shared/ui/icon-picker";
 
 import {
   getProfileQueryOptions,
@@ -40,6 +41,45 @@ import {
 } from "@/features/profile";
 
 const CONTACT_TYPES = contactTypeSchema.options;
+
+function getInitials(name: string | null | undefined): string {
+  return (
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("") ?? ""
+  );
+}
+
+function ContactLink({
+  children,
+  href,
+  icon
+}: {
+  children: React.ReactNode;
+  href?: string;
+  icon: React.ReactNode;
+}) {
+  if (!children) return null;
+
+  const className = "inline-flex items-center gap-1 text-muted-foreground hover:text-foreground";
+
+  if (href) {
+    return (
+      <a className={className} href={href} rel="noopener noreferrer" target="_blank">
+        {icon}
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <span className={className}>
+      {icon}
+      {children}
+    </span>
+  );
+}
 
 export function ProfileSettings() {
   const queryClient = useQueryClient();
@@ -50,8 +90,23 @@ export function ProfileSettings() {
   const serverValues = {
     name: profileQuery.data?.name ?? session?.user?.name ?? "",
     email: profileQuery.data?.email ?? session?.user?.email ?? "",
-    contacts: profileQuery.data?.contacts ?? [{ icon: "", type: "", value: "" }]
+    contacts: (profileQuery.data?.contacts ?? []).map((c) => {
+      return {
+        icon: c.icon,
+        type: c.type,
+        value: c.value,
+        includedInPortfolio: !!c.portfolioEntryId
+      };
+    })
   } as ProfileUpdateInput;
+
+  const updateMutation = useMutation({
+    ...getUpdateProfileMutationOptions(),
+    onSuccess: (data) => {
+      queryClient.setQueryData(getProfileQueryOptions().queryKey, data);
+      toast.success("Profile updated successfully");
+    }
+  });
 
   const form = useAppForm({
     defaultValues: serverValues,
@@ -74,14 +129,6 @@ export function ProfileSettings() {
     }
   });
 
-  const updateMutation = useMutation({
-    ...getUpdateProfileMutationOptions(),
-    onSuccess: (data) => {
-      queryClient.setQueryData(getProfileQueryOptions().queryKey, data);
-      toast.success("Profile updated successfully");
-    }
-  });
-
   const handleCancel = () => {
     form.reset(serverValues);
     setIsEditing(false);
@@ -90,30 +137,19 @@ export function ProfileSettings() {
   const userImage = session?.user?.image ?? undefined;
   const displayName = profileQuery.data?.name ?? session?.user?.name ?? "";
   const displayEmail = profileQuery.data?.email ?? session?.user?.email ?? "";
-  const websiteDisplay =
-    profileQuery.data?.contacts.find((c) => c.type === "website")?.value ?? null;
-  const contactEmailDisplay =
-    profileQuery.data?.contacts.find((c) => c.type === "email")?.value ?? null;
-  const locationDisplay =
-    profileQuery.data?.contacts.find((c) => c.type === "location")?.value ?? null;
-  const linkedinDisplay =
-    profileQuery.data?.contacts.find((c) => c.type === "linkedin")?.value ?? null;
-  const githubDisplay = profileQuery.data?.contacts.find((c) => c.type === "github")?.value ?? null;
-  const twitterDisplay = profileQuery.data?.contacts.find((c) => c.type === "x")?.value ?? null;
-  const youtubeDisplay =
-    profileQuery.data?.contacts.find((c) => c.type === "youtube")?.value ?? null;
+  const contacts = profileQuery.data?.contacts ?? [];
 
   return (
     <form.Subscribe
       selector={(state) => {
         return {
-          values: state.values,
           canSubmit: state.canSubmit,
-          isSubmitting: state.isSubmitting
+          isSubmitting: state.isSubmitting,
+          values: state.values
         };
       }}
     >
-      {({ values, canSubmit, isSubmitting }) => (
+      {({ canSubmit, isSubmitting, values }) => (
         <Frame>
           <FrameHeader>
             <div className="flex w-full items-start justify-between gap-4">
@@ -124,29 +160,26 @@ export function ProfileSettings() {
               <div className="flex gap-2">
                 {isEditing ? (
                   <>
+                    <Button onClick={handleCancel} size="sm" variant="ghost">
+                      Cancel
+                    </Button>
                     <Button
                       disabled={!canSubmit || isSubmitting}
-                      onClick={() => {
-                        void form.handleSubmit();
-                      }}
+                      loading={isSubmitting}
+                      onClick={() => void form.handleSubmit()}
                       size="sm"
-                      type="button"
                     >
-                      {isSubmitting ? <Spinner /> : "Save Changes"}
-                    </Button>
-                    <Button onClick={handleCancel} size="sm" type="button" variant="outline">
-                      Cancel
+                      Save Changes
                     </Button>
                   </>
                 ) : (
                   <Button
+                    loading={profileQuery.isLoading}
                     onClick={() => setIsEditing(true)}
                     size="sm"
-                    type="button"
                     variant="outline"
-                    disabled={profileQuery.isLoading}
                   >
-                    {profileQuery.isLoading ? <Spinner /> : <Edit />}
+                    <Edit aria-hidden="true" />
                     Edit Profile
                   </Button>
                 )}
@@ -156,130 +189,53 @@ export function ProfileSettings() {
 
           <FramePanel>
             <div className="flex items-start gap-6">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
+              <div className="relative shrink-0">
+                <Avatar className="size-24">
                   <AvatarImage alt={displayName} src={userImage} />
-                  <AvatarFallback className="text-lg">
-                    {displayName
-                      ?.split(" ")
-                      .map((n: string) => n[0])
-                      .join("")}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-lg">{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
-                <Button
-                  className="absolute -right-2 -bottom-2 size-8 rounded-full p-0"
-                  size="sm"
-                  type="button"
-                >
-                  <Edit className="size-4" />
+                <Button className="absolute -right-2 -bottom-2 rounded-full" size="icon-sm">
+                  <UserRoundPen aria-hidden="true" />
                 </Button>
               </div>
 
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-2xl font-semibold">{values.name || displayName}</h3>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-                  <span>{values.email || displayEmail}</span>
+              <div className="flex min-w-0 flex-col gap-2">
+                <h3 className="truncate text-2xl font-semibold">{values.name || displayName}</h3>
+
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span className="truncate">{values.email || displayEmail}</span>
                   {session?.user?.emailVerified ? (
                     <Badge variant="secondary">
-                      <Check className="mr-1 h-3 w-3" />
+                      <Check aria-hidden="true" className="size-3" />
                       Verified
                     </Badge>
                   ) : (
                     <Badge variant="destructive">
-                      <X className="mr-1 h-3 w-3" />
-                      unverified
+                      <X aria-hidden="true" className="size-3" />
+                      Unverified
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    Member since{" "}
-                    {session?.user?.createdAt
-                      ? new Date(session.user.createdAt).getFullYear()
-                      : new Date().getFullYear()}
-                  </div>
+
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Calendar aria-hidden="true" className="size-4" />
+                  Member since{" "}
+                  {session?.user?.createdAt
+                    ? new Date(session.user.createdAt).getFullYear()
+                    : new Date().getFullYear()}
                 </div>
-                {(websiteDisplay ??
-                  contactEmailDisplay ??
-                  locationDisplay ??
-                  linkedinDisplay ??
-                  githubDisplay ??
-                  twitterDisplay ??
-                  youtubeDisplay) && (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm text-muted-foreground">
-                    {websiteDisplay ? (
-                      <a
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                        href={websiteDisplay}
-                        rel="noopener noreferrer"
-                        target="_blank"
+
+                {contacts.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    {contacts.map((c, idx) => (
+                      <ContactLink
+                        key={idx}
+                        href={c.type === "email" ? `mailto:${c.value}` : c.value}
+                        icon={<Icon nameIcon={c.icon} propsIcon={{ className: "size-3.5" }} />}
                       >
-                        <Globe className="h-3.5 w-3.5" />
-                        {websiteDisplay.replace(/^https?:\/\//, "")}
-                      </a>
-                    ) : null}
-                    {contactEmailDisplay ? (
-                      <a
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                        href={`mailto:${contactEmailDisplay}`}
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        {contactEmailDisplay}
-                      </a>
-                    ) : null}
-                    {locationDisplay ? (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {locationDisplay}
-                      </span>
-                    ) : null}
-                    {linkedinDisplay ? (
-                      <a
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                        href={linkedinDisplay}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        LinkedIn
-                      </a>
-                    ) : null}
-                    {githubDisplay ? (
-                      <a
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                        href={githubDisplay}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        <GitBranch className="h-3.5 w-3.5" />
-                        {githubDisplay.replace(/^https?:\/\//, "")}
-                      </a>
-                    ) : null}
-                    {twitterDisplay ? (
-                      <a
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                        href={twitterDisplay}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        <AtSign className="h-3.5 w-3.5" />
-                        {twitterDisplay.replace(/^https?:\/\//, "")}
-                      </a>
-                    ) : null}
-                    {youtubeDisplay ? (
-                      <a
-                        className="inline-flex items-center gap-1 hover:text-foreground"
-                        href={youtubeDisplay}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        {youtubeDisplay.replace(/^https?:\/\//, "")}
-                      </a>
-                    ) : null}
+                        {c.type === "linkedin" ? "LinkedIn" : c.value.replace(/^https?:\/\//, "")}
+                      </ContactLink>
+                    ))}
                   </div>
                 )}
               </div>
@@ -288,100 +244,176 @@ export function ProfileSettings() {
 
           {isEditing && (
             <FramePanel>
-              <Card>
-                <CardPanel>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      void form.handleSubmit();
-                    }}
-                  >
-                    <FieldSet>
-                      <FieldGroup>
-                        <div className="grid grid-cols-2 gap-4">
-                          <form.AppField name="name">
-                            {(field) => <field.InputField label="Display Name" />}
-                          </form.AppField>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  void form.handleSubmit();
+                }}
+              >
+                <FieldSet>
+                  <FieldGroup className="grid grid-cols-1 md:grid-cols-2">
+                    <form.AppField name="name">
+                      {(field) => <field.InputField label="Display Name" />}
+                    </form.AppField>
 
-                          <form.AppField name="email">
-                            {(field) => <field.InputField type="email" label="Email" />}
-                          </form.AppField>
-                        </div>
+                    <form.AppField name="email">
+                      {(field) => <field.InputField type="email" label="Email" />}
+                    </form.AppField>
+                  </FieldGroup>
+                  <FieldGroup>
+                    <form.AppField name="contacts" mode="array">
+                      {(field) => (
+                        <div className="mt-5 flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-foreground">Contacts</p>
+                            <Button
+                              onClick={() =>
+                                field.pushValue({ type: "email", value: "", icon: "" })
+                              }
+                              size="sm"
+                            >
+                              Add contact
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3">
+                            {field.state.value?.map((_, i) => (
+                              <Group
+                                key={i}
+                                aria-label="Contact entry"
+                                className="w-full rounded-lg"
+                              >
+                                <Group aria-label="Contact fields" className="flex-1">
+                                  <form.AppField name={`contacts[${i}].icon`}>
+                                    {(subField) => (
+                                      <IconPicker
+                                        value={subField.state.value}
+                                        onValueChange={(icon) => subField.handleChange(icon)}
+                                        className="overflow-hidden rounded-lg border border-input"
+                                      >
+                                        <Button
+                                          variant="ghost"
+                                          className="size-full justify-start rounded-none border-0 px-3"
+                                        >
+                                          {subField.state.value ? (
+                                            <Icon
+                                              nameIcon={subField.state.value}
+                                              propsIcon={{ className: "size-4.5 sm:size-4" }}
+                                            />
+                                          ) : (
+                                            "Select icon"
+                                          )}
+                                        </Button>
+                                      </IconPicker>
+                                    )}
+                                  </form.AppField>
 
-                        <form.AppField name="contacts" mode="array">
-                          {(field) => (
-                            <div className="space-y-4">
-                              <div className="flex w-full items-center justify-between pt-2">
-                                <p className="text-sm font-medium text-foreground">Contact</p>
-                                <Button
-                                  onClick={() =>
-                                    field.pushValue({ type: "email", value: "", icon: "" })
-                                  }
-                                >
-                                  add contact
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-                                {field.state.value?.map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className="grid grid-cols-6 gap-3 rounded-sm border p-5"
+                                  <GroupSeparator />
+                                  <form.AppField name={`contacts[${i}].type`}>
+                                    {(subField) => {
+                                      const items = CONTACT_TYPES.map((t) => {
+                                        return {
+                                          label: t,
+                                          value: t
+                                        };
+                                      });
+                                      return (
+                                        <Combobox
+                                          value={subField.state.value ?? null}
+                                          onValueChange={(val) => {
+                                            if (val != null) {
+                                              subField.handleChange(val as never);
+                                            }
+                                          }}
+                                          items={items}
+                                        >
+                                          <ComboboxPrimitive.InputGroup
+                                            className="relative max-w-30 rounded-lg border border-input has-disabled:opacity-64"
+                                            data-slot="input-control"
+                                          >
+                                            <ComboboxPrimitive.Input
+                                              data-slot="combobox-input"
+                                              render={
+                                                <Input
+                                                  unstyled
+                                                  nativeInput
+                                                  size="default"
+                                                  placeholder="type"
+                                                />
+                                              }
+                                            />
+                                            <ComboboxTrigger className="absolute inset-e-0.5 top-1/2 inline-flex size-8 max-w-fit shrink -translate-y-1/2 cursor-pointer items-center justify-center rounded-md opacity-80 transition-opacity outline-none hover:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4">
+                                              <ComboboxPrimitive.Icon data-slot="combobox-icon">
+                                                <ChevronsUpDown />
+                                              </ComboboxPrimitive.Icon>
+                                            </ComboboxTrigger>
+                                          </ComboboxPrimitive.InputGroup>
+                                          <ComboboxContent>
+                                            <ComboboxEmpty>No results found.</ComboboxEmpty>
+                                            <ComboboxList>
+                                              {(item: (typeof items)[number]) => (
+                                                <ComboboxItem key={item.value} value={item.value}>
+                                                  {item.label}
+                                                </ComboboxItem>
+                                              )}
+                                            </ComboboxList>
+                                          </ComboboxContent>
+                                        </Combobox>
+                                      );
+                                    }}
+                                  </form.AppField>
+
+                                  <GroupSeparator />
+                                  <form.AppField name={`contacts[${i}].value`}>
+                                    {(subField) => (
+                                      <Input
+                                        value={subField.state.value ?? ""}
+                                        className="flex-1"
+                                        onChange={(e) => subField.handleChange(e.target.value)}
+                                        placeholder="https://github.com/salahmohsen/"
+                                      />
+                                    )}
+                                  </form.AppField>
+
+                                  <GroupSeparator />
+                                  <form.AppField name={`contacts[${i}].includedInPortfolio`}>
+                                    {(subField) => (
+                                      <span
+                                        data-slot="input-control"
+                                        className="flex items-center justify-center rounded-lg border border-input px-3"
+                                      >
+                                        <Label>
+                                          Portfolio
+                                          <Switch
+                                            checked={subField.state.value as boolean}
+                                            onCheckedChange={(checked) =>
+                                              subField.handleChange(checked)
+                                            }
+                                          />
+                                        </Label>
+                                      </span>
+                                    )}
+                                  </form.AppField>
+                                </Group>
+                                <Group aria-label="Remove contact">
+                                  <Button
+                                    aria-label="Remove contact"
+                                    onClick={() => field.removeValue(i)}
+                                    size="icon-sm"
+                                    variant="outline"
                                   >
-                                    <form.AppField name={`contacts[${i}].icon`}>
-                                      {(subField) => (
-                                        <subField.IconPickerField
-                                          classNames={{
-                                            field: "col-span-1"
-                                          }}
-                                          label="Icon"
-                                        />
-                                      )}
-                                    </form.AppField>
-
-                                    <form.AppField name={`contacts[${i}].type`}>
-                                      {(subField) => (
-                                        <subField.ComboboxField
-                                          label={"Type"}
-                                          items={CONTACT_TYPES.map((t) => {
-                                            return { label: t, value: t };
-                                          })}
-                                          classNames={{
-                                            field: "col-span-1"
-                                          }}
-                                        />
-                                      )}
-                                    </form.AppField>
-
-                                    <form.AppField name={`contacts[${i}].value`}>
-                                      {(subField) => (
-                                        <subField.InputField
-                                          classNames={{ field: "col-span-3" }}
-                                          label={"Name"}
-                                        />
-                                      )}
-                                    </form.AppField>
-
-                                    <Button
-                                      className="col-span-1 h-9 self-end"
-                                      onClick={() => field.removeValue(i)}
-                                      size="sm"
-                                      type="button"
-                                      variant="destructive"
-                                    >
-                                      Delete
-                                    </Button>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </form.AppField>
-                      </FieldGroup>
-                    </FieldSet>
-                  </form>
-                </CardPanel>
-              </Card>
+                                    <X aria-hidden="true" />
+                                  </Button>
+                                </Group>
+                              </Group>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </form.AppField>
+                  </FieldGroup>
+                </FieldSet>
+              </form>
             </FramePanel>
           )}
         </Frame>

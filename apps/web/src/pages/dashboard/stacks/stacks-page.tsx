@@ -1,13 +1,19 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Package } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type StackOutput } from "@tsu-stack/core/portfolio";
+import { FrameTitle } from "@tsu-stack/ui/components/frame";
+
+import { HeaderActions } from "@/shared/ui/header-actions";
+import { Icon } from "@/shared/ui/icon";
+import { Markdown } from "@/shared/ui/markdown";
 
 import {
   GridSkeleton,
+  ItemInfoPanel,
   ItemsEmpty,
   ItemsNavProvider,
   PageHeader,
@@ -19,9 +25,7 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
-import { StackInfo } from "@/pages/dashboard/stacks/ui/stack-info";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
-import { StackItemAddButton } from "@/pages/dashboard/stacks/ui/stack-item-add-button";
 
 export function StacksPage() {
   const queryClient = useQueryClient();
@@ -29,9 +33,9 @@ export function StacksPage() {
 
   const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useStackStore();
 
-  const stacks = useMemo<StackOutput[]>(() => stacksQuery.data ?? [], [stacksQuery.data]);
+  const stacks = useMemo(() => stacksQuery.data ?? [], [stacksQuery.data]);
 
-  const { handleNext, handlePrev } = useItemsNavigation<StackOutput>({
+  const { handleNext, handlePrev } = useItemsNavigation({
     items: stacks,
     itemInfo,
     isItemSelected,
@@ -60,7 +64,7 @@ export function StacksPage() {
     <ItemsEmpty
       title="No stacks configured"
       description="Add a stack to reuse it across multiple projects."
-      action={<StackItemAddButton onAdd={() => openDialog(null)} />}
+      action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Stack" }} />}
     />
   );
 
@@ -92,13 +96,44 @@ export function StacksPage() {
         <PageHeader
           title="Tech Stacks"
           description="Click a stack to inspect its details. Use ← → to navigate."
-          actions={<StackItemAddButton onAdd={() => openDialog(null)} />}
+          actions={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Stack" }} />}
         />
 
         {renderGrid()}
 
         <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
-          {(item: StackOutput) => <StackInfo stack={item} />}
+          {(item) => {
+            if (!item) return null;
+            return (
+              <ItemInfoPanel
+                title={
+                  <div className="flex min-w-0 items-center gap-3">
+                    {item.icon ? (
+                      <Icon
+                        nameIcon={item.icon}
+                        propsIcon={{ className: "size-10 shrink-0 rounded object-contain" }}
+                      />
+                    ) : (
+                      <Package
+                        className="size-10 shrink-0 text-muted-foreground"
+                        strokeWidth={1.5}
+                      />
+                    )}
+                    <FrameTitle className="text-lg">{item.name}</FrameTitle>
+                  </div>
+                }
+                description={`Sort order: ${item.sortOrder}`}
+              >
+                {item.description ? (
+                  <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                    {item.description}
+                  </Markdown>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No description.</p>
+                )}
+              </ItemInfoPanel>
+            );
+          }}
         </ItemsInfoPanel>
 
         <StackForm

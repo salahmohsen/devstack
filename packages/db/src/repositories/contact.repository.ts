@@ -39,11 +39,18 @@ export const contactRepository = {
 
     if (input.length === 0) return [];
 
+    const seen = new Set<string>();
+    const unique = input.filter((item) => {
+      if (seen.has(item.type)) return false;
+      seen.add(item.type);
+      return true;
+    });
+
     return await getDb()
       .insert(contact)
       .values(
-        input.map((item) => {
-          return { userId, ...item };
+        unique.map((item) => {
+          return { userId, icon: item.icon, type: item.type, value: item.value };
         })
       )
       .returning();

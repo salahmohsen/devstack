@@ -2,7 +2,7 @@ import { type IconBaseProps } from "react-icons";
 
 import { type ContactOutput } from "@tsu-stack/core";
 
-import { Icon } from "@/shared/ui/icon-picker";
+import { Icon } from "@/shared/ui/icon";
 
 export const ContactButton = ({
   contact,
