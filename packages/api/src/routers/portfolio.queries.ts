@@ -1,6 +1,6 @@
 import { and, eq, type SQL, sql } from "drizzle-orm";
 
-import { type PortfolioEntryType } from "@tsu-stack/core/portfolio";
+import { type PortfolioEntryType } from "@tsu-stack/core";
 
 export type PortfolioEntityType = PortfolioEntryType;
 

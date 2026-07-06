@@ -4,34 +4,29 @@ import {
   contactOutputSchema,
   ProfileOutputSchema,
   ProfileUpdateInputSchema
-} from "@tsu-stack/core/profile";
-import { contactRepository, userRepository, type UserEntity } from "@tsu-stack/db";
+} from "@tsu-stack/core";
+import { contactRepository, userRepository } from "@tsu-stack/db";
+import { type UserSchemaSelect } from "@tsu-stack/db/types";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 
 function toProfileOutput(
-  userRow: UserEntity,
-  contacts: Awaited<ReturnType<typeof contactRepository.findByUserId>>
+  userRow: UserSchemaSelect,
+  contacts: Awaited<ReturnType<typeof contactRepository.findByUserId>>,
+  disableContacts?: boolean
 ) {
   return ProfileOutputSchema.parse({
-    id: userRow.id,
-    name: userRow.name,
-    email: userRow.email,
-    emailVerified: userRow.emailVerified,
-    image: userRow.image,
-    createdAt: userRow.createdAt,
-    contacts: (contacts ?? []).map((c) => {
-      return {
-        type: c.type,
-        value: c.value,
-        icon: c.icon,
-        portfolioEntryId: c.portfolioEntryId ?? null,
-        includedInPortfolio: !!c.portfolioEntryId,
-        updatedAt: c.updatedAt,
-        createdAt: c.createdAt,
-        id: c.id
-      };
-    })
+    ...userRow,
+    ...(disableContacts
+      ? { contacts: [] }
+      : {
+          contacts: (contacts ?? []).map((c) => {
+            return {
+              ...c,
+              includedInPortfolio: !!c.portfolioEntryId
+            };
+          })
+        })
   });
 }
 
@@ -41,15 +36,16 @@ export const profileRouter = {
       description: "Get the current owner's profile and contact info",
       method: "GET"
     })
+    .input(z.object({ disableContacts: z.boolean().default(false).optional() }).optional())
     .output(ProfileOutputSchema)
-    .handler(async ({ context }) => {
+    .handler(async ({ context, input }) => {
       const userId = context.session.user.id;
       const userRow = await userRepository.findById(userId);
       if (!userRow) {
         throw new Error("Session references a user that no longer exists");
       }
       const contacts = await contactRepository.findByUserId(userId);
-      return toProfileOutput(userRow, contacts);
+      return toProfileOutput(userRow, contacts, input?.disableContacts);
     }),
   getContacts: publicProcedure
     .route({
@@ -104,6 +100,8 @@ export const profileRouter = {
       const updatedUser = await userRepository.update(userId, {
         name: input.name,
         email: input.email,
+        summary: input.summary,
+        image: input.image,
         ...(emailChanged ? { emailVerified: false } : {})
       });
       if (!updatedUser) {

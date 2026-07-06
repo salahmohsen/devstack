@@ -1,5 +1,5 @@
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ProfileUpdateInput } from "@tsu-stack/core/profile";
+import { type ProfileUpdateInput } from "@tsu-stack/core";
 
 export function getUpdateProfileMutationOptions() {
   return orpcQueryClient.profile.update.mutationOptions();

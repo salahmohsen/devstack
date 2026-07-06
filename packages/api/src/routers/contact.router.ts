@@ -3,11 +3,11 @@ import { z } from "zod";
 import { contactOutputSchema } from "@tsu-stack/core";
 import { contactRepository, userRepository } from "@tsu-stack/db";
 
-import { publicProcedure } from "#@/lib/procedures/factory";
+import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toContactOutput } from "#@/routers/portfolio.mappers";
 
 export const portfolioContactRouter = {
-  get: publicProcedure
+  get: protectedProcedure
     .route({
       description: "Get the contact info",
       method: "GET"

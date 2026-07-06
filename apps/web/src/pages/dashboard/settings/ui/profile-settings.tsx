@@ -3,8 +3,9 @@ import { Calendar, Check, ChevronsUpDown, Edit, UserRoundPen, X } from "lucide-r
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { authClient } from "@tsu-stack/auth/react/auth-client";
-import { contactTypeSchema, ProfileUpdateInputSchema } from "@tsu-stack/core/profile";
+import { contactTypeSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -35,11 +36,7 @@ import { Icon } from "@/shared/ui/icon";
 import { IconPicker } from "@/shared/ui/icon-picker";
 
 import { getPortfolioListQueryOptions } from "@/features/portfolio";
-import {
-  getProfileQueryOptions,
-  getUpdateProfileMutationOptions,
-  type ProfileUpdateInput
-} from "@/features/profile";
+import { getUpdateProfileMutationOptions, type ProfileUpdateInput } from "@/features/profile";
 
 const CONTACT_TYPES = contactTypeSchema.options;
 
@@ -85,7 +82,7 @@ function ContactLink({
 export function ProfileSettings() {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
-  const profileQuery = useQuery(getProfileQueryOptions());
+  const profileQuery = useQuery(orpcQueryClient.profile.get.queryOptions());
   const [isEditing, setIsEditing] = useState(false);
 
   const serverValues = {
@@ -105,7 +102,7 @@ export function ProfileSettings() {
   const updateMutation = useMutation({
     ...getUpdateProfileMutationOptions(),
     onSuccess: (data) => {
-      queryClient.setQueryData(getProfileQueryOptions().queryKey, data);
+      queryClient.setQueryData(orpcQueryClient.profile.get.queryOptions().queryKey, data);
       void queryClient.invalidateQueries({
         queryKey: getPortfolioListQueryOptions().queryKey
       });

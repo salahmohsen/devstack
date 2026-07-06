@@ -44,6 +44,8 @@ export const contactInputSchema = z.object({
 export const ProfileUpdateInputSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   email: z.email("Please enter a valid email address").trim().max(320),
+  summary: z.string().optional(),
+  image: z.string().optional(),
   contacts: z.array(contactInputSchema).optional()
 }) satisfies z.ZodType<
   Partial<Omit<UserSchemaInsert, "emailVerified" | "image" | "createdAt" | "updatedAt">>
@@ -58,7 +60,8 @@ export const ProfileOutputSchema = z.object({
   emailVerified: z.boolean(),
   image: z.string().nullable(),
   createdAt: z.coerce.date(),
-  contacts: z.array(contactOutputSchema)
+  contacts: z.array(contactOutputSchema),
+  summary: z.string()
 }) satisfies z.ZodType<
   Omit<UserSchemaSelect, "updatedAt"> & { contacts: z.infer<typeof contactOutputSchema>[] }
 >;

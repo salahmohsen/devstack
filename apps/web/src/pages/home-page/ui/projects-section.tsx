@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 
-import { type ProjectOutput } from "@tsu-stack/core/portfolio";
+import { type ProjectOutput } from "@tsu-stack/core";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 

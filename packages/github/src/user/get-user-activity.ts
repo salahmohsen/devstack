@@ -1,5 +1,4 @@
-import { type OrpcContext } from "@tsu-stack/core/orpc-context";
-import { isRecord } from "@tsu-stack/core/utils";
+import { type OrpcContext, isRecord } from "@tsu-stack/core";
 
 import { getCachedGitHubRequest } from "#@/infrastructure/cache/get-github-resource-local-first";
 import { githubCachePolicy } from "#@/infrastructure/cache/github-cache-policy";

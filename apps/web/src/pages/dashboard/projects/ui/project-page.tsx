@@ -8,7 +8,7 @@ import { FaGithub, FaLink } from "react-icons/fa";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ProjectOutput } from "@tsu-stack/core/portfolio";
+import { type ProjectOutput } from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { FrameDescription, FrameTitle } from "@tsu-stack/ui/components/frame";
@@ -37,7 +37,7 @@ import { useProjectStore } from "@/pages/dashboard/projects/_lib/project.slice";
 import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
 export function ProjectsPage() {
-  const projectsQuery = useQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
+  const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
   const queryClient = useQueryClient();
 
   const { itemInfo, isItemSelected, setItemInfo, setItemSelected, selectItem } = useProjectStore();
@@ -48,10 +48,10 @@ export function ProjectsPage() {
   const [pendingOrder, setPendingOrder] = useState<ProjectOutput[] | null>(null);
 
   const deleteMutation = useMutation(
-    orpcQueryClient.portfolio.projects.delete.mutationOptions({
+    orpcQueryClient.projects.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -65,10 +65,10 @@ export function ProjectsPage() {
   );
 
   const togglePortfolioMutation = useMutation(
-    orpcQueryClient.portfolio.portfolio.toggle.mutationOptions({
+    orpcQueryClient.portfolio.toggle.mutationOptions({
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -82,9 +82,9 @@ export function ProjectsPage() {
   );
 
   const reorderMutation = useMutation(
-    orpcQueryClient.portfolio.projects.reorder.mutationOptions({
+    orpcQueryClient.projects.reorder.mutationOptions({
       onMutate: async (input) => {
-        const listKey = orpcQueryClient.portfolio.projects.list.queryKey();
+        const listKey = orpcQueryClient.projects.list.queryKey();
         await queryClient.cancelQueries({ queryKey: listKey });
 
         const previous = queryClient.getQueryData(listKey);
@@ -106,10 +106,7 @@ export function ProjectsPage() {
       },
       onError: (_error, _input, context) => {
         if (context?.previous !== undefined) {
-          queryClient.setQueryData(
-            orpcQueryClient.portfolio.projects.list.queryKey(),
-            context.previous
-          );
+          queryClient.setQueryData(orpcQueryClient.projects.list.queryKey(), context.previous);
         }
         toast.error("Failed to update order.");
       },
@@ -119,7 +116,7 @@ export function ProjectsPage() {
       },
       onSettled: () => {
         void queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         void queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -226,7 +223,7 @@ export function ProjectsPage() {
             isSort={isSort}
             onMouseEnter={() => {
               void queryClient.ensureQueryData(
-                orpcQueryClient.portfolio.projects.get.queryOptions({ input: { id: project.id } })
+                orpcQueryClient.projects.get.queryOptions({ input: { id: project.id } })
               );
             }}
             onEdit={() => openDialog(project.id)}

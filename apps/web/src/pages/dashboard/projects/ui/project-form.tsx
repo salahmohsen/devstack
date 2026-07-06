@@ -9,7 +9,7 @@ import {
   CreateProjectInputSchema,
   UpdateProjectInputSchema,
   type ProjectOutput
-} from "@tsu-stack/core/portfolio";
+} from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,
@@ -41,8 +41,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
   const isEdit = !!initialData;
   const id = initialData?.id;
 
-  const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
-  const stacksQuery = useQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
+  const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
   const reposQuery = useGetGithubProfileReposQuery();
   const stacks = stacksQuery.data ?? [];
   const repos = reposQuery.data ?? [];
@@ -50,10 +50,10 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
   const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(null);
 
   const createMutation = useMutation(
-    orpcQueryClient.portfolio.projects.create.mutationOptions({
+    orpcQueryClient.projects.create.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -62,19 +62,19 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         onOpenChange(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to create project.");
+        toast.error(error.message ?? "Failed to create project.");
       }
     })
   );
 
   const updateMutation = useMutation(
-    orpcQueryClient.portfolio.projects.update.mutationOptions({
+    orpcQueryClient.projects.update.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.get.queryKey({
+          queryKey: orpcQueryClient.projects.get.queryKey({
             input: { id: id! }
           })
         });
@@ -85,7 +85,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         onOpenChange(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to update project.");
+        toast.error(error.message ?? "Failed to update project.");
       }
     })
   );

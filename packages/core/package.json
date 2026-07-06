@@ -6,16 +6,7 @@
     "#@/*": "./src/*.ts"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./github-config": "./src/github-config/index.ts",
-    "./health": "./src/health/index.ts",
-    "./orpc-context": "./src/orpc-context/index.ts",
-    "./portfolio": "./src/portfolio/index.ts",
-    "./profile": "./src/profile/index.ts",
-    "./resume": "./src/resume/index.ts",
-    "./utils": "./src/utils/index.ts",
-    "./common": "./src/common/index.ts",
-    "./*": "./src/*.ts"
+    ".": "./src/index.ts"
   },
   "dependencies": {
     "octokit": "catalog:",

@@ -8,7 +8,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { useMediaQuery } from "@/shared/lib/use-media-query";
 import { IntersectionProvider } from "@/shared/providers/intersection.provider";
 
-import { PublicSidebar } from "@/widgets/layout/ui/public-sidebar";
+import { PublicSidebar } from "@/widgets/layout/ui/sidebar";
 
 import { CommandPalette } from "./command-palette";
 import { DashboardBottomBar } from "./dashboard-bottombar";

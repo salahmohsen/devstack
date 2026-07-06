@@ -1,4 +1,4 @@
-import { type ResumeOutput } from "@tsu-stack/core/resume";
+import { type ResumeOutput } from "@tsu-stack/core";
 
 import { createItemsUIStore } from "@/widgets/items-page";
 

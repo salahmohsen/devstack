@@ -1,23 +1,21 @@
 import { z } from "zod";
 
 import {
-  DeleteResponseSchema,
-  ReorderInputSchema,
-  ReorderResponseSchema
-} from "@tsu-stack/core/common";
-import {
   CreateExperienceInputSchema,
+  DeleteResponseSchema,
   ExperienceListOutputSchema,
   ExperienceOutputSchema,
+  ReorderInputSchema,
+  ReorderResponseSchema,
   UpdateExperienceInputSchema
-} from "@tsu-stack/core/portfolio";
+} from "@tsu-stack/core";
 import { experienceRepository } from "@tsu-stack/db/repositories";
 
-import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toExperienceOutput } from "#@/routers/portfolio.mappers";
 
-export const portfolioExperiencesRouter = {
-  list: publicProcedure
+export const experiencesRouter = {
+  list: protectedProcedure
     .route({
       description: "List all experiences with their projects",
       method: "GET"
@@ -27,7 +25,7 @@ export const portfolioExperiencesRouter = {
       const experiences = await experienceRepository.findAll();
       return experiences.map(toExperienceOutput);
     }),
-  get: publicProcedure
+  get: protectedProcedure
     .route({
       description: "Get a single experience by ID",
       method: "GET"

@@ -2,24 +2,22 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
-  DeleteResponseSchema,
-  ReorderInputSchema,
-  ReorderResponseSchema
-} from "@tsu-stack/core/common";
-import {
   CreateProjectInputSchema,
+  DeleteResponseSchema,
   ProjectListOutputSchema,
   ProjectOutputSchema,
+  ReorderInputSchema,
+  ReorderResponseSchema,
   ToggleProjectArchivedResponseSchema,
   UpdateProjectInputSchema
-} from "@tsu-stack/core/portfolio";
+} from "@tsu-stack/core";
 import { projectRepository } from "@tsu-stack/db/repositories";
 
-import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toProjectOutput } from "#@/routers/portfolio.mappers";
 
-export const portfolioProjectsRouter = {
-  list: publicProcedure
+export const projectsRouter = {
+  list: protectedProcedure
     .route({
       description: "List all projects with their tech stacks",
       method: "GET"
@@ -29,7 +27,7 @@ export const portfolioProjectsRouter = {
       const projects = await projectRepository.findAll();
       return projects.map(toProjectOutput);
     }),
-  get: publicProcedure
+  get: protectedProcedure
     .route({
       description: "Get a single project by ID",
       method: "GET"

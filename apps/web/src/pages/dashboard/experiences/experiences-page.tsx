@@ -58,14 +58,14 @@ export function ExperiencesPage() {
   const [pendingOrder, setPendingOrder] = useState<typeof visibleExperiences | null>(null);
   const queryClient = useQueryClient();
 
-  const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
   const visibleExperiences = useMemo(() => experiencesQuery.data ?? [], [experiencesQuery.data]);
 
   const deleteMutation = useMutation(
-    orpcQueryClient.portfolio.experiences.delete.mutationOptions({
+    orpcQueryClient.experiences.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -76,10 +76,10 @@ export function ExperiencesPage() {
   );
 
   const togglePortfolioMutation = useMutation(
-    orpcQueryClient.portfolio.portfolio.toggle.mutationOptions({
+    orpcQueryClient.portfolio.toggle.mutationOptions({
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -93,9 +93,9 @@ export function ExperiencesPage() {
   );
 
   const reorderMutation = useMutation(
-    orpcQueryClient.portfolio.experiences.reorder.mutationOptions({
+    orpcQueryClient.experiences.reorder.mutationOptions({
       onMutate: async (input) => {
-        const listKey = orpcQueryClient.portfolio.experiences.list.queryKey();
+        const listKey = orpcQueryClient.experiences.list.queryKey();
         await queryClient.cancelQueries({ queryKey: listKey });
 
         const previous = queryClient.getQueryData(listKey);
@@ -117,10 +117,7 @@ export function ExperiencesPage() {
       },
       onError: (_error, _input, context) => {
         if (context?.previous !== undefined) {
-          queryClient.setQueryData(
-            orpcQueryClient.portfolio.experiences.list.queryKey(),
-            context.previous
-          );
+          queryClient.setQueryData(orpcQueryClient.experiences.list.queryKey(), context.previous);
         }
         toast.error("Failed to update order.");
       },
@@ -130,7 +127,7 @@ export function ExperiencesPage() {
       },
       onSettled: () => {
         void queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         void queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -243,7 +240,7 @@ export function ExperiencesPage() {
             isSort={isSort}
             onMouseEnter={() => {
               void queryClient.prefetchQuery(
-                orpcQueryClient.portfolio.experiences.get.queryOptions({
+                orpcQueryClient.experiences.get.queryOptions({
                   input: { id: experience.id }
                 })
               );

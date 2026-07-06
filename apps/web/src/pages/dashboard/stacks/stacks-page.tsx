@@ -29,7 +29,7 @@ import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 
 export function StacksPage() {
   const queryClient = useQueryClient();
-  const stacksQuery = useQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
+  const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
 
   const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useStackStore();
 
@@ -81,7 +81,7 @@ export function StacksPage() {
             onEdit={openDialog}
             onMouseEnter={() => {
               void queryClient.prefetchQuery(
-                orpcQueryClient.portfolio.stacks.get.queryOptions({ input: { id: stack.id } })
+                orpcQueryClient.stacks.get.queryOptions({ input: { id: stack.id } })
               );
             }}
           />

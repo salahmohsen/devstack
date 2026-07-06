@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const DeleteResponseSchema = z.object({ success: z.boolean() });
-export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;
 
 export const ReorderInputSchema = z.object({
   items: z.array(
@@ -11,7 +10,8 @@ export const ReorderInputSchema = z.object({
     })
   )
 });
-export type ReorderInput = z.infer<typeof ReorderInputSchema>;
-
 export const ReorderResponseSchema = z.object({ success: z.boolean() });
+
+export type ReorderInput = z.infer<typeof ReorderInputSchema>;
 export type ReorderResponse = z.infer<typeof ReorderResponseSchema>;
+export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;

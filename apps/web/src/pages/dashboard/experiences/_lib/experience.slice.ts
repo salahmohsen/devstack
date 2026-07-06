@@ -1,4 +1,4 @@
-import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
+import { type ExperienceOutput } from "@tsu-stack/core";
 
 import { createItemsUIStore } from "@/widgets/items-page";
 

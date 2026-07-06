@@ -1,4 +1,4 @@
-import { type ProjectOutput } from "@tsu-stack/core/portfolio";
+import { type ProjectOutput } from "@tsu-stack/core";
 
 import { createItemsUIStore } from "@/widgets/items-page";
 

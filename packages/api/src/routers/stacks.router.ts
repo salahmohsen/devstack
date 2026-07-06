@@ -4,21 +4,19 @@ import { z } from "zod";
 import {
   DeleteResponseSchema,
   ReorderInputSchema,
-  ReorderResponseSchema
-} from "@tsu-stack/core/common";
-import {
+  ReorderResponseSchema,
   StackCreateInputSchema,
   StackListOutputSchema,
   StackOutputSchema,
   StackUpdateInputSchema
-} from "@tsu-stack/core/portfolio";
+} from "@tsu-stack/core";
 import { stackRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { toStackOutput } from "#@/routers/portfolio.mappers";
 
-export const portfolioStacksRouter = {
-  list: publicProcedure
+export const stacksRouter = {
+  list: protectedProcedure
     .route({
       description: "List all tech stacks",
       method: "GET"

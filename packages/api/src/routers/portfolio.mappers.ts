@@ -1,8 +1,4 @@
-import {
-  type ExperienceOutput,
-  type ProjectOutput,
-  type StackOutput
-} from "@tsu-stack/core/portfolio";
+import { type ExperienceOutput, type ProjectOutput, type StackOutput } from "@tsu-stack/core";
 import { type ContactSchemaSelect } from "@tsu-stack/db/types";
 
 export type StackRow = {

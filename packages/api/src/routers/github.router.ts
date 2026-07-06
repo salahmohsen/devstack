@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { GitHubUsernameSchema } from "@tsu-stack/core/github-config";
+import { GitHubUsernameSchema } from "@tsu-stack/core";
 import { getDb } from "@tsu-stack/db";
 import {
   bumpGitHubCacheNamespaces,

@@ -9,7 +9,7 @@ import {
   CreateExperienceInputSchema,
   UpdateExperienceInputSchema,
   type ExperienceOutput
-} from "@tsu-stack/core/portfolio";
+} from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,
@@ -42,7 +42,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
   const id = initialData?.id;
 
   const experienceQuery = useQuery({
-    ...orpcQueryClient.portfolio.experiences.get.queryOptions({
+    ...orpcQueryClient.experiences.get.queryOptions({
       input: { id: id! }
     }),
     enabled: isEdit,
@@ -50,10 +50,10 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
   });
 
   const createMutation = useMutation(
-    orpcQueryClient.portfolio.experiences.create.mutationOptions({
+    orpcQueryClient.experiences.create.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -68,13 +68,13 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
   );
 
   const updateMutation = useMutation(
-    orpcQueryClient.portfolio.experiences.update.mutationOptions({
+    orpcQueryClient.experiences.update.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.list.queryKey()
+          queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.experiences.get.queryKey({
+          queryKey: orpcQueryClient.experiences.get.queryKey({
             input: { id: id! }
           })
         });
@@ -85,7 +85,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
         onOpenChange(false);
       },
       onError: (error) => {
-        toast.error(error.message || "Failed to update experience.");
+        toast.error(error.message ?? "Failed to update experience.");
       }
     })
   );
@@ -112,8 +112,8 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
         ...value,
         includedInPortfolio: value.includedInPortfolio,
         description: value.description,
-        fromDate: value.fromDate || null,
-        toDate: value.toDate || null
+        fromDate: value.fromDate ?? null,
+        toDate: value.toDate ?? null
       };
       if (isEdit && id) {
         updateMutation.mutate({ id: id, data: payload });

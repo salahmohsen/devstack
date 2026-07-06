@@ -2,7 +2,7 @@ import {
   GITHUB_TOKEN_MASK,
   GithubConfigOutputSchema,
   UpdateGithubConfigInputSchema
-} from "@tsu-stack/core/github-config";
+} from "@tsu-stack/core";
 import { githubConfigRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";

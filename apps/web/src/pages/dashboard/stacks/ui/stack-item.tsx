@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type StackOutput } from "@tsu-stack/core/portfolio";
+import { type StackOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
 import {
@@ -36,13 +36,13 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const deleteMutation = useMutation(
-    orpcQueryClient.portfolio.stacks.delete.mutationOptions({
+    orpcQueryClient.stacks.delete.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -57,10 +57,10 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
   );
 
   const togglePortfolioMutation = useMutation(
-    orpcQueryClient.portfolio.portfolio.toggle.mutationOptions({
+    orpcQueryClient.portfolio.toggle.mutationOptions({
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.portfolio.list.queryOptions().queryKey
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey

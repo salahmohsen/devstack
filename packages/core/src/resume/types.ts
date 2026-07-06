@@ -26,9 +26,6 @@ export const SetDefaultInputSchema = z.object({
 });
 export type SetDefaultInput = z.infer<typeof SetDefaultInputSchema>;
 
-export type { DeleteResponse } from "@tsu-stack/core/common";
-export { DeleteResponseSchema } from "@tsu-stack/core/common";
-
 export const DeleteInputSchema = z.object({
   id: z.string()
 });

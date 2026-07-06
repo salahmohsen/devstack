@@ -1,0 +1,77 @@
+import { z } from "zod";
+
+import { type ProjectSchemaInsert, type ProjectSchemaSelect } from "@tsu-stack/db/types";
+
+import { StackOutputSchema } from "#@/stack/types";
+
+export const ProjectOutputSchema = z.object({
+  id: z.string(),
+  logo: z.string().nullable(),
+  repos: z.array(z.url()),
+  demoUrl: z.url().nullable(),
+  year: z.number().int(),
+  title: z.string(),
+  summary: z.string(),
+  description: z.string(),
+  sortOrder: z.number().int(),
+  experienceId: z.string().nullable(),
+  isArchived: z.boolean(),
+  isPresent: z.boolean(),
+  portfolioEntryId: z.string().nullable(),
+  includedInPortfolio: z.boolean(),
+  stacks: z.array(StackOutputSchema),
+  updatedAt: z.date(),
+  createdAt: z.date()
+}) satisfies z.ZodType<ProjectSchemaSelect>;
+
+export const ProjectListOutputSchema = z.array(ProjectOutputSchema);
+
+export const CreateProjectInputSchema = z.object({
+  logo: z.string().nullable().optional(),
+  repos: z.array(z.url()).optional().default([]),
+  demoUrl: z.url().nullable().optional(),
+  year: z.coerce.number().int(),
+  title: z.string().min(1),
+  summary: z.string(),
+  description: z.string(),
+  experienceId: z.string().nullable().optional(),
+  isArchived: z.boolean().optional(),
+  isPresent: z.boolean().optional(),
+  stackIds: z.array(z.string()).optional().default([]),
+  includedInPortfolio: z.boolean().optional()
+}) satisfies z.ZodType<
+  Partial<
+    Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt" | "portfolioEntryId">
+  >
+>;
+
+export const UpdateProjectInputSchema = z.object({
+  logo: z.string().nullable().optional(),
+  repos: z.array(z.url()).optional(),
+  demoUrl: z
+    .union([z.literal(""), z.url()])
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value)),
+  year: z.coerce.number().int().optional(),
+  title: z.string().min(1).optional(),
+  summary: z.string(),
+  description: z.string(),
+  experienceId: z.string().nullable().optional(),
+  isArchived: z.boolean().optional(),
+  isPresent: z.boolean().optional(),
+  stackIds: z.array(z.string()).optional(),
+  includedInPortfolio: z.boolean().optional()
+}) satisfies z.ZodType<
+  Partial<
+    Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt" | "portfolioEntryId">
+  >
+>;
+
+export const ToggleProjectArchivedResponseSchema = ProjectOutputSchema;
+
+export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
+export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
+export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
+export type ToggleProjectArchivedResponse = z.infer<typeof ToggleProjectArchivedResponseSchema>;
+export type ProjectListOutput = z.infer<typeof ProjectListOutputSchema>;

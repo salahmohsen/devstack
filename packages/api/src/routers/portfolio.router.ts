@@ -6,7 +6,7 @@ import {
   PortfolioListOutputSchema,
   PortfolioToggleInputSchema,
   PortfolioToggleOutputSchema
-} from "@tsu-stack/core/portfolio";
+} from "@tsu-stack/core";
 import { contactRepository, getDb, userRepository } from "@tsu-stack/db";
 import {
   experienceRepository,
@@ -110,7 +110,7 @@ async function listAllOptedIn(filterString?: string) {
   };
 }
 
-export const portfolioPortfolioRouter = {
+export const PortfolioRouter = {
   list: publicProcedure
     .route({
       description: "List all portfolio entries categorized by type",
@@ -128,10 +128,10 @@ export const portfolioPortfolioRouter = {
       try {
         const all = await listAllOptedIn(input.filter);
         return {
-          experiences: all.experiences as never,
-          projects: all.projects as never,
-          stacks: all.stacks as never,
-          contacts: all.contacts as never,
+          experiences: all.experiences,
+          projects: all.projects,
+          stacks: all.stacks,
+          contacts: all.contacts,
           nextCursor: null
         };
       } catch (error) {

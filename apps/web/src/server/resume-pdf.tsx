@@ -1,11 +1,8 @@
-import { Document, Page, Text, Heading, List, Spacer } from "pdfnative-react";
+import { Document, Heading, List, Page, Spacer, Text } from "pdfnative-react";
 
-import {
-  type ExperienceOutput,
-  type ProjectOutput,
-  type StackOutput
-} from "@tsu-stack/core/portfolio";
-import { type ContactSchemaSelect } from "@tsu-stack/db/types";
+import { type PortfolioListOutput } from "@tsu-stack/core";
+
+import { type GenerateResume } from "@/server/resume-service";
 
 const SPACING = {
   pagePadding: 52,
@@ -56,20 +53,33 @@ function extractBullets(html: string): string[] {
   return items;
 }
 
-type ContactMap = {
-  email: string;
-  phone: string;
-  location: string;
-  website: string;
-};
+function stripUrl(value: string): string {
+  return value
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "")
+    .replace(/^www\./, "");
+}
 
-function toContactMap(contacts: ContactSchemaSelect[]): ContactMap {
-  const map: ContactMap = { email: "", phone: "", location: "", website: "" };
+function displayContact(type: string, value: string): string {
+  if (type === "email" || type === "phone" || type === "location") return value;
+  const stripped = stripUrl(value);
+  const prefix: Record<string, string> = {
+    website: "",
+    linkedin: "linkedin.com/",
+    github: "github.com/",
+    x: "x.com/",
+    youtube: "youtube.com/"
+  };
+  return `${prefix[type] ?? ""}${stripped}`;
+}
+
+type ContactMap = Record<string, string>;
+
+function toContactMap(contacts: Pick<PortfolioListOutput, "contacts">["contacts"]): ContactMap {
+  const map: ContactMap = {};
+
   for (const c of contacts) {
-    if (c.type === "email") map.email = c.value;
-    else if (c.type === "phone") map.phone = c.value;
-    else if (c.type === "location") map.location = c.value;
-    else if (c.type === "website") map.website = c.value;
+    map[c.type] = displayContact(c.type, c.value);
   }
   return map;
 }
@@ -85,44 +95,35 @@ function formatDateRange(from: string | null, to: string | null, isPresent: bool
   return `${fromStr} - ${toStr}`;
 }
 
-function ContactLine({ contacts }: { contacts: ContactSchemaSelect[] }) {
+function ContactLine({
+  contacts
+}: {
+  contacts: Pick<PortfolioListOutput, "contacts">["contacts"];
+}) {
   const contactMap = toContactMap(contacts);
-  const parts: string[] = [];
-  if (contactMap.email) parts.push(contactMap.email);
-  if (contactMap.phone) parts.push(contactMap.phone);
-  if (contactMap.location) parts.push(contactMap.location);
-  if (contactMap.website) parts.push(contactMap.website);
-  return (
+  const parts: string[] = Object.values(contactMap).filter(Boolean);
+  return parts.length > 0 ? (
     <Text fontSize={9} color={COLORS.secondary}>
       {parts.join(" · ")}
     </Text>
-  );
+  ) : null;
 }
 
-type ResumeData = {
-  name: string;
-  contacts: ContactSchemaSelect[];
-  experiences: ExperienceOutput[];
-  projects: ProjectOutput[];
-  stacks: StackOutput[];
-};
-
-export function ResumeDocument({ data }: { data: ResumeData }) {
-  const experiences = data.experiences.filter((e) => e.includedInPortfolio);
-  const projects = data.projects.filter((p) => p.includedInPortfolio && !p.isArchived);
-  const stacks = data.stacks.filter((s) => s.includedInPortfolio);
+export function ResumeDocument({ data }: { data: GenerateResume }) {
+  const experiences = data.portfolio.experiences.filter((e) => e.includedInPortfolio);
+  const projects = data.portfolio.projects.filter((p) => p.includedInPortfolio && !p.isArchived);
+  const stacks = data.portfolio.stacks.filter((s) => s.includedInPortfolio);
 
   return (
     <Document
-      title={`${data.name} - Resume`}
       layout={{
         tagged: true,
         margins: { t: 52, r: 52, b: 52, l: 52 }
       }}
     >
       <Page>
-        <Heading level={1}>{data.name}</Heading>
-        <ContactLine contacts={data.contacts} />
+        <Heading level={1}>{data.profile.name}</Heading>
+        <ContactLine contacts={data.portfolio.contacts} />
         <Spacer height={SPACING.contactToFirstSection} />
 
         {experiences.length > 0 && (

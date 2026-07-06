@@ -4,11 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import {
-  StackCreateInputSchema,
-  StackUpdateInputSchema,
-  type StackOutput
-} from "@tsu-stack/core/portfolio";
+import { StackCreateInputSchema, StackUpdateInputSchema, type StackOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,
@@ -41,7 +37,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
   const id = initialData?.id;
 
   const stackQuery = useQuery({
-    ...orpcQueryClient.portfolio.stacks.get.queryOptions({
+    ...orpcQueryClient.stacks.get.queryOptions({
       input: { id: id! }
     }),
     enabled: isEdit,
@@ -49,10 +45,10 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
   });
 
   const createMutation = useMutation(
-    orpcQueryClient.portfolio.stacks.create.mutationOptions({
+    orpcQueryClient.stacks.create.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -67,18 +63,18 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
   );
 
   const updateMutation = useMutation(
-    orpcQueryClient.portfolio.stacks.update.mutationOptions({
+    orpcQueryClient.stacks.update.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.stacks.get.queryKey({
+          queryKey: orpcQueryClient.stacks.get.queryKey({
             input: { id: id! }
           })
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.projects.list.queryKey()
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -118,7 +114,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
       } else {
         createMutation.mutate({
           name: value.name,
-          description: value.description || null,
+          description: value.description ?? null,
           icon: value.icon ? value.icon : null,
           includedInPortfolio: value.includedInPortfolio
         });

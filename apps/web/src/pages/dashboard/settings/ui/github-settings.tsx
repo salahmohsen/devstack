@@ -6,10 +6,7 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
-import {
-  type GithubConfigOutput,
-  UpdateGithubConfigInputSchema
-} from "@tsu-stack/core/github-config";
+import { type GithubConfigOutput, UpdateGithubConfigInputSchema } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardPanel } from "@tsu-stack/ui/components/card";
 import {

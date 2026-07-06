@@ -4,7 +4,7 @@ import {
   ResumeListOutputSchema,
   ResumeOutputSchema,
   SetDefaultInputSchema
-} from "@tsu-stack/core/resume";
+} from "@tsu-stack/core";
 import { resumeRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";

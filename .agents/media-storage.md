@@ -185,12 +185,12 @@ export const uploadContractSchema = z.discriminatedUnion("method", [
   z.object({
     headers: z.record(z.string(), z.string()).optional(),
     method: z.literal("PUT"),
-    url: z.string().url()
+    url: z.url()
   }),
   z.object({
     fields: z.record(z.string(), z.string()),
     method: z.literal("POST"),
-    url: z.string().url()
+    url: z.url()
   })
 ]);
 

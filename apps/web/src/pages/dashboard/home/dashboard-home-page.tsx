@@ -24,8 +24,8 @@ function ProjectCount({ count }: { count: number }) {
 }
 
 export function DashboardHomePage() {
-  const experiencesQuery = useQuery(orpcQueryClient.portfolio.experiences.list.queryOptions());
-  const projectsQuery = useQuery(orpcQueryClient.portfolio.projects.list.queryOptions());
+  const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
+  const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
 
   if (!experiencesQuery.data || !projectsQuery.data) {
     return <ResumeOverviewSkeleton />;

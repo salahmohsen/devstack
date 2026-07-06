@@ -1,4 +1,4 @@
-import { type OrpcContext } from "@tsu-stack/core/orpc-context";
+import { type OrpcContext } from "@tsu-stack/core";
 
 import { createGitHubResponseMetadata } from "#@/infrastructure/octokit/client";
 import {

@@ -5,7 +5,7 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type StackOutput } from "@tsu-stack/core/portfolio";
+import { type StackOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Command,
@@ -44,20 +44,20 @@ function StackSelector(props: StackSelectorProps) {
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("");
 
-  const stacksQuery = useQuery(orpcQueryClient.portfolio.stacks.list.queryOptions());
+  const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
   const stacks = stacksQuery.data ?? [];
 
   const selectedIds = field.state.value ?? [];
   const selectedStacks = stacks.filter((s) => selectedIds.includes(s.id));
 
   const createMutation = useMutation(
-    orpcQueryClient.portfolio.stacks.create.mutationOptions({
+    orpcQueryClient.stacks.create.mutationOptions({
       onSuccess: async (created) => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.stacks.list.queryKey()
+          queryKey: orpcQueryClient.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.portfolio.list.queryKey({ input: {} })
+          queryKey: orpcQueryClient.portfolio.list.queryKey({ input: {} })
         });
         field.handleChange([...selectedIds, created.id]);
         setCreateOpen(false);
