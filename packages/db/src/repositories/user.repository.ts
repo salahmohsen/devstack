@@ -36,7 +36,9 @@ export const userRepository = {
     id: string,
     input: { name?: string; email?: string; emailVerified?: boolean }
   ): Promise<UserEntity | null> {
-    const [row] = await getDb().update(user).set(input).where(eq(user.id, id)).returning();
-    return row ?? null;
+    const [updated] = await getDb().update(user).set(input).where(eq(user.id, id)).returning();
+
+    if (!updated) return null;
+    return userRepository.findById(id);
   }
 };

@@ -31,10 +31,10 @@ import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { Icon } from "@/shared/ui/icon";
 import { IconPicker } from "@/shared/ui/icon-picker";
 
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import {
   getProfileQueryOptions,
   getUpdateProfileMutationOptions,
@@ -93,6 +93,7 @@ export function ProfileSettings() {
     email: profileQuery.data?.email ?? session?.user?.email ?? "",
     contacts: (profileQuery.data?.contacts ?? []).map((c) => {
       return {
+        id: c.id,
         icon: c.icon,
         type: c.type,
         value: c.value,
@@ -108,6 +109,19 @@ export function ProfileSettings() {
       void queryClient.invalidateQueries({
         queryKey: getPortfolioListQueryOptions().queryKey
       });
+      form.reset({
+        name: data.name,
+        email: data.email,
+        contacts: (data.contacts ?? []).map((c) => {
+          return {
+            id: c.id,
+            icon: c.icon,
+            type: c.type,
+            value: c.value,
+            includedInPortfolio: !!c.portfolioEntryId
+          };
+        })
+      });
       toast.success("Profile updated successfully");
     }
   });
@@ -119,12 +133,10 @@ export function ProfileSettings() {
     },
     onSubmit: async ({ value }) => {
       try {
-        const contacts = value.contacts?.filter((c) => c.value.trim().length > 0);
-
         await updateMutation.mutateAsync({
           name: value.name.trim(),
           email: value.email.trim(),
-          contacts
+          contacts: value.contacts
         });
         setIsEditing(false);
       } catch (error) {
@@ -270,7 +282,20 @@ export function ProfileSettings() {
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-foreground">Contacts</p>
                           <Button
-                            onClick={() => field.pushValue({ type: "email", value: "", icon: "" })}
+                            onClick={() => {
+                              const used = new Set(
+                                (field.state.value ?? [])
+                                  .map((c) => c?.type)
+                                  .filter((t): t is (typeof CONTACT_TYPES)[number] => !!t)
+                              );
+                              const nextType =
+                                CONTACT_TYPES.find((t) => !used.has(t)) ?? CONTACT_TYPES[0];
+                              field.pushValue({
+                                type: nextType,
+                                value: "",
+                                icon: ""
+                              });
+                            }}
                             size="sm"
                           >
                             Add contact

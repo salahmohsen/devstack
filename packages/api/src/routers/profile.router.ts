@@ -1,4 +1,3 @@
-import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -6,9 +5,7 @@ import {
   ProfileOutputSchema,
   ProfileUpdateInputSchema
 } from "@tsu-stack/core/profile";
-import { contactRepository, getDb, userRepository, type UserEntity } from "@tsu-stack/db";
-import { portfolioEntryRepository } from "@tsu-stack/db/repositories";
-import { contact } from "@tsu-stack/db/schema";
+import { contactRepository, userRepository, type UserEntity } from "@tsu-stack/db";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 
@@ -31,7 +28,8 @@ function toProfileOutput(
         portfolioEntryId: c.portfolioEntryId ?? null,
         includedInPortfolio: !!c.portfolioEntryId,
         updatedAt: c.updatedAt,
-        createdAt: c.createdAt
+        createdAt: c.createdAt,
+        id: c.id
       };
     })
   });
@@ -69,7 +67,8 @@ export const profileRouter = {
           portfolioEntryId: c.portfolioEntryId ?? null,
           includedInPortfolio: !!c.portfolioEntryId,
           updatedAt: c.updatedAt,
-          createdAt: c.createdAt
+          createdAt: c.createdAt,
+          id: c.id
         };
       });
     }),
@@ -111,38 +110,8 @@ export const profileRouter = {
         throw new Error("Profile update did not affect any row");
       }
 
-      await contactRepository.upsert(userId, contactItems);
+      const contacts = await contactRepository.upsert(userId, contactItems);
 
-      for (const contactInput of contactItems) {
-        if (contactInput.includedInPortfolio) {
-          const existing = await portfolioEntryRepository.findByTypeAndEntityId(
-            "contact",
-            contactInput.type
-          );
-          if (!existing) {
-            const created = await portfolioEntryRepository.create({
-              type: "contact",
-              entityId: contactInput.type
-            });
-            if (created) {
-              await getDb()
-                .update(contact)
-                .set({ portfolioEntryId: created.id })
-                .where(and(eq(contact.userId, userId), eq(contact.type, contactInput.type)));
-            }
-          }
-        } else {
-          const existing = await portfolioEntryRepository.findByTypeAndEntityId(
-            "contact",
-            contactInput.type
-          );
-          if (existing) {
-            await portfolioEntryRepository.deleteByTypeAndEntityId("contact", contactInput.type);
-          }
-        }
-      }
-
-      const contacts = await contactRepository.findByUserId(userId);
       return toProfileOutput(updatedUser, contacts);
     })
 };

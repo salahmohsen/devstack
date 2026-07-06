@@ -17,9 +17,10 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { Icon } from "@/shared/ui/icon";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
+
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 

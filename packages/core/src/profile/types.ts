@@ -10,6 +10,7 @@ import {
 export const contactTypeSchema = z.enum([
   "website",
   "email",
+  "phone",
   "location",
   "linkedin",
   "github",
@@ -24,7 +25,8 @@ export const contactOutputSchema = z.object({
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
   updatedAt: z.date(),
-  createdAt: z.date()
+  createdAt: z.date(),
+  id: z.string()
 }) satisfies z.ZodType<Omit<ContactSchemaSelect, "userId">>;
 
 export type ContactOutputSchema = z.infer<typeof contactOutputSchema>;
@@ -33,9 +35,10 @@ export const contactInputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
   icon: z.string(),
-  includedInPortfolio: z.boolean().optional()
+  includedInPortfolio: z.boolean().optional(),
+  id: z.string().optional()
 }) satisfies z.ZodType<
-  Omit<ContactSchemaInsert, "userId" | "createdAt" | "updatedAt" | "portfolioEntryId">
+  Omit<ContactSchemaInsert, "userId" | "createdAt" | "updatedAt" | "portfolioEntryId" | "id">
 >;
 
 export const ProfileUpdateInputSchema = z.object({
@@ -43,7 +46,7 @@ export const ProfileUpdateInputSchema = z.object({
   email: z.email("Please enter a valid email address").trim().max(320),
   contacts: z.array(contactInputSchema).optional()
 }) satisfies z.ZodType<
-  Partial<Omit<UserSchemaInsert, "id" | "emailVerified" | "image" | "createdAt" | "updatedAt">>
+  Partial<Omit<UserSchemaInsert, "emailVerified" | "image" | "createdAt" | "updatedAt">>
 >;
 
 export type ProfileUpdateInput = z.infer<typeof ProfileUpdateInputSchema>;

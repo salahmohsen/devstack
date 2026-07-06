@@ -9,6 +9,10 @@
       "default": "./src/*.ts"
     }
   },
+  "scripts": {
+    "check": "vp check",
+    "fix": "vp check --fix"
+  },
   "dependencies": {
     "@orpc/client": "catalog:",
     "@orpc/server": "catalog:",

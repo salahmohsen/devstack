@@ -6,6 +6,7 @@ import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 export const contactTypeEnum = pgEnum("contact_type_enum", [
   "website",
   "email",
+  "phone",
   "location",
   "linkedin",
   "github",
@@ -16,6 +17,7 @@ export const contactTypeEnum = pgEnum("contact_type_enum", [
 export const contact = pgTable(
   "contact",
   {
+    id: text("id").primaryKey(),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

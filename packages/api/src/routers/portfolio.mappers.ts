@@ -115,6 +115,7 @@ export function toExperienceOutput(exp: ExperienceRow): ExperienceOutput {
 
 export function toContactOutput(c: ContactSchemaSelect) {
   return {
+    id: c.id,
     type: c.type,
     value: c.value,
     icon: c.icon,

@@ -198,3 +198,22 @@ the old per-entity `enable_ai` switch. The `enable_ai` field is gone
 from `experience`, `project`, and `stack`; toggling inclusion is a
 separate action from editing the entity.
 _Avoid_: AI switch, include flag, visibility switch.
+
+## Output
+
+**PDF renderer**:
+The library that compiles portfolio data into a PDF byte stream
+server-side. Currently `pdfnative` + `pdfnative-react`, migrated from
+`@react-pdf/renderer`. Runs in the TanStack Start Cloudflare Worker
+(`apps/web`). The renderer is a pure engine concern — it has no
+knowledge of resume semantics, only document structure (headings,
+paragraphs, lists, tables).
+_Avoid_: PDF engine, document generator.
+
+**Tagged PDF**:
+A PDF with a `/StructTreeRoot` structure tree that assigns semantic
+roles (`/H1`, `/P`, `/Table`, `/L`) to content. Required for reliable
+ATS text extraction and screen-reader accessibility. Enabled via
+`tagged: true` on the pdfnative `<Document>` component, which also
+activates PDF/A-2b compliance.
+_Avoid_: Accessible PDF, structured PDF.
