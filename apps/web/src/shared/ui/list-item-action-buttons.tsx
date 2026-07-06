@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Edit, Loader2, Trash2 } from "lucide-react";
+import { ChevronDown, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
@@ -30,6 +30,7 @@ type classNames = {
 };
 
 type ListItemActionButtonsProps = {
+  view?: ActionButtonConfig;
   edit?: ActionButtonConfig;
   togglePortfolio?: TogglePortfolioConfig;
   delete?: ActionButtonConfig;
@@ -37,6 +38,7 @@ type ListItemActionButtonsProps = {
 };
 
 export function ListItemActionButtons({
+  view,
   edit,
   togglePortfolio,
   delete: deleteConfig,
@@ -45,7 +47,7 @@ export function ListItemActionButtons({
   const hasMenu = !!togglePortfolio || !!deleteConfig;
   const menuLoading = togglePortfolio?.isLoading ?? deleteConfig?.isLoading;
 
-  if (!edit && !hasMenu) {
+  if (!view && !edit && !hasMenu) {
     return null;
   }
 
@@ -102,24 +104,57 @@ export function ListItemActionButtons({
     </Menu>
   );
 
-  if (edit && hasMenu) {
+  if ((view || edit) && hasMenu) {
     return (
       <Group aria-label="Item actions" className={classNames?.wrapper}>
-        <Button
-          onClick={(event: React.MouseEvent) => {
-            event.stopPropagation();
-            edit.onAction();
-          }}
-          loading={edit.isLoading}
-          variant="outline"
-          aria-label="Edit"
-        >
-          <Edit />
-          Edit
-        </Button>
-        <GroupSeparator />
+        {view ? (
+          <Button
+            onClick={(event: React.MouseEvent) => {
+              event.stopPropagation();
+              view.onAction();
+            }}
+            loading={view.isLoading}
+            variant="outline"
+            aria-label="View"
+          >
+            <ExternalLink />
+            View
+          </Button>
+        ) : null}
+        {edit ? (
+          <Button
+            onClick={(event: React.MouseEvent) => {
+              event.stopPropagation();
+              edit.onAction();
+            }}
+            loading={edit.isLoading}
+            variant="outline"
+            aria-label="Edit"
+          >
+            <Edit />
+            Edit
+          </Button>
+        ) : null}
+        {view || edit ? <GroupSeparator /> : null}
         {menuContent}
       </Group>
+    );
+  }
+
+  if (view) {
+    return (
+      <Button
+        size="icon"
+        className={classNames?.wrapper}
+        onClick={(event: React.MouseEvent) => {
+          event.stopPropagation();
+          view.onAction();
+        }}
+        loading={view.isLoading}
+        aria-label="View"
+      >
+        <ExternalLink />
+      </Button>
     );
   }
 

@@ -8,5 +8,6 @@ export {
   type PortfolioEntryEntity
 } from "#@/repositories/portfolio-entry.repository";
 export { projectRepository } from "#@/repositories/project.repository";
+export { resumeRepository } from "#@/repositories/resume.repository";
 export { stackRepository } from "#@/repositories/stack.repository";
 export { userRepository, type UserEntity } from "#@/repositories/user.repository";

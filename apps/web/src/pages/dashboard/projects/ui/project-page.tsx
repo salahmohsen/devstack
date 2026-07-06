@@ -13,12 +13,13 @@ import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { FrameDescription, FrameTitle } from "@tsu-stack/ui/components/frame";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
+
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
 import {
   ItemInfoPanel,

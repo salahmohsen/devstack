@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { VscLinkExternal } from "react-icons/vsc";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperienceOutput } from "@tsu-stack/core/portfolio";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
@@ -26,7 +28,9 @@ function formatDuration(
 
 export const Experience = () => {
   const portfolioQuery = useGetPortfolioListQuery();
+  const defaultResumeQuery = useQuery(orpcQueryClient.resume.getDefault.queryOptions());
   const experiences = portfolioQuery.data?.experiences ?? [];
+  const defaultResume = defaultResumeQuery.data;
 
   return (
     <>
@@ -35,17 +39,19 @@ export const Experience = () => {
           <ExperienceItem key={exp.id} experience={exp} />
         ))}
       </ol>
-      <div className="mt-10 flex gap-1">
-        <a
-          href={"/salahmohsen_frontend_resume.pdf"}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-accent"
-        >
-          View Full Résumé
-          <VscLinkExternal />
-        </a>
-      </div>
+      {defaultResume && (
+        <div className="mt-10 flex gap-1">
+          <a
+            href={`/api/resume/download/?id=${defaultResume.id}`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-accent"
+          >
+            Download Resume
+            <VscLinkExternal />
+          </a>
+        </div>
+      )}
     </>
   );
 };

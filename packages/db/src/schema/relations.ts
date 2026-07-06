@@ -31,6 +31,7 @@ export const relations = defineRelationsPart(schema, (r) => {
       })
     },
     portfolioEntry: {},
+    resume: {},
     project: {
       experience: r.one.experience({
         from: r.project.experienceId,

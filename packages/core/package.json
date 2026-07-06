@@ -12,7 +12,9 @@
     "./orpc-context": "./src/orpc-context/index.ts",
     "./portfolio": "./src/portfolio/index.ts",
     "./profile": "./src/profile/index.ts",
+    "./resume": "./src/resume/index.ts",
     "./utils": "./src/utils/index.ts",
+    "./common": "./src/common/index.ts",
     "./*": "./src/*.ts"
   },
   "dependencies": {

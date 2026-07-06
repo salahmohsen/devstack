@@ -5,4 +5,5 @@ export * from "#@/schema/experience.schema";
 export * from "#@/schema/github-cache.schema";
 export * from "#@/schema/portfolio-entry.schema";
 export * from "#@/schema/project.schema";
+export * from "#@/schema/resume.schema";
 export * from "#@/schema/stack.schema";

@@ -5,4 +5,5 @@ export type * from "#@/types/github-cache.schema";
 export type * from "#@/types/github-config.schema";
 export type * from "#@/types/portfolio-entry.schema";
 export type * from "#@/types/project.schema";
+export type * from "#@/types/resume.schema";
 export type * from "#@/types/stack.schema";

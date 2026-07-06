@@ -30,6 +30,7 @@ type ListItemProps = {
   dragHandleProps?: DragHandleProps;
   isSort?: boolean;
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
+  onView?: () => void;
   onEdit?: () => void;
   onDelete: () => void;
   isDeleting: boolean;
@@ -63,6 +64,7 @@ export function ListItem({
   dragHandleProps,
   isSort = false,
   onMouseEnter,
+  onView,
   onEdit,
   onDelete,
   isDeleting,
@@ -145,6 +147,7 @@ export function ListItem({
           {bodyContent}
           <ListItemActionButtons
             classNames={{ wrapper: "col-span-full md:col-span-1 ms-auto" }}
+            view={onView ? { onAction: onView, isLoading: false } : undefined}
             edit={onEdit ? { onAction: onEdit, isLoading: false } : undefined}
             togglePortfolio={
               onTogglePortfolio

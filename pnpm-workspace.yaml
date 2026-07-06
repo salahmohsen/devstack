@@ -134,6 +134,8 @@ catalog:
   "@tanstack/react-store": ^0.11.0
   "@fontsource-variable/inter": ^5.2.8
   geist: ^1.7.2
+  pdfnative: ^1.4.0
+  pdfnative-react: ^0.2.0
 
 catalogMode: prefer
 
@@ -146,6 +148,7 @@ overrides:
   vitest: "catalog:"
   drizzle-orm: "catalog:"
   kysely: 0.28.17
+  yoga-layout: 2.0.1
 peerDependencyRules:
   allowAny:
     - vite

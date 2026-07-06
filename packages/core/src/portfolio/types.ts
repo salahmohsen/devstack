@@ -241,28 +241,18 @@ export const UpdateExperienceInputSchema = z.object({
 
 export type UpdateExperienceInput = z.infer<typeof UpdateExperienceInputSchema>;
 
+export type { DeleteResponse, ReorderInput, ReorderResponse } from "@tsu-stack/core/common";
+export {
+  DeleteResponseSchema,
+  ReorderInputSchema,
+  ReorderResponseSchema
+} from "@tsu-stack/core/common";
+
 export const ToggleProjectArchivedResponseSchema = ProjectOutputSchema;
 export type ToggleProjectArchivedResponse = z.infer<typeof ToggleProjectArchivedResponseSchema>;
-
-export const ReorderInputSchema = z.object({
-  items: z.array(
-    z.object({
-      id: z.string(),
-      sortOrder: z.number().int().min(0)
-    })
-  )
-});
-
-export type ReorderInput = z.infer<typeof ReorderInputSchema>;
-
-export const ReorderResponseSchema = z.object({ success: z.boolean() });
-export type ReorderResponse = z.infer<typeof ReorderResponseSchema>;
 
 export const ExperienceListOutputSchema = z.array(ExperienceOutputSchema);
 export type ExperienceListOutput = z.infer<typeof ExperienceListOutputSchema>;
 
 export const ProjectListOutputSchema = z.array(ProjectOutputSchema);
 export type ProjectListOutput = z.infer<typeof ProjectListOutputSchema>;
-
-export const DeleteResponseSchema = z.object({ success: z.boolean() });
-export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;

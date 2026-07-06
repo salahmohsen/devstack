@@ -23,12 +23,12 @@ import {
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 import { Icon } from "@/shared/ui/icon";
 
 import { useGetGithubProfileReposQuery } from "@/features/github";
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
 type ProjectFormProps = {
   initialData?: ProjectOutput | null;

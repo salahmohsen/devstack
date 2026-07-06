@@ -22,12 +22,17 @@ import { Route as rootLayoutPlaygroundIndexRouteImport } from './routes/(root-la
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
+import { Route as ApiResumeGenerateIndexRouteImport } from './routes/api/resume/generate/index'
+import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
+import { Route as ApiResumeDeleteIndexRouteImport } from './routes/api/resume/delete/index'
 import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
 import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
 import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
 import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
+import { Route as rootLayout_protectedDashboardResumesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/route'
 import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/route'
 import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
+import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
 import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
@@ -106,6 +111,21 @@ const rootLayoutguestSignInRouteRoute =
     path: '/sign-in',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
+const ApiResumeGenerateIndexRoute = ApiResumeGenerateIndexRouteImport.update({
+  id: '/api/resume/generate/',
+  path: '/api/resume/generate/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiResumeDownloadIndexRoute = ApiResumeDownloadIndexRouteImport.update({
+  id: '/api/resume/download/',
+  path: '/api/resume/download/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiResumeDeleteIndexRoute = ApiResumeDeleteIndexRouteImport.update({
+  id: '/api/resume/delete/',
+  path: '/api/resume/delete/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const rootLayoutReposRepoIndexRoute =
   rootLayoutReposRepoIndexRouteImport.update({
     id: '/',
@@ -130,6 +150,12 @@ const rootLayout_protectedDashboardSettingsRouteRoute =
     path: '/dashboard/settings',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
+const rootLayout_protectedDashboardResumesRouteRoute =
+  rootLayout_protectedDashboardResumesRouteRouteImport.update({
+    id: '/dashboard/resumes',
+    path: '/dashboard/resumes',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardExperiencesRouteRoute =
   rootLayout_protectedDashboardExperiencesRouteRouteImport.update({
     id: '/dashboard/experiences',
@@ -141,6 +167,12 @@ const rootLayout_protectedDashboardStacksIndexRoute =
     id: '/dashboard/stacks/',
     path: '/dashboard/stacks/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardResumesIndexRoute =
+  rootLayout_protectedDashboardResumesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => rootLayout_protectedDashboardResumesRouteRoute,
   } as any)
 const rootLayout_protectedDashboardProjectsIndexRoute =
   rootLayout_protectedDashboardProjectsIndexRouteImport.update({
@@ -204,15 +236,20 @@ export interface FileRoutesByFullPath {
   '/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
   '/api/files/': typeof ApiFilesIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
+  '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesRouteRouteWithChildren
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
+  '/api/resume/delete/': typeof ApiResumeDeleteIndexRoute
+  '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
+  '/api/resume/generate/': typeof ApiResumeGenerateIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
+  '/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
@@ -232,11 +269,15 @@ export interface FileRoutesByTo {
   '/sign-in': typeof rootLayoutguestSignInIndexRoute
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
+  '/api/resume/delete': typeof ApiResumeDeleteIndexRoute
+  '/api/resume/download': typeof ApiResumeDownloadIndexRoute
+  '/api/resume/generate': typeof ApiResumeGenerateIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
+  '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/github': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
@@ -258,15 +299,20 @@ export interface FileRoutesById {
   '/(root-layout)/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
   '/api/files/': typeof ApiFilesIndexRoute
   '/(root-layout)/__protected/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
+  '/(root-layout)/__protected/dashboard/resumes': typeof rootLayout_protectedDashboardResumesRouteRouteWithChildren
   '/(root-layout)/__protected/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/(root-layout)/(guest)/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
+  '/api/resume/delete/': typeof ApiResumeDeleteIndexRoute
+  '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
+  '/api/resume/generate/': typeof ApiResumeGenerateIndexRoute
   '/(root-layout)/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/(root-layout)/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/(root-layout)/__protected/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
+  '/(root-layout)/__protected/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/(root-layout)/__protected/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
@@ -287,15 +333,20 @@ export interface FileRouteTypes {
     | '/terms-of-service/'
     | '/api/files/'
     | '/dashboard/experiences'
+    | '/dashboard/resumes'
     | '/dashboard/settings'
     | '/sign-in/'
     | '/dashboard/'
     | '/repos/$repo/'
+    | '/api/resume/delete/'
+    | '/api/resume/download/'
+    | '/api/resume/generate/'
     | '/repos/$repo/blob/$'
     | '/repos/$repo/tree/$'
     | '/sign-in/create-an-account/'
     | '/dashboard/experiences/'
     | '/dashboard/projects/'
+    | '/dashboard/resumes/'
     | '/dashboard/stacks/'
     | '/dashboard/settings/account/'
     | '/dashboard/settings/github/'
@@ -315,11 +366,15 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/dashboard'
     | '/repos/$repo'
+    | '/api/resume/delete'
+    | '/api/resume/download'
+    | '/api/resume/generate'
     | '/repos/$repo/blob/$'
     | '/repos/$repo/tree/$'
     | '/sign-in/create-an-account'
     | '/dashboard/experiences'
     | '/dashboard/projects'
+    | '/dashboard/resumes'
     | '/dashboard/stacks'
     | '/dashboard/settings/account'
     | '/dashboard/settings/github'
@@ -340,15 +395,20 @@ export interface FileRouteTypes {
     | '/(root-layout)/terms-of-service/'
     | '/api/files/'
     | '/(root-layout)/__protected/dashboard/experiences'
+    | '/(root-layout)/__protected/dashboard/resumes'
     | '/(root-layout)/__protected/dashboard/settings'
     | '/(root-layout)/(guest)/sign-in/'
     | '/(root-layout)/__protected/dashboard/'
     | '/(root-layout)/repos/$repo/'
+    | '/api/resume/delete/'
+    | '/api/resume/download/'
+    | '/api/resume/generate/'
     | '/(root-layout)/repos/$repo/blob/$'
     | '/(root-layout)/repos/$repo/tree/$'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
     | '/(root-layout)/__protected/dashboard/experiences/'
     | '/(root-layout)/__protected/dashboard/projects/'
+    | '/(root-layout)/__protected/dashboard/resumes/'
     | '/(root-layout)/__protected/dashboard/stacks/'
     | '/(root-layout)/__protected/dashboard/settings/account/'
     | '/(root-layout)/__protected/dashboard/settings/github/'
@@ -361,6 +421,9 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
   ApiFilesIndexRoute: typeof ApiFilesIndexRoute
+  ApiResumeDeleteIndexRoute: typeof ApiResumeDeleteIndexRoute
+  ApiResumeDownloadIndexRoute: typeof ApiResumeDownloadIndexRoute
+  ApiResumeGenerateIndexRoute: typeof ApiResumeGenerateIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -456,6 +519,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutguestSignInRouteRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
+    '/api/resume/generate/': {
+      id: '/api/resume/generate/'
+      path: '/api/resume/generate'
+      fullPath: '/api/resume/generate/'
+      preLoaderRoute: typeof ApiResumeGenerateIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/resume/download/': {
+      id: '/api/resume/download/'
+      path: '/api/resume/download'
+      fullPath: '/api/resume/download/'
+      preLoaderRoute: typeof ApiResumeDownloadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/resume/delete/': {
+      id: '/api/resume/delete/'
+      path: '/api/resume/delete'
+      fullPath: '/api/resume/delete/'
+      preLoaderRoute: typeof ApiResumeDeleteIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(root-layout)/repos/$repo/': {
       id: '/(root-layout)/repos/$repo/'
       path: '/'
@@ -484,6 +568,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/resumes': {
+      id: '/(root-layout)/__protected/dashboard/resumes'
+      path: '/dashboard/resumes'
+      fullPath: '/dashboard/resumes'
+      preLoaderRoute: typeof rootLayout_protectedDashboardResumesRouteRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/experiences': {
       id: '/(root-layout)/__protected/dashboard/experiences'
       path: '/dashboard/experiences'
@@ -497,6 +588,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/stacks/'
       preLoaderRoute: typeof rootLayout_protectedDashboardStacksIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/resumes/': {
+      id: '/(root-layout)/__protected/dashboard/resumes/'
+      path: '/'
+      fullPath: '/dashboard/resumes/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardResumesIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardResumesRouteRoute
     }
     '/(root-layout)/__protected/dashboard/projects/': {
       id: '/(root-layout)/__protected/dashboard/projects/'
@@ -572,6 +670,21 @@ const rootLayout_protectedDashboardExperiencesRouteRouteWithChildren =
     rootLayout_protectedDashboardExperiencesRouteRouteChildren,
   )
 
+interface rootLayout_protectedDashboardResumesRouteRouteChildren {
+  rootLayout_protectedDashboardResumesIndexRoute: typeof rootLayout_protectedDashboardResumesIndexRoute
+}
+
+const rootLayout_protectedDashboardResumesRouteRouteChildren: rootLayout_protectedDashboardResumesRouteRouteChildren =
+  {
+    rootLayout_protectedDashboardResumesIndexRoute:
+      rootLayout_protectedDashboardResumesIndexRoute,
+  }
+
+const rootLayout_protectedDashboardResumesRouteRouteWithChildren =
+  rootLayout_protectedDashboardResumesRouteRoute._addFileChildren(
+    rootLayout_protectedDashboardResumesRouteRouteChildren,
+  )
+
 interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsAccountIndexRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   rootLayout_protectedDashboardSettingsGithubIndexRoute: typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
@@ -595,6 +708,7 @@ const rootLayout_protectedDashboardSettingsRouteRouteWithChildren =
 
 interface rootLayout_protectedRouteRouteChildren {
   rootLayout_protectedDashboardExperiencesRouteRoute: typeof rootLayout_protectedDashboardExperiencesRouteRouteWithChildren
+  rootLayout_protectedDashboardResumesRouteRoute: typeof rootLayout_protectedDashboardResumesRouteRouteWithChildren
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
@@ -605,6 +719,8 @@ const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChil
   {
     rootLayout_protectedDashboardExperiencesRouteRoute:
       rootLayout_protectedDashboardExperiencesRouteRouteWithChildren,
+    rootLayout_protectedDashboardResumesRouteRoute:
+      rootLayout_protectedDashboardResumesRouteRouteWithChildren,
     rootLayout_protectedDashboardSettingsRouteRoute:
       rootLayout_protectedDashboardSettingsRouteRouteWithChildren,
     rootLayout_protectedDashboardIndexRoute:
@@ -687,6 +803,9 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,
   ApiFilesIndexRoute: ApiFilesIndexRoute,
+  ApiResumeDeleteIndexRoute: ApiResumeDeleteIndexRoute,
+  ApiResumeDownloadIndexRoute: ApiResumeDownloadIndexRoute,
+  ApiResumeGenerateIndexRoute: ApiResumeGenerateIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

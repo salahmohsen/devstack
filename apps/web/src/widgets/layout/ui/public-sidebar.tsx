@@ -9,8 +9,9 @@ import {
   Sidebar001Section
 } from "@tsu-stack/ui/components/unlumen-ui/sidebar-001";
 
-import { useGetPortfolioListQuery } from "@/features/portfolio";
 import { ContactButton } from "@/shared/ui/contact-button";
+
+import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 const PublicItems = [
   { href: "/", label: "Portfolio" },
@@ -21,6 +22,7 @@ const DashboardItems = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/experiences", label: "Experiences", group: "Dashboard" },
   { href: "/dashboard/projects", label: "Projects", group: "Dashboard" },
+  { href: "/dashboard/resumes", label: "Resumes", group: "Dashboard" },
   { href: "/dashboard/stacks", label: "Stack", group: "Dashboard" },
   { href: "/dashboard/settings/profile", label: "Profile", group: "Dashboard" },
   { href: "/dashboard/settings/account", label: "Account", group: "Dashboard" },

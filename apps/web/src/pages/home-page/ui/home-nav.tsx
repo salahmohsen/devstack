@@ -1,17 +1,23 @@
+import { useQuery } from "@tanstack/react-query";
+
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+
 import { useIntersection } from "@/shared/providers/intersection.provider";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
-import { Contact } from "@/pages/home-page/ui/contact";
 
-const navItems = [
-  "projects",
-  "experience",
-  "certificates",
-  ["Full Résumé", "/salahmohsen_frontend_resume.pdf"]
-];
+import { Contact } from "@/pages/home-page/ui/contact";
 
 export const HomeNav = () => {
   const portfolioQuery = useGetPortfolioListQuery();
+  const defaultResumeQuery = useQuery(orpcQueryClient.resume.getDefault.queryOptions());
+  const defaultResume = defaultResumeQuery.data;
+
+  const navItems: (string | [string, string])[] = ["projects", "experience", "certificates"];
+
+  if (defaultResume) {
+    navItems.push(["Resume", `/api/resume/download?id=${defaultResume.id}`]);
+  }
 
   return (
     <nav className="relative hidden min-w-max lg:block" aria-label="In-page jump links relative">
@@ -25,7 +31,7 @@ export const HomeNav = () => {
   );
 };
 
-const NavItem = ({ name }: { name: string | string[] }) => {
+const NavItem = ({ name }: { name: string | [string, string] }) => {
   const liveName = typeof name === "string" ? name : name[0];
 
   const hash = typeof name === "string" ? `#${name.replace(/\s/g, "").toLowerCase()}` : name[1];
