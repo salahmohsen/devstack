@@ -2,7 +2,7 @@ import { defineRelationsPart } from "drizzle-orm";
 
 import * as schema from "#@/schema/index";
 
-export const relations = defineRelationsPart(schema, (r) => {
+export const appRelationPart = defineRelationsPart(schema, (r) => {
   return {
     githubConfig: {
       user: r.one.user({

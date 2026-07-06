@@ -7,8 +7,8 @@ import { drizzle as drizzleWs, type NeonDatabase } from "drizzle-orm/neon-server
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
-import * as schema from "#@/schema/index";
-import { relations as appRelations } from "#@/schema/relations";
+import { authRelations } from "#@/schema/auth.schema";
+import { appRelationPart } from "#@/schema/relations";
 
 export * from "#@/repositories/index";
 export * from "drizzle-orm/sql";
@@ -25,11 +25,10 @@ export * from "drizzle-orm/sql";
  * and the auto-generated `auth.schema.ts` (auth relations). See
  * `.agents/auth.md` for the canonical composition pattern.
  */
-const { relations: authRelations } = schema;
-export const fullRelations = { ...appRelations, ...authRelations };
+export const relations = { ...appRelationPart, ...authRelations };
 
-export const db: NeonHttpDatabase<typeof fullRelations> = drizzleHttp(ENV_SERVER.DATABASE_URL, {
-  relations: fullRelations
+export const db: NeonHttpDatabase<typeof relations> = drizzleHttp(ENV_SERVER.DATABASE_URL, {
+  relations
 });
 
 /**
@@ -51,13 +50,13 @@ export const db: NeonHttpDatabase<typeof fullRelations> = drizzleHttp(ENV_SERVER
  * `run.start()` resolves shallow (the workflow's later steps find a
  * closed pool via AsyncLocalStorage). See docs/adr/0009.
  */
-export type WsDb = NeonDatabase<typeof fullRelations>;
+export type WsDb = NeonDatabase<typeof relations>;
 
 const dbStorage = new AsyncLocalStorage<{ db: WsDb; pool: Pool }>();
 
 export function createDb(): WsDb {
   const pool = new Pool({ connectionString: ENV_SERVER.DATABASE_URL });
-  return drizzleWs({ client: pool, relations: fullRelations });
+  return drizzleWs({ client: pool, relations: relations });
 }
 
 export async function runWithDb<T>(db: WsDb, fn: () => T | Promise<T>): Promise<T> {

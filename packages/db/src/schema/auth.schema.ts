@@ -1,5 +1,5 @@
-import { defineRelations } from "drizzle-orm";
-import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { defineRelationsPart } from "drizzle-orm";
+import { pgTable, text, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -11,7 +11,8 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull()
+    .notNull(),
+  summary: text("summary").default("")
 });
 
 export const session = pgTable(
@@ -96,39 +97,42 @@ export const passkey = pgTable(
   ]
 );
 
-export const relations = defineRelations({ user, session, account, verification, passkey }, (r) => {
-  return {
-    user: {
-      sessions: r.many.session({
-        from: r.user.id,
-        to: r.session.userId
-      }),
-      accounts: r.many.account({
-        from: r.user.id,
-        to: r.account.userId
-      }),
-      passkeys: r.many.passkey({
-        from: r.user.id,
-        to: r.passkey.userId
-      })
-    },
-    session: {
-      user: r.one.user({
-        from: r.session.userId,
-        to: r.user.id
-      })
-    },
-    account: {
-      user: r.one.user({
-        from: r.account.userId,
-        to: r.user.id
-      })
-    },
-    passkey: {
-      user: r.one.user({
-        from: r.passkey.userId,
-        to: r.user.id
-      })
-    }
-  };
-});
+export const authRelations = defineRelationsPart(
+  { user, session, account, verification, passkey },
+  (r) => {
+    return {
+      user: {
+        sessions: r.many.session({
+          from: r.user.id,
+          to: r.session.userId
+        }),
+        accounts: r.many.account({
+          from: r.user.id,
+          to: r.account.userId
+        }),
+        passkeys: r.many.passkey({
+          from: r.user.id,
+          to: r.passkey.userId
+        })
+      },
+      session: {
+        user: r.one.user({
+          from: r.session.userId,
+          to: r.user.id
+        })
+      },
+      account: {
+        user: r.one.user({
+          from: r.account.userId,
+          to: r.user.id
+        })
+      },
+      passkey: {
+        user: r.one.user({
+          from: r.passkey.userId,
+          to: r.user.id
+        })
+      }
+    };
+  }
+);

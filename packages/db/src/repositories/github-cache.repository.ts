@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { type NeonTransaction } from "drizzle-orm/neon-serverless";
 
-import { type fullRelations, getDb, type WsDb } from "#@/index";
+import { getDb, type relations, type WsDb } from "#@/index";
 import {
   githubCacheNamespace,
   githubResponseCache,
@@ -9,7 +9,7 @@ import {
   githubWebhookEvent
 } from "#@/schema/github-cache.schema";
 
-export type DbExecutor = WsDb | NeonTransaction<typeof fullRelations>;
+export type DbExecutor = WsDb | NeonTransaction<typeof relations>;
 
 export type UpsertGitHubResponseCacheInput = {
   cacheKey: string;

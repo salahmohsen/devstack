@@ -1,9 +1,9 @@
 import { join } from "node:path/posix";
 
+//TODO: update this when the pr merged https://github.com/better-auth/better-auth/issues/6766#issuecomment-4614864597
+import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { APIError, betterAuth } from "better-auth";
-//TODO: update this when the pr merged https://github.com/better-auth/better-auth/issues/6766#issuecomment-4614864597
-import { drizzleAdapter } from "better-auth-drizzle-adapter";
 import { openAPI } from "better-auth/plugins";
 
 import { db } from "@tsu-stack/db";
@@ -20,6 +20,7 @@ export const auth = betterAuth({
     provider: "pg",
     schema
   }),
+
   databaseHooks: {
     user: {
       create: {
@@ -55,6 +56,13 @@ export const auth = betterAuth({
   },
 
   user: {
+    additionalFields: {
+      summary: {
+        type: "string",
+        required: false,
+        defaultValue: ""
+      }
+    },
     changeEmail: {
       enabled: true,
       sendChangeEmailConfirmation: async ({ newEmail, url, user }) => {

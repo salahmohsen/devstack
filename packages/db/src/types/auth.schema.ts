@@ -2,7 +2,10 @@ import { account, passkey, session, user, verification } from "#@/schema/index";
 
 const userSchemaInsert = user.$inferInsert;
 const userSchemaSelect = user.$inferSelect;
-export type UserSchemaInsert = typeof userSchemaInsert;
+export type UserSchemaInsert = Omit<
+  typeof userSchemaInsert,
+  "createdAt" | "updatedAt" | "emailVerified" | "id"
+>;
 export type UserSchemaSelect = typeof userSchemaSelect;
 
 const sessionSchemaInsert = session.$inferInsert;

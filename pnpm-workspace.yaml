@@ -55,7 +55,7 @@ catalog:
   "@typescript/native-preview": 7.0.0-dev.20260701.1
   "@vitejs/plugin-react": ^6.0.3
   babel-plugin-react-compiler: ^1.0.0
-  better-auth: 1.6.23
+  better-auth: ^1.6.23
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
   cross-env: ^10.1.0
@@ -136,6 +136,7 @@ catalog:
   geist: ^1.7.2
   pdfnative: ^1.4.0
   pdfnative-react: ^0.2.0
+  "@better-auth/drizzle-adapter": 1.7.0-rc.1
 
 catalogMode: prefer
 

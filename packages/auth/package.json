@@ -12,11 +12,11 @@
     "./react/*": "./src/react/*.ts"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "catalog:",
     "@better-auth/passkey": "catalog:",
     "@tsu-stack/email": "workspace:*",
     "@tsu-stack/env": "workspace:*",
-    "better-auth": "catalog:",
-    "better-auth-drizzle-adapter": "catalog:"
+    "better-auth": "^1.6.23"
   },
   "devDependencies": {
     "@tsu-stack/tsconfig": "workspace:*",

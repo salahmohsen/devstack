@@ -1,9 +1,8 @@
-import { eq, type InferSelectModel } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { user } from "#@/schema/auth.schema";
-
-export type UserEntity = InferSelectModel<typeof user>;
+import { type UserSchemaInsert, type UserSchemaSelect } from "#@/types/auth.schema";
 
 /**
  * Read access to the `user` table for the API layer.
@@ -17,25 +16,22 @@ export type UserEntity = InferSelectModel<typeof user>;
  * `authClient.updateUser` / `authClient.changeEmail`.
  */
 export const userRepository = {
-  async findById(id: string): Promise<UserEntity | null> {
+  async findById(id: string): Promise<UserSchemaSelect | null> {
     const [row] = await getDb().select().from(user).where(eq(user.id, id)).limit(1);
     return row ?? null;
   },
 
-  async findFirst(): Promise<UserEntity | null> {
+  async findFirst(): Promise<UserSchemaSelect | null> {
     const [row] = await getDb().select().from(user).limit(1);
     return row ?? null;
   },
 
-  async findByEmail(email: string): Promise<UserEntity | null> {
+  async findByEmail(email: string): Promise<UserSchemaSelect | null> {
     const [row] = await getDb().select().from(user).where(eq(user.email, email)).limit(1);
     return row ?? null;
   },
 
-  async update(
-    id: string,
-    input: { name?: string; email?: string; emailVerified?: boolean }
-  ): Promise<UserEntity | null> {
+  async update(id: string, input: UserSchemaInsert): Promise<UserSchemaSelect | null> {
     const [updated] = await getDb().update(user).set(input).where(eq(user.id, id)).returning();
 
     if (!updated) return null;
