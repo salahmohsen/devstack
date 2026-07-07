@@ -1,6 +1,7 @@
 import { CardFrame, CardFrameHeader } from "@tsu-stack/ui/components/card.js";
 import { FrameDescription, FramePanel, FrameTitle } from "@tsu-stack/ui/components/frame";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { ItemsInfoFooter } from "@/widgets/items-page";
 
@@ -8,9 +9,19 @@ type ItemInfoPanelProps = {
   title: string | React.ReactNode;
   description: string | React.ReactNode;
   children: React.ReactNode;
+  updatedAt?: string | Date;
+  createdAt?: string | Date;
+  className?: string;
 };
 
-export function ItemInfoPanel({ title, description, children }: ItemInfoPanelProps) {
+export function ItemInfoPanel({
+  title,
+  description,
+  children,
+  updatedAt,
+  createdAt,
+  className
+}: ItemInfoPanelProps) {
   return (
     <CardFrame className="me-5 mt-px grid max-h-[calc(100dvh-var(--navbar-height)-10px)] overflow-hidden">
       <CardFrameHeader>
@@ -22,12 +33,12 @@ export function ItemInfoPanel({ title, description, children }: ItemInfoPanelPro
         )}
       </CardFrameHeader>
       <ScrollArea
-        className="max-h-[calc(100dvh-var(--navbar-height)-200px)] p-4"
+        className={cn("max-h-[calc(100dvh-var(--navbar-height)-200px)] p-4", className)}
         render={<FramePanel />}
       >
         {children}
       </ScrollArea>
-      <ItemsInfoFooter />
+      <ItemsInfoFooter updatedAt={updatedAt} createdAt={createdAt} />
     </CardFrame>
   );
 }

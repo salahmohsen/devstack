@@ -26,10 +26,12 @@ export const Route = createFileRoute("/api/resume/download/")({
           }
 
           const body = await object.blob();
+          const viewMode = url.searchParams.get("view") === "1";
+          const disposition = viewMode ? "inline" : "attachment";
           return new Response(body, {
             headers: {
               "content-type": "application/pdf",
-              "content-disposition": `attachment; filename="${resumeRow.filename}"`,
+              "content-disposition": `${disposition}; filename="${resumeRow.filename}"`,
               "cache-control": "public, max-age=3600"
             }
           });

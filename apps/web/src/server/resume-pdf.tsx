@@ -1,4 +1,4 @@
-import { Document, Heading, List, Page, Spacer, Text } from "pdfnative-react";
+import { Document, Heading, Link, List, Page, Spacer, Text } from "pdfnative-react";
 
 import { type PortfolioListOutput } from "@tsu-stack/core";
 
@@ -62,15 +62,7 @@ function stripUrl(value: string): string {
 
 function displayContact(type: string, value: string): string {
   if (type === "email" || type === "phone" || type === "location") return value;
-  const stripped = stripUrl(value);
-  const prefix: Record<string, string> = {
-    website: "",
-    linkedin: "linkedin.com/",
-    github: "github.com/",
-    x: "x.com/",
-    youtube: "youtube.com/"
-  };
-  return `${prefix[type] ?? ""}${stripped}`;
+  return stripUrl(value);
 }
 
 type ContactMap = Record<string, string>;
@@ -101,12 +93,16 @@ function ContactLine({
   contacts: Pick<PortfolioListOutput, "contacts">["contacts"];
 }) {
   const contactMap = toContactMap(contacts);
-  const parts: string[] = Object.values(contactMap).filter(Boolean);
-  return parts.length > 0 ? (
-    <Text fontSize={9} color={COLORS.secondary}>
-      {parts.join(" · ")}
+  const entries = contacts.filter((c) => contactMap[c.type]);
+  if (entries.length === 0) return null;
+
+  return entries.map((c) => (
+    <Text>
+      <Link url={c.value} fontSize={9} color={COLORS.secondary}>
+        {contactMap[c.type]}
+      </Link>
     </Text>
-  ) : null;
+  ));
 }
 
 export function ResumeDocument({ data }: { data: GenerateResume }) {
@@ -138,19 +134,6 @@ export function ResumeDocument({ data }: { data: GenerateResume }) {
                   {formatDateRange(exp.fromDate, exp.toDate, exp.isPresent)}
                 </Text>
                 <List items={extractBullets(exp.description)} fontSize={9} />
-                {exp.projects
-                  .filter((p) => !p.isArchived)
-                  .map((proj) => (
-                    <>
-                      <Text fontSize={9}>{proj.title}</Text>
-                      {proj.summary ? <Text fontSize={9}>{stripHtml(proj.summary)}</Text> : null}
-                      {proj.stacks.length > 0 && (
-                        <Text fontSize={9}>
-                          Tech Stack: {proj.stacks.map((s) => s.name).join(" • ")}
-                        </Text>
-                      )}
-                    </>
-                  ))}
                 <Spacer height={SPACING.projectMarginBottom} />
               </>
             ))}
