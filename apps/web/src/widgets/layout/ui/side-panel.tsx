@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 // w-72 (288px) + pl-2 (8px)
 export const PUBLIC_SIDE_PANEL_WIDTH = 320;
-export const DASHBOARD_SIDE_PANEL_WIDTH = 500;
+export const DASHBOARD_SIDE_PANEL_WIDTH = 530;
 
 type SidePanelState = {
   node: HTMLDivElement | null;
