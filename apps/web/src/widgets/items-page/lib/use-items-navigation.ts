@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
-import { isAnyItemSelected } from "@/widgets/items-page/lib/is-any-item-selected";
+import { isAnyOpened } from "@/widgets/items-page/lib/is-any-item-open";
 
 type UseItemsNavigationOptions<T extends { id: string }> = {
   items: readonly T[] | null;
-  itemInfo: T | null;
-  isItemSelected: Record<string, boolean> | null | undefined;
-  setItemInfo: (item: T | null) => void;
-  setItemSelected: (selected: Record<string, boolean> | null) => void;
+  openedItem: T | null;
+  isItemOpen: Record<string, boolean> | null | undefined;
+  setOpenedItem: (item: T | null) => void;
+  setIsItemOpen: (open: Record<string, boolean> | null) => void;
   containerRef?: React.RefObject<HTMLUListElement | null>;
 };
 
@@ -31,62 +31,62 @@ function isEditableTarget(target: EventTarget | null): boolean {
  */
 export function useItemsNavigation<T extends { id: string }>({
   items,
-  itemInfo,
-  isItemSelected,
-  setItemInfo,
-  setItemSelected,
+  openedItem,
+  isItemOpen,
+  setOpenedItem,
+  setIsItemOpen,
   containerRef
 }: UseItemsNavigationOptions<T>) {
   const itemIds = useMemo(() => items?.map((item) => item.id) ?? [], [items]);
-  const isAnySelected = isAnyItemSelected(isItemSelected);
+  const isAnyOpen = isAnyOpened(isItemOpen);
 
   const setSelectionById = useCallback(
     (id: string) => {
       const target = items?.find((item) => item.id === id);
       if (!target) return;
-      setItemInfo(target);
-      setItemSelected({ [id]: true });
+      setOpenedItem(target);
+      setIsItemOpen({ [id]: true });
     },
-    [items, setItemInfo, setItemSelected]
+    [items, setOpenedItem, setIsItemOpen]
   );
 
   const resetSelection = useCallback(
     (last = false) => {
       if (!items?.length) return;
       const target = last ? items[items.length - 1] : items[0];
-      setItemInfo(target);
-      setItemSelected({ [target.id]: true });
+      setOpenedItem(target);
+      setIsItemOpen({ [target.id]: true });
     },
-    [items, setItemInfo, setItemSelected]
+    [items, setOpenedItem, setIsItemOpen]
   );
 
   const handleNext = useCallback(() => {
     if (!items?.length) return;
-    if (!itemInfo || !isAnySelected) {
+    if (!openedItem || !isAnyOpen) {
       resetSelection(false);
       return;
     }
-    const idx = itemIds.indexOf(itemInfo.id);
+    const idx = itemIds.indexOf(openedItem.id);
     if (idx === -1 || idx >= itemIds.length - 1) {
       resetSelection(false);
       return;
     }
     setSelectionById(itemIds[idx + 1]);
-  }, [items, itemInfo, isAnySelected, itemIds, resetSelection, setSelectionById]);
+  }, [items, openedItem, isAnyOpen, itemIds, resetSelection, setSelectionById]);
 
   const handlePrev = useCallback(() => {
     if (!items?.length) return;
-    if (!itemInfo || !isAnySelected) {
+    if (!openedItem || !isAnyOpen) {
       resetSelection(true);
       return;
     }
-    const idx = itemIds.indexOf(itemInfo.id);
+    const idx = itemIds.indexOf(openedItem.id);
     if (idx <= 0) {
       resetSelection(true);
       return;
     }
     setSelectionById(itemIds[idx - 1]);
-  }, [items, itemInfo, isAnySelected, itemIds, resetSelection, setSelectionById]);
+  }, [items, openedItem, isAnyOpen, itemIds, resetSelection, setSelectionById]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -107,17 +107,17 @@ export function useItemsNavigation<T extends { id: string }>({
 
   const lastScrolledId = useRef<string | null>(null);
   useEffect(() => {
-    if (!itemInfo) return;
-    if (lastScrolledId.current === itemInfo.id) return;
+    if (!openedItem) return;
+    if (lastScrolledId.current === openedItem.id) return;
     const container = containerRef?.current;
     if (!container) return;
     const target = container.querySelector<HTMLElement>(
-      `[data-item-id="${CSS.escape(itemInfo.id)}"]`
+      `[data-item-id="${CSS.escape(openedItem.id)}"]`
     );
     if (!target) return;
     target.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    lastScrolledId.current = itemInfo.id;
-  }, [itemInfo, containerRef]);
+    lastScrolledId.current = openedItem.id;
+  }, [openedItem, containerRef]);
 
   return { handleNext, handlePrev };
 }

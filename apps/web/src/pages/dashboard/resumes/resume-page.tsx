@@ -18,7 +18,7 @@ import {
   ListSkeleton,
   PageHeader,
   PageLayout,
-  isAnyItemSelected,
+  isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
 import { ItemsInfoPanel } from "@/widgets/layout";
@@ -26,7 +26,7 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 import { useResumeStore } from "@/pages/dashboard/resumes/_lib/resume.slice";
 
 export function ResumesPage() {
-  const { itemInfo, isItemSelected, setItemInfo, setItemSelected, selectItem } = useResumeStore();
+  const { openedItem, isItemOpen, setOpenedItem, setIsItemOpen, openItem } = useResumeStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
 
@@ -76,21 +76,21 @@ export function ResumesPage() {
 
   const { handleNext, handlePrev } = useItemsNavigation({
     items: visibleResumes,
-    itemInfo,
-    isItemSelected,
-    setItemInfo,
-    setItemSelected,
+    openedItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen,
     containerRef
   });
 
-  const isAnySelected = isAnyItemSelected(isItemSelected);
+  const isAnyOpen = isAnyOpened(isItemOpen);
 
   useEffect(() => {
-    if (!resumesQuery.isLoading && visibleResumes.length === 0 && itemInfo) {
-      setItemInfo(null);
-      setItemSelected(null);
+    if (!resumesQuery.isLoading && visibleResumes.length === 0 && openedItem) {
+      setOpenedItem(null);
+      setIsItemOpen(null);
     }
-  }, [resumesQuery.isLoading, visibleResumes.length, itemInfo, setItemInfo, setItemSelected]);
+  }, [resumesQuery.isLoading, visibleResumes.length, openedItem, setOpenedItem, setIsItemOpen]);
 
   const emptyState = (
     <ItemsEmpty
@@ -113,9 +113,9 @@ export function ResumesPage() {
         {visibleResumes.map((resume) => (
           <ListItem
             key={resume.id}
-            selected={isItemSelected?.[resume.id] ?? false}
-            onSelect={() => selectItem(resume.id, resume)}
-            onView={() => window.open(`/api/resume/download/?id=${resume.id}`, "_blank")}
+            selected={isItemOpen?.[resume.id] ?? false}
+            onSelect={() => openItem(resume.id, resume)}
+            onView={() => window.open(`/api/resume/download/?id=${resume.id}&view=1`, "_blank")}
             onDelete={() => deleteMutation.mutate(resume.id)}
             isDeleting={deleteMutation.isPending}
             deleteTitle="Delete this resume?"
@@ -149,7 +149,8 @@ export function ResumesPage() {
             <HeaderActions
               add={{
                 onAdd: handleGenerate,
-                label: "Generate New Resume"
+                label: "Generate New Resume",
+                isLoading: isGenerating
               }}
             />
           }
@@ -157,20 +158,21 @@ export function ResumesPage() {
 
         {renderList()}
 
-        <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
+        <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
           {(item) => {
             if (!item) return null;
             return (
               <ItemInfoPanel
                 title={item.filename}
                 description={`Author: ${item.author}${item.default ? " • Default" : ""}`}
+                createdAt={item.createdAt}
+                className="p-0"
               >
-                {item.prompt ? (
-                  <p className="text-sm text-muted-foreground">Prompt: {item.prompt}</p>
-                ) : null}
-                <p className="text-sm text-muted-foreground">
-                  Generated: {new Date(item.createdAt).toLocaleDateString()}
-                </p>
+                <embed
+                  src={`/api/resume/download/?id=${item.id}&view=1`}
+                  type="application/pdf"
+                  className="min-h-150 w-full overflow-hidden rounded-lg"
+                />
               </ItemInfoPanel>
             );
           }}

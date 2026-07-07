@@ -28,7 +28,7 @@ import {
   ListSkeleton,
   PageHeader,
   PageLayout,
-  isAnyItemSelected,
+  isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
 import { ItemsInfoPanel } from "@/widgets/layout";
@@ -40,7 +40,7 @@ export function ProjectsPage() {
   const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
   const queryClient = useQueryClient();
 
-  const { itemInfo, isItemSelected, setItemInfo, setItemSelected, selectItem } = useProjectStore();
+  const { openedItem, isItemOpen, setOpenedItem, setIsItemOpen, openItem } = useProjectStore();
 
   const projects = useMemo<ProjectOutput[]>(() => projectsQuery.data ?? [], [projectsQuery.data]);
 
@@ -172,21 +172,21 @@ export function ProjectsPage() {
 
   const { handleNext, handlePrev } = useItemsNavigation<ProjectOutput>({
     items: projects,
-    itemInfo,
-    isItemSelected,
-    setItemInfo,
-    setItemSelected,
+    openedItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen,
     containerRef
   });
 
-  const isAnySelected = isAnyItemSelected(isItemSelected);
+  const isAnyOpen = isAnyOpened(isItemOpen);
 
   useEffect(() => {
-    if (!projectsQuery.isLoading && projects.length === 0 && itemInfo) {
-      setItemInfo(null);
-      setItemSelected(null);
+    if (!projectsQuery.isLoading && projects.length === 0 && openedItem) {
+      setOpenedItem(null);
+      setIsItemOpen(null);
     }
-  }, [projectsQuery.isLoading, projects.length, itemInfo, setItemInfo, setItemSelected]);
+  }, [projectsQuery.isLoading, projects.length, openedItem, setOpenedItem, setIsItemOpen]);
 
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -217,8 +217,8 @@ export function ProjectsPage() {
       >
         {(project, dragHandleProps) => (
           <ListItem
-            selected={isItemSelected?.[project.id] ?? false}
-            onSelect={() => selectItem(project.id, project)}
+            selected={isItemOpen?.[project.id] ?? false}
+            onSelect={() => openItem(project.id, project)}
             dragHandleProps={dragHandleProps}
             isSort={isSort}
             onMouseEnter={() => {
@@ -283,7 +283,7 @@ export function ProjectsPage() {
 
         {renderList()}
 
-        <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
+        <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
           {(item: ProjectOutput | null) => {
             if (!item) return null;
             const projectLink = `${ENV_WEB_ISOMORPHIC.VITE_WEB_URL.replace(/\/$/, "")}/${item.title}`;

@@ -18,7 +18,7 @@ import {
   ItemsNavProvider,
   PageHeader,
   PageLayout,
-  isAnyItemSelected,
+  isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
 import { ItemsInfoPanel } from "@/widgets/layout";
@@ -31,26 +31,26 @@ export function StacksPage() {
   const queryClient = useQueryClient();
   const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
 
-  const { itemInfo, isItemSelected, setItemInfo, setItemSelected } = useStackStore();
+  const { openedItem, isItemOpen, setOpenedItem, setIsItemOpen } = useStackStore();
 
   const stacks = useMemo(() => stacksQuery.data ?? [], [stacksQuery.data]);
 
   const { handleNext, handlePrev } = useItemsNavigation({
     items: stacks,
-    itemInfo,
-    isItemSelected,
-    setItemInfo,
-    setItemSelected
+    openedItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen
   });
 
-  const isAnySelected = isAnyItemSelected(isItemSelected);
+  const isAnyOpen = isAnyOpened(isItemOpen);
 
   useEffect(() => {
-    if (!stacksQuery.isLoading && stacks.length === 0 && itemInfo) {
-      setItemInfo(null);
-      setItemSelected(null);
+    if (!stacksQuery.isLoading && stacks.length === 0 && openedItem) {
+      setOpenedItem(null);
+      setIsItemOpen(null);
     }
-  }, [stacksQuery.isLoading, stacks.length, itemInfo, setItemInfo, setItemSelected]);
+  }, [stacksQuery.isLoading, stacks.length, openedItem, setOpenedItem, setIsItemOpen]);
 
   const [editingStackId, setEditingStackId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -101,7 +101,7 @@ export function StacksPage() {
 
         {renderGrid()}
 
-        <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
+        <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
           {(item) => {
             if (!item) return null;
             return (

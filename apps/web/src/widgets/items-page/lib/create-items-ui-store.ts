@@ -32,7 +32,7 @@ import {
  * });
  *
  * // experiences-page.tsx
- * const { activeTab, itemInfo, selectItem, clearSelection } = useExperienceStore();
+ * const { activeTab, openedItem, openItem, closePanel } = useExperienceStore();
  * ```
  */
 export function createItemsUIStore<
@@ -43,8 +43,8 @@ export function createItemsUIStore<
   let state: ItemsUIState<T, Tab, Filter> = {
     activeTab: config.initialTab,
     filter: config.initialFilter,
-    itemInfo: null,
-    isItemSelected: null
+    openedItem: null,
+    isItemOpen: null
   };
 
   const listeners = new Set<() => void>();
@@ -74,24 +74,24 @@ export function createItemsUIStore<
     setState({ filter });
   };
 
-  const setItemInfo = (item: T | null) => {
-    setState({ itemInfo: item });
+  const setOpenedItem = (item: T | null) => {
+    setState({ openedItem: item });
   };
 
-  const setItemSelected = (selected: Record<string, boolean> | null) => {
-    setState({ isItemSelected: selected });
+  const setIsItemOpen = (open: Record<string, boolean> | null) => {
+    setState({ isItemOpen: open });
   };
 
-  const selectItem = (id: string, item: T) => {
-    const wasSelected = state.isItemSelected?.[id] ?? false;
+  const openItem = (id: string, item: T) => {
+    const wasOpen = state.isItemOpen?.[id] ?? false;
     setState({
-      isItemSelected: { [id]: !wasSelected },
-      itemInfo: wasSelected ? null : item
+      isItemOpen: { [id]: !wasOpen },
+      openedItem: wasOpen ? null : item
     });
   };
 
-  const clearSelection = () => {
-    setState({ isItemSelected: null, itemInfo: null });
+  const closePanel = () => {
+    setState({ isItemOpen: null, openedItem: null });
   };
 
   const setTabAndFilter = (tab: Tab) => {
@@ -103,10 +103,10 @@ export function createItemsUIStore<
   const useStore = (): ItemsUIState<T, Tab, Filter> & {
     setActiveTab: typeof setActiveTab;
     setFilter: typeof setFilter;
-    setItemInfo: typeof setItemInfo;
-    setItemSelected: typeof setItemSelected;
-    selectItem: typeof selectItem;
-    clearSelection: typeof clearSelection;
+    setOpenedItem: typeof setOpenedItem;
+    setIsItemOpen: typeof setIsItemOpen;
+    openItem: typeof openItem;
+    closePanel: typeof closePanel;
     setTabAndFilter: typeof setTabAndFilter;
   } => {
     const snapshot = useSyncExternalStore(subscribe, getState, getState);
@@ -115,10 +115,10 @@ export function createItemsUIStore<
         ...snapshot,
         setActiveTab,
         setFilter,
-        setItemInfo,
-        setItemSelected,
-        selectItem,
-        clearSelection,
+        setOpenedItem,
+        setIsItemOpen,
+        openItem,
+        closePanel,
         setTabAndFilter
       };
     }, [snapshot]);

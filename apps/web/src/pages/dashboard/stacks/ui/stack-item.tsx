@@ -31,8 +31,8 @@ type StackItemProps = React.ComponentProps<"div"> & { size?: "default" | "sm" } 
 
 export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
   const queryClient = useQueryClient();
-  const { selectItem, isItemSelected } = useStackStore();
-  const selected = isItemSelected?.[stack.id] ?? false;
+  const { openItem, isItemOpen } = useStackStore();
+  const selected = isItemOpen?.[stack.id] ?? false;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const deleteMutation = useMutation(
@@ -94,11 +94,11 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
         aria-label={`View details for ${stack.name}`}
         data-item-id={stack.id}
         data-selected={selected}
-        onClick={() => selectItem(stack.id, stack)}
+        onClick={() => openItem(stack.id, stack)}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            selectItem(stack.id, stack);
+            openItem(stack.id, stack);
           }
         }}
         className={cn(

@@ -1,6 +1,6 @@
 // Lib
 export { createItemsUIStore } from "@/widgets/items-page/lib/create-items-ui-store";
-export { isAnyItemSelected } from "@/widgets/items-page/lib/is-any-item-selected";
+export { isAnyOpened } from "@/widgets/items-page/lib/is-any-item-open";
 export { ItemsNavProvider, useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
 export type {
   ItemsUIConfig,

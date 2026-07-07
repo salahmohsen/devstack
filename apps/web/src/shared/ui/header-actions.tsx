@@ -9,6 +9,7 @@ type HeaderActionProps = {
   add?: {
     onAdd?: () => void;
     label?: string;
+    isLoading?: boolean;
   };
   sort?: {
     isSort: boolean;
@@ -25,7 +26,7 @@ export function HeaderActions({ add, sort }: HeaderActionProps) {
     sort ?? {};
 
   const renderAdd = add?.onAdd && (
-    <Button onClick={add.onAdd}>
+    <Button onClick={add.onAdd} loading={add.isLoading}>
       <PlusIcon />
       {add.label ?? "Add"}
     </Button>

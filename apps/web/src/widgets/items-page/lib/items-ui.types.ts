@@ -16,8 +16,8 @@ export type ItemsUIConfig<_T extends { id: string }, Tab extends string, Filter 
 export type ItemsUIState<T extends { id: string }, Tab extends string, Filter extends string> = {
   activeTab: Tab;
   filter: Filter;
-  itemInfo: T | null;
-  isItemSelected: Record<string, boolean> | null;
+  openedItem: T | null;
+  isItemOpen: Record<string, boolean> | null;
 };
 
 export type ItemsUIStore<
@@ -27,15 +27,14 @@ export type ItemsUIStore<
 > = () => ItemsUIState<T, Tab, Filter> & {
   setActiveTab: (tab: Tab) => void;
   setFilter: (filter: Filter) => void;
-  setItemInfo: (item: T | null) => void;
-  setItemSelected: (selected: Record<string, boolean> | null) => void;
+  setOpenedItem: (item: T | null) => void;
+  setIsItemOpen: (open: Record<string, boolean> | null) => void;
   /**
-   * Single-select helper: toggles the given id and updates `itemInfo`.
-   * When the item becomes selected, sets `itemInfo` to `item`.
-   * When the item becomes unselected, clears `itemInfo`.
+   * Open an item for inspection: sets `openedItem` and marks `isItemOpen[id] = true`.
+   * Toggling an already-open item closes the panel (sets both back to null).
    */
-  selectItem: (id: string, item: T) => void;
-  clearSelection: () => void;
+  openItem: (id: string, item: T) => void;
+  closePanel: () => void;
   /**
    * Set the active tab and its derived filter in one call.
    * Falls back to the existing filter if `tabToFilter` is not configured.

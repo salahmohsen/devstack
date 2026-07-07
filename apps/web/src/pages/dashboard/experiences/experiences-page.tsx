@@ -22,7 +22,7 @@ import {
   ListSkeleton,
   PageHeader,
   PageLayout,
-  isAnyItemSelected,
+  isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
 import { ItemsInfoPanel } from "@/widgets/layout";
@@ -52,8 +52,7 @@ function safeFormat(value: string, pattern: string): string {
 }
 
 export function ExperiencesPage() {
-  const { itemInfo, isItemSelected, setItemInfo, setItemSelected, selectItem } =
-    useExperienceStore();
+  const { openedItem, isItemOpen, setOpenedItem, setIsItemOpen, openItem } = useExperienceStore();
   const [isSort, setIsSort] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<typeof visibleExperiences | null>(null);
   const queryClient = useQueryClient();
@@ -183,26 +182,26 @@ export function ExperiencesPage() {
 
   const { handleNext, handlePrev } = useItemsNavigation({
     items: visibleExperiences,
-    itemInfo,
-    isItemSelected,
-    setItemInfo,
-    setItemSelected,
+    openedItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen,
     containerRef
   });
 
-  const isAnySelected = isAnyItemSelected(isItemSelected);
+  const isAnyOpen = isAnyOpened(isItemOpen);
 
   useEffect(() => {
-    if (!experiencesQuery.isLoading && visibleExperiences.length === 0 && itemInfo) {
-      setItemInfo(null);
-      setItemSelected(null);
+    if (!experiencesQuery.isLoading && visibleExperiences.length === 0 && openedItem) {
+      setOpenedItem(null);
+      setIsItemOpen(null);
     }
   }, [
     experiencesQuery.isLoading,
     visibleExperiences.length,
-    itemInfo,
-    setItemInfo,
-    setItemSelected
+    openedItem,
+    setOpenedItem,
+    setIsItemOpen
   ]);
 
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
@@ -234,8 +233,8 @@ export function ExperiencesPage() {
       >
         {(experience, dragHandleProps) => (
           <ListItem
-            selected={isItemSelected?.[experience.id] ?? false}
-            onSelect={() => selectItem(experience.id, experience)}
+            selected={isItemOpen?.[experience.id] ?? false}
+            onSelect={() => openItem(experience.id, experience)}
             dragHandleProps={dragHandleProps}
             isSort={isSort}
             onMouseEnter={() => {
@@ -297,7 +296,7 @@ export function ExperiencesPage() {
 
         {renderList()}
 
-        <ItemsInfoPanel open={isAnySelected} item={itemInfo}>
+        <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
           {(item) => {
             if (!item) return null;
             return (
