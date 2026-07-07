@@ -27,6 +27,6 @@ export const SetDefaultInputSchema = z.object({
 export type SetDefaultInput = z.infer<typeof SetDefaultInputSchema>;
 
 export const DeleteInputSchema = z.object({
-  id: z.string()
+  ids: z.array(z.string())
 });
 export type DeleteInput = z.infer<typeof DeleteInputSchema>;

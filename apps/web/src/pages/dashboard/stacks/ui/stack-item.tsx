@@ -7,6 +7,7 @@ import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
+import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,7 @@ type StackItemProps = React.ComponentProps<"div"> & { size?: "default" | "sm" } 
 
 export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
   const queryClient = useQueryClient();
-  const { openItem, isItemOpen } = useStackStore();
+  const { openItem, isItemOpen, selectedIds, toggleSelect } = useStackStore();
   const selected = isItemOpen?.[stack.id] ?? false;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -88,7 +89,7 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
   return (
     <>
       <Card
-        // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+        /* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role, jsx-a11y/interactive-supports-focus */
         role="button"
         aria-pressed={selected}
         aria-label={`View details for ${stack.name}`}
@@ -108,6 +109,21 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
         )}
         {...props}
       >
+        <div
+          role="presentation"
+          className="absolute top-2 left-3 z-10"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={selectedIds?.[stack.id] ?? false}
+            onCheckedChange={() => toggleSelect(stack.id)}
+            className={cn(
+              "transition-opacity",
+              selectedIds?.[stack.id] ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            )}
+          />
+        </div>
         <CardContent
           data-selected={selected}
           className={cn(

@@ -1,4 +1,4 @@
-import { eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import { eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { resume } from "#@/schema/resume.schema";
@@ -54,11 +54,10 @@ export const resumeRepository = {
     return resumeRepository.findById(id);
   },
 
-  async delete(id: string) {
-    const [deleted] = await getDb()
+  async deleteMany(ids: string[]) {
+    return getDb()
       .delete(resume)
-      .where(eq(resume.id, id))
+      .where(inArray(resume.id, ids))
       .returning({ id: resume.id, r2Key: resume.r2Key });
-    return deleted ?? null;
   }
 };

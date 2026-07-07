@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
+import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,8 @@ type ListItemProps = {
   className?: string;
   dragHandleProps?: DragHandleProps;
   isSort?: boolean;
+  isBatchSelected?: boolean;
+  onToggleSelect?: () => void;
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
   onView?: () => void;
   onEdit?: () => void;
@@ -63,6 +66,8 @@ export function ListItem({
   className,
   dragHandleProps,
   isSort = false,
+  isBatchSelected,
+  onToggleSelect,
   onMouseEnter,
   onView,
   onEdit,
@@ -86,7 +91,7 @@ export function ListItem({
   }
 
   const bodyContent = children ?? (
-    <div className="grid gap-5 md:max-w-3/4 md:grid-cols-2 lg:max-w-1/2">
+    <div className="grid gap-5 md:max-w-3/4 md:grid-cols-[20rem_1fr]">
       <CardTitle className="flex items-center gap-2 self-center text-sm">
         {inPortfolio !== undefined ? (
           <span
@@ -130,9 +135,26 @@ export function ListItem({
         <CardHeader
           className={cn(
             "grid-cols-[auto_1fr] items-center py-3",
-            isSort ? "md:grid-cols-[auto_1fr_auto]" : "md:grid-cols-[1fr_auto]"
+            isSort
+              ? "md:grid-cols-[auto_auto_1fr_auto]"
+              : onToggleSelect
+                ? "md:grid-cols-[auto_1fr_auto]"
+                : "md:grid-cols-[1fr_auto]"
           )}
         >
+          {onToggleSelect ? (
+            <div className="flex items-center self-center">
+              <Checkbox
+                checked={isBatchSelected ?? false}
+                onCheckedChange={onToggleSelect}
+                className={cn(
+                  "transition-opacity",
+                  isBatchSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              />
+            </div>
+          ) : null}
           {dragHandleProps && isSort ? (
             <button
               type="button"

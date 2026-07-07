@@ -89,6 +89,6 @@ export function GroupSeparator({
 
 export {
   Group as ButtonGroup,
-  GroupText as ButtonGroupText,
-  GroupSeparator as ButtonGroupSeparator
+  GroupSeparator as ButtonGroupSeparator,
+  GroupText as ButtonGroupText
 };

@@ -26,7 +26,7 @@ import {
   FramePanel,
   FrameTitle
 } from "@tsu-stack/ui/components/frame";
-import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { ButtonGroup, Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
@@ -172,10 +172,11 @@ export function ProfileSettings() {
               </div>
               <div className="flex gap-2">
                 {isEditing ? (
-                  <>
-                    <Button onClick={handleCancel} size="sm" variant="ghost">
+                  <ButtonGroup>
+                    <Button onClick={handleCancel} size="sm" variant="outline">
                       Cancel
                     </Button>
+                    <GroupSeparator />
                     <Button
                       disabled={!canSubmit || isSubmitting}
                       loading={isSubmitting}
@@ -184,7 +185,7 @@ export function ProfileSettings() {
                     >
                       Save Changes
                     </Button>
-                  </>
+                  </ButtonGroup>
                 ) : (
                   <Button
                     loading={profileQuery.isLoading}

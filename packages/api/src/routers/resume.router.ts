@@ -48,7 +48,7 @@ export const resumeRouter = {
     .input(DeleteInputSchema)
     .output(DeleteResponseSchema)
     .handler(async ({ input }) => {
-      const deleted = await resumeRepository.delete(input.id);
-      return { success: deleted !== null };
+      const deleted = await resumeRepository.deleteMany(input.ids);
+      return { success: deleted.length > 0 };
     })
 };

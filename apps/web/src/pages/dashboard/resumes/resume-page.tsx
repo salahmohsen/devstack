@@ -6,6 +6,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
 
 import { HeaderActions } from "@/shared/ui/header-actions";
@@ -26,7 +35,17 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 import { useResumeStore } from "@/pages/dashboard/resumes/_lib/resume.slice";
 
 export function ResumesPage() {
-  const { openedItem, isItemOpen, setOpenedItem, setIsItemOpen, openItem } = useResumeStore();
+  const {
+    openedItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen,
+    openItem,
+    selectedIds,
+    toggleSelect,
+    selectAll,
+    clearSelection
+  } = useResumeStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
 
@@ -40,21 +59,17 @@ export function ResumesPage() {
   }, [queryClient]);
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (input: { ids: string[] }) => {
       const res = await fetch("/api/resume/delete", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id })
+        body: JSON.stringify(input)
       });
       if (!res.ok) throw new Error("Failed to delete resume");
       return res.json() as Promise<{ success: boolean }>;
     },
     onSuccess: async () => {
       await invalidateQueries();
-      toast.success("Resume deleted.");
-    },
-    onError: () => {
-      toast.error("Failed to delete resume.");
     }
   });
 
@@ -85,12 +100,49 @@ export function ResumesPage() {
 
   const isAnyOpen = isAnyOpened(isItemOpen);
 
-  useEffect(() => {
-    if (!resumesQuery.isLoading && visibleResumes.length === 0 && openedItem) {
-      setOpenedItem(null);
-      setIsItemOpen(null);
+  const [batchAction, setBatchAction] = useState<"delete" | null>(null);
+  const selectedIdsEntries = useMemo(
+    () => Object.entries(selectedIds ?? {}).filter(([, v]) => v),
+    [selectedIds]
+  );
+  const selectedCount = selectedIdsEntries.length;
+  const isDeleting = batchAction === "delete";
+
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+
+  async function handleBatchDelete() {
+    setBatchAction("delete");
+    setBatchDeleteDialogOpen(false);
+    const ids = selectedIdsEntries.map(([id]) => id);
+
+    try {
+      await deleteMutation.mutateAsync({ ids });
+      toast.success(`Deleted ${ids.length} resume(s).`);
+      clearSelection();
+    } catch {
+      toast.error("Deletion failed.");
+    } finally {
+      setBatchAction(null);
     }
-  }, [resumesQuery.isLoading, visibleResumes.length, openedItem, setOpenedItem, setIsItemOpen]);
+  }
+
+  useEffect(() => {
+    if (!resumesQuery.isLoading && visibleResumes.length === 0) {
+      if (openedItem) {
+        setOpenedItem(null);
+        setIsItemOpen(null);
+      }
+      if (selectedIds) clearSelection();
+    }
+  }, [
+    resumesQuery.isLoading,
+    visibleResumes.length,
+    openedItem,
+    setOpenedItem,
+    setIsItemOpen,
+    selectedIds,
+    clearSelection
+  ]);
 
   const emptyState = (
     <ItemsEmpty
@@ -115,8 +167,15 @@ export function ResumesPage() {
             key={resume.id}
             selected={isItemOpen?.[resume.id] ?? false}
             onSelect={() => openItem(resume.id, resume)}
+            isBatchSelected={selectedIds?.[resume.id] ?? false}
+            onToggleSelect={() => toggleSelect(resume.id)}
             onView={() => window.open(`/api/resume/download/?id=${resume.id}&view=1`, "_blank")}
-            onDelete={() => deleteMutation.mutate(resume.id)}
+            onDelete={() => {
+              deleteMutation.mutate(
+                { ids: [resume.id] },
+                { onSuccess: () => toast.success("Resume deleted.") }
+              );
+            }}
             isDeleting={deleteMutation.isPending}
             deleteTitle="Delete this resume?"
             deleteDescription="This will permanently delete this resume PDF."
@@ -152,6 +211,15 @@ export function ResumesPage() {
                 label: "Generate New Resume",
                 isLoading: isGenerating
               }}
+              batch={{
+                selectedCount,
+                totalCount: visibleResumes.length,
+                isBatchLoading: isDeleting,
+                isDeleting,
+                onDeleteSelected: () => setBatchDeleteDialogOpen(true),
+                onSelectAll: () => selectAll(visibleResumes.map((r) => r.id)),
+                onClearSelection: clearSelection
+              }}
             />
           }
         />
@@ -177,6 +245,26 @@ export function ResumesPage() {
             );
           }}
         </ItemsInfoPanel>
+
+        <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedCount} resume(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the selected resume PDFs.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+              <AlertDialogClose
+                render={<Button variant="destructive" disabled={isDeleting} />}
+                onClick={handleBatchDelete}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogClose>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
       </PageLayout>
     </ItemsNavProvider>
   );

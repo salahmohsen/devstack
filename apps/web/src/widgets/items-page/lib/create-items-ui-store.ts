@@ -44,7 +44,8 @@ export function createItemsUIStore<
     activeTab: config.initialTab,
     filter: config.initialFilter,
     openedItem: null,
-    isItemOpen: null
+    isItemOpen: null,
+    selectedIds: null
   };
 
   const listeners = new Set<() => void>();
@@ -67,11 +68,11 @@ export function createItemsUIStore<
 
   const setActiveTab = (tab: Tab) => {
     if (config.isValidTab && !config.isValidTab(tab)) return;
-    setState({ activeTab: tab });
+    setState({ activeTab: tab, selectedIds: null });
   };
 
   const setFilter = (filter: Filter) => {
-    setState({ filter });
+    setState({ filter, selectedIds: null });
   };
 
   const setOpenedItem = (item: T | null) => {
@@ -94,10 +95,23 @@ export function createItemsUIStore<
     setState({ isItemOpen: null, openedItem: null });
   };
 
+  const toggleSelect = (id: string) => {
+    const current = state.selectedIds ?? {};
+    setState({ selectedIds: { ...current, [id]: !current[id] } });
+  };
+
+  const selectAll = (ids: string[]) => {
+    setState({ selectedIds: Object.fromEntries(ids.map((id) => [id, true])) });
+  };
+
+  const clearSelection = () => {
+    setState({ selectedIds: null });
+  };
+
   const setTabAndFilter = (tab: Tab) => {
     if (config.isValidTab && !config.isValidTab(tab)) return;
     const filter = config.tabToFilter ? config.tabToFilter(tab) : state.filter;
-    setState({ activeTab: tab, filter });
+    setState({ activeTab: tab, filter, selectedIds: null });
   };
 
   const useStore = (): ItemsUIState<T, Tab, Filter> & {
@@ -108,6 +122,9 @@ export function createItemsUIStore<
     openItem: typeof openItem;
     closePanel: typeof closePanel;
     setTabAndFilter: typeof setTabAndFilter;
+    toggleSelect: typeof toggleSelect;
+    selectAll: typeof selectAll;
+    clearSelection: typeof clearSelection;
   } => {
     const snapshot = useSyncExternalStore(subscribe, getState, getState);
     return useMemo(() => {
@@ -119,7 +136,10 @@ export function createItemsUIStore<
         setIsItemOpen,
         openItem,
         closePanel,
-        setTabAndFilter
+        setTabAndFilter,
+        toggleSelect,
+        selectAll,
+        clearSelection
       };
     }, [snapshot]);
   };

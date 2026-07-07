@@ -2,15 +2,25 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, type NavigateOptions } from "@tanstack/react-router";
-import { CalendarIcon, ExternalLink } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ExternalLink } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FaGithub, FaLink } from "react-icons/fa";
 import { toast } from "sonner";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ProjectOutput } from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
+import { Button } from "@tsu-stack/ui/components/button";
 import { FrameDescription, FrameTitle } from "@tsu-stack/ui/components/frame";
 
 import { HeaderActions } from "@/shared/ui/header-actions";
@@ -40,7 +50,17 @@ export function ProjectsPage() {
   const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
   const queryClient = useQueryClient();
 
-  const { openedItem, isItemOpen, setOpenedItem, setIsItemOpen, openItem } = useProjectStore();
+  const {
+    openedItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen,
+    openItem,
+    selectedIds,
+    toggleSelect,
+    selectAll,
+    clearSelection
+  } = useProjectStore();
 
   const projects = useMemo<ProjectOutput[]>(() => projectsQuery.data ?? [], [projectsQuery.data]);
 
@@ -168,6 +188,60 @@ export function ProjectsPage() {
     );
   }
 
+  async function handleBatchDelete() {
+    setBatchAction("delete");
+    setBatchDeleteDialogOpen(false);
+    const ids = selectedIdsEntries.map(([id]) => id);
+    const results = await Promise.allSettled(ids.map((id) => orpcClient.projects.delete({ id })));
+
+    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.projects.list.queryKey() });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+
+    setBatchAction(null);
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    if (failed === 0) {
+      toast.success(`Deleted ${succeeded} project(s).`);
+      clearSelection();
+    } else {
+      toast.error(`Deleted ${succeeded}, ${failed} failed.`);
+    }
+  }
+
+  async function handleBatchAddToPortfolio() {
+    setBatchAction("portfolio");
+    const items = projects.filter((proj) => selectedIds?.[proj.id] && !proj.portfolioEntryId);
+
+    if (items.length === 0) {
+      toast("All selected items are already in portfolio.");
+      setBatchAction(null);
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      items.map((proj) =>
+        orpcClient.portfolio.toggle({ type: "project", entityId: proj.id, included: true })
+      )
+    );
+
+    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.projects.list.queryKey() });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+
+    setBatchAction(null);
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    if (failed === 0) {
+      toast.success(`Added ${succeeded} project(s) to portfolio.`);
+      clearSelection();
+    } else {
+      toast.error(`Added ${succeeded} to portfolio, ${failed} failed.`);
+    }
+  }
+
   const containerRef = useRef<HTMLUListElement | null>(null);
 
   const { handleNext, handlePrev } = useItemsNavigation<ProjectOutput>({
@@ -181,20 +255,40 @@ export function ProjectsPage() {
 
   const isAnyOpen = isAnyOpened(isItemOpen);
 
+  const [batchAction, setBatchAction] = useState<"delete" | "portfolio" | null>(null);
+
+  const selectedIdsEntries = Object.entries(selectedIds ?? {}).filter(([, v]) => v);
+  const selectedCount = selectedIdsEntries.length;
+  const isBatchLoading = batchAction !== null;
+  const isDeleting = batchAction === "delete";
+  const isAddingToPortfolio = batchAction === "portfolio";
+
   useEffect(() => {
-    if (!projectsQuery.isLoading && projects.length === 0 && openedItem) {
-      setOpenedItem(null);
-      setIsItemOpen(null);
+    if (!projectsQuery.isLoading && projects.length === 0) {
+      if (openedItem) {
+        setOpenedItem(null);
+        setIsItemOpen(null);
+      }
+      if (selectedIds) clearSelection();
     }
-  }, [projectsQuery.isLoading, projects.length, openedItem, setOpenedItem, setIsItemOpen]);
+  }, [
+    projectsQuery.isLoading,
+    projects.length,
+    openedItem,
+    setOpenedItem,
+    setIsItemOpen,
+    selectedIds,
+    clearSelection
+  ]);
 
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 
-  const openDialog = useCallback((id: string | null) => {
+  function openDialog(id: string | null) {
     setEditingProjectId(id);
     setDialogOpen(true);
-  }, []);
+  }
 
   const emptyState = (
     <ItemsEmpty
@@ -221,6 +315,8 @@ export function ProjectsPage() {
             onSelect={() => openItem(project.id, project)}
             dragHandleProps={dragHandleProps}
             isSort={isSort}
+            isBatchSelected={selectedIds?.[project.id] ?? false}
+            onToggleSelect={() => toggleSelect(project.id)}
             onMouseEnter={() => {
               void queryClient.ensureQueryData(
                 orpcQueryClient.projects.get.queryOptions({ input: { id: project.id } })
@@ -235,24 +331,17 @@ export function ProjectsPage() {
             deleteTitle="Delete this project?"
             deleteDescription="This will permanently delete this project and all its associated data."
             title={project.title}
-            titleEnd={
-              project.repos.length > 0 ? (
-                <a
-                  href={project.repos[0]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Open ${project.title} on GitHub`}
-                  onClick={(event) => event.stopPropagation()}
-                  className="ms-1.5 inline-flex align-middle text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <ExternalLink className="size-3.5" strokeWidth={2.25} />
-                </a>
-              ) : null
-            }
             meta={
-              <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
-                <CalendarIcon size={14} /> {project.year}
-              </p>
+              project.stacks.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {project.stacks.map((stack) => (
+                    <Badge key={stack.id} variant="secondary" size="lg">
+                      {stack.icon ? <Icon nameIcon={stack.icon} /> : null}
+                      {stack.name}
+                    </Badge>
+                  ))}
+                </div>
+              ) : null
             }
           />
         )}
@@ -276,6 +365,17 @@ export function ProjectsPage() {
                 onSortSave: handleSaveSort,
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
+              }}
+              batch={{
+                selectedCount,
+                totalCount: projects.length,
+                isBatchLoading,
+                isDeleting,
+                isAddingToPortfolio,
+                onDeleteSelected: () => setBatchDeleteDialogOpen(true),
+                onAddSelectedToPortfolio: handleBatchAddToPortfolio,
+                onSelectAll: () => selectAll(projects.map((p) => p.id)),
+                onClearSelection: clearSelection
               }}
             />
           }
@@ -391,6 +491,25 @@ export function ProjectsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
         />
+        <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedCount} project(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the selected projects and all their associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+              <AlertDialogClose
+                render={<Button variant="destructive" disabled={isDeleting} />}
+                onClick={handleBatchDelete}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogClose>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
       </PageLayout>
     </ItemsNavProvider>
   );

@@ -6,7 +6,17 @@ import { Building2Icon, CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
+import { Button } from "@tsu-stack/ui/components/button";
 
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
@@ -52,7 +62,17 @@ function safeFormat(value: string, pattern: string): string {
 }
 
 export function ExperiencesPage() {
-  const { openedItem, isItemOpen, setOpenedItem, setIsItemOpen, openItem } = useExperienceStore();
+  const {
+    openedItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen,
+    openItem,
+    selectedIds,
+    toggleSelect,
+    selectAll,
+    clearSelection
+  } = useExperienceStore();
   const [isSort, setIsSort] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<typeof visibleExperiences | null>(null);
   const queryClient = useQueryClient();
@@ -178,6 +198,64 @@ export function ExperiencesPage() {
     );
   }
 
+  async function handleBatchDelete() {
+    setBatchAction("delete");
+    setBatchDeleteDialogOpen(false);
+    const ids = selectedIdsEntries.map(([id]) => id);
+    const results = await Promise.allSettled(
+      ids.map((id) => orpcClient.experiences.delete({ id }))
+    );
+
+    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.experiences.list.queryKey() });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+
+    setBatchAction(null);
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    if (failed === 0) {
+      toast.success(`Deleted ${succeeded} experience(s).`);
+      clearSelection();
+    } else {
+      toast.error(`Deleted ${succeeded}, ${failed} failed.`);
+    }
+  }
+
+  async function handleBatchAddToPortfolio() {
+    setBatchAction("portfolio");
+    const items = visibleExperiences.filter(
+      (exp) => selectedIds?.[exp.id] && !exp.portfolioEntryId
+    );
+
+    if (items.length === 0) {
+      toast("All selected items are already in portfolio.");
+      setBatchAction(null);
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      items.map((exp) =>
+        orpcClient.portfolio.toggle({ type: "experience", entityId: exp.id, included: true })
+      )
+    );
+
+    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.experiences.list.queryKey() });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+
+    setBatchAction(null);
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    if (failed === 0) {
+      toast.success(`Added ${succeeded} experience(s) to portfolio.`);
+      clearSelection();
+    } else {
+      toast.error(`Added ${succeeded} to portfolio, ${failed} failed.`);
+    }
+  }
+
   const containerRef = useRef<HTMLUListElement | null>(null);
 
   const { handleNext, handlePrev } = useItemsNavigation({
@@ -189,19 +267,33 @@ export function ExperiencesPage() {
     containerRef
   });
 
+  const [batchAction, setBatchAction] = useState<"delete" | "portfolio" | null>(null);
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+
+  const selectedIdsEntries = Object.entries(selectedIds ?? {}).filter(([, v]) => v);
+  const selectedCount = selectedIdsEntries.length;
+  const isBatchLoading = batchAction !== null;
+  const isDeleting = batchAction === "delete";
+  const isAddingToPortfolio = batchAction === "portfolio";
+
   const isAnyOpen = isAnyOpened(isItemOpen);
 
   useEffect(() => {
-    if (!experiencesQuery.isLoading && visibleExperiences.length === 0 && openedItem) {
-      setOpenedItem(null);
-      setIsItemOpen(null);
+    if (!experiencesQuery.isLoading && visibleExperiences.length === 0) {
+      if (openedItem) {
+        setOpenedItem(null);
+        setIsItemOpen(null);
+      }
+      if (selectedIds) clearSelection();
     }
   }, [
     experiencesQuery.isLoading,
     visibleExperiences.length,
     openedItem,
     setOpenedItem,
-    setIsItemOpen
+    setIsItemOpen,
+    selectedIds,
+    clearSelection
   ]);
 
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
@@ -237,6 +329,8 @@ export function ExperiencesPage() {
             onSelect={() => openItem(experience.id, experience)}
             dragHandleProps={dragHandleProps}
             isSort={isSort}
+            isBatchSelected={selectedIds?.[experience.id] ?? false}
+            onToggleSelect={() => toggleSelect(experience.id)}
             onMouseEnter={() => {
               void queryClient.prefetchQuery(
                 orpcQueryClient.experiences.get.queryOptions({
@@ -289,6 +383,17 @@ export function ExperiencesPage() {
                 onSortSave: handleSaveSort,
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
+              }}
+              batch={{
+                selectedCount,
+                totalCount: visibleExperiences.length,
+                isBatchLoading,
+                isDeleting,
+                isAddingToPortfolio,
+                onDeleteSelected: () => setBatchDeleteDialogOpen(true),
+                onAddSelectedToPortfolio: handleBatchAddToPortfolio,
+                onSelectAll: () => selectAll(visibleExperiences.map((e) => e.id)),
+                onClearSelection: clearSelection
               }}
             />
           }
@@ -343,6 +448,27 @@ export function ExperiencesPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
         />
+
+        <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedCount} experience(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the selected experiences and all their associated
+                projects.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+              <AlertDialogClose
+                render={<Button variant="destructive" disabled={isDeleting} />}
+                onClick={handleBatchDelete}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogClose>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
       </PageLayout>
     </ItemsNavProvider>
   );

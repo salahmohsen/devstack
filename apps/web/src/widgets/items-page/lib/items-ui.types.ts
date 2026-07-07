@@ -18,6 +18,7 @@ export type ItemsUIState<T extends { id: string }, Tab extends string, Filter ex
   filter: Filter;
   openedItem: T | null;
   isItemOpen: Record<string, boolean> | null;
+  selectedIds: Record<string, boolean> | null;
 };
 
 export type ItemsUIStore<
@@ -35,6 +36,9 @@ export type ItemsUIStore<
    */
   openItem: (id: string, item: T) => void;
   closePanel: () => void;
+  toggleSelect: (id: string) => void;
+  selectAll: (ids: string[]) => void;
+  clearSelection: () => void;
   /**
    * Set the active tab and its derived filter in one call.
    * Falls back to the existing filter if `tabToFilter` is not configured.

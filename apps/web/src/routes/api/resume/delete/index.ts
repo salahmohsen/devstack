@@ -8,7 +8,7 @@ import { resumeRepository } from "@tsu-stack/db/repositories";
 import { deleteResumePdf } from "@/server/resume-service";
 
 const DeleteInputSchema = z.object({
-  id: z.string()
+  ids: z.array(z.string())
 });
 
 export const Route = createFileRoute("/api/resume/delete/")({
@@ -30,15 +30,9 @@ export const Route = createFileRoute("/api/resume/delete/")({
         }
 
         return runWithDb(createDb(), async () => {
-          const deleted = await resumeRepository.delete(parsed.data.id);
-          if (!deleted) {
-            return new Response(JSON.stringify({ success: false }), {
-              status: 404,
-              headers: { "content-type": "application/json" }
-            });
-          }
+          const deleted = await resumeRepository.deleteMany(parsed.data.ids);
 
-          await deleteResumePdf(deleted.r2Key);
+          await Promise.all(deleted.map((d) => deleteResumePdf(d.r2Key)));
 
           return new Response(JSON.stringify({ success: true }), {
             headers: { "content-type": "application/json" }
