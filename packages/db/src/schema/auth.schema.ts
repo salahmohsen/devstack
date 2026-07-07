@@ -12,7 +12,8 @@ export const user = pgTable("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  summary: text("summary").default("")
+  summary: text("summary").default(""),
+  phone: text("phone")
 });
 
 export const session = pgTable(
