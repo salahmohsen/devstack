@@ -288,9 +288,7 @@ export interface FileRoutesById {
   '/(root-layout)/(guest)/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
-  '/api/resume/delete/': typeof ApiResumeDeleteIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
-  '/api/resume/generate/': typeof ApiResumeGenerateIndexRoute
   '/(root-layout)/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/(root-layout)/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
