@@ -27,6 +27,7 @@
     "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
     "hono": "catalog:",
+    "pdfnative": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

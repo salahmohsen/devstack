@@ -46,6 +46,13 @@
       "id": "24c38be634a943a9bcb47f9fd133fee6"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA_BUCKET",
+      "bucket_name": "personal-hub",
+      "remote": true
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {
