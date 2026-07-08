@@ -68,6 +68,16 @@ export type OrpcContextLogger = {
 
 export type OrpcContextSession = { user: { id: string } } | null;
 
+export type OrpcContextMediaBucket = {
+  put(
+    key: string,
+    value: ReadableStream | ArrayBuffer | FormData | string,
+    options?: { httpMetadata?: { contentType?: string } }
+  ): Promise<{ key: string }>;
+  get(key: string): Promise<{ body: ReadableStream | null; key: string } | null>;
+  delete(key: string): Promise<void>;
+};
+
 export type OrpcContext = {
   github: {
     binding: OrpcContextGithubBinding;
@@ -77,4 +87,5 @@ export type OrpcContext = {
   };
   logger: OrpcContextLogger;
   session: OrpcContextSession;
+  mediaBucket: OrpcContextMediaBucket;
 };

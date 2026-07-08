@@ -1,6 +1,7 @@
 import { type Context as HonoContext } from "hono";
 
 import { auth } from "@tsu-stack/auth/index";
+import { type OrpcContextMediaBucket } from "@tsu-stack/core";
 import { betterAuthAccountRepository, createDb, runWithDb } from "@tsu-stack/db";
 import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/client";
 import { type GitHubRuntimeBindings } from "@tsu-stack/github/runtime/bindings";
@@ -12,6 +13,7 @@ import { type OrpcContext } from "#@/lib/context/types";
 type HonoBindings = {
   GITHUB_CACHE_KV?: GitHubRuntimeBindings["kv"];
   GITHUB_SIGNAL_RELAY?: GitHubRuntimeBindings["signalRelay"];
+  MEDIA_BUCKET?: unknown;
 };
 
 export type OrpcContextBindings = HonoBindings;
@@ -31,6 +33,11 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
     kv: context.env.GITHUB_CACHE_KV,
     signalRelay: context.env.GITHUB_SIGNAL_RELAY
   };
+  const mediaBucket = context.env.MEDIA_BUCKET as OrpcContextMediaBucket | undefined;
+  if (!mediaBucket) {
+    throw new Error("MEDIA_BUCKET binding is not configured");
+  }
+
   const githubSource = await resolvePublicGitHubSource();
 
   // The PAT in `github_config` powers the `publicOctokit` (and the
@@ -83,6 +90,7 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
       source: githubSource
     },
     logger,
-    session
+    session,
+    mediaBucket
   };
 }

@@ -4,8 +4,10 @@ import { createRouterClient, type RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
+import { env } from "cloudflare:workers";
 
 import { auth } from "@tsu-stack/auth";
+import { type OrpcContextMediaBucket } from "@tsu-stack/core";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { createLogger } from "@tsu-stack/logger/server";
@@ -43,7 +45,8 @@ const getORPCClient = createIsomorphicFn()
               source: githubSource
             },
             logger: createLogger({ operation: "web__client__orpc" }),
-            session
+            session,
+            mediaBucket: (env as Record<string, unknown>).MEDIA_BUCKET as OrpcContextMediaBucket
           };
         }),
       interceptors: [

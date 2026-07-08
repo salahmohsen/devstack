@@ -203,11 +203,10 @@ _Avoid_: AI switch, include flag, visibility switch.
 
 **PDF renderer**:
 The library that compiles portfolio data into a PDF byte stream
-server-side. Currently `pdfnative` + `pdfnative-react`, migrated from
-`@react-pdf/renderer`. Runs in the TanStack Start Cloudflare Worker
-(`apps/web`). The renderer is a pure engine concern — it has no
-knowledge of resume semantics, only document structure (headings,
-paragraphs, lists, tables).
+server-side. `pdfnative` core (no React wrapper), migrated from
+`pdfnative-react`. Runs in the Hono server (`apps/server`). The
+renderer is a pure engine concern — it has no knowledge of resume
+semantics, only document structure (headings, paragraphs, lists, tables).
 _Avoid_: PDF engine, document generator.
 
 **Tagged PDF**:
@@ -217,3 +216,13 @@ ATS text extraction and screen-reader accessibility. Enabled via
 `tagged: true` on the pdfnative `<Document>` component, which also
 activates PDF/A-2b compliance.
 _Avoid_: Accessible PDF, structured PDF.
+
+**Resume builder**:
+The orchestrator that fetches portfolio evidence + profile, calls the
+PDF renderer to produce a PDF byte stream, uploads the file to R2, and
+persists the result in the resume table. Implemented as the
+`resume.generate` oRPC procedure in
+`packages/api/src/routers/resume.router.ts`. The single entry point
+for producing a resume PDF; distinct from the PDF renderer (which is a
+pure engine with no resume-domain knowledge).
+_Avoid_: PDF generator, resume service, resume orchestrator.

@@ -26,6 +26,7 @@
     "@tsu-stack/logger": "workspace:*",
     "drizzle-orm": "catalog:",
     "files-sdk": "catalog:",
+    "pdfnative": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
