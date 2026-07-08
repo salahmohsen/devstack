@@ -22,9 +22,7 @@ import { Route as rootLayoutPlaygroundIndexRouteImport } from './routes/(root-la
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
-import { Route as ApiResumeGenerateIndexRouteImport } from './routes/api/resume/generate/index'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
-import { Route as ApiResumeDeleteIndexRouteImport } from './routes/api/resume/delete/index'
 import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
 import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
 import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
@@ -111,19 +109,9 @@ const rootLayoutguestSignInRouteRoute =
     path: '/sign-in',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
-const ApiResumeGenerateIndexRoute = ApiResumeGenerateIndexRouteImport.update({
-  id: '/api/resume/generate/',
-  path: '/api/resume/generate/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiResumeDownloadIndexRoute = ApiResumeDownloadIndexRouteImport.update({
   id: '/api/resume/download/',
   path: '/api/resume/download/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiResumeDeleteIndexRoute = ApiResumeDeleteIndexRouteImport.update({
-  id: '/api/resume/delete/',
-  path: '/api/resume/delete/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const rootLayoutReposRepoIndexRoute =
@@ -241,9 +229,7 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
-  '/api/resume/delete/': typeof ApiResumeDeleteIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
-  '/api/resume/generate/': typeof ApiResumeGenerateIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
@@ -269,9 +255,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof rootLayoutguestSignInIndexRoute
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
-  '/api/resume/delete': typeof ApiResumeDeleteIndexRoute
   '/api/resume/download': typeof ApiResumeDownloadIndexRoute
-  '/api/resume/generate': typeof ApiResumeGenerateIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
@@ -338,9 +322,7 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/dashboard/'
     | '/repos/$repo/'
-    | '/api/resume/delete/'
     | '/api/resume/download/'
-    | '/api/resume/generate/'
     | '/repos/$repo/blob/$'
     | '/repos/$repo/tree/$'
     | '/sign-in/create-an-account/'
@@ -366,9 +348,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/dashboard'
     | '/repos/$repo'
-    | '/api/resume/delete'
     | '/api/resume/download'
-    | '/api/resume/generate'
     | '/repos/$repo/blob/$'
     | '/repos/$repo/tree/$'
     | '/sign-in/create-an-account'
@@ -400,9 +380,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/(guest)/sign-in/'
     | '/(root-layout)/__protected/dashboard/'
     | '/(root-layout)/repos/$repo/'
-    | '/api/resume/delete/'
     | '/api/resume/download/'
-    | '/api/resume/generate/'
     | '/(root-layout)/repos/$repo/blob/$'
     | '/(root-layout)/repos/$repo/tree/$'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
@@ -421,9 +399,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
   ApiFilesIndexRoute: typeof ApiFilesIndexRoute
-  ApiResumeDeleteIndexRoute: typeof ApiResumeDeleteIndexRoute
   ApiResumeDownloadIndexRoute: typeof ApiResumeDownloadIndexRoute
-  ApiResumeGenerateIndexRoute: typeof ApiResumeGenerateIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -519,25 +495,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutguestSignInRouteRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
-    '/api/resume/generate/': {
-      id: '/api/resume/generate/'
-      path: '/api/resume/generate'
-      fullPath: '/api/resume/generate/'
-      preLoaderRoute: typeof ApiResumeGenerateIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/resume/download/': {
       id: '/api/resume/download/'
       path: '/api/resume/download'
       fullPath: '/api/resume/download/'
       preLoaderRoute: typeof ApiResumeDownloadIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/resume/delete/': {
-      id: '/api/resume/delete/'
-      path: '/api/resume/delete'
-      fullPath: '/api/resume/delete/'
-      preLoaderRoute: typeof ApiResumeDeleteIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root-layout)/repos/$repo/': {
@@ -803,9 +765,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,
   ApiFilesIndexRoute: ApiFilesIndexRoute,
-  ApiResumeDeleteIndexRoute: ApiResumeDeleteIndexRoute,
   ApiResumeDownloadIndexRoute: ApiResumeDownloadIndexRoute,
-  ApiResumeGenerateIndexRoute: ApiResumeGenerateIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -5,7 +5,7 @@ import { FileTextIcon, StarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -60,13 +60,8 @@ export function ResumesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (input: { ids: string[] }) => {
-      const res = await fetch("/api/resume/delete", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(input)
-      });
-      if (!res.ok) throw new Error("Failed to delete resume");
-      return res.json() as Promise<{ success: boolean }>;
+      const res = await orpcClient.resume.delete({ ids: input.ids });
+      return res;
     },
     onSuccess: async () => {
       await invalidateQueries();
@@ -76,8 +71,7 @@ export function ResumesPage() {
   async function handleGenerate() {
     setIsGenerating(true);
     try {
-      const res = await fetch("/api/resume/generate", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to generate resume");
+      await orpcClient.resume.generate();
       await invalidateQueries();
       toast.success("Resume generated!");
     } catch {

@@ -1,8 +1,11 @@
 import { Document, Heading, Link, List, Page, Spacer, Text } from "pdfnative-react";
 
-import { type PortfolioListOutput } from "@tsu-stack/core";
+import { type PortfolioListOutput, type ProfileOutput } from "@tsu-stack/core";
 
-import { type GenerateResume } from "@/server/resume-service";
+type GenerateResume = {
+  portfolio: PortfolioListOutput;
+  profile: ProfileOutput;
+};
 
 const SPACING = {
   pagePadding: 52,
