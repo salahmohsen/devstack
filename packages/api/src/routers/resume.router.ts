@@ -9,10 +9,10 @@ import {
   SetDefaultInputSchema
 } from "@tsu-stack/core";
 import { contactRepository, userRepository } from "@tsu-stack/db";
-import { resumeRepository } from "@tsu-stack/db/repositories";
 import {
   experienceRepository,
   projectRepository,
+  resumeRepository,
   stackRepository
 } from "@tsu-stack/db/repositories";
 
@@ -102,7 +102,7 @@ export const resumeRouter = {
       const { params, layout } = buildResumeDocument({ portfolio, profile });
       const bytes = buildDocumentPDFBytes(params, layout);
 
-      await context.mediaBucket.put(r2Key, bytes.buffer as ArrayBuffer, {
+      await context.mediaBucket.put(r2Key, bytes.slice().buffer as ArrayBuffer, {
         httpMetadata: { contentType: "application/pdf" }
       });
 
