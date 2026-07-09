@@ -10,4 +10,9 @@
  * in `packages/api`, `packages/github`, and `apps/server` (which does not depend
  * on `@tsu-stack/core` directly).
  */
-export type { OrpcContext, OrpcContextLogger, OrpcContextMediaBucket } from "@tsu-stack/core";
+export type {
+  OrpcContext,
+  OrpcContextAgentWorker,
+  OrpcContextLogger,
+  OrpcContextMediaBucket
+} from "@tsu-stack/core";

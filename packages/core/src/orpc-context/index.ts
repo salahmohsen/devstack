@@ -78,6 +78,12 @@ export type OrpcContextMediaBucket = {
   delete(key: string): Promise<void>;
 };
 
+// Cloudflare Fetcher.fetch accepts Request | string, not URL.
+// Using RequestInfo (Request | string) keeps the type compatible.
+export type OrpcContextAgentWorker = {
+  fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
+};
+
 export type OrpcContext = {
   github: {
     binding: OrpcContextGithubBinding;
@@ -88,4 +94,5 @@ export type OrpcContext = {
   logger: OrpcContextLogger;
   session: OrpcContextSession;
   mediaBucket: OrpcContextMediaBucket;
+  agentWorker?: OrpcContextAgentWorker;
 };
