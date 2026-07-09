@@ -24,6 +24,7 @@ import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-lay
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
 import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
+import { Route as rootLayoutPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/playground/agent/index'
 import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
 import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
 import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
@@ -119,6 +120,12 @@ const rootLayoutReposRepoIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => rootLayoutReposRepoRouteRoute,
+  } as any)
+const rootLayoutPlaygroundAgentIndexRoute =
+  rootLayoutPlaygroundAgentIndexRouteImport.update({
+    id: '/playground/agent/',
+    path: '/playground/agent/',
+    getParentRoute: () => rootLayoutRouteRoute,
   } as any)
 const rootLayout_protectedDashboardIndexRoute =
   rootLayout_protectedDashboardIndexRouteImport.update({
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
+  '/playground/agent/': typeof rootLayoutPlaygroundAgentIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -254,6 +262,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/sign-in': typeof rootLayoutguestSignInIndexRoute
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
+  '/playground/agent': typeof rootLayoutPlaygroundAgentIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download': typeof ApiResumeDownloadIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -287,6 +296,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/(root-layout)/(guest)/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
+  '/(root-layout)/playground/agent/': typeof rootLayoutPlaygroundAgentIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/(root-layout)/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/sign-in/'
     | '/dashboard/'
+    | '/playground/agent/'
     | '/repos/$repo/'
     | '/api/resume/download/'
     | '/repos/$repo/blob/$'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/sign-in'
     | '/dashboard'
+    | '/playground/agent'
     | '/repos/$repo'
     | '/api/resume/download'
     | '/repos/$repo/blob/$'
@@ -377,6 +389,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings'
     | '/(root-layout)/(guest)/sign-in/'
     | '/(root-layout)/__protected/dashboard/'
+    | '/(root-layout)/playground/agent/'
     | '/(root-layout)/repos/$repo/'
     | '/api/resume/download/'
     | '/(root-layout)/repos/$repo/blob/$'
@@ -506,6 +519,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/repos/$repo/'
       preLoaderRoute: typeof rootLayoutReposRepoIndexRouteImport
       parentRoute: typeof rootLayoutReposRepoRouteRoute
+    }
+    '/(root-layout)/playground/agent/': {
+      id: '/(root-layout)/playground/agent/'
+      path: '/playground/agent'
+      fullPath: '/playground/agent/'
+      preLoaderRoute: typeof rootLayoutPlaygroundAgentIndexRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
     }
     '/(root-layout)/__protected/dashboard/': {
       id: '/(root-layout)/__protected/dashboard/'
@@ -740,6 +760,7 @@ interface rootLayoutRouteRouteChildren {
   rootLayoutPrivacyPolicyIndexRoute: typeof rootLayoutPrivacyPolicyIndexRoute
   rootLayoutReposIndexRoute: typeof rootLayoutReposIndexRoute
   rootLayoutTermsOfServiceIndexRoute: typeof rootLayoutTermsOfServiceIndexRoute
+  rootLayoutPlaygroundAgentIndexRoute: typeof rootLayoutPlaygroundAgentIndexRoute
 }
 
 const rootLayoutRouteRouteChildren: rootLayoutRouteRouteChildren = {
@@ -751,6 +772,7 @@ const rootLayoutRouteRouteChildren: rootLayoutRouteRouteChildren = {
   rootLayoutPrivacyPolicyIndexRoute: rootLayoutPrivacyPolicyIndexRoute,
   rootLayoutReposIndexRoute: rootLayoutReposIndexRoute,
   rootLayoutTermsOfServiceIndexRoute: rootLayoutTermsOfServiceIndexRoute,
+  rootLayoutPlaygroundAgentIndexRoute: rootLayoutPlaygroundAgentIndexRoute,
 }
 
 const rootLayoutRouteRouteWithChildren = rootLayoutRouteRoute._addFileChildren(
