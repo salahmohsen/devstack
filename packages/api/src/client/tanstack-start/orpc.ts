@@ -1,4 +1,4 @@
-import { createORPCClient } from "@orpc/client";
+import { createORPCClient, eventIteratorToUnproxiedDataStream } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { createRouterClient, type RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
@@ -98,3 +98,5 @@ const getORPCClient = createIsomorphicFn()
 export const orpcClient = getORPCClient();
 
 export const orpcQueryClient = createTanstackQueryUtils(orpcClient);
+
+export { eventIteratorToUnproxiedDataStream };
