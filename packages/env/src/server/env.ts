@@ -76,6 +76,10 @@ export const ENV_SERVER = createEnv({
     // Default: mxbai-embed-large (1024-d). Vectorize's max dimension is
     // 1536, so the previous qwen3-embedding default (4096-d) is rejected
     // at deploy time. See docs/adr/0013.
-    EMBEDDING_MODEL: z.string().default("mxbai-embed-large")
+    EMBEDDING_MODEL: z.string().default("mxbai-embed-large"),
+    // Agent Worker URL — used as a fallback in dev when no Cloudflare service
+    // binding is available. In production, prefer the AGENT_WORKER service
+    // binding (which `createAgentWorker` checks first).
+    AGENT_WORKER_URL: z.string().url().optional()
   }
 });
