@@ -35,8 +35,15 @@
   },
   "vars": {
     "VITE_SERVER_URL": "https://salahmohsen.com/server",
-    "VITE_WEB_URL": "https://salahmohsen.com"
+    "VITE_WEB_URL": "https://salahmohsen.com",
+    "AGENT_WORKER_URL": "http://localhost:4111"
   },
+  "services": [
+    {
+      "binding": "AGENT_WORKER",
+      "service": "devhub-agent"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "GITHUB_CACHE_KV",

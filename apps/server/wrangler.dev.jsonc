@@ -38,8 +38,15 @@
   },
   "vars": {
     "VITE_SERVER_URL": "http://localhost:5001/server",
-    "VITE_WEB_URL": "http://localhost:3000"
+    "VITE_WEB_URL": "http://localhost:3000",
+    "AGENT_WORKER_URL": "http://localhost:4111"
   },
+  "services": [
+    {
+      "binding": "AGENT_WORKER",
+      "service": "devhub-agent"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "GITHUB_CACHE_KV",
