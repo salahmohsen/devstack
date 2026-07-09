@@ -137,12 +137,31 @@ catalog:
   pdfnative: ^1.4.0
   pdfnative-react: ^0.2.0
   "@better-auth/drizzle-adapter": 1.7.0-rc.1
+  "mastra": "^1.18.2"
+  "@mastra/core": "^1.50.1"
+  "@mastra/duckdb": "^1.5.1"
+  "@mastra/evals": "^1.5.1"
+  "@mastra/libsql": "^1.15.1"
+  "@mastra/loggers": "^1.2.0"
+  "@mastra/memory": "^1.22.2"
+  "@mastra/observability": "^1.16.0"
+  "@mastra/hono": ^1.5.6
+  "@mastra/deployer-cloudflare": ^1.2.6
+  # Mastra's peerDep requires ai >= 5.0.76; current resolved is ai@6.0.208
+  ai: ^6.0.208
+  "@ai-sdk/react": ^2.0.212
 
 catalogMode: prefer
 
 minimumReleaseAgeExclude:
   - miniflare@4.20260529.0
   - wrangler@4.96.0
+  - "@mastra/core@1.50.1"
+  - "@mastra/deployer@1.50.1"
+  - "@mastra/duckdb@1.5.1"
+  - "@mastra/memory@1.22.2"
+  - "@mastra/server@1.50.1"
+  - mastra@1.18.2
 
 overrides:
   vite: "catalog:"
