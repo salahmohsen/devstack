@@ -12,6 +12,7 @@ import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { createAgentWorker, type AgentWorkerEnv } from "#@/lib/agent/worker";
 import { type AppRouter, appRouter } from "#@/routers/index";
 
 const getORPCClient = createIsomorphicFn()
@@ -33,6 +34,24 @@ const getORPCClient = createIsomorphicFn()
           ]);
           const githubSource = await resolvePublicGitHubSource();
 
+          // The web Worker has no service binding to the agent. The factory will
+          // fall back to `AGENT_WORKER_URL` if set; if neither is configured we
+          // attach a stub that throws lazily on `.fetch()`. This keeps SSR
+          // startup working even when the env var is missing in deployment —
+          // the throw only happens if an agent procedure is actually called
+          // from SSR, which is not the normal path.
+          const envAny = env as AgentWorkerEnv;
+          const agentWorker =
+            (envAny.AGENT_WORKER ?? envAny.AGENT_WORKER_URL)
+              ? createAgentWorker(envAny)
+              : {
+                  fetch(): Promise<Response> {
+                    throw new Error(
+                      "Agent worker is not configured. Set AGENT_WORKER_URL or add a service binding."
+                    );
+                  }
+                };
+
           return {
             github: {
               binding: {},
@@ -46,7 +65,8 @@ const getORPCClient = createIsomorphicFn()
             },
             logger: createLogger({ operation: "web__client__orpc" }),
             session,
-            mediaBucket: (env as Record<string, unknown>).MEDIA_BUCKET as OrpcContextMediaBucket
+            mediaBucket: (env as Record<string, unknown>).MEDIA_BUCKET as OrpcContextMediaBucket,
+            agentWorker
           };
         }),
       interceptors: [
