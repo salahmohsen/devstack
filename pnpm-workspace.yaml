@@ -147,6 +147,7 @@ catalog:
   "@mastra/observability": "^1.16.0"
   "@mastra/hono": ^1.5.6
   "@mastra/deployer-cloudflare": ^1.2.6
+  "@mastra/ai-sdk": ^1.6.1
   # Mastra's peerDep requires ai >= 5.0.76; current resolved is ai@6.0.208
   ai: ^6.0.208
   "@ai-sdk/react": ^2.0.212
@@ -162,6 +163,8 @@ minimumReleaseAgeExclude:
   - "@mastra/memory@1.22.2"
   - "@mastra/server@1.50.1"
   - mastra@1.18.2
+  - "@dotenvx/primitives@1.8.1"
+  - "@dotenvx/tooling@1.0.2"
 
 overrides:
   vite: "catalog:"

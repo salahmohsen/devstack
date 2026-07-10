@@ -23,7 +23,7 @@
     "@loadable/component": "catalog:",
     "@lonik/oh-image": "catalog:",
     "@number-flow/react": "catalog:",
-    "@tanstack/react-form": "",
+    "@tanstack/react-form": "^1.33.1",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",

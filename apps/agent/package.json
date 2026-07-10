@@ -15,11 +15,12 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "mastra dev",
+    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev",
     "build": "mastra build",
     "start": "mastra start"
   },
   "dependencies": {
+    "@mastra/ai-sdk": "catalog:",
     "@mastra/core": "catalog:",
     "@mastra/deployer-cloudflare": "catalog:",
     "@mastra/duckdb": "catalog:",
@@ -32,6 +33,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "catalog:",
     "@types/node": "catalog:",
     "mastra": "catalog:",
     "typescript": "catalog:"

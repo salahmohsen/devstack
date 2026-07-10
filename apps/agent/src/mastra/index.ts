@@ -1,3 +1,4 @@
+import { chatRoute } from "@mastra/ai-sdk";
 import { Mastra } from "@mastra/core/mastra";
 import { MastraCompositeStore } from "@mastra/core/storage";
 import { CloudflareDeployer } from "@mastra/deployer-cloudflare";
@@ -22,6 +23,13 @@ import {
 import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
 export const mastra = new Mastra({
+  server: {
+    apiRoutes: [
+      chatRoute({
+        path: "/chat/:agentId"
+      })
+    ]
+  },
   deployer: new CloudflareDeployer({
     name: "devhub-agent",
     routes: [

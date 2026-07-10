@@ -19,7 +19,12 @@ Your primary function is to help users get weather details for specific location
 - If the user asks for activities, respond in the format they request.
 
 Use the weatherTool to fetch current weather data.`,
-  model: "opencode-go/deepseek-v4-flash",
+  model: [
+    { model: "opencode-go/minimax-m3", maxRetries: 1 },
+    { model: "nvidia/meta/llama-3.3-70b-instruct", maxRetries: 2 },
+    { model: "openrouter/nvidia/nemotron-3-super-120b-a12b:free", maxRetries: 2 },
+    { model: "openrouter/google/gemma-4-31b-it:free", maxRetries: 2 }
+  ],
   tools: { weatherTool },
   scorers: {
     toolCallAppropriateness: {

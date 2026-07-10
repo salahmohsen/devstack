@@ -1,5 +1,3 @@
-import { stripTrailingSlashes } from "@tsu-stack/core";
-
 import { type OrpcContextAgentWorker } from "#@/lib/context/types";
 
 export type AgentWorkerEnv = {
@@ -10,21 +8,23 @@ export type AgentWorkerEnv = {
 export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
   return {
     fetch(input, init) {
+      // Both service bindings and global fetch require absolute URLs.
+      // Resolve relative paths using AGENT_WORKER_URL before dispatching.
+      const baseUrl = env.AGENT_WORKER_URL;
+      const inputUrl = input instanceof Request ? input.url : String(input);
+      const resolved = baseUrl ? new URL(inputUrl, baseUrl).href : inputUrl;
+
       const binding = env.AGENT_WORKER;
       if (binding) {
-        // Fetcher.fetch(Request | string, RequestInit)
-        return binding.fetch(input, init);
+        return binding.fetch(resolved, init);
       }
-      const baseUrl = env.AGENT_WORKER_URL;
       if (!baseUrl) {
         throw new Error(
           "Agent worker is not configured. Set AGENT_WORKER_URL or add a service binding."
         );
       }
-      const request = new Request(input, init);
-      const absoluteUrl = new URL(request.url);
-      absoluteUrl.href = stripTrailingSlashes(baseUrl) + absoluteUrl.pathname + absoluteUrl.search;
-      return fetch(absoluteUrl.href, {
+      const request = new Request(resolved, init);
+      return fetch(resolved, {
         method: request.method,
         headers: request.headers,
         body: request.body,

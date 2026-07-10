@@ -64,16 +64,16 @@ export const agentRouter = {
     }),
 
   /**
-   * Streaming chat. Hits the agent's `/agents/:agentId/stream/ui`
-   * endpoint (Mastra's built-in AI SDK UIMessage stream bridge) and
-   * pipes the response body through oRPC's EventIterator protocol
-   * using `streamToEventIterator`. The client's
+   * Streaming chat. Hits the agent's `/chat/:agentId` endpoint
+   * exposed by `@mastra/ai-sdk`'s `chatRoute()` (registered in the
+   * agent's Mastra config). Returns AI SDK UIMessageStream SSE
+   * events and pipes the response body through oRPC's EventIterator
+   * protocol using `streamToEventIterator`. The client's
    * `eventIteratorToUnproxiedDataStream` converts it back to a
    * `ReadableStream<UIMessageChunk>` that `useChat` consumes.
    *
-   * We use `/stream/ui` (not `/stream`) because `/stream` returns
-   * Mastra's own chunk format while `/stream/ui` returns SSE-encoded
-   * AI SDK UIMessage chunks.
+   * NOTE: Mastra's built-in `/agents/:agentId/stream/ui` is
+   * deprecated in v1.50.1 — use this path instead.
    */
   chatStream: publicProcedure
     .route({
@@ -91,7 +91,7 @@ export const agentRouter = {
         throw new Error("agentWorker not configured");
       }
 
-      const upstream = await context.agentWorker.fetch(`/agents/${input.agentId}/stream/ui`, {
+      const upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: input.messages })
