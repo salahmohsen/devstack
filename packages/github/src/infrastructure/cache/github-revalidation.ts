@@ -1,3 +1,5 @@
+import { isRecord } from "@tsu-stack/core";
+
 export const githubRevalidationSignalKeys = {
   pullsMine: "pulls.mine",
   issuesMine: "issues.mine",
@@ -29,10 +31,6 @@ export const githubRevalidationSignalKeys = {
     `repoStatuses:${input.owner}/${input.repo}`,
   installationAccess: "installationAccess"
 } as const;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object";
-}
 
 function getRepositoryIdentity(payload: unknown) {
   if (!isRecord(payload)) {

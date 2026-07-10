@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Eye, GitBranch, GitFork, Star } from "lucide-react";
 
+import { formatCompactCount } from "@tsu-stack/core";
 import { type RepoOverview } from "@tsu-stack/github/schemas";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import {
@@ -15,11 +16,6 @@ import {
   type GitHubQueryScope,
   githubRepoContributorsQueryOptions
 } from "@/pages/github-repo/api/get-github-repo-contributors.query";
-
-function formatCount(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
-  return String(n);
-}
 
 export function RepoSidebar({ repo, scope }: { repo: RepoOverview; scope?: GitHubQueryScope }) {
   return (
@@ -51,13 +47,13 @@ export function RepoSidebar({ repo, scope }: { repo: RepoOverview; scope?: GitHu
       {/* Stats */}
       <DetailSidebarSection title="Stats">
         <DetailSidebarRow icon={Star} label="Stars">
-          {formatCount(repo.stars)}
+          {formatCompactCount(repo.stars)}
         </DetailSidebarRow>
         <DetailSidebarRow icon={Eye} label="Watching">
-          {formatCount(repo.watchers)}
+          {formatCompactCount(repo.watchers)}
         </DetailSidebarRow>
         <DetailSidebarRow icon={GitFork} label="Forks">
-          {formatCount(repo.forks)}
+          {formatCompactCount(repo.forks)}
         </DetailSidebarRow>
         <DetailSidebarRow icon={GitBranch} label="Branches">
           {repo.branchCount}
@@ -90,7 +86,7 @@ function ContributorsSection({ repo, scope }: { repo: RepoOverview; scope?: GitH
   if (!data) return null;
 
   return (
-    <DetailSidebarSection title="Contributors" titleRight={formatCount(data.totalCount)}>
+    <DetailSidebarSection title="Contributors" titleRight={formatCompactCount(data.totalCount)}>
       <div className="flex flex-col gap-1 pt-1.5">
         <div className="flex items-center gap-2">
           <div className="flex flex-wrap gap-1">
@@ -113,7 +109,7 @@ function ContributorsSection({ repo, scope }: { repo: RepoOverview; scope?: GitH
                   />
                 </TooltipTrigger>
                 <TooltipContent>
-                  {c.login} · {formatCount(c.contributions)} commits
+                  {c.login} · {formatCompactCount(c.contributions)} commits
                 </TooltipContent>
               </Tooltip>
             ))}
@@ -121,7 +117,7 @@ function ContributorsSection({ repo, scope }: { repo: RepoOverview; scope?: GitH
         </div>
         {data.totalCount > data.contributors.length && (
           <span className="text-xs text-muted-foreground">
-            + {formatCount(data.totalCount - data.contributors.length)} more
+            + {formatCompactCount(data.totalCount - data.contributors.length)} more
           </span>
         )}
       </div>

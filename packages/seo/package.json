@@ -12,6 +12,7 @@
     "test:unit": "vp test"
   },
   "devDependencies": {
+    "@tsu-stack/core": "workspace:*",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:",

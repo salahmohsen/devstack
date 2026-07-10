@@ -1,5 +1,7 @@
 import { type DocumentBlock, type DocumentParams } from "pdfnative";
 
+import { stripUrl } from "@tsu-stack/core";
+
 export type ResumeBuilderData = {
   portfolio: {
     experiences: Array<{
@@ -78,13 +80,6 @@ function extractBullets(html: string): string[] {
     if (text) items.push(text);
   }
   return items;
-}
-
-function stripUrl(value: string): string {
-  return value
-    .replace(/^https?:\/\//, "")
-    .replace(/\/$/, "")
-    .replace(/^www\./, "");
 }
 
 function displayContact(type: string, value: string): string {

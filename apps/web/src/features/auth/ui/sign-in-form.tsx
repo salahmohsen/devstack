@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
+import { stripTrailingSlashes } from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -20,7 +21,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { appConfig } from "@/config/app.config";
 
 function createWebCallbackUrl(redirectTo: NavigateOptions["to"]): string {
-  const baseUrl = ENV_WEB_ISOMORPHIC.VITE_WEB_URL.replace(/\/$/, "");
+  const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
   const path = redirectTo?.startsWith("/") ? redirectTo : `/${redirectTo}`;
 
   return `${baseUrl}${path}`;

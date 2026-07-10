@@ -153,7 +153,7 @@ export const PortfolioRouter = {
 
       if (!isEntityType(type)) {
         throw new ORPCError("BAD_REQUEST", {
-          message: `Unknown type ${type}`
+          message: `Unknown type ${String(type)}`
         });
       }
 

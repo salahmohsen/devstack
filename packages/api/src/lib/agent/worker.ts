@@ -1,3 +1,5 @@
+import { stripTrailingSlashes } from "@tsu-stack/core";
+
 import { type OrpcContextAgentWorker } from "#@/lib/context/types";
 
 export type AgentWorkerEnv = {
@@ -11,7 +13,7 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
       const binding = env.AGENT_WORKER;
       if (binding) {
         // Fetcher.fetch(Request | string, RequestInit)
-        return binding.fetch(input as Request | string, init);
+        return binding.fetch(input, init);
       }
       const baseUrl = env.AGENT_WORKER_URL;
       if (!baseUrl) {
@@ -20,7 +22,7 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
         );
       }
       const request = new Request(input, init);
-      const url = new URL(request.url, baseUrl.replace(/\/+$/, ""));
+      const url = new URL(request.url, stripTrailingSlashes(baseUrl));
       return fetch(url.href, {
         method: request.method,
         headers: request.headers,

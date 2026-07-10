@@ -1,0 +1,39 @@
+{
+  "name": "@tsu-stack/agent",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "imports": {
+    "#@/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": "./src/index"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "mastra dev",
+    "build": "mastra build",
+    "start": "mastra start"
+  },
+  "dependencies": {
+    "@mastra/core": "catalog:",
+    "@mastra/deployer-cloudflare": "catalog:",
+    "@mastra/duckdb": "catalog:",
+    "@mastra/evals": "catalog:",
+    "@mastra/libsql": "catalog:",
+    "@mastra/loggers": "catalog:",
+    "@mastra/memory": "catalog:",
+    "@mastra/observability": "catalog:",
+    "@tsu-stack/env": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "mastra": "catalog:",
+    "typescript": "catalog:"
+  }
+}

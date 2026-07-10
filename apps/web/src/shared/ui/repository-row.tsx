@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { EyeIcon, EyeOffIcon, GitFork, Star } from "lucide-react";
 import { Fragment, memo, type ReactNode } from "react";
 
+import { formatCompactCount } from "@tsu-stack/core";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { Card } from "@tsu-stack/ui/components/card.js";
 
@@ -82,7 +83,7 @@ export const RepositoryRow = memo(function RepositoryRow({
       node: (
         <span className="flex shrink-0 items-center gap-1 tabular-nums">
           <Star size={13} strokeWidth={2} />
-          {formatCount(repo.stars)}
+          {formatCompactCount(repo.stars)}
         </span>
       )
     });
@@ -93,7 +94,7 @@ export const RepositoryRow = memo(function RepositoryRow({
       node: (
         <span className="flex shrink-0 items-center gap-1 tabular-nums">
           <GitFork size={13} strokeWidth={2} />
-          {formatCount(repo.forks)}
+          {formatCompactCount(repo.forks)}
         </span>
       )
     });
@@ -146,10 +147,3 @@ export const RepositoryRow = memo(function RepositoryRow({
     />
   );
 });
-
-function formatCount(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k`;
-  }
-  return count.toString();
-}

@@ -1,3 +1,5 @@
+import { isDefined, resolveRelativePathToAbsoluteUrl } from "@tsu-stack/core";
+
 import {
   type GenerateTanStackStartSeoParams,
   type TanStackStartSeoHead,
@@ -7,9 +9,7 @@ import {
   buildOpenGraphImageMeta,
   formatTanStackStartRobotsContent,
   formatTanStackStartTitle,
-  generateTanStackStartAlternateLinks,
-  isDefined,
-  resolveRelativePathToAbsoluteUrl
+  generateTanStackStartAlternateLinks
 } from "#@/tanstack-start/utils/index";
 
 export function generateTanStackStartSeo({

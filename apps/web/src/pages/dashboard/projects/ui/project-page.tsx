@@ -8,7 +8,7 @@ import { FaGithub, FaLink } from "react-icons/fa";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ProjectOutput } from "@tsu-stack/core";
+import { type ProjectOutput, stripTrailingSlashes } from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import {
   AlertDialog,
@@ -386,7 +386,7 @@ export function ProjectsPage() {
         <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
           {(item: ProjectOutput | null) => {
             if (!item) return null;
-            const projectLink = `${ENV_WEB_ISOMORPHIC.VITE_WEB_URL.replace(/\/$/, "")}/${item.title}`;
+            const projectLink = `${stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL)}/${item.title}`;
             return (
               <ItemInfoPanel
                 title={
