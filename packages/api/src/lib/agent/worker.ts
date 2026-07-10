@@ -22,8 +22,9 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
         );
       }
       const request = new Request(input, init);
-      const url = new URL(request.url, stripTrailingSlashes(baseUrl));
-      return fetch(url.href, {
+      const absoluteUrl = new URL(request.url);
+      absoluteUrl.href = stripTrailingSlashes(baseUrl) + absoluteUrl.pathname + absoluteUrl.search;
+      return fetch(absoluteUrl.href, {
         method: request.method,
         headers: request.headers,
         body: request.body,
