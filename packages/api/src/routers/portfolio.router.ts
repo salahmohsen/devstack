@@ -113,8 +113,7 @@ async function listAllOptedIn(filterString?: string) {
 export const PortfolioRouter = {
   list: publicProcedure
     .route({
-      description: "List all portfolio entries categorized by type",
-      method: "GET"
+      description: "List all portfolio entries categorized by type"
     })
     .input(PortfolioListInputSchema)
     .output(PortfolioListOutputSchema)
