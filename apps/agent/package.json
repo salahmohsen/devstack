@@ -21,11 +21,10 @@
   },
   "dependencies": {
     "@mastra/ai-sdk": "catalog:",
+    "@mastra/cloudflare-d1": "catalog:",
     "@mastra/core": "catalog:",
     "@mastra/deployer-cloudflare": "catalog:",
-    "@mastra/duckdb": "catalog:",
     "@mastra/evals": "catalog:",
-    "@mastra/libsql": "catalog:",
     "@mastra/loggers": "catalog:",
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",
@@ -36,6 +35,7 @@
     "@dotenvx/dotenvx": "catalog:",
     "@types/node": "catalog:",
     "mastra": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
   }
 }
