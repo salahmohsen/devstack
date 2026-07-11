@@ -17,7 +17,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev",
     "deploy": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true wrangler deploy",
-    "build": "mastra build",
+    "build": "cross-env IS_BUILD=true mastra build",
     "start": "mastra start",
     "check": "vp check",
     "check:fix": "vp check --fix"

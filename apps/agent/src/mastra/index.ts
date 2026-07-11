@@ -12,6 +12,8 @@ import {
   SensitiveDataFilter
 } from "@mastra/observability";
 
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
+
 import { weatherAgent } from "#@/mastra/agents/weather-agent";
 import {
   completenessScorer,
@@ -19,6 +21,36 @@ import {
   translationScorer
 } from "#@/mastra/scorers/weather-scorer";
 import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
+
+const storage = ENV_SERVER.IS_BUILD
+  ? new MastraCompositeStore({
+      id: "composite-storage",
+      default: new LibSQLStore({
+        id: "mastra-agent-storage",
+        url: "file:./mastra.db"
+      }),
+      domains: {
+        observability: new DuckDBStore().observability
+      }
+    })
+  : ENV_SERVER.TURSO_DATABASE_URL
+    ? new MastraCompositeStore({
+        id: "composite-storage",
+        default: new LibSQLStore({
+          id: "mastra-agent-storage",
+          url: ENV_SERVER.TURSO_DATABASE_URL,
+          authToken: ENV_SERVER.TURSO_AUTH_TOKEN ?? undefined
+        }),
+        domains: {
+          observability:
+            ENV_SERVER.NODE_ENV === "development" ? new DuckDBStore().observability : undefined
+        }
+      })
+    : (() => {
+        throw new Error(
+          "TURSO_DATABASE_URL is required in production. Set it in Cloudflare dashboard → Settings → Variables."
+        );
+      })();
 
 export const mastra = new Mastra({
   server: {
@@ -46,18 +78,7 @@ export const mastra = new Mastra({
   workflows: { weatherWorkflow },
   agents: { weatherAgent },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
-  storage: new MastraCompositeStore({
-    id: "composite-storage",
-    default: new LibSQLStore({
-      id: "mastra-agent-storage",
-      url: process.env.TURSO_DATABASE_URL ?? "file:./mastra.db",
-      authToken: process.env.TURSO_AUTH_TOKEN ?? undefined
-    }),
-    domains: {
-      observability:
-        process.env.NODE_ENV === "development" ? new DuckDBStore().observability : undefined
-    }
-  }),
+  storage,
   logger: new PinoLogger({
     name: "Mastra",
     level: "info"
