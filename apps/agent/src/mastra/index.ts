@@ -44,16 +44,16 @@ export const mastra = new Mastra({
     ],
     d1_databases: [
       {
-        binding: "DB",
-        database_name: "my-database",
-        database_id: "d1-database-id",
-        preview_database_id: "your-preview-database-id"
+        binding: "mastra_agent_store",
+        database_name: "mastra-agent-store",
+        database_id: "f9e4f357-f016-4be6-85f4-54beaa6c36de",
+        preview_database_id: "f9e4f357-f016-4be6-85f4-54beaa6c36de"
       }
     ],
     kv_namespaces: [
       {
-        binding: "CACHE",
-        id: "kv-namespace-id"
+        binding: "AGENT_CACHE",
+        id: "d39dbbce5f874c9ebd9543a6de17b888"
       }
     ]
   }),
