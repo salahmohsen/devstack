@@ -14,7 +14,7 @@ import {
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
-import { weatherAgent } from "#@/mastra/agents/weather-agent";
+import { createWeatherAgent } from "#@/mastra/agents/weather-agent";
 import {
   completenessScorer,
   toolCallAppropriatenessScorer,
@@ -50,7 +50,7 @@ export const mastra = new Mastra({
     }
   }),
   workflows: { weatherWorkflow },
-  agents: { weatherAgent },
+  agents: { weatherAgent: createWeatherAgent() },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
   storage: (() => {
     if (ENV_SERVER.TURSO_DATABASE_URL) {

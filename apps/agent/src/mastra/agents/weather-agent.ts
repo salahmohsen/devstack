@@ -3,10 +3,11 @@ import { Agent } from "@mastra/core/agent";
 import { scorers } from "#@/mastra/scorers/weather-scorer";
 import { weatherTool } from "#@/mastra/tools/weather-tool";
 
-export const weatherAgent = new Agent({
-  id: "weather-agent",
-  name: "Weather Agent",
-  instructions: `You are a helpful weather assistant that provides accurate weather information and can help planning activities based on the weather.
+export function createWeatherAgent() {
+  return new Agent({
+    id: "weather-agent",
+    name: "Weather Agent",
+    instructions: `You are a helpful weather assistant that provides accurate weather information and can help planning activities based on the weather.
 
 Your primary function is to help users get weather details for specific locations. When responding:
 - Always ask for a location if none is provided
@@ -18,34 +19,35 @@ Your primary function is to help users get weather details for specific location
 - If the user asks for activities, respond in the format they request.
 
 Use the weatherTool to fetch current weather data.`,
-  model: [
-    { model: "opencode-go/minimax-m3", maxRetries: 1 },
-    { model: "nvidia/meta/llama-3.3-70b-instruct", maxRetries: 2 },
-    { model: "openrouter/nvidia/nemotron-3-super-120b-a12b:free", maxRetries: 2 },
-    { model: "openrouter/google/gemma-4-31b-it:free", maxRetries: 2 }
-  ],
-  tools: { weatherTool },
-  scorers: {
-    toolCallAppropriateness: {
-      scorer: scorers.toolCallAppropriatenessScorer,
-      sampling: {
-        type: "ratio",
-        rate: 1
-      }
-    },
-    completeness: {
-      scorer: scorers.completenessScorer,
-      sampling: {
-        type: "ratio",
-        rate: 1
-      }
-    },
-    translation: {
-      scorer: scorers.translationScorer,
-      sampling: {
-        type: "ratio",
-        rate: 1
+    model: [
+      { model: "opencode-go/minimax-m3", maxRetries: 1 },
+      { model: "nvidia/meta/llama-3.3-70b-instruct", maxRetries: 2 },
+      { model: "openrouter/nvidia/nemotron-3-super-120b-a12b:free", maxRetries: 2 },
+      { model: "openrouter/google/gemma-4-31b-it:free", maxRetries: 2 }
+    ],
+    tools: { weatherTool },
+    scorers: {
+      toolCallAppropriateness: {
+        scorer: scorers.toolCallAppropriatenessScorer,
+        sampling: {
+          type: "ratio",
+          rate: 1
+        }
+      },
+      completeness: {
+        scorer: scorers.completenessScorer,
+        sampling: {
+          type: "ratio",
+          rate: 1
+        }
+      },
+      translation: {
+        scorer: scorers.translationScorer,
+        sampling: {
+          type: "ratio",
+          rate: 1
+        }
       }
     }
-  }
-});
+  });
+}
