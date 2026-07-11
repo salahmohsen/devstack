@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "catalog:",
+    "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "cross-env": "catalog:",
     "mastra": "catalog:",

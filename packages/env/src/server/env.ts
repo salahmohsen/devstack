@@ -4,7 +4,19 @@ import { createEnv } from "@t3-oss/env-core";
 import { isProduction } from "std-env";
 import { z } from "zod";
 
-import { normalizedUrlSchema } from "#@/utils/url";
+const URL_WITH_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//;
+
+function normalizeUrlString(value: string): string {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return trimmedValue;
+  const protocol = isProduction ? "https://" : "http://";
+  return URL_WITH_SCHEME_PATTERN.test(trimmedValue) ? trimmedValue : `${protocol}${trimmedValue}`;
+}
+
+const normalizedUrlSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  return normalizeUrlString(value);
+}, z.url());
 
 const IS_BUILD = process.env.IS_BUILD === "true";
 

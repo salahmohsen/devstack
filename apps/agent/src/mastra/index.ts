@@ -94,7 +94,7 @@ export const mastra = new Mastra({
       },
       production: {
         serviceName: "mastra-prod",
-        exporters: [new MastraPlatformExporter()],
+        exporters: [new MastraPlatformExporter()], // Sends observability events to Mastra Platform (if MASTRA_PLATFORM_ACCESS_TOKEN is set)
         spanOutputProcessors: [new SensitiveDataFilter()],
         logging: {
           enabled: true,

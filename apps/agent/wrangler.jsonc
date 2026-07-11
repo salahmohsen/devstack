@@ -11,7 +11,8 @@
   },
   "routes": [
     {
-      "pattern": "localhost:400"
+      "pattern": "salahmohsen.com/agent*",
+      "zone_name": "salahmohsen.com"
     }
   ],
   "main": "./.mastra/output/index.mjs",
