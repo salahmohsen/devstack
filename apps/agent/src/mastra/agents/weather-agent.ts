@@ -1,18 +1,7 @@
 import { Agent } from "@mastra/core/agent";
-import { LibSQLStore } from "@mastra/libsql";
-import { Memory } from "@mastra/memory";
 
 import { scorers } from "#@/mastra/scorers/weather-scorer";
 import { weatherTool } from "#@/mastra/tools/weather-tool";
-
-const storage = new LibSQLStore({
-  id: "mastra-agent-storage",
-  url: "file:./mastra.db"
-});
-
-const memory = new Memory({
-  storage
-});
 
 export const weatherAgent = new Agent({
   id: "weather-agent",
@@ -58,6 +47,5 @@ Use the weatherTool to fetch current weather data.`,
         rate: 1
       }
     }
-  },
-  memory
+  }
 });
