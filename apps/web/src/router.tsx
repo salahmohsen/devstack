@@ -4,6 +4,7 @@ import {
 } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
+import { stripTrailingSlashes } from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { LOG_SERVICES, initLog } from "@tsu-stack/logger/client";
 
@@ -18,7 +19,7 @@ import { DefaultNotFoundPage } from "@/pages/default-not-found";
 
 import { routeTree } from "@/routeTree.gen";
 
-const browserLogEndpoint = `${ENV_WEB_ISOMORPHIC.VITE_SERVER_URL.replace(/\/$/, "")}/_logs/ingest`;
+const browserLogEndpoint = `${stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_SERVER_URL)}/_logs/ingest`;
 
 initLog({
   batchedTransport: {

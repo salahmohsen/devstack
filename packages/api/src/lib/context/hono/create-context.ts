@@ -8,12 +8,15 @@ import { type GitHubRuntimeBindings } from "@tsu-stack/github/runtime/bindings";
 import { resolvePublicGitHubSource } from "@tsu-stack/github/shared/public-github-source";
 import { type RequestLogger } from "@tsu-stack/logger/server";
 
+import { createAgentWorker, type AgentWorkerEnv } from "#@/lib/agent/worker";
 import { type OrpcContext } from "#@/lib/context/types";
 
 type HonoBindings = {
   GITHUB_CACHE_KV?: GitHubRuntimeBindings["kv"];
   GITHUB_SIGNAL_RELAY?: GitHubRuntimeBindings["signalRelay"];
   MEDIA_BUCKET?: unknown;
+  AGENT_WORKER?: Fetcher;
+  AGENT_WORKER_URL?: string;
 };
 
 export type OrpcContextBindings = HonoBindings;
@@ -37,6 +40,8 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
   if (!mediaBucket) {
     throw new Error("MEDIA_BUCKET binding is not configured");
   }
+
+  const agentWorker = createAgentWorker(context.env as AgentWorkerEnv);
 
   const githubSource = await resolvePublicGitHubSource();
 
@@ -91,6 +96,7 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
     },
     logger,
     session,
-    mediaBucket
+    mediaBucket,
+    agentWorker
   };
 }

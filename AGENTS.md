@@ -76,3 +76,17 @@ pnpm tanstack doc query framework/react/overview --docs-version v5 --json
 pnpm tanstack search-docs "server functions" --library start --json
 pnpm tanstack search-docs "loaders" --library router --framework react --json
 ```
+
+## CRITICAL: Load `mastra` skill first whenever dealing with ai and mastra
+
+Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge — APIs change between versions.
+
+## Rules
+
+- Register all agents, tools, workflows, and scorers in `apps/agent/src/mastra/index.ts`
+- Use the `dev` and `build` scripts from `package.json` instead of running `mastra dev` / `mastra build` directly
+
+## Resources
+
+- [Mastra Documentation](https://mastra.ai/llms.txt)
+- [Skills Discovery](https://mastra.ai/.well-known/skills/index.json)

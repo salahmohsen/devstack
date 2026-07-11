@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { GitFork, Star } from "lucide-react";
 
+import { formatCompactCount } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
-
-import { formatGithubCount } from "@/shared/lib/format-github-count";
 
 type PinnedRepoCardProps = {
   repo: {
@@ -51,13 +50,13 @@ export function PinnedRepoCard({ repo }: PinnedRepoCardProps) {
         {repo.stars > 0 ? (
           <span className="flex items-center gap-1">
             <Star className="size-3.5" />
-            {formatGithubCount(repo.stars)}
+            {formatCompactCount(repo.stars)}
           </span>
         ) : null}
         {repo.forks > 0 ? (
           <span className="flex items-center gap-1">
             <GitFork className="size-3.5" />
-            {formatGithubCount(repo.forks)}
+            {formatCompactCount(repo.forks)}
           </span>
         ) : null}
       </div>

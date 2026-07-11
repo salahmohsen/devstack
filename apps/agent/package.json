@@ -1,0 +1,52 @@
+{
+  "name": "@tsu-stack/agent",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "imports": {
+    "#@/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": "./src/index"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev",
+    "deploy": "pnpm dotenvx run -f ../../packages/env/.env -- wrangler deploy",
+    "build": "cross-env IS_BUILD=true mastra build",
+    "start": "mastra start",
+    "check": "vp check",
+    "check:fix": "vp check --fix"
+  },
+  "dependencies": {
+    "@duckdb/node-bindings": "catalog:",
+    "@mastra/ai-sdk": "catalog:",
+    "@mastra/cloudflare-d1": "catalog:",
+    "@mastra/core": "catalog:",
+    "@mastra/deployer-cloudflare": "catalog:",
+    "@mastra/duckdb": "catalog:",
+    "@mastra/evals": "catalog:",
+    "@mastra/libsql": "catalog:",
+    "@mastra/loggers": "catalog:",
+    "@mastra/memory": "catalog:",
+    "@mastra/observability": "catalog:",
+    "@mastra/pg": "catalog:",
+    "@tsu-stack/env": "workspace:*",
+    "ollama-ai-provider-v2": "catalog:",
+    "pg": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "catalog:",
+    "@tsu-stack/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "cross-env": "catalog:",
+    "mastra": "catalog:",
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

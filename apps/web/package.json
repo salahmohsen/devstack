@@ -13,6 +13,7 @@
     "ui": "vpx shadcn@latest"
   },
   "dependencies": {
+    "@ai-sdk/react": "catalog:",
     "@bprogress/react": "catalog:",
     "@dnd-kit/core": "catalog:",
     "@dnd-kit/sortable": "catalog:",
@@ -22,7 +23,7 @@
     "@loadable/component": "catalog:",
     "@lonik/oh-image": "catalog:",
     "@number-flow/react": "catalog:",
-    "@tanstack/react-form": "catalog:",
+    "@tanstack/react-form": "^1.33.1",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
@@ -39,6 +40,7 @@
     "@tsu-stack/logger": "workspace:*",
     "@tsu-stack/seo": "workspace:*",
     "@tsu-stack/ui": "workspace:*",
+    "ai": "catalog:",
     "date-fns": "catalog:",
     "files-sdk": "catalog:",
     "fuse.js": "catalog:",

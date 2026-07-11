@@ -38,8 +38,12 @@
   },
   "vars": {
     "VITE_SERVER_URL": "http://localhost:5001/server",
-    "VITE_WEB_URL": "http://localhost:3000"
+    "VITE_WEB_URL": "http://localhost:3000",
+    "AGENT_WORKER_URL": "http://localhost:4111"
   },
+  // No services in local dev — the agent Worker isn't running as a local
+  // service. createAgentWorker falls through to the AGENT_WORKER_URL URL
+  // fallback. Service bindings are only in wrangler.jsonc (production).
   "kv_namespaces": [
     {
       "binding": "GITHUB_CACHE_KV",

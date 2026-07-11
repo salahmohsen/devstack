@@ -4,7 +4,19 @@ import { createEnv } from "@t3-oss/env-core";
 import { isProduction } from "std-env";
 import { z } from "zod";
 
-import { normalizedUrlSchema } from "#@/utils/url";
+const URL_WITH_SCHEME_PATTERN = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//;
+
+function normalizeUrlString(value: string): string {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return trimmedValue;
+  const protocol = isProduction ? "https://" : "http://";
+  return URL_WITH_SCHEME_PATTERN.test(trimmedValue) ? trimmedValue : `${protocol}${trimmedValue}`;
+}
+
+const normalizedUrlSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  return normalizeUrlString(value);
+}, z.url());
 
 const IS_BUILD = process.env.IS_BUILD === "true";
 
@@ -76,6 +88,14 @@ export const ENV_SERVER = createEnv({
     // Default: mxbai-embed-large (1024-d). Vectorize's max dimension is
     // 1536, so the previous qwen3-embedding default (4096-d) is rejected
     // at deploy time. See docs/adr/0013.
-    EMBEDDING_MODEL: z.string().default("mxbai-embed-large")
+    EMBEDDING_MODEL: z.string().default("mxbai-embed-large"),
+    // Agent Worker URL — used as a fallback in dev when no Cloudflare service
+    // binding is available. In production, prefer the AGENT_WORKER service
+    // binding (which `createAgentWorker` checks first).
+    AGENT_WORKER_URL: z.url().optional(),
+    // Mastra
+    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().optional(),
+    TURSO_DATABASE_URL: runtimeRequired(z.string().optional()),
+    TURSO_AUTH_TOKEN: runtimeRequired(z.string().optional())
   }
 });

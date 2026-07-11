@@ -13,7 +13,8 @@
   "routes": [
     {
       "pattern": "salahmohsen.com/server*",
-      "zone_name": "salahmohsen.com"
+      "zone_name": "salahmohsen.com",
+      "custom_domain": true
     }
   ],
   "keep_vars": true,
@@ -35,8 +36,15 @@
   },
   "vars": {
     "VITE_SERVER_URL": "https://salahmohsen.com/server",
-    "VITE_WEB_URL": "https://salahmohsen.com"
+    "VITE_WEB_URL": "https://salahmohsen.com",
+    "AGENT_WORKER_URL": "https://salahmohsen.com/agent"
   },
+  "services": [
+    {
+      "binding": "AGENT_WORKER",
+      "service": "devhub-agent"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "GITHUB_CACHE_KV",

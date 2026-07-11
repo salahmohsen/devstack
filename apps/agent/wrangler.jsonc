@@ -1,0 +1,26 @@
+{
+  /* This file was auto-generated through Mastra. Edit the CloudflareDeployer() instance directly. */
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "devhub-agent",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
+  "observability": {
+    "logs": {
+      "enabled": true
+    }
+  },
+  "routes": [
+    {
+      "pattern": "salahmohsen.com/agent*",
+      "zone_name": "salahmohsen.com"
+    }
+  ],
+  "main": "./.mastra/output/index.mjs",
+  "vars": {},
+  "alias": {
+    "typescript": "./.mastra/output/typescript-stub.mjs",
+    "execa": "./execa-stub.mjs",
+    "readable-stream": "./readable-stream-stub.mjs",
+    "@mastra/duckdb": "./duckdb-stub.mjs"
+  }
+}

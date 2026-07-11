@@ -2,6 +2,7 @@ import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { stripTrailingSlashes } from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 
@@ -119,7 +120,7 @@ function mergeTargetsWithMyGitHubLists(
 function getWebSocketUrl() {
   const serverUrl = new URL(ENV_WEB_ISOMORPHIC.VITE_SERVER_URL, window.location.origin);
   serverUrl.protocol = serverUrl.protocol === "https:" ? "wss:" : "ws:";
-  serverUrl.pathname = `${serverUrl.pathname.replace(/\/$/, "")}/api/ws/github-signals`;
+  serverUrl.pathname = `${stripTrailingSlashes(serverUrl.pathname)}/api/ws/github-signals`;
   serverUrl.search = "";
   serverUrl.hash = "";
   return serverUrl.toString();

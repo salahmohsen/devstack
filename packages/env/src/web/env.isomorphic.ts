@@ -5,8 +5,8 @@ import { z } from "zod";
 import { normalizedUrlSchema } from "#@/utils/url";
 
 console.debug("⏳ [ENV_WEB_ISOMORPHIC] Loading environment variables...", {
-  VITE_SERVER_URL: (import.meta.env ?? process.env).VITE_SERVER_URL,
-  VITE_WEB_URL: (import.meta.env ?? process.env).VITE_WEB_URL
+  VITE_SERVER_URL: import.meta.env ?? process.env.VITE_SERVER_URL,
+  VITE_WEB_URL: import.meta.env ?? process.env.VITE_WEB_URL
 });
 
 export const ENV_WEB_ISOMORPHIC = createEnv({
