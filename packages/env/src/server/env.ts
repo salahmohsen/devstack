@@ -82,12 +82,6 @@ export const ENV_SERVER = createEnv({
     // binding (which `createAgentWorker` checks first).
     AGENT_WORKER_URL: z.url().optional(),
     // Mastra
-    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().optional(),
-    // Cloudflare D1 + KV for Mastra agent storage
-    CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
-    CLOUDFLARE_D1_DATABASE_ID: z.string().optional(),
-    CLOUDFLARE_D1_PREVIEW_DATABASE_ID: z.string().optional(),
-    CLOUDFLARE_KV_AGENT_CACHE_ID: z.string().optional(),
-    CLOUDFLARE_D1_API_TOKEN: z.string().optional()
+    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().optional()
   }
 });

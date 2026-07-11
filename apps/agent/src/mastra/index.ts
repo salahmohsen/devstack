@@ -12,8 +12,6 @@ import {
   SensitiveDataFilter
 } from "@mastra/observability";
 
-import { ENV_SERVER } from "@tsu-stack/env/server/env";
-
 import { weatherAgent } from "#@/mastra/agents/weather-agent";
 import {
   completenessScorer,
@@ -40,21 +38,6 @@ export const mastra = new Mastra({
         pattern: "salahmohsen.com/agent*",
         zone_name: "salahmohsen.com",
         custom_domain: true
-      }
-    ],
-    d1_databases: [
-      {
-        binding: "mastra_agent_store",
-        database_name: "mastra-agent-store",
-        database_id: ENV_SERVER.CLOUDFLARE_D1_DATABASE_ID!,
-        preview_database_id:
-          ENV_SERVER.CLOUDFLARE_D1_PREVIEW_DATABASE_ID ?? ENV_SERVER.CLOUDFLARE_D1_DATABASE_ID
-      }
-    ],
-    kv_namespaces: [
-      {
-        binding: "AGENT_CACHE",
-        id: ENV_SERVER.CLOUDFLARE_KV_AGENT_CACHE_ID!
       }
     ]
   }),
