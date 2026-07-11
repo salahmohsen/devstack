@@ -16,17 +16,6 @@
       "custom_domain": true
     }
   ],
-  "d1_databases": [
-    {
-      "binding": "mastra_agent_store",
-      "database_name": "mastra-agent-store"
-    }
-  ],
-  "kv_namespaces": [
-    {
-      "binding": "AGENT_CACHE"
-    }
-  ],
   "main": "./.mastra/output/index.mjs",
   "vars": {},
   "alias": {

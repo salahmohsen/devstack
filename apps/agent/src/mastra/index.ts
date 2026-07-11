@@ -60,14 +60,24 @@ export const mastra = new Mastra({
   }),
   observability: new Observability({
     configs: {
-      default: {
-        serviceName: "mastra",
-        exporters: [
-          new MastraStorageExporter(), // Persists observability events to Mastra Storage
-          new MastraPlatformExporter() // Sends observability events to Mastra Platform (if MASTRA_PLATFORM_ACCESS_TOKEN is set)
-        ],
-        spanOutputProcessors: [new SensitiveDataFilter()]
+      development: {
+        serviceName: "mastra-dev",
+        exporters: [new MastraStorageExporter()], // Persists observability events to Mastra Storage,
+        logging: {
+          enabled: true,
+          level: "debug"
+        }
+      },
+      production: {
+        serviceName: "mastra-prod",
+        exporters: [new MastraPlatformExporter()], // Sends observability events to Mastra Platform (if MASTRA_PLATFORM_ACCESS_TOKEN is set),
+        spanOutputProcessors: [new SensitiveDataFilter()],
+        logging: {
+          enabled: true,
+          level: "info"
+        }
       }
-    }
+    },
+    configSelector: () => (process.env.NODE_ENV === "production" ? "production" : "development")
   })
 });
