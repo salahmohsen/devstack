@@ -2,6 +2,7 @@ import { chatRoute } from "@mastra/ai-sdk";
 import { Mastra } from "@mastra/core/mastra";
 import { MastraCompositeStore } from "@mastra/core/storage";
 import { CloudflareDeployer } from "@mastra/deployer-cloudflare";
+import { DuckDBStore } from "@mastra/duckdb";
 import { LibSQLStore } from "@mastra/libsql";
 import { PinoLogger } from "@mastra/loggers";
 import {
@@ -27,6 +28,9 @@ export const mastra = new Mastra({
       })
     ]
   },
+  bundler: {
+    externals: ["@mastra/duckdb", "@duckdb/node-bindings"]
+  },
   deployer: new CloudflareDeployer({
     name: "devhub-agent",
     routes: [
@@ -34,7 +38,10 @@ export const mastra = new Mastra({
         pattern: "salahmohsen.com/agent*",
         zone_name: "salahmohsen.com"
       }
-    ]
+    ],
+    alias: {
+      "@mastra/duckdb": "./duckdb-stub.mjs"
+    }
   }),
   workflows: { weatherWorkflow },
   agents: { weatherAgent },
@@ -45,7 +52,11 @@ export const mastra = new Mastra({
       id: "mastra-agent-storage",
       url: process.env.TURSO_DATABASE_URL ?? "file:./mastra.db",
       authToken: process.env.TURSO_AUTH_TOKEN ?? undefined
-    })
+    }),
+    domains: {
+      observability:
+        process.env.NODE_ENV === "development" ? new DuckDBStore().observability : undefined
+    }
   }),
   logger: new PinoLogger({
     name: "Mastra",

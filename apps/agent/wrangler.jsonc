@@ -11,9 +11,8 @@
   },
   "routes": [
     {
-      "pattern": "salahmohsen.com",
-      "zone_name": "salahmohsen.com",
-      "custom_domain": true
+      "pattern": "salahmohsen.com/agent*",
+      "zone_name": "salahmohsen.com"
     }
   ],
   "main": "./.mastra/output/index.mjs",
@@ -21,6 +20,7 @@
   "alias": {
     "typescript": "./.mastra/output/typescript-stub.mjs",
     "execa": "./execa-stub.mjs",
-    "readable-stream": "./readable-stream-stub.mjs"
+    "readable-stream": "./readable-stream-stub.mjs",
+    "@mastra/duckdb": "./duckdb-stub.mjs"
   }
 }
