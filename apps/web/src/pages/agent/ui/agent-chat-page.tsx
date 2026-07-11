@@ -1,3 +1,4 @@
+import { ClientOnly } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
@@ -7,13 +8,23 @@ import { Container } from "@/shared/ui/container";
 import { useAgentChat } from "@/features/agent";
 
 export function AgentChatPage() {
-  const { messages, sendMessage, status } = useAgentChat();
-  const [input, setInput] = useState("");
-
   return (
     <Container>
       <h1 className="mb-4 text-2xl">Agent Playground</h1>
 
+      <ClientOnly>
+        <AgentChat />
+      </ClientOnly>
+    </Container>
+  );
+}
+
+function AgentChat() {
+  const { messages, sendMessage, status } = useAgentChat();
+  const [input, setInput] = useState("");
+
+  return (
+    <>
       <div className="mb-4 space-y-2">
         {messages.map((message) => (
           <div
@@ -49,6 +60,6 @@ export function AgentChatPage() {
           {status === "ready" ? "Send" : "Thinking..."}
         </Button>
       </form>
-    </Container>
+    </>
   );
 }
