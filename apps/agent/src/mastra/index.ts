@@ -23,6 +23,9 @@ import {
 import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
 export const mastra = new Mastra({
+  bundler: {
+    externals: ["@duckdb/node-bindings"]
+  },
   server: {
     apiRoutes: [
       chatRoute({
