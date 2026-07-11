@@ -25,10 +25,13 @@
     "@mastra/core": "catalog:",
     "@mastra/deployer-cloudflare": "catalog:",
     "@mastra/evals": "catalog:",
+    "@mastra/libsql": "catalog:",
     "@mastra/loggers": "catalog:",
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",
+    "@mastra/pg": "catalog:",
     "@tsu-stack/env": "workspace:*",
+    "ollama-ai-provider-v2": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

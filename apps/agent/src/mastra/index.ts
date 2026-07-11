@@ -1,8 +1,7 @@
 import { chatRoute } from "@mastra/ai-sdk";
+import { D1Store } from "@mastra/cloudflare-d1";
 import { Mastra } from "@mastra/core/mastra";
-import { MastraCompositeStore } from "@mastra/core/storage";
 import { CloudflareDeployer } from "@mastra/deployer-cloudflare";
-import { DuckDBStore } from "@mastra/duckdb";
 import { LibSQLStore } from "@mastra/libsql";
 import { PinoLogger } from "@mastra/loggers";
 import {
@@ -12,7 +11,7 @@ import {
   SensitiveDataFilter
 } from "@mastra/observability";
 
-import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { weatherAgent } from "#@/mastra/agents/weather-agent";
 import {
@@ -22,10 +21,19 @@ import {
 } from "#@/mastra/scorers/weather-scorer";
 import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
+const storage = ENV_SERVER.CLOUDFLARE_D1_API_TOKEN
+  ? new D1Store({
+      id: "mastra-agent-storage",
+      accountId: ENV_SERVER.CLOUDFLARE_ACCOUNT_ID!,
+      databaseId: ENV_SERVER.CLOUDFLARE_D1_DATABASE_ID!,
+      apiToken: ENV_SERVER.CLOUDFLARE_D1_API_TOKEN
+    })
+  : new LibSQLStore({
+      id: "mastra-agent-storage",
+      url: "file:./mastra.db"
+    });
+
 export const mastra = new Mastra({
-  bundler: {
-    externals: ["@duckdb/node-bindings"]
-  },
   server: {
     apiRoutes: [
       chatRoute({
@@ -37,8 +45,8 @@ export const mastra = new Mastra({
     name: "devhub-agent",
     routes: [
       {
-        pattern: `${ENV_WEB_ISOMORPHIC.VITE_WEB_URL}/agent*`,
-        zone_name: ENV_WEB_ISOMORPHIC.VITE_WEB_URL,
+        pattern: "salahmohsen.com/agent*",
+        zone_name: "salahmohsen.com",
         custom_domain: true
       }
     ],
@@ -46,30 +54,22 @@ export const mastra = new Mastra({
       {
         binding: "mastra_agent_store",
         database_name: "mastra-agent-store",
-        database_id: "f9e4f357-f016-4be6-85f4-54beaa6c36de",
-        preview_database_id: "f9e4f357-f016-4be6-85f4-54beaa6c36de"
+        database_id: ENV_SERVER.CLOUDFLARE_D1_DATABASE_ID!,
+        preview_database_id:
+          ENV_SERVER.CLOUDFLARE_D1_PREVIEW_DATABASE_ID ?? ENV_SERVER.CLOUDFLARE_D1_DATABASE_ID
       }
     ],
     kv_namespaces: [
       {
         binding: "AGENT_CACHE",
-        id: "d39dbbce5f874c9ebd9543a6de17b888"
+        id: ENV_SERVER.CLOUDFLARE_KV_AGENT_CACHE_ID!
       }
     ]
   }),
   workflows: { weatherWorkflow },
   agents: { weatherAgent },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
-  storage: new MastraCompositeStore({
-    id: "composite-storage",
-    default: new LibSQLStore({
-      id: "mastra-storage",
-      url: "file:./mastra.db"
-    }),
-    domains: {
-      observability: await new DuckDBStore().getStore("observability")
-    }
-  }),
+  storage,
   logger: new PinoLogger({
     name: "Mastra",
     level: "info"
@@ -79,12 +79,10 @@ export const mastra = new Mastra({
       default: {
         serviceName: "mastra",
         exporters: [
-          new MastraStorageExporter(), // Persists observability events to Mastra Storage
-          new MastraPlatformExporter() // Sends observability events to Mastra Platform (if MASTRA_PLATFORM_ACCESS_TOKEN is set)
+          new MastraPlatformExporter(),
+          ...(ENV_SERVER.MASTRA_PLATFORM_ACCESS_TOKEN ? [] : [new MastraStorageExporter()])
         ],
-        spanOutputProcessors: [
-          new SensitiveDataFilter() // Redacts sensitive data like passwords, tokens, keys
-        ]
+        spanOutputProcessors: [new SensitiveDataFilter()]
       }
     }
   })

@@ -1,0 +1,40 @@
+{
+  /* This file was auto-generated through Mastra. Edit the CloudflareDeployer() instance directly. */
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "devhub-agent",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
+  "observability": {
+    "logs": {
+      "enabled": true
+    }
+  },
+  "routes": [
+    {
+      "pattern": "http://localhost:3000/agent*",
+      "zone_name": "http://localhost:3000",
+      "custom_domain": true
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "mastra_agent_store",
+      "database_name": "mastra-agent-store",
+      "database_id": "f9e4f357-f016-4be6-85f4-54beaa6c36de",
+      "preview_database_id": "f9e4f357-f016-4be6-85f4-54beaa6c36de"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "AGENT_CACHE",
+      "id": "d39dbbce5f874c9ebd9543a6de17b888"
+    }
+  ],
+  "main": "./.mastra/output/index.mjs",
+  "vars": {},
+  "alias": {
+    "typescript": "./.mastra/output/typescript-stub.mjs",
+    "execa": "./execa-stub.mjs",
+    "readable-stream": "./readable-stream-stub.mjs"
+  }
+}

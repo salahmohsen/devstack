@@ -1,8 +1,35 @@
 import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
+import { PgVector } from "@mastra/pg";
+import { createOllama } from "ollama-ai-provider-v2";
+
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { scorers } from "#@/mastra/scorers/weather-scorer";
 import { weatherTool } from "#@/mastra/tools/weather-tool";
+
+const ollama = createOllama({
+  baseURL: ENV_SERVER.OLLAMA_BASE_URL
+});
+
+const embedder = ollama.textEmbeddingModel(ENV_SERVER.EMBEDDING_MODEL);
+
+const vector = new PgVector({
+  id: "mastra-vector-store",
+  connectionString: ENV_SERVER.DATABASE_URL
+});
+
+const memory = new Memory({
+  vector,
+  embedder,
+  options: {
+    semanticRecall: {
+      topK: 5,
+      messageRange: 2,
+      scope: "resource"
+    }
+  }
+});
 
 export const weatherAgent = new Agent({
   id: "weather-agent",
@@ -49,5 +76,5 @@ Use the weatherTool to fetch current weather data.`,
       }
     }
   },
-  memory: new Memory()
+  memory
 });
