@@ -22,36 +22,6 @@ import {
 } from "#@/mastra/scorers/weather-scorer";
 import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
-const storage = ENV_SERVER.IS_BUILD
-  ? new MastraCompositeStore({
-      id: "composite-storage",
-      default: new LibSQLStore({
-        id: "mastra-agent-storage",
-        url: "file:./mastra.db"
-      }),
-      domains: {
-        observability: new DuckDBStore().observability
-      }
-    })
-  : ENV_SERVER.TURSO_DATABASE_URL
-    ? new MastraCompositeStore({
-        id: "composite-storage",
-        default: new LibSQLStore({
-          id: "mastra-agent-storage",
-          url: ENV_SERVER.TURSO_DATABASE_URL,
-          authToken: ENV_SERVER.TURSO_AUTH_TOKEN ?? undefined
-        }),
-        domains: {
-          observability:
-            ENV_SERVER.NODE_ENV === "development" ? new DuckDBStore().observability : undefined
-        }
-      })
-    : (() => {
-        throw new Error(
-          "TURSO_DATABASE_URL is required in production. Set it in Cloudflare dashboard → Settings → Variables."
-        );
-      })();
-
 export const mastra = new Mastra({
   server: {
     apiRoutes: [
@@ -78,7 +48,32 @@ export const mastra = new Mastra({
   workflows: { weatherWorkflow },
   agents: { weatherAgent },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
-  storage,
+  storage: (() => {
+    if (ENV_SERVER.TURSO_DATABASE_URL) {
+      return new MastraCompositeStore({
+        id: "composite-storage",
+        default: new LibSQLStore({
+          id: "mastra-agent-storage",
+          url: ENV_SERVER.TURSO_DATABASE_URL,
+          authToken: ENV_SERVER.TURSO_AUTH_TOKEN ?? undefined
+        }),
+        domains: {
+          observability:
+            ENV_SERVER.NODE_ENV === "development" ? new DuckDBStore().observability : undefined
+        }
+      });
+    }
+    return new MastraCompositeStore({
+      id: "composite-storage",
+      default: new LibSQLStore({
+        id: "mastra-agent-storage",
+        url: "file:./mastra.db"
+      }),
+      domains: {
+        observability: new DuckDBStore().observability
+      }
+    });
+  })(),
   logger: new PinoLogger({
     name: "Mastra",
     level: "info"
