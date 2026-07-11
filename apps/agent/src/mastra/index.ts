@@ -43,6 +43,10 @@ export const mastra = new Mastra({
     ],
     alias: {
       "@mastra/duckdb": "./duckdb-stub.mjs"
+    },
+    vars: {
+      TURSO_DATABASE_URL: ENV_SERVER.TURSO_DATABASE_URL!,
+      TURSO_AUTH_TOKEN: ENV_SERVER.TURSO_AUTH_TOKEN!
     }
   }),
   workflows: { weatherWorkflow },
