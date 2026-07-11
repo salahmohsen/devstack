@@ -16,6 +16,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev",
+    "deploy": "pnpm dotenvx run -f ../../packages/env/.env -- cross-env CLOUDFLARE_INCLUDE_PROCESS_ENV=true wrangler deploy",
     "build": "mastra build",
     "start": "mastra start",
     "check": "vp check",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@dotenvx/dotenvx": "catalog:",
     "@types/node": "catalog:",
+    "cross-env": "catalog:",
     "mastra": "catalog:",
     "typescript": "catalog:",
     "wrangler": "catalog:"

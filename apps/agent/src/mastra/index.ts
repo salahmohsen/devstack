@@ -2,7 +2,6 @@ import { chatRoute } from "@mastra/ai-sdk";
 import { Mastra } from "@mastra/core/mastra";
 import { MastraCompositeStore } from "@mastra/core/storage";
 import { CloudflareDeployer } from "@mastra/deployer-cloudflare";
-import { DuckDBStore } from "@mastra/duckdb";
 import { LibSQLStore } from "@mastra/libsql";
 import { PinoLogger } from "@mastra/loggers";
 import {
@@ -28,16 +27,12 @@ export const mastra = new Mastra({
       })
     ]
   },
-  bundler: {
-    externals: ["@duckdb/node-bindings"]
-  },
   deployer: new CloudflareDeployer({
     name: "devhub-agent",
     routes: [
       {
         pattern: "salahmohsen.com/agent*",
-        zone_name: "salahmohsen.com",
-        custom_domain: true
+        zone_name: "salahmohsen.com"
       }
     ]
   }),
@@ -49,11 +44,7 @@ export const mastra = new Mastra({
     default: new LibSQLStore({
       id: "mastra-agent-storage",
       url: "file:./mastra.db"
-    }),
-    domains: {
-      observability:
-        process.env.NODE_ENV === "development" ? new DuckDBStore().observability : undefined
-    }
+    })
   }),
   logger: new PinoLogger({
     name: "Mastra",
@@ -63,7 +54,7 @@ export const mastra = new Mastra({
     configs: {
       development: {
         serviceName: "mastra-dev",
-        exporters: [new MastraStorageExporter()], // Persists observability events to Mastra Storage,
+        exporters: [new MastraStorageExporter()],
         logging: {
           enabled: true,
           level: "debug"
@@ -71,7 +62,7 @@ export const mastra = new Mastra({
       },
       production: {
         serviceName: "mastra-prod",
-        exporters: [new MastraPlatformExporter()], // Sends observability events to Mastra Platform (if MASTRA_PLATFORM_ACCESS_TOKEN is set),
+        exporters: [new MastraPlatformExporter()],
         spanOutputProcessors: [new SensitiveDataFilter()],
         logging: {
           enabled: true,

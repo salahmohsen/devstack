@@ -11,7 +11,7 @@
   },
   "routes": [
     {
-      "pattern": "salahmohsen.com/agent*",
+      "pattern": "salahmohsen.com",
       "zone_name": "salahmohsen.com",
       "custom_domain": true
     }
