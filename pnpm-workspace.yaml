@@ -151,6 +151,7 @@ catalog:
   # Mastra's peerDep requires ai >= 5.0.76; current resolved is ai@6.0.208
   "@mastra/cloudflare-d1": ^1.1.1
   "@mastra/pg": ^1.15.1
+  pg: ^8.21.0
   ai: ^6.0.208
   "@ai-sdk/react": ^2.0.212
 

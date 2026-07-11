@@ -17,13 +17,16 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev",
     "build": "mastra build",
-    "start": "mastra start"
+    "start": "mastra start",
+    "check": "vp check",
+    "check:fix": "vp check --fix"
   },
   "dependencies": {
     "@mastra/ai-sdk": "catalog:",
     "@mastra/cloudflare-d1": "catalog:",
     "@mastra/core": "catalog:",
     "@mastra/deployer-cloudflare": "catalog:",
+    "@mastra/duckdb": "catalog:",
     "@mastra/evals": "catalog:",
     "@mastra/libsql": "catalog:",
     "@mastra/loggers": "catalog:",
@@ -32,6 +35,7 @@
     "@mastra/pg": "catalog:",
     "@tsu-stack/env": "workspace:*",
     "ollama-ai-provider-v2": "catalog:",
+    "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
