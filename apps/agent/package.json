@@ -22,6 +22,7 @@
     "check:fix": "vp check --fix"
   },
   "dependencies": {
+    "@duckdb/node-bindings": "catalog:",
     "@mastra/ai-sdk": "catalog:",
     "@mastra/cloudflare-d1": "catalog:",
     "@mastra/core": "catalog:",
