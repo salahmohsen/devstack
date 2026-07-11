@@ -13,8 +13,7 @@
   "routes": [
     {
       "pattern": "salahmohsen.com/server*",
-      "zone_name": "salahmohsen.com",
-      "custom_domain": true
+      "zone_name": "salahmohsen.com"
     }
   ],
   "keep_vars": true,
