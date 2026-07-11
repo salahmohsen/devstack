@@ -82,6 +82,8 @@ export const ENV_SERVER = createEnv({
     // binding (which `createAgentWorker` checks first).
     AGENT_WORKER_URL: z.url().optional(),
     // Mastra
-    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().optional()
+    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().optional(),
+    TURSO_DATABASE_URL: z.string().optional(),
+    TURSO_AUTH_TOKEN: z.string().optional()
   }
 });
