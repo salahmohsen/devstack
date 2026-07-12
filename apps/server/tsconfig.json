@@ -2,7 +2,9 @@
   "extends": "@tsu-stack/tsconfig/tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-
+    "paths": {
+      "#@/*": ["./src/*"]
+    },
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "outDir": "dist"

@@ -178,32 +178,6 @@ export default defineConfig({
     ],
 
     rules: {
-      /**
-       * Recommended rules for enforcing Feature Sliced Design (FSD) architecture.
-       *
-       * FIXME: Oxlint does not support nested monorepo package/app config merging or variations. Running `vp check` will *always* use the monorepo root config.
-       * This means that we can only enable FSD for a single app only via `rootPath`.
-       * There is currently an [open issue](https://github.com/voidzero-dev/vite-plus/pull/1115) regarding this in the Vite+ repository.
-       * @see {@link https://github.com/effozen/eslint-plugin-fsd-lint?tab=readme-ov-file#manual-configuration}
-       */
-      "fsd/forbidden-imports": [
-        "error",
-        { ...fsdEslintPluginOptions, alias: { value: "@", withSlash: false } }
-      ],
-      "fsd/no-relative-imports": ["error", { ...fsdEslintPluginOptions, allowSameSlice: true }],
-      "fsd/no-public-api-sidestep": ["error", fsdEslintPluginOptions],
-      "fsd/no-cross-slice-dependency": [
-        "error",
-        {
-          ...fsdEslintPluginOptions,
-          allowTypeImports: false,
-          excludeLayers: ["shared"],
-          featuresOnly: false
-        }
-      ],
-      "fsd/no-ui-in-business-logic": ["error", fsdEslintPluginOptions],
-      "fsd/no-global-store-imports": "error",
-
       // Tanstack Router rules, ref: https://tanstack.com/router/latest/docs/eslint/eslint-plugin-router
       "eslint-tanstack-router/create-route-property-order": "error",
       // Tanstack Query rules, ref: https://tanstack.com/query/latest/docs/eslint/eslint-plugin-query
@@ -302,7 +276,38 @@ export default defineConfig({
       "tailwindcss/consistent-variant-order": "warn",
       "tailwindcss/enforce-consistent-important-position": "warn",
       "tailwindcss/no-unnecessary-whitespace": "warn"
-    }
+    },
+
+    overrides: [
+      {
+        files: ["apps/**"],
+        jsPlugins: [{ name: "fsd", specifier: "eslint-plugin-fsd-lint" }],
+        rules: {
+          /**
+           * Feature Sliced Design (FSD) architecture rules.
+           * Scoped to apps/web only via overrides.
+           * @see {@link https://github.com/effozen/eslint-plugin-fsd-lint?tab=readme-ov-file#manual-configuration}
+           */
+          "fsd/forbidden-imports": [
+            "error",
+            { ...fsdEslintPluginOptions, alias: { value: "@", withSlash: false } }
+          ],
+          "fsd/no-relative-imports": ["error", { ...fsdEslintPluginOptions, allowSameSlice: true }],
+          "fsd/no-public-api-sidestep": ["error", fsdEslintPluginOptions],
+          "fsd/no-cross-slice-dependency": [
+            "error",
+            {
+              ...fsdEslintPluginOptions,
+              allowTypeImports: false,
+              excludeLayers: ["shared"],
+              featuresOnly: false
+            }
+          ],
+          "fsd/no-ui-in-business-logic": ["error", fsdEslintPluginOptions],
+          "fsd/no-global-store-imports": "error"
+        }
+      }
+    ]
   },
   plugins: [tailwindcss() as PluginOption]
 });

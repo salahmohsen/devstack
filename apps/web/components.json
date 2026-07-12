@@ -24,6 +24,7 @@
   "registries": {
     "@unlumen-ui": "https://ui.unlumen.com/r/{name}.json",
     "@hextaui": "https://hextaui.com/r/{name}.json",
-    "@files-sdk": "https://files-sdk.dev/r/{name}.json"
+    "@files-sdk": "https://files-sdk.dev/r/{name}.json",
+    "@coss": "https://coss.com/ui/r/{name}.json"
   }
 }

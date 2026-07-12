@@ -29,6 +29,7 @@
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
     "@tanstack/react-store": "catalog:",
+    "@tanstack/react-table": "catalog:",
     "@tanstack/react-virtual": "catalog:",
     "@tanstack/zod-adapter": "catalog:",
     "@tsu-stack/api": "workspace:*",

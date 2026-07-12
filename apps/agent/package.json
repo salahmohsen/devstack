@@ -15,7 +15,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev",
+    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
     "deploy": "pnpm dotenvx run -f ../../packages/env/.env -- wrangler deploy",
     "build": "cross-env IS_BUILD=true mastra build",
     "start": "mastra start",
@@ -35,7 +35,10 @@
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",
     "@mastra/pg": "catalog:",
+    "@tsu-stack/core": "workspace:*",
+    "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
+    "drizzle-orm": "catalog:",
     "ollama-ai-provider-v2": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"

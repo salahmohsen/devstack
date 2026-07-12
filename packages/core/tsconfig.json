@@ -1,7 +1,10 @@
 {
   "extends": "@tsu-stack/tsconfig/tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2022", "ES2023.Array"]
+    "lib": ["DOM", "DOM.Iterable", "ES2022", "ES2023.Array"],
+    "paths": {
+      "#@/*": ["./src/*"]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

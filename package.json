@@ -12,6 +12,7 @@
     "deploy": "pnpm run deploy:server && pnpm run deploy:web",
     "deploy:server": "vp run --filter @tsu-stack/server deploy",
     "deploy:web": "vp run --filter @tsu-stack/web deploy",
+    "deploy:agent": "vp run --filter @tsu-stack/agent deploy",
     "logs": "vp run -r --parallel logs",
     "logs:server": "vp run --filter @tsu-stack/server logs",
     "email:dev": "vp run --filter @tsu-stack/email email:dev",
