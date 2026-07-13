@@ -40,7 +40,6 @@ export function Group({
       className={cn(groupVariants({ orientation }), className)}
       data-orientation={orientation}
       data-slot="group"
-      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="group"
       {...props}
     >
@@ -89,6 +88,6 @@ export function GroupSeparator({
 
 export {
   Group as ButtonGroup,
-  GroupSeparator as ButtonGroupSeparator,
-  GroupText as ButtonGroupText
+  GroupText as ButtonGroupText,
+  GroupSeparator as ButtonGroupSeparator
 };

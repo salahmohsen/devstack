@@ -11,7 +11,6 @@ export function Spinner({
     <Loader2Icon
       aria-label="Loading"
       className={cn("animate-spin", className)}
-      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
       role="status"
       {...props}
     />
