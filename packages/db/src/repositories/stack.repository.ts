@@ -295,7 +295,7 @@ export const stackRepository = {
         }
       }
 
-      // Move stack_aliases from victim → survivor (skip duplicates)
+      // Move stack dependencies from victim → survivor (skip duplicates)
       const victimAliases = await tx
         .select({ id: stackDependency.id, npmPackage: stackDependency.npmPackage })
         .from(stackDependency)
@@ -395,7 +395,7 @@ export const stackRepository = {
           }
         }
 
-        // Move stack_aliases from victim → survivor (skip duplicates)
+        // Move stack dependencies from victim → survivor (skip duplicates)
         const victimAliases = await tx
           .select({ id: stackDependency.id, npmPackage: stackDependency.npmPackage })
           .from(stackDependency)
