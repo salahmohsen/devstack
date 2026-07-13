@@ -16,7 +16,7 @@ export const stackDependencyRepository = {
     });
   },
 
-  async upsert(input: CreateStackDependencyData) {
+  async upsert(input: CreateStackDependencyData): Promise<StackDependencyEntity | undefined> {
     const id = crypto.randomUUID();
     await getDb()
       .insert(stackDependency)

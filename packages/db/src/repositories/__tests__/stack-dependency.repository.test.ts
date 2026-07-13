@@ -70,7 +70,12 @@ describe("stackDependencyRepository", () => {
       expect(onConflictChain.onConflictDoNothing).toHaveBeenCalledWith({
         target: [stackDependency.stackId, stackDependency.npmPackage]
       });
-      expect(result).toEqual(insertedRow);
+      expect(result).toEqual({
+        id: "new-id",
+        ...input,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      });
     });
 
     it("should return the existing row on duplicate (idempotent)", async () => {
@@ -86,7 +91,22 @@ describe("stackDependencyRepository", () => {
 
       const result = await stackDependencyRepository.upsert(input);
 
-      expect(result).toEqual(existingRow);
+      expect(result).toEqual({
+        id: "existing-id",
+        ...input,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date)
+      });
+    });
+
+    it("returns undefined if row deleted between insert and re-find", async () => {
+      const mockDb = buildMockDb();
+      mockDb.query.stackDependency.findFirst.mockResolvedValue(undefined);
+      mockGetDb.mockReturnValue(mockDb as never);
+
+      const result = await stackDependencyRepository.upsert(input);
+
+      expect(result).toBeUndefined();
     });
   });
 
@@ -110,7 +130,15 @@ describe("stackDependencyRepository", () => {
       expect(mockDb.query.stackDependency.findMany).toHaveBeenCalledWith({
         where: { stackId: "stack-1" }
       });
-      expect(result).toEqual(rows);
+      expect(result).toEqual([
+        {
+          id: "1",
+          stackId: "stack-1",
+          npmPackage: "react",
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date)
+        }
+      ]);
     });
 
     it("should return empty array for non-existent stack", async () => {
