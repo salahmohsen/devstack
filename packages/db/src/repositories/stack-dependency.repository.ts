@@ -29,6 +29,10 @@ export const stackDependencyRepository = {
     });
   },
 
+  async findAll(): Promise<StackDependencyEntity[]> {
+    return getDb().query.stackDependency.findMany();
+  },
+
   async deleteByStackId(stackId: string) {
     return getDb().delete(stackDependency).where(eq(stackDependency.stackId, stackId));
   }
