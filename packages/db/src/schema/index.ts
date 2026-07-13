@@ -5,5 +5,7 @@ export * from "#@/schema/github-cache.schema";
 export * from "#@/schema/github-config.schema";
 export * from "#@/schema/portfolio-entry.schema";
 export * from "#@/schema/project.schema";
+export * from "#@/schema/project-stack-scan.schema";
 export * from "#@/schema/resume.schema";
+export * from "#@/schema/stack-dependency.schema";
 export * from "#@/schema/stack.schema";
