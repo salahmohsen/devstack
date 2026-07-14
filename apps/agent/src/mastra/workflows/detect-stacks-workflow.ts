@@ -1,11 +1,7 @@
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import {
-  DetectStacksOutputSchema,
-  DetectStacksWorkflowInputSchema,
-  groupDependencies
-} from "@tsu-stack/core";
+import { DetectStacksOutputSchema, DetectStacksWorkflowInputSchema } from "@tsu-stack/core";
 
 // Noise patterns to filter out from dependency lists
 const NOISE_PATTERNS = [
@@ -118,32 +114,17 @@ const fetchRepoPackageJsons = createStep({
 
 const extractDependencies = createStep({
   id: "extract-dependencies",
-  description: "Extracts, deduplicates, and groups dependencies from package.json files",
+  description: "Extracts and deduplicates dependencies from package.json files",
   inputSchema: fetchRepoPackageJsons.outputSchema,
   outputSchema: z.object({
-    dependencies: z
-      .array(
-        z.object({
-          name: z.string().describe("npm package name"),
-          version: z.string().describe("Version specifier from package.json"),
-          repo: z.string().describe("Source repository URL"),
-          workspace: z.string().nullable().describe("Workspace name if monorepo, null for root")
-        })
-      )
-      .describe("Deduplicated list of project dependencies"),
-    groupedDeps: z
-      .array(
-        z.object({
-          npmPackage: z.string().describe("Primary npm package name (family key)"),
-          name: z.string().describe("Human-readable display name"),
-          relatedPackages: z
-            .array(z.string())
-            .describe("Other packages in this group that were merged"),
-          repo: z.string().describe("Source repository URL"),
-          workspace: z.string().nullable().describe("Workspace name if monorepo")
-        })
-      )
-      .describe("Grouped dependencies — related packages merged under one stack entry")
+    dependencies: z.array(
+      z.object({
+        name: z.string().describe("npm package name"),
+        version: z.string().describe("Version specifier from package.json"),
+        repo: z.string().describe("Source repository URL"),
+        workspace: z.string().nullable().describe("Workspace name if monorepo, null for root")
+      })
+    )
   }),
   execute: async ({ inputData }) => {
     const allDeps = new Map<
@@ -178,202 +159,402 @@ const extractDependencies = createStep({
       }
     }
 
-    const rawDeps = Array.from(allDeps.values());
-
-    // Group related packages (e.g., react + react-dom + @types/react → one React stack)
-    const groupedDeps = groupDependencies(rawDeps);
-
-    return {
-      dependencies: rawDeps,
-      groupedDeps
-    };
+    return { dependencies: Array.from(allDeps.values()) };
   }
 });
 
-const categorizeWithLLM = createStep({
-  id: "categorize-with-llm",
-  description: "Uses LLM to categorize grouped dependencies into stack types",
+type ExtractedDep = {
+  name: string;
+  version: string;
+  repo: string;
+  workspace: string | null;
+};
+
+const programmaticMatch = createStep({
+  id: "programmatic-match",
+  description: "Matches extracted dependencies against existing stack_dependency records",
   inputSchema: extractDependencies.outputSchema,
   outputSchema: z.object({
-    stacks: z.array(
+    matched: z.array(
       z.object({
-        npmPackage: z.string().describe("Primary npm package name (family key)"),
-        name: z.string().describe("Display name (e.g., 'React' not 'react')"),
-        type: z
-          .string()
-          .describe(
-            "Stack type: framework | language | database | ui | auth | deployment | testing | ai | tooling | storage | other"
-          ),
-        description: z.string().nullable().describe("One-sentence description"),
-        suggestedIcon: z.string().nullable().describe("react-icons component name or null"),
-        iconSvg: z
-          .string()
-          .nullable()
-          .describe("24x24 SVG with currentColor, or null if react-icons has match"),
-        confidence: z.enum(["high", "medium", "low"]).describe("Categorization confidence"),
-        repo: z.string().describe("Source repository URL"),
-        relatedPackages: z
-          .array(z.string())
-          .describe("Other packages in this group (e.g., ['react-dom', '@types/react'])")
+        npmPackage: z.string(),
+        stackId: z.string(),
+        name: z.string(),
+        repo: z.string(),
+        relatedPackages: z.array(z.string())
+      })
+    ),
+    unknown: z.array(
+      z.object({
+        name: z.string(),
+        version: z.string(),
+        repo: z.string(),
+        workspace: z.string().nullable()
       })
     )
   }),
-  execute: async ({ inputData, mastra }) => {
-    const { groupedDeps } = inputData;
+  execute: async ({ inputData, getInitData }) => {
+    const initData = getInitData() as z.infer<typeof DetectStacksWorkflowInputSchema>;
+    console.log(
+      `[DEBUG-WF-4b] initData existingStacks: ${initData.existingStacks?.length}, existingDependencies: ${initData.existingDependencies?.length}, lastScan: ${initData.lastScan ? "yes" : "no"}`
+    );
+    const { dependencies } = inputData;
 
-    if (groupedDeps.length === 0) {
-      return { stacks: [] };
+    // Build lookup: npmPackage → stackId
+    const dependencyMap = new Map(
+      initData.existingDependencies.map((d) => [d.npmPackage, d.stackId])
+    );
+
+    const matched: Array<{
+      npmPackage: string;
+      stackId: string;
+      name: string;
+      repo: string;
+      relatedPackages: string[];
+    }> = [];
+    const unknown: ExtractedDep[] = [];
+
+    for (const dep of dependencies) {
+      const stackId = dependencyMap.get(dep.name);
+      if (stackId) {
+        matched.push({
+          npmPackage: dep.name,
+          stackId,
+          name: dep.name,
+          repo: dep.repo,
+          relatedPackages: []
+        });
+      } else {
+        unknown.push(dep);
+      }
+    }
+
+    console.log(
+      `[DEBUG-WF-5] programmaticMatch complete, matched: ${matched.length}, unknown: ${unknown.length}`
+    );
+    return { matched, unknown };
+  }
+});
+
+const aiCategorize = createStep({
+  id: "ai-categorize",
+  description: "Uses AI to categorize each unknown package one-by-one",
+  inputSchema: programmaticMatch.outputSchema,
+  outputSchema: z.object({
+    matched: z.array(
+      z.object({
+        npmPackage: z.string(),
+        stackId: z.string(),
+        name: z.string(),
+        repo: z.string(),
+        relatedPackages: z.array(z.string())
+      })
+    ),
+    categorized: z.array(
+      z.object({
+        npmPackage: z.string(),
+        name: z.string(),
+        type: z.string(),
+        description: z.string().nullable(),
+        confidence: z.enum(["high", "medium", "low"]),
+        repo: z.string(),
+        relatedPackages: z.array(z.string()),
+        iconSvg: z.string().nullable(),
+        stackId: z.string().nullable(),
+        existingStackId: z.string().nullable()
+      })
+    )
+  }),
+  execute: async ({ inputData, mastra, getInitData }) => {
+    console.log(
+      `[DEBUG-WF-6] aiCategorize started, matched: ${inputData.matched.length}, unknown: ${inputData.unknown.length}`
+    );
+    const { matched, unknown } = inputData;
+
+    if (unknown.length === 0) {
+      return {
+        matched,
+        categorized: []
+      };
     }
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
-      console.warn("[detect-stacks] stackCategorizerAgent not found, returning empty stacks");
-      return { stacks: [] };
+      console.warn("[detect-stacks] stackCategorizerAgent not found, skipping AI categorization");
+      return {
+        matched,
+        categorized: unknown.map((dep) => {
+          return {
+            npmPackage: dep.name,
+            name: dep.name,
+            type: "other",
+            description: null,
+            confidence: "low" as const,
+            repo: dep.repo,
+            relatedPackages: [],
+            iconSvg: null,
+            stackId: null,
+            existingStackId: null
+          };
+        })
+      };
     }
 
-    // Chunk grouped deps into batches of 25 for better LLM processing
-    const CHUNK_SIZE = 25;
-    const chunks: (typeof groupedDeps)[] = [];
-    for (let i = 0; i < groupedDeps.length; i += CHUNK_SIZE) {
-      chunks.push(groupedDeps.slice(i, i + CHUNK_SIZE));
+    // Build context: existing stacks with their dependency lists
+    const initCtx = getInitData() as z.infer<typeof DetectStacksWorkflowInputSchema>;
+    const existingStacks = initCtx.existingStacks;
+    const existingDeps = initCtx.existingDependencies;
+
+    // Group existing dependencies by stackId
+    const depsByStack = new Map<string, string[]>();
+    for (const dep of existingDeps) {
+      const list = depsByStack.get(dep.stackId) ?? [];
+      list.push(dep.npmPackage);
+      depsByStack.set(dep.stackId, list);
     }
 
-    const allStacks: Array<{
+    const existingStackContext = existingStacks
+      .map((s) => {
+        const deps = depsByStack.get(s.id) ?? [];
+        return `- ${s.name} — dependencies: ${deps.join(", ")}`;
+      })
+      .join("\n");
+
+    const categorized: Array<{
       npmPackage: string;
       name: string;
       type: string;
       description: string | null;
-      suggestedIcon: string | null;
-      iconSvg: string | null;
       confidence: "high" | "medium" | "low";
       repo: string;
       relatedPackages: string[];
+      iconSvg: string | null;
+      stackId: null;
+      existingStackId: string | null;
     }> = [];
 
-    for (const chunk of chunks) {
-      const depList = chunk
-        .map(
-          (d) =>
-            `${d.npmPackage} (from ${d.repo}${d.workspace ? `, workspace: ${d.workspace}` : ""})` +
-            (d.relatedPackages.length > 0 ? ` [related: ${d.relatedPackages.join(", ")}]` : "")
-        )
-        .join("\n");
+    // Process each unknown package one-by-one
+    const usedNames = new Set<string>();
+    for (const dep of unknown) {
+      const prompt = `Existing stacks:
+${existingStackContext || "(none)"}
 
-      const prompt = `Categorize each of these npm dependencies into stack types. Some entries are grouped — related packages are listed in [related:] brackets.
+Already categorized in this run (REUSE the same name for related packages of the same library/family):
+${
+  usedNames.size > 0
+    ? Array.from(usedNames)
+        .map((n) => `- ${n}`)
+        .join("\n")
+    : "(none)"
+}
 
-Dependencies:
-${depList}
+Package to categorize: ${dep.name}
+Repository: ${dep.repo}
+Workspace: ${dep.workspace ?? "(root)"}
 
-For each dependency, output:
-- npmPackage: the primary npm package name (the entry point)
-- name: human-readable display name (e.g., "React" not "react", "Tailwind CSS" not "tailwindcss")
-- type: one of framework, language, database, ui, auth, deployment, testing, ai, tooling, storage, other
-- description: one-sentence description of what this package does
-- suggestedIcon: react-icons component name (e.g., "SiReact") if available, otherwise null
-- iconSvg: simple SVG string (24x24 viewBox, single path, currentColor) if no react-icons match exists, otherwise null
-- confidence: high, medium, or low
-- repo: the source repository URL (copy from the dependency list)
-- relatedPackages: the list of related packages (copy from [related:] brackets, or empty array if none)
-
-Skip packages that are clearly build-only tools or test utilities.
-Focus on packages that represent actual tech stack choices.`;
+Decide:
+1. Does this belong to an existing stack? (yes/no)
+2. If yes: which stack name? (must match existing stack name exactly)
+3. If no: what type? (framework/language/database/ui/auth/deployment/testing/ai/tooling/storage/other)
+4. What display name? REUSE an existing display name if this package belongs to the same library/family as another package already categorized (e.g. @radix-ui/react-dialog → "Radix UI", @dnd-kit/sortable → "dnd-kit"). Only invent a NEW unique name for genuinely distinct libraries.
+5. Confidence: high/medium/low`;
 
       try {
         const result = await Promise.race([
           agent.generate([{ role: "user", content: prompt }], {
             structuredOutput: {
               schema: z.object({
-                stacks: z.array(
-                  z.object({
-                    npmPackage: z.string(),
-                    name: z.string(),
-                    type: z.string(),
-                    description: z.string().nullable(),
-                    suggestedIcon: z.string().nullable(),
-                    iconSvg: z.string().nullable(),
-                    confidence: z.enum(["high", "medium", "low"]),
-                    repo: z.string(),
-                    relatedPackages: z.array(z.string())
-                  })
-                )
+                belongsToExistingStack: z.boolean(),
+                existingStackName: z.string().nullable(),
+                type: z.string().nullable(),
+                displayName: z.string(),
+                confidence: z.enum(["high", "medium", "low"]),
+                description: z.string().nullable()
               })
             }
           }),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("LLM timeout after 120s")), 120_000)
+            setTimeout(() => reject(new Error("LLM timeout after 60s")), 60_000)
           )
         ]);
 
-        allStacks.push(...(result.object.stacks ?? []));
-      } catch (error) {
-        console.error("[detect-stacks] LLM categorization failed for chunk:", error);
-        // Fallback: heuristic categorization for this chunk
-        for (const dep of chunk) {
-          allStacks.push({
-            npmPackage: dep.npmPackage,
-            name: dep.name,
-            type: "other",
-            description: null,
-            suggestedIcon: null,
-            iconSvg: null,
-            confidence: "low",
-            repo: dep.repo,
-            relatedPackages: dep.relatedPackages
-          });
+        const ai = result.object;
+
+        if (ai.belongsToExistingStack && ai.existingStackName) {
+          // Find matching stack by name
+          const match = existingStacks.find(
+            (s) => s.name.toLowerCase() === ai.existingStackName!.toLowerCase()
+          );
+          if (match) {
+            categorized.push({
+              npmPackage: dep.name,
+              name: match.name,
+              type: "other", // Inherit from stack; type resolved downstream
+              description: null,
+              confidence: ai.confidence,
+              repo: dep.repo,
+              relatedPackages: [],
+              iconSvg: null,
+              stackId: null,
+              existingStackId: match.id
+            });
+            continue;
+          }
         }
+
+        categorized.push({
+          npmPackage: dep.name,
+          name: ai.displayName,
+          type: ai.type ?? "other",
+          description: ai.description,
+          confidence: ai.confidence,
+          repo: dep.repo,
+          relatedPackages: [],
+          iconSvg: null,
+          stackId: null,
+          existingStackId: null
+        });
+        usedNames.add(ai.displayName);
+      } catch (error) {
+        console.error(`[detect-stacks] AI categorization failed for ${dep.name}:`, error);
+        categorized.push({
+          npmPackage: dep.name,
+          name: dep.name,
+          type: "other",
+          description: null,
+          confidence: "low",
+          repo: dep.repo,
+          relatedPackages: [],
+          iconSvg: null,
+          stackId: null,
+          existingStackId: null
+        });
+        usedNames.add(dep.name);
       }
     }
 
-    return { stacks: allStacks };
+    console.log(`[DEBUG-WF-7] aiCategorize complete, categorized: ${categorized.length}`);
+    return { matched, categorized };
   }
 });
 
 type InitData = z.infer<typeof DetectStacksWorkflowInputSchema>;
 
-const deduplicateAndFormat = createStep({
-  id: "deduplicate-and-format",
-  description: "Deduplicates stacks, checks existing, computes diff",
-  inputSchema: categorizeWithLLM.outputSchema,
+const format = createStep({
+  id: "format",
+  description: "Merges matched and categorized results, computes diff",
+  inputSchema: aiCategorize.outputSchema,
   outputSchema: DetectStacksOutputSchema,
   execute: async ({ inputData, getInitData }) => {
+    console.log(
+      `[DEBUG-WF-8] format started, matched: ${inputData.matched?.length}, categorized: ${inputData.categorized?.length}`
+    );
     const initData = getInitData() as InitData;
-    const { stacks } = inputData;
+    const { matched, categorized } = inputData;
 
-    // Deduplicate by npmPackage
-    const seen = new Map<string, (typeof stacks)[number]>();
-    for (const stack of stacks) {
+    // Build enriched stacks from matched entries
+    const matchedStacks = matched.map(
+      (m: {
+        npmPackage: string;
+        stackId: string;
+        name: string;
+        repo: string;
+        relatedPackages: string[];
+      }) => {
+        return {
+          npmPackage: m.npmPackage,
+          name: m.name,
+          type: "other",
+          description: null,
+          confidence: "medium" as const,
+          iconSvg: null,
+          exists: true,
+          existingStackId: m.stackId,
+          repo: m.repo,
+          relatedPackages: m.relatedPackages,
+          health: null as {
+            deprecated?: boolean;
+            downloads?: number;
+            lastPublished?: string;
+          } | null
+        };
+      }
+    );
+
+    // Build enriched stacks from categorized entries
+    const categorizedStacks = categorized.map(
+      (c: {
+        npmPackage: string;
+        name: string;
+        type: string;
+        description: string | null;
+        confidence: "high" | "medium" | "low";
+        repo: string;
+        relatedPackages: string[];
+        iconSvg: string | null;
+        stackId: string | null;
+        existingStackId: string | null;
+      }) => {
+        return {
+          npmPackage: c.npmPackage,
+          name: c.name,
+          type: c.type,
+          description: c.description,
+          confidence: c.confidence,
+          iconSvg: c.iconSvg,
+          exists: c.existingStackId !== null,
+          existingStackId: c.existingStackId,
+          repo: c.repo,
+          relatedPackages: c.relatedPackages,
+          health: null as {
+            deprecated?: boolean;
+            downloads?: number;
+            lastPublished?: string;
+          } | null
+        };
+      }
+    );
+
+    // Merge and deduplicate by npmPackage
+    type EnrichedStack = (typeof matchedStacks)[number] | (typeof categorizedStacks)[number];
+    const seen = new Map<string, EnrichedStack>();
+    for (const stack of [...matchedStacks, ...categorizedStacks]) {
       if (!seen.has(stack.npmPackage)) {
         seen.set(stack.npmPackage, stack);
       }
     }
-    const uniqueStacks = Array.from(seen.values());
+    const allStacks = Array.from(seen.values());
 
-    // Check against existing stacks and aliases
-    const existingMap = new Map((initData.existingStacks ?? []).map((s) => [s.npmPackage, s]));
-    const dependencyMap = new Map(
-      (initData.existingDependencies ?? []).map((d) => [d.npmPackage, d.stackId])
-    );
-
-    const enrichedStacks = uniqueStacks.map((stack) => {
-      const existing = existingMap.get(stack.npmPackage);
-      const depStackId = dependencyMap.get(stack.npmPackage);
-      const exists = !!existing || !!depStackId;
-
-      return {
-        ...stack,
-        exists,
-        existingStackId: existing?.id ?? depStackId ?? null,
-        health: null as {
-          deprecated?: boolean;
-          downloads?: number;
-          lastPublished?: string;
-        } | null
+    // NEW: Group by display name to combine e.g. all Radix UI packages
+    const groupedByNameMap = new Map<string, { stacks: typeof allStacks; displayName: string }>();
+    for (const stack of allStacks) {
+      const existing = groupedByNameMap.get(stack.name);
+      if (!existing) {
+        groupedByNameMap.set(stack.name, {
+          displayName: stack.name,
+          stacks: [stack]
+        });
+      } else {
+        // Union related packages, keep the first stack's metadata (name, type, etc.)
+        existing.stacks.push(stack);
+      }
+    }
+    const groupedByName = Array.from(groupedByNameMap.entries()).map(([_, value]) => {
+      const { displayName, stacks } = value;
+      // Merge all packages under this displayName
+      // Collect ALL npm packages as relatedPackages so other projects can recognize them
+      const allRelatedPackages = Array.from(new Set(stacks.map((s) => s.npmPackage)));
+      const merged = {
+        ...stacks[0],
+        name: displayName,
+        relatedPackages: allRelatedPackages
       };
+      return merged;
     });
 
-    // Group by repo
-    const groupedByRepoMap = new Map<string, typeof enrichedStacks>();
-    for (const stack of enrichedStacks) {
+    // Group by repo (for frontend grouping)
+    const groupedByRepoMap = new Map<string, typeof groupedByName>();
+    for (const stack of groupedByName) {
       const existing = groupedByRepoMap.get(stack.repo) ?? [];
       existing.push(stack);
       groupedByRepoMap.set(stack.repo, existing);
@@ -386,7 +567,7 @@ const deduplicateAndFormat = createStep({
     });
 
     // Compute diff against last scan
-    const currentPackages = enrichedStacks.map((s) => s.npmPackage);
+    const currentPackages = groupedByName.map((s) => s.npmPackage);
     const previousPackages = (initData.lastScan?.detectedPackages ?? []) as string[];
 
     const added = currentPackages.filter((p) => !previousPackages.includes(p));
@@ -395,8 +576,11 @@ const deduplicateAndFormat = createStep({
 
     const hasChanges = added.length > 0 || removed.length > 0;
 
+    console.log(
+      `[DEBUG-WF-9] format complete, detectedStacks: ${groupedByName.length}, groupedByRepo: ${groupedByRepo.length}`
+    );
     return {
-      detectedStacks: enrichedStacks,
+      detectedStacks: groupedByName,
       groupedByRepo,
       hasChanges,
       diff: initData.lastScan ? { added, unchanged, removed } : null
@@ -411,7 +595,8 @@ export const detectStacksWorkflow = createWorkflow({
 })
   .then(fetchRepoPackageJsons)
   .then(extractDependencies)
-  .then(categorizeWithLLM)
-  .then(deduplicateAndFormat);
+  .then(programmaticMatch)
+  .then(aiCategorize)
+  .then(format);
 
 detectStacksWorkflow.commit();
