@@ -1,7 +1,11 @@
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { DetectStacksOutputSchema, DetectStacksWorkflowInputSchema } from "@tsu-stack/core";
+import {
+  DetectStacksOutputSchema,
+  DetectStacksWorkflowInputSchema,
+  resolveIconForPackage
+} from "@tsu-stack/core";
 
 // Noise patterns to filter out from dependency lists
 const NOISE_PATTERNS = [
@@ -438,12 +442,74 @@ Decide:
   }
 });
 
+const resolveIcons = createStep({
+  id: "resolve-icons",
+  description: "Fetches SVG icons from Iconify API for each categorized stack",
+  inputSchema: aiCategorize.outputSchema,
+  outputSchema: z.object({
+    matched: z.array(
+      z.object({
+        npmPackage: z.string(),
+        stackId: z.string(),
+        name: z.string(),
+        repo: z.string(),
+        relatedPackages: z.array(z.string())
+      })
+    ),
+    categorized: z.array(
+      z.object({
+        npmPackage: z.string(),
+        name: z.string(),
+        type: z.string(),
+        description: z.string().nullable(),
+        confidence: z.enum(["high", "medium", "low"]),
+        repo: z.string(),
+        relatedPackages: z.array(z.string()),
+        iconSvg: z.string().nullable(),
+        stackId: z.string().nullable(),
+        existingStackId: z.string().nullable()
+      })
+    )
+  }),
+  execute: async ({ inputData }) => {
+    const { matched, categorized } = inputData;
+
+    // Only resolve icons for new stacks (not existing ones)
+    const toResolve = categorized.filter(
+      (c) => c.existingStackId === null && c.confidence !== "low"
+    );
+
+    const resolved = await Promise.allSettled(
+      toResolve.map(async (stack) => {
+        const svg = await resolveIconForPackage(stack.npmPackage);
+        return { npmPackage: stack.npmPackage, iconSvg: svg };
+      })
+    );
+
+    const iconMap = new Map<string, string | null>();
+    for (const result of resolved) {
+      if (result.status === "fulfilled") {
+        iconMap.set(result.value.npmPackage, result.value.iconSvg);
+      }
+    }
+
+    const categorizedWithIcons = categorized.map((stack) => {
+      return {
+        ...stack,
+        iconSvg: iconMap.get(stack.npmPackage) ?? stack.iconSvg
+      };
+    });
+
+    return { matched, categorized: categorizedWithIcons };
+  }
+});
+
 type InitData = z.infer<typeof DetectStacksWorkflowInputSchema>;
 
 const format = createStep({
   id: "format",
   description: "Merges matched and categorized results, computes diff",
-  inputSchema: aiCategorize.outputSchema,
+  inputSchema: resolveIcons.outputSchema,
   outputSchema: DetectStacksOutputSchema,
   execute: async ({ inputData, getInitData }) => {
     console.log(
@@ -597,6 +663,7 @@ export const detectStacksWorkflow = createWorkflow({
   .then(extractDependencies)
   .then(programmaticMatch)
   .then(aiCategorize)
+  .then(resolveIcons)
   .then(format);
 
 detectStacksWorkflow.commit();
