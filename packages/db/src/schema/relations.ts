@@ -61,7 +61,7 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         from: r.stack.id,
         to: r.projectStack.stackId
       }),
-      aliases: r.many.stackDependency({
+      dependencies: r.many.stackDependency({
         from: r.stack.id,
         to: r.stackDependency.stackId
       }),

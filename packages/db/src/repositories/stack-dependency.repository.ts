@@ -1,4 +1,4 @@
-import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import { and, eq, ne, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { stackDependency } from "#@/schema/stack-dependency.schema";
@@ -47,6 +47,24 @@ export const stackDependencyRepository = {
     return getDb()
       .delete(stackDependency)
       .where(and(eq(stackDependency.stackId, stackId), eq(stackDependency.npmPackage, npmPackage)));
+  },
+
+  async reassign(
+    stackId: string,
+    npmPackage: string,
+    description?: string | null,
+    homepage?: string | null
+  ): Promise<StackDependencyEntity | undefined> {
+    await getDb()
+      .delete(stackDependency)
+      .where(and(eq(stackDependency.npmPackage, npmPackage), ne(stackDependency.stackId, stackId)));
+    return this.upsert({
+      stackId,
+      npmPackage,
+      description: description ?? null,
+      homepage: homepage ?? null,
+      lastRefreshedAt: null
+    });
   },
 
   async syncForStack(

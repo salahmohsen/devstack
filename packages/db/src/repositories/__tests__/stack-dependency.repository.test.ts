@@ -68,7 +68,7 @@ describe("stackDependencyRepository", () => {
       expect(valuesChain.values).toHaveBeenCalled();
       const onConflictChain = valuesChain.values.mock.results[0].value;
       expect(onConflictChain.onConflictDoNothing).toHaveBeenCalledWith({
-        target: [stackDependency.stackId, stackDependency.npmPackage]
+        target: stackDependency.npmPackage
       });
       expect(result).toEqual({
         id: "new-id",

@@ -11,5 +11,5 @@ export { projectRepository } from "#@/repositories/project.repository";
 export { projectStackScanRepository } from "#@/repositories/project-stack-scan.repository";
 export { resumeRepository } from "#@/repositories/resume.repository";
 export { stackDependencyRepository } from "#@/repositories/stack-dependency.repository";
-export { stackRepository } from "#@/repositories/stack.repository";
+export { stackRepository, type UpdateStackData } from "#@/repositories/stack.repository";
 export { userRepository } from "#@/repositories/user.repository";

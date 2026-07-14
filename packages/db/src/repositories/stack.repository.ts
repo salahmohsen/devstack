@@ -3,6 +3,7 @@ import {
   eq,
   inArray,
   isNotNull,
+  ne,
   sql,
   type InferInsertModel,
   type InferSelectModel,
@@ -118,7 +119,26 @@ export const stackRepository = {
       )
       .orderBy(stack.sortOrder, stack.name);
 
-    return Promise.all(rows.map(({ id }) => this.findById(id)!));
+    const results = await Promise.all(rows.map(({ id }) => this.findById(id)!));
+
+    return results.map((row) => {
+      if (!row) return row;
+      return {
+        ...row,
+        projects: row.projects
+          ?.filter(
+            (ps): ps is typeof ps & { project: NonNullable<typeof ps.project> } =>
+              ps.project != null
+          )
+          .map((ps) => {
+            return {
+              id: ps.project.id,
+              name: ps.project.title,
+              logo: ps.project.logo
+            };
+          })
+      };
+    });
   },
 
   async findById(id: string) {
@@ -171,6 +191,14 @@ export const stackRepository = {
     const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
 
     await getDb().transaction(async (tx) => {
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "stack",
+          entityId: id
+        });
+      }
+
       await tx.insert(stack).values({
         id,
         name: input.name,
@@ -182,27 +210,25 @@ export const stackRepository = {
         portfolioEntryId: pid
       });
 
-      if (pid) {
-        await tx.insert(portfolioEntry).values({
-          id: pid,
-          type: "stack",
-          entityId: id
-        });
-      }
-
       if (options?.dependencies && options.dependencies.length > 0) {
-        await tx.insert(stackDependency).values(
-          options.dependencies.map((dep) => {
-            return {
+        for (const dep of options.dependencies) {
+          await tx
+            .delete(stackDependency)
+            .where(
+              and(eq(stackDependency.npmPackage, dep.npmPackage), ne(stackDependency.stackId, id))
+            );
+          await tx
+            .insert(stackDependency)
+            .values({
               id: crypto.randomUUID(),
               stackId: id,
               npmPackage: dep.npmPackage,
               description: dep.description ?? null,
               homepage: dep.homepage ?? null,
               lastRefreshedAt: null
-            };
-          })
-        );
+            })
+            .onConflictDoNothing({ target: stackDependency.npmPackage });
+        }
       }
 
       if (options?.projectIds && options.projectIds.length > 0) {
@@ -265,19 +291,23 @@ export const stackRepository = {
 
       if (options?.dependencies !== undefined) {
         await tx.delete(stackDependency).where(eq(stackDependency.stackId, id));
-        if (options.dependencies.length > 0) {
-          await tx.insert(stackDependency).values(
-            options.dependencies.map((dep) => {
-              return {
-                id: crypto.randomUUID(),
-                stackId: id,
-                npmPackage: dep.npmPackage,
-                description: dep.description ?? null,
-                homepage: dep.homepage ?? null,
-                lastRefreshedAt: null
-              };
+        for (const dep of options.dependencies) {
+          await tx
+            .delete(stackDependency)
+            .where(
+              and(eq(stackDependency.npmPackage, dep.npmPackage), ne(stackDependency.stackId, id))
+            );
+          await tx
+            .insert(stackDependency)
+            .values({
+              id: crypto.randomUUID(),
+              stackId: id,
+              npmPackage: dep.npmPackage,
+              description: dep.description ?? null,
+              homepage: dep.homepage ?? null,
+              lastRefreshedAt: null
             })
-          );
+            .onConflictDoNothing({ target: stackDependency.npmPackage });
         }
       }
 
@@ -313,7 +343,11 @@ export const stackRepository = {
       const results: { id: string; name: string }[] = [];
 
       for (const { id, data, options } of items) {
-        const [updated] = await tx.update(stack).set(data).where(eq(stack.id, id)).returning();
+        const filtered = Object.fromEntries(
+          Object.entries(data).filter(([, v]) => v !== undefined)
+        ) as UpdateStackData;
+        if (Object.keys(filtered).length === 0) continue;
+        const [updated] = await tx.update(stack).set(filtered).where(eq(stack.id, id)).returning();
 
         if (!updated) continue;
 
