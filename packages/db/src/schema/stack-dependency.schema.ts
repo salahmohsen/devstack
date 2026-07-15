@@ -10,6 +10,10 @@ export const stackDependency = pgTable(
       .notNull()
       .references(() => stack.id, { onDelete: "cascade" }),
     npmPackage: text("npm_package").notNull(),
+    description: text("description"),
+    version: text("version"),
+    homepage: text("homepage"),
+    lastRefreshedAt: timestamp("last_refreshed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
@@ -17,10 +21,7 @@ export const stackDependency = pgTable(
       .$onUpdate(() => new Date())
   },
   (table) => [
-    uniqueIndex("stack_dependency_stack_id_npm_package_unique_idx").on(
-      table.stackId,
-      table.npmPackage
-    ),
+    uniqueIndex("stack_dependency_npm_package_unique_idx").on(table.npmPackage),
     index("stack_dependency_stack_id_idx").on(table.stackId)
   ]
 );

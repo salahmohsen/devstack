@@ -8,17 +8,37 @@ import {
   StackCreateInputSchema,
   StackListOutputSchema,
   StackOutputSchema,
-  StackUpdateInputSchema
+  StackUpdateInputSchema,
+  sanitizeSvg
 } from "@tsu-stack/core";
-import {
-  projectRepository,
-  projectStackScanRepository,
-  stackDependencyRepository,
-  stackRepository
-} from "@tsu-stack/db/repositories";
+import { stackDependencyRepository, stackRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { toStackOutput } from "#@/routers/portfolio.mappers";
+
+const NPM_SEARCH_SIZE = 10;
+const NPM_REGISTRY_SEARCH_URL = "https://registry.npmjs.org/-/v1/search";
+
+const NpmSearchItemSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  version: z.string(),
+  keywords: z.array(z.string()),
+  links: z.object({
+    repository: z.string().nullable(),
+    homepage: z.string().nullable(),
+    npm: z.string()
+  }),
+  downloads: z.object({
+    monthly: z.number(),
+    weekly: z.number()
+  })
+});
+
+const NpmSearchOutputSchema = z.object({
+  total: z.number(),
+  items: z.array(NpmSearchItemSchema)
+});
 
 export const stacksRouter = {
   list: protectedProcedure
@@ -50,16 +70,7 @@ export const stacksRouter = {
     .input(StackCreateInputSchema)
     .output(StackOutputSchema)
     .handler(async ({ input }) => {
-      const {
-        includedInPortfolio,
-        name,
-        description,
-        icon,
-        npmPackage,
-        type,
-        suggestedIcon,
-        iconSvg
-      } = input;
+      const { includedInPortfolio, name, description, icon } = input;
       const existing = await stackRepository.findByName(name);
       if (existing) {
         throw new ORPCError("CONFLICT", {
@@ -69,16 +80,7 @@ export const stacksRouter = {
       const all = await stackRepository.findAll();
       const nextSortOrder = all.length > 0 ? Math.max(...all.map((s) => s.sortOrder)) + 1 : 0;
       const created = await stackRepository.create(
-        {
-          name,
-          description: description ?? null,
-          icon: icon ?? null,
-          npmPackage,
-          type,
-          suggestedIcon,
-          iconSvg,
-          sortOrder: nextSortOrder
-        },
+        { name, description: description ?? null, icon: icon ?? null, sortOrder: nextSortOrder },
         { includedInPortfolio }
       );
       return toStackOutput(created!);
@@ -103,56 +105,6 @@ export const stacksRouter = {
       const updated = await stackRepository.update(input.id, updateData, { includedInPortfolio });
       return updated ? toStackOutput(updated) : null;
     }),
-  batchUpdate: protectedProcedure
-    .route({
-      description: "Batch update multiple tech stacks in a single transaction",
-      method: "POST"
-    })
-    .input(
-      z.object({
-        items: z.array(z.object({ id: z.string(), data: StackUpdateInputSchema }))
-      })
-    )
-    .output(z.array(z.object({ id: z.string(), name: z.string() })))
-    .handler(async ({ input }) => {
-      // Deduplicate by id (last one wins)
-      const itemMap = new Map<string, (typeof input.items)[number]>();
-      for (const item of input.items) {
-        itemMap.set(item.id, item);
-      }
-      const items = Array.from(itemMap.values()).map(({ id, data }) => {
-        const { includedInPortfolio, ...updateData } = data;
-        return { id, data: updateData, options: { includedInPortfolio } };
-      });
-
-      // Check for intra-batch duplicate names
-      const nameMap = new Map<string, string>();
-      for (const { id, data } of items) {
-        if (data.name) {
-          const existingId = nameMap.get(data.name);
-          if (existingId && existingId !== id) {
-            throw new ORPCError("CONFLICT", {
-              message: `Multiple items in batch target the same name "${data.name}".`
-            });
-          }
-          nameMap.set(data.name, id);
-        }
-      }
-
-      // Validate names don't conflict with existing DB rows
-      for (const { id, data } of items) {
-        if (data.name) {
-          const existing = await stackRepository.findByName(data.name);
-          if (existing && existing.id !== id) {
-            throw new ORPCError("CONFLICT", {
-              message: `A stack with name "${data.name}" already exists.`
-            });
-          }
-        }
-      }
-
-      return await stackRepository.batchUpdate(items);
-    }),
   reorder: protectedProcedure
     .route({
       description: "Reorder stacks by updating sort orders",
@@ -163,54 +115,6 @@ export const stacksRouter = {
     .handler(async ({ input }) => {
       await stackRepository.reorder(input.items);
       return { success: true };
-    }),
-  merge: protectedProcedure
-    .route({
-      description: "Merge two stacks — moves projects and aliases from victim to survivor",
-      method: "POST"
-    })
-    .input(z.object({ survivorId: z.string(), victimId: z.string() }))
-    .output(
-      z.object({
-        merged: z.object({ id: z.string(), name: z.string() }),
-        aliases: z.array(z.object({ id: z.string(), npmPackage: z.string() }))
-      })
-    )
-    .handler(async ({ input }) => {
-      try {
-        return await stackRepository.merge(input.survivorId, input.victimId);
-      } catch (error) {
-        throw new ORPCError("BAD_REQUEST", {
-          message: error instanceof Error ? error.message : "Failed to merge stacks"
-        });
-      }
-    }),
-  batchMerge: protectedProcedure
-    .route({
-      description: "Batch merge multiple stacks in a single transaction",
-      method: "POST"
-    })
-    .input(
-      z.object({
-        items: z.array(z.object({ survivorId: z.string(), victimId: z.string() }))
-      })
-    )
-    .output(
-      z.array(
-        z.object({
-          merged: z.object({ id: z.string(), name: z.string() }),
-          aliases: z.array(z.object({ id: z.string(), npmPackage: z.string() }))
-        })
-      )
-    )
-    .handler(async ({ input }) => {
-      try {
-        return await stackRepository.batchMerge(input.items);
-      } catch (error) {
-        throw new ORPCError("BAD_REQUEST", {
-          message: error instanceof Error ? error.message : "Failed to batch merge stacks"
-        });
-      }
     }),
   delete: protectedProcedure
     .route({
@@ -223,81 +127,168 @@ export const stacksRouter = {
       const deleted = await stackRepository.delete(input.id);
       return { success: deleted !== null };
     }),
-  usageCount: protectedProcedure
+  merge: protectedProcedure
     .route({
-      description: "Get the number of projects using a stack",
-      method: "GET"
-    })
-    .input(z.object({ id: z.string() }))
-    .output(z.object({ count: z.number().int() }))
-    .handler(async ({ input }) => {
-      const count = await stackRepository.getUsageCount(input.id);
-      return { count };
-    }),
-  bulkCreate: protectedProcedure
-    .route({
-      description: "Create multiple tech stacks at once",
+      description: "Merge a victim stack into a survivor stack",
       method: "POST"
     })
-    .input(z.object({ stacks: z.array(StackCreateInputSchema) }))
-    .output(StackListOutputSchema)
+    .input(z.object({ survivorId: z.string(), victimId: z.string() }))
+    .output(z.object({ merged: z.object({ id: z.string(), name: z.string() }) }))
     .handler(async ({ input }) => {
-      // Check for duplicates by npm package and name
-      const npmPackages = input.stacks.map((s) => s.npmPackage);
-      const names = input.stacks.map((s) => s.name);
+      try {
+        return await stackRepository.merge(input.survivorId, input.victimId);
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : "Failed to merge stacks");
+      }
+    }),
+  batchMerge: protectedProcedure
+    .route({
+      description: "Batch merge multiple stacks",
+      method: "POST"
+    })
+    .input(z.object({ items: z.array(z.object({ survivorId: z.string(), victimId: z.string() })) }))
+    .output(z.array(z.object({ merged: z.object({ id: z.string(), name: z.string() }) })))
+    .handler(async ({ input }) => {
+      try {
+        return await stackRepository.batchMerge(input.items);
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : "Failed to batch merge stacks");
+      }
+    }),
+  batchUpdate: protectedProcedure
+    .route({
+      description: "Batch update multiple stacks",
+      method: "POST"
+    })
+    .input(
+      z.object({
+        items: z.array(
+          z.object({
+            id: z.string(),
+            data: StackUpdateInputSchema
+          })
+        )
+      })
+    )
+    .output(z.array(z.object({ id: z.string(), name: z.string() })))
+    .handler(async ({ input }) =>
+      stackRepository.batchUpdate(
+        input.items.map((item) => {
+          return {
+            id: item.id,
+            data: item.data
+          };
+        })
+      )
+    ),
+  searchNpm: publicProcedure
+    .route({
+      description: "Search npm packages by name",
+      method: "GET"
+    })
+    .errors({
+      NPM_API_ERROR: {
+        description: "Failed to fetch results from npm registry",
+        status: 502
+      }
+    })
+    .input(z.object({ query: z.string().min(1).max(50) }))
+    .output(NpmSearchOutputSchema)
+    .handler(async ({ input, errors }) => {
+      const url = new URL(NPM_REGISTRY_SEARCH_URL);
+      url.searchParams.set("text", input.query);
+      url.searchParams.set("size", String(NPM_SEARCH_SIZE));
 
-      const existingStacks = await stackRepository.findAll();
-      const conflicts = existingStacks.filter(
-        (s) => npmPackages.includes(s.npmPackage) || names.includes(s.name)
-      );
-
-      if (conflicts.length > 0) {
-        throw new ORPCError("CONFLICT", {
-          message: `Stacks with these names already exist: ${conflicts.map((s) => s.name).join(", ")}`
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          headers: { Accept: "application/json" }
         });
+      } catch {
+        throw errors.NPM_API_ERROR({ message: "Network error reaching npm registry" });
       }
 
-      // Create all stacks in a transaction
-      const createdStacks = [];
-      for (const stackInput of input.stacks) {
-        const {
-          includedInPortfolio,
-          name,
-          description,
-          icon,
-          npmPackage,
-          type,
-          suggestedIcon,
-          iconSvg
-        } = stackInput;
-        const allStacks = await stackRepository.findAll();
-        const nextSortOrder =
-          allStacks.length > 0 ? Math.max(...allStacks.map((s) => s.sortOrder)) + 1 : 0;
+      if (!res.ok) {
+        throw errors.NPM_API_ERROR({ message: `npm registry returned ${res.status}` });
+      }
 
-        const created = await stackRepository.create(
-          {
-            name,
-            description: description ?? null,
-            icon: icon ?? null,
-            npmPackage,
-            type,
-            suggestedIcon,
-            iconSvg,
-            sortOrder: nextSortOrder
+      const data = (await res.json()) as {
+        total: number;
+        objects: Array<{
+          package: Record<string, unknown>;
+          score?: { detail?: { popularity?: number } };
+        }>;
+      };
+
+      const items = data.objects.map((obj) => {
+        const pkg = obj.package;
+        const links = (pkg.links ?? {}) as Record<string, string | undefined>;
+        return {
+          name: (pkg.name as string) ?? "",
+          description: (pkg.description as string) ?? "",
+          version: (pkg.version as string) ?? "",
+          keywords: Array.isArray(pkg.keywords) ? (pkg.keywords as string[]) : [],
+          links: {
+            repository: links.repository ?? null,
+            homepage: links.homepage ?? null,
+            npm: links.npm ?? ""
           },
-          { includedInPortfolio }
-        );
+          downloads: { monthly: 0, weekly: 0 }
+        };
+      });
 
-        if (created) {
-          createdStacks.push(created);
-        }
+      return { total: data.total, items };
+    }),
+  listDependencies: protectedProcedure
+    .route({
+      description: "List npm dependencies for a stack",
+      method: "GET"
+    })
+    .input(z.object({ stackId: z.string() }))
+    .handler(async ({ input }) => stackDependencyRepository.findByStackId(input.stackId)),
+  addDependency: protectedProcedure
+    .route({
+      description: "Add an npm dependency to a stack",
+      method: "POST"
+    })
+    .input(
+      z.object({
+        stackId: z.string(),
+        npmPackage: z.string().min(1),
+        description: z.string().nullable().optional(),
+        version: z.string().nullable().optional(),
+        homepage: z.string().nullable().optional()
+      })
+    )
+    .handler(async ({ input }) => {
+      const { stackId, ...data } = input;
+      const existing = await stackRepository.findById(stackId);
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Stack not found" });
       }
-
-      return createdStacks.map(toStackOutput);
+      return stackDependencyRepository.upsert({
+        stackId,
+        npmPackage: data.npmPackage,
+        description: data.description ?? null,
+        version: data.version ?? null,
+        homepage: data.homepage ?? null,
+        lastRefreshedAt: null
+      });
+    }),
+  removeDependency: protectedProcedure
+    .route({
+      description: "Remove an npm dependency from a stack",
+      method: "DELETE"
+    })
+    .input(z.object({ stackId: z.string(), npmPackage: z.string() }))
+    .output(DeleteResponseSchema)
+    .handler(async ({ input }) => {
+      await stackDependencyRepository.deleteByNpmPackage(input.stackId, input.npmPackage);
+      return { success: true };
     }),
   upsertFromDetection: protectedProcedure
     .route({
-      description: "Upsert detected stacks — creates new ones, returns IDs for existing",
+      description: "Upsert stacks from detection results",
       method: "POST"
     })
     .input(
@@ -306,133 +297,70 @@ export const stacksRouter = {
           z.object({
             npmPackage: z.string(),
             name: z.string(),
-            type: z.string().optional(),
+            type: z.string(),
             description: z.string().nullable().optional(),
-            suggestedIcon: z.string().nullable().optional(),
+            confidence: z.string().nullable().optional(),
             iconSvg: z.string().nullable().optional(),
-            confidence: z.string().nullable().optional()
+            relatedPackages: z.array(z.string()).optional()
           })
         )
       })
     )
-    .output(z.array(z.object({ id: z.string(), npmPackage: z.string() })))
+    .output(z.array(z.object({ id: z.string(), name: z.string() })))
     .handler(async ({ input }) => {
-      if (input.stacks.length === 0) return [];
+      const results: Array<{ id: string; name: string }> = [];
 
-      const results: Array<{ id: string; npmPackage: string }> = [];
+      const seenNames = new Set<string>();
+      for (const s of input.stacks) {
+        if (seenNames.has(s.name)) continue;
+        seenNames.add(s.name);
 
-      for (const detected of input.stacks) {
-        // Check if stack already exists by npmPackage or name
-        const existing =
-          (await stackRepository.findByNpmPackage(detected.npmPackage)) ??
-          (await stackRepository.findByName(detected.name));
-        if (existing) {
-          results.push({ id: existing.id, npmPackage: detected.npmPackage });
-          continue;
+        let stack =
+          (await stackRepository.findByNpmPackageAlias(s.npmPackage)) ??
+          (await stackRepository.findByName(s.name));
+
+        if (!stack) {
+          const all = await stackRepository.findAll();
+          const nextSortOrder = all.length > 0 ? Math.max(...all.map((st) => st.sortOrder)) + 1 : 0;
+          stack = await stackRepository.create(
+            {
+              name: s.name,
+              description: s.description ?? null,
+              icon: s.iconSvg ? sanitizeSvg(s.iconSvg) : null,
+              type: s.type,
+              confidence: s.confidence ?? null,
+              sortOrder: nextSortOrder
+            },
+            { includedInPortfolio: false }
+          );
         }
 
-        // Create new stack
-        const allStacks = await stackRepository.findAll();
-        const nextSortOrder =
-          allStacks.length > 0 ? Math.max(...allStacks.map((s) => s.sortOrder)) + 1 : 0;
-
-        const created = await stackRepository.create({
-          name: detected.name,
-          npmPackage: detected.npmPackage,
-          type: detected.type ?? "other",
-          description: detected.description ?? null,
-          suggestedIcon: detected.suggestedIcon ?? null,
-          iconSvg: detected.iconSvg ?? null,
-          confidence: detected.confidence ?? "low",
-          sortOrder: nextSortOrder
-        });
-
-        if (created) {
-          results.push({ id: created.id, npmPackage: detected.npmPackage });
+        if (stack) {
+          // Link the primary package + all related packages as stack dependencies.
+          // For each package: if it already belongs to a different stack, skip it
+          // (the global unique constraint enforces one-owner; the workflow dedup
+          // step should have absorbed it, but this is the safety net).
+          const allPackages = Array.from(new Set([s.npmPackage, ...(s.relatedPackages ?? [])]));
+          for (const pkg of allPackages) {
+            const existing = await stackDependencyRepository.findByNpmPackage(pkg);
+            if (existing && existing.stackId !== stack.id) {
+              // Package already belongs to another stack — skip.
+              // The workflow should have absorbed this group into the existing stack.
+              continue;
+            }
+            await stackDependencyRepository.upsert({
+              stackId: stack.id,
+              npmPackage: pkg,
+              description: s.description ?? null,
+              version: null,
+              homepage: null,
+              lastRefreshedAt: null
+            });
+          }
+          results.push({ id: stack.id, name: stack.name });
         }
       }
 
       return results;
-    }),
-  createAliases: protectedProcedure
-    .route({
-      description: "Create stack aliases in bulk",
-      method: "POST"
-    })
-    .input(
-      z.object({
-        aliases: z.array(
-          z.object({
-            stackId: z.string(),
-            npmPackage: z.string()
-          })
-        )
-      })
-    )
-    .output(z.object({ success: z.boolean() }))
-    .handler(async ({ input }) => {
-      if (input.aliases.length === 0) return { success: true };
-
-      // Verify all stack IDs exist
-      const stackIds = [...new Set(input.aliases.map((a) => a.stackId))];
-      const existingStacks = await stackRepository.findManyById(stackIds);
-      const missingIds = stackIds.filter((id) => !existingStacks.some((s) => s.id === id));
-
-      if (missingIds.length > 0) {
-        throw new ORPCError("NOT_FOUND", {
-          message: `Stacks not found: ${missingIds.join(", ")}`
-        });
-      }
-
-      // Check for existing aliases
-      const packages = input.aliases.map((a) => a.npmPackage);
-      const existingAliases = await stackDependencyRepository.findManyByNpmPackages(packages);
-      const conflictingPackages = existingAliases.map((a) => a.npmPackage);
-
-      if (conflictingPackages.length > 0) {
-        throw new ORPCError("CONFLICT", {
-          message: `Aliases already exist for packages: ${conflictingPackages.join(", ")}`
-        });
-      }
-
-      await stackDependencyRepository.createMany(
-        input.aliases.map((a) => {
-          return { stackId: a.stackId, npmPackage: a.npmPackage };
-        })
-      );
-
-      return { success: true };
-    }),
-  createScan: protectedProcedure
-    .route({
-      description: "Record a stack scan for a project",
-      method: "POST"
-    })
-    .input(
-      z.object({
-        projectId: z.string(),
-        runId: z.string(),
-        detectedPackages: z.array(z.string()),
-        detectedStackIds: z.array(z.string())
-      })
-    )
-    .output(z.object({ success: z.boolean() }))
-    .handler(async ({ input }) => {
-      // Verify project exists
-      const project = await projectRepository.findById(input.projectId);
-      if (!project) {
-        throw new ORPCError("NOT_FOUND", {
-          message: "Project not found"
-        });
-      }
-
-      await projectStackScanRepository.create({
-        projectId: input.projectId,
-        runId: input.runId,
-        detectedPackages: input.detectedPackages,
-        detectedStackIds: input.detectedStackIds
-      });
-
-      return { success: true };
     })
 };

@@ -1,0 +1,1 @@
+ALTER TABLE "stack_dependency" DROP COLUMN "monthly_downloads";
