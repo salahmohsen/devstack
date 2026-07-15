@@ -51,7 +51,8 @@ export function toStackOutput(s: StackRow): StackOutput {
       };
     }),
     updatedAt: s.updatedAt ?? new Date(),
-    createdAt: s.createdAt ?? new Date()
+    createdAt: s.createdAt ?? new Date(),
+    projects: []
   };
 }
 
