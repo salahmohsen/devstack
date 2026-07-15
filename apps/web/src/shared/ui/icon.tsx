@@ -1,73 +1,78 @@
-import * as React from "react";
-import { type IconBaseProps, type IconType } from "react-icons/lib";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
-type typesPropsIcon = {
-  nameIcon: string;
-  propsIcon?: IconBaseProps;
+type IconProps = {
+  icon?: string | null;
+  className?: string;
+  fallbackToLetter?: boolean;
+  letterClassName?: string;
+  name?: string;
 };
 
-let allIconsPromise: Promise<Record<string, IconType>> | undefined;
+function renderSvg(svgRaw: string, className?: string): React.ReactElement {
+  let svg = svgRaw.trim();
 
-const iconComponentCache = new Map<string, IconType>();
+  if (!svg.startsWith("<svg")) {
+    svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%">${svg}</svg>`;
+  } else {
+    svg = svg
+      .replace(/\swidth="[^"]*"/, "")
+      .replace(/\sheight="[^"]*"/, "")
+      .replace(/<svg/, '<svg width="100%" height="100%"');
+  }
 
-async function resolveIcon(nameIcon: string): Promise<IconType | null> {
-  const lib = nameIcon
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .split(" ")[0]
-    .toLocaleLowerCase();
-
-  const cacheKey = `${lib}:${nameIcon}`;
-  const cached = iconComponentCache.get(cacheKey);
-  if (cached) return cached;
-
-  allIconsPromise ??= (async () => {
-    const allGroups = await Promise.all([
-      import("./icons/group-01"),
-      import("./icons/group-02"),
-      import("./icons/group-03"),
-      import("./icons/group-04"),
-      import("./icons/group-05"),
-      import("./icons/group-06"),
-      import("./icons/group-07"),
-      import("./icons/group-08"),
-      import("./icons/group-09"),
-      import("./icons/group-10"),
-      import("./icons/group-11"),
-      import("./icons/group-12"),
-      import("./icons/group-13"),
-      import("./icons/group-14"),
-      import("./icons/group-15")
-    ]);
-    const all: Record<string, IconType> = {};
-    for (const m of allGroups) {
-      for (const libModules of Object.values(m.iconLibraries)) {
-        Object.assign(all, libModules);
-      }
-    }
-    return all;
-  })();
-
-  const allIcons = await allIconsPromise;
-  const Comp = allIcons[nameIcon] ?? null;
-  if (Comp) iconComponentCache.set(cacheKey, Comp);
-  return Comp;
+  return (
+    <span
+      className={cn("inline-flex items-center justify-center", className)}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
 }
 
-function Icon({ nameIcon, propsIcon }: typesPropsIcon): React.ReactElement | null {
-  const [Component, setComponent] = React.useState<IconType | null>(null);
+function Icon({
+  icon,
+  className,
+  fallbackToLetter = false,
+  letterClassName,
+  name
+}: IconProps): React.ReactElement | null {
+  if (icon) {
+    return renderSvg(icon, className);
+  }
 
-  React.useEffect(() => {
-    let cancelled = false;
-    void resolveIcon(nameIcon).then((comp) => {
-      if (!cancelled) setComponent(() => comp);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [nameIcon]);
+  if (fallbackToLetter) {
+    return (
+      <span
+        className={cn(
+          "inline-flex size-8 items-center justify-center rounded-md bg-muted text-sm font-medium",
+          letterClassName
+        )}
+      >
+        {name?.charAt(0)?.toUpperCase()}
+      </span>
+    );
+  }
 
-  if (!Component) return null;
-  return <Component {...propsIcon} />;
+  return null;
 }
 
-export { Icon };
+function IconLetter({
+  letter,
+  letterClassName
+}: {
+  letter: string;
+  letterClassName?: string;
+}): React.ReactElement {
+  return (
+    <span
+      className={cn(
+        "inline-flex size-8 items-center justify-center rounded-md bg-muted text-sm font-medium",
+        letterClassName
+      )}
+    >
+      {letter.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
+export { Icon, IconLetter, renderSvg };
+export type { IconProps };

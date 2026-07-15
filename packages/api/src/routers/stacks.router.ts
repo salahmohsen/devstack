@@ -323,14 +323,12 @@ export const stacksRouter = {
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Stack not found" });
       }
-      return stackDependencyRepository.upsert({
+      return stackDependencyRepository.reassign(
         stackId,
-        npmPackage: data.npmPackage,
-        description: data.description ?? null,
-        version: data.version ?? null,
-        homepage: data.homepage ?? null,
-        lastRefreshedAt: null
-      });
+        data.npmPackage,
+        data.description,
+        data.homepage
+      );
     }),
   removeDependency: protectedProcedure
     .route({
@@ -394,25 +392,10 @@ export const stacksRouter = {
 
         if (stack) {
           // Link the primary package + all related packages as stack dependencies.
-          // For each package: if it already belongs to a different stack, skip it
-          // (the global unique constraint enforces one-owner; the workflow dedup
-          // step should have absorbed it, but this is the safety net).
+          // If a package already belongs to a different stack, reassign it here.
           const allPackages = Array.from(new Set([s.npmPackage, ...(s.relatedPackages ?? [])]));
           for (const pkg of allPackages) {
-            const existing = await stackDependencyRepository.findByNpmPackage(pkg);
-            if (existing && existing.stackId !== stack.id) {
-              // Package already belongs to another stack — skip.
-              // The workflow should have absorbed this group into the existing stack.
-              continue;
-            }
-            await stackDependencyRepository.upsert({
-              stackId: stack.id,
-              npmPackage: pkg,
-              description: s.description ?? null,
-              version: null,
-              homepage: null,
-              lastRefreshedAt: null
-            });
+            await stackDependencyRepository.reassign(stack.id, pkg, s.description ?? null, null);
           }
           results.push({ id: stack.id, name: stack.name });
         }

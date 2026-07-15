@@ -226,3 +226,79 @@ persists the result in the resume table. Implemented as the
 for producing a resume PDF; distinct from the PDF renderer (which is a
 pure engine with no resume-domain knowledge).
 _Avoid_: PDF generator, resume service, resume orchestrator.
+
+## Stacks
+
+**Stack**:
+A named technology choice tracked in the `stack` table. Represents a
+framework, language, library, tool, or service used across projects.
+Linked to projects via the `project_stack` join table. Each stack has a
+display `name` (customizable by the user), an optional `npmPackage`
+(the raw npm package name for deduplication and auto-detection), a
+`type` category, and an optional `icon`.
+\_Avably: Tech, technology, skill, dependency.
+
+**Stack type**:
+The `type` column on `stack`. One of `"framework" | "language" |
+"database" | "ui" | "auth" | "deployment" | "testing" | "ai" |
+"tooling" | "storage" | "other"`. Categorizes the stack for
+filtering and display grouping. Assigned by the LLM during
+auto-detection, editable by the user.
+\_Avably: Category, kind, group.
+
+**npm package**:
+The `npm_package` column on `stack`. The raw npm package name as it
+appears in `package.json` (e.g., `"react"`, `"@tanstack/react-query"`).
+Nullable — not every stack has an npm package (e.g., "REST API", "Docker").
+Used as the deduplication key: one npm package maps to at most one stack.
+Filled automatically by the detect-stacks workflow; optional in the
+manual stack form.
+\_Avably: Package name, npm name, dependency name.
+
+**Detect-stacks workflow**:
+A Mastra workflow (`detect-stacks-workflow`) that scans GitHub
+repositories' `package.json` files to auto-detect tech stacks.
+Triggered from the Project Form's "Detect Stacks" button. Four steps:
+fetch-repo-package-jsons → extract-dependencies →
+categorize-with-llm → deduplicate-and-format. Streams step progress
+to the UI via oRPC for real-time `ShimmeringText` feedback. Includes
+10 enhancements: auto-icon mapping, health metadata, confidence
+scoring, stack aliases, usage frequency, stack diff, batch detection,
+language aggregation, auto-descriptions, and portfolio tech section.
+\_Avably: Stack scanner, dependency detector, auto-stack.
+
+**Stack alias**:
+A row in `stack_alias` mapping an alternative npm package name to an
+existing stack. Prevents duplicate stacks when multiple npm packages
+represent the same technology (e.g., `react` and `react-dom` both
+map to the "React" stack). Checked alongside `stack.npm_package`
+during deduplication.
+\_Avably: Package alias, alternative name, npm alias.
+
+**Stack health**:
+Cached npm registry metadata stored in `stack.health_status`: whether
+the package is deprecated, its weekly download count, and last publish
+date. Refreshed on each detect-stacks scan. Displayed as badges in
+the review dialog and on stack cards.
+\_Avably: Package health, npm status, dependency health.
+
+**Stack confidence**:
+The LLM's confidence level (`high | medium | low`) in its type
+categorization of a dependency. Stored in `stack.confidence`. Low-
+confidence items get a warning badge in the review dialog to surface
+potential misclassifications.
+\_Avably: Classification confidence, categorization certainty.
+
+**Stack scan**:
+A row in `project_stack_scan` recording one detect-stacks workflow
+execution for a project: the timestamp, detected npm package names,
+and resulting stack IDs. Used to compute stack diffs on re-scan
+(new/unchanged/removed packages).
+\_Avably: Detection scan, package scan, dependency scan.
+
+**Language aggregation**:
+The computed breakdown of programming languages across a project's
+linked GitHub repositories. Derived from `GitHubUserRepoSummary.language`
+weighted by repo relevance. Displayed on the project page as percentage
+badges (e.g., "TypeScript 60%").
+\_Avably: Repo languages, language breakdown, tech breakdown.

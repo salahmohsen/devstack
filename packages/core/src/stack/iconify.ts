@@ -15,16 +15,29 @@ type IconifyIconData = {
 };
 
 /**
- * Search Iconify for an icon matching a query string.
- * Returns the first matching icon ID (e.g., "mdi:react") or null.
+ * Remove special characters from a search query string.
  */
-export async function searchIcon(query: string, limit?: number): Promise<string | null> {
-  const url = `${ICONIFY_API_BASE}/search?query=${encodeURIComponent(query)}&limit=${limit ?? 1}`;
+function sanitizeQuery(query: string): string {
+  return query.replace(/[\W_]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Search Iconify for an icon matching a query string.
+ * Returns the first matching icon ID (e.g., "mdi:react") or null when limit is 1 or unset.
+ * Returns an array of icon IDs when limit is greater than 1.
+ */
+export async function searchIcon(query: string, limit?: 1): Promise<string | null>;
+export async function searchIcon(query: string, limit: number): Promise<string[]>;
+export async function searchIcon(query: string, limit?: number): Promise<string | null | string[]> {
+  const sanitized = sanitizeQuery(query);
+  const effectiveLimit = limit ?? 1;
+  const url = `${ICONIFY_API_BASE}/search?query=${encodeURIComponent(sanitized)}&limit=${effectiveLimit}`;
   const res = await fetch(url);
-  if (!res.ok) return null;
+  if (!res.ok) return effectiveLimit === 1 ? null : [];
 
   const data = (await res.json()) as IconifySearchResult;
-  return data.icons[0] ?? null;
+  if (effectiveLimit === 1) return data.icons[0] ?? null;
+  return data.icons;
 }
 
 /**

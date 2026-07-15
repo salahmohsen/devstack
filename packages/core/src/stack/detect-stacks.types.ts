@@ -38,7 +38,6 @@ export const DetectStacksWorkflowInputSchema = z.object({
     .array(
       z.object({
         id: z.string().describe("Existing stack ID in database"),
-        npmPackage: z.string().nullable().describe("npm package name if already set"),
         name: z.string().describe("Display name of existing stack")
       })
     )
@@ -70,20 +69,13 @@ export const DetectedStackSchema = z
     type: z
       .string()
       .describe(
-        "Stack type category: framework | language | database | ui | auth | deployment | testing | ai | tooling | storage | other"
+        "Stack type category: framework | language | database | ui | auth | deployment | testing | ai | tooling | storage | state management | other"
       ),
     description: z.string().nullable().describe("One-sentence description"),
-    suggestedIcon: z
-      .string()
-      .nullable()
-      .describe("react-icons component name (e.g., 'SiReact') if available"),
-    iconSvg: z
-      .string()
-      .nullable()
-      .describe("Simple 24x24 SVG with currentColor. If no react-icons match exists."),
     confidence: z
       .enum(["high", "medium", "low"])
       .describe("How confident you are in this categorization"),
+    iconSvg: z.string().nullable().describe("SVG icon markup for the stack"),
     exists: z.boolean().describe("Whether this stack already exists in the database"),
     existingStackId: z.string().nullable().describe("ID of existing stack if exists=true"),
     repo: z.string().describe("Source repository URL this dependency was found in"),

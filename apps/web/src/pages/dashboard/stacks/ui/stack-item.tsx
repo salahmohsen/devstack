@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Package } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core";
+import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
@@ -25,16 +26,55 @@ import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 
+const TYPE_LABELS: Record<string, string> = {
+  framework: "Framework",
+  language: "Language",
+  database: "Database",
+  ui: "UI",
+  auth: "Auth",
+  deployment: "Deploy",
+  testing: "Testing",
+  ai: "AI",
+  tooling: "Tooling",
+  storage: "Storage",
+  other: "Other"
+};
+
+const TYPE_VARIANTS: Record<
+  string,
+  "default" | "secondary" | "outline" | "info" | "success" | "warning" | "error"
+> = {
+  framework: "default",
+  language: "info",
+  database: "success",
+  ui: "secondary",
+  auth: "warning",
+  deployment: "outline",
+  testing: "error",
+  ai: "info",
+  tooling: "secondary",
+  storage: "success",
+  other: "outline"
+};
+
 type StackItemProps = React.ComponentProps<"div"> & { size?: "default" | "sm" } & {
   stack: StackOutput;
   onEdit: (id: string) => void;
+  dragHandleProps?: {
+    attributes: Record<string, unknown>;
+    listeners: Record<string, unknown> | undefined;
+    className: string;
+  };
+  isSort?: boolean;
 };
 
-export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
+export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: StackItemProps) {
   const queryClient = useQueryClient();
   const { openItem, isItemOpen, selectedIds, toggleSelect } = useStackStore();
   const selected = isItemOpen?.[stack.id] ?? false;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const usageCount = stack.projectCount ?? 0;
 
   const deleteMutation = useMutation(
     orpcQueryClient.stacks.delete.mutationOptions({
@@ -95,79 +135,109 @@ export function StackItem({ stack, onEdit, ...props }: StackItemProps) {
         aria-label={`View details for ${stack.name}`}
         data-item-id={stack.id}
         data-selected={selected}
-        onClick={() => openItem(stack.id, stack)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            openItem(stack.id, stack);
-          }
-        }}
+        onClick={isSort ? undefined : () => openItem(stack.id, stack)}
+        onKeyDown={
+          isSort
+            ? undefined
+            : (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  openItem(stack.id, stack);
+                }
+              }
+        }
         className={cn(
           "group relative aspect-square cursor-pointer overflow-hidden py-0!",
           "**:transition-all **:duration-200",
-          "size-40"
+          "h-50 w-full",
+          isSort && "cursor-grab active:cursor-grabbing",
+          selected && "ring-1"
         )}
         {...props}
       >
+        {isSort && dragHandleProps && (
+          <div
+            {...dragHandleProps.attributes}
+            {...dragHandleProps.listeners}
+            className={cn("absolute top-2 left-3 z-20", dragHandleProps.className)}
+          >
+            <GripVertical className="size-4" />
+          </div>
+        )}
         <div
           role="presentation"
           className="absolute top-2 left-3 z-10"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          <Checkbox
-            checked={selectedIds?.[stack.id] ?? false}
-            onCheckedChange={() => toggleSelect(stack.id)}
-            className={cn(
-              "transition-opacity",
-              selectedIds?.[stack.id] ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-            )}
-          />
+          {!isSort && (
+            <Checkbox
+              checked={selectedIds?.[stack.id] ?? false}
+              onCheckedChange={() => toggleSelect(stack.id)}
+              className={cn(
+                "transition-opacity",
+                selectedIds?.[stack.id] ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+              )}
+            />
+          )}
         </div>
         <CardContent
           data-selected={selected}
           className={cn(
-            "flex h-full flex-col items-center justify-center gap-3 p-4",
-            "translate-y-4 scale-100 data-selected:translate-y-0 data-selected:scale-90"
+            "flex h-full flex-col items-center justify-center gap-2 p-4",
+            !isSort && "translate-y-4 scale-100 data-selected:translate-y-0 data-selected:scale-90"
           )}
         >
-          {stack.icon ? (
-            <Icon
-              nameIcon={stack.icon}
-              propsIcon={{ className: "size-14 shrink-0 rounded object-contain" }}
-            />
-          ) : (
-            <Package className="size-14 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+          {stack.type && (
+            <Badge
+              variant={TYPE_VARIANTS[stack.type] ?? "outline"}
+              size="sm"
+              className="absolute top-2 right-2 z-10"
+            >
+              {TYPE_LABELS[stack.type] ?? stack.type}
+            </Badge>
           )}
+          <Icon
+            icon={stack.icon}
+            className="size-14 shrink-0 rounded object-contain"
+            fallbackToLetter
+            letterClassName="size-14 text-xl"
+            name={stack.name}
+          />
           <p
-            className="warp-break-words line-clamp-2 block max-w-full text-center text-sm font-medium data-selected:hidden"
-            data-selected={selected}
+            className="warp-break-words line-clamp-2 block max-w-full text-center text-sm font-medium"
             title={stack.name}
           >
             {stack.name}
           </p>
+          {usageCount > 0 && (
+            <p className="text-center text-xs text-muted-foreground">
+              {usageCount} {usageCount === 1 ? "project" : "projects"}
+            </p>
+          )}
         </CardContent>
-        {/* className="mx-auto flex w-[calc(100%-10px)] translate-y-16 justify-center p-1.5 data-selected:-translate-y-2" */}
-        <div
-          className="mx-auto translate-y-9 data-selected:-translate-y-2"
-          data-selected={selected}
-        >
-          <ListItemActionButtons
-            edit={{
-              onAction: () => onEdit(stack.id),
-              isLoading: false
-            }}
-            togglePortfolio={{
-              onAction: handleTogglePortfolio,
-              initialValue: !!stack.portfolioEntryId,
-              isLoading: togglePortfolioMutation.isPending
-            }}
-            delete={{
-              onAction: () => setDeleteDialogOpen(true),
-              isLoading: deleteMutation.isPending
-            }}
-          />
-        </div>
+        {!isSort && (
+          <div
+            className="mx-auto translate-y-9 data-selected:-translate-y-2"
+            data-selected={selected}
+          >
+            <ListItemActionButtons
+              edit={{
+                onAction: () => onEdit(stack.id),
+                isLoading: false
+              }}
+              togglePortfolio={{
+                onAction: handleTogglePortfolio,
+                initialValue: !!stack.portfolioEntryId,
+                isLoading: togglePortfolioMutation.isPending
+              }}
+              delete={{
+                onAction: () => setDeleteDialogOpen(true),
+                isLoading: deleteMutation.isPending
+              }}
+            />
+          </div>
+        )}
       </Card>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

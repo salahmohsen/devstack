@@ -20,6 +20,9 @@ export const ProjectOutputSchema = z.object({
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
   stacks: z.array(StackOutputSchema),
+  stackTypeSummary: z
+    .record(z.string(), z.number())
+    .describe("Stack counts grouped by type (e.g., { framework: 2, ui: 3 })"),
   updatedAt: z.date(),
   createdAt: z.date()
 }) satisfies z.ZodType<ProjectSchemaSelect>;

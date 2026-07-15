@@ -10,3 +10,40 @@
     */
   --navbar-height: 52px;
 }
+
+/**
+ * Animated grid layout — smoothly interpolates `grid-template-columns`
+ * when items are added, removed, or the responsive column count changes.
+ * Apply to the grid container alongside your grid-cols-* utilities.
+ */
+@utility animate-grid {
+  interpolate-size: allow-keywords;
+  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/**
+ * Animated grid item — transitions all layout-affecting properties so items
+ * smoothly resize when columns change and fade+scale in on first render.
+ * Entry uses CSS @starting-style for automatic animation on DOM insert.
+ */
+@utility animate-grid-item {
+  opacity: 1;
+  scale: 1;
+  translate: 0 0;
+  transition:
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    scale 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    translate 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    display 0.35s cubic-bezier(0.4, 0, 0.2, 1) allow-discrete;
+
+  @starting-style {
+    opacity: 0;
+    scale: 0.92;
+    translate: 0 8px;
+  }
+}
+
+.form-dialog {
+  @apply w-[calc(100%-5rem)] max-w-6xl;
+}

@@ -6,7 +6,8 @@ import { type OrganizeAction, type OrganizeStacksOutput } from "@tsu-stack/core"
 const STEP_LABELS: Record<string, string> = {
   "find-merges": "Finding duplicate stacks",
   "find-renames": "Checking naming conventions",
-  "find-enrichments": "Analyzing metadata with AI",
+  "find-enrichments": "Analyzing metadata",
+  "fetch-missing-icons": "Fetching icons",
   "sort-stacks": "Sorting by importance",
   "format-output": "Preparing results"
 };

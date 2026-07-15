@@ -18,6 +18,7 @@
     "naumovs.color-highlight",
     "wayou.vscode-todo-highlight",
     "ibm.output-colorizer",
-    "oderwat.indent-rainbow"
+    "oderwat.indent-rainbow",
+    "oxc.oxc-vscode"
   ]
 }

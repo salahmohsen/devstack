@@ -7,7 +7,12 @@ import {
   stackDependencyRepository,
   stackRepository
 } from "@tsu-stack/db/repositories";
-import { getPrivateRepoFileContent, getRepoFileContent } from "@tsu-stack/github";
+import {
+  getPrivateRepoFileContent,
+  getPrivateRepoTree,
+  getRepoFileContent,
+  getRepoTree
+} from "@tsu-stack/github";
 
 import { ownerProcedure, publicProcedure } from "#@/lib/procedures/factory";
 
@@ -37,6 +42,96 @@ async function getDefaultBranch(repoSlug: string, context: OrpcContext): Promise
   if (branch) return branch;
   const publicBranch = await tryOctokit(context.github.publicOctokit);
   return publicBranch ?? "main";
+}
+
+/**
+ * Parse pnpm-workspace.yaml content and extract workspace glob patterns.
+ * Handles standard format: `packages:\n  - "pattern"\n  - pattern`
+ */
+function parsePnpmWorkspaceYaml(content: string): string[] {
+  const patterns: string[] = [];
+  const lines = content.split("\n");
+  let inPackages = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("#") || trimmed === "") continue;
+
+    if (/^packages\s*:/.test(trimmed)) {
+      inPackages = true;
+      continue;
+    }
+
+    if (inPackages && /^[a-zA-Z]/.test(trimmed) && !trimmed.startsWith("-")) {
+      inPackages = false;
+    }
+
+    if (inPackages && trimmed.startsWith("-")) {
+      const pattern = trimmed
+        .slice(1)
+        .trim()
+        .replace(/^["']|["']$/g, "");
+      if (pattern) patterns.push(pattern);
+    }
+  }
+
+  return patterns;
+}
+
+/**
+ * Resolve pnpm-workspace.yaml patterns to actual workspace package.json files.
+ * Uses the GitHub tree API to list directories and find package.json files.
+ */
+async function resolveWorkspacePackageJsons(
+  workspaceYamlContent: string,
+  repoSlug: string,
+  defaultBranch: string,
+  context: OrpcContext
+): Promise<Array<{ workspace: string; content: string }>> {
+  const patterns = parsePnpmWorkspaceYaml(workspaceYamlContent);
+  if (patterns.length === 0) return [];
+
+  // Extract unique base directories from patterns (e.g., "packages/*" -> "packages")
+  const baseDirs = new Set<string>();
+  for (const pattern of patterns) {
+    const baseDir = pattern.replace(/\/?\*+$/, "").replace(/\/$/, "");
+    baseDirs.add(baseDir); // "" means root directory
+  }
+
+  const fetchTree = async (path: string) => {
+    const privateResult = await getPrivateRepoTree(
+      { path, ref: defaultBranch, repo: repoSlug },
+      context
+    );
+    if (privateResult.length > 0) return privateResult;
+    return getRepoTree({ path, ref: defaultBranch, repo: repoSlug }, context);
+  };
+
+  const fetchFile = async (path: string) => {
+    const privateResult = await getPrivateRepoFileContent(
+      { path, ref: defaultBranch, repo: repoSlug },
+      context
+    );
+    if (privateResult !== null) return privateResult;
+    return getRepoFileContent({ path, ref: defaultBranch, repo: repoSlug }, context);
+  };
+
+  const results: Array<{ workspace: string; content: string }> = [];
+
+  for (const baseDir of baseDirs) {
+    const entries = await fetchTree(baseDir);
+    const dirs = entries.filter((e) => e.type === "dir");
+
+    for (const dir of dirs) {
+      const pkgPath = `${dir.path}/package.json`;
+      const content = await fetchFile(pkgPath);
+      if (content) {
+        results.push({ workspace: dir.name, content });
+      }
+    }
+  }
+
+  return results;
 }
 
 const agentIdSchema = z.string().default("weather-agent");
@@ -179,18 +274,16 @@ export const agentRouter = {
 
           // Only try workspace yaml if package.json was found
           let workspaceYamlContent: string | null = null;
-          const workspacePkgContents: Array<{ workspace: string; content: string }> = [];
+          let workspacePkgContents: Array<{ workspace: string; content: string }> = [];
           if (rootPkgContent) {
             workspaceYamlContent = await fetchFile("pnpm-workspace.yaml");
             if (workspaceYamlContent) {
-              workspacePkgContents.push({
-                workspace: "shared",
-                content: JSON.stringify({
-                  name: "@repo/shared",
-                  version: "1.0.0",
-                  dependencies: {}
-                })
-              });
+              workspacePkgContents = await resolveWorkspacePackageJsons(
+                workspaceYamlContent,
+                repoSlug,
+                defaultBranch,
+                context
+              );
             }
           }
 
@@ -204,11 +297,16 @@ export const agentRouter = {
       );
 
       // 2. Look up existing stacks, dependencies, and last scan
-      const [existingStacks, existingDependencies, lastScan] = await Promise.all([
-        stackRepository.findAll(),
-        stackDependencyRepository.findAll(),
-        projectStackScanRepository.findLatestByProjectId(input.projectId)
-      ]);
+      const existingStacks = await stackRepository.findAll();
+
+      let existingDependencies: Awaited<ReturnType<typeof stackDependencyRepository.findAll>>;
+      try {
+        existingDependencies = await stackDependencyRepository.findAll();
+      } catch (err) {
+        throw err;
+      }
+
+      const lastScan = await projectStackScanRepository.findLatestByProjectId(input.projectId);
 
       // 3. Build DetectStacksWorkflowInputSchema payload
       const workflowInput = {
@@ -217,7 +315,6 @@ export const agentRouter = {
         existingStacks: existingStacks.map((stack) => {
           return {
             id: stack.id,
-            npmPackage: stack.npmPackage,
             name: stack.name
           };
         }),
@@ -277,7 +374,6 @@ export const agentRouter = {
       const reader = upstream.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let eventCount = 0;
 
       try {
         while (true) {
@@ -298,7 +394,6 @@ export const agentRouter = {
               if (depth === 0 && start >= 0) {
                 try {
                   const event = JSON.parse(buffer.slice(start, i + 1));
-                  eventCount++;
                   yield event;
                 } catch {
                   // Ignore malformed JSON
@@ -319,7 +414,6 @@ export const agentRouter = {
         if (buffer.trim().length > 0) {
           try {
             const event = JSON.parse(buffer);
-            eventCount++;
             yield event;
           } catch {
             // Ignore malformed trailing data
@@ -350,12 +444,9 @@ export const agentRouter = {
           return {
             id: stack.id,
             name: stack.name,
-            npmPackage: stack.npmPackage,
             type: stack.type,
             description: stack.description,
             icon: stack.icon,
-            suggestedIcon: stack.suggestedIcon,
-            iconSvg: stack.iconSvg,
             projectCount: stack.projectCount ?? 0
           };
         })
@@ -404,6 +495,7 @@ export const agentRouter = {
       const decoder = new TextDecoder();
       let buffer = "";
       let eventCount = 0;
+      let completed = false;
 
       try {
         while (true) {
@@ -451,8 +543,21 @@ export const agentRouter = {
             // Ignore malformed trailing data
           }
         }
+
+        completed = true;
       } finally {
         reader.releaseLock();
+
+        // Cancel the workflow if the client disconnected before completion
+        if (!completed) {
+          try {
+            await agentWorker.fetch(`/api/workflows/organize-stacks-workflow/cancel/${runId}`, {
+              method: "POST"
+            });
+          } catch {
+            // Best-effort cancel — workflow may have already finished
+          }
+        }
       }
     })
 };

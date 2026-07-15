@@ -322,6 +322,7 @@ export function ExperiencesPage() {
         onReorder={handleReorder}
         disabled={reorderMutation.isPending || !isSort}
         siblingsDimOnHover
+        containerClassName="space-y-2"
       >
         {(experience, dragHandleProps) => (
           <ListItem

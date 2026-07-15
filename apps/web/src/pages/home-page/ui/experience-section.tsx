@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { VscLinkExternal } from "react-icons/vsc";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperienceOutput } from "@tsu-stack/core";
@@ -48,7 +47,9 @@ export const Experience = () => {
             className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-accent"
           >
             Download Resume
-            <VscLinkExternal />
+            <svg className="size-3" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M3.75 2h3.5a.75.75 0 010 1.5H4.5v8h8V8.75a.75.75 0 011.5 0v3.5A1.75 1.75 0 0112.25 14h-8.5A1.75 1.75 0 012 12.25v-8.5C2 2.784 2.784 2 3.75 2zm6.854-1h4.004a.25.25 0 01.177.427l-5.5 5.5a.25.25 0 01-.354 0l-5.5-5.5A.25.25 0 013.596 1h4.004z" />
+            </svg>
           </a>
         </div>
       )}

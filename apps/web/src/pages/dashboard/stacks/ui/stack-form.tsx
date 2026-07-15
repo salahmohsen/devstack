@@ -109,6 +109,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
       name: stack?.name ?? "",
       description: stack?.description ?? "",
       icon: stack?.icon ?? "",
+      type: stack?.type ?? "",
       includedInPortfolio: !!stack?.portfolioEntryId,
       dependencies: (stack?.dependencies ?? []).map((d) => {
         return {
@@ -130,6 +131,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
             name: value.name,
             description: value.description || null,
             icon: value.icon ? sanitizeSvg(value.icon) : null,
+            type: value.type || null,
             includedInPortfolio: value.includedInPortfolio,
             dependencies: value.dependencies,
             projectIds: value.projectIds
@@ -140,6 +142,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           name: value.name,
           description: value.description ?? null,
           icon: value.icon ? sanitizeSvg(value.icon) : null,
+          type: value.type || null,
           includedInPortfolio: value.includedInPortfolio,
           dependencies: value.dependencies,
           projectIds: value.projectIds
@@ -157,6 +160,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
         name: stack.name,
         description: stack.description ?? "",
         icon: stack.icon ?? "",
+        type: stack.type ?? "",
         includedInPortfolio: !!stack.portfolioEntryId,
         dependencies: stack.dependencies.map((d) => {
           return {
@@ -180,7 +184,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="form-dialog">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Stack" : "New Stack"}</DialogTitle>
           <DialogDescription>
@@ -218,6 +222,30 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
                   <field.RichTextField
                     label="Description"
                     placeholder="Brief description of the stack"
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="type">
+                {(field) => (
+                  <field.DropdownField
+                    label="Type"
+                    description="Categorize this stack."
+                    placeholder="Select type..."
+                    items={[
+                      { value: "framework", label: "Framework" },
+                      { value: "language", label: "Language" },
+                      { value: "database", label: "Database" },
+                      { value: "ui", label: "UI" },
+                      { value: "auth", label: "Auth" },
+                      { value: "deployment", label: "Deployment" },
+                      { value: "testing", label: "Testing" },
+                      { value: "ai", label: "AI" },
+                      { value: "tooling", label: "Tooling" },
+                      { value: "storage", label: "Storage" },
+                      { value: "state management", label: "State Management" },
+                      { value: "other", label: "Other" }
+                    ]}
                   />
                 )}
               </form.AppField>

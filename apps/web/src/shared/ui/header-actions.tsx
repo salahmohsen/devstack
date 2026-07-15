@@ -4,14 +4,32 @@ import {
   ArrowUpDownIcon,
   BookmarkPlusIcon,
   CheckIcon,
+  GitMergeIcon,
   PlusIcon,
   RotateCcwIcon,
+  SparklesIcon,
   Trash2Icon,
-  X
+  X,
+  XIcon
 } from "lucide-react";
 
-import { Button } from "@tsu-stack/ui/components/button.js";
-import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { Button } from "@tsu-stack/ui/components/button";
+import { Group, GroupSeparator, GroupText } from "@tsu-stack/ui/components/group";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipProvider,
+  TooltipTrigger
+} from "@tsu-stack/ui/components/tooltip";
+import { ShimmeringText } from "@tsu-stack/ui/components/unlumen-ui/shimmering-text";
+
+type OrganizeConfig = {
+  isRunning: boolean;
+  currentStep: string | null;
+  onStart: () => void;
+  onCancel: () => void;
+};
 
 type BatchConfig = {
   selectedCount: number;
@@ -21,6 +39,7 @@ type BatchConfig = {
   isAddingToPortfolio?: boolean;
   onDeleteSelected: () => void;
   onAddSelectedToPortfolio?: () => void;
+  onMerge?: () => void;
   onSelectAll: () => void;
   onClearSelection: () => void;
 };
@@ -31,6 +50,7 @@ type HeaderActionProps = {
     label?: string;
     isLoading?: boolean;
   };
+  organize?: OrganizeConfig;
   batch?: BatchConfig;
   sort?: {
     isSort: boolean;
@@ -42,16 +62,9 @@ type HeaderActionProps = {
   };
 };
 
-export function HeaderActions({ add, batch, sort }: HeaderActionProps) {
+export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps) {
   const { isSort, isSortPending, onSortStart, onSortSave, onSortRestore, onSortCancel } =
     sort ?? {};
-
-  const renderAdd = add?.onAdd && (
-    <Button onClick={add.onAdd} loading={add.isLoading}>
-      <PlusIcon />
-      {add.label ?? "Add"}
-    </Button>
-  );
 
   return (
     <div className="flex gap-2">
@@ -96,6 +109,15 @@ export function HeaderActions({ add, batch, sort }: HeaderActionProps) {
               </Button>
             </>
           ) : null}
+          {batch.onMerge ? (
+            <>
+              <GroupSeparator />
+              <Button onClick={batch.onMerge} disabled={batch.isBatchLoading} variant="secondary">
+                <GitMergeIcon />
+                Merge ({batch.selectedCount})
+              </Button>
+            </>
+          ) : null}
           <GroupSeparator />
           {batch.selectedCount < batch.totalCount ? (
             <Button onClick={batch.onSelectAll} disabled={batch.isBatchLoading} variant="secondary">
@@ -111,13 +133,52 @@ export function HeaderActions({ add, batch, sort }: HeaderActionProps) {
         </Group>
       ) : (
         <>
+          {organize?.isRunning ? (
+            <Group>
+              <GroupText aria-live="polite" className="cursor-default gap-2" role="status">
+                <Spinner />
+                <ShimmeringText
+                  className="max-w-45 min-w-fit truncate text-sm font-medium"
+                  text={organize.currentStep ?? "Organizing"}
+                />
+              </GroupText>
+              <GroupSeparator />
+              <TooltipProvider delay={0}>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        aria-label="Cancel organize"
+                        onClick={organize.onCancel}
+                        size="icon"
+                        variant="outline"
+                      />
+                    }
+                  >
+                    <XIcon aria-hidden="true" />
+                  </TooltipTrigger>
+                  <TooltipPopup>Cancel</TooltipPopup>
+                </Tooltip>
+              </TooltipProvider>
+            </Group>
+          ) : organize ? (
+            <Button onClick={organize.onStart} variant="outline">
+              <SparklesIcon aria-hidden="true" />
+              Organize
+            </Button>
+          ) : null}
           {onSortStart && (
-            <Button onClick={onSortStart} variant="secondary">
+            <Button onClick={onSortStart} variant="outline">
               <ArrowUpDownIcon />
               Reorder
             </Button>
           )}
-          {renderAdd}
+          {add?.onAdd && (
+            <Button onClick={add.onAdd} loading={add.isLoading}>
+              <PlusIcon />
+              {add.label ?? "Add"}
+            </Button>
+          )}
         </>
       )}
     </div>

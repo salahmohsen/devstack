@@ -17,7 +17,6 @@ import {
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
-import { Icon } from "@/shared/ui/icon";
 
 import { type iconsData } from "./icons-data";
 
@@ -38,8 +37,75 @@ export type IconPickerProps = {
   modal?: boolean;
 } & Omit<React.ComponentPropsWithoutRef<typeof PopoverTrigger>, "onSelect" | "onOpenChange">;
 
-const IconRenderer = React.memo(({ name }: { name: string }) => <Icon nameIcon={name} />);
-IconRenderer.displayName = "IconRenderer";
+let allIconsPromise:
+  | Promise<Record<string, React.ComponentType<{ className?: string }>>>
+  | undefined;
+const iconComponentCache = new Map<string, React.ComponentType<{ className?: string }>>();
+
+async function resolvePickerIcon(
+  name: string
+): Promise<React.ComponentType<{ className?: string }> | null> {
+  const lib = name
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(" ")[0]
+    .toLocaleLowerCase();
+
+  const cacheKey = `${lib}:${name}`;
+  const cached = iconComponentCache.get(cacheKey);
+  if (cached) return cached;
+
+  allIconsPromise ??= (async () => {
+    const allGroups = await Promise.all([
+      import("./icons/group-01"),
+      import("./icons/group-02"),
+      import("./icons/group-03"),
+      import("./icons/group-04"),
+      import("./icons/group-05"),
+      import("./icons/group-06"),
+      import("./icons/group-07"),
+      import("./icons/group-08"),
+      import("./icons/group-09"),
+      import("./icons/group-10"),
+      import("./icons/group-11"),
+      import("./icons/group-12"),
+      import("./icons/group-13"),
+      import("./icons/group-14"),
+      import("./icons/group-15")
+    ]);
+    const all: Record<string, React.ComponentType<{ className?: string }>> = {};
+    for (const m of allGroups) {
+      for (const libModules of Object.values(m.iconLibraries)) {
+        Object.assign(all, libModules);
+      }
+    }
+    return all;
+  })();
+
+  const allIcons = await allIconsPromise;
+  const Comp = allIcons[name] ?? null;
+  if (Comp) iconComponentCache.set(cacheKey, Comp);
+  return Comp;
+}
+
+const PickerIconRenderer = React.memo(({ name }: { name: string }) => {
+  const [Component, setComponent] = React.useState<React.ComponentType<{
+    className?: string;
+  }> | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    void resolvePickerIcon(name).then((comp) => {
+      if (!cancelled) setComponent(() => comp);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [name]);
+
+  if (Component) return <Component className="size-5" />;
+  return null;
+});
+PickerIconRenderer.displayName = "PickerIconRenderer";
 
 const IconsColumnSkeleton = () => (
   <div className="flex w-full flex-col gap-2">
@@ -308,7 +374,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
               )}
               onClick={() => handleIconClick(icon.name)}
             >
-              <IconRenderer name={icon.name} />
+              <PickerIconRenderer name={icon.name} />
             </TooltipTrigger>
             <TooltipContent>
               <p>{icon.name}</p>
@@ -402,7 +468,7 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
             <Button variant="outline">
               {value || selectedIcon ? (
                 <>
-                  <Icon nameIcon={(value ?? selectedIcon)!} />
+                  <PickerIconRenderer name={(value ?? selectedIcon)!} />
                 </>
               ) : (
                 triggerPlaceholder
@@ -427,4 +493,4 @@ const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, I
 );
 IconPicker.displayName = "IconPicker";
 
-export { IconPicker };
+export { IconPicker, PickerIconRenderer };

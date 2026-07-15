@@ -1,0 +1,86 @@
+import { createStep } from "@mastra/core/workflows";
+import { z } from "zod";
+
+import { type DetectStacksWorkflowInputSchema } from "@tsu-stack/core";
+
+import { aiCategorize } from "#@/mastra/workflows/detect-stacks-workflow/ai-categorize.step";
+
+export const deduplicateGroups = createStep({
+  id: "deduplicate-groups",
+  description: "Ensures no two stacks share a package; absorbs groups into existing stacks",
+  inputSchema: aiCategorize.outputSchema,
+  outputSchema: z.object({
+    matched: z.array(
+      z.object({
+        npmPackage: z.string(),
+        stackId: z.string(),
+        name: z.string(),
+        repo: z.string(),
+        relatedPackages: z.array(z.string())
+      })
+    ),
+    categorized: z.array(
+      z.object({
+        npmPackage: z.string(),
+        name: z.string(),
+        type: z.string(),
+        description: z.string().nullable(),
+        confidence: z.enum(["high", "medium", "low"]),
+        repo: z.string(),
+        relatedPackages: z.array(z.string()),
+        iconSvg: z.string().nullable(),
+        stackId: z.string().nullable(),
+        existingStackId: z.string().nullable()
+      })
+    )
+  }),
+  execute: async (params) => {
+    const { matched, categorized } = params.inputData;
+    const initData = params.getInitData() as z.infer<typeof DetectStacksWorkflowInputSchema>;
+
+    const dependencyOwnerMap = new Map(
+      initData.existingDependencies.map((d) => [d.npmPackage, d.stackId])
+    );
+
+    for (const m of matched) {
+      dependencyOwnerMap.set(m.npmPackage, m.stackId);
+    }
+
+    const groupsByName = new Map<string, typeof categorized>();
+    for (const cat of categorized) {
+      const list = groupsByName.get(cat.name) ?? [];
+      list.push(cat);
+      groupsByName.set(cat.name, list);
+    }
+
+    const resolvedMatched: typeof matched = [];
+    const resolvedCategorized: typeof categorized = [];
+
+    for (const [groupName, group] of groupsByName) {
+      let ownerStackId: string | null = null;
+      for (const cat of group) {
+        const existingOwner = dependencyOwnerMap.get(cat.npmPackage);
+        if (existingOwner) {
+          ownerStackId = existingOwner;
+          break;
+        }
+      }
+
+      if (ownerStackId) {
+        for (const cat of group) {
+          resolvedMatched.push({
+            npmPackage: cat.npmPackage,
+            stackId: ownerStackId,
+            name: groupName,
+            repo: cat.repo,
+            relatedPackages: []
+          });
+        }
+      } else {
+        resolvedCategorized.push(...group);
+      }
+    }
+
+    return { matched: resolvedMatched, categorized: resolvedCategorized };
+  }
+});

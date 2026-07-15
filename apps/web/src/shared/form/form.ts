@@ -2,8 +2,10 @@ import { createFormHook } from "@tanstack/react-form";
 
 import { CalendarField } from "@/shared/form/calendar-field";
 import { IconPickerField } from "@/shared/form/icon-field";
+import { IconifyField } from "@/shared/form/iconify-field";
 import { ImageField } from "@/shared/form/image-field";
 import { InputGroupField } from "@/shared/form/input-group-field";
+import { NpmPackageField } from "@/shared/form/npm-package-field";
 import { StackSelector } from "@/shared/form/stack-selector";
 import { SwitchField } from "@/shared/form/switch-field";
 
@@ -28,6 +30,7 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       CalendarField,
       DropdownField,
       InputField,
+      NpmPackageField,
       NumberFieldForm,
       PasswordInputField,
       RichTextField,
@@ -36,7 +39,8 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       StackSelector,
       SwitchField,
       ImageField,
-      IconPickerField
+      IconPickerField,
+      IconifyField
     },
     fieldContext,
     formComponents: {

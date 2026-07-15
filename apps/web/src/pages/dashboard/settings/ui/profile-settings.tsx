@@ -32,8 +32,8 @@ import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
-import { Icon } from "@/shared/ui/icon";
-import { IconPicker } from "@/shared/ui/icon-picker";
+import { IconLetter } from "@/shared/ui/icon";
+import { IconPicker, PickerIconRenderer } from "@/shared/ui/icon-picker";
 
 import { getPortfolioListQueryOptions } from "@/features/portfolio";
 import { getUpdateProfileMutationOptions, type ProfileUpdateInput } from "@/features/profile";
@@ -244,7 +244,7 @@ export function ProfileSettings() {
                     <ContactLink
                       key={idx}
                       href={c.type === "email" ? `mailto:${c.value}` : c.value}
-                      icon={<Icon nameIcon={c.icon} propsIcon={{ className: "size-3.5" }} />}
+                      icon={<IconLetter letter={c.type} letterClassName="size-3.5" />}
                     >
                       {c.type === "linkedin" ? "LinkedIn" : c.value.replace(/^https?:\/\//, "")}
                     </ContactLink>
@@ -315,10 +315,7 @@ export function ProfileSettings() {
                                         className="size-full justify-start rounded-none border-0 px-3"
                                       >
                                         {subField.state.value ? (
-                                          <Icon
-                                            nameIcon={subField.state.value}
-                                            propsIcon={{ className: "size-4.5 sm:size-4" }}
-                                          />
+                                          <PickerIconRenderer name={subField.state.value} />
                                         ) : (
                                           "Select icon"
                                         )}

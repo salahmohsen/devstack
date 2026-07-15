@@ -4,7 +4,10 @@ export { useAppForm, withForm, withFieldGroup } from "./form";
 
 export { CheckboxField } from "./checkbox-field";
 export { ComboboxMultipleField } from "./combobox-multiple-field";
+export { IconifyField } from "./iconify-field";
 export { InputField } from "./input-field";
+export { NpmPackageField } from "./npm-package-field";
+export type { NpmPackage } from "./npm-package-field";
 export { NumberFieldForm } from "./number-field";
 export { PasswordInputField } from "./password-input-field";
 export { RichTextField } from "./rich-text-field";

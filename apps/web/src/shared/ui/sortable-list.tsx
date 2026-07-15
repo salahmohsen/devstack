@@ -11,6 +11,7 @@ import {
 import {
   arrayMove,
   SortableContext,
+  type SortingStrategy,
   useSortable,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
@@ -22,6 +23,8 @@ type SortableItemProps<T extends { id: string }> = {
   items: T[];
   onReorder: (items: T[]) => void;
   disabled?: boolean;
+  strategy?: SortingStrategy;
+  containerClassName?: string;
   /**
    * When `true`, the items container gets the `group` class so child
    * items can use `group-hover:*` modifiers (e.g. dim siblings while
@@ -42,13 +45,14 @@ function SortableList<T extends { id: string }>({
   items,
   onReorder,
   disabled = false,
+  strategy = verticalListSortingStrategy,
+  containerClassName,
   siblingsDimOnHover = false,
   children
 }: SortableItemProps<T>) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 4 },
-      axis: "y"
+      activationConstraint: { distance: 4 }
     })
   );
 
@@ -65,8 +69,8 @@ function SortableList<T extends { id: string }>({
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-        <div className={cn("space-y-3", siblingsDimOnHover && "group")}>
+      <SortableContext items={items.map((item) => item.id)} strategy={strategy}>
+        <div className={cn(containerClassName, siblingsDimOnHover && "group")}>
           {items.map((item) => (
             <SortableRow key={item.id} id={item.id} disabled={disabled}>
               {(dragHandleProps, isDragging) => children(item, dragHandleProps, isDragging)}
@@ -93,7 +97,7 @@ function SortableRow({
   });
 
   const style: React.CSSProperties = {
-    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
     opacity: isDragging ? 0.6 : 1
   };
