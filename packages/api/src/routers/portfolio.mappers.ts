@@ -26,6 +26,11 @@ export type StackRow = {
     description: string | null;
     homepage: string | null;
   }>;
+  projects?: Array<{
+    id: string;
+    name: string;
+    logo: string | null;
+  }>;
   updatedAt?: Date;
   createdAt?: Date;
 };
@@ -52,7 +57,13 @@ export function toStackOutput(s: StackRow): StackOutput {
     }),
     updatedAt: s.updatedAt ?? new Date(),
     createdAt: s.createdAt ?? new Date(),
-    projects: []
+    projects: (s.projects ?? []).map((p) => {
+      return {
+        id: p.id,
+        name: p.name,
+        logo: p.logo
+      };
+    })
   };
 }
 
