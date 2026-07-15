@@ -1,4 +1,4 @@
-import { eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "#@/index";
 import { stackDependency } from "#@/schema/stack-dependency.schema";
@@ -16,16 +16,22 @@ export const stackDependencyRepository = {
     });
   },
 
+  async findByNpmPackage(npmPackage: string): Promise<StackDependencyEntity | undefined> {
+    return getDb().query.stackDependency.findFirst({
+      where: { npmPackage }
+    });
+  },
+
   async upsert(input: CreateStackDependencyData): Promise<StackDependencyEntity | undefined> {
     const id = crypto.randomUUID();
     await getDb()
       .insert(stackDependency)
       .values({ id, ...input })
       .onConflictDoNothing({
-        target: [stackDependency.stackId, stackDependency.npmPackage]
+        target: stackDependency.npmPackage
       });
     return getDb().query.stackDependency.findFirst({
-      where: { stackId: input.stackId, npmPackage: input.npmPackage }
+      where: { npmPackage: input.npmPackage }
     });
   },
 
@@ -35,5 +41,39 @@ export const stackDependencyRepository = {
 
   async deleteByStackId(stackId: string) {
     return getDb().delete(stackDependency).where(eq(stackDependency.stackId, stackId));
+  },
+
+  async deleteByNpmPackage(stackId: string, npmPackage: string) {
+    return getDb()
+      .delete(stackDependency)
+      .where(and(eq(stackDependency.stackId, stackId), eq(stackDependency.npmPackage, npmPackage)));
+  },
+
+  async syncForStack(
+    stackId: string,
+    dependencies: Array<{
+      npmPackage: string;
+      description?: string | null;
+      homepage?: string | null;
+    }>
+  ) {
+    return getDb().transaction(async (tx) => {
+      await tx.delete(stackDependency).where(eq(stackDependency.stackId, stackId));
+
+      if (dependencies.length > 0) {
+        await tx.insert(stackDependency).values(
+          dependencies.map((dep) => {
+            return {
+              id: crypto.randomUUID(),
+              stackId,
+              npmPackage: dep.npmPackage,
+              description: dep.description ?? null,
+              homepage: dep.homepage ?? null,
+              lastRefreshedAt: null
+            };
+          })
+        );
+      }
+    });
   }
 };

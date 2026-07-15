@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm";
 
 import { getDb } from "#@/index";
+import { stackDependencyRepository } from "#@/repositories/stack-dependency.repository";
 import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 import { projectStack } from "#@/schema/project.schema";
 import { stackDependency } from "#@/schema/stack-dependency.schema";
@@ -40,10 +41,7 @@ export const stackRepository = {
         name: stack.name,
         description: stack.description,
         icon: stack.icon,
-        npmPackage: stack.npmPackage,
         type: stack.type,
-        suggestedIcon: stack.suggestedIcon,
-        iconSvg: stack.iconSvg,
         healthStatus: stack.healthStatus,
         confidence: stack.confidence,
         sortOrder: stack.sortOrder,
@@ -55,6 +53,31 @@ export const stackRepository = {
       .from(stack)
       .leftJoin(counts, eq(stack.id, counts.stackId))
       .orderBy(stack.sortOrder, stack.name);
+  },
+
+  async findAllWithDependencies() {
+    const stacks = await this.findAll();
+    const allDeps = await stackDependencyRepository.findAll();
+
+    const depsByStack = new Map<string, typeof allDeps>();
+    for (const dep of allDeps) {
+      const list = depsByStack.get(dep.stackId) ?? [];
+      list.push(dep);
+      depsByStack.set(dep.stackId, list);
+    }
+
+    return stacks.map((s) => {
+      return {
+        ...s,
+        dependencies: (depsByStack.get(s.id) ?? []).map((d) => {
+          return {
+            npmPackage: d.npmPackage,
+            description: d.description,
+            homepage: d.homepage
+          };
+        })
+      };
+    });
   },
 
   async findOptedIn(extraWhere?: SQL) {
@@ -79,28 +102,12 @@ export const stackRepository = {
     return getDb().query.stack.findFirst({ where: { name } });
   },
 
-  async findByNpmPackage(npmPackage: string) {
-    return getDb().query.stack.findFirst({
-      where: { npmPackage }
-    });
-  },
-
-  async findByNpmPackageOrAlias(npmPackage: string) {
-    const direct = await this.findByNpmPackage(npmPackage);
-    if (direct) return direct;
-
+  async findByNpmPackageAlias(npmPackage: string) {
     const alias = await getDb().query.stackDependency.findFirst({
       where: { npmPackage }
     });
     if (!alias) return null;
     return getDb().query.stack.findFirst({ where: { id: alias.stackId } });
-  },
-
-  async findManyByNpmPackages(packages: string[]) {
-    if (packages.length === 0) return [];
-    return getDb().query.stack.findMany({
-      where: { npmPackage: { in: packages } }
-    });
   },
 
   async findManyById(ids: string[]) {
@@ -110,7 +117,17 @@ export const stackRepository = {
     });
   },
 
-  async create(input: CreateStackData, options?: { includedInPortfolio?: boolean }) {
+  async create(
+    input: CreateStackData,
+    options?: {
+      includedInPortfolio?: boolean;
+      dependencies?: Array<{
+        npmPackage: string;
+        description?: string | null;
+        homepage?: string | null;
+      }>;
+    }
+  ) {
     const id = crypto.randomUUID();
     const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
 
@@ -120,10 +137,7 @@ export const stackRepository = {
         name: input.name,
         description: input.description ?? null,
         icon: input.icon ?? null,
-        npmPackage: input.npmPackage ?? null,
         type: input.type ?? null,
-        suggestedIcon: input.suggestedIcon ?? null,
-        iconSvg: input.iconSvg ?? null,
         confidence: input.confidence ?? null,
         sortOrder: input.sortOrder ?? 0,
         portfolioEntryId: pid
@@ -136,12 +150,38 @@ export const stackRepository = {
           entityId: id
         });
       }
+
+      if (options?.dependencies && options.dependencies.length > 0) {
+        await tx.insert(stackDependency).values(
+          options.dependencies.map((dep) => {
+            return {
+              id: crypto.randomUUID(),
+              stackId: id,
+              npmPackage: dep.npmPackage,
+              description: dep.description ?? null,
+              homepage: dep.homepage ?? null,
+              lastRefreshedAt: null
+            };
+          })
+        );
+      }
     });
 
     return stackRepository.findById(id);
   },
 
-  async update(id: string, input: UpdateStackData, options?: { includedInPortfolio?: boolean }) {
+  async update(
+    id: string,
+    input: UpdateStackData,
+    options?: {
+      includedInPortfolio?: boolean;
+      dependencies?: Array<{
+        npmPackage: string;
+        description?: string | null;
+        homepage?: string | null;
+      }>;
+    }
+  ) {
     return getDb().transaction(async (tx) => {
       const [updated] = await tx.update(stack).set(input).where(eq(stack.id, id)).returning();
 
@@ -164,6 +204,24 @@ export const stackRepository = {
           await tx
             .delete(portfolioEntry)
             .where(and(eq(portfolioEntry.type, "stack"), eq(portfolioEntry.entityId, id)));
+        }
+      }
+
+      if (options?.dependencies !== undefined) {
+        await tx.delete(stackDependency).where(eq(stackDependency.stackId, id));
+        if (options.dependencies.length > 0) {
+          await tx.insert(stackDependency).values(
+            options.dependencies.map((dep) => {
+              return {
+                id: crypto.randomUUID(),
+                stackId: id,
+                npmPackage: dep.npmPackage,
+                description: dep.description ?? null,
+                homepage: dep.homepage ?? null,
+                lastRefreshedAt: null
+              };
+            })
+          );
         }
       }
 
@@ -309,7 +367,6 @@ export const stackRepository = {
             .where(eq(stackDependency.stackId, survivorId))
         ).map((r) => r.npmPackage)
       );
-      if (survivor.npmPackage) survivorAliasSet.add(survivor.npmPackage);
 
       for (const alias of victimAliases) {
         if (!survivorAliasSet.has(alias.npmPackage)) {
@@ -322,24 +379,11 @@ export const stackRepository = {
         }
       }
 
-      // Create victim.npmPackage → survivor alias (blocks re-detection)
-      const aliases: Array<{ id: string; npmPackage: string }> = [];
-      const victimPkg = victim.npmPackage;
-      if (victimPkg && !survivorAliasSet.has(victimPkg)) {
-        const aliasId = crypto.randomUUID();
-        const [newAlias] = await tx
-          .insert(stackDependency)
-          .values({ id: aliasId, stackId: survivorId, npmPackage: victimPkg })
-          .returning({ id: stackDependency.id, npmPackage: stackDependency.npmPackage });
-        if (newAlias) aliases.push(newAlias);
-      }
-
       // Delete victim
       await tx.delete(stack).where(eq(stack.id, victimId));
 
       return {
-        merged: { id: survivor.id, name: survivor.name },
-        aliases
+        merged: { id: survivor.id, name: survivor.name }
       };
     });
   },
@@ -350,7 +394,6 @@ export const stackRepository = {
     return getDb().transaction(async (tx) => {
       const results: Array<{
         merged: { id: string; name: string };
-        aliases: Array<{ id: string; npmPackage: string }>;
       }> = [];
 
       for (const { survivorId, victimId } of items) {
@@ -409,7 +452,6 @@ export const stackRepository = {
               .where(eq(stackDependency.stackId, survivorId))
           ).map((r) => r.npmPackage)
         );
-        if (survivor.npmPackage) survivorAliasSet.add(survivor.npmPackage);
 
         for (const alias of victimAliases) {
           if (!survivorAliasSet.has(alias.npmPackage)) {
@@ -422,24 +464,11 @@ export const stackRepository = {
           }
         }
 
-        // Create victim.npmPackage → survivor alias (blocks re-detection)
-        const aliases: Array<{ id: string; npmPackage: string }> = [];
-        const victimPkg = victim.npmPackage;
-        if (victimPkg && !survivorAliasSet.has(victimPkg)) {
-          const aliasId = crypto.randomUUID();
-          const [newAlias] = await tx
-            .insert(stackDependency)
-            .values({ id: aliasId, stackId: survivorId, npmPackage: victimPkg })
-            .returning({ id: stackDependency.id, npmPackage: stackDependency.npmPackage });
-          if (newAlias) aliases.push(newAlias);
-        }
-
         // Delete victim
         await tx.delete(stack).where(eq(stack.id, victimId));
 
         results.push({
-          merged: { id: survivor.id, name: survivor.name },
-          aliases
+          merged: { id: survivor.id, name: survivor.name }
         });
       }
 
