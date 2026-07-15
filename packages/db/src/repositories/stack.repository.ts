@@ -12,7 +12,7 @@ import {
 import { getDb } from "#@/index";
 import { stackDependencyRepository } from "#@/repositories/stack-dependency.repository";
 import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
-import { projectStack } from "#@/schema/project.schema";
+import { project, projectStack } from "#@/schema/project.schema";
 import { stackDependency } from "#@/schema/stack-dependency.schema";
 import { stack } from "#@/schema/stack.schema";
 
@@ -126,6 +126,7 @@ export const stackRepository = {
         description?: string | null;
         homepage?: string | null;
       }>;
+      projectIds?: string[];
     }
   ) {
     const id = crypto.randomUUID();
@@ -165,6 +166,22 @@ export const stackRepository = {
           })
         );
       }
+
+      if (options?.projectIds && options.projectIds.length > 0) {
+        const unique = [...new Set(options.projectIds)];
+        const existingProjects = await tx
+          .select({ id: project.id })
+          .from(project)
+          .where(inArray(project.id, unique));
+        if (existingProjects.length !== unique.length) {
+          throw new Error("One or more projects not found");
+        }
+        await tx.insert(projectStack).values(
+          unique.map((projectId) => {
+            return { id: crypto.randomUUID(), projectId, stackId: id };
+          })
+        );
+      }
     });
 
     return stackRepository.findById(id);
@@ -180,6 +197,7 @@ export const stackRepository = {
         description?: string | null;
         homepage?: string | null;
       }>;
+      projectIds?: string[];
     }
   ) {
     return getDb().transaction(async (tx) => {
@@ -220,6 +238,25 @@ export const stackRepository = {
                 homepage: dep.homepage ?? null,
                 lastRefreshedAt: null
               };
+            })
+          );
+        }
+      }
+
+      if (options?.projectIds !== undefined) {
+        await tx.delete(projectStack).where(eq(projectStack.stackId, id));
+        if (options.projectIds.length > 0) {
+          const unique = [...new Set(options.projectIds)];
+          const existingProjects = await tx
+            .select({ id: project.id })
+            .from(project)
+            .where(inArray(project.id, unique));
+          if (existingProjects.length !== unique.length) {
+            throw new Error("One or more projects not found");
+          }
+          await tx.insert(projectStack).values(
+            unique.map((projectId) => {
+              return { id: crypto.randomUUID(), projectId, stackId: id };
             })
           );
         }
