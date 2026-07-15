@@ -64,13 +64,37 @@ export const stacksRouter = {
       const deps = await stackDependencyRepository.findByStackId(input.id);
       return toStackOutput({
         ...stack,
+        name: stack.name,
+        icon: stack.icon,
+        description: stack.description,
+        type: stack.type,
+        healthStatus: stack.healthStatus,
+        confidence: stack.confidence,
+        sortOrder: stack.sortOrder,
+        portfolioEntryId: stack.portfolioEntryId,
         dependencies: deps.map((d) => {
           return {
             npmPackage: d.npmPackage,
             description: d.description,
             homepage: d.homepage
           };
-        })
+        }),
+        projects: (stack.projects ?? [])
+          .filter(
+            (
+              ps
+            ): ps is { project: { id: string; title: string; logo: string | null } } & Omit<
+              typeof ps,
+              "project"
+            > => ps.project !== null
+          )
+          .map((ps) => {
+            return {
+              id: ps.project.id,
+              name: ps.project.title,
+              logo: ps.project.logo
+            };
+          })
       });
     }),
   create: protectedProcedure
@@ -81,7 +105,7 @@ export const stacksRouter = {
     .input(StackCreateInputSchema)
     .output(StackOutputSchema)
     .handler(async ({ input }) => {
-      const { includedInPortfolio, name, description, icon, dependencies } = input;
+      const { includedInPortfolio, name, description, icon, dependencies, projectIds } = input;
       const existing = await stackRepository.findByName(name);
       if (existing) {
         throw new ORPCError("CONFLICT", {
@@ -92,9 +116,27 @@ export const stacksRouter = {
       const nextSortOrder = all.length > 0 ? Math.max(...all.map((s) => s.sortOrder)) + 1 : 0;
       const created = await stackRepository.create(
         { name, description: description ?? null, icon: icon ?? null, sortOrder: nextSortOrder },
-        { includedInPortfolio, dependencies: dependencies ?? [] }
+        { includedInPortfolio, dependencies: dependencies ?? [], projectIds }
       );
-      return toStackOutput(created!);
+      return toStackOutput({
+        ...created!,
+        projects: (created!.projects ?? [])
+          .filter(
+            (
+              ps
+            ): ps is { project: { id: string; title: string; logo: string | null } } & Omit<
+              typeof ps,
+              "project"
+            > => ps.project !== null
+          )
+          .map((ps) => {
+            return {
+              id: ps.project.id,
+              name: ps.project.title,
+              logo: ps.project.logo
+            };
+          })
+      });
     }),
   update: protectedProcedure
     .route({
@@ -104,7 +146,7 @@ export const stacksRouter = {
     .input(z.object({ id: z.string(), data: StackUpdateInputSchema }))
     .output(StackOutputSchema.nullable())
     .handler(async ({ input }) => {
-      const { includedInPortfolio, dependencies, ...updateData } = input.data;
+      const { includedInPortfolio, dependencies, projectIds, ...updateData } = input.data;
       if (updateData.name) {
         const existing = await stackRepository.findByName(updateData.name);
         if (existing && existing.id !== input.id) {
@@ -115,7 +157,8 @@ export const stacksRouter = {
       }
       const updated = await stackRepository.update(input.id, updateData, {
         includedInPortfolio,
-        dependencies
+        dependencies,
+        projectIds
       });
       return updated ? toStackOutput(updated) : null;
     }),
