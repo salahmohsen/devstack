@@ -594,6 +594,19 @@ export function StacksPage() {
                     </div>
                   </div>
                 )}
+
+                {item.projects && item.projects.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="mb-2 text-sm font-medium">Projects</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.projects.map((project) => (
+                        <Badge key={project.id} variant="secondary" size="sm">
+                          {project.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </ItemInfoPanel>
             );
           }}
