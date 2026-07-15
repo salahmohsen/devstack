@@ -1,8 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -12,7 +11,6 @@ import {
   StackUpdateInputSchema,
   type StackOutput
 } from "@tsu-stack/core";
-import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,
@@ -25,13 +23,12 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
-import { Input } from "@tsu-stack/ui/components/input";
 
 import { useAppForm } from "@/shared/form";
-import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
+import { Icon } from "@/shared/ui/icon";
 
 import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
@@ -54,11 +51,18 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
     placeholderData: initialData ?? undefined
   });
 
+  const projectsQuery = useQuery({
+    ...orpcQueryClient.projects.list.queryOptions({})
+  });
+
   const createMutation = useMutation(
     orpcQueryClient.stacks.create.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.stacks.list.queryKey()
+        });
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -100,45 +104,20 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
 
   const stack = stackQuery.data;
 
-  const [dependencies, setDependencies] = useState<
-    Array<{
-      npmPackage: string;
-      description: string | null;
-      homepage: string | null;
-    }>
-  >([]);
-
-  const [depSearchQuery, setDepSearchQuery] = useState("");
-  const [depDebouncedQuery] = useDebouncedValue(depSearchQuery, 300);
-
-  const npmSearchQuery = useQuery({
-    ...orpcQueryClient.stacks.searchNpm.queryOptions({ input: { query: depDebouncedQuery } }),
-    enabled: depDebouncedQuery.length >= 2
-  });
-
-  const searchResults = npmSearchQuery.data?.items ?? [];
-  const existingPackages = new Set(dependencies.map((d) => d.npmPackage));
-
-  useEffect(() => {
-    if (stack?.dependencies) {
-      setDependencies(
-        stack.dependencies.map((d) => {
-          return {
-            npmPackage: d.npmPackage,
-            description: d.description ?? null,
-            homepage: d.homepage ?? null
-          };
-        })
-      );
-    }
-  }, [stack?.dependencies]);
-
   const form = useAppForm({
     defaultValues: {
       name: stack?.name ?? "",
       description: stack?.description ?? "",
       icon: stack?.icon ?? "",
-      includedInPortfolio: !!stack?.portfolioEntryId
+      includedInPortfolio: !!stack?.portfolioEntryId,
+      dependencies: (stack?.dependencies ?? []).map((d) => {
+        return {
+          npmPackage: d.npmPackage,
+          description: d.description ?? null,
+          homepage: d.homepage ?? null
+        };
+      }),
+      projectIds: (stack?.projects ?? []).map((p) => p.id)
     },
     validators: {
       onBlur: createZodFormValidator(isEdit ? StackUpdateInputSchema : StackCreateInputSchema)
@@ -152,7 +131,8 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
             description: value.description || null,
             icon: value.icon ? sanitizeSvg(value.icon) : null,
             includedInPortfolio: value.includedInPortfolio,
-            dependencies
+            dependencies: value.dependencies,
+            projectIds: value.projectIds
           }
         });
       } else {
@@ -161,7 +141,8 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           description: value.description ?? null,
           icon: value.icon ? sanitizeSvg(value.icon) : null,
           includedInPortfolio: value.includedInPortfolio,
-          dependencies
+          dependencies: value.dependencies,
+          projectIds: value.projectIds
         });
       }
     }
@@ -169,6 +150,25 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
 
   const handleClose = () => onOpenChange(false);
   const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
+
+  useEffect(() => {
+    if (stack) {
+      form.reset({
+        name: stack.name,
+        description: stack.description ?? "",
+        icon: stack.icon ?? "",
+        includedInPortfolio: !!stack.portfolioEntryId,
+        dependencies: stack.dependencies.map((d) => {
+          return {
+            npmPackage: d.npmPackage,
+            description: d.description ?? null,
+            homepage: d.homepage ?? null
+          };
+        }),
+        projectIds: stack.projects.map((p) => p.id)
+      });
+    }
+  }, [stack, form]);
 
   if (isEdit && stackQuery.isLoading && !stack) {
     return <DefaultLoader />;
@@ -222,74 +222,32 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
                 )}
               </form.AppField>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Dependencies</label>
-                <div className="flex flex-col gap-2">
-                  <div className="relative">
-                    <Input
-                      placeholder="Search npm packages..."
-                      value={depSearchQuery}
-                      onChange={(e) => setDepSearchQuery(e.target.value)}
-                    />
-                    {searchResults.length > 0 && depDebouncedQuery.length >= 2 && (
-                      <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-border bg-background shadow-md">
-                        {searchResults.map((item) => (
-                          <button
-                            key={item.name}
-                            type="button"
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted disabled:opacity-50"
-                            disabled={existingPackages.has(item.name)}
-                            onClick={() => {
-                              setDependencies((prev) => [
-                                ...prev,
-                                {
-                                  npmPackage: item.name,
-                                  description: item.description || null,
-                                  homepage: item.links.npm || null
-                                }
-                              ]);
-                              setDepSearchQuery("");
-                            }}
-                          >
-                            <Plus className="size-3.5 shrink-0 text-muted-foreground" />
-                            <span className="truncate font-medium">{item.name}</span>
-                            {item.description && (
-                              <span className="truncate text-xs text-muted-foreground">
-                                {item.description}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {dependencies.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {dependencies.map((dep) => (
-                        <Badge
-                          key={dep.npmPackage}
-                          variant="secondary"
-                          size="lg"
-                          className="gap-1 pr-1"
-                        >
-                          {dep.npmPackage}
-                          <button
-                            type="button"
-                            className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
-                            onClick={() => {
-                              setDependencies((prev) =>
-                                prev.filter((d) => d.npmPackage !== dep.npmPackage)
-                              );
-                            }}
-                          >
-                            <X className="size-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <form.AppField name="dependencies">
+                {(field) => (
+                  <field.NpmPackageField
+                    label="Dependencies"
+                    description="Search and add npm packages used by this stack."
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="projectIds">
+                {(field) => (
+                  <field.ComboboxMultipleField
+                    label="Projects"
+                    description="Link projects that use this stack."
+                    placeholder="Search projects..."
+                    emptyMessage="No projects found."
+                    items={(projectsQuery.data ?? []).map((p) => {
+                      return {
+                        value: p.id,
+                        label: p.title,
+                        icon: p.logo ? <Icon icon={p.logo} className="size-4" /> : null
+                      };
+                    })}
+                  />
+                )}
+              </form.AppField>
 
               <form.AppField name="includedInPortfolio">
                 {(field) => (
