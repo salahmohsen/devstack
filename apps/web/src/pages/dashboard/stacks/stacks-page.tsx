@@ -3,7 +3,7 @@
 import { rectSortingStrategy } from "@dnd-kit/sortable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Package } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -96,11 +96,14 @@ export function StacksPage() {
   const [isOrganizing, setIsOrganizing] = useState(false);
 
   const organizeMutation = useOrganizeStacksMutation();
+  const organizeAbortRef = useRef<AbortController | null>(null);
 
   function handleStartOrganize() {
+    const controller = new AbortController();
+    organizeAbortRef.current = controller;
     setOrganizeStep("Initializing");
     organizeMutation.mutate(
-      { onStepChange: setOrganizeStep },
+      { onStepChange: setOrganizeStep, signal: controller.signal },
       {
         onSuccess: (data) => {
           setOrganizeActions(data.actions);
@@ -113,8 +116,12 @@ export function StacksPage() {
           setOrganizeStep(null);
         },
         onError: (error) => {
-          console.error("[stacks] Organize failed:", error);
-          toast.error("Failed to organize stacks.");
+          if (error.name === "AbortError") {
+            toast.info("Organize cancelled.");
+          } else {
+            console.error("[stacks] Organize failed:", error);
+            toast.error("Failed to organize stacks.");
+          }
           setOrganizeStep(null);
         }
       }
@@ -122,7 +129,7 @@ export function StacksPage() {
   }
 
   function handleCancelOrganize() {
-    // TODO: Implement abort controller for workflow cancellation
+    organizeAbortRef.current?.abort();
     setOrganizeStep(null);
   }
 
