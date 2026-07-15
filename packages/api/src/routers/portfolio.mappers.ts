@@ -1,4 +1,9 @@
-import { type ExperienceOutput, type ProjectOutput, type StackOutput } from "@tsu-stack/core";
+import {
+  aggregateStacksByType,
+  type ExperienceOutput,
+  type ProjectOutput,
+  type StackOutput
+} from "@tsu-stack/core";
 import { type ContactSchemaSelect } from "@tsu-stack/db/types";
 
 export type StackRow = {
@@ -6,8 +11,21 @@ export type StackRow = {
   name: string;
   description: string | null;
   icon: string | null;
+  type: string | null;
+  healthStatus: {
+    deprecated?: boolean;
+    downloads?: number;
+    lastPublished?: string;
+  } | null;
+  confidence: string | null;
+  projectCount?: number;
   sortOrder: number;
   portfolioEntryId: string | null;
+  dependencies?: Array<{
+    npmPackage: string;
+    description: string | null;
+    homepage: string | null;
+  }>;
   updatedAt?: Date;
   createdAt?: Date;
 };
@@ -18,9 +36,20 @@ export function toStackOutput(s: StackRow): StackOutput {
     name: s.name,
     description: s.description,
     icon: s.icon,
+    type: s.type,
+    healthStatus: s.healthStatus,
+    confidence: s.confidence,
+    projectCount: s.projectCount ?? 0,
     sortOrder: s.sortOrder,
     portfolioEntryId: s.portfolioEntryId,
     includedInPortfolio: !!s.portfolioEntryId,
+    dependencies: (s.dependencies ?? []).map((d) => {
+      return {
+        npmPackage: d.npmPackage,
+        description: d.description,
+        homepage: d.homepage
+      };
+    }),
     updatedAt: s.updatedAt ?? new Date(),
     createdAt: s.createdAt ?? new Date()
   };
@@ -53,6 +82,10 @@ export type ProjectRow = {
 };
 
 export function toProjectOutput(proj: ProjectRow): ProjectOutput {
+  const stacks = proj.stacks
+    .map((join) => (join.stack ? toStackOutput(join.stack) : null))
+    .filter((s): s is StackOutput => s !== null);
+
   return {
     id: proj.id,
     logo: proj.logo,
@@ -70,9 +103,8 @@ export function toProjectOutput(proj: ProjectRow): ProjectOutput {
     includedInPortfolio: !!proj.portfolioEntryId,
     updatedAt: proj.updatedAt ?? new Date(),
     createdAt: proj.createdAt ?? new Date(),
-    stacks: proj.stacks
-      .map((join) => (join.stack ? toStackOutput(join.stack) : null))
-      .filter((s): s is StackOutput => s !== null)
+    stacks,
+    stackTypeSummary: aggregateStacksByType(stacks)
   };
 }
 

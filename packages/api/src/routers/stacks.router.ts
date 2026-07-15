@@ -48,7 +48,7 @@ export const stacksRouter = {
     })
     .output(StackListOutputSchema)
     .handler(async () => {
-      const stacks = await stackRepository.findAll();
+      const stacks = await stackRepository.findAllWithDependencies();
       return stacks.map(toStackOutput);
     }),
   get: publicProcedure
@@ -60,7 +60,18 @@ export const stacksRouter = {
     .output(StackOutputSchema.nullable())
     .handler(async ({ input }) => {
       const stack = await stackRepository.findById(input.id);
-      return stack ? toStackOutput(stack) : null;
+      if (!stack) return null;
+      const deps = await stackDependencyRepository.findByStackId(input.id);
+      return toStackOutput({
+        ...stack,
+        dependencies: deps.map((d) => {
+          return {
+            npmPackage: d.npmPackage,
+            description: d.description,
+            homepage: d.homepage
+          };
+        })
+      });
     }),
   create: protectedProcedure
     .route({
@@ -70,7 +81,7 @@ export const stacksRouter = {
     .input(StackCreateInputSchema)
     .output(StackOutputSchema)
     .handler(async ({ input }) => {
-      const { includedInPortfolio, name, description, icon } = input;
+      const { includedInPortfolio, name, description, icon, dependencies } = input;
       const existing = await stackRepository.findByName(name);
       if (existing) {
         throw new ORPCError("CONFLICT", {
@@ -81,7 +92,7 @@ export const stacksRouter = {
       const nextSortOrder = all.length > 0 ? Math.max(...all.map((s) => s.sortOrder)) + 1 : 0;
       const created = await stackRepository.create(
         { name, description: description ?? null, icon: icon ?? null, sortOrder: nextSortOrder },
-        { includedInPortfolio }
+        { includedInPortfolio, dependencies: dependencies ?? [] }
       );
       return toStackOutput(created!);
     }),
@@ -93,7 +104,7 @@ export const stacksRouter = {
     .input(z.object({ id: z.string(), data: StackUpdateInputSchema }))
     .output(StackOutputSchema.nullable())
     .handler(async ({ input }) => {
-      const { includedInPortfolio, ...updateData } = input.data;
+      const { includedInPortfolio, dependencies, ...updateData } = input.data;
       if (updateData.name) {
         const existing = await stackRepository.findByName(updateData.name);
         if (existing && existing.id !== input.id) {
@@ -102,7 +113,10 @@ export const stacksRouter = {
           });
         }
       }
-      const updated = await stackRepository.update(input.id, updateData, { includedInPortfolio });
+      const updated = await stackRepository.update(input.id, updateData, {
+        includedInPortfolio,
+        dependencies
+      });
       return updated ? toStackOutput(updated) : null;
     }),
   reorder: protectedProcedure
