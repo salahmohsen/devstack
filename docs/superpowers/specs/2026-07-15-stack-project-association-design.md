@@ -10,7 +10,7 @@ Stacks know how many projects use them (`projectCount`) but not _which_ projects
 
 ## Goal
 
-- Stack list/get routes return associated projects (minimal: `{ id, name, icon }`)
+- Stack list/get routes return associated projects (minimal: `{ id, name, logo }`)
 - Stack create/update accept `projectIds: string[]` to manage associations
 - Stack form gets a `ComboboxMultipleField` for project selection
 - Both sides can manage the same junction table symmetrically
@@ -26,7 +26,7 @@ projects: z.array(
   z.object({
     id: z.string(),
     name: z.string(),
-    icon: z.string().nullable()
+    logo: z.string().nullable()
   })
 );
 ```
@@ -49,8 +49,8 @@ projectIds: z.array(z.string()).optional();
 
 - `create()` — accept optional `projectIds`, validate existence, insert `projectStack` rows in same transaction
 - `update()` — accept optional `projectIds`, if provided: delete all existing `projectStack` rows, re-insert new set (same pattern as `projectRepository.update` handles `stackIds`)
-- `findAll()` — keep existing `project_counts` subquery, add lateral/batch load for `{ id, name, icon }` per stack
-- `findById()` — eager-load via Drizzle relation: `with: { projects: { with: { project: { columns: { id, name, icon } } } } }`
+- `findAll()` — keep existing `project_counts` subquery, add lateral/batch load for `{ id, name, logo }` per stack
+- `findById()` — eager-load via Drizzle relation: `with: { projects: { with: { project: { columns: { id, name, logo } } } } }`
 - `merge()` — already moves `projectStack` rows. No changes needed.
 
 ### 3. API Router (`packages/api/src/routers/stacks.router.ts`)
@@ -65,7 +65,7 @@ projectIds: z.array(z.string()).optional();
 
 - Add `projectIds` field (array of strings, defaults to `stack.projects.map(p => p.id)` on edit, `[]` on create)
 - Add `ComboboxMultipleField` bound to `projectIds`, after dependencies field
-- Options from `projects.list` query: `{ value: id, label: name, icon: <Icon /> }`
+- Options from `projects.list` query: `{ value: id, label: name, icon: <Icon /> }` (icon uses project logo)
 - On submit, `projectIds` passed in mutation input
 - Invalidations: add `projects.list`
 
