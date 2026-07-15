@@ -66,6 +66,32 @@ export const stackRepository = {
       depsByStack.set(dep.stackId, list);
     }
 
+    // Batch-load projects for all stacks
+    const stackIds = stacks.map((s) => s.id);
+    const allProjectLinks =
+      stackIds.length > 0
+        ? await getDb()
+            .select({
+              stackId: projectStack.stackId,
+              projectId: project.id,
+              projectName: project.title,
+              projectLogo: project.logo
+            })
+            .from(projectStack)
+            .innerJoin(project, eq(projectStack.projectId, project.id))
+            .where(inArray(projectStack.stackId, stackIds))
+        : [];
+
+    const projectsByStack = new Map<
+      string,
+      Array<{ id: string; name: string; logo: string | null }>
+    >();
+    for (const link of allProjectLinks) {
+      const list = projectsByStack.get(link.stackId) ?? [];
+      list.push({ id: link.projectId, name: link.projectName, logo: link.projectLogo });
+      projectsByStack.set(link.stackId, list);
+    }
+
     return stacks.map((s) => {
       return {
         ...s,
@@ -75,7 +101,8 @@ export const stackRepository = {
             description: d.description,
             homepage: d.homepage
           };
-        })
+        }),
+        projects: projectsByStack.get(s.id) ?? []
       };
     });
   },
@@ -95,7 +122,18 @@ export const stackRepository = {
   },
 
   async findById(id: string) {
-    return getDb().query.stack.findFirst({ where: { id } });
+    return getDb().query.stack.findFirst({
+      where: { id },
+      with: {
+        projects: {
+          with: {
+            project: {
+              columns: { id: true, title: true, logo: true }
+            }
+          }
+        }
+      }
+    });
   },
 
   async findByName(name: string) {
