@@ -33,6 +33,13 @@ export const StackOutputSchema = z.object({
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
   dependencies: z.array(StackDependencyItemSchema),
+  projects: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      logo: z.string().nullable()
+    })
+  ),
   updatedAt: z.date(),
   createdAt: z.date()
 });
@@ -45,7 +52,8 @@ export const StackCreateInputSchema = z.object({
   icon: z.string().nullable().optional(),
   type: z.string().nullable().optional().describe("Stack type category"),
   includedInPortfolio: z.boolean().optional(),
-  dependencies: z.array(StackDependencyItemSchema).optional()
+  dependencies: z.array(StackDependencyItemSchema).optional(),
+  projectIds: z.array(z.string()).optional()
 });
 
 export const StackUpdateInputSchema = z.object({
@@ -54,7 +62,8 @@ export const StackUpdateInputSchema = z.object({
   icon: z.string().nullable().optional(),
   type: z.string().nullable().optional().describe("Stack type category"),
   includedInPortfolio: z.boolean().optional(),
-  dependencies: z.array(StackDependencyItemSchema).optional()
+  dependencies: z.array(StackDependencyItemSchema).optional(),
+  projectIds: z.array(z.string()).optional()
 });
 
 export type StackUpdateInput = z.infer<typeof StackUpdateInputSchema>;
