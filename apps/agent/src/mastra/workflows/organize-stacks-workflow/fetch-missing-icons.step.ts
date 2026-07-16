@@ -1,8 +1,7 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { resolveIconForPackage } from "@tsu-stack/core";
-
+import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 import {
   EnrichActionSchema,
   MergeActionSchema,
@@ -37,21 +36,21 @@ export const fetchMissingIcons = createStep({
       return { stacks, mergeActions, renameActions, enrichActions };
     }
 
-    const results = await Promise.allSettled(
-      missing.map(async (s) => {
-        const svg = await resolveIconForPackage(s.name);
-        return { stackId: s.id, stackName: s.name, svg };
-      })
+    const results = await batchResolveIcons(
+      missing.map((s) => {
+        return { stackId: s.id, stackName: s.name };
+      }),
+      3
     );
 
     const newEnrichActions = [...enrichActions];
-    for (const result of results) {
-      if (result.status === "fulfilled" && result.value.svg) {
+    for (const r of results) {
+      if (r.svg) {
         newEnrichActions.push({
-          stackId: result.value.stackId,
-          stackName: result.value.stackName,
+          stackId: r.stackId,
+          stackName: r.stackName,
           description: null,
-          icon: result.value.svg,
+          icon: r.svg,
           type: null
         });
       }

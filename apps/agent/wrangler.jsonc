@@ -15,9 +15,6 @@
       "zone_name": "salahmohsen.com"
     }
   ],
-  "limits": {
-    "subrequests": 50000
-  },
   "main": "./.mastra/output/index.mjs",
   "vars": {},
   "alias": {

@@ -37,7 +37,7 @@ export const findRenames = createStep({
       return { stacks, mergeActions, renameActions: [] };
     }
 
-    const CHUNK_SIZE = 25;
+    const CHUNK_SIZE = 50;
     const renameActions: z.infer<typeof RenameActionSchema>[] = [];
     const usedNewNames = new Set<string>();
     const usedStackIds = new Set<string>();

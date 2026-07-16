@@ -1,8 +1,7 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { resolveIconForPackage } from "@tsu-stack/core";
-
+import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 import {
   EnrichActionSchema,
   MergeActionSchema,
@@ -53,7 +52,7 @@ export const findEnrichments = createStep({
       return { stacks, mergeActions, renameActions, enrichActions: [] };
     }
 
-    const CHUNK_SIZE = 20;
+    const CHUNK_SIZE = 50;
     const enrichActions: z.infer<typeof EnrichActionSchema>[] = [];
 
     for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
@@ -114,6 +113,18 @@ Only suggest changes when metadata is clearly missing or wrong. Skip stacks with
           )
         ]);
 
+        const iconCandidates: Array<{
+          stackId: string;
+          stackName: string;
+          query: string;
+          idx: number;
+        }> = [];
+        const pendingEnriches: Array<{
+          enrich: z.infer<typeof EnrichActionSchema>;
+          stack: (typeof chunk)[number];
+          idx: number;
+        }> = [];
+
         for (const enrich of result.object.enrichments ?? []) {
           const stack = chunk.find((s) => s.id === enrich.stackId);
           if (!stack) continue;
@@ -123,18 +134,37 @@ Only suggest changes when metadata is clearly missing or wrong. Skip stacks with
           const typeChanged = enrich.type && enrich.type !== stack.type && enrich.type !== "other";
 
           if (descChanged || iconChanged || typeChanged) {
-            let iconSvg: string | null = null;
+            const idx = pendingEnriches.length;
+            pendingEnriches.push({ enrich, stack, idx });
             if (iconChanged && enrich.icon) {
-              iconSvg = await resolveIconForPackage(enrich.icon);
+              iconCandidates.push({
+                stackId: enrich.stackId,
+                stackName: enrich.icon,
+                query: enrich.icon,
+                idx
+              });
             }
-            enrichActions.push({
-              stackId: enrich.stackId,
-              stackName: stack.name,
-              description: descChanged ? enrich.description : null,
-              icon: iconSvg,
-              type: typeChanged ? enrich.type : null
-            });
           }
+        }
+
+        const iconResults =
+          iconCandidates.length > 0 ? await batchResolveIcons(iconCandidates, 3) : [];
+        const iconMap = new Map(iconResults.map((r) => [r.stackId, r.svg]));
+
+        for (const { enrich, stack } of pendingEnriches) {
+          enrichActions.push({
+            stackId: enrich.stackId,
+            stackName: stack.name,
+            description:
+              enrich.description && enrich.description !== stack.description
+                ? enrich.description
+                : null,
+            icon: iconMap.get(enrich.stackId) ?? null,
+            type:
+              enrich.type && enrich.type !== stack.type && enrich.type !== "other"
+                ? enrich.type
+                : null
+          });
         }
       } catch (error) {
         console.error("[organize-stacks] Enrichment analysis failed for chunk:", error);
