@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type StackOutput } from "@tsu-stack/core";
+import { type OrganizeAction, type StackOutput } from "@tsu-stack/core";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -19,16 +19,7 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 import { FrameTitle } from "@tsu-stack/ui/components/frame";
-import { RadioGroup, RadioGroupItem } from "@tsu-stack/ui/components/radio-group";
 
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -51,6 +42,8 @@ import {
 import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
+import { MergeDialog } from "@/pages/dashboard/stacks/ui/merge-dialog";
+import { OrganizeDialog } from "@/pages/dashboard/stacks/ui/organize-dialog";
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 
@@ -83,15 +76,7 @@ export function StacksPage() {
   // ── Organize state ────────────────────────────────────────────────
   const [organizeStep, setOrganizeStep] = useState<string | null>(null);
   const [organizeDialogOpen, setOrganizeDialogOpen] = useState(false);
-  const [organizeActions, setOrganizeActions] = useState<
-    Array<{
-      type: string;
-      stackId: string;
-      stackName: string;
-      details: Record<string, unknown>;
-      reason: string;
-    }>
-  >([]);
+  const [organizeActions, setOrganizeActions] = useState<OrganizeAction[]>([]);
   const [organizeSortOrder, setOrganizeSortOrder] = useState<string[]>([]);
   const [isOrganizing, setIsOrganizing] = useState(false);
 
@@ -320,7 +305,6 @@ export function StacksPage() {
 
   // ── Merge state ───────────────────────────────────────────────────
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
-  const [mergeSurvivorId, setMergeSurvivorId] = useState<string | null>(null);
 
   const selectedStacks = useMemo(
     () => stacks.filter((s) => selectedIds?.[s.id]),
@@ -336,7 +320,6 @@ export function StacksPage() {
         toast.success(`Merged into "${data.merged.name}".`);
         clearSelection();
         setMergeDialogOpen(false);
-        setMergeSurvivorId(null);
       },
       onError: () => {
         toast.error("Failed to merge stacks.");
@@ -344,24 +327,9 @@ export function StacksPage() {
     })
   );
 
-  function handleOpenMerge() {
-    if (selectedStacks.length < 2) return;
-    // Default survivor: the one with more projects, or first alphabetically
-    const sorted = [...selectedStacks].toSorted((a, b) => {
-      const diff = (b.projectCount ?? 0) - (a.projectCount ?? 0);
-      return diff !== 0 ? diff : a.name.localeCompare(b.name);
-    });
-    setMergeSurvivorId(sorted[0].id);
-    setMergeDialogOpen(true);
-  }
-
-  async function handleConfirmMerge() {
-    if (!mergeSurvivorId || selectedStacks.length < 2) return;
-    const victims = selectedStacks.filter((s) => s.id !== mergeSurvivorId);
-    if (victims.length === 0) return;
-
-    for (const victim of victims) {
-      await mergeMutation.mutateAsync({ survivorId: mergeSurvivorId, victimId: victim.id });
+  function handleConfirmMerge(survivorId: string, victimIds: string[]) {
+    for (const victimId of victimIds) {
+      void mergeMutation.mutateAsync({ survivorId, victimId });
     }
   }
 
@@ -501,10 +469,6 @@ export function StacksPage() {
     );
   }
 
-  // ── Merge dialog: chosen survivor ──────────────────────────────────
-  const mergeSurvivor = selectedStacks.find((s) => s.id === mergeSurvivorId);
-  const mergeVictims = selectedStacks.filter((s) => s.id !== mergeSurvivorId);
-
   return (
     <ItemsNavProvider value={{ handleNext, handlePrev }}>
       <PageLayout>
@@ -536,7 +500,7 @@ export function StacksPage() {
                 isAddingToPortfolio,
                 onDeleteSelected: () => setBatchDeleteDialogOpen(true),
                 onAddSelectedToPortfolio: handleBatchAddToPortfolio,
-                onMerge: isMergeEligible ? handleOpenMerge : undefined,
+                onMerge: isMergeEligible ? () => setMergeDialogOpen(true) : undefined,
                 onSelectAll: () => selectAll(stacks.map((s) => s.id)),
                 onClearSelection: clearSelection
               }}
@@ -643,145 +607,24 @@ export function StacksPage() {
         </AlertDialog>
 
         {/* ── Merge dialog ────────────────────────────────────────── */}
-        <Dialog open={mergeDialogOpen} onOpenChange={setMergeDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Merge stacks</DialogTitle>
-              <DialogDescription>
-                All projects and aliases from the selected stacks will be moved to the survivor. The
-                victim(s) will be deleted.
-              </DialogDescription>
-            </DialogHeader>
-
-            {mergeSurvivor && mergeVictims.length > 0 && (
-              <div className="space-y-4">
-                <RadioGroup
-                  value={mergeSurvivorId ?? ""}
-                  onValueChange={setMergeSurvivorId}
-                  className="gap-3"
-                >
-                  {selectedStacks.map((s) => (
-                    <label
-                      key={s.id}
-                      className="flex items-center gap-3 rounded-md border border-border/60 p-3 transition-colors has-checked:border-primary/50 has-checked:bg-primary/5"
-                    >
-                      <RadioGroupItem value={s.id} />
-                      <div className="flex min-w-0 items-center gap-2">
-                        {s.icon ? (
-                          <Icon icon={s.icon} className="size-6 shrink-0 rounded object-contain" />
-                        ) : (
-                          <Package className="size-6 shrink-0 text-muted-foreground" />
-                        )}
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{s.name}</p>
-                        </div>
-                        {s.id === mergeSurvivorId && (
-                          <Badge variant="success" size="sm">
-                            Survivor
-                          </Badge>
-                        )}
-                      </div>
-                    </label>
-                  ))}
-                </RadioGroup>
-
-                <div className="rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-                  <p>
-                    {mergeVictims.length} stack(s) will be merged into "{mergeSurvivor.name}". All
-                    projects and aliases will be moved.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setMergeDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                disabled={!mergeSurvivorId || mergeMutation.isPending}
-                loading={mergeMutation.isPending}
-                onClick={handleConfirmMerge}
-              >
-                Merge
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <MergeDialog
+          open={mergeDialogOpen}
+          onOpenChange={setMergeDialogOpen}
+          stacks={selectedStacks}
+          onConfirm={handleConfirmMerge}
+          isPending={mergeMutation.isPending}
+        />
 
         {/* ── Organize dialog ─────────────────────────────────────── */}
-        <Dialog open={organizeDialogOpen} onOpenChange={setOrganizeDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Organize Stacks</DialogTitle>
-              <DialogDescription>
-                The following actions will be applied to your stacks. Review and confirm to proceed.
-              </DialogDescription>
-            </DialogHeader>
-
-            {organizeActions.length > 0 && (
-              <div className="max-h-100 space-y-2 overflow-y-auto">
-                {organizeActions.map((action) => (
-                  <div
-                    key={`${action.type}-${action.stackId}`}
-                    className="flex items-start gap-3 rounded-md border border-border/60 p-3"
-                  >
-                    <Badge
-                      variant={
-                        action.type === "merge"
-                          ? "destructive"
-                          : action.type === "rename"
-                            ? "warning"
-                            : "success"
-                      }
-                      size="sm"
-                    >
-                      {action.type}
-                    </Badge>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">{action.stackName}</p>
-                      <p className="text-xs text-muted-foreground">{action.reason}</p>
-                      {action.type === "merge" && (
-                        <p className="text-xs text-muted-foreground">
-                          → Merging into "{String(action.details.mergeIntoName ?? "unknown")}"
-                        </p>
-                      )}
-                      {action.type === "rename" && (
-                        <p className="text-xs text-muted-foreground">
-                          → Renaming to "{String(action.details.newName ?? "unknown")}"
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setOrganizeDialogOpen(false);
-                  setOrganizeSortOrder([]);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                disabled={
-                  isOrganizing || (organizeActions.length === 0 && organizeSortOrder.length === 0)
-                }
-                onClick={handleConfirmOrganize}
-              >
-                {isOrganizing
-                  ? "Applying..."
-                  : organizeSortOrder.length > 0
-                    ? `Apply ${organizeSortOrder.length} reorder${organizeSortOrder.length !== 1 ? "s" : ""} ${organizeActions.length > 0 ? `+ ${organizeActions.length} change${organizeActions.length !== 1 ? "s" : ""}` : ""}`
-                    : `Apply ${organizeActions.length} action${organizeActions.length !== 1 ? "s" : ""}`}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <OrganizeDialog
+          open={organizeDialogOpen}
+          onOpenChange={setOrganizeDialogOpen}
+          actions={organizeActions}
+          sortOrder={organizeSortOrder}
+          isPending={isOrganizing}
+          onConfirm={handleConfirmOrganize}
+          onClearSortOrder={() => setOrganizeSortOrder([])}
+        />
       </PageLayout>
     </ItemsNavProvider>
   );

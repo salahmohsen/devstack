@@ -1,0 +1,126 @@
+import { createStep } from "@mastra/core/workflows";
+import { z } from "zod";
+
+import {
+  EnrichActionSchema,
+  MergeActionSchema,
+  RenameActionSchema,
+  StackSchema
+} from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
+
+export const sortStacks = createStep({
+  id: "sort-stacks",
+  description: "Uses LLM to sort stacks by importance and foundational role",
+  inputSchema: z.object({
+    stacks: StackSchema,
+    mergeActions: z.array(MergeActionSchema),
+    renameActions: z.array(RenameActionSchema),
+    enrichActions: z.array(EnrichActionSchema)
+  }),
+  outputSchema: z.object({
+    stacks: StackSchema,
+    mergeActions: z.array(MergeActionSchema),
+    renameActions: z.array(RenameActionSchema),
+    enrichActions: z.array(EnrichActionSchema),
+    sortOrder: z.array(z.string())
+  }),
+  execute: async ({ inputData, mastra, abortSignal }) => {
+    if (abortSignal?.aborted) {
+      return { ...inputData, sortOrder: inputData.stacks.map((s) => s.id) };
+    }
+    const { stacks, mergeActions, renameActions, enrichActions } = inputData;
+
+    // Skip merge victims — they'll be deleted
+    const victimIds = new Set(mergeActions.map((m) => m.victimId));
+    const remaining = stacks.filter((s) => !victimIds.has(s.id));
+
+    if (remaining.length === 0) {
+      return { stacks, mergeActions, renameActions, enrichActions, sortOrder: [] };
+    }
+
+    const agent = mastra?.getAgent("stackCategorizerAgent");
+    if (!agent) {
+      return {
+        stacks,
+        mergeActions,
+        renameActions,
+        enrichActions,
+        sortOrder: remaining.map((s) => s.id)
+      };
+    }
+
+    const stackList = remaining
+      .map((s) => `- id: ${s.id} | "${s.name}" | type: ${s.type} | projects: ${s.projectCount}`)
+      .join("\n");
+
+    const prompt = `Sort these tech stacks by importance and foundational role. Most foundational/important first.
+
+Stacks:
+${stackList}
+
+SORTING RULES:
+- Languages first: TypeScript, JavaScript, Python, Go, Rust, etc.
+- Core frameworks next: React, Vue, Angular, Next.js, Nuxt, Svelte, etc.
+- Build tools: Vite, Webpack, esbuild, etc.
+- CSS/Styling: Tailwind CSS, Styled Components, etc.
+- State management: Zustand, Jotai, Redux, etc.
+- Data fetching: TanStack Query, SWR, etc.
+- Databases/ORMs: Prisma, Drizzle, PostgreSQL, etc.
+- Auth: Better Auth, NextAuth, etc.
+- Testing: Vitest, Jest, Playwright, etc.
+- Deployment: Vercel, Cloudflare, Docker, etc.
+- Dev tools: ESLint, Prettier, TypeScript, etc.
+- UI component libraries: Radix UI, HeroUI, etc.
+- Utilities last: clsx, zod, lodash, etc.
+
+Within each category, sort by project count (more projects = more important).
+
+Output JSON:
+{
+  "orderedIds": ["id1", "id2", ...]
+}
+
+Return ALL remaining stack IDs in order.`;
+
+    try {
+      const result = await Promise.race([
+        agent.generate([{ role: "user", content: prompt }], {
+          structuredOutput: {
+            schema: z.object({
+              orderedIds: z.array(z.string())
+            })
+          }
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("LLM timeout after 60s")), 60_000)
+        )
+      ]);
+
+      // Validate: all IDs must exist in remaining stacks
+      const remainingIds = new Set(remaining.map((s) => s.id));
+      const validOrder = (result.object.orderedIds ?? []).filter((id) => remainingIds.has(id));
+
+      // Append any stacks the LLM missed
+      for (const s of remaining) {
+        if (!validOrder.includes(s.id)) validOrder.push(s.id);
+      }
+
+      return {
+        stacks,
+        mergeActions,
+        renameActions,
+        enrichActions,
+        sortOrder: validOrder
+      };
+    } catch (error) {
+      console.error("[organize-stacks] Sort analysis failed:", error);
+      return {
+        stacks,
+        mergeActions,
+        renameActions,
+        enrichActions,
+        sortOrder: remaining.map((s) => s.id)
+      };
+    }
+  }
+});
