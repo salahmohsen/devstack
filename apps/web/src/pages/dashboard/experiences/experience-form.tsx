@@ -150,7 +150,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-6xl">
+      <DialogContent className="form-dialog">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Experience" : "New Experience"}</DialogTitle>
           <DialogDescription>

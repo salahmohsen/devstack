@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -8,6 +9,7 @@ import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   CreateProjectInputSchema,
   UpdateProjectInputSchema,
+  type DetectStacksResult,
   type ProjectOutput
 } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -21,14 +23,21 @@ import {
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
 import { Form } from "@tsu-stack/ui/components/form";
+import { Group } from "@tsu-stack/ui/components/group";
+import { Label } from "@tsu-stack/ui/components/label";
+import { ShimmeringText } from "@tsu-stack/ui/components/unlumen-ui/shimmering-text";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 import { Icon } from "@/shared/ui/icon";
 
 import { useGetGithubProfileReposQuery } from "@/features/github";
 import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { useDetectStacksMutation } from "@/features/stacks";
+
+import { DetectStacksDialog } from "./detect-stacks-dialog";
 
 type ProjectFormProps = {
   initialData?: ProjectOutput | null;
@@ -48,6 +57,38 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
   const repos = reposQuery.data ?? [];
 
   const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(null);
+  const [detectDialogOpen, setDetectDialogOpen] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [currentStep, setCurrentStep] = useState<string | null>(null);
+  const [results, setResults] = useState<DetectStacksResult | null>(null);
+
+  const detectionHook = useDetectStacksMutation();
+
+  const handleOpenDetectDialog = async () => {
+    const repos = form.getFieldValue("repos") ?? [];
+    if (repos.length === 0) return;
+
+    setIsDetecting(true);
+    setCurrentStep("Initializing");
+    setResults(null);
+
+    try {
+      const result = await detectionHook.mutateAsync({
+        projectId: id ?? "",
+        repos,
+        onStepChange: setCurrentStep
+      });
+
+      setResults(result);
+      setCurrentStep(null);
+      setDetectDialogOpen(true);
+    } catch (error) {
+      console.error("Stack detection failed:", error);
+      setCurrentStep("Detection failed. Please try again.");
+    } finally {
+      setIsDetecting(false);
+    }
+  };
 
   const createMutation = useMutation(
     orpcQueryClient.projects.create.mutationOptions({
@@ -165,7 +206,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-6xl">
+      <DialogContent className="form-dialog">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Project" : "New Project"}</DialogTitle>
           <DialogDescription>
@@ -241,7 +282,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                     return { label: repo.fullName, value: repo.url };
                   })}
                   label="Repositories"
-                  description="Pick one or more of your GitHub repositories (public or private)."
                   placeholder="Select repositories..."
                   emptyMessage="No repositories found."
                 />
@@ -250,19 +290,52 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
             <form.AppField name="stackIds">
               {(field) => (
-                <field.ComboboxMultipleField
-                  items={stacks.map((stack) => {
-                    return {
-                      label: stack.name,
-                      value: stack.id,
-                      icon: stack.icon ? <Icon nameIcon={stack.icon} /> : undefined
-                    };
-                  })}
-                  label="Tech Stacks"
-                  description="Pick existing stacks to associate with this project."
-                  placeholder="Select stacks..."
-                  emptyMessage="No stacks found."
-                />
+                <form.Subscribe selector={(state) => state.values.repos}>
+                  {(repos) => (
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor={field.name}>Stack</Label>
+                      <Group aria-label="Project associations" className="w-full overflow-hidden">
+                        <field.ComboboxMultipleField
+                          items={stacks.map((stack) => {
+                            return {
+                              label: stack.name,
+                              value: stack.id,
+                              icon: stack.icon ? <Icon icon={stack.icon} /> : undefined
+                            };
+                          })}
+                          classNames={{
+                            field: "contents",
+                            chips: "rounded-e-none grow before:rounded-none "
+                          }}
+                          placeholder="Select stacks..."
+                          emptyMessage="No stacks found."
+                        />
+
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={handleOpenDetectDialog}
+                          disabled={!repos?.length || isDetecting}
+                        >
+                          {isDetecting ? (
+                            <div className="flex items-center gap-2">
+                              <DefaultLoader />
+                              <ShimmeringText
+                                text={currentStep ?? "Detecting Stacks..."}
+                                duration={1.8}
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <SparklesIcon />
+                              Detect Stacks
+                            </>
+                          )}
+                        </Button>
+                      </Group>
+                    </div>
+                  )}
+                </form.Subscribe>
               )}
             </form.AppField>
 
@@ -303,6 +376,15 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           </DialogFooter>
         </Form>
         {alertDialog}
+        <DetectStacksDialog
+          open={detectDialogOpen}
+          setOpen={setDetectDialogOpen}
+          onStacksSelected={async (stackIds) => {
+            form.setFieldValue("stackIds", stackIds);
+          }}
+          isDetecting={isDetecting}
+          results={results}
+        />
       </DialogContent>
     </Dialog>
   );

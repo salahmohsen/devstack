@@ -2,6 +2,8 @@ import { ExternalLink } from "lucide-react";
 
 import { type ProjectOutput } from "@tsu-stack/core";
 
+import { Icon } from "@/shared/ui/icon";
+
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 export const ProjectsSection = () => {
@@ -39,9 +41,9 @@ export const ProjectsItem = ({ project }: { project: ProjectOutput }) => {
           </p>
           <p className="inline-flex items-center gap-1 font-semibold tracking-widest">
             <span className="tracking-normal">{project.title}</span>
-            {project.repos.length > 0 && project.repos[0] && (
+            {project.demoUrl && (
               <a
-                href={project.repos[0]}
+                href={project.demoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Open ${project.title} on GitHub`}
@@ -64,7 +66,12 @@ export const ProjectsItem = ({ project }: { project: ProjectOutput }) => {
               className="flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium tracking-wide uppercase"
             >
               {stack.icon && (
-                <img src={stack.icon} alt={stack.name} className="inline-block h-3.5 w-3.5" />
+                <Icon
+                  icon={stack.icon}
+                  fallbackToLetter
+                  name={stack.name}
+                  className="size-4 saturate-0"
+                />
               )}
               {stack.name}
             </p>

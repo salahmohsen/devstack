@@ -47,7 +47,7 @@ async function syncPortfolioFK(
       await getDb()
         .update(contact)
         .set({ portfolioEntryId })
-        .where(and(eq(contact.userId, adminUser.id), eq(contact.type, entityId as never)));
+        .where(and(eq(contact.id, entityId), eq(contact.userId, adminUser.id)));
     }
   }
 }
@@ -75,7 +75,7 @@ async function assertEntityExists(type: PortfolioEntityType, entityId: string): 
   const existing = await getDb()
     .select({ type: contact.type })
     .from(contact)
-    .where(and(eq(contact.userId, adminUser.id), eq(contact.type, entityId as never)))
+    .where(and(eq(contact.id, entityId), eq(contact.userId, adminUser.id)))
     .limit(1);
   if (existing.length === 0) {
     throw new ORPCError("NOT_FOUND", { message: "Contact not found" });

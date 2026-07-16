@@ -14,12 +14,15 @@ import {
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
+import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { createWeatherAgent } from "#@/mastra/agents/weather-agent";
 import {
   completenessScorer,
   toolCallAppropriatenessScorer,
   translationScorer
 } from "#@/mastra/scorers/weather-scorer";
+import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
+import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
 import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
 export const mastra = new Mastra({
@@ -49,8 +52,15 @@ export const mastra = new Mastra({
       TURSO_AUTH_TOKEN: ENV_SERVER.TURSO_AUTH_TOKEN!
     }
   }),
-  workflows: { weatherWorkflow },
-  agents: { weatherAgent: createWeatherAgent() },
+  workflows: {
+    weatherWorkflow,
+    detectStacksWorkflow,
+    organizeStacksWorkflow
+  },
+  agents: {
+    weatherAgent: createWeatherAgent(),
+    stackCategorizerAgent: createStackCategorizerAgent()
+  },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
   storage: (() => {
     if (ENV_SERVER.TURSO_DATABASE_URL) {

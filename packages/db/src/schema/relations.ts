@@ -61,9 +61,25 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         from: r.stack.id,
         to: r.projectStack.stackId
       }),
+      dependencies: r.many.stackDependency({
+        from: r.stack.id,
+        to: r.stackDependency.stackId
+      }),
       portfolioEntry: r.one.portfolioEntry({
         from: r.stack.portfolioEntryId,
         to: r.portfolioEntry.id
+      })
+    },
+    stackDependency: {
+      stack: r.one.stack({
+        from: r.stackDependency.stackId,
+        to: r.stack.id
+      })
+    },
+    projectStackScan: {
+      project: r.one.project({
+        from: r.projectStackScan.projectId,
+        to: r.project.id
       })
     }
   };

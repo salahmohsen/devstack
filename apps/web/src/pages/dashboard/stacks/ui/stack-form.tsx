@@ -1,10 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { StackCreateInputSchema, StackUpdateInputSchema, type StackOutput } from "@tsu-stack/core";
+import {
+  sanitizeSvg,
+  StackCreateInputSchema,
+  StackUpdateInputSchema,
+  type StackOutput
+} from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,
@@ -22,6 +28,7 @@ import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
+import { Icon } from "@/shared/ui/icon";
 
 import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
@@ -44,11 +51,18 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
     placeholderData: initialData ?? undefined
   });
 
+  const projectsQuery = useQuery({
+    ...orpcQueryClient.projects.list.queryOptions({})
+  });
+
   const createMutation = useMutation(
     orpcQueryClient.stacks.create.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.stacks.list.queryKey()
+        });
+        await queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
@@ -95,7 +109,16 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
       name: stack?.name ?? "",
       description: stack?.description ?? "",
       icon: stack?.icon ?? "",
-      includedInPortfolio: !!stack?.portfolioEntryId
+      type: stack?.type ?? "",
+      includedInPortfolio: !!stack?.portfolioEntryId,
+      dependencies: (stack?.dependencies ?? []).map((d) => {
+        return {
+          npmPackage: d.npmPackage,
+          description: d.description ?? null,
+          homepage: d.homepage ?? null
+        };
+      }),
+      projectIds: (stack?.projects ?? []).map((p) => p.id)
     },
     validators: {
       onBlur: createZodFormValidator(isEdit ? StackUpdateInputSchema : StackCreateInputSchema)
@@ -107,16 +130,22 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           data: {
             name: value.name,
             description: value.description || null,
-            icon: value.icon ? value.icon : null,
-            includedInPortfolio: value.includedInPortfolio
+            icon: value.icon ? sanitizeSvg(value.icon) : null,
+            type: value.type || null,
+            includedInPortfolio: value.includedInPortfolio,
+            dependencies: value.dependencies,
+            projectIds: value.projectIds
           }
         });
       } else {
         createMutation.mutate({
           name: value.name,
           description: value.description ?? null,
-          icon: value.icon ? value.icon : null,
-          includedInPortfolio: value.includedInPortfolio
+          icon: value.icon ? sanitizeSvg(value.icon) : null,
+          type: value.type || null,
+          includedInPortfolio: value.includedInPortfolio,
+          dependencies: value.dependencies,
+          projectIds: value.projectIds
         });
       }
     }
@@ -124,6 +153,26 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
 
   const handleClose = () => onOpenChange(false);
   const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
+
+  useEffect(() => {
+    if (stack) {
+      form.reset({
+        name: stack.name,
+        description: stack.description ?? "",
+        icon: stack.icon ?? "",
+        type: stack.type ?? "",
+        includedInPortfolio: !!stack.portfolioEntryId,
+        dependencies: stack.dependencies.map((d) => {
+          return {
+            npmPackage: d.npmPackage,
+            description: d.description ?? null,
+            homepage: d.homepage ?? null
+          };
+        }),
+        projectIds: stack.projects.map((p) => p.id)
+      });
+    }
+  }, [stack, form]);
 
   if (isEdit && stackQuery.isLoading && !stack) {
     return <DefaultLoader />;
@@ -135,7 +184,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="form-dialog">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Stack" : "New Stack"}</DialogTitle>
           <DialogDescription>
@@ -160,7 +209,12 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
               </form.AppField>
 
               <form.AppField name="icon">
-                {(field) => <field.IconPickerField label="Stack Icon" />}
+                {(field) => (
+                  <field.IconifyField
+                    label="Stack Icon"
+                    description="Search for an icon from Iconify."
+                  />
+                )}
               </form.AppField>
 
               <form.AppField name="description">
@@ -168,6 +222,57 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
                   <field.RichTextField
                     label="Description"
                     placeholder="Brief description of the stack"
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="type">
+                {(field) => (
+                  <field.DropdownField
+                    label="Type"
+                    description="Categorize this stack."
+                    placeholder="Select type..."
+                    items={[
+                      { value: "framework", label: "Framework" },
+                      { value: "language", label: "Language" },
+                      { value: "database", label: "Database" },
+                      { value: "ui", label: "UI" },
+                      { value: "auth", label: "Auth" },
+                      { value: "deployment", label: "Deployment" },
+                      { value: "testing", label: "Testing" },
+                      { value: "ai", label: "AI" },
+                      { value: "tooling", label: "Tooling" },
+                      { value: "storage", label: "Storage" },
+                      { value: "state management", label: "State Management" },
+                      { value: "other", label: "Other" }
+                    ]}
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="dependencies">
+                {(field) => (
+                  <field.NpmPackageField
+                    label="Dependencies"
+                    description="Search and add npm packages used by this stack."
+                  />
+                )}
+              </form.AppField>
+
+              <form.AppField name="projectIds">
+                {(field) => (
+                  <field.ComboboxMultipleField
+                    label="Projects"
+                    description="Link projects that use this stack."
+                    placeholder="Search projects..."
+                    emptyMessage="No projects found."
+                    items={(projectsQuery.data ?? []).map((p) => {
+                      return {
+                        value: p.id,
+                        label: p.title,
+                        icon: p.logo ? <Icon icon={p.logo} className="size-4" /> : null
+                      };
+                    })}
                   />
                 )}
               </form.AppField>

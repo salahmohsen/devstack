@@ -44,12 +44,18 @@ async function _fetchRepoFileContent(
   try {
     const result = await getCachedGitHubRequest<string | null>({
       fetcher: async (conditionals) => {
+        // Extract owner from repo slug (e.g. "salahmohsen/cilas" → owner: "salahmohsen")
+        // instead of using source.owner, which may differ from the repo's actual owner
+        const [repoOwner, repoName] = input.repo.includes("/")
+          ? input.repo.split("/")
+          : [source.owner, input.repo];
+
         const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
-          owner: source.owner,
+          owner: repoOwner,
           path: input.path,
           ref: input.ref,
-          repo: input.repo
+          repo: repoName
         });
 
         return {

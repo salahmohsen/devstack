@@ -1,4 +1,4 @@
-import { index, integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { index, integer, json, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
 
@@ -9,6 +9,13 @@ export const stack = pgTable(
     name: text("name").notNull(),
     description: text("description"),
     icon: text("icon"),
+    type: text("type"),
+    healthStatus: json("health_status").$type<{
+      deprecated?: boolean;
+      downloads?: number;
+      lastPublished?: string;
+    }>(),
+    confidence: text("confidence"),
     sortOrder: integer("sort_order").notNull().default(0),
     portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
       onDelete: "set null"

@@ -36,7 +36,6 @@ export function useCyclePhase({ active, cycleMsBase, speed = 1 }: UseCyclePhaseO
 
   useEffect(() => {
     if (!active) {
-      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setPhase(0);
       return;
     }
@@ -90,9 +89,7 @@ function tick(now: number) {
 
 function subscribeFrame(listener: FrameListener) {
   listeners.add(listener);
-  if ((rafId ??= null)) {
-    rafId = window.requestAnimationFrame(tick);
-  }
+  rafId ??= window.requestAnimationFrame(tick);
   return () => {
     listeners.delete(listener);
     if (listeners.size === 0 && rafId !== null) {
@@ -125,7 +122,6 @@ export function useSteppedCycle({
     if (!active) {
       activeRef.current = false;
       currentStepRef.current = idleStep;
-      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setStep(idleStep);
       return;
     }

@@ -78,7 +78,7 @@ export async function getGitHubRevalidationSignals(
   const uniqueSignalKeys = Array.from(new Set(signalKeys));
   const entries = await githubCacheRepository.findRevalidationSignals(uniqueSignalKeys);
 
-  return entries.map((entry) => {
+  return entries.map((entry: { signalKey: string; updatedAt: Date }) => {
     return {
       signalKey: entry.signalKey,
       updatedAt: entry.updatedAt.getTime()

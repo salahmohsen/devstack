@@ -1,5 +1,10 @@
 {
   "extends": "@tsu-stack/tsconfig/tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "#@/*": ["./src/*"]
+    }
+  },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

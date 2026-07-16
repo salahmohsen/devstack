@@ -53,7 +53,7 @@ export const contactRepository = {
    *   the contact table has a unique `(userId, type)` constraint and the
    *   form's "Add contact" button can produce duplicates.
    * - For each item where `includedInPortfolio` is defined, the matching
-   *   `portfolioEntry` (keyed by `entityId = type`) is created or removed
+   *   `portfolioEntry` (keyed by `entityId = id`) is created or removed
    *   inside the same transaction so the toggle stays stable.
    * - Existing rows whose `(userId, type)` is not represented in `input` are
    *   left untouched so the admin can keep seeded contact rows even when the
@@ -98,7 +98,7 @@ export const contactRepository = {
         if (!row) continue;
 
         const existing = await tx.query.portfolioEntry.findFirst({
-          where: { type: "contact", entityId: row.type }
+          where: { type: "contact", entityId: row.id }
         });
 
         if (item.includedInPortfolio) {
@@ -107,7 +107,7 @@ export const contactRepository = {
             await tx.insert(portfolioEntry).values({
               id: pid,
               type: "contact",
-              entityId: row.type
+              entityId: row.id
             });
             await tx.update(contact).set({ portfolioEntryId: pid }).where(eq(contact.id, row.id));
           } else if (row.portfolioEntryId !== existing.id) {
@@ -119,7 +119,7 @@ export const contactRepository = {
         } else if (existing) {
           await tx
             .delete(portfolioEntry)
-            .where(and(eq(portfolioEntry.type, "contact"), eq(portfolioEntry.entityId, row.type)));
+            .where(and(eq(portfolioEntry.type, "contact"), eq(portfolioEntry.entityId, row.id)));
           if (row.portfolioEntryId !== null) {
             await tx.update(contact).set({ portfolioEntryId: null }).where(eq(contact.id, row.id));
           }

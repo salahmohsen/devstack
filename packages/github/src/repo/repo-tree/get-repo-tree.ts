@@ -46,12 +46,16 @@ async function _fetchRepoTree(
   try {
     const result = await getCachedGitHubRequest<GitHubRepoTreeEntry[]>({
       fetcher: async (conditionals) => {
+        const [repoOwner, repoName] = input.repo.includes("/")
+          ? input.repo.split("/")
+          : [source.owner, input.repo];
+
         const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
-          owner: source.owner,
+          owner: repoOwner,
           path: input.path,
           ref: input.ref,
-          repo: input.repo
+          repo: repoName
         });
 
         return {
