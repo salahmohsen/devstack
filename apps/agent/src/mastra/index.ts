@@ -50,6 +50,9 @@ export const mastra = new Mastra({
     vars: {
       TURSO_DATABASE_URL: ENV_SERVER.TURSO_DATABASE_URL!,
       TURSO_AUTH_TOKEN: ENV_SERVER.TURSO_AUTH_TOKEN!
+    },
+    limits: {
+      subrequests: 50000
     }
   }),
   workflows: {
