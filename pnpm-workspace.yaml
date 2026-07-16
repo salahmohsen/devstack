@@ -146,7 +146,7 @@ catalog:
   "@mastra/memory": "^1.22.2"
   "@mastra/observability": "^1.16.0"
   "@mastra/hono": ^1.5.6
-  "@mastra/deployer-cloudflare": ^1.2.6
+  "@mastra/deployer-cloudflare": ^1.2.7
   "@mastra/ai-sdk": ^1.6.1
   # Mastra's peerDep requires ai >= 5.0.76; current resolved is ai@6.0.208
   "@mastra/cloudflare-d1": ^1.1.1
@@ -177,6 +177,7 @@ overrides:
   drizzle-orm: "catalog:"
   kysely: 0.28.17
   yoga-layout: 2.0.1
+
 peerDependencyRules:
   allowAny:
     - vite
