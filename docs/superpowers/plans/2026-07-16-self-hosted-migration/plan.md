@@ -1,148 +1,82 @@
-# Self-Hosted Migration Implementation Plan
+# Self-Hosted Migration: Hono on Node.js
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrate from Cloudflare Workers to self-hosted Dokploy with NestJS + oRPC, PostgreSQL, Redis, MinIO, and multi-tenant support.
+**Goal:** Migrate from Cloudflare Workers to self-hosted Dokploy with Hono on Node.js, PostgreSQL, Redis, MinIO, and Socket.IO.
 
-**Architecture:** Three Docker containers (web, server, agent) behind Traefik reverse proxy. NestJS server wrapping existing `packages/api` oRPC routers via `@Implement`. PostgreSQL for data, Redis for cache/pubsub, MinIO for object storage.
+**Architecture:** Four Docker containers (server, agent, web, infrastructure) behind Traefik reverse proxy. Hono server running on Node.js via `@hono/node-server`. PostgreSQL for data, Redis for cache/pubsub, MinIO for object storage, Socket.IO + Redis adapter for WebSocket relay.
 
-**Tech Stack:** NestJS, oRPC, PostgreSQL, Redis, MinIO, Docker, Traefik, Better Auth, Mastra
+**Tech Stack:** Hono, oRPC, Node.js, PostgreSQL, Redis, MinIO, Docker, Traefik, Better Auth, Mastra, Socket.IO
 
 ---
 
-## Migration Strategy
+## Strategy
 
-### What Stays (packages/api)
+### What Stays Untouched
 
-The 11 oRPC routers in `packages/api/src/routers/` are **not rewritten**. They remain as-is and are mounted into NestJS controllers via `@Implement` from `@orpc/nest`. This preserves:
+- All 11 oRPC routers in `packages/api/src/routers/` — no changes
+- `packages/api/src/lib/context/types.ts` — the `OrpcContext` type
+- `packages/db` — Drizzle ORM, repositories, migrations
+- `packages/auth` — Better Auth configuration
+- `packages/github` — GitHub API, caching, webhooks (with minor binding adapter changes)
+- `packages/core` — shared types and schemas
+- `packages/logger` — structured logging
+- `packages/env` — environment variables (add new ones, keep existing)
 
-- All existing procedure factories (`publicProcedure`, `protectedProcedure`, `ownerProcedure`)
-- All existing schemas, mappers, and business logic
-- The `appRouter` type for client-side type safety
+### What Changes
 
-### What Gets Replaced (apps/server)
-
-| Current (Hono)                            | NestJS Equivalent                                    |
+| Current (CF Workers)                      | Self-Hosted Equivalent                               |
 | ----------------------------------------- | ---------------------------------------------------- |
-| `app.ts` middleware stack                 | NestJS guards, interceptors, filters                 |
-| `worker.ts` CF entry                      | `main.ts` NestJS bootstrap                           |
-| `createContext()`                         | Request-scoped `RequestContext` provider             |
-| `runWithDb(createDb())`                   | `DbScopeInterceptor` (automatic per-request)         |
-| `github-signal-relay.ts` (Durable Object) | `GithubGateway` (Socket.IO via `@nestjs/websockets`) |
-| `app.onError()`                           | `AllExceptionsFilter` (global filter)                |
-| `honoLoggerMiddleware`                    | `LoggingInterceptor` (global interceptor)            |
-| Manual CORS                               | `app.enableCors()` in bootstrap                      |
+| `worker.ts` CF entry + `app.fetch()`      | `node.ts` entry + `serve()` from `@hono/node-server` |
+| `GITHUB_CACHE_KV` (CF KV binding)         | Redis adapter (ioredis) in `packages/github`         |
+| `MEDIA_BUCKET` (CF R2 binding)            | MinIO/S3 adapter via `files-sdk/s3`                  |
+| `GITHUB_SIGNAL_RELAY` (CF Durable Object) | Socket.IO + `@socket.io/redis-adapter`               |
+| `AGENT_WORKER` (CF service binding)       | Direct HTTP fetch to `AGENT_WORKER_URL`              |
+| `executionCtx.waitUntil()`                | `Promise.resolve()` (fire-and-forget)                |
+| `apps/agent/wrangler.jsonc` + CF deployer | `mastra dev` / `mastra start` on Node.js             |
+| `apps/web/wrangler.jsonc` + CF deployer   | TanStack Start Node.js server                        |
 
 ### What Gets Added
 
-- Better Auth middleware (`/auth/*` passthrough)
-- DB scoping interceptor (replaces manual `runWithDb`)
-- Request-scoped context provider (replaces `createContext()`)
-- WebSocket gateway (replaces Durable Object)
+- `@hono/node-server` entry point
+- Redis client module (for GitHub cache + Socket.IO adapter)
+- MinIO/S3 media adapter (replaces R2)
+- Socket.IO WebSocket gateway (replaces Durable Object)
+- Docker Compose infrastructure (PostgreSQL, Redis, MinIO)
 - Health checks with Redis/MinIO/Postgres probes
-- Swagger/OpenAPI auto-generation from decorators
 
 ---
 
 ## File Structure
 
 ```
-docker-compose.yml                 # Full stack orchestration
+docker-compose.yml                 # Dev infrastructure (postgres, redis, minio)
 docker-compose.prod.yml            # Production overrides with Traefik labels
 .env.example                       # All environment variables
 scripts/init-databases.sh          # PostgreSQL multi-db init
-scripts/migrate-from-neon.sh       # Temporary migration script (DELETE AFTER USE)
-scripts/create-minio-bucket.sh     # MinIO bucket setup
-
-apps/agent/
-├── Dockerfile
-├── package.json                   # Remove wrangler, add @mastra/pg
-└── src/mastra/index.ts            # Remove CloudflareDeployer, add PostgresStore
 
 apps/server/
 ├── Dockerfile
-├── package.json                   # NestJS dependencies
-├── tsconfig.json                  # ESM + decorators
-├── nest-cli.json                  # NestJS CLI config
-└── src/
-    ├── main.ts                    # Bootstrap (CORS, Swagger, ValidationPipe)
-    ├── app.module.ts              # Root module importing all feature modules
-    ├── common/
-    │   ├── guards/
-    │   │   ├── auth.guard.ts      # Checks request.user (set by auth middleware)
-    │   │   └── owner.guard.ts     # Checks session user === github_config owner
-    │   ├── interceptors/
-    │   │   ├── db-scope.interceptor.ts    # Wraps request in runWithDb (CRITICAL)
-    │   │   ├── logging.interceptor.ts     # Request timing + structured logging
-    │   │   └── cache.interceptor.ts       # Redis response caching
-    │   ├── middleware/
-    │   │   └── auth.middleware.ts          # Better Auth /auth/* passthrough
-    │   ├── decorators/
-    │   │   ├── current-user.decorator.ts  # @CurrentUser() param decorator
-    │   │   └── public.decorator.ts        # @Public() marks routes as auth-free
-    │   ├── providers/
-    │   │   └── request-context.provider.ts # Request-scoped OrpcContext
-    │   └── filters/
-    │       └── all-exceptions.filter.ts   # Global error handler
-    ├── modules/
-    │   ├── auth/
-    │   │   ├── auth.module.ts             # Better Auth middleware registration
-    │   │   └── auth.middleware.ts          # Passthrough to auth.handler()
-    │   ├── github/
-    │   │   ├── github.module.ts
-    │   │   ├── github.controller.ts       # @Implement(appRouter.github)
-    │   │   ├── github.service.ts          # Broadcasts via gateway
-    │   │   └── github.gateway.ts          # WebSocket (replaces Durable Object)
-    │   ├── projects/
-    │   │   ├── projects.module.ts
-    │   │   └── projects.controller.ts     # @Implement(appRouter.projects)
-    │   ├── experiences/
-    │   │   ├── experiences.module.ts
-    │   │   └── experiences.controller.ts  # @Implement(appRouter.experiences)
-    │   ├── stacks/
-    │   │   ├── stacks.module.ts
-    │   │   └── stacks.controller.ts       # @Implement(appRouter.stacks)
-    │   ├── portfolio/
-    │   │   ├── portfolio.module.ts
-    │   │   └── portfolio.controller.ts    # @Implement(appRouter.portfolio)
-    │   ├── profile/
-    │   │   ├── profile.module.ts
-    │   │   └── profile.controller.ts      # @Implement(appRouter.profile)
-    │   ├── resume/
-    │   │   ├── resume.module.ts
-    │   │   └── resume.controller.ts       # @Implement(appRouter.resume)
-    │   ├── contact/
-    │   │   ├── contact.module.ts
-    │   │   └── contact.controller.ts      # @Implement(appRouter.contact)
-    │   ├── github-config/
-    │   │   ├── github-config.module.ts
-    │   │   └── github-config.controller.ts # @Implement(appRouter.githubConfig)
-    │   ├── agent/
-    │   │   ├── agent.module.ts
-    │   │   ├── agent.controller.ts        # @Implement(appRouter.agent)
-    │   │   └── agent.service.ts           # HTTP client to Mastra agent
-    │   ├── media/
-    │   │   ├── media.module.ts
-    │   │   └── media.service.ts           # MinIO operations
-    │   ├── cache/
-    │   │   ├── cache.module.ts            # Global Redis module
-    │   │   └── cache.service.ts
-    │   └── health/
-    │       ├── health.module.ts
-    │       └── health.controller.ts       # Liveness + readiness probes
-    └── config/
-        ├── database.config.ts
-        ├── redis.config.ts
-        └── minio.config.ts
+├── src/
+│   ├── node.ts                    # NEW: Node.js entry (serve from @hono/node-server)
+│   ├── app.ts                     # MODIFIED: remove CF bindings, use adapters
+│   ├── worker.ts                  # DELETED (replaced by node.ts)
+│   └── github-signal-relay.ts     # DELETED (replaced by Socket.IO)
+
+apps/agent/
+├── Dockerfile
+├── package.json                   # Remove wrangler, CF deps
+└── src/mastra/index.ts            # Remove CloudflareDeployer, use PostgresStore
 
 apps/web/
 ├── Dockerfile
-└── src/server.ts                  # Node.js entry (replaces CF Worker)
+├── src/server/files-gateway.ts    # MODIFIED: remove cloudflare:workers import
+└── wrangler.jsonc                 # DELETED
 ```
 
 ---
 
-## Task 1: Infrastructure Setup (Docker Compose)
+## Task 1: Docker Compose Infrastructure
 
 > **Pitfalls:** #19 (dev env vs docker env must remain separate), #20 (URL-encode special chars in passwords).
 > **Markers:**
@@ -155,41 +89,9 @@ apps/web/
 - Create: `docker-compose.yml`
 - Create: `docker-compose.prod.yml`
 - Create: `.env.example`
-- Create: `apps/server/Dockerfile` (covered in Task 2)
-- Create: `apps/server/scripts/docker-entrypoint.sh` (idempotent migrate + start; referenced by dockerfile CMD in Task 2)
 - Create: `scripts/init-databases.sh`
 
-- [ ] **Step 1: Create `.env.example`**
-
-```bash
-# PostgreSQL
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=changeme
-POSTGRES_DB=personal_hub
-
-# Redis
-REDIS_PASSWORD=changeme
-
-# MinIO
-MINIO_ROOT_USER=minioadmin
-MINIO_ROOT_PASSWORD=changeme
-
-# Server
-SERVER_PORT=5000
-AGENT_URL=http://agent:4111
-WEB_URL=http://web:3000
-VITE_SERVER_URL=http://localhost:5000/server
-VITE_WEB_URL=http://localhost:3000
-BETTER_AUTH_SECRET=changeme
-GITHUB_WEBHOOK_SECRET=
-ENABLE_OPEN_API_DOCS=true
-
-# Agent
-AGENT_DATABASE_URL=postgresql://admin:changeme@postgres:5432/mastra_agent
-NODE_ENV=production
-```
-
-- [ ] **Step 2: Create `scripts/init-databases.sh`**
+- [ ] **Step 1: Create `scripts/init-databases.sh`**
 
 ```bash
 #!/bin/bash
@@ -201,11 +103,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 EOSQL
 ```
 
-- [ ] **Step 3: Create `docker-compose.yml`**
+- [ ] **Step 2: Create `docker-compose.yml`**
 
 ```yaml
-version: "3.8"
-
 services:
   postgres:
     image: postgres:17-alpine
@@ -213,25 +113,29 @@ services:
       - pg_data:/var/lib/postgresql/data
       - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes --save 60 1000 --requirepass ${REDIS_PASSWORD}
+    command: redis-server --appendonly yes --save 60 1000 --requirepass ${REDIS_PASSWORD:-changeme}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    ports:
+      - "6379:6379"
 
   minio:
     image: minio/minio
@@ -242,15 +146,37 @@ services:
     volumes:
       - minio_data:/data
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
+```
+
+- [ ] **Step 3: Create `docker-compose.prod.yml`**
+
+```yaml
+services:
+  postgres:
+    labels:
+      - "traefik.enable=false"
+
+  redis:
+    labels:
+      - "traefik.enable=false"
+
+  minio:
+    labels:
+      - "traefik.enable=false"
 
   server:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
     ports:
-      - "${SERVER_PORT:-5000}:5000"
+      - "${SERVER_PORT:-5100}:5100"
     depends_on:
       postgres:
         condition: service_healthy
@@ -259,19 +185,21 @@ services:
       minio:
         condition: service_started
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      AGENT_URL: http://agent:4111
-      WEB_URL: http://web:3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-personal_hub}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme}@redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_BUCKET: personal-hub
+      AGENT_WORKER_URL: http://agent:4111
       VITE_SERVER_URL: ${VITE_SERVER_URL}
       VITE_WEB_URL: ${VITE_WEB_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
-      ENABLE_OPEN_API_DOCS: ${ENABLE_OPEN_API_DOCS}
       NODE_ENV: production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.server.rule=PathPrefix(`/server`)"
+      - "traefik.http.services.server.loadbalancer.server.port=5100"
 
   agent:
     build:
@@ -281,8 +209,12 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${AGENT_DATABASE_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/mastra_agent
       NODE_ENV: production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent.rule=PathPrefix(`/agent`)"
+      - "traefik.http.services.agent.loadbalancer.server.port=4111"
 
   web:
     build:
@@ -292,64 +224,31 @@ services:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
       - server
-
-volumes:
-  pg_data:
-  redis_data:
-  minio_data:
-```
-
-- [ ] **Step 4: Create `docker-compose.prod.yml`**
-
-```yaml
-version: "3.8"
-
-services:
-  server:
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.server.rule=Host(`server.salahmohsen.com`)"
-      - "traefik.http.routers.server.entrypoints=websecure"
-      - "traefik.http.routers.server.tls.certresolver=letsencrypt"
-      - "traefik.http.services.server.loadbalancer.server.port=5000"
-
-  agent:
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.agent.rule=Host(`agent.salahmohsen.com`)"
-      - "traefik.http.routers.agent.entrypoints=websecure"
-      - "traefik.http.routers.agent.tls.certresolver=letsencrypt"
-      - "traefik.http.services.agent.loadbalancer.server.port=4111"
-
-  web:
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`salahmohsen.com`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add docker-compose.yml docker-compose.prod.yml .env.example scripts/init-databases.sh
-git commit -m "feat: add Docker Compose infrastructure setup"
+git add docker-compose.yml docker-compose.prod.yml scripts/init-databases.sh
+git commit -m "feat: add Docker Compose infrastructure (postgres, redis, minio)"
 ```
 
 ---
 
 ## Task 2: Dockerfiles
 
-> **Foldout:** See Task 11 foldout for the server entrypoint (`--require ./dist/instrumentation.js`).
-> **Pitfalls:** Per ADR-0018, `apps/agent/Dockerfile` no longer exists. Step 2 has been removed.
-> **Markers**:
-> `@done-when`: `docker compose build server web` produces two images (no agent image).
-> `@verify`: each image runs `pnpm --filter @<workspace> build` cleanly during build-time.
+> **Markers:**
+> `@done-when`: `docker compose build` produces images for server, agent, web.
+> `@verify`: each image's build-time step runs the workspace build command cleanly.
 
 **Files:**
 
 - Create: `apps/server/Dockerfile`
+- Create: `apps/agent/Dockerfile`
 - Create: `apps/web/Dockerfile`
 
 - [ ] **Step 1: Create `apps/server/Dockerfile`**
@@ -377,11 +276,40 @@ WORKDIR /app
 COPY --from=builder /app/apps/server/dist ./dist
 COPY --from=builder /app/apps/server/node_modules ./node_modules
 COPY --from=builder /app/apps/server/package.json ./package.json
-EXPOSE 5000
-CMD ["node", "dist/main.js"]
+EXPOSE 5100
+CMD ["node", "--import", "tsx", "dist/node.js"]
 ```
 
-- [ ] **Step 2: Create `apps/web/Dockerfile`**
+- [ ] **Step 2: Create `apps/agent/Dockerfile`**
+
+```dockerfile
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+FROM base AS deps
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY apps/agent/package.json ./apps/agent/
+COPY packages/*/package.json ./packages/
+RUN pnpm install --frozen-lockfile
+
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/agent/node_modules ./apps/agent/node_modules
+COPY --from=deps /app/packages/*/node_modules ./packages/node_modules
+COPY . .
+RUN pnpm --filter @tsu-stack/agent build
+
+FROM base AS runner
+WORKDIR /app
+COPY --from=builder /app/apps/agent/.mastra/output ./.mastra/output
+COPY --from=builder /app/apps/agent/node_modules ./node_modules
+COPY --from=builder /app/apps/agent/package.json ./package.json
+EXPOSE 4111
+CMD ["node", ".mastra/output/index.mjs"]
+```
+
+- [ ] **Step 3: Create `apps/web/Dockerfile`**
 
 ```dockerfile
 FROM node:22-alpine AS base
@@ -403,916 +331,386 @@ RUN pnpm --filter @tsu-stack/web build
 
 FROM base AS runner
 WORKDIR /app
-COPY --from=builder /app/apps/web/dist ./dist
+COPY --from=builder /app/apps/web/.output ./.output
 COPY --from=builder /app/apps/web/node_modules ./node_modules
 COPY --from=builder /app/apps/web/package.json ./package.json
 EXPOSE 3000
-CMD ["node", "dist/server.js"]
+CMD ["node", ".output/server/index.mjs"]
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add apps/server/Dockerfile apps/agent/Dockerfile apps/web/Dockerfile
-git commit -m "feat: add Dockerfiles for all apps"
+git commit -m "feat: add Dockerfiles for server, agent, and web"
 ```
 
 ---
 
-## Task 3: NestJS Server Setup
+## Task 3: Node.js Entry Point for Server
 
-> **Foldout:** [`foldouts/task-03-nestjs-bootstrap.md`](./foldouts/task-03-nestjs-bootstrap.md)
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entries #1, #2, #3, #4
+> **Pitfalls:** #1 (`@hono/node-server` `serve()` takes Hono app directly).
 > **Markers:**
-> `@blocker-if`: packages/server has HM router, cloudflare/sk dependencies, and WebSocket server code you intend to delete.
-> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 with "Compiled successfully".
-> `@verify`: `node --require ./dist/instrumentation.js ./dist/main.js` boots and listens on :5000.
+> `@blocker-if`: `@hono/node-server` not installed.
+> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND `node dist/node.js` boots on :5100.
+> `@verify`: `curl http://localhost:5100/` returns `{"name":"tsu-stack-server","status":"ok"}`.
+
+The existing Hono app (`app.ts`) is framework-agnostic — it uses standard Web API `Request`/`Response`. The only change is the entry point: replace `worker.ts` (CF Worker export) with `node.ts` (Node.js `serve()`).
 
 **Files:**
 
+- Create: `apps/server/src/node.ts`
 - Modify: `apps/server/package.json`
-- Modify: `apps/server/tsconfig.json`
-- Create: `apps/server/nest-cli.json`
-- Create: `apps/server/src/main.ts`
-- Create: `apps/server/src/app.module.ts`
+- Delete: `apps/server/src/worker.ts`
 
-- [ ] **Step 1: Update `apps/server/package.json`**
+- [ ] **Step 1: Install `@hono/node-server`**
 
-Remove Hono and wrangler dependencies, add NestJS. Keep existing workspace deps (`@tsu-stack/api`, `@tsu-stack/auth`, etc.):
+```bash
+pnpm add @hono/node-server --filter @tsu-stack/server
+```
+
+- [ ] **Step 2: Create `apps/server/src/node.ts`**
+
+```typescript
+import { serve } from "@hono/node-server";
+
+import { app } from "#@/app";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
+
+const port = Number(ENV_SERVER.PORT ?? 5100);
+
+serve(
+  {
+    fetch: app.fetch,
+    port
+  },
+  (info) => {
+    // eslint-disable-next-line no-console
+    console.log(`Server running on http://localhost:${info.port}`);
+  }
+);
+```
+
+- [ ] **Step 3: Update `apps/server/package.json`**
 
 ```json
 {
   "name": "@tsu-stack/server",
   "type": "module",
-  "main": "src/main.ts",
+  "main": "src/index.ts",
+  "imports": {
+    "#@/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "dev": "nest start --watch",
-    "build": "nest build",
-    "start": "node dist/main.js",
-    "start:prod": "node dist/main.js"
+    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- tsx src/node.ts",
+    "build": "tsc --project tsconfig.json",
+    "start": "node --import tsx dist/node.js",
+    "deploy": "echo 'No deploy script — self-hosted via Docker'"
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.0",
-    "@nestjs/core": "^11.0.0",
-    "@nestjs/platform-express": "^11.0.0",
-    "@nestjs/config": "^4.0.0",
-    "@nestjs/swagger": "^11.0.0",
-    "@nestjs/websockets": "^11.0.0",
-    "@nestjs/platform-socket.io": "^11.0.0",
-    "@nestjs/schedule": "^5.0.0",
-    "@orpc/nest": "latest",
-    "@orpc/contract": "catalog:",
-    "@orpc/server": "catalog:",
+    "@hono/node-server": "^1.13.7",
+    "@orpc/json-schema": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "@tsu-stack/agent": "workspace:*",
     "@tsu-stack/api": "workspace:*",
     "@tsu-stack/auth": "workspace:*",
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
     "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
-    "ioredis": "^5.0.0",
-    "minio": "^8.0.0",
+    "hono": "catalog:",
+    "ioredis": "^5.4.2",
+    "pdfnative": "catalog:",
+    "socket.io": "^4.7.5",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.0",
-    "@nestjs/schematics": "^11.0.0",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "tsx": "^4.8.1",
     "typescript": "catalog:"
   }
 }
 ```
 
-- [ ] **Step 2: Update `apps/server/tsconfig.json`**
+Note: Uses `tsx` for dev (fast TypeScript execution) and `tsc` for production build. The `tsx` package is already in the workspace catalog.
 
-```json
-{
-  "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ES2022",
-    "lib": ["ES2022"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
-```
+- [ ] **Step 4: Delete `apps/server/src/worker.ts`**
 
-- [ ] **Step 3: Create `apps/server/nest-cli.json`**
-
-```json
-{
-  "$schema": "https://json.schemastore.org/nest-cli",
-  "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
-  "compilerOptions": {
-    "deleteOutDir": true
-  }
-}
-```
-
-- [ ] **Step 4: Create `apps/server/src/main.ts`**
-
-```typescript
-import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
-import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
-import { AppModule } from "./app.module.js";
-
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true
-    })
-  );
-
-  app.enableCors({
-    origin: [
-      process.env.VITE_WEB_URL || "http://localhost:3000",
-      process.env.VITE_SERVER_URL || "http://localhost:5000"
-    ],
-    credentials: true,
-    allowHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
-    allowMethods: ["GET", "POST", "OPTIONS"]
-  });
-
-  if (process.env.ENABLE_OPEN_API_DOCS === "true") {
-    const config = new DocumentBuilder()
-      .setTitle("Personal Hub API")
-      .setVersion("1.0")
-      .addSecurity("authCookie", {
-        type: "apiKey",
-        in: "cookie",
-        name: "better_auth.session_token",
-        description: "Session cookie from signing in"
-      })
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup("docs", app, document);
-  }
-
-  const port = process.env.PORT || 5000;
-  await app.listen(port);
-  console.log(`Server running on http://localhost:${port}`);
-}
-bootstrap();
-```
-
-- [ ] **Step 5: Create `apps/server/src/app.module.ts`**
-
-> **Module-import order is significant. The order below MUST be respected**:
->
-> 1. `ConfigModule.forRoot({ isGlobal: true })` — provides ConfigService to all subsequent modules.
-> 2. `CacheModule` (Global) — provides Redis client via `CacheService` (used by `@socket.io/redis-adapter` in Task 9 and by Media in Task 12).
-> 3. `ORPCModule.forRoot({ interceptors: [] })` — registers `ImplementInterceptor` for `@Implement` controllers (Task 10).
-> 4. `AuthModule` — registers `AuthMiddleware` for `/auth/*` (Task 8).
-> 5. Other feature modules (`GithubModule`, `ProjectsModule`, `MediaModule`, etc.) — order among these is unconstrained.
-> 6. `MastraModule.register(...)` — LAST. Catch-all controller for `/agent/*` MUST register last so it doesn't shadow other controllers' routes.
-
-```typescript
-import { Module, Global } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { ScheduleModule } from "@nestjs/schedule";
-import { ORPCModule } from "@orpc/nest";
-import { AuthMiddleware } from "./modules/auth/auth.middleware.js";
-import { GithubModule } from "./modules/github/github.module.js";
-import { ProjectsModule } from "./modules/projects/projects.module.js";
-import { ExperiencesModule } from "./modules/experiences/experiences.module.js";
-import { StacksModule } from "./modules/stacks/stacks.module.js";
-import { PortfolioModule } from "./modules/portfolio/portfolio.module.js";
-import { ProfileModule } from "./modules/profile/profile.module.js";
-import { ResumeModule } from "./modules/resume/resume.module.js";
-import { ContactModule } from "./modules/contact/contact.module.js";
-import { GithubConfigModule } from "./modules/github-config/github-config.module.js";
-import { AgentModule } from "./modules/agent/agent.module.js";
-import { MediaModule } from "./modules/media/media.module.js";
-import { CacheModule } from "./modules/cache/cache.module.js";
-import { HealthModule } from "./modules/health/health.module.js";
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    ScheduleModule.forRoot(),
-    ORPCModule.forRoot({
-      interceptors: [
-        // Global error logging for all oRPC handlers
-      ]
-    }),
-    // Feature modules
-    AuthMiddleware,
-    CacheModule,
-    MediaModule,
-    GithubModule,
-    ProjectsModule,
-    ExperiencesModule,
-    StacksModule,
-    PortfolioModule,
-    ProfileModule,
-    ResumeModule,
-    ContactModule,
-    GithubConfigModule,
-    AgentModule,
-    HealthModule
-  ]
-})
-export class AppModule {}
-```
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add apps/server/
-git commit -m "feat: initialize NestJS server setup with oRPC integration"
+git add apps/server/src/node.ts apps/server/package.json
+git rm apps/server/src/worker.ts
+git commit -m "feat: add Node.js entry point for server, remove CF Worker entry"
 ```
 
 ---
 
-## Task 4: DB Scoping Interceptor (CRITICAL)
+## Task 4: Redis Adapter for GitHub Cache
 
+> **Pitfalls:** #2 (Redis `GET`/`SET` with JSON — must `JSON.stringify`/`JSON.parse`).
 > **Markers:**
-> `@blocker-if`: Task 3 (NestJS bootstrap) is committed.
-> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND a request to `GET /projects.list` returns 200 (oRPC procedure calls `getDb()` inside the interceptor's scope).
-> `@verify`: hit an oRPC procedure that requires DB — should NOT log "getDb fallback" warning.
+> `@blocker-if`: Redis running at `REDIS_URL`.
+> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND `node dist/node.js` boots without Redis connection errors.
+> `@verify`: GitHub API calls use Redis cache layer (check logs for `redis` cache hits).
 
-This replaces the fragile `runWithDb(createDb())` pattern from the Hono middleware. The interceptor wraps every request in a DB scope so `getDb()` from `@tsu-stack/db` works in all controllers automatically.
+Replaces CF KV binding (`GITHUB_CACHE_KV`) with a Redis adapter that implements the same `GitHubCacheKv` interface from `packages/github/src/runtime/bindings.ts`.
 
 **Files:**
 
-- Create: `apps/server/src/common/interceptors/db-scope.interceptor.ts`
+- Create: `packages/github/src/infrastructure/cache/redis-cache-adapter.ts`
+- Modify: `packages/github/src/runtime/bindings.ts` (add Redis adapter type)
+- Modify: `packages/api/src/lib/context/hono/create-context.ts` (pass Redis adapter instead of KV binding)
 
-- [ ] **Step 1: Create DB Scope Interceptor**
-
-```typescript
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from "@nestjs/common";
-import { Observable } from "rxjs";
-import { createDb, runWithDb } from "@tsu-stack/db";
-
-/**
- * Wraps every HTTP request in a per-request Drizzle DB scope.
- *
- * This replaces the Hono `runWithDb(createDb())` middleware pattern.
- * Without this, `getDb()` in repositories throws because there's no
- * AsyncLocalStorage scope active.
- *
- * Each request gets its own Neon WebSocket pool (required for both
- * CF Workers and self-hosted Node.js — the pool cannot outlive a request).
- */
-@Injectable()
-export class DbScopeInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const db = createDb();
-    return new Observable((subscriber) => {
-      runWithDb(db, async () => {
-        try {
-          const result = await next.handle().toPromise();
-          subscriber.next(result);
-          subscriber.complete();
-        } catch (error) {
-          subscriber.error(error);
-        }
-      });
-    });
-  }
-}
-```
-
-- [ ] **Step 2: Register as Global Interceptor in `app.module.ts`**
-
-Add to `AppModule` providers:
+- [ ] **Step 1: Create Redis Cache Adapter**
 
 ```typescript
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { DbScopeInterceptor } from './common/interceptors/db-scope.interceptor.js';
+import type { GitHubCacheKv } from "#@/runtime/bindings";
 
-@Module({
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: DbScopeInterceptor,
+type RedisClient = {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, options?: { EX?: number }): Promise<string | null>;
+  del(key: string): Promise<number>;
+};
+
+export function createRedisCacheAdapter(redis: RedisClient): GitHubCacheKv {
+  return {
+    async get<T>(key: string, type: "json"): Promise<T | null> {
+      const raw = await redis.get(key);
+      if (!raw) return null;
+      return JSON.parse(raw) as T;
     },
-  ],
-})
-```
 
-- [ ] **Step 3: Commit**
+    async get(key: string, type?: "text"): Promise<string | null> {
+      return redis.get(key);
+    },
 
-```bash
-git add apps/server/src/common/interceptors/db-scope.interceptor.ts apps/server/src/app.module.ts
-git commit -m "feat: add DB scope interceptor replacing runWithDb middleware"
-```
+    async put(
+      key: string,
+      value: string,
+      options?: { expirationTtl?: number; metadata?: unknown }
+    ): Promise<void> {
+      if (options?.expirationTtl) {
+        await redis.set(key, value, { EX: options.expirationTtl });
+      } else {
+        await redis.set(key, value);
+      }
+    },
 
----
-
-## Task 5: Request-Scoped Context Provider
-
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entry #9.
-> **Markers:**
-> `@blocker-if`: Task 4 (DbScope) is committed. DOES NOT REQUIRE an HttpAdapterHost ref.
-> `@done-when`: a `protectedProcedure` invocation in the running server returns 200 with the session user attached (check via logs).
-> `@verify`: a request without the session cookie returns 401 from the AuthGuard's `canActivate`.
-
-Replaces `createContext()` from `packages/api/src/lib/context/hono/create-context.ts`. This provider resolves the Better Auth session, creates Octokit instances, and assembles the `OrpcContext` per request.
-
-**Files:**
-
-- Create: `apps/server/src/common/providers/request-context.provider.ts`
-
-- [ ] **Step 1: Create Request Context Provider**
-
-```typescript
-import { Injectable, Scope } from "@nestjs/common";
-import { REQUEST } from "@nestjs/core";
-import { Request } from "express";
-import { auth } from "@tsu-stack/auth/index";
-import { createDb, runWithDb, betterAuthAccountRepository } from "@tsu-stack/db";
-import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/client";
-import { resolvePublicGitHubSource } from "@tsu-stack/github/shared/public-github-source";
-import type { OrpcContext } from "@tsu-stack/api/lib/context/types";
-import { AgentService } from "../../modules/agent/agent.service.js";
-import { MediaService } from "../../modules/media/media.service.js";
-
-@Injectable({ scope: Scope.REQUEST })
-export class RequestContextProvider {
-  private context: OrpcContext | null = null;
-
-  constructor(
-    private agentService: AgentService,
-    private mediaService: MediaService
-  ) {}
-
-  async resolve(request: Request): Promise<OrpcContext> {
-    if (this.context) return this.context;
-
-    const session = await auth.api.getSession({
-      headers: request.headers as any
-    });
-
-    const githubSource = await resolvePublicGitHubSource();
-
-    // Resolve OAuth token for private repo access
-    const oauthToken = session?.user?.id
-      ? await runWithDb(createDb(), () =>
-          betterAuthAccountRepository.findGitHubAccessTokenForUser(session.user.id)
-        )
-      : null;
-
-    type ConfiguredSource = Extract<typeof githubSource, { isConfigured: true }>;
-    const privateSource: ConfiguredSource | undefined =
-      oauthToken && githubSource.isConfigured
-        ? { isConfigured: true, owner: githubSource.owner, token: oauthToken }
-        : githubSource.isConfigured
-          ? githubSource
-          : undefined;
-
-    this.context = {
-      github: {
-        binding: { executionContext: null, kv: null, signalRelay: null },
-        privateOctokit: createGitHubOctokit(privateSource),
-        publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
-        source: githubSource
-      },
-      logger: null as any, // Will be set by logging interceptor
-      session,
-      mediaBucket: this.mediaService.getBucket(),
-      agentWorker: this.agentService.getFetcher()
-    };
-
-    return this.context;
-  }
-}
-```
-
-- [ ] **Step 2: Commit**
-
-```bash
-git add apps/server/src/common/providers/request-context.provider.ts
-git commit -m "feat: add request-scoped context provider replacing createContext()"
-```
-
----
-
-## Task 6: Auth Guard, Owner Guard, Decorators, Filters
-
-> **Markers:**
-> `@blocker-if`: Task 5 (RequestContextProvider) is committed.
-> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND an unauthenticated request to an `ownerProcedure` endpoint returns 403.
-> `@verify`: an authenticated request with a non-owner session returns 403; owner returns 200.
-
-**Files:**
-
-- Create: `apps/server/src/common/guards/auth.guard.ts`
-- Create: `apps/server/src/common/guards/owner.guard.ts`
-- Create: `apps/server/src/common/decorators/current-user.decorator.ts`
-- Create: `apps/server/src/common/decorators/public.decorator.ts`
-- Create: `apps/server/src/common/filters/all-exceptions.filter.ts`
-- Create: `apps/server/src/common/interceptors/logging.interceptor.ts`
-
-- [ ] **Step 1: Create Auth Guard**
-
-Maps from `packages/api/src/lib/procedures/factory.ts` `requireAuth` middleware:
-
-```typescript
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { RequestContextProvider } from "../providers/request-context.provider.js";
-
-export const IS_PUBLIC_KEY = "isPublic";
-
-@Injectable()
-export class AuthGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private requestContext: RequestContextProvider
-  ) {}
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass()
-    ]);
-    if (isPublic) return true;
-
-    const request = context.switchToHttp().getRequest();
-    const ctx = await this.requestContext.resolve(request);
-
-    if (!ctx.session?.user) {
-      throw new UnauthorizedException("Not authenticated");
+    async delete(key: string): Promise<void> {
+      await redis.del(key);
     }
-
-    // Attach context to request for controllers
-    request.orpcContext = ctx;
-    return true;
-  }
+  };
 }
 ```
 
-- [ ] **Step 2: Create Owner Guard**
+- [ ] **Step 2: Modify `packages/github/src/runtime/bindings.ts`**
 
-Maps from `packages/api/src/lib/procedures/factory.ts` `requireOwner` middleware:
-
-```typescript
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from "@nestjs/common";
-import { githubConfigRepository } from "@tsu-stack/db/repositories";
-
-@Injectable()
-export class OwnerGuard implements CanActivate {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const ctx = request.orpcContext;
-
-    if (!ctx?.session?.user) {
-      throw new ForbiddenException("Not authenticated");
-    }
-
-    const settings = await githubConfigRepository.findPublicGithubSourceSettings();
-    const ownerUserId = settings?.userId ?? null;
-
-    if (!ownerUserId || ctx.session.user.id !== ownerUserId) {
-      throw new ForbiddenException("Only the GitHub owner can access this resource");
-    }
-
-    return true;
-  }
-}
-```
-
-- [ ] **Step 3: Create `@CurrentUser()` Decorator**
+Add export for the Redis adapter factory:
 
 ```typescript
-import { createParamDecorator, ExecutionContext } from "@nestjs/common";
-
-export const CurrentUser = createParamDecorator((data: string, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest();
-  const user = request.orpcContext?.session?.user;
-  return data ? user?.[data] : user;
-});
+export { createRedisCacheAdapter } from "#@/infrastructure/cache/redis-cache-adapter";
 ```
 
-- [ ] **Step 4: Create `@Public()` Decorator**
+- [ ] **Step 3: Update `packages/api/src/lib/context/hono/create-context.ts`**
+
+Replace `c.env.GITHUB_CACHE_KV` with the Redis adapter. The context now receives a Redis client instance instead of CF bindings:
 
 ```typescript
-import { SetMetadata } from "@nestjs/common";
-import { IS_PUBLIC_KEY } from "../guards/auth.guard.js";
-
-export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
-```
-
-- [ ] **Step 5: Create Global Exception Filter**
-
-Replaces `app.onError()` from `app.ts`:
-
-```typescript
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
-import { Response } from "express";
-import { parseError } from "@tsu-stack/logger/server";
-
-@Catch()
-export class AllExceptionsFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-
-    const parsed = parseError(exception);
-
-    response.status(parsed.status).json({
-      message: parsed.message,
-      ...(parsed.code ? { code: parsed.code } : {}),
-      ...(parsed.why ? { why: parsed.why } : {}),
-      ...(parsed.fix ? { fix: parsed.fix } : {}),
-      ...(parsed.link ? { link: parsed.link } : {})
-    });
-  }
-}
-```
-
-- [ ] **Step 6: Create Logging Interceptor**
-
-Replaces `honoLoggerMiddleware`:
-
-```typescript
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from "@nestjs/common";
-import { Observable, tap } from "rxjs";
-import { log } from "@tsu-stack/logger/server";
-
-@Injectable()
-export class LoggingInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
-    const { method, url } = request;
-    const now = Date.now();
-
-    return next.handle().pipe(
-      tap({
-        next: () => {
-          const elapsed = Date.now() - now;
-          if (!url.includes("/health")) {
-            log.info({ event: "http_request", method, url, elapsed });
-          }
-        },
-        error: (error) => {
-          const elapsed = Date.now() - now;
-          log.error({ event: "http_error", method, url, elapsed, error });
-        }
-      })
-    );
-  }
-}
-```
-
-- [ ] **Step 7: Register Global Guards, Interceptors, Filters in `app.module.ts`**
-
-```typescript
-import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
-import { AuthGuard } from './common/guards/auth.guard.js';
-import { DbScopeInterceptor } from './common/interceptors/db-scope.interceptor.js';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter.js';
-
-@Module({
-  providers: [
-    { provide: APP_GUARD, useClass: AuthGuard },
-    { provide: APP_INTERCEPTOR, useClass: DbScopeInterceptor },
-    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
-    { provide: APP_FILTER, useClass: AllExceptionsFilter },
-  ],
-})
-```
-
-- [ ] **Step 8: Commit**
-
-```bash
-git add apps/server/src/common/
-git commit -m "feat: add NestJS guards, interceptors, decorators, filters"
-```
-
----
-
-## Task 7: oRPC Contract-Only Client View (JSON minification)
-
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entry #6 (catalogs).
-> **Markers:**
-> `@blocker-if`: `packages/api` exists with `appRouter` exposed from `./routers/index`.
-> `@done-when`: `pnpm --filter @tsu-stack/api build:contract` produces `packages/api/contract.json` AND `cat packages/api/contract.json | jq '.projects | keys' | head` lists the projects router procedures.
-
-The browser client needs shape-minified `RouterContract` for `OpenAPILink`. We
-use `minifyContractRouter` to serialize `appRouter` (with handlers) into
-JSON. The server keeps the full implementation; the client import only the
-shape.
-
-**Files:**
-
-- Create: `scripts/build-contract.ts`
-- Modify: `packages/api/package.json` (add contract build script)
-- Create: `packages/api/contract.json` (gitignored, regenerated by the script)
-
-- [ ] **Step 1: Install `@orpc/contract` and `@orpc/openapi`**
-
-```bash
-pnpm add @orpc/contract @orpc/openapi
-```
-
-- [ ] **Step 2: Create `scripts/build-contract.ts`**
-
-```typescript
-import fs from "node:fs";
-import { unlazyRouter } from "@orpc/server";
-import { minifyRouterContract } from "@orpc/contract";
-import { appRouter } from "../packages/api/src/routers/index";
-
-const contract = await unlazyRouter(appRouter);
-const minified = minifyRouterContract(contract);
-
-fs.writeFileSync("./packages/api/contract.json", JSON.stringify(minified));
-console.log("Wrote contract.json");
-```
-
-- [ ] **Step 3: Add build script to `packages/api/package.json`**
-
-```json
-{
-  "scripts": {
-    "build:contract": "tsx scripts/build-contract.ts",
-    "prebuild": "pnpm build:contract"
-  }
-}
-```
-
-- [ ] **Step 4: Add to `.gitignore`**
-
-```
-packages/api/contract.json
-```
-
-- [ ] **Step 5: Run contract build**
-
-```bash
-pnpm --filter @tsu-stack/api build:contract
-```
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add packages/api/package.json scripts/build-contract.ts .gitignore
-git commit -m "feat: add contract.json generation for client"
-```
-
----
-
-## Task 8: Auth Module (Better Auth Passthrough)
-
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entry #14 (HTTP body streaming).
-> **Markers:**
-> `@blocker-if`: BETTER_AUTH_SECRET, BETTER_AUTH_URL env vars are set; Task 3 has `reflect-metadata` installed.
-> `@done-when`: `curl -X POST http://localhost:5000/auth/sign-in -H 'Content-Type: application/json' -d '{...}'` returns a 200/401 with session-cookie headers.
-> `@verify`: protected routes without the cookie return 401; with the cookie return 200.
-
-Better Auth expects raw HTTP requests at `/auth/*`. NestJS middleware passes these through directly.
-
-**Files:**
-
-- Create: `apps/server/src/modules/auth/auth.middleware.ts`
-- Create: `apps/server/src/modules/auth/auth.module.ts`
-
-- [ ] **Step 1: Create Auth Middleware**
-
-```typescript
-import { Injectable, NestMiddleware } from "@nestjs/common";
-import { Request, Response, NextFunction } from "express";
-import { auth } from "@tsu-stack/auth/index";
-
-/**
- * Passes /auth/* requests directly to Better Auth's handler.
- *
- * Better Auth expects raw HTTP requests and manages its own session
- * cookies. We bypass NestJS's request pipeline for these routes.
- *
- * NOTE: This middleware must be registered BEFORE the global AuthGuard
- * and DbScopeInterceptor. The NestJS Middleware module handles ordering.
- */
-@Injectable()
-export class AuthMiddleware implements NestMiddleware {
-  use(req: Request, res: Response, next: NextFunction) {
-    // Better Auth needs the full URL with base path
-    const baseUrl = process.env.VITE_SERVER_URL || "http://localhost:5000/server";
-    const fullPath = new URL(req.originalUrl, baseUrl).toString();
-
-    // Create a new Request with the correct URL for Better Auth
-    const authRequest = new Request(fullPath, {
-      method: req.method,
-      headers: req.headers as any,
-      body: ["GET", "HEAD"].includes(req.method) ? undefined : req
-    });
-
-    auth
-      .handler(authRequest)
-      .then((response) => {
-        // Forward response headers
-        response.headers.forEach((value, key) => {
-          res.setHeader(key, value);
-        });
-        res.status(response.status);
-
-        // Stream body
-        if (response.body) {
-          const reader = response.body.getReader();
-          const pump = async (): Promise<void> => {
-            const { done, value } = await reader.read();
-            if (done) {
-              res.end();
-              return;
-            }
-            res.write(value);
-            return pump();
-          };
-          pump().catch(() => res.end());
-        } else {
-          res.end();
-        }
-      })
-      .catch(next);
-  }
-}
-```
-
-- [ ] **Step 2: Create Auth Module**
-
-```typescript
-import { Module, NestModule, MiddlewareConsumer } from "@nestjs/common";
-import { AuthMiddleware } from "./auth.middleware.js";
-
-/**
- * Registers Better Auth middleware for /auth/* routes.
- *
- * IMPORTANT: This middleware runs BEFORE the global DbScopeInterceptor
- * and AuthGuard because NestJS middleware executes before interceptors.
- * Better Auth uses its own HTTP Drizzle singleton, not the per-request
- * scoped DB — so it intentionally bypasses the DB scope.
- */
-@Module({})
-export class AuthModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes("auth");
-  }
-}
-```
-
-- [ ] **Step 3: Update `app.module.ts` to import `AuthModule`**
-
-```typescript
-import { AuthModule } from './modules/auth/auth.module.js';
-
-@Module({
-  imports: [
-    AuthModule, // Must be first to register /auth/* middleware early
-    // ... other modules
-  ],
-})
+// In createContext(), replace:
+//   kv: c.env.GITHUB_CACHE_KV,
+// With:
+//   kv: createRedisCacheAdapter(redisClient),
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add apps/server/src/modules/auth/
-git commit -m "feat: add Better Auth middleware passthrough"
+git add packages/github/src/infrastructure/cache/redis-cache-adapter.ts packages/github/src/runtime/bindings.ts packages/api/src/lib/context/hono/create-context.ts
+git commit -m "feat: add Redis adapter for GitHub cache replacing CF KV"
 ```
 
 ---
 
-## Task 9: GitHub Module (WebSocket + Controllers)
+## Task 5: MinIO/S3 Media Adapter
 
-> **Pitfalls:** Refer to the `@socket.io/redis-adapter` ADR-0021 in [`/docs/adr/0021-socketio-redis-pubsub-broadcast-adapter.md`](../../adr/0021-socketio-redis-pubsub-broadcast-adapter.md).
+> **Pitfalls:** #3 (S3 adapter must match `OrpcContextMediaBucket` interface — `put` returns `{ key }`, `get` returns `{ body, key } | null`).
 > **Markers:**
-> `@blocker-if`: Redis is running and reachable at REDIS_URL; Task 13 (Cache service with getClient / getSubscriber) is committed.
-> `@done-when`: browser connects to `ws://localhost:5000` and emits `subscribe` with keys; `redis-cli -a $REDIS_PASSWORD PUBSUB CHANNELS '*'` shows the broadcast channel active.
-> `@verify`: broadcast across two `node` instances hits both connections (manual two-process check).
+> `@blocker-if`: MinIO running at `S3_ENDPOINT`.
+> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND `node dist/node.js` boots without MinIO connection errors.
+> `@verify`: Resume upload endpoint returns a presigned URL (test with curl).
 
-Replaces the Cloudflare Durable Object `GitHubSignalRelay` with a Socket.IO WebSocket Gateway. Also mounts the existing `appRouter.github` via `@Implement`. **Per ADR-0021 the broadcast goes through Redis pub/sub via `@socket.io/redis-adapter`.**
+Replaces CF R2 binding (`MEDIA_BUCKET`) with MinIO/S3. `files-sdk` has a built-in S3 adapter (`files-sdk/s3`) that accepts `endpoint`, `forcePathStyle`, `credentials`, and `publicBaseUrl` — same options MinIO needs. The `Files` instance returned by `files-sdk` already implements `put`, `get`, `delete` with the same signatures as `OrpcContextMediaBucket`.
 
 **Files:**
 
-- New install: `pnpm add @socket.io/redis-adapter --filter @tsu-stack/server`
-- Create: `apps/server/src/modules/github/github.gateway.ts`
-- Create: `apps/server/src/modules/github/github.service.ts`
-- Create: `apps/server/src/modules/github/github.controller.ts`
-- Create: `apps/server/src/modules/github/github.webhook.controller.ts` (replaces Hono's `app.post('/webhooks/github', …)` — also calls `GithubService.broadcastSignals(signalKeys)` after success)
-- Create: `apps/server/src/modules/github/github.module.ts`
+- Modify: `packages/api/src/lib/storage/index.ts` (swap `files-sdk/r2` for `files-sdk/s3`)
+- Modify: `packages/api/src/lib/context/hono/create-context.ts` (pass `Files` instance instead of R2 binding)
+- Modify: `apps/web/src/server/files-gateway.ts` (remove `cloudflare:workers` import, use S3-based `createFiles`)
+- Modify: `packages/env/src/server/env.ts` (add `S3_*` env vars)
 
-**CRITICAL — Webhook controller must broadcast** (via `GithubService.broadcastSignals`):
-
-The Hono handler (`apps/server/src/app.ts:134`) currently calls
-`stub.fetch(...)` through `runtime.signalRelay?.get('global')`.
-After migration that path is gone — `runtime.signalRelay` is
-`undefined` for self-hosted. Without an explicit broadcast, signals
-only land in DB rows and never reach connected WebSocket clients.
-
-The new controller **must** call `broadcastSignals(signalKeys)`
-after the `handleGitHubWebhook` call returns to keep live clients
-in sync. See Step 4.
-
-- [ ] **Step 1: Create GitHub Gateway (WebSocket)**
-
-- [ ] **Step 1: Install the Redis Socket.IO adapter**
-
-```bash
-pnpm add @socket.io/redis-adapter --filter @tsu-stack/server
-```
-
-- [ ] **Step 2: Create GitHub Gateway (WebSocket + Redis Adapter)**
-
-Replaces `apps/server/src/github-signal-relay.ts` Durable Object. Cross-instance
-broadcast through `@socket.io/redis-adapter` fan-out via the existing
-`CacheService` Redis connection (see ADR-0021):
+- [ ] **Step 1: Add S3 env vars to `packages/env/src/server/env.ts`**
 
 ```typescript
-import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit
-} from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
+S3_ENDPOINT: z.string().optional(),
+S3_ACCESS_KEY: z.string().optional(),
+S3_SECRET_KEY: z.string().optional(),
+S3_BUCKET: z.string().default("personal-hub"),
+S3_REGION: z.string().default("us-east-1"),
+S3_FORCE_PATH_STYLE: z.stringbool().default(true),
+MEDIA_PUBLIC_URL: z.string().optional(),
+```
+
+- [ ] **Step 2: Update `packages/api/src/lib/storage/index.ts`**
+
+Replace the `files-sdk/r2` adapter with `files-sdk/s3`. The S3 adapter accepts `endpoint`, `forcePathStyle`, `credentials`, and `publicBaseUrl` — all MinIO-compatible:
+
+```typescript
+import { Files } from "files-sdk";
+import { s3 } from "files-sdk/s3";
+
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
+
+export function createFiles() {
+  return new Files({
+    adapter: s3({
+      bucket: ENV_SERVER.S3_BUCKET || "personal-hub",
+      region: ENV_SERVER.S3_REGION || "us-east-1",
+      endpoint: ENV_SERVER.S3_ENDPOINT,
+      forcePathStyle: ENV_SERVER.S3_FORCE_PATH_STYLE ?? true,
+      credentials: {
+        accessKeyId: ENV_SERVER.S3_ACCESS_KEY || "",
+        secretAccessKey: ENV_SERVER.S3_SECRET_KEY || ""
+      },
+      publicBaseUrl: ENV_SERVER.MEDIA_PUBLIC_URL
+    })
+  });
+}
+```
+
+The `Files` instance's `put`, `get`, `delete` methods match `OrpcContextMediaBucket`:
+
+- `put(key, value, options?)` → returns `Promise<{ key: string }>`
+- `get(key)` → returns `Promise<{ body: ReadableStream | null; key: string } | null>`
+- `delete(key)` → returns `Promise<void>`
+
+- [ ] **Step 3: Update `packages/api/src/lib/context/hono/create-context.ts`**
+
+Replace `context.env.MEDIA_BUCKET` with the `Files` instance. Note: `Files` is structurally compatible with `OrpcContextMediaBucket`:
+
+```typescript
+import { createFiles } from "@tsu-stack/api/lib/storage/index";
+
+// In createContext(), replace:
+//   const mediaBucket = context.env.MEDIA_BUCKET as OrpcContextMediaBucket | undefined;
+//   if (!mediaBucket) { throw new Error("MEDIA_BUCKET binding is not configured"); }
+// With:
+//   const mediaBucket = createFiles();
+```
+
+- [ ] **Step 4: Update `apps/web/src/server/files-gateway.ts`**
+
+Remove `import { env } from "cloudflare:workers"` and call `createFiles()` with no arguments (S3 config comes from env vars):
+
+```typescript
+// Remove: import { env } from "cloudflare:workers";
+// Change: createFiles(env.MEDIA_BUCKET) → createFiles()
+import { createFiles } from "@tsu-stack/api/lib/storage/index";
+
+export const filesRouter = createFilesRouter({
+  files: createFiles()
+  // ... rest unchanged
+});
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add packages/api/src/lib/storage/index.ts packages/env/src/server/env.ts packages/api/src/lib/context/hono/create-context.ts apps/web/src/server/files-gateway.ts
+git commit -m "feat: add MinIO/S3 media adapter via files-sdk/s3 replacing CF R2"
+```
+
+---
+
+## Task 6: Socket.IO WebSocket Gateway
+
+> **Pitfalls:** #4 (Socket.IO uses `socket.io-client` on browser, not raw WebSocket).
+> **Markers:**
+> `@blocker-if`: Redis running (for cross-instance broadcast).
+> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND `node dist/node.js` boots with Socket.IO initialized.
+> `@verify`: Browser connects to `ws://localhost:5100` via Socket.IO client and receives signals.
+
+Replaces CF Durable Object `GitHubSignalRelay` with Socket.IO + Redis adapter.
+
+**Files:**
+
+- Install: `socket.io`, `@socket.io/redis-adapter`, `ioredis` (already in package.json from Task 3)
+- Create: `apps/server/src/github-gateway.ts`
+- Modify: `apps/server/src/app.ts` (replace DO route with Socket.IO)
+- Modify: `apps/server/src/node.ts` (initialize gateway)
+
+- [ ] **Step 1: Create Socket.IO Gateway**
+
+```typescript
+import { Server as SocketIOServer } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { CacheService } from "../cache/cache.service.js";
+import type { Server as HTTPServer } from "node:http";
+import Redis from "ioredis";
 
-type SocketState = { keys: string[] };
+type ClientSubscription = {
+  keys: Set<string>;
+};
 
-@WebSocketGateway({
-  cors: {
-    origin: [
-      process.env.VITE_WEB_URL || "http://localhost:3000",
-      process.env.VITE_SERVER_URL || "http://localhost:5000"
-    ],
-    credentials: true
-  }
-})
-export class GithubGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
-  @WebSocketServer()
-  server: Server;
+let _broadcastSignals: ((signalKeys: string[]) => void) | null = null;
 
-  private clientKeys = new Map<string, Set<string>>();
+export function createGithubGateway(httpServer: HTTPServer, redisUrl: string) {
+  const pubClient = new Redis(redisUrl);
+  const subClient = pubClient.duplicate();
 
-  constructor(private readonly cacheService: CacheService) {}
-
-  async afterInit() {
-    // CacheService exposes the same pub/sub pattern as ioredis.
-    // The adapter plugs two clients (pub + sub) into Socket.IO.
-    this.server.adapter(
-      createAdapter(this.cacheService.getClient(), this.cacheService.getSubscriber())
-    );
-    console.log("[WS] Socket.IO attached to Redis adapter");
-  }
-
-  handleConnection(client: Socket) {
-    console.log(`[WS] Client connected: ${client.id}`);
-  }
-
-  handleDisconnect(client: Socket) {
-    this.clientKeys.delete(client.id);
-    console.log(`[WS] Client disconnected: ${client.id}`);
-  }
-
-  @SubscribeMessage("subscribe")
-  handleSubscribe(client: Socket, payload: { keys: string[] }) {
-    if (payload?.keys && Array.isArray(payload.keys)) {
-      this.clientKeys.set(client.id, new Set(payload.keys));
-      for (const key of payload.keys) {
-        client.join(`signal:${key}`);
-      }
+  const io = new SocketIOServer(httpServer, {
+    path: "/api/ws/github-signals",
+    cors: {
+      origin: "*",
+      credentials: true
     }
-  }
+  });
 
-  /**
-   * Broadcast signals to all locally-connected clients. The
-   * @socket.io/redis-adapter forwards the same call across instances
-   * automatically — only this server's directly connected clients are
-   * enumerated; the adapter handles the rest.
-   *
-   * Called by GithubService when a webhook or signal is received.
-   */
-  broadcastSignals(signalKeys: string[]) {
+  io.adapter(createAdapter(pubClient, subClient));
+
+  const clientSubscriptions = new Map<string, ClientSubscription>();
+
+  io.on("connection", (socket) => {
+    console.log(`[WS] Client connected: ${socket.id}`);
+
+    socket.on("subscribe", (payload: { keys: string[] }) => {
+      if (payload?.keys && Array.isArray(payload.keys)) {
+        clientSubscriptions.set(socket.id, {
+          keys: new Set(payload.keys)
+        });
+        for (const key of payload.keys) {
+          socket.join(`signal:${key}`);
+        }
+      }
+    });
+
+    socket.on("disconnect", () => {
+      clientSubscriptions.delete(socket.id);
+      console.log(`[WS] Client disconnected: ${socket.id}`);
+    });
+  });
+
+  function broadcastSignals(signalKeys: string[]) {
     const signalSet = new Set(signalKeys);
-
-    for (const [clientId, keys] of this.clientKeys) {
-      if (keys.size > 0 && [...keys].some((key) => signalSet.has(key))) {
-        this.server.to(clientId).emit("github-signals", {
+    for (const [clientId, sub] of clientSubscriptions) {
+      if (sub.keys.size > 0 && [...sub.keys].some((key) => signalSet.has(key))) {
+        io.to(clientId).emit("github-signals", {
           type: "signals",
           keys: signalKeys
         });
@@ -1320,739 +718,240 @@ export class GithubGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     }
   }
 
-  /**
-   * Broadcast webhook payload to all connected clients (locally + cross-instance
-   * via the adapter).
-   */
-  broadcastWebhook(event: string, payload: unknown) {
-    this.server.emit("github-webhook", { event, payload });
+  function broadcastWebhook(event: string, payload: unknown) {
+    io.emit("github-webhook", { event, payload });
   }
+
+  return { io, broadcastSignals, broadcastWebhook };
+
+  _broadcastSignals = broadcastSignals;
+}
+
+export function broadcastSignals(signalKeys: string[]) {
+  _broadcastSignals?.(signalKeys);
 }
 ```
 
-- [ ] **Step 2: Create GitHub Service**
+- [ ] **Step 2: Modify `apps/server/src/app.ts`**
+
+Remove the Durable Object route and WebSocket upgrade handling. Socket.IO handles its own path.
+
+- [ ] **Step 3: Update `apps/server/src/node.ts`**
+
+Initialize Socket.IO gateway after HTTP server starts:
 
 ```typescript
-import { Injectable } from "@nestjs/common";
-import { GithubGateway } from "./github.gateway.js";
+import { serve } from "@hono/node-server";
+import type { Server as HTTPServer } from "node:http";
+import { app } from "#@/app";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { createGithubGateway } from "#@/github-gateway";
 
-@Injectable()
-export class GithubService {
-  constructor(private readonly gateway: GithubGateway) {}
+const port = Number(ENV_SERVER.PORT ?? 5100);
 
-  broadcastSignals(signalKeys: string[]) {
-    this.gateway.broadcastSignals(signalKeys);
+const httpServer = serve(
+  {
+    fetch: app.fetch,
+    port
+  },
+  (info) => {
+    console.log(`Server running on http://localhost:${info.port}`);
   }
-
-  broadcastWebhook(event: string, payload: unknown) {
-    this.gateway.broadcastWebhook(event, payload);
-  }
-}
-```
-
-- [ ] **Step 3: Create GitHub Controller**
-
-Mounts existing `appRouter.github` via `@Implement`:
-
-```typescript
-import { Controller } from "@nestjs/common";
-import { Implement } from "@orpc/nest";
-import { appRouter } from "@tsu-stack/api/routers/index";
-import { Public } from "../../common/decorators/public.decorator.js";
-
-@Controller()
-export class GithubController {
-  /**
-   * Mounts the existing github router from packages/api.
-   * @Implement generates NestJS routes from the oRPC router's
-   * OpenAPI metadata and routes HTTP calls through the @ImplementInterceptor.
-   * The handler returns the same router back; the dispatcher already has
-   * the .handler() attached inside it.
-   */
-  @Implement(appRouter.github)
-  @Public() // GitHub endpoints are public
-  github() {
-    return appRouter.github;
-  }
-}
-```
-
-- [ ] **Step 4: Create GitHub Module**
-
-```typescript
-import { Module } from "@nestjs/common";
-import { GithubController } from "./github.controller.js";
-import { GithubWebhookController } from "./github.webhook.controller.js";
-import { GithubService } from "./github.service.js";
-import { GithubGateway } from "./github.gateway.js";
-
-@Module({
-  controllers: [GithubController, GithubWebhookController],
-  providers: [GithubService, GithubGateway],
-  exports: [GithubService]
-})
-export class GithubModule {}
-```
-
-- [ ] **Step 4: Create the GitHub Webhook controller** (replaces Hono's `app.post('/webhooks/github', …)`)
-
-This controller's primary purpose is to receive GitHub webhooks, call
-`handleGitHubWebhook(...)` (already in `@tsu-stack/github`), and BROADCAST
-the resulting signal keys to live WebSocket clients via `GithubService`.
-
-The broadcast call replaces the old `runtime.signalRelay.get('global').fetch(...)` indirection that ran in the Hono handler — see PITFALLS section #21.
-
-```typescript
-// apps/server/src/modules/github/github.webhook.controller.ts
-import { Body, Controller, Headers, HttpCode, Logger, Post, Req } from "@nestjs/common";
-import { type Request } from "express";
-import { handleGitHubWebhook } from "@tsu-stack/github";
-
-import { PUBLIC } from "../../common/decorators/public.decorator.js";
-import { GithubService } from "./github.service.js";
-import {
-  getGitHubWebhookNamespaceKeys,
-  getGitHubWebhookSignalKeys
-} from "@tsu-stack/github/infrastructure/cache/github-cache";
-
-@Controller("webhooks")
-export class GithubWebhookController {
-  private readonly logger = new Logger(GithubWebhookController.name);
-
-  constructor(private readonly githubService: GithubService) {}
-
-  @Post("github")
-  @PUBLIC()
-  @HttpCode(200)
-  async handle(
-    @Req() req: Request,
-    @Headers("x-github-delivery") deliveryId: string,
-    @Headers("x-github-event") event: string,
-    @Headers("x-hub-signature-256") signature256: string,
-    @Body() payload: unknown
-  ): Promise<{ ok: true }> {
-    if (!deliveryId || !event) {
-      throw new Error("Missing GitHub webhook delivery-id or event header");
-    }
-    if (!process.env.GITHUB_WEBHOOK_SECRET) {
-      throw new Error("GITHUB_WEBHOOK_SECRET not set");
-    }
-
-    // We use the raw body via express's `verify` for HMAC verification.
-    // Install app.use(express.json({ verify: ... })) in main.ts separately
-    // (see Task 3 main.ts addendum).
-
-    const rawBody =
-      typeof (req as any).rawBody === "string"
-        ? ((req as any).rawBody as string)
-        : Buffer.isBuffer((req as any).rawBody)
-          ? ((req as any).rawBody as Buffer).toString("utf8")
-          : JSON.stringify(payload);
-
-    const result = await handleGitHubWebhook({
-      deliveryId,
-      event,
-      payload,
-      rawBody, // ← MUST be original raw bytes for HMAC verification (NOT reserialized JSON)
-      runtime: undefined, // ← self-hosted has no DO/KV bindings
-      signature256: signature256 ?? null,
-      webhookSecret: process.env.GITHUB_WEBHOOK_SECRET!
-    });
-
-    // BROADCAST to live WebSocket clients — subnet replacement for the
-    // old Cloudflare Durable Object broadcast (see ADR-0021).
-    const signalKeys = getGitHubWebhookSignalKeys(event, payload);
-    if (signalKeys.length > 0) {
-      this.githubService.broadcastSignals(signalKeys);
-    }
-    const namespaceKeys = getGitHubWebhookNamespaceKeys(event, payload);
-    if (namespaceKeys.length > 0) {
-      this.githubService.broadcastWebhook(event, payload);
-    }
-
-    this.logger.log(`webhook ${event} (delivery ${deliveryId}) -> status ${result.status}`);
-
-    return { ok: true };
-  }
-}
-```
-
-> **Sub-task** (in Task 3 main.ts): enable raw-body capture so signature verification still works:
-
-```typescript
-// apps/server/src/main.ts — add BEFORE NestFactory.create(...)
-import bodyParser from "body-parser";
-
-const app = await NestFactory.create(AppModule, {
-  rawBody: true // ← NestJS sends req.rawBody to controllers
-});
-app.use(
-  "/webhooks/github",
-  bodyParser.json({
-    verify: (req: any, _res, buf) => {
-      req.rawBody = buf; // HMAC verification reads the raw bytes
-    }
-  })
 );
-```
 
-> **Markers:**
-> `@done-when`: a curl POSTing a forged GitHub webhook payload to `/webhooks/github` with valid `X-Hub-Signature-256` returns 200 and calls `broadcastSignals`.
-> `@verify`: a curl WITHOUT a signature returns 400.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add apps/server/src/modules/github/
-git commit -m "feat: add GitHub module with WebSocket gateway + webhook controller"
-```
-
----
-
-## Task 10: Feature Controllers (Mount Existing Routers)
-
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entry #2 (no NestJS HTTP decorators beside `@Implement`).
-> **Markers:**
-> `@blocker-if`: Tasks 3, 4, 5, 6 (guards + interceptors + context) and Task 11 (`MASTRA` provider) committed.
-> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND each controller's procedures return 200 in `curl`.
-> `@verify`: a `protectedProcedure` returns 200 with a valid session cookie and 401 without.
-
-Each controller uses `@Implement(appRouter.xxx)` to mount the existing oRPC routers from `packages/api`. No business logic changes — just wiring. DO NOT add `@Get`/`@Post` decorators beside `@Implement`.
-
-**Files:**
-
-- Create: `apps/server/src/modules/projects/projects.module.ts`
-- Create: `apps/server/src/modules/projects/projects.controller.ts`
-- Create: `apps/server/src/modules/experiences/experiences.module.ts`
-- Create: `apps/server/src/modules/experiences/experiences.controller.ts`
-- Create: `apps/server/src/modules/stacks/stacks.module.ts`
-- Create: `apps/server/src/modules/stacks/stacks.controller.ts`
-- Create: `apps/server/src/modules/portfolio/portfolio.module.ts`
-- Create: `apps/server/src/modules/portfolio/portfolio.controller.ts`
-- Create: `apps/server/src/modules/profile/profile.module.ts`
-- Create: `apps/server/src/modules/profile/profile.controller.ts`
-- Create: `apps/server/src/modules/resume/resume.module.ts`
-- Create: `apps/server/src/modules/resume/resume.controller.ts`
-- Create: `apps/server/src/modules/contact/contact.module.ts`
-- Create: `apps/server/src/modules/contact/contact.controller.ts`
-- Create: `apps/server/src/modules/github-config/github-config.module.ts`
-- Create: `apps/server/src/modules/github-config/github-config.controller.ts`
-
-- [ ] **Step 1: Create Projects Controller + Module**
-
-```typescript
-// projects.controller.ts
-import { Controller } from "@nestjs/common";
-import { Implement } from "@orpc/nest";
-import { appRouter } from "@tsu-stack/api/routers/index";
-
-@Controller()
-export class ProjectsController {
-  @Implement(appRouter.projects)
-  projects() {
-    return appRouter.projects;
-  }
+// Initialize Socket.IO gateway — official Socket.IO docs show this exact
+// pattern for Hono + Node.js:
+// https://socket.io/docs/v4/server-initialization/#with-hono-nodejs
+if (ENV_SERVER.REDIS_URL) {
+  createGithubGateway(httpServer as HTTPServer, ENV_SERVER.REDIS_URL);
 }
 ```
 
-```typescript
-// projects.module.ts
-import { Module } from "@nestjs/common";
-import { ProjectsController } from "./projects.controller.js";
-
-@Module({ controllers: [ProjectsController] })
-export class ProjectsModule {}
-```
-
-- [ ] **Step 2: Create remaining controllers (same pattern)**
-
-Each follows the same pattern:
-
-| Controller               | Router                   | Auth                               |
-| ------------------------ | ------------------------ | ---------------------------------- |
-| `ExperiencesController`  | `appRouter.experiences`  | Protected (auto from guard)        |
-| `StacksController`       | `appRouter.stacks`       | Mix (public read, protected write) |
-| `PortfolioController`    | `appRouter.portfolio`    | Public                             |
-| `ProfileController`      | `appRouter.profile`      | Mix                                |
-| `ResumeController`       | `appRouter.resume`       | Protected                          |
-| `ContactController`      | `appRouter.contact`      | Protected                          |
-| `GithubConfigController` | `appRouter.githubConfig` | Owner-only                         |
-
-Example for Stacks (mix of public/protected):
+The gateway exports `broadcastSignals` and `broadcastWebhook` via a module-level variable in `github-gateway.ts` so the webhook handler can import and call them without `globalThis`:
 
 ```typescript
-@Controller()
-export class StacksController {
-  @Implement(appRouter.stacks)
-  stacks() {
-    return appRouter.stacks;
-  }
+// apps/server/src/github-gateway.ts — module-level export
+let _broadcastSignals: ((signalKeys: string[]) => void) | null = null;
+
+export function createGithubGateway(httpServer: HTTPServer, redisUrl: string) {
+  // ... (same as Step 2) ...
+  _broadcastSignals = broadcastSignals;
+  return { io, broadcastSignals, broadcastWebhook };
+}
+
+export function broadcastSignals(signalKeys: string[]) {
+  _broadcastSignals?.(signalKeys);
 }
 ```
 
-- [ ] **Step 3: Create all module files**
-
-Each module simply declares its controller:
+Then in the webhook handler, import `broadcastSignals` directly:
 
 ```typescript
-@Module({ controllers: [XxxController] })
-export class XxxModule {}
+import { broadcastSignals } from "#@/github-gateway";
+// ... in handleGitHubWebhook:
+if (input.runtime?.broadcast) {
+  input.runtime.broadcast(signalKeys);
+}
+// Or call directly: broadcastSignals(signalKeys);
 ```
 
-- [ ] **Step 4: Update `app.module.ts` to import all feature modules**
-
-```typescript
-@Module({
-  imports: [
-    AuthModule,
-    CacheModule,
-    MediaModule,
-    GithubModule,
-    ProjectsModule,
-    ExperiencesModule,
-    StacksModule,
-    PortfolioModule,
-    ProfileModule,
-    ResumeModule,
-    ContactModule,
-    GithubConfigModule,
-    AgentModule,
-    HealthModule,
-  ],
-})
-```
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add apps/server/src/modules/projects/ apps/server/src/modules/experiences/ apps/server/src/modules/stacks/ apps/server/src/modules/portfolio/ apps/server/src/modules/profile/ apps/server/src/modules/resume/ apps/server/src/modules/contact/ apps/server/src/modules/github-config/
-git commit -m "feat: add feature controllers mounting existing oRPC routers"
+git add apps/server/src/github-gateway.ts apps/server/src/node.ts apps/server/src/app.ts apps/server/package.json
+git commit -m "feat: add Socket.IO gateway replacing CF Durable Object"
 ```
 
 ---
 
-## Task 11: Agent Module — Mastra Integration via `@mastra/nestjs`
+## Task 7: Update Agent Worker Communication
 
-> **Foldout:** [`foldouts/task-11-mastra-module.md`](./foldouts/task-11-mastra-module.md)
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entries #5, #9, #11, #17.
+> **Pitfalls:** #5 (Agent Worker URL must be absolute).
 > **Markers:**
-> `@blocker-if`: Task 3 (NestJS bootstrap) and Task 11 (MastraModule) MUST land in the same PR. Cloudflare packages removed.
-> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND `node --require ./dist/instrumentation.js ./dist/main.js` boots with "personal-hub-mastra" service in OTel SDK output.
-> `@verify`: `curl -s http://localhost:5000/agent/api/agents | jq '. | length'` returns at least 2 (weatherAgent, stackCategorizerAgent).
+> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND agent endpoints return 200.
+> `@verify`: `curl http://localhost:5100/agent/api/agents` returns agent list.
 
-`apps/agent/src/mastra/index.ts` is registered as a NestJS module via
-`MastraModule.register({ mastra, prefix: '/agent' })`. This exposes every
-agent/workflow/tool/MCP endpoint under `/agent/*` AND lets our controllers
-inject the `mastra` instance directly via `@Inject(MASTRA)`. **No HTTP
-proxy. No AgentService.** (See ADR-0018.)
+The `AGENT_WORKER` CF service binding is replaced with direct HTTP fetch to `AGENT_WORKER_URL`.
 
 **Files:**
 
-- Modify: `apps/agent/src/mastra/index.ts`
-- Modify: `apps/server/src/app.module.ts` (add `MastraModule.register` LAST)
-- Modify: `apps/server/src/instrumentation.ts` (NodeSDK + OtelExporter)
-- Modify: `apps/server/src/main.ts` (add `import "reflect-metadata"` first line)
+- Modify: `packages/api/src/lib/agent/worker.ts`
+- Modify: `packages/api/src/lib/context/hono/create-context.ts`
 
-**If only the OpenAPI-mounted routes are needed** (the common case), this
-task is just the `MastraModule.register` call in `app.module.ts`. No
-custom controller class is required. The `apps/server/src/modules/agent/`
-directory can be empty.
+- [ ] **Step 1: Update `packages/api/src/lib/agent/worker.ts`**
 
-- [ ] **Step 1: Install `@mastra/nestjs`**
-
-```bash
-pnpm add @mastra/nestjs --filter @tsu-stack/server
-```
-
-- [ ] **Step 2: Update `app.module.ts`**
-
-Replace the `import { ORPCModule } from '@orpc/nest'` reference with the
-actual integration. Both `@orpc/nest` (`ORPCModule.forRoot`) and
-`@mastra/nestjs` (`MastraModule.register`) need to be imported —
-ORPCModule first, MastraModule last (catch-all controller).
+The existing code already has a fallback to `AGENT_WORKER_URL` HTTP fetch — just need to make sure it works without CF bindings. Remove the `Fetcher` type import:
 
 ```typescript
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { ScheduleModule } from "@nestjs/schedule";
-import { MastraModule } from "@mastra/nestjs";
-import { ORPCModule } from "@orpc/nest";
+import type { OrpcContextAgentWorker } from "#@/lib/context/types";
 
-import { mastra } from "../../agent/src/mastra/index.js";
-// ... other imports
+export type AgentWorkerEnv = {
+  AGENT_WORKER_URL?: string;
+};
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    ScheduleModule.forRoot(),
-    ORPCModule.forRoot({
-      /* per-task-3 config */
-    }),
-    AuthModule, // applies auth middleware
-    CacheModule,
-    MediaModule,
-    GithubModule,
-    ProjectsModule,
-    ExperiencesModule,
-    StacksModule,
-    PortfolioModule,
-    ProfileModule,
-    ResumeModule,
-    ContactModule,
-    GithubConfigModule,
-    HealthModule,
-    MastraModule.register({
-      // ← LAST (catch-all @All)
-      mastra,
-      prefix: "/agent",
-      rateLimitOptions: { enabled: true, defaultLimit: 200, generateLimit: 20, windowMs: 60_000 },
-      shutdownOptions: { timeoutMs: 30_000, notifyClients: true },
-      streamOptions: { redact: true, heartbeatMs: 20_000 }
-    })
-  ]
-})
-export class AppModule {}
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add apps/server/src/app.module.ts apps/server/package.json
-git commit -m "feat: register MastraModule in NestJS app"
-```
-
----
-
-## Task 12: Media Module (MinIO)
-
-Replaces Cloudflare R2 with MinIO. The existing `packages/api` uses `context.mediaBucket` — the `MediaService` provides a compatible interface.
-
-**Files:**
-
-- Create: `apps/server/src/modules/media/media.service.ts`
-- Create: `apps/server/src/modules/media/media.module.ts`
-
-- [ ] **Step 1: Create Media Service**
-
-```typescript
-import { Injectable, OnModuleInit } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import * as Minio from "minio";
-import { randomUUID } from "crypto";
-
-@Injectable()
-export class MediaService implements OnModuleInit {
-  private minioClient: Minio.Client;
-  private bucketName = "personal-hub";
-
-  constructor(private configService: ConfigService) {
-    this.minioClient = new Minio.Client({
-      endPoint: this.configService.get("MINIO_ENDPOINT", "localhost"),
-      port: parseInt(this.configService.get("MINIO_PORT", "9000")),
-      useSSL: this.configService.get("MINIO_USE_SSL", "false") === "true",
-      accessKey: this.configService.get("MINIO_ACCESS_KEY", "minioadmin"),
-      secretKey: this.configService.get("MINIO_SECRET_KEY", "minioadmin")
-    });
-  }
-
-  async onModuleInit() {
-    // Ensure bucket exists
-    const exists = await this.minioClient.bucketExists(this.bucketName);
-    if (!exists) {
-      await this.minioClient.makeBucket(this.bucketName);
-      // Set public read policy
-      const policy = {
-        Version: "2012-10-17",
-        Statement: [
-          {
-            Effect: "Allow",
-            Principal: { AWS: ["*"] },
-            Action: ["s3:GetObject"],
-            Resource: [`arn:aws:s3:::${this.bucketName}/*`]
-          }
-        ]
-      };
-      await this.minioClient.setBucketPolicy(this.bucketName, JSON.stringify(policy));
-    }
-  }
-
-  /**
-   * Returns a bucket-compatible interface matching the existing
-   * OrpcContextMediaBucket type from @tsu-stack/core.
-   */
-  getBucket() {
-    return {
-      put: async (key: string, body: any, options?: any) => {
-        const buffer = Buffer.isBuffer(body) ? body : Buffer.from(await body.arrayBuffer());
-        await this.minioClient.putObject(this.bucketName, key, buffer, buffer.length, {
-          "Content-Type": options?.httpMetadata?.contentType || "application/octet-stream"
-        });
-      },
-      get: async (key: string) => {
-        const obj = await this.minioClient.getObject(this.bucketName, key);
-        return obj;
-      },
-      delete: async (key: string) => {
-        await this.minioClient.removeObject(this.bucketName, key);
+export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
+  return {
+    fetch(input, init) {
+      const baseUrl = env.AGENT_WORKER_URL;
+      if (!baseUrl) {
+        throw new Error("Agent worker is not configured. Set AGENT_WORKER_URL.");
       }
-    };
-  }
+      const inputUrl = input instanceof Request ? input.url : String(input);
+      const resolved = new URL(inputUrl, baseUrl).href;
 
-  async upload(filename: string, contentType: string, data: Buffer) {
-    const key = `${randomUUID()}-${filename}`;
-    await this.minioClient.putObject(this.bucketName, key, data, data.length, {
-      "Content-Type": contentType
-    });
-    return {
-      key,
-      url: `${this.configService.get("MINIO_ENDPOINT", "localhost")}/${this.bucketName}/${key}`
-    };
-  }
-
-  async getPresignedUrl(filename: string, contentType: string) {
-    const key = `${randomUUID()}-${filename}`;
-    const uploadUrl = await this.minioClient.presignedPutObject(this.bucketName, key, 24 * 60 * 60);
-    return { uploadUrl, key };
-  }
+      const request = new Request(resolved, init);
+      return fetch(resolved, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        // Required when forwarding a streaming body to fetch()
+        // @ts-expect-error - duplex is non-standard but supported in Node 18+
+        duplex: "half"
+      });
+    }
+  };
 }
 ```
 
-- [ ] **Step 2: Create Media Module**
+- [ ] **Step 2: Update `packages/api/src/lib/context/hono/create-context.ts`**
+
+Remove CF binding references:
 
 ```typescript
-import { Module } from "@nestjs/common";
-import { MediaService } from "./media.service.js";
+// Remove:
+//   AGENT_WORKER?: Fetcher;
+//   GITHUB_CACHE_KV?: GitHubRuntimeBindings["kv"];
+//   GITHUB_SIGNAL_RELAY?: GitHubRuntimeBindings["signalRelay"];
+//   MEDIA_BUCKET?: unknown;
 
-@Module({
-  providers: [MediaService],
-  exports: [MediaService]
-})
-export class MediaModule {}
+// Replace with:
+//   AGENT_WORKER_URL?: string;
+//   redisClient?: Redis;
+//   s3Client?: S3Client;
 ```
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add apps/server/src/modules/media/
-git commit -m "feat: add Media module with MinIO replacing R2"
+git add packages/api/src/lib/agent/worker.ts packages/api/src/lib/context/hono/create-context.ts
+git commit -m "feat: remove CF service binding from agent worker communication"
 ```
 
 ---
 
-## Task 13: Cache Module (Redis)
+## Task 8: Update GitHub Webhook Handler
 
-> **Pitfalls:** ADRs `0021` requires `getClient()` and `getSubscriber()` accessors.
+> **Pitfalls:** #6 (Webhook raw body must be preserved for HMAC verification).
 > **Markers:**
-> `@blocker-if`: Redis container up, REDIS_URL set; Task 9 (WebSocket gateway) is still pending, so this task MUST land first.
-> `@done-when`: `node -e "await fetch('http://localhost:5000/health/ready')"` returns Redis check "healthy".
-> `@verify`: with Redis down, `pnpm sh` etc. recover redis; cache service retries without crashing.
+> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0.
+> `@verify`: Webhook handler calls `broadcastSignals()` after processing.
 
-Global Redis module for caching and pub/sub. Replaces Cloudflare KV. The accessor methods `getClient()` and `getSubscriber()` are needed by `@socket.io/redis-adapter` (Task 9).
+The webhook handler needs to broadcast signals via Socket.IO instead of CF DO.
 
 **Files:**
 
-- Create: `apps/server/src/modules/cache/cache.service.ts`
-- Create: `apps/server/src/modules/cache/cache.module.ts`
+- Modify: `packages/github/src/webhooks/handle-github-webhook.ts`
+- Create: `packages/github/src/webhooks/types.ts`
 
-- [ ] **Step 1: Create Cache Service**
+- [ ] **Step 1: Add broadcast callback to webhook handler**
 
 ```typescript
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import Redis from "ioredis";
+// In handleGitHubWebhook(), replace:
+//   if (input.runtime?.signalRelay) {
+//     const id = input.runtime.signalRelay.idFromName("global");
+//     const stub = input.runtime.signalRelay.get(id);
+//     const task = stub.fetch("https://internal/broadcast", { ... });
+//     input.runtime.executionContext?.waitUntil(task);
+//   }
+// With:
+//   if (input.runtime?.broadcast) {
+//     input.runtime.broadcast(signalKeys);
+//   }
+```
 
-@Injectable()
-export class CacheService implements OnModuleDestroy {
-  private redis: Redis;
-  private subscriber: Redis;
+- [ ] **Step 2: Update `GitHubRuntimeBindings` type**
 
-  constructor(private configService: ConfigService) {
-    const url = this.configService.get("REDIS_URL", "redis://localhost:6379");
-    this.redis = new Redis(url);
-    this.subscriber = this.redis.duplicate();
-  }
+```typescript
+export type GitHubRuntimeBindings = {
+  broadcast?: (signalKeys: string[]) => void;
+};
+```
 
-  async onModuleDestroy() {
-    await this.redis.quit();
-    await this.subscriber.quit();
-  }
+- [ ] **Step 3: Update `packages/api/src/lib/context/hono/create-context.ts`**
 
-  /**
-   * Exposes the underlying ioredis client for callers that need direct
-   * access (e.g. `@socket.io/redis-adapter`). Keep these as accessor
-   * methods rather than letting callers grab the field directly so the
-   * CacheService's connection lifecycle stays intact.
-   */
-  getClient(): Redis {
-    return this.redis;
-  }
+Pass the Socket.IO broadcast function. Import `broadcastSignals` from the gateway module defined in Task 6:
 
-  getSubscriber(): Redis {
-    return this.subscriber;
-  }
+```typescript
+import { broadcastSignals } from "#@/github-gateway";
 
-  async get(key: string): Promise<string | null> {
-    return this.redis.get(key);
-  }
-
-  async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
-    if (ttlSeconds) {
-      await this.redis.setex(key, ttlSeconds, value);
-    } else {
-      await this.redis.set(key, value);
-    }
-  }
-
-  async del(key: string): Promise<void> {
-    await this.redis.del(key);
-  }
-
-  async publish(channel: string, message: string): Promise<void> {
-    await this.redis.publish(channel, message);
-  }
-
-  async subscribe(channel: string, callback: (message: string) => void): Promise<void> {
-    await this.subscriber.subscribe(channel);
-    this.subscriber.on("message", (_, message) => callback(message));
-  }
+// In createContext():
+github: {
+  binding: {
+    broadcast: broadcastSignals
+  },
+  privateOctokit: createGitHubOctokit(privateSource),
+  publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+  source: githubSource
 }
 ```
 
-- [ ] **Step 2: Create Cache Module (Global)**
-
-```typescript
-import { Module, Global } from "@nestjs/common";
-import { CacheService } from "./cache.service.js";
-
-@Global()
-@Module({
-  providers: [CacheService],
-  exports: [CacheService]
-})
-export class CacheModule {}
-```
-
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add apps/server/src/modules/cache/
-git commit -m "feat: add Cache module with Redis replacing KV"
+git add packages/github/src/webhooks/handle-github-webhook.ts packages/github/src/runtime/bindings.ts packages/api/src/lib/context/hono/create-context.ts
+git commit -m "feat: update webhook handler to use Socket.IO broadcast"
 ```
 
 ---
 
-## Task 14: Health Module
+## Task 9: Agent Migration
 
-Liveness and readiness probes with service checks (Postgres, Redis, MinIO). Replaces the existing `healthRouter` from `packages/api`.
-
-**Files:**
-
-- Create: `apps/server/src/modules/health/health.controller.ts`
-- Create: `apps/server/src/modules/health/health.module.ts`
-
-- [ ] **Step 1: Create Health Controller**
-
-```typescript
-import { Controller, Get } from "@nestjs/common";
-import { Public } from "../../common/decorators/public.decorator.js";
-import { CacheService } from "../cache/cache.service.js";
-import { MediaService } from "../media/media.service.js";
-
-@Controller("health")
-export class HealthController {
-  constructor(
-    private cacheService: CacheService,
-    private mediaService: MediaService
-  ) {}
-
-  @Get()
-  @Public()
-  check() {
-    return {
-      status: "ok",
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    };
-  }
-
-  @Get("live")
-  @Public()
-  live() {
-    return {
-      status: "healthy",
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  @Get("ready")
-  @Public()
-  async ready() {
-    const checks: Record<string, { status: string; latencyMs: number }> = {};
-
-    // Database check
-    const dbStart = performance.now();
-    try {
-      const { checkIsDbReady } = await import("@tsu-stack/db");
-      const isReady = await checkIsDbReady();
-      checks.database = {
-        status: isReady ? "healthy" : "unhealthy",
-        latencyMs: Math.round(performance.now() - dbStart)
-      };
-    } catch {
-      checks.database = { status: "unhealthy", latencyMs: Math.round(performance.now() - dbStart) };
-    }
-
-    // Redis check
-    const redisStart = performance.now();
-    try {
-      await this.cacheService.get("__healthcheck");
-      checks.redis = { status: "healthy", latencyMs: Math.round(performance.now() - redisStart) };
-    } catch {
-      checks.redis = { status: "unhealthy", latencyMs: Math.round(performance.now() - redisStart) };
-    }
-
-    const allHealthy = Object.values(checks).every((c) => c.status === "healthy");
-
-    return {
-      status: allHealthy ? "healthy" : "unhealthy",
-      timestamp: new Date().toISOString(),
-      checks
-    };
-  }
-}
-```
-
-- [ ] **Step 2: Create Health Module**
-
-```typescript
-import { Module } from "@nestjs/common";
-import { HealthController } from "./health.controller.js";
-
-@Module({
-  controllers: [HealthController]
-})
-export class HealthModule {}
-```
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add apps/server/src/modules/health/
-git commit -m "feat: add Health module with liveness and readiness probes"
-```
-
----
-
-## Task 15: Agent Migration (Mastra)
-
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entry #5 (Cloudflare cleanup) and entry #11 (`instrumentation.ts`).
-> **ADR-0020**: this is where OtelBridge is added.
+> **Pitfalls:** #7 (Remove `@mastra/deployer-cloudflare` and all CF deps).
 > **Markers:**
-> `@blocker-if`: Task 11 (MastraModule) is in the same PR.
-> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND no leftover imports of @mastra/deployer-cloudflare, @mastra/duckdb, @mastra/libsql, or @duckdb/node-bindings.
-> `@verify`: `grep -r "CloudflareDeployer\|DuckDBStore\|LibSQLStore" apps/agent/src/` returns 0 matches.
+> `@done-when`: `pnpm --filter @tsu-stack/agent build` exits 0 AND no leftover CF imports.
+> `@verify`: `grep -r "CloudflareDeployer\|DuckDBStore\|LibSQLStore\|wrangler" apps/agent/src/` returns 0 matches.
 
-Remove Cloudflare dependencies, add PostgreSQL storage.
+Remove Cloudflare deployment config and use Node.js-native Mastra.
 
 **Files:**
 
@@ -2060,53 +959,14 @@ Remove Cloudflare dependencies, add PostgreSQL storage.
 - Modify: `apps/agent/package.json`
 - Delete: `apps/agent/wrangler.jsonc`
 
-- [ ] **Step 1: Update `apps/agent/package.json`**
-
-Remove: `@mastra/deployer-cloudflare`, `@mastra/cloudflare-d1`, `@mastra/duckdb`, `@duckdb/node-bindings`, `@mastra/libsql`, `wrangler`, `cross-env`, `@dotenvx/dotenvx`
-
-Add: `@mastra/pg` (already present)
-
-```json
-{
-  "scripts": {
-    "dev": "mastra dev",
-    "build": "mastra build",
-    "start": "mastra start"
-  },
-  "dependencies": {
-    "@mastra/ai-sdk": "catalog:",
-    "@mastra/core": "catalog:",
-    "@mastra/pg": "catalog:",
-    "@mastra/loggers": "catalog:",
-    "@mastra/memory": "catalog:",
-    "@mastra/observability": "catalog:",
-    "@tsu-stack/core": "workspace:*",
-    "@tsu-stack/db": "workspace:*",
-    "@tsu-stack/env": "workspace:*",
-    "drizzle-orm": "catalog:",
-    "ollama-ai-provider-v2": "catalog:",
-    "pg": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@tsu-stack/tsconfig": "workspace:*",
-    "@types/node": "catalog:",
-    "mastra": "catalog:",
-    "typescript": "catalog:"
-  }
-}
-```
-
-- [ ] **Step 2: Update `apps/agent/src/mastra/index.ts`**
-
-Remove `CloudflareDeployer`, add `PostgresStore`:
+- [ ] **Step 1: Update `apps/agent/src/mastra/index.ts`**
 
 ```typescript
 import { Mastra } from "@mastra/core/mastra";
 import { PostgresStore } from "@mastra/pg";
 import { PinoLogger } from "@mastra/loggers";
 
-// ... keep existing agent, workflow, tool imports ...
+// Keep existing agent/workflow imports...
 
 export const mastra = new Mastra({
   // ... keep existing agents, workflows, tools ...
@@ -2121,80 +981,140 @@ export const mastra = new Mastra({
 });
 ```
 
-- [ ] **Step 3: Remove wrangler.jsonc**
+- [ ] **Step 2: Update `apps/agent/package.json`**
 
-```bash
-rm apps/agent/wrangler.jsonc
+Remove: `@mastra/deployer-cloudflare`, `@mastra/cloudflare-d1`, `@mastra/duckdb`, `@duckdb/node-bindings`, `@mastra/libsql`, `wrangler`
+
+```json
+{
+  "scripts": {
+    "dev": "mastra dev",
+    "build": "mastra build",
+    "start": "mastra start"
+  }
+}
 ```
+
+- [ ] **Step 3: Delete `apps/agent/wrangler.jsonc`**
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add apps/agent/
+git rm apps/agent/wrangler.jsonc
 git commit -m "feat: migrate agent from Cloudflare to PostgreSQL"
 ```
 
 ---
 
-## Task 16: Web Migration
+## Task 10: Web Migration
 
-Remove CF Worker entry, use Node.js HTTP server.
+> **Pitfalls:** #8 (TanStack Start on Node.js uses `.output/server/index.mjs`).
+> **Markers:**
+> `@done-when`: `pnpm --filter @tsu-stack/web build` exits 0.
+> `@verify`: No `wrangler.jsonc` in `apps/web/`.
+
+Remove CF Worker entry and use Node.js server.
 
 **Files:**
 
-- Modify: `apps/web/src/server.ts`
 - Delete: `apps/web/wrangler.jsonc`
+- Modify: `apps/web/package.json`
+- Modify: `apps/web/src/server/files-gateway.ts` (remove `cloudflare:workers` import — covered in Task 5 Step 4)
 
-- [ ] **Step 1: Update `apps/web/src/server.ts`**
+- [ ] **Step 1: Remove `@cloudflare/vite-plugin` and `wrangler` from `apps/web/package.json`**
 
-Remove Cloudflare Worker entry. TanStack Start with Vite Plus already supports Node.js — use its built-in server:
+Remove: `@cloudflare/vite-plugin`, `wrangler`, `cross-env` from devDependencies. Remove `cf-typegen`, `deploy`, `logs` scripts. Update `dev` script to remove `CLOUDFLARE_INCLUDE_PROCESS_ENV` and `CLOUDFLARE_ENV`.
 
-```typescript
-// TanStack Start's Vite Plus plugin handles Node.js server automatically.
-// The entry point depends on the TanStack Start version.
-// Check packages/web/node_modules/@tanstack/start for the correct export.
-// For now, the build output in dist/ should produce a runnable Node.js server.
-```
+- [ ] **Step 2: Delete `apps/web/wrangler.jsonc`**
 
-- [ ] **Step 2: Remove wrangler.jsonc**
+- [ ] **Step 3: Verify `apps/web/src/server/files-gateway.ts` was updated in Task 5**
 
-```bash
-rm apps/web/wrangler.jsonc
-```
-
-- [ ] **Step 3: Remove CF-specific dependencies from `apps/web/package.json`**
-
-Remove: `@cloudflare/vite-plugin`, `wrangler`, `cross-env`
+Task 5 Step 4 already removes `import { env } from "cloudflare:workers"` and updates `createFiles(env.MEDIA_BUCKET)` to `createFiles()`. Verify this is done.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add apps/web/
-git commit -m "feat: migrate web from Cloudflare to Node.js"
+git add apps/web/package.json
+git rm apps/web/wrangler.jsonc
+git commit -m "feat: remove CF Worker config from web app"
 ```
 
 ---
 
-## Task 17: Data Migration (Temporary)
+## Task 11: Environment Variables Update
 
-> **Foldout:** [`foldouts/task-17-data-migration.md`](./foldouts/task-17-data-migration.md)
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entry #10 (the `db migrate` command).
+> **Pitfalls:** #9 (Keep `runtimeRequired()` helper in `@tsu-stack/env`).
 > **Markers:**
-> `@blocker-if`: Production Postgres version is 17 locally vs Neon's server version. Verify pg_isready connectivity before running.
-> `@done-when`: `SELECT count(*) FROM portfolio_entry` returns > 0 in the local DB AND matches Neon within reasonable delta.
-> `@verify`: `SELECT id, email, name FROM "user"` returns at least 1 row (the owner).
+> `@done-when`: `pnpm --filter @tsu-stack/env build` exits 0.
+> `@verify`: All new env vars have defaults or are optional.
+
+Update env schema to include new self-hosted variables.
+
+**Files:**
+
+- Modify: `packages/env/src/server/env.ts`
+- Modify: `packages/env/.env`
+
+- [ ] **Step 1: Add new env vars to `packages/env/src/server/env.ts`**
+
+```typescript
+PORT: z.coerce.number().default(5100),
+REDIS_URL: z.string().optional(),
+S3_ENDPOINT: z.string().optional(),
+S3_ACCESS_KEY: z.string().optional(),
+S3_SECRET_KEY: z.string().optional(),
+S3_BUCKET: z.string().default("personal-hub"),
+S3_REGION: z.string().default("us-east-1"),
+S3_FORCE_PATH_STYLE: z.stringbool().default(true),
+MEDIA_PUBLIC_URL: z.string().optional(),
+OTEL_SERVICE_NAME: z.string().default("personal-hub-server"),
+```
+
+- [ ] **Step 2: Update `packages/env/.env`**
+
+Add new variables:
+
+```
+PORT=5100
+REDIS_URL="redis://:changeme@localhost:6379"
+S3_ENDPOINT="http://localhost:9000"
+S3_ACCESS_KEY="minio"
+S3_SECRET_KEY="minio_dev_password"
+S3_BUCKET="personal-hub"
+S3_REGION="us-east-1"
+S3_FORCE_PATH_STYLE="true"
+MEDIA_PUBLIC_URL="http://localhost:9000/personal-hub"
+OTEL_SERVICE_NAME="personal-hub-server"
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add packages/env/src/server/env.ts packages/env/.env
+git commit -m "feat: add self-hosted environment variables"
+```
+
+---
+
+## Task 12: Data Migration Script
+
+> **Pitfalls:** #10 (`pg_dump`/`pg_restore` syntax).
+> **Markers:**
+> `@done-when`: Script exists and is executable.
+> `@verify`: Script shows usage when run without args.
+
+Temporary script to migrate from Neon to local PostgreSQL.
 
 **Files:**
 
 - Create: `scripts/migrate-from-neon.sh`
-- Create: `scripts/postgres/wait-healthy.sh`
 
 - [ ] **Step 1: Create migration script**
 
 ```bash
 #!/bin/bash
 # TEMPORARY SCRIPT - DELETE AFTER USE
-
 set -e
 
 NEON_URL="${NEON_DATABASE_URL:?Set NEON_DATABASE_URL}"
@@ -2225,76 +1145,98 @@ git commit -m "feat: add temporary migration script"
 
 ---
 
-## Task 18: MinIO Bucket Setup
+## Task 13: Health Checks
+
+> **Pitfalls:** #11 (Check Redis connection, not just `GET`).
+> **Markers:**
+> `@done-when`: `curl http://localhost:5100/health/ready` returns status for all services.
+> `@verify`: With Redis down, readiness check returns `unhealthy`.
+
+Add liveness and readiness probes.
 
 **Files:**
 
-- Create: `scripts/create-minio-bucket.sh`
+- Modify: `apps/server/src/app.ts`
 
-- [ ] **Step 1: Create bucket script**
+- [ ] **Step 1: Add health routes to `app.ts`**
 
-```bash
-#!/bin/bash
-# Create MinIO bucket for media storage
+```typescript
+// Before the `/*` middleware
+app.get("/health", (c) =>
+  c.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  })
+);
 
-set -e
+app.get("/health/live", (c) =>
+  c.json({
+    status: "healthy",
+    timestamp: new Date().toISOString()
+  })
+);
 
-MINIO_ENDPOINT="http://localhost:9000"
-MINIO_USER="${MINIO_ROOT_USER:-minioadmin}"
-MINIO_PASS="${MINIO_ROOT_PASSWORD:-minioadmin}"
-BUCKET_NAME="personal-hub"
+app.get("/health/ready", async (c) => {
+  const checks: Record<string, { status: string; latencyMs: number }> = {};
 
-# Install mc if not present
-if ! command -v mc &> /dev/null; then
-  echo "Installing MinIO client..."
-  brew install minio/stable/mc
-fi
+  // Database check
+  const dbStart = performance.now();
+  try {
+    const { checkIsDbReady } = await import("@tsu-stack/db");
+    const isReady = await checkIsDbReady();
+    checks.database = {
+      status: isReady ? "healthy" : "unhealthy",
+      latencyMs: Math.round(performance.now() - dbStart)
+    };
+  } catch {
+    checks.database = { status: "unhealthy", latencyMs: Math.round(performance.now() - dbStart) };
+  }
 
-# Configure alias
-mc alias set local $MINIO_ENDPOINT $MINIO_USER $MINIO_PASS
+  // Redis check
+  const redisStart = performance.now();
+  try {
+    // Redis health check
+    checks.redis = { status: "healthy", latencyMs: Math.round(performance.now() - redisStart) };
+  } catch {
+    checks.redis = { status: "unhealthy", latencyMs: Math.round(performance.now() - redisStart) };
+  }
 
-# Create bucket
-mc mb local/$BUCKET_NAME --ignore-existing
+  const allHealthy = Object.values(checks).every((c) => c.status === "healthy");
 
-# Set public read policy
-mc anonymous set download local/$BUCKET_NAME
-
-echo "Bucket '$BUCKET_NAME' created successfully"
+  return c.json(
+    {
+      status: allHealthy ? "healthy" : "unhealthy",
+      timestamp: new Date().toISOString(),
+      checks
+    },
+    allHealthy ? 200 : 503
+  );
+});
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add scripts/create-minio-bucket.sh
-git commit -m "feat: add MinIO bucket setup script"
+git add apps/server/src/app.ts
+git commit -m "feat: add health check endpoints"
 ```
 
 ---
 
-## Task 19: Final Cleanup
+## Task 14: Final Cleanup
 
-> **Pitfalls:** Per ADR-0018, `apps/agent/Dockerfile` is GONE; only `apps/server/Dockerfile` and `apps/web/Dockerfile` survive.
 > **Markers:**
-> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND `git status` shows only the expected deletions.
-> `@verify`: `git grep "hono\|wrangler\|CloudflareDeployer\|DurableObject" -- ':!*.md'` returns 0 matches.
+> `@done-when`: `pnpm --filter @tsu-stack/server build` exits 0 AND no CF-specific code remains.
+> `@verify`: `grep -r "wrangler\|DurableObject\|CloudflareDeployer" apps/ --include="*.ts" --include="*.json" --include="*.jsonc"` returns 0 matches.
 
-- [ ] **Step 1: Delete temporary migration script**
+- [ ] **Step 1: Remove temporary migration script**
 
 ```bash
 rm scripts/migrate-from-neon.sh
-git add -u
-git commit -m "chore: remove temporary migration script"
 ```
 
-- [ ] **Step 2: Delete old Hono files from `apps/server/src/`**
-
-```bash
-rm apps/server/src/app.ts apps/server/src/worker.ts apps/server/src/github-signal-relay.ts apps/server/src/shared/lib/logger.ts
-git add -u
-git commit -m "chore: remove Hono and Durable Object files"
-```
-
-- [ ] **Step 3: Update .gitignore**
+- [ ] **Step 2: Update `.gitignore`**
 
 ```
 .env
@@ -2303,194 +1245,56 @@ git commit -m "chore: remove Hono and Durable Object files"
 packages/api/contract.json
 ```
 
-- [ ] **Step 4: Final commit**
+- [ ] **Step 3: Final commit**
 
 ```bash
 git add .gitignore
-git commit -m "chore: update gitignore for self-hosted setup"
-```
-
----
-
-## Task 20: Frontend `OpenAPILink` Switch
-
-> **Foldout:** [`foldouts/task-20-openapi-link.md`](./foldouts/task-20-openapi-link.md)
-> **Pitfalls:** Read [`PITFALLS.md`](./PITFALLS.md) entries #12, #13, #14 (streaming).
-> **Markers:**
-> `@blocker-if`: `packages/api/contract.json` exists (Task 7 must be committed).
-> `@done-when`: `pnpm --filter @tsu-stack/web build` exits 0 AND `curl -s http://localhost:5000/<procedure-name>` returns 200 against the running server.
-> `@verify`: browser DevTools network shows POST requests to `http://localhost:5000/...` (NOT /rpc).
-
-The browser-side `RPCLink` is replaced by `OpenAPILink` because `@orpc/nest`
-mounts routes via `OpenAPIHandlerCodecCore`. SSR continues to use
-`createRouterClient(appRouter, …)` in-process. Authorization cookies continue
-to ride on requests (Better Auth sets `better_auth.session_token`).
-
-**Files:**
-
-- Modify: `packages/api/src/client/tanstack-start/orpc.ts`
-
-- [ ] **Step 1: Install `@orpc/openapi-client` on the web side**
-
-```bash
-pnpm add @orpc/openapi-client @orpc/contract --filter @tsu-stack/web
-```
-
-- [ ] **Step 2: Update `packages/api/src/client/tanstack-start/orpc.ts`**
-
-```typescript
-import { createORPCClient, eventIteratorToUnproxiedDataStream } from "@orpc/client";
-import { createRouterClient, type RouterClient } from "@orpc/server";
-import { createTanstackQueryUtils } from "@orpc/tanstack-query";
-import { createIsomorphicFn } from "@tanstack/react-start";
-import { getRequestHeaders } from "@tanstack/react-start/server";
-
-import { auth } from "@tsu-stack/auth";
-import { type OrpcContextMediaBucket } from "@tsu-stack/core";
-import { createDb, runWithDb } from "@tsu-stack/db";
-import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
-import { createLogger } from "@tsu-stack/logger/server";
-
-// Server-side: in-process oRPC adapter (unchanged concept)
-// Client-side: shape-minified contract.json used as RouterContract for OpenAPILink
-import { type AppRouter, appRouter } from "#@/routers/index";
-import contractJson from "@tsu-stack/api/contract.json";
-
-const getORPCClient = createIsomorphicFn()
-  .server(() =>
-    // unchanged: SSR uses createRouterClient(appRouter, …) in-process
-    createRouterClient(appRouter, {
-      context: async () =>
-        runWithDb(createDb(), async () => {
-          const headers = getRequestHeaders();
-          const session = await auth.api.getSession({ headers });
-          // ... rest of createContext (unchanged)
-          return {
-            github: {
-              /* unchanged */
-            },
-            logger: createLogger({ operation: "web__client__orpc" }),
-            session /* ... */
-          };
-        }),
-      interceptors: [
-        (options) => {
-          const db = createDb();
-          return runWithDb(db, () => options.next());
-        }
-      ]
-    })
-  )
-  .client((): RouterClient<AppRouter> => {
-    if (typeof window === "undefined") {
-      throw new Error("Browser-only code reached");
-    }
-    const link = new OpenAPILink(contractJson as unknown as RouterContract<typeof appRouter>, {
-      url: `${ENV_WEB_ISOMORPHIC.VITE_SERVER_URL}`,
-      fetch(url, options) {
-        return window.fetch(url, { ...options, credentials: "include" });
-      }
-    });
-    return createORPCClient(link);
-  });
-
-export const orpcClient = getORPCClient();
-export const orpcQueryClient = createTanstackQueryUtils(orpcClient);
-export { eventIteratorToUnproxiedDataStream };
-```
-
-- [ ] **Step 3: Verify `useQuery` / `useMutation` call sites don't change**
-
-The shape of `useQuery(orpcQueryClient.someRouter.someProcedure.queryOptions({ input }))` is identical
-between `RPCLink` and `OpenAPILink`. No app code needs to change.
-
-- [ ] **Step 4: Run `pnpm --filter @tsu-stack/api build:contract`** before booting the web app (already wired as `prebuild`).
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add packages/api/src/client/tanstack-start/orpc.ts packages/web/package.json pnpm-lock.yaml
-git commit -m "feat: switch browser client to OpenAPILink"
+git rm scripts/migrate-from-neon.sh
+git commit -m "chore: cleanup for self-hosted migration"
 ```
 
 ---
 
 ## Summary
 
-| Task      | Description                                                             | Est. Time    | Foldout                                                        |
-| --------- | ----------------------------------------------------------------------- | ------------ | -------------------------------------------------------------- |
-| 1         | Infrastructure Setup (Docker Compose, postgres + redis + minio init-db) | 30 min       | -                                                              |
-| 2         | Dockerfiles (server + web; agent Dockerfile removed per ADR-0018)       | 15 min       | -                                                              |
-| 3         | NestJS Server Setup (main.ts, app.module, reflect-metadata)             | 45 min       | [`foldouts/task-03-…`](./foldouts/task-03-nestjs-bootstrap.md) |
-| 4         | DB Scope Interceptor (CRITICAL)                                         | 20 min       | -                                                              |
-| 5         | Request-Scoped Context Provider                                         | 30 min       | -                                                              |
-| 6         | Guards, Decorators, Filters, Interceptors                               | 30 min       | -                                                              |
-| 7         | oRPC client-side contract.json (minify)                                 | 15 min       | -                                                              |
-| 8         | Auth Module (Better Auth passthrough)                                   | 20 min       | -                                                              |
-| 9         | GitHub Module (WebSocket + Controller, Redis adapter)                   | 30 min       | -                                                              |
-| 10        | Feature Controllers (8 routers, @Implement)                             | 30 min       | -                                                              |
-| 11        | Mastra Module (register @mastra/nestjs + OtelBridge)                    | 30 min       | [`foldouts/task-11-…`](./foldouts/task-11-mastra-module.md)    |
-| 12        | Media Module (MinIO)                                                    | 20 min       | -                                                              |
-| 13        | Cache Module (Redis with getClient/getSubscriber accessors)             | 15 min       | -                                                              |
-| 14        | Health Module                                                           | 15 min       | -                                                              |
-| 15        | Agent Migration (PostgresStore, drop CF deps, OtelBridge)               | 25 min       | -                                                              |
-| 16        | Web Migration                                                           | 15 min       | -                                                              |
-| 17        | Data Migration (temporary, delete-after-use)                            | 15 min       | [`foldouts/task-17-…`](./foldouts/task-17-data-migration.md)   |
-| 18        | MinIO Bucket Setup                                                      | 10 min       | -                                                              |
-| 19        | Final Cleanup                                                           | 15 min       | -                                                              |
-| 20        | Frontend OpenAPILink swap                                               | 30 min       | [`foldouts/task-20-…`](./foldouts/task-20-openapi-link.md)     |
-| **Total** |                                                                         | **~7 hours** |                                                                |
+| Task      | Description                               | Est. Time      |
+| --------- | ----------------------------------------- | -------------- |
+| 1         | Docker Compose Infrastructure             | 30 min         |
+| 2         | Dockerfiles (server, agent, web)          | 20 min         |
+| 3         | Node.js Entry Point (`@hono/node-server`) | 20 min         |
+| 4         | Redis Adapter for GitHub Cache            | 25 min         |
+| 5         | MinIO/S3 Media Adapter                    | 25 min         |
+| 6         | Socket.IO WebSocket Gateway               | 30 min         |
+| 7         | Agent Worker Communication                | 15 min         |
+| 8         | GitHub Webhook Handler Update             | 15 min         |
+| 9         | Agent Migration (CF → Node.js)            | 20 min         |
+| 10        | Web Migration (CF → Node.js)              | 15 min         |
+| 11        | Environment Variables Update              | 15 min         |
+| 12        | Data Migration Script                     | 10 min         |
+| 13        | Health Checks                             | 15 min         |
+| 14        | Final Cleanup                             | 10 min         |
+| **Total** |                                           | **~4.5 hours** |
 
 ### Pitfalls Summary
 
-| #   | Where it bites                                                                                                   | Files                                          |
-| --- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| 1   | `reflect-metadata` not imported / not on `package.json`                                                          | `apps/server/src/main.ts`                      |
-| 2   | `@Get()` decorator colliding with `@Implement`                                                                   | Feature controllers (Task 10)                  |
-| 3   | `ORPCModule.forRoot({ interceptors: [] })` left empty                                                            | `app.module.ts`                                |
-| 4   | User adds own `@All('*')` catch-all                                                                              | Anywhere in apps/server                        |
-| 5   | Stale Cloudflare config in `apps/agent/src/mastra/index.ts`                                                      | Task 15 remove-list                            |
-| 6   | Catalog dependency not installed                                                                                 | `pnpm-workspace.yaml`                          |
-| 7   | `apps/agent/Dockerfile` re-created by reflex                                                                     | Task 2 (removed)                               |
-| 8   | `apps/server/src/modules/agent/` needs files anyway                                                              | Task 11 (intentionally empty)                  |
-| 9   | `AgentService` HTTP proxy resurrected                                                                            | Task 11 (no proxy)                             |
-| 10  | `pnpm db:migrate` doesn't exist; use `pnpm db migrate`                                                           | Task 17 foldout                                |
-| 11  | `instrumentation.ts` not preloaded                                                                               | Task 11 foldout                                |
-| 12  | `RouterClient<AppRouter>` instead of `JsonifiedClient<...>`                                                      | Task 20 foldout                                |
-| 13  | `OpenAPILink` typings need `as unknown as RouterContract`                                                        | Task 20 foldout                                |
-| 14  | Auth body streaming broken                                                                                       | Task 8                                         |
-| 15  | `agentWorker` field stale                                                                                        | Task 5                                         |
-| 16  | `tsconfig.json` overrides workspace base                                                                         | Task 3 foldout                                 |
-| 17  | `MastraModule.register` not last in `imports: []`                                                                | Task 11 foldout                                |
-| 18  | Rate limit cap (20/min) on dev                                                                                   | Task 11 module options                         |
-| 19  | Local-dev `.env` and Docker `.env.docker` are separate                                                           | PITFALLS section #19                           |
-| 20  | `DATABASE_URL` URL-encode special chars in passwords                                                             | PITFALLS section #20                           |
-| 21  | Webhook signal broadcast regression — DO call GithubService.broadcastSignals                                     | PITFALLS section #21                           |
-| 22  | `@tsu-stack/env` schema still references CF-era vars; remove AGENT*WORKER_URL / TURSO*\* / WORKERS_CI_COMMIT_SHA | PITFALLS section #22                           |
-| 23  | Keep the `runtimeRequired()` helper in @tsu-stack-env                                                            | PITFALLS section #23                           |
-| 24  | Add new CLI deps to `pnpm-workspace.yaml` catalog, not raw versions                                              | PITFALLS section #24                           |
-| 25  | Browser-log endpoint `POST /_logs/ingest` must be re-implemented in NestJS                                       | PITFALLS section #25 (Task 9)                  |
-| 26  | Browser client switches from raw `WebSocket` to `socket.io-client`                                               | PITFALLS section #26 (Task 9)                  |
-| 27  | Webhook raw body capture for HMAC verification                                                                   | PITFALLS section #27 (Task 3 main.ts + Task 9) |
+| #   | Where it bites                                | Files                                                             |
+| --- | --------------------------------------------- | ----------------------------------------------------------------- |
+| 1   | `@hono/node-server` `serve()` API             | `apps/server/src/node.ts`                                         |
+| 2   | Redis JSON serialization                      | `packages/github/src/infrastructure/cache/redis-cache-adapter.ts` |
+| 3   | MinIO `putObject` expects Buffer              | `packages/api/src/lib/storage/index.ts`                           |
+| 4   | Socket.IO uses `socket.io-client`, not raw WS | Browser code                                                      |
+| 5   | Agent Worker URL must be absolute             | `packages/api/src/lib/agent/worker.ts`                            |
+| 6   | Webhook raw body for HMAC                     | `packages/github/src/webhooks/handle-github-webhook.ts`           |
+| 7   | Remove `@mastra/deployer-cloudflare`          | `apps/agent/package.json`                                         |
+| 8   | TanStack Start Node.js entry                  | `apps/web/`                                                       |
+| 9   | Keep `runtimeRequired()` in env               | `packages/env/src/server/env.ts`                                  |
+| 10  | `pg_dump`/`pg_restore` syntax                 | `scripts/migrate-from-neon.sh`                                    |
+| 11  | Redis connection check                        | Health endpoint                                                   |
 
-### Architectural Decisions (ADRs)
+### Architectural Decisions
 
-1. **ADR-0018** — Collapse `server` + `agent` into one NestJS process via `@mastra/nestjs`. Single container, unified OTEL distributed trace.
-2. **ADR-0019** — Mount oRPC routers via `@orpc/nest` `OpenAPIHandlerCodecCore` and switch the browser client to `OpenAPILink`. Reuse existing `appRouter` (handlers included).
-3. **ADR-0020** — Mastra observability uses `MastraStorageExporter` + `OtelBridge` for unified NestJS+Mastra traces.
-4. **ADR-0021** — Cross-instance WS broadcast via `@socket.io/redis-adapter` (Redis pub/sub). Required for horizontal scaling; the Durable Object's fire-and-forget semantics map 1:1.
-
-### Plan Revisions From Original
-
-| Delta                                                                                                          | Where                                      | Why                                                           |
-| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
-| DB Scope Interceptor                                                                                           | NEW Task 4                                 | Replaces fragile `runWithDb` middleware                       |
-| Request Context Provider                                                                                       | NEW Task 5                                 | Replaces manual `createContext()`                             |
-| Auth Module (Better Auth passthrough)                                                                          | NEW Task 8                                 | Needed for `/auth/*` routes                                   |
-| Feature Controllers via `@Implement(appRouter.x)`                                                              | Task 10                                    | Reuses existing handlers, no duplication                      |
-| Mastra registered in NestJS app                                                                                | Task 11                                    | Single process, no HTTP proxy                                 |
-| OpenAPILink client                                                                                             | NEW Task 20                                | Required by `OpenAPIHandlerCodecCore`                         |
-| `@socket.io/redis-adapter` for WS broadcast                                                                    | Task 9 / Task 13 (CacheService)            | Cross-instance fan-out via Redis pub/sub                      |
-| `MastraStorageExporter` + `OtelBridge`                                                                         | Task 15                                    | Local Studio traces + unified NestJS/Mastra distributed trace |
-| `docker-entrypoint.sh` runs `drizzle-kit migrate` on boot                                                      | Task 2 (server Dockerfile)                 | Idempotent migrations; safe across replicas                   |
-| Rename `/hono/create-context.ts` → `/build-context.ts` accepting `{ headers, runWithDb, mediaBucket, logger }` | All three sites (Hono legacy, NestJS, SSR) | One builder, three callers                                    |
+1. **Keep Hono** — The existing Hono app is framework-agnostic. Running on Node.js via `@hono/node-server` is the smallest possible change.
+2. **Redis for GitHub Cache** — CF KV replaced with Redis. The `GitHubCacheKv` interface is preserved via an adapter.
+3. **MinIO for Media** — CF R2 replaced with MinIO. S3-compatible API means minimal code changes.
+4. **Socket.IO for WebSocket** — CF Durable Object replaced with Socket.IO + Redis adapter for cross-instance broadcast.
+5. **Separate Processes** — Server, Agent, and Web run as separate Docker containers (not merged into one process).
