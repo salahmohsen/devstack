@@ -161,47 +161,43 @@ export const auth = betterAuth({
               "User-Agent": "better-auth",
               authorization: `Bearer ${accessToken}`
             };
-            
-            console.error("[auth] GitHub OAuth callback received");
-            
+
             const profileRes = await fetch("https://api.github.com/user", { headers });
             const profile = await profileRes.json();
-            
-            console.error("[auth] GitHub profile response:", {
-              status: profileRes.status,
-              id: profile.id,
-              email: profile.email,
-              name: profile.name,
-              login: profile.login
-            });
-            
+
             if (!profileRes.ok || !profile.id) {
               console.error("[auth] GitHub user fetch failed:", profile);
               return null;
             }
-            
-            const emailsRes = await fetch("https://api.github.com/user/emails", { headers });
-            const emails = await emailsRes.json();
-            
-            console.error("[auth] GitHub emails response:", {
-              status: emailsRes.status,
-              count: Array.isArray(emails) ? emails.length : 0,
-              emails
-            });
-            
-            if (!profile.email && Array.isArray(emails) && emails.length > 0) {
-              const primaryEmail = emails.find((e) => e.primary) ?? emails[0];
-              console.error("[auth] Using primary email:", primaryEmail?.email);
-              profile.email = primaryEmail?.email;
-              profile.emailVerified = primaryEmail?.verified ?? false;
+
+            let email = profile.email ?? null;
+            let emailVerified = false;
+
+            if (!email) {
+              const emailsRes = await fetch("https://api.github.com/user/emails", { headers });
+              if (emailsRes.ok) {
+                const emails = await emailsRes.json();
+                if (Array.isArray(emails) && emails.length > 0) {
+                  const primary = emails.find((e) => e.primary) ?? emails[0];
+                  if (primary) {
+                    email = primary.email;
+                    emailVerified = primary.verified ?? false;
+                  }
+                }
+              }
             }
-            
+
+            if (!email) {
+              email = `${profile.id}+${profile.login}@users.noreply.github.com`;
+              emailVerified = true;
+            }
+
             return {
               user: {
                 id: String(profile.id),
                 name: profile.name || profile.login || "",
-                email: profile.email,
-                emailVerified: profile.emailVerified ?? false,
+                email,
+                emailVerified,
                 image: profile.avatar_url
               },
               data: profile
