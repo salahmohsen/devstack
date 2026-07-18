@@ -155,7 +155,58 @@ export const auth = betterAuth({
             "codespace",
             "workflow",
             "read:audit_log"
-          ]
+          ],
+          async getUserInfo({ accessToken }) {
+            const headers = {
+              "User-Agent": "better-auth",
+              authorization: `Bearer ${accessToken}`
+            };
+            
+            console.error("[auth] GitHub OAuth callback received");
+            
+            const profileRes = await fetch("https://api.github.com/user", { headers });
+            const profile = await profileRes.json();
+            
+            console.error("[auth] GitHub profile response:", {
+              status: profileRes.status,
+              id: profile.id,
+              email: profile.email,
+              name: profile.name,
+              login: profile.login
+            });
+            
+            if (!profileRes.ok || !profile.id) {
+              console.error("[auth] GitHub user fetch failed:", profile);
+              return null;
+            }
+            
+            const emailsRes = await fetch("https://api.github.com/user/emails", { headers });
+            const emails = await emailsRes.json();
+            
+            console.error("[auth] GitHub emails response:", {
+              status: emailsRes.status,
+              count: Array.isArray(emails) ? emails.length : 0,
+              emails
+            });
+            
+            if (!profile.email && Array.isArray(emails) && emails.length > 0) {
+              const primaryEmail = emails.find((e) => e.primary) ?? emails[0];
+              console.error("[auth] Using primary email:", primaryEmail?.email);
+              profile.email = primaryEmail?.email;
+              profile.emailVerified = primaryEmail?.verified ?? false;
+            }
+            
+            return {
+              user: {
+                id: String(profile.id),
+                name: profile.name || profile.login || "",
+                email: profile.email,
+                emailVerified: profile.emailVerified ?? false,
+                image: profile.avatar_url
+              },
+              data: profile
+            };
+          }
         }
       };
     }
