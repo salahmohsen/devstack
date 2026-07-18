@@ -105,4 +105,5 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # Start all apps in parallel using pnpm's built-in parallel runner
-pnpm -r --parallel dev
+# Override production URLs with local dev equivalents
+VITE_SERVER_URL="http://localhost:5200" pnpm -r --parallel dev
