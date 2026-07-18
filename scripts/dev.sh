@@ -71,7 +71,10 @@ fi
 # ─── Step 4: Push DB schema ───────────────────────────────────────
 info "Pushing database schema..."
 cd "$ROOT/packages/db"
-pnpm dotenvx run -f "$ENV_FILE" -- drizzle-kit push --force 2>&1 | tail -5
+# Use migrate for idempotent schema management. On a fresh database,
+# drizzle-kit migrate creates the _drizzle_migrations table and applies
+# all pending migrations. Already-applied migrations are skipped.
+pnpm dotenvx run -f "$ENV_FILE" -- drizzle-kit migrate 2>&1 | tail -10
 ok "Database schema pushed"
 cd "$ROOT"
 
@@ -89,7 +92,12 @@ echo ""
 cleanup() {
   echo ""
   info "Stopping apps..."
+  # Kill processes on all known ports
+  for port in 3000 5200 4111 9229; do
+    lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
+  done
   kill $(jobs -p) 2>/dev/null || true
+  sleep 1
   info "Stopping infrastructure..."
   docker compose -f "$INFRA_COMPOSE" down
   ok "All services stopped"

@@ -108,6 +108,7 @@ catalog:
   "@dnd-kit/sortable": ^10.0.0
   "@dnd-kit/utilities": ^3.2.2
   "@neondatabase/serverless": ^1.1.0
+  "@types/pg": ^8.15.4
   "@react-email/components": ^1.0.12
   "@react-email/render": ^2.0.9
   "@tiptap/react": ^3.27.1
@@ -156,6 +157,11 @@ catalog:
   "@ai-sdk/react": ^2.0.212
   "@duckdb/node-bindings": 1.5.4-r.1
   "@tanstack/react-table": ^8.21.3
+  "@hono/node-server": ^1.19.14
+  "@socket.io/redis-adapter": ^8.3.0
+  "ioredis": ^5.4.2
+  "socket.io": ^4.7.5
+  nitro: npm:nitro-nightly@3.0.1-20260128-211656-ae83c97e
 
 catalogMode: prefer
 

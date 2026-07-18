@@ -1,25 +1,24 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-import { Pool } from "@neondatabase/serverless";
+import { Pool } from "pg";
 import { sql } from "drizzle-orm";
-import { drizzle as drizzleHttp, type NeonHttpDatabase } from "drizzle-orm/neon-http";
-import { drizzle as drizzleWs, type NeonDatabase } from "drizzle-orm/neon-serverless";
+import { drizzle as drizzlePg, type NodePgDatabase } from "drizzle-orm/node-postgres";
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
-import { authRelations } from "#@/schema/auth.schema";
-import { appRelationPart } from "#@/schema/relations";
+import { authRelations } from "./schema/auth.schema.ts";
+import { appRelationPart } from "./schema/relations.ts";
 
-export * from "#@/repositories/index";
+export * from "./repositories/index.ts";
 export * from "drizzle-orm/sql";
 
 /**
- * Singleton HTTP Drizzle instance.
+ * Singleton PG Drizzle instance.
  *
  * Used by Better Auth's drizzle adapter and any code path that needs a
  * long-lived connection (e.g. module-load wiring that runs across many
- * requests). The HTTP transport is stateless, so a module-level instance is
- * safe in Cloudflare Workers — each `fetch()` call is independent.
+ * requests). The connection pool is module-level and safe for single-instance
+ * Node.js servers.
  *
  * Relations are composed from `relations.ts` (app relations, hand-written)
  * and the auto-generated `auth.schema.ts` (auth relations). See
@@ -27,62 +26,51 @@ export * from "drizzle-orm/sql";
  */
 export const relations = { ...appRelationPart, ...authRelations };
 
-export const db: NeonHttpDatabase<typeof relations> = drizzleHttp(ENV_SERVER.DATABASE_URL, {
+export const pool = new Pool({
+  connectionString: ENV_SERVER.DATABASE_URL
+});
+
+export const db: NodePgDatabase<typeof relations> = drizzlePg({
+  client: pool,
   relations
 });
 
 /**
- * Per-request WebSocket Drizzle instance.
+ * Per-request database instance.
  *
- * Required for `db.transaction(...)` and the node-postgres `Pool` API. Each
- * request gets its own pool via `createDb()`; the pool's lifetime is the
- * worker's lifetime, kept alive by `c.executionCtx.waitUntil(...)` when work
- * (e.g. a workflow started via `start-async`) continues past the
- * response. Repositories use `getDb()` to read the current request's
- * instance from `AsyncLocalStorage`.
+ * Each request gets its own pool via `createDb()`; the pool's lifetime is
+ * kept alive by the request handler. Repositories use `getDb()` to read
+ * the current request's instance from `AsyncLocalStorage`.
  *
- * Neon's "Pool and Client" docs warn against *sharing* a pool across
- * requests — the WebSocket from request A may be killed by the runtime
- * and reused for request B, causing cross-request contamination. They do
- * not say "close the pool at the end of every request." `runWithDb` does
- * not call `pool.end()`; the Cloudflare runtime closes the connection
- * when the isolate is destroyed. Closing eagerly creates a race when
- * `run.start()` resolves shallow (the workflow's later steps find a
- * closed pool via AsyncLocalStorage). See docs/adr/0009.
+ * For self-hosted PostgreSQL, we use the standard `pg` Pool directly — no
+ * WebSocket/Neon-specific transport needed.
  */
-export type WsDb = NeonDatabase<typeof relations>;
+export type WsDb = NodePgDatabase<typeof relations>;
 
 const dbStorage = new AsyncLocalStorage<{ db: WsDb; pool: Pool }>();
 
 export function createDb(): WsDb {
-  const pool = new Pool({ connectionString: ENV_SERVER.DATABASE_URL });
-  return drizzleWs({ client: pool, relations: relations });
+  const requestPool = new Pool({
+    connectionString: ENV_SERVER.DATABASE_URL
+  });
+  return drizzlePg({ client: requestPool, relations });
 }
 
 export async function runWithDb<T>(db: WsDb, fn: () => T | Promise<T>): Promise<T> {
-  const pool = (db as unknown as { $client: Pool }).$client;
-  return dbStorage.run({ db, pool }, fn);
+  const requestPool = (db as unknown as { $client: Pool }).$client;
+  return dbStorage.run({ db, pool: requestPool }, fn);
 }
 
 /**
  * Repository call sites use this instead of importing a singleton `db`.
  *
- * Preferred path: returns the per-request Neon WebSocket Drizzle inside the
- * `runWithDb(...)` scope opened by the server's `/*` middleware. The WebSocket
- * pool is required for `db.transaction(...)` and prepared-statement reuse.
- *
- * The pool's lifetime is the worker's, not the request's — see the docblock
- * on `createDb`. A workflow started inside the request scope will see a
- * live pool for the entire workflow run because `c.executionCtx.waitUntil`
- * keeps the isolate alive past the response.
+ * Preferred path: returns the per-request Drizzle inside the
+ * `runWithDb(...)` scope opened by the server's `/*` middleware.
  *
  * Defensive fallback: if no scope is active (e.g. a route was registered
- * before the `/*` middleware and forgot to wrap itself), falls back to the
- * HTTP Drizzle singleton. The HTTP transport is stateless and safe to use
- * without a per-request scope, so a missed `runWithDb` is no longer a hard
- * 500 — it just logs once and continues. Callers that need
- * `db.transaction(...)` MUST still be inside a `runWithDb` scope; the HTTP
- * fallback will throw at runtime if you try to start a transaction on it.
+ * before the `/*` middleware and forgot to wrap itself), falls back to
+ * the PG singleton. Callers that need `db.transaction(...)` MUST still
+ * be inside a `runWithDb` scope.
  */
 let hasLoggedLazyDbFallback = false;
 export function getDb(): WsDb {
@@ -93,11 +81,8 @@ export function getDb(): WsDb {
 
   if (!hasLoggedLazyDbFallback) {
     hasLoggedLazyDbFallback = true;
-    // This package has no logger dependency; surfacing the warning is the
-    // whole point of the fallback.
-    // eslint-disable-next-line no-console
     console.warn(
-      "[db] getDb() called outside runWithDb. Falling back to the HTTP Drizzle singleton. " +
+      "[db] getDb() called outside runWithDb. Falling back to the PG singleton. " +
         "Wrap the request handler with runWithDb(createDb(), ...) for transaction support."
     );
   }

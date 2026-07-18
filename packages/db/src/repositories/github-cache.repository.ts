@@ -1,15 +1,15 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { type NeonTransaction } from "drizzle-orm/neon-serverless";
+import { type NodePgTransaction } from "drizzle-orm/node-postgres";
 
-import { getDb, type relations, type WsDb } from "#@/index";
+import { getDb, type relations, type WsDb } from "../index.ts";
 import {
   githubCacheNamespace,
   githubResponseCache,
   githubRevalidationSignal,
   githubWebhookEvent
-} from "#@/schema/github-cache.schema";
+} from "../schema/github-cache.schema.ts";
 
-export type DbExecutor = WsDb | NeonTransaction<typeof relations>;
+export type DbExecutor = WsDb | NodePgTransaction<typeof relations>;
 
 export type UpsertGitHubResponseCacheInput = {
   cacheKey: string;
