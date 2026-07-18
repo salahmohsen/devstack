@@ -49,13 +49,16 @@ apps/server/Dockerfile                                  # port 5000→5100, buil
 apps/agent/src/mastra/index.ts                          # PostgresStore
 apps/agent/package.json                                 # drop CF deps
 apps/web/src/server/files-gateway.ts                    # drop cloudflare:workers
+apps/web/src/routes/api/resume/download/index.ts        # drop cloudflare:workers, use createFiles
 apps/web/package.json                                   # drop CF devDeps
 apps/web/Dockerfile                                     # drop CF build args
 packages/api/src/lib/context/hono/create-context.ts     # accept NodeRuntime
 packages/api/src/lib/agent/worker.ts                    # drop Fetcher, HTTP-only
 packages/api/src/lib/storage/index.ts                   # files-sdk/s3
+packages/api/src/client/tanstack-start/orpc.ts          # drop cloudflare:workers, use createFiles
 packages/github/src/runtime/bindings.ts                 # drop all CF types
-packages/github/src/webhooks/handle-github-webhook.ts  # broadcast callback
+packages/github/src/webhooks/handle-github-webhook.ts   # broadcast callback
+packages/github/src/infrastructure/cache/github-cache.ts # drop executionContext?.waitUntil
 packages/core/src/orpc-context/index.ts                 # OrpcContextGithubBinding change
 packages/env/src/server/env.ts                          # new env vars
 packages/env/.env                                       # dev values
@@ -76,6 +79,8 @@ packages/env/.env                                       # dev values
 - Delete: `apps/server/vite.config.ts` (426-line CF version), `apps/server/wrangler.jsonc`, `apps/server/wrangler.dev.jsonc`, `apps/server/src/worker.ts`, `apps/server/worker-configuration.d.ts`
 - Create: `apps/server/vite.config.ts` (new, ~30 lines), `apps/server/src/node.ts` (~30 lines)
 - Modify: `apps/server/src/app.ts` (add `/health/live` and `/health/ready` routes), `apps/server/package.json` (scripts + deps)
+
+> **Note:** This task intentionally touches ONLY the server's build pipeline and health routes. All CF binding replacements happen in Task 2.
 
 ### Step 1: Delete CF-specific files
 
@@ -286,7 +291,7 @@ git commit -m "feat: migrate server build from Cloudflare to Node.js (vp pack)"
 
 **Files:**
 
-- Modify: `packages/api/src/lib/context/hono/create-context.ts`, `packages/api/src/lib/agent/worker.ts`, `packages/api/src/lib/storage/index.ts`, `packages/github/src/runtime/bindings.ts`, `packages/github/src/webhooks/handle-github-webhook.ts`, `apps/web/src/server/files-gateway.ts`, `apps/server/src/app.ts:134-178` (webhook handler), `packages/core/src/orpc-context/index.ts` (binding type)
+- Modify: `packages/api/src/lib/context/hono/create-context.ts`, `packages/api/src/lib/agent/worker.ts`, `packages/api/src/lib/storage/index.ts`, `packages/github/src/runtime/bindings.ts`, `packages/github/src/webhooks/handle-github-webhook.ts`, `packages/github/src/infrastructure/cache/github-cache.ts` (drop `executionContext?.waitUntil`), `apps/web/src/server/files-gateway.ts`, `apps/server/src/app.ts:134-178` (webhook handler), `packages/core/src/orpc-context/index.ts` (binding type)
 - Create: `apps/server/src/runtime-context.ts`, `packages/github/src/infrastructure/cache/redis-cache-adapter.ts`
 
 ### Step 1: Start dev infrastructure
@@ -437,7 +442,20 @@ export { createRedisCacheAdapter } from "#@/infrastructure/cache/redis-cache-ada
 
 - [ ] Done
 
-### Step 5: Modify `packages/core/src/orpc-context/index.ts`
+### Step 5: Delete `executionContext?.waitUntil` from `packages/github/src/infrastructure/cache/github-cache.ts`
+
+Line 348 calls `runtime.executionContext?.waitUntil(task)`. After Step 4 removes `executionContext` from `GitHubRuntimeBindings`, this field no longer exists on the type. In Node.js the `await task` on line 349 is sufficient — the event loop outlives the request, so `waitUntil` is unnecessary.
+
+```diff
+-  runtime.executionContext?.waitUntil(task);
+   await task;
+```
+
+Delete line 348 only. The `await task` on line 349 remains.
+
+- [ ] Done
+
+### Step 6: Modify `packages/core/src/orpc-context/index.ts`
 
 Update `OrpcContextGithubBinding` type to mirror the new `bindings.ts`:
 
@@ -466,11 +484,11 @@ Update `OrpcContextGithubBinding` type to mirror the new `bindings.ts`:
 
 - [ ] Done
 
-### Step 6: Modify `packages/api/src/lib/storage/index.ts`
+### Step 7: Modify `packages/api/src/lib/storage/index.ts`
 
 Swap `files-sdk/r2` for `files-sdk/s3`. Read config from env.
 
-**Important**: `storage/index.ts` lives in `packages/api` which is imported by **both** `apps/web` (via `apps/web/src/server/files-gateway.ts`) AND `apps/server`. The original file already uses `ENV_WEB_SERVER` from `@tsu-stack/env/web/env.server` (NOT `ENV_SERVER` from `@tsu-stack/env/server/env`) — preserve that choice so the web app can import it. Add the new S3 vars to `packages/env/src/web/env.server.ts` in Step 7 (in addition to `server/env.ts`).
+**Important**: `storage/index.ts` lives in `packages/api` which is imported by **both** `apps/web` (via `apps/web/src/server/files-gateway.ts`) AND `apps/server`. The original file already uses `ENV_WEB_SERVER` from `@tsu-stack/env/web/env.server` (NOT `ENV_SERVER` from `@tsu-stack/env/server/env`) — preserve that choice so the web app can import it. Add the new S3 vars to `packages/env/src/web/env.server.ts` in Step 8 (in addition to `server/env.ts`).
 
 Original file is 13 lines. Replace with:
 
@@ -499,9 +517,9 @@ export function createFiles() {
 
 - [ ] Done
 
-### Step 7: Add S3 env vars to env schemas
+### Step 8: Add S3 env vars to env schemas
 
-Add to **both** `packages/env/src/server/env.ts` AND `packages/env/src/web/env.server.ts` (the web env is shared with the web app's server-side code — `storage/index.ts` reads `ENV_WEB_SERVER` per Step 6):
+Add to **both** `packages/env/src/server/env.ts` AND `packages/env/src/web/env.server.ts` (the web env is shared with the web app's server-side code — `storage/index.ts` reads `ENV_WEB_SERVER` per Step 7):
 
 **For `packages/env/src/server/env.ts`** (server-side vars — Redis, AGENT_WORKER_URL, etc.):
 
@@ -555,7 +573,7 @@ Save current Neon `DATABASE_URL` in `DATABASE_URL_NEON_BACKUP` for the data migr
 
 - [ ] Done
 
-### Step 8: Modify `packages/api/src/lib/agent/worker.ts`
+### Step 9: Modify `packages/api/src/lib/agent/worker.ts`
 
 Drop the `Fetcher` type. Always HTTP fetch. Keep the `duplex: "half"` for streaming bodies per the existing `@ts-expect-error` comment.
 
@@ -593,7 +611,7 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
 
 - [ ] Done
 
-### Step 9: Modify `packages/github/src/webhooks/handle-github-webhook.ts`
+### Step 10: Modify `packages/github/src/webhooks/handle-github-webhook.ts`
 
 Replace the DO broadcast block (lines ~74-82 originally):
 
@@ -619,7 +637,7 @@ The new call is synchronous — Socket.IO `emit` is fire-and-forget. No `waitUnt
 
 - [ ] Done
 
-### Step 10: Modify `packages/api/src/lib/context/hono/create-context.ts`
+### Step 11: Modify `packages/api/src/lib/context/hono/create-context.ts`
 
 Change the `createContext()` signature to accept a `NodeRuntime` parameter rather than reading from Hono env. Significantly:
 
@@ -666,7 +684,7 @@ The `HonoBindings` type in this file no longer needs `GITHUB_CACHE_KV`, `GITHUB_
 
 - [ ] Done
 
-### Step 11: Modify `apps/server/src/app.ts` to wire `createContext` with the runtime
+### Step 12: Modify `apps/server/src/app.ts` to wire `createContext` with the runtime
 
 In the `/*` middleware block (lines ~256-297 originally), pass the runtime:
 
@@ -725,7 +743,7 @@ initRuntime();
 
 - [ ] Done
 
-### Step 12: Modify `apps/web/src/server/files-gateway.ts`
+### Step 13: Modify `apps/web/src/server/files-gateway.ts`
 
 Drop `cloudflare:workers` import. Call `createFiles()` with no args.
 
@@ -756,7 +774,7 @@ export const filesRouter = createFilesRouter({
 
 - [ ] Done
 
-### Step 13: Verify build still passes
+### Step 14: Verify build still passes
 
 ```bash
 vp run -w fix  # workspace-wide lint/format/typecheck
@@ -767,7 +785,7 @@ ls dist/index.mjs
 
 - [ ] Done
 
-### Step 14: Smoke test
+### Step 15: Smoke test
 
 ```bash
 DATABASE_URL="postgresql://admin:changeme@localhost:5432/personal_hub" \
@@ -792,7 +810,7 @@ DATABASE_URL="postgresql://admin:changeme@localhost:5432/personal_hub" vp run db
 
 - [ ] Done
 
-### Step 15: Commit
+### Step 16: Commit
 
 ```bash
 git add apps/server/ apps/web/ packages/api/ packages/github/ packages/core/ packages/env/
@@ -1252,7 +1270,7 @@ git commit -m "feat: migrate agent from Cloudflare deployer to PostgresStore"
 **Files:**
 
 - Delete: `apps/web/wrangler.jsonc`, `docker-compose.coolify.yaml`
-- Modify: `apps/web/package.json`, `apps/web/Dockerfile`, `apps/server/Dockerfile`
+- Modify: `apps/web/package.json`, `apps/web/Dockerfile`, `apps/server/Dockerfile`, `apps/web/src/routes/api/resume/download/index.ts`, `packages/api/src/client/tanstack-start/orpc.ts`
 - Create: `docker-compose.yaml`, `docker-compose.prod.yml`, `scripts/migrate-from-neon.sh`
 - Modify: `packages/env/src/server/env.ts`, `packages/env/.env`, `.gitignore`
 
@@ -1296,7 +1314,78 @@ Drop `cf-typegen`, `deploy`, `logs` scripts.
 
 - [ ] Done
 
-### Step 3: Modify `apps/server/Dockerfile`
+### Step 3: Modify `apps/web/src/routes/api/resume/download/index.ts`
+
+Drop `cloudflare:workers` import. Use `createFiles()` from the shared storage module. The R2 `.get()` returns `{ body, key }` — the S3 `Files.get()` returns the same shape, but the consumer calls `.blob()` on the result. Verify `Files.get()` returns an object with `.blob()` or adapt accordingly.
+
+```diff
+-import { env } from "cloudflare:workers";
++import { createFiles } from "@tsu-stack/api/lib/storage/index";
+
+// In the handler:
+-const object = await env.MEDIA_BUCKET.get(resumeRow.r2Key);
++const files = createFiles();
++const object = await files.get(resumeRow.r2Key);
+```
+
+If `Files.get()` doesn't expose `.blob()`, read the body stream instead:
+
+```typescript
+if (!object) {
+  return new Response("PDF not found", { status: 404 });
+}
+const body = await object.body; // ReadableStream
+```
+
+- [ ] Done
+
+### Step 4: Modify `packages/api/src/client/tanstack-start/orpc.ts`
+
+Drop `cloudflare:workers` import. Replace the `env.MEDIA_BUCKET` and `env.AGENT_WORKER` access with the shared modules.
+
+Remove lines 7, 43-53, and 68. Replace with:
+
+```diff
+-import { env } from "cloudflare:workers";
+-import { type OrpcContextMediaBucket } from "@tsu-stack/core";
++import { createFiles } from "@tsu-stack/api/lib/storage/index";
++import { type OrpcContextMediaBucket } from "@tsu-stack/core";
+ import { createAgentWorker, type AgentWorkerEnv } from "#@/lib/agent/worker";
+
+// In the isomorphic fn:
+-const envAny = env as AgentWorkerEnv;
+-const agentWorker =
+-  (envAny.AGENT_WORKER ?? envAny.AGENT_WORKER_URL)
+-    ? createAgentWorker(envAny)
+-    : {
+-        fetch(): Promise<Response> {
+-          throw new Error(
+-            "Agent worker is not configured. Set AGENT_WORKER_URL or add a service binding."
+-          );
+-        }
+-      };
++const agentWorker = (() => {
++  const url = ENV_WEB_ISOMORPHIC.AGENT_WORKER_URL;
++  if (!url) {
++    return {
++      fetch(): Promise<Response> {
++        throw new Error("Agent worker is not configured. Set AGENT_WORKER_URL.");
++      }
++    };
++  }
++  return createAgentWorker({ AGENT_WORKER_URL: url });
++})();
+
+// In the return object:
+-mediaBucket: (env as Record<string, unknown>).MEDIA_BUCKET as OrpcContextMediaBucket,
++mediaBucket: createFiles() as unknown as OrpcContextMediaBucket,
+```
+
+Note: `AGENT_WORKER_URL` must be available on the web side — add it to `packages/env/src/web/env.isomorphic.ts` if not already present (check existing env schema first; it may already be wired via `VITE_*`).
+
+- [ ] Done
+
+### Step 5: Modify `apps/server/Dockerfile`
 
 Port 5000 → 5100. Build via `vp pack`. CMD `node dist/index.mjs`. Keep the existing `node:25-bookworm-slim` + Vite Plus pattern.
 
@@ -1323,13 +1412,13 @@ Also: drop the `RUN vp run -v --filter server build` line if Task 1 rewired it t
 
 - [ ] Done
 
-### Step 4: Modify `apps/web/Dockerfile`
+### Step 6: Modify `apps/web/Dockerfile`
 
 Drop CF build args. The Dockerfile's existing `--filter web build` already produces `.output/server/index.mjs` via Nitro (TanStack Start's default Node.js target), so no other change to the CMD/healthcheck is needed — just drop the `SERVICE_URL_*`/CF env refs from the `ARG`/`ENV` block.
 
 - [ ] Done
 
-### Step 5: Create `docker-compose.yaml`
+### Step 7: Create `docker-compose.yaml`
 
 Full-stack Dokploy-style compose — all 6 services with Traefik labels.
 
@@ -1440,7 +1529,7 @@ volumes:
 
 - [ ] Done
 
-### Step 6: Create `docker-compose.prod.yml`
+### Step 8: Create `docker-compose.prod.yml`
 
 Production override extending `docker-compose.yaml` with explicit port mappings (Dokploy proxies TLS for us, so only needed if testing without Traefik).
 
@@ -1480,7 +1569,7 @@ Run with `docker compose -f docker-compose.yaml -f docker-compose.prod.yml up -d
 
 - [ ] Done
 
-### Step 7: Delete `docker-compose.coolify.yaml`
+### Step 9: Delete `docker-compose.coolify.yaml`
 
 ```bash
 git rm docker-compose.coolify.yaml
@@ -1488,7 +1577,7 @@ git rm docker-compose.coolify.yaml
 
 - [ ] Done
 
-### Step 8: Update env schema and `.env`
+### Step 10: Update env schema and `.env`
 
 Already partially done in Task 2 Step 7. Add the remaining vars for completeness in `packages/env/src/server/env.ts`:
 
@@ -1508,7 +1597,7 @@ OTEL_SERVICE_NAME: z.string().default("personal-hub-server"),
 
 - [ ] Done
 
-### Step 9: Create `scripts/migrate-from-neon.sh`
+### Step 11: Create `scripts/migrate-from-neon.sh`
 
 Temporary script for the one-time data dump from Neon to local Postgres.
 
@@ -1538,7 +1627,7 @@ chmod +x scripts/migrate-from-neon.sh
 
 - [ ] Done
 
-### Step 10: Update `.gitignore`
+### Step 12: Update `.gitignore`
 
 Add:
 
@@ -1550,7 +1639,7 @@ The `.env` files are already gitignored per the existing repo config (verify bef
 
 - [ ] Done
 
-### Step 11: Build, deploy, smoke test
+### Step 13: Build, deploy, smoke test
 
 ```bash
 # Build all three images
@@ -1576,7 +1665,7 @@ curl http://localhost:4111/api/agents     # agent
 
 - [ ] Done
 
-### Step 12: Final cleanup verification
+### Step 14: Final cleanup verification
 
 ```bash
 grep -r "wrangler\|DurableObject\|CloudflareDeployer\|cloudflare:workers" \
@@ -1589,7 +1678,7 @@ If any match, remove them.
 
 - [ ] Done
 
-### Step 13: Delete temporary migration script
+### Step 15: Delete temporary migration script
 
 ```bash
 git rm scripts/migrate-from-neon.sh
@@ -1597,7 +1686,7 @@ git rm scripts/migrate-from-neon.sh
 
 - [ ] Done
 
-### Step 14: Run final workspace validation
+### Step 16: Run final workspace validation
 
 ```bash
 vp run -w fix   # workspace-wide lint/format/typecheck
@@ -1608,7 +1697,7 @@ Expected: both green.
 
 - [ ] Done
 
-### Step 15: Final commit
+### Step 17: Final commit
 
 ```bash
 git add .
