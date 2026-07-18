@@ -260,9 +260,14 @@ The `/health/ready` returning `unhealthy` for the DB is fine at this point — t
 
 - [ ] Done
 
-### Step 10: Commit
+### Step 10: Validate and commit
+
+Per `AGENTS.md`, run package-local validation after a scoped change:
 
 ```bash
+vp check --filter @tsu-stack/server
+# Expected: typecheck + lint pass
+
 git add apps/server/ packages/env/
 git commit -m "feat: migrate server build from Cloudflare to Node.js (vp pack)"
 ```
@@ -465,26 +470,28 @@ Update `OrpcContextGithubBinding` type to mirror the new `bindings.ts`:
 
 Swap `files-sdk/r2` for `files-sdk/s3`. Read config from env.
 
+**Important**: `storage/index.ts` lives in `packages/api` which is imported by **both** `apps/web` (via `apps/web/src/server/files-gateway.ts`) AND `apps/server`. The original file already uses `ENV_WEB_SERVER` from `@tsu-stack/env/web/env.server` (NOT `ENV_SERVER` from `@tsu-stack/env/server/env`) — preserve that choice so the web app can import it. Add the new S3 vars to `packages/env/src/web/env.server.ts` in Step 7 (in addition to `server/env.ts`).
+
 Original file is 13 lines. Replace with:
 
 ```typescript
 import { Files } from "files-sdk";
 import { s3 } from "files-sdk/s3";
 
-import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
 
 export function createFiles() {
   return new Files({
     adapter: s3({
-      bucket: ENV_SERVER.S3_BUCKET || "personal-hub",
-      region: ENV_SERVER.S3_REGION || "us-east-1",
-      endpoint: ENV_SERVER.S3_ENDPOINT,
-      forcePathStyle: ENV_SERVER.S3_FORCE_PATH_STYLE ?? true,
+      bucket: ENV_WEB_SERVER.S3_BUCKET || "personal-hub",
+      region: ENV_WEB_SERVER.S3_REGION || "us-east-1",
+      endpoint: ENV_WEB_SERVER.S3_ENDPOINT,
+      forcePathStyle: ENV_WEB_SERVER.S3_FORCE_PATH_STYLE ?? true,
       credentials: {
-        accessKeyId: ENV_SERVER.S3_ACCESS_KEY || "",
-        secretAccessKey: ENV_SERVER.S3_SECRET_KEY || ""
+        accessKeyId: ENV_WEB_SERVER.S3_ACCESS_KEY || "",
+        secretAccessKey: ENV_WEB_SERVER.S3_SECRET_KEY || ""
       },
-      publicBaseUrl: ENV_SERVER.MEDIA_PUBLIC_URL
+      publicBaseUrl: ENV_WEB_SERVER.MEDIA_PUBLIC_URL
     })
   });
 }
@@ -492,7 +499,11 @@ export function createFiles() {
 
 - [ ] Done
 
-### Step 7: Add S3 env vars to `packages/env/src/server/env.ts`
+### Step 7: Add S3 env vars to env schemas
+
+Add to **both** `packages/env/src/server/env.ts` AND `packages/env/src/web/env.server.ts` (the web env is shared with the web app's server-side code — `storage/index.ts` reads `ENV_WEB_SERVER` per Step 6):
+
+**For `packages/env/src/server/env.ts`** (server-side vars — Redis, AGENT_WORKER_URL, etc.):
 
 ```typescript
 S3_ENDPOINT: z.string().optional(),
@@ -504,7 +515,22 @@ S3_FORCE_PATH_STYLE: z.stringbool().default(true),
 MEDIA_PUBLIC_URL: z.string().optional(),
 REDIS_URL: z.string().optional(),
 AGENT_WORKER_URL: z.string().optional(),
+OTEL_SERVICE_NAME: z.string().default("personal-hub-server"),
 ```
+
+**For `packages/env/src/web/env.server.ts`** (read by `storage/index.ts`) — keep existing vars, add the S3 set (drop `REDIS_URL` and `AGENT_WORKER_URL` — those are server-only):
+
+```typescript
+S3_ENDPOINT: z.string().optional(),
+S3_ACCESS_KEY: z.string().optional(),
+S3_SECRET_KEY: z.string().optional(),
+S3_BUCKET: z.string().default("personal-hub"),
+S3_REGION: z.string().default("us-east-1"),
+S3_FORCE_PATH_STYLE: z.stringbool().default(true),
+MEDIA_PUBLIC_URL: z.string().optional(),
+```
+
+(Keep the existing `R2_PUBLIC_BASE_URL` in web env.server for backward compat during transition — drop it in Task 5 final cleanup if unused.)
 
 Update `packages/env/.env` with dev values (several already present from `ada51fe`):
 
@@ -864,26 +890,14 @@ export function broadcastSignals(signalKeys: string[]) {
 
 ### Step 2: Wire up the gateway in `apps/server/src/node.ts`
 
-After `initRuntime()` and after `serve()`:
+After `initRuntime()` and after `serve()`, import the gateway's module-level `broadcastSignals` export and pass it to `setBroadcastSignals`:
 
 ```typescript
-import { createGithubGateway } from "#@/github-gateway";
+import { createGithubGateway, broadcastSignals } from "#@/github-gateway";
 import { setBroadcastSignals } from "#@/runtime-context";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
-// ... existing serve() call produces httpServer ...
-
-if (ENV_SERVER.REDIS_URL) {
-  createGithubGateway(httpServer, ENV_SERVER.REDIS_URL);
-  setBroadcastSignals(broadcastSignalsFromGateway);
-}
-```
-
-Looking at the gateway's module-level `_broadcastSignals` export, we can use a simpler pattern: import `broadcastSignals` from the gateway module and pass to `setBroadcastSignals`:
-
-```typescript
-import { broadcastSignals } from "#@/github-gateway";
-import { setBroadcastSignals } from "#@/runtime-context";
+// ... existing serve() call produces httpServer in scope ...
 
 if (ENV_SERVER.REDIS_URL) {
   createGithubGateway(httpServer, ENV_SERVER.REDIS_URL);
@@ -891,7 +905,7 @@ if (ENV_SERVER.REDIS_URL) {
 }
 ```
 
-(Note: the `broadcastSignals` import only resolves to the actual function after `createGithubGateway` runs, since `_broadcastSignals` starts as `null`. If the gateway hasn't initialized when a webhook fires, the no-op in `runtime-context.ts` kicks in. Once the gateway initializes, the module-level closure is set, and the exported `broadcastSignals` calls the real one.)
+Note: the `broadcastSignals` import only resolves to the actual function after `createGithubGateway` runs (it sets the module-level `_broadcastSignals` closure). If a webhook fires before the gateway initializes, the no-op from `runtime-context.ts`'s initial `broadcastSignals: () => {}` kicks in. Once the gateway initializes, the exported `broadcastSignals` calls the real one.
 
 - [ ] Done
 
@@ -979,8 +993,10 @@ git commit -m "feat: replace CF Durable Object with Socket.IO + Redis adapter"
 > Per spec Phase 4. Convert the Mastra agent from the CF deployer to a Node.js server with PostgresStore.
 > **Markers:**
 > `@blocker-if`: Task 2 committed, `mastra_agent` database exists locally (verified in Task 2 Step 1).
-> `@done-when`: `mastra build` produces `.mastra/output/index.mjs`, agent boots on `:4111`, `/api/agents` returns 200.
+> `@done-when`: `pnpm build` (which runs `mastra build`) produces `.mastra/output/index.mjs`, agent boots on `:4111`, `/api/agents` returns 200.
 > `@verify`: `curl http://localhost:4111/api/agents` returns JSON array.
+>
+> **REQUIRED SUB-SKILL:** Per `apps/agent/AGENTS.md`, load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge — Mastra APIs change between versions. Use `pnpm build` / `pnpm dev` from `apps/agent/package.json` instead of running `mastra build` / `mastra dev` directly.
 
 **Files:**
 
@@ -1022,12 +1038,16 @@ import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
 export const mastra = new Mastra({
   server: {
+    // Keep the existing chatRoute import + config from the original file
     apiRoutes: [
-      // keep existing chatRoute import + config unchanged
+      /* keep existing chatRoute(...) call */
     ]
   },
   bundler: {
-    // drop the duckdb externals since we no longer use it
+    // DROP the externals array entirely — it only listed "@mastra/duckdb" and
+    // "@duckdb/node-bindings" which are no longer deps. If other externals
+    // remain, keep them; otherwise remove the whole `bundler` block.
+    externals: []
   },
   workflows: {
     weatherWorkflow,
@@ -1047,11 +1067,17 @@ export const mastra = new Mastra({
     name: "personal-hub-agent",
     level: "info"
   }),
-  observability: /* keep existing block — but drop DuckDBStore reference inside */
+  observability: {
+    // Keep the existing top-level Observability config (configs.development
+    // with MastraStorageExporter, configs.production with MastraPlatformExporter,
+    // and configSelector). This top-level block does NOT reference DuckDBStore —
+    // DuckDBStore was used in the `storage` block above, which we've now replaced
+    // with PostgresStore.
+  }
 });
 ```
 
-Note: the existing `observability.configs.development` block references `new DuckDBStore().observability` — that needs to go too. Per Mastra docs, dev observability can use `MastraStorageExporter` only, without DuckDBStore.
+The `MastraCompositeStore` abstraction (used at lines 65-90 of the original) is no longer needed — `PostgresStore` is the only storage, so we hand it directly to `storage` rather than wrapping it in a composite with per-domain overrides.
 
 - [ ] Done
 
@@ -1143,8 +1169,12 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 
 RUN pnpm --filter @tsu-stack/agent build
 
-FROM base AS runner
+FROM node:25-bookworm-slim AS runner
 WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends wget ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN addgroup --gid 1001 nodejs \
     && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" agent
@@ -1187,9 +1217,14 @@ curl -X POST http://localhost:5100/rpc/agent.detectStacks \
 
 - [ ] Done
 
-### Step 6: Commit
+### Step 6: Validate and commit
+
+Per `AGENTS.md`, run package-local validation after a scoped change:
 
 ```bash
+vp check --filter @tsu-stack/agent
+# Expected: typecheck + lint pass
+
 git add apps/agent/
 git commit -m "feat: migrate agent from Cloudflare deployer to PostgresStore"
 ```
