@@ -890,15 +890,17 @@ export function broadcastSignals(signalKeys: string[]) {
 
 ### Step 2: Wire up the gateway in `apps/server/src/node.ts`
 
-After `initRuntime()` and after `serve()`, import the gateway's module-level `broadcastSignals` export and pass it to `setBroadcastSignals`:
+Add to the existing imports at the top of `apps/server/src/node.ts` (the `ENV_SERVER` import already exists from Task 1 Step 3 — do NOT duplicate it):
 
 ```typescript
 import { createGithubGateway, broadcastSignals } from "#@/github-gateway";
 import { setBroadcastSignals } from "#@/runtime-context";
-import { ENV_SERVER } from "@tsu-stack/env/server/env";
+// ENV_SERVER already imported in Task 1 Step 3 — keep that single import
+```
 
-// ... existing serve() call produces httpServer in scope ...
+After `initRuntime()` and after `serve()` returns `httpServer` in scope:
 
+```typescript
 if (ENV_SERVER.REDIS_URL) {
   createGithubGateway(httpServer, ENV_SERVER.REDIS_URL);
   setBroadcastSignals(broadcastSignals);
@@ -1113,12 +1115,12 @@ Drop CF deps:
 }
 ```
 
-Update scripts:
+Update scripts (drop `cross-env` — `pnpm` runs scripts via a POSIX shell, so bare `IS_BUILD=true` works without it):
 
 ```json
 "scripts": {
   "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev",
-  "build": "cross-env IS_BUILD=true mastra build",
+  "build": "IS_BUILD=true mastra build",
   "start": "node .mastra/output/index.mjs"
 }
 ```
@@ -1135,7 +1137,7 @@ git rm apps/agent/wrangler.jsonc
 
 ### Step 4: Create `apps/agent/Dockerfile`
 
-Follow the same pattern as the existing `apps/server/Dockerfile` (node:25-bookworm-slim + Vite Plus). Build via `mastra build`, CMD `node .mastra/output/index.mjs`.
+Multi-stage with explicit `base` → `builder` → `runner` chain (matches the existing `apps/server/Dockerfile` convention where the `builder` stage owns the build artifacts and the `runner` stage is a fresh slim image).
 
 ```dockerfile
 FROM node:25-bookworm-slim AS base
@@ -1157,6 +1159,10 @@ RUN npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
     chmod +x /root/.vite-plus/bin/vp
 ENV PATH="/root/.vite-plus/bin:$PATH"
 
+# =========================================================================== #
+
+FROM base AS builder
+
 COPY --parents **/package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN vp install --frozen-lockfile --ignore-scripts
 
@@ -1168,6 +1174,8 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     NODE_ENV=${NODE_ENV}
 
 RUN pnpm --filter @tsu-stack/agent build
+
+# =========================================================================== #
 
 FROM node:25-bookworm-slim AS runner
 WORKDIR /app
@@ -1465,6 +1473,8 @@ services:
       - "9000:9000"
       - "9001:9001"
 ```
+
+**Security note**: The `postgres`, `redis`, and `minio` port mappings above expose those services to the host's network. In a real Dokploy prod deployment, drop these three port-publish blocks so only Traefik-reachable services (`server`, `agent`, `web`) are exposed; the infra containers stay isolated on the internal Docker network. Keep the mappings here only for local staging / Dokploy-affinity testing.
 
 Run with `docker compose -f docker-compose.yaml -f docker-compose.prod.yml up -d` on Dokploy.
 
