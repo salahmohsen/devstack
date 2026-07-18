@@ -306,6 +306,19 @@ export default defineConfig({
           "fsd/no-ui-in-business-logic": ["error", fsdEslintPluginOptions],
           "fsd/no-global-store-imports": "error"
         }
+      },
+      {
+        /**
+         * `packages/db` is a non-FSD package. Its internal repositories
+         * legitimately need parent imports to share `getDb`, schema
+         * definitions, and migration utilities. The global
+         * `import/no-relative-parent-imports` rule is too strict for
+         * this package, so it's disabled here.
+         */
+        files: ["packages/db/**/*.ts"],
+        rules: {
+          "import/no-relative-parent-imports": "off"
+        }
       }
     ]
   },

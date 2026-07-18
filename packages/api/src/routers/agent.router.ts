@@ -299,12 +299,7 @@ export const agentRouter = {
       // 2. Look up existing stacks, dependencies, and last scan
       const existingStacks = await stackRepository.findAll();
 
-      let existingDependencies: Awaited<ReturnType<typeof stackDependencyRepository.findAll>>;
-      try {
-        existingDependencies = await stackDependencyRepository.findAll();
-      } catch (err) {
-        throw err;
-      }
+      const existingDependencies = await stackDependencyRepository.findAll();
 
       const lastScan = await projectStackScanRepository.findLatestByProjectId(input.projectId);
 
