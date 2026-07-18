@@ -166,6 +166,7 @@ export const auth = betterAuth({
             const profile = await profileRes.json();
 
             if (!profileRes.ok || !profile.id) {
+              // eslint-disable-next-line no-console
               console.error("[auth] GitHub user fetch failed:", profile);
               return null;
             }
@@ -195,7 +196,7 @@ export const auth = betterAuth({
             return {
               user: {
                 id: String(profile.id),
-                name: profile.name || profile.login || "",
+                name: profile.name ?? profile.login ?? "",
                 email,
                 emailVerified,
                 image: profile.avatar_url

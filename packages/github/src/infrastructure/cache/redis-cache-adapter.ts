@@ -16,8 +16,10 @@ export function createRedisCacheAdapter(redis: RedisLike): GitHubCacheKv {
     get: async (key: string, type?: "text" | "json"): Promise<unknown> => {
       const raw = await redis.get(key);
       if (raw) {
+        // eslint-disable-next-line no-console
         console.log(`[cache:redis] HIT  ${shortKey(key)} (${(raw.length / 1024).toFixed(1)}kb)`);
       } else {
+        // eslint-disable-next-line no-console
         console.log(`[cache:redis] MISS ${shortKey(key)}`);
       }
       if (!raw) return null;
@@ -32,17 +34,22 @@ export function createRedisCacheAdapter(redis: RedisLike): GitHubCacheKv {
     ): Promise<void> {
       if (options?.expirationTtl) {
         await redis.set(key, value, { EX: options.expirationTtl });
+        // eslint-disable-next-line no-console
         console.log(
           `[cache:redis] PUT  ${shortKey(key)} ttl=${options.expirationTtl}s (${(value.length / 1024).toFixed(1)}kb)`
         );
       } else {
         await redis.set(key, value);
-        console.log(`[cache:redis] PUT  ${shortKey(key)} no-ttl (${(value.length / 1024).toFixed(1)}kb)`);
+        // eslint-disable-next-line no-console
+        console.log(
+          `[cache:redis] PUT  ${shortKey(key)} no-ttl (${(value.length / 1024).toFixed(1)}kb)`
+        );
       }
     },
 
     async delete(key: string): Promise<void> {
       const deleted = await redis.del(key);
+      // eslint-disable-next-line no-console
       console.log(`[cache:redis] DEL  ${shortKey(key)} removed=${deleted}`);
     }
   } as GitHubCacheKv;
