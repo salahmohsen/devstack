@@ -15,22 +15,16 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "pnpm dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
-    "deploy": "pnpm dotenvx run -f ../../packages/env/.env -- wrangler deploy",
-    "build": "cross-env IS_BUILD=true mastra build",
-    "start": "mastra start",
+    "dev": "PORT=4111 pnpm dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
+    "build": "IS_BUILD=true mastra build",
+    "start": "node .mastra/output/index.mjs",
     "check": "vp check",
     "check:fix": "vp check --fix"
   },
   "dependencies": {
-    "@duckdb/node-bindings": "catalog:",
     "@mastra/ai-sdk": "catalog:",
-    "@mastra/cloudflare-d1": "catalog:",
     "@mastra/core": "catalog:",
-    "@mastra/deployer-cloudflare": "catalog:",
-    "@mastra/duckdb": "catalog:",
     "@mastra/evals": "catalog:",
-    "@mastra/libsql": "catalog:",
     "@mastra/loggers": "catalog:",
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",
@@ -47,9 +41,7 @@
     "@dotenvx/dotenvx": "catalog:",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "cross-env": "catalog:",
     "mastra": "catalog:",
-    "typescript": "^6.0.3",
-    "wrangler": "catalog:"
+    "typescript": "^6.0.3"
   }
 }

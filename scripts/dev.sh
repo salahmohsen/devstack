@@ -70,15 +70,16 @@ fi
 
 # ─── Step 4: Push DB schema ───────────────────────────────────────
 info "Pushing database schema..."
-cd "$ROOT"
-pnpm dotenvx run -f "$ENV_FILE" -- pnpm run -w db db push --force 2>&1 | tail -5
+cd "$ROOT/packages/db"
+pnpm dotenvx run -f "$ENV_FILE" -- drizzle-kit push --force 2>&1 | tail -5
 ok "Database schema pushed"
+cd "$ROOT"
 
 # ─── Step 5: Start apps ──────────────────────────────────────────
 info "Starting all apps in dev mode..."
 echo ""
-echo -e "  ${CYAN}Server${RESET}  → http://localhost:5100"
-echo -e "  ${CYAN}Web${RESET}     → http://localhost:5100 (via vite-plus)"
+echo -e "  ${CYAN}Server${RESET}  → http://localhost:5200"
+echo -e "  ${CYAN}Web${RESET}     → http://localhost:5100"
 echo -e "  ${CYAN}Agent${RESET}  → http://localhost:4111"
 echo ""
 echo -e "  ${YELLOW}Press Ctrl+C to stop all services${RESET}"
