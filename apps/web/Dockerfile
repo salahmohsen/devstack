@@ -11,8 +11,8 @@ WORKDIR /app
 
 FROM base AS installer
 
-# Enable corepack and prepare pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm using npm
+RUN npm install -g pnpm
 
 # Copy lockfiles and package.json files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
