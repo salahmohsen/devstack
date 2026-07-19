@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM node:25-bookworm-slim AS base
 
 RUN apt-get update \
@@ -15,7 +16,8 @@ FROM base AS installer
 # FIXME: Use the documented manual method when it's available
 # @see {@link https://github.com/voidzero-dev/vite-plus/issues/896}
 ARG VITE_PLUS_VERSION=0.1.23
-RUN npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
+RUN --mount=type=cache,target=/root/.npm \
+    npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
         --pack-destination /tmp && \
     mkdir -p /root/.vite-plus/bin && \
     tar xzf /tmp/voidzero-dev-vite-plus-cli-linux-x64-gnu-*.tgz -C /root/.vite-plus/bin \
@@ -31,7 +33,12 @@ RUN vp env off
 # --parents preserves directory structure, picking up all workspace packages automatically.
 COPY --parents **/package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-RUN vp install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
+# Cache mounts keep pnpm store and download cache across builds.
+# pnpm store layout: https://pnpm.io/docker
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    --mount=type=cache,target=/root/.cache/pnpm \
+    --mount=type=cache,target=/root/.npm \
+    vp install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
 
 # =========================================================================== #
 
@@ -57,7 +64,7 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 # RUN vp run test:unit:run
 # RUN vp run test:e2e:run
 
-RUN vp run -v --filter server build
+RUN vp build --filter @tsu-stack/server
 
 # =========================================================================== #
 
