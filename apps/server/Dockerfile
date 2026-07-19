@@ -75,7 +75,9 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 # RUN vp run test:unit:run
 # RUN vp run test:e2e:run
 
-RUN vp build --filter @tsu-stack/server
+WORKDIR /app/apps/server
+RUN vp build
+WORKDIR /app
 
 # =========================================================================== #
 
