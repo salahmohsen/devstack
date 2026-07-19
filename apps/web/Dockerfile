@@ -23,6 +23,10 @@ RUN npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
     chmod +x /root/.vite-plus/bin/vp
 ENV PATH="/root/.vite-plus/bin:$PATH"
 
+# Use the system Node.js bundled with the base image instead of downloading a managed runtime.
+# The network inside the build environment is too slow for the managed runtime download to succeed.
+RUN vp env off
+
 # This layer only invalidates when dependencies change, not on source changes.
 # --parents preserves directory structure, picking up all workspace packages automatically.
 COPY --parents **/package.json pnpm-lock.yaml pnpm-workspace.yaml ./
