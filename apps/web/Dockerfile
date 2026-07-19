@@ -73,11 +73,11 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 # migrations before the web build spins up its preview server.
 # dotenvx (used by the db:migrate script) only passes vars found in the specified
 # .env file, so we create a temporary one from the build-time ENVs.
-RUN printf 'DATABASE_URL=%s\nBETTER_AUTH_SECRET=%s\nIS_BUILD=true\n' \
-        "$DATABASE_URL" "$BETTER_AUTH_SECRET" \
-    > packages/env/.env \
-    && vp run db:migrate \
-    && rm packages/env/.env
+# RUN printf 'DATABASE_URL=%s\nBETTER_AUTH_SECRET=%s\nIS_BUILD=true\n' \
+#         "$DATABASE_URL" "$BETTER_AUTH_SECRET" \
+#     > packages/env/.env \
+#     && vp run db:migrate \
+#     && rm packages/env/.env
 
 RUN cd apps/web && vp build
 
