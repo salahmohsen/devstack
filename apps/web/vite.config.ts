@@ -13,17 +13,6 @@ import { defineConfig } from "vite-plus";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
 
-import { type FileRouteTypes } from "@/routeTree.gen";
-
-const ROUTES_TO_PRERENDER: FileRouteTypes["fullPaths"][] = ["/sitemap.xml", "/robots.txt"];
-
-const PAGES_PRERENDER_CONFIG = ROUTES_TO_PRERENDER.map((path) => {
-  return {
-    path: path,
-    prerender: { enabled: true }
-  };
-});
-
 // Stub out shiki in the Nitro SSR build to prevent bundling all
 // language grammars and the oniguruma WASM binary.
 // See similar fix in diffkit, apps/dashboard/vite.config.ts.
@@ -135,12 +124,15 @@ export default defineConfig({
     }),
     mdx(),
     tanstackStart({
-      pages: PAGES_PRERENDER_CONFIG,
+      // Prerender is disabled because the build-time preview server crashes
+      // when rendering pages whose route tree transitively imports
+      // drizzle-orm/node-postgres (which uses `class extends pg.Pool` at
+      // module-evaluation time, and rolldown's CJS→ESM wrapping breaks
+      // that). The /sitemap.xml and /robots.txt routes are served at
+      // runtime by the Nitro server from the SSR bundle, so they remain
+      // available without prerendering.
       prerender: {
-        enabled: true,
-        autoStaticPathsDiscovery: false,
-        crawlLinks: false,
-        concurrency: 4
+        enabled: false
       },
       server: {
         build: {
