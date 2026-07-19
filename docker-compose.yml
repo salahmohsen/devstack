@@ -116,6 +116,8 @@ services:
       args:
         VITE_SERVER_URL: ${VITE_SERVER_URL}
         VITE_WEB_URL: ${VITE_WEB_URL}
+        DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-personal_hub}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
       server: { condition: service_healthy }
     restart: unless-stopped
