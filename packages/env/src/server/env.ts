@@ -21,30 +21,14 @@ const normalizedUrlSchema = z.preprocess((value) => {
 const IS_BUILD = process.env.IS_BUILD === "true";
 
 // Required at runtime, but optional at build time so the build can run
-// without runtime-only secrets (OAuth, AI provider keys, etc.). At
-// runtime a missing value is still a hard error — the consumer code is
-// expected to throw on the undefined branch, narrowing the TS type to
-// `string` after the check. The build pipeline sets IS_BUILD=true via
+// without runtime-only secrets (OAuth, etc.). At runtime a missing value
+// is still a hard error. The build pipeline sets IS_BUILD=true via
 // `cross-env` in apps/web/vite.config.ts and apps/server/package.json.
 function runtimeRequired<T extends z.ZodTypeAny>(schema: T) {
   return IS_BUILD ? schema.optional() : schema;
 }
 
 export const ENV_SERVER = createEnv({
-  // Skip Zod validation at module load. Cloudflare's 1s startup limit
-  // ([workers/platform/limits](https://developers.cloudflare.com/workers/platform/limits/#worker-startup-time))
-  // makes the full schema validation (~440ms in the wrangler CPU profile)
-  // infeasible. Env values are injected at deploy time and validated by
-  // the deployment pipeline; if a value is missing or malformed, the
-  // first code site that reads it will throw a TypeError on `undefined`
-  // access or a runtime error from the consumer. See ADR-0014.
-  //
-  // `skipValidation: true` makes @t3-oss/env-core return `process.env`
-  // directly without applying schema defaults. To preserve the defaults,
-  // we build a synthetic `runtimeEnv` that backfills missing values from
-  // the schema defaults. Without this, `new URL(ENV_SERVER.VITE_SERVER_URL)`
-  // throws at module init because the deployed worker's `process.env`
-  // doesn't contain every var (secrets land in `env.X`, not `process.env.X`).
   skipValidation: true,
 
   emptyStringAsUndefined: true,
@@ -83,30 +67,11 @@ export const ENV_SERVER = createEnv({
     GITHUB_CLIENT_SECRET: runtimeRequired(z.string().min(1)),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
-    OPENCODE_API_KEY: runtimeRequired(z.string().min(1)),
-    OPENAI_API_KEY: z.string().min(1).optional(),
-    OLLAMA_BASE_URL: z.url().default("https://ollama.salahmohsen.com"),
-    // Default: mxbai-embed-large (1024-d). Vectorize's max dimension is
-    // 1536, so the previous qwen3-embedding default (4096-d) is rejected
-    // at deploy time. See docs/adr/0013.
-    EMBEDDING_MODEL: z.string().default("mxbai-embed-large"),
     // Agent Worker URL — used as a fallback in dev when no Cloudflare service
     // binding is available. In production, prefer the AGENT_WORKER service
     // binding (which `createAgentWorker` checks first).
     AGENT_WORKER_URL: z.url().optional(),
-    // S3/MinIO Storage
-    S3_ENDPOINT: z.string().optional(),
-    S3_ACCESS_KEY: z.string().optional(),
-    S3_SECRET_KEY: z.string().optional(),
-    S3_BUCKET: z.string().default("personal-hub"),
-    S3_REGION: z.string().default("us-east-1"),
-    S3_FORCE_PATH_STYLE: z.stringbool().default(true),
-    MEDIA_PUBLIC_URL: z.string().optional(),
     // Redis
-    REDIS_URL: z.string().optional(),
-    // Mastra
-    MASTRA_PLATFORM_ACCESS_TOKEN: z.string().optional(),
-    TURSO_DATABASE_URL: runtimeRequired(z.string().optional()),
-    TURSO_AUTH_TOKEN: runtimeRequired(z.string().optional())
+    REDIS_URL: z.string().optional()
   }
 });

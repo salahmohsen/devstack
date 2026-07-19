@@ -129,7 +129,7 @@
     "vite.config.*": "jsconfig*, vitest.config.*, cypress.config.*, playwright.config.*",
     "package.json": "LICENSE, package-lock.json, renovate.*, .npmrc, .fallowrc.jsonc, .node-version, pnpm*, components.json, commitlint*, .nvmrc, .yarnrc*, yarn*, .eslint*, eslint*, .prettier*, prettier*, .editorconfig, .gitattributes, .gitignore, bun.lock",
     "router.tsx": "routeTree.gen.ts",
-    "docker-compose.yaml": ".dockerignore, Dockerfile*, docker-compose.*.yaml, .env.docker*"
+    "docker-compose.yml": ".dockerignore, Dockerfile*, docker-compose.*.yml, .env*"
   },
 
   // Allow loading these json schemas
