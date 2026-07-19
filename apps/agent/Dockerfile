@@ -11,22 +11,10 @@ WORKDIR /app
 
 FROM base AS installer
 
-ARG VITE_PLUS_VERSION=0.1.23
-RUN npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
-        --pack-destination /tmp && \
-    mkdir -p /root/.vite-plus/bin && \
-    tar xzf /tmp/voidzero-dev-vite-plus-cli-linux-x64-gnu-*.tgz -C /root/.vite-plus/bin \
-        --strip-components=1 package/vp && \
-    chmod +x /root/.vite-plus/bin/vp
-ENV PATH="/root/.vite-plus/bin:$PATH"
+# Enable corepack and prepare pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Use the system Node.js bundled with the base image instead of downloading a managed runtime.
-# The network inside the build environment is too slow for the managed runtime download to succeed.
-RUN vp env off
-
-# This layer only invalidates when dependencies change, not on source changes.
-# Classic builder does not support COPY --parents, so we list every workspace
-# package.json explicitly to preserve the directory structure for pnpm.
+# Copy lockfiles and package.json files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 COPY apps/agent/package.json apps/agent/
 COPY apps/server/package.json apps/server/
@@ -42,11 +30,8 @@ COPY packages/logger/package.json packages/logger/
 COPY packages/seo/package.json packages/seo/
 COPY packages/ui/package.json packages/ui/
 
-# Install dependencies. The pnpm store lives at /root/.local/share/pnpm/store
-# and is reused across builds on the same host; consider switching to a
-# BuildKit `--mount=type=cache` for full cross-build caching once Dokploy
-# supports BuildKit for compose builds.
-RUN vp install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
+# Install dependencies
+RUN pnpm install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
 
 # =========================================================================== #
 
@@ -65,11 +50,12 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     NPM_CONFIG_FETCH_TIMEOUT=300000 \
     NPM_CONFIG_PREFER_OFFLINE=true
 
-RUN timeout 600 vp run -v --filter agent build
+RUN timeout 600 pnpm run -w @tsu-stack/agent build
 
 # =========================================================================== #
 
 FROM node:25-bookworm-slim AS runner
+
 WORKDIR /app
 
 RUN apt-get update \
@@ -81,8 +67,10 @@ RUN addgroup --gid 1001 nodejs \
 USER agent
 
 COPY --from=builder --chown=agent:nodejs /app/apps/agent/.mastra/output /app/.mastra/output
+COPY --from=builder --chown=agent:nodejs /app/node_modules /app/node_modules
 COPY --from=builder --chown=agent:nodejs /app/apps/agent/node_modules /app/node_modules
 COPY --from=builder --chown=agent:nodejs /app/apps/agent/package.json /app/package.json
+
 COPY --from=builder --chown=agent:nodejs --chmod=755 /app/docker/encode-db-url.sh /usr/local/bin/encode-db-url.sh
 COPY --from=builder --chown=agent:nodejs --chmod=755 /app/docker/ensure-db.js /usr/local/bin/ensure-db.js
 

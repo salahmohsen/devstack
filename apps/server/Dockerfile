@@ -11,25 +11,10 @@ WORKDIR /app
 
 FROM base AS installer
 
-# Use `npm view vite-plus version` to get the latest version of vite-plus for reproducible builds
-# FIXME: Use the documented manual method when it's available
-# @see {@link https://github.com/voidzero-dev/vite-plus/issues/896}
-ARG VITE_PLUS_VERSION=0.1.23
-RUN npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
-        --pack-destination /tmp && \
-    mkdir -p /root/.vite-plus/bin && \
-    tar xzf /tmp/voidzero-dev-vite-plus-cli-linux-x64-gnu-*.tgz -C /root/.vite-plus/bin \
-        --strip-components=1 package/vp && \
-    chmod +x /root/.vite-plus/bin/vp
-ENV PATH="/root/.vite-plus/bin:$PATH"
+# Enable corepack and prepare pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Use the system Node.js bundled with the base image instead of downloading a managed runtime.
-# The network inside the build environment is too slow for the managed runtime download to succeed.
-RUN vp env off
-
-# This layer only invalidates when dependencies change, not on source changes.
-# Classic builder does not support COPY --parents, so we list every workspace
-# package.json explicitly to preserve the directory structure for pnpm.
+# Copy lockfiles and package.json files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 COPY apps/agent/package.json apps/agent/
 COPY apps/server/package.json apps/server/
@@ -45,11 +30,8 @@ COPY packages/logger/package.json packages/logger/
 COPY packages/seo/package.json packages/seo/
 COPY packages/ui/package.json packages/ui/
 
-# Install dependencies. The pnpm store lives at /root/.local/share/pnpm/store
-# and is reused across builds on the same host; consider switching to a
-# BuildKit `--mount=type=cache` for full cross-build caching once Dokploy
-# supports BuildKit for compose builds.
-RUN vp install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
+# Install dependencies
+RUN pnpm install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
 
 # =========================================================================== #
 
@@ -57,13 +39,11 @@ FROM installer AS builder
 
 COPY . .
 
-# Ensure the migrations directory exists so that the build doesn't fail when trying to copy it in the production stage.
-RUN mkdir -p packages/db/migrations
-
 ARG SOURCE_COMMIT VITE_SERVER_URL VITE_WEB_URL DATABASE_URL BETTER_AUTH_SECRET GITHUB_WEBHOOK_SECRET RESEND_API_KEY EMAIL_FROM OPENCODE_API_KEY OPENAI_API_KEY EMBEDDING_MODEL
 ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     VITE_SERVER_URL=${VITE_SERVER_URL} \
     VITE_WEB_URL=${VITE_WEB_URL} \
+    DATABASE_URL=${DATABASE_URL} \
     GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET} \
     RESEND_API_KEY=${RESEND_API_KEY} \
     EMAIL_FROM=${EMAIL_FROM} \
@@ -71,12 +51,13 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     OPENAI_API_KEY=${OPENAI_API_KEY} \
     EMBEDDING_MODEL=${EMBEDDING_MODEL}
 
-# TODO: Uncomment this when you have `test:unit` or `test:e2e` scripts defined in your apps/*/package.json or packages/*/package.json files.
-# RUN vp run test:unit:run
-# RUN vp run test:e2e:run
+# TODO: Uncomment when you have `test:unit` or `test:e2e` scripts defined in your apps/*/package.json or packages/*/package.json files.
+# RUN pnpm run test:unit:run
+# RUN pnpm run test:e2e:run
 
 WORKDIR /app/apps/server
-RUN vp build
+RUN pnpm run build
+
 WORKDIR /app
 
 # =========================================================================== #
@@ -92,11 +73,9 @@ COPY --from=builder --chown=server:nodejs /app/packages/db/migrations /app/dist/
 # (e.g. @hono/node-server) resolve at runtime. Copying the full
 # /app/node_modules tree preserves pnpm's symlink layout (.pnpm/...).
 # The server workspace's own node_modules (where pnpm places @hono/node-server)
-# must also be copied, since dist/index.mjs imports it bare.
-COPY --from=builder --chown=server:nodejs /app/node_modules /app/node_modules
-COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules /app/apps/server/node_modules
-
-COPY --from=builder --chown=server:nodejs --chmod=755 /app/docker/encode-db-url.sh /usr/local/bin/encode-db-url.sh
+# must be merged into the root node_modules so that dist/index.mjs can find it.
+COPY --from=builder --chown=server:nodejs /app/node_modules /app/node_nodes
+COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules /app/node_modules
 
 USER server
 
@@ -104,7 +83,7 @@ ENV NODE_ENV=production
 ENV PORT=5100
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:5100/server/health/live || exit 1
+  CMD wget -qO- http://127.0.0.1:${PORT}/server/health/live || exit 1
 
 ENTRYPOINT ["/usr/local/bin/encode-db-url.sh"]
 CMD ["node", "/app/dist/index.mjs"]
