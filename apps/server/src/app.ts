@@ -20,6 +20,7 @@ import { auth } from "@tsu-stack/auth/index";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { handleGitHubWebhook } from "@tsu-stack/github";
+import { createRedisCacheAdapter } from "@tsu-stack/github/infrastructure/cache/redis-cache-adapter";
 import { log, parseError } from "@tsu-stack/logger/server";
 import {
   honoLogIngestionMiddleware,
@@ -27,6 +28,7 @@ import {
   type HonoLogVariables
 } from "@tsu-stack/logger/server/hono/middleware";
 
+import { getRuntime } from "#@/runtime-context";
 import "#@/shared/lib/logger";
 
 const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
@@ -60,17 +62,52 @@ app.use(
 
 app.post("/_logs/ingest", honoLogIngestionMiddleware());
 
-/**
- * Root health-check. The Hono app is a backend (oRPC + Better Auth +
- * GitHub webhooks) — there is no UI at `/`. The previous
- * notFoundHandler was returning 404 in 4-10s because the request still
- * walked the `/*` `runWithDb` middleware before falling through.
- * Registering `app.get("/")` here, before the `/*` middleware, short-
- * circuits the root path and gives a useful 200 for the health checks
- * any browser pointing at the server URL) makes on
- * startup. The response intentionally exposes only static server info —
- * not the env, bindings, or any per-request data.
- */
+app.get("/health/live", (c) => c.json({ status: "healthy", timestamp: new Date().toISOString() }));
+
+app.get("/health/ready", async (c) => {
+  const checks: Record<string, { status: string; latencyMs: number }> = {};
+
+  const dbStart = performance.now();
+  try {
+    const { checkIsDbReady } = await import("@tsu-stack/db");
+    const isReady = await checkIsDbReady();
+    checks.database = {
+      status: isReady ? "healthy" : "unhealthy",
+      latencyMs: Math.round(performance.now() - dbStart)
+    };
+  } catch {
+    checks.database = {
+      status: "unhealthy",
+      latencyMs: Math.round(performance.now() - dbStart)
+    };
+  }
+
+  const redisStart = performance.now();
+  try {
+    const redis = getRuntime().redis;
+    const pong = await redis.ping();
+    checks.redis = {
+      status: pong === "PONG" ? "healthy" : "unhealthy",
+      latencyMs: Math.round(performance.now() - redisStart)
+    };
+  } catch {
+    checks.redis = {
+      status: "unhealthy",
+      latencyMs: Math.round(performance.now() - redisStart)
+    };
+  }
+
+  const allHealthy = Object.values(checks).every((v) => v.status === "healthy");
+  return c.json(
+    {
+      status: allHealthy ? "healthy" : "unhealthy",
+      timestamp: new Date().toISOString(),
+      checks
+    },
+    allHealthy ? 200 : 503
+  );
+});
+
 app.get("/", (c) =>
   c.json({
     name: "tsu-stack-server",
@@ -78,17 +115,6 @@ app.get("/", (c) =>
     timestamp: new Date().toISOString()
   })
 );
-
-app.get("/api/ws/github-signals", async (c) => {
-  const relay = c.env.GITHUB_SIGNAL_RELAY;
-  if (!relay) {
-    return c.json({ message: "GitHub signal relay is not configured." }, 503);
-  }
-
-  const id = relay.idFromName("global");
-  const stub = relay.get(id);
-  return stub.fetch("https://internal/connect", c.req.raw);
-});
 
 app.onError((error, c) => {
   const requestLog = c.get("log");
@@ -121,16 +147,8 @@ app.get("/auth/open-api/generate-schema", async (c) => {
   return c.json(schema);
 });
 
-// Better Auth uses the HTTP Drizzle singleton (`db` from `@tsu-stack/db`), not
-// `getDb()`. The HTTP transport is stateless, so this route does not need
-// `runWithDb` and intentionally bypasses the `/*` middleware below.
 app.on(["POST", "GET"], "/auth/*", async (c) => auth.handler(c.req.raw));
 
-// GitHub webhooks are registered before the `/*` `runWithDb` middleware (Hono
-// processes handlers in registration order, so the first match wins). Without
-// an explicit `runWithDb` scope here, `getDb()` throws inside the repository
-// and the webhook returns 500 — causing the four github_cache_* tables to
-// stay empty.
 app.post("/webhooks/github", async (c) => {
   if (!ENV_SERVER.GITHUB_WEBHOOK_SECRET) {
     return c.json({ message: "GitHub webhook secret is not configured." }, 503);
@@ -153,21 +171,18 @@ app.post("/webhooks/github", async (c) => {
     return c.json({ message: "GitHub webhook body must be valid JSON." }, 400);
   }
 
-  // Narrow the webhook secret to `string` here so it stays narrowed inside the
-  // `runWithDb` callback (TypeScript does not propagate control-flow narrowing
-  // across function boundaries).
   const webhookSecret = ENV_SERVER.GITHUB_WEBHOOK_SECRET;
 
   return runWithDb(createDb(), async () => {
+    const runtime = getRuntime();
     const result = await handleGitHubWebhook({
       deliveryId,
       event,
       payload,
       rawBody,
       runtime: {
-        executionContext: c.executionCtx,
-        kv: c.env.GITHUB_CACHE_KV,
-        signalRelay: c.env.GITHUB_SIGNAL_RELAY
+        broadcast: runtime.broadcastSignals,
+        kv: createRedisCacheAdapter(runtime.redis)
       },
       signature256: signature256 ?? null,
       webhookSecret
@@ -254,14 +269,15 @@ export const rpcHandler = new RPCHandler(appRouter, {
 });
 
 app.use("/*", async (c, next) => {
-  // Per-request Neon WebSocket Pool. Required by Cloudflare Workers: the
-  // serverless driver's WebSocket connection cannot outlive a single request,
-  // and a module-level Pool gets reused across requests → "Connection terminated"
-  // (see Neon's "Pool and Client" docs).
   const db = createDb();
 
   return runWithDb(db, async () => {
-    const context = await createContext({ context: c, logger: c.get("log") });
+    const runtime = getRuntime();
+    const context = await createContext({
+      context: c,
+      logger: c.get("log"),
+      runtime
+    });
 
     const rpcResult = await rpcHandler.handle(c.req.raw, {
       context,

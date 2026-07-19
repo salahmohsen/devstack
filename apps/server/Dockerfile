@@ -62,21 +62,15 @@ FROM base AS production
 RUN addgroup --gid 1001 nodejs \
     && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" server
 
-COPY --from=builder --chown=server:nodejs /app/apps/server/.output /app/.output
-COPY --from=builder --chown=server:nodejs /app/packages/db/migrations /app/.output/migrations
+COPY --from=builder --chown=server:nodejs /app/apps/server/dist /app/dist
+COPY --from=builder --chown=server:nodejs /app/packages/db/migrations /app/dist/migrations
 
 USER server
 
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=5100
 
-# You may want to consider editing the healthcheck if you want to use /health/live (just the server) or /health/ready (all services)
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:${PORT}$(echo ${VITE_SERVER_URL} | sed 's|^http[s]*://[^/]*||' | sed 's|/$||')/health/live || exit 1
+  CMD wget -qO- http://127.0.0.1:${PORT}/health/live || exit 1
 
-# You may set --max-old-space-size to control the maximum V8 heap size.
-# This creates a hard cap on the Node.js JavaScript heap and causes the
-# process to exit with an OOM error if exceeded.
-# It helps prevent the process from consuming excessive memory,
-# but container-level memory limits are the recommended primary safeguard.
-CMD ["node", "/app/.output/index.mjs", "--hostname", "0.0.0.0"]
+CMD ["node", "/app/dist/index.mjs"]
