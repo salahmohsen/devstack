@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { env } from "cloudflare:workers";
 
+import { createFiles } from "@tsu-stack/api/lib/storage/index";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { resumeRepository } from "@tsu-stack/db/repositories";
 
@@ -20,12 +20,9 @@ export const Route = createFileRoute("/api/resume/download/")({
             return new Response("Resume not found", { status: 404 });
           }
 
-          const object = await env.MEDIA_BUCKET.get(resumeRow.r2Key);
-          if (!object) {
-            return new Response("PDF not found", { status: 404 });
-          }
-
-          const body = await object.blob();
+          const files = createFiles();
+          const object = await files.download(resumeRow.r2Key);
+          const body = object.stream();
           const viewMode = url.searchParams.get("view") === "1";
           const disposition = viewMode ? "inline" : "attachment";
           return new Response(body, {

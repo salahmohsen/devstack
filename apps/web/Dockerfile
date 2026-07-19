@@ -68,6 +68,6 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:${PORT}$(echo ${VITE_WEB_URL} | sed 's|^http[s]*://[^/]*||' | sed 's|/$||')/_api/health/live || exit 1
+  CMD wget -qO- http://127.0.0.1:${PORT}/_api/health/live || exit 1
 
-CMD ["node", "/app/.output/server/index.mjs", "--hostname", "0.0.0.0"]
+CMD ["node", "/app/.output/server/index.mjs"]
