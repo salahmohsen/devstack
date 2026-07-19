@@ -11,6 +11,7 @@
     "./cache/github-revalidation": "./src/infrastructure/cache/github-revalidation.ts",
     "./infrastructure/octokit/client": "./src/infrastructure/octokit/client.ts",
     "./infrastructure/cache/*": "./src/infrastructure/cache/*",
+    "./infrastructure/cache/redis-cache-adapter": "./src/infrastructure/cache/redis-cache-adapter.ts",
     "./infrastructure/octokit/*": "./src/infrastructure/octokit/*",
     "./repo/*": "./src/repo/*",
     "./runtime/bindings": "./src/runtime/bindings.ts",

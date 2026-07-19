@@ -345,7 +345,6 @@ async function putKvEntry(
     }
   );
 
-  runtime.executionContext?.waitUntil(task);
   await task;
 }
 

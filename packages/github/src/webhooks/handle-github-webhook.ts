@@ -71,14 +71,8 @@ export async function handleGitHubWebhook(input: {
     await githubCacheRepository.markWebhookDeliveryProcessed(input.deliveryId, tx);
   });
 
-  if (input.runtime?.signalRelay) {
-    const id = input.runtime.signalRelay.idFromName("global");
-    const stub = input.runtime.signalRelay.get(id);
-    const task = stub.fetch("https://internal/broadcast", {
-      body: JSON.stringify({ signalKeys }),
-      method: "POST"
-    });
-    input.runtime.executionContext?.waitUntil(task);
+  if (input.runtime?.broadcast) {
+    input.runtime.broadcast(signalKeys);
   }
 
   return {
