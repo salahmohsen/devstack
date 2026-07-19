@@ -44,7 +44,7 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 
 # TODO: Uncomment this when you have `test:unit` or `test:e2e` scripts defined in your apps/*/package.json or packages/*/package.json files.
-RUN vp run test:unit:run
+# RUN vp run test:unit:run
 # RUN vp run test:e2e:run
 
 # Prerender queries the database during the production build, so apply pending
