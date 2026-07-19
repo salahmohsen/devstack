@@ -1,6 +1,6 @@
 import { defineRelationsPart } from "drizzle-orm";
 
-import * as schema from "#@/schema/index";
+import * as schema from "./index.ts";
 
 export const appRelationPart = defineRelationsPart(schema, (r) => {
   return {

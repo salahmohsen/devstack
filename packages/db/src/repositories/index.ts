@@ -1,15 +1,15 @@
-export { betterAuthAccountRepository } from "#@/repositories/better-auth-account.repository";
-export { contactRepository } from "#@/repositories/contact.repository";
-export { experienceRepository } from "#@/repositories/experience.repository";
-export { githubCacheRepository, type DbExecutor } from "#@/repositories/github-cache.repository";
-export { githubConfigRepository } from "#@/repositories/github-config.repository";
+export { betterAuthAccountRepository } from "./better-auth-account.repository.ts";
+export { contactRepository } from "./contact.repository.ts";
+export { experienceRepository } from "./experience.repository.ts";
+export { githubCacheRepository, type DbExecutor } from "./github-cache.repository.ts";
+export { githubConfigRepository } from "./github-config.repository.ts";
 export {
   portfolioEntryRepository,
   type PortfolioEntryEntity
-} from "#@/repositories/portfolio-entry.repository";
-export { projectRepository } from "#@/repositories/project.repository";
-export { projectStackScanRepository } from "#@/repositories/project-stack-scan.repository";
-export { resumeRepository } from "#@/repositories/resume.repository";
-export { stackDependencyRepository } from "#@/repositories/stack-dependency.repository";
-export { stackRepository, type UpdateStackData } from "#@/repositories/stack.repository";
-export { userRepository } from "#@/repositories/user.repository";
+} from "./portfolio-entry.repository.ts";
+export { projectRepository } from "./project.repository.ts";
+export { projectStackScanRepository } from "./project-stack-scan.repository.ts";
+export { resumeRepository } from "./resume.repository.ts";
+export { stackDependencyRepository } from "./stack-dependency.repository.ts";
+export { stackRepository, type UpdateStackData } from "./stack.repository.ts";
+export { userRepository } from "./user.repository.ts";

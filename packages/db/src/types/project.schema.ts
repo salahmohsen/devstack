@@ -1,4 +1,4 @@
-import { project, projectStack } from "#@/schema/index";
+import { project, projectStack } from "../schema/index.ts";
 
 const projectSchemaInsert = project.$inferInsert;
 const projectSchemaSelect = project.$inferSelect;

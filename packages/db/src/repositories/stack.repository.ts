@@ -10,12 +10,12 @@ import {
   type SQL
 } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { stackDependencyRepository } from "#@/repositories/stack-dependency.repository";
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
-import { project, projectStack } from "#@/schema/project.schema";
-import { stackDependency } from "#@/schema/stack-dependency.schema";
-import { stack } from "#@/schema/stack.schema";
+import { getDb } from "../index.ts";
+import { portfolioEntry } from "../schema/portfolio-entry.schema.ts";
+import { project, projectStack } from "../schema/project.schema.ts";
+import { stackDependency } from "../schema/stack-dependency.schema.ts";
+import { stack } from "../schema/stack.schema.ts";
+import { stackDependencyRepository } from "./stack-dependency.repository.ts";
 
 export type StackEntity = InferSelectModel<typeof stack>;
 export type CreateStackData = Omit<

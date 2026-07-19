@@ -1,7 +1,7 @@
 import { eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { resume } from "#@/schema/resume.schema";
+import { getDb } from "../index.ts";
+import { resume } from "../schema/resume.schema.ts";
 
 export type ResumeEntity = InferSelectModel<typeof resume>;
 export type CreateResumeData = Omit<

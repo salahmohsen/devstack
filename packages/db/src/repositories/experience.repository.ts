@@ -8,9 +8,9 @@ import {
   type SQL
 } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { experience } from "#@/schema/experience.schema";
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
+import { getDb } from "../index.ts";
+import { experience } from "../schema/experience.schema.ts";
+import { portfolioEntry } from "../schema/portfolio-entry.schema.ts";
 
 export type ExperienceEntity = InferSelectModel<typeof experience>;
 export type CreateExperienceData = Omit<

@@ -1,4 +1,4 @@
-import { githubConfig } from "#@/schema/index";
+import { githubConfig } from "../schema/index.ts";
 
 const githubConfigSchemaInsert = githubConfig.$inferInsert;
 const githubConfigSchemaSelect = githubConfig.$inferSelect;

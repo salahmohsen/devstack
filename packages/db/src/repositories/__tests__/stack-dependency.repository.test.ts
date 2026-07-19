@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { stackDependency } from "../../schema/stack-dependency.schema.ts";
 import {
   type CreateStackDependencyData,
   stackDependencyRepository
-} from "#@/repositories/stack-dependency.repository";
-import { stackDependency } from "#@/schema/stack-dependency.schema";
+} from "../stack-dependency.repository.ts";
 
-vi.mock("#@/index", () => {
+vi.mock("../../index.ts", () => {
   return {
     getDb: vi.fn()
   };
 });
 
-import { getDb } from "#@/index";
+import { getDb } from "../../index.ts";
 
 const mockGetDb = vi.mocked(getDb);
 

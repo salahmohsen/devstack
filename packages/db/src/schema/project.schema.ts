@@ -8,9 +8,9 @@ import {
   uniqueIndex
 } from "drizzle-orm/pg-core";
 
-import { experience } from "#@/schema/experience.schema";
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
-import { stack } from "#@/schema/stack.schema";
+import { experience } from "./experience.schema.ts";
+import { portfolioEntry } from "./portfolio-entry.schema.ts";
+import { stack } from "./stack.schema.ts";
 
 export const project = pgTable(
   "project",

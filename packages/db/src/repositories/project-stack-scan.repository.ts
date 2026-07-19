@@ -1,7 +1,7 @@
 import { type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { projectStackScan } from "#@/schema/project-stack-scan.schema";
+import { getDb } from "../index.ts";
+import { projectStackScan } from "../schema/project-stack-scan.schema.ts";
 
 export type ProjectStackScanEntity = InferSelectModel<typeof projectStackScan>;
 export type CreateProjectStackScanData = Omit<

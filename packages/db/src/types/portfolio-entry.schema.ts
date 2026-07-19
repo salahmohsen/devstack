@@ -1,4 +1,4 @@
-import { portfolioEntry } from "#@/schema/index";
+import { portfolioEntry } from "../schema/index.ts";
 
 const portfolioEntrySchemaInsert = portfolioEntry.$inferInsert;
 const portfolioEntrySchemaSelect = portfolioEntry.$inferSelect;

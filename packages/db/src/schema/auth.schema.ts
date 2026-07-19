@@ -1,12 +1,5 @@
 import { defineRelationsPart } from "drizzle-orm";
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  index,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, index } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -20,7 +13,7 @@ export const user = pgTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   summary: text("summary").default(""),
-  phone: text("phone"),
+  phone: text("phone")
 });
 
 export const session = pgTable(
@@ -37,9 +30,9 @@ export const session = pgTable(
     userAgent: text("user_agent"),
     userId: text("user_id")
       .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
+      .references(() => user.id, { onDelete: "cascade" })
   },
-  (table) => [index("session_userId_idx").on(table.userId)],
+  (table) => [index("session_userId_idx").on(table.userId)]
 );
 
 export const account = pgTable(
@@ -61,9 +54,9 @@ export const account = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
+      .notNull()
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [index("account_userId_idx").on(table.userId)]
 );
 
 export const verification = pgTable(
@@ -77,9 +70,9 @@ export const verification = pgTable(
     updatedAt: timestamp("updated_at")
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
-      .notNull(),
+      .notNull()
   },
-  (table) => [index("verification_identifier_idx").on(table.identifier)],
+  (table) => [index("verification_identifier_idx").on(table.identifier)]
 );
 
 export const passkey = pgTable(
@@ -97,48 +90,50 @@ export const passkey = pgTable(
     backedUp: boolean("backed_up").notNull(),
     transports: text("transports"),
     createdAt: timestamp("created_at"),
-    aaguid: text("aaguid"),
+    aaguid: text("aaguid")
   },
   (table) => [
     index("passkey_userId_idx").on(table.userId),
-    index("passkey_credentialID_idx").on(table.credentialID),
-  ],
+    index("passkey_credentialID_idx").on(table.credentialID)
+  ]
 );
 
 export const authRelations = defineRelationsPart(
   { user, session, account, verification, passkey },
-  (r) => ({
-    user: {
-      sessions: r.many.session({
-        from: r.user.id,
-        to: r.session.userId,
-      }),
-      accounts: r.many.account({
-        from: r.user.id,
-        to: r.account.userId,
-      }),
-      passkeys: r.many.passkey({
-        from: r.user.id,
-        to: r.passkey.userId,
-      }),
-    },
-    session: {
-      user: r.one.user({
-        from: r.session.userId,
-        to: r.user.id,
-      }),
-    },
-    account: {
-      user: r.one.user({
-        from: r.account.userId,
-        to: r.user.id,
-      }),
-    },
-    passkey: {
-      user: r.one.user({
-        from: r.passkey.userId,
-        to: r.user.id,
-      }),
-    },
-  }),
+  (r) => {
+    return {
+      user: {
+        sessions: r.many.session({
+          from: r.user.id,
+          to: r.session.userId
+        }),
+        accounts: r.many.account({
+          from: r.user.id,
+          to: r.account.userId
+        }),
+        passkeys: r.many.passkey({
+          from: r.user.id,
+          to: r.passkey.userId
+        })
+      },
+      session: {
+        user: r.one.user({
+          from: r.session.userId,
+          to: r.user.id
+        })
+      },
+      account: {
+        user: r.one.user({
+          from: r.account.userId,
+          to: r.user.id
+        })
+      },
+      passkey: {
+        user: r.one.user({
+          from: r.passkey.userId,
+          to: r.user.id
+        })
+      }
+    };
+  }
 );

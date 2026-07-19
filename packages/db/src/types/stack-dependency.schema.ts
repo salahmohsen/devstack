@@ -1,4 +1,4 @@
-import { stackDependency } from "#@/schema/index";
+import { stackDependency } from "../schema/index.ts";
 
 const stackDependencySchemaInsert = stackDependency.$inferInsert;
 const stackDependencySchemaSelect = stackDependency.$inferSelect;

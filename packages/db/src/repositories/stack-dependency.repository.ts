@@ -1,7 +1,7 @@
 import { and, eq, ne, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { stackDependency } from "#@/schema/stack-dependency.schema";
+import { getDb } from "../index.ts";
+import { stackDependency } from "../schema/stack-dependency.schema.ts";
 
 export type StackDependencyEntity = InferSelectModel<typeof stackDependency>;
 export type CreateStackDependencyData = Omit<

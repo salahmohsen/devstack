@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
-import { stack } from "#@/schema/stack.schema";
+import { stack } from "./stack.schema.ts";
 
 export const stackDependency = pgTable(
   "stack_dependency",

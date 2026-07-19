@@ -1,7 +1,7 @@
 import { and, eq, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { portfolioEntry, type PortfolioEntryType } from "#@/schema/portfolio-entry.schema";
+import { getDb } from "../index.ts";
+import { portfolioEntry, type PortfolioEntryType } from "../schema/portfolio-entry.schema.ts";
 
 export type PortfolioEntryEntity = InferSelectModel<typeof portfolioEntry>;
 export type CreatePortfolioEntryData = Omit<

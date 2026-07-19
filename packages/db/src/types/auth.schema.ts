@@ -1,4 +1,4 @@
-import { account, passkey, session, user, verification } from "#@/schema/index";
+import { account, passkey, session, user, verification } from "../schema/index.ts";
 
 const userSchemaInsert = user.$inferInsert;
 const userSchemaSelect = user.$inferSelect;

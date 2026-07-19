@@ -7,10 +7,10 @@ import {
   type SQL
 } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { contact } from "#@/schema/contact.schema";
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
-import { type ContactSchemaSelect } from "#@/types/contact.schema";
+import { getDb } from "../index.ts";
+import { contact } from "../schema/contact.schema.ts";
+import { portfolioEntry } from "../schema/portfolio-entry.schema.ts";
+import { type ContactSchemaSelect } from "../types/contact.schema.ts";
 
 export type ContactEntity = InferSelectModel<typeof contact>;
 

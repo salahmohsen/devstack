@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { account } from "#@/schema/auth.schema";
+import { getDb } from "../index.ts";
+import { account } from "../schema/auth.schema.ts";
 
 export const betterAuthAccountRepository = {
   /**

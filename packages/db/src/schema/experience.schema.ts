@@ -1,6 +1,6 @@
 import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
+import { portfolioEntry } from "./portfolio-entry.schema.ts";
 
 export const experience = pgTable(
   "experience",

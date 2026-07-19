@@ -1,6 +1,6 @@
 import { index, integer, json, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
+import { portfolioEntry } from "./portfolio-entry.schema.ts";
 
 export const stack = pgTable(
   "stack",

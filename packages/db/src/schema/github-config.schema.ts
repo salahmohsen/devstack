@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import { user } from "#@/schema/auth.schema";
+import { user } from "./auth.schema.ts";
 
 export const githubConfig = pgTable(
   "github_config",

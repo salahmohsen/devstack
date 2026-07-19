@@ -8,10 +8,10 @@ import {
   type SQL
 } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
-import { project, projectStack } from "#@/schema/project.schema";
-import { stack } from "#@/schema/stack.schema";
+import { getDb } from "../index.ts";
+import { portfolioEntry } from "../schema/portfolio-entry.schema.ts";
+import { project, projectStack } from "../schema/project.schema.ts";
+import { stack } from "../schema/stack.schema.ts";
 
 export type ProjectEntity = InferSelectModel<typeof project>;
 

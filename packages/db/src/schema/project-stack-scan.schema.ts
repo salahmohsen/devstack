@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import { project } from "#@/schema/project.schema";
+import { project } from "./project.schema.ts";
 
 export const projectStackScan = pgTable(
   "project_stack_scan",

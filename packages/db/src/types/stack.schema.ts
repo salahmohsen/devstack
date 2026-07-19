@@ -1,4 +1,4 @@
-import { stack } from "#@/schema/index";
+import { stack } from "../schema/index.ts";
 
 const stackSchemaInsert = stack.$inferInsert;
 const stackSchemaSelect = stack.$inferSelect;

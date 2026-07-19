@@ -3,7 +3,7 @@ import {
   githubResponseCache,
   githubRevalidationSignal,
   githubWebhookEvent
-} from "#@/schema/index";
+} from "../schema/index.ts";
 
 const githubResponseCacheSchemaInsert = githubResponseCache.$inferInsert;
 const githubResponseCacheSchemaSelect = githubResponseCache.$inferSelect;

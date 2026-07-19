@@ -1,4 +1,4 @@
-import { experience } from "#@/schema/index";
+import { experience } from "../schema/index.ts";
 
 const experienceSchemaInsert = experience.$inferInsert;
 const experienceSchemaSelect = experience.$inferSelect;

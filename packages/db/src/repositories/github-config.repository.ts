@@ -1,7 +1,7 @@
 import { desc, isNotNull, or, sql } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { githubConfig } from "#@/schema/github-config.schema";
+import { getDb } from "../index.ts";
+import { githubConfig } from "../schema/github-config.schema.ts";
 
 export type UpdateGithubConfigData = {
   githubToken?: string;

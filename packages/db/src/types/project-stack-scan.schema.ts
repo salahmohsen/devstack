@@ -1,4 +1,4 @@
-import { projectStackScan } from "#@/schema/index";
+import { projectStackScan } from "../schema/index.ts";
 
 const projectStackScanSchemaInsert = projectStackScan.$inferInsert;
 const projectStackScanSchemaSelect = projectStackScan.$inferSelect;

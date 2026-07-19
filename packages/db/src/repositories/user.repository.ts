@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 
-import { getDb } from "#@/index";
-import { user } from "#@/schema/auth.schema";
-import { type UserSchemaInsert, type UserSchemaSelect } from "#@/types/auth.schema";
+import { getDb } from "../index.ts";
+import { user } from "../schema/auth.schema.ts";
+import { type UserSchemaInsert, type UserSchemaSelect } from "../types/auth.schema.ts";
 
 /**
  * Read access to the `user` table for the API layer.

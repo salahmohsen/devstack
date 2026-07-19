@@ -1,7 +1,7 @@
 import { pgEnum, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
-import { user } from "#@/schema/auth.schema";
-import { portfolioEntry } from "#@/schema/portfolio-entry.schema";
+import { user } from "./auth.schema.ts";
+import { portfolioEntry } from "./portfolio-entry.schema.ts";
 
 export const contactTypeEnum = pgEnum("contact_type_enum", [
   "website",

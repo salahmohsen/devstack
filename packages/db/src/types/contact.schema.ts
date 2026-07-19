@@ -1,4 +1,4 @@
-import { contact } from "#@/schema/index";
+import { contact } from "../schema/index.ts";
 
 const contactSchemaInsert = contact.$inferInsert;
 const contactSchemaSelect = contact.$inferSelect;
