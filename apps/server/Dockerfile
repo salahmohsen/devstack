@@ -74,7 +74,7 @@ COPY --from=builder --chown=server:nodejs /app/packages/db/migrations /app/dist/
 # /app/node_modules tree preserves pnpm's symlink layout (.pnpm/...).
 # The server workspace's own node_modules (where pnpm places @hono/node-server)
 # must be merged into the root node_modules so that dist/index.mjs can find it.
-COPY --from=builder --chown=server:nodejs /app/node_modules /app/node_nodes
+COPY --from=builder --chown=server:nodejs /app/node_modules /app/node_modules
 COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules /app/node_modules
 
 USER server
