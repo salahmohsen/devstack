@@ -124,13 +124,8 @@ export default defineConfig({
     }),
     mdx(),
     tanstackStart({
-      // Prerender is disabled because the build-time preview server crashes
-      // when rendering pages whose route tree transitively imports
-      // drizzle-orm/node-postgres (which uses `class extends pg.Pool` at
-      // module-evaluation time, and rolldown's CJS→ESM wrapping breaks
-      // that). The /sitemap.xml and /robots.txt routes are served at
-      // runtime by the Nitro server from the SSR bundle, so they remain
-      // available without prerendering.
+      // Prerender disabled — blocked by nitro@3 + TanStack Start race condition
+      // (TanStack/router#6275, #6322). Re-enable when nitro@4 ships.
       prerender: {
         enabled: false
       },
