@@ -57,9 +57,15 @@ COPY . .
 ARG SOURCE_COMMIT DATABASE_URL NODE_ENV
 ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     DATABASE_URL=${DATABASE_URL} \
-    NODE_ENV=${NODE_ENV}
+    NODE_ENV=${NODE_ENV} \
+    # Mastra's internal `npm install` for the bundled output can hang on
+    # slow/flaky registry connections inside the Dokploy build env. Cap any
+    # single fetch to 5 minutes and prefer the cache, so a transient
+    # network blip fails fast instead of stalling the build indefinitely.
+    NPM_CONFIG_FETCH_TIMEOUT=300000 \
+    NPM_CONFIG_PREFER_OFFLINE=true
 
-RUN vp run -v --filter agent build
+RUN timeout 600 vp run -v --filter agent build
 
 # =========================================================================== #
 
