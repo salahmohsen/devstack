@@ -1,9 +1,5 @@
 import { chatRoute } from "@mastra/ai-sdk";
 import { Mastra } from "@mastra/core/mastra";
-import { MastraCompositeStore } from "@mastra/core/storage";
-import { CloudflareDeployer } from "@mastra/deployer-cloudflare";
-import { DuckDBStore } from "@mastra/duckdb";
-import { LibSQLStore } from "@mastra/libsql";
 import { PinoLogger } from "@mastra/loggers";
 import {
   MastraPlatformExporter,
@@ -11,8 +7,7 @@ import {
   Observability,
   SensitiveDataFilter
 } from "@mastra/observability";
-
-import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { PostgresStore } from "@mastra/pg";
 
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { createWeatherAgent } from "#@/mastra/agents/weather-agent";
@@ -33,25 +28,6 @@ export const mastra = new Mastra({
       })
     ]
   },
-  bundler: {
-    externals: ["@mastra/duckdb", "@duckdb/node-bindings"]
-  },
-  deployer: new CloudflareDeployer({
-    name: "devhub-agent",
-    routes: [
-      {
-        pattern: "salahmohsen.com/agent*",
-        zone_name: "salahmohsen.com"
-      }
-    ],
-    alias: {
-      "@mastra/duckdb": "./duckdb-stub.mjs"
-    },
-    vars: {
-      TURSO_DATABASE_URL: ENV_SERVER.TURSO_DATABASE_URL!,
-      TURSO_AUTH_TOKEN: ENV_SERVER.TURSO_AUTH_TOKEN!
-    }
-  }),
   workflows: {
     weatherWorkflow,
     detectStacksWorkflow,
@@ -62,34 +38,12 @@ export const mastra = new Mastra({
     stackCategorizerAgent: createStackCategorizerAgent()
   },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
-  storage: (() => {
-    if (ENV_SERVER.TURSO_DATABASE_URL) {
-      return new MastraCompositeStore({
-        id: "composite-storage",
-        default: new LibSQLStore({
-          id: "mastra-agent-storage",
-          url: ENV_SERVER.TURSO_DATABASE_URL,
-          authToken: ENV_SERVER.TURSO_AUTH_TOKEN ?? undefined
-        }),
-        domains: {
-          observability:
-            ENV_SERVER.NODE_ENV === "development" ? new DuckDBStore().observability : undefined
-        }
-      });
-    }
-    return new MastraCompositeStore({
-      id: "composite-storage",
-      default: new LibSQLStore({
-        id: "mastra-agent-storage",
-        url: "file:./mastra.db"
-      }),
-      domains: {
-        observability: new DuckDBStore().observability
-      }
-    });
-  })(),
+  storage: new PostgresStore({
+    id: "mastra-agent-storage",
+    connectionString: process.env.DATABASE_URL
+  }),
   logger: new PinoLogger({
-    name: "Mastra",
+    name: "personal-hub-agent",
     level: "info"
   }),
   observability: new Observability({
@@ -104,7 +58,7 @@ export const mastra = new Mastra({
       },
       production: {
         serviceName: "mastra-prod",
-        exporters: [new MastraPlatformExporter()], // Sends observability events to Mastra Platform (if MASTRA_PLATFORM_ACCESS_TOKEN is set)
+        exporters: [new MastraPlatformExporter()],
         spanOutputProcessors: [new SensitiveDataFilter()],
         logging: {
           enabled: true,
