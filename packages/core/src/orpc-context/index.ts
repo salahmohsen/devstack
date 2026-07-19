@@ -41,7 +41,6 @@ export type OrpcContextGithubSource =
   | { isConfigured: true; owner: string; token: string };
 
 export type OrpcContextGithubBinding = {
-  executionContext?: { waitUntil(promise: Promise<unknown>): void };
   kv?: {
     delete(key: string): Promise<void>;
     get<T>(key: string, type: "json"): Promise<T | null>;
@@ -52,10 +51,7 @@ export type OrpcContextGithubBinding = {
       options?: { expirationTtl?: number; metadata?: unknown }
     ): Promise<void>;
   };
-  signalRelay?: {
-    get(id: unknown): { fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> };
-    idFromName(name: string): unknown;
-  };
+  broadcast?: (signalKeys: string[]) => void;
 };
 
 export type OrpcContextLogger = {
@@ -78,8 +74,8 @@ export type OrpcContextMediaBucket = {
   delete(key: string): Promise<void>;
 };
 
-// Cloudflare Fetcher.fetch accepts Request | string, not URL.
-// Using RequestInfo (Request | string) keeps the type compatible.
+// Using RequestInfo (Request | string) keeps the type compatible with both
+// fetch() and service bindings.
 export type OrpcContextAgentWorker = {
   fetch(input: RequestInfo, init?: RequestInit): Promise<Response>;
 };

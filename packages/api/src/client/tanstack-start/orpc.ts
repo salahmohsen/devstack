@@ -4,27 +4,50 @@ import { createRouterClient, type RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
-import { env } from "cloudflare:workers";
 
+import { createFiles } from "@tsu-stack/api/lib/storage/index";
 import { auth } from "@tsu-stack/auth";
 import { type OrpcContextMediaBucket } from "@tsu-stack/core";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
+import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
 import { createLogger } from "@tsu-stack/logger/server";
 
-import { createAgentWorker, type AgentWorkerEnv } from "#@/lib/agent/worker";
+import { createAgentWorker } from "#@/lib/agent/worker";
 import { type AppRouter, appRouter } from "#@/routers/index";
+
+function adaptMediaBucket(rawFiles: ReturnType<typeof createFiles>): OrpcContextMediaBucket {
+  return {
+    async put(key, value, options) {
+      const body =
+        value instanceof ReadableStream
+          ? value
+          : value instanceof ArrayBuffer
+            ? new Blob([value])
+            : value;
+      await rawFiles.upload(key, body as Blob | ReadableStream, {
+        contentType: options?.httpMetadata?.contentType
+      });
+      return { key };
+    },
+    async get(key) {
+      try {
+        const file = await rawFiles.download(key);
+        return { body: file.stream(), key: file.key };
+      } catch {
+        return null;
+      }
+    },
+    async delete(key) {
+      await rawFiles.delete(key);
+    }
+  };
+}
 
 const getORPCClient = createIsomorphicFn()
   .server(() =>
     createRouterClient(appRouter, {
       context: async () =>
-        // The oRPC server calls this context function (bundled
-        // @orpc_server.js:406) BEFORE invoking the interceptors that wrap
-        // the procedure's main call. So both layers need their own
-        // runWithDb scope: this one for the context build (where
-        // resolvePublicGitHubSource → findPublicGithubSourceSettings reads
-        // github_config), and the interceptor below for the handler call.
         runWithDb(createDb(), async () => {
           const headers = getRequestHeaders();
           const session = await auth.api.getSession({ headers });
@@ -34,23 +57,13 @@ const getORPCClient = createIsomorphicFn()
           ]);
           const githubSource = await resolvePublicGitHubSource();
 
-          // The web Worker has no service binding to the agent. The factory will
-          // fall back to `AGENT_WORKER_URL` if set; if neither is configured we
-          // attach a stub that throws lazily on `.fetch()`. This keeps SSR
-          // startup working even when the env var is missing in deployment —
-          // the throw only happens if an agent procedure is actually called
-          // from SSR, which is not the normal path.
-          const envAny = env as AgentWorkerEnv;
-          const agentWorker =
-            (envAny.AGENT_WORKER ?? envAny.AGENT_WORKER_URL)
-              ? createAgentWorker(envAny)
-              : {
-                  fetch(): Promise<Response> {
-                    throw new Error(
-                      "Agent worker is not configured. Set AGENT_WORKER_URL or add a service binding."
-                    );
-                  }
-                };
+          const agentWorker = ENV_WEB_SERVER.AGENT_WORKER_URL
+            ? createAgentWorker({ AGENT_WORKER_URL: ENV_WEB_SERVER.AGENT_WORKER_URL })
+            : {
+                fetch(): Promise<Response> {
+                  throw new Error("Agent worker is not configured. Set AGENT_WORKER_URL.");
+                }
+              };
 
           return {
             github: {
@@ -65,7 +78,7 @@ const getORPCClient = createIsomorphicFn()
             },
             logger: createLogger({ operation: "web__client__orpc" }),
             session,
-            mediaBucket: (env as Record<string, unknown>).MEDIA_BUCKET as OrpcContextMediaBucket,
+            mediaBucket: adaptMediaBucket(createFiles()),
             agentWorker
           };
         }),
