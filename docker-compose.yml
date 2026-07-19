@@ -54,6 +54,7 @@ services:
       context: .
       dockerfile: apps/server/Dockerfile
       args:
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-}
         VITE_SERVER_URL: ${VITE_SERVER_URL}
         VITE_WEB_URL: ${VITE_WEB_URL}
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -114,6 +115,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-}
         VITE_SERVER_URL: ${VITE_SERVER_URL}
         VITE_WEB_URL: ${VITE_WEB_URL}
         DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-personal_hub}
