@@ -11,25 +11,10 @@ WORKDIR /app
 
 FROM base AS installer
 
-# Use `npm view vite-plus version` to get the latest version of vite-plus for reproducible builds
-# FIXME: Use the documented manual method when it's available
-# @see {@link https://github.com/voidzero-dev/vite-plus/issues/896}
-ARG VITE_PLUS_VERSION=0.1.23
-RUN npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
-        --pack-destination /tmp && \
-    mkdir -p /root/.vite-plus/bin && \
-    tar xzf /tmp/voidzero-dev-vite-plus-cli-linux-x64-gnu-*.tgz -C /root/.vite-plus/bin \
-        --strip-components=1 package/vp && \
-    chmod +x /root/.vite-plus/bin/vp
-ENV PATH="/root/.vite-plus/bin:$PATH"
+# Enable corepack and prepare pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Use the system Node.js bundled with the base image instead of downloading a managed runtime.
-# The network inside the build environment is too slow for the managed runtime download to succeed.
-RUN vp env off
-
-# This layer only invalidates when dependencies change, not on source changes.
-# Classic builder does not support COPY --parents, so we list every workspace
-# package.json explicitly to preserve the directory structure for pnpm.
+# Copy lockfiles and package.json files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 COPY apps/agent/package.json apps/agent/
 COPY apps/server/package.json apps/server/
@@ -45,11 +30,8 @@ COPY packages/logger/package.json packages/logger/
 COPY packages/seo/package.json packages/seo/
 COPY packages/ui/package.json packages/ui/
 
-# Install dependencies. The pnpm store lives at /root/.local/share/pnpm/store
-# and is reused across builds on the same host; consider switching to a
-# BuildKit `--mount=type=cache` for full cross-build caching once Dokploy
-# supports BuildKit for compose builds.
-RUN vp install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
+# Install dependencies
+RUN pnpm install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
 
 # =========================================================================== #
 
@@ -65,9 +47,9 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     DATABASE_URL=${DATABASE_URL} \
     BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 
-# TODO: Uncomment this when you have `test:unit` or `test:e2e` scripts defined in your apps/*/package.json or packages/*/package.json files.
-# RUN vp run test:unit:run
-# RUN vp run test:e2e:run
+# TODO: Uncomment when you have `test:unit` or `test:e2e` scripts defined in your apps/*/package.json or packages/*/package.json files.
+# RUN pnpm run test:unit:run
+# RUN pnpm run test:e2e:run
 
 # Prerender queries the database during the production build, so apply pending
 # migrations before the web build spins up its preview server.
@@ -76,10 +58,10 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 # RUN printf 'DATABASE_URL=%s\nBETTER_AUTH_SECRET=%s\nIS_BUILD=true\n' \
 #         "$DATABASE_URL" "$BETTER_AUTH_SECRET" \
 #     > packages/env/.env \
-#     && vp run db:migrate \
+#     && pnpm run db:migrate \
 #     && rm packages/env/.env
 
-RUN cd apps/web && vp build
+RUN pnpm run -w @tsu-stack/web build
 
 # =========================================================================== #
 
