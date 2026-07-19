@@ -80,7 +80,7 @@ services:
       PORT: "5100"
       NODE_ENV: production
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5100/health/live || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5100/server/health/live || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3

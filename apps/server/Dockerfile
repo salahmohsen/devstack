@@ -95,6 +95,6 @@ ENV NODE_ENV=production
 ENV PORT=5100
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:${PORT}/health/live || exit 1
+  CMD wget -qO- http://127.0.0.1:${PORT}/server/health/live || exit 1
 
 CMD ["node", "/app/dist/index.mjs"]
