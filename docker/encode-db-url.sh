@@ -2,6 +2,7 @@
 # Wraps the entrypoint to build a URL-safe DATABASE_URL at runtime.
 # PostgreSQL passwords may contain + / = which break URL parsing;
 # this script percent-encodes the password and sets DATABASE_URL accordingly.
+# When CREATE_DB=true, also creates the target database via ensure-db.js.
 set -eu
 
 _user="${POSTGRES_USER:?}"
@@ -35,5 +36,10 @@ encode() {
 }
 
 export DATABASE_URL="postgresql://$(encode "$_user"):$(encode "$_pass")@${_host}:${_port}/${_db}"
+
+# When CREATE_DB is set, attempt to create the target database.
+if [ "${CREATE_DB:-false}" = "true" ]; then
+  node /usr/local/bin/ensure-db.js 2>&1 || true
+fi
 
 exec "$@"

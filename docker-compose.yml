@@ -102,7 +102,8 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
+      POSTGRES_DB: mastra_agent
+      CREATE_DB: "true"
       NODE_ENV: production
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4111/api/agents || exit 1"]

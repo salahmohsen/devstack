@@ -84,6 +84,7 @@ COPY --from=builder --chown=agent:nodejs /app/apps/agent/.mastra/output /app/.ma
 COPY --from=builder --chown=agent:nodejs /app/apps/agent/node_modules /app/node_modules
 COPY --from=builder --chown=agent:nodejs /app/apps/agent/package.json /app/package.json
 COPY --from=builder --chown=agent:nodejs --chmod=755 /app/docker/encode-db-url.sh /usr/local/bin/encode-db-url.sh
+COPY --from=builder --chown=agent:nodejs --chmod=755 /app/docker/ensure-db.js /usr/local/bin/ensure-db.js
 
 EXPOSE 4111
 

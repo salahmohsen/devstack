@@ -99,3 +99,12 @@ COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules /app/app
 COPY --from=builder --chown=server:nodejs --chmod=755 /app/docker/encode-db-url.sh /usr/local/bin/encode-db-url.sh
 
 USER server
+
+ENV NODE_ENV=production
+ENV PORT=5100
+
+HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:5100/server/health/live || exit 1
+
+ENTRYPOINT ["/usr/local/bin/encode-db-url.sh"]
+CMD ["node", "/app/dist/index.mjs"]
