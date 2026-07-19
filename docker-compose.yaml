@@ -1,83 +1,102 @@
-name: tsu-stack
+name: personal-hub
 
 services:
+  postgres:
+    image: postgres:17-alpine
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --save 60 1000 --requirepass ${REDIS_PASSWORD:-changeme}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+
   server:
-    container_name: tsu-stack-server
     build:
       context: .
       dockerfile: apps/server/Dockerfile
-      args:
-        - "SOURCE_COMMIT=${SOURCE_COMMIT}"
-        - "VITE_SERVER_URL=${VITE_SERVER_URL:-http://localhost:5000}"
-        - "VITE_WEB_URL=${VITE_WEB_URL:-http://localhost:3000}"
-        - "DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}"
-        - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-replace_me_run_pnpm_auth_secret_to_generate_a_real_value_here}"
-        - "GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:-}"
-        - "RESEND_API_KEY=${RESEND_API_KEY:-}"
-        - "EMAIL_FROM=${EMAIL_FROM:-}"
-        - "OPENCODE_API_KEY=${OPENCODE_API_KEY:-}"
-        - "OPENAI_API_KEY=${OPENAI_API_KEY:-}"
-        - "EMBEDDING_MODEL=${EMBEDDING_MODEL:-}"
-    ports:
-      - "${SERVER_PORT:-5000}:5000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_started }
     environment:
-      - "VITE_SERVER_URL=${VITE_SERVER_URL:-http://localhost:5000}"
-      - "VITE_WEB_URL=${VITE_WEB_URL:-http://localhost:3000}"
-      - "DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}"
-      - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-replace_me_run_pnpm_auth_secret_to_generate_a_real_value_here}"
-      - "ENABLE_OPEN_API_DOCS=${ENABLE_OPEN_API_DOCS:-false}"
-      - "GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:-}"
-      - "RESEND_API_KEY=${RESEND_API_KEY:-}"
-      - "EMAIL_FROM=${EMAIL_FROM:-}"
-      - "OPENCODE_API_KEY=${OPENCODE_API_KEY:-}"
-      - "OPENAI_API_KEY=${OPENAI_API_KEY:-}"
-      - "EMBEDDING_MODEL=${EMBEDDING_MODEL:-}"
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget -qO- http://127.0.0.1:5000$(echo $VITE_SERVER_URL | sed 's|^http[s]*://[^/]*||' | sed 's|/$||')/health/live || exit 1"
-        ]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - tsu-stack-network
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-personal_hub}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: personal-hub
+      S3_REGION: us-east-1
+      S3_FORCE_PATH_STYLE: "true"
+      MEDIA_PUBLIC_URL: http://minio:9000/personal-hub
+      AGENT_WORKER_URL: http://agent:4111
+      VITE_SERVER_URL: ${VITE_SERVER_URL}
+      VITE_WEB_URL: ${VITE_WEB_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      PORT: "5100"
+      NODE_ENV: production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.server.rule=PathPrefix(`/server`)"
+      - "traefik.http.services.server.loadbalancer.server.port=5100"
+
+  agent:
+    build:
+      context: .
+      dockerfile: apps/agent/Dockerfile
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/mastra_agent
+      NODE_ENV: production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.agent.rule=PathPrefix(`/agent`)"
+      - "traefik.http.services.agent.loadbalancer.server.port=4111"
 
   web:
-    container_name: tsu-stack-web
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      args:
-        - "SOURCE_COMMIT=${SOURCE_COMMIT}"
-        - "VITE_SERVER_URL=${VITE_SERVER_URL:-http://localhost:5000}"
-        - "VITE_WEB_URL=${VITE_WEB_URL:-http://localhost:3000}"
-        - "VITE_IMGPROXY_URL=${VITE_IMGPROXY_URL:-}"
-        - "DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}"
-        - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-replace_me_run_pnpm_auth_secret_to_generate_a_real_value_here}"
-    environment:
-      - "VITE_SERVER_URL=${VITE_SERVER_URL:-http://localhost:5000}"
-      - "VITE_WEB_URL=${VITE_WEB_URL:-http://localhost:3000}"
-      - "VITE_IMGPROXY_URL=${VITE_IMGPROXY_URL:-}"
-      - "DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}"
-      - "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-replace_me_run_pnpm_auth_secret_to_generate_a_real_value_here}"
-    ports:
-      - "${WEB_PORT:-3000}:3000"
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget -qO- http://127.0.0.1:3000$(echo $VITE_WEB_URL | sed 's|^http[s]*://[^/]*||' | sed 's|/$||')/_api/health/live || exit 1"
-        ]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - tsu-stack-network
     depends_on:
-      server:
-        condition: service_healthy
+      server: { condition: service_healthy }
+    environment:
+      VITE_SERVER_URL: ${VITE_SERVER_URL}
+      VITE_WEB_URL: ${VITE_WEB_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-personal_hub}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      NODE_ENV: production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
 
-networks:
-  tsu-stack-network:
+volumes:
+  pg_data:
+  redis_data:
+  minio_data:
