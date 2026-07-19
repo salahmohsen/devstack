@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 FROM node:25-bookworm-slim AS base
 
 RUN apt-get update \
@@ -16,8 +15,7 @@ FROM base AS installer
 # FIXME: Use the documented manual method when it's available
 # @see {@link https://github.com/voidzero-dev/vite-plus/issues/896}
 ARG VITE_PLUS_VERSION=0.1.23
-RUN --mount=type=cache,target=/root/.npm \
-    npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
+RUN npm pack "@voidzero-dev/vite-plus-cli-linux-x64-gnu@${VITE_PLUS_VERSION}" \
         --pack-destination /tmp && \
     mkdir -p /root/.vite-plus/bin && \
     tar xzf /tmp/voidzero-dev-vite-plus-cli-linux-x64-gnu-*.tgz -C /root/.vite-plus/bin \
@@ -30,15 +28,20 @@ ENV PATH="/root/.vite-plus/bin:$PATH"
 RUN vp env off
 
 # This layer only invalidates when dependencies change, not on source changes.
-# --parents preserves directory structure, picking up all workspace packages automatically.
-COPY --parents **/package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Use a find-generated tarball so we ship every package.json (preserving the
+# apps/<name> and packages/<name> directory layout) without needing the
+# COPY --parents flag (unsupported by Dokploy's classic builder).
+RUN find apps packages -name package.json -print0 \
+      | tar --null --files-from=- -cf /tmp/ws.tar \
+ && tar -xf /tmp/ws.tar -C /app/ \
+ && rm /tmp/ws.tar
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
 
-# Cache mounts keep pnpm store and download cache across builds.
-# pnpm store layout: https://pnpm.io/docker
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    --mount=type=cache,target=/root/.cache/pnpm \
-    --mount=type=cache,target=/root/.npm \
-    vp install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
+# Install dependencies. The pnpm store lives at /root/.local/share/pnpm/store
+# and is reused across builds on the same host; consider switching to a
+# BuildKit `--mount=type=cache` for full cross-build caching once Dokploy
+# supports BuildKit for compose builds.
+RUN vp install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
 
 # =========================================================================== #
 
