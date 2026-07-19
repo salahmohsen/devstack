@@ -89,9 +89,8 @@ RUN addgroup --gid 1001 nodejs \
 COPY --from=builder --chown=server:nodejs /app/apps/server/dist /app/dist
 COPY --from=builder --chown=server:nodejs /app/packages/db/migrations /app/dist/migrations
 # Bring along node_modules so CJS deps externalized by rolldown
-# (e.g. @hono/node-server) resolve at runtime. The build is small enough
-# that bundling everything into dist/ would be cleaner, but rolldown
-# currently externalizes these, so the simplest fix is to ship the tree.
+# (e.g. @hono/node-server) resolve at runtime. Copying the full
+# /app/node_modules tree preserves pnpm's symlink layout (.pnpm/...).
 COPY --from=builder --chown=server:nodejs /app/node_modules /app/node_modules
 
 USER server
