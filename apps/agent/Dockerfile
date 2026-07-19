@@ -22,7 +22,7 @@ ENV PATH="/root/.vite-plus/bin:$PATH"
 
 COPY --parents **/package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-RUN vp install --frozen-lockfile --ignore-scripts
+RUN vp install --frozen-lockfile --ignore-scripts --network-timeout=600000
 
 # =========================================================================== #
 
