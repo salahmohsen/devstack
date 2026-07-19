@@ -28,14 +28,22 @@ ENV PATH="/root/.vite-plus/bin:$PATH"
 RUN vp env off
 
 # This layer only invalidates when dependencies change, not on source changes.
-# Use a find-generated tarball so we ship every package.json (preserving the
-# apps/<name> and packages/<name> directory layout) without needing the
-# COPY --parents flag (unsupported by Dokploy's classic builder).
-RUN find apps packages -name package.json -print0 \
-      | tar --null --files-from=- -cf /tmp/ws.tar \
- && tar -xf /tmp/ws.tar -C /app/ \
- && rm /tmp/ws.tar
+# Classic builder does not support COPY --parents, so we list every workspace
+# package.json explicitly to preserve the directory structure for pnpm.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
+COPY apps/agent/package.json apps/agent/
+COPY apps/server/package.json apps/server/
+COPY apps/web/package.json apps/web/
+COPY packages/api/package.json packages/api/
+COPY packages/auth/package.json packages/auth/
+COPY packages/core/package.json packages/core/
+COPY packages/db/package.json packages/db/
+COPY packages/email/package.json packages/email/
+COPY packages/env/package.json packages/env/
+COPY packages/github/package.json packages/github/
+COPY packages/logger/package.json packages/logger/
+COPY packages/seo/package.json packages/seo/
+COPY packages/ui/package.json packages/ui/
 
 # Install dependencies. The pnpm store lives at /root/.local/share/pnpm/store
 # and is reused across builds on the same host; consider switching to a
