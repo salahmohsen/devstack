@@ -67,7 +67,9 @@ services:
       minio: { condition: service_started }
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-personal_hub}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       AGENT_WORKER_URL: http://agent:4111
       VITE_SERVER_URL: ${VITE_SERVER_URL}
@@ -98,7 +100,9 @@ services:
       postgres: { condition: service_healthy }
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/mastra_agent
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
       NODE_ENV: production
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4111/api/agents || exit 1"]
