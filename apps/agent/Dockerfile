@@ -35,7 +35,7 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     DATABASE_URL=${DATABASE_URL} \
     NODE_ENV=${NODE_ENV}
 
-RUN pnpm --filter @tsu-stack/agent build
+RUN vp --filter @tsu-stack/agent build
 
 # =========================================================================== #
 
