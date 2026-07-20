@@ -31,7 +31,7 @@ COPY packages/seo/package.json packages/seo/
 COPY packages/ui/package.json packages/ui/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile --ignore-scripts -- --fetch-timeout=600000
+RUN pnpm install --prefer-offline --ignore-scripts --fetch-timeout=600000
 
 # =========================================================================== #
 
