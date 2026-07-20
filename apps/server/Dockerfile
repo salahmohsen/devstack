@@ -82,11 +82,23 @@ WORKDIR /app
 # symlinks (a directory cannot overlay a symlink with the same
 # name in a single layer).
 RUN find /app/apps/server/node_modules -type l | while IFS= read -r link; do \
-      abs_target=$(cd "$(dirname "$link")" && readlink -f "$link") && \
+      abs_target=$(cd "$(dirname "$link")" && readlink -f "$(basename "$link")") && \
       case "$abs_target" in \
         /app/node_modules/.pnpm/*) \
-          rest=${abs_target#/app/node_modules/} && \
-          ln -sfn "$rest" "$link" ;; \
+          rest=${abs_target#/app/node_modules/.pnpm/} && \
+          rel=${link#/app/apps/server/node_modules/} && \
+          parent_sub=$(dirname "$rel") && \
+          if [ "$parent_sub" = "." ]; then \
+            depth=0; \
+          else \
+            depth=$(echo "$parent_sub" | awk -F'/' '{print NF}'); \
+          fi && \
+          if [ "$depth" -eq 0 ]; then \
+            prefix=""; \
+          else \
+            prefix=$(printf '../%.0s' $(seq 1 $depth)); \
+          fi && \
+          ln -sfn "${prefix}.pnpm/$rest" "$link" ;; \
       esac; \
     done
 
