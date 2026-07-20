@@ -61,6 +61,16 @@ RUN pnpm --filter @tsu-stack/server run build
 
 WORKDIR /app
 
+# pnpm places non-hoisted packages (e.g. @hono/node-server) in
+# apps/server/node_modules as symlinks with depth-relative targets
+# like ../../../../node_modules/.pnpm/... (4 levels up, because the
+# symlink sits 4 dirs below the workspace root). Copying that tree
+# verbatim onto /app/node_modules breaks the symlinks (the relative
+# target no longer resolves from the new, shallower location), so
+# the server fails at startup with ERR_MODULE_NOT_FOUND. Dereference
+# the symlinks into a real, self-contained staging tree before COPY.
+RUN cp -RL /app/apps/server/node_modules /app/apps/server/node_modules.real
+
 # =========================================================================== #
 
 FROM base AS production
@@ -76,7 +86,7 @@ COPY --from=builder --chown=server:nodejs /app/packages/db/migrations /app/dist/
 # The server workspace's own node_modules (where pnpm places @hono/node-server)
 # must be merged into the root node_modules so that dist/index.mjs can find it.
 COPY --from=builder --chown=server:nodejs /app/node_modules /app/node_modules
-COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules /app/node_modules
+COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules.real /app/node_modules
 
 USER server
 
