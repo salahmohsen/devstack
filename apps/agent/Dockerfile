@@ -53,6 +53,42 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 
 RUN timeout 600 pnpm --filter @tsu-stack/agent run build
 
+WORKDIR /app
+
+# pnpm places non-hoisted packages (e.g. pg) in apps/agent/node_modules as
+# symlinks whose targets are depth-relative to apps/agent/node_modules
+# (e.g. '../../../node_modules/.pnpm/.../node_modules/pg' — three '..'s
+# because the symlink sits 3 dirs below the workspace root). The
+# Dockerfile overlay-COPYs apps/agent/node_modules onto /app/node_modules,
+# which moves those symlinks to depth 2 and breaks the relative targets.
+# Rewrite each symlink to target the same .pnpm package via a path that
+# is valid from the destination depth (i.e. just '.pnpm/...'), so that
+# once overlaid onto /app/node_modules the symlink resolves to the real
+# package in /app/node_modules/.pnpm/ (which the preceding COPY of the
+# root node_modules already provides). Without this rewrite, ensure-db.js
+# fails with 'Cannot find module pg' (and any other symlinked package
+# would fail the same way).
+RUN find /app/apps/agent/node_modules -type l | while IFS= read -r link; do \
+      abs_target=$(cd "$(dirname "$link")" && readlink -f "$(basename "$link")") && \
+      case "$abs_target" in \
+        /app/node_modules/.pnpm/*) \
+          rest=${abs_target#/app/node_modules/.pnpm/} && \
+          rel=${link#/app/apps/agent/node_modules/} && \
+          parent_sub=$(dirname "$rel") && \
+          if [ "$parent_sub" = "." ]; then \
+            depth=0; \
+          else \
+            depth=$(echo "$parent_sub" | awk -F'/' '{print NF}'); \
+          fi && \
+          if [ "$depth" -eq 0 ]; then \
+            prefix=""; \
+          else \
+            prefix=$(printf '../%.0s' $(seq 1 $depth)); \
+          fi && \
+          ln -sfn "${prefix}.pnpm/$rest" "$link" ;; \
+      esac; \
+    done
+
 # =========================================================================== #
 
 FROM node:25-bookworm-slim AS runner
