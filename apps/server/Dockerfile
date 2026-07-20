@@ -62,14 +62,33 @@ RUN pnpm --filter @tsu-stack/server run build
 WORKDIR /app
 
 # pnpm places non-hoisted packages (e.g. @hono/node-server) in
-# apps/server/node_modules as symlinks with depth-relative targets
-# like ../../../../node_modules/.pnpm/... (4 levels up, because the
-# symlink sits 4 dirs below the workspace root). Copying that tree
-# verbatim onto /app/node_modules breaks the symlinks (the relative
-# target no longer resolves from the new, shallower location), so
-# the server fails at startup with ERR_MODULE_NOT_FOUND. Dereference
-# the symlinks into a real, self-contained staging tree before COPY.
-RUN cp -RL /app/apps/server/node_modules /app/apps/server/node_modules.real
+# apps/server/node_modules as symlinks whose targets are depth-
+# relative to apps/server/node_modules, e.g.
+#   ../../../../node_modules/.pnpm/.../node_modules/@hono/node-server
+# (four '..'s because the symlink sits 4 dirs below the workspace
+# root). The Dockerfile overlay-COPYs apps/server/node_modules onto
+# /app/node_modules, which moves those symlinks to depth 2 and
+# breaks the relative targets, so the server fails at startup with
+# ERR_MODULE_NOT_FOUND for @hono/node-server.
+#
+# Rewrite each symlink to target the same .pnpm package via a
+# path that is valid from the destination depth (i.e. just
+# '.pnpm/...'), so that once overlaid onto /app/node_modules the
+# symlink resolves to the real package in /app/node_modules/.pnpm/
+# (which the preceding COPY of the root node_modules already
+# provides). Keeping the entries as symlinks (rather than
+# dereferencing to real dirs with cp -RL) avoids a type conflict
+# with the root node_modules, which is itself full of pnpm
+# symlinks (a directory cannot overlay a symlink with the same
+# name in a single layer).
+RUN find /app/apps/server/node_modules -type l | while IFS= read -r link; do \
+      abs_target=$(cd "$(dirname "$link")" && readlink -f "$link") && \
+      case "$abs_target" in \
+        /app/node_modules/.pnpm/*) \
+          rest=${abs_target#/app/node_modules/} && \
+          ln -sfn "$rest" "$link" ;; \
+      esac; \
+    done
 
 # =========================================================================== #
 
@@ -86,7 +105,7 @@ COPY --from=builder --chown=server:nodejs /app/packages/db/migrations /app/dist/
 # The server workspace's own node_modules (where pnpm places @hono/node-server)
 # must be merged into the root node_modules so that dist/index.mjs can find it.
 COPY --from=builder --chown=server:nodejs /app/node_modules /app/node_modules
-COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules.real /app/node_modules
+COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules /app/node_modules
 
 USER server
 
