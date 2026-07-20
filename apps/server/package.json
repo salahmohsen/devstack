@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "build": "vp build",
     "dev": "PORT=5200 pnpm dotenvx run -f ../../packages/env/.env -- tsx watch src/index.ts",
     "start": "node dist/index.mjs"
   },

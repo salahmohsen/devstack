@@ -57,7 +57,7 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 # RUN pnpm run test:e2e:run
 
 WORKDIR /app/apps/server
-RUN pnpm run build
+RUN pnpm --filter @tsu-stack/server run build
 
 WORKDIR /app
 

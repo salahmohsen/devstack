@@ -62,7 +62,7 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
 #     && pnpm run db:migrate \
 #     && rm packages/env/.env
 
-RUN pnpm run -w @tsu-stack/web build
+RUN pnpm --filter @tsu-stack/web run build
 
 # =========================================================================== #
 

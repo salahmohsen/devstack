@@ -51,7 +51,7 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     NPM_CONFIG_FETCH_TIMEOUT=300000 \
     NPM_CONFIG_PREFER_OFFLINE=true
 
-RUN timeout 600 pnpm run -w @tsu-stack/agent build
+RUN timeout 600 pnpm --filter @tsu-stack/agent run build
 
 # =========================================================================== #
 

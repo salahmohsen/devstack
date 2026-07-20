@@ -2,6 +2,7 @@
   "name": "@tsu-stack/web",
   "type": "module",
   "scripts": {
+    "build": "vp build",
     "check": "vp check",
     "check:fix": "vp check --fix",
     "dev": "pnpm dotenvx run -f ../../packages/env/.env -- vp dev",
