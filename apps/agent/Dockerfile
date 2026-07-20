@@ -29,6 +29,7 @@ COPY packages/github/package.json packages/github/
 COPY packages/logger/package.json packages/logger/
 COPY packages/seo/package.json packages/seo/
 COPY packages/ui/package.json packages/ui/
+COPY tools/tsconfig/package.json tools/tsconfig/
 
 # Install dependencies
 RUN pnpm install --prefer-offline --ignore-scripts --fetch-timeout=600000
@@ -65,6 +66,10 @@ RUN apt-get update \
 RUN addgroup --gid 1001 nodejs \
     && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" agent
 USER agent
+
+# Allow scripts outside /app (e.g. /usr/local/bin/ensure-db.js) to resolve
+# bare requires like `require("pg")` from /app/node_modules.
+ENV NODE_PATH=/app/node_modules
 
 COPY --from=builder --chown=agent:nodejs /app/apps/agent/.mastra/output /app/.mastra/output
 COPY --from=builder --chown=agent:nodejs /app/node_modules /app/node_modules

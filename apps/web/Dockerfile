@@ -29,6 +29,7 @@ COPY packages/github/package.json packages/github/
 COPY packages/logger/package.json packages/logger/
 COPY packages/seo/package.json packages/seo/
 COPY packages/ui/package.json packages/ui/
+COPY tools/tsconfig/package.json tools/tsconfig/
 
 # Install dependencies
 RUN pnpm install --prefer-offline --ignore-scripts --fetch-timeout=600000
