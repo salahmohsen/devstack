@@ -80,6 +80,13 @@ COPY --from=builder --chown=server:nodejs /app/apps/server/node_modules /app/nod
 
 USER server
 
+# Allow scripts outside /app (e.g. /usr/local/bin/ensure-db.js) to resolve
+# bare requires like `require("pg")` from /app/node_modules.
+ENV NODE_PATH=/app/node_modules
+
+COPY --from=builder --chown=server:nodejs --chmod=755 /app/docker/encode-db-url.sh /usr/local/bin/encode-db-url.sh
+COPY --from=builder --chown=server:nodejs --chmod=755 /app/docker/ensure-db.js /usr/local/bin/ensure-db.js
+
 ENV NODE_ENV=production
 ENV PORT=5100
 
