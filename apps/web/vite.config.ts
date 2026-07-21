@@ -151,7 +151,18 @@ export default defineConfig({
        * Recent Discord discussion on the matter
        * @see {@link https://discord.com/channels/719702312431386674/1490005967067414608}
        */
-      traceDeps: ["react", "react-dom"]
+      traceDeps: ["react", "react-dom"],
+      /**
+       * Don't bundle `pg` (and its native binding `pg-native`) into the
+       * SSR output. Nitro tree-shakes or stubs `pg` during bundling, and
+       * the stub is what produced the runtime
+       * `TypeError: Class extends value #<Object> is not a constructor`
+       * in the web app. Externalising lets Node's `require('pg')` resolve
+       * the real package at runtime.
+       */
+      externals: {
+        external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
+      }
     }),
     tailwindcss(),
     ohImage({

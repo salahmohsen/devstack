@@ -26,8 +26,21 @@ export * from "drizzle-orm/sql";
  */
 export const relations = { ...appRelationPart, ...authRelations };
 
-export const pool = new Pool({
-  connectionString: ENV_SERVER.DATABASE_URL
+// Lazy pool proxy: the web SSR bundle previously crashed at import time
+// because Nitro tried to bundle `pg` and produced a stub. Initialising the
+// pool eagerly meant the stub was exercised during module evaluation, not
+// at request time. The proxy defers the real `new Pool(...)` until the
+// first method call, so the web app can import `@tsu-stack/db` without
+// opening a connection (and without blowing up if the bundle's pg stub
+// is incomplete).
+let _pool: Pool | undefined;
+export const pool = new Proxy({} as Pool, {
+  get(_target, prop) {
+    if (!_pool) {
+      _pool = new Pool({ connectionString: ENV_SERVER.DATABASE_URL });
+    }
+    return Reflect.get(_pool, prop);
+  }
 });
 
 export const db: NodePgDatabase<typeof relations> = drizzlePg({
