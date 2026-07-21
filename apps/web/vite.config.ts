@@ -160,7 +160,7 @@ export default defineConfig({
        * in the web app. Externalising lets Node's `require('pg')` resolve
        * the real package at runtime.
        */
-      externals: {
+      rollupConfig: {
         external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
       }
     }),
