@@ -1,101 +1,67 @@
 import { createORPCClient, eventIteratorToUnproxiedDataStream } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
-import { createRouterClient, type RouterClient } from "@orpc/server";
+import { type RouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 
-import { createFiles } from "@tsu-stack/api/lib/storage/index";
-import { auth } from "@tsu-stack/auth";
-import { type OrpcContextMediaBucket } from "@tsu-stack/core";
-import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
-import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
-import { createLogger } from "@tsu-stack/logger/server";
 
-import { createAgentWorker } from "#@/lib/agent/worker";
-import { type AppRouter, appRouter } from "#@/routers/index";
+import { type AppRouter } from "#@/routers/index";
 
-function adaptMediaBucket(rawFiles: ReturnType<typeof createFiles>): OrpcContextMediaBucket {
-  return {
-    async put(key, value, options) {
-      const body =
-        value instanceof ReadableStream
-          ? value
-          : value instanceof ArrayBuffer
-            ? new Blob([value])
-            : value;
-      await rawFiles.upload(key, body as Blob | ReadableStream, {
-        contentType: options?.httpMetadata?.contentType
-      });
-      return { key };
-    },
-    async get(key) {
-      try {
-        const file = await rawFiles.download(key);
-        return { body: file.stream(), key: file.key };
-      } catch {
-        return null;
-      }
-    },
-    async delete(key) {
-      await rawFiles.delete(key);
-    }
-  };
+/**
+ * Isomorphic oRPC client.
+ *
+ * The web app's SSR bundle must NOT import `@tsu-stack/db` (or any of its
+ * transitive deps like `pg`). Nitro bundles workspace packages, and the
+ * bundled `pg` comes out as a stub whose `Pool` class is an empty object —
+ * producing the runtime `Class extends value #<Object> is not a constructor`
+ * crash. The only safe path is to call the Hono server over HTTP, even
+ * during SSR. So both the server and the client sides use RPCLink; the
+ * server side just points at the internal Docker-network URL so we don't
+ * loop through the Cloudflare tunnel for every SSR-time oRPC call.
+ */
+function getServerURL(): string {
+  return (
+    ENV_WEB_ISOMORPHIC.VITE_SERVER_URL_INTERNAL ??
+    ENV_WEB_ISOMORPHIC.VITE_SERVER_URL
+  );
+}
+
+function getHeaders(): HeadersInit {
+  const headers = getRequestHeaders();
+  // Forward the incoming request's cookies (and any other relevant headers)
+  // so the Hono server sees the same session for SSR oRPC calls.
+  const cookie = headers.get?.("cookie");
+  if (cookie) {
+    return { cookie };
+  }
+  return {};
 }
 
 const getORPCClient = createIsomorphicFn()
-  .server(() =>
-    createRouterClient(appRouter, {
-      context: async () =>
-        runWithDb(createDb(), async () => {
-          const headers = getRequestHeaders();
-          const session = await auth.api.getSession({ headers });
-          const [{ createGitHubOctokit }, { resolvePublicGitHubSource }] = await Promise.all([
-            import("@tsu-stack/github/infrastructure/octokit/client"),
-            import("@tsu-stack/github/shared/public-github-source")
-          ]);
-          const githubSource = await resolvePublicGitHubSource();
-
-          const agentWorker = ENV_WEB_SERVER.AGENT_WORKER_URL
-            ? createAgentWorker({ AGENT_WORKER_URL: ENV_WEB_SERVER.AGENT_WORKER_URL })
-            : {
-                fetch(): Promise<Response> {
-                  throw new Error("Agent worker is not configured. Set AGENT_WORKER_URL.");
-                }
-              };
-
-          return {
-            github: {
-              binding: {},
-              privateOctokit: createGitHubOctokit(
-                githubSource.isConfigured ? githubSource : undefined
-              ),
-              publicOctokit: createGitHubOctokit(
-                githubSource.isConfigured ? githubSource : undefined
-              ),
-              source: githubSource
-            },
-            logger: createLogger({ operation: "web__client__orpc" }),
-            session,
-            mediaBucket: adaptMediaBucket(createFiles()),
-            agentWorker
-          };
-        }),
-      interceptors: [
-        (options) => {
-          const db = createDb();
-          return runWithDb(db, () => options.next());
-        }
-      ]
-    })
-  )
+  .server((): RouterClient<AppRouter> => {
+    const link = new RPCLink({
+      url: `${getServerURL()}/rpc`,
+      headers: getHeaders(),
+      fetch(url, options) {
+        return fetch(url, {
+          ...options,
+          credentials: "include"
+        }).catch((error) => {
+          // oxlint-disable-next-line no-console
+          console.error("[rpc-fetch-failed]", { url, error });
+          throw error;
+        });
+      }
+    });
+    return createORPCClient(link);
+  })
   .client((): RouterClient<AppRouter> => {
     const link = new RPCLink({
       fetch(url, options) {
         return fetch(url, {
           ...options,
-
           credentials: "include"
         }).catch((error) => {
           // oxlint-disable-next-line no-console

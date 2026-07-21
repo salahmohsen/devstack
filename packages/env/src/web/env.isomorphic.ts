@@ -19,6 +19,16 @@ export const ENV_WEB_ISOMORPHIC = createEnv({
       ? normalizedUrlSchema
       : normalizedUrlSchema.default("http://localhost:3000")
   },
+  server: {
+    /**
+     * Internal Docker-network URL of the Hono server. Used by the
+     * web app's server-side oRPC client during SSR so it can call
+     * the server over HTTP without going through the Cloudflare
+     * tunnel. Falls back to VITE_SERVER_URL (the public URL) if
+     * not set, which is fine in dev or when no internal URL exists.
+     */
+    VITE_SERVER_URL_INTERNAL: normalizedUrlSchema.optional()
+  },
   clientPrefix: "VITE_",
   emptyStringAsUndefined: true,
   runtimeEnv: import.meta.env ?? process.env
