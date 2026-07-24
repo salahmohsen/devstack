@@ -162,16 +162,25 @@ export default defineConfig({
        * Recent Discord discussion on the matter
        * @see {@link https://discord.com/channels/719702312431386674/1490005967067414608}
        *
-       * `drizzle-orm*` and `pg*` copy the full package trees into
-       * `.output/node_modules/` so the externalised imports in the SSR
-       * chunks resolve at runtime. The production stage of the Dockerfile
-       * only ships `.output/`, so anything left as an `import` must be
-       * traced here. Without this, the bundle errors with
+       * `drizzle-orm` and `pg` cover their full dep trees here. The
+       * subpath `drizzle-orm/node-postgres` is a file inside the
+       * `drizzle-orm` package, and `pg` pulls in `pg-pool`, `pg-native`,
+       * `pg-protocol`, `pg-types`, `pg-connection-string`, `pgpass`.
+       *
+       * Use exact names — `traceDeps` is joined raw into a RegExp in
+       * Nitro's externals plugin (`nitro-nightly/dist/_build/common.mjs`
+       * line ~23782), so a `*` suffix is interpreted as a regex
+       * quantifier on the previous char, not a glob. `drizzle-orm*`
+       * would match `drizzle-orm` but NOT `drizzle-orm/node-postgres`.
+       *
+       * The production stage of the Dockerfile only ships `.output/`,
+       * so anything left as an `import` must be traced here. Without
+       * this, the bundle errors with
        * `ERR_MODULE_NOT_FOUND: Cannot find package 'drizzle-orm'`.
        *
        * @see {@link https://nitro.build/config#build-tracedeps}
        */
-      traceDeps: ["react", "react-dom", "drizzle-orm*", "pg*"],
+      traceDeps: ["react", "react-dom", "drizzle-orm", "pg"],
       /**
        * CJS interop fix for `pg` (and `pg-pool` via `pg`).
        *
