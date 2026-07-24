@@ -93,134 +93,140 @@ export function isSpecialTheme(theme) {
   };
 }
 
-export default defineConfig({
-  /**
-   * FIXME: This is needed for prerendering to work in Docker Compose builds
-   * @see {@link https://github.com/TanStack/router/issues/6275}
-   */
-  preview: {
-    host: "127.0.0.1"
-  },
-  base: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
-  // Restart the dev server when env files in this directory change
-  envDir: resolve(import.meta.dirname, "../../packages/env"),
-  resolve: {
-    alias: {
-      "@": resolve(import.meta.dirname, "./src")
+// `vite-plus@0.2.1`'s `defineConfig` types only accept a plain object,
+// but Vite (and `vite-plus` at runtime) accept a function that receives
+// `{ command }` and returns a config. We need the function form to make
+// `ssr.external` / `ssr.noExternal` conditional on dev vs build without
+// breaking the dev pool-singleton fix. The transitive type from
+// `vite-plus-core@0.2.6` (used by the Nitro plugin) collides with the
+// `0.2.1` type of the imported `defineConfig`, so the function form
+// fails structurally. The runtime is fine.
+// @ts-expect-error -- vite-plus@0.2.1 defineConfig type lacks the function form
+export default defineConfig(({ command }: { command: "build" | "serve" }) => {
+  const isBuild = command === "build";
+  return {
+    /**
+     * FIXME: This is needed for prerendering to work in Docker Compose builds
+     * @see {@link https://github.com/TanStack/router/issues/6275}
+     */
+    preview: {
+      host: "127.0.0.1"
     },
-    tsconfigPaths: true
-  },
-  define: {
-    __BUILD_NODE_ENV__: JSON.stringify(ENV_WEB_SERVER.NODE_ENV),
-    __BUILD_SOURCE_COMMIT__: JSON.stringify(ENV_WEB_SERVER.SOURCE_COMMIT)
-  },
-  server: {
-    port: 3000
-  },
-  // Vite's dev SSR externalization. `rollupConfig.external` inside the
-  // `nitro()` plugin only affects the production Rollup build — in `dev`
-  // Vite's SSR runtime pre-bundles deps via esbuild and re-instantiates
-  // the module per request, which made the lazy `pg.Pool` proxy in
-  // `@tsu-stack/db` open a fresh pool every SSR request and exhaust
-  // Postgres with `FATAL: too many clients already`. Listing the native
-  // driver packages here tells Vite to load them through Node's `require`
-  // so the singleton stays stable across requests.
-  ssr: {
-    external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
-  },
-  plugins: [
-    shikiSSRStub(),
-    devtools({
-      consolePiping: { enabled: false }
-    }),
-    mdx(),
-    tanstackStart({
-      // Prerender disabled — blocked by nitro@3 + TanStack Start race condition
-      // (TanStack/router#6275, #6322). Re-enable when nitro@4 ships.
-      prerender: {
-        enabled: false
+    base: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
+    // Restart the dev server when env files in this directory change
+    envDir: resolve(import.meta.dirname, "../../packages/env"),
+    resolve: {
+      alias: {
+        "@": resolve(import.meta.dirname, "./src")
       },
-      server: {
-        build: {
-          // Don't allow changing of process.env.NODE_ENV at runtime
-          staticNodeEnv: true
+      tsconfigPaths: true
+    },
+    define: {
+      __BUILD_NODE_ENV__: JSON.stringify(ENV_WEB_SERVER.NODE_ENV),
+      __BUILD_SOURCE_COMMIT__: JSON.stringify(ENV_WEB_SERVER.SOURCE_COMMIT)
+    },
+    server: {
+      port: 3000
+    },
+    /**
+     * SSR externalization is environment-specific.
+     *
+     * In `dev`, `tanstackStart` creates a Vite SSR service that
+     * re-instantiates pre-bundled deps per request. Externalising the
+     * native DB driver packages lets Vite load them through Node's
+     * `require`, keeping the `pg.Pool` singleton stable across requests
+     * (otherwise every SSR request opens a fresh pool and exhausts
+     * Postgres with `FATAL: too many clients already`).
+     *
+     * In `build`, the same SSR service produces the `.output/server/_ssr/`
+     * chunks. Those chunks run inside the production container, which
+     * only ships `.output/` (no `node_modules/`). If `drizzle-orm` and
+     * `pg` are left as external `import` statements there, Node ESM
+     * throws `ERR_MODULE_NOT_FOUND` at first request. `ssr.noExternal`
+     * (which takes priority over `ssr.external` per Vite docs) forces
+     * those packages to be bundled into the SSR chunks, so no runtime
+     * resolve is needed. The CJS interop fix in the `nitro({ commonJS })`
+     * block below keeps the bundled `pg` working.
+     */
+    ssr: {
+      external: isBuild ? [] : ["pg", "pg-native", "drizzle-orm/node-postgres"],
+      noExternal: isBuild
+        ? ["drizzle-orm", "drizzle-orm/node-postgres", "pg", "pg-pool", "pg-native"]
+        : []
+    },
+    plugins: [
+      shikiSSRStub(),
+      devtools({
+        consolePiping: { enabled: false }
+      }),
+      mdx(),
+      tanstackStart({
+        // Prerender disabled — blocked by nitro@3 + TanStack Start race condition
+        // (TanStack/router#6275, #6322). Re-enable when nitro@4 ships.
+        prerender: {
+          enabled: false
+        },
+        server: {
+          build: {
+            // Don't allow changing of process.env.NODE_ENV at runtime
+            staticNodeEnv: true
+          }
         }
-      }
-    }),
-    viteReact(),
-    /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
-    babel({
-      presets: [reactCompilerPreset()]
-    }),
-    /** @see {@link https://tanstack.com/start/latest/docs/framework/react/guide/hosting} */
-    nitro({
-      baseURL: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
-      /**
-       * We need to add this or else we will get `Error: Cannot find module 'react'` during prod.
-       * FIXME: I haven't found a fix or related issue yet, but this is where I got the idea to trace the deps:
-       * @see {@link https://github.com/nuxt/nuxt/issues/20773}
-       * Recent Discord discussion on the matter
-       * @see {@link https://discord.com/channels/719702312431386674/1490005967067414608}
-       *
-       * `drizzle-orm` and `pg` cover their full dep trees here. The
-       * subpath `drizzle-orm/node-postgres` is a file inside the
-       * `drizzle-orm` package, and `pg` pulls in `pg-pool`, `pg-native`,
-       * `pg-protocol`, `pg-types`, `pg-connection-string`, `pgpass`.
-       *
-       * Use exact names — `traceDeps` is joined raw into a RegExp in
-       * Nitro's externals plugin (`nitro-nightly/dist/_build/common.mjs`
-       * line ~23782), so a `*` suffix is interpreted as a regex
-       * quantifier on the previous char, not a glob. `drizzle-orm*`
-       * would match `drizzle-orm` but NOT `drizzle-orm/node-postgres`.
-       *
-       * The production stage of the Dockerfile only ships `.output/`,
-       * so anything left as an `import` must be traced here. Without
-       * this, the bundle errors with
-       * `ERR_MODULE_NOT_FOUND: Cannot find package 'drizzle-orm'`.
-       *
-       * @see {@link https://nitro.build/config#build-tracedeps}
-       */
-      traceDeps: ["react", "react-dom", "drizzle-orm", "pg"],
-      /**
-       * CJS interop fix for `pg` (and `pg-pool` via `pg`).
-       *
-       * `pg@8.22.0`'s `lib/index.js` does `class BoundPool extends Pool`
-       * where `Pool = require('pg-pool')`. When rolldown bundles this
-       * for Nitro's `_ssr/` output, the Rollup CommonJS plugin wraps
-       * `pg-pool`'s `module.exports = PoolClass` as
-       * `{ default: PoolClass }` by default. The `extends` then sees an
-       * object and throws:
-       *   `TypeError: Class extends value #<Object> is not a constructor`
-       *   at poolFactory (...src-DTTaCAoo.mjs)
-       *
-       * `requireReturnsDefault: "auto"` makes the CJS plugin unwrap a
-       * CJS module whose `module.exports` *is* a constructor (class /
-       * function) and return it directly, restoring the `extends` chain.
-       *
-       * @see {@link https://nitro.build/config#build-commonjs}
-       */
-      commonJS: {
-        requireReturnsDefault: "auto"
-      },
-      /**
-       * Don't bundle `pg` (and its native binding `pg-native`) into the
-       * SSR output. Nitro tree-shakes or stubs `pg` during bundling, and
-       * the stub is what produced the runtime
-       * `TypeError: Class extends value #<Object> is not a constructor`
-       * in the web app. Externalising lets Node's `require('pg')` resolve
-       * the real package at runtime.
-       */
-      rollupConfig: {
-        external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
-      }
-    }),
-    tailwindcss(),
-    ohImage({
-      pl_show: true,
-      transforms: {
-        format: "webp",
-        quality: 80
-      }
-    })
-  ]
+      }),
+      viteReact(),
+      /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
+      babel({
+        presets: [reactCompilerPreset()]
+      }),
+      /** @see {@link https://tanstack.com/start/latest/docs/framework/react/guide/hosting} */
+      nitro({
+        baseURL: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
+        /**
+         * We need to add this or else we will get `Error: Cannot find module 'react'` during prod.
+         * FIXME: I haven't found a fix or related issue yet, but this is where I got the idea to trace the deps:
+         * @see {@link https://github.com/nuxt/nuxt/issues/20773}
+         * Recent Discord discussion on the matter
+         * @see {@link https://discord.com/channels/719702312431386674/1490005967067414608}
+         *
+         * `react` / `react-dom` are externalised by the SSR service env
+         * and need to be copied into `.output/node_modules/` so the
+         * production container (which only ships `.output/`) can resolve
+         * them. `drizzle-orm` and `pg` are no longer here — they're
+         * bundled into the SSR chunks by `ssr.noExternal` above.
+         *
+         * @see {@link https://nitro.build/config#build-tracedeps}
+         */
+        traceDeps: ["react", "react-dom"],
+        /**
+         * CJS interop fix for `pg` (and `pg-pool` via `pg`).
+         *
+         * `pg@8.22.0`'s `lib/index.js` does `class BoundPool extends Pool`
+         * where `Pool = require('pg-pool')`. When rolldown bundles this
+         * for Nitro's `_ssr/` output, the Rollup CommonJS plugin wraps
+         * `pg-pool`'s `module.exports = PoolClass` as
+         * `{ default: PoolClass }` by default. The `extends` then sees an
+         * object and throws:
+         *   `TypeError: Class extends value #<Object> is not a constructor`
+         *   at poolFactory (...src-DTTaCAoo.mjs)
+         *
+         * `requireReturnsDefault: "auto"` makes the CJS plugin unwrap a
+         * CJS module whose `module.exports` *is* a constructor (class /
+         * function) and return it directly, restoring the `extends` chain.
+         *
+         * @see {@link https://nitro.build/config#build-commonjs}
+         */
+        commonJS: {
+          requireReturnsDefault: "auto"
+        }
+      }),
+      tailwindcss(),
+      ohImage({
+        pl_show: true,
+        transforms: {
+          format: "webp",
+          quality: 80
+        }
+      })
+    ]
+  };
 });
