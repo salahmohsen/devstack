@@ -164,6 +164,22 @@ export default defineConfig({
     nitro({
       baseURL: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
       /**
+       * Externalise the native DB driver packages in the main Nitro
+       * Rollup pass. The `tanstackStart` SSR service already externalises
+       * them in its own build (see `ssr.external` above); the chunks
+       * under `.output/server/_ssr/` carry bare `import "pg"` /
+       * `import "drizzle-orm/node-postgres"` statements. The main Nitro
+       * build then re-processes those chunks and would try to resolve
+       * the subpath `drizzle-orm/node-postgres` via Rolldown's module
+       * resolver, which fails on the subpath export map. Marking them
+       * external here leaves the imports as-is; the Dockerfile copies
+       * the packages into `.output/node_modules/` so Node ESM resolves
+       * them at runtime.
+       */
+      rollupConfig: {
+        external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
+      },
+      /**
        * CJS interop fix for `pg` (and `pg-pool` via `pg`).
        *
        * `pg@8.22.0`'s `lib/index.js` does `class BoundPool extends Pool`
