@@ -117,6 +117,17 @@ export default defineConfig({
   server: {
     port: 3000
   },
+  // Vite's dev SSR externalization. `rollupConfig.external` inside the
+  // `nitro()` plugin only affects the production Rollup build — in `dev`
+  // Vite's SSR runtime pre-bundles deps via esbuild and re-instantiates
+  // the module per request, which made the lazy `pg.Pool` proxy in
+  // `@tsu-stack/db` open a fresh pool every SSR request and exhaust
+  // Postgres with `FATAL: too many clients already`. Listing the native
+  // driver packages here tells Vite to load them through Node's `require`
+  // so the singleton stays stable across requests.
+  ssr: {
+    external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
+  },
   plugins: [
     shikiSSRStub(),
     devtools({
