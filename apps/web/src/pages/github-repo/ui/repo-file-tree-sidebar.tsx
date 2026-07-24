@@ -17,23 +17,29 @@ import {
 import { type FileSearchEntry, type FileSearchResult } from "@/shared/lib/fuzzy-file-search";
 import { FileSearchCard } from "@/shared/ui/file-search-card";
 
-import {
-  getGithubRepoTreeQueryOptions,
-  githubRepoTreeQueryKeys
-} from "@/pages/github-repo/api/get-github-repo-tree.query";
+import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-github-repo-tree.query";
 
 function useAllCachedFiles(repo: string, ref: string): FileSearchEntry[] {
   const queryClient = useQueryClient();
-
-  const keyPrefix = githubRepoTreeQueryKeys.byPath(repo, ref, "");
   const allFiles: FileSearchEntry[] = [];
 
-  const cache = queryClient.getQueriesData<GitHubRepoTreeEntry[]>({
-    queryKey: keyPrefix.slice(0, 4) as readonly string[]
-  });
-
-  for (const [, data] of cache) {
+  for (const query of queryClient.getQueryCache().getAll()) {
+    const data = query.state.data as GitHubRepoTreeEntry[] | undefined;
     if (!data) continue;
+
+    const key = query.queryKey;
+    const path = key[0];
+    if (
+      !Array.isArray(path) ||
+      (path[path.length - 1] !== "publicGetRepoTree" &&
+        path[path.length - 1] !== "privateGetRepoTree")
+    ) {
+      continue;
+    }
+
+    const input = (key[1] as { input?: { repo?: string; ref?: string } } | undefined)?.input;
+    if (input?.repo !== repo || input?.ref !== ref) continue;
+
     for (const entry of data) {
       allFiles.push({
         name: entry.name,
