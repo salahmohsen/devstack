@@ -137,6 +137,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       year: initialData?.year ?? new Date().getFullYear(),
       summary: initialData?.summary ?? "",
       description: initialData?.description ?? "",
+      analysis: initialData?.analysis ?? "",
       logo: initialData?.logo ?? "",
       repos: (initialData?.repos ?? []) as string[],
       demoUrl: initialData?.demoUrl ?? "",
@@ -154,6 +155,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         year: value.year ?? new Date().getFullYear(),
         summary: value.summary,
         description: value.description,
+        analysis: value.analysis?.trim() ? value.analysis : null,
         logo: value.logo ?? null,
         repos: value.repos ?? [],
         demoUrl: value.demoUrl ?? null,
@@ -179,6 +181,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         year: initialData.year,
         summary: initialData.summary ?? "",
         description: initialData.description ?? "",
+        analysis: initialData.analysis ?? "",
         logo: initialData.logo ?? "",
         repos: initialData.repos ?? [],
         demoUrl: initialData.demoUrl ?? "",
@@ -193,6 +196,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         year: new Date().getFullYear(),
         summary: "",
         description: "",
+        analysis: "",
         logo: "",
         repos: [],
         demoUrl: "",
@@ -265,6 +269,16 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                 <field.RichTextField
                   label="Description"
                   placeholder="Brief description of the project"
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="analysis">
+              {(field) => (
+                <field.MarkdownField
+                  label="Analysis"
+                  description="Private markdown notes for the resume agent. Not shown on the public portfolio."
+                  placeholder="What you did, why, trade-offs, metrics, lessons…"
                 />
               )}
             </form.AppField>

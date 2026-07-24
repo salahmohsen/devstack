@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { ExperienceOutputSchema } from "#@/experience/types";
+import { ExperiencePublicOutputSchema } from "#@/experience/types";
 import { contactOutputSchema } from "#@/profile/index";
-import { ProjectOutputSchema } from "#@/project/index";
+import { ProjectPublicOutputSchema } from "#@/project/index";
 import { StackOutputSchema } from "#@/stack/types";
 
 export const PortfolioEntryTypeSchema = z.enum(["experience", "project", "stack", "contact"]);
@@ -57,9 +57,11 @@ export type PortfolioListInput = z.infer<typeof PortfolioListInputSchema>;
 
 export const PortfolioListOutputSchema = z.object({
   experiences: z
-    .array(ExperienceOutputSchema)
-    .describe("Full experience objects with nested projects and stacks"),
-  projects: z.array(ProjectOutputSchema).describe("Full project objects with nested stacks"),
+    .array(ExperiencePublicOutputSchema)
+    .describe("Full experience objects with nested projects and stacks (public-safe)"),
+  projects: z
+    .array(ProjectPublicOutputSchema)
+    .describe("Full project objects with nested stacks (public-safe)"),
   stacks: z.array(StackOutputSchema).describe("Full stack objects"),
   contacts: z.array(contactOutputSchema).describe("Full contact objects"),
   nextCursor: z.string().nullable().describe("Cursor for next page, null if last page")

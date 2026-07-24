@@ -6,6 +6,7 @@ export { CheckboxField } from "./checkbox-field";
 export { ComboboxMultipleField } from "./combobox-multiple-field";
 export { IconifyField } from "./iconify-field";
 export { InputField } from "./input-field";
+export { MarkdownField } from "./markdown-field";
 export { NpmPackageField } from "./npm-package-field";
 export type { NpmPackage } from "./npm-package-field";
 export { NumberFieldForm } from "./number-field";

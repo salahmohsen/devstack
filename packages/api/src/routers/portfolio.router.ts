@@ -19,8 +19,8 @@ import { contact, experience, project, stack } from "@tsu-stack/db/schema";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import {
   toContactOutput,
-  toExperienceOutput,
-  toProjectOutput,
+  toExperiencePublicOutput,
+  toProjectPublicOutput,
   toStackOutput
 } from "#@/routers/portfolio.mappers";
 import {
@@ -103,8 +103,8 @@ async function listAllOptedIn(filterString?: string) {
     : [];
 
   return {
-    experiences: experiences.map((exp) => toExperienceOutput(exp!)),
-    projects: projects.map((proj) => toProjectOutput(proj!)),
+    experiences: experiences.map((exp) => toExperiencePublicOutput(exp!)),
+    projects: projects.map((proj) => toProjectPublicOutput(proj!)),
     stacks: stacks.map((stack) => toStackOutput(stack!)),
     contacts: contacts.map(toContactOutput)
   };

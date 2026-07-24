@@ -17,6 +17,7 @@ export const ProjectOutputSchema = z.object({
   experienceId: z.string().nullable(),
   isArchived: z.boolean(),
   isPresent: z.boolean(),
+  analysis: z.string().nullable(),
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
   stacks: z.array(StackOutputSchema),
@@ -26,6 +27,8 @@ export const ProjectOutputSchema = z.object({
   updatedAt: z.date(),
   createdAt: z.date()
 }) satisfies z.ZodType<ProjectSchemaSelect>;
+
+export const ProjectPublicOutputSchema = ProjectOutputSchema.omit({ analysis: true });
 
 export const ProjectListOutputSchema = z.array(ProjectOutputSchema);
 
@@ -40,6 +43,7 @@ export const CreateProjectInputSchema = z.object({
   experienceId: z.string().nullable().optional(),
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
+  analysis: z.string().nullable().optional(),
   stackIds: z.array(z.string()).optional().default([]),
   includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
@@ -63,6 +67,7 @@ export const UpdateProjectInputSchema = z.object({
   experienceId: z.string().nullable().optional(),
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
+  analysis: z.string().nullable().optional(),
   stackIds: z.array(z.string()).optional(),
   includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
@@ -76,5 +81,6 @@ export const ToggleProjectArchivedResponseSchema = ProjectOutputSchema;
 export type UpdateProjectInput = z.infer<typeof UpdateProjectInputSchema>;
 export type CreateProjectInput = z.infer<typeof CreateProjectInputSchema>;
 export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
+export type ProjectPublicOutput = z.infer<typeof ProjectPublicOutputSchema>;
 export type ToggleProjectArchivedResponse = z.infer<typeof ToggleProjectArchivedResponseSchema>;
 export type ProjectListOutput = z.infer<typeof ProjectListOutputSchema>;

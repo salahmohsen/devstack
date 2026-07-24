@@ -1,7 +1,9 @@
 import {
   aggregateStacksByType,
   type ExperienceOutput,
+  type ExperiencePublicOutput,
   type ProjectOutput,
+  type ProjectPublicOutput,
   type StackOutput
 } from "@tsu-stack/core";
 import { type ContactSchemaSelect } from "@tsu-stack/db/types";
@@ -87,6 +89,7 @@ export type ProjectRow = {
   experienceId: string | null;
   isArchived?: boolean | null;
   isPresent?: boolean | null;
+  analysis: string | null;
   portfolioEntryId: string | null;
   stacks: ProjectStackJoin[];
   createdAt?: Date;
@@ -111,6 +114,7 @@ export function toProjectOutput(proj: ProjectRow): ProjectOutput {
     experienceId: proj.experienceId,
     isArchived: proj.isArchived ?? false,
     isPresent: proj.isPresent ?? false,
+    analysis: proj.analysis,
     portfolioEntryId: proj.portfolioEntryId,
     includedInPortfolio: !!proj.portfolioEntryId,
     updatedAt: proj.updatedAt ?? new Date(),
@@ -118,6 +122,11 @@ export function toProjectOutput(proj: ProjectRow): ProjectOutput {
     stacks,
     stackTypeSummary: aggregateStacksByType(stacks)
   };
+}
+
+export function toProjectPublicOutput(proj: ProjectRow): ProjectPublicOutput {
+  const { analysis: _analysis, ...publicFields } = toProjectOutput(proj);
+  return publicFields;
 }
 
 export type ExperienceRow = {
@@ -148,6 +157,24 @@ export function toExperienceOutput(exp: ExperienceRow): ExperienceOutput {
     portfolioEntryId: exp.portfolioEntryId,
     includedInPortfolio: !!exp.portfolioEntryId,
     projects: exp.projects.map(toProjectOutput),
+    createdAt: exp.createdAt,
+    updatedAt: exp.updatedAt
+  };
+}
+
+export function toExperiencePublicOutput(exp: ExperienceRow): ExperiencePublicOutput {
+  return {
+    id: exp.id,
+    title: exp.title,
+    organization: exp.organization,
+    description: exp.description,
+    fromDate: exp.fromDate,
+    toDate: exp.toDate,
+    sortOrder: exp.sortOrder,
+    isPresent: exp.isPresent ?? false,
+    portfolioEntryId: exp.portfolioEntryId,
+    includedInPortfolio: !!exp.portfolioEntryId,
+    projects: exp.projects.map(toProjectPublicOutput),
     createdAt: exp.createdAt,
     updatedAt: exp.updatedAt
   };

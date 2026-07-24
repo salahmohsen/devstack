@@ -15,6 +15,7 @@ import { ComboboxMultipleField } from "./combobox-multiple-field";
 import { DropdownField } from "./dropdown-field";
 import { fieldContext, formContext } from "./form-contexts";
 import { InputField } from "./input-field";
+import { MarkdownField } from "./markdown-field";
 import { NumberFieldForm } from "./number-field";
 import { PasswordInputField } from "./password-input-field";
 import { RichTextField } from "./rich-text-field";
@@ -30,6 +31,7 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       CalendarField,
       DropdownField,
       InputField,
+      MarkdownField,
       NpmPackageField,
       NumberFieldForm,
       PasswordInputField,

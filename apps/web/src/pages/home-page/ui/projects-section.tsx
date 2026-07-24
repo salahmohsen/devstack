@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 
-import { type ProjectOutput } from "@tsu-stack/core";
+import { type ProjectPublicOutput } from "@tsu-stack/core";
 
 import { Icon } from "@/shared/ui/icon";
 
@@ -19,7 +19,7 @@ export const ProjectsSection = () => {
   );
 };
 
-export const ProjectsItem = ({ project }: { project: ProjectOutput }) => {
+export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
   const content = (
     <article className="group relative grid grid-cols-8 items-center gap-8 pb-1 transition-all duration-200 ease-in-out md:gap-4 lg:group-hover/list:opacity-50 hover:lg:opacity-100!">
       <aside className="col-span-2 hidden h-full w-full items-center justify-center sm:flex lg:justify-start">

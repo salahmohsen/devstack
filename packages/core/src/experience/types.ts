@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { type ExperienceSchemaInsert, type ExperienceSchemaSelect } from "@tsu-stack/db/types";
 
-import { ProjectOutputSchema } from "#@/project/types";
+import { ProjectOutputSchema, ProjectPublicOutputSchema } from "#@/project/types";
 
 const ExperienceDateStringSchema = z
   .union([z.string().date(), z.literal("")])
@@ -25,6 +25,10 @@ export const ExperienceOutputSchema = z.object({
   updatedAt: z.date(),
   createdAt: z.date()
 }) satisfies z.ZodType<ExperienceSchemaSelect>;
+
+export const ExperiencePublicOutputSchema = ExperienceOutputSchema.extend({
+  projects: z.array(ProjectPublicOutputSchema)
+});
 
 export const CreateExperienceInputSchema = z.object({
   title: z.string().min(1),
@@ -63,6 +67,7 @@ export const UpdateExperienceInputSchema = z.object({
 export const ExperienceListOutputSchema = z.array(ExperienceOutputSchema);
 
 export type ExperienceOutput = z.infer<typeof ExperienceOutputSchema>;
+export type ExperiencePublicOutput = z.infer<typeof ExperiencePublicOutputSchema>;
 export type CreateExperienceInput = z.infer<typeof CreateExperienceInputSchema>;
 export type UpdateExperienceInput = z.infer<typeof UpdateExperienceInputSchema>;
 export type ExperienceListOutput = z.infer<typeof ExperienceListOutputSchema>;

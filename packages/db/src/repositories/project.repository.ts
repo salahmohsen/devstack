@@ -85,6 +85,7 @@ export const projectRepository = {
         experienceId: input.experienceId ?? null,
         isArchived: input.isArchived ?? false,
         isPresent: input.isPresent ?? false,
+        analysis: input.analysis ?? null,
         portfolioEntryId: pid
       });
 
@@ -143,6 +144,9 @@ export const projectRepository = {
       }
       if (projectFields.isPresent !== undefined) {
         updateData.isPresent = projectFields.isPresent;
+      }
+      if (projectFields.analysis !== undefined) {
+        updateData.analysis = projectFields.analysis;
       }
 
       const [updated] = await tx

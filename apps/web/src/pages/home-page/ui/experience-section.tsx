@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ExperienceOutput } from "@tsu-stack/core";
+import { type ExperiencePublicOutput } from "@tsu-stack/core";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
@@ -57,7 +57,7 @@ export const Experience = () => {
   );
 };
 
-export const ExperienceItem = ({ experience }: { experience: ExperienceOutput }) => {
+export const ExperienceItem = ({ experience }: { experience: ExperiencePublicOutput }) => {
   const duration = formatDuration(experience.fromDate, experience.toDate, experience.isPresent);
 
   return (

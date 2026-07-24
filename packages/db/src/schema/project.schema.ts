@@ -29,6 +29,7 @@ export const project = pgTable(
       onDelete: "set null"
     }),
     isPresent: boolean("is_present").default(false),
+    analysis: text("analysis"),
     portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
       onDelete: "set null"
     }),
