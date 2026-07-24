@@ -47,25 +47,31 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
       )
     : null;
 
+  const oauthScope = session?.user?.id
+    ? await runWithDb(createDb(), () =>
+        betterAuthAccountRepository.findGithubScopesForUser(session.user.id)
+      )
+    : null;
+
+  const hasRepoScope = (oauthScope ?? "").split(/[\s,]+/).includes("repo");
+
   type ConfiguredSource = Extract<typeof githubSource, { isConfigured: true }>;
   const privateSource: ConfiguredSource | undefined =
-    oauthToken && githubSource.isConfigured
+    oauthToken && hasRepoScope && githubSource.isConfigured
       ? { isConfigured: true, owner: githubSource.owner, token: oauthToken }
       : githubSource.isConfigured
         ? githubSource
         : undefined;
 
   if (session?.user?.id) {
-    const scope = await runWithDb(createDb(), () =>
-      betterAuthAccountRepository.findGithubScopesForUser(session.user.id)
-    );
     // eslint-disable-next-line no-console
     console.log("[create-context] github token source:", {
       userId: session.user.id,
-      usedOAuthToken: Boolean(oauthToken),
+      usedOAuthToken: Boolean(oauthToken) && hasRepoScope,
       usedPAT: !oauthToken && githubSource.isConfigured,
       noTokenAtAll: !oauthToken && !githubSource.isConfigured,
-      scope: scope ?? "(none)"
+      fellBackToPat: Boolean(oauthToken) && !hasRepoScope && githubSource.isConfigured,
+      scope: oauthScope ?? "(none)"
     });
   }
 
@@ -77,7 +83,7 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
       },
       privateOctokit: createGitHubOctokit(privateSource),
       publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
-      source: githubSource
+      source: privateSource ?? githubSource
     },
     logger,
     session,
