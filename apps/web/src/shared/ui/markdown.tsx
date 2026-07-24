@@ -57,7 +57,7 @@ function CopyButton({ code }: { code: string }) {
     <button
       type="button"
       onClick={handleClick}
-      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-muted-foreground text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-accent-foreground"
+      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-accent-foreground"
     >
       {copied ? <Check size={14} /> : <ClipboardCopy size={14} />}
     </button>

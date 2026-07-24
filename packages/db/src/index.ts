@@ -36,9 +36,7 @@ export const relations = { ...appRelationPart, ...authRelations };
 let _pool: Pool | undefined;
 export const pool = new Proxy({} as Pool, {
   get(_target, prop) {
-    if (!_pool) {
-      _pool = new Pool({ connectionString: ENV_SERVER.DATABASE_URL });
-    }
+    _pool ??= new Pool({ connectionString: ENV_SERVER.DATABASE_URL });
     return Reflect.get(_pool, prop);
   }
 });
