@@ -161,8 +161,17 @@ export default defineConfig({
        * @see {@link https://github.com/nuxt/nuxt/issues/20773}
        * Recent Discord discussion on the matter
        * @see {@link https://discord.com/channels/719702312431386674/1490005967067414608}
+       *
+       * `drizzle-orm*` and `pg*` copy the full package trees into
+       * `.output/node_modules/` so the externalised imports in the SSR
+       * chunks resolve at runtime. The production stage of the Dockerfile
+       * only ships `.output/`, so anything left as an `import` must be
+       * traced here. Without this, the bundle errors with
+       * `ERR_MODULE_NOT_FOUND: Cannot find package 'drizzle-orm'`.
+       *
+       * @see {@link https://nitro.build/config#build-tracedeps}
        */
-      traceDeps: ["react", "react-dom"],
+      traceDeps: ["react", "react-dom", "drizzle-orm*", "pg*"],
       /**
        * CJS interop fix for `pg` (and `pg-pool` via `pg`).
        *
