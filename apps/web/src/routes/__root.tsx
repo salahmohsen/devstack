@@ -85,13 +85,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
-        {/*
-         * `vite-plugin-checker` pushes TypeScript errors to. TanStack Start's
-         * dev client hydrates React but does not load it, so without this
-         * injection the browser never connects to HMR and the checker overlay
-         * never appears. Dev-only; Vite tree-shakes the import in builds.
-         */}
-        {import.meta.env.DEV && <script type="module" src="/@vite-plugin-checker-runtime-entry" />}
+
+        {/* {import.meta.env.DEV && <script type="module" src="/@vite-plugin-checker-runtime-entry" />} */}
       </head>
       <body suppressHydrationWarning>
         {/* We place the progress provider here otherwise we will get "Cannot render a <style> outside the main document" error */}

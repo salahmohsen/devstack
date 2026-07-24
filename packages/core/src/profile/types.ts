@@ -61,8 +61,8 @@ export const ProfileOutputSchema = z.object({
   image: z.string().nullable(),
   createdAt: z.coerce.date(),
   contacts: z.array(contactOutputSchema),
-  summary: z.string(),
-  phone: z.string()
+  summary: z.string().nullable(),
+  phone: z.string().nullable()
 }) satisfies z.ZodType<
   Omit<UserSchemaSelect, "updatedAt"> & { contacts: z.infer<typeof contactOutputSchema>[] }
 >;

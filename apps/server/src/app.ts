@@ -10,6 +10,7 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type ContentfulStatusCode } from "hono/utils/http-status";
+import { type Pool } from "pg";
 
 import {
   createContext,
@@ -270,44 +271,49 @@ export const rpcHandler = new RPCHandler(appRouter, {
 
 app.use("/*", async (c, next) => {
   const db = createDb();
+  const requestPool = (db as unknown as { $client: Pool }).$client;
 
-  return runWithDb(db, async () => {
-    const runtime = getRuntime();
-    const context = await createContext({
-      context: c,
-      logger: c.get("log"),
-      runtime
-    });
-
-    const rpcResult = await rpcHandler.handle(c.req.raw, {
-      context,
-      prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "rpc") as `/${string}`
-    });
-
-    if (rpcResult.matched) {
-      return c.newResponse(rpcResult.response.body, rpcResult.response);
-    }
-
-    if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
-      const docsResult = await openApiHandler.handle(c.req.raw, {
-        context,
-        prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "docs") as `/${string}`
+  try {
+    return await runWithDb(db, async () => {
+      const runtime = getRuntime();
+      const context = await createContext({
+        context: c,
+        logger: c.get("log"),
+        runtime
       });
 
-      if (docsResult.matched) {
-        return c.newResponse(docsResult.response.body, docsResult.response);
+      const rpcResult = await rpcHandler.handle(c.req.raw, {
+        context,
+        prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "rpc") as `/${string}`
+      });
+
+      if (rpcResult.matched) {
+        return c.newResponse(rpcResult.response.body, rpcResult.response);
       }
-    }
 
-    const openApiResult = await openApiHandler.handle(c.req.raw, {
-      context,
-      prefix: new URL(ENV_SERVER.VITE_SERVER_URL).pathname as `/${string}`
+      if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
+        const docsResult = await openApiHandler.handle(c.req.raw, {
+          context,
+          prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "docs") as `/${string}`
+        });
+
+        if (docsResult.matched) {
+          return c.newResponse(docsResult.response.body, docsResult.response);
+        }
+      }
+
+      const openApiResult = await openApiHandler.handle(c.req.raw, {
+        context,
+        prefix: new URL(ENV_SERVER.VITE_SERVER_URL).pathname as `/${string}`
+      });
+
+      if (openApiResult.matched) {
+        return c.newResponse(openApiResult.response.body, openApiResult.response);
+      }
+
+      await next();
     });
-
-    if (openApiResult.matched) {
-      return c.newResponse(openApiResult.response.body, openApiResult.response);
-    }
-
-    await next();
-  });
+  } finally {
+    await requestPool.end().catch(() => undefined);
+  }
 });

@@ -2,7 +2,7 @@ import { type Context as HonoContext } from "hono";
 
 import { auth } from "@tsu-stack/auth/index";
 import { type OrpcContextMediaBucket } from "@tsu-stack/core";
-import { betterAuthAccountRepository, createDb, runWithDb } from "@tsu-stack/db";
+import { betterAuthAccountRepository } from "@tsu-stack/db";
 import { createRedisCacheAdapter } from "@tsu-stack/github/infrastructure/cache/redis-cache-adapter";
 import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/client";
 import { resolvePublicGitHubSource } from "@tsu-stack/github/shared/public-github-source";
@@ -42,15 +42,11 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
   const githubSource = await resolvePublicGitHubSource();
 
   const oauthToken = session?.user?.id
-    ? await runWithDb(createDb(), () =>
-        betterAuthAccountRepository.findGitHubAccessTokenForUser(session.user.id)
-      )
+    ? await betterAuthAccountRepository.findGitHubAccessTokenForUser(session.user.id)
     : null;
 
   const oauthScope = session?.user?.id
-    ? await runWithDb(createDb(), () =>
-        betterAuthAccountRepository.findGithubScopesForUser(session.user.id)
-      )
+    ? await betterAuthAccountRepository.findGithubScopesForUser(session.user.id)
     : null;
 
   const hasRepoScope = (oauthScope ?? "").split(/[\s,]+/).includes("repo");

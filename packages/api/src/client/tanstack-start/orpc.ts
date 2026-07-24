@@ -36,36 +36,62 @@ function getHeaders(): Record<string, string> {
   return {};
 }
 
+function isRetriable(error: unknown): boolean {
+  if (error instanceof Error && error.name === "AbortError") return false;
+  if (!(error instanceof TypeError)) return false;
+  const cause = (error as { cause?: { code?: string } }).cause;
+  if (cause && typeof cause === "object" && "code" in cause) {
+    return (
+      cause.code === "ECONNREFUSED" || cause.code === "ECONNRESET" || cause.code === "EAI_AGAIN"
+    );
+  }
+  return error.message === "fetch failed";
+}
+
+async function fetchWithRetry(
+  url: string | URL | Request,
+  options: RequestInit,
+  maxAttempts = 5
+): Promise<Response> {
+  const target = typeof url === "string" ? url : url instanceof URL ? url.toString() : url.url;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fetch(url, { ...options, credentials: "include" });
+    } catch (error) {
+      lastError = error;
+      if (!isRetriable(error) || attempt === maxAttempts - 1) throw error;
+      const delay = 200 * 2 ** attempt;
+      // oxlint-disable-next-line no-console
+      console.warn("[rpc-fetch-retry]", { url: target, attempt: attempt + 1, delay, error });
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw lastError;
+}
+
 const getORPCClient = createIsomorphicFn()
   .server((): RouterClient<AppRouter> => {
     const link = new RPCLink({
       url: `${getServerURL()}/rpc`,
       headers: getHeaders(),
-      fetch(url, options) {
-        return fetch(url, {
-          ...options,
-          credentials: "include"
-        }).catch((error) => {
+      fetch: (url, options) =>
+        fetchWithRetry(url, options ?? {}).catch((error) => {
           // oxlint-disable-next-line no-console
           console.error("[rpc-fetch-failed]", { url, error });
           throw error;
-        });
-      }
+        })
     });
     return createORPCClient(link);
   })
   .client((): RouterClient<AppRouter> => {
     const link = new RPCLink({
-      fetch(url, options) {
-        return fetch(url, {
-          ...options,
-          credentials: "include"
-        }).catch((error) => {
+      fetch: (url, options) =>
+        fetchWithRetry(url, options ?? {}).catch((error) => {
           // oxlint-disable-next-line no-console
           console.error("[rpc-fetch-failed]", { url, error });
           throw error;
-        });
-      },
+        }),
       url: `${ENV_WEB_ISOMORPHIC.VITE_SERVER_URL}/rpc`
     });
 

@@ -37,6 +37,7 @@
   "devDependencies": {
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "@types/pg": "catalog:",
     "tsx": "^4.19.0",
     "typescript": "catalog:"
   }
