@@ -101,7 +101,7 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
     orpcQueryClient.portfolio.toggle.mutationOptions({
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.list.queryOptions().queryKey
+          queryKey: orpcQueryClient.portfolio.list.queryOptions({ input: {} }).queryKey
         });
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryOptions().queryKey
