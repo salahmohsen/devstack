@@ -108,5 +108,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # Start all apps in parallel using pnpm's built-in parallel runner
-# Override production URLs with local dev equivalents
-VITE_SERVER_URL="http://localhost:5200" pnpm -r --parallel dev
+# Override production URLs with local dev equivalents. Both must be set:
+# the server's CORS allowlist is derived from VITE_WEB_URL, so leaving it
+# at the production origin would block the browser (localhost:3000).
+VITE_SERVER_URL="http://localhost:5200" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev

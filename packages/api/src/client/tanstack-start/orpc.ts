@@ -22,13 +22,10 @@ import { type AppRouter } from "#@/routers/index";
  * loop through the Cloudflare tunnel for every SSR-time oRPC call.
  */
 function getServerURL(): string {
-  return (
-    ENV_WEB_ISOMORPHIC.VITE_SERVER_URL_INTERNAL ??
-    ENV_WEB_ISOMORPHIC.VITE_SERVER_URL
-  );
+  return ENV_WEB_ISOMORPHIC.SERVER_URL_INTERNAL ?? ENV_WEB_ISOMORPHIC.VITE_SERVER_URL;
 }
 
-function getHeaders(): HeadersInit {
+function getHeaders(): Record<string, string> {
   const headers = getRequestHeaders();
   // Forward the incoming request's cookies (and any other relevant headers)
   // so the Hono server sees the same session for SSR oRPC calls.

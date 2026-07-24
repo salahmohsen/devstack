@@ -27,7 +27,7 @@ export const ENV_WEB_ISOMORPHIC = createEnv({
      * tunnel. Falls back to VITE_SERVER_URL (the public URL) if
      * not set, which is fine in dev or when no internal URL exists.
      */
-    VITE_SERVER_URL_INTERNAL: normalizedUrlSchema.optional()
+    SERVER_URL_INTERNAL: normalizedUrlSchema.optional()
   },
   clientPrefix: "VITE_",
   emptyStringAsUndefined: true,
