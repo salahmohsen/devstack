@@ -69,7 +69,21 @@ RUN pnpm --filter @tsu-stack/web run build
 FROM base AS production
 
 RUN addgroup --gid 1001 nodejs \
-    && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" web
+  && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" web
+
+# Deploy production-only dependencies for the web app into a staging dir,
+# then copy the resolved `node_modules/` into `.output/node_modules/` so the
+# SSR service's external imports (`drizzle-orm`, `pg`, `pg-pool`, `react`,
+# `react-dom`, etc.) resolve at runtime. The production stage only ships
+# `.output/`, but the SSR chunks in `.output/server/_ssr/` carry external
+# `import "drizzle-orm"` / `import "pg"` statements that Node ESM resolves
+# by walking up from the chunk's directory looking for `node_modules/`.
+# `pnpm deploy --prod` flattens the pnpm workspace's symlinked store into a
+# self-contained tree so the COPY works without dangling symlinks.
+COPY --from=builder --chown=web:nodejs /app /app
+RUN pnpm --filter @tsu-stack/web deploy --prod /tmp/web-deploy \
+  && cp -r /tmp/web-deploy/node_modules /app/.output/node_modules \
+  && rm -rf /tmp/web-deploy
 
 COPY --from=builder --chown=web:nodejs /app/apps/web/.output /app/.output
 
