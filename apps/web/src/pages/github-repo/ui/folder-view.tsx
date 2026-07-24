@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { File, Folder } from "lucide-react";
 import { useMemo } from "react";
@@ -10,7 +9,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 
-import { getGithubTreeEntryCommitsQueryOptions } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
+import { useGetGithubTreeEntryCommitsQuery } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
 
 import { LatestCommitBar } from "./latest-commit-bar";
 import { RepoMarkdownFiles } from "./repo-markdown-files";
@@ -30,8 +29,11 @@ export function FolderView({
 }) {
   const entryNames = useMemo(() => entries.map((e) => e.name), [entries]);
 
-  const commitsQuery = useQuery(
-    getGithubTreeEntryCommitsQueryOptions(repoName, currentRef, currentPath, entryNames)
+  const commitsQuery = useGetGithubTreeEntryCommitsQuery(
+    repoName,
+    currentRef,
+    currentPath,
+    entryNames
   );
 
   return (

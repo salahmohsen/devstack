@@ -57,6 +57,7 @@
     "remark-gfm": "catalog:",
     "remark-github-blockquote-alert": "catalog:",
     "sharp": "catalog:",
+    "socket.io-client": "catalog:",
     "sonner": "catalog:",
     "zod": "catalog:"
   },

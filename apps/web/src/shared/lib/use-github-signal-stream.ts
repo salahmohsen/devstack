@@ -1,8 +1,8 @@
 import { type QueryKey, useQueryClient } from "@tanstack/react-query";
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { type Socket, io } from "socket.io-client";
 
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { stripTrailingSlashes } from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 
@@ -117,13 +117,15 @@ function mergeTargetsWithMyGitHubLists(
   return out;
 }
 
-function getWebSocketUrl() {
+function getSocketIOConfig() {
   const serverUrl = new URL(ENV_WEB_ISOMORPHIC.VITE_SERVER_URL, window.location.origin);
-  serverUrl.protocol = serverUrl.protocol === "https:" ? "wss:" : "ws:";
-  serverUrl.pathname = `${stripTrailingSlashes(serverUrl.pathname)}/api/ws/github-signals`;
+  serverUrl.pathname = "/";
   serverUrl.search = "";
   serverUrl.hash = "";
-  return serverUrl.toString();
+  return {
+    baseUrl: serverUrl.toString().replace(/\/$/, ""),
+    path: "/api/ws/github-signals"
+  };
 }
 
 export function invalidateTargets(
@@ -226,15 +228,8 @@ function useGitHubSignalStreamWebSocket(
       return;
     }
 
-    if (typeof WebSocket === "undefined") {
-      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
-      setStatus("disconnected");
-      return;
-    }
-
     const keys = signalKeysKey.split(",");
-    let ws: WebSocket | null = null;
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let socket: Socket | null = null;
     let disposed = false;
     let lastResumeSyncAt = 0;
 
@@ -302,35 +297,16 @@ function useGitHubSignalStreamWebSocket(
       void syncSignalsFromServer(source);
     }
 
-    function sendSubscription(socket: WebSocket) {
-      if (socket.readyState === WebSocket.OPEN) {
+    function sendSubscription() {
+      if (socket?.connected) {
         debug("github-signal-stream", "subscribing to signal keys", {
           keys
         });
-        socket.send(JSON.stringify({ type: "subscribe", keys }));
+        socket.emit("subscribe", { keys });
       }
     }
 
-    function handleMessage(event: MessageEvent) {
-      if (typeof event.data !== "string") return;
-
-      let message: unknown;
-      try {
-        message = JSON.parse(event.data);
-      } catch {
-        debug("github-signal-stream", "received malformed message", {
-          data: event.data
-        });
-        return;
-      }
-
-      if (!isSignalMessage(message)) {
-        debug("github-signal-stream", "received unknown message type", {
-          message
-        });
-        return;
-      }
-
+    function handleSignalBroadcast(message: SignalMessage) {
       debug("github-signal-stream", "received signal broadcast", {
         keys: message.keys
       });
@@ -351,51 +327,45 @@ function useGitHubSignalStreamWebSocket(
       });
     }
 
-    function connect() {
-      if (disposed) return;
+    const { baseUrl, path } = getSocketIOConfig();
+    debug("github-signal-stream", "connecting", { baseUrl, path });
 
-      setStatus("connecting");
-      debug("github-signal-stream", "connecting", {
-        url: getWebSocketUrl()
-      });
+    socket = io(baseUrl, {
+      path,
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: RECONNECT_DELAY_MS
+    });
 
-      ws = new WebSocket(getWebSocketUrl());
+    socket.on("connect", () => {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect
+      setStatus("connected");
+      debug("github-signal-stream", "connected");
+      sendSubscription();
+      void syncSignalsFromServer("github-signal-ws-catchup");
+    });
 
-      ws.addEventListener("open", () => {
-        setStatus("connected");
-        debug("github-signal-stream", "connected");
-        if (ws) sendSubscription(ws);
-        void syncSignalsFromServer("github-signal-ws-catchup");
-      });
+    socket.on("disconnect", (reason) => {
+      debug("github-signal-stream", "disconnected", { reason });
+      if (!disposed) {
+        // oxlint-disable-next-line react-hooks-js/set-state-in-effect
+        setStatus("disconnected");
+      }
+    });
 
-      ws.addEventListener("message", handleMessage);
+    socket.on("connect_error", (error) => {
+      debug("github-signal-stream", "connection error", { message: error.message });
+    });
 
-      ws.addEventListener("close", (event) => {
-        debug("github-signal-stream", "disconnected", {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean
+    socket.on("github-signals", (data: unknown) => {
+      if (!isSignalMessage(data)) {
+        debug("github-signal-stream", "received unknown message type", {
+          data
         });
-        ws = null;
-        if (!disposed) {
-          setStatus("disconnected");
-        }
-        scheduleReconnect();
-      });
-
-      ws.addEventListener("error", () => {
-        debug("github-signal-stream", "connection error");
-        ws?.close();
-      });
-    }
-
-    function scheduleReconnect() {
-      if (disposed) return;
-      debug("github-signal-stream", "scheduling reconnect", {
-        delayMs: RECONNECT_DELAY_MS
-      });
-      reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS);
-    }
+        return;
+      }
+      handleSignalBroadcast(data);
+    });
 
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
@@ -411,7 +381,6 @@ function useGitHubSignalStreamWebSocket(
       scheduleResumeSync("github-signal-online-catchup");
     }
 
-    connect();
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleWindowFocus);
     window.addEventListener("online", handleOnline);
@@ -421,11 +390,10 @@ function useGitHubSignalStreamWebSocket(
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleWindowFocus);
       window.removeEventListener("online", handleOnline);
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-      }
-      if (ws) {
-        ws.close();
+      if (socket) {
+        socket.removeAllListeners();
+        socket.disconnect();
+        socket = null;
       }
     };
   }, [signalKeysKey, queryClient, lastSeenTimestampsRef]);

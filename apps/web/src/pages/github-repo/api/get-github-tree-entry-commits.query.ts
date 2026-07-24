@@ -6,15 +6,15 @@ import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
-export function getGithubTreeEntryCommitsQueryOptions(
+export function useGetGithubTreeEntryCommitsQuery(
   repo: string,
   ref: string,
   dirPath: string,
-  entries: string[],
-  isPrivate = false
+  entries: string[]
 ) {
-  return (
-    isPrivate
+  const { user, isPending } = useAuth();
+  const queryOptions = (
+    user?.id && !isPending
       ? orpcQueryClient.github.privateGetTreeEntryCommits
       : orpcQueryClient.github.publicGetTreeEntryCommits
   ).queryOptions({
@@ -24,16 +24,8 @@ export function getGithubTreeEntryCommitsQueryOptions(
     retry: false,
     meta: persistedMeta
   });
-}
 
-export function useGetGithubTreeEntryCommitsQuery(
-  repo: string,
-  ref: string,
-  dirPath: string,
-  entries: string[]
-) {
-  const { user } = useAuth();
-  return useQuery(getGithubTreeEntryCommitsQueryOptions(repo, ref, dirPath, entries, !!user));
+  return useQuery(queryOptions);
 }
 
 export type GithubTreeEntryCommitsQueryResult = Awaited<

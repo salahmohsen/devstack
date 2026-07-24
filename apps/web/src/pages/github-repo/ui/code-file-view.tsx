@@ -13,7 +13,7 @@ import { highlightCode } from "@/shared/lib/highlight-code";
 
 import { getGithubRepoFileContentQueryOptions } from "@/pages/github-repo/api/get-github-repo-file-content.query";
 import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-github-repo-tree.query";
-import { getGithubTreeEntryCommitsQueryOptions } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
+import { useGetGithubTreeEntryCommitsQuery } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
 
 const IMAGE_EXTENSIONS = new Set([
   "avif",
@@ -165,9 +165,9 @@ export function CodeFileView({
   const fileName = path.split("/").pop() ?? path;
   const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
 
-  const fileCommitQuery = useQuery(
-    getGithubTreeEntryCommitsQueryOptions(repo, currentRef, parentPath, [fileName], isPrivate)
-  );
+  const fileCommitQuery = useGetGithubTreeEntryCommitsQuery(repo, currentRef, parentPath, [
+    fileName
+  ]);
 
   const parentTreeQuery = useQuery({
     ...getGithubRepoTreeQueryOptions(repo, currentRef, parentPath, isPrivate),
