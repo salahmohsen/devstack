@@ -164,6 +164,27 @@ export default defineConfig({
        */
       traceDeps: ["react", "react-dom"],
       /**
+       * CJS interop fix for `pg` (and `pg-pool` via `pg`).
+       *
+       * `pg@8.22.0`'s `lib/index.js` does `class BoundPool extends Pool`
+       * where `Pool = require('pg-pool')`. When rolldown bundles this
+       * for Nitro's `_ssr/` output, the Rollup CommonJS plugin wraps
+       * `pg-pool`'s `module.exports = PoolClass` as
+       * `{ default: PoolClass }` by default. The `extends` then sees an
+       * object and throws:
+       *   `TypeError: Class extends value #<Object> is not a constructor`
+       *   at poolFactory (...src-DTTaCAoo.mjs)
+       *
+       * `requireReturnsDefault: "auto"` makes the CJS plugin unwrap a
+       * CJS module whose `module.exports` *is* a constructor (class /
+       * function) and return it directly, restoring the `extends` chain.
+       *
+       * @see {@link https://nitro.build/config#build-commonjs}
+       */
+      commonJS: {
+        requireReturnsDefault: "auto"
+      },
+      /**
        * Don't bundle `pg` (and its native binding `pg-native`) into the
        * SSR output. Nitro tree-shakes or stubs `pg` during bundling, and
        * the stub is what produced the runtime
