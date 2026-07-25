@@ -8,6 +8,8 @@ set -eu
 _user="${POSTGRES_USER:?}"
 _pass="${POSTGRES_PASSWORD:?}"
 _db="${POSTGRES_DB:-personal_hub}"
+# Prefer hub-postgres in compose (unique on shared Dokploy networks).
+# Keep "postgres" as fallback for older stacks / local defaults.
 _host="${POSTGRES_HOST:-postgres}"
 _port="${POSTGRES_PORT:-5432}"
 

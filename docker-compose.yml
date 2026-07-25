@@ -14,6 +14,12 @@
 services:
   # ── Infrastructure ──────────────────────────────────────────────────────────
 
+  # Service names stay short for depends_on, but we advertise unique DNS
+  # aliases (hub-*). Dokploy attaches Traefik-enabled services to the shared
+  # dokploy-network where many stacks also use alias "postgres"/"redis" —
+  # resolving the generic name from server (on both networks) hits the wrong
+  # container (28P01 password auth failure). Agent-only-on-project-network
+  # can luck out; server cannot.
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -24,6 +30,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       # Must be the database name (e.g. personal_hub), NOT the username.
       POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
+    networks:
+      default:
+        aliases:
+          - hub-postgres
     healthcheck:
       # -d is required: without it pg_isready defaults DB name to the user
       # (e.g. personalhub), which does not exist when POSTGRES_DB differs.
@@ -41,6 +51,10 @@ services:
     command: redis-server --appendonly yes --save 60 1000 --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
+    networks:
+      default:
+        aliases:
+          - hub-redis
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -56,6 +70,10 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    networks:
+      default:
+        aliases:
+          - hub-minio
 
   # ── Apps ────────────────────────────────────────────────────────────────────
 
@@ -82,7 +100,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      # Unique alias — not "postgres" (collides on dokploy-network).
+      POSTGRES_HOST: hub-postgres
+      REDIS_URL: redis://:${REDIS_PASSWORD}@hub-redis:6379
       AGENT_WORKER_URL: ${AGENT_WORKER_URL:-http://agent:4111}
       VITE_SERVER_URL: ${VITE_SERVER_URL}
       VITE_WEB_URL: ${VITE_WEB_URL}
@@ -117,6 +137,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: mastra_agent
+      POSTGRES_HOST: hub-postgres
       CREATE_DB: "true"
       # Mastra model strings like "deepseek/deepseek-v4-flash" read DEEPSEEK_API_KEY
       # (see apps/agent/src/mastra/model-config.ts). Must be listed here — Dokploy
@@ -162,7 +183,7 @@ services:
       # app's SSR-time oRPC client to call the server over HTTP without
       # looping through the Cloudflare tunnel.
       SERVER_URL_INTERNAL: ${SERVER_URL_INTERNAL:-http://server:5100/server}
-      S3_ENDPOINT: http://minio:9000
+      S3_ENDPOINT: http://hub-minio:9000
       S3_ACCESS_KEY: ${MINIO_ROOT_USER}
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       S3_BUCKET: ${S3_BUCKET:-personal-hub}

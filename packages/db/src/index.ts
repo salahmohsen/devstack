@@ -37,6 +37,7 @@ function createPoolConfig(): PoolConfig {
   const password = process.env.POSTGRES_PASSWORD;
   if (user && password) {
     return {
+      // compose uses hub-postgres to avoid dokploy-network alias collisions
       host: process.env.POSTGRES_HOST ?? "postgres",
       port: Number(process.env.POSTGRES_PORT ?? 5432),
       user,
