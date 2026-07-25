@@ -43,7 +43,7 @@ function TextPart({ text, isUser }: { text: string; isUser: boolean }) {
         )}
       >
         {isUser ? (
-          <p className="m-0 whitespace-pre-wrap text-sm leading-relaxed">{text}</p>
+          <p className="m-0 text-sm leading-relaxed whitespace-pre-wrap">{text}</p>
         ) : (
           <Markdown>{text}</Markdown>
         )}
@@ -55,7 +55,10 @@ function TextPart({ text, isUser }: { text: string; isUser: boolean }) {
 function ReasoningPart({ text, isStreaming }: { text: string; isStreaming?: boolean }) {
   return (
     <div className="w-full max-w-[min(72ch,100%)]">
-      <Reasoning isStreaming={isStreaming} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+      <Reasoning
+        isStreaming={isStreaming}
+        className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2"
+      >
         <ReasoningTrigger className="text-xs text-muted-foreground">Thinking</ReasoningTrigger>
         <ReasoningContent markdown className="mt-1 text-sm">
           {text}
@@ -108,11 +111,7 @@ export function AgentHubMessageParts({ parts, role }: AgentHubMessagePartsProps)
         if (part.type === "reasoning") {
           // AI SDK ReasoningUIPart uses `text`, not `reasoning`.
           return part.text ? (
-            <ReasoningPart
-              key={key}
-              text={part.text}
-              isStreaming={part.state === "streaming"}
-            />
+            <ReasoningPart key={key} text={part.text} isStreaming={part.state === "streaming"} />
           ) : null;
         }
 

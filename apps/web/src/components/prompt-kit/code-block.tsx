@@ -30,12 +30,7 @@ export type CodeBlockCodeProps = {
   className?: string;
 } & React.HTMLProps<HTMLDivElement>;
 
-function CodeBlockCode({
-  code,
-  language = "tsx",
-  className,
-  ...props
-}: CodeBlockCodeProps) {
+function CodeBlockCode({ code, language = "tsx", className, ...props }: CodeBlockCodeProps) {
   const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,7 +62,11 @@ function CodeBlockCode({
 
   if (highlightedHtml) {
     return (
-      <div className={classNames} dangerouslySetInnerHTML={{ __html: highlightedHtml }} {...props} />
+      <div
+        className={classNames}
+        dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+        {...props}
+      />
     );
   }
 

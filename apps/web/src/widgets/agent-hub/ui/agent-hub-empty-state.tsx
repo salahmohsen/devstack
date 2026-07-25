@@ -9,8 +9,9 @@ import {
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
 
-import { PromptSuggestion } from "@/components/prompt-kit";
 import { HUB_SUGGESTIONS } from "@/features/agent-hub";
+
+import { PromptSuggestion } from "@/components/prompt-kit";
 
 type AgentHubEmptyStateProps = {
   onSelectSuggestion: (prompt: string) => void;

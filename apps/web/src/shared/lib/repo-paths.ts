@@ -42,7 +42,9 @@ export function buildRepoTabUrl(input: {
  * Link `to="/repos/foo"` does not match the file route `/repos/$repo` —
  * we must pass the route id and params.
  */
-export function parseRepoTabLocation(url: string):
+export function parseRepoTabLocation(
+  url: string
+):
   | { to: "/repos/$repo"; params: { repo: string } }
   | { to: "/repos/$repo/tree/$"; params: { repo: string; _splat: string } }
   | { to: "/repos/$repo/blob/$"; params: { repo: string; _splat: string } }

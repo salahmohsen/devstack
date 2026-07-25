@@ -1,11 +1,6 @@
 import { Check, ShieldAlert, X } from "lucide-react";
 
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle
-} from "@tsu-stack/ui/components/alert";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
 
 type AgentHubToolApprovalProps = {
@@ -31,14 +26,19 @@ export function AgentHubToolApproval({
   const hasArgs = argEntries.length > 0;
 
   return (
-    <Alert variant="warning" className="mx-auto w-full max-w-3xl" role="alertdialog" aria-label="Tool approval required">
+    <Alert
+      variant="warning"
+      className="mx-auto w-full max-w-3xl"
+      role="alertdialog"
+      aria-label="Tool approval required"
+    >
       <ShieldAlert aria-hidden />
       <AlertTitle>Approval required</AlertTitle>
       <AlertDescription className="gap-2">
         <p className="m-0">
           The hub wants to run{" "}
-          <span className="font-medium text-foreground font-mono text-xs">{toolName}</span>.
-          Review the arguments before continuing.
+          <span className="font-mono text-xs font-medium text-foreground">{toolName}</span>. Review
+          the arguments before continuing.
         </p>
         {hasArgs ? (
           <pre className="max-h-28 overflow-auto rounded-lg border border-border/60 bg-background/80 p-2 font-mono text-xs text-muted-foreground">
