@@ -1,8 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import process from "node:process";
 
 import { sql } from "drizzle-orm";
 import { drizzle as drizzlePg, type NodePgDatabase } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { Pool, type PoolConfig } from "pg";
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
@@ -26,6 +27,26 @@ export * from "drizzle-orm/sql";
  */
 export const relations = { ...appRelationPart, ...authRelations };
 
+/**
+ * Prefer discrete POSTGRES_* fields in Docker (avoids URL-encoding footguns
+ * with passwords containing + / =). Fall back to DATABASE_URL for local/
+ * Neon connection strings.
+ */
+function createPoolConfig(): PoolConfig {
+  const user = process.env.POSTGRES_USER;
+  const password = process.env.POSTGRES_PASSWORD;
+  if (user && password) {
+    return {
+      host: process.env.POSTGRES_HOST ?? "postgres",
+      port: Number(process.env.POSTGRES_PORT ?? 5432),
+      user,
+      password,
+      database: process.env.POSTGRES_DB ?? "personal_hub"
+    };
+  }
+  return { connectionString: ENV_SERVER.DATABASE_URL };
+}
+
 // Lazy pool proxy: the web SSR bundle previously crashed at import time
 // because Nitro tried to bundle `pg` and produced a stub. Initialising the
 // pool eagerly meant the stub was exercised during module evaluation, not
@@ -36,7 +57,7 @@ export const relations = { ...appRelationPart, ...authRelations };
 let _pool: Pool | undefined;
 export const pool = new Proxy({} as Pool, {
   get(_target, prop) {
-    _pool ??= new Pool({ connectionString: ENV_SERVER.DATABASE_URL });
+    _pool ??= new Pool(createPoolConfig());
     return Reflect.get(_pool, prop);
   }
 });
@@ -61,9 +82,7 @@ export type WsDb = NodePgDatabase<typeof relations>;
 const dbStorage = new AsyncLocalStorage<{ db: WsDb; pool: Pool }>();
 
 export function createDb(): WsDb {
-  const requestPool = new Pool({
-    connectionString: ENV_SERVER.DATABASE_URL
-  });
+  const requestPool = new Pool(createPoolConfig());
   return drizzlePg({ client: requestPool, relations });
 }
 
