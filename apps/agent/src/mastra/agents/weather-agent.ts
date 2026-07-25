@@ -8,6 +8,8 @@ export function createWeatherAgent() {
   return new Agent({
     id: "weather-agent",
     name: "Weather Agent",
+    description:
+      "Fetches current weather and a short forecast for a city, then suggests activities. Delegate here when the user asks about weather, temperature, or what to do in a location today or this week.",
     instructions: `You are a helpful weather assistant that provides accurate weather information and can help planning activities based on the weather.
 
 Your primary function is to help users get weather details for specific locations. When responding:

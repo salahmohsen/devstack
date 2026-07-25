@@ -9,6 +9,7 @@ import {
 } from "@mastra/observability";
 import { PostgresStore } from "@mastra/pg";
 
+import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { createWeatherAgent } from "#@/mastra/agents/weather-agent";
 import {
@@ -24,7 +25,8 @@ export const mastra = new Mastra({
   server: {
     apiRoutes: [
       chatRoute({
-        path: "/chat/:agentId"
+        path: "/chat/:agentId",
+        version: "v6"
       })
     ]
   },
@@ -35,7 +37,8 @@ export const mastra = new Mastra({
   },
   agents: {
     weatherAgent: createWeatherAgent(),
-    stackCategorizerAgent: createStackCategorizerAgent()
+    stackCategorizerAgent: createStackCategorizerAgent(),
+    hubSupervisor: createHubSupervisor()
   },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
   storage: new PostgresStore({

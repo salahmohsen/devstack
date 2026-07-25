@@ -6,21 +6,23 @@
 export const MODEL_PRESETS = {
   /** Balanced: fast model first, fallback for quality */
   default: [
-    { model: "deepseek/deepseek-v4-flash", maxRetries: 1 } // DeepSeek Chat model
+    // DeepSeek API currently accepts only deepseek-v4-flash | deepseek-v4-pro.
+    { model: "deepseek/deepseek-v4-flash", maxRetries: 1 }
     // { model: "opencode/deepseek-v4-flash-free", maxRetries: 1 },
     // { model: "opencode/big-pickle", maxRetries: 2 },
   ],
 
-  /** Quality-first: paid fast model first, fallback to free */
+  /** Quality-first: stronger model first */
   qualityFirst: [
-    { model: "deepseek/deepseek-chat", maxRetries: 1 } // DeepSeek Chat model
+    { model: "deepseek/deepseek-v4-pro", maxRetries: 1 }
     // { model: "opencode/deepseek-v4-flash", maxRetries: 1 },
     // { model: "opencode/big-pickle", maxRetries: 2 }
   ],
 
-  /** Full fallback chain (weather agent, etc.) */
+  /** Full fallback chain (hub supervisor, weather agent, etc.) */
   fullChain: [
-    { model: "deepseek/deepseek-chat", maxRetries: 1 } // DeepSeek Chat model
+    { model: "deepseek/deepseek-v4-flash", maxRetries: 1 }
+    // { model: "deepseek/deepseek-v4-pro", maxRetries: 1 },
     // { model: "opencode/big-pickle", maxRetries: 1 },
     // { model: "opencode/deepseek-v4-flash-free", maxRetries: 1 },
     // { model: "nvidia/nemotron-nano-9b-v2:free", maxRetries: 2 },

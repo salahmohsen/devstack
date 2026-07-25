@@ -6,6 +6,8 @@ export function createStackCategorizerAgent() {
   return new Agent({
     id: "stack-categorizer",
     name: "Stack Categorizer",
+    description:
+      "Classifies npm packages into tech-stack types (framework, language, database, ui, etc.) and matches each to an existing stack when possible. Pure categorization; no tools.",
     instructions: `You categorize a batch of npm packages into tech stack types.
 
 You receive a numbered list of packages with existing stack context.
