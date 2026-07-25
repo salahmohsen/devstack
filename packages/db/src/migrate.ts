@@ -4,8 +4,16 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 
 import { db } from "./index.ts";
 
-export async function migrateDatabase(): Promise<void> {
-  await migrate(db, {
-    migrationsFolder: join(import.meta.dirname, "migrations")
-  });
+/**
+ * Apply pending Drizzle migrations.
+ *
+ * Folder resolution order:
+ * 1. `MIGRATIONS_FOLDER` env (Docker sets this to the copied migrations path)
+ * 2. `packages/db/migrations` next to this source file (`../migrations`)
+ */
+export async function migrateDatabase(folder?: string): Promise<void> {
+  const migrationsFolder =
+    folder ?? process.env.MIGRATIONS_FOLDER ?? join(import.meta.dirname, "..", "migrations");
+
+  await migrate(db, { migrationsFolder });
 }

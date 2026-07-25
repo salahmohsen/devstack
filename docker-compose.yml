@@ -2,9 +2,13 @@
 # personal-hub — All-in-one Dokploy deployment
 # =============================================================================
 # Usage:
-#   1. Set environment variables in Dokploy UI (see .env.example)
+#   1. Set environment variables in Dokploy UI (see packages/env/.env.example)
 #   2. Upload this repo to Dokploy
 #   3. In Dokploy, use this as the Docker Compose file
+#
+# Required: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB (default personal_hub),
+# REDIS_PASSWORD, MINIO_*, BETTER_AUTH_SECRET, VITE_SERVER_URL, VITE_WEB_URL,
+# GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, FILES_API_SECRET
 # =============================================================================
 
 services:
@@ -18,9 +22,12 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Must be the database name (e.g. personal_hub), NOT the username.
       POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      # -d is required: without it pg_isready defaults DB name to the user
+      # (e.g. personalhub), which does not exist when POSTGRES_DB differs.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-personal_hub}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,6 +35,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    # Host note: enable memory overcommit for safe BGSAVE under pressure:
+    #   sysctl vm.overcommit_memory=1
+    # (cannot set this sysctl from an unprivileged container)
     command: redis-server --appendonly yes --save 60 1000 --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
@@ -83,6 +93,7 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       ENABLE_OPEN_API_DOCS: ${ENABLE_OPEN_API_DOCS:-false}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
       PORT: "5100"
       NODE_ENV: production
     healthcheck:
@@ -126,7 +137,7 @@ services:
         SOURCE_COMMIT: ${SOURCE_COMMIT:-}
         VITE_SERVER_URL: ${VITE_SERVER_URL}
         VITE_WEB_URL: ${VITE_WEB_URL}
-        # Dummy URL for build-time only — prerender is disabled; runtime uses SERVER_URL_INTERNAL
+        # Dummy URL for build-time only — prerender is disabled
         DATABASE_URL: postgresql://build:build@localhost:5432/build
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
@@ -135,6 +146,11 @@ services:
     environment:
       VITE_SERVER_URL: ${VITE_SERVER_URL}
       VITE_WEB_URL: ${VITE_WEB_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      # SSR loads Better Auth (server env) even for public routes / health —
+      # OAuth client credentials must be present or module init throws.
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       # Internal Docker-network URL of the Hono server, used by the web
       # app's SSR-time oRPC client to call the server over HTTP without
       # looping through the Cloudflare tunnel.
@@ -145,7 +161,8 @@ services:
       S3_BUCKET: ${S3_BUCKET:-personal-hub}
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_FORCE_PATH_STYLE: "true"
-      MEDIA_PUBLIC_URL: ${VITE_WEB_URL}/media
+      # Full URL — Dokploy does not expand nested ${VITE_WEB_URL} in all cases
+      MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-${VITE_WEB_URL}/media}
       AGENT_WORKER_URL: http://agent:4111
       FILES_API_SECRET: ${FILES_API_SECRET}
       NODE_ENV: production

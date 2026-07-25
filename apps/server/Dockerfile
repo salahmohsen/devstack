@@ -75,8 +75,10 @@ COPY --from=build --chown=server:nodejs --chmod=755 /app/docker/ensure-db.js /us
 USER server
 
 # ensure-db.js (outside /app) resolves bare `require("pg")` via NODE_PATH.
-ENV NODE_PATH=/app/node_modules
+ENV NODE_PATH=/app/node_modules:/app/apps/server/node_modules
 ENV PORT=5100
+ENV MIGRATIONS_FOLDER=/app/apps/server/dist/migrations
+ENV RUN_MIGRATIONS=true
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   CMD wget -qO- http://127.0.0.1:${PORT}/server/health/live || exit 1

@@ -67,7 +67,8 @@ COPY --from=build --chown=agent:nodejs --chmod=755 /app/docker/ensure-db.js /usr
 
 USER agent
 
-ENV NODE_PATH=/app/node_modules
+# App-level node_modules holds non-hoisted deps (e.g. pg) for ensure-db.js.
+ENV NODE_PATH=/app/node_modules:/app/apps/agent/node_modules
 
 EXPOSE 4111
 
