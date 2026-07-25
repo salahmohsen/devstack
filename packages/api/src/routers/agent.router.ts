@@ -14,7 +14,8 @@ import {
   getRepoTree
 } from "@tsu-stack/github";
 
-import { ownerProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
+import { ownerProcedure, protectedProcedure } from "#@/lib/procedures/factory";
 
 // Parse GitHub URL to owner/repo format
 function parseGitHubRepo(url: string): string {
@@ -157,7 +158,7 @@ export const agentRouter = {
    * future agent uses structured output, `text` may be empty — fall
    * back to `object` stringified as a safety net.
    */
-  chat: publicProcedure
+  chat: protectedProcedure
     .route({
       description: "Send a message to the agent and get a non-streaming response",
       method: "POST"
@@ -177,7 +178,13 @@ export const agentRouter = {
       const response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: input.messages })
+        body: JSON.stringify({
+          messages: input.messages,
+          requestContext: {
+            resourceId: context.session.user.id,
+            threadId: `dashboard-home:${context.session.user.id}`
+          }
+        })
       });
 
       if (!response.ok) {
@@ -197,16 +204,24 @@ export const agentRouter = {
   /**
    * Streaming chat. Hits the agent's `/chat/:agentId` endpoint
    * exposed by `@mastra/ai-sdk`'s `chatRoute()` (registered in the
-   * agent's Mastra config). Returns AI SDK UIMessageStream SSE
-   * events and pipes the response body through oRPC's EventIterator
-   * protocol using `streamToEventIterator`. The client's
-   * `eventIteratorToUnproxiedDataStream` converts it back to a
-   * `ReadableStream<UIMessageChunk>` that `useChat` consumes.
+   * agent's Mastra config). Mastra emits AI SDK UIMessageStream SSE
+   * bytes; we parse those into JSON chunk objects and pipe them
+   * through oRPC's EventIterator via `streamToEventIterator`.
+   *
+   * The client must use `eventIteratorToUnproxiedDataStream` and
+   * return that stream **directly** to `useChat` — no TextDecoder /
+   * SSE re-parse on the client (oRPC AI SDK integration docs).
+   *
+   * The v6 `chatRoute` is configured in the agent worker and the
+   * v6 native tool-approval flow uses the same transport for both
+   * initial messages and approval resume. The handler attaches the
+   * authenticated user as `requestContext` so the supervisor's
+   * `Memory` and approval snapshots key on the user/thread.
    *
    * NOTE: Mastra's built-in `/agents/:agentId/stream/ui` is
    * deprecated in v1.50.1 — use this path instead.
    */
-  chatStream: publicProcedure
+  chatStream: protectedProcedure
     .route({
       description: "Stream a chat response from the agent as an event iterator",
       method: "POST"
@@ -224,8 +239,18 @@ export const agentRouter = {
 
       const upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: input.messages })
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Id": context.session.user.id,
+          "X-Thread-Id": `dashboard-home:${context.session.user.id}`
+        },
+        body: JSON.stringify({
+          messages: input.messages,
+          requestContext: {
+            resourceId: context.session.user.id,
+            threadId: `dashboard-home:${context.session.user.id}`
+          }
+        })
       });
 
       if (!upstream.ok || !upstream.body) {
@@ -233,9 +258,68 @@ export const agentRouter = {
         throw new Error(`Agent stream returned ${upstream.status}: ${body}`);
       }
 
-      // streamToEventIterator takes a ReadableStream<Uint8Array> and
-      // returns an AsyncIteratorClass — oRPC's EventIterator shape.
-      return streamToEventIterator(upstream.body);
+      // Parse Mastra SSE → UIMessageChunk objects, then hand oRPC an
+      // object stream. Do NOT pipe raw Uint8Array SSE frames — those
+      // rehydrate as non-ArrayBuffer values and break TextDecoder on
+      // the client.
+      return streamToEventIterator(sseByteStreamToUIMessageChunkStream(upstream.body));
+    }),
+
+  /**
+   * List suspended (paused) runs on a thread. Called lazily from
+   * the dashboard home — once on mount when `messages.length === 0` —
+   * to surface a "Resume previous conversation" banner if the user
+   * has a pending tool-approval from a prior session. Not a polling
+   * endpoint.
+   */
+  listSuspendedRuns: protectedProcedure
+    .route({
+      description: "List suspended runs on a thread for HITL resume",
+      method: "POST"
+    })
+    .input(
+      z.object({
+        agentId: z.string().default("hub-supervisor"),
+        threadId: z.string().min(1),
+        resourceId: z.string().min(1)
+      })
+    )
+    .output(
+      z.array(
+        z.object({
+          runId: z.string(),
+          toolCalls: z.array(
+            z.object({
+              toolCallId: z.string(),
+              toolName: z.string(),
+              args: z.record(z.string(), z.unknown()),
+              requiresApproval: z.boolean()
+            })
+          )
+        })
+      )
+    )
+    .handler(async ({ input, context }) => {
+      if (!context.agentWorker) {
+        throw new Error("agentWorker not configured");
+      }
+
+      const upstream = await context.agentWorker.fetch(
+        `/agents/${input.agentId}/suspended-runs?threadId=${encodeURIComponent(input.threadId)}&resourceId=${encodeURIComponent(input.resourceId)}`
+      );
+      if (!upstream.ok) {
+        const body = await upstream.text();
+        throw new Error(`List suspended returned ${upstream.status}: ${body}`);
+      }
+      return (await upstream.json()) as Array<{
+        runId: string;
+        toolCalls: Array<{
+          toolCallId: string;
+          toolName: string;
+          args: Record<string, unknown>;
+          requiresApproval: boolean;
+        }>;
+      }>;
     }),
 
   /**
