@@ -7,6 +7,7 @@
   },
   "exports": {
     "./*": "./*.ts",
+    "./styles/*": "./styles/*",
     "./styles/globals.css": "./styles/globals.css",
     "./components/*": "./components/*"
   },
@@ -35,7 +36,6 @@
     "lucide-react": "catalog:",
     "motion": "catalog:",
     "next-themes": "catalog:",
-    "radix-ui": "catalog:",
     "react-day-picker": "^10.0.1",
     "react-resizable-panels": "catalog:",
     "shiki": "^4.3.0",

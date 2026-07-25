@@ -137,6 +137,14 @@ export default defineConfig({
   },
   plugins: [
     shikiSSRStub(),
+    /**
+     * Tailwind CSS v4 Vite plugin — processes app.css (and its import chain
+     * into @tsu-stack/ui/styles/*) for utility generation + CSS bundling.
+     * Keep early so downstream plugins see final CSS. No tailwind.config.js;
+     * theme tokens live in CSS (@theme / @import chain).
+     * @see {@link https://tailwindcss.com/docs/installation/using-vite}
+     */
+    tailwindcss(),
     devtools({
       consolePiping: { enabled: false }
     }),
@@ -200,7 +208,6 @@ export default defineConfig({
         requireReturnsDefault: "auto"
       }
     }),
-    tailwindcss(),
     ohImage({
       pl_show: true,
       transforms: {

@@ -114,7 +114,8 @@ export default defineConfig({
     sortTailwindcss: {
       attributes: ["class", "className"],
       functions: ["clsx", "cn", "cva", "tw"],
-      stylesheet: "./packages/ui/styles/globals.css"
+      // Prefer app entry (imports full UI chain + app tokens) for class sorting
+      stylesheet: "./apps/web/src/shared/styles/app.css"
     },
     trailingComma: "none"
   },

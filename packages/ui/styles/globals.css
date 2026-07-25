@@ -1,3 +1,10 @@
+/*
+ * Shared UI stylesheet — imported by apps/web via
+ * `@import "@tsu-stack/ui/styles/globals.css"` in app.css.
+ *
+ * Requires @tailwindcss/vite in the consuming app's Vite config
+ * (see apps/web/vite.config.ts). No separate tailwind.config.js.
+ */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./animations.css";
@@ -6,8 +13,10 @@
 @import "./scrollbar.css";
 @import "./prose.css";
 
-@source "../**/*.{ts,tsx}";
-@source "../components/dotmatrix-loader.css";
+/* Scan UI package sources for Tailwind class generation */
+@source "../**/*.ts";
+@source "../**/*.tsx";
+@source "../**/*.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

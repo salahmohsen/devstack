@@ -1,6 +1,31 @@
+/*
+ * Web app CSS entry (loaded from __root.tsx as a stylesheet link).
+ *
+ * Chain:
+ *   app.css
+ *     -> @tsu-stack/ui/styles/globals.css
+ *         -> tailwindcss + tw-animate-css
+ *         -> animations.css (transitions-dev: dropdown, icon-swap, modal, ...)
+ *         -> shadcn.css, base-theme.css, scrollbar.css, prose.css
+ *     -> fonts.css, theme.css (app-local tokens)
+ *
+ * Tailwind content scanning:
+ *   - packages/ui is sourced from globals.css
+ *   - apps/web sources are declared here so utilities used only in the
+ *     app (routes, widgets, pages, shared) are always generated.
+ */
 @import "@tsu-stack/ui/styles/globals.css";
 @import "./fonts.css";
 @import "./theme.css";
+
+/* App sources — relative to this file (apps/web/src/shared/styles) */
+@source "../../**/*.ts";
+@source "../../**/*.tsx";
+@source "../../**/*.mdx";
+/* Workspace UI package (explicit for monorepo; also set in globals.css) */
+@source "../../../../packages/ui/**/*.ts";
+@source "../../../../packages/ui/**/*.tsx";
+@source "../../../../packages/ui/**/*.css";
 
 :root {
   /**

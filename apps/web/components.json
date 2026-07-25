@@ -5,7 +5,7 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "../../packages/ui/styles/shadcn.css",
+    "css": "src/shared/styles/app.css",
     "baseColor": "stone",
     "cssVariables": true,
     "prefix": ""

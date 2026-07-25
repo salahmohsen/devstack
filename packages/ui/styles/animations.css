@@ -1,3 +1,483 @@
+/* transitions-dev motion tokens + menu dropdown (05-menu-dropdown) */
+:root {
+  /* ── Motion tokens — shared scale ────────────────────────────── */
+  --duration-stagger: 40ms;
+  --duration-micro: 80ms;
+  --duration-quick: 150ms;
+  --duration-fast: 250ms;
+  --duration-medium: 350ms;
+  --duration-slow: 400ms;
+  --duration-very-slow: 500ms;
+
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: ease-in-out;
+  --ease-out: ease-out;
+  --ease-linear: linear;
+  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --ease-bounce-strong: cubic-bezier(0.34, 3.85, 0.64, 1);
+
+  --distance-micro: 4px;
+  --distance-small: 6px;
+  --distance-base: 8px;
+  --distance-medium: 12px;
+  --distance-large: 30px;
+
+  --scale-large: 0.96;
+  --scale-medium: 0.97;
+  --scale-small: 0.98;
+  --scale-tiny: 0.99;
+
+  --blur-small: 2px;
+  --blur-medium: 3px;
+  --blur-large: 8px;
+
+  /* Menu dropdown */
+  --dropdown-open-dur: 250ms;
+  --dropdown-close-dur: 150ms;
+  --dropdown-pre-scale: 0.97;
+  --dropdown-closing-scale: 0.99;
+  --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Icon swap */
+  --icon-swap-dur: 250ms;
+  --icon-swap-blur: 2px;
+  --icon-swap-start-scale: 0.25;
+  --icon-swap-ease: ease-in-out;
+
+  /* Modal open / close */
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-scale: 0.96;
+  --modal-scale-close: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * Base UI popups (Menu, Select, Combobox, Popover, …):
+ * use with data-starting-style / data-ending-style hooks.
+ * Includes width/height so surfaces that resize (Popover) keep
+ * layout transitions while open/close use the dropdown scale.
+ */
+.t-dropdown {
+  transition-property: scale, opacity, transform, width, height;
+  transition-duration: var(--dropdown-open-dur);
+  transition-timing-function: var(--dropdown-ease);
+  will-change: scale, opacity;
+}
+
+.t-dropdown[data-starting-style] {
+  scale: var(--dropdown-pre-scale);
+  opacity: 0;
+}
+
+.t-dropdown[data-ending-style] {
+  scale: var(--dropdown-closing-scale);
+  opacity: 0;
+  transition-duration: var(--dropdown-close-dur);
+}
+
+/*
+ * Radix popups that animate via keyframes on data-state
+ * (legacy dropdown-menu). Origin stays on the element.
+ */
+@keyframes t-dropdown-in {
+  from {
+    opacity: 0;
+    transform: scale(var(--dropdown-pre-scale));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes t-dropdown-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--dropdown-closing-scale));
+  }
+}
+
+.t-dropdown-radix[data-state="open"] {
+  animation: t-dropdown-in var(--dropdown-open-dur) var(--dropdown-ease) both;
+}
+
+.t-dropdown-radix[data-state="closed"] {
+  animation: t-dropdown-out var(--dropdown-close-dur) var(--dropdown-ease) both;
+}
+
+/*
+ * Icon swap (09-icon-swap) — two icons stacked in one grid cell.
+ * Toggle data-state="a"|"b" on .t-icon-swap.
+ * Optional data-theme-swap: driven by html.dark instead of data-state.
+ * Optional data-hover-swap: show "b" while hovered (or parent .group:hover).
+ */
+.t-icon-swap {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.t-icon-swap .t-icon {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    opacity var(--icon-swap-dur) var(--icon-swap-ease),
+    filter var(--icon-swap-dur) var(--icon-swap-ease),
+    transform var(--icon-swap-dur) var(--icon-swap-ease);
+  will-change: opacity, filter, transform;
+}
+
+.t-icon-swap[data-state="a"] .t-icon[data-icon="a"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="b"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.t-icon-swap[data-state="a"] .t-icon[data-icon="b"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="a"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+}
+
+/* Theme-driven (sun ↔ moon) via .dark on html */
+.t-icon-swap[data-theme-swap] .t-icon[data-icon="a"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.t-icon-swap[data-theme-swap] .t-icon[data-icon="b"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+}
+
+:is(.dark) .t-icon-swap[data-theme-swap] .t-icon[data-icon="a"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+}
+
+:is(.dark) .t-icon-swap[data-theme-swap] .t-icon[data-icon="b"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+/* Hover-driven swap — parent control :hover (button/link), not only the icon */
+.t-icon-swap[data-hover-swap] .t-icon[data-icon="a"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+.t-icon-swap[data-hover-swap] .t-icon[data-icon="b"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+}
+
+:is(
+    button,
+    a,
+    [role="button"],
+    [data-slot="button"],
+    [data-slot="menu-item"],
+    [data-slot="menu-link-item"],
+    [data-slot="menu-checkbox-item"],
+    [data-slot="input-group-addon"],
+    .group
+  ):is(:hover, [data-popup-open], [data-state="open"])
+  .t-icon-swap[data-hover-swap]
+  .t-icon[data-icon="a"],
+.t-icon-swap[data-hover-swap]:hover .t-icon[data-icon="a"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+}
+
+:is(
+    button,
+    a,
+    [role="button"],
+    [data-slot="button"],
+    [data-slot="menu-item"],
+    [data-slot="menu-link-item"],
+    [data-slot="menu-checkbox-item"],
+    [data-slot="input-group-addon"],
+    .group
+  ):is(:hover, [data-popup-open], [data-state="open"])
+  .t-icon-swap[data-hover-swap]
+  .t-icon[data-icon="b"],
+.t-icon-swap[data-hover-swap]:hover .t-icon[data-icon="b"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+/*
+ * Icon motion (t-im-*) — hover is driven by:
+ *   1) ancestor [data-hovered] (set by Button on pointer enter/leave of FULL control)
+ *   2) ancestor :hover on button/a (plain anchors e.g. star control)
+ *   3) [data-highlighted] on menu rows (Base UI keyboard/pointer highlight)
+ *   4) data-state="b" when mode="state" + active
+ * Never depends on the 16px icon hit box.
+ */
+
+[data-slot="icon-motion"] {
+  --im-active: 0;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+}
+
+/* Parent host hovered — full button/link surface (set by Button) */
+[data-hovered] [data-slot="icon-motion"][data-im-mode="hover"],
+button:hover [data-slot="icon-motion"][data-im-mode="hover"],
+a:hover [data-slot="icon-motion"][data-im-mode="hover"],
+[data-slot="button"]:hover [data-slot="icon-motion"][data-im-mode="hover"],
+[data-slot="menu-item"][data-highlighted] [data-slot="icon-motion"][data-im-mode="hover"],
+[data-slot="menu-link-item"][data-highlighted] [data-slot="icon-motion"][data-im-mode="hover"],
+[data-slot="menu-item"]:hover [data-slot="icon-motion"][data-im-mode="hover"],
+[data-slot="menu-link-item"]:hover [data-slot="icon-motion"][data-im-mode="hover"] {
+  --im-active: 1;
+}
+
+/* Explicit state mode */
+[data-slot="icon-motion"][data-im-mode="state"][data-state="b"] {
+  --im-active: 1;
+}
+
+.t-im-layer {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  will-change: opacity, transform, filter;
+}
+
+.t-im-layer > svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Morph ───────────────────────────────────────────────────── */
+.t-im-morph [data-part="a"],
+.t-im-morph [data-part="b"] {
+  transition:
+    opacity var(--icon-swap-dur, 250ms) var(--icon-swap-ease, ease-in-out),
+    transform var(--icon-swap-dur, 250ms) var(--icon-swap-ease, ease-in-out),
+    filter var(--icon-swap-dur, 250ms) var(--icon-swap-ease, ease-in-out);
+}
+
+.t-im-morph [data-part="a"] {
+  opacity: calc(1 - var(--im-active, 0));
+  transform: scale(calc(1 - 0.5 * var(--im-active, 0)));
+  filter: blur(calc(var(--icon-swap-blur, 2px) * var(--im-active, 0)));
+}
+
+.t-im-morph [data-part="b"] {
+  opacity: var(--im-active, 0);
+  transform: scale(calc(0.5 + 0.5 * var(--im-active, 0)));
+  filter: blur(calc(var(--icon-swap-blur, 2px) * (1 - var(--im-active, 0))));
+}
+
+/* ── Slide ───────────────────────────────────────────────────── */
+.t-im-slide [data-part="a"],
+.t-im-slide [data-part="b"] {
+  transition:
+    opacity var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1),
+    filter var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-im-slide [data-part="a"] {
+  opacity: calc(1 - var(--im-active, 0));
+  transform: translateY(calc(-0.5rem * var(--im-active, 0)))
+    scale(calc(1 - 0.2 * var(--im-active, 0)));
+  filter: blur(calc(var(--icon-swap-blur, 2px) * var(--im-active, 0)));
+}
+
+.t-im-slide [data-part="b"] {
+  opacity: var(--im-active, 0);
+  transform: translateY(calc(0.5rem * (1 - var(--im-active, 0))))
+    scale(calc(0.8 + 0.2 * var(--im-active, 0)));
+  filter: blur(calc(var(--icon-swap-blur, 2px) * (1 - var(--im-active, 0))));
+}
+
+.t-im-sparkle {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.5rem;
+  color: var(--color-yellow-200, #fef08a);
+  opacity: var(--im-active, 0);
+  transform: scale(var(--im-active, 0)) rotate(calc(-45deg * (1 - var(--im-active, 0))));
+  transition:
+    opacity var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1),
+    transform var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: 40ms;
+  pointer-events: none;
+}
+
+/* ── Shake ───────────────────────────────────────────────────── */
+.t-im-shake [data-part="icon"] {
+  transform-origin: center bottom;
+}
+
+:is(
+    [data-hovered],
+    button:hover,
+    a:hover,
+    [data-slot="button"]:hover,
+    [data-slot="menu-item"]:hover
+  )
+  .t-im-shake[data-im-mode="hover"]
+  [data-part="icon"],
+.t-im-shake[data-im-mode="state"][data-state="b"] [data-part="icon"] {
+  animation: t-icon-shake 350ms ease-in-out;
+}
+
+@keyframes t-icon-shake {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  20% {
+    transform: translateY(-2px) rotate(-10deg);
+  }
+  40% {
+    transform: translateY(0) rotate(10deg);
+  }
+  60% {
+    transform: translateY(-2px) rotate(-10deg);
+  }
+  80% {
+    transform: translateY(0) rotate(10deg);
+  }
+}
+
+/* ── Rotate ──────────────────────────────────────────────────── */
+.t-im-rotate [data-part="icon"] {
+  transition: transform var(--icon-swap-dur, 250ms) cubic-bezier(0.22, 1, 0.36, 1);
+  transform: rotate(calc(var(--im-rotate-deg, 180deg) * var(--im-active, 0)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-im-layer,
+  .t-im-sparkle {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/*
+ * Modal open / close (06-modal) — centered scale-up surfaces.
+ * Base UI: data-starting-style / data-ending-style on popup + backdrop.
+ * Open: 250ms from --modal-scale (0.96). Close: 150ms to --modal-scale-close.
+ */
+.t-modal {
+  transform-origin: center;
+  transition-property: scale, opacity, transform, translate;
+  transition-duration: var(--modal-open-dur);
+  transition-timing-function: var(--modal-ease);
+  will-change: scale, opacity;
+}
+
+.t-modal[data-starting-style],
+.t-modal[data-ending-style] {
+  opacity: 0;
+}
+
+/* Scale only from sm+; mobile bottom-stick dialogs use translate instead */
+@media (min-width: 40rem) {
+  .t-modal[data-starting-style] {
+    scale: var(--modal-scale);
+  }
+
+  .t-modal[data-ending-style] {
+    scale: var(--modal-scale-close);
+  }
+}
+
+.t-modal[data-ending-style] {
+  transition-duration: var(--modal-close-dur);
+}
+
+/* Always-scale variant (command palette, centered-only modals) */
+.t-modal-scale[data-starting-style] {
+  scale: var(--modal-scale);
+  opacity: 0;
+}
+
+.t-modal-scale[data-ending-style] {
+  scale: var(--modal-scale-close);
+  opacity: 0;
+  transition-duration: var(--modal-close-dur);
+}
+
+.t-modal-backdrop {
+  transition-property:
+    opacity,
+    backdrop-filter,
+    -webkit-backdrop-filter;
+  transition-duration: var(--modal-open-dur);
+  transition-timing-function: var(--modal-ease);
+}
+
+.t-modal-backdrop[data-starting-style],
+.t-modal-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.t-modal-backdrop[data-ending-style] {
+  transition-duration: var(--modal-close-dur);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-dropdown {
+    transition: none !important;
+  }
+
+  .t-dropdown-radix[data-state="open"],
+  .t-dropdown-radix[data-state="closed"] {
+    animation: none !important;
+  }
+
+  .t-icon-swap .t-icon {
+    transition: none !important;
+  }
+
+  .t-icon-motion [data-part="a"],
+  .t-icon-motion [data-part="b"],
+  .t-icon-motion [data-part="icon"],
+  .t-icon-motion [data-part="sparkle"] {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .t-modal,
+  .t-modal-scale,
+  .t-modal-backdrop {
+    transition: none !important;
+  }
+}
+
 @theme inline {
   @keyframes spinner-leaf-fade {
     0%,
