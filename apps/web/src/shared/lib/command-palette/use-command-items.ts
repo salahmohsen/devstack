@@ -71,8 +71,11 @@ export function useCommandItems(): CommandItem[] {
   const issues = queryClient.getQueryData<MyIssuesResult>(githubQueryKeys.issues.mine(scope));
   const viewer = queryClient.getQueryData<{ login: string } | null>(githubQueryKeys.viewer(scope));
 
-  const dynamicItems: CommandItem[] = [
-    {
+  const dynamicItems: CommandItem[] = [];
+
+  // Admin-only: app owner/session user can clear GitHub query caches.
+  if (user) {
+    dynamicItems.push({
       id: "action:refresh-data",
       label: "Refresh data",
       group: "Actions",
@@ -84,8 +87,8 @@ export function useCommandItems(): CommandItem[] {
           void refreshGitHubData();
         }
       }
-    }
-  ];
+    });
+  }
 
   if (viewer) {
     dynamicItems.push({
