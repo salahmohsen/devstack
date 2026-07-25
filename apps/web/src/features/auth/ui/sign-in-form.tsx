@@ -58,14 +58,24 @@ export function SignInForm({
         throw new Error(`GitHub sign-in failed (no response). ${JSON.stringify(result)}`);
       }
 
-      return result;
+      return result.data;
     },
     onError: (error: Error) => {
       toast.error(error.message);
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries(getAuthUserQueryOptions());
-      toast.success("Redirecting to GitHub…");
+    onSuccess: (data) => {
+      // Better Auth returns { url, redirect: true } for social OAuth. Its
+      // client redirect plugin also tries window.location.href, but that can
+      // race with React Query onSuccess (invalidate/refetch) and look like a
+      // soft refresh of /sign-in. Navigate explicitly and skip session refetch
+      // until the user returns from GitHub.
+      const url = typeof data === "object" && data && "url" in data ? data.url : null;
+      if (typeof url === "string" && url.length > 0) {
+        toast.success("Redirecting to GitHub…");
+        window.location.assign(url);
+        return;
+      }
+      toast.error("GitHub sign-in failed (missing redirect URL).");
     }
   });
 
