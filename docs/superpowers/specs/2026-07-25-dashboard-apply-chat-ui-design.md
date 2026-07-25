@@ -155,7 +155,7 @@ listSuspendedRuns: protectedProcedure
   })
 ```
 
-The exact Mastra server path (`/agents/:agentId/approve-tool-call` etc.) is verified against the installed `@mastra/core@1.50.1` during implementation. The user identity is passed through `context.session.user.id` as the `resourceId`, and a new `threadId` is minted per dashboard-home session.
+The exact Mastra server path (`/agents/:agentId/approve-tool-call` etc.) is verified against the installed `@mastra/core@1.50.1` during implementation. The user identity is passed through `context.session.user.id` as the `resourceId`. The `threadId` is a **stable per-user identifier** for the dashboard home (e.g. `dashboard-home:<userId>`) — a single conversation per user, not per page-load. This is what makes refresh-resume work: on page load, `useHubChat` calls `listSuspendedRuns({ threadId, resourceId })` to discover any pending approval and re-render it. A per-tab or per-session thread would lose approvals on refresh.
 
 ### Web side: same UI, new wiring
 
