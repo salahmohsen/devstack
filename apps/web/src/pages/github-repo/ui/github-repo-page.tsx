@@ -6,6 +6,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/
 
 import { parseRepoRouteSplat } from "@/shared/lib/parse-repo-route-splat";
 import { getGitHubCacheStatus, getGitHubDataSource } from "@/shared/lib/query-persistence";
+import { buildRepoTabUrl, repoOverviewPath, repoTreePath } from "@/shared/lib/repo-paths";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
 // oxlint-disable-next-line fsd/no-public-api-sidestep
@@ -77,34 +78,17 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
   const branchName = routeTarget.ref;
   const routePath = routeTarget.path;
-
-  if (view === "blob") {
-    return (
-      <RepoExplorerLayout
-        currentPath={routePath}
-        currentRef={branchName}
-        repo={repo}
-        viewMode="blob"
-      />
-    );
-  }
-
-  if (view === "tree" && routePath) {
-    return (
-      <RepoExplorerLayout
-        currentPath={routePath}
-        currentRef={branchName}
-        repo={repo}
-        viewMode="tree"
-      />
-    );
-  }
-
   const directoryPath = routePath;
+  const isExplorerView = view === "blob" || (view === "tree" && Boolean(routePath));
 
-  const treeQuery = useGetGithubRepoTreeQuery(repo, branchName, directoryPath);
+  // Always call hooks (no conditional returns above). Explorer views skip the
+  // overview tree query via `enabled`.
+  const treeQuery = useGetGithubRepoTreeQuery(repo, branchName, directoryPath, {
+    enabled: !isExplorerView
+  });
 
   const signalTargets = useMemo(() => {
+    if (isExplorerView) return [];
     const repoSignalKeys = [
       githubRevalidationSignalKeys.repoMeta({ owner, repo }),
       githubRevalidationSignalKeys.repoCode({ owner, repo })
@@ -128,29 +112,52 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       }
     ];
-  }, [branchName, directoryPath, repo, owner]);
+  }, [branchName, directoryPath, isExplorerView, repo, owner]);
   useGitHubSignalStream(signalTargets);
 
-  const tabUrl =
-    view === "tree" ? `${repo}/tree/${branchName}${routePath ? `/${routePath}` : ""}` : `${repo}`;
+  // Register immediately — do not wait for overviewQuery. Bare repo slug is
+  // enough for a tab; avatar/title enrich when overview lands.
+  const tabUrl = buildRepoTabUrl({
+    repo,
+    view: view === "blob" ? "blob" : view === "tree" ? "tree" : "repo",
+    ref: branchName,
+    path: routePath
+  });
   const tabTitle =
-    view === "repo" || !routePath ? `${repo}` : (routePath.split("/").at(-1) ?? routePath);
+    view === "repo" || !routePath
+      ? (overviewQuery.data?.name ?? repo)
+      : (routePath.split("/").at(-1) ?? routePath);
 
-  useRegisterGithubPublicTab(
-    overviewQuery.data
-      ? {
-          avatarUrl: overviewQuery.data.ownerAvatarUrl ?? undefined,
-          repo: `${repo}`,
-          tabId:
-            view === "repo"
-              ? undefined
-              : `${view}:${owner}/${repo}:${branchName}:${routePath || "."}`,
-          title: tabTitle,
-          type: "repo",
-          url: tabUrl
-        }
-      : null
-  );
+  useRegisterGithubPublicTab({
+    avatarUrl: overviewQuery.data?.ownerAvatarUrl ?? undefined,
+    repo,
+    tabId: `repo:${repo}`,
+    title: tabTitle,
+    type: "repo",
+    url: tabUrl
+  });
+
+  if (view === "blob") {
+    return (
+      <RepoExplorerLayout
+        currentPath={routePath}
+        currentRef={branchName}
+        repo={repo}
+        viewMode="blob"
+      />
+    );
+  }
+
+  if (view === "tree" && routePath) {
+    return (
+      <RepoExplorerLayout
+        currentPath={routePath}
+        currentRef={branchName}
+        repo={repo}
+        viewMode="tree"
+      />
+    );
+  }
 
   if (overviewQuery.isLoading && !overviewQuery.data) {
     return <RepoOverviewSkeleton />;
@@ -176,16 +183,16 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
   const handleBranchChange = (nextBranch: string) => {
     if (routePath) {
-      window.location.assign(`${repo}/tree/${nextBranch}${routePath ? `/${routePath}` : ""}`);
+      window.location.assign(repoTreePath(repo, nextBranch, routePath));
       return;
     }
 
     if (nextBranch === overview.defaultBranch) {
-      window.location.assign(`${repo}`);
+      window.location.assign(repoOverviewPath(repo));
       return;
     }
 
-    window.location.assign(`${repo}/tree/${nextBranch}`);
+    window.location.assign(repoTreePath(repo, nextBranch));
   };
 
   return (

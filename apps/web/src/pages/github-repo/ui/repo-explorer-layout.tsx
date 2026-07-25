@@ -15,6 +15,7 @@ import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { getExplorerPath, setExplorerPath } from "@/shared/lib/explorer-path-store";
+import { buildRepoTabUrl } from "@/shared/lib/repo-paths";
 
 import { useRegisterGithubPublicTab } from "@/widgets/layout";
 
@@ -69,14 +70,26 @@ export function RepoExplorerLayout({
 
   setExplorerPath(currentPath);
 
+  const explorerTabTitle =
+    currentPath && currentPath.length > 0
+      ? (currentPath.split("/").at(-1) ?? repoData?.name ?? repoName)
+      : (repoData?.name ?? repoName);
+
   useRegisterGithubPublicTab(
     repoData
       ? {
           avatarUrl: repoData.ownerAvatarUrl ?? undefined,
+          // Stable id per repo so tree/blob navigation updates the same tab.
           repo: repoName,
-          title: repoData.name,
+          tabId: `repo:${repoName}`,
+          title: explorerTabTitle,
           type: "repo",
-          url: `${repoName}`
+          url: buildRepoTabUrl({
+            repo: repoName,
+            view: viewMode,
+            ref: activeRef,
+            path: currentPath
+          })
         }
       : null
   );

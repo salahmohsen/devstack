@@ -33,6 +33,7 @@ import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { setCommandPaletteOpen } from "@/shared/lib/command-palette/open-state";
+import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
 import { useGlobalShortcuts } from "@/shared/lib/use-global-shortcuts";
@@ -125,6 +126,14 @@ export function Topbar() {
 
   function navigateToTab(tab: { url: string } | undefined) {
     if (!tab) return;
+    const location = parseRepoTabLocation(tab.url);
+    if (location) {
+      void routerRef.current.navigate({
+        to: location.to,
+        params: location.params
+      } as never);
+      return;
+    }
     void routerRef.current.navigate({ to: tab.url as never });
   }
 

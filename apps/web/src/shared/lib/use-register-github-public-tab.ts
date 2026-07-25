@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 import { addTab, type Tab, type TabType } from "@/shared/lib/tab-store";
 
@@ -8,18 +8,20 @@ const TAB_ICON_COLORS: Partial<Record<TabType, string>> = {
   issue: "text-green-500"
 };
 
-export function useRegisterGithubPublicTab(
-  tab:
-    | ({
-        tabId?: string;
-        iconColor?: string;
-      } & Omit<Tab, "id" | "iconColor"> & {
-          type: TabType;
-        })
-    | null
-) {
-  useEffect(() => {
-    if (!tab?.title) {
+export type RegisterableGithubTab = {
+  tabId?: string;
+  iconColor?: string;
+} & Omit<Tab, "id" | "iconColor"> & {
+    type: TabType;
+  };
+
+/**
+ * Opens / updates a topbar tab for the current page.
+ * Uses layout effect so the tab appears before paint (no wait for overview query).
+ */
+export function useRegisterGithubPublicTab(tab: RegisterableGithubTab | null) {
+  useLayoutEffect(() => {
+    if (!tab?.title || !tab.url.startsWith("/")) {
       return;
     }
 
@@ -31,7 +33,23 @@ export function useRegisterGithubPublicTab(
       repo: tab.repo,
       title: tab.title,
       type: tab.type,
-      url: tab.url
+      url: tab.url,
+      number: tab.number,
+      additions: tab.additions,
+      deletions: tab.deletions,
+      merged: tab.merged
     });
-  }, [tab]);
+  }, [
+    tab?.type,
+    tab?.title,
+    tab?.number,
+    tab?.url,
+    tab?.repo,
+    tab?.iconColor,
+    tab?.avatarUrl,
+    tab?.additions,
+    tab?.deletions,
+    tab?.merged,
+    tab?.tabId
+  ]);
 }

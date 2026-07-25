@@ -30,9 +30,17 @@ export function getGithubRepoTreeQueryOptions(
   });
 }
 
-export function useGetGithubRepoTreeQuery(repo: string, ref: string, path = "") {
+export function useGetGithubRepoTreeQuery(
+  repo: string,
+  ref: string,
+  path = "",
+  options?: { enabled?: boolean }
+) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoTreeQueryOptions(repo, ref, path, !!user));
+  return useQuery({
+    ...getGithubRepoTreeQueryOptions(repo, ref, path, !!user),
+    enabled: options?.enabled ?? true
+  });
 }
 
 export type GithubRepoTreeQueryResult = Awaited<

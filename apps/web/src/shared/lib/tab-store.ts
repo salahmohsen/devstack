@@ -16,7 +16,9 @@ export type Tab = {
   merged?: boolean;
 };
 
-export const TABS_STORAGE_KEY = "diffkit:tabs";
+// Bumped from `diffkit:tabs` so stale bare-repo slugs (without `/repos/`)
+// from earlier migrations don't break Link navigation / active matching.
+export const TABS_STORAGE_KEY = "personal-hub:tabs:v2";
 
 const VALID_TAB_TYPES = {
   pull: true,
@@ -36,7 +38,11 @@ function isValidTab(t: unknown): t is Tab {
     t !== null &&
     typeof t === "object" &&
     typeof (t as Tab).id === "string" &&
-    isValidTabType((t as Tab).type)
+    isValidTabType((t as Tab).type) &&
+    typeof (t as Tab).url === "string" &&
+    (t as Tab).url.startsWith("/") &&
+    typeof (t as Tab).title === "string" &&
+    typeof (t as Tab).repo === "string"
   );
 }
 

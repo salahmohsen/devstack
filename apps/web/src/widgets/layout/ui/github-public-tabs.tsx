@@ -25,6 +25,7 @@ import {
 } from "@tsu-stack/ui/components/context-menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import {
   removeOtherTabs,
@@ -133,6 +134,21 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
     dragTabRef.current = null;
   }, []);
 
+  const navigateToTabUrl = useCallback(
+    (url: string) => {
+      const location = parseRepoTabLocation(url);
+      if (location) {
+        void routerRef.current.navigate({
+          to: location.to,
+          params: location.params
+        } as never);
+        return;
+      }
+      void routerRef.current.navigate({ to: url as never });
+    },
+    [routerRef]
+  );
+
   const handleCloseTab = useCallback(
     (id: string, tabUrl: string) => {
       const currentPath = routerRef.current.state.location.pathname;
@@ -141,10 +157,14 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
       const nextTab = index === -1 ? undefined : (openTabs[index + 1] ?? openTabs[index - 1]);
       removeTab(id);
       if (isActive) {
-        void routerRef.current.navigate({ to: nextTab?.url ?? ("/" as never) });
+        if (nextTab) {
+          navigateToTabUrl(nextTab.url);
+        } else {
+          void routerRef.current.navigate({ to: "/" });
+        }
       }
     },
-    [openTabs, routerRef]
+    [navigateToTabUrl, openTabs, routerRef]
   );
 
   const handleContextClose = useCallback(() => {
@@ -156,10 +176,10 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
     if (!contextTab) return;
     const currentPath = routerRef.current.state.location.pathname;
     if (currentPath !== contextTab.tab.url) {
-      void routerRef.current.navigate({ to: contextTab.tab.url as never });
+      navigateToTabUrl(contextTab.tab.url);
     }
     removeOtherTabs(contextTab.tab.id);
-  }, [contextTab, routerRef]);
+  }, [contextTab, navigateToTabUrl]);
 
   const handleContextCloseRight = useCallback(() => {
     if (!contextTab) return;
@@ -188,53 +208,50 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
         tabsReady ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-0.5 opacity-0"
       )}
     >
-      <div className="hidden h-4 shrink-0 border-l md:block" />
+      <div className="hidden h-4 shrink-0 border-l border-border md:block" />
       <ContextMenu>
-        <ContextMenuTrigger>
-          <div className="relative min-w-0 flex-1 overflow-hidden">
-            <div
-              className={cn(
-                "from-container pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r to-transparent transition-opacity",
-                canScrollLeft ? "opacity-100" : "opacity-0"
-              )}
-            />
-            <div
-              className={cn(
-                "from-container pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l to-transparent transition-opacity",
-                canScrollRight ? "opacity-100" : "opacity-0"
-              )}
-            />
-            {/* biome-ignore lint/a11y/noStaticElementInteractions: scroll container needs onScroll for gradient visibility */}
-            <div
-              ref={scrollRef}
-              onScroll={updateScrollState}
-              onWheel={handleWheel}
-              onMouseEnter={updateScrollState}
-              className="no-scrollbar flex w-0 min-w-full items-center gap-0.5 overflow-x-auto"
-            >
-              <ScrollActiveTabIntoView
-                scrollRef={scrollRef}
-                updateScrollState={updateScrollState}
-              />
-              {openTabs.map((tab, index) => {
-                const Icon = tabIconMap[tab.type];
-                return (
-                  <DetailTab
-                    key={tab.id}
-                    tab={tab}
-                    icon={Icon}
-                    onClose={handleCloseTab}
-                    onDragStart={handleDragStart}
-                    onDragOver={handleDragOver}
-                    onDragEnd={handleDragEnd}
-                    onContextMenu={() => {
-                      setContextTab({ tab, index });
-                    }}
-                    routerRef={routerRef}
-                  />
-                );
-              })}
-            </div>
+        {/* Base UI trigger must grow in the topbar flex row (Diffkit used asChild).
+            Without min-w-0 flex-1 the tab strip collapses to 0 width. */}
+        <ContextMenuTrigger className="relative min-w-0 flex-1 overflow-hidden">
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-background to-transparent transition-opacity",
+              canScrollLeft ? "opacity-100" : "opacity-0"
+            )}
+          />
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-background to-transparent transition-opacity",
+              canScrollRight ? "opacity-100" : "opacity-0"
+            )}
+          />
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: scroll container needs onScroll for gradient visibility */}
+          <div
+            ref={scrollRef}
+            onScroll={updateScrollState}
+            onWheel={handleWheel}
+            onMouseEnter={updateScrollState}
+            className="no-scrollbar flex w-0 min-w-full items-center gap-0.5 overflow-x-auto"
+          >
+            <ScrollActiveTabIntoView scrollRef={scrollRef} updateScrollState={updateScrollState} />
+            {openTabs.map((tab, index) => {
+              const Icon = tabIconMap[tab.type];
+              return (
+                <DetailTab
+                  key={tab.id}
+                  tab={tab}
+                  icon={Icon}
+                  onClose={handleCloseTab}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
+                  onContextMenu={() => {
+                    setContextTab({ tab, index });
+                  }}
+                  routerRef={routerRef}
+                />
+              );
+            })}
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -319,33 +336,14 @@ const DetailTab = memo(function DetailTab({
   onContextMenu: () => void;
   routerRef: React.RefObject<ReturnType<typeof useRouter>>;
 }) {
+  const location = parseRepoTabLocation(tab.url);
   const preloadTab = () => {
-    void preloadRouteOnce(routerRef.current, tab.url);
+    if (!location) return;
+    void preloadRouteOnce(routerRef.current, location.to);
   };
 
-  return (
-    <Link
-      to={tab.url as never}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = "move";
-        onDragStart(tab.id);
-      }}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        onDragOver(tab.id);
-      }}
-      onDragEnd={onDragEnd}
-      preload={false}
-      onMouseEnter={preloadTab}
-      onFocus={preloadTab}
-      onTouchStart={preloadTab}
-      onContextMenu={onContextMenu}
-      activeOptions={{ exact: true }}
-      activeProps={{ className: "active" }}
-      className="group [&.active]:ring-container relative flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-3 text-xs font-medium text-accent-foreground transition-colors hover:bg-foreground/9 [&.active]:bg-foreground/9 [&.active]:ring-1"
-    >
+  const children = (
+    <>
       {tab.avatarUrl ? (
         <img src={tab.avatarUrl} alt="" className="size-3.5 shrink-0 rounded-sm" />
       ) : (
@@ -358,9 +356,8 @@ const DetailTab = memo(function DetailTab({
           {tab.deletions != null && <span>-{tab.deletions}</span>}
         </span>
       ) : tab.number != null ? (
-        <span className="text-[11px] text-accent-foreground tabular-nums">#{tab.number}</span>
+        <span className="text-[11px] text-muted-foreground tabular-nums">#{tab.number}</span>
       ) : null}
-      {/* Mobile: inline close button in flow — oversized touch target */}
       <button
         type="button"
         onClick={(e) => {
@@ -373,7 +370,6 @@ const DetailTab = memo(function DetailTab({
       >
         <X size={12} strokeWidth={2} className="text-muted-foreground" />
       </button>
-      {/* Desktop: overlay close button on hover */}
       <button
         type="button"
         onClick={(e) => {
@@ -381,14 +377,51 @@ const DetailTab = memo(function DetailTab({
           e.stopPropagation();
           onClose(tab.id, tab.url);
         }}
-        className="bg-container absolute inset-y-0 right-0 hidden items-center rounded-r-sm pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+        className="absolute inset-y-0 right-0 hidden items-center rounded-r-sm bg-background pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
         aria-label={`Close ${tab.title}`}
       >
-        <span className="to-container absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent" />
-        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-foreground/9">
+        <span className="absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent to-background" />
+        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-muted">
           <X size={10} strokeWidth={2} />
         </span>
       </button>
+    </>
+  );
+
+  const shared = {
+    draggable: true as const,
+    onDragStart: (e: React.DragEvent) => {
+      e.dataTransfer.effectAllowed = "move";
+      onDragStart(tab.id);
+    },
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      onDragOver(tab.id);
+    },
+    onDragEnd,
+    preload: false as const,
+    onMouseEnter: preloadTab,
+    onFocus: preloadTab,
+    onTouchStart: preloadTab,
+    onContextMenu,
+    activeOptions: { exact: true } as const,
+    activeProps: { className: "active" },
+    className:
+      "group relative flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&.active]:bg-muted [&.active]:text-foreground [&.active]:ring-1 [&.active]:ring-border"
+  };
+
+  if (location) {
+    return (
+      <Link to={location.to} params={location.params as never} {...shared}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <Link to={tab.url as never} {...shared}>
+      {children}
     </Link>
   );
 });
