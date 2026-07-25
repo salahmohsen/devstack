@@ -2,6 +2,7 @@ import { SendHorizontal, Square } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 
 import {
   PromptInput,
@@ -58,32 +59,23 @@ export function AgentHubPromptComposer({
             aria-label="Message the hub"
           />
           <PromptInputActions className="justify-end gap-1.5 p-2 pt-0">
-            {isStreaming ? (
-              <PromptInputAction tooltip="Stop generating">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  onClick={onStop}
-                  aria-label="Stop generating"
-                >
-                  <Square className="size-3.5 fill-current" aria-hidden />
-                </Button>
-              </PromptInputAction>
-            ) : (
-              <PromptInputAction tooltip="Send message">
-                <Button
-                  type="button"
-                  variant="default"
-                  size="icon-sm"
-                  onClick={onSubmit}
-                  disabled={!value.trim() || disabled}
-                  aria-label="Send message"
-                >
-                  <SendHorizontal className="size-4" aria-hidden />
-                </Button>
-              </PromptInputAction>
-            )}
+            <PromptInputAction tooltip={isStreaming ? "Stop generating" : "Send message"}>
+              <Button
+                type="button"
+                variant={isStreaming ? "outline" : "default"}
+                size="icon-sm"
+                onClick={isStreaming ? onStop : onSubmit}
+                disabled={isStreaming ? false : !value.trim() || disabled}
+                aria-label={isStreaming ? "Stop generating" : "Send message"}
+              >
+                <IconMorph
+                  active={isStreaming}
+                  aria-hidden
+                  iconA={<SendHorizontal className="size-4" />}
+                  iconB={<Square className="size-3.5 fill-current" />}
+                />
+              </Button>
+            </PromptInputAction>
           </PromptInputActions>
         </PromptInput>
         <p className="mt-2 text-center text-[11px] text-muted-foreground">

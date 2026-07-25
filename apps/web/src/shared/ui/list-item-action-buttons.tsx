@@ -1,9 +1,11 @@
 "use client";
 
-import { ChevronDown, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { IconMorph, IconShake } from "@tsu-stack/ui/components/icon-motion";
+import { IconSwap } from "@tsu-stack/ui/components/icon-swap";
 import {
   Menu,
   MenuItem,
@@ -65,11 +67,12 @@ export function ListItemActionButtons({
           />
         }
       >
-        {menuLoading ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          <ChevronDown aria-hidden="true" className="size-4" />
-        )}
+        <IconSwap
+          state={menuLoading ? "b" : "a"}
+          aria-hidden
+          iconA={<ChevronDown className="size-4" />}
+          iconB={<Loader2 className="size-4 animate-spin" />}
+        />
       </MenuTrigger>
       <MenuPopup align="end">
         {togglePortfolio ? (
@@ -95,7 +98,9 @@ export function ListItemActionButtons({
               }}
               disabled={deleteConfig.isLoading}
             >
-              <Trash2 />
+              <IconShake mode="hover">
+                <Trash2 className="text-destructive" />
+              </IconShake>
               Delete
             </MenuItem>
           </>
@@ -131,7 +136,7 @@ export function ListItemActionButtons({
             variant="outline"
             aria-label="Edit"
           >
-            <Edit />
+            <IconMorph mode="hover" iconA={<Edit />} iconB={<Check className="text-success" />} />
             Edit
           </Button>
         ) : null}
@@ -170,7 +175,7 @@ export function ListItemActionButtons({
         loading={edit.isLoading}
         aria-label="Edit"
       >
-        <Edit />
+        <IconMorph mode="hover" iconA={<Edit />} iconB={<Check className="text-success" />} />
       </Button>
     );
   }

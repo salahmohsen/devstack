@@ -15,6 +15,7 @@ import {
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator, GroupText } from "@tsu-stack/ui/components/group";
+import { IconMorph, IconShake } from "@tsu-stack/ui/components/icon-motion";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import {
   Tooltip,
@@ -92,7 +93,9 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
             loading={batch.isDeleting}
             variant="destructive"
           >
-            <Trash2Icon />
+            <IconShake mode="hover">
+              <Trash2Icon />
+            </IconShake>
             Delete ({batch.selectedCount})
           </Button>
           {batch.onAddSelectedToPortfolio ? (
@@ -175,7 +178,11 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
           )}
           {add?.onAdd && (
             <Button onClick={add.onAdd} loading={add.isLoading}>
-              <PlusIcon />
+              <IconMorph
+                mode="hover"
+                iconA={<PlusIcon aria-hidden />}
+                iconB={<CheckIcon aria-hidden className="text-primary-foreground" />}
+              />
               {add.label ?? "Add"}
             </Button>
           )}

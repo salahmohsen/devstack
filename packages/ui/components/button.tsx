@@ -3,7 +3,7 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
-import type * as React from "react";
+import * as React from "react";
 
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -65,6 +65,12 @@ export function Button({
   disabled: disabledProp,
   ...props
 }: ButtonProps): React.ReactElement {
+  /**
+   * Track hover on the full host element so icon-motion can animate when the
+   * pointer is anywhere on the button (label/padding), not only the icon.
+   * Exposed as data-hovered for plain CSS descendants.
+   */
+  const [hovered, setHovered] = React.useState(false);
   const isDisabled: boolean = Boolean(loading || disabledProp);
   const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>["type"] = render
     ? undefined
@@ -82,9 +88,14 @@ export function Button({
     className: cn(buttonVariants({ className, size, variant })),
     "aria-disabled": loading || undefined,
     "data-loading": loading ? "" : undefined,
+    "data-hovered": hovered ? "" : undefined,
     "data-slot": "button",
     disabled: isDisabled,
-    type: typeValue
+    type: typeValue,
+    onPointerEnter: () => setHovered(true),
+    onPointerLeave: () => setHovered(false),
+    onMouseEnter: () => setHovered(true),
+    onMouseLeave: () => setHovered(false)
   };
 
   return useRender({

@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Code, Copy, Download, Eye, File, GitCommitHorizontal } from "lucide-react";
+import { Check, Code, Copy, Download, Eye, File, GitCommitHorizontal } from "lucide-react";
 import { Suspense, use, useCallback, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -394,7 +395,11 @@ function FileViewHeader({
             className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-1 hover:text-foreground"
             title={copied ? "Copied!" : "Copy file content"}
           >
-            <Copy size={14} />
+            <IconMorph
+              active={copied}
+              iconA={<Copy size={14} />}
+              iconB={<Check size={14} className="text-success" />}
+            />
           </button>
         )}
         {repo && currentRef && path && (

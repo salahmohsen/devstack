@@ -18,6 +18,7 @@ import {
   FramePanel,
   FrameTitle
 } from "@tsu-stack/ui/components/frame.js";
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 import { Kbd } from "@tsu-stack/ui/components/kbd.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
@@ -245,7 +246,11 @@ function CloneInput({
         {value}
       </code>
       <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={onCopy}>
-        {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
+        <IconMorph
+          active={copied}
+          iconA={<Copy size={14} />}
+          iconB={<Check size={14} className="text-success" />}
+        />
       </Button>
     </div>
   );

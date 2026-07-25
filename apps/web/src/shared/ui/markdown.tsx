@@ -5,6 +5,7 @@ import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { remarkAlert } from "remark-github-blockquote-alert";
 
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { highlightCode } from "@/shared/lib/highlight-code";
@@ -59,7 +60,7 @@ function CopyButton({ code }: { code: string }) {
       onClick={handleClick}
       className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-muted hover:text-foreground"
     >
-      {copied ? <Check size={14} /> : <ClipboardCopy size={14} />}
+      <IconMorph active={copied} iconA={<ClipboardCopy size={14} />} iconB={<Check size={14} />} />
     </button>
   );
 }
@@ -94,17 +95,26 @@ function ShikiCode({ code, lang }: { code: string; lang: string }) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const components: Record<string, React.FC<any>> = {
   h1: ({ node: _node, children, ...props }) => (
-    <h1 className="mt-5 mb-3 text-2xl font-semibold tracking-tight text-foreground first:mt-0" {...props}>
+    <h1
+      className="mt-5 mb-3 text-2xl font-semibold tracking-tight text-foreground first:mt-0"
+      {...props}
+    >
       {children}
     </h1>
   ),
   h2: ({ node: _node, children, ...props }) => (
-    <h2 className="mt-4 mb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0" {...props}>
+    <h2
+      className="mt-4 mb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0"
+      {...props}
+    >
       {children}
     </h2>
   ),
   h3: ({ node: _node, children, ...props }) => (
-    <h3 className="mt-3 mb-2 text-lg font-semibold tracking-tight text-foreground first:mt-0" {...props}>
+    <h3
+      className="mt-3 mb-2 text-lg font-semibold tracking-tight text-foreground first:mt-0"
+      {...props}
+    >
       {children}
     </h3>
   ),
@@ -269,7 +279,10 @@ const components: Record<string, React.FC<any>> = {
     </del>
   ),
   details: ({ node: _node, children, ...props }) => (
-    <details className="group/details mb-2 text-sm text-foreground [&>:not(summary)]:mt-2" {...props}>
+    <details
+      className="group/details mb-2 text-sm text-foreground [&>:not(summary)]:mt-2"
+      {...props}
+    >
       {children}
     </details>
   ),

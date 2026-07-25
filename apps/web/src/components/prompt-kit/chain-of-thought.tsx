@@ -8,6 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@tsu-stack/ui/components/collapsible";
+import { IconSwap } from "@tsu-stack/ui/components/icon-swap";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 export type ChainOfThoughtItemProps = React.ComponentProps<"div">;
@@ -39,14 +40,16 @@ export const ChainOfThoughtTrigger = ({
   >
     <div className="flex items-center gap-2">
       {leftIcon ? (
-        <span className="relative inline-flex size-4 items-center justify-center">
-          <span className={cn("transition-opacity", swapIconOnHover && "group-hover:opacity-0")}>
-            {leftIcon}
-          </span>
-          {swapIconOnHover && (
-            <ChevronDown className="absolute size-4 opacity-0 transition-opacity group-hover:opacity-100 group-data-[state=open]:rotate-180" />
-          )}
-        </span>
+        swapIconOnHover ? (
+          <IconSwap
+            hoverSwap
+            className="size-4"
+            iconA={leftIcon}
+            iconB={<ChevronDown className="size-4 group-data-[state=open]:rotate-180" />}
+          />
+        ) : (
+          <span className="inline-flex size-4 items-center justify-center">{leftIcon}</span>
+        )
       ) : (
         <span className="relative inline-flex size-4 items-center justify-center">
           <Circle className="size-2 fill-current" />

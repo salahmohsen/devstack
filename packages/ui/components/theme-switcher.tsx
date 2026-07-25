@@ -1,7 +1,9 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
 
 import { Button, type ButtonProps } from "@tsu-stack/ui/components/button";
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 
 export { ThemeProvider } from "next-themes";
 
@@ -9,8 +11,24 @@ type ThemeSwitcherProps = {
   className?: string;
 } & ButtonProps;
 
+function subscribeThemeClass(onStoreChange: () => void) {
+  const root = document.documentElement;
+  const observer = new MutationObserver(onStoreChange);
+  observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+  return () => observer.disconnect();
+}
+
+function getIsDark() {
+  return document.documentElement.classList.contains("dark");
+}
+
+function getServerIsDark() {
+  return false;
+}
+
 export function ThemeSwitcher({ variant = "ghost", size = "icon", className }: ThemeSwitcherProps) {
   const { theme, setTheme } = useTheme();
+  const isDark = useSyncExternalStore(subscribeThemeClass, getIsDark, getServerIsDark);
 
   const changeThemeValue =
     theme === "dark"
@@ -29,15 +47,11 @@ export function ThemeSwitcher({ variant = "ghost", size = "icon", className }: T
       aria-label="Toggle theme"
       className={className}
     >
-      <Sun
-        className="absolute scale-100 rotate-0 transition-all duration-50 dark:scale-0 dark:rotate-90"
-        size={18}
-        strokeWidth={2}
-      />
-      <Moon
-        className="absolute scale-0 rotate-90 transition-all duration-50 dark:scale-100 dark:rotate-0"
-        size={18}
-        strokeWidth={2}
+      <IconMorph
+        active={isDark}
+        aria-hidden
+        iconA={<Sun size={18} strokeWidth={2} />}
+        iconB={<Moon size={18} strokeWidth={2} />}
       />
     </Button>
   );

@@ -1,6 +1,9 @@
 "use client";
 
+import { Check, Send } from "lucide-react";
+
 import { Button } from "@tsu-stack/ui/components/button";
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 
 import { useFormContext } from "./form-contexts";
 
@@ -17,11 +20,21 @@ function SubmitButton({ children, isLoading, ...props }: SubmitButtonProps) {
 
   return (
     <form.Subscribe selector={(state) => [state.isSubmitting]}>
-      {([isSubmitting]) => (
-        <Button type="submit" disabled={isLoading ?? isSubmitting} {...props}>
-          {children}
-        </Button>
-      )}
+      {([isSubmitting]) => {
+        const busy = Boolean(isLoading ?? isSubmitting);
+        return (
+          <Button type="submit" disabled={busy} loading={busy} {...props}>
+            {!busy ? (
+              <IconMorph
+                mode="hover"
+                iconA={<Send className="size-4" aria-hidden />}
+                iconB={<Check className="size-4" aria-hidden />}
+              />
+            ) : null}
+            {children}
+          </Button>
+        );
+      }}
     </form.Subscribe>
   );
 }

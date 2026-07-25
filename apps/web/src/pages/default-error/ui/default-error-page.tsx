@@ -11,6 +11,7 @@ import {
   EmptyHeader,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
+import { IconRotate } from "@tsu-stack/ui/components/icon-motion";
 
 import { ErrorLayout } from "@/shared/ui/error-layout";
 
@@ -67,7 +68,9 @@ export function DefaultErrorPage({ error, reset }: { error: Error; reset: () => 
             />
 
             <Button onClick={handleRefresh} variant="outline">
-              <RefreshCw data-icon="inline-start" />
+              <IconRotate mode="hover">
+                <RefreshCw data-icon="inline-start" />
+              </IconRotate>
               Try Again
             </Button>
           </div>

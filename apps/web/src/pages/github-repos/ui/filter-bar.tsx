@@ -3,6 +3,7 @@ import { memo, useEffect, useRef, useState, type ReactNode, type RefObject } fro
 
 import { Badge } from "@tsu-stack/ui/components/badge.js";
 import { Button } from "@tsu-stack/ui/components/button";
+import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 import {
   InputGroup,
   InputGroupAddon,
@@ -89,14 +90,17 @@ function SearchInput({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
       />
-      <InputGroupAddon>
-        <SearchIcon aria-hidden="true" />
+      <InputGroupAddon
+        className={value ? "cursor-pointer" : undefined}
+        onClick={value ? () => onChange("") : undefined}
+        aria-label={value ? "Clear search" : undefined}
+      >
+        <IconMorph
+          active={Boolean(value)}
+          iconA={<SearchIcon aria-hidden="true" />}
+          iconB={<X size={13} aria-hidden="true" />}
+        />
       </InputGroupAddon>
-      {value && (
-        <InputGroupAddon align="inline-end" onClick={() => onChange("")}>
-          <X size={13} aria-hidden="true" />
-        </InputGroupAddon>
-      )}
     </InputGroup>
   );
 }
