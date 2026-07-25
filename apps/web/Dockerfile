@@ -1,44 +1,40 @@
-FROM node:25-bookworm-slim AS base
+# syntax=docker/dockerfile:1
+# Web (TanStack Start / Nitro SSR)
+#
+# Conventions:
+# - Build with official Vite+ image + `vp` (https://viteplus.dev/guide/docker)
+# - Activate package manager via corepack + package.json "packageManager"
+# - Ship SSR externals with `pnpm deploy` (pnpm monorepo deploy standard)
+#   so bare imports like `import "drizzle-orm"` resolve from
+#   apps/web/.output/server/_ssr/ → apps/web/.output/node_modules/
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends wget git ca-certificates \
-  && update-ca-certificates \
-  && rm -rf /var/lib/apt/lists/*
-
+FROM ghcr.io/voidzero-dev/vite-plus:latest AS build
 WORKDIR /app
 
-# =========================================================================== #
+ENV NPM_CONFIG_FETCH_TIMEOUT=600000 \
+    NPM_CONFIG_FETCH_RETRIES=5
 
-FROM base AS installer
+# Manifests first for layer caching (every workspace package.json).
+COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version* .npmrc* ./
+COPY --chown=vp:vp apps/agent/package.json apps/agent/
+COPY --chown=vp:vp apps/server/package.json apps/server/
+COPY --chown=vp:vp apps/web/package.json apps/web/
+COPY --chown=vp:vp packages/api/package.json packages/api/
+COPY --chown=vp:vp packages/auth/package.json packages/auth/
+COPY --chown=vp:vp packages/core/package.json packages/core/
+COPY --chown=vp:vp packages/db/package.json packages/db/
+COPY --chown=vp:vp packages/email/package.json packages/email/
+COPY --chown=vp:vp packages/env/package.json packages/env/
+COPY --chown=vp:vp packages/github/package.json packages/github/
+COPY --chown=vp:vp packages/logger/package.json packages/logger/
+COPY --chown=vp:vp packages/seo/package.json packages/seo/
+COPY --chown=vp:vp packages/ui/package.json packages/ui/
+COPY --chown=vp:vp tools/tsconfig/package.json tools/tsconfig/
 
-# Install pnpm using npm
-RUN npm install -g pnpm
+RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid=1000,gid=1000 \
+    vp install --frozen-lockfile --prefer-offline --ignore-scripts -- --fetch-timeout=600000
 
-# Copy lockfiles and package.json files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc* ./
-COPY apps/agent/package.json apps/agent/
-COPY apps/server/package.json apps/server/
-COPY apps/web/package.json apps/web/
-COPY packages/api/package.json packages/api/
-COPY packages/auth/package.json packages/auth/
-COPY packages/core/package.json packages/core/
-COPY packages/db/package.json packages/db/
-COPY packages/email/package.json packages/email/
-COPY packages/env/package.json packages/env/
-COPY packages/github/package.json packages/github/
-COPY packages/logger/package.json packages/logger/
-COPY packages/seo/package.json packages/seo/
-COPY packages/ui/package.json packages/ui/
-COPY tools/tsconfig/package.json tools/tsconfig/
-
-# Install dependencies
-RUN pnpm install --prefer-offline --ignore-scripts --fetch-timeout=600000
-
-# =========================================================================== #
-
-FROM installer AS builder
-
-COPY . .
+COPY --chown=vp:vp . .
 
 ARG SOURCE_COMMIT VITE_SERVER_URL VITE_WEB_URL VITE_IMGPROXY_URL DATABASE_URL BETTER_AUTH_SECRET
 ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
@@ -48,48 +44,41 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     DATABASE_URL=${DATABASE_URL} \
     BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 
-# TODO: Uncomment when you have `test:unit` or `test:e2e` scripts defined in your apps/*/package.json or packages/*/package.json files.
-# RUN pnpm run test:unit:run
-# RUN pnpm run test:e2e:run
+RUN vp run --filter @tsu-stack/web build
 
-# Prerender queries the database during the production build, so apply pending
-# migrations before the web build spins up its preview server.
-# dotenvx (used by the db:migrate script) only passes vars found in the specified
-# .env file, so we create a temporary one from the build-time ENVs.
-# RUN printf 'DATABASE_URL=%s\nBETTER_AUTH_SECRET=%s\nIS_BUILD=true\n' \
-#         "$DATABASE_URL" "$BETTER_AUTH_SECRET" \
-#     > packages/env/.env \
-#     && pnpm run db:migrate \
-#     && rm packages/env/.env
-
-RUN pnpm --filter @tsu-stack/web run build
-
-# =========================================================================== #
-
-FROM base AS production
-
-RUN addgroup --gid 1001 nodejs \
-  && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" web
-
-# Deploy production-only dependencies for the web app into a staging dir,
-# then copy the resolved `node_modules/` into `.output/node_modules/` so the
-# SSR service's external imports (`drizzle-orm`, `pg`, `pg-pool`, `react`,
-# `react-dom`, etc.) resolve at runtime. The production stage only ships
-# `.output/`, but the SSR chunks in `.output/server/_ssr/` carry external
-# `import "drizzle-orm"` / `import "pg"` statements that Node ESM resolves
-# by walking up from the chunk's directory looking for `node_modules/`.
-# `pnpm deploy --prod` flattens the pnpm workspace's symlinked store into a
-# self-contained tree so the COPY works without dangling symlinks.
-COPY --from=builder --chown=web:nodejs /app /app
-RUN pnpm --filter @tsu-stack/web deploy --prod /tmp/web-deploy \
-  && cp -r /tmp/web-deploy/node_modules /app/.output/node_modules \
+# Flatten web's production dependency tree next to Nitro output. SSR chunks
+# externalise native/driver packages (`pg`, `drizzle-orm/node-postgres`);
+# Node resolves those by walking up from `.output/server/_ssr/`.
+#
+# `pnpm deploy` is the package-manager standard for extracting a workspace
+# package + its runtime deps. Activated via corepack from package.json.
+# `--legacy`: this monorepo uses normal workspace:* links (not
+# inject-workspace-packages); pnpm v10+ requires legacy mode for that.
+RUN corepack enable \
+  && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate \
+  && pnpm --filter @tsu-stack/web deploy --prod --legacy /tmp/web-deploy \
+  && cp -a /tmp/web-deploy/node_modules /app/apps/web/.output/node_modules \
   && rm -rf /tmp/web-deploy
 
-COPY --from=builder --chown=web:nodejs /app/apps/web/.output /app/.output
+# Exact Node matching .node-version (official Vite+ runtime pattern).
+RUN cp "$(vp env which node | head -1)" /tmp/node
+
+# --- runtime: glibc, no toolchain ---
+FROM debian:bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends wget ca-certificates libatomic1 \
+  && rm -rf /var/lib/apt/lists/* \
+  && addgroup --gid 1001 nodejs \
+  && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" web
+
+# Only ship Nitro output (includes flattened node_modules from deploy).
+COPY --from=build /tmp/node /usr/local/bin/node
+COPY --from=build --chown=web:nodejs /app/apps/web/.output /app/.output
 
 USER web
-
-ENV NODE_ENV=production
 ENV PORT=3000
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \

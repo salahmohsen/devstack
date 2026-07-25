@@ -1,5 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -101,44 +101,26 @@ function ReasoningContent({
   markdown = false,
   ...props
 }: ReasoningContentProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
   const { isOpen } = useReasoningContext();
-
-  useEffect(() => {
-    if (!contentRef.current || !innerRef.current) return;
-
-    const observer = new ResizeObserver(() => {
-      if (contentRef.current && innerRef.current && isOpen) {
-        contentRef.current.style.maxHeight = `${innerRef.current.scrollHeight}px`;
-      }
-    });
-
-    observer.observe(innerRef.current);
-
-    if (isOpen) {
-      contentRef.current.style.maxHeight = `${innerRef.current.scrollHeight}px`;
-    }
-
-    return () => observer.disconnect();
-  }, [isOpen]);
 
   const content = markdown ? <Markdown>{children as string}</Markdown> : children;
 
+  // CSS grid 0fr/1fr collapse — no ref measurement during render.
   return (
     <div
-      ref={contentRef}
-      className={cn("overflow-hidden transition-[max-height] duration-150 ease-out", className)}
-      style={{
-        maxHeight: isOpen ? contentRef.current?.scrollHeight : "0px"
-      }}
+      className={cn(
+        "grid transition-[grid-template-rows] duration-150 ease-out",
+        isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        className
+      )}
       {...props}
     >
-      <div
-        ref={innerRef}
-        className={cn("prose prose-sm text-muted-foreground dark:prose-invert", contentClassName)}
-      >
-        {content}
+      <div className="overflow-hidden">
+        <div
+          className={cn("prose prose-sm text-muted-foreground dark:prose-invert", contentClassName)}
+        >
+          {content}
+        </div>
       </div>
     </div>
   );

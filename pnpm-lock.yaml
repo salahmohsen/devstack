@@ -690,6 +690,9 @@ importers:
       date-fns:
         specifier: 'catalog:'
         version: 4.4.0
+      drizzle-orm:
+        specifier: 1.0.0-rc.4-5d5b77c
+        version: 1.0.0-rc.4-5d5b77c(@cloudflare/workers-types@4.20260701.1)(@libsql/client@0.17.4)(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(pg@8.22.0)(zod@4.4.3)
       files-sdk:
         specifier: 'catalog:'
         version: 2.0.0(@aws-sdk/client-s3@3.1077.0)(@aws-sdk/lib-storage@3.1077.0(@aws-sdk/client-s3@3.1077.0))(@aws-sdk/s3-presigned-post@3.1077.0)(@aws-sdk/s3-request-presigner@3.1077.0)(@opentelemetry/api@1.9.1)(ai@6.0.208(zod@4.4.3))(hono@4.12.27)(next@16.2.6(@babel/core@8.0.1)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(zod@4.4.3)
@@ -714,6 +717,9 @@ importers:
       pdfnative:
         specifier: 'catalog:'
         version: 1.4.0
+      pg:
+        specifier: 'catalog:'
+        version: 8.22.0
       react:
         specifier: 'catalog:'
         version: 19.2.7

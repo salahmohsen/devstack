@@ -1,11 +1,6 @@
 import { TriangleAlertIcon } from "lucide-react";
 
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle
-} from "@tsu-stack/ui/components/alert";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
 
 type AgentHubErrorCardProps = {
@@ -32,7 +27,7 @@ export function AgentHubErrorCard({
       <AlertDescription>
         <p className="m-0">{message}</p>
       </AlertDescription>
-      {(onRetry || onDismiss) && (
+      {(onRetry != null || onDismiss != null) && (
         <AlertAction>
           {onRetry ? (
             <Button variant="outline" size="sm" onClick={onRetry}>

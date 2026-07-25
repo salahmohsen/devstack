@@ -129,9 +129,8 @@ export default defineConfig({
    *
    * In `build`, the same externalisation produces `.output/server/_ssr/`
    * chunks with `import "drizzle-orm"` / `import "pg"` statements. The
-   * production container ships `.output/node_modules/` (populated by
-   * the Dockerfile via `pnpm deploy --prod`), so those imports resolve
-   * at runtime.
+   * Dockerfile runs `pnpm deploy` so `.output/node_modules/` contains
+   * those packages; Node resolves them by walking up from the SSR chunk.
    */
   ssr: {
     external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
@@ -172,8 +171,8 @@ export default defineConfig({
        * build then re-processes those chunks and would try to resolve
        * the subpath `drizzle-orm/node-postgres` via Rolldown's module
        * resolver, which fails on the subpath export map. Marking them
-       * external here leaves the imports as-is; the Dockerfile copies
-       * the packages into `.output/node_modules/` so Node ESM resolves
+       * external here leaves the imports as-is; the production image
+       * provides them via monorepo `node_modules` so Node ESM resolves
        * them at runtime.
        */
       rollupConfig: {

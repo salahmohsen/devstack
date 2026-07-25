@@ -17,7 +17,7 @@ export type MarkdownProps = {
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
   const tokens = marked.lexer(markdown);
-  return tokens.map((token) => token.raw);
+  return tokens.map((token: { raw: string }) => token.raw);
 }
 
 function extractLanguage(className?: string): string {
@@ -118,7 +118,10 @@ const INITIAL_COMPONENTS: Partial<Components> = {
     </ol>
   ),
   li: ({ className, children, ...props }) => (
-    <li className={cn("leading-relaxed text-foreground marker:text-muted-foreground", className)} {...props}>
+    <li
+      className={cn("leading-relaxed text-foreground marker:text-muted-foreground", className)}
+      {...props}
+    >
       {children}
     </li>
   ),
@@ -153,10 +156,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
   ),
   table: ({ className, children, ...props }) => (
     <div className="mb-2 overflow-x-auto rounded-lg border border-border last:mb-0">
-      <table
-        className={cn("w-full border-collapse text-sm text-foreground", className)}
-        {...props}
-      >
+      <table className={cn("w-full border-collapse text-sm text-foreground", className)} {...props}>
         {children}
       </table>
     </div>
@@ -252,7 +252,7 @@ function MarkdownComponent({
   const blocks = useMemo(() => parseMarkdownIntoBlocks(children), [children]);
 
   return (
-    <div className={cn("wrap-break-word text-sm text-foreground", className)}>
+    <div className={cn("text-sm wrap-break-word text-foreground", className)}>
       {blocks.map((block, index) => (
         <MemoizedMarkdownBlock
           key={`${blockId}-block-${index}`}
