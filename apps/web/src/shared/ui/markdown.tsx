@@ -57,7 +57,7 @@ function CopyButton({ code }: { code: string }) {
     <button
       type="button"
       onClick={handleClick}
-      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-white/8 hover:text-accent-foreground"
+      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-muted hover:text-foreground"
     >
       {copied ? <Check size={14} /> : <ClipboardCopy size={14} />}
     </button>
@@ -80,7 +80,7 @@ function ShikiCode({ code, lang }: { code: string; lang: string }) {
     <Suspense
       fallback={
         <div className="group/code relative mb-2">
-          <pre className="overflow-x-auto rounded-lg bg-muted-foreground p-3 text-xs text-accent-foreground">
+          <pre className="overflow-x-auto rounded-lg border border-border bg-muted p-3 text-xs text-foreground">
             <code>{code}</code>
           </pre>
         </div>
@@ -94,27 +94,27 @@ function ShikiCode({ code, lang }: { code: string; lang: string }) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const components: Record<string, React.FC<any>> = {
   h1: ({ node: _node, children, ...props }) => (
-    <h1 className="mt-5 mb-3 text-2xl font-semibold tracking-tight first:mt-0" {...props}>
+    <h1 className="mt-5 mb-3 text-2xl font-semibold tracking-tight text-foreground first:mt-0" {...props}>
       {children}
     </h1>
   ),
   h2: ({ node: _node, children, ...props }) => (
-    <h2 className="mt-4 mb-2 text-xl font-semibold tracking-tight first:mt-0" {...props}>
+    <h2 className="mt-4 mb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0" {...props}>
       {children}
     </h2>
   ),
   h3: ({ node: _node, children, ...props }) => (
-    <h3 className="mt-3 mb-2 text-lg font-semibold tracking-tight first:mt-0" {...props}>
+    <h3 className="mt-3 mb-2 text-lg font-semibold tracking-tight text-foreground first:mt-0" {...props}>
       {children}
     </h3>
   ),
   h4: ({ node: _node, children, ...props }) => (
-    <h4 className="mt-3 mb-1.5 text-base font-semibold first:mt-0" {...props}>
+    <h4 className="mt-3 mb-1.5 text-base font-semibold text-foreground first:mt-0" {...props}>
       {children}
     </h4>
   ),
   p: ({ node: _node, children, ...props }) => (
-    <p className="mb-2 text-sm leading-relaxed last:mb-0" {...props}>
+    <p className="mb-2 text-sm leading-relaxed text-foreground last:mb-0" {...props}>
       {children}
     </p>
   ),
@@ -123,30 +123,30 @@ const components: Record<string, React.FC<any>> = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-sm font-medium underline decoration-white/20 underline-offset-2 transition-colors hover:decoration-white"
+      className="text-sm font-medium text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
       {...props}
     >
       {children}
     </a>
   ),
   ul: ({ node: _node, children, ...props }) => (
-    <ul className="mb-2 flex list-disc flex-col gap-1.5 pl-5 text-sm" {...props}>
+    <ul className="mb-2 flex list-disc flex-col gap-1.5 pl-5 text-sm text-foreground" {...props}>
       {children}
     </ul>
   ),
   ol: ({ node: _node, children, ...props }) => (
-    <ol className="mb-2 flex list-decimal flex-col gap-1.5 pl-5 text-sm" {...props}>
+    <ol className="mb-2 flex list-decimal flex-col gap-1.5 pl-5 text-sm text-foreground" {...props}>
       {children}
     </ol>
   ),
   li: ({ node: _node, children, ...props }) => (
-    <li className="text-sm leading-relaxed" {...props}>
+    <li className="text-sm leading-relaxed text-foreground marker:text-muted-foreground" {...props}>
       {children}
     </li>
   ),
   blockquote: ({ node: _node, children, ...props }) => (
     <blockquote
-      className="mb-2 border-l-2 border-white/20 pl-3 text-sm text-muted-foreground italic"
+      className="mb-2 border-l-2 border-border pl-3 text-sm text-muted-foreground italic"
       {...props}
     >
       {children}
@@ -159,7 +159,10 @@ const components: Record<string, React.FC<any>> = {
       return <ShikiCode code={code} lang={langMatch[1]} />;
     }
     return (
-      <code className="rounded-md bg-white/6 px-1.5 py-0.5 font-mono text-xs" {...props}>
+      <code
+        className="rounded-md border border-border/60 bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground"
+        {...props}
+      >
         {children}
       </code>
     );
@@ -176,7 +179,7 @@ const components: Record<string, React.FC<any>> = {
     }
     return (
       <pre
-        className="mb-2 overflow-x-auto rounded-lg bg-muted-foreground p-3 text-xs text-accent-foreground"
+        className="mb-2 overflow-x-auto rounded-lg border border-border bg-muted p-3 text-xs text-foreground"
         {...props}
       >
         {children}
@@ -210,13 +213,13 @@ const components: Record<string, React.FC<any>> = {
   },
   table: ({ node: _node, children, ...props }) => (
     <div className="mb-2 flex flex-col overflow-hidden rounded-lg border border-border">
-      <table className="w-full border-collapse text-sm" {...props}>
+      <table className="w-full border-collapse text-sm text-foreground" {...props}>
         {children}
       </table>
     </div>
   ),
   thead: ({ node: _node, children, ...props }) => (
-    <thead className="bg-muted-foreground" {...props}>
+    <thead className="bg-muted/60" {...props}>
       {children}
     </thead>
   ),
@@ -230,7 +233,7 @@ const components: Record<string, React.FC<any>> = {
   ),
   td: ({ node: _node, children, ...props }) => (
     <td
-      className="border-r border-b border-border px-3 py-1.5 text-xs last:border-r-0 [tr:last-child_&]:border-b-0"
+      className="border-r border-b border-border px-3 py-1.5 text-xs text-foreground last:border-r-0 [tr:last-child_&]:border-b-0"
       {...props}
     >
       {children}
@@ -251,12 +254,12 @@ const components: Record<string, React.FC<any>> = {
     return <input type={type} {...props} />;
   },
   strong: ({ node: _node, children, ...props }) => (
-    <strong className="font-semibold" {...props}>
+    <strong className="font-semibold text-foreground" {...props}>
       {children}
     </strong>
   ),
   em: ({ node: _node, children, ...props }) => (
-    <em className="italic" {...props}>
+    <em className="text-foreground italic" {...props}>
       {children}
     </em>
   ),
@@ -266,13 +269,13 @@ const components: Record<string, React.FC<any>> = {
     </del>
   ),
   details: ({ node: _node, children, ...props }) => (
-    <details className="group/details mb-2 text-sm [&>:not(summary)]:mt-2" {...props}>
+    <details className="group/details mb-2 text-sm text-foreground [&>:not(summary)]:mt-2" {...props}>
       {children}
     </details>
   ),
   summary: ({ node: _node, children, ...props }) => (
     <summary
-      className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-lg border border-border bg-muted-foreground px-3 py-1.5 text-[13px] font-medium select-none hover:bg-white/6 [&::-webkit-details-marker]:hidden"
+      className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-[13px] font-medium text-foreground select-none hover:bg-muted/80 [&::-webkit-details-marker]:hidden"
       {...props}
     >
       <svg
