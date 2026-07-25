@@ -329,24 +329,86 @@ These were identified during the tech-lead review and are now addressed:
 
 ## Visual Design
 
-- **Empty state**: centered greeting ("Welcome back. What can I do for you?") + 1-line sub + 2×2 grid of `<PromptSuggestion>` chips:
-  1. "What's the weather in Berlin?"
-  2. "Detect stacks for my project"
-  3. "Help me apply to a job" ← establishes the apply flow without making it the only flow
-  4. "Clean up my stack library"
-- **First message onwards**: standard chat layout, input docked bottom, messages fill the scroller.
-- **Message rows**: user right-aligned with `Bubble variant="default"`, assistant left-aligned with `Bubble variant="ghost"` (unframed so markdown spans full width).
+### Design language (per `impeccable`)
+
+The chat surface is the dashboard's first impression. It must avoid the AI slop tells that make a UI guessable as "AI made that":
+
+- **No numbered 01/02/03 section markers.** No uppercase tracked eyebrows ("CHAT" / "TOOLS") above headings. No gradient text. No glassmorphism as a default. No side-stripe borders on cards/list items. No identical card grids — the four suggestions below vary in size, weight, and visual weight rather than being a uniform `repeat(2, 1fr)` of identical cards.
+- **Contrast**: body text ≥ 4.5:1 against background; large text (≥18px or bold ≥14px) ≥ 3:1. Placeholder text in the input also ≥ 4.5:1. Tinted-neutrals are a hair of chroma toward the brand's hue, not toward warm-by-default cream.
+- **Typography**: body line-length capped at 65–75ch. `text-wrap: balance` on the empty-state h1 and the "Welcome back" h1 in the chat header. Display letter-spacing ≥ -0.04em (the codex default of -0.05 to -0.085em makes letters touch and reads as cramped; -0.02 to -0.03em is plenty).
+- **z-index scale** (semantic, not arbitrary): `dropdown` → `sticky` → `modal-backdrop` → `modal` → `toast` → `tooltip`. The approval card's sticky notice uses `sticky`; the `coss Sheet` for "Edit first" uses `modal-backdrop` + `modal`.
+- **Motion** (per `transitions-dev`): ease-out-quart or ease-out-expo curves; no bounce, no elastic. Every animation ships a `prefers-reduced-motion: reduce` alternative. Specific transitions are listed in §Motion patterns below.
+- **The "AI slop" test**: someone looking at this should not be able to guess "AI made that" from the dashboard alone. The four suggestions are not a uniform grid; the empty state has rhythm; the tool cards are not a stamp.
+
+### Layout
+
+- **Empty state**: centered greeting ("Welcome back. What can I do for you?") with `text-wrap: balance`, 1-line sub, then four `<PromptSuggestion>` chips. The four are arranged in a deliberately varied layout — not `repeat(2, 1fr)` identical cards. The two more-likely-to-be-clicked suggestions (weather, apply) get visual weight via subtle background tint and a leading icon; the two power-user ones (detect stacks, clean library) are quieter inline chips. The eye lands on the right action, not on a uniform wall. This is the "category-reflex check" answer: a uniform 2×2 grid is what an LLM defaults to. We don't.
+  1. "What's the weather in Berlin?" — leading icon, primary weight
+  2. "Detect stacks for my project" — inline chip
+  3. "Help me apply to a job" — leading icon, primary weight (establishes the apply flow)
+  4. "Clean up my stack library" — inline chip
+- **First message onwards**: standard chat layout, input docked bottom, messages fill the scroller. Header above the scroller shows the agent's name (`Hub Supervisor`) + a small status dot (coss `Badge` with `Sparkles` icon).
+- **Message rows**: user right-aligned with `Bubble variant="default"`, assistant left-aligned with `Bubble variant="ghost"` (unframed so markdown spans full width). Max width ~72ch so long assistant responses don't span the full viewport.
 - **Avatars**: "You" via coss `Avatar` with initials, "Agent" via coss `Avatar` with a `Sparkles` icon fallback.
-- **Tool card**: collapsible, status pill (spinner / `Check` / `X` / `AlertTriangle`).
+- **Tool card**: collapsible (per `transitions-dev/21-accordion`), status pill in the header (spinner / `Check` / `X` / `AlertTriangle`).
 - **Tool error**: body shows the `errorText` in a coss `Alert` (destructive).
 - **HITL approval card**: nested in the tool card. Shows `toolName`, `args`, and "Why this needs your approval". `Approve` (primary) / `Decline` (destructive outline) in a button group. Sticky "Approval required to continue" notice on the input.
-- **Reasoning**: prompt-kit `Reasoning`, collapsed by default.
-- **Loader**: prompt-kit `Loader` variant `typing` for "Agent is typing".
-- **Mobile**: suggestions stack vertically; approval buttons wrap.
+- **Reasoning**: prompt-kit `Reasoning`, collapsed by default with a `ReasoningTrigger` showing "Thought for Xs".
+- **Loader**: prompt-kit `Loader` variant `typing` for "Agent is typing" → first text chunk swap (see §Motion).
+- **Mobile**: suggestions stack vertically; approval buttons wrap; sheet opens full-width.
+
+### Motion patterns (per `transitions-dev`)
+
+Every motion below ships a `prefers-reduced-motion: reduce` crossfade alternative.
+
+| Surface                                               | Transition                                                                                       | Reference                            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| Empty state greeting + sub + suggestions (first load) | `texts-reveal` — staggered blurred rise; per-line 80ms delay                                     | `reference/18-texts-reveal.md`       |
+| "Agent is typing…" → first real text chunk            | `text-states-swap` — blurred up-and-down swap                                                    | `reference/04-text-states-swap.md`   |
+| Error card on the chat                                | `error-state-shake` — per-segment cubic-bezier shake with auto-reverting border                  | `reference/12-error-state-shake.md`  |
+| Tool card body expand/collapse                        | `accordion` — `grid-rows` track; chevron flips via `scaleY(-1)` (NOT path morph — Chromium-only) | `reference/21-accordion.md`          |
+| Tool result status pill on success                    | `success-check` — fade + rotate + Y-bob + path stroke-draw                                       | `reference/10-success-check.md`      |
+| Approval pending count badge (multiple pending)       | `notification-badge` — slide + dot pop                                                           | `reference/03-notification-badge.md` |
+| Tool card placeholder → real content                  | `skeleton-reveal` — crossfade + cross-blur                                                       | `reference/14-skeleton-reveal.md`    |
+
+Streaming text uses the natural AI SDK chunk-by-chunk rendering; no extra motion is layered on top (the chunk cadence is the motion).
+
+### Accessibility (per `impeccable`)
+
+- `prefers-reduced-motion: reduce` honored on every motion above.
+- Keyboard: `Tab` reaches every interactive element in order; `Enter` submits; `Shift+Enter` adds a newline; `Esc` does NOT close the approval card (forcing a decision).
+- Focus ring: every focusable element shows a 2px focus ring matching the brand's primary color at 60% opacity.
+- `aria-label` on every icon-only button (copy, send, stop, approve, decline).
+- `aria-live="polite"` on the message scroller so screen readers announce new assistant chunks.
+- Color is not the only signal for tool state: the status pill has an icon (spinner / `Check` / `X` / `AlertTriangle`) and text, not just a color.
+
+### FSD Boundaries
+
+## Validation
+
+Per `verification-before-completion`: every claim in this section must be backed by a command run in the same message, with the full output visible. No "should pass" wording. No "looks correct" claims. The implementation is not done until each step's command has been run and its output read.
+
+Per `.agents/workflow.md` and the project AGENTS.md:
+
+1. **`pnpm lint`** — must pass clean. Paste the final summary line (`✔ No ESLint errors found` or equivalent).
+2. **`pnpm typecheck`** — must pass clean. Paste the final summary. The v6 `UIMessage` and the `Chat` class from `@ai-sdk/react@2.0.212` should align on the same `ai` package version, eliminating the cross-version cast that `useAgentChat` still uses. Verify the import is from `@ai-sdk/react` (not `@ai-sdk/react/v5`) and that the installed `ai` is v6.
+3. **`pnpm dev` (web) + the `dev` script from `apps/agent/package.json`** — verify by hand, then capture the actual results in the commit message. Each item below is a separate manual check with a discrete outcome:
+   - Empty state shows 4 suggestions and the greeting. ✓/✗
+   - Clicking suggestion 1 (weather) routes to the `weatherAgent` and returns a forecast. ✓/✗
+   - Clicking suggestion 2 (detect stacks) routes to the `detectStacksWorkflow` and streams progress events. ✓/✗
+   - Clicking suggestion 3 (apply) returns a roadmap-style message. ✓/✗
+   - **HITL manual test**: temporarily set `requireToolApproval: true` on the supervisor's `defaultOptions` (or add `requireApproval: true` to a temporary tool). Click a suggestion. The HITL card appears with the tool name and args. Click `Approve` — the supervisor resumes. Click `Decline` — the supervisor's follow-up message arrives and the input re-enables. ✓/✗
+   - **Snapshot verification**: pause a tool, kill the agent worker (`pkill -f "mastra"`), restart with `pnpm dev`, hit `listSuspendedRuns` directly — the paused run is still listed. ✓/✗
+4. **Keyboard**: `Tab` order is sensible; `Enter` submits; `Esc` does not close the approval card. ✓/✗
+5. **Mobile breakpoint check at 375px width** — captured screenshot. ✓/✗
+6. **Failure-mode check**: stop the agent worker, reload the dashboard — the error card appears with a `Retry` button. ✓/✗
+7. **Reduced motion**: set `prefers-reduced-motion: reduce` in the OS or DevTools, reload — the texts-reveal, accordion, text-states-swap all degrade to crossfades or instant transitions. ✓/✗
+
+No tests are added (project convention: tests only when explicitly requested).
 
 ## FSD Boundaries
 
-- **Routes** (`apps/web/src/routes/`): swap the component reference in `dashboard/index.tsx` to the new `AgentHubPage`. Update `dashboard/route.tsx` to drop the `orpcQueryClient.githubConfig.get.queryOptions()` prefetch (the new page doesn't use it) and the `experiences.list` / `projects.list` prefetches (no resume stats).
+- **Routes** (`apps/web/src/routes/`): swap the component reference in `dashboard/index.tsx` to the new `AgentHubPage`. Use **`.lazy.tsx`** code splitting per the TanStack Router `split-lazy-routes` rule — the chat widget is a sizable JS payload (prompt-kit, shadcn Base UI, coss ui) and the dashboard home is the most-visited route. The `index.tsx` route file stays thin: import the lazy component, wire `beforeLoad` (with `ensureQueryData` per `tanstack-router-best-practices/load-ensure-query-data` — the new page has no prefetches, so this is a no-op call). Update `dashboard/route.tsx` to drop the `orpcQueryClient.githubConfig.get.queryOptions()` prefetch (the new page doesn't use it) and the `experiences.list` / `projects.list` prefetches (no resume stats).
 - **Pages** (`apps/web/src/pages/dashboard/home/`): thin `<ClientOnly>` wrapper around `<AgentHubChat />`.
 - **Widgets** (`apps/web/src/widgets/agent-hub/`): presentational composition.
 - **Features** (`apps/web/src/features/agent-hub/`): all client-side chat wiring.
@@ -402,10 +464,31 @@ No tests are added (project convention: tests only when explicitly requested).
 
 ## Implementation Order
 
+**Step 0 (worktree setup, per `using-git-worktrees`)**: before any code changes, create an isolated worktree.
+
+```bash
+# Verify .worktrees/ is git-ignored (or add it)
+git -C /Users/salah/Developer/personal-hub check-ignore -q .worktrees || \
+  echo ".worktrees/" >> /Users/salah/Developer/personal-hub/.gitignore
+
+# Create worktree
+git -C /Users/salah/Developer/personal-hub worktree add \
+  /Users/salah/Developer/personal-hub/.worktrees/dashboard-hub-chat \
+  -b feat/dashboard-hub-chat
+
+# Run setup
+cd /Users/salah/Developer/personal-hub/.worktrees/dashboard-hub-chat && pnpm install
+
+# Verify clean baseline
+pnpm lint && pnpm typecheck
+```
+
+Only proceed if both pass. If either fails on `main`, report and resolve before starting.
+
 1. **Mastra side**: add `description` to `weatherAgent` and `stackCategorizerAgent`. Add `apps/agent/src/mastra/agents/hub-supervisor.ts`. Edit `apps/agent/src/mastra/index.ts` to add `version: "v6"` to `chatRoute` and register `hubSupervisor`. Verify by running the dev script (`pnpm dev` in `apps/agent/`) and curling `POST /chat/hub-supervisor` with a sample payload.
 2. **oRPC side**: change `chat` and `chatStream` from `publicProcedure` to `protectedProcedure`; add `listSuspendedRuns` to `agentRouter`. Move the playground route under `__protected/` so the auth change doesn't break it. Verify by hitting each endpoint via the agent worker while signed in.
-3. **Install web deps**: from `apps/web/`, run `vpx shadcn@latest add message bubble message-scroller marker` and the prompt-kit primitives (`npx shadcn@latest add "https://prompt-kit.com/c/prompt-input.json"` etc.).
-4. **Web slice**: build `features/agent-hub/lib/` bottom-up (`use-hub-chat.ts` → `use-hub-approval.ts` → `hub-suggestions.ts`).
-5. **Web widgets**: build `widgets/agent-hub/ui/` bottom-up (`agent-hub-error-card.tsx` → `agent-hub-message-parts.tsx` → `agent-hub-tool-card.tsx` → `agent-hub-tool-approval.tsx` → `agent-hub-message-row.tsx` → `agent-hub-prompt-composer.tsx` → `agent-hub-typing-indicator.tsx` → `agent-hub-empty-state.tsx` → `agent-hub-chat.tsx`).
-6. **Wire route**: create `pages/dashboard/home/ui/agent-hub-page.tsx`, swap the route's component reference, delete the old `dashboard-home-page.tsx` resume-overview code (file is rewritten), update `dashboard/route.tsx` to drop the now-unused prefetches.
-7. **Manual verification**: per §Validation, exercise all four suggestions, the HITL flow (with a temporary `requireToolApproval: true`), and the failure modes.
+3. **Install web deps**: from `apps/web/`, run `vpx shadcn@latest add message bubble message-scroller marker` and the prompt-kit primitives (`npx shadcn@latest add "https://prompt-kit.com/c/prompt-input.json"` etc.). Install the `transitions-dev` `_root.css` block into the project's global stylesheet so all transition CSS variables are available.
+4. **Web slice**: build `features/agent-hub/lib/` bottom-up (`use-hub-chat.ts` → `use-hub-approval.ts` → `hub-suggestions.ts`). Set up a query key factory in `features/agent-hub/api/query-keys.ts` per `tanstack-query-best-practices/qk-factory-pattern`. Wrap the chat surface in an error boundary that uses `useQueryErrorResetBoundary` per `tanstack-query-best-practices/err-error-boundaries`.
+5. **Web widgets**: build `widgets/agent-hub/ui/` bottom-up (`agent-hub-error-card.tsx` → `agent-hub-message-parts.tsx` → `agent-hub-tool-card.tsx` → `agent-hub-tool-approval.tsx` → `agent-hub-message-row.tsx` → `agent-hub-prompt-composer.tsx` → `agent-hub-typing-indicator.tsx` → `agent-hub-empty-state.tsx` → `agent-hub-chat.tsx`). Each widget that uses motion references the corresponding `transitions-dev` snippet and ships the `prefers-reduced-motion` block verbatim.
+6. **Wire route**: create `pages/dashboard/home/ui/agent-hub-page.tsx` as the page wrapper. Create `routes/(root-layout)/__protected/dashboard/index.lazy.tsx` per `tanstack-router-best-practices/split-lazy-routes` for code splitting the chat widget. Swap the route's `index.tsx` component reference, delete the old `dashboard-home-page.tsx` resume-overview code (file is rewritten), update `dashboard/route.tsx` to drop the now-unused prefetches.
+7. **Manual verification**: per §Validation, exercise all four suggestions, the HITL flow (with a temporary `requireToolApproval: true`), and the failure modes. Run `pnpm lint`, `pnpm typecheck`, and capture actual output for each validation step. The implementation is not done until every check in §Validation has a ✓ next to a captured output or screenshot in the commit message.
