@@ -6,7 +6,7 @@ import { PlaygroundPage } from "@/pages/playground";
 
 import { appConfig } from "@/config/app.config";
 
-export const Route = createFileRoute("/(root-layout)/playground/")({
+export const Route = createFileRoute("/(root-layout)/__protected/playground/")({
   head: () =>
     generateAppSeo({
       alternates: {

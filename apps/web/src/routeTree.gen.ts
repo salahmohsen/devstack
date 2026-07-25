@@ -18,18 +18,18 @@ import { Route as ApiFilesIndexRouteImport } from './routes/api/files/index'
 import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(root-layout)/terms-of-service/index'
 import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
 import { Route as rootLayoutPrivacyPolicyIndexRouteImport } from './routes/(root-layout)/privacy-policy/index'
-import { Route as rootLayoutPlaygroundIndexRouteImport } from './routes/(root-layout)/playground/index'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
 import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
-import { Route as rootLayoutPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/playground/agent/index'
+import { Route as rootLayout_protectedPlaygroundIndexRouteImport } from './routes/(root-layout)/__protected/playground/index'
 import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
 import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
 import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
 import { Route as rootLayout_protectedDashboardResumesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/route'
 import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/route'
+import { Route as rootLayout_protectedPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/__protected/playground/agent/index'
 import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
 import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
@@ -87,12 +87,6 @@ const rootLayoutPrivacyPolicyIndexRoute =
     path: '/privacy-policy/',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
-const rootLayoutPlaygroundIndexRoute =
-  rootLayoutPlaygroundIndexRouteImport.update({
-    id: '/playground/',
-    path: '/playground/',
-    getParentRoute: () => rootLayoutRouteRoute,
-  } as any)
 const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
   id: '/_api/health/live',
   path: '/_api/health/live',
@@ -121,11 +115,11 @@ const rootLayoutReposRepoIndexRoute =
     path: '/',
     getParentRoute: () => rootLayoutReposRepoRouteRoute,
   } as any)
-const rootLayoutPlaygroundAgentIndexRoute =
-  rootLayoutPlaygroundAgentIndexRouteImport.update({
-    id: '/playground/agent/',
-    path: '/playground/agent/',
-    getParentRoute: () => rootLayoutRouteRoute,
+const rootLayout_protectedPlaygroundIndexRoute =
+  rootLayout_protectedPlaygroundIndexRouteImport.update({
+    id: '/playground/',
+    path: '/playground/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
 const rootLayout_protectedDashboardIndexRoute =
   rootLayout_protectedDashboardIndexRouteImport.update({
@@ -155,6 +149,12 @@ const rootLayout_protectedDashboardExperiencesRouteRoute =
   rootLayout_protectedDashboardExperiencesRouteRouteImport.update({
     id: '/dashboard/experiences',
     path: '/dashboard/experiences',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
+const rootLayout_protectedPlaygroundAgentIndexRoute =
+  rootLayout_protectedPlaygroundAgentIndexRouteImport.update({
+    id: '/playground/agent/',
+    path: '/playground/agent/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
 const rootLayout_protectedDashboardStacksIndexRoute =
@@ -225,7 +225,6 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/playground/': typeof rootLayoutPlaygroundIndexRoute
   '/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos/': typeof rootLayoutReposIndexRoute
   '/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
@@ -235,7 +234,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
-  '/playground/agent/': typeof rootLayoutPlaygroundAgentIndexRoute
+  '/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -245,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
+  '/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -254,7 +254,6 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/playground': typeof rootLayoutPlaygroundIndexRoute
   '/privacy-policy': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos': typeof rootLayoutReposIndexRoute
   '/terms-of-service': typeof rootLayoutTermsOfServiceIndexRoute
@@ -262,7 +261,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/sign-in': typeof rootLayoutguestSignInIndexRoute
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
-  '/playground/agent': typeof rootLayoutPlaygroundAgentIndexRoute
+  '/playground': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download': typeof ApiResumeDownloadIndexRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -272,6 +271,7 @@ export interface FileRoutesByTo {
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
+  '/playground/agent': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/github': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -286,7 +286,6 @@ export interface FileRoutesById {
   '/(root-layout)/(guest)/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/(root-layout)/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
-  '/(root-layout)/playground/': typeof rootLayoutPlaygroundIndexRoute
   '/(root-layout)/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/(root-layout)/repos/': typeof rootLayoutReposIndexRoute
   '/(root-layout)/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
@@ -296,7 +295,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings': typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   '/(root-layout)/(guest)/sign-in/': typeof rootLayoutguestSignInIndexRoute
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
-  '/(root-layout)/playground/agent/': typeof rootLayoutPlaygroundAgentIndexRoute
+  '/(root-layout)/__protected/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/(root-layout)/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -306,6 +305,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/(root-layout)/__protected/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
+  '/(root-layout)/__protected/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/(root-layout)/__protected/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -319,7 +319,6 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/repos/$repo'
     | '/_api/health/live'
-    | '/playground/'
     | '/privacy-policy/'
     | '/repos/'
     | '/terms-of-service/'
@@ -329,7 +328,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/sign-in/'
     | '/dashboard/'
-    | '/playground/agent/'
+    | '/playground/'
     | '/repos/$repo/'
     | '/api/resume/download/'
     | '/repos/$repo/blob/$'
@@ -339,6 +338,7 @@ export interface FileRouteTypes {
     | '/dashboard/projects/'
     | '/dashboard/resumes/'
     | '/dashboard/stacks/'
+    | '/playground/agent/'
     | '/dashboard/settings/account/'
     | '/dashboard/settings/github/'
     | '/dashboard/settings/profile/'
@@ -348,7 +348,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/'
     | '/_api/health/live'
-    | '/playground'
     | '/privacy-policy'
     | '/repos'
     | '/terms-of-service'
@@ -356,7 +355,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings'
     | '/sign-in'
     | '/dashboard'
-    | '/playground/agent'
+    | '/playground'
     | '/repos/$repo'
     | '/api/resume/download'
     | '/repos/$repo/blob/$'
@@ -366,6 +365,7 @@ export interface FileRouteTypes {
     | '/dashboard/projects'
     | '/dashboard/resumes'
     | '/dashboard/stacks'
+    | '/playground/agent'
     | '/dashboard/settings/account'
     | '/dashboard/settings/github'
     | '/dashboard/settings/profile'
@@ -379,7 +379,6 @@ export interface FileRouteTypes {
     | '/(root-layout)/(guest)/sign-in'
     | '/(root-layout)/repos/$repo'
     | '/_api/health/live'
-    | '/(root-layout)/playground/'
     | '/(root-layout)/privacy-policy/'
     | '/(root-layout)/repos/'
     | '/(root-layout)/terms-of-service/'
@@ -389,7 +388,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings'
     | '/(root-layout)/(guest)/sign-in/'
     | '/(root-layout)/__protected/dashboard/'
-    | '/(root-layout)/playground/agent/'
+    | '/(root-layout)/__protected/playground/'
     | '/(root-layout)/repos/$repo/'
     | '/api/resume/download/'
     | '/(root-layout)/repos/$repo/blob/$'
@@ -399,6 +398,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/projects/'
     | '/(root-layout)/__protected/dashboard/resumes/'
     | '/(root-layout)/__protected/dashboard/stacks/'
+    | '/(root-layout)/__protected/playground/agent/'
     | '/(root-layout)/__protected/dashboard/settings/account/'
     | '/(root-layout)/__protected/dashboard/settings/github/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
@@ -478,13 +478,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutPrivacyPolicyIndexRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
-    '/(root-layout)/playground/': {
-      id: '/(root-layout)/playground/'
-      path: '/playground'
-      fullPath: '/playground/'
-      preLoaderRoute: typeof rootLayoutPlaygroundIndexRouteImport
-      parentRoute: typeof rootLayoutRouteRoute
-    }
     '/_api/health/live': {
       id: '/_api/health/live'
       path: '/_api/health/live'
@@ -520,12 +513,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutReposRepoIndexRouteImport
       parentRoute: typeof rootLayoutReposRepoRouteRoute
     }
-    '/(root-layout)/playground/agent/': {
-      id: '/(root-layout)/playground/agent/'
-      path: '/playground/agent'
-      fullPath: '/playground/agent/'
-      preLoaderRoute: typeof rootLayoutPlaygroundAgentIndexRouteImport
-      parentRoute: typeof rootLayoutRouteRoute
+    '/(root-layout)/__protected/playground/': {
+      id: '/(root-layout)/__protected/playground/'
+      path: '/playground'
+      fullPath: '/playground/'
+      preLoaderRoute: typeof rootLayout_protectedPlaygroundIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/dashboard/': {
       id: '/(root-layout)/__protected/dashboard/'
@@ -560,6 +553,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/experiences'
       fullPath: '/dashboard/experiences'
       preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesRouteRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
+    '/(root-layout)/__protected/playground/agent/': {
+      id: '/(root-layout)/__protected/playground/agent/'
+      path: '/playground/agent'
+      fullPath: '/playground/agent/'
+      preLoaderRoute: typeof rootLayout_protectedPlaygroundAgentIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/dashboard/stacks/': {
@@ -691,8 +691,10 @@ interface rootLayout_protectedRouteRouteChildren {
   rootLayout_protectedDashboardResumesRouteRoute: typeof rootLayout_protectedDashboardResumesRouteRouteWithChildren
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
+  rootLayout_protectedPlaygroundIndexRoute: typeof rootLayout_protectedPlaygroundIndexRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
+  rootLayout_protectedPlaygroundAgentIndexRoute: typeof rootLayout_protectedPlaygroundAgentIndexRoute
 }
 
 const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChildren =
@@ -705,10 +707,14 @@ const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChil
       rootLayout_protectedDashboardSettingsRouteRouteWithChildren,
     rootLayout_protectedDashboardIndexRoute:
       rootLayout_protectedDashboardIndexRoute,
+    rootLayout_protectedPlaygroundIndexRoute:
+      rootLayout_protectedPlaygroundIndexRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:
       rootLayout_protectedDashboardProjectsIndexRoute,
     rootLayout_protectedDashboardStacksIndexRoute:
       rootLayout_protectedDashboardStacksIndexRoute,
+    rootLayout_protectedPlaygroundAgentIndexRoute:
+      rootLayout_protectedPlaygroundAgentIndexRoute,
   }
 
 const rootLayout_protectedRouteRouteWithChildren =
@@ -756,11 +762,9 @@ interface rootLayoutRouteRouteChildren {
   rootLayoutIndexRoute: typeof rootLayoutIndexRoute
   rootLayoutguestSignInRouteRoute: typeof rootLayoutguestSignInRouteRouteWithChildren
   rootLayoutReposRepoRouteRoute: typeof rootLayoutReposRepoRouteRouteWithChildren
-  rootLayoutPlaygroundIndexRoute: typeof rootLayoutPlaygroundIndexRoute
   rootLayoutPrivacyPolicyIndexRoute: typeof rootLayoutPrivacyPolicyIndexRoute
   rootLayoutReposIndexRoute: typeof rootLayoutReposIndexRoute
   rootLayoutTermsOfServiceIndexRoute: typeof rootLayoutTermsOfServiceIndexRoute
-  rootLayoutPlaygroundAgentIndexRoute: typeof rootLayoutPlaygroundAgentIndexRoute
 }
 
 const rootLayoutRouteRouteChildren: rootLayoutRouteRouteChildren = {
@@ -768,11 +772,9 @@ const rootLayoutRouteRouteChildren: rootLayoutRouteRouteChildren = {
   rootLayoutIndexRoute: rootLayoutIndexRoute,
   rootLayoutguestSignInRouteRoute: rootLayoutguestSignInRouteRouteWithChildren,
   rootLayoutReposRepoRouteRoute: rootLayoutReposRepoRouteRouteWithChildren,
-  rootLayoutPlaygroundIndexRoute: rootLayoutPlaygroundIndexRoute,
   rootLayoutPrivacyPolicyIndexRoute: rootLayoutPrivacyPolicyIndexRoute,
   rootLayoutReposIndexRoute: rootLayoutReposIndexRoute,
   rootLayoutTermsOfServiceIndexRoute: rootLayoutTermsOfServiceIndexRoute,
-  rootLayoutPlaygroundAgentIndexRoute: rootLayoutPlaygroundAgentIndexRoute,
 }
 
 const rootLayoutRouteRouteWithChildren = rootLayoutRouteRoute._addFileChildren(
