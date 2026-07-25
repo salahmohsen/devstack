@@ -99,9 +99,11 @@ export const mastra = new Mastra({
 - `apps/agent/src/mastra/agents/weather-agent.ts` — add a `description` field. The supervisor's tool-description generator uses this to decide when to delegate. (See the v5 sub-agent memory inheritance section of the Mastra memory docs: a sub-agent's `description` is the supervisor's signal for delegation, not its memory.)
 - `apps/agent/src/mastra/agents/stack-categorizer-agent.ts` — add a `description` field. Same reason.
 
-### oRPC side: protect the existing chat procedures + add `resumeToolCall` and `listSuspendedRuns`
+### oRPC side: protect the existing chat procedures + add `listSuspendedRuns`
 
 The user chose the original direction: switch the existing `chat` and `chatStream` procedures from `publicProcedure` to `protectedProcedure`, and move the dev playground under `__protected/` so the auth change doesn't break it. This makes one chat procedure, one auth model, simpler.
+
+**Important — no separate "resume tool call" oRPC procedure is needed.** The v6 `chatRoute` handler natively handles approval resume: when the client sends a `messages` array containing an `approval-responded` part, the handler calls `extractV6NativeApproval(messages)` (per `chat-route.d.ts:8-23`) which splits the composite `approvalId = "${runId}::${toolCallId}"` to recover the `runId`, then calls `agent.approveToolCall({ runId })` server-side and streams the resumed run back as v6 chunks. The client just calls `chat.addToolApprovalResponse({ id, approved })` on the local `Chat` instance, which updates the part to `state: "approval-responded"` and re-sends via the **same transport** used for normal `sendMessage` calls. So the existing `chatStream` procedure handles both initial messages and approval resume — no new procedure required.
 
 **`packages/api/src/routers/agent.router.ts`** (modified):
 
@@ -119,7 +121,9 @@ chatStream: protectedProcedure /* was publicProcedure */
     // Same upstream proxy, but the handler now attaches the authenticated
     // user as `requestContext` for the supervisor's `Memory` and approval
     // snapshots. The v6 chatRoute forwards `requestContext` to
-    // `agent.stream()` automatically.
+    // `agent.stream()` automatically. The same handler also receives
+    // approval-resume messages (the client re-sends via the same transport
+    // after chat.addToolApprovalResponse() flips the part state).
     const upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
       method: "POST",
       headers: {
@@ -137,39 +141,6 @@ chatStream: protectedProcedure /* was publicProcedure */
     });
     if (!upstream.ok || !upstream.body) {
       throw new Error(`Agent stream returned ${upstream.status}: ${await upstream.text()}`);
-    }
-    yield* streamToEventIterator(upstream.body);
-  }),
-
-// New: HITL resume. Single procedure, two decisions, two paths on the
-// agent worker. `toolCallId` is REQUIRED — the Mastra v6 approve/decline
-// server methods require it.
-
-resumeToolCall: protectedProcedure
-  .input(z.object({
-    agentId: z.string().default("hub-supervisor"),
-    runId: z.string().min(1),
-    toolCallId: z.string().min(1),
-    decision: z.enum(["approve", "decline"])
-  }))
-  .handler(async function* ({ input, context }) {
-    const path = input.decision === "approve"
-      ? `/agents/${input.agentId}/approve-tool-call`
-      : `/agents/${input.agentId}/decline-tool-call`;
-
-    const upstream = await context.agentWorker.fetch(path, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-User-Id": context.session.user.id
-      },
-      body: JSON.stringify({
-        runId: input.runId,
-        toolCallId: input.toolCallId
-      })
-    });
-    if (!upstream.ok || !upstream.body) {
-      throw new Error(`Resume returned ${upstream.status}: ${await upstream.text()}`);
     }
     yield* streamToEventIterator(upstream.body);
   }),
@@ -205,9 +176,9 @@ The exact Mastra server paths (`/chat/:agentId`, `/agents/:agentId/approve-tool-
 
 ### Web side: the chat UI
 
-The UI uses shadcn Base UI primitives for the message surface, prompt-kit for input/tool/reasoning/markdown, and coss ui for chrome. The chat is wired to `protectedChatStream` (not the public one) and uses the **AI SDK v6 `Chat` instance** so we can call `chat.addToolApprovalResponse()` to resume after a HITL pause.
+The UI uses shadcn Base UI primitives for the message surface, prompt-kit for input/tool/reasoning/markdown, and coss ui for chrome. The chat is wired to the **protected `chatStream`** oRPC procedure and uses the **AI SDK v6 `Chat` instance** so we can call `chat.addToolApprovalResponse()` to resume after a HITL pause. The resume flows through the same `chatStream` procedure (no separate resume endpoint).
 
-**`features/agent-hub/lib/use-hub-chat.ts`** (new) — the chat hook. The key bit: instantiate a `Chat` from `ai` and pass it into `useChat({ chat })`, so the hook delegates to that instance and we can call `chat.addToolApprovalResponse({ id, approved })` to resume after an approval.
+**`features/agent-hub/lib/use-hub-chat.ts`** (new) — the chat hook. The key bit: instantiate a `Chat` from `ai` and pass it into `useChat({ chat })`, so the hook delegates to that instance and we can call `chat.addToolApprovalResponse({ id, approved })` to resume after an approval. The transport hits the protected `chatStream` procedure for both initial messages and approval resume.
 
 ```ts
 import { Chat, type UIMessage } from "@ai-sdk/react";
@@ -229,9 +200,9 @@ export function useHubChat() {
 }
 ```
 
-(`makeHubTransport` is the per-message transport function. It calls `orpcClient.protectedAgent.protectedChatStream({...})` and pipes the oRPC event iterator back into a `ReadableStream<UIMessageChunk>`.)
+(`makeHubTransport` is the per-message transport function. It calls `orpcClient.agent.chatStream({...})` — the now-protected existing procedure — and pipes the oRPC event iterator back into a `ReadableStream<UIMessageChunk>`. The same transport is used for normal `sendMessage` calls and for the auto-resend that `chat.addToolApprovalResponse()` triggers.)
 
-**`features/agent-hub/lib/use-hub-approval.ts`** (new) — the approval hook. Reads the most recent `tool-approval-request` chunk from `chat.messages`, exposes `approve(toolCallId)` and `decline(toolCallId)`, and on click calls `chat.addToolApprovalResponse({ id, approved })`. The `approvalId` from the chunk is composite: `${runId}::${toolCallId}` (per the v6 `extractV6NativeApproval` helper in `chat-route.d.ts:8-23`). We split it to recover the `runId` for the oRPC `resumeToolCall` server-side call, AND we hand the composite `approvalId` to `chat.addToolApprovalResponse()` so the local `Chat` instance can mark the part as `approval-responded`. The local `Chat` then re-sends the messages to the same chat route with the resume data extracted, and the server resumes the suspended run.
+**`features/agent-hub/lib/use-hub-approval.ts`** (new) — the approval hook. Reads the most recent `tool-approval-request` chunk from `chat.messages`, exposes `approve(toolCallId)` and `decline(toolCallId)`, and on click calls `chat.addToolApprovalResponse({ id, approved })`. The `id` from the chunk is the composite `approvalId` (`${runId}::${toolCallId}`, per the v6 `extractV6NativeApproval` helper in `chat-route.d.ts:8-23`). The local `Chat` instance marks the part as `state: "approval-responded"` and re-sends the messages through the same transport. The v6 `chatRoute` server-side calls `extractV6NativeApproval(messages)` to recover the `runId`, invokes `agent.approveToolCall({ runId })` or `agent.declineToolCall({ runId })` to resume the suspended run, and streams the result back through the same `/chat/:agentId` response.
 
 This avoids the two `as never` / `as unknown` casts the existing `useAgentChat` does for cross-version `UIMessage` type identity: we use the `@mastra/ai-sdk` re-exported `SupportedUIMessage` type as the source of truth (or the `ai` package's `UIMessage` directly), so the v6 server and v6 client agree on the same module instance.
 
@@ -246,7 +217,7 @@ apps/agent/src/mastra/
   index.ts                           # MODIFIED — add `version: "v6"` to chatRoute; register hubSupervisor
 
 packages/api/src/routers/
-  agent.router.ts                    # MODIFIED — add protectedChatStream, resumeToolCall, listSuspendedRuns
+    agent.router.ts                    # MODIFIED — protect chat + chatStream; add listSuspendedRuns
 
 apps/web/src/
   routes/(root-layout)/__protected/dashboard/index.tsx       # MODIFIED — swap component ref
@@ -292,7 +263,7 @@ The dev playground at `/playground/agent` is moved under `__protected/`. Its `us
 
 1. User loads the dashboard home. Empty state renders 4 prompt suggestions.
 2. User clicks a suggestion. `useHubChat().sendMessage({ text })` is called.
-3. The transport calls `orpcClient.protectedAgent.protectedChatStream({ agentId: "hub-supervisor", messages })`.
+3. The transport calls `orpcClient.agent.chatStream({ agentId: "hub-supervisor", messages })` — the now-protected existing procedure.
 4. The oRPC handler forwards to `POST /chat/hub-supervisor` on the agent worker, passing `requestContext: { resourceId: <userId>, threadId: dashboard-home:<userId> }`.
 5. The Mastra `chatRoute` runs the supervisor via `agent.stream()`. The supervisor delegates to a sub-agent or workflow based on the request. The full flow is streamed back as AI SDK v6 `UIMessageChunk`s.
 6. The client renders each chunk: `text-delta` → message bubble, `reasoning-delta` → reasoning block, `tool-input-available` / `tool-output-available` → tool card.
@@ -310,11 +281,8 @@ If the user denies, the supervisor's `declineToolCall` returns a stream that inc
 ### Refresh-resume
 
 - `threadId` is `dashboard-home:<userId>` (stable per user; see §"Failure modes" for the multi-tab caveat).
-- The chat widget does NOT call `listSuspendedRuns` on every page load. It calls it lazily in one of these cases:
-  - The `useChat` stream errors with a "suspended" indicator. (Future — the AI SDK may not surface this in v6 yet; the implementation will verify.)
-  - The user explicitly clicks a "Resume" button on an empty state placeholder (only shown if `messages.length === 0` and a previous session ended mid-approval).
-  - The supervisor's `runId` is missing from a chunk that needs it.
-- This avoids a Postgres query on every dashboard render for the common case (no pending approval).
+- The chat widget calls `listSuspendedRuns` **once on mount** when `messages.length === 0`. If there are pending runs, the widget shows a "Resume previous conversation" banner above the empty state. Clicking the banner replays the suspended messages into the local `Chat` so the user can see and act on the pending approval. This is the only call site for `listSuspendedRuns` — no polling, no re-call on every keystroke.
+- This avoids a Postgres query on every dashboard render for the common case (the user starts a new conversation, no pending approval).
 
 ## Component Composition
 
@@ -355,7 +323,7 @@ These were identified during the tech-lead review and are now addressed:
 | **Denial**                      | The supervisor's follow-up stream continues with its next message. The input composer re-enables. No re-send needed.                                                                                                                                                                                                                                                                     |
 | **Browser offline mid-stream**  | The `useChat` transport errors. The chat shows "Reconnecting..." with a manual `Retry` button. The `reconnectToStream` API is still unsupported (matches the existing `useAgentChat` behavior).                                                                                                                                                                                          |
 | **Multi-tab same-user**         | The `threadId` is per-user, not per-tab, so two tabs share the same conversation. Approval in tab A will mark the run as `approval-responded` in the supervisor's storage, and tab B will see the resumed run on its next chunk. (This is acceptable for v1; multi-tab isolation is a future enhancement — `threadId` could be suffixed with a per-tab UUID stored in `sessionStorage`.) |
-| **Lazy `listSuspendedRuns`**    | Only called on explicit triggers (see §"Refresh-resume"), not on every page load. Avoids wasted Postgres round-trips.                                                                                                                                                                                                                                                                    |
+| **Lazy `listSuspendedRuns`**    | Called once on mount when `messages.length === 0`. No polling, no re-call on every render. If a pending run exists, a "Resume" banner surfaces it; otherwise the call is a no-op round-trip.                                                                                                                                                                                             |
 | **Suspended run not resumable** | If the run is too old to resume (snapshots evicted), the chat surfaces "This conversation is too old to resume. Start a new one?" and offers a `New conversation` button.                                                                                                                                                                                                                |
 | **Snapshot verification**       | A manual test step in §Validation proves snapshots actually persist: pause a tool, kill the agent worker, restart, and confirm `listSuspendedRuns` still returns the run.                                                                                                                                                                                                                |
 
@@ -409,9 +377,11 @@ No tests are added (project convention: tests only when explicitly requested).
 ## Risks & Open Questions
 
 - **The `chatRoute` default version is v5 in `@mastra/ai-sdk@1.6.1`.** The spec changes the route to `version: "v6"`. This is required because the v6 native tool-approval flow (`tool-approval-request` chunk + `Chat.addToolApprovalResponse` + `extractV6NativeApproval`) only works on a v6 stream. The existing `/playground/agent` continues to work because it parses the SSE response generically and doesn't care about chunk-type names.
-- **Auth boundary is `protectedProcedure` on the existing `chat` + `chatStream` (per user direction)**: the dev playground is moved under `__protected/` as the mitigation. The two new procedures (`resumeToolCall`, `listSuspendedRuns`) are also `protectedProcedure`. One chat procedure, one auth model.
+- **Auth boundary is `protectedProcedure` on the existing `chat` + `chatStream` (per user direction)**: the dev playground is moved under `__protected/` as the mitigation. The new `listSuspendedRuns` is also `protectedProcedure`. One chat procedure, one auth model.
+- **No `resumeToolCall` oRPC procedure is needed.** The v6 `chatRoute` handler calls `extractV6NativeApproval(messages)` (`chat-route.d.ts:8-23`) on every incoming `messages` array, finds the most recent `approval-responded` part, splits its composite `approvalId = "${runId}::${toolCallId}"` to recover the `runId`, and invokes `agent.approveToolCall({ runId })` or `agent.declineToolCall({ runId })` server-side. The client only needs `chat.addToolApprovalResponse({ id, approved })` on the local `Chat` instance, which updates the part state and re-sends through the same `chatStream` transport. Adding a separate `resumeToolCall` procedure would duplicate the chat route's built-in behavior.
+- **Supervisor id / registration key consistency**: the supervisor's `id: "hub-supervisor"` and the Mastra registration key `hubSupervisor: createHubSupervisor()` follow the same pattern as the existing `weatherAgent` (id `"weather-agent"`, key `"weatherAgent"`) and `stackCategorizerAgent` (id `"stack-categorizer"`, key `"stackCategorizerAgent"`). The id is the AI SDK / Mastra agent identifier; the registration key is the in-memory lookup name. They differ by design and are not required to match.
 - **Mastra server API paths**: the exact HTTP paths for `approve-tool-call`, `decline-tool-call`, and `suspended-runs` are verified against the installed `@mastra/core@1.50.1` during implementation. The spec assumes `/agents/:agentId/approve-tool-call` and `/agents/:agentId/suspended-runs` per the Agent approval docs; the implementation will adjust if the installed version differs.
-- **`requestContext` propagation**: the oRPC handler passes `resourceId` and `threadId` as `requestContext` in the request body. The v6 `chatRoute` forwards `requestContext` to `agent.stream()` automatically. Confirmed against the v6 handler signature in `chat-route.d.ts:25-31`.
+- **`description` field on sub-agents**: the new `description` fields on `weatherAgent` and `stackCategorizerAgent` are short one-sentence summaries that the supervisor embeds into its tool list. Some AI SDK providers truncate or reject descriptions over ~256 characters. Implementation will keep each `description` under 200 characters.
 - **AI SDK v6 `Chat` class**: `addToolApprovalResponse` is a method on the `Chat` class (`@ai-sdk/react@2.0.212` exposes it via the `Chat` import). The pattern is `useChat({ chat: new Chat(...) })` so the hook delegates to the instance. Confirmed by reading the installed types at `@mastra+ai-sdk@1.6.1_*/_types/@internal_ai-v6/dist/index.d.ts:80`.
 - **shadcn Base UI variants in `base-maia` style**: shadcn's Base UI components are typically styled for the default shadcn theme. The project already uses coss (Base UI), so the variants install into the right primitive tree. Style adjustments are likely — confirmed during implementation; fallback is app-local style overrides in `apps/web/src/components/ui/`.
 - **Install command**: the spec uses `vpx shadcn@latest add <name>` from the `apps/web` directory, per `apps/web/package.json:11` (`"ui": "vpx shadcn@latest"`). Not `pnpm ui add` — that script doesn't exist.
@@ -433,7 +403,7 @@ No tests are added (project convention: tests only when explicitly requested).
 ## Implementation Order
 
 1. **Mastra side**: add `description` to `weatherAgent` and `stackCategorizerAgent`. Add `apps/agent/src/mastra/agents/hub-supervisor.ts`. Edit `apps/agent/src/mastra/index.ts` to add `version: "v6"` to `chatRoute` and register `hubSupervisor`. Verify by running the dev script (`pnpm dev` in `apps/agent/`) and curling `POST /chat/hub-supervisor` with a sample payload.
-2. **oRPC side**: change `chat` and `chatStream` from `publicProcedure` to `protectedProcedure`; add `resumeToolCall` and `listSuspendedRuns` to `agentRouter`. Move the playground route under `__protected/` so the auth change doesn't break it. Verify by hitting each endpoint via the agent worker while signed in.
+2. **oRPC side**: change `chat` and `chatStream` from `publicProcedure` to `protectedProcedure`; add `listSuspendedRuns` to `agentRouter`. Move the playground route under `__protected/` so the auth change doesn't break it. Verify by hitting each endpoint via the agent worker while signed in.
 3. **Install web deps**: from `apps/web/`, run `vpx shadcn@latest add message bubble message-scroller marker` and the prompt-kit primitives (`npx shadcn@latest add "https://prompt-kit.com/c/prompt-input.json"` etc.).
 4. **Web slice**: build `features/agent-hub/lib/` bottom-up (`use-hub-chat.ts` → `use-hub-approval.ts` → `hub-suggestions.ts`).
 5. **Web widgets**: build `widgets/agent-hub/ui/` bottom-up (`agent-hub-error-card.tsx` → `agent-hub-message-parts.tsx` → `agent-hub-tool-card.tsx` → `agent-hub-tool-approval.tsx` → `agent-hub-message-row.tsx` → `agent-hub-prompt-composer.tsx` → `agent-hub-typing-indicator.tsx` → `agent-hub-empty-state.tsx` → `agent-hub-chat.tsx`).
