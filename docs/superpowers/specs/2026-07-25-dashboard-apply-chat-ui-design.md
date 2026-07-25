@@ -99,63 +99,42 @@ export const mastra = new Mastra({
 - `apps/agent/src/mastra/agents/weather-agent.ts` — add a `description` field. The supervisor's tool-description generator uses this to decide when to delegate. (See the v5 sub-agent memory inheritance section of the Mastra memory docs: a sub-agent's `description` is the supervisor's signal for delegation, not its memory.)
 - `apps/agent/src/mastra/agents/stack-categorizer-agent.ts` — add a `description` field. Same reason.
 
-### oRPC side: a new `protectedChatStream` + a `resumeToolCall` procedure
+### oRPC side: protect the existing chat procedures + add `resumeToolCall` and `listSuspendedRuns`
 
-The user's prior direction was to make `chat` and `chatStream` `protectedProcedure`. The cleaner alternative, surfaced during the tech-lead review, is to **keep the existing public `chat`/`chatStream` (used by the dev playground) and add a new `protectedChatStream` for the dashboard**. Reasons:
-
-- Auth boundary is explicit at the call site (production dashboard vs. dev playground).
-- Avoids the unrequested scope of moving the playground route.
-- Keeps the playground working as-is.
-
-If the user prefers the prior direction (protect the existing procedures and move the playground), the change is mechanical — the same chat-streaming logic moves into the protected procedure and the playground moves under `__protected/`. The spec defaults to the cleaner alternative; flagging the choice below.
+The user chose the original direction: switch the existing `chat` and `chatStream` procedures from `publicProcedure` to `protectedProcedure`, and move the dev playground under `__protected/` so the auth change doesn't break it. This makes one chat procedure, one auth model, simpler.
 
 **`packages/api/src/routers/agent.router.ts`** (modified):
 
 ```ts
-// Existing: public chat + chatStream. Unchanged. Used by the playground.
-
-chat: publicProcedure /* unchanged */
+chat: protectedProcedure /* was publicProcedure */
   .route({ description: "Send a message to the agent and get a non-streaming response", method: "POST" })
   .input(z.object({ agentId: agentIdSchema, messages: messagesSchema }))
   .output(z.object({ content: z.string() }))
   .handler(/* unchanged */),
 
-chatStream: publicProcedure /* unchanged */
+chatStream: protectedProcedure /* was publicProcedure */
   .route({ description: "Stream a chat response from the agent as an event iterator", method: "POST" })
   .input(z.object({ agentId: agentIdSchema, messages: uiMessagesSchema }))
-  .handler(/* unchanged — body still proxies to /chat/:agentId */),
-
-// New: protected streaming for the dashboard. The handler attaches the
-// authenticated user as a RequestContext so the supervisor's `Memory` and
-// approval snapshots can scope to that user.
-
-protectedChatStream: protectedProcedure
-  .route({ description: "Stream a chat response as the authenticated user", method: "POST" })
-  .input(z.object({
-    agentId: z.string().default("hub-supervisor"),
-    messages: uiMessagesSchema
-  }))
   .handler(async function* ({ input, context }) {
-    const upstream = await context.agentWorker.fetch(
-      `/chat/${input.agentId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-User-Id": context.session.user.id,
-          "X-Thread-Id": `dashboard-home:${context.session.user.id}`
-        },
-        body: JSON.stringify({
-          messages: input.messages,
-          // requestContext is the v6 way to pass per-request data into the
-          // supervisor (resourceId, threadId, anything else).
-          requestContext: {
-            resourceId: context.session.user.id,
-            threadId: `dashboard-home:${context.session.user.id}`
-          }
-        })
-      }
-    );
+    // Same upstream proxy, but the handler now attaches the authenticated
+    // user as `requestContext` for the supervisor's `Memory` and approval
+    // snapshots. The v6 chatRoute forwards `requestContext` to
+    // `agent.stream()` automatically.
+    const upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-User-Id": context.session.user.id,
+        "X-Thread-Id": `dashboard-home:${context.session.user.id}`
+      },
+      body: JSON.stringify({
+        messages: input.messages,
+        requestContext: {
+          resourceId: context.session.user.id,
+          threadId: `dashboard-home:${context.session.user.id}`
+        }
+      })
+    });
     if (!upstream.ok || !upstream.body) {
       throw new Error(`Agent stream returned ${upstream.status}: ${await upstream.text()}`);
     }
@@ -164,9 +143,7 @@ protectedChatStream: protectedProcedure
 
 // New: HITL resume. Single procedure, two decisions, two paths on the
 // agent worker. `toolCallId` is REQUIRED — the Mastra v6 approve/decline
-// server methods require it (the optional-form assumption from the
-// earlier spec was wrong; verified against the installed @mastra/ai-sdk
-// source).
+// server methods require it.
 
 resumeToolCall: protectedProcedure
   .input(z.object({
@@ -197,8 +174,8 @@ resumeToolCall: protectedProcedure
     yield* streamToEventIterator(upstream.body);
   }),
 
-// New: discover pending approvals on a thread. The implementation spec
-// calls this LAZILY — not on every page load. See §"Failure modes".
+// New: discover pending approvals on a thread. Called LAZILY — not on
+// every page load. See §"Failure modes".
 
 listSuspendedRuns: protectedProcedure
   .input(z.object({
@@ -273,7 +250,11 @@ packages/api/src/routers/
 
 apps/web/src/
   routes/(root-layout)/__protected/dashboard/index.tsx       # MODIFIED — swap component ref
-  routes/(root-layout)/__protected/dashboard/route.tsx       # MODIFIED — drop githubConfig prefetch (new page doesn't use it)
+  routes/(root-layout)/__protected/dashboard/route.tsx       # MODIFIED — drop unused prefetches (new page doesn't use them)
+  routes/(root-layout)/playground/                          # DELETED
+  routes/(root-layout)/__protected/playground/              # NEW — playground moved under auth
+    index.tsx
+    agent/index.tsx
   pages/dashboard/home/
     ui/dashboard-home-page.tsx       # REPLACED — renders <AgentHubPage>
     ui/agent-hub-page.tsx            # NEW — <ClientOnly> wrapper around <AgentHubChat>
@@ -303,7 +284,7 @@ apps/web/src/
     message.tsx, bubble.tsx, message-scroller.tsx, marker.tsx
 ```
 
-`apps/web/src/features/agent/` (the agent playground at `/playground/agent`) and the `/playground/agent` route are untouched. The dev playground continues to use the existing public `chat`/`chatStream` oRPC procedures.
+The dev playground at `/playground/agent` is moved under `__protected/`. Its `useAgentChat` hook is unchanged and still uses `orpcClient.agent.chatStream` — which is now `protectedProcedure`, so the auth check at the procedure level satisfies the route guard.
 
 ## Data Flow
 
@@ -428,7 +409,7 @@ No tests are added (project convention: tests only when explicitly requested).
 ## Risks & Open Questions
 
 - **The `chatRoute` default version is v5 in `@mastra/ai-sdk@1.6.1`.** The spec changes the route to `version: "v6"`. This is required because the v6 native tool-approval flow (`tool-approval-request` chunk + `Chat.addToolApprovalResponse` + `extractV6NativeApproval`) only works on a v6 stream. The existing `/playground/agent` continues to work because it parses the SSE response generically and doesn't care about chunk-type names.
-- **`ProtectedChatStream` vs. protected existing routes**: the user previously asked for the existing `chat`/`chatStream` to be `protectedProcedure`. This spec takes the alternative path (new `protectedChatStream`, public routes unchanged, playground unaffected) on the grounds that auth boundaries should be explicit at the call site. If the user wants the prior direction, the swap is mechanical: rename `protectedChatStream` back to `chatStream`, change `publicProcedure` to `protectedProcedure` on the existing one, and move the playground under `__protected/`. **This is the one open question for the user.**
+- **Auth boundary is `protectedProcedure` on the existing `chat` + `chatStream` (per user direction)**: the dev playground is moved under `__protected/` as the mitigation. The two new procedures (`resumeToolCall`, `listSuspendedRuns`) are also `protectedProcedure`. One chat procedure, one auth model.
 - **Mastra server API paths**: the exact HTTP paths for `approve-tool-call`, `decline-tool-call`, and `suspended-runs` are verified against the installed `@mastra/core@1.50.1` during implementation. The spec assumes `/agents/:agentId/approve-tool-call` and `/agents/:agentId/suspended-runs` per the Agent approval docs; the implementation will adjust if the installed version differs.
 - **`requestContext` propagation**: the oRPC handler passes `resourceId` and `threadId` as `requestContext` in the request body. The v6 `chatRoute` forwards `requestContext` to `agent.stream()` automatically. Confirmed against the v6 handler signature in `chat-route.d.ts:25-31`.
 - **AI SDK v6 `Chat` class**: `addToolApprovalResponse` is a method on the `Chat` class (`@ai-sdk/react@2.0.212` exposes it via the `Chat` import). The pattern is `useChat({ chat: new Chat(...) })` so the hook delegates to the instance. Confirmed by reading the installed types at `@mastra+ai-sdk@1.6.1_*/_types/@internal_ai-v6/dist/index.d.ts:80`.
@@ -452,7 +433,7 @@ No tests are added (project convention: tests only when explicitly requested).
 ## Implementation Order
 
 1. **Mastra side**: add `description` to `weatherAgent` and `stackCategorizerAgent`. Add `apps/agent/src/mastra/agents/hub-supervisor.ts`. Edit `apps/agent/src/mastra/index.ts` to add `version: "v6"` to `chatRoute` and register `hubSupervisor`. Verify by running the dev script (`pnpm dev` in `apps/agent/`) and curling `POST /chat/hub-supervisor` with a sample payload.
-2. **oRPC side**: add `protectedChatStream`, `resumeToolCall`, `listSuspendedRuns` to `agentRouter`. Verify by hitting each endpoint via the agent worker.
+2. **oRPC side**: change `chat` and `chatStream` from `publicProcedure` to `protectedProcedure`; add `resumeToolCall` and `listSuspendedRuns` to `agentRouter`. Move the playground route under `__protected/` so the auth change doesn't break it. Verify by hitting each endpoint via the agent worker while signed in.
 3. **Install web deps**: from `apps/web/`, run `vpx shadcn@latest add message bubble message-scroller marker` and the prompt-kit primitives (`npx shadcn@latest add "https://prompt-kit.com/c/prompt-input.json"` etc.).
 4. **Web slice**: build `features/agent-hub/lib/` bottom-up (`use-hub-chat.ts` → `use-hub-approval.ts` → `hub-suggestions.ts`).
 5. **Web widgets**: build `widgets/agent-hub/ui/` bottom-up (`agent-hub-error-card.tsx` → `agent-hub-message-parts.tsx` → `agent-hub-tool-card.tsx` → `agent-hub-tool-approval.tsx` → `agent-hub-message-row.tsx` → `agent-hub-prompt-composer.tsx` → `agent-hub-typing-indicator.tsx` → `agent-hub-empty-state.tsx` → `agent-hub-chat.tsx`).
