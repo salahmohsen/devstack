@@ -54,9 +54,22 @@ RUN vp run --filter @tsu-stack/web build
 # package + its runtime deps. Activated via corepack from package.json.
 # `--legacy`: this monorepo uses normal workspace:* links (not
 # inject-workspace-packages); pnpm v10+ requires legacy mode for that.
-RUN corepack enable \
+#
+# Reuse the same BuildKit pnpm store as `vp install` and force long fetch
+# timeouts + prefer-offline. Without the store mount, deploy re-downloads
+# large tarballs (pdfnative ~37MB, optional next peers) and hits pnpm's
+# default ~60s timeout → curl error 23 / TimeoutError on slow hosts.
+# `--no-optional`: skip optional peers like `next` (TanStack Start, not Next).
+ENV PNPM_FETCH_TIMEOUT=600000 \
+    npm_config_fetch_timeout=600000 \
+    npm_config_fetch_retries=5
+RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid=1000,gid=1000 \
+    corepack enable \
   && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate \
-  && pnpm --filter @tsu-stack/web deploy --prod --legacy /tmp/web-deploy \
+  && pnpm config set store-dir /home/vp/.local/share/pnpm/store \
+  && pnpm config set fetch-timeout 600000 \
+  && pnpm config set fetch-retries 5 \
+  && pnpm --filter @tsu-stack/web deploy --prod --legacy --prefer-offline --no-optional /tmp/web-deploy \
   && cp -a /tmp/web-deploy/node_modules /app/apps/web/.output/node_modules \
   && rm -rf /tmp/web-deploy
 
