@@ -9,7 +9,10 @@ import { SignInForm } from "@/features/auth";
 import { appConfig } from "@/config/app.config";
 
 const guestSearchSchema = z.object({
-  redirect: z.string().optional().catch(undefined)
+  redirect: z.string().optional().catch(undefined),
+  // Better Auth OAuth callback failures append these (`redirectOnError`).
+  error: z.string().optional().catch(undefined),
+  error_description: z.string().optional().catch(undefined)
 });
 
 export const Route = createFileRoute("/(root-layout)/(guest)/sign-in/")({
@@ -31,7 +34,13 @@ export const Route = createFileRoute("/(root-layout)/(guest)/sign-in/")({
 });
 
 function RouteComponent() {
-  const { redirect } = Route.useSearch();
+  const { redirect, error, error_description: errorDescription } = Route.useSearch();
 
-  return <SignInForm redirectTo={redirect as NavigateOptions["to"]} />;
+  return (
+    <SignInForm
+      oauthError={error}
+      oauthErrorDescription={errorDescription}
+      redirectTo={redirect as NavigateOptions["to"]}
+    />
+  );
 }

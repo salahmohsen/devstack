@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, type NavigateOptions, useNavigate } from "@tanstack/react-router";
 import { KeyRound } from "lucide-react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
@@ -20,25 +21,82 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { appConfig } from "@/config/app.config";
 
-function createWebCallbackUrl(redirectTo: NavigateOptions["to"]): string {
+function createWebCallbackUrl(redirectTo?: string | NavigateOptions["to"]): string {
   const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
-  const path = redirectTo?.startsWith("/") ? redirectTo : `/${redirectTo}`;
+
+  if (typeof redirectTo === "string" && /^https?:\/\//i.test(redirectTo)) {
+    try {
+      const target = new URL(redirectTo);
+      if (target.origin === new URL(baseUrl).origin) {
+        return `${baseUrl}${target.pathname}${target.search}${target.hash}`;
+      }
+    } catch {
+      // fall through to path handling
+    }
+  }
+
+  const raw = typeof redirectTo === "string" && redirectTo.length > 0 ? redirectTo : "/";
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
 
   return `${baseUrl}${path}`;
 }
 
+function createOAuthErrorCallbackUrl(redirectTo?: string | NavigateOptions["to"]): string {
+  const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
+  if (typeof redirectTo === "string" && redirectTo.startsWith("/")) {
+    return `${baseUrl}/sign-in?redirect=${encodeURIComponent(redirectTo)}`;
+  }
+  return `${baseUrl}/sign-in`;
+}
+
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  account_not_linked:
+    "This GitHub account is not linked to the portfolio owner. Sign in with the owner GitHub account (matching email).",
+  REGISTRATION_CLOSED: "Registration is closed. Only the portfolio owner can sign in.",
+  registration_closed: "Registration is closed. Only the portfolio owner can sign in.",
+  email_not_found:
+    "GitHub did not return an email address. Make sure your GitHub email is public or verified.",
+  unable_to_create_user: "Could not create a session for this GitHub account.",
+  unable_to_link_account: "Could not link this GitHub account to the existing admin user."
+};
+
 export function SignInForm({
   redirectTo = "/",
+  oauthError,
+  oauthErrorDescription,
   className,
   ...props
-}: React.ComponentProps<"div"> & { redirectTo?: NavigateOptions["to"] }) {
+}: React.ComponentProps<"div"> & {
+  redirectTo?: NavigateOptions["to"];
+  oauthError?: string;
+  oauthErrorDescription?: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Surface Better Auth OAuth callback errors (?error=…) after GitHub redirect.
+  useEffect(() => {
+    if (!oauthError) return;
+
+    toast.error(
+      OAUTH_ERROR_MESSAGES[oauthError] ??
+        oauthErrorDescription ??
+        `Sign-in failed (${oauthError.replaceAll("_", " ")}).`
+    );
+
+    void navigate({
+      to: "/sign-in",
+      search:
+        typeof redirectTo === "string" && redirectTo.length > 0 ? { redirect: redirectTo } : {},
+      replace: true
+    });
+  }, [oauthError, oauthErrorDescription, navigate, redirectTo]);
 
   const signInWithGithubMutation = useMutation({
     mutationFn: async () => {
       const result = await authClient.signIn.social({
         callbackURL: createWebCallbackUrl(redirectTo),
+        errorCallbackURL: createOAuthErrorCallbackUrl(redirectTo),
         provider: "github"
       });
 

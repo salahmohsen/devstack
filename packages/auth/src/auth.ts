@@ -7,14 +7,20 @@ import { db } from "@tsu-stack/db";
 import * as schema from "@tsu-stack/db/schema";
 import { sendEmail, VerifyEmail } from "@tsu-stack/email";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
-import { getApiBasePath, joinApiPath } from "@tsu-stack/env/utils/url";
+import { getApiBasePath, getSharedCookieDomain, joinApiPath } from "@tsu-stack/env/utils/url";
+
+const webOrigin = new URL(ENV_SERVER.VITE_WEB_URL).origin;
+const sharedCookieDomain = getSharedCookieDomain(
+  ENV_SERVER.VITE_WEB_URL,
+  ENV_SERVER.VITE_SERVER_URL
+);
 
 export const auth = betterAuth({
   baseURL: new URL(ENV_SERVER.VITE_SERVER_URL).origin,
   // Root deploy (`https://api.example.com`) → `/auth`
   // Legacy path deploy (`…/server`) → `/server/auth`
   basePath: joinApiPath(getApiBasePath(ENV_SERVER.VITE_SERVER_URL), "auth"),
-  trustedOrigins: [new URL(ENV_SERVER.VITE_WEB_URL).origin],
+  trustedOrigins: [webOrigin],
   secret: ENV_SERVER.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -79,6 +85,19 @@ export const auth = betterAuth({
     }
   },
 
+  // Link GitHub onto the existing admin row when the GitHub primary email
+  // matches. Without this, a first-time GitHub sign-in for an email/password
+  // admin tries to create a second user and hits REGISTRATION_CLOSED.
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["github"],
+      // Portfolio admin may have been seeded / signed up before verifying
+      // email; still allow GitHub to attach when emails match.
+      requireLocalEmailVerified: false
+    }
+  },
+
   // https://www.better-auth.com/docs/concepts/session-management#session-caching
   session: {
     cookieCache: {
@@ -86,6 +105,22 @@ export const auth = betterAuth({
       maxAge: 5 * 60 // 5 minutes
     }
   },
+
+  // Web (salahmohsen.com) and API (api.salahmohsen.com) are different hosts.
+  // OAuth Set-Cookie is issued by the API; the web SSR `$getUser` guard
+  // only sees the session if Domain is the shared parent. Localhost keeps
+  // host-only cookies (sharedCookieDomain is undefined).
+  // https://www.better-auth.com/docs/concepts/cookies#cross-subdomain-cookies
+  ...(sharedCookieDomain
+    ? {
+        advanced: {
+          crossSubDomainCookies: {
+            enabled: true,
+            domain: sharedCookieDomain
+          }
+        }
+      }
+    : {}),
 
   experimental: {
     // https://www.better-auth.com/docs/adapters/drizzle#joins-experimental
@@ -102,6 +137,13 @@ export const auth = betterAuth({
   telemetry: {
     enabled: false
   },
+
+  // OAuth failures (account not linked, registration closed, etc.) should
+  // land on the web app, not the API host's bare /error page.
+  onAPIError: {
+    errorURL: `${webOrigin}/sign-in`
+  },
+
   socialProviders: (() => {
     // GITHUB_CLIENT_ID/SECRET are runtimeRequired (optional at build, required
     // at runtime). At build we accept an empty provider so the bundle can be
