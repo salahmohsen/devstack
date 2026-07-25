@@ -111,4 +111,9 @@ trap cleanup EXIT INT TERM
 # Override production URLs with local dev equivalents. Both must be set:
 # the server's CORS allowlist is derived from VITE_WEB_URL, so leaving it
 # at the production origin would block the browser (localhost:3000).
-VITE_SERVER_URL="http://localhost:5200" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev
+#
+# VITE_SERVER_URL MUST include the `/server` base path — Hono mounts with
+# `.basePath(new URL(VITE_SERVER_URL).pathname)` and the oRPC client calls
+# `${VITE_SERVER_URL}/rpc`. Dropping `/server` here while `.env` keeps it
+# (or vice versa) produces ORPCError: Not Found (404) on every procedure.
+VITE_SERVER_URL="http://localhost:5200/server" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev
