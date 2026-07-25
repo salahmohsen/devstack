@@ -1,5 +1,3 @@
-import { join } from "node:path/posix";
-
 import { SmartCoercionPlugin } from "@orpc/json-schema";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
@@ -20,6 +18,7 @@ import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { getApiBasePath, joinApiPath } from "@tsu-stack/env/utils/url";
 import { handleGitHubWebhook } from "@tsu-stack/github";
 import { createRedisCacheAdapter } from "@tsu-stack/github/infrastructure/cache/redis-cache-adapter";
 import { log, parseError } from "@tsu-stack/logger/server";
@@ -33,6 +32,8 @@ import { getRuntime } from "#@/runtime-context";
 import "#@/shared/lib/logger";
 
 const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
+/** Empty when `VITE_SERVER_URL` has no path (e.g. `https://api.example.com`). */
+const apiBasePath = getApiBasePath(ENV_SERVER.VITE_SERVER_URL);
 const allowedOrigins = new Set([new URL(ENV_SERVER.VITE_WEB_URL).origin]);
 
 const corsOptions: NonNullable<Parameters<typeof cors>[0]> = {
@@ -46,7 +47,7 @@ type AppEnv = HonoLogVariables & {
   Bindings: OrpcContextBindings;
 };
 
-export const app = new Hono<AppEnv>().basePath(serverBaseUrl.pathname);
+export const app = apiBasePath ? new Hono<AppEnv>().basePath(apiBasePath) : new Hono<AppEnv>();
 
 app.use("*", async (c, next) => cors(corsOptions)(c, next));
 app.options("*", async (c, next) => cors(corsOptions)(c, next));
@@ -206,7 +207,6 @@ export const openApiHandler = new OpenAPIHandler(appRouter, {
     }),
     new OpenAPIReferencePlugin({
       docsConfig: () => {
-        const apiBasePath = new URL(ENV_SERVER.VITE_SERVER_URL).pathname;
         return {
           content: undefined,
           metaData: {
@@ -216,11 +216,11 @@ export const openApiHandler = new OpenAPIHandler(appRouter, {
           sources: [
             {
               title: "API Reference",
-              url: join(apiBasePath, "docs", "spec.json")
+              url: joinApiPath(apiBasePath, "docs", "spec.json")
             },
             {
               title: "Auth API Reference",
-              url: join(apiBasePath, "auth", "open-api", "generate-schema")
+              url: joinApiPath(apiBasePath, "auth", "open-api", "generate-schema")
             }
           ],
           theme: "deepSpace"
@@ -284,7 +284,7 @@ app.use("/*", async (c, next) => {
 
       const rpcResult = await rpcHandler.handle(c.req.raw, {
         context,
-        prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "rpc") as `/${string}`
+        prefix: joinApiPath(apiBasePath, "rpc")
       });
 
       if (rpcResult.matched) {
@@ -294,7 +294,7 @@ app.use("/*", async (c, next) => {
       if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
         const docsResult = await openApiHandler.handle(c.req.raw, {
           context,
-          prefix: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "docs") as `/${string}`
+          prefix: joinApiPath(apiBasePath, "docs")
         });
 
         if (docsResult.matched) {
@@ -304,7 +304,8 @@ app.use("/*", async (c, next) => {
 
       const openApiResult = await openApiHandler.handle(c.req.raw, {
         context,
-        prefix: new URL(ENV_SERVER.VITE_SERVER_URL).pathname as `/${string}`
+        // Root mount: OpenAPI handler prefix is `/` (not empty string).
+        prefix: (apiBasePath || "/") as `/${string}`
       });
 
       if (openApiResult.matched) {

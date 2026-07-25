@@ -22,3 +22,24 @@ export const normalizedUrlSchema = z.preprocess((value) => {
 
   return normalizeUrlString(value);
 }, z.url());
+
+/**
+ * API mount path derived from `VITE_SERVER_URL` pathname.
+ * - `https://api.example.com` → `""` (app at root)
+ * - `https://example.com/server` → `"/server"`
+ */
+export function getApiBasePath(serverUrl: string): string {
+  try {
+    const pathname = new URL(serverUrl).pathname.replace(/\/+$/, "");
+    if (!pathname || pathname === "/") return "";
+    return pathname.startsWith("/") ? pathname : `/${pathname}`;
+  } catch {
+    return "";
+  }
+}
+
+/** Join base path segments into an absolute path (`/auth`, `/rpc`, …). */
+export function joinApiPath(...segments: string[]): `/${string}` {
+  const parts = segments.flatMap((s) => s.split("/")).filter(Boolean);
+  return `/${parts.join("/")}` as `/${string}`;
+}

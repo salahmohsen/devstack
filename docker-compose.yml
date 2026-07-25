@@ -117,16 +117,14 @@ services:
       PORT: "5100"
       NODE_ENV: production
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5100/server/health/live || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5100/health/live || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
     labels:
       - "traefik.enable=true"
-      # Higher priority than web's PathPrefix(`/`) / Host-only routers so
-      # https://domain/server/* hits Hono, not the TanStack app (404 HTML).
-      - "traefik.http.routers.server.rule=PathPrefix(`/server`)"
-      - "traefik.http.routers.server.priority=100"
+      # Prefer a dedicated host (e.g. api.example.com) via Dokploy domain.
+      # No /server path prefix — API is mounted at the URL root.
       - "traefik.http.routers.server.entrypoints=web"
       - "traefik.http.services.server.loadbalancer.server.port=5100"
 
@@ -188,7 +186,7 @@ services:
       # Internal Docker-network URL of the Hono server, used by the web
       # app's SSR-time oRPC client to call the server over HTTP without
       # looping through the Cloudflare tunnel.
-      SERVER_URL_INTERNAL: ${SERVER_URL_INTERNAL:-http://server:5100/server}
+      SERVER_URL_INTERNAL: ${SERVER_URL_INTERNAL:-http://server:5100}
       S3_ENDPOINT: http://hub-minio:9000
       S3_ACCESS_KEY: ${MINIO_ROOT_USER}
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}

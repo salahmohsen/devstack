@@ -1,5 +1,3 @@
-import { join } from "node:path/posix";
-
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { APIError, betterAuth } from "better-auth";
@@ -9,10 +7,13 @@ import { db } from "@tsu-stack/db";
 import * as schema from "@tsu-stack/db/schema";
 import { sendEmail, VerifyEmail } from "@tsu-stack/email";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import { getApiBasePath, joinApiPath } from "@tsu-stack/env/utils/url";
 
 export const auth = betterAuth({
   baseURL: new URL(ENV_SERVER.VITE_SERVER_URL).origin,
-  basePath: join(new URL(ENV_SERVER.VITE_SERVER_URL).pathname, "auth"),
+  // Root deploy (`https://api.example.com`) → `/auth`
+  // Legacy path deploy (`…/server`) → `/server/auth`
+  basePath: joinApiPath(getApiBasePath(ENV_SERVER.VITE_SERVER_URL), "auth"),
   trustedOrigins: [new URL(ENV_SERVER.VITE_WEB_URL).origin],
   secret: ENV_SERVER.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {

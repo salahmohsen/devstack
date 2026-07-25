@@ -81,7 +81,7 @@ ENV MIGRATIONS_FOLDER=/app/apps/server/dist/migrations
 ENV RUN_MIGRATIONS=true
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:${PORT}/server/health/live || exit 1
+  CMD wget -qO- http://127.0.0.1:${PORT}/health/live || exit 1
 
 ENTRYPOINT ["/usr/local/bin/encode-db-url.sh"]
 CMD ["node", "/app/apps/server/dist/index.mjs"]

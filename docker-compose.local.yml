@@ -16,7 +16,7 @@ services:
     # host-mapped port, not the in-network one. `SERVER_URL_INTERNAL` keeps
     # the in-container address for SSR-time oRPC calls (see orpc.ts).
     environment:
-      VITE_SERVER_URL: http://localhost:${SERVER_PORT:-5100}/server
+      VITE_SERVER_URL: http://localhost:${SERVER_PORT:-5100}
     ports:
       - "${WEB_PORT:-3000}:3000"
     # Traefik labels from the base file are left in place — they are inert
