@@ -44,7 +44,8 @@ export function createHubSupervisor() {
   return new Agent({
     id: "hub-supervisor",
     name: "Hub Supervisor",
-    description: "Coordinates the user's personal hub: resume data, project stacks, weather, and the apply-to-jobs flow.",
+    description:
+      "Coordinates the user's personal hub: resume data, project stacks, weather, and the apply-to-jobs flow.",
     instructions: `You are the coordinator for the user's personal hub.
 
 Available primitives:
@@ -81,8 +82,14 @@ Success criteria:
       detectStacksWorkflow,
       organizeStacksWorkflow
     },
+    // No `storage` here. The Mastra instance (`apps/agent/src/mastra/index.ts`)
+    // already configures `PostgresStore` once, and the supervisor's `Memory`
+    // inherits it. This is the convention from the Mastra memory docs
+    // (https://mastra.ai/docs/memory/overview): configure storage on the
+    // Mastra instance, then pass `Memory` to agents without re-passing
+    // storage. Existing sub-agents inherit this memory automatically
+    // because they have no `memory` field of their own.
     memory: new Memory({
-      storage: /* same PostgresStore as the Mastra instance */,
       options: { lastMessages: 20 }
     })
   });
@@ -97,11 +104,24 @@ Success criteria:
 
 The supervisor gets the same Postgres storage the Mastra instance already configures, so tool-approval snapshots and conversation memory persist across refreshes (per the [Agent approval](https://mastra.ai/docs/agents/agent-approval) docs: "Suspended runs only survive restarts when your Mastra instance is configured with a persistent storage provider").
 
-### oRPC side: add approval endpoints
+### oRPC side: protect all chat procedures + add approval endpoints
 
-The existing oRPC `agentRouter` exposes `chat` and `chatStream`. It does **not** yet expose `approveToolCall`, `declineToolCall`, or `listSuspendedRuns`. Add three new procedures (one streaming return that mirrors `chatStream`):
+The existing oRPC `agentRouter` exposes `chat` (non-streaming) and `chatStream` (streaming) as `publicProcedure`. Both are switched to `protectedProcedure` so the auth boundary is consistent at the procedure level — the dashboard route guard is not the only thing protecting these endpoints. This is a small breaking change for any public caller; see §Risks for the playground consequence and the chosen mitigation.
+
+The router also gains three new procedures for the HITL approval flow:
 
 ```ts
+chat: protectedProcedure /* was publicProcedure */
+  .route({ description: "Send a message to the agent and get a non-streaming response", method: "POST" })
+  .input(z.object({ agentId: agentIdSchema, messages: messagesSchema }))
+  .output(z.object({ content: z.string() }))
+  .handler(/* unchanged */),
+
+chatStream: protectedProcedure /* was publicProcedure */
+  .route({ description: "Stream a chat response from the agent as an event iterator", method: "POST" })
+  .input(z.object({ agentId: agentIdSchema, messages: uiMessagesSchema }))
+  .handler(/* unchanged — body still proxies to /chat/:agentId */),
+
 approveToolCall: protectedProcedure
   .input(z.object({
     agentId: z.string().default("hub-supervisor"),
@@ -189,6 +209,10 @@ packages/api/src/routers/
 
 apps/web/src/
   routes/(root-layout)/__protected/dashboard/index.tsx  # MODIFIED — swap component ref
+  routes/(root-layout)/playground/                      # MODIFIED — moved under __protected/
+  routes/(root-layout)/__protected/playground/          # NEW location (was public)
+    agent/index.tsx
+    index.tsx
   pages/dashboard/home/
     ui/dashboard-home-page.tsx       # REPLACED — renders <AgentHubPage>
     ui/agent-hub-page.tsx            # NEW — <ClientOnly> wrapper around <AgentHubChat>
@@ -311,12 +335,12 @@ No tests are added (project convention: tests only when explicitly requested).
 ## Risks & Open Questions
 
 - **Mastra server API paths**: the exact HTTP paths for `approveToolCall`, `declineToolCall`, and `listSuspendedRuns` are verified against the installed `@mastra/core@1.50.1` during implementation. The spec assumes `/agents/:agentId/approve-tool-call` and `/agents/:agentId/suspended-runs` per the Agent approval docs; the implementation will adjust if the installed version differs.
-- **Supervisor memory**: the supervisor needs `Memory` configured with a storage provider. The Mastra instance already configures `PostgresStore` — the supervisor's `Memory` will reference the same store. The exact `Memory` constructor signature for `@mastra/memory` is verified during implementation.
+- **`chat` and `chatStream` becoming `protectedProcedure` breaks the playground**: the existing `/playground/agent` route is currently a public route (lives under `(root-layout)/playground/agent/`, not under `(root-layout)/__protected/`). When `chatStream` becomes protected, the playground's `useAgentChat` will fail with an auth error. **Mitigation**: move `(root-layout)/playground/agent/` and `(root-layout)/playground/` under `__protected/` (the simplest fix — the playground is a dev tool, behind auth is fine). Alternative is to keep `chatStream` public and add a separate `protectedChatStream` for the dashboard, but that re-introduces the inconsistency we just removed.
 - **shadcn Base UI variants in `base-maia` style**: same risk as the prior spec — shadcn's Base UI components are typically styled for the default shadcn theme. Confirmed during implementation; fallback is app-local style overrides.
-- **AI SDK v5/v6 dual types**: `@mastra/ai-sdk` ships both v5 and v6 `UIMessage` types. The installed `@ai-sdk/react` resolves one, the server resolves the other. The existing `useAgentChat` documents the cast pattern (`features/agent/api/agent-chat.ts:97-110`) — same pattern applies here.
+- **AI SDK v5/v6 cross-version `UIMessage` type identity**: `@mastra/ai-sdk` (server) and `@ai-sdk/react` (client) each pin their own version of the `ai` package in this workspace. Each version exports a `UIMessage` type. The two types are structurally identical but TypeScript treats them as different named types because they come from different module instances. The existing `useAgentChat` already hits this and works around it with two `as never` / `as unknown` casts (`apps/web/src/features/agent/api/agent-chat.ts:96-110`); the new `useHubChat` will follow the same pattern. The casts are safe at runtime — they only suppress a TypeScript type-identity complaint.
 - **prompt-kit + shadcn Base UI coexistence**: prompt-kit was originally built for shadcn/Radix. It may pull `radix-ui` transitively. `packages/ui` already lists `radix-ui` as a catalog dependency for legacy reasons. We do not block on this.
 - **Apply flow is aspirational**: the user wants the apply flow established, but no `applyAgent` sub-agent exists yet. The chat will work for the existing primitives (weather, stack categorization, detect/organize stacks workflows). Suggestion 3 ("Help me apply to a job") is wired to the supervisor, which will respond with a roadmap-style message until the apply agent is built in a follow-up. This is acceptable scope and explicitly called out in the suggestion copy ("on the roadmap").
-- **Snapshots + storage**: approval resume after refresh requires snapshots. PostgresStore is already configured on the Mastra instance — no extra setup. The implementation will verify that snapshots are created and resumed correctly.
+- **Snapshots + storage**: approval resume after refresh requires snapshots. PostgresStore is already configured on the Mastra instance; the supervisor's `Memory` inherits it per the [Mastra memory docs](https://mastra.ai/docs/memory/overview). No extra setup. The implementation will verify that snapshots are created and resumed correctly.
 
 ## Out of Scope (YAGNI)
 
@@ -330,7 +354,7 @@ No tests are added (project convention: tests only when explicitly requested).
 ## Implementation Order
 
 1. **Mastra side**: add `description` to `weatherAgent` and `stackCategorizerAgent`. Add `apps/agent/src/mastra/agents/hub-supervisor.ts`. Register it in `index.ts`. Verify `pnpm dev` (agent) boots and `POST /chat/hub-supervisor` returns a stream.
-2. **oRPC side**: add `approveToolCall`, `declineToolCall`, `listSuspendedRuns` to `agentRouter`. Verify by curling each endpoint via the agent worker.
+2. **oRPC side**: change `chat` and `chatStream` from `publicProcedure` to `protectedProcedure`; add `approveToolCall`, `declineToolCall`, `listSuspendedRuns` to `agentRouter`. Move the playground route under `__protected/` so the auth change doesn't break it. Verify by curling each endpoint via the agent worker while signed in.
 3. **Install web deps**: `@shadcn/helpers`; shadcn Base UI `message` / `bubble` / `message-scroller` / `marker` via `pnpm ui add`; prompt-kit primitives via the prompt-kit registry.
 4. **Web slice**: build `features/agent-hub/lib/` bottom-up (`use-hub-chat.ts` → `use-hub-approval.ts` → `hub-approval.ts` → `hub-suggestions.ts`).
 5. **Web widgets**: build `widgets/agent-hub/ui/` bottom-up (`agent-hub-message-parts.tsx` → `agent-hub-tool-card.tsx` → `agent-hub-tool-approval.tsx` → `agent-hub-message-row.tsx` → `agent-hub-prompt-composer.tsx` → `agent-hub-typing-indicator.tsx` → `agent-hub-empty-state.tsx` → `agent-hub-chat.tsx`).
