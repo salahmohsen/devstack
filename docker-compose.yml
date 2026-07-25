@@ -123,7 +123,11 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
+      # Higher priority than web's PathPrefix(`/`) / Host-only routers so
+      # https://domain/server/* hits Hono, not the TanStack app (404 HTML).
       - "traefik.http.routers.server.rule=PathPrefix(`/server`)"
+      - "traefik.http.routers.server.priority=100"
+      - "traefik.http.routers.server.entrypoints=web"
       - "traefik.http.services.server.loadbalancer.server.port=5100"
 
   agent:
@@ -155,6 +159,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.agent.rule=PathPrefix(`/agent`)"
+      - "traefik.http.routers.agent.priority=100"
+      - "traefik.http.routers.agent.entrypoints=web"
       - "traefik.http.services.agent.loadbalancer.server.port=4111"
 
   web:
@@ -202,7 +208,10 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
+      # Catch-all last — server/agent PathPrefix routers must win first.
       - "traefik.http.routers.web.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.web.priority=1"
+      - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
 
 volumes:
