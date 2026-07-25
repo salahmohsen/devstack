@@ -118,6 +118,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: mastra_agent
       CREATE_DB: "true"
+      # Mastra model strings like "deepseek/deepseek-v4-flash" read DEEPSEEK_API_KEY
+      # (see apps/agent/src/mastra/model-config.ts). Must be listed here — Dokploy
+      # project env alone does not inject into containers unless referenced.
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      # Optional fallbacks if you switch models in model-config.ts:
+      OPENCODE_API_KEY: ${OPENCODE_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       NODE_ENV: production
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4111/api/agents || exit 1"]
