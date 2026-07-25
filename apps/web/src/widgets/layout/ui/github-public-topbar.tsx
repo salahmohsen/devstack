@@ -17,17 +17,18 @@ import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger
-} from "@tsu-stack/ui/components/dropdown-menu";
 import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd";
+import {
+  Menu,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuLinkItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuShortcut,
+  MenuTrigger
+} from "@tsu-stack/ui/components/menu";
 import { TextAnimate } from "@tsu-stack/ui/components/text-animate";
 import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
@@ -206,20 +207,22 @@ export function Topbar() {
     <nav className="flex h-(--navbar-height) min-w-0 items-center gap-3 overflow-hidden px-3 py-2">
       {admin && !pathname.includes("dashboard") && (
         <div className="hidden md:block">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex size-8 items-center justify-center rounded-full"
-              >
-                <Avatar className="size-7 border border-border">
-                  <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel className="flex items-center gap-3 py-2">
+          <Menu>
+            <MenuTrigger
+              render={
+                <button
+                  type="button"
+                  className="flex size-8 items-center justify-center rounded-full"
+                />
+              }
+            >
+              <Avatar className="size-7 border border-border">
+                <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
+                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+              </Avatar>
+            </MenuTrigger>
+            <MenuPopup align="start" className="w-56">
+              <MenuGroupLabel className="flex items-center gap-3 py-2">
                 <Avatar className="size-8 border border-border">
                   <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
                   <AvatarFallback className="text-xs">{initials}</AvatarFallback>
@@ -230,47 +233,55 @@ export function Topbar() {
                     <span className="text-xs font-normal text-muted-foreground">@{owner}</span>
                   )}
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem asChild disabled={!owner}>
-                  <Link to="/">
+              </MenuGroupLabel>
+              <MenuSeparator />
+              <MenuGroup>
+                {owner ? (
+                  <MenuLinkItem render={<Link to="/" />}>
                     <UserCircle size={16} strokeWidth={2} />
                     Profile
-                    <DropdownMenuShortcut>G U</DropdownMenuShortcut>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild disabled={!owner}>
-                  <Link to="/repos">
+                    <MenuShortcut>G U</MenuShortcut>
+                  </MenuLinkItem>
+                ) : (
+                  <MenuItem disabled>
+                    <UserCircle size={16} strokeWidth={2} />
+                    Profile
+                    <MenuShortcut>G U</MenuShortcut>
+                  </MenuItem>
+                )}
+                {owner ? (
+                  <MenuLinkItem render={<Link to="/repos" />}>
                     <Archive size={16} strokeWidth={2} />
                     Repositories
-                    <DropdownMenuShortcut>G O</DropdownMenuShortcut>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard">
-                    <LayoutDashboard size={16} strokeWidth={2} />
-                    Dashboard
-                    <DropdownMenuShortcut>G D</DropdownMenuShortcut>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
+                    <MenuShortcut>G O</MenuShortcut>
+                  </MenuLinkItem>
+                ) : (
+                  <MenuItem disabled>
+                    <Archive size={16} strokeWidth={2} />
+                    Repositories
+                    <MenuShortcut>G O</MenuShortcut>
+                  </MenuItem>
+                )}
+                <MenuLinkItem render={<Link to="/dashboard" />}>
+                  <LayoutDashboard size={16} strokeWidth={2} />
+                  Dashboard
+                  <MenuShortcut>G D</MenuShortcut>
+                </MenuLinkItem>
+              </MenuGroup>
+              <MenuSeparator />
               {admin ? (
-                <DropdownMenuItem onSelect={() => void handleSignOut()}>
+                <MenuItem onClick={() => void handleSignOut()}>
                   <LogOut size={16} strokeWidth={2} />
                   Sign out
-                </DropdownMenuItem>
+                </MenuItem>
               ) : (
-                <DropdownMenuItem asChild>
-                  <Link to="/sign-in">
-                    <UserCircle size={16} strokeWidth={2} />
-                    Sign in
-                  </Link>
-                </DropdownMenuItem>
+                <MenuLinkItem render={<Link to="/sign-in" />}>
+                  <UserCircle size={16} strokeWidth={2} />
+                  Sign in
+                </MenuLinkItem>
               )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </MenuPopup>
+          </Menu>
         </div>
       )}
 
@@ -318,42 +329,42 @@ export function Topbar() {
           </KbdGroup>
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8 text-muted-foreground hover:bg-surface-1"
-              aria-label="More actions"
+        <Menu>
+          <MenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted-foreground hover:bg-surface-1"
+                aria-label="More actions"
+              />
+            }
+          >
+            <MoreHorizontal className="size-5" strokeWidth={2} />
+          </MenuTrigger>
+          <MenuPopup align="end" className="w-48">
+            <MenuLinkItem
+              href="https://github.com/salahmohsen"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <MoreHorizontal className="size-5" strokeWidth={2} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem asChild>
-              <a href="https://github.com/salahmohsen" target="_blank" rel="noopener noreferrer">
-                <ExternalLink size={16} strokeWidth={2} />
-                View GitHub profile
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a
-                href="https://github.com/salahmohsen/portfolio-v2/issues/new"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Bug size={16} strokeWidth={2} />
-                Report an issue
-              </a>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to={"/sign-in"} rel="noopener noreferrer">
-                <ExternalLink size={16} strokeWidth={2} />
-                login
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <ExternalLink size={16} strokeWidth={2} />
+              View GitHub profile
+            </MenuLinkItem>
+            <MenuLinkItem
+              href="https://github.com/salahmohsen/portfolio-v2/issues/new"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Bug size={16} strokeWidth={2} />
+              Report an issue
+            </MenuLinkItem>
+            <MenuLinkItem render={<Link to="/sign-in" />}>
+              <ExternalLink size={16} strokeWidth={2} />
+              login
+            </MenuLinkItem>
+          </MenuPopup>
+        </Menu>
       </div>
     </nav>
   );

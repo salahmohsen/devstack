@@ -7,15 +7,17 @@ import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
+import { IconRotate } from "@tsu-stack/ui/components/icon-motion";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@tsu-stack/ui/components/dropdown-menu";
+  Menu,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuLinkItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger
+} from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { getGithubSetupStatusQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
@@ -58,7 +60,7 @@ export function MobileNav() {
     .toUpperCase();
 
   return (
-    <nav className="bg-container flex items-stretch border-t border-border md:hidden">
+    <nav className="flex items-stretch border-t border-border bg-container md:hidden">
       <Link
         to="/"
         preload={false}
@@ -83,22 +85,24 @@ export function MobileNav() {
       >
         <Archive size={22} strokeWidth={1.8} />
       </Link>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className={cn(
-              "flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors"
-            )}
-          >
-            <Avatar className="size-6 border border-white/10">
-              <AvatarImage alt={displayName} src={user?.image ?? undefined} />
-              <AvatarFallback className="text-[8px]">{initials}</AvatarFallback>
-            </Avatar>
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="top" className="w-56">
-          <DropdownMenuLabel className="flex items-center justify-between">
+      <Menu>
+        <MenuTrigger
+          render={
+            <button
+              type="button"
+              className={cn(
+                "flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors"
+              )}
+            />
+          }
+        >
+          <Avatar className="size-6 border border-white/10">
+            <AvatarImage alt={displayName} src={user?.image ?? undefined} />
+            <AvatarFallback className="text-[8px]">{initials}</AvatarFallback>
+          </Avatar>
+        </MenuTrigger>
+        <MenuPopup align="end" side="top" className="w-56">
+          <MenuGroupLabel className="flex items-center justify-between">
             <div>
               <p>{displayName}</p>
               <p className="font-normal text-muted-foreground">{user?.email}</p>
@@ -120,31 +124,36 @@ export function MobileNav() {
                 </button>
               ))}
             </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem asChild disabled={!owner}>
-              <Link to="/repos">
+          </MenuGroupLabel>
+          <MenuSeparator />
+          <MenuGroup>
+            {owner ? (
+              <MenuLinkItem render={<Link to="/repos" />}>
                 <Archive className="size-4" />
                 Repositories
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard">
+              </MenuLinkItem>
+            ) : (
+              <MenuItem disabled>
+                <Archive className="size-4" />
+                Repositories
+              </MenuItem>
+            )}
+            <MenuLinkItem render={<Link to="/dashboard" />}>
+              <IconRotate mode="hover">
                 <Settings className="size-4" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
+              </IconRotate>
+              Settings
+            </MenuLinkItem>
+          </MenuGroup>
+          <MenuSeparator />
           {user ? (
-            <DropdownMenuItem onClick={() => void handleSignOut()}>
+            <MenuItem onClick={() => void handleSignOut()}>
               <LogOut className="size-4" />
               Sign out
-            </DropdownMenuItem>
+            </MenuItem>
           ) : null}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </MenuPopup>
+      </Menu>
       <div className="pb-[env(safe-area-inset-bottom)]" />
     </nav>
   );
