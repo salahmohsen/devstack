@@ -21,7 +21,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { appConfig } from "@/config/app.config";
 
-function createWebCallbackUrl(redirectTo?: string | NavigateOptions["to"]): string {
+function createWebCallbackUrl(redirectTo?: string): string {
   const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
 
   if (typeof redirectTo === "string" && /^https?:\/\//i.test(redirectTo)) {
@@ -41,7 +41,7 @@ function createWebCallbackUrl(redirectTo?: string | NavigateOptions["to"]): stri
   return `${baseUrl}${path}`;
 }
 
-function createOAuthErrorCallbackUrl(redirectTo?: string | NavigateOptions["to"]): string {
+function createOAuthErrorCallbackUrl(redirectTo?: string): string {
   const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
   if (typeof redirectTo === "string" && redirectTo.startsWith("/")) {
     return `${baseUrl}/sign-in?redirect=${encodeURIComponent(redirectTo)}`;
@@ -193,13 +193,13 @@ export function SignInForm({
             </Button>
           </FieldGroup>
         </CardContent>
-        <CardFooter className="mt-5 flex flex-wrap justify-center gap-1 px-6 text-xs leading-6">
+        <CardFooter className="mt-5 flex flex-wrap justify-center gap-1 px-6 text-xs leading-6 text-muted-foreground">
           By continuing, you agree to our
-          <Link className="text-foreground underline underline-offset-4" to="/terms-of-service">
+          <Link className="underline underline-offset-4" to="/terms-of-service">
             Terms of Service
           </Link>
           and
-          <Link className="text-foreground underline underline-offset-4" to="/privacy-policy">
+          <Link className="underline underline-offset-4" to="/privacy-policy">
             Privacy Policy
           </Link>
         </CardFooter>

@@ -22,8 +22,7 @@ const KNOWN_SEGMENTS = new Set([
   "profile",
   "account",
   "github",
-  "new",
-  "github-config"
+  "new"
 ]);
 
 const SEGMENT_LABELS: Record<string, string> = {
@@ -38,8 +37,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   profile: "Profile",
   account: "Account",
   github: "GitHub",
-  new: "New",
-  "github-config": "GitHub Config"
+  new: "New"
 };
 
 function isIdSegment(segment: string) {

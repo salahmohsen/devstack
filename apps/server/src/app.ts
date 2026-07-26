@@ -8,7 +8,6 @@ import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type ContentfulStatusCode } from "hono/utils/http-status";
-import { type Pool } from "pg";
 
 import {
   createContext,
@@ -175,7 +174,8 @@ app.post("/webhooks/github", async (c) => {
 
   const webhookSecret = ENV_SERVER.GITHUB_WEBHOOK_SECRET;
 
-  return runWithDb(createDb(), async () => {
+  const db = createDb();
+  return runWithDb(db, async () => {
     const runtime = getRuntime();
     const result = await handleGitHubWebhook({
       deliveryId,
@@ -270,51 +270,47 @@ export const rpcHandler = new RPCHandler(appRouter, {
 });
 
 app.use("/*", async (c, next) => {
+  // Shared process pool via createDb() — do not call pool.end() per request.
   const db = createDb();
-  const requestPool = (db as unknown as { $client: Pool }).$client;
 
-  try {
-    return await runWithDb(db, async () => {
-      const runtime = getRuntime();
-      const context = await createContext({
-        context: c,
-        logger: c.get("log"),
-        runtime
-      });
-
-      const rpcResult = await rpcHandler.handle(c.req.raw, {
-        context,
-        prefix: joinApiPath(apiBasePath, "rpc")
-      });
-
-      if (rpcResult.matched) {
-        return c.newResponse(rpcResult.response.body, rpcResult.response);
-      }
-
-      if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
-        const docsResult = await openApiHandler.handle(c.req.raw, {
-          context,
-          prefix: joinApiPath(apiBasePath, "docs")
-        });
-
-        if (docsResult.matched) {
-          return c.newResponse(docsResult.response.body, docsResult.response);
-        }
-      }
-
-      const openApiResult = await openApiHandler.handle(c.req.raw, {
-        context,
-        // Root mount: OpenAPI handler prefix is `/` (not empty string).
-        prefix: (apiBasePath || "/") as `/${string}`
-      });
-
-      if (openApiResult.matched) {
-        return c.newResponse(openApiResult.response.body, openApiResult.response);
-      }
-
-      await next();
+  return runWithDb(db, async () => {
+    const runtime = getRuntime();
+    const context = await createContext({
+      context: c,
+      logger: c.get("log"),
+      runtime
     });
-  } finally {
-    await requestPool.end().catch(() => undefined);
-  }
+
+    const rpcResult = await rpcHandler.handle(c.req.raw, {
+      context,
+      prefix: joinApiPath(apiBasePath, "rpc")
+    });
+
+    if (rpcResult.matched) {
+      return c.newResponse(rpcResult.response.body, rpcResult.response);
+    }
+
+    if (ENV_SERVER.ENABLE_OPEN_API_DOCS) {
+      const docsResult = await openApiHandler.handle(c.req.raw, {
+        context,
+        prefix: joinApiPath(apiBasePath, "docs")
+      });
+
+      if (docsResult.matched) {
+        return c.newResponse(docsResult.response.body, docsResult.response);
+      }
+    }
+
+    const openApiResult = await openApiHandler.handle(c.req.raw, {
+      context,
+      // Root mount: OpenAPI handler prefix is `/` (not empty string).
+      prefix: (apiBasePath || "/") as `/${string}`
+    });
+
+    if (openApiResult.matched) {
+      return c.newResponse(openApiResult.response.body, openApiResult.response);
+    }
+
+    await next();
+  });
 });

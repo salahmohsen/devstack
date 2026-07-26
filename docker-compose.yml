@@ -174,11 +174,21 @@ services:
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
       server: { condition: service_healthy }
+      # Session lookup ($getUser / Better Auth drizzle) hits Postgres from SSR
+      # after cross-subdomain cookies land on the web host.
+      postgres: { condition: service_healthy }
     restart: unless-stopped
     environment:
       VITE_SERVER_URL: ${VITE_SERVER_URL}
       VITE_WEB_URL: ${VITE_WEB_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      # SSR Better Auth reads session/user tables via @tsu-stack/db.
+      # Without these, createPoolConfig falls through to empty DATABASE_URL
+      # and node-postgres defaults to 127.0.0.1:5432 (ECONNREFUSED in Docker).
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
+      POSTGRES_HOST: hub-postgres
       # SSR loads Better Auth (server env) even for public routes / health —
       # OAuth client credentials must be present or module init throws.
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}

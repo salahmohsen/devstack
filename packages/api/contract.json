@@ -45,30 +45,6 @@
       }
     }
   },
-  "githubConfig": {
-    "get": {
-      "~orpc": {
-        "errorMap": {},
-        "meta": {},
-        "route": {
-          "path": "/githubConfig/get",
-          "description": "Get the current user's GitHub config",
-          "method": "GET"
-        }
-      }
-    },
-    "update": {
-      "~orpc": {
-        "errorMap": {},
-        "meta": {},
-        "route": {
-          "path": "/githubConfig/update",
-          "description": "Create or update the current user's GitHub config",
-          "method": "POST"
-        }
-      }
-    }
-  },
   "github": {
     "getRevalidationSignals": {
       "~orpc": {

@@ -55,14 +55,24 @@
 /*
  * Base UI popups (Menu, Select, Combobox, Popover, …):
  * use with data-starting-style / data-ending-style hooks.
- * Includes width/height so surfaces that resize (Popover) keep
- * layout transitions while open/close use the dropdown scale.
+ *
+ * Do NOT transition width/height here — Floating UI measures and sets
+ * size / --available-height; animating those fights positioning and
+ * makes combobox/select/menu lists paint under dialog content.
+ * For surfaces that intentionally resize, use .t-dropdown-resize.
  */
 .t-dropdown {
-  transition-property: scale, opacity, transform, width, height;
+  transition-property: scale, opacity;
   transition-duration: var(--dropdown-open-dur);
   transition-timing-function: var(--dropdown-ease);
   will-change: scale, opacity;
+}
+
+/** Optional: only for popovers that intentionally animate size while open */
+.t-dropdown-resize {
+  transition-property: scale, opacity, width, height;
+  transition-duration: var(--dropdown-open-dur);
+  transition-timing-function: var(--dropdown-ease);
 }
 
 .t-dropdown[data-starting-style] {
@@ -450,7 +460,8 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .t-dropdown {
+  .t-dropdown,
+  .t-dropdown-resize {
     transition: none !important;
   }
 

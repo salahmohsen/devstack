@@ -1,24 +1,31 @@
-import { desc, isNotNull, or, sql } from "drizzle-orm";
+import { desc, isNotNull, sql } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { githubConfig } from "../schema/github-config.schema.ts";
 
-export type UpdateGithubConfigData = {
-  githubToken?: string;
-  clearGithubToken?: boolean;
-  githubUsername: string;
-};
-
+/**
+ * Portfolio-owner identity for GitHub public routes.
+ * Tokens live on Better Auth `account` (OAuth) — not on this table.
+ */
 export const githubConfigRepository = {
   async findPublicGithubSourceSettings() {
     const [settings] = await getDb()
       .select()
       .from(githubConfig)
-      .where(or(isNotNull(githubConfig.githubToken), isNotNull(githubConfig.githubUsername)))
+      .where(isNotNull(githubConfig.githubUsername))
       .orderBy(desc(githubConfig.updatedAt))
       .limit(1);
 
-    return settings ?? null;
+    if (settings) return settings;
+
+    // Fall back to any row (owner may only have userId until username is synced).
+    const [anyRow] = await getDb()
+      .select()
+      .from(githubConfig)
+      .orderBy(desc(githubConfig.updatedAt))
+      .limit(1);
+
+    return anyRow ?? null;
   },
 
   async findByUserId(userId: string) {
@@ -27,38 +34,33 @@ export const githubConfigRepository = {
     });
   },
 
-  async upsert(userId: string, input: UpdateGithubConfigData) {
-    const existingSettings = await githubConfigRepository.findByUserId(userId);
-    const normalizedGithubToken = input.githubToken?.trim() ?? null;
+  /** Upsert username only — never store classic PATs. */
+  async upsertUsername(userId: string, githubUsername: string) {
+    const existing = await githubConfigRepository.findByUserId(userId);
+    const name = githubUsername.trim();
+    if (!name) return existing ?? null;
 
-    const githubToken = input.clearGithubToken
-      ? null
-      : normalizedGithubToken && normalizedGithubToken.length > 0
-        ? normalizedGithubToken
-        : (existingSettings?.githubToken ?? null);
-
-    if (existingSettings) {
-      const [updatedSettings] = await getDb()
+    if (existing) {
+      const [updated] = await getDb()
         .update(githubConfig)
         .set({
-          githubToken,
-          githubUsername: input.githubUsername
+          githubUsername: name,
+          // Clear legacy PAT if present — OAuth is the only source of truth.
+          githubToken: null
         })
         .where(sql`${githubConfig.userId} = ${userId}`)
         .returning();
-
-      return updatedSettings;
+      return updated;
     }
 
-    const [createdSettings] = await getDb()
+    const [created] = await getDb()
       .insert(githubConfig)
       .values({
-        githubToken,
-        githubUsername: input.githubUsername,
-        userId
+        userId,
+        githubUsername: name,
+        githubToken: null
       })
       .returning();
-
-    return createdSettings;
+    return created;
   }
 };

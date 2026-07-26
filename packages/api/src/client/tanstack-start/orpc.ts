@@ -36,8 +36,16 @@ function getHeaders(): Record<string, string> {
   return {};
 }
 
+function isAbortError(error: unknown): boolean {
+  if (error instanceof Error && error.name === "AbortError") return true;
+  if (typeof DOMException !== "undefined" && error instanceof DOMException) {
+    return error.name === "AbortError";
+  }
+  return false;
+}
+
 function isRetriable(error: unknown): boolean {
-  if (error instanceof Error && error.name === "AbortError") return false;
+  if (isAbortError(error)) return false;
   if (!(error instanceof TypeError)) return false;
   const cause = (error as { cause?: { code?: string } }).cause;
   if (cause && typeof cause === "object" && "code" in cause) {
@@ -77,6 +85,8 @@ const getORPCClient = createIsomorphicFn()
       headers: getHeaders(),
       fetch: (url, options) =>
         fetchWithRetry(url, options ?? {}).catch((error) => {
+          // SSR aborts in-flight RPCs after render/dehydrate; not actionable.
+          if (isAbortError(error)) throw error;
           // oxlint-disable-next-line no-console
           console.error("[rpc-fetch-failed]", { url, error });
           throw error;
@@ -88,6 +98,7 @@ const getORPCClient = createIsomorphicFn()
     const link = new RPCLink({
       fetch: (url, options) =>
         fetchWithRetry(url, options ?? {}).catch((error) => {
+          if (isAbortError(error)) throw error;
           // oxlint-disable-next-line no-console
           console.error("[rpc-fetch-failed]", { url, error });
           throw error;

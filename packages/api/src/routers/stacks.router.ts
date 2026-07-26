@@ -350,44 +350,71 @@ export const stacksRouter = {
       z.object({
         stacks: z.array(
           z.object({
-            npmPackage: z.string(),
-            name: z.string(),
-            type: z.string(),
+            npmPackage: z.string().min(1),
+            name: z.string().min(1),
+            type: z.string().nullable().optional(),
             description: z.string().nullable().optional(),
             confidence: z.string().nullable().optional(),
             iconSvg: z.string().nullable().optional(),
-            relatedPackages: z.array(z.string()).optional()
+            relatedPackages: z.array(z.string()).optional(),
+            /** Prefer linking an already-known stack over re-creating by name. */
+            existingStackId: z.string().nullable().optional()
           })
         )
       })
     )
-    .output(z.array(z.object({ id: z.string(), name: z.string() })))
+    .output(
+      z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          icon: z.string().nullable(),
+          type: z.string().nullable(),
+          description: z.string().nullable()
+        })
+      )
+    )
     .handler(async ({ input }) => {
-      const results: Array<{ id: string; name: string }> = [];
+      const results: Array<{
+        id: string;
+        name: string;
+        icon: string | null;
+        type: string | null;
+        description: string | null;
+      }> = [];
 
-      const seenNames = new Set<string>();
+      const seenKeys = new Set<string>();
       for (const s of input.stacks) {
-        if (seenNames.has(s.name)) continue;
-        seenNames.add(s.name);
+        const dedupeKey = s.existingStackId ?? (s.npmPackage || s.name);
+        if (seenKeys.has(dedupeKey)) continue;
+        seenKeys.add(dedupeKey);
 
         let stack =
+          (s.existingStackId ? await stackRepository.findById(s.existingStackId) : null) ??
           (await stackRepository.findByNpmPackageAlias(s.npmPackage)) ??
           (await stackRepository.findByName(s.name));
 
         if (!stack) {
           const all = await stackRepository.findAll();
           const nextSortOrder = all.length > 0 ? Math.max(...all.map((st) => st.sortOrder)) + 1 : 0;
-          stack = await stackRepository.create(
-            {
-              name: s.name,
-              description: s.description ?? null,
-              icon: s.iconSvg ? sanitizeSvg(s.iconSvg) : null,
-              type: s.type,
-              confidence: s.confidence ?? null,
-              sortOrder: nextSortOrder
-            },
-            { includedInPortfolio: false }
-          );
+          try {
+            stack = await stackRepository.create(
+              {
+                name: s.name,
+                description: s.description ?? null,
+                icon: s.iconSvg ? sanitizeSvg(s.iconSvg) : null,
+                type: s.type ?? null,
+                confidence: s.confidence ?? null,
+                sortOrder: nextSortOrder
+              },
+              { includedInPortfolio: false }
+            );
+          } catch {
+            // Race / unique name: re-fetch by name or npm alias.
+            stack =
+              (await stackRepository.findByNpmPackageAlias(s.npmPackage)) ??
+              (await stackRepository.findByName(s.name));
+          }
         }
 
         if (stack) {
@@ -397,7 +424,13 @@ export const stacksRouter = {
           for (const pkg of allPackages) {
             await stackDependencyRepository.reassign(stack.id, pkg, s.description ?? null, null);
           }
-          results.push({ id: stack.id, name: stack.name });
+          results.push({
+            id: stack.id,
+            name: stack.name,
+            icon: stack.icon ?? null,
+            type: stack.type ?? null,
+            description: stack.description ?? null
+          });
         }
       }
 

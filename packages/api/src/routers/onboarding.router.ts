@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import {
@@ -74,8 +75,9 @@ async function bestEffortDeleteResumeSource(
 }
 
 /**
- * Parse raw concatenated JSON objects from an agent workflow stream and yield each event.
- * Same shape as `detectStacks` / `organizeStacks` in agent.router.ts.
+ * Parse Mastra workflow streams of concatenated JSON objects (NOT SSE).
+ * String-aware so braces inside messages do not split events.
+ * Kept in sync with `parseConcatenatedJsonStream` in agent.router.ts.
  */
 async function* streamWorkflowJsonEvents(
   body: ReadableStream<Uint8Array>
@@ -84,48 +86,74 @@ async function* streamWorkflowJsonEvents(
   const decoder = new TextDecoder();
   let buffer = "";
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
+  const drainCompleteObjects = function* (): Generator<unknown> {
+    let i = 0;
+    while (i < buffer.length) {
+      while (i < buffer.length && /\s/.test(buffer[i]!)) i++;
+      if (i >= buffer.length) {
+        buffer = "";
+        return;
+      }
+      if (buffer[i] !== "{") {
+        i++;
+        continue;
+      }
 
       let depth = 0;
-      let start = -1;
-      for (let i = 0; i < buffer.length; i++) {
-        if (buffer[i] === "{") {
-          if (depth === 0) start = i;
+      let inString = false;
+      let escaped = false;
+      const start = i;
+
+      for (; i < buffer.length; i++) {
+        const ch = buffer[i]!;
+        if (inString) {
+          if (escaped) {
+            escaped = false;
+          } else if (ch === "\\") {
+            escaped = true;
+          } else if (ch === '"') {
+            inString = false;
+          }
+          continue;
+        }
+
+        if (ch === '"') {
+          inString = true;
+        } else if (ch === "{") {
           depth++;
-        } else if (buffer[i] === "}") {
+        } else if (ch === "}") {
           depth--;
-          if (depth === 0 && start >= 0) {
+          if (depth === 0) {
+            const slice = buffer.slice(start, i + 1);
             try {
-              const event = JSON.parse(buffer.slice(start, i + 1));
-              yield event;
+              yield JSON.parse(slice) as unknown;
             } catch {
-              // Ignore malformed JSON
+              // Ignore malformed JSON fragments
             }
-            start = -1;
+            i++;
+            buffer = buffer.slice(i);
+            i = 0;
+            break;
           }
         }
       }
 
-      if (start >= 0) {
+      if (depth > 0 || inString) {
         buffer = buffer.slice(start);
-      } else {
-        buffer = "";
+        return;
       }
     }
+  };
 
-    if (buffer.trim().length > 0) {
-      try {
-        const event = JSON.parse(buffer);
-        yield event;
-      } catch {
-        // Ignore malformed trailing data
-      }
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      yield* drainCompleteObjects();
     }
+    buffer += decoder.decode();
+    yield* drainCompleteObjects();
   } finally {
     reader.releaseLock();
   }
@@ -242,40 +270,61 @@ export const onboardingRouter = {
 
       const agentWorker = context.agentWorker;
       if (!agentWorker) {
-        throw new Error("agentWorker not configured");
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Agent worker is not configured. Set AGENT_WORKER_URL and restart the server."
+        });
       }
 
-      const createRunRes = await agentWorker.fetch(
-        `/api/workflows/resume-import-workflow/create-run`,
-        {
+      let createRunRes: Response;
+      try {
+        createRunRes = await agentWorker.fetch(`/api/workflows/resume-import-workflow/create-run`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({})
-        }
-      );
+        });
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: `Cannot reach agent worker (create-run): ${detail}`
+        });
+      }
 
       if (!createRunRes.ok) {
         const body = await createRunRes.text();
-        throw new Error(`Workflow create-run returned ${createRunRes.status}: ${body}`);
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: `Workflow create-run returned ${createRunRes.status}: ${body.slice(0, 300)}`
+        });
       }
 
       const { runId } = (await createRunRes.json()) as { runId: string };
 
-      const upstream = await agentWorker.fetch(
-        `/api/workflows/resume-import-workflow/stream?runId=${encodeURIComponent(runId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inputData: workflowInput })
-        }
-      );
+      let upstream: Response;
+      try {
+        upstream = await agentWorker.fetch(
+          `/api/workflows/resume-import-workflow/stream?runId=${encodeURIComponent(runId)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ inputData: workflowInput })
+          }
+        );
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: `Cannot reach agent worker (stream): ${detail}`
+        });
+      }
 
       if (!upstream.ok || !upstream.body) {
         const body = await upstream.text();
-        throw new Error(`Workflow stream returned ${upstream.status}: ${body}`);
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: `Workflow stream returned ${upstream.status}: ${body.slice(0, 300)}`
+        });
       }
 
-      yield* streamWorkflowJsonEvents(upstream.body);
+      for await (const event of streamWorkflowJsonEvents(upstream.body)) {
+        yield event;
+      }
     }),
 
   apply: protectedProcedure

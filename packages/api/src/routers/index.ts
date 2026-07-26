@@ -3,7 +3,6 @@ import { type RouterClient } from "@orpc/server";
 import { agentRouter } from "#@/routers/agent.router";
 import { portfolioContactRouter } from "#@/routers/contact.router";
 import { experiencesRouter } from "#@/routers/experiences.router";
-import { githubConfigRouter } from "#@/routers/github-config.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
 import { onboardingRouter } from "#@/routers/onboarding.router";
@@ -15,7 +14,6 @@ import { stacksRouter } from "#@/routers/stacks.router";
 
 export const appRouter = {
   agent: agentRouter,
-  githubConfig: githubConfigRouter,
   github: githubRouter,
   health: healthRouter,
   experiences: experiencesRouter,

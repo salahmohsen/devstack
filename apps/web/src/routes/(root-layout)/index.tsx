@@ -8,7 +8,6 @@ import {
   getGithubPinnedReposQueryOptions,
   getGithubProfileQueryOptions,
   getGithubSetupStatusQueryOptions,
-  getPortfolioListQueryOptions,
   HomePage
 } from "@/pages/home-page";
 
@@ -32,8 +31,6 @@ export const Route = createFileRoute("/(root-layout)/")({
         context.queryClient.prefetchQuery(getGithubActivityQueryOptions())
       ]);
     }
-
-    void context.queryClient.prefetchQuery(getPortfolioListQueryOptions());
   },
   head: () =>
     generateAppSeo({

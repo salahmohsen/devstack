@@ -69,27 +69,27 @@ export const db: NodePgDatabase<typeof relations> = drizzlePg({
 });
 
 /**
- * Per-request database instance.
+ * Request-scoped Drizzle handle (same underlying connection pool).
  *
- * Each request gets its own pool via `createDb()`; the pool's lifetime is
- * kept alive by the request handler. Repositories use `getDb()` to read
- * the current request's instance from `AsyncLocalStorage`.
+ * Important: we share the process-wide `pool` singleton. Creating a new
+ * `pg.Pool` per request (and calling `pool.end()`) exhausts Postgres
+ * connections and can hang Better Auth (e.g. `/auth/sign-in/social`
+ * waiting forever on `createVerificationValue`).
  *
- * For self-hosted PostgreSQL, we use the standard `pg` Pool directly — no
- * WebSocket/Neon-specific transport needed.
+ * Repositories use `getDb()` to read the current request's instance from
+ * `AsyncLocalStorage` so transactions stay request-scoped.
  */
 export type WsDb = NodePgDatabase<typeof relations>;
 
 const dbStorage = new AsyncLocalStorage<{ db: WsDb; pool: Pool }>();
 
 export function createDb(): WsDb {
-  const requestPool = new Pool(createPoolConfig());
-  return drizzlePg({ client: requestPool, relations });
+  // Always share the process pool — never open a disposable Pool per request.
+  return drizzlePg({ client: pool, relations });
 }
 
-export async function runWithDb<T>(db: WsDb, fn: () => T | Promise<T>): Promise<T> {
-  const requestPool = (db as unknown as { $client: Pool }).$client;
-  return dbStorage.run({ db, pool: requestPool }, fn);
+export async function runWithDb<T>(dbInstance: WsDb, fn: () => T | Promise<T>): Promise<T> {
+  return dbStorage.run({ db: dbInstance, pool: pool as Pool }, fn);
 }
 
 /**

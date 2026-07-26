@@ -1,4 +1,4 @@
-import { streamToEventIterator } from "@orpc/server";
+import { ORPCError, streamToEventIterator } from "@orpc/server";
 import { z } from "zod";
 
 import { DetectStacksClientInputSchema, type OrpcContext } from "@tsu-stack/core";
@@ -21,6 +21,100 @@ import { ownerProcedure, protectedProcedure } from "#@/lib/procedures/factory";
 function parseGitHubRepo(url: string): string {
   const match = url.match(/github\.com\/([^/]+\/[^/]+?)(?:\/|$)/);
   return match ? match[1] : url;
+}
+
+/**
+ * Parse Mastra workflow streams of concatenated JSON objects (NOT SSE).
+ * String-aware so braces inside SVG icons / messages do not split events.
+ */
+async function* parseConcatenatedJsonStream(
+  body: ReadableStream<Uint8Array>
+): AsyncGenerator<unknown> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  const drainCompleteObjects = function* (): Generator<unknown> {
+    let i = 0;
+    while (i < buffer.length) {
+      while (i < buffer.length && /\s/.test(buffer[i]!)) i++;
+      if (i >= buffer.length) {
+        buffer = "";
+        return;
+      }
+      if (buffer[i] !== "{") {
+        i++;
+        continue;
+      }
+
+      let depth = 0;
+      let inString = false;
+      let escaped = false;
+      const start = i;
+
+      for (; i < buffer.length; i++) {
+        const ch = buffer[i]!;
+        if (inString) {
+          if (escaped) {
+            escaped = false;
+          } else if (ch === "\\") {
+            escaped = true;
+          } else if (ch === '"') {
+            inString = false;
+          }
+          continue;
+        }
+
+        if (ch === '"') {
+          inString = true;
+        } else if (ch === "{") {
+          depth++;
+        } else if (ch === "}") {
+          depth--;
+          if (depth === 0) {
+            const slice = buffer.slice(start, i + 1);
+            try {
+              yield JSON.parse(slice) as unknown;
+            } catch {
+              // Ignore malformed JSON fragments
+            }
+            i++;
+            buffer = buffer.slice(i);
+            i = 0;
+            break;
+          }
+        }
+      }
+
+      // Incomplete object — keep remainder for the next chunk
+      if (depth > 0 || inString) {
+        buffer = buffer.slice(start);
+        return;
+      }
+    }
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      yield* drainCompleteObjects();
+    }
+
+    buffer += decoder.decode();
+    yield* drainCompleteObjects();
+
+    if (buffer.trim().length > 0) {
+      try {
+        yield JSON.parse(buffer) as unknown;
+      } catch {
+        // Ignore malformed trailing data
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 /**
@@ -333,173 +427,178 @@ export const agentRouter = {
     })
     .input(DetectStacksClientInputSchema)
     .handler(async function* ({ input, context }) {
-      // 1. Pre-fetch package.json from each repo
-      const repoPackages = await Promise.all(
-        input.repos.map(async (repoUrl: string) => {
-          const repoSlug = parseGitHubRepo(repoUrl);
+      try {
+        // 1. Pre-fetch package.json from each repo
+        const repoPackages = await Promise.all(
+          input.repos.map(async (repoUrl: string) => {
+            const repoSlug = parseGitHubRepo(repoUrl);
 
-          // Detect default branch (private first, then public)
-          const defaultBranch = await getDefaultBranch(repoSlug, context);
+            // Detect default branch (private first, then public)
+            const defaultBranch = await getDefaultBranch(repoSlug, context);
 
-          const fetchFile = async (path: string) => {
-            const privateResult = await getPrivateRepoFileContent(
-              { path, ref: defaultBranch, repo: repoSlug },
-              context
-            );
-            if (privateResult !== null) return privateResult;
-            const publicResult = await getRepoFileContent(
-              { path, ref: defaultBranch, repo: repoSlug },
-              context
-            );
-            return publicResult;
-          };
-
-          const rootPkgContent = await fetchFile("package.json");
-
-          // Only try workspace yaml if package.json was found
-          let workspaceYamlContent: string | null = null;
-          let workspacePkgContents: Array<{ workspace: string; content: string }> = [];
-          if (rootPkgContent) {
-            workspaceYamlContent = await fetchFile("pnpm-workspace.yaml");
-            if (workspaceYamlContent) {
-              workspacePkgContents = await resolveWorkspacePackageJsons(
-                workspaceYamlContent,
-                repoSlug,
-                defaultBranch,
+            const fetchFile = async (path: string) => {
+              const privateResult = await getPrivateRepoFileContent(
+                { path, ref: defaultBranch, repo: repoSlug },
                 context
               );
-            }
-          }
+              if (privateResult !== null) return privateResult;
+              const publicResult = await getRepoFileContent(
+                { path, ref: defaultBranch, repo: repoSlug },
+                context
+              );
+              return publicResult;
+            };
 
-          return {
-            repo: repoUrl,
-            rootPkgContent,
-            workspaceYamlContent,
-            workspacePkgContents
-          };
-        })
-      );
+            const rootPkgContent = await fetchFile("package.json");
 
-      // 2. Look up existing stacks, dependencies, and last scan
-      const existingStacks = await stackRepository.findAll();
-
-      const existingDependencies = await stackDependencyRepository.findAll();
-
-      const lastScan = await projectStackScanRepository.findLatestByProjectId(input.projectId);
-
-      // 3. Build DetectStacksWorkflowInputSchema payload
-      const workflowInput = {
-        projectId: input.projectId,
-        repoPackages,
-        existingStacks: existingStacks.map((stack) => {
-          return {
-            id: stack.id,
-            name: stack.name
-          };
-        }),
-        existingDependencies: existingDependencies.map((dep) => {
-          return {
-            npmPackage: dep.npmPackage,
-            stackId: dep.stackId
-          };
-        }),
-        lastScan: lastScan
-          ? {
-              detectedPackages: lastScan.detectedPackages ?? []
-            }
-          : null
-      };
-
-      // 4. Stream workflow execution
-      const agentWorker = context.agentWorker;
-      if (!agentWorker) {
-        throw new Error("agentWorker not configured");
-      }
-
-      // Create a run first, then stream events with the runId
-      const createRunRes = await agentWorker.fetch(
-        `/api/workflows/detect-stacks-workflow/create-run`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({})
-        }
-      );
-
-      if (!createRunRes.ok) {
-        const body = await createRunRes.text();
-        throw new Error(`Workflow create-run returned ${createRunRes.status}: ${body}`);
-      }
-
-      const { runId } = (await createRunRes.json()) as { runId: string };
-
-      // Start streaming — this keeps the connection open while the workflow runs
-      const upstream = await agentWorker.fetch(
-        `/api/workflows/detect-stacks-workflow/stream?runId=${encodeURIComponent(runId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inputData: workflowInput })
-        }
-      );
-
-      if (!upstream.ok || !upstream.body) {
-        const body = await upstream.text();
-        throw new Error(`Workflow stream returned ${upstream.status}: ${body}`);
-      }
-
-      // Parse raw JSON event stream from agent worker and yield each event.
-      // The workflow stream sends raw concatenated JSON objects (NOT SSE).
-      const reader = upstream.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          // Events are raw concatenated JSON — find complete objects
-          let depth = 0;
-          let start = -1;
-          for (let i = 0; i < buffer.length; i++) {
-            if (buffer[i] === "{") {
-              if (depth === 0) start = i;
-              depth++;
-            } else if (buffer[i] === "}") {
-              depth--;
-              if (depth === 0 && start >= 0) {
-                try {
-                  const event = JSON.parse(buffer.slice(start, i + 1));
-                  yield event;
-                } catch {
-                  // Ignore malformed JSON
-                }
-                start = -1;
+            // Only try workspace yaml if package.json was found
+            let workspaceYamlContent: string | null = null;
+            let workspacePkgContents: Array<{ workspace: string; content: string }> = [];
+            if (rootPkgContent) {
+              workspaceYamlContent = await fetchFile("pnpm-workspace.yaml");
+              if (workspaceYamlContent) {
+                workspacePkgContents = await resolveWorkspacePackageJsons(
+                  workspaceYamlContent,
+                  repoSlug,
+                  defaultBranch,
+                  context
+                );
               }
             }
-          }
 
-          if (start >= 0) {
-            buffer = buffer.slice(start);
-          } else {
-            buffer = "";
-          }
+            return {
+              repo: repoUrl,
+              rootPkgContent,
+              workspaceYamlContent,
+              workspacePkgContents
+            };
+          })
+        );
+
+        const reposWithPackageJson = repoPackages.filter((r) => r.rootPkgContent != null);
+        if (reposWithPackageJson.length === 0) {
+          throw new ORPCError("BAD_REQUEST", {
+            message:
+              "Could not read package.json from any selected repository (GitHub 401/404). " +
+              "Sign out and sign back in with GitHub so the server can refresh your OAuth token " +
+              "(private repos need a valid owner OAuth session; tokens never leave the server)."
+          });
         }
 
-        // Flush remaining buffer — may contain a final event
-        if (buffer.trim().length > 0) {
-          try {
-            const event = JSON.parse(buffer);
-            yield event;
-          } catch {
-            // Ignore malformed trailing data
-          }
+        // 2. Look up existing stacks, dependencies, and last scan
+        const existingStacks = await stackRepository.findAll();
+
+        const existingDependencies = await stackDependencyRepository.findAll();
+
+        // New (unsaved) projects pass an empty projectId — skip scan lookup.
+        const lastScan =
+          input.projectId.length > 0
+            ? await projectStackScanRepository.findLatestByProjectId(input.projectId)
+            : null;
+
+        // 3. Build DetectStacksWorkflowInputSchema payload
+        const workflowInput = {
+          projectId: input.projectId || "draft",
+          repoPackages,
+          existingStacks: existingStacks.map((stack) => {
+            return {
+              id: stack.id,
+              name: stack.name
+            };
+          }),
+          existingDependencies: existingDependencies.map((dep) => {
+            return {
+              npmPackage: dep.npmPackage,
+              stackId: dep.stackId
+            };
+          }),
+          lastScan: lastScan
+            ? {
+                detectedPackages: lastScan.detectedPackages ?? []
+              }
+            : null
+        };
+
+        // 4. Stream workflow execution
+        const agentWorker = context.agentWorker;
+        if (!agentWorker) {
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: "Agent worker is not configured. Set AGENT_WORKER_URL and restart the server."
+          });
         }
-      } finally {
-        reader.releaseLock();
+
+        // Create a run first, then stream events with the runId
+        let createRunRes: Response;
+        try {
+          createRunRes = await agentWorker.fetch(
+            `/api/workflows/detect-stacks-workflow/create-run`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({})
+            }
+          );
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: `Cannot reach agent worker (create-run): ${detail}`
+          });
+        }
+
+        if (!createRunRes.ok) {
+          const body = await createRunRes.text();
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: `Workflow create-run returned ${createRunRes.status}: ${body.slice(0, 300)}`
+          });
+        }
+
+        const { runId } = (await createRunRes.json()) as { runId: string };
+
+        // Start streaming — this keeps the connection open while the workflow runs
+        let upstream: Response;
+        try {
+          upstream = await agentWorker.fetch(
+            `/api/workflows/detect-stacks-workflow/stream?runId=${encodeURIComponent(runId)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ inputData: workflowInput })
+            }
+          );
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: `Cannot reach agent worker (stream): ${detail}`
+          });
+        }
+
+        if (!upstream.ok || !upstream.body) {
+          const body = await upstream.text();
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: `Workflow stream returned ${upstream.status}: ${body.slice(0, 300)}`
+          });
+        }
+
+        // Parse raw JSON event stream from agent worker and yield each event.
+        // Prefer for-await over yield* so oRPC always sees plain object yields.
+        for await (const event of parseConcatenatedJsonStream(upstream.body)) {
+          yield event;
+        }
+      } catch (error) {
+        if (error instanceof ORPCError) throw error;
+        const message = error instanceof Error ? error.message : String(error);
+        const cause =
+          error instanceof Error && error.cause instanceof Error
+            ? error.cause.message
+            : error instanceof Error && error.cause != null
+              ? typeof error.cause === "string"
+                ? error.cause
+                : JSON.stringify(error.cause)
+              : null;
+        context.logger.error(error instanceof Error ? error : message);
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: cause ? `${message}\nCaused by: ${cause}` : message || "Stack detection failed"
+        });
       }
     }),
 
@@ -570,63 +669,13 @@ export const agentRouter = {
       }
 
       // Parse raw JSON event stream from agent worker and yield each event.
-      const reader = upstream.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let eventCount = 0;
       let completed = false;
-
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-
-          // Events are raw concatenated JSON — find complete objects
-          let depth = 0;
-          let start = -1;
-          for (let i = 0; i < buffer.length; i++) {
-            if (buffer[i] === "{") {
-              if (depth === 0) start = i;
-              depth++;
-            } else if (buffer[i] === "}") {
-              depth--;
-              if (depth === 0 && start >= 0) {
-                try {
-                  const event = JSON.parse(buffer.slice(start, i + 1));
-                  eventCount++;
-                  yield event;
-                } catch {
-                  // Ignore malformed JSON
-                }
-                start = -1;
-              }
-            }
-          }
-
-          if (start >= 0) {
-            buffer = buffer.slice(start);
-          } else {
-            buffer = "";
-          }
+        for await (const event of parseConcatenatedJsonStream(upstream.body)) {
+          yield event;
         }
-
-        // Flush remaining buffer — may contain a final event
-        if (buffer.trim().length > 0) {
-          try {
-            const event = JSON.parse(buffer);
-            eventCount++;
-            yield event;
-          } catch {
-            // Ignore malformed trailing data
-          }
-        }
-
         completed = true;
       } finally {
-        reader.releaseLock();
-
         // Cancel the workflow if the client disconnected before completion
         if (!completed) {
           try {

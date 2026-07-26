@@ -19,7 +19,6 @@ import { useRefreshOnReturn } from "@/shared/lib/use-refresh-on-return";
 export function GitHubAccessDialog() {
   const prompt = useGitHubAccessPrompt();
 
-  // Use URL search params instead of nuqs (not available in this project)
   const searchParams =
     typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const showOrgSetup = searchParams?.get("show-org-setup") === "true";
@@ -40,8 +39,8 @@ export function GitHubAccessDialog() {
 
   const title = prompt?.repo ? `Configure access for ${prompt.repo}` : "GitHub access";
   const description = prompt?.repo
-    ? "The portfolio needs access to this repository. Configure your GitHub setup below."
-    : "Configure the accounts this portfolio can access.";
+    ? "The portfolio needs access to this repository. Sign in with GitHub so the server can use your OAuth token."
+    : "GitHub access uses your signed-in OAuth token (not a classic PAT).";
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -54,13 +53,13 @@ export function GitHubAccessDialog() {
         <div className="px-5 pb-5">
           <div className="rounded-xl border border-white/10 px-4 py-8">
             <p className="text-center text-sm text-muted-foreground">
-              GitHub access is managed from the{" "}
+              Sign out and sign back in with GitHub if private repos fail with 401, or open{" "}
               <Link
-                to="/dashboard/settings/github"
+                to="/dashboard/settings/account"
                 className="text-accent-foreground hover:underline"
                 onClick={() => handleOpenChange(false)}
               >
-                configuration page
+                Account settings
               </Link>
               .
             </p>
@@ -74,10 +73,10 @@ export function GitHubAccessDialog() {
           <Button
             size="sm"
             render={
-              <Link to="/dashboard/settings/github" onClick={() => handleOpenChange(false)} />
+              <Link to="/dashboard/settings/account" onClick={() => handleOpenChange(false)} />
             }
           >
-            Configure access
+            Account settings
           </Button>
         </DialogFooter>
       </DialogContent>

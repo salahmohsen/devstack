@@ -13,6 +13,11 @@ import { defineConfig } from "vite-plus";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
 
+// FIRST import — patches fs.watch before other modules open FSEvents.
+// Relative path is required here: this is Vite tooling config, not app FSD.
+// oxlint-disable-next-line fsd/no-relative-imports
+import "./vite-emfile-guard";
+
 // Stub out shiki in the Nitro SSR build to prevent bundling all
 // language grammars and the oniguruma WASM binary.
 // See similar fix in diffkit, apps/dashboard/vite.config.ts.
@@ -115,7 +120,44 @@ export default defineConfig({
     __BUILD_SOURCE_COMMIT__: JSON.stringify(ENV_WEB_SERVER.SOURCE_COMMIT)
   },
   server: {
-    port: 3000
+    // Bind IPv4+IPv6. Default "localhost" is often [::1] only on macOS, so
+    // http://127.0.0.1:3000 fails while http://localhost:3000 works.
+    host: true,
+    port: 3000,
+    // Native FSEvents on this monorepo hits EMFILE even with ulimit ~1M
+    // (macOS FSEvents stream limit / pnpm + workspace crawl, not RLIMIT_NOFILE).
+    //
+    // Important: when fsevents is available, useFsEvents defaults true and
+    // SUPERSEDES usePolling. Must set useFsEvents:false for polling to apply.
+    // Opt back into native: VITE_USE_POLLING=0
+    watch: {
+      followSymlinks: false,
+      useFsEvents: process.env.VITE_USE_POLLING === "0",
+      usePolling: process.env.VITE_USE_POLLING !== "0",
+      interval: 400,
+      binaryInterval: 800,
+      ignorePermissionErrors: true,
+      ignored(watchPath: string) {
+        const p = watchPath.replaceAll("\\", "/");
+        return (
+          p.includes("/node_modules/") ||
+          p.endsWith("/node_modules") ||
+          p.includes("/.pnpm/") ||
+          p.includes("/.git/") ||
+          p.includes("/.worktrees/") ||
+          p.includes("/dist/") ||
+          p.includes("/.output/") ||
+          p.includes("/.vinxi/") ||
+          p.includes("/.nitro/") ||
+          p.includes("/.mastra/") ||
+          p.includes("/coverage/") ||
+          p.includes("/.turbo/") ||
+          p.includes("/playwright-report/") ||
+          p.includes("/test-results/") ||
+          p.includes("/apps/agent/.mastra/")
+        );
+      }
+    }
   },
   /**
    * Vite's dev SSR externalization. `rollupConfig.external` inside the

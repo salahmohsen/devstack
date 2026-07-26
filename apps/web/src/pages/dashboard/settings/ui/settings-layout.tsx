@@ -35,13 +35,6 @@ export const SettingsLayout = () => {
           >
             Account
           </TabsTrigger>
-          <TabsTrigger
-            value="github"
-            nativeButton={false}
-            render={<Link to={"/dashboard/settings/github"} />}
-          >
-            Github
-          </TabsTrigger>
         </TabsList>
         <Outlet />
       </Tabs>

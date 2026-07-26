@@ -17,21 +17,18 @@
  * The `github` sub-object carries two Octokits so callers can pick the right
  * one for the auth level they need:
  *
- * - `publicOctokit` is **always anonymous**. It cannot read private repos,
- *   so any public-facing procedure that uses it is structurally incapable of
- *   leaking private data.
- * - `octokit` is the **owner-authenticated** Octokit (the portfolio owner's
- *   PAT from `github_config`). It is used by server-side AI workflows that
- *   need to read the owner's private repos (e.g. the identity refresh
- *   pipeline), and by the new `privateGetXxx` oRPC procedures.
+ * - `publicOctokit` is the **portfolio owner's** server-side OAuth token
+ *   (Better Auth GitHub account + refresh). Used for public homepage/repo
+ *   routes so rate limits are reasonable. The token never leaves the server.
+ * - `privateOctokit` is the **signed-in user's** OAuth token when present,
+ *   otherwise the same owner OAuth source. Used for private repo reads
+ *   (detect-stacks, dashboard tools).
  *
  * # Token safety
  *
- * The owner's GitHub PAT lives in `source.token` and is only ever passed
- * to `createGitHubOctokit` to build `octokit`. It must never be returned
- * by any handler or appear in any response shape. The `publicOctokit` is
- * built without the token, so public procedures cannot leak it even by
- * accident.
+ * Tokens live only in Better Auth `account` rows and in-memory Octokit
+ * instances. They must never be returned by any handler or appear in any
+ * response shape. Visitors only receive already-fetched public data.
  */
 
 import { type Octokit } from "octokit";

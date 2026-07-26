@@ -11,6 +11,36 @@ import {
   type CategorizedEntry
 } from "#@/mastra/workflows/detect-stacks-workflow/utils";
 
+function lowConfidenceFallback(deps: Array<{ name: string; repo: string }>): CategorizedEntry[] {
+  return deps.map((dep) => {
+    return {
+      npmPackage: dep.name,
+      name: dep.name,
+      type: "other",
+      description: null,
+      confidence: "low" as const,
+      repo: dep.repo,
+      relatedPackages: [] as string[],
+      iconSvg: null,
+      stackId: null,
+      existingStackId: null
+    };
+  });
+}
+
+/** Providers used by MODEL_PRESETS.default — extend when presets change. */
+function missingLlmApiKeys(): string[] {
+  const required: Array<{ modelPrefix: string; env: string }> = [
+    { modelPrefix: "deepseek/", env: "DEEPSEEK_API_KEY" },
+    { modelPrefix: "opencode/", env: "OPENCODE_API_KEY" },
+    { modelPrefix: "openai/", env: "OPENAI_API_KEY" }
+  ];
+  // Only flag keys that our configured models actually need.
+  // Currently default preset is deepseek/* only.
+  const needed = required.filter((r) => r.modelPrefix === "deepseek/");
+  return needed.filter((r) => !process.env[r.env]?.trim()).map((r) => r.env);
+}
+
 export const aiCategorize = createStep({
   id: "ai-categorize",
   description: "Uses AI to categorize unknown packages in batches",
@@ -50,24 +80,25 @@ export const aiCategorize = createStep({
       };
     }
 
+    const missingKeys = missingLlmApiKeys();
+    if (missingKeys.length > 0) {
+      // Do not call the model — missing keys fail the whole Mastra agent stream
+      // and abort the workflow instead of letting our per-chunk catch run.
+      console.debug(
+        `[detect-stacks] Skipping AI categorize; missing ${missingKeys.join(", ")}. ` +
+          `Set it in packages/env/.env and restart the agent. Falling back to low-confidence names.`
+      );
+      return {
+        matched,
+        categorized: lowConfidenceFallback(unknown)
+      };
+    }
+
     const agent = params.mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
       return {
         matched,
-        categorized: unknown.map((dep) => {
-          return {
-            npmPackage: dep.name,
-            name: dep.name,
-            type: "other",
-            description: null,
-            confidence: "low" as const,
-            repo: dep.repo,
-            relatedPackages: [],
-            iconSvg: null,
-            stackId: null,
-            existingStackId: null
-          };
-        })
+        categorized: lowConfidenceFallback(unknown)
       };
     }
 
@@ -194,36 +225,16 @@ For each package:
         // Fallback for missing packages (LLM didn't return them)
         for (const dep of chunk) {
           if (!returnedPackages.has(dep.name)) {
-            categorized.push({
-              npmPackage: dep.name,
-              name: dep.name,
-              type: "other",
-              description: null,
-              confidence: "low",
-              repo: dep.repo,
-              relatedPackages: [],
-              iconSvg: null,
-              stackId: null,
-              existingStackId: null
-            });
+            categorized.push(...lowConfidenceFallback([dep]));
             usedNames.add(dep.name);
           }
         }
-      } catch {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.debug(`[detect-stacks] AI categorize chunk failed, using fallback: ${message}`);
         // Fallback: all packages in this chunk get low-confidence entries
         for (const dep of chunk) {
-          categorized.push({
-            npmPackage: dep.name,
-            name: dep.name,
-            type: "other",
-            description: null,
-            confidence: "low",
-            repo: dep.repo,
-            relatedPackages: [],
-            iconSvg: null,
-            stackId: null,
-            existingStackId: null
-          });
+          categorized.push(...lowConfidenceFallback([dep]));
           usedNames.add(dep.name);
         }
       }
