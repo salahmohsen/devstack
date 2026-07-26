@@ -429,7 +429,7 @@ export function StacksPage() {
     const displayItems = pendingOrder ?? stacks;
 
     const grid = (
-      <div className="animate-grid grid w-full grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
+      <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 animate-grid">
         {displayItems.map((stack) => (
           <div key={stack.id} className="animate-grid-item">
             <StackItem
