@@ -1,5 +1,6 @@
 "use client";
 
+import { FileTextIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { type ResumeImportDraft } from "@tsu-stack/core";
@@ -13,9 +14,10 @@ import {
   CardHeader,
   CardTitle
 } from "@tsu-stack/ui/components/card";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useExtractResumeMutation } from "@/features/onboarding";
+
+import { AnalyzingProgress } from "@/pages/dashboard/onboarding/ui/analyzing-progress";
 
 export type AnalyzingStepProps = {
   objectKey: string;
@@ -70,38 +72,33 @@ export function AnalyzingStep({ objectKey, filename, onSuccess, onBack }: Analyz
   const isRunning = extractMutation.isPending && !error;
 
   return (
-    <Card className="mx-auto w-full max-w-lg">
-      <CardHeader>
-        <CardTitle>Analyzing resume</CardTitle>
-        <CardDescription>
-          Extracting profile, experiences, projects, and skills
+    <Card className="mx-auto w-full max-w-lg border-border/80 shadow-xs/5">
+      <CardHeader className="gap-1 border-b border-border/60 pb-4">
+        <CardTitle className="text-base sm:text-lg">Working through your resume</CardTitle>
+        <CardDescription className="flex flex-wrap items-center gap-2">
           {filename ? (
-            <>
-              {" "}
-              from <span className="font-medium text-foreground">{filename}</span>
-            </>
-          ) : null}
-          .
+            <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border bg-muted/40 px-2 py-0.5 text-xs text-foreground">
+              <FileTextIcon className="size-3 shrink-0" aria-hidden />
+              <span className="truncate">{filename}</span>
+            </span>
+          ) : (
+            "Extracting profile, experiences, projects, and skills"
+          )}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-col items-center gap-4 py-8">
-        {isRunning ? (
-          <>
-            <Spinner className="size-8" />
-            <p className="text-sm text-muted-foreground">{stepLabel ?? "Working…"}</p>
-          </>
-        ) : null}
-
+      <CardContent className="flex flex-col gap-2 py-6">
         {error ? (
-          <Alert variant="error" className="w-full">
+          <Alert variant="error" className="w-full" role="alert">
             <AlertTitle>Analysis failed</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        ) : null}
+        ) : (
+          <AnalyzingProgress stepLabel={stepLabel} isRunning={isRunning} />
+        )}
       </CardContent>
 
-      <CardFooter className="flex flex-wrap justify-between gap-2">
+      <CardFooter className="flex flex-wrap justify-between gap-2 border-t border-border/60 pt-4">
         <Button type="button" variant="ghost" onClick={onBack} disabled={isRunning}>
           Back
         </Button>
@@ -114,7 +111,7 @@ export function AnalyzingStep({ objectKey, filename, onSuccess, onBack }: Analyz
               void runExtract();
             }}
           >
-            Retry
+            Retry analysis
           </Button>
         ) : null}
       </CardFooter>

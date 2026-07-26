@@ -11,6 +11,7 @@ import {
   type ResumeImportStackDraft
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
+import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Card,
@@ -20,6 +21,7 @@ import {
   CardTitle
 } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/components/empty";
 import { Field, FieldLabel } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Label } from "@tsu-stack/ui/components/label";
@@ -46,9 +48,51 @@ export type ReviewStepProps = {
   objectKey: string | null;
   onDraftChange: (draft: ResumeImportDraft) => void;
   onBack: () => void;
-  onApplied: () => void;
+  onApplied: (summary: { experiences: number; projects: number; stacks: number }) => void;
   onDiscarded: () => void;
 };
+
+function TabCount({ value }: { value: number }) {
+  return (
+    <Badge
+      variant="secondary"
+      className="ms-1.5 h-5 min-w-5 justify-center px-1.5 text-[10px] font-medium tabular-nums"
+    >
+      {value}
+    </Badge>
+  );
+}
+
+function SectionToolbar({
+  label,
+  total,
+  selected,
+  onSelectAll,
+  onSelectNone
+}: {
+  label: string;
+  total: number;
+  selected: number;
+  onSelectAll: () => void;
+  onSelectNone: () => void;
+}) {
+  if (total === 0) return null;
+  return (
+    <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-muted-foreground">
+        {selected} of {total} {label} selected
+      </p>
+      <div className="flex gap-1">
+        <Button type="button" size="xs" variant="ghost" onClick={onSelectAll}>
+          Select all
+        </Button>
+        <Button type="button" size="xs" variant="ghost" onClick={onSelectNone}>
+          Select none
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function PortfolioToggle({
   checked,
@@ -87,8 +131,10 @@ function SelectionRow({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-xl border p-4",
-        selected ? "border-border bg-background" : "border-border/60 bg-muted/20 opacity-80"
+        "flex flex-col gap-3 rounded-xl border p-4 transition-[border-color,background-color,opacity] duration-150 ease-out motion-reduce:transition-none",
+        selected
+          ? "border-border/90 bg-card shadow-xs/5"
+          : "border-border/50 bg-muted/15 opacity-75"
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -223,15 +269,58 @@ export function ReviewStep({
     );
   };
 
+  const setAllSelected = (kind: "experiences" | "projects" | "stacks", selected: boolean) => {
+    if (kind === "experiences") {
+      onDraftChange({
+        ...draft,
+        experiences: draft.experiences.map((e) => {
+          return {
+            ...e,
+            selected,
+            ...(selected ? {} : { includedInPortfolio: false })
+          };
+        })
+      });
+      return;
+    }
+    if (kind === "projects") {
+      onDraftChange({
+        ...draft,
+        projects: draft.projects.map((p) => {
+          return {
+            ...p,
+            selected,
+            ...(selected ? {} : { includedInPortfolio: false })
+          };
+        })
+      });
+      return;
+    }
+    onDraftChange({
+      ...draft,
+      stacks: draft.stacks.map((s) => {
+        return {
+          ...s,
+          selected,
+          ...(selected ? {} : { includedInPortfolio: false })
+        };
+      })
+    });
+  };
+
   const handleApply = async () => {
     setError(null);
     try {
-      await applyMutation.mutateAsync({
+      const result = await applyMutation.mutateAsync({
         ...draft,
         objectKey: objectKey ?? undefined
       });
       toast.success("Resume import applied");
-      onApplied();
+      onApplied({
+        experiences: result.experiencesCreated,
+        projects: result.projectsCreated,
+        stacks: result.stacksUpserted
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to apply import";
       setError(message);
@@ -254,12 +343,12 @@ export function ReviewStep({
   const warnings = draft.meta?.warnings ?? [];
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 pb-28">
-      <Card>
-        <CardHeader>
-          <CardTitle>Review import</CardTitle>
+    <div className="flex w-full flex-col gap-4 pb-28">
+      <Card className="border-border/80 shadow-xs/5">
+        <CardHeader className="gap-1 border-b border-border/60 pb-4">
+          <CardTitle className="text-base sm:text-lg">Edit extracted data</CardTitle>
           <CardDescription>
-            Edit extracted data, choose what to import, and decide what appears on your portfolio.
+            Choose what to import and what appears on your public portfolio.
             {draft.meta?.sourceFilename ? (
               <>
                 {" "}
@@ -269,7 +358,7 @@ export function ReviewStep({
             ) : null}
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-4 pt-5">
           {warnings.length > 0 ? (
             <Alert variant="warning">
               <AlertTitle>Notes from extract</AlertTitle>
@@ -284,7 +373,7 @@ export function ReviewStep({
           ) : null}
 
           {error ? (
-            <Alert variant="error">
+            <Alert variant="error" role="alert">
               <AlertTitle>Apply failed</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -295,15 +384,15 @@ export function ReviewStep({
               <TabsTab value="profile">Profile</TabsTab>
               <TabsTab value="experiences">
                 Experiences
-                <span className="text-muted-foreground">({counts.experiences})</span>
+                <TabCount value={counts.experiences} />
               </TabsTab>
               <TabsTab value="projects">
                 Projects
-                <span className="text-muted-foreground">({counts.projects})</span>
+                <TabCount value={counts.projects} />
               </TabsTab>
               <TabsTab value="stacks">
                 Stacks
-                <span className="text-muted-foreground">({counts.stacks})</span>
+                <TabCount value={counts.stacks} />
               </TabsTab>
             </TabsList>
 
@@ -396,8 +485,23 @@ export function ReviewStep({
             </TabsPanel>
 
             <TabsPanel value="experiences" className="mt-4 flex flex-col gap-3">
+              <SectionToolbar
+                label="experiences"
+                total={draft.experiences.length}
+                selected={counts.experiences}
+                onSelectAll={() => setAllSelected("experiences", true)}
+                onSelectNone={() => setAllSelected("experiences", false)}
+              />
               {draft.experiences.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No experiences extracted.</p>
+                <Empty className="rounded-xl border border-dashed py-8">
+                  <EmptyHeader>
+                    <EmptyTitle>No experiences extracted</EmptyTitle>
+                    <EmptyDescription>
+                      You can still import projects and stacks, or fill experiences later in the
+                      dashboard.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 draft.experiences.map((exp) => (
                   <SelectionRow
@@ -484,8 +588,22 @@ export function ReviewStep({
             </TabsPanel>
 
             <TabsPanel value="projects" className="mt-4 flex flex-col gap-3">
+              <SectionToolbar
+                label="projects"
+                total={draft.projects.length}
+                selected={counts.projects}
+                onSelectAll={() => setAllSelected("projects", true)}
+                onSelectNone={() => setAllSelected("projects", false)}
+              />
               {draft.projects.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No projects extracted.</p>
+                <Empty className="rounded-xl border border-dashed py-8">
+                  <EmptyHeader>
+                    <EmptyTitle>No projects extracted</EmptyTitle>
+                    <EmptyDescription>
+                      Personal or work projects can be added later from the Projects page.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 draft.projects.map((project) => (
                   <SelectionRow
@@ -587,8 +705,22 @@ export function ReviewStep({
             </TabsPanel>
 
             <TabsPanel value="stacks" className="mt-4 flex flex-col gap-3">
+              <SectionToolbar
+                label="stacks"
+                total={draft.stacks.length}
+                selected={counts.stacks}
+                onSelectAll={() => setAllSelected("stacks", true)}
+                onSelectNone={() => setAllSelected("stacks", false)}
+              />
               {draft.stacks.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No stacks extracted.</p>
+                <Empty className="rounded-xl border border-dashed py-8">
+                  <EmptyHeader>
+                    <EmptyTitle>No stacks extracted</EmptyTitle>
+                    <EmptyDescription>
+                      Skills and tools can be added or detected from GitHub later.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               ) : (
                 draft.stacks.map((stack, index) => (
                   <SelectionRow
@@ -637,11 +769,21 @@ export function ReviewStep({
         </CardContent>
       </Card>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/80 bg-background/95 shadow-[0_-8px_24px_-12px] shadow-black/10 backdrop-blur supports-backdrop-filter:bg-background/85">
         <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            Importing {counts.experiences} exp · {counts.projects} projects · {counts.stacks} stacks
-          </p>
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-sm font-medium text-foreground">
+              Ready to import{" "}
+              <span className="text-muted-foreground tabular-nums">
+                {counts.experiences + counts.projects + counts.stacks}
+              </span>{" "}
+              items
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {counts.experiences} exp · {counts.projects} projects · {counts.stacks} stacks ·
+              portfolio flags respected
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"

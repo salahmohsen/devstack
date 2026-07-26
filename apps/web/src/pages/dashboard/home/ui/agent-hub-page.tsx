@@ -24,13 +24,13 @@ function OnboardingSoftCta() {
   }
 
   return (
-    <Alert variant="info" className="shrink-0 rounded-none border-x-0 border-t-0">
+    <Alert variant="info" className="shrink-0 rounded-none border-x-0 border-t-0 bg-primary/4">
       <FileUpIcon />
       <AlertTitle>Set up your portfolio from a resume</AlertTitle>
       <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          Upload a PDF resume to import profile, experiences, projects, and stacks — or skip and
-          fill things in manually.
+        <span className="max-w-2xl text-pretty">
+          Upload a PDF once — we extract profile, experiences, projects, and stacks. You review
+          everything before it goes live.
         </span>
         <span className="flex shrink-0 flex-wrap gap-2" data-slot="alert-action">
           <Button size="sm" render={<Link to="/dashboard/onboarding" />}>
