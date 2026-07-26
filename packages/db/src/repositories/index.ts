@@ -4,6 +4,13 @@ export { experienceRepository } from "./experience.repository.ts";
 export { githubCacheRepository, type DbExecutor } from "./github-cache.repository.ts";
 export { githubConfigRepository } from "./github-config.repository.ts";
 export {
+  applyOnboardingDraft,
+  OnboardingApplyError,
+  type OnboardingApplyErrorCode,
+  type OnboardingApplyInput,
+  type OnboardingApplyResult
+} from "./onboarding-apply.repository.ts";
+export {
   portfolioEntryRepository,
   type PortfolioEntryEntity
 } from "./portfolio-entry.repository.ts";
