@@ -53,6 +53,20 @@ else
   export WATCHPACK_POLLING=true
 fi
 
+# Preload EMFILE guard for web (and any Node child) before ESM binds fs.watch.
+# apps/web/package.json also sets this; export here so `pnpm -r --parallel dev`
+# children inherit a raised limit + early patch.
+_EMFILE_GUARD="$ROOT/apps/web/vite-emfile-guard.cjs"
+if [ -f "$_EMFILE_GUARD" ]; then
+  case "${NODE_OPTIONS:-}" in
+    *vite-emfile-guard*) ;;
+    *)
+      export NODE_OPTIONS="--require ${_EMFILE_GUARD}${NODE_OPTIONS:+ ${NODE_OPTIONS}}"
+      info "NODE_OPTIONS EMFILE preload: ${_EMFILE_GUARD}"
+      ;;
+  esac
+fi
+
 # ─── Preflight ────────────────────────────────────────────────────
 command -v docker >/dev/null 2>&1 || fail "Docker is not installed"
 docker info >/dev/null 2>&1 || fail "Docker daemon is not running"

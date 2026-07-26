@@ -1,5 +1,7 @@
 /**
- * Side-effect module loaded first from vite.config.ts.
+ * ESM side-effect import from vite.config.ts (belt-and-suspenders).
+ * Prefer CJS preload via package.json / NODE_OPTIONS — that runs before
+ * any ESM module can bind a stale `watch` export.
  *
  * On this monorepo, native FSEvents / fs.watch can hit EMFILE. An unhandled
  * 'error' on FSWatcher kills Node. We attach error handlers on fs.watch and
@@ -25,7 +27,9 @@ function isWatchEmfile(err: unknown): boolean {
   const e = err as NodeJS.ErrnoException;
   return (
     (e.code === "EMFILE" || e.code === "ENOSPC") &&
-    (e.syscall === "watch" || /too many open files, watch/i.test(String(e.message)))
+    (e.syscall === "watch" ||
+      /too many open files.*watch/i.test(String(e.message)) ||
+      /watch/i.test(String(e.message)))
   );
 }
 
@@ -35,48 +39,72 @@ if (forcePolling) {
   process.env.WATCHPACK_POLLING = "true";
 }
 
-// Overload surface of fs.watch is awkward; keep the patch untyped at the edge.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const originalWatch = (fs.watch as any).bind(fs) as (...args: unknown[]) => fs.FSWatcher;
+// Skip double-patch if CJS preload already installed the wrapper
+const alreadyPatched = Boolean((fs.watch as { __emfilePatched?: boolean }).__emfilePatched);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(fs as any).watch = function patchedWatch(
-  filename: fs.PathLike,
-  options?: unknown,
-  listener?: unknown
-): fs.FSWatcher {
-  try {
-    const watcher =
-      typeof options === "function"
-        ? originalWatch(filename, options)
-        : listener !== undefined
-          ? originalWatch(filename, options, listener)
-          : originalWatch(filename, options);
+if (!alreadyPatched) {
+  // Overload surface of fs.watch is awkward; keep the patch untyped at the edge.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const originalWatch = (fs as any).watch.bind(fs) as (...args: unknown[]) => fs.FSWatcher;
 
-    watcher.on("error", (err: NodeJS.ErrnoException) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const patched = function patchedWatch(
+    filename: fs.PathLike,
+    options?: unknown,
+    listener?: unknown
+  ): fs.FSWatcher {
+    try {
+      const watcher =
+        typeof options === "function"
+          ? originalWatch(filename, options)
+          : listener !== undefined
+            ? originalWatch(filename, options, listener)
+            : originalWatch(filename, options);
+
+      watcher.on("error", (err: NodeJS.ErrnoException) => {
+        if (isWatchEmfile(err)) {
+          // eslint-disable-next-line no-console
+          console.warn(`[fs.watch] ${err.code} (ignored):`, String(filename));
+          try {
+            watcher.close();
+          } catch {
+            // ignore
+          }
+          return;
+        }
+        // eslint-disable-next-line no-console
+        console.warn(`[fs.watch] error:`, String(filename), err);
+      });
+
+      return watcher;
+    } catch (err) {
       if (isWatchEmfile(err)) {
         // eslint-disable-next-line no-console
-        console.warn(`[fs.watch] ${err.code} (ignored):`, String(filename));
-        return;
+        console.warn(`[fs.watch] EMFILE failed (stubbed):`, String(filename));
+        const stub = new EventEmitter() as unknown as fs.FSWatcher;
+        stub.close = () => undefined;
+        stub.ref = () => stub;
+        stub.unref = () => stub;
+        return stub;
       }
-      // eslint-disable-next-line no-console
-      console.warn(`[fs.watch] error:`, String(filename), err);
-    });
+      throw err;
+    }
+  };
+  (patched as { __emfilePatched?: boolean }).__emfilePatched = true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (fs as any).watch = patched;
 
-    return watcher;
-  } catch (err) {
+  process.on("uncaughtException", (err) => {
     if (isWatchEmfile(err)) {
       // eslint-disable-next-line no-console
-      console.warn(`[fs.watch] EMFILE failed (stubbed):`, String(filename));
-      const stub = new EventEmitter() as unknown as fs.FSWatcher;
-      stub.close = () => undefined;
-      stub.ref = () => stub;
-      stub.unref = () => stub;
-      return stub;
+      console.warn("[watch-emfile] swallowed uncaughtException:", err.message);
+      return;
     }
-    throw err;
-  }
-};
+    // eslint-disable-next-line no-console
+    console.error(err);
+    process.exit(1);
+  });
+}
 
 // eslint-disable-next-line no-console
 console.info(

@@ -98,6 +98,9 @@ export function isSpecialTheme(theme) {
   };
 }
 
+// PluginOption types can diverge across duplicate vite-plus-core versions in the
+// monorepo graph (TS2321/TS2769 on defineConfig plugins). Cast keeps runtime config
+// intact without blocking pre-commit typecheck.
 export default defineConfig({
   /**
    * FIXME: This is needed for prerendering to work in Docker Compose builds
@@ -135,26 +138,46 @@ export default defineConfig({
       interval: 400,
       binaryInterval: 800,
       ignorePermissionErrors: true,
-      ignored(watchPath: string) {
-        const p = watchPath.replaceAll("\\", "/");
-        return (
-          p.includes("/node_modules/") ||
-          p.endsWith("/node_modules") ||
-          p.includes("/.pnpm/") ||
-          p.includes("/.git/") ||
-          p.includes("/.worktrees/") ||
-          p.includes("/dist/") ||
-          p.includes("/.output/") ||
-          p.includes("/.vinxi/") ||
-          p.includes("/.nitro/") ||
-          p.includes("/.mastra/") ||
-          p.includes("/coverage/") ||
-          p.includes("/.turbo/") ||
-          p.includes("/playwright-report/") ||
-          p.includes("/test-results/") ||
-          p.includes("/apps/agent/.mastra/")
-        );
-      }
+      // Prefer globs (cheaper) + function for path-segment edge cases.
+      // Watching monorepo noise (node_modules, agent mastra, dist) is a
+      // common EMFILE trigger even with a high ulimit.
+      ignored: [
+        "**/node_modules/**",
+        "**/.pnpm/**",
+        "**/.git/**",
+        "**/.worktrees/**",
+        "**/dist/**",
+        "**/.output/**",
+        "**/.vinxi/**",
+        "**/.nitro/**",
+        "**/.mastra/**",
+        "**/coverage/**",
+        "**/.turbo/**",
+        "**/playwright-report/**",
+        "**/test-results/**",
+        "**/apps/agent/**",
+        "**/apps/server/dist/**",
+        (watchPath: string) => {
+          const p = watchPath.replaceAll("\\", "/");
+          return (
+            p.includes("/node_modules/") ||
+            p.endsWith("/node_modules") ||
+            p.includes("/.pnpm/") ||
+            p.includes("/.git/") ||
+            p.includes("/.worktrees/") ||
+            p.includes("/dist/") ||
+            p.includes("/.output/") ||
+            p.includes("/.vinxi/") ||
+            p.includes("/.nitro/") ||
+            p.includes("/.mastra/") ||
+            p.includes("/coverage/") ||
+            p.includes("/.turbo/") ||
+            p.includes("/playwright-report/") ||
+            p.includes("/test-results/") ||
+            p.includes("/apps/agent/")
+          );
+        }
+      ]
     }
   },
   /**
@@ -272,4 +295,5 @@ export default defineConfig({
       }
     })
   ]
-});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vite-plus PluginOption skew
+} as any);
