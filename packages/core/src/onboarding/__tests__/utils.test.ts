@@ -119,6 +119,21 @@ describe("assignClientIds", () => {
     );
     expect(result[1]?.clientId).not.toBe(result[2]?.clientId);
   });
+
+  it("reassigns whitespace-only clientIds", () => {
+    const result = assignClientIds([
+      { title: "A", clientId: "   " },
+      { title: "B", clientId: "\t" }
+    ]);
+
+    expect(result[0]?.clientId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+    expect(result[1]?.clientId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+    expect(result[0]?.clientId).not.toBe(result[1]?.clientId);
+  });
 });
 
 describe("withContactDefaultIcons", () => {
@@ -136,5 +151,13 @@ describe("withContactDefaultIcons", () => {
     });
     expect(result[1]?.icon).toBe("FaEnvelopeOpen");
     expect(result[2]?.icon).toBe(CONTACT_TYPE_DEFAULT_ICONS.x);
+  });
+
+  it("falls back to website icon for unknown contact types", () => {
+    const result = withContactDefaultIcons([
+      { type: "unknown-social", value: "https://example.com/me" }
+    ]);
+
+    expect(result[0]?.icon).toBe(CONTACT_TYPE_DEFAULT_ICONS.website);
   });
 });

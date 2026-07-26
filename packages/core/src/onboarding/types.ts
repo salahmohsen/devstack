@@ -12,8 +12,8 @@ export const ResumeImportContactSchema = z.object({
 export type ResumeImportContact = z.infer<typeof ResumeImportContactSchema>;
 
 export const ResumeImportExperienceDraftSchema = z.object({
-  title: z.string(),
-  organization: z.string(),
+  title: z.string().min(1),
+  organization: z.string().min(1),
   description: z.string(),
   fromDate: z.string().nullable().optional(),
   toDate: z.string().nullable().optional(),
@@ -26,7 +26,7 @@ export const ResumeImportExperienceDraftSchema = z.object({
 export type ResumeImportExperienceDraft = z.infer<typeof ResumeImportExperienceDraftSchema>;
 
 export const ResumeImportProjectDraftSchema = z.object({
-  title: z.string(),
+  title: z.string().min(1),
   year: z.number().int(),
   summary: z.string(),
   description: z.string(),
@@ -59,8 +59,11 @@ export type ResumeImportDraftMeta = z.infer<typeof ResumeImportDraftMetaSchema>;
 export const ResumeImportProfileDraftSchema = z.object({
   /** Required after normalize; Apply enforces min length 2. */
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
-  /** Omit/empty → keep existing user.email on Apply. */
-  email: z.string().trim().nullable().optional(),
+  /**
+   * Omit / empty string / null → keep existing user.email on Apply.
+   * Non-empty values must be a valid email.
+   */
+  email: z.union([z.literal(""), z.email(), z.null()]).optional(),
   summary: z.string().nullable().optional(),
   /**
    * Omit, undefined, or `[]` → contact merge no-op (leave existing contacts).

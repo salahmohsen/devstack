@@ -44,15 +44,16 @@ export function resolveResumeSourceObjectKey(objectKey: string, userId: string):
   const fullPrefix = `${uid}/${RESUME_SOURCE_KEY_PREFIX}`;
 
   if (key.startsWith(RESUME_SOURCE_KEY_PREFIX)) {
-    // Relative form: resume-sources/...
-    if (key === RESUME_SOURCE_KEY_PREFIX.slice(0, -1) || key === RESUME_SOURCE_KEY_PREFIX) {
+    // Relative form: resume-sources/... (prefix-only keys have no object name)
+    if (key === RESUME_SOURCE_KEY_PREFIX) {
       return null;
     }
     return `${uid}/${key}`;
   }
 
   if (key.startsWith(fullPrefix)) {
-    if (key === fullPrefix || key === fullPrefix.slice(0, -1)) {
+    // Full form under this user; reject prefix-only (no object name)
+    if (key === fullPrefix) {
       return null;
     }
     return key;
