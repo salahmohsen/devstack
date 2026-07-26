@@ -36,5 +36,14 @@ export const userRepository = {
 
     if (!updated) return null;
     return userRepository.findById(id);
+  },
+
+  async setOnboardingCompletedAt(id: string, at: Date | null): Promise<UserSchemaSelect | null> {
+    const [updated] = await getDb()
+      .update(user)
+      .set({ onboardingCompletedAt: at })
+      .where(eq(user.id, id))
+      .returning();
+    return updated ?? null;
   }
 };

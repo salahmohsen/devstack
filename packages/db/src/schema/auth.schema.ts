@@ -13,7 +13,8 @@ export const user = pgTable("user", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   summary: text("summary").default(""),
-  phone: text("phone")
+  phone: text("phone"),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true })
 });
 
 export const session = pgTable(
