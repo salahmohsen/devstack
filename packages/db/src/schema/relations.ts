@@ -81,6 +81,22 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         from: r.projectStackScan.projectId,
         to: r.project.id
       })
+    },
+    invite: {
+      createdBy: r.one.user({
+        from: r.invite.createdByUserId,
+        to: r.user.id
+      }),
+      usedBy: r.one.user({
+        from: r.invite.usedByUserId,
+        to: r.user.id
+      })
+    },
+    profileSlugAlias: {
+      user: r.one.user({
+        from: r.profileSlugAlias.userId,
+        to: r.user.id
+      })
     }
   };
 });
