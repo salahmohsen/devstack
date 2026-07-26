@@ -15,6 +15,11 @@ import {
 } from "@tsu-stack/github";
 
 import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
+import {
+  abortPromise,
+  cancelMastraWorkflowRun,
+  streamMastraWorkflow
+} from "#@/lib/agent/workflow-stream";
 import { ownerProcedure, protectedProcedure } from "#@/lib/procedures/factory";
 
 // Parse GitHub URL to owner/repo format
@@ -417,6 +422,49 @@ export const agentRouter = {
     }),
 
   /**
+   * Explicitly cancel a Mastra workflow run by id.
+   * Prefer this from the client in addition to aborting the event stream —
+   * request disconnect alone is not always enough to stop in-flight steps.
+   */
+  cancelWorkflowRun: ownerProcedure
+    .route({
+      description: "Cancel a Mastra workflow run (POST .../runs/:runId/cancel)",
+      method: "POST"
+    })
+    .input(
+      z.object({
+        workflowId: z.string().min(1),
+        runId: z.string().min(1)
+      })
+    )
+    .output(
+      z.object({
+        success: z.boolean(),
+        status: z.number(),
+        detail: z.string().optional()
+      })
+    )
+    .handler(async ({ input, context }) => {
+      const agentWorker = context.agentWorker;
+      if (!agentWorker) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Agent worker is not configured. Set AGENT_WORKER_URL and restart the server."
+        });
+      }
+      const result = await cancelMastraWorkflowRun(
+        agentWorker,
+        input.workflowId,
+        input.runId,
+        context.logger
+      );
+      return {
+        success: result.ok,
+        status: result.status,
+        detail: result.ok ? undefined : result.body
+      };
+    }),
+
+  /**
    * Detect stacks from project repos via Mastra workflow.
    * Streams workflow events for progress tracking.
    */
@@ -426,54 +474,81 @@ export const agentRouter = {
       method: "POST"
     })
     .input(DetectStacksClientInputSchema)
-    .handler(async function* ({ input, context }) {
+    .handler(async function* ({ input, context, signal }) {
       try {
-        // 1. Pre-fetch package.json from each repo
-        const repoPackages = await Promise.all(
-          input.repos.map(async (repoUrl: string) => {
-            const repoSlug = parseGitHubRepo(repoUrl);
+        if (signal?.aborted) return;
 
-            // Detect default branch (private first, then public)
-            const defaultBranch = await getDefaultBranch(repoSlug, context);
+        // Yield immediately so the oRPC event stream is live and client cancel
+        // can close the generator (otherwise cancel waits on GitHub prefetch).
+        yield {
+          type: "workflow-step-start",
+          payload: {
+            stepName: "fetch-repo-package-jsons",
+            id: "fetch-repo-package-jsons",
+            status: "running"
+          }
+        };
 
-            const fetchFile = async (path: string) => {
-              const privateResult = await getPrivateRepoFileContent(
-                { path, ref: defaultBranch, repo: repoSlug },
-                context
-              );
-              if (privateResult !== null) return privateResult;
-              const publicResult = await getRepoFileContent(
-                { path, ref: defaultBranch, repo: repoSlug },
-                context
-              );
-              return publicResult;
-            };
+        if (signal?.aborted) return;
 
-            const rootPkgContent = await fetchFile("package.json");
+        // 1. Pre-fetch package.json from each repo (abortable)
+        const repoPackages = await Promise.race([
+          Promise.all(
+            input.repos.map(async (repoUrl: string) => {
+              if (signal?.aborted) {
+                throw new DOMException("Aborted", "AbortError");
+              }
+              const repoSlug = parseGitHubRepo(repoUrl);
 
-            // Only try workspace yaml if package.json was found
-            let workspaceYamlContent: string | null = null;
-            let workspacePkgContents: Array<{ workspace: string; content: string }> = [];
-            if (rootPkgContent) {
-              workspaceYamlContent = await fetchFile("pnpm-workspace.yaml");
-              if (workspaceYamlContent) {
-                workspacePkgContents = await resolveWorkspacePackageJsons(
-                  workspaceYamlContent,
-                  repoSlug,
-                  defaultBranch,
+              // Detect default branch (private first, then public)
+              const defaultBranch = await getDefaultBranch(repoSlug, context);
+
+              if (signal?.aborted) {
+                throw new DOMException("Aborted", "AbortError");
+              }
+
+              const fetchFile = async (path: string) => {
+                const privateResult = await getPrivateRepoFileContent(
+                  { path, ref: defaultBranch, repo: repoSlug },
                   context
                 );
-              }
-            }
+                if (privateResult !== null) return privateResult;
+                const publicResult = await getRepoFileContent(
+                  { path, ref: defaultBranch, repo: repoSlug },
+                  context
+                );
+                return publicResult;
+              };
 
-            return {
-              repo: repoUrl,
-              rootPkgContent,
-              workspaceYamlContent,
-              workspacePkgContents
-            };
-          })
-        );
+              const rootPkgContent = await fetchFile("package.json");
+
+              // Only try workspace yaml if package.json was found
+              let workspaceYamlContent: string | null = null;
+              let workspacePkgContents: Array<{ workspace: string; content: string }> = [];
+              if (rootPkgContent) {
+                workspaceYamlContent = await fetchFile("pnpm-workspace.yaml");
+                if (workspaceYamlContent) {
+                  workspacePkgContents = await resolveWorkspacePackageJsons(
+                    workspaceYamlContent,
+                    repoSlug,
+                    defaultBranch,
+                    context
+                  );
+                }
+              }
+
+              return {
+                repo: repoUrl,
+                rootPkgContent,
+                workspaceYamlContent,
+                workspacePkgContents
+              };
+            })
+          ),
+          abortPromise(signal)
+        ]);
+
+        if (signal?.aborted) return;
 
         const reposWithPackageJson = repoPackages.filter((r) => r.rootPkgContent != null);
         if (reposWithPackageJson.length === 0) {
@@ -519,7 +594,9 @@ export const agentRouter = {
             : null
         };
 
-        // 4. Stream workflow execution
+        if (signal?.aborted) return;
+
+        // 4. Stream workflow execution — cancels Mastra run on client abort
         const agentWorker = context.agentWorker;
         if (!agentWorker) {
           throw new ORPCError("INTERNAL_SERVER_ERROR", {
@@ -527,64 +604,26 @@ export const agentRouter = {
           });
         }
 
-        // Create a run first, then stream events with the runId
-        let createRunRes: Response;
         try {
-          createRunRes = await agentWorker.fetch(
-            `/api/workflows/detect-stacks-workflow/create-run`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({})
-            }
-          );
+          yield* streamMastraWorkflow({
+            agentWorker,
+            workflowId: "detect-stacks-workflow",
+            inputData: workflowInput,
+            signal,
+            parseStream: parseConcatenatedJsonStream,
+            logger: context.logger
+          });
         } catch (error) {
+          if (signal?.aborted) return;
+          if (error instanceof DOMException && error.name === "AbortError") return;
           const detail = error instanceof Error ? error.message : String(error);
           throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: `Cannot reach agent worker (create-run): ${detail}`
+            message: `Cannot reach agent worker: ${detail}`
           });
-        }
-
-        if (!createRunRes.ok) {
-          const body = await createRunRes.text();
-          throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: `Workflow create-run returned ${createRunRes.status}: ${body.slice(0, 300)}`
-          });
-        }
-
-        const { runId } = (await createRunRes.json()) as { runId: string };
-
-        // Start streaming — this keeps the connection open while the workflow runs
-        let upstream: Response;
-        try {
-          upstream = await agentWorker.fetch(
-            `/api/workflows/detect-stacks-workflow/stream?runId=${encodeURIComponent(runId)}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ inputData: workflowInput })
-            }
-          );
-        } catch (error) {
-          const detail = error instanceof Error ? error.message : String(error);
-          throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: `Cannot reach agent worker (stream): ${detail}`
-          });
-        }
-
-        if (!upstream.ok || !upstream.body) {
-          const body = await upstream.text();
-          throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: `Workflow stream returned ${upstream.status}: ${body.slice(0, 300)}`
-          });
-        }
-
-        // Parse raw JSON event stream from agent worker and yield each event.
-        // Prefer for-await over yield* so oRPC always sees plain object yields.
-        for await (const event of parseConcatenatedJsonStream(upstream.body)) {
-          yield event;
         }
       } catch (error) {
+        if (signal?.aborted) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
         if (error instanceof ORPCError) throw error;
         const message = error instanceof Error ? error.message : String(error);
         const cause =
@@ -612,7 +651,7 @@ export const agentRouter = {
       method: "POST"
     })
     .input(z.object({}))
-    .handler(async function* ({ context }) {
+    .handler(async function* ({ context, signal }) {
       // 1. Fetch all existing stacks
       const allStacks = await stackRepository.findAll();
 
@@ -630,62 +669,23 @@ export const agentRouter = {
         })
       };
 
-      // 3. Stream workflow execution
+      // 3. Stream workflow execution — cancels Mastra run on client abort
       const agentWorker = context.agentWorker;
       if (!agentWorker) {
         throw new Error("agentWorker not configured");
       }
 
-      // Create a run first, then stream events with the runId
-      const createRunRes = await agentWorker.fetch(
-        `/api/workflows/organize-stacks-workflow/create-run`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({})
-        }
-      );
-
-      if (!createRunRes.ok) {
-        const body = await createRunRes.text();
-        throw new Error(`Workflow create-run returned ${createRunRes.status}: ${body}`);
+      if (signal?.aborted) {
+        return;
       }
 
-      const { runId } = (await createRunRes.json()) as { runId: string };
-
-      // Start streaming — this keeps the connection open while the workflow runs
-      const upstream = await agentWorker.fetch(
-        `/api/workflows/organize-stacks-workflow/stream?runId=${encodeURIComponent(runId)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inputData: workflowInput })
-        }
-      );
-
-      if (!upstream.ok || !upstream.body) {
-        const body = await upstream.text();
-        throw new Error(`Workflow stream returned ${upstream.status}: ${body}`);
-      }
-
-      // Parse raw JSON event stream from agent worker and yield each event.
-      let completed = false;
-      try {
-        for await (const event of parseConcatenatedJsonStream(upstream.body)) {
-          yield event;
-        }
-        completed = true;
-      } finally {
-        // Cancel the workflow if the client disconnected before completion
-        if (!completed) {
-          try {
-            await agentWorker.fetch(`/api/workflows/organize-stacks-workflow/cancel/${runId}`, {
-              method: "POST"
-            });
-          } catch {
-            // Best-effort cancel — workflow may have already finished
-          }
-        }
-      }
+      yield* streamMastraWorkflow({
+        agentWorker,
+        workflowId: "organize-stacks-workflow",
+        inputData: workflowInput,
+        signal,
+        parseStream: parseConcatenatedJsonStream,
+        logger: context.logger
+      });
     })
 };

@@ -129,7 +129,9 @@ export const OnboardingStatusOutputSchema = z.object({
 export type OnboardingStatusOutput = z.infer<typeof OnboardingStatusOutputSchema>;
 
 /**
- * Reviewed draft + optional session PDF key for post-commit best-effort delete.
+ * Reviewed draft + optional session PDF key. On successful Apply the source is
+ * promoted into the permanent resumes inventory as the new default (then the
+ * temporary `resume-sources/` object is removed).
  *
  * **EMPTY_DRAFT:** same rule as {@link ResumeImportDraftSchema} — reject only when
  * no selected exp/project/stack **and** profile is effectively a no-op.

@@ -17,11 +17,13 @@ import {
   userRepository
 } from "@tsu-stack/db/repositories";
 
+import { streamMastraWorkflow } from "#@/lib/agent/workflow-stream";
 import {
   requireResumeSourceObjectKey,
   ResumeSourceObjectKeyError
 } from "#@/lib/onboarding/object-key";
 import { extractTextFromPdf, PdfTextError } from "#@/lib/onboarding/pdf-text";
+import { promoteResumeSourceToDefault } from "#@/lib/onboarding/promote-resume-source";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 const OnboardingApplyOutputSchema = z.object({
@@ -199,8 +201,10 @@ export const onboardingRouter = {
         status: 422
       }
     })
-    .handler(async function* ({ input, context, errors }) {
+    .handler(async function* ({ input, context, errors, signal }) {
       const userId = context.session.user.id;
+
+      if (signal?.aborted) return;
 
       /** Synthetic step events so the client can progress before the agent stream opens. */
       const emitStep = (stepName: string) => {
@@ -285,6 +289,8 @@ export const onboardingRouter = {
         })
       };
 
+      if (signal?.aborted) return;
+
       const agentWorker = context.agentWorker;
       if (!agentWorker) {
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
@@ -294,55 +300,22 @@ export const onboardingRouter = {
 
       yield emitStep("extract");
 
-      let createRunRes: Response;
+      // Stream resume-import workflow — cancels Mastra run on client abort
       try {
-        createRunRes = await agentWorker.fetch(`/api/workflows/resume-import-workflow/create-run`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({})
+        yield* streamMastraWorkflow({
+          agentWorker,
+          workflowId: "resume-import-workflow",
+          inputData: workflowInput,
+          signal,
+          parseStream: streamWorkflowJsonEvents,
+          logger: context.logger
         });
       } catch (error) {
+        if (signal?.aborted) return;
         const detail = error instanceof Error ? error.message : String(error);
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: `Cannot reach agent worker (create-run): ${detail}`
+          message: `Cannot reach agent worker: ${detail}`
         });
-      }
-
-      if (!createRunRes.ok) {
-        const body = await createRunRes.text();
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: `Workflow create-run returned ${createRunRes.status}: ${body.slice(0, 300)}`
-        });
-      }
-
-      const { runId } = (await createRunRes.json()) as { runId: string };
-
-      let upstream: Response;
-      try {
-        upstream = await agentWorker.fetch(
-          `/api/workflows/resume-import-workflow/stream?runId=${encodeURIComponent(runId)}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ inputData: workflowInput })
-          }
-        );
-      } catch (error) {
-        const detail = error instanceof Error ? error.message : String(error);
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: `Cannot reach agent worker (stream): ${detail}`
-        });
-      }
-
-      if (!upstream.ok || !upstream.body) {
-        const body = await upstream.text();
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: `Workflow stream returned ${upstream.status}: ${body.slice(0, 300)}`
-        });
-      }
-
-      for await (const event of streamWorkflowJsonEvents(upstream.body)) {
-        yield event;
       }
     }),
 
@@ -393,7 +366,22 @@ export const onboardingRouter = {
         });
       }
 
-      await bestEffortDeleteResumeSource(context.mediaBucket, objectKey, userId);
+      // Store the uploaded PDF as the default resume (permanent inventory).
+      // Draft apply already succeeded — promote is best-effort so a storage
+      // failure does not undo onboarding completion. On failure, leave the
+      // session source in place rather than deleting the only remaining copy.
+      if (objectKey) {
+        try {
+          await promoteResumeSourceToDefault({
+            mediaBucket: context.mediaBucket,
+            userId,
+            objectKey,
+            filename: draft.meta?.sourceFilename
+          });
+        } catch {
+          // Intentionally no-op: profile data is committed; PDF may remain under resume-sources/.
+        }
+      }
 
       return result;
     }),

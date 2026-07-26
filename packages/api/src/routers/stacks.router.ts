@@ -228,16 +228,39 @@ export const stacksRouter = {
       })
     )
     .output(z.array(z.object({ id: z.string(), name: z.string() })))
-    .handler(async ({ input }) =>
-      stackRepository.batchUpdate(
+    .handler(async ({ input }) => {
+      // Pre-check name uniqueness (same as single update) to avoid 500s on unique index
+      const claimedNames = new Map<string, string>(); // lower(name) → stack id
+      for (const item of input.items) {
+        const name = item.data.name?.trim();
+        if (!name) continue;
+
+        const key = name.toLowerCase();
+        const prior = claimedNames.get(key);
+        if (prior && prior !== item.id) {
+          throw new ORPCError("CONFLICT", {
+            message: `Duplicate name in batch: "${name}".`
+          });
+        }
+        claimedNames.set(key, item.id);
+
+        const existing = await stackRepository.findByName(name);
+        if (existing && existing.id !== item.id) {
+          throw new ORPCError("CONFLICT", {
+            message: `A stack with the name "${name}" already exists.`
+          });
+        }
+      }
+
+      return stackRepository.batchUpdate(
         input.items.map((item) => {
           return {
             id: item.id,
             data: item.data
           };
         })
-      )
-    ),
+      );
+    }),
   searchNpm: publicProcedure
     .route({
       description: "Search npm packages by name",
