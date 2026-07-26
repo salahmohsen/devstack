@@ -112,7 +112,7 @@ function SortableRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className="min-w-0">
       {children(dragHandleProps, isDragging)}
     </div>
   );

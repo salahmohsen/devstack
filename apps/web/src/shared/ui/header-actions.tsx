@@ -16,13 +16,14 @@ import {
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator, GroupText } from "@tsu-stack/ui/components/group";
 import { IconMorph, IconShake } from "@tsu-stack/ui/components/icon-motion";
-import { Spinner } from "@tsu-stack/ui/components/spinner";
 import {
   Tooltip,
   TooltipPopup,
   TooltipProvider,
   TooltipTrigger
 } from "@tsu-stack/ui/components/tooltip";
+
+import { DefaultLoader } from "@/shared/ui/default-loader";
 
 type OrganizeConfig = {
   isRunning: boolean;
@@ -138,7 +139,7 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
           {organize?.isRunning ? (
             <Group>
               <GroupText aria-live="polite" className="cursor-default gap-2" role="status">
-                <Spinner />
+                <DefaultLoader size="xs" />
                 <span className="max-w-45 min-w-fit shimmer truncate text-sm font-medium text-foreground">
                   {organize.currentStep ?? "Organizing"}
                 </span>

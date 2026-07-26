@@ -32,6 +32,12 @@
 @utility shimmer {
   --_spread: var(--shimmer-spread, calc(3ch + 40px));
   --_base: currentColor;
+  /*
+   * Single highlight for light + dark (shadcn default).
+   * Do NOT brighten in dark mode: `oklch(... max(0.85, l + 0.45) ...)` with
+   * light text often yields L > 1 (invalid) or a white-on-white band, which
+   * kills the visible sweep. The 20% alpha band works in both themes.
+   */
   --_highlight: var(--shimmer-color, oklch(from currentColor l c h / calc(alpha* 0.2)));
 
   background-image: var(
@@ -52,13 +58,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: var(--shimmer-text-fill, transparent);
   animation: tw-shimmer var(--shimmer-duration, 2s) linear infinite;
-
-  @variant dark {
-    --_highlight: var(
-      --shimmer-color,
-      oklch(from currentColor max(0.8, calc(l + 0.4)) c h / calc(alpha + 0.4))
-    );
-  }
 
   &:where([dir="rtl"], [dir="rtl"] *) {
     animation-direction: reverse;

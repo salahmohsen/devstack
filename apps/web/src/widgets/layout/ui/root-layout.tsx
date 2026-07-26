@@ -70,7 +70,8 @@ export function RootLayout({ children }: PropsWithChildren) {
                   : PUBLIC_SIDE_PANEL_WIDTH
                 : 0
             }}
-            transition={{ type: "spring", stiffness: 400, damping: 35 }}
+            // Slightly softer spring so main content (and grids) can ease width without snapping
+            transition={{ type: "spring", stiffness: 320, damping: 36, mass: 0.85 }}
             className="hidden h-full max-h-[calc(100dvh-var(--navbar-height))] shrink-0 overflow-hidden xl:block"
           >
             <SidePanelSlot

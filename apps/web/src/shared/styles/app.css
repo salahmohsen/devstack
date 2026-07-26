@@ -203,28 +203,33 @@
 /**
  * Animated grid layout — smoothly interpolates `grid-template-columns`
  * when items are added, removed, or the responsive column count changes.
- * Apply to the grid container alongside your grid-cols-* utilities.
+ * Prefer viewport breakpoints (sm/lg/xl) over auto-fill so side-panel
+ * open/close only resizes cards instead of rearranging them.
  */
 @utility animate-grid {
   interpolate-size: allow-keywords;
-  transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    grid-template-columns 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    gap 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /**
- * Animated grid item — transitions all layout-affecting properties so items
- * smoothly resize when columns change and fade+scale in on first render.
- * Entry uses CSS @starting-style for automatic animation on DOM insert.
+ * Animated grid item — transitions layout-affecting properties so items
+ * smoothly resize when the main column width changes (e.g. side panel)
+ * and fade+scale in on first render via @starting-style.
  */
 @utility animate-grid-item {
+  min-width: 0;
   opacity: 1;
   scale: 1;
   translate: 0 0;
   transition:
-    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    scale 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    translate 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    display 0.35s cubic-bezier(0.4, 0, 0.2, 1) allow-discrete;
+    opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    scale 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    translate 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    max-width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    display 0.35s cubic-bezier(0.22, 1, 0.36, 1) allow-discrete;
 
   @starting-style {
     opacity: 0;
