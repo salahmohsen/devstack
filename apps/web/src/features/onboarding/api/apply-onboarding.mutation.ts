@@ -15,9 +15,26 @@ export function useApplyOnboardingMutation() {
   return useMutation(
     orpcQueryClient.onboarding.apply.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: onboardingQueryKeys.status()
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: onboardingQueryKeys.status()
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.profile.get.queryKey()
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.experiences.list.queryKey()
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.projects.list.queryKey()
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.stacks.list.queryKey()
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.portfolio.list.queryKey({ input: {} })
+          })
+        ]);
       }
     })
   );
