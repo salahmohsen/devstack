@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { Archive, House, LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -30,6 +30,7 @@ const themeOptions = [
 
 export function MobileNav() {
   const router = useRouter();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const setupStatusQuery = useGetGithubSetupStatusQuery();
@@ -38,17 +39,21 @@ export function MobileNav() {
   const owner = setupStatusQuery.data?.owner ?? null;
 
   const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onResponse: async () => {
-          await Promise.all([
-            queryClient.invalidateQueries(getAuthUserQueryOptions()),
-            queryClient.invalidateQueries(getGithubSetupStatusQueryOptions())
-          ]);
-          await router.invalidate();
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          credentials: "include"
         }
-      }
-    });
+      });
+    } finally {
+      // Drop cached session immediately (query staleTime is 5m).
+      queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
+      await queryClient.invalidateQueries({
+        queryKey: getGithubSetupStatusQueryOptions().queryKey
+      });
+      await router.invalidate();
+      await navigate({ to: "/" });
+    }
   };
 
   const displayName = user?.name ?? user?.email ?? "GitHub";
@@ -90,6 +95,7 @@ export function MobileNav() {
           render={
             <button
               type="button"
+              aria-label="Open account menu"
               className={cn(
                 "flex flex-1 items-center justify-center py-3 text-accent-foreground transition-colors"
               )}
@@ -102,29 +108,31 @@ export function MobileNav() {
           </Avatar>
         </MenuTrigger>
         <MenuPopup align="end" side="top" className="w-56">
-          <MenuGroupLabel className="flex items-center justify-between">
-            <div>
-              <p>{displayName}</p>
-              <p className="font-normal text-muted-foreground">{user?.email}</p>
-            </div>
-            <div className="flex items-center gap-0.5 rounded-md border border-white/10 p-0.5">
-              {themeOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setTheme(opt.value)}
-                  className={cn(
-                    "flex size-6 items-center justify-center rounded-sm transition-colors",
-                    theme === opt.value ? "bg-white/8" : "hover:text-muted-foreground"
-                  )}
-                  aria-label={opt.label}
-                  title={opt.label}
-                >
-                  <opt.icon size={13} strokeWidth={2} />
-                </button>
-              ))}
-            </div>
-          </MenuGroupLabel>
+          <MenuGroup>
+            <MenuGroupLabel className="flex items-center justify-between">
+              <div>
+                <p>{displayName}</p>
+                <p className="font-normal text-muted-foreground">{user?.email}</p>
+              </div>
+              <div className="flex items-center gap-0.5 rounded-md border border-white/10 p-0.5">
+                {themeOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTheme(opt.value)}
+                    className={cn(
+                      "flex size-6 items-center justify-center rounded-sm transition-colors",
+                      theme === opt.value ? "bg-white/8" : "hover:text-muted-foreground"
+                    )}
+                    aria-label={opt.label}
+                    title={opt.label}
+                  >
+                    <opt.icon size={13} strokeWidth={2} />
+                  </button>
+                ))}
+              </div>
+            </MenuGroupLabel>
+          </MenuGroup>
           <MenuSeparator />
           <MenuGroup>
             {owner ? (
@@ -145,12 +153,22 @@ export function MobileNav() {
               Settings
             </MenuLinkItem>
           </MenuGroup>
-          <MenuSeparator />
           {user ? (
-            <MenuItem onClick={() => void handleSignOut()}>
-              <LogOut className="size-4" />
-              Sign out
-            </MenuItem>
+            <>
+              <MenuSeparator />
+              <MenuGroup>
+                <MenuItem
+                  nativeButton
+                  closeOnClick
+                  onClick={() => {
+                    void handleSignOut();
+                  }}
+                >
+                  <LogOut className="size-4" />
+                  Sign out
+                </MenuItem>
+              </MenuGroup>
+            </>
           ) : null}
         </MenuPopup>
       </Menu>

@@ -12,10 +12,9 @@ const requireAuth = o.middleware(async ({ context, next }) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED");
   }
+  // Merge-only delta: keep agentWorker / mediaBucket from the root context.
   return next({
     context: {
-      github: context.github,
-      logger: context.logger,
       session: context.session
     }
   });
@@ -41,10 +40,9 @@ const requireOwner = o.middleware(async ({ context, next }) => {
       message: "Only the GitHub owner can access this procedure"
     });
   }
+  // Merge-only delta: keep agentWorker / mediaBucket / github from the root context.
   return next({
     context: {
-      github: context.github,
-      logger: context.logger,
       session: context.session
     }
   });

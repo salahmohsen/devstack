@@ -71,17 +71,21 @@ export function Topbar() {
   const owner = setupStatus?.owner ?? null;
 
   const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onResponse: async () => {
-          await Promise.all([
-            queryClient.invalidateQueries(getAuthUserQueryOptions()),
-            queryClient.invalidateQueries(getGithubSetupStatusQueryOptions())
-          ]);
-          await router.invalidate();
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          credentials: "include"
         }
-      }
-    });
+      });
+    } finally {
+      // Drop cached session immediately (query staleTime is 5m; suspense keeps UI mounted).
+      queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
+      await queryClient.invalidateQueries({
+        queryKey: getGithubSetupStatusQueryOptions().queryKey
+      });
+      await router.invalidate();
+      await navigateRef.current({ to: "/" });
+    }
   };
 
   const displayName = admin?.name ?? admin?.email ?? "Guest";
@@ -212,6 +216,7 @@ export function Topbar() {
               render={
                 <button
                   type="button"
+                  aria-label="Open account menu"
                   className="flex size-8 items-center justify-center rounded-full"
                 />
               }
@@ -222,18 +227,20 @@ export function Topbar() {
               </Avatar>
             </MenuTrigger>
             <MenuPopup align="start" className="w-56">
-              <MenuGroupLabel className="flex items-center gap-3 py-2">
-                <Avatar className="size-8 border border-border">
-                  <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-foreground">{displayName}</span>
-                  {owner && (
-                    <span className="text-xs font-normal text-muted-foreground">@{owner}</span>
-                  )}
-                </div>
-              </MenuGroupLabel>
+              <MenuGroup>
+                <MenuGroupLabel className="flex items-center gap-3 py-2">
+                  <Avatar className="size-8 border border-border">
+                    <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
+                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-foreground">{displayName}</span>
+                    {owner && (
+                      <span className="text-xs font-normal text-muted-foreground">@{owner}</span>
+                    )}
+                  </div>
+                </MenuGroupLabel>
+              </MenuGroup>
               <MenuSeparator />
               <MenuGroup>
                 {owner ? (
@@ -269,17 +276,25 @@ export function Topbar() {
                 </MenuLinkItem>
               </MenuGroup>
               <MenuSeparator />
-              {admin ? (
-                <MenuItem onClick={() => void handleSignOut()}>
-                  <LogOut size={16} strokeWidth={2} />
-                  Sign out
-                </MenuItem>
-              ) : (
-                <MenuLinkItem render={<Link to="/sign-in" />}>
-                  <UserCircle size={16} strokeWidth={2} />
-                  Sign in
-                </MenuLinkItem>
-              )}
+              <MenuGroup>
+                {admin ? (
+                  <MenuItem
+                    nativeButton
+                    closeOnClick
+                    onClick={() => {
+                      void handleSignOut();
+                    }}
+                  >
+                    <LogOut size={16} strokeWidth={2} />
+                    Sign out
+                  </MenuItem>
+                ) : (
+                  <MenuLinkItem render={<Link to="/sign-in" />}>
+                    <UserCircle size={16} strokeWidth={2} />
+                    Sign in
+                  </MenuLinkItem>
+                )}
+              </MenuGroup>
             </MenuPopup>
           </Menu>
         </div>

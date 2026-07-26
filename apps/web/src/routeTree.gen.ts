@@ -38,7 +38,6 @@ import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from '.
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
 import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
-import { Route as rootLayout_protectedDashboardSettingsGithubIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/github/index'
 import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -205,12 +204,6 @@ const rootLayout_protectedDashboardSettingsProfileIndexRoute =
     path: '/profile/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
-const rootLayout_protectedDashboardSettingsGithubIndexRoute =
-  rootLayout_protectedDashboardSettingsGithubIndexRouteImport.update({
-    id: '/github/',
-    path: '/github/',
-    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
-  } as any)
 const rootLayout_protectedDashboardSettingsAccountIndexRoute =
   rootLayout_protectedDashboardSettingsAccountIndexRouteImport.update({
     id: '/account/',
@@ -246,7 +239,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
-  '/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRoutesByTo {
@@ -273,7 +265,6 @@ export interface FileRoutesByTo {
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/playground/agent': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
-  '/dashboard/settings/github': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRoutesById {
@@ -307,7 +298,6 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/(root-layout)/__protected/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
-  '/(root-layout)/__protected/dashboard/settings/github/': typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRouteTypes {
@@ -340,7 +330,6 @@ export interface FileRouteTypes {
     | '/dashboard/stacks/'
     | '/playground/agent/'
     | '/dashboard/settings/account/'
-    | '/dashboard/settings/github/'
     | '/dashboard/settings/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -367,7 +356,6 @@ export interface FileRouteTypes {
     | '/dashboard/stacks'
     | '/playground/agent'
     | '/dashboard/settings/account'
-    | '/dashboard/settings/github'
     | '/dashboard/settings/profile'
   id:
     | '__root__'
@@ -400,7 +388,6 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/stacks/'
     | '/(root-layout)/__protected/playground/agent/'
     | '/(root-layout)/__protected/dashboard/settings/account/'
-    | '/(root-layout)/__protected/dashboard/settings/github/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
   fileRoutesById: FileRoutesById
 }
@@ -618,13 +605,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
-    '/(root-layout)/__protected/dashboard/settings/github/': {
-      id: '/(root-layout)/__protected/dashboard/settings/github/'
-      path: '/github'
-      fullPath: '/dashboard/settings/github/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsGithubIndexRouteImport
-      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
-    }
     '/(root-layout)/__protected/dashboard/settings/account/': {
       id: '/(root-layout)/__protected/dashboard/settings/account/'
       path: '/account'
@@ -667,7 +647,6 @@ const rootLayout_protectedDashboardResumesRouteRouteWithChildren =
 
 interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsAccountIndexRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
-  rootLayout_protectedDashboardSettingsGithubIndexRoute: typeof rootLayout_protectedDashboardSettingsGithubIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 
@@ -675,8 +654,6 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
   {
     rootLayout_protectedDashboardSettingsAccountIndexRoute:
       rootLayout_protectedDashboardSettingsAccountIndexRoute,
-    rootLayout_protectedDashboardSettingsGithubIndexRoute:
-      rootLayout_protectedDashboardSettingsGithubIndexRoute,
     rootLayout_protectedDashboardSettingsProfileIndexRoute:
       rootLayout_protectedDashboardSettingsProfileIndexRoute,
   }

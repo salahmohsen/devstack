@@ -2,7 +2,6 @@ import { type Context as HonoContext } from "hono";
 
 import { auth } from "@tsu-stack/auth/index";
 import { type OrpcContextMediaBucket } from "@tsu-stack/core";
-import { betterAuthAccountRepository } from "@tsu-stack/db";
 import { createRedisCacheAdapter } from "@tsu-stack/github/infrastructure/cache/redis-cache-adapter";
 import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/client";
 import { resolvePublicGitHubSource } from "@tsu-stack/github/shared/public-github-source";
@@ -35,39 +34,63 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
   logger: RequestLogger;
   runtime: NodeRuntime;
 }): Promise<OrpcContext> {
+  const headers = context.req.raw.headers;
+
   const session = await auth.api.getSession({
-    headers: context.req.raw.headers
+    headers
   });
 
+  // Portfolio owner credentials (OAuth + refresh) for public routes & fallbacks.
+  // Token never leaves the server.
   const githubSource = await resolvePublicGitHubSource();
 
-  const oauthToken = session?.user?.id
-    ? await betterAuthAccountRepository.findGitHubAccessTokenForUser(session.user.id)
-    : null;
+  /**
+   * When the portfolio owner is signed in, prefer a request-scoped
+   * getAccessToken (refreshes via Better Auth). Otherwise use the
+   * owner OAuth source resolved above for public/anonymous requests.
+   */
+  let sessionOAuthToken: string | null = null;
+  let oauthRefreshFailed = false;
 
-  const oauthScope = session?.user?.id
-    ? await betterAuthAccountRepository.findGithubScopesForUser(session.user.id)
-    : null;
+  if (session?.user?.id) {
+    try {
+      const tokens = await auth.api.getAccessToken({
+        body: { providerId: "github" },
+        headers
+      });
+      sessionOAuthToken = tokens.accessToken ?? null;
+    } catch {
+      oauthRefreshFailed = true;
+    }
+  }
 
-  const hasRepoScope = (oauthScope ?? "").split(/[\s,]+/).includes("repo");
+  type ConfiguredSource = {
+    isConfigured: true;
+    owner: string;
+    token: string;
+  };
 
-  type ConfiguredSource = Extract<typeof githubSource, { isConfigured: true }>;
-  const privateSource: ConfiguredSource | undefined =
-    oauthToken && hasRepoScope && githubSource.isConfigured
-      ? { isConfigured: true, owner: githubSource.owner, token: oauthToken }
-      : githubSource.isConfigured
-        ? githubSource
-        : undefined;
+  const ownerSource: ConfiguredSource | undefined = githubSource.isConfigured
+    ? { isConfigured: true, owner: githubSource.owner, token: githubSource.token }
+    : undefined;
+
+  const privateSource: ConfiguredSource | undefined = sessionOAuthToken
+    ? {
+        isConfigured: true,
+        owner: ownerSource?.owner ?? "oauth-user",
+        token: sessionOAuthToken
+      }
+    : ownerSource;
 
   if (session?.user?.id) {
     // eslint-disable-next-line no-console
     console.log("[create-context] github token source:", {
       userId: session.user.id,
-      usedOAuthToken: Boolean(oauthToken) && hasRepoScope,
-      usedPAT: !oauthToken && githubSource.isConfigured,
-      noTokenAtAll: !oauthToken && !githubSource.isConfigured,
-      fellBackToPat: Boolean(oauthToken) && !hasRepoScope && githubSource.isConfigured,
-      scope: oauthScope ?? "(none)"
+      usedSessionOAuth: Boolean(sessionOAuthToken),
+      usedOwnerOAuth: !sessionOAuthToken && Boolean(ownerSource),
+      noTokenAtAll: !sessionOAuthToken && !ownerSource,
+      oauthRefreshFailed,
+      owner: ownerSource?.owner ?? null
     });
   }
 
@@ -77,8 +100,11 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
         kv: createRedisCacheAdapter(runtime.redis),
         broadcast: runtime.broadcastSignals
       },
+      // Authenticated private reads: session OAuth → owner OAuth.
       privateOctokit: createGitHubOctokit(privateSource),
-      publicOctokit: createGitHubOctokit(githubSource.isConfigured ? githubSource : undefined),
+      // Public routes: owner OAuth on the server only (never sent to client).
+      // Raises rate limits vs anonymous while keeping secrets server-side.
+      publicOctokit: createGitHubOctokit(ownerSource),
       source: privateSource ?? githubSource
     },
     logger,

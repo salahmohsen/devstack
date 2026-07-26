@@ -25,8 +25,7 @@ const DashboardItems = [
   { href: "/dashboard/stacks", label: "Stack", group: "Dashboard" },
   { href: "/dashboard/resumes", label: "Resumes", group: "Dashboard" },
   { href: "/dashboard/settings/profile", label: "Profile", group: "Dashboard" },
-  { href: "/dashboard/settings/account", label: "Account", group: "Dashboard" },
-  { href: "/dashboard/settings/github", label: "Github", group: "Dashboard" }
+  { href: "/dashboard/settings/account", label: "Account", group: "Dashboard" }
 ] as const;
 
 type NavItem = { href: string; label: string; group?: string };

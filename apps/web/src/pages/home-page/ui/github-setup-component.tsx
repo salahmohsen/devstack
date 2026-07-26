@@ -17,12 +17,13 @@ export function GithubProfileUnavailableState() {
         <EmptyHeader>
           <EmptyTitle>GitHub profile is temporarily unavailable</EmptyTitle>
           <EmptyDescription>
-            The public GitHub data for the homepage could not be loaded. Verify the configured
-            GitHub username and token in the dashboard, then try again.
+            Public GitHub data could not be loaded. The portfolio owner should sign in with GitHub
+            so the server can use a valid OAuth token (tokens stay on the server and never reach
+            visitors).
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button render={<Link to="/dashboard/settings/github" />}>Open GitHub config</Button>
+          <Button render={<Link to="/sign-in" />}>Sign in with GitHub</Button>
         </EmptyContent>
       </Empty>
     </Container>

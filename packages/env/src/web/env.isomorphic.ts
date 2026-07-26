@@ -1,16 +1,30 @@
-import process from "node:process";
-
 import { createEnv } from "@t3-oss/env-core";
 import { isProduction } from "std-env";
 import { z } from "zod";
 
 import { normalizedUrlSchema } from "#@/utils/url";
 
-// Nitro/Vite always provides `import.meta.env` as an object. Using it alone
-// with `?? process.env` never falls through, so Docker runtime env like
-// SERVER_URL_INTERNAL was ignored during SSR (public URL + CF 404 instead).
+/**
+ * Node `process.env` without `import "node:process"`.
+ * That bare import is externalized by Vite and throws in the browser
+ * (`Cannot access "node:process.env" in client code`), which left
+ * `/repos` stuck on the SSR shell "Loading" state.
+ *
+ * On SSR/Node the global is available so Docker runtime vars like
+ * SERVER_URL_INTERNAL still merge in; in the browser this is empty and
+ * `import.meta.env` supplies the `VITE_*` values.
+ */
+function getNodeProcessEnv(): Record<string, string | undefined> {
+  if (typeof process === "undefined" || !process.env) {
+    return {};
+  }
+  return process.env as Record<string, string | undefined>;
+}
+
+// Spread Node env first, then Vite `import.meta.env`, so build-time
+// `VITE_*` win where both exist, while SSR still sees runtime-only keys.
 const runtimeEnv = {
-  ...process.env,
+  ...getNodeProcessEnv(),
   ...(import.meta.env as Record<string, string | undefined>)
 };
 
@@ -25,7 +39,7 @@ export const ENV_WEB_ISOMORPHIC = createEnv({
     VITE_IMGPROXY_URL: z.url().optional(),
     VITE_SERVER_URL: isProduction
       ? normalizedUrlSchema
-      : normalizedUrlSchema.default("http://localhost:5001"),
+      : normalizedUrlSchema.default("http://localhost:5200"),
     VITE_WEB_URL: isProduction
       ? normalizedUrlSchema
       : normalizedUrlSchema.default("http://localhost:3000")
