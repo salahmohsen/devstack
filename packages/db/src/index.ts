@@ -28,24 +28,64 @@ export * from "drizzle-orm/sql";
 export const relations = { ...appRelationPart, ...authRelations };
 
 /**
- * Prefer discrete POSTGRES_* fields in Docker (avoids URL-encoding footguns
- * with passwords containing + / =). Fall back to DATABASE_URL for local/
- * Neon connection strings.
+ * Prefer discrete POSTGRES_* fields in Docker when POSTGRES_HOST is set
+ * (avoids URL-encoding footguns with passwords containing + / =).
+ * Fall back to DATABASE_URL for local / Neon.
+ *
+ * Local `vp run dev` often has credentials only in DATABASE_URL pointing at
+ * Docker-mapped localhost. Never default host to the compose service name
+ * "postgres" unless POSTGRES_HOST is explicit — that host only resolves
+ * inside the compose network.
  */
 function createPoolConfig(): PoolConfig {
   const user = process.env.POSTGRES_USER;
   const password = process.env.POSTGRES_PASSWORD;
-  if (user && password) {
+  const host = process.env.POSTGRES_HOST;
+  const shared: PoolConfig = {
+    // Fail fast — never wait forever for a slot or TCP connect.
+    connectionTimeoutMillis: 8_000,
+    idleTimeoutMillis: 30_000,
+    // Keep local docker-desktop + multi-process dev from exhausting PG.
+    max: Number(process.env.PG_POOL_MAX ?? 10),
+    allowExitOnIdle: false,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10_000
+  };
+
+  if (user && password && host) {
     return {
-      // compose uses hub-postgres to avoid dokploy-network alias collisions
-      host: process.env.POSTGRES_HOST ?? "postgres",
+      ...shared,
+      host: normalizeLocalhost(host),
       port: Number(process.env.POSTGRES_PORT ?? 5432),
       user,
       password,
       database: process.env.POSTGRES_DB ?? "personal_hub"
     };
   }
-  return { connectionString: ENV_SERVER.DATABASE_URL };
+
+  const connectionString = normalizeDatabaseUrl(ENV_SERVER.DATABASE_URL);
+  return { ...shared, connectionString };
+}
+
+/** Prefer IPv4 loopback — Docker Desktop often hangs on localhost → ::1. */
+function normalizeLocalhost(host: string): string {
+  return host === "localhost" ? "127.0.0.1" : host;
+}
+
+function normalizeDatabaseUrl(url: string): string {
+  try {
+    // URL parser needs a web scheme; postgres URLs work after a temp swap.
+    const parsed = new URL(url.replace(/^postgresql:/i, "http:").replace(/^postgres:/i, "http:"));
+    if (parsed.hostname === "localhost") {
+      parsed.hostname = "127.0.0.1";
+      return parsed
+        .toString()
+        .replace(/^http:/i, url.startsWith("postgres://") ? "postgres:" : "postgresql:");
+    }
+  } catch {
+    // leave as-is
+  }
+  return url;
 }
 
 // Lazy pool proxy: the web SSR bundle previously crashed at import time
@@ -56,12 +96,58 @@ function createPoolConfig(): PoolConfig {
 // opening a connection (and without blowing up if the bundle's pg stub
 // is incomplete).
 let _pool: Pool | undefined;
+let hasLoggedPoolConfig = false;
+
+function getOrCreatePool(): Pool {
+  if (!_pool) {
+    const config = createPoolConfig();
+    _pool = new Pool(config);
+    _pool.on("error", (err) => {
+      // Idle client errors — log and continue; next checkout opens a new client.
+      console.debug("[db] pool client error:", err.message);
+    });
+    if (!hasLoggedPoolConfig) {
+      hasLoggedPoolConfig = true;
+      const hostHint =
+        "connectionString" in config && typeof config.connectionString === "string"
+          ? (() => {
+              try {
+                return new URL(
+                  config.connectionString
+                    .replace(/^postgresql:/i, "http:")
+                    .replace(/^postgres:/i, "http:")
+                ).host;
+              } catch {
+                return "(url)";
+              }
+            })()
+          : `${config.host}:${config.port}`;
+      console.debug(`[db] pool ready → ${hostHint} max=${config.max}`);
+    }
+  }
+  return _pool;
+}
+
 export const pool = new Proxy({} as Pool, {
   get(_target, prop) {
-    _pool ??= new Pool(createPoolConfig());
-    return Reflect.get(_pool, prop);
+    const p = getOrCreatePool();
+    const value = Reflect.get(p, prop);
+    return typeof value === "function" ? value.bind(p) : value;
   }
 });
+
+/**
+ * Drop the process pool so the next query opens a fresh one.
+ * Use after Docker Desktop network blips leave the pool wedged
+ * (`timeout exceeded when trying to connect` with no free clients).
+ */
+export async function resetDbPool(): Promise<void> {
+  const old = _pool;
+  _pool = undefined;
+  if (old) {
+    await old.end().catch(() => undefined);
+  }
+}
 
 export const db: NodePgDatabase<typeof relations> = drizzlePg({
   client: pool,
@@ -112,7 +198,7 @@ export function getDb(): WsDb {
 
   if (!hasLoggedLazyDbFallback) {
     hasLoggedLazyDbFallback = true;
-    console.warn(
+    console.debug(
       "[db] getDb() called outside runWithDb. Falling back to the PG singleton. " +
         "Wrap the request handler with runWithDb(createDb(), ...) for transaction support."
     );
@@ -121,11 +207,32 @@ export function getDb(): WsDb {
   return db as unknown as WsDb;
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      })
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function checkIsDbReady(): Promise<boolean> {
   try {
-    await db.execute(sql`SELECT 1`);
+    await withTimeout(db.execute(sql`SELECT 1`), 4_000, "db ready check");
     return true;
   } catch {
-    return false;
+    // Recover from a wedged pool (Docker Desktop blips, leaked clients).
+    await resetDbPool();
+    try {
+      await withTimeout(db.execute(sql`SELECT 1`), 4_000, "db ready check retry");
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

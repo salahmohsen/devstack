@@ -1,4 +1,4 @@
-import { extractText, getDocumentProxy } from "unpdf";
+import { extractText, getDocumentProxy, getResolvedPDFJS } from "unpdf";
 
 import { RESUME_SOURCE_MAX_BYTES } from "@tsu-stack/core";
 
@@ -43,6 +43,30 @@ export class PdfTextError extends Error {
 }
 
 /**
+ * PDF.js (via unpdf) calls `Math.sumPrecise` for glyph/layout math. That helper is
+ * not yet available in all Node runtimes, so polyfill a precise-enough sum.
+ */
+function ensureMathSumPrecise(): void {
+  const math = Math as typeof Math & {
+    sumPrecise?: (values: Iterable<number>) => number;
+  };
+  if (typeof math.sumPrecise === "function") return;
+
+  // Kahan compensated sum — good enough for pdf.js font/layout arithmetic.
+  math.sumPrecise = (values: Iterable<number>): number => {
+    let sum = 0;
+    let compensation = 0;
+    for (const value of values) {
+      const y = Number(value) - compensation;
+      const total = sum + y;
+      compensation = total - sum - y;
+      sum = total;
+    }
+    return sum;
+  };
+}
+
+/**
  * Extract plain text from a PDF byte buffer using unpdf
  * (`getDocumentProxy` + `extractText` with `mergePages: true`).
  *
@@ -62,10 +86,17 @@ export async function extractTextFromPdf(bytes: Uint8Array): Promise<string> {
     throw new PdfTextError("EXTRACT_FAILED", "Resume source PDF is empty");
   }
 
+  ensureMathSumPrecise();
+
   let text: string;
   try {
+    const pdfjs = await getResolvedPDFJS();
+    // Silence non-fatal pdf.js noise (e.g. embedded font substitution).
+    // VerbosityLevel.ERRORS === 0
+    const errorsOnly = pdfjs.VerbosityLevel?.ERRORS ?? 0;
+
     // unpdf: getDocumentProxy(data) → PDFDocumentProxy; extractText(pdf, { mergePages: true }) → { text: string }
-    const pdf = await getDocumentProxy(bytes);
+    const pdf = await getDocumentProxy(bytes, { verbosity: errorsOnly });
     const result = await extractText(pdf, { mergePages: true });
     text = result.text;
   } catch (error) {

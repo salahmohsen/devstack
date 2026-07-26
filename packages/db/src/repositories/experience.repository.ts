@@ -74,6 +74,15 @@ export const experienceRepository = {
     const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
 
     await getDb().transaction(async (tx) => {
+      // portfolio_entry first — experience.portfolio_entry_id FK requires parent row.
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "experience",
+          entityId: id
+        });
+      }
+
       await tx.insert(experience).values({
         id,
         title: input.title,
@@ -85,14 +94,6 @@ export const experienceRepository = {
         isPresent: input.isPresent ?? false,
         portfolioEntryId: pid
       });
-
-      if (pid) {
-        await tx.insert(portfolioEntry).values({
-          id: pid,
-          type: "experience",
-          entityId: id
-        });
-      }
     });
 
     return experienceRepository.findById(id);

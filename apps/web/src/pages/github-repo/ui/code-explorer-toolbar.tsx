@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 import { useRepoCloneProtocol } from "@/shared/lib/repo-clone-protocol-storage";
 
 import { getGithubRepoBranchesQueryOptions } from "@/pages/github-repo/api/get-github-repo-branches.query";
@@ -60,7 +61,7 @@ function BranchSelector({
 
   const branchesQuery = useQuery({
     ...branchesOptions,
-    enabled: open
+    enabled: open && isValidGithubRepoSlug(repo.name)
   });
 
   const prefetchBranches = useCallback(async () => {

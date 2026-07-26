@@ -23,7 +23,6 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@tsu-stack/ui/components/tooltip";
-import { ShimmeringText } from "@tsu-stack/ui/components/unlumen-ui/shimmering-text";
 
 type OrganizeConfig = {
   isRunning: boolean;
@@ -140,10 +139,9 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
             <Group>
               <GroupText aria-live="polite" className="cursor-default gap-2" role="status">
                 <Spinner />
-                <ShimmeringText
-                  className="max-w-45 min-w-fit truncate text-sm font-medium"
-                  text={organize.currentStep ?? "Organizing"}
-                />
+                <span className="max-w-45 min-w-fit shimmer truncate text-sm font-medium text-foreground">
+                  {organize.currentStep ?? "Organizing"}
+                </span>
               </GroupText>
               <GroupSeparator />
               <TooltipProvider delay={0}>

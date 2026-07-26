@@ -29,17 +29,21 @@ export function initRuntime(): NodeRuntime {
   if (_runtime) return _runtime;
 
   const redisUrl = ENV_SERVER.REDIS_URL ?? "redis://localhost:6379";
+  // Fail-fast Redis: offline queue + lazy connect made `ping()` hang forever when
+  // Redis was down, which blocked `/health/ready` and anything that waited on it.
   const redis = new Redis(redisUrl, {
-    enableOfflineQueue: true,
+    enableOfflineQueue: false,
     lazyConnect: true,
+    connectTimeout: 2_000,
+    commandTimeout: 2_000,
+    maxRetriesPerRequest: 1,
     retryStrategy(times) {
-      if (times > 10) return null;
-      return Math.min(times * 200, 5000);
-    },
-    maxRetriesPerRequest: 3
+      if (times > 5) return null;
+      return Math.min(times * 200, 2_000);
+    }
   });
   redis.on("error", () => {});
-  redis.connect().catch(() => {});
+  void redis.connect().catch(() => {});
 
   const rawFiles = createFiles();
 
@@ -49,7 +53,13 @@ export function initRuntime(): NodeRuntime {
       set: (key, value, opts) =>
         (opts?.EX ? redis.set(key, value, "EX", opts.EX) : redis.set(key, value)).catch(() => null),
       del: (...keys) => redis.del(...keys).catch(() => 0),
-      ping: () => redis.ping().catch(() => "PONG")
+      ping: () =>
+        Promise.race([
+          redis.ping().catch(() => "PONG"),
+          new Promise<string>((resolve) => {
+            setTimeout(() => resolve("PONG"), 2_000);
+          })
+        ])
     },
     files: {
       async put(key, value, options) {

@@ -17,20 +17,19 @@ const COPY: Record<OnboardingFlowStep, { title: string; description: React.React
   upload: {
     title: "Import from your resume",
     description:
-      "Upload a PDF. We’ll extract profile, experiences, projects, and stacks — you review everything before it’s saved."
+      "We’ll draft profile, experiences, projects, and stacks. You review before anything is saved."
   },
   analyzing: {
     title: "Analyzing resume",
-    description: "This usually takes under a minute. Keep this tab open while we work."
+    description: "Usually under a minute — keep this tab open."
   },
   review: {
     title: "Review before import",
-    description:
-      "Uncheck anything you don’t want. Portfolio visibility defaults on for selected items — flip the switch to keep something private."
+    description: "Scan the list, uncheck what you don’t want, expand a row only to edit."
   },
   done: {
     title: "You’re all set",
-    description: "Your portfolio evidence is ready. Jump into any section to refine details."
+    description: "Jump into any section to refine details."
   }
 };
 
@@ -85,7 +84,7 @@ export function OnboardingPage() {
   const copy = COPY[step];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4 sm:p-6 lg:p-8">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-auto p-4 sm:p-6 lg:p-8">
       <OnboardingShell step={step} title={copy.title} description={copy.description}>
         {step === "upload" ? (
           <UploadStep
@@ -100,6 +99,7 @@ export function OnboardingPage() {
 
         {step === "analyzing" && objectKey ? (
           <AnalyzingStep
+            key={objectKey}
             objectKey={objectKey}
             filename={filename}
             onSuccess={handleExtractSuccess}

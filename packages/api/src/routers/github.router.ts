@@ -74,8 +74,19 @@ const UserActivityInputSchema = z.object({
   page: z.number().int().min(1).default(1)
 });
 
+/** GitHub repo name segment (not owner/repo). Rejects JS stringifications of missing values. */
+const GitHubRepoNameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .regex(/^[A-Za-z0-9._-]+$/, "Invalid repository name")
+  .refine((name) => !["undefined", "null", "NaN"].includes(name), {
+    message: "Invalid repository name"
+  });
+
 const RepoInputSchema = z.object({
-  repo: z.string().trim().min(1)
+  repo: GitHubRepoNameSchema
 });
 
 const RepoBranchComparisonInputSchema = RepoInputSchema.extend({

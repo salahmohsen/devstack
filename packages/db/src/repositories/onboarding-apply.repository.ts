@@ -353,7 +353,15 @@ export async function applyOnboardingDraft(
       const includedInPortfolio = exp.includedInPortfolio !== false;
       const pid = includedInPortfolio ? crypto.randomUUID() : null;
 
-      // Mirror experience.repository.create insert shape
+      // portfolio_entry first — experience.portfolio_entry_id FK requires parent row.
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "experience",
+          entityId: id
+        });
+      }
+
       await tx.insert(experience).values({
         id,
         title: exp.title,
@@ -365,14 +373,6 @@ export async function applyOnboardingDraft(
         isPresent: exp.isPresent ?? false,
         portfolioEntryId: pid
       });
-
-      if (pid) {
-        await tx.insert(portfolioEntry).values({
-          id: pid,
-          type: "experience",
-          entityId: id
-        });
-      }
 
       experienceIdByClientId.set(exp.clientId, id);
       nextExperienceSort += 1;
@@ -407,7 +407,15 @@ export async function applyOnboardingDraft(
         )
       ];
 
-      // Mirror project.repository.create insert shape
+      // portfolio_entry first — project.portfolio_entry_id FK requires parent row.
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "project",
+          entityId: id
+        });
+      }
+
       await tx.insert(project).values({
         id,
         logo: null,
@@ -424,14 +432,6 @@ export async function applyOnboardingDraft(
         analysis: null,
         portfolioEntryId: pid
       });
-
-      if (pid) {
-        await tx.insert(portfolioEntry).values({
-          id: pid,
-          type: "project",
-          entityId: id
-        });
-      }
 
       if (stackIds.length > 0) {
         await tx.insert(projectStack).values(

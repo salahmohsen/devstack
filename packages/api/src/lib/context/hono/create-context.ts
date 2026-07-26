@@ -36,13 +36,29 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
 }): Promise<OrpcContext> {
   const headers = context.req.raw.headers;
 
-  const session = await auth.api.getSession({
-    headers
-  });
+  // Session lookup must not take down public RPCs when the pool is briefly wedged.
+  // Protected procedures still fail closed via their own session checks.
+  let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
+  try {
+    session = await auth.api.getSession({ headers });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`getSession failed (continuing unauthenticated): ${message}`);
+    session = null;
+  }
 
   // Portfolio owner credentials (OAuth + refresh) for public routes & fallbacks.
   // Token never leaves the server.
-  const githubSource = await resolvePublicGitHubSource();
+  let githubSource: Awaited<ReturnType<typeof resolvePublicGitHubSource>> = {
+    isConfigured: false,
+    reason: "missing_github_configuration"
+  };
+  try {
+    githubSource = await resolvePublicGitHubSource();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`resolvePublicGitHubSource failed: ${message}`);
+  }
 
   /**
    * When the portfolio owner is signed in, prefer a request-scoped

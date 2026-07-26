@@ -1,71 +1,108 @@
 "use client";
 
-import { type FileUploadState, type UseFilesResult } from "files-sdk/react";
 import { CheckCircle2Icon, Loader2Icon, XCircleIcon } from "lucide-react";
 
-import { Progress } from "@tsu-stack/ui/components/progress";
+import {
+  Progress,
+  ProgressIndicator,
+  ProgressLabel,
+  ProgressTrack,
+  ProgressValue
+} from "@tsu-stack/ui/components/progress";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-export type UploadProgressProps = {
-  /** A `useFiles()` instance — reads its ambient `uploads` / `progress`. */
-  files: UseFilesResult;
+export type FileUploadProgressStatus = "uploading" | "success" | "error";
+
+export type FileUploadProgressState = {
+  name: string;
+  /** 0–100. Use `null` for indeterminate (no byte reports yet). */
+  percent: number | null;
+  status: FileUploadProgressStatus;
+  errorMessage?: string;
+};
+
+export type FileUploadProgressProps = {
+  upload: FileUploadProgressState;
   className?: string;
 };
 
-const StatusIcon = ({ status }: { status: FileUploadState["status"] }) => {
+function StatusIcon({ status }: { status: FileUploadProgressStatus }) {
   if (status === "success") {
-    return <CheckCircle2Icon className="size-4 text-primary" />;
+    return <CheckCircle2Icon className="size-4 shrink-0 text-primary" aria-hidden />;
   }
-  if (status === "error" || status === "aborted") {
-    return <XCircleIcon className="size-4 text-destructive" />;
+  if (status === "error") {
+    return <XCircleIcon className="size-4 shrink-0 text-destructive" aria-hidden />;
   }
-  return <Loader2Icon className="size-4 animate-spin text-muted-foreground" />;
-};
+  return <Loader2Icon className="size-4 shrink-0 animate-spin text-muted-foreground" aria-hidden />;
+}
 
-const UploadRow = ({ upload }: { upload: FileUploadState }) => (
-  <li className="flex flex-col gap-1.5">
-    <div className="flex items-center gap-2 text-sm">
-      <StatusIcon status={upload.status} />
-      <span className="min-w-0 flex-1 truncate">{upload.name}</span>
-      <span className="text-xs text-muted-foreground">{Math.round(upload.progress * 100)}%</span>
-    </div>
-    <Progress
-      className={cn(
-        upload.status === "error" && "bg-destructive/20",
-        upload.status === "aborted" && "opacity-50"
-      )}
-      value={upload.progress * 100}
-    />
-  </li>
-);
+function statusCopy(status: FileUploadProgressStatus): string {
+  switch (status) {
+    case "success":
+      return "Uploaded";
+    case "error":
+      return "Failed";
+    case "uploading":
+      return "Uploading…";
+  }
+}
 
 /**
- * Renders the ambient upload state of a `useFiles()` instance: one row per file
- * plus an aggregate bar when several are in flight. Returns `null` when idle.
+ * Determinate upload bar using coss/Base UI Progress.
+ * Drive `upload` from `files.upload(..., { onProgress })` — do not rely on
+ * ambient `useFiles().uploads` alone (explicit-key PUT never sets success).
+ *
+ * @see https://files-sdk.dev/features/onprogress
+ * @see https://base-ui.com/react/components/progress — value 0–max (default max 100); null = indeterminate
  */
-export const UploadProgress = ({ files, className }: UploadProgressProps) => {
-  const { progress, uploads } = files;
+export function FileUploadProgress({ upload, className }: FileUploadProgressProps) {
+  const { name, percent, status, errorMessage } = upload;
 
-  if (uploads.length === 0) {
-    return null;
-  }
+  // Base UI: null → indeterminate; number → determinate (default max=100)
+  const value =
+    status === "success"
+      ? 100
+      : status === "error"
+        ? (percent ?? 0)
+        : percent === null
+          ? null
+          : Math.min(100, Math.max(0, percent));
 
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
-      {uploads.length > 1 && (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{uploads.length} files</span>
-            <span>{Math.round(progress.fraction * 100)}%</span>
-          </div>
-          <Progress value={progress.fraction * 100} />
+    <div className={cn("flex flex-col gap-1.5", className)} aria-live="polite">
+      <Progress value={value} max={100}>
+        <div className="flex items-center gap-2">
+          <StatusIcon status={status} />
+          <ProgressLabel className="min-w-0 flex-1 truncate text-sm font-medium">
+            {name}
+          </ProgressLabel>
+          <span className="shrink-0 text-xs text-muted-foreground">{statusCopy(status)}</span>
+          {value != null ? (
+            <ProgressValue className="shrink-0 text-xs text-muted-foreground tabular-nums">
+              {(formatted) =>
+                formatted == null || formatted === "indeterminate" ? null : `${value}%`
+              }
+            </ProgressValue>
+          ) : null}
         </div>
-      )}
-      <ul className="flex flex-col gap-2">
-        {uploads.map((upload, index) => (
-          <UploadRow key={upload.key ?? `${upload.name}-${index}`} upload={upload} />
-        ))}
-      </ul>
+        <ProgressTrack
+          className={cn(
+            status === "error" && "bg-destructive/20",
+            status === "success" && "bg-primary/15"
+          )}
+        >
+          <ProgressIndicator
+            className={cn(
+              "rounded-full",
+              status === "error" && "bg-destructive",
+              status === "success" && "bg-primary"
+            )}
+          />
+        </ProgressTrack>
+      </Progress>
+      {status === "error" && errorMessage ? (
+        <p className="pl-6 text-xs text-destructive">{errorMessage}</p>
+      ) : null}
     </div>
   );
-};
+}

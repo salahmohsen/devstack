@@ -115,7 +115,7 @@ export function useCommandItems(): CommandItem[] {
         keywords: [repo.name, repo.owner, repo.language ?? ""].filter(Boolean),
         action: {
           type: "navigate",
-          to: `/${repo.owner}/${repo.name}`
+          to: `/repos/${repo.name}`
         },
         meta: {
           language: repo.language ?? undefined,

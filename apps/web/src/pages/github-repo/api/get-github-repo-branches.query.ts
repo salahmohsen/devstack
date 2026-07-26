@@ -4,6 +4,7 @@ import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
+import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
 export function getGithubRepoBranchesQueryOptions(repo: string, isPrivate = false) {
@@ -15,7 +16,8 @@ export function getGithubRepoBranchesQueryOptions(repo: string, isPrivate = fals
     input: { repo },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
-    meta: persistedMeta
+    meta: persistedMeta,
+    enabled: isValidGithubRepoSlug(repo)
   });
 }
 

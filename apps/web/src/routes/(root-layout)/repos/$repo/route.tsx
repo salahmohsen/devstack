@@ -1,5 +1,7 @@
 import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 
+import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
+
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 import {
@@ -12,7 +14,7 @@ const RESERVED_NON_REPO_SEGMENTS = new Set([".well-known", "firebase-messaging-s
 export const Route = createFileRoute("/(root-layout)/repos/$repo")({
   component: RouteComponent,
   beforeLoad: async ({ context, params }) => {
-    if (RESERVED_NON_REPO_SEGMENTS.has(params.repo)) {
+    if (RESERVED_NON_REPO_SEGMENTS.has(params.repo) || !isValidGithubRepoSlug(params.repo)) {
       throw notFound();
     }
 
@@ -25,6 +27,10 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo")({
     }
   },
   loader: async ({ context, params }) => {
+    if (!isValidGithubRepoSlug(params.repo)) {
+      return;
+    }
+
     void context.queryClient.prefetchQuery(getGithubRepoOverviewQueryOptions(params.repo));
 
     void context.queryClient.prefetchQuery(getGithubRepoBranchesQueryOptions(params.repo));

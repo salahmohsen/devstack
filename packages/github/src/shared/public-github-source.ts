@@ -14,6 +14,18 @@ export type PublicGitHubSource =
 
 const GITHUB_TOKEN_ENDPOINT = "https://github.com/login/oauth/access_token";
 const ACCESS_TOKEN_SKEW_MS = 5_000;
+/** Bound outbound GitHub HTTP so RPC context creation cannot hang the server. */
+const GITHUB_HTTP_TIMEOUT_MS = 5_000;
+/**
+ * Short in-memory cache — every oRPC request previously resolved + refreshed
+ * tokens and hit api.github.com/user, which piled up and timed out undici.
+ */
+const SOURCE_CACHE_TTL_MS = 30_000;
+
+let cachedSource: { value: PublicGitHubSource; expiresAt: number } | null = null;
+let inflightSource: Promise<PublicGitHubSource> | null = null;
+/** Serialize token refresh so concurrent requests don't stampede GitHub. */
+let inflightRefresh: Promise<string | null> | null = null;
 
 /**
  * Resolve the portfolio owner's GitHub credentials for **server-side** use.
@@ -25,6 +37,33 @@ const ACCESS_TOKEN_SKEW_MS = 5_000;
  * already-fetched public data shapes.
  */
 export async function resolvePublicGitHubSource(): Promise<PublicGitHubSource> {
+  const now = Date.now();
+  if (cachedSource && cachedSource.expiresAt > now) {
+    return cachedSource.value;
+  }
+
+  if (inflightSource) {
+    return inflightSource;
+  }
+
+  inflightSource = resolvePublicGitHubSourceUncached()
+    .then((value) => {
+      cachedSource = { value, expiresAt: Date.now() + SOURCE_CACHE_TTL_MS };
+      return value;
+    })
+    .finally(() => {
+      inflightSource = null;
+    });
+
+  return inflightSource;
+}
+
+/** Drop cache (e.g. after sign-in / config change). */
+export function invalidatePublicGitHubSourceCache(): void {
+  cachedSource = null;
+}
+
+async function resolvePublicGitHubSourceUncached(): Promise<PublicGitHubSource> {
   const settings = await githubConfigRepository.findPublicGithubSourceSettings();
   const githubAccount =
     (settings?.userId
@@ -47,10 +86,11 @@ export async function resolvePublicGitHubSource(): Promise<PublicGitHubSource> {
   }
 
   const ownerFromConfig = settings?.githubUsername?.trim();
-  const ownerFromLogin = await fetchGitHubLogin(token);
+  // Prefer stored username — avoid a GitHub /user round-trip on every request.
+  // `??` short-circuits so fetchGitHubLogin only runs when config has no username.
   const owner =
     (ownerFromConfig && ownerFromConfig.length > 0 ? ownerFromConfig : null) ??
-    ownerFromLogin ??
+    (await fetchGitHubLogin(token)) ??
     "owner";
 
   // Keep username in github_config for ownerProcedure identity without storing a PAT.
@@ -76,9 +116,11 @@ async function getValidAccessToken(
   const refreshToken = refreshTokenRaw && refreshTokenRaw.length > 0 ? refreshTokenRaw : null;
 
   const expiresAt = row.accessTokenExpiresAt ? new Date(row.accessTokenExpiresAt).getTime() : null;
-  const needsRefresh =
-    Boolean(refreshToken) &&
-    (expiresAt == null || expiresAt - Date.now() < ACCESS_TOKEN_SKEW_MS || !accessToken);
+
+  // Only refresh when we know the token is expired/near-expiry, or we have no access token.
+  // Do NOT treat `expiresAt == null` as "always refresh" — that stampeded GitHub on every RPC.
+  const knownExpired = expiresAt != null && expiresAt - Date.now() < ACCESS_TOKEN_SKEW_MS;
+  const needsRefresh = Boolean(refreshToken) && (!accessToken || knownExpired);
 
   if (!needsRefresh) {
     return accessToken;
@@ -94,12 +136,38 @@ async function getValidAccessToken(
     return accessToken;
   }
 
+  if (inflightRefresh) {
+    return inflightRefresh;
+  }
+
+  inflightRefresh = refreshAccessToken({
+    accountId: row.id,
+    accessToken,
+    refreshToken,
+    scope: row.scope,
+    clientId,
+    clientSecret
+  }).finally(() => {
+    inflightRefresh = null;
+  });
+
+  return inflightRefresh;
+}
+
+async function refreshAccessToken(args: {
+  accountId: string;
+  accessToken: string | null;
+  refreshToken: string;
+  scope: string | null | undefined;
+  clientId: string;
+  clientSecret: string;
+}): Promise<string | null> {
   try {
     const body = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
+      client_id: args.clientId,
+      client_secret: args.clientSecret,
       grant_type: "refresh_token",
-      refresh_token: refreshToken
+      refresh_token: args.refreshToken
     });
 
     const res = await fetch(GITHUB_TOKEN_ENDPOINT, {
@@ -109,7 +177,8 @@ async function getValidAccessToken(
         "Content-Type": "application/x-www-form-urlencoded",
         "User-Agent": "tsu-stack"
       },
-      body
+      body,
+      signal: AbortSignal.timeout(GITHUB_HTTP_TIMEOUT_MS)
     });
 
     const data = (await res.json()) as {
@@ -123,7 +192,7 @@ async function getValidAccessToken(
 
     if (!res.ok || !data.access_token || data.error) {
       console.debug("[github] OAuth refresh failed:", data.error ?? res.status);
-      return accessToken;
+      return args.accessToken;
     }
 
     const accessTokenExpiresAt =
@@ -133,18 +202,18 @@ async function getValidAccessToken(
         ? new Date(Date.now() + data.refresh_token_expires_in * 1000)
         : null;
 
-    await betterAuthAccountRepository.updateGitHubTokens(row.id, {
+    await betterAuthAccountRepository.updateGitHubTokens(args.accountId, {
       accessToken: data.access_token,
-      refreshToken: data.refresh_token ?? refreshToken,
+      refreshToken: data.refresh_token ?? args.refreshToken,
       accessTokenExpiresAt,
       refreshTokenExpiresAt,
-      scope: data.scope ?? row.scope
+      scope: data.scope ?? args.scope
     });
 
     return data.access_token;
   } catch (error) {
     console.debug("[github] OAuth refresh threw:", error);
-    return accessToken;
+    return args.accessToken;
   }
 }
 
@@ -155,7 +224,8 @@ async function fetchGitHubLogin(token: string): Promise<string | null> {
         Accept: "application/vnd.github+json",
         Authorization: `Bearer ${token}`,
         "User-Agent": "tsu-stack"
-      }
+      },
+      signal: AbortSignal.timeout(GITHUB_HTTP_TIMEOUT_MS)
     });
     if (!res.ok) return null;
     const profile = (await res.json()) as { login?: string };

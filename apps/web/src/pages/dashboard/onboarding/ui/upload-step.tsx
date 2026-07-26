@@ -10,21 +10,15 @@ import {
   RESUME_SOURCE_MIME
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
-import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@tsu-stack/ui/components/card";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useDiscardSourceMutation, useSkipOnboardingMutation } from "@/features/onboarding";
 
-import { UploadProgress } from "@/components/files-sdk/upload-progress";
+import {
+  FileUploadProgress,
+  type FileUploadProgressState
+} from "@/components/files-sdk/upload-progress";
 
 export type UploadStepProps = {
   objectKey: string | null;
@@ -37,8 +31,12 @@ export type UploadStepProps = {
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) {
+    const kb = bytes / 1024;
+    return `${kb % 1 === 0 ? kb : kb.toFixed(1)} KB`;
+  }
+  const mb = bytes / (1024 * 1024);
+  return `${mb % 1 === 0 ? mb : mb.toFixed(1)} MB`;
 }
 
 export function UploadStep({
@@ -56,6 +54,8 @@ export function UploadStep({
   const skipMutation = useSkipOnboardingMutation();
   const [localError, setLocalError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  /** Local UI progress — do not rely on ambient `files.uploads` for success/error. */
+  const [uploadUi, setUploadUi] = useState<FileUploadProgressState | null>(null);
 
   const discardPrevious = useCallback(
     async (key: string | null) => {
@@ -88,14 +88,47 @@ export function UploadStep({
       const previousKey = objectKey;
       const key = `${RESUME_SOURCE_KEY_PREFIX}${crypto.randomUUID()}.pdf`;
 
+      setUploadUi({ name: file.name, percent: null, status: "uploading" });
+
       try {
         const result = await files.upload(key, file, {
-          contentType: RESUME_SOURCE_MIME
+          contentType: RESUME_SOURCE_MIME,
+          onProgress: (aggregate, perFile) => {
+            const fileState = perFile[0];
+            const loaded = fileState?.loaded ?? aggregate.loaded;
+            const total =
+              fileState && fileState.total > 0
+                ? fileState.total
+                : aggregate.total > 0
+                  ? aggregate.total
+                  : file.size;
+            const percent =
+              total > 0 ? Math.min(100, Math.max(0, Math.round((loaded / total) * 100))) : null;
+
+            setUploadUi({
+              name: file.name,
+              percent: loaded > 0 ? percent : null,
+              status: "uploading"
+            });
+          }
         });
+
+        setUploadUi({ name: file.name, percent: 100, status: "success" });
         await discardPrevious(previousKey);
         onUploaded({ objectKey: result.key, filename: file.name });
+        files.reset();
+        window.setTimeout(() => setUploadUi(null), 600);
       } catch (error) {
-        setLocalError(error instanceof Error ? error.message : "Upload failed");
+        const message = error instanceof Error ? error.message : "Upload failed";
+        setLocalError(message);
+        setUploadUi((prev) => {
+          return {
+            name: prev?.name ?? file.name,
+            percent: prev?.percent ?? 0,
+            status: "error",
+            errorMessage: message
+          };
+        });
       }
     },
     [discardPrevious, files, objectKey, onUploaded]
@@ -116,6 +149,7 @@ export function UploadStep({
 
   const handleRemove = async () => {
     setLocalError(null);
+    setUploadUi(null);
     await discardPrevious(objectKey);
     onCleared();
     files.reset();
@@ -133,25 +167,19 @@ export function UploadStep({
     }
   };
 
-  const isBusy = files.isUploading || discardMutation.isPending || skipMutation.isPending;
+  const isBusy =
+    uploadUi?.status === "uploading" ||
+    files.isUploading ||
+    discardMutation.isPending ||
+    skipMutation.isPending;
   const errorMessage = localError ?? files.error?.message ?? null;
+  const hasFile = Boolean(objectKey && filename);
+  const showReady = hasFile && uploadUi?.status !== "uploading";
 
   return (
-    <Card className="w-full border-border/80 shadow-xs/5">
-      <CardHeader className="gap-1 border-b border-border/60 pb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <CardTitle className="text-base sm:text-lg">Resume PDF</CardTitle>
-          <Badge variant="secondary" className="font-normal">
-            Required for analysis
-          </Badge>
-        </div>
-        <CardDescription>
-          Drag and drop or choose a file. Nothing is written to your portfolio until you confirm on
-          the review step.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-4 pt-5">
+    <div className="flex w-full flex-col gap-5">
+      {/* Dropzone — empty / replacing state */}
+      {!showReady ? (
         <div
           id={dropzoneId}
           role="button"
@@ -159,11 +187,11 @@ export function UploadStep({
           aria-label="Upload resume PDF"
           aria-disabled={isBusy}
           className={cn(
-            "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center transition-[border-color,background-color,box-shadow] duration-200 ease-out outline-none motion-reduce:transition-none",
+            "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-5 py-10 text-center transition-[border-color,background-color] duration-150 outline-none motion-reduce:transition-none",
             "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40",
             isDragging
-              ? "border-primary bg-primary/5 shadow-[inset_0_0_0_1px] shadow-primary/20"
-              : "border-border bg-muted/20 hover:border-muted-foreground/35 hover:bg-muted/30",
+              ? "border-primary bg-primary/5"
+              : "border-border/80 bg-muted/15 hover:border-muted-foreground/30 hover:bg-muted/25",
             isBusy && "pointer-events-none opacity-70"
           )}
           onKeyDown={(e) => {
@@ -188,20 +216,21 @@ export function UploadStep({
         >
           <div
             className={cn(
-              "flex size-14 items-center justify-center rounded-2xl border bg-background shadow-xs transition-transform duration-200 motion-reduce:transition-none",
-              isDragging ? "scale-105 border-primary/40" : "border-border group-hover:scale-[1.02]"
+              "flex size-11 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border/70",
+              isDragging && "text-primary ring-primary/30"
             )}
           >
-            <UploadCloudIcon
-              className={cn("size-6", isDragging ? "text-primary" : "text-muted-foreground")}
-            />
+            <UploadCloudIcon className="size-5" aria-hidden />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">
-              {isDragging ? "Drop PDF to upload" : "Drop a PDF here, or click to browse"}
+              {isDragging ? "Drop to upload" : "Drop your resume here"}
             </p>
             <p className="text-xs text-muted-foreground">
-              PDF only · up to {formatBytes(RESUME_SOURCE_MAX_BYTES)}
+              PDF · up to {formatBytes(RESUME_SOURCE_MAX_BYTES)} ·{" "}
+              <span className="text-foreground underline-offset-2 group-hover:underline">
+                browse
+              </span>
             </p>
           </div>
           <input
@@ -213,70 +242,61 @@ export function UploadStep({
             disabled={isBusy}
             aria-labelledby={dropzoneId}
           />
+        </div>
+      ) : null}
+
+      {uploadUi ? <FileUploadProgress upload={uploadUi} /> : null}
+
+      {/* Ready file — single compact row, not a second card */}
+      {showReady ? (
+        <output className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/20 px-3.5 py-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-foreground ring-1 ring-border/70">
+            <FileTextIcon className="size-4" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1 text-start">
+            <p className="truncate text-sm font-medium">{filename}</p>
+            <p className="text-xs text-muted-foreground">Ready to analyze</p>
+          </div>
           <Button
             type="button"
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove uploaded resume"
             disabled={isBusy}
-            loading={files.isUploading}
-            onClick={(e) => {
-              e.stopPropagation();
-              inputRef.current?.click();
-            }}
+            onClick={() => void handleRemove()}
           >
-            {objectKey ? "Replace PDF" : "Choose PDF"}
+            <Trash2Icon className="size-4" />
           </Button>
-        </div>
+        </output>
+      ) : null}
 
-        <UploadProgress files={files} />
+      {errorMessage ? (
+        <Alert variant="error" role="alert">
+          <AlertTitle>Upload issue</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      ) : null}
 
-        {objectKey && filename ? (
-          <div
-            className="flex items-center gap-3 rounded-xl border border-border/80 bg-card px-3.5 py-3 motion-safe:animate-in motion-safe:duration-200 motion-safe:fade-in-0"
-            role="status"
-          >
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <FileTextIcon className="size-4" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{filename}</p>
-              <p className="truncate text-xs text-muted-foreground">Ready to analyze</p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Remove uploaded resume"
-              disabled={isBusy}
-              onClick={() => void handleRemove()}
-            >
-              <Trash2Icon className="size-4" />
-            </Button>
-          </div>
-        ) : null}
-
-        {errorMessage ? (
-          <Alert variant="error" role="alert">
-            <AlertTitle>Upload issue</AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        ) : null}
-      </CardContent>
-
-      <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-4">
+      {/* Actions: one primary path depending on state */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
         <Button
           type="button"
           variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
           disabled={isBusy}
           loading={skipMutation.isPending}
           onClick={() => void handleSkip()}
         >
           Skip for now
         </Button>
-        <Button type="button" disabled={!objectKey || isBusy} onClick={onAnalyze}>
-          Analyze resume
-        </Button>
-      </CardFooter>
-    </Card>
+
+        {showReady ? (
+          <Button type="button" disabled={isBusy} onClick={onAnalyze}>
+            Analyze resume
+          </Button>
+        ) : null}
+      </div>
+    </div>
   );
 }

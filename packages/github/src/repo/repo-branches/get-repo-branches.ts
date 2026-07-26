@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   executeGitHubGraphQL,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoBranchesResponse } from "#@/repo/repo-branches/repo-branches.types";
 import { mapGraphQLRepoBranches } from "#@/repo/repo-branches/repo-branches.utils";
@@ -97,7 +97,7 @@ async function _fetchRepoBranches(
 
     return result.data;
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_branches_read_not_found");
 
       return [];

@@ -6,14 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { type ResumeImportDraft } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@tsu-stack/ui/components/card";
 
 import { useExtractResumeMutation } from "@/features/onboarding";
 
@@ -28,93 +20,108 @@ export type AnalyzingStepProps = {
 
 export function AnalyzingStep({ objectKey, filename, onSuccess, onBack }: AnalyzingStepProps) {
   const extractMutation = useExtractResumeMutation();
-  const [stepLabel, setStepLabel] = useState<string | null>("Initializing");
+  const [stepLabel, setStepLabel] = useState<string | null>("Starting analysis…");
   const [error, setError] = useState<string | null>(null);
-  const startedForKey = useRef<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-
-  const runExtract = async () => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    setError(null);
-    setStepLabel("Initializing");
-
-    try {
-      const draft = await extractMutation.mutateAsync({
-        objectKey,
-        filename: filename ?? undefined,
-        signal: controller.signal,
-        onStepChange: (step) => setStepLabel(step)
-      });
-      if (!controller.signal.aborted) {
-        onSuccess(draft);
-      }
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      setError(err instanceof Error ? err.message : "Failed to analyze resume");
-      setStepLabel(null);
-    }
-  };
+  const [isRunning, setIsRunning] = useState(true);
+  const onSuccessRef = useRef(onSuccess);
 
   useEffect(() => {
-    if (startedForKey.current === objectKey) return;
-    startedForKey.current = objectKey;
-    void runExtract();
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let alive = true;
+
+    void (async () => {
+      try {
+        const draft = await extractMutation.mutateAsync({
+          objectKey,
+          filename: filename ?? undefined,
+          signal: controller.signal,
+          onStepChange: (step) => {
+            if (alive) setStepLabel(step);
+          }
+        });
+        if (!alive || controller.signal.aborted) return;
+        setIsRunning(false);
+        onSuccessRef.current(draft);
+      } catch (err) {
+        if (!alive || controller.signal.aborted) return;
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "Failed to analyze resume");
+        setStepLabel(null);
+        setIsRunning(false);
+      }
+    })();
 
     return () => {
-      abortRef.current?.abort();
+      alive = false;
+      controller.abort();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only when objectKey changes
+    // Mount once per source via parent `key={objectKey}` — do not reset state in effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectKey]);
 
-  const isRunning = extractMutation.isPending && !error;
+  const handleRetry = () => {
+    setError(null);
+    setIsRunning(true);
+    setStepLabel("Starting analysis…");
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const draft = await extractMutation.mutateAsync({
+          objectKey,
+          filename: filename ?? undefined,
+          signal: controller.signal,
+          onStepChange: setStepLabel
+        });
+        setIsRunning(false);
+        onSuccessRef.current(draft);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "Failed to analyze resume");
+        setStepLabel(null);
+        setIsRunning(false);
+      }
+    })();
+  };
 
   return (
-    <Card className="mx-auto w-full max-w-lg border-border/80 shadow-xs/5">
-      <CardHeader className="gap-1 border-b border-border/60 pb-4">
-        <CardTitle className="text-base sm:text-lg">Working through your resume</CardTitle>
-        <CardDescription className="flex flex-wrap items-center gap-2">
-          {filename ? (
-            <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border bg-muted/40 px-2 py-0.5 text-xs text-foreground">
-              <FileTextIcon className="size-3 shrink-0" aria-hidden />
-              <span className="truncate">{filename}</span>
-            </span>
-          ) : (
-            "Extracting profile, experiences, projects, and skills"
-          )}
-        </CardDescription>
-      </CardHeader>
+    <div className="flex w-full flex-col gap-5">
+      {filename ? (
+        <p className="inline-flex max-w-full items-center gap-1.5 self-start text-xs text-muted-foreground">
+          <FileTextIcon className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{filename}</span>
+        </p>
+      ) : null}
 
-      <CardContent className="flex flex-col gap-2 py-6">
-        {error ? (
-          <Alert variant="error" className="w-full" role="alert">
-            <AlertTitle>Analysis failed</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : (
-          <AnalyzingProgress stepLabel={stepLabel} isRunning={isRunning} />
-        )}
-      </CardContent>
+      {error ? (
+        <Alert variant="error" className="w-full" role="alert">
+          <AlertTitle>Analysis failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : (
+        <AnalyzingProgress stepLabel={stepLabel} isRunning={isRunning} />
+      )}
 
-      <CardFooter className="flex flex-wrap justify-between gap-2 border-t border-border/60 pt-4">
-        <Button type="button" variant="ghost" onClick={onBack} disabled={isRunning}>
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={onBack}
+          disabled={isRunning}
+        >
           Back
         </Button>
         {error ? (
-          <Button
-            type="button"
-            loading={extractMutation.isPending}
-            onClick={() => {
-              startedForKey.current = null;
-              void runExtract();
-            }}
-          >
-            Retry analysis
+          <Button type="button" loading={extractMutation.isPending} onClick={handleRetry}>
+            Retry
           </Button>
         ) : null}
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

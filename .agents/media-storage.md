@@ -55,16 +55,16 @@ Prefer adapter-provided URL resolution such as `await files.url(key)` over hand-
 
 Storage env is validated on **`ENV_WEB_SERVER`** in `packages/env` (not a separate MinIO\_\* naming scheme):
 
-| Variable              | Role                                                                                     |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| `S3_ENDPOINT`         | S3-compatible endpoint (e.g. MinIO `http://localhost:9000`)                              |
-| `S3_ACCESS_KEY`       | Access key                                                                               |
-| `S3_SECRET_KEY`       | Secret key                                                                               |
-| `S3_BUCKET`           | Bucket name (default `personal-hub`)                                                     |
-| `S3_REGION`           | Region (default `us-east-1`)                                                             |
-| `S3_FORCE_PATH_STYLE` | Path-style URLs; required for MinIO (default `true`)                                     |
-| `MEDIA_PUBLIC_URL`    | Public/CDN base URL for read-side resolution (e.g. `http://localhost:9000/personal-hub`) |
-| `FILES_API_SECRET`    | HMAC secret for the files-sdk gateway                                                    |
+| Variable              | Role                                                                                         |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `S3_ENDPOINT`         | S3-compatible endpoint (local MinIO: `http://127.0.0.1:9002` — host map, not container 9000) |
+| `S3_ACCESS_KEY`       | Access key (local default `minioadmin`, must match MinIO `MINIO_ROOT_USER`)                  |
+| `S3_SECRET_KEY`       | Secret key (local default `minioadmin`, must match MinIO `MINIO_ROOT_PASSWORD`)              |
+| `S3_BUCKET`           | Bucket name (default `personal-hub`)                                                         |
+| `S3_REGION`           | Region (default `us-east-1`)                                                                 |
+| `S3_FORCE_PATH_STYLE` | Path-style URLs; required for MinIO (default `true`)                                         |
+| `MEDIA_PUBLIC_URL`    | Public/CDN base URL (local: `http://127.0.0.1:9002/personal-hub`)                            |
+| `FILES_API_SECRET`    | HMAC secret for the files-sdk gateway                                                        |
 
 See `packages/env/.env.example` for local placeholders. For propagation checklists, follow [Environment variables](./environment-variables.md).
 

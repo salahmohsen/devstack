@@ -57,7 +57,11 @@ export function ProgressIndicator({
 }: ProgressPrimitive.Indicator.Props): React.ReactElement {
   return (
     <ProgressPrimitive.Indicator
-      className={cn("bg-primary transition-all duration-500", className)}
+      className={cn(
+        // Base UI sets inline width %; block + full height makes the fill visible.
+        "block h-full bg-primary transition-all duration-500 ease-out",
+        className
+      )}
       data-slot="progress-indicator"
       {...props}
     />

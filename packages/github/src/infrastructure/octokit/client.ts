@@ -152,6 +152,43 @@ export function getErrorStatusCode(error: unknown) {
     : null;
 }
 
+/**
+ * GraphQL "repository not found" often has no HTTP 404 — Octokit throws with
+ * message/errors like "Could not resolve to a Repository with the name …".
+ * Treat those as not-found so handlers can return empty/null instead of 500.
+ */
+export function isGitHubNotFoundError(error: unknown): boolean {
+  if (getErrorStatusCode(error) === 404) {
+    return true;
+  }
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const message =
+    typeof (error as { message?: unknown }).message === "string"
+      ? (error as { message: string }).message
+      : "";
+  if (/could not resolve to a repository/i.test(message)) {
+    return true;
+  }
+
+  const errors = (error as { errors?: unknown }).errors;
+  if (!Array.isArray(errors)) {
+    return false;
+  }
+
+  return errors.some((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const type = (entry as { type?: unknown }).type;
+    const entryMessage = (entry as { message?: unknown }).message;
+    if (type === "NOT_FOUND") return true;
+    return (
+      typeof entryMessage === "string" && /could not resolve to a repository/i.test(entryMessage)
+    );
+  });
+}
+
 function parseNullableInt(value: string | null) {
   if (!value) {
     return null;

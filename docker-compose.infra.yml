@@ -34,9 +34,12 @@ services:
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
+    # Host 9000 is commonly taken by php-fpm (127.0.0.1:9000), which steals
+    # IPv4 traffic from MinIO and breaks S3 uploads with confusing errors.
+    # Container still listens on 9000/9001; only the host mapping moves.
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9002:9000"
+      - "9003:9001"
     volumes:
       - minio_data:/data
     environment:

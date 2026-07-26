@@ -202,6 +202,14 @@ export const onboardingRouter = {
     .handler(async function* ({ input, context, errors }) {
       const userId = context.session.user.id;
 
+      /** Synthetic step events so the client can progress before the agent stream opens. */
+      const emitStep = (stepName: string) => {
+        return {
+          type: "workflow-step-start" as const,
+          payload: { stepName, id: stepName, status: "running" as const }
+        };
+      };
+
       let fullKey: string;
       try {
         fullKey = requireResumeSourceObjectKey(input.objectKey, userId);
@@ -212,6 +220,8 @@ export const onboardingRouter = {
         throw error;
       }
 
+      yield emitStep("download");
+
       let bytes: Uint8Array;
       try {
         bytes = await downloadObjectBytes(context.mediaBucket, fullKey);
@@ -219,7 +229,12 @@ export const onboardingRouter = {
         if (error instanceof PdfTextError && error.code === "EXTRACT_FAILED") {
           throw errors.EXTRACT_FAILED({ message: error.message });
         }
-        throw errors.EXTRACT_FAILED();
+        throw errors.EXTRACT_FAILED({
+          message:
+            error instanceof Error
+              ? error.message
+              : "Resume source object not found or could not be downloaded"
+        });
       }
 
       if (bytes.byteLength > RESUME_SOURCE_MAX_BYTES) {
@@ -229,6 +244,8 @@ export const onboardingRouter = {
       if (!looksLikePdf(bytes)) {
         throw errors.UNSUPPORTED_MEDIA();
       }
+
+      yield emitStep("pdf-text");
 
       let resumeText: string;
       try {
@@ -274,6 +291,8 @@ export const onboardingRouter = {
           message: "Agent worker is not configured. Set AGENT_WORKER_URL and restart the server."
         });
       }
+
+      yield emitStep("extract");
 
       let createRunRes: Response;
       try {
@@ -368,7 +387,10 @@ export const onboardingRouter = {
             throw errors.EMAIL_TAKEN({ message: error.message });
           }
         }
-        throw errors.APPLY_FAILED();
+        const detail = error instanceof Error ? error.message : String(error);
+        throw errors.APPLY_FAILED({
+          message: `Failed to apply onboarding draft: ${detail}`
+        });
       }
 
       await bestEffortDeleteResumeSource(context.mediaBucket, objectKey, userId);

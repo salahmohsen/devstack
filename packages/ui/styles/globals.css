@@ -9,6 +9,7 @@
 @import "tw-animate-css";
 @import "./animations.css";
 @import "./shadcn.css";
+@import "./shimmer.css";
 @import "./base-theme.css";
 @import "./scrollbar.css";
 @import "./prose.css";

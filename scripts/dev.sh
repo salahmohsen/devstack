@@ -90,7 +90,8 @@ wait_for_healthy "minio" 30
 
 # ─── Step 3: Create S3 bucket ────────────────────────────────────
 info "Ensuring MinIO bucket exists..."
-MINIO_ENDPOINT="http://localhost:9000"
+# Host map 9002→container 9000 (see docker-compose.infra.yml); avoids php-fpm on :9000.
+MINIO_ENDPOINT="http://127.0.0.1:9002"
 MINIO_USER="${MINIO_ROOT_USER:-minioadmin}"
 MINIO_PASS="${MINIO_ROOT_PASSWORD:-minioadmin}"
 

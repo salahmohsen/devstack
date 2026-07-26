@@ -32,7 +32,6 @@ import {
   TableHeader,
   TableRow
 } from "@tsu-stack/ui/components/table";
-import { ShimmeringText } from "@tsu-stack/ui/components/unlumen-ui/shimmering-text";
 
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { Icon } from "@/shared/ui/icon";
@@ -333,7 +332,9 @@ export function DetectStacksDialog({
           <DialogPanel>
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
               <DefaultLoader />
-              <ShimmeringText text={currentStep ?? "Detecting stacks…"} duration={1.8} />
+              <p className="shimmer text-sm font-medium text-foreground">
+                {currentStep ?? "Detecting stacks…"}
+              </p>
               <p className="max-w-sm text-xs text-muted-foreground">
                 This can take a minute for monorepos. You can cancel anytime.
               </p>

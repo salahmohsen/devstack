@@ -72,6 +72,15 @@ export const projectRepository = {
     const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
 
     await getDb().transaction(async (tx) => {
+      // portfolio_entry first — project.portfolio_entry_id FK requires parent row.
+      if (pid) {
+        await tx.insert(portfolioEntry).values({
+          id: pid,
+          type: "project",
+          entityId: projectId
+        });
+      }
+
       await tx.insert(project).values({
         id: projectId,
         logo: input.logo ?? null,
@@ -88,14 +97,6 @@ export const projectRepository = {
         analysis: input.analysis ?? null,
         portfolioEntryId: pid
       });
-
-      if (pid) {
-        await tx.insert(portfolioEntry).values({
-          id: pid,
-          type: "project",
-          entityId: projectId
-        });
-      }
 
       if (input.stackIds && input.stackIds.length > 0) {
         const unique = [...new Set(input.stackIds)];
