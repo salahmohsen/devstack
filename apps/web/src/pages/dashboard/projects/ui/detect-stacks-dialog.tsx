@@ -331,10 +331,12 @@ export function DetectStacksDialog({
         {isDetecting ? (
           <DialogPanel>
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <DefaultLoader />
-              <p className="shimmer text-sm font-medium text-foreground">
-                {currentStep ?? "Detecting stacks…"}
-              </p>
+              <div className="flex items-center gap-3">
+                <DefaultLoader />
+                <p className="shimmer text-sm font-medium text-foreground">
+                  {currentStep ?? "Detecting stacks…"}
+                </p>
+              </div>
               <p className="max-w-sm text-xs text-muted-foreground">
                 This can take a minute for monorepos. You can cancel anytime.
               </p>
