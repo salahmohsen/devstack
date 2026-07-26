@@ -3,6 +3,18 @@ import { useMutation } from "@tanstack/react-query";
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type DetectedStack, type DetectStacksResult } from "@tsu-stack/core";
 
+import {
+  cancelMastraWorkflowRun,
+  extractRunId,
+  getWorkflowErrorMessage,
+  isAbortError,
+  unwrapWorkflowEvent,
+  workflowFailedMessage,
+  workflowStepErrorMessage
+} from "@/shared/lib/ai-job";
+
+const DETECT_WORKFLOW_ID = "detect-stacks-workflow";
+
 const STEP_LABELS: Record<string, string> = {
   "fetch-repo-package-jsons": "Fetching repository files",
   "extract-dependencies": "Extracting dependencies",
@@ -13,34 +25,12 @@ const STEP_LABELS: Record<string, string> = {
   format: "Processing results"
 };
 
-function unwrapEvent(raw: unknown): Record<string, unknown> {
-  if (!raw || typeof raw !== "object") return {};
-  const record = raw as Record<string, unknown>;
-  if (record.json && typeof record.json === "object") {
-    return record.json as Record<string, unknown>;
-  }
-  return record;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (!error) return "Stack detection failed.";
-  if (typeof error === "string") return error;
-  if (error instanceof Error && error.message) return error.message;
-  if (typeof error === "object") {
-    const record = error as Record<string, unknown>;
-    if (typeof record.message === "string" && record.message) return record.message;
-    const data = record.data;
-    if (
-      data &&
-      typeof data === "object" &&
-      typeof (data as { message?: string }).message === "string"
-    ) {
-      return (data as { message: string }).message;
-    }
-    const cause = record.cause;
-    if (cause instanceof Error && cause.message) return cause.message;
-  }
-  return "Stack detection failed.";
+/**
+ * Abort stream + explicit Mastra cancel RPC.
+ * Stream abort alone is not always enough to stop in-flight LLM steps.
+ */
+function cancelDetectRun(runId: string | null) {
+  cancelMastraWorkflowRun(DETECT_WORKFLOW_ID, runId);
 }
 
 export function useDetectStacksMutation() {
@@ -61,19 +51,39 @@ export function useDetectStacksMutation() {
         currentStep: null
       };
 
+      let runId: string | null = null;
+
+      const onAbort = () => {
+        cancelDetectRun(runId);
+      };
+      signal?.addEventListener("abort", onAbort, { once: true });
+
       onStepChange?.("Initializing");
 
       try {
+        if (signal?.aborted) {
+          throw new DOMException("Stack detection cancelled.", "AbortError");
+        }
+
         const iterator = await orpcClient.agent.detectStacks(rpcInput, { signal });
 
         for await (const raw of iterator) {
           if (signal?.aborted) {
+            cancelDetectRun(runId);
             throw new DOMException("Stack detection cancelled.", "AbortError");
           }
 
-          const event = unwrapEvent(raw);
+          const event = unwrapWorkflowEvent(raw);
           const eventType = event.type as string | undefined;
           const payload = event.payload as Record<string, unknown> | undefined;
+
+          // Capture runId from any event so cancel RPC works ASAP
+          const maybeRunId = extractRunId(event, payload);
+          if (maybeRunId) runId = maybeRunId;
+
+          if (eventType === "workflow-run-created") {
+            continue;
+          }
 
           if (eventType === "workflow-step-start") {
             const stepName = (payload?.stepName as string) ?? null;
@@ -98,30 +108,25 @@ export function useDetectStacksMutation() {
           if (eventType === "workflow-step-error") {
             result.currentStep = null;
             onStepChange?.(null);
-            const message =
-              (payload?.error as { message?: string } | undefined)?.message ??
-              (typeof payload?.error === "string" ? payload.error : null) ??
-              "A detection step failed.";
-            throw new Error(message);
+            throw new Error(workflowStepErrorMessage(payload, "A detection step failed."));
           }
 
           if (eventType === "workflow-failed" || eventType === "error") {
-            const message =
-              (payload?.error as { message?: string } | undefined)?.message ??
-              (typeof event.error === "string" ? event.error : null) ??
-              "Stack detection failed.";
-            throw new Error(message);
+            throw new Error(workflowFailedMessage(event, payload, "Stack detection failed."));
           }
         }
       } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") throw error;
-        if (signal?.aborted) {
+        if (isAbortError(error) || signal?.aborted) {
+          cancelDetectRun(runId);
           throw new DOMException("Stack detection cancelled.", "AbortError");
         }
-        throw new Error(getErrorMessage(error));
+        throw new Error(getWorkflowErrorMessage(error, "Stack detection failed."));
+      } finally {
+        signal?.removeEventListener("abort", onAbort);
       }
 
       if (signal?.aborted) {
+        cancelDetectRun(runId);
         throw new DOMException("Stack detection cancelled.", "AbortError");
       }
 

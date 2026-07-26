@@ -3,11 +3,11 @@
 import { rectSortingStrategy } from "@dnd-kit/sortable";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Package } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type OrganizeAction, type StackOutput } from "@tsu-stack/core";
+import { type OrganizeAction, type StackOutput, normalizeOrganizeActions } from "@tsu-stack/core";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -27,7 +27,13 @@ import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { getPortfolioListQueryOptions } from "@/features/portfolio";
-import { useOrganizeStacksMutation } from "@/features/stacks";
+import {
+  cancelOrganizeStacksJob,
+  dismissOrganizeStacksJob,
+  setOrganizeReviewOpen,
+  startOrganizeStacksJob,
+  useOrganizeStacksJob
+} from "@/features/stacks";
 
 import {
   GridSkeleton,
@@ -73,64 +79,41 @@ export function StacksPage() {
 
   const isAnyOpen = isAnyOpened(isItemOpen);
 
-  // ── Organize state ────────────────────────────────────────────────
-  const [organizeStep, setOrganizeStep] = useState<string | null>(null);
-  const [organizeDialogOpen, setOrganizeDialogOpen] = useState(false);
-  const [organizeActions, setOrganizeActions] = useState<OrganizeAction[]>([]);
-  const [organizeSortOrder, setOrganizeSortOrder] = useState<string[]>([]);
-  const [isOrganizing, setIsOrganizing] = useState(false);
-
-  const organizeMutation = useOrganizeStacksMutation();
-  const organizeAbortRef = useRef<AbortController | null>(null);
+  // ── Organize job (global; survives navigation) ───────────────────
+  const organizeJob = useOrganizeStacksJob();
+  const [isApplyingOrganize, setIsApplyingOrganize] = useState(false);
 
   function handleStartOrganize() {
-    const controller = new AbortController();
-    organizeAbortRef.current = controller;
-    setOrganizeStep("Initializing");
-    organizeMutation.mutate(
-      { onStepChange: setOrganizeStep, signal: controller.signal },
-      {
-        onSuccess: (data) => {
-          setOrganizeActions(data.actions);
-          setOrganizeSortOrder(data.sortOrder);
-          if (data.actions.length > 0 || data.sortOrder.length > 0) {
-            setOrganizeDialogOpen(true);
-          } else {
-            toast.success("All stacks are already organized!");
-          }
-          setOrganizeStep(null);
-        },
-        onError: (error) => {
-          if (error.name === "AbortError") {
-            toast.info("Organize cancelled.");
-          } else {
-            console.error("[stacks] Organize failed:", error);
-            toast.error("Failed to organize stacks.");
-          }
-          setOrganizeStep(null);
-        }
-      }
-    );
+    // Single-flight + re-open ready review is handled inside the job runner
+    startOrganizeStacksJob();
   }
 
   function handleCancelOrganize() {
-    organizeAbortRef.current?.abort();
-    setOrganizeStep(null);
+    cancelOrganizeStacksJob();
   }
 
-  async function handleConfirmOrganize() {
-    const mergeActions = organizeActions.filter((a) => a.type === "merge");
-    const renameActions = organizeActions.filter((a) => a.type === "rename");
-    const enrichActions = organizeActions.filter((a) => a.type === "enrich");
-    setIsOrganizing(true);
+  async function handleConfirmOrganize(selectedActions: OrganizeAction[]) {
+    // Re-normalize selected subset against current stacks (auto-merge collisions)
+    const { actions: plan, sortOrder: planSortOrder } = normalizeOrganizeActions(
+      selectedActions,
+      stacks.map((s) => {
+        return { id: s.id, name: s.name, projectCount: s.projectCount };
+      }),
+      organizeJob.sortOrder
+    );
+
+    const mergeActions = plan.filter((a) => a.type === "merge");
+    const renameActions = plan.filter((a) => a.type === "rename");
+    const enrichActions = plan.filter((a) => a.type === "enrich");
+    setIsApplyingOrganize(true);
 
     try {
       if (mergeActions.length > 0) {
         const mergeItems = mergeActions
           .map((action) => {
-            const details = action.details as { mergeIntoId?: string; mergeIntoName?: string };
-            if (!details.mergeIntoId) return null;
-            return { survivorId: details.mergeIntoId, victimId: action.stackId };
+            const mergeIntoId = action.details.mergeIntoId;
+            if (!mergeIntoId) return null;
+            return { survivorId: mergeIntoId, victimId: action.stackId };
           })
           .filter((item): item is { survivorId: string; victimId: string } => item !== null);
 
@@ -140,41 +123,34 @@ export function StacksPage() {
           } catch (error) {
             console.error("[stacks] Batch merge failed:", error);
             toast.error("Failed to merge some stacks.");
+            return;
           }
         }
       }
 
-      // Batch update renames + enrichments + SVG in a single transaction
-      // Deduplicate by id (last one wins), track used names to avoid conflicts
+      // Batch update renames + enrichments in a single transaction
       const batchItemMap = new Map<string, { id: string; data: Record<string, unknown> }>();
-      const usedNewNames = new Set<string>();
 
       for (const action of renameActions) {
-        const details = action.details as { newName?: string };
-        if (!details.newName) continue;
-        const newName = details.newName;
-        if (usedNewNames.has(newName.toLowerCase())) {
-          console.warn(`[stacks] Skipping duplicate rename target "${newName}"`);
-          continue;
-        }
-        usedNewNames.add(newName.toLowerCase());
+        const newName = action.details.newName;
+        if (!newName) continue;
         batchItemMap.set(action.stackId, { id: action.stackId, data: { name: newName } });
       }
 
       for (const action of enrichActions) {
-        const details = action.details as {
-          newDescription?: string;
-          newIcon?: string;
-          newType?: string;
-        };
         const existing = batchItemMap.get(action.stackId);
         const enrichData: Record<string, unknown> = {
-          description: details.newDescription,
-          icon: details.newIcon,
-          type: details.newType
+          description: action.details.newDescription,
+          icon: action.details.newIcon,
+          type: action.details.newType
         };
+        // Drop undefined so we don't wipe fields
+        for (const key of Object.keys(enrichData)) {
+          if (enrichData[key] === undefined) delete enrichData[key];
+        }
+        if (Object.keys(enrichData).length === 0) continue;
+
         if (existing) {
-          // Merge: keep existing name, add enrich fields
           batchItemMap.set(action.stackId, {
             id: action.stackId,
             data: { ...existing.data, ...enrichData }
@@ -192,13 +168,14 @@ export function StacksPage() {
         } catch (error) {
           console.error("[stacks] Batch update failed:", error);
           toast.error("Failed to apply some changes.");
+          return;
         }
       }
 
-      // Apply sort order if provided
-      if (organizeSortOrder.length > 0) {
+      // Apply sort order if provided (already remapped through survivors)
+      if (planSortOrder.length > 0) {
         try {
-          const reorderItems = organizeSortOrder.map((id, index) => {
+          const reorderItems = planSortOrder.map((id, index) => {
             return { id, sortOrder: index };
           });
           await orpcClient.stacks.reorder({ items: reorderItems });
@@ -211,16 +188,14 @@ export function StacksPage() {
       await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
 
       const totalActions = mergeActions.length + renameActions.length + enrichActions.length;
-      const totalChanges = totalActions + (organizeSortOrder.length > 0 ? 1 : 0);
+      const totalChanges = totalActions + (planSortOrder.length > 0 ? 1 : 0);
       toast.success(`Organized ${totalChanges} change(s).`);
-      setOrganizeDialogOpen(false);
-      setOrganizeActions([]);
-      setOrganizeSortOrder([]);
+      dismissOrganizeStacksJob();
     } catch (error) {
       console.error("[stacks] Organize failed:", error);
       toast.error("Failed to apply changes.");
     } finally {
-      setIsOrganizing(false);
+      setIsApplyingOrganize(false);
     }
   }
 
@@ -428,10 +403,15 @@ export function StacksPage() {
 
     const displayItems = pendingOrder ?? stacks;
 
+    // Viewport breakpoints (not auto-fill): column count stays stable when the
+    // side panel opens and only card width animates — no item reflow/rearrange.
+    const gridClassName =
+      "grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 animate-grid";
+
     const grid = (
-      <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 animate-grid">
+      <div className={gridClassName}>
         {displayItems.map((stack) => (
-          <div key={stack.id} className="animate-grid-item">
+          <div key={stack.id} className="animate-grid-item min-w-0">
             <StackItem
               stack={stack}
               onEdit={openDialog}
@@ -454,16 +434,12 @@ export function StacksPage() {
         onReorder={handleReorder}
         disabled={reorderMutation.isPending}
         strategy={rectSortingStrategy}
-        containerClassName="animate-grid grid w-full grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3"
+        containerClassName={gridClassName}
       >
         {(stack, dragHandleProps) => (
-          <StackItem
-            key={stack.id}
-            stack={stack}
-            onEdit={openDialog}
-            dragHandleProps={dragHandleProps}
-            isSort
-          />
+          <div key={stack.id} className="animate-grid-item min-w-0">
+            <StackItem stack={stack} onEdit={openDialog} dragHandleProps={dragHandleProps} isSort />
+          </div>
         )}
       </SortableList>
     );
@@ -479,8 +455,8 @@ export function StacksPage() {
             <HeaderActions
               add={{ onAdd: () => openDialog(null), label: "Add Stack" }}
               organize={{
-                isRunning: organizeMutation.isPending,
-                currentStep: organizeStep,
+                isRunning: organizeJob.status === "running",
+                currentStep: organizeJob.stepLabel,
                 onStart: handleStartOrganize,
                 onCancel: handleCancelOrganize
               }}
@@ -615,15 +591,22 @@ export function StacksPage() {
           isPending={mergeMutation.isPending}
         />
 
-        {/* ── Organize dialog ─────────────────────────────────────── */}
+        {/* ── Organize dialog (state from global job store) ───────── */}
         <OrganizeDialog
-          open={organizeDialogOpen}
-          onOpenChange={setOrganizeDialogOpen}
-          actions={organizeActions}
-          sortOrder={organizeSortOrder}
-          isPending={isOrganizing}
+          open={organizeJob.dialogOpen}
+          onOpenChange={(open) => {
+            setOrganizeReviewOpen(open);
+            // Dismissing without apply keeps ready results — re-open via Organize
+          }}
+          actions={organizeJob.actions}
+          sortOrder={organizeJob.sortOrder}
+          stacks={stacks}
+          isPending={isApplyingOrganize}
           onConfirm={handleConfirmOrganize}
-          onClearSortOrder={() => setOrganizeSortOrder([])}
+          onClearSortOrder={() => {
+            // sort order is part of the ready job; clearing keeps dialog openable
+            setOrganizeReviewOpen(false);
+          }}
         />
       </PageLayout>
     </ItemsNavProvider>

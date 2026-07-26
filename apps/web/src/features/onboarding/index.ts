@@ -5,7 +5,27 @@ export {
 } from "@/features/onboarding/api/get-onboarding-status.query";
 export type { OnboardingStatusQueryResult } from "@/features/onboarding/api/get-onboarding-status.query";
 
-export { useExtractResumeMutation } from "@/features/onboarding/api/extract-resume";
+export {
+  runExtractResume,
+  useExtractResumeMutation
+} from "@/features/onboarding/api/extract-resume.mutation";
+export type { RunExtractResumeInput } from "@/features/onboarding/api/extract-resume.mutation";
+
+export {
+  cancelExtractResumeJob,
+  clearExtractResumeError,
+  startExtractResumeJob
+} from "@/features/onboarding/api/extract-resume-job";
+
+export {
+  getOnboardingSessionState,
+  resetOnboardingSessionState,
+  setOnboardingSessionState,
+  useOnboardingSession,
+  type OnboardingApplySummary,
+  type OnboardingFlowStep,
+  type OnboardingSessionState
+} from "@/features/onboarding/lib/onboarding-session-store";
 
 export {
   getApplyOnboardingMutationOptions,

@@ -65,11 +65,26 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   const detectionHook = useDetectStacksMutation();
 
-  const handleCancelDetect = () => {
-    detectAbortRef.current?.abort();
+  /**
+   * Abort in-flight detect-stacks. Call when the detect dialog closes or the
+   * parent project form dialog closes — never leave a stream running detached.
+   */
+  const handleCancelDetect = (options?: { silent?: boolean }) => {
+    const controller = detectAbortRef.current;
+    if (!controller) {
+      setIsDetecting(false);
+      setCurrentStep(null);
+      return;
+    }
+    // Abort first — oRPC closes the stream; mutation cancels the Mastra run
+    controller.abort();
     detectAbortRef.current = null;
     setIsDetecting(false);
     setCurrentStep(null);
+    detectionHook.reset();
+    if (!options?.silent) {
+      toast.info("Stack detection cancelled.");
+    }
   };
 
   const handleOpenDetectDialog = () => {
@@ -106,12 +121,10 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       .catch((error: unknown) => {
         const aborted =
           controller.signal.aborted ||
-          (error instanceof DOMException && error.name === "AbortError");
+          (error instanceof DOMException && error.name === "AbortError") ||
+          (error instanceof Error && error.name === "AbortError");
         if (aborted) {
-          // User cancelled (ref cleared). Skip toast when a newer run superseded this one.
-          if (detectAbortRef.current === null) {
-            toast.info("Stack detection cancelled.");
-          }
+          // Cancel toast is shown in handleCancelDetect
           return;
         }
         const message =
@@ -209,7 +222,11 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     }
   });
 
-  const handleClose = () => onOpenChange(false);
+  const handleClose = () => {
+    handleCancelDetect();
+    setDetectDialogOpen(false);
+    onOpenChange(false);
+  };
   const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
 
   // Reset only when the dialog opens or the edited project id changes.
@@ -254,8 +271,38 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     // projects.list identity change), so detect-stacks can keep stackIds.
   }, [open, projectIdKey, form]);
 
+  // Parent form closed (X / overlay / Escape / external) — always stop detect.
+  useEffect(() => {
+    if (open) return;
+    handleCancelDetect({ silent: true });
+    // Reset detect dialog state when the form is closed from outside this tree.
+    // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- sync detect UI to closed form prop
+    setDetectDialogOpen(false);
+    setResults(null);
+    setDetectError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to form dialog open
+  }, [open]);
+
+  // Unmount safety net
+  useEffect(
+    () => () => {
+      detectAbortRef.current?.abort();
+      detectAbortRef.current = null;
+    },
+    []
+  );
+
+  const handleFormDialogOpenChange = (next: boolean) => {
+    if (next) {
+      onOpenChange(true);
+      return;
+    }
+    // Dirty guard → handleClose aborts detect when confirmed
+    handleCloseAttempt();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleFormDialogOpenChange}>
       <DialogContent className="form-dialog">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Project" : "New Project"}</DialogTitle>
@@ -440,7 +487,12 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         <DetectStacksDialog
           open={detectDialogOpen}
           setOpen={(next) => {
-            if (!next) handleCancelDetect();
+            if (!next) {
+              // Closing detect dialog (Cancel / Escape / X) aborts the run
+              handleCancelDetect();
+              setResults(null);
+              setDetectError(null);
+            }
             setDetectDialogOpen(next);
           }}
           onStacksSelected={async (upserted) => {
@@ -484,7 +536,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           currentStep={currentStep}
           results={results}
           error={detectError}
-          onCancel={handleCancelDetect}
+          onCancel={() => handleCancelDetect()}
         />
       </DialogContent>
     </Dialog>

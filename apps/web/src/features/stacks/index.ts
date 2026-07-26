@@ -1,2 +1,13 @@
-export { useDetectStacksMutation } from "@/features/stacks/api/detect-stacks";
-export { useOrganizeStacksMutation } from "@/features/stacks/api/organize-stacks";
+export { useDetectStacksMutation } from "@/features/stacks/api/detect-stacks.mutation";
+export {
+  cancelOrganizeStacksJob,
+  dismissOrganizeStacksJob,
+  setOrganizeReviewOpen,
+  startOrganizeStacksJob
+} from "@/features/stacks/api/organize-stacks-job";
+export {
+  getOrganizeJobState,
+  useOrganizeStacksJob,
+  type OrganizeJobState,
+  type OrganizeJobStatus
+} from "@/features/stacks/lib/organize-stacks-job-store";

@@ -1,8 +1,16 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import { type ResumeImportDraft } from "@tsu-stack/core";
+
+import {
+  cancelExtractResumeJob,
+  resetOnboardingSessionState,
+  setOnboardingSessionState,
+  startExtractResumeJob,
+  useOnboardingSession
+} from "@/features/onboarding";
 
 import { AnalyzingStep } from "@/pages/dashboard/onboarding/ui/analyzing-step";
 import { DoneStep } from "@/pages/dashboard/onboarding/ui/done-step";
@@ -21,7 +29,7 @@ const COPY: Record<OnboardingFlowStep, { title: string; description: React.React
   },
   analyzing: {
     title: "Analyzing resume",
-    description: "Usually under a minute — keep this tab open."
+    description: "You can leave this page — analysis continues in the background."
   },
   review: {
     title: "Review before import",
@@ -34,52 +42,95 @@ const COPY: Record<OnboardingFlowStep, { title: string; description: React.React
 };
 
 export function OnboardingPage() {
-  const [step, setStep] = useState<OnboardingFlowStep>("upload");
-  const [objectKey, setObjectKey] = useState<string | null>(null);
-  const [filename, setFilename] = useState<string | null>(null);
-  const [draft, setDraft] = useState<ResumeImportDraft | null>(null);
-  const [applySummary, setApplySummary] = useState<{
-    experiences: number;
-    projects: number;
-    stacks: number;
-  } | null>(null);
+  const session = useOnboardingSession();
+  const {
+    step,
+    objectKey,
+    filename,
+    draft,
+    applySummary,
+    extractStatus,
+    extractStepLabel,
+    extractError
+  } = session;
 
   const handleUploaded = useCallback((payload: { objectKey: string; filename: string }) => {
-    setObjectKey(payload.objectKey);
-    setFilename(payload.filename);
+    setOnboardingSessionState({
+      objectKey: payload.objectKey,
+      filename: payload.filename,
+      draft: null,
+      extractStatus: "idle",
+      extractError: null,
+      extractStepLabel: null,
+      extractRunId: null
+    });
   }, []);
 
   const handleCleared = useCallback(() => {
-    setObjectKey(null);
-    setFilename(null);
-    setDraft(null);
+    cancelExtractResumeJob();
+    setOnboardingSessionState({
+      objectKey: null,
+      filename: null,
+      draft: null,
+      extractStatus: "idle",
+      extractError: null,
+      extractStepLabel: null,
+      extractRunId: null
+    });
   }, []);
 
-  const handleExtractSuccess = useCallback((nextDraft: ResumeImportDraft) => {
-    setDraft(nextDraft);
-    setStep("review");
+  const handleAnalyze = useCallback(() => {
+    startExtractResumeJob();
+  }, []);
+
+  const handleDraftChange = useCallback((next: ResumeImportDraft) => {
+    setOnboardingSessionState({ draft: next });
   }, []);
 
   const handleApplySuccess = useCallback(
     (summary: { experiences: number; projects: number; stacks: number }) => {
-      setApplySummary(summary);
-      setStep("done");
+      setOnboardingSessionState({
+        applySummary: summary,
+        step: "done",
+        // Keep draft/source cleared so a later revisit doesn't re-show review
+        draft: null,
+        objectKey: null,
+        filename: null,
+        extractStatus: "idle",
+        extractError: null,
+        extractStepLabel: null,
+        extractRunId: null
+      });
     },
     []
   );
 
   const handleSkipped = useCallback(() => {
-    setApplySummary(null);
-    setStep("done");
+    setOnboardingSessionState({
+      applySummary: null,
+      step: "done",
+      draft: null,
+      objectKey: null,
+      filename: null,
+      extractStatus: "idle",
+      extractError: null,
+      extractStepLabel: null,
+      extractRunId: null
+    });
   }, []);
 
   const handleDiscardAndRestart = useCallback(() => {
-    setDraft(null);
-    setObjectKey(null);
-    setFilename(null);
-    setApplySummary(null);
-    setStep("upload");
+    cancelExtractResumeJob();
+    resetOnboardingSessionState();
   }, []);
+
+  const handleBackToUpload = useCallback(() => {
+    if (extractStatus === "running") {
+      cancelExtractResumeJob();
+      return;
+    }
+    setOnboardingSessionState({ step: "upload", extractError: null });
+  }, [extractStatus]);
 
   const copy = COPY[step];
 
@@ -92,18 +143,20 @@ export function OnboardingPage() {
             filename={filename}
             onUploaded={handleUploaded}
             onCleared={handleCleared}
-            onAnalyze={() => setStep("analyzing")}
+            onAnalyze={handleAnalyze}
             onSkipped={handleSkipped}
           />
         ) : null}
 
         {step === "analyzing" && objectKey ? (
           <AnalyzingStep
-            key={objectKey}
-            objectKey={objectKey}
             filename={filename}
-            onSuccess={handleExtractSuccess}
-            onBack={() => setStep("upload")}
+            stepLabel={extractStepLabel}
+            error={extractError}
+            isRunning={extractStatus === "running"}
+            onCancel={handleBackToUpload}
+            onRetry={() => startExtractResumeJob({ objectKey, filename })}
+            onBack={handleBackToUpload}
           />
         ) : null}
 
@@ -111,8 +164,8 @@ export function OnboardingPage() {
           <ReviewStep
             draft={draft}
             objectKey={objectKey}
-            onDraftChange={setDraft}
-            onBack={() => setStep("upload")}
+            onDraftChange={handleDraftChange}
+            onBack={() => setOnboardingSessionState({ step: "upload" })}
             onApplied={handleApplySuccess}
             onDiscarded={handleDiscardAndRestart}
           />

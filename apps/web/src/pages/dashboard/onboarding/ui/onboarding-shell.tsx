@@ -4,7 +4,9 @@ import { CheckIcon } from "lucide-react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-export type OnboardingFlowStep = "upload" | "analyzing" | "review" | "done";
+import { type OnboardingFlowStep } from "@/features/onboarding";
+
+export type { OnboardingFlowStep };
 
 const STEPS: { id: OnboardingFlowStep; label: string }[] = [
   { id: "upload", label: "Upload" },
@@ -93,7 +95,7 @@ export function OnboardingShell({
         className
       )}
     >
-      <header className="flex w-full flex-col gap-5 sm:gap-6">
+      <header className="flex w-full flex-col gap-5 sm:gap-10">
         <OnboardingStepIndicator step={step} />
         <div
           className={cn(

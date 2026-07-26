@@ -149,9 +149,10 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
         className={cn(
           "group relative aspect-square cursor-pointer overflow-hidden py-0!",
           "**:transition-all **:duration-200",
-          "h-50 w-full",
+          // Fixed footprint so selection / side-panel width changes don't reflow the grid
+          "h-50 w-full max-w-full shrink-0",
           isSort && "cursor-grab active:cursor-grabbing",
-          selected && "ring-1"
+          selected && "ring-1 ring-primary/40"
         )}
         {...props}
       >

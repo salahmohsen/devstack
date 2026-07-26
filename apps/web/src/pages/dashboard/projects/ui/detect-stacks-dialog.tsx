@@ -307,7 +307,9 @@ export function DetectStacksDialog({
   };
 
   const handleOpenChange = (next: boolean) => {
-    if (!next && isDetecting) {
+    if (!next) {
+      // Always notify parent on dismiss so an in-flight detect is aborted
+      // (Cancel, Escape, overlay, or X). Parent no-ops if nothing is running.
       onCancel?.();
     }
     setOpen(next);
@@ -318,7 +320,7 @@ export function DetectStacksDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="sm:max-w-2xl lg:max-w-fit" showCloseButton={!isDetecting}>
+      <DialogPopup className="sm:max-w-2xl lg:max-w-fit" showCloseButton>
         <DialogHeader>
           <DialogTitle>Detect Stacks from Repositories</DialogTitle>
           <DialogDescription>
