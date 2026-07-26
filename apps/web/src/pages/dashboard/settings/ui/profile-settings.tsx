@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Check, ChevronsUpDown, Edit, UserRoundPen, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Calendar, Check, ChevronsUpDown, Edit, FileUp, UserRoundPen, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -170,7 +171,11 @@ export function ProfileSettings() {
                 <FrameTitle>Profile</FrameTitle>
                 <FrameDescription>Manage your personal information and contacts.</FrameDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" render={<Link to="/dashboard/onboarding" />}>
+                  <FileUp aria-hidden="true" />
+                  Import from resume
+                </Button>
                 {isEditing ? (
                   <ButtonGroup>
                     <Button onClick={handleCancel} size="sm" variant="outline">

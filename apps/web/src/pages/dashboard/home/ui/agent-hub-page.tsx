@@ -1,14 +1,63 @@
-import { ClientOnly } from "@tanstack/react-router";
+"use client";
 
+import { ClientOnly, Link } from "@tanstack/react-router";
+import { FileUpIcon } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
+import { Button } from "@tsu-stack/ui/components/button";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
+import { useGetOnboardingStatusQuery, useSkipOnboardingMutation } from "@/features/onboarding";
+
 import { AgentHubChat } from "@/widgets/agent-hub";
+
+function OnboardingSoftCta() {
+  const statusQuery = useGetOnboardingStatusQuery();
+  const skipMutation = useSkipOnboardingMutation();
+
+  if (statusQuery.isLoading || statusQuery.isError) {
+    return null;
+  }
+
+  if (statusQuery.data?.onboardingCompletedAt != null) {
+    return null;
+  }
+
+  return (
+    <Alert variant="info" className="shrink-0 rounded-none border-x-0 border-t-0">
+      <FileUpIcon />
+      <AlertTitle>Set up your portfolio from a resume</AlertTitle>
+      <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <span>
+          Upload a PDF resume to import profile, experiences, projects, and stacks — or skip and
+          fill things in manually.
+        </span>
+        <span className="flex shrink-0 flex-wrap gap-2" data-slot="alert-action">
+          <Button size="sm" render={<Link to="/dashboard/onboarding" />}>
+            Set up from resume
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            loading={skipMutation.isPending}
+            onClick={() => void skipMutation.mutateAsync({})}
+          >
+            Skip for now
+          </Button>
+        </span>
+      </AlertDescription>
+    </Alert>
+  );
+}
 
 export function AgentHubPage() {
   return (
     // size-full + overflow-hidden: fill the dashboard ScrollArea content
     // box and keep a single scroll owner (the chat MessageScroller).
     <div className="flex size-full min-h-0 flex-1 flex-col overflow-hidden">
+      <ClientOnly fallback={null}>
+        <OnboardingSoftCta />
+      </ClientOnly>
       <ClientOnly
         fallback={
           <div className="flex flex-1 items-center justify-center text-muted-foreground">

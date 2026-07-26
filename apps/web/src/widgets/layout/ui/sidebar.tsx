@@ -20,6 +20,7 @@ const PublicItems = [
 
 const DashboardItems = [
   { href: "/dashboard", label: "Agent", group: "Dashboard" },
+  { href: "/dashboard/onboarding", label: "Onboarding", group: "Dashboard" },
   { href: "/dashboard/experiences", label: "Experiences", group: "Dashboard" },
   { href: "/dashboard/projects", label: "Projects", group: "Dashboard" },
   { href: "/dashboard/stacks", label: "Stack", group: "Dashboard" },

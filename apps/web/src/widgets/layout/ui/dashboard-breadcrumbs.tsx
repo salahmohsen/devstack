@@ -13,9 +13,15 @@ import {
 const KNOWN_SEGMENTS = new Set([
   "dashboard",
   "resume",
+  "resumes",
+  "onboarding",
   "experiences",
   "projects",
   "stacks",
+  "settings",
+  "profile",
+  "account",
+  "github",
   "new",
   "github-config"
 ]);
@@ -23,9 +29,15 @@ const KNOWN_SEGMENTS = new Set([
 const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   resume: "Resume",
+  resumes: "Resumes",
+  onboarding: "Onboarding",
   experiences: "Experience",
   projects: "Project",
   stacks: "Stacks",
+  settings: "Settings",
+  profile: "Profile",
+  account: "Account",
+  github: "GitHub",
   new: "New",
   "github-config": "GitHub Config"
 };
