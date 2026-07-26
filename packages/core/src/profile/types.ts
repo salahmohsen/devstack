@@ -64,7 +64,9 @@ export const ProfileOutputSchema = z.object({
   summary: z.string().nullable(),
   phone: z.string().nullable()
 }) satisfies z.ZodType<
-  Omit<UserSchemaSelect, "updatedAt"> & { contacts: z.infer<typeof contactOutputSchema>[] }
+  Omit<UserSchemaSelect, "updatedAt" | "onboardingCompletedAt"> & {
+    contacts: z.infer<typeof contactOutputSchema>[];
+  }
 >;
 
 export type ContactOutput = z.infer<typeof contactOutputSchema>;
