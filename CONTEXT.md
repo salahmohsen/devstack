@@ -127,6 +127,48 @@ for producing a resume PDF; distinct from the PDF renderer (which is a
 pure engine with no resume-domain knowledge).
 _Avoid_: PDF generator, resume service, resume orchestrator.
 
+**Resume** (generated):
+A row in the `resume` table representing a portfolio-derived PDF
+artifact (filename, storage key under `resumes/…`, author admin|agent,
+optional default). Output only — never an uploaded source for import.
+_Avoid_: Uploaded CV, resume source, import PDF.
+
+## Owner onboarding
+
+**Owner onboarding**:
+The first-run or re-import flow that helps the portfolio owner populate
+evidence and profile from a resume source. Completes when the owner
+Applies a resume import draft or Skips; completion is recorded as
+`onboardingCompletedAt` on the user. Soft CTAs only — does not hard-lock
+dashboard routes.
+_Avoid_: Setup wizard lock, forced onboarding, account activation.
+
+**Onboarding completed at**:
+Nullable timestamp on the owner user set by Apply or Skip. Soft CTAs
+and empty-state banners treat a null value as incomplete onboarding.
+_Avoid_: onboarding flag, setup done boolean (prefer timestamp).
+
+**Resume source (session)**:
+A temporary PDF object in storage used only as input to resume import,
+keyed under the owner's files-sdk prefix at `resume-sources/…`. Not a
+`resume` row. Deleted after Apply, Skip (when key known), Discard, or
+replace-upload. No durable source table in v1.
+_Avoid_: Uploaded resume record, media_asset resume, resumes/ prefix.
+
+**Resume import draft**:
+The structured, client-held proposal produced by the resume-import
+workflow (profile, experiences, projects, stacks with selection and
+portfolio inclusion defaults) before transactional Apply. Not persisted
+server-side in v1.
+_Avoid_: Import job, pending onboarding entity, server draft row.
+
+**Resume import**:
+The pipeline: session resume source → API text extract → Mastra
+resume-import workflow → client review of resume import draft →
+transactional apply into profile/evidence (with portfolio entries for
+selected rows). Distinct from resume builder (generate).
+_Avoid_: Resume parse service, CV sync, reverse resume builder.
+
 ## Stacks
 
 **Stack**:
