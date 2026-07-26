@@ -29,11 +29,23 @@ function fallbackProfileName(existingName: string, extractedName?: string | null
   return "Owner";
 }
 
-function normalizeEmail(value?: string | null): string | null | undefined {
+/**
+ * Empty / null / undefined pass through (Apply keeps existing user.email).
+ * Non-empty values must be valid emails; invalid ones are cleared with a warning.
+ */
+function normalizeEmail(
+  value: string | null | undefined,
+  warnings: string[]
+): string | null | undefined {
   if (value == null) return value;
   const trimmed = value.trim();
   if (!trimmed) return "";
-  return trimmed;
+  const parsed = z.email().safeParse(trimmed);
+  if (!parsed.success) {
+    warnings.push(`Dropped invalid profile email: ${trimmed}`);
+    return null;
+  }
+  return parsed.data;
 }
 
 function dedupeStackNames(names: string[]): string[] {
@@ -61,7 +73,7 @@ export const normalize = createStep({
   outputSchema: z.object({
     profile: z.object({
       name: z.string(),
-      email: z.union([z.literal(""), z.string(), z.null()]).optional(),
+      email: z.union([z.literal(""), z.email(), z.null()]).optional(),
       summary: z.string().nullable().optional(),
       contacts: z.array(
         z.object({
@@ -258,11 +270,13 @@ export const normalize = createStep({
         .filter((c): c is NonNullable<typeof c> => c != null)
     );
 
-    const email = normalizeEmail(raw.profile?.email ?? existingProfile.email);
+    const email = normalizeEmail(raw.profile?.email ?? existingProfile.email, warnings);
+    // fallbackProfileName always returns a name with length ≥ 2 (min for ResumeImportDraftSchema).
+    const name = fallbackProfileName(existingProfile.name, raw.profile?.name);
 
     return {
       profile: {
-        name: fallbackProfileName(existingProfile.name, raw.profile?.name),
+        name,
         email,
         summary: raw.profile?.summary?.trim()
           ? raw.profile.summary.trim()
