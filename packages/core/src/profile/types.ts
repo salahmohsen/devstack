@@ -7,6 +7,13 @@ import {
   type UserSchemaSelect
 } from "@tsu-stack/db/types";
 
+import {
+  PROFILE_NAME_MAX,
+  PROFILE_NAME_MIN,
+  PROFILE_NAME_REGEX,
+  RESERVED_PROFILE_PATH_SET
+} from "#@/profile/constants";
+
 export const contactTypeSchema = z.enum([
   "website",
   "email",
@@ -73,3 +80,14 @@ export type ContactOutput = z.infer<typeof contactOutputSchema>;
 export type ContactInput = z.infer<typeof contactInputSchema>;
 export type ProfileOutput = z.infer<typeof ProfileOutputSchema>;
 export type ProfileOutputContact = z.infer<typeof contactOutputSchema>[];
+
+export const ProfileNameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(PROFILE_NAME_MIN)
+  .max(PROFILE_NAME_MAX)
+  .regex(PROFILE_NAME_REGEX, "Use lowercase letters, numbers, and single hyphens")
+  .refine((s) => !RESERVED_PROFILE_PATH_SET.has(s), "This name is reserved");
+
+export type ProfileName = z.infer<typeof ProfileNameSchema>;
