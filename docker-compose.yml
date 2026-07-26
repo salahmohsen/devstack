@@ -75,6 +75,38 @@ services:
         aliases:
           - hub-minio
 
+  # MinIO does not auto-create buckets. Local dev uses scripts/dev.sh + mc;
+  # production must create S3_BUCKET once or uploads fail with
+  # "The specified bucket does not exist".
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    restart: "no"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        i=0
+        until mc alias set local http://hub-minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do
+          i=$$((i + 1))
+          if [ "$$i" -gt 30 ]; then
+            echo "minio not ready after 60s" >&2
+            exit 1
+          fi
+          sleep 2
+        done
+        bucket="$${S3_BUCKET:-personal-hub}"
+        mc mb --ignore-existing "local/$$bucket"
+        echo "MinIO bucket ready: $$bucket"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      S3_BUCKET: ${S3_BUCKET:-personal-hub}
+    networks:
+      - default
+
   # ── Apps ────────────────────────────────────────────────────────────────────
 
   server:
@@ -177,6 +209,8 @@ services:
       # Session lookup ($getUser / Better Auth drizzle) hits Postgres from SSR
       # after cross-subdomain cookies land on the web host.
       postgres: { condition: service_healthy }
+      # Ensure S3_BUCKET exists before the files gateway accepts uploads.
+      minio-init: { condition: service_completed_successfully }
     restart: unless-stopped
     environment:
       VITE_SERVER_URL: ${VITE_SERVER_URL}
