@@ -166,6 +166,7 @@ catalog:
   "@shadcn/react": ^0.2.1
   marked: ^18.0.7
   remark-breaks: ^4.0.0
+  unpdf: ^1.8.0
 
 catalogMode: prefer
 
