@@ -1,7 +1,11 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { OrganizeStacksOutputSchema, type OrganizeAction } from "@tsu-stack/core";
+import {
+  OrganizeStacksOutputSchema,
+  type OrganizeAction,
+  normalizeOrganizeActions
+} from "@tsu-stack/core";
 
 import {
   EnrichActionSchema,
@@ -22,11 +26,11 @@ export const formatOutput = createStep({
   }),
   outputSchema: OrganizeStacksOutputSchema,
   execute: async ({ inputData }) => {
-    const { mergeActions, renameActions, enrichActions, sortOrder } = inputData;
-    const actions: OrganizeAction[] = [];
+    const { stacks, mergeActions, renameActions, enrichActions, sortOrder } = inputData;
+    const raw: OrganizeAction[] = [];
 
     for (const m of mergeActions) {
-      actions.push({
+      raw.push({
         type: "merge",
         stackId: m.victimId,
         stackName: m.victimName,
@@ -36,7 +40,7 @@ export const formatOutput = createStep({
     }
 
     for (const r of renameActions) {
-      actions.push({
+      raw.push({
         type: "rename",
         stackId: r.stackId,
         stackName: r.currentName,
@@ -46,7 +50,8 @@ export const formatOutput = createStep({
     }
 
     for (const e of enrichActions) {
-      actions.push({
+      if (!e.description && !e.icon && !e.type) continue;
+      raw.push({
         type: "enrich",
         stackId: e.stackId,
         stackName: e.stackName,
@@ -59,14 +64,22 @@ export const formatOutput = createStep({
       });
     }
 
+    const { actions, sortOrder: normalizedSortOrder } = normalizeOrganizeActions(
+      raw,
+      stacks.map((s) => {
+        return { id: s.id, name: s.name, projectCount: s.projectCount };
+      }),
+      sortOrder
+    );
+
     return {
       actions,
-      sortOrder,
+      sortOrder: normalizedSortOrder,
       summary: {
-        merges: mergeActions.length,
-        renames: renameActions.length,
-        enrichments: enrichActions.length,
-        sorted: sortOrder.length > 0
+        merges: actions.filter((a) => a.type === "merge").length,
+        renames: actions.filter((a) => a.type === "rename").length,
+        enrichments: actions.filter((a) => a.type === "enrich").length,
+        sorted: normalizedSortOrder.length > 0
       }
     };
   }

@@ -111,7 +111,21 @@ export const findMerges = createStep({
       ["ws", "@types/ws"]
     ];
 
+    // Case/spacing-insensitive exact-name duplicates (e.g. "React" + "react")
+    const exactNameGroups = new Map<
+      string,
+      Array<{ id: string; name: string; projectCount: number }>
+    >();
+
     for (const stack of stacks) {
+      const nameKey = stack.name.trim().toLowerCase().replace(/\s+/g, " ");
+      if (!exactNameGroups.has(nameKey)) exactNameGroups.set(nameKey, []);
+      exactNameGroups.get(nameKey)!.push({
+        id: stack.id,
+        name: stack.name,
+        projectCount: stack.projectCount
+      });
+
       // Group by npm scope (derive from stack name as a heuristic)
       const pkg = stack.name.toLowerCase().replace(/\s+/g, "");
       if (pkg.startsWith("@")) {
@@ -186,6 +200,12 @@ export const findMerges = createStep({
           reason
         });
       }
+    }
+
+    // Exact-name duplicates first (highest confidence)
+    for (const [, group] of exactNameGroups) {
+      if (group.length < 2) continue;
+      addMerges(group, `Duplicate name: "${group[0]?.name}"`);
     }
 
     for (const [scope, group] of scopeGroups) {

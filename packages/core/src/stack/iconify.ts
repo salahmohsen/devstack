@@ -2,6 +2,18 @@ import { sanitizeSvg } from "#@/stack/sanitize-svg";
 
 const ICONIFY_API_BASE = "https://api.iconify.design";
 
+/** Prefer brand / logo sets so stack icons look intentional. */
+const PREFERRED_PREFIXES = [
+  "simple-icons",
+  "logos",
+  "skill-icons",
+  "devicon",
+  "vscode-icons",
+  "mdi",
+  "tabler",
+  "hugeicons"
+] as const;
+
 type IconifySearchResult = {
   icons: string[];
   total: number;
@@ -22,6 +34,66 @@ function sanitizeQuery(query: string): string {
 }
 
 /**
+ * Build ordered search queries from a stack / package name.
+ * Tries full name first, then compact and shorter variants.
+ */
+function buildSearchQueries(name: string): string[] {
+  const cleaned = sanitizeQuery(name);
+  if (!cleaned) return [];
+
+  const queries: string[] = [cleaned];
+  const compact = cleaned.replace(/\s+/g, "");
+  if (compact !== cleaned) queries.push(compact);
+
+  // Drop common noise words for better brand matches
+  const withoutNoise = cleaned
+    .replace(/\b(js|ts|css|orm|sdk|api|client|server|core|react|vue|angular)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (withoutNoise && withoutNoise !== cleaned && withoutNoise.length >= 2) {
+    queries.push(withoutNoise);
+  }
+
+  const firstWord = cleaned.split(" ")[0];
+  if (firstWord && firstWord !== cleaned && firstWord.length >= 3) {
+    queries.push(firstWord);
+  }
+
+  return [...new Set(queries)];
+}
+
+function scoreIconId(iconId: string, query: string): number {
+  const colonIdx = iconId.indexOf(":");
+  if (colonIdx === -1) return 0;
+
+  const prefix = iconId.slice(0, colonIdx);
+  const iconName = iconId.slice(colonIdx + 1);
+
+  let score = 0;
+  const prefIdx = PREFERRED_PREFIXES.indexOf(prefix as (typeof PREFERRED_PREFIXES)[number]);
+  if (prefIdx !== -1) {
+    score += (PREFERRED_PREFIXES.length - prefIdx) * 15;
+  }
+
+  const q = query.toLowerCase().replace(/[\s-_/]/g, "");
+  const n = iconName.toLowerCase().replace(/[\s-_/]/g, "");
+
+  if (n === q) score += 100;
+  else if (n.startsWith(q) || q.startsWith(n)) score += 70;
+  else if (n.includes(q) || q.includes(n)) score += 40;
+
+  // Penalize generic / unrelated UI icons when a brand match is likely
+  if (
+    prefix === "mdi" &&
+    (iconName.includes("help") || iconName.includes("help-circle") || iconName === "package")
+  ) {
+    score -= 30;
+  }
+
+  return score;
+}
+
+/**
  * Search Iconify for an icon matching a query string.
  * Returns the first matching icon ID (e.g., "mdi:react") or null when limit is 1 or unset.
  * Returns an array of icon IDs when limit is greater than 1.
@@ -31,6 +103,8 @@ export async function searchIcon(query: string, limit: number): Promise<string[]
 export async function searchIcon(query: string, limit?: number): Promise<string | null | string[]> {
   const sanitized = sanitizeQuery(query);
   const effectiveLimit = limit ?? 1;
+  if (!sanitized) return effectiveLimit === 1 ? null : [];
+
   const url = `${ICONIFY_API_BASE}/search?query=${encodeURIComponent(sanitized)}&limit=${effectiveLimit}`;
   const res = await fetch(url);
   if (!res.ok) return effectiveLimit === 1 ? null : [];
@@ -66,11 +140,64 @@ export async function fetchIconSvg(iconId: string): Promise<string | null> {
 }
 
 /**
- * Resolve an icon for a given npm package name.
- * Searches Iconify, fetches the SVG, returns full SVG string or null.
+ * Pick the best icon ID from a list of candidates for a given query.
+ */
+export function pickBestIconId(iconIds: string[], query: string): string | null {
+  if (iconIds.length === 0) return null;
+
+  const ranked = iconIds
+    .map((id) => {
+      return { id, score: scoreIconId(id, query) };
+    })
+    .toSorted((a, b) => b.score - a.score);
+
+  // Prefer a scored preferred-prefix match
+  const preferred = ranked.find(
+    (r) => r.score >= 40 && PREFERRED_PREFIXES.some((p) => r.id.startsWith(`${p}:`))
+  );
+  if (preferred) return preferred.id;
+
+  // Any solid name match
+  const good = ranked.find((r) => r.score >= 40);
+  if (good) return good.id;
+
+  // Fall back to first preferred-prefix result even with lower score
+  const anyPreferred = ranked.find((r) => PREFERRED_PREFIXES.some((p) => r.id.startsWith(`${p}:`)));
+  if (anyPreferred) return anyPreferred.id;
+
+  return ranked[0]?.id ?? null;
+}
+
+/**
+ * Resolve an icon for a stack or npm package name.
+ * Tries multiple query variants and prefers brand icon sets (simple-icons, logos, …).
  */
 export async function resolveIconForPackage(npmPackage: string): Promise<string | null> {
-  const iconId = await searchIcon(npmPackage);
-  if (!iconId) return null;
-  return fetchIconSvg(iconId);
+  const queries = buildSearchQueries(npmPackage);
+
+  for (const query of queries) {
+    const icons = await searchIcon(query, 32);
+    if (icons.length === 0) continue;
+
+    const bestId = pickBestIconId(icons, query);
+    if (!bestId) continue;
+
+    const svg = await fetchIconSvg(bestId);
+    if (svg) return svg;
+
+    // Try next-best preferred icons if the top pick failed to fetch
+    const ranked = icons
+      .map((id) => {
+        return { id, score: scoreIconId(id, query) };
+      })
+      .toSorted((a, b) => b.score - a.score);
+
+    for (const candidate of ranked.slice(0, 5)) {
+      if (candidate.id === bestId) continue;
+      const fallback = await fetchIconSvg(candidate.id);
+      if (fallback) return fallback;
+    }
+  }
+
+  return null;
 }

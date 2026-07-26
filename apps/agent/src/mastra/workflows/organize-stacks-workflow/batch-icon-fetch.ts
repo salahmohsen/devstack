@@ -5,6 +5,7 @@ export async function batchResolveIcons(
   concurrency = 3
 ): Promise<Array<{ stackId: string; stackName: string; svg: string | null }>> {
   const results: Array<{ stackId: string; stackName: string; svg: string | null }> = [];
+
   for (let i = 0; i < items.length; i += concurrency) {
     const batch = items.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(
@@ -14,8 +15,14 @@ export async function batchResolveIcons(
       })
     );
     for (const r of batchResults) {
-      if (r.status === "fulfilled") results.push(r.value);
+      if (r.status === "fulfilled") {
+        results.push(r.value);
+      } else {
+        // Keep a null entry so callers can see which stack failed without throwing
+        console.debug("[organize-stacks] Icon resolve failed:", r.reason);
+      }
     }
   }
+
   return results;
 }

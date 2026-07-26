@@ -34,8 +34,12 @@ export const resolveIcons = createStep({
       })
     )
   }),
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, abortSignal }) => {
     const { matched, categorized } = inputData;
+
+    if (abortSignal?.aborted) {
+      return { matched, categorized };
+    }
 
     // Only resolve icons for new stacks (not existing ones)
     const toResolve = categorized.filter(
@@ -44,6 +48,9 @@ export const resolveIcons = createStep({
 
     const resolved = await Promise.allSettled(
       toResolve.map(async (stack) => {
+        if (abortSignal?.aborted) {
+          return { npmPackage: stack.npmPackage, iconSvg: null };
+        }
         const svg = await resolveIconForPackage(stack.name);
         return { npmPackage: stack.npmPackage, iconSvg: svg };
       })

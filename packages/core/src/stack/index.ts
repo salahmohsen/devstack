@@ -1,5 +1,6 @@
 export * from "#@/stack/detect-stacks.types";
 export * from "#@/stack/iconify";
+export * from "#@/stack/normalize-organize-actions";
 export * from "#@/stack/organize-stacks.types";
 export * from "#@/stack/types";
 export * from "#@/stack/sanitize-svg";

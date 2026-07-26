@@ -1,6 +1,8 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
+import { normalizeOrganizeName } from "@tsu-stack/core";
+
 import {
   MergeActionSchema,
   RenameActionSchema,
@@ -39,8 +41,13 @@ export const findRenames = createStep({
 
     const CHUNK_SIZE = 50;
     const renameActions: z.infer<typeof RenameActionSchema>[] = [];
-    const usedNewNames = new Set<string>();
+    const extraMerges: z.infer<typeof MergeActionSchema>[] = [];
     const usedStackIds = new Set<string>();
+    // Normalized name → owner after planned renames/merges
+    const nameOwner = new Map<string, { id: string; name: string }>();
+    for (const s of candidates) {
+      nameOwner.set(normalizeOrganizeName(s.name), { id: s.id, name: s.name });
+    }
 
     for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
       const chunk = candidates.slice(i, i + CHUNK_SIZE);
@@ -65,6 +72,8 @@ RENAME RULES:
 - Proper spacing: "framer motion" → "Framer Motion"
 - Official names: "drizzle-orm" → "Drizzle", "prisma client" → "Prisma"
 - Keep existing canonical names unchanged
+- NEVER rename a stack to a name that another stack in the list already has — those are merges, not renames
+- Do not suggest a rename when the current name is already correct (same spelling/casing)
 
 Output JSON:
 {
@@ -97,17 +106,47 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
         for (const rename of result.object.renames ?? []) {
           const stack = chunk.find((s) => s.id === rename.stackId);
           if (!stack) continue;
-          if (stack.name === rename.newName) continue;
-          // Dedup: skip if this stack already has a rename action
           if (usedStackIds.has(rename.stackId)) continue;
-          // Dedup: skip if another stack already renames to this name
-          if (usedNewNames.has(rename.newName.toLowerCase())) continue;
+          if (victimIds.has(rename.stackId)) continue;
+
+          const newName = rename.newName?.trim();
+          if (!newName) continue;
+
+          // No-op (case/spacing insensitive)
+          if (normalizeOrganizeName(stack.name) === normalizeOrganizeName(newName)) continue;
+
+          const key = normalizeOrganizeName(newName);
+          const owner = nameOwner.get(key);
+
+          // Name already owned by another living stack → auto-merge
+          if (owner && owner.id !== rename.stackId) {
+            usedStackIds.add(rename.stackId);
+            victimIds.add(rename.stackId);
+            extraMerges.push({
+              victimId: rename.stackId,
+              victimName: stack.name,
+              survivorId: owner.id,
+              survivorName: owner.name,
+              reason: `Auto-merged: both resolve to "${owner.name}" (${rename.reason})`
+            });
+            // Free victim's old name key if still pointing at them
+            const oldKey = normalizeOrganizeName(stack.name);
+            if (nameOwner.get(oldKey)?.id === rename.stackId) {
+              nameOwner.delete(oldKey);
+            }
+            continue;
+          }
+
           usedStackIds.add(rename.stackId);
-          usedNewNames.add(rename.newName.toLowerCase());
+          const oldKey = normalizeOrganizeName(stack.name);
+          if (nameOwner.get(oldKey)?.id === rename.stackId) {
+            nameOwner.delete(oldKey);
+          }
+          nameOwner.set(key, { id: rename.stackId, name: newName });
           renameActions.push({
             stackId: rename.stackId,
             currentName: stack.name,
-            newName: rename.newName,
+            newName,
             reason: rename.reason
           });
         }
@@ -116,6 +155,10 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
       }
     }
 
-    return { stacks, mergeActions, renameActions };
+    return {
+      stacks,
+      mergeActions: [...mergeActions, ...extraMerges],
+      renameActions
+    };
   }
 });

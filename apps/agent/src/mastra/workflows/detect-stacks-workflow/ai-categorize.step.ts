@@ -72,6 +72,11 @@ export const aiCategorize = createStep({
   }),
   execute: async (params) => {
     const { matched, unknown } = params.inputData;
+    const abortSignal = params.abortSignal;
+
+    if (abortSignal?.aborted) {
+      return { matched, categorized: [] };
+    }
 
     if (unknown.length === 0) {
       return {
@@ -127,6 +132,11 @@ export const aiCategorize = createStep({
 
     // Chunk unknowns and process sequentially
     for (let i = 0; i < unknown.length; i += BATCH_CHUNK_SIZE) {
+      // Mastra cancel triggers abortSignal — stop between chunks (docs: steps must check it)
+      if (abortSignal?.aborted) {
+        break;
+      }
+
       const chunk = unknown.slice(i, i + BATCH_CHUNK_SIZE);
 
       const packageList = chunk

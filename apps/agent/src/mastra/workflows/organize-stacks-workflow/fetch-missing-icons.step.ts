@@ -28,24 +28,43 @@ export const fetchMissingIcons = createStep({
     const { stacks, mergeActions, renameActions, enrichActions } = inputData;
 
     const victimIds = new Set(mergeActions.map((m) => m.victimId));
-    const enrichedIds = new Set(enrichActions.filter((e) => e.icon).map((e) => e.stackId));
+    const enrichedWithIcon = new Set(enrichActions.filter((e) => e.icon).map((e) => e.stackId));
+    const renameMap = new Map(renameActions.map((r) => [r.stackId, r.newName]));
 
-    const missing = stacks.filter((s) => !victimIds.has(s.id) && !s.icon && !enrichedIds.has(s.id));
+    // Stacks still without an icon after enrich step
+    const missing = stacks.filter(
+      (s) => !victimIds.has(s.id) && !s.icon && !enrichedWithIcon.has(s.id)
+    );
 
     if (missing.length === 0) {
       return { stacks, mergeActions, renameActions, enrichActions };
     }
 
+    // Prefer canonical (renamed) name for Iconify search quality
     const results = await batchResolveIcons(
       missing.map((s) => {
-        return { stackId: s.id, stackName: s.name };
+        return {
+          stackId: s.id,
+          stackName: renameMap.get(s.id) ?? s.name
+        };
       }),
       3
     );
 
+    const existingByStack = new Map(enrichActions.map((e) => [e.stackId, e]));
     const newEnrichActions = [...enrichActions];
+
     for (const r of results) {
-      if (r.svg) {
+      if (!r.svg) continue;
+
+      const existing = existingByStack.get(r.stackId);
+      if (existing) {
+        // Fold icon into existing enrich action for this stack
+        const idx = newEnrichActions.findIndex((e) => e.stackId === r.stackId);
+        if (idx !== -1) {
+          newEnrichActions[idx] = { ...existing, icon: r.svg };
+        }
+      } else {
         newEnrichActions.push({
           stackId: r.stackId,
           stackName: r.stackName,

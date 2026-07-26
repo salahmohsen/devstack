@@ -34,13 +34,12 @@ export const findEnrichments = createStep({
     }
     const { stacks, mergeActions, renameActions } = inputData;
 
-    const skipIds = new Set([
-      ...mergeActions.map((m) => m.victimId),
-      ...renameActions.map((r) => r.stackId)
-    ]);
+    // Only skip merge victims — renamed stacks still need metadata
+    const victimIds = new Set(mergeActions.map((m) => m.victimId));
+    const renameMap = new Map(renameActions.map((r) => [r.stackId, r.newName]));
 
     const candidates = stacks.filter(
-      (s) => !skipIds.has(s.id) && (!s.description || !s.icon || !s.type || s.type === "other")
+      (s) => !victimIds.has(s.id) && (!s.description || !s.icon || !s.type || s.type === "other")
     );
 
     if (candidates.length === 0) {
@@ -58,10 +57,10 @@ export const findEnrichments = createStep({
     for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
       const chunk = candidates.slice(i, i + CHUNK_SIZE);
       const stackList = chunk
-        .map(
-          (s) =>
-            `- id: ${s.id} | "${s.name}" | type: ${s.type ?? "none"} | desc: ${s.description ?? "none"} | icon: ${s.icon ?? "none"}`
-        )
+        .map((s) => {
+          const displayName = renameMap.get(s.id) ?? s.name;
+          return `- id: ${s.id} | "${displayName}" | type: ${s.type ?? "none"} | desc: ${s.description ?? "none"} | icon: ${s.icon ? "present" : "none"}`;
+        })
         .join("\n");
 
       const prompt = `Suggest enrichments for stacks with missing metadata.
@@ -71,18 +70,19 @@ ${stackList}
 
 For each stack, suggest:
 1. description: one-sentence description (if missing)
-2. icon: a short search query to find an Iconify icon, e.g. "react", "tailwind css", "prisma" (if missing)
-3. type: framework | language | database | ui | auth | deployment | testing | ai | tooling | storage | other (if missing or "other")
+2. icon: a short Iconify search query for the brand logo, e.g. "react", "tailwind css", "framer", "prisma" (if missing). Prefer the product brand name, not the stack type.
+3. type: framework | language | database | ui | auth | deployment | testing | ai | tooling | storage | state management | other (if missing or "other")
 
 TYPE GUIDELINES:
 - Framework: React, Vue, Angular, Next.js, Nuxt, Remix, Astro, Svelte, Hono, Express
-- UI: Tailwind CSS, Radix UI, shadcn/ui, HeroUI, Base UI, Chakra UI, Material UI
+- UI: Tailwind CSS, Radix UI, shadcn/ui, HeroUI, Base UI, Chakra UI, Material UI, Framer Motion
 - Database: Prisma, Drizzle, Mongoose, TypeORM, Sequelize
 - Tooling: Vite, Webpack, ESLint, Prettier, TypeScript
 - Testing: Vitest, Jest, Playwright, Cypress
 - AI: OpenAI, Anthropic, LangChain, AI SDK, Mastra
 - Auth: Better Auth, NextAuth, Lucia
 - Deployment: Vercel, Netlify, Cloudflare Workers, Firebase
+- State management: Zustand, Jotai, Redux, Recoil
 
 Output JSON:
 {
@@ -97,7 +97,8 @@ Output JSON:
   ]
 }
 
-Only suggest changes when metadata is clearly missing or wrong. Skip stacks with complete metadata.`;
+Only suggest changes when metadata is clearly missing or wrong. Skip stacks with complete metadata.
+Do not invent icons for stacks that already have one.`;
 
       try {
         const result = await Promise.race([
@@ -116,31 +117,35 @@ Only suggest changes when metadata is clearly missing or wrong. Skip stacks with
         const iconCandidates: Array<{
           stackId: string;
           stackName: string;
-          query: string;
           idx: number;
         }> = [];
         const pendingEnriches: Array<{
           enrich: z.infer<typeof EnrichActionSchema>;
           stack: (typeof chunk)[number];
-          idx: number;
         }> = [];
 
         for (const enrich of result.object.enrichments ?? []) {
           const stack = chunk.find((s) => s.id === enrich.stackId);
           if (!stack) continue;
 
-          const descChanged = enrich.description && enrich.description !== stack.description;
-          const iconChanged = enrich.icon && enrich.icon !== stack.icon;
-          const typeChanged = enrich.type && enrich.type !== stack.type && enrich.type !== "other";
+          const descChanged = Boolean(
+            enrich.description && enrich.description !== stack.description
+          );
+          // Only request icon when stack has none — never replace existing SVG via search query
+          const needsIcon = !stack.icon && Boolean(enrich.icon);
+          const typeChanged = Boolean(
+            enrich.type && enrich.type !== stack.type && enrich.type !== "other"
+          );
 
-          if (descChanged || iconChanged || typeChanged) {
+          if (descChanged || needsIcon || typeChanged) {
             const idx = pendingEnriches.length;
-            pendingEnriches.push({ enrich, stack, idx });
-            if (iconChanged && enrich.icon) {
+            pendingEnriches.push({ enrich, stack });
+            if (needsIcon && enrich.icon) {
+              // Prefer brand query from LLM; fall back to (renamed) display name
+              const displayName = renameMap.get(stack.id) ?? stack.name;
               iconCandidates.push({
                 stackId: enrich.stackId,
-                stackName: enrich.icon,
-                query: enrich.icon,
+                stackName: enrich.icon.trim() || displayName,
                 idx
               });
             }
@@ -152,18 +157,24 @@ Only suggest changes when metadata is clearly missing or wrong. Skip stacks with
         const iconMap = new Map(iconResults.map((r) => [r.stackId, r.svg]));
 
         for (const { enrich, stack } of pendingEnriches) {
+          const description =
+            enrich.description && enrich.description !== stack.description
+              ? enrich.description
+              : null;
+          const icon = !stack.icon ? (iconMap.get(enrich.stackId) ?? null) : null;
+          const type =
+            enrich.type && enrich.type !== stack.type && enrich.type !== "other"
+              ? enrich.type
+              : null;
+
+          if (!description && !icon && !type) continue;
+
           enrichActions.push({
             stackId: enrich.stackId,
-            stackName: stack.name,
-            description:
-              enrich.description && enrich.description !== stack.description
-                ? enrich.description
-                : null,
-            icon: iconMap.get(enrich.stackId) ?? null,
-            type:
-              enrich.type && enrich.type !== stack.type && enrich.type !== "other"
-                ? enrich.type
-                : null
+            stackName: renameMap.get(stack.id) ?? stack.name,
+            description,
+            icon,
+            type
           });
         }
       } catch (error) {
