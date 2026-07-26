@@ -6,6 +6,7 @@ import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubConfigRouter } from "#@/routers/github-config.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
+import { onboardingRouter } from "#@/routers/onboarding.router";
 import { PortfolioRouter } from "#@/routers/portfolio.router";
 import { profileRouter } from "#@/routers/profile.router";
 import { projectsRouter } from "#@/routers/projects.router";
@@ -23,7 +24,8 @@ export const appRouter = {
   contact: portfolioContactRouter,
   portfolio: PortfolioRouter,
   profile: profileRouter,
-  resume: resumeRouter
+  resume: resumeRouter,
+  onboarding: onboardingRouter
 };
 
 export type AppRouter = typeof appRouter;
