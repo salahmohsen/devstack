@@ -120,20 +120,18 @@ export default defineConfig({
     __BUILD_SOURCE_COMMIT__: JSON.stringify(ENV_WEB_SERVER.SOURCE_COMMIT)
   },
   server: {
-    // Bind IPv4+IPv6. Default "localhost" is often [::1] only on macOS, so
-    // http://127.0.0.1:3000 fails while http://localhost:3000 works.
-    host: true,
+    // Explicit IPv4 so 127.0.0.1 and localhost both work on macOS.
+    host: "127.0.0.1",
     port: 3000,
-    // Native FSEvents on this monorepo hits EMFILE even with ulimit ~1M
-    // (macOS FSEvents stream limit / pnpm + workspace crawl, not RLIMIT_NOFILE).
-    //
-    // Important: when fsevents is available, useFsEvents defaults true and
-    // SUPERSEDES usePolling. Must set useFsEvents:false for polling to apply.
-    // Opt back into native: VITE_USE_POLLING=0
+    strictPort: true,
+    // Default: native FSEvents. Polling (VITE_USE_POLLING=1) can leave Vite
+    // accepting TCP on :3000 but never completing HTTP responses.
+    // When fsevents is available, useFsEvents SUPERSEDES usePolling — set
+    // useFsEvents:false only when polling is requested.
     watch: {
       followSymlinks: false,
-      useFsEvents: process.env.VITE_USE_POLLING === "0",
-      usePolling: process.env.VITE_USE_POLLING !== "0",
+      useFsEvents: process.env.VITE_USE_POLLING !== "1",
+      usePolling: process.env.VITE_USE_POLLING === "1",
       interval: 400,
       binaryInterval: 800,
       ignorePermissionErrors: true,
@@ -187,8 +185,24 @@ export default defineConfig({
      * @see {@link https://tailwindcss.com/docs/installation/using-vite}
      */
     tailwindcss(),
+    /**
+     * TanStack Devtools Vite plugin.
+     *
+     * The event bus defaults to :4206. Two failure modes we hit on this monorepo:
+     * 1) Stale process holds 4206 → next start throws EADDRINUSE and never binds
+     *    :3000 (server/agent still start via `vp run dev`, so it "looks fine").
+     * 2) With the bus enabled, configureServer can stall before Vite listens on
+     *    :3000 (process idle with only :4206 open). Disable the bus for reliable
+     *    local boot; browser Devtools panels still work without server event bus.
+     * scripts/dev.sh frees 3000/4206 on start and stop as a belt-and-suspenders.
+     */
     devtools({
-      consolePiping: { enabled: false }
+      eventBusConfig: {
+        enabled: false
+      },
+      consolePiping: { enabled: false },
+      injectSource: { enabled: false },
+      enhancedLogs: { enabled: false }
     }),
     mdx(),
     tanstackStart({

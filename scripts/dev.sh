@@ -36,17 +36,22 @@ for _nofile_try in 1048576 65536 10240 4096; do
   fi
 done
 info "Open-file limit (after):  $(ulimit -n 2>/dev/null || echo unknown)"
-# Vite web defaults to polling (see apps/web/vite.config.ts) because native
-# FSEvents hits EMFILE on this monorepo even with a huge RLIMIT_NOFILE.
-# Set VITE_USE_POLLING=0 to force native watchers.
-export VITE_USE_POLLING="${VITE_USE_POLLING:-1}"
-if [ "${VITE_USE_POLLING}" != "0" ]; then
-  info "Vite file watching: polling (set VITE_USE_POLLING=0 for native FSEvents)"
+# Prefer native FSEvents. Polling (VITE_USE_POLLING=1) was observed to leave
+# Vite listening on :3000 but never answering HTTP (connection hang / timeout),
+# while server/agent still start — so `vp run dev` looks healthy and
+# localhost:3000 "doesn't work". apps/web/vite-emfile-guard.ts swallows
+# watch EMFILE when it occurs. Opt into polling only if native breaks:
+#   VITE_USE_POLLING=1 vp run dev
+export VITE_USE_POLLING="${VITE_USE_POLLING:-0}"
+if [ "${VITE_USE_POLLING}" = "0" ]; then
+  info "Vite file watching: native FSEvents (set VITE_USE_POLLING=1 if EMFILE)"
+  unset CHOKIDAR_USEPOLLING CHOKIDAR_INTERVAL WATCHPACK_POLLING 2>/dev/null || true
 else
-  warn "Vite file watching: native FSEvents (may EMFILE on macOS monorepos)"
+  warn "Vite file watching: polling (may hang HTTP on :3000 — prefer native)"
+  export CHOKIDAR_USEPOLLING=true
+  export CHOKIDAR_INTERVAL="${CHOKIDAR_INTERVAL:-400}"
+  export WATCHPACK_POLLING=true
 fi
-# Also set chokidar env for any tooling that reads it directly
-export CHOKIDAR_USEPOLLING="${CHOKIDAR_USEPOLLING:-true}"
 
 # ─── Preflight ────────────────────────────────────────────────────
 command -v docker >/dev/null 2>&1 || fail "Docker is not installed"
@@ -109,11 +114,19 @@ pnpm dotenvx run -f "$ENV_FILE" -- drizzle-kit migrate 2>&1 | tail -10
 ok "Database schema pushed"
 cd "$ROOT"
 
-# ─── Step 5: Start apps ──────────────────────────────────────────
+# ─── Step 5: Free app ports (stale vite/devtools holders) ─────────
+# Web can die while leaving TanStack devtools on :4206; next start then
+# crashes with EADDRINUSE and never binds :3000. Clear before launch.
+info "Freeing app ports (3000, 4206, 5200, 4111, 9229)..."
+for port in 3000 4206 5200 4111 9229; do
+  lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
+done
+
+# ─── Step 6: Start apps ──────────────────────────────────────────
 info "Starting all apps in dev mode..."
 echo ""
 echo -e "  ${CYAN}Server${RESET}  → http://localhost:5200"
-  echo -e "  ${CYAN}Web${RESET}     → http://localhost:3000"
+echo -e "  ${CYAN}Web${RESET}     → http://localhost:3000"
 echo -e "  ${CYAN}Agent${RESET}  → http://localhost:4111"
 echo ""
 echo -e "  ${YELLOW}Note: GitHub OAuth callback URL: http://localhost:5200/auth/callback/github${RESET}"
@@ -126,8 +139,10 @@ echo ""
 cleanup() {
   echo ""
   info "Stopping apps..."
-  # Kill processes on all known ports
-  for port in 3000 5200 4111 9229; do
+  # Kill processes on all known ports.
+  # 4206 = @tanstack/devtools-vite event bus (held even when :3000 is dead;
+  # a stale holder causes `listen EADDRINUSE ::1:4206` and web never binds 3000).
+  for port in 3000 4206 5200 4111 9229; do
     lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
   done
   kill $(jobs -p) 2>/dev/null || true

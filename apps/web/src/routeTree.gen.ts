@@ -9,40 +9,41 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as rootLayoutRouteRouteImport } from './routes/(root-layout)/route'
-import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as rootLayoutRouteRouteImport } from './routes/(root-layout)/route'
 import { Route as rootLayoutIndexRouteImport } from './routes/(root-layout)/index'
 import { Route as rootLayout_protectedRouteRouteImport } from './routes/(root-layout)/__protected/route'
-import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
-import { Route as rootLayoutPrivacyPolicyIndexRouteImport } from './routes/(root-layout)/privacy-policy/index'
-import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
-import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
-import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(root-layout)/terms-of-service/index'
-import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as ApiFilesIndexRouteImport } from './routes/api/files/index'
-import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
-import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
-import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/route'
-import { Route as rootLayout_protectedDashboardResumesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/route'
-import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
-import { Route as rootLayout_protectedPlaygroundIndexRouteImport } from './routes/(root-layout)/__protected/playground/index'
-import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
+import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(root-layout)/terms-of-service/index'
+import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
+import { Route as rootLayoutPrivacyPolicyIndexRouteImport } from './routes/(root-layout)/privacy-policy/index'
+import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
+import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
+import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
-import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
-import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
-import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/onboarding/index'
-import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
-import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
-import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
+import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
+import { Route as rootLayout_protectedPlaygroundIndexRouteImport } from './routes/(root-layout)/__protected/playground/index'
+import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
+import { Route as rootLayoutguestSignInIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/index'
+import { Route as rootLayout_protectedDashboardSettingsRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/route'
+import { Route as rootLayout_protectedDashboardResumesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/route'
+import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/route'
 import { Route as rootLayout_protectedPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/__protected/playground/agent/index'
-import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
+import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
+import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
+import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
+import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/onboarding/index'
+import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
+import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
-import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
+import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
+import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
 
-const rootLayoutRouteRoute = rootLayoutRouteRouteImport.update({
-  id: '/(root-layout)',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
@@ -50,9 +51,8 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const rootLayoutRouteRoute = rootLayoutRouteRouteImport.update({
+  id: '/(root-layout)',
   getParentRoute: () => rootRouteImport,
 } as any)
 const rootLayoutIndexRoute = rootLayoutIndexRouteImport.update({
@@ -65,16 +65,15 @@ const rootLayout_protectedRouteRoute =
     id: '/__protected',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
-const rootLayoutguestSignInRouteRoute =
-  rootLayoutguestSignInRouteRouteImport.update({
-    id: '/(guest)/sign-in',
-    path: '/sign-in',
-    getParentRoute: () => rootLayoutRouteRoute,
-  } as any)
-const rootLayoutPrivacyPolicyIndexRoute =
-  rootLayoutPrivacyPolicyIndexRouteImport.update({
-    id: '/privacy-policy/',
-    path: '/privacy-policy/',
+const ApiFilesIndexRoute = ApiFilesIndexRouteImport.update({
+  id: '/api/files/',
+  path: '/api/files/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const rootLayoutTermsOfServiceIndexRoute =
+  rootLayoutTermsOfServiceIndexRouteImport.update({
+    id: '/terms-of-service/',
+    path: '/terms-of-service/',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
 const rootLayoutReposIndexRoute = rootLayoutReposIndexRouteImport.update({
@@ -82,16 +81,10 @@ const rootLayoutReposIndexRoute = rootLayoutReposIndexRouteImport.update({
   path: '/repos/',
   getParentRoute: () => rootLayoutRouteRoute,
 } as any)
-const rootLayoutReposRepoRouteRoute =
-  rootLayoutReposRepoRouteRouteImport.update({
-    id: '/repos/$repo',
-    path: '/repos/$repo',
-    getParentRoute: () => rootLayoutRouteRoute,
-  } as any)
-const rootLayoutTermsOfServiceIndexRoute =
-  rootLayoutTermsOfServiceIndexRouteImport.update({
-    id: '/terms-of-service/',
-    path: '/terms-of-service/',
+const rootLayoutPrivacyPolicyIndexRoute =
+  rootLayoutPrivacyPolicyIndexRouteImport.update({
+    id: '/privacy-policy/',
+    path: '/privacy-policy/',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
 const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
@@ -99,16 +92,34 @@ const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
   path: '/_api/health/live',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiFilesIndexRoute = ApiFilesIndexRouteImport.update({
-  id: '/api/files/',
-  path: '/api/files/',
+const rootLayoutReposRepoRouteRoute =
+  rootLayoutReposRepoRouteRouteImport.update({
+    id: '/repos/$repo',
+    path: '/repos/$repo',
+    getParentRoute: () => rootLayoutRouteRoute,
+  } as any)
+const rootLayoutguestSignInRouteRoute =
+  rootLayoutguestSignInRouteRouteImport.update({
+    id: '/(guest)/sign-in',
+    path: '/sign-in',
+    getParentRoute: () => rootLayoutRouteRoute,
+  } as any)
+const ApiResumeDownloadIndexRoute = ApiResumeDownloadIndexRouteImport.update({
+  id: '/api/resume/download/',
+  path: '/api/resume/download/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const rootLayoutguestSignInIndexRoute =
-  rootLayoutguestSignInIndexRouteImport.update({
+const rootLayoutReposRepoIndexRoute =
+  rootLayoutReposRepoIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => rootLayoutguestSignInRouteRoute,
+    getParentRoute: () => rootLayoutReposRepoRouteRoute,
+  } as any)
+const rootLayout_protectedPlaygroundIndexRoute =
+  rootLayout_protectedPlaygroundIndexRouteImport.update({
+    id: '/playground/',
+    path: '/playground/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
 const rootLayout_protectedDashboardIndexRoute =
   rootLayout_protectedDashboardIndexRouteImport.update({
@@ -116,10 +127,16 @@ const rootLayout_protectedDashboardIndexRoute =
     path: '/dashboard/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
-const rootLayout_protectedDashboardExperiencesRouteRoute =
-  rootLayout_protectedDashboardExperiencesRouteRouteImport.update({
-    id: '/dashboard/experiences',
-    path: '/dashboard/experiences',
+const rootLayoutguestSignInIndexRoute =
+  rootLayoutguestSignInIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => rootLayoutguestSignInRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardSettingsRouteRoute =
+  rootLayout_protectedDashboardSettingsRouteRouteImport.update({
+    id: '/dashboard/settings',
+    path: '/dashboard/settings',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
 const rootLayout_protectedDashboardResumesRouteRoute =
@@ -128,63 +145,10 @@ const rootLayout_protectedDashboardResumesRouteRoute =
     path: '/dashboard/resumes',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
-const rootLayout_protectedDashboardSettingsRouteRoute =
-  rootLayout_protectedDashboardSettingsRouteRouteImport.update({
-    id: '/dashboard/settings',
-    path: '/dashboard/settings',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayout_protectedPlaygroundIndexRoute =
-  rootLayout_protectedPlaygroundIndexRouteImport.update({
-    id: '/playground/',
-    path: '/playground/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayoutReposRepoIndexRoute =
-  rootLayoutReposRepoIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => rootLayoutReposRepoRouteRoute,
-  } as any)
-const ApiResumeDownloadIndexRoute = ApiResumeDownloadIndexRouteImport.update({
-  id: '/api/resume/download/',
-  path: '/api/resume/download/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const rootLayoutguestSignInCreateAnAccountIndexRoute =
-  rootLayoutguestSignInCreateAnAccountIndexRouteImport.update({
-    id: '/create-an-account/',
-    path: '/create-an-account/',
-    getParentRoute: () => rootLayoutguestSignInRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardExperiencesIndexRoute =
-  rootLayout_protectedDashboardExperiencesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => rootLayout_protectedDashboardExperiencesRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardOnboardingIndexRoute =
-  rootLayout_protectedDashboardOnboardingIndexRouteImport.update({
-    id: '/dashboard/onboarding/',
-    path: '/dashboard/onboarding/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardProjectsIndexRoute =
-  rootLayout_protectedDashboardProjectsIndexRouteImport.update({
-    id: '/dashboard/projects/',
-    path: '/dashboard/projects/',
-    getParentRoute: () => rootLayout_protectedRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardResumesIndexRoute =
-  rootLayout_protectedDashboardResumesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => rootLayout_protectedDashboardResumesRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardStacksIndexRoute =
-  rootLayout_protectedDashboardStacksIndexRouteImport.update({
-    id: '/dashboard/stacks/',
-    path: '/dashboard/stacks/',
+const rootLayout_protectedDashboardExperiencesRouteRoute =
+  rootLayout_protectedDashboardExperiencesRouteRouteImport.update({
+    id: '/dashboard/experiences',
+    path: '/dashboard/experiences',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
 const rootLayout_protectedPlaygroundAgentIndexRoute =
@@ -193,11 +157,41 @@ const rootLayout_protectedPlaygroundAgentIndexRoute =
     path: '/playground/agent/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
-const rootLayoutReposRepoBlobSplatRoute =
-  rootLayoutReposRepoBlobSplatRouteImport.update({
-    id: '/blob/$',
-    path: '/blob/$',
-    getParentRoute: () => rootLayoutReposRepoRouteRoute,
+const rootLayout_protectedDashboardStacksIndexRoute =
+  rootLayout_protectedDashboardStacksIndexRouteImport.update({
+    id: '/dashboard/stacks/',
+    path: '/dashboard/stacks/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardResumesIndexRoute =
+  rootLayout_protectedDashboardResumesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => rootLayout_protectedDashboardResumesRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardProjectsIndexRoute =
+  rootLayout_protectedDashboardProjectsIndexRouteImport.update({
+    id: '/dashboard/projects/',
+    path: '/dashboard/projects/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardOnboardingIndexRoute =
+  rootLayout_protectedDashboardOnboardingIndexRouteImport.update({
+    id: '/dashboard/onboarding/',
+    path: '/dashboard/onboarding/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardExperiencesIndexRoute =
+  rootLayout_protectedDashboardExperiencesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => rootLayout_protectedDashboardExperiencesRouteRoute,
+  } as any)
+const rootLayoutguestSignInCreateAnAccountIndexRoute =
+  rootLayoutguestSignInCreateAnAccountIndexRouteImport.update({
+    id: '/create-an-account/',
+    path: '/create-an-account/',
+    getParentRoute: () => rootLayoutguestSignInRouteRoute,
   } as any)
 const rootLayoutReposRepoTreeSplatRoute =
   rootLayoutReposRepoTreeSplatRouteImport.update({
@@ -205,16 +199,22 @@ const rootLayoutReposRepoTreeSplatRoute =
     path: '/tree/$',
     getParentRoute: () => rootLayoutReposRepoRouteRoute,
   } as any)
-const rootLayout_protectedDashboardSettingsAccountIndexRoute =
-  rootLayout_protectedDashboardSettingsAccountIndexRouteImport.update({
-    id: '/account/',
-    path: '/account/',
-    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+const rootLayoutReposRepoBlobSplatRoute =
+  rootLayoutReposRepoBlobSplatRouteImport.update({
+    id: '/blob/$',
+    path: '/blob/$',
+    getParentRoute: () => rootLayoutReposRepoRouteRoute,
   } as any)
 const rootLayout_protectedDashboardSettingsProfileIndexRoute =
   rootLayout_protectedDashboardSettingsProfileIndexRouteImport.update({
     id: '/profile/',
     path: '/profile/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardSettingsAccountIndexRoute =
+  rootLayout_protectedDashboardSettingsAccountIndexRouteImport.update({
+    id: '/account/',
+    path: '/account/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
 
@@ -415,11 +415,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/(root-layout)': {
-      id: '/(root-layout)'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof rootLayoutRouteRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/robots.txt': {
@@ -429,11 +429,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/(root-layout)': {
+      id: '/(root-layout)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof rootLayoutRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root-layout)/': {
@@ -450,18 +450,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedRouteRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
-    '/(root-layout)/(guest)/sign-in': {
-      id: '/(root-layout)/(guest)/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof rootLayoutguestSignInRouteRouteImport
-      parentRoute: typeof rootLayoutRouteRoute
+    '/api/files/': {
+      id: '/api/files/'
+      path: '/api/files'
+      fullPath: '/api/files/'
+      preLoaderRoute: typeof ApiFilesIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/(root-layout)/privacy-policy/': {
-      id: '/(root-layout)/privacy-policy/'
-      path: '/privacy-policy'
-      fullPath: '/privacy-policy/'
-      preLoaderRoute: typeof rootLayoutPrivacyPolicyIndexRouteImport
+    '/(root-layout)/terms-of-service/': {
+      id: '/(root-layout)/terms-of-service/'
+      path: '/terms-of-service'
+      fullPath: '/terms-of-service/'
+      preLoaderRoute: typeof rootLayoutTermsOfServiceIndexRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
     '/(root-layout)/repos/': {
@@ -471,18 +471,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutReposIndexRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
-    '/(root-layout)/repos/$repo': {
-      id: '/(root-layout)/repos/$repo'
-      path: '/repos/$repo'
-      fullPath: '/repos/$repo'
-      preLoaderRoute: typeof rootLayoutReposRepoRouteRouteImport
-      parentRoute: typeof rootLayoutRouteRoute
-    }
-    '/(root-layout)/terms-of-service/': {
-      id: '/(root-layout)/terms-of-service/'
-      path: '/terms-of-service'
-      fullPath: '/terms-of-service/'
-      preLoaderRoute: typeof rootLayoutTermsOfServiceIndexRouteImport
+    '/(root-layout)/privacy-policy/': {
+      id: '/(root-layout)/privacy-policy/'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy/'
+      preLoaderRoute: typeof rootLayoutPrivacyPolicyIndexRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
     '/_api/health/live': {
@@ -492,19 +485,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHealthLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/files/': {
-      id: '/api/files/'
-      path: '/api/files'
-      fullPath: '/api/files/'
-      preLoaderRoute: typeof ApiFilesIndexRouteImport
+    '/(root-layout)/repos/$repo': {
+      id: '/(root-layout)/repos/$repo'
+      path: '/repos/$repo'
+      fullPath: '/repos/$repo'
+      preLoaderRoute: typeof rootLayoutReposRepoRouteRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/(root-layout)/(guest)/sign-in': {
+      id: '/(root-layout)/(guest)/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof rootLayoutguestSignInRouteRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/api/resume/download/': {
+      id: '/api/resume/download/'
+      path: '/api/resume/download'
+      fullPath: '/api/resume/download/'
+      preLoaderRoute: typeof ApiResumeDownloadIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(root-layout)/(guest)/sign-in/': {
-      id: '/(root-layout)/(guest)/sign-in/'
+    '/(root-layout)/repos/$repo/': {
+      id: '/(root-layout)/repos/$repo/'
       path: '/'
-      fullPath: '/sign-in/'
-      preLoaderRoute: typeof rootLayoutguestSignInIndexRouteImport
-      parentRoute: typeof rootLayoutguestSignInRouteRoute
+      fullPath: '/repos/$repo/'
+      preLoaderRoute: typeof rootLayoutReposRepoIndexRouteImport
+      parentRoute: typeof rootLayoutReposRepoRouteRoute
+    }
+    '/(root-layout)/__protected/playground/': {
+      id: '/(root-layout)/__protected/playground/'
+      path: '/playground'
+      fullPath: '/playground/'
+      preLoaderRoute: typeof rootLayout_protectedPlaygroundIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/dashboard/': {
       id: '/(root-layout)/__protected/dashboard/'
@@ -513,11 +527,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
-    '/(root-layout)/__protected/dashboard/experiences': {
-      id: '/(root-layout)/__protected/dashboard/experiences'
-      path: '/dashboard/experiences'
-      fullPath: '/dashboard/experiences'
-      preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesRouteRouteImport
+    '/(root-layout)/(guest)/sign-in/': {
+      id: '/(root-layout)/(guest)/sign-in/'
+      path: '/'
+      fullPath: '/sign-in/'
+      preLoaderRoute: typeof rootLayoutguestSignInIndexRouteImport
+      parentRoute: typeof rootLayoutguestSignInRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/settings': {
+      id: '/(root-layout)/__protected/dashboard/settings'
+      path: '/dashboard/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/dashboard/resumes': {
@@ -527,74 +548,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardResumesRouteRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
-    '/(root-layout)/__protected/dashboard/settings': {
-      id: '/(root-layout)/__protected/dashboard/settings'
-      path: '/dashboard/settings'
-      fullPath: '/dashboard/settings'
-      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/__protected/playground/': {
-      id: '/(root-layout)/__protected/playground/'
-      path: '/playground'
-      fullPath: '/playground/'
-      preLoaderRoute: typeof rootLayout_protectedPlaygroundIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/repos/$repo/': {
-      id: '/(root-layout)/repos/$repo/'
-      path: '/'
-      fullPath: '/repos/$repo/'
-      preLoaderRoute: typeof rootLayoutReposRepoIndexRouteImport
-      parentRoute: typeof rootLayoutReposRepoRouteRoute
-    }
-    '/api/resume/download/': {
-      id: '/api/resume/download/'
-      path: '/api/resume/download'
-      fullPath: '/api/resume/download/'
-      preLoaderRoute: typeof ApiResumeDownloadIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(root-layout)/(guest)/sign-in/create-an-account/': {
-      id: '/(root-layout)/(guest)/sign-in/create-an-account/'
-      path: '/create-an-account'
-      fullPath: '/sign-in/create-an-account/'
-      preLoaderRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRouteImport
-      parentRoute: typeof rootLayoutguestSignInRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/experiences/': {
-      id: '/(root-layout)/__protected/dashboard/experiences/'
-      path: '/'
-      fullPath: '/dashboard/experiences/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesIndexRouteImport
-      parentRoute: typeof rootLayout_protectedDashboardExperiencesRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/onboarding/': {
-      id: '/(root-layout)/__protected/dashboard/onboarding/'
-      path: '/dashboard/onboarding'
-      fullPath: '/dashboard/onboarding/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardOnboardingIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/projects/': {
-      id: '/(root-layout)/__protected/dashboard/projects/'
-      path: '/dashboard/projects'
-      fullPath: '/dashboard/projects/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardProjectsIndexRouteImport
-      parentRoute: typeof rootLayout_protectedRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/resumes/': {
-      id: '/(root-layout)/__protected/dashboard/resumes/'
-      path: '/'
-      fullPath: '/dashboard/resumes/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardResumesIndexRouteImport
-      parentRoute: typeof rootLayout_protectedDashboardResumesRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/stacks/': {
-      id: '/(root-layout)/__protected/dashboard/stacks/'
-      path: '/dashboard/stacks'
-      fullPath: '/dashboard/stacks/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardStacksIndexRouteImport
+    '/(root-layout)/__protected/dashboard/experiences': {
+      id: '/(root-layout)/__protected/dashboard/experiences'
+      path: '/dashboard/experiences'
+      fullPath: '/dashboard/experiences'
+      preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesRouteRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/playground/agent/': {
@@ -604,12 +562,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedPlaygroundAgentIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
-    '/(root-layout)/repos/$repo/blob/$': {
-      id: '/(root-layout)/repos/$repo/blob/$'
-      path: '/blob/$'
-      fullPath: '/repos/$repo/blob/$'
-      preLoaderRoute: typeof rootLayoutReposRepoBlobSplatRouteImport
-      parentRoute: typeof rootLayoutReposRepoRouteRoute
+    '/(root-layout)/__protected/dashboard/stacks/': {
+      id: '/(root-layout)/__protected/dashboard/stacks/'
+      path: '/dashboard/stacks'
+      fullPath: '/dashboard/stacks/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardStacksIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/resumes/': {
+      id: '/(root-layout)/__protected/dashboard/resumes/'
+      path: '/'
+      fullPath: '/dashboard/resumes/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardResumesIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardResumesRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/projects/': {
+      id: '/(root-layout)/__protected/dashboard/projects/'
+      path: '/dashboard/projects'
+      fullPath: '/dashboard/projects/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardProjectsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/onboarding/': {
+      id: '/(root-layout)/__protected/dashboard/onboarding/'
+      path: '/dashboard/onboarding'
+      fullPath: '/dashboard/onboarding/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardOnboardingIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/experiences/': {
+      id: '/(root-layout)/__protected/dashboard/experiences/'
+      path: '/'
+      fullPath: '/dashboard/experiences/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardExperiencesRouteRoute
+    }
+    '/(root-layout)/(guest)/sign-in/create-an-account/': {
+      id: '/(root-layout)/(guest)/sign-in/create-an-account/'
+      path: '/create-an-account'
+      fullPath: '/sign-in/create-an-account/'
+      preLoaderRoute: typeof rootLayoutguestSignInCreateAnAccountIndexRouteImport
+      parentRoute: typeof rootLayoutguestSignInRouteRoute
     }
     '/(root-layout)/repos/$repo/tree/$': {
       id: '/(root-layout)/repos/$repo/tree/$'
@@ -618,18 +611,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayoutReposRepoTreeSplatRouteImport
       parentRoute: typeof rootLayoutReposRepoRouteRoute
     }
-    '/(root-layout)/__protected/dashboard/settings/account/': {
-      id: '/(root-layout)/__protected/dashboard/settings/account/'
-      path: '/account'
-      fullPath: '/dashboard/settings/account/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRouteImport
-      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    '/(root-layout)/repos/$repo/blob/$': {
+      id: '/(root-layout)/repos/$repo/blob/$'
+      path: '/blob/$'
+      fullPath: '/repos/$repo/blob/$'
+      preLoaderRoute: typeof rootLayoutReposRepoBlobSplatRouteImport
+      parentRoute: typeof rootLayoutReposRepoRouteRoute
     }
     '/(root-layout)/__protected/dashboard/settings/profile/': {
       id: '/(root-layout)/__protected/dashboard/settings/profile/'
       path: '/profile'
       fullPath: '/dashboard/settings/profile/'
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/settings/account/': {
+      id: '/(root-layout)/__protected/dashboard/settings/account/'
+      path: '/account'
+      fullPath: '/dashboard/settings/account/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
   }
@@ -792,3 +792,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
