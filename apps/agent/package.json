@@ -24,6 +24,7 @@
   "dependencies": {
     "@mastra/ai-sdk": "catalog:",
     "@mastra/core": "catalog:",
+    "@mastra/duckdb": "catalog:",
     "@mastra/evals": "catalog:",
     "@mastra/loggers": "catalog:",
     "@mastra/memory": "catalog:",

@@ -12,6 +12,11 @@ node_modules
 dist
 dist-ssr
 
+# Mastra agent local artifacts (DuckDB observability + build output)
+**/.mastra/
+*.duckdb
+*.duckdb.wal
+
 .env
 .env.docker
 *.local
