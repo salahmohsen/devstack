@@ -12,6 +12,7 @@ import {
   ComboboxValue
 } from "@tsu-stack/ui/components/combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useFieldContext } from "./form-contexts";
 
@@ -39,12 +40,31 @@ type ComboboxMultipleFieldProps = {
   };
 };
 
+/**
+ * Form-layer defaults for multi-combobox inside dialogs / dense layouts.
+ * Kept here (not packages/ui ComboboxPopup) so the installed primitive stays stock.
+ * - chips: don't let many selections expand the field over the form
+ * - popup: shorter than the primitive's ~23rem default so the list doesn't blanket
+ *   the rest of a dialog; force the internal ScrollArea viewport to scroll
+ */
+const CHIPS_FORM_CLASS = "max-h-28 overflow-y-auto";
+const POPUP_FORM_CLASS = cn(
+  "max-h-60 overflow-hidden",
+  // Primitive ComboboxList wraps items in ScrollArea (size-full). Without a
+  // real height on the viewport, the list grows and covers sibling fields.
+  "[&_[data-slot=scroll-area-viewport]]:max-h-52 [&_[data-slot=scroll-area-viewport]]:overflow-y-auto"
+);
+
 function ComboboxMultipleField(props: ComboboxMultipleFieldProps) {
   const field = useFieldContext<string[]>();
   const selectedValues: string[] = field.state.value ?? [];
-  const value: ComboboxItemType[] = props.items.filter((item) =>
-    selectedValues.includes(item.value)
+  // Keep selected chips even when items haven't been refetched yet (e.g.
+  // stacks just created by detect-stacks before stacks.list lands).
+  const itemsByValue = new Map(props.items.map((item) => [item.value, item]));
+  const value: ComboboxItemType[] = selectedValues.map(
+    (id) => itemsByValue.get(id) ?? { value: id, label: id }
   );
+  const listItems = props.items;
 
   return (
     <Field className={props.classNames?.field}>
@@ -52,7 +72,7 @@ function ComboboxMultipleField(props: ComboboxMultipleFieldProps) {
         <FieldLabel className={props.classNames?.label}>{props.label}</FieldLabel>
       ) : null}
       <Combobox
-        items={props.items}
+        items={listItems}
         multiple
         itemToStringValue={(item) => item.value}
         onValueChange={(next) => {
@@ -61,7 +81,7 @@ function ComboboxMultipleField(props: ComboboxMultipleFieldProps) {
         }}
         value={value}
       >
-        <ComboboxChips className={props.classNames?.chips}>
+        <ComboboxChips className={cn(CHIPS_FORM_CLASS, props.classNames?.chips)}>
           <ComboboxValue>
             {(selected: ComboboxItemType[]) => (
               <>
@@ -85,7 +105,7 @@ function ComboboxMultipleField(props: ComboboxMultipleFieldProps) {
             )}
           </ComboboxValue>
         </ComboboxChips>
-        <ComboboxPopup className={props.classNames?.content}>
+        <ComboboxPopup className={cn(POPUP_FORM_CLASS, props.classNames?.content)}>
           <ComboboxEmpty>{props.emptyMessage ?? "No results found."}</ComboboxEmpty>
           <ComboboxList className={props.classNames?.list}>
             {(item: ComboboxItemType) => (
