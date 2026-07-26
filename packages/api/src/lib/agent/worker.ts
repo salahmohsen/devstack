@@ -14,13 +14,30 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
       const inputUrl = input instanceof Request ? input.url : String(input);
       const resolved = new URL(inputUrl, baseUrl).href;
 
-      const request = new Request(resolved, init);
+      // Pass body through as-is. Re-wrapping a string body via `new Request`
+      // turns it into a ReadableStream that requires `duplex: "half"` and can
+      // fail under some Node fetch implementations.
+      const body = init?.body;
+      const needsDuplex =
+        typeof body === "object" &&
+        body !== null &&
+        (typeof (body as { getReader?: unknown }).getReader === "function" ||
+          ArrayBuffer.isView(body) ||
+          body instanceof ArrayBuffer ||
+          body instanceof Blob ||
+          body instanceof FormData ||
+          body instanceof URLSearchParams);
+
       return fetch(resolved, {
-        method: request.method,
-        headers: request.headers,
-        body: request.body,
-        // @ts-expect-error - duplex is non-standard but supported in Node 18+
-        duplex: "half"
+        ...init,
+        method: init?.method ?? (input instanceof Request ? input.method : "GET"),
+        headers: init?.headers,
+        body,
+        ...(needsDuplex
+          ? ({
+              duplex: "half"
+            } as RequestInit)
+          : {})
       });
     }
   };
