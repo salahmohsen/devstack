@@ -17,6 +17,37 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 INFRA_COMPOSE="$ROOT/docker-compose.infra.yml"
 ENV_FILE="$ROOT/packages/env/.env"
 
+# ─── File descriptors (macOS monorepo Vite EMFILE) ────────────────
+# Vite/chokidar + tsx watch + parallel apps exhaust low soft limits.
+# Always try to raise; always log so failures are obvious in the log stream.
+_current_nofile="$(ulimit -n 2>/dev/null || echo 0)"
+info "Open-file limit (before): ${_current_nofile}"
+# Prefer hard max available; fall through smaller values if the OS rejects.
+for _nofile_try in 1048576 65536 10240 4096; do
+  if [ "${_current_nofile}" = "unlimited" ]; then
+    break
+  fi
+  if [ "${_current_nofile}" -ge "${_nofile_try}" ] 2>/dev/null; then
+    break
+  fi
+  if ulimit -n "${_nofile_try}" 2>/dev/null; then
+    ok "Raised open-file limit: ${_current_nofile} → $(ulimit -n)"
+    break
+  fi
+done
+info "Open-file limit (after):  $(ulimit -n 2>/dev/null || echo unknown)"
+# Vite web defaults to polling (see apps/web/vite.config.ts) because native
+# FSEvents hits EMFILE on this monorepo even with a huge RLIMIT_NOFILE.
+# Set VITE_USE_POLLING=0 to force native watchers.
+export VITE_USE_POLLING="${VITE_USE_POLLING:-1}"
+if [ "${VITE_USE_POLLING}" != "0" ]; then
+  info "Vite file watching: polling (set VITE_USE_POLLING=0 for native FSEvents)"
+else
+  warn "Vite file watching: native FSEvents (may EMFILE on macOS monorepos)"
+fi
+# Also set chokidar env for any tooling that reads it directly
+export CHOKIDAR_USEPOLLING="${CHOKIDAR_USEPOLLING:-true}"
+
 # ─── Preflight ────────────────────────────────────────────────────
 command -v docker >/dev/null 2>&1 || fail "Docker is not installed"
 docker info >/dev/null 2>&1 || fail "Docker daemon is not running"
@@ -85,7 +116,7 @@ echo -e "  ${CYAN}Server${RESET}  → http://localhost:5200"
   echo -e "  ${CYAN}Web${RESET}     → http://localhost:3000"
 echo -e "  ${CYAN}Agent${RESET}  → http://localhost:4111"
 echo ""
-echo -e "  ${YELLOW}Note: GitHub OAuth callback URL: http://localhost:5200/server/auth/callback/github${RESET}"
+echo -e "  ${YELLOW}Note: GitHub OAuth callback URL: http://localhost:5200/auth/callback/github${RESET}"
 echo -e "  ${YELLOW}Make sure this is registered in your GitHub OAuth app settings.${RESET}"
 echo ""
 echo -e "  ${YELLOW}Press Ctrl+C to stop all services${RESET}"
@@ -112,8 +143,8 @@ trap cleanup EXIT INT TERM
 # the server's CORS allowlist is derived from VITE_WEB_URL, so leaving it
 # at the production origin would block the browser (localhost:3000).
 #
-# VITE_SERVER_URL MUST include the `/server` base path — Hono mounts with
-# `.basePath(new URL(VITE_SERVER_URL).pathname)` and the oRPC client calls
-# `${VITE_SERVER_URL}/rpc`. Dropping `/server` here while `.env` keeps it
-# (or vice versa) produces ORPCError: Not Found (404) on every procedure.
-VITE_SERVER_URL="http://localhost:5200/server" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev
+# API mounts at URL root (no /server path). VITE_SERVER_URL pathname is
+# empty → Hono has no basePath; oRPC client calls `${VITE_SERVER_URL}/rpc`.
+# Keep this in sync with packages/env/.env — a leftover `/server` suffix
+# (from the pre-dedicated-api-host setup) causes 404 on every procedure.
+VITE_SERVER_URL="http://localhost:5200" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev
