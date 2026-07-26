@@ -10,6 +10,7 @@ import {
 import { PostgresStore } from "@mastra/pg";
 
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
+import { createResumeImportExtractorAgent } from "#@/mastra/agents/resume-import-extractor-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { createWeatherAgent } from "#@/mastra/agents/weather-agent";
 import {
@@ -19,6 +20,7 @@ import {
 } from "#@/mastra/scorers/weather-scorer";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
+import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow";
 import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
 export const mastra = new Mastra({
@@ -33,12 +35,14 @@ export const mastra = new Mastra({
   workflows: {
     weatherWorkflow,
     detectStacksWorkflow,
-    organizeStacksWorkflow
+    organizeStacksWorkflow,
+    resumeImportWorkflow
   },
   agents: {
     weatherAgent: createWeatherAgent(),
     stackCategorizerAgent: createStackCategorizerAgent(),
-    hubSupervisor: createHubSupervisor()
+    hubSupervisor: createHubSupervisor(),
+    resumeImportExtractor: createResumeImportExtractorAgent()
   },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
   storage: new PostgresStore({
