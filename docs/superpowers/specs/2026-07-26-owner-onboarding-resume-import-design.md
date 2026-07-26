@@ -116,18 +116,20 @@ Apply processes only `selected === true` rows. Profile is always considered when
 ### Contact merge (profile)
 
 - Draft contacts must include `type` + `value`. Normalize fills **default icons** per type (same map as profile settings if one exists; else fixed lucide/name map in core).
-- **Omit** `contacts` or pass `undefined` → do not call contact upsert (leave existing contacts untouched).
-- **Never** pass empty array to existing `contactRepository.upsert` as “no change” — that path deletes all contacts today. Apply must use an explicit merge helper:
+- **Omit** `contacts`, pass `undefined`, **or** `contacts: []` → **no-op** (leave existing contacts untouched). Never route `[]` through `contactRepository.upsert` (that path deletes all contacts today).
+- When `contacts` is a non-empty array, Apply uses an explicit merge helper:
   - For each draft contact type: update value/icon if type exists, else insert.
   - Types not present in draft: **leave unchanged** (no delete-on-import).
+- Contact **portfolio_entry** links are **not** changed by import (no inventing contact portfolio rows).
 - Re-import: match by `(userId, type)` natural key, not by missing draft ids.
 
 ### Stack upsert-by-name
 
 - Match existing stack with **case-insensitive** name compare; preserve existing casing on match.
-- On match: optionally fill null `description`/`type` from draft if currently empty; do **not** overwrite non-empty fields unless owner edited them in review (review values win when Apply sends them).
-- `includedInPortfolio: true` on a selected existing stack → ensure portfolio entry (toggle/create).
-- Project `stackNames` not in `stacks[]`: **create** minimal stack rows (name only, portfolio per project’s stack inclusion default true) so links resolve.
+- **Apply payload is authoritative for selected stacks:** for each selected stack row, write `description`/`type` from the draft (including owner review edits). Do not implement dirty-field tracking in v1.
+- New stacks: create with draft fields + portfolio when `includedInPortfolio`.
+- Existing stacks: update description/type from draft; `includedInPortfolio: true` → ensure portfolio entry.
+- Project `stackNames` not in `stacks[]`: **create** minimal stack rows (name only, `includedInPortfolio: true` default) so links resolve.
 
 ### Project defaults
 
@@ -150,8 +152,8 @@ Existing repositories each open their own `getDb().transaction(...)` and **canno
 
 **Order inside the outer transaction:**
 
-1. Profile user fields (name; email only if provided and valid; summary)
-2. Contact merge (never wipe-all)
+1. Profile user fields (name; email only if provided and non-empty; summary). If email changes: same rules as `profile.update` — uniqueness check → typed `EMAIL_TAKEN`; set `emailVerified: false` when the address actually changes. If email omitted/empty: keep existing email and verification state.
+2. Contact merge (never wipe-all; `[]`/omit = no-op)
 3. Stacks upsert-by-name + portfolio entries
 4. Experiences create + portfolio; map `clientId` → real id
 5. Projects create with resolved `experienceId` + `stackIds` + portfolio; sequential sortOrder
