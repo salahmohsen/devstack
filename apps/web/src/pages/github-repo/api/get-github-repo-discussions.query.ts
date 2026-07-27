@@ -15,16 +15,25 @@ type GetGithubRepoDiscussionsInput = {
 
 export function getGithubRepoDiscussionsQueryOptions(
   input: GetGithubRepoDiscussionsInput,
-  isPrivate = false
+  isPrivate = false,
+  profileName?: string
 ) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetRepoDiscussions
-      : orpcQueryClient.github.publicGetRepoDiscussions
-  ).queryOptions({
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetRepoDiscussions.queryOptions({
+      input: {
+        first: input.first ?? REPO_ACTIVITY_CARDS_PER_PAGE,
+        repo: input.repo
+      },
+      staleTime: githubCachePolicy.list.staleTimeMs,
+      gcTime: githubCachePolicy.list.gcTimeMs,
+      meta: persistedMeta
+    });
+  }
+  return orpcQueryClient.github.publicGetRepoDiscussions.queryOptions({
     input: {
       first: input.first ?? REPO_ACTIVITY_CARDS_PER_PAGE,
-      repo: input.repo
+      repo: input.repo,
+      profileName
     },
     staleTime: githubCachePolicy.list.staleTimeMs,
     gcTime: githubCachePolicy.list.gcTimeMs,
@@ -32,9 +41,20 @@ export function getGithubRepoDiscussionsQueryOptions(
   });
 }
 
-export function useGetGithubRepoDiscussionsQuery(input: GetGithubRepoDiscussionsInput) {
+export function useGetGithubRepoDiscussionsQuery(
+  input: GetGithubRepoDiscussionsInput,
+  profileName: string
+) {
   const { user } = useAuth();
-  return useQuery({ ...getGithubRepoDiscussionsQueryOptions(input, !!user), enabled: !!user });
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  return useQuery({
+    ...getGithubRepoDiscussionsQueryOptions(input, isPrivate, profileName),
+    enabled: true
+  });
 }
 
 export type GithubRepoDiscussionsQueryResult = Awaited<

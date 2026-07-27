@@ -1,56 +1,104 @@
 /**
- * Canonical in-app paths for public GitHub repo routes.
- * Tab URLs, Link targets, and window navigations must use these —
- * bare `repo` or `owner/repo` strings do not match the router.
+ * Canonical in-app paths for profile-scoped GitHub repo routes.
+ *
+ * - Primary host: `/{profileName}/repos/...`
+ * - Custom domain Host: `/repos/...` (profile comes from Host; pass profileName=null)
  */
 
-export function repoOverviewPath(repo: string): string {
-  return `/repos/${repo}`;
+/** Base path for a user's repos list. */
+export function reposListPath(profileName: string | null): string {
+  return profileName ? `/${profileName}/repos` : `/repos`;
 }
 
-export function repoTreePath(repo: string, ref: string, path = ""): string {
-  const cleanPath = path.replace(/^\/+|\/+$/g, "");
-  if (!cleanPath) {
-    return `/repos/${repo}/tree/${ref}`;
-  }
-  return `/repos/${repo}/tree/${ref}/${cleanPath}`;
+export function repoOverviewPath(profileName: string | null, repo: string): string {
+  return `${reposListPath(profileName)}/${repo}`;
 }
 
-export function repoBlobPath(repo: string, ref: string, path: string): string {
+export function repoTreePath(
+  profileName: string | null,
+  repo: string,
+  ref: string,
+  path = ""
+): string {
   const cleanPath = path.replace(/^\/+|\/+$/g, "");
-  return `/repos/${repo}/blob/${ref}/${cleanPath}`;
+  const base = `${reposListPath(profileName)}/${repo}/tree/${ref}`;
+  if (!cleanPath) return base;
+  return `${base}/${cleanPath}`;
+}
+
+export function repoBlobPath(
+  profileName: string | null,
+  repo: string,
+  ref: string,
+  path: string
+): string {
+  const cleanPath = path.replace(/^\/+|\/+$/g, "");
+  return `${reposListPath(profileName)}/${repo}/blob/${ref}/${cleanPath}`;
 }
 
 export function buildRepoTabUrl(input: {
+  profileName: string | null;
   repo: string;
   view: "repo" | "tree" | "blob";
   ref?: string;
   path?: string;
 }): string {
-  const { repo, view, ref = "main", path = "" } = input;
+  const { profileName, repo, view, ref = "main", path = "" } = input;
   if (view === "blob") {
-    return repoBlobPath(repo, ref, path);
+    return repoBlobPath(profileName, repo, ref, path);
   }
   if (view === "tree") {
-    return repoTreePath(repo, ref, path);
+    return repoTreePath(profileName, repo, ref, path);
   }
-  return repoOverviewPath(repo);
+  return repoOverviewPath(profileName, repo);
 }
+
+type ProfileRepoParams = { profileName: string; repo: string };
+type ProfileRepoSplatParams = { profileName: string; repo: string; _splat: string };
+type CustomRepoParams = { repo: string };
+type CustomRepoSplatParams = { repo: string; _splat: string };
 
 /**
  * Map a stored tab url back to a typed TanStack route `to` + `params`.
- * Link `to="/repos/foo"` does not match the file route `/repos/$repo` —
- * we must pass the route id and params.
  */
 export function parseRepoTabLocation(
   url: string
 ):
-  | { to: "/repos/$repo"; params: { repo: string } }
-  | { to: "/repos/$repo/tree/$"; params: { repo: string; _splat: string } }
-  | { to: "/repos/$repo/blob/$"; params: { repo: string; _splat: string } }
+  | { to: "/$profileName/repos/$repo"; params: ProfileRepoParams }
+  | { to: "/$profileName/repos/$repo/tree/$"; params: ProfileRepoSplatParams }
+  | { to: "/$profileName/repos/$repo/blob/$"; params: ProfileRepoSplatParams }
+  | { to: "/repos/$repo"; params: CustomRepoParams }
+  | { to: "/repos/$repo/tree/$"; params: CustomRepoSplatParams }
+  | { to: "/repos/$repo/blob/$"; params: CustomRepoSplatParams }
   | null {
   const path = url.split("?")[0] ?? url;
 
+  // Profile-scoped: /{profileName}/repos/...
+  const profileBlob = path.match(/^\/([^/]+)\/repos\/([^/]+)\/blob\/(.+)$/);
+  if (profileBlob && profileBlob[1] !== "repos") {
+    return {
+      to: "/$profileName/repos/$repo/blob/$",
+      params: { profileName: profileBlob[1], repo: profileBlob[2], _splat: profileBlob[3] }
+    };
+  }
+
+  const profileTree = path.match(/^\/([^/]+)\/repos\/([^/]+)\/tree\/(.+)$/);
+  if (profileTree && profileTree[1] !== "repos") {
+    return {
+      to: "/$profileName/repos/$repo/tree/$",
+      params: { profileName: profileTree[1], repo: profileTree[2], _splat: profileTree[3] }
+    };
+  }
+
+  const profileOverview = path.match(/^\/([^/]+)\/repos\/([^/]+)\/?$/);
+  if (profileOverview && profileOverview[1] !== "repos") {
+    return {
+      to: "/$profileName/repos/$repo",
+      params: { profileName: profileOverview[1], repo: profileOverview[2] }
+    };
+  }
+
+  // Custom-domain root: /repos/...
   const blob = path.match(/^\/repos\/([^/]+)\/blob\/(.+)$/);
   if (blob) {
     return {

@@ -16,17 +16,27 @@ type GetGithubRepoWorkflowRunsInput = {
 
 export function getGithubRepoWorkflowRunsQueryOptions(
   input: GetGithubRepoWorkflowRunsInput,
-  isPrivate = false
+  isPrivate = false,
+  profileName?: string
 ) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetRepoWorkflowRuns
-      : orpcQueryClient.github.publicGetRepoWorkflowRuns
-  ).queryOptions({
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetRepoWorkflowRuns.queryOptions({
+      input: {
+        page: input.page ?? 1,
+        perPage: input.perPage ?? REPO_ACTIVITY_CARDS_PER_PAGE,
+        repo: input.repo
+      },
+      staleTime: githubCachePolicy.list.staleTimeMs,
+      gcTime: githubCachePolicy.list.gcTimeMs,
+      meta: persistedMeta
+    });
+  }
+  return orpcQueryClient.github.publicGetRepoWorkflowRuns.queryOptions({
     input: {
       page: input.page ?? 1,
       perPage: input.perPage ?? REPO_ACTIVITY_CARDS_PER_PAGE,
-      repo: input.repo
+      repo: input.repo,
+      profileName
     },
     staleTime: githubCachePolicy.list.staleTimeMs,
     gcTime: githubCachePolicy.list.gcTimeMs,
@@ -34,9 +44,20 @@ export function getGithubRepoWorkflowRunsQueryOptions(
   });
 }
 
-export function useGetGithubRepoWorkflowRunsQuery(input: GetGithubRepoWorkflowRunsInput) {
+export function useGetGithubRepoWorkflowRunsQuery(
+  input: GetGithubRepoWorkflowRunsInput,
+  profileName: string
+) {
   const { user } = useAuth();
-  return useQuery({ ...getGithubRepoWorkflowRunsQueryOptions(input, !!user), enabled: !!user });
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  return useQuery({
+    ...getGithubRepoWorkflowRunsQueryOptions(input, isPrivate, profileName),
+    enabled: true
+  });
 }
 
 export type GithubRepoWorkflowRunsQueryResult = Awaited<

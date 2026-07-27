@@ -18,12 +18,14 @@ export function FolderView({
   currentPath,
   currentRef,
   entries,
+  profileName,
   repo,
   repoName
 }: {
   currentPath: string;
   currentRef: string;
   entries: GitHubRepoTreeEntry[];
+  profileName: string;
   repo: RepoOverview;
   repoName: string;
 }) {
@@ -33,7 +35,8 @@ export function FolderView({
     repoName,
     currentRef,
     currentPath,
-    entryNames
+    entryNames,
+    profileName
   );
 
   return (

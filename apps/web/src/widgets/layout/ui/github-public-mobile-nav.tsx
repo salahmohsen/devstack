@@ -85,7 +85,8 @@ export function MobileNav() {
         <House size={22} strokeWidth={1.8} />
       </Link>
       <Link
-        to="/repos"
+        to={sessionProfileName ? "/$profileName/repos" : "/repos"}
+        params={sessionProfileName ? { profileName: sessionProfileName } : undefined}
         preload={false}
         activeOptions={{ exact: true }}
         activeProps={{ className: "active" }}

@@ -1,8 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 
+import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { getRequestHostname } from "@/shared/lib/request-host";
 import { generateAppSeo } from "@/shared/lib/seo";
+
+import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
+import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 import {
   buildReposHubPrefetchInput,
@@ -11,6 +16,10 @@ import {
   RepositoriesPage
 } from "@/pages/github-repos";
 
+/**
+ * Custom-domain only: `https://custom.example/repos`.
+ * On the primary host, redirect to `/{profileName}/repos` (session user or 404).
+ */
 export const Route = createFileRoute("/(root-layout)/repos/")({
   validateSearch: (raw: Record<string, unknown>): { page?: number } => {
     const pageRaw = raw.page;
@@ -24,35 +33,71 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
     return {};
   },
   ssr: false,
+  beforeLoad: async ({ context, location }) => {
+    const host = getRequestHostname();
+    if (host && isCustomDomainHost(host)) {
+      return; // custom domain: stay on /repos
+    }
+
+    // Primary host: force /{profileName}/repos
+    const user = await context.queryClient.ensureQueryData(getAuthUserQueryOptions());
+    const profileName =
+      typeof (user as { profileName?: string } | null)?.profileName === "string"
+        ? (user as { profileName: string }).profileName
+        : null;
+
+    if (profileName) {
+      throw redirect({
+        to: "/$profileName/repos",
+        params: { profileName },
+        search: location.search as { page?: number }
+      });
+    }
+
+    throw notFound();
+  },
   loader: async ({ context, location }) => {
+    const host = getRequestHostname();
     const filterStore = await getFilterCookie();
     const search = location.search as { page?: number };
     const urlPage = typeof search.page === "number" && search.page > 0 ? search.page : 1;
     const hubPrefetchInput = buildReposHubPrefetchInput(filterStore, urlPage);
 
-    // Multi-user: /repos is the signed-in user's private hub only — never a
-    // global "site owner" public repo list.
-    const sessionUser = await context.queryClient.ensureQueryData(getAuthUserQueryOptions());
-    if (sessionUser) {
-      void context.queryClient.prefetchQuery(githubReposHubQueryOptions(hubPrefetchInput, true));
+    const resolved = await context.queryClient.ensureQueryData(
+      getResolvePublicPortfolioQueryOptions({ host: host ?? undefined })
+    );
+
+    if (!resolved?.profileName) {
+      throw notFound();
     }
 
-    return { filterStore };
+    const { profileName } = resolved;
+    const setupStatus = await context.queryClient.ensureQueryData(
+      getGithubSetupStatusQueryOptions(profileName)
+    );
+
+    if (setupStatus?.isConfigured && setupStatus.owner) {
+      void context.queryClient.prefetchQuery(
+        githubReposHubQueryOptions(hubPrefetchInput, false, profileName)
+      );
+    }
+
+    return { filterStore, profileName, pathProfileName: null as string | null };
   },
-  head: () =>
+  head: ({ loaderData }) =>
     generateAppSeo({
       alternates: {
         canonicalPath: "/repos"
       },
-      title: "Repositories",
-      description: "Your linked GitHub repositories (signed-in).",
+      title: loaderData?.profileName ? `@${loaderData.profileName} · Repositories` : "Repositories",
+      description: "GitHub repositories for this portfolio",
       robots: {
-        follow: false,
-        index: false
+        follow: true,
+        index: true
       }
     }),
   component: () => {
-    const { filterStore } = Route.useLoaderData();
-    return <RepositoriesPage filterStore={filterStore} />;
+    const { filterStore, profileName } = Route.useLoaderData();
+    return <RepositoriesPage filterStore={filterStore} profileName={profileName} />;
   }
 });

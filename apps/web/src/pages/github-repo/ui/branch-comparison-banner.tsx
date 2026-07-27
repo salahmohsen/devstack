@@ -9,14 +9,21 @@ import { useGetGithubRepoBranchComparisonQuery } from "@/pages/github-repo/api/g
 export function BranchComparisonBanner({
   currentBranch,
   defaultBranch,
+  profileName,
   repo
 }: {
   currentBranch: string;
   defaultBranch: string;
+  profileName: string;
   repo: string;
 }) {
   const isSameBranch = currentBranch === defaultBranch;
-  const comparisonQuery = useGetGithubRepoBranchComparisonQuery(repo, defaultBranch, currentBranch);
+  const comparisonQuery = useGetGithubRepoBranchComparisonQuery(
+    repo,
+    defaultBranch,
+    currentBranch,
+    profileName
+  );
   const isAdmin = !!useAuth().user?.id;
 
   if (isSameBranch || !isAdmin) return null;

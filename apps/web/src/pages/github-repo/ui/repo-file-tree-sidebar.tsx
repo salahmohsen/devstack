@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useParams, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, File, Folder } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 
@@ -50,6 +50,24 @@ function useAllCachedFiles(repo: string, ref: string): FileSearchEntry[] {
   }
 
   return allFiles;
+}
+
+function useRepoLinkMode() {
+  const params = useParams({ strict: false }) as { profileName?: string };
+  const profileName = params.profileName;
+  return {
+    profileName,
+    treeTo: profileName
+      ? ("/$profileName/repos/$repo/tree/$" as const)
+      : ("/repos/$repo/tree/$" as const),
+    blobTo: profileName
+      ? ("/$profileName/repos/$repo/blob/$" as const)
+      : ("/repos/$repo/blob/$" as const),
+    treeParams: (repo: string, splat: string) =>
+      profileName ? { profileName, repo, _splat: splat } : { repo, _splat: splat },
+    blobParams: (repo: string, splat: string) =>
+      profileName ? { profileName, repo, _splat: splat } : { repo, _splat: splat }
+  };
 }
 
 export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
@@ -167,10 +185,22 @@ const DirectoryNode = memo(function DirectoryNode({
   const [isOpen, setIsOpen] = useState(isAncestor || isActive);
   const hasMounted = useIsClient();
   const { user } = useAuth();
-  const isPrivate = !!user;
+  const linkMode = useRepoLinkMode();
+  const profileName = linkMode.profileName ?? "";
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
 
   const treeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, currentRef, entryPath, isPrivate),
+    ...getGithubRepoTreeQueryOptions(
+      repoName,
+      currentRef,
+      entryPath,
+      isPrivate,
+      profileName || undefined
+    ),
     enabled: hasMounted && isOpen
   });
 
@@ -194,11 +224,8 @@ const DirectoryNode = memo(function DirectoryNode({
           />
         </button>
         <Link
-          to="/repos/$repo/tree/$"
-          params={{
-            repo: repoName,
-            _splat: `${currentRef}/${entryPath}`
-          }}
+          to={linkMode.treeTo}
+          params={linkMode.treeParams(repoName, `${currentRef}/${entryPath}`)}
           onClick={(e) => {
             if (isActive) {
               e.preventDefault();
@@ -255,14 +282,12 @@ const FileNode = memo(function FileNode({
   repoName: string;
 }) {
   const isActive = useIsActivePath(entryPath);
+  const linkMode = useRepoLinkMode();
 
   return (
     <Link
-      to="/repos/$repo/blob/$"
-      params={{
-        repo: repoName,
-        _splat: `${currentRef}/${entryPath}`
-      }}
+      to={linkMode.blobTo}
+      params={linkMode.blobParams(repoName, `${currentRef}/${entryPath}`)}
       onClick={(e) => {
         if (isActive) e.preventDefault();
       }}

@@ -19,20 +19,33 @@ type GetGithubRepoIssuesInput = {
 
 export function getGithubRepoIssuesQueryOptions(
   input: GetGithubRepoIssuesInput,
-  isPrivate = false
+  isPrivate = false,
+  profileName?: string
 ) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetRepoIssues
-      : orpcQueryClient.github.publicGetRepoIssues
-  ).queryOptions({
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetRepoIssues.queryOptions({
+      input: {
+        direction: input.direction ?? "desc",
+        page: input.page ?? 1,
+        perPage: input.perPage ?? REPO_ACTIVITY_CARDS_PER_PAGE,
+        repo: input.repo,
+        sort: input.sort ?? "updated",
+        state: input.state ?? "open"
+      },
+      staleTime: githubCachePolicy.list.staleTimeMs,
+      gcTime: githubCachePolicy.list.gcTimeMs,
+      meta: persistedMeta
+    });
+  }
+  return orpcQueryClient.github.publicGetRepoIssues.queryOptions({
     input: {
       direction: input.direction ?? "desc",
       page: input.page ?? 1,
       perPage: input.perPage ?? REPO_ACTIVITY_CARDS_PER_PAGE,
       repo: input.repo,
       sort: input.sort ?? "updated",
-      state: input.state ?? "open"
+      state: input.state ?? "open",
+      profileName
     },
     staleTime: githubCachePolicy.list.staleTimeMs,
     gcTime: githubCachePolicy.list.gcTimeMs,
@@ -40,9 +53,17 @@ export function getGithubRepoIssuesQueryOptions(
   });
 }
 
-export function useGetGithubRepoIssuesQuery(input: GetGithubRepoIssuesInput) {
+export function useGetGithubRepoIssuesQuery(input: GetGithubRepoIssuesInput, profileName: string) {
   const { user } = useAuth();
-  return useQuery({ ...getGithubRepoIssuesQueryOptions(input, !!user), enabled: !!user });
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  return useQuery({
+    ...getGithubRepoIssuesQueryOptions(input, isPrivate, profileName),
+    enabled: true
+  });
 }
 
 export type GithubRepoIssuesQueryResult = Awaited<

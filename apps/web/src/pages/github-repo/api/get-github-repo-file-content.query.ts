@@ -7,14 +7,19 @@ export function getGithubRepoFileContentQueryOptions(
   repo: string,
   ref: string,
   path: string,
-  isPrivate = false
+  isPrivate = false,
+  profileName?: string
 ) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetRepoFileContent
-      : orpcQueryClient.github.publicGetRepoFileContent
-  ).queryOptions({
-    input: { path, ref, repo },
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetRepoFileContent.queryOptions({
+      input: { path, ref, repo },
+      staleTime: githubCachePolicy.repoMeta.staleTimeMs,
+      gcTime: githubCachePolicy.repoMeta.gcTimeMs,
+      meta: persistedMeta
+    });
+  }
+  return orpcQueryClient.github.publicGetRepoFileContent.queryOptions({
+    input: { path, ref, repo, profileName },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta

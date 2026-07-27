@@ -265,7 +265,16 @@ export function Topbar() {
                   </MenuItem>
                 )}
                 {owner ? (
-                  <MenuLinkItem render={<Link to="/repos" />}>
+                  <MenuLinkItem
+                    render={
+                      <Link
+                        to={sessionProfileName ? "/$profileName/repos" : "/repos"}
+                        params={
+                          sessionProfileName ? { profileName: sessionProfileName } : undefined
+                        }
+                      />
+                    }
+                  >
                     <Archive size={16} strokeWidth={2} />
                     Repositories
                     <MenuShortcut>G O</MenuShortcut>

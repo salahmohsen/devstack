@@ -5,9 +5,11 @@ import { RepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline";
 const DEFAULT_PLACEHOLDER_CLASSES = "h-13 w-42 shrink-0 rounded-sm bg-muted/15";
 
 export function LazyRepoCommitSparkline({
+  profileName,
   repo,
   placeholderClassName
 }: {
+  profileName: string;
   repo: string;
   placeholderClassName?: string;
 }) {
@@ -42,7 +44,7 @@ export function LazyRepoCommitSparkline({
     <div ref={containerRef} className="flex items-start justify-end">
       {showChart ? (
         <Suspense fallback={placeholder}>
-          <RepoCommitSparkline repo={repo} />
+          <RepoCommitSparkline profileName={profileName} repo={repo} />
         </Suspense>
       ) : (
         placeholder

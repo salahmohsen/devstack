@@ -6,22 +6,38 @@ import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
-export function getGithubRepoOverviewQueryOptions(repo: string, isPrivate = false) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetRepoOverview
-      : orpcQueryClient.github.publicGetRepoOverview
-  ).queryOptions({
-    input: { repo },
+export function getGithubRepoOverviewQueryOptions(
+  repo: string,
+  isPrivate = false,
+  profileName?: string
+) {
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetRepoOverview.queryOptions({
+      input: { repo },
+      staleTime: githubCachePolicy.repoMeta.staleTimeMs,
+      gcTime: githubCachePolicy.repoMeta.gcTimeMs,
+      meta: persistedMeta
+    });
+  }
+  return orpcQueryClient.github.publicGetRepoOverview.queryOptions({
+    input: { repo, profileName },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoOverviewQuery(repo: string) {
+export function useGetGithubRepoOverviewQuery(repo: string, profileName: string) {
   const { user } = useAuth();
-  return useQuery({ ...getGithubRepoOverviewQueryOptions(repo, !!user), enabled: !!user });
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  return useQuery({
+    ...getGithubRepoOverviewQueryOptions(repo, isPrivate, profileName),
+    enabled: true
+  });
 }
 
 export type GithubRepoOverviewQueryResult = Awaited<

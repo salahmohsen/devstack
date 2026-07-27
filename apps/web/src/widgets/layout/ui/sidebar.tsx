@@ -15,12 +15,6 @@ import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 const PublicItems = [{ href: "/", label: "Home" }] as const;
 
-/** Signed-in private GitHub hub (not a public global owner list). */
-const SignedInPublicItems = [
-  { href: "/", label: "Home" },
-  { href: "/repos", label: "Repositories" }
-] as const;
-
 const DashboardItems = [
   { href: "/dashboard", label: "Agent", group: "Dashboard" },
   { href: "/dashboard/onboarding", label: "Onboarding", group: "Dashboard" },
@@ -75,8 +69,13 @@ export function PublicSidebar() {
   const portfolioQuery = useGetPortfolioListQuery(profileName, { enabled: Boolean(profileName) });
 
   const publicItems: NavItem[] = [
-    ...(isSignedIn ? SignedInPublicItems : PublicItems),
-    ...(profileName ? [{ href: `/${profileName}`, label: "Portfolio" }] : [])
+    ...PublicItems,
+    ...(profileName
+      ? [
+          { href: `/${profileName}`, label: "Portfolio" },
+          { href: `/${profileName}/repos`, label: "Repositories" }
+        ]
+      : [])
   ];
 
   const sections = [

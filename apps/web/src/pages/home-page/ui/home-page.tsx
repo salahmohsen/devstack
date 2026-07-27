@@ -189,7 +189,11 @@ export function HomePage({ profileName }: { profileName: string }) {
                   <h2 className="text-sm font-medium text-muted-foreground">Pinned</h2>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {(pinnedReposQuery.data ?? []).map((repo) => (
-                      <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
+                      <PinnedRepoCard
+                        key={`${repo.owner}/${repo.name}`}
+                        profileName={profileName}
+                        repo={repo}
+                      />
                     ))}
                   </div>
                 </section>
