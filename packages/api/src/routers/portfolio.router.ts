@@ -17,7 +17,7 @@ import {
 import { contact, experience, project, stack } from "@tsu-stack/db/schema";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
-import { resolveUserIdByProfileName } from "#@/lib/public-portfolio/resolve-context";
+import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 import {
   toContactOutput,
   toExperiencePublicOutput,
@@ -132,13 +132,16 @@ export const PortfolioRouter = {
         status: 404
       }
     })
-    .handler(async ({ input, errors }) => {
+    .handler(async ({ input, context, errors }) => {
       try {
-        const userId = await resolveUserIdByProfileName(input.profileName);
-        if (!userId) {
+        const resolved = await resolvePublicPortfolioContext({
+          host: context.host,
+          pathProfileName: input.profileName
+        });
+        if (!resolved) {
           throw errors.NOT_FOUND();
         }
-        const all = await listAllOptedIn(userId, input.filter);
+        const all = await listAllOptedIn(resolved.userId, input.filter);
         return {
           experiences: all.experiences,
           projects: all.projects,

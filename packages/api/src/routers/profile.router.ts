@@ -12,7 +12,7 @@ import { contactRepository, profileSlugAliasRepository, userRepository } from "@
 import { type UserSchemaSelect } from "@tsu-stack/db/types";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
-import { resolveUserIdByProfileName } from "#@/lib/public-portfolio/resolve-context";
+import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 
 function toProfileOutput(
   userRow: UserSchemaSelect,
@@ -64,12 +64,15 @@ export const profileRouter = {
         status: 404
       }
     })
-    .handler(async ({ input, errors }) => {
-      const userId = await resolveUserIdByProfileName(input.profileName);
-      if (!userId) {
+    .handler(async ({ input, context, errors }) => {
+      const resolved = await resolvePublicPortfolioContext({
+        host: context.host,
+        pathProfileName: input.profileName
+      });
+      if (!resolved) {
         throw errors.NOT_FOUND();
       }
-      const contacts = await contactRepository.findOptedInByUserId(userId);
+      const contacts = await contactRepository.findOptedInByUserId(resolved.userId);
       return (contacts ?? []).map((c) => {
         return {
           type: c.type,

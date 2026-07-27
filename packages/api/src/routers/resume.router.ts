@@ -18,7 +18,7 @@ import {
 } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
-import { resolveUserIdByProfileName } from "#@/lib/public-portfolio/resolve-context";
+import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 import {
   toContactOutput,
   toExperienceOutput,
@@ -84,12 +84,15 @@ export const resumeRouter = {
         status: 404
       }
     })
-    .handler(async ({ input, errors }) => {
-      const userId = await resolveUserIdByProfileName(input.profileName);
-      if (!userId) {
+    .handler(async ({ input, context, errors }) => {
+      const resolved = await resolvePublicPortfolioContext({
+        host: context.host,
+        pathProfileName: input.profileName
+      });
+      if (!resolved) {
         throw errors.NOT_FOUND();
       }
-      return resumeRepository.findDefaultByUserId(userId);
+      return resumeRepository.findDefaultByUserId(resolved.userId);
     }),
   setDefault: protectedProcedure
     .route({

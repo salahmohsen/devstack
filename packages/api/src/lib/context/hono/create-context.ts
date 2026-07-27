@@ -36,6 +36,19 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
 }): Promise<OrpcContext> {
   const headers = context.req.raw.headers;
 
+  // Host for custom-domain public portfolio resolution.
+  // Prefer x-forwarded-host only when a trusted reverse proxy sets it (documented
+  // operator note). Fall back to Host. Strip port for storage-compatible form.
+  const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim() ?? "";
+  const requestHost = headers.get("host")?.trim() ?? "";
+  const rawHost =
+    forwardedHost.length > 0 ? forwardedHost : requestHost.length > 0 ? requestHost : null;
+  const host = rawHost
+    ? rawHost.includes(":") && !rawHost.startsWith("[")
+      ? (rawHost.split(":")[0] ?? rawHost)
+      : rawHost
+    : null;
+
   // Session lookup must not take down public RPCs when the pool is briefly wedged.
   // Protected procedures still fail closed via their own session checks.
   let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
@@ -126,6 +139,7 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
     logger,
     session,
     mediaBucket: runtime.files,
-    agentWorker: createAgentWorker({ AGENT_WORKER_URL: runtime.agentWorkerUrl })
+    agentWorker: createAgentWorker({ AGENT_WORKER_URL: runtime.agentWorkerUrl }),
+    host
   };
 }

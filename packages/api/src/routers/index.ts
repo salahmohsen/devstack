@@ -2,6 +2,7 @@ import { type RouterClient } from "@orpc/server";
 
 import { agentRouter } from "#@/routers/agent.router";
 import { portfolioContactRouter } from "#@/routers/contact.router";
+import { domainRouter } from "#@/routers/domain.router";
 import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
@@ -25,7 +26,8 @@ export const appRouter = {
   profile: profileRouter,
   resume: resumeRouter,
   onboarding: onboardingRouter,
-  invite: inviteRouter
+  invite: inviteRouter,
+  domain: domainRouter
 };
 
 export type AppRouter = typeof appRouter;
