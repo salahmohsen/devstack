@@ -5,6 +5,7 @@ import { portfolioContactRouter } from "#@/routers/contact.router";
 import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
+import { inviteRouter } from "#@/routers/invite.router";
 import { onboardingRouter } from "#@/routers/onboarding.router";
 import { PortfolioRouter } from "#@/routers/portfolio.router";
 import { profileRouter } from "#@/routers/profile.router";
@@ -23,7 +24,8 @@ export const appRouter = {
   portfolio: PortfolioRouter,
   profile: profileRouter,
   resume: resumeRouter,
-  onboarding: onboardingRouter
+  onboarding: onboardingRouter,
+  invite: inviteRouter
 };
 
 export type AppRouter = typeof appRouter;

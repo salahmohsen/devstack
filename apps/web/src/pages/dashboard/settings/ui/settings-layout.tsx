@@ -35,6 +35,13 @@ export const SettingsLayout = () => {
           >
             Account
           </TabsTrigger>
+          <TabsTrigger
+            value="invites"
+            nativeButton={false}
+            render={<Link to={"/dashboard/settings/invites"} />}
+          >
+            Invites
+          </TabsTrigger>
         </TabsList>
         <Outlet />
       </Tabs>

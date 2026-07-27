@@ -2,6 +2,7 @@ export * from "#@/common/index";
 export * from "#@/experience/index";
 export * from "#@/github-config/index";
 export * from "#@/health/index";
+export * from "#@/invite/index";
 export * from "#@/onboarding/index";
 export * from "#@/orpc-context/index";
 export * from "#@/portfolio/index";
