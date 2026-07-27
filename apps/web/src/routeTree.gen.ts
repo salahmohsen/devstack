@@ -41,6 +41,7 @@ import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root
 import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
+import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/domain/index'
 import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -225,6 +226,12 @@ const rootLayout_protectedDashboardSettingsInvitesIndexRoute =
     path: '/invites/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsDomainIndexRoute =
+  rootLayout_protectedDashboardSettingsDomainIndexRouteImport.update({
+    id: '/domain/',
+    path: '/domain/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsAccountIndexRoute =
   rootLayout_protectedDashboardSettingsAccountIndexRouteImport.update({
     id: '/account/',
@@ -262,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  '/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -291,6 +299,7 @@ export interface FileRoutesByTo {
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/playground/agent': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  '/dashboard/settings/domain': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -327,6 +336,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/(root-layout)/__protected/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/(root-layout)/__protected/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/dashboard/stacks/'
     | '/playground/agent/'
     | '/dashboard/settings/account/'
+    | '/dashboard/settings/domain/'
     | '/dashboard/settings/invites/'
     | '/dashboard/settings/profile/'
   fileRoutesByTo: FileRoutesByTo
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/dashboard/stacks'
     | '/playground/agent'
     | '/dashboard/settings/account'
+    | '/dashboard/settings/domain'
     | '/dashboard/settings/invites'
     | '/dashboard/settings/profile'
   id:
@@ -426,6 +438,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/stacks/'
     | '/(root-layout)/__protected/playground/agent/'
     | '/(root-layout)/__protected/dashboard/settings/account/'
+    | '/(root-layout)/__protected/dashboard/settings/domain/'
     | '/(root-layout)/__protected/dashboard/settings/invites/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
   fileRoutesById: FileRoutesById
@@ -665,6 +678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/domain/': {
+      id: '/(root-layout)/__protected/dashboard/settings/domain/'
+      path: '/domain'
+      fullPath: '/dashboard/settings/domain/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/account/': {
       id: '/(root-layout)/__protected/dashboard/settings/account/'
       path: '/account'
@@ -707,6 +727,7 @@ const rootLayout_protectedDashboardResumesRouteRouteWithChildren =
 
 interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsAccountIndexRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  rootLayout_protectedDashboardSettingsDomainIndexRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   rootLayout_protectedDashboardSettingsInvitesIndexRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -715,6 +736,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
   {
     rootLayout_protectedDashboardSettingsAccountIndexRoute:
       rootLayout_protectedDashboardSettingsAccountIndexRoute,
+    rootLayout_protectedDashboardSettingsDomainIndexRoute:
+      rootLayout_protectedDashboardSettingsDomainIndexRoute,
     rootLayout_protectedDashboardSettingsInvitesIndexRoute:
       rootLayout_protectedDashboardSettingsInvitesIndexRoute,
     rootLayout_protectedDashboardSettingsProfileIndexRoute:

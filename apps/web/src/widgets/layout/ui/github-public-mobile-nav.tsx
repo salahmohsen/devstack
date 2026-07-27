@@ -20,6 +20,8 @@ import {
 } from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { primaryAppUrl } from "@/shared/lib/primary-app-url";
+
 import { getGithubSetupStatusQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
 
 const themeOptions = [
@@ -146,7 +148,7 @@ export function MobileNav() {
                 Repositories
               </MenuItem>
             )}
-            <MenuLinkItem render={<Link to="/dashboard" />}>
+            <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
               <IconRotate mode="hover">
                 <Settings className="size-4" />
               </IconRotate>

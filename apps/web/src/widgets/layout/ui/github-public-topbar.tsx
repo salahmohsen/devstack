@@ -34,6 +34,7 @@ import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { setCommandPaletteOpen } from "@/shared/lib/command-palette/open-state";
+import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
@@ -269,7 +270,7 @@ export function Topbar() {
                     <MenuShortcut>G O</MenuShortcut>
                   </MenuItem>
                 )}
-                <MenuLinkItem render={<Link to="/dashboard" />}>
+                <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
                   <LayoutDashboard size={16} strokeWidth={2} />
                   Dashboard
                   <MenuShortcut>G D</MenuShortcut>
