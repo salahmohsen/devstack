@@ -42,7 +42,7 @@ export function getGithubRepoIssuesQueryOptions(
 
 export function useGetGithubRepoIssuesQuery(input: GetGithubRepoIssuesInput) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoIssuesQueryOptions(input, !!user));
+  return useQuery({ ...getGithubRepoIssuesQueryOptions(input, !!user), enabled: !!user });
 }
 
 export type GithubRepoIssuesQueryResult = Awaited<

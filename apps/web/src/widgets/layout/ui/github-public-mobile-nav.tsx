@@ -35,7 +35,11 @@ export function MobileNav() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const setupStatusQuery = useGetGithubSetupStatusQuery();
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : undefined;
+  const setupStatusQuery = useGetGithubSetupStatusQuery(sessionProfileName);
   const { theme, setTheme } = useTheme();
 
   const owner = setupStatusQuery.data?.owner ?? null;
@@ -51,7 +55,7 @@ export function MobileNav() {
       // Drop cached session immediately (query staleTime is 5m).
       queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
       await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions().queryKey
+        queryKey: getGithubSetupStatusQueryOptions(sessionProfileName).queryKey
       });
       await router.invalidate();
       await navigate({ to: "/" });

@@ -29,18 +29,22 @@ export const protectedProcedure = publicProcedure.use(requireAuth).route({
   }
 });
 
+/**
+ * Session user must have linked GitHub (config and/or OAuth). Used for private
+ * GitHub RPCs — each user is the owner of their own GitHub data (multi-tenant).
+ */
 const requireOwner = o.middleware(async ({ context, next }) => {
   if (!context.session?.user) {
     throw new ORPCError("UNAUTHORIZED");
   }
-  const settings = await githubConfigRepository.findPublicGithubSourceSettings();
-  const ownerUserId = settings?.userId ?? null;
-  if (!ownerUserId || context.session.user.id !== ownerUserId) {
+  const userId = context.session.user.id;
+  const settings = await githubConfigRepository.findByUserId(userId);
+  const hasSource = context.github.source.isConfigured || Boolean(settings?.githubUsername);
+  if (!hasSource) {
     throw new ORPCError("FORBIDDEN", {
-      message: "Only the GitHub owner can access this procedure"
+      message: "Link a GitHub account to access private GitHub data"
     });
   }
-  // Merge-only delta: keep agentWorker / mediaBucket / github from the root context.
   return next({
     context: {
       session: context.session

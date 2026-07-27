@@ -34,7 +34,7 @@ export function getGithubRepoDiscussionsQueryOptions(
 
 export function useGetGithubRepoDiscussionsQuery(input: GetGithubRepoDiscussionsInput) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoDiscussionsQueryOptions(input, !!user));
+  return useQuery({ ...getGithubRepoDiscussionsQueryOptions(input, !!user), enabled: !!user });
 }
 
 export type GithubRepoDiscussionsQueryResult = Awaited<

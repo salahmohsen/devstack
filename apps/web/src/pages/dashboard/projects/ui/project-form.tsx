@@ -51,7 +51,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
   const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
-  const reposQuery = useGetGithubProfileReposQuery();
+  // Dashboard form: session user's private repos only.
+  const reposQuery = useGetGithubProfileReposQuery("me", true);
   const stacks = stacksQuery.data ?? [];
   const repos = reposQuery.data ?? [];
 

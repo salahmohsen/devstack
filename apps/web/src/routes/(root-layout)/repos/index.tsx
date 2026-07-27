@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { generateAppSeo } from "@/shared/lib/seo";
+import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 
-import { getGithubSetupStatusQueryOptions } from "@/features/github";
+import { generateAppSeo } from "@/shared/lib/seo";
 
 import {
   buildReposHubPrefetchInput,
@@ -26,15 +26,15 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
   ssr: false,
   loader: async ({ context, location }) => {
     const filterStore = await getFilterCookie();
-    const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions()
-    );
     const search = location.search as { page?: number };
     const urlPage = typeof search.page === "number" && search.page > 0 ? search.page : 1;
     const hubPrefetchInput = buildReposHubPrefetchInput(filterStore, urlPage);
 
-    if (setupStatus.isConfigured && setupStatus.owner) {
-      void context.queryClient.prefetchQuery(githubReposHubQueryOptions(hubPrefetchInput));
+    // Multi-user: /repos is the signed-in user's private hub only — never a
+    // global "site owner" public repo list.
+    const sessionUser = await context.queryClient.ensureQueryData(getAuthUserQueryOptions());
+    if (sessionUser) {
+      void context.queryClient.prefetchQuery(githubReposHubQueryOptions(hubPrefetchInput, true));
     }
 
     return { filterStore };
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
         canonicalPath: "/repos"
       },
       title: "Repositories",
-      description: "Browse and filter GitHub repositories.",
+      description: "Your linked GitHub repositories (signed-in).",
       robots: {
         follow: false,
         index: false

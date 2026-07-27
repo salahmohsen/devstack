@@ -13,7 +13,10 @@ import { ContactButton } from "@/shared/ui/contact-button";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
-const PublicItems = [
+const PublicItems = [{ href: "/", label: "Home" }] as const;
+
+/** Signed-in private GitHub hub (not a public global owner list). */
+const SignedInPublicItems = [
   { href: "/", label: "Home" },
   { href: "/repos", label: "Repositories" }
 ] as const;
@@ -72,7 +75,7 @@ export function PublicSidebar() {
   const portfolioQuery = useGetPortfolioListQuery(profileName, { enabled: Boolean(profileName) });
 
   const publicItems: NavItem[] = [
-    ...PublicItems,
+    ...(isSignedIn ? SignedInPublicItems : PublicItems),
     ...(profileName ? [{ href: `/${profileName}`, label: "Portfolio" }] : [])
   ];
 

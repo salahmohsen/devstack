@@ -43,15 +43,15 @@ export const Route = createFileRoute("/(root-layout)/")({
           void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(profileName));
 
           const setupStatus = await context.queryClient.ensureQueryData(
-            getGithubSetupStatusQueryOptions()
+            getGithubSetupStatusQueryOptions(profileName)
           );
 
           if (setupStatus?.isConfigured && setupStatus?.owner) {
-            void context.queryClient.prefetchQuery(getGithubProfileQueryOptions());
+            void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(profileName));
             void Promise.all([
-              context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions()),
-              context.queryClient.prefetchQuery(getGithubContributionsQueryOptions()),
-              context.queryClient.prefetchQuery(getGithubActivityQueryOptions())
+              context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions(profileName)),
+              context.queryClient.prefetchQuery(getGithubContributionsQueryOptions(profileName)),
+              context.queryClient.prefetchQuery(getGithubActivityQueryOptions(profileName))
             ]);
           }
 

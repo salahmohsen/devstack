@@ -39,7 +39,7 @@ export function getGithubRepoPullsQueryOptions(input: GetGithubRepoPullsInput, i
 
 export function useGetGithubRepoPullsQuery(input: GetGithubRepoPullsInput) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoPullsQueryOptions(input, !!user));
+  return useQuery({ ...getGithubRepoPullsQueryOptions(input, !!user), enabled: !!user });
 }
 
 export type GithubRepoPullsQueryResult = Awaited<

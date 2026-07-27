@@ -6,12 +6,22 @@ import { persistedMeta } from "@/shared/lib/query-persistence";
 
 import { buildReposHubResult, type ReposHubInput } from "@/pages/github-repos/lib/repos-hub-filter";
 
+/**
+ * Repos hub is **session-private only** in multi-user mode.
+ * Public repo browsing is not global — use a profile-scoped surface later if needed.
+ */
 export function githubReposHubQueryOptions(input: ReposHubInput, isPrivate = false) {
+  if (!isPrivate) {
+    return {
+      queryKey: ["github", "repos-hub", "unauthenticated"] as const,
+      queryFn: async (): Promise<GitHubUserRepoSummary[]> => [],
+      select: (repos: GitHubUserRepoSummary[]) => buildReposHubResult(repos, input),
+      enabled: false as const
+    };
+  }
+
   return {
-    ...(isPrivate
-      ? orpcQueryClient.github.privateGetProfileRepos
-      : orpcQueryClient.github.publicGetProfileRepos
-    ).queryOptions({ meta: persistedMeta }),
+    ...orpcQueryClient.github.privateGetProfileRepos.queryOptions({ meta: persistedMeta }),
     select: (repos: GitHubUserRepoSummary[]) => buildReposHubResult(repos, input)
   };
 }

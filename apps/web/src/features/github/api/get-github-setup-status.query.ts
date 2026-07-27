@@ -4,14 +4,16 @@ import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
-export function getGithubSetupStatusQueryOptions() {
+/** Public setup for a portfolio profile (or custom-domain Host when profileName omitted). */
+export function getGithubSetupStatusQueryOptions(profileName?: string) {
   return orpcQueryClient.github.getSetupStatus.queryOptions({
+    input: profileName ? { profileName } : {},
     meta: persistedMeta
   });
 }
 
-export function useGetGithubSetupQuery() {
-  return useQuery(getGithubSetupStatusQueryOptions());
+export function useGetGithubSetupQuery(profileName?: string) {
+  return useQuery(getGithubSetupStatusQueryOptions(profileName));
 }
 
 export type GithubSetupStatusQueryResult = Awaited<

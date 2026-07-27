@@ -65,10 +65,17 @@ export function Topbar() {
 
   const queryClient = useQueryClient();
   const { user: admin } = useAuthSuspense();
-  const setupStatus = queryClient.getQueryData(getGithubSetupStatusQueryOptions().queryKey);
   const isClient = useIsClient();
   const openTabs = useTabs();
 
+  // Prefer session user's profile for GitHub chrome; never a global site owner.
+  const sessionProfileName =
+    typeof (admin as { profileName?: string } | null)?.profileName === "string"
+      ? (admin as { profileName: string }).profileName
+      : undefined;
+  const setupStatus = sessionProfileName
+    ? queryClient.getQueryData(getGithubSetupStatusQueryOptions(sessionProfileName).queryKey)
+    : undefined;
   const owner = setupStatus?.owner ?? null;
 
   const handleSignOut = async () => {
@@ -82,7 +89,7 @@ export function Topbar() {
       // Drop cached session immediately (query staleTime is 5m; suspense keeps UI mounted).
       queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
       await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions().queryKey
+        queryKey: getGithubSetupStatusQueryOptions(sessionProfileName).queryKey
       });
       await router.invalidate();
       await navigateRef.current({ to: "/" });

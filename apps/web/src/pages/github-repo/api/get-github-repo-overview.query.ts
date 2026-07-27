@@ -21,7 +21,7 @@ export function getGithubRepoOverviewQueryOptions(repo: string, isPrivate = fals
 
 export function useGetGithubRepoOverviewQuery(repo: string) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoOverviewQueryOptions(repo, !!user));
+  return useQuery({ ...getGithubRepoOverviewQueryOptions(repo, !!user), enabled: !!user });
 }
 
 export type GithubRepoOverviewQueryResult = Awaited<

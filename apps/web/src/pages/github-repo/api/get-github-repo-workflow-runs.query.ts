@@ -36,7 +36,7 @@ export function getGithubRepoWorkflowRunsQueryOptions(
 
 export function useGetGithubRepoWorkflowRunsQuery(input: GetGithubRepoWorkflowRunsInput) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoWorkflowRunsQueryOptions(input, !!user));
+  return useQuery({ ...getGithubRepoWorkflowRunsQueryOptions(input, !!user), enabled: !!user });
 }
 
 export type GithubRepoWorkflowRunsQueryResult = Awaited<
