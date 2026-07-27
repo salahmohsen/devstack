@@ -84,5 +84,9 @@ export const userRepository = {
       .where(eq(user.id, id))
       .returning();
     return updated ?? null;
+  },
+
+  async updateProfileName(id: string, profileName: string): Promise<UserSchemaSelect | null> {
+    return userRepository.update(id, { profileName });
   }
 };

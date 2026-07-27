@@ -92,3 +92,10 @@ export const ProfileNameSchema = z
   .refine((s) => !RESERVED_PROFILE_PATH_SET.has(s), "This name is reserved");
 
 export type ProfileName = z.infer<typeof ProfileNameSchema>;
+
+/** Input for renaming a user's public profile path key. */
+export const RenameProfileInputSchema = z.object({
+  profileName: z.string()
+});
+
+export type RenameProfileInput = z.infer<typeof RenameProfileInputSchema>;
