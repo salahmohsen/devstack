@@ -22,11 +22,11 @@ export type CreateStackData = Omit<
   InferInsertModel<typeof stack>,
   "id" | "createdAt" | "updatedAt"
 >;
-export type UpdateStackData = Partial<CreateStackData>;
+export type UpdateStackData = Partial<Omit<CreateStackData, "userId">>;
 export type ReorderStackItem = { id: string; sortOrder: number };
 
 export const stackRepository = {
-  async findAll() {
+  async findAllByUserId(userId: string) {
     const counts = getDb()
       .select({
         stackId: projectStack.stackId,
@@ -39,6 +39,7 @@ export const stackRepository = {
     return getDb()
       .select({
         id: stack.id,
+        userId: stack.userId,
         name: stack.name,
         description: stack.description,
         icon: stack.icon,
@@ -53,12 +54,15 @@ export const stackRepository = {
       })
       .from(stack)
       .leftJoin(counts, eq(stack.id, counts.stackId))
+      .where(eq(stack.userId, userId))
       .orderBy(stack.sortOrder, stack.name);
   },
 
-  async findAllWithDependencies() {
-    const stacks = await this.findAll();
-    const allDeps = await stackDependencyRepository.findAll();
+  async findAllWithDependenciesByUserId(userId: string) {
+    const stacks = await this.findAllByUserId(userId);
+    const stackIds = stacks.map((s) => s.id);
+    const allDeps =
+      stackIds.length > 0 ? await stackDependencyRepository.findByStackIds(stackIds) : [];
 
     const depsByStack = new Map<string, typeof allDeps>();
     for (const dep of allDeps) {
@@ -68,7 +72,6 @@ export const stackRepository = {
     }
 
     // Batch-load projects for all stacks
-    const stackIds = stacks.map((s) => s.id);
     const allProjectLinks =
       stackIds.length > 0
         ? await getDb()
@@ -80,7 +83,7 @@ export const stackRepository = {
             })
             .from(projectStack)
             .innerJoin(project, eq(projectStack.projectId, project.id))
-            .where(inArray(projectStack.stackId, stackIds))
+            .where(and(inArray(projectStack.stackId, stackIds), eq(project.userId, userId)))
         : [];
 
     const projectsByStack = new Map<
@@ -108,18 +111,18 @@ export const stackRepository = {
     });
   },
 
-  async findOptedIn(extraWhere?: SQL) {
+  async findOptedInByUserId(userId: string, extraWhere?: SQL) {
     const rows = await getDb()
       .select({ id: stack.id })
       .from(stack)
       .where(
         extraWhere
-          ? and(isNotNull(stack.portfolioEntryId), extraWhere)
-          : isNotNull(stack.portfolioEntryId)
+          ? and(eq(stack.userId, userId), isNotNull(stack.portfolioEntryId), extraWhere)
+          : and(eq(stack.userId, userId), isNotNull(stack.portfolioEntryId))
       )
       .orderBy(stack.sortOrder, stack.name);
 
-    const results = await Promise.all(rows.map(({ id }) => this.findById(id)!));
+    const results = await Promise.all(rows.map(({ id }) => this.findByIdForUser(id, userId)!));
 
     return results.map((row) => {
       if (!row) return row;
@@ -141,9 +144,9 @@ export const stackRepository = {
     });
   },
 
-  async findById(id: string) {
+  async findByIdForUser(id: string, userId: string) {
     return getDb().query.stack.findFirst({
-      where: { id },
+      where: { id, userId },
       with: {
         projects: {
           with: {
@@ -156,22 +159,22 @@ export const stackRepository = {
     });
   },
 
-  async findByName(name: string) {
-    return getDb().query.stack.findFirst({ where: { name } });
+  async findByNameForUser(userId: string, name: string) {
+    return getDb().query.stack.findFirst({ where: { userId, name } });
   },
 
-  async findByNpmPackageAlias(npmPackage: string) {
+  async findByNpmPackageAliasForUser(userId: string, npmPackage: string) {
     const alias = await getDb().query.stackDependency.findFirst({
       where: { npmPackage }
     });
     if (!alias) return null;
-    return getDb().query.stack.findFirst({ where: { id: alias.stackId } });
+    return getDb().query.stack.findFirst({ where: { id: alias.stackId, userId } });
   },
 
-  async findManyById(ids: string[]) {
+  async findManyByIdForUser(userId: string, ids: string[]) {
     if (ids.length === 0) return [];
     return getDb().query.stack.findMany({
-      where: { id: { in: ids } }
+      where: { userId, id: { in: ids } }
     });
   },
 
@@ -194,6 +197,7 @@ export const stackRepository = {
       if (pid) {
         await tx.insert(portfolioEntry).values({
           id: pid,
+          userId: input.userId,
           type: "stack",
           entityId: id
         });
@@ -201,6 +205,7 @@ export const stackRepository = {
 
       await tx.insert(stack).values({
         id,
+        userId: input.userId,
         name: input.name,
         description: input.description ?? null,
         icon: input.icon ?? null,
@@ -236,7 +241,7 @@ export const stackRepository = {
         const existingProjects = await tx
           .select({ id: project.id })
           .from(project)
-          .where(inArray(project.id, unique));
+          .where(and(eq(project.userId, input.userId), inArray(project.id, unique)));
         if (existingProjects.length !== unique.length) {
           throw new Error("One or more projects not found");
         }
@@ -248,11 +253,12 @@ export const stackRepository = {
       }
     });
 
-    return stackRepository.findById(id);
+    return stackRepository.findByIdForUser(id, input.userId);
   },
 
   async update(
     id: string,
+    userId: string,
     input: UpdateStackData,
     options?: {
       includedInPortfolio?: boolean;
@@ -265,27 +271,41 @@ export const stackRepository = {
     }
   ) {
     return getDb().transaction(async (tx) => {
-      const [updated] = await tx.update(stack).set(input).where(eq(stack.id, id)).returning();
+      const [updated] = await tx
+        .update(stack)
+        .set(input)
+        .where(and(eq(stack.id, id), eq(stack.userId, userId)))
+        .returning();
 
       if (!updated) return null;
 
       if (options?.includedInPortfolio !== undefined) {
         const existing = await tx.query.portfolioEntry.findFirst({
-          where: { type: "stack", entityId: id }
+          where: { userId, type: "stack", entityId: id }
         });
 
         if (options.includedInPortfolio && !existing) {
           const pid = crypto.randomUUID();
           await tx.insert(portfolioEntry).values({
             id: pid,
+            userId,
             type: "stack",
             entityId: id
           });
-          await tx.update(stack).set({ portfolioEntryId: pid }).where(eq(stack.id, id));
+          await tx
+            .update(stack)
+            .set({ portfolioEntryId: pid })
+            .where(and(eq(stack.id, id), eq(stack.userId, userId)));
         } else if (!options.includedInPortfolio && existing) {
           await tx
             .delete(portfolioEntry)
-            .where(and(eq(portfolioEntry.type, "stack"), eq(portfolioEntry.entityId, id)));
+            .where(
+              and(
+                eq(portfolioEntry.userId, userId),
+                eq(portfolioEntry.type, "stack"),
+                eq(portfolioEntry.entityId, id)
+              )
+            );
         }
       }
 
@@ -318,7 +338,7 @@ export const stackRepository = {
           const existingProjects = await tx
             .select({ id: project.id })
             .from(project)
-            .where(inArray(project.id, unique));
+            .where(and(eq(project.userId, userId), inArray(project.id, unique)));
           if (existingProjects.length !== unique.length) {
             throw new Error("One or more projects not found");
           }
@@ -330,11 +350,12 @@ export const stackRepository = {
         }
       }
 
-      return tx.query.stack.findFirst({ where: { id } });
+      return tx.query.stack.findFirst({ where: { id, userId } });
     });
   },
 
   async batchUpdate(
+    userId: string,
     items: { id: string; data: UpdateStackData; options?: { includedInPortfolio?: boolean } }[]
   ) {
     if (items.length === 0) return [];
@@ -347,31 +368,45 @@ export const stackRepository = {
           Object.entries(data).filter(([, v]) => v !== undefined)
         ) as UpdateStackData;
         if (Object.keys(filtered).length === 0) continue;
-        const [updated] = await tx.update(stack).set(filtered).where(eq(stack.id, id)).returning();
+        const [updated] = await tx
+          .update(stack)
+          .set(filtered)
+          .where(and(eq(stack.id, id), eq(stack.userId, userId)))
+          .returning();
 
         if (!updated) continue;
 
         if (options?.includedInPortfolio !== undefined) {
           const existing = await tx.query.portfolioEntry.findFirst({
-            where: { type: "stack", entityId: id }
+            where: { userId, type: "stack", entityId: id }
           });
 
           if (options.includedInPortfolio && !existing) {
             const pid = crypto.randomUUID();
             await tx.insert(portfolioEntry).values({
               id: pid,
+              userId,
               type: "stack",
               entityId: id
             });
-            await tx.update(stack).set({ portfolioEntryId: pid }).where(eq(stack.id, id));
+            await tx
+              .update(stack)
+              .set({ portfolioEntryId: pid })
+              .where(and(eq(stack.id, id), eq(stack.userId, userId)));
           } else if (!options.includedInPortfolio && existing) {
             await tx
               .delete(portfolioEntry)
-              .where(and(eq(portfolioEntry.type, "stack"), eq(portfolioEntry.entityId, id)));
+              .where(
+                and(
+                  eq(portfolioEntry.userId, userId),
+                  eq(portfolioEntry.type, "stack"),
+                  eq(portfolioEntry.entityId, id)
+                )
+              );
           }
         }
 
-        const final = await tx.query.stack.findFirst({ where: { id } });
+        const final = await tx.query.stack.findFirst({ where: { id, userId } });
         if (final) results.push({ id: final.id, name: final.name });
       }
 
@@ -379,14 +414,14 @@ export const stackRepository = {
     });
   },
 
-  async reorder(items: ReorderStackItem[]) {
+  async reorder(userId: string, items: ReorderStackItem[]) {
     if (items.length === 0) return;
 
     const ids = items.map((item) => item.id);
     const existing = await getDb()
       .select({ id: stack.id })
       .from(stack)
-      .where(inArray(stack.id, ids));
+      .where(and(eq(stack.userId, userId), inArray(stack.id, ids)));
 
     if (existing.length !== ids.length) {
       throw new Error("One or more stacks not found");
@@ -394,15 +429,18 @@ export const stackRepository = {
 
     await getDb().transaction(async (tx) => {
       for (const item of items) {
-        await tx.update(stack).set({ sortOrder: item.sortOrder }).where(eq(stack.id, item.id));
+        await tx
+          .update(stack)
+          .set({ sortOrder: item.sortOrder })
+          .where(and(eq(stack.id, item.id), eq(stack.userId, userId)));
       }
     });
   },
 
-  async delete(id: string) {
+  async delete(id: string, userId: string) {
     const [deleted] = await getDb()
       .delete(stack)
-      .where(eq(stack.id, id))
+      .where(and(eq(stack.id, id), eq(stack.userId, userId)))
       .returning({ id: stack.id });
 
     return deleted ?? null;
@@ -416,15 +454,15 @@ export const stackRepository = {
     return result[0]?.count ?? 0;
   },
 
-  async merge(survivorId: string, victimId: string) {
+  async merge(userId: string, survivorId: string, victimId: string) {
     if (survivorId === victimId) {
       throw new Error("Cannot merge a stack into itself");
     }
 
     return getDb().transaction(async (tx) => {
       const [survivor, victim] = await Promise.all([
-        tx.query.stack.findFirst({ where: { id: survivorId } }),
-        tx.query.stack.findFirst({ where: { id: victimId } })
+        tx.query.stack.findFirst({ where: { id: survivorId, userId } }),
+        tx.query.stack.findFirst({ where: { id: victimId, userId } })
       ]);
 
       if (!survivor) throw new Error("Survivor stack not found");
@@ -489,7 +527,7 @@ export const stackRepository = {
       }
 
       // Delete victim
-      await tx.delete(stack).where(eq(stack.id, victimId));
+      await tx.delete(stack).where(and(eq(stack.id, victimId), eq(stack.userId, userId)));
 
       return {
         merged: { id: survivor.id, name: survivor.name }
@@ -497,7 +535,7 @@ export const stackRepository = {
     });
   },
 
-  async batchMerge(items: { survivorId: string; victimId: string }[]) {
+  async batchMerge(userId: string, items: { survivorId: string; victimId: string }[]) {
     if (items.length === 0) return [];
 
     return getDb().transaction(async (tx) => {
@@ -509,8 +547,8 @@ export const stackRepository = {
         if (survivorId === victimId) continue;
 
         const [survivor, victim] = await Promise.all([
-          tx.query.stack.findFirst({ where: { id: survivorId } }),
-          tx.query.stack.findFirst({ where: { id: victimId } })
+          tx.query.stack.findFirst({ where: { id: survivorId, userId } }),
+          tx.query.stack.findFirst({ where: { id: victimId, userId } })
         ]);
 
         if (!survivor || !victim) continue;
@@ -574,7 +612,7 @@ export const stackRepository = {
         }
 
         // Delete victim
-        await tx.delete(stack).where(eq(stack.id, victimId));
+        await tx.delete(stack).where(and(eq(stack.id, victimId), eq(stack.userId, userId)));
 
         results.push({
           merged: { id: survivor.id, name: survivor.name }

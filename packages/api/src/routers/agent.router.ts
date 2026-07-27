@@ -561,9 +561,12 @@ export const agentRouter = {
         }
 
         // 2. Look up existing stacks, dependencies, and last scan
-        const existingStacks = await stackRepository.findAll();
+        const userId = context.session.user.id;
+        const existingStacks = await stackRepository.findAllByUserId(userId);
 
-        const existingDependencies = await stackDependencyRepository.findAll();
+        const existingDependencies = await stackDependencyRepository.findByStackIds(
+          existingStacks.map((s) => s.id)
+        );
 
         // New (unsaved) projects pass an empty projectId — skip scan lookup.
         const lastScan =
@@ -652,8 +655,9 @@ export const agentRouter = {
     })
     .input(z.object({}))
     .handler(async function* ({ context, signal }) {
-      // 1. Fetch all existing stacks
-      const allStacks = await stackRepository.findAll();
+      // 1. Fetch all existing stacks for the session user
+      const userId = context.session.user.id;
+      const allStacks = await stackRepository.findAllByUserId(userId);
 
       // 2. Build workflow input
       const workflowInput = {

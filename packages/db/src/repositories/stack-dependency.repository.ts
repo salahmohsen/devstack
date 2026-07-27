@@ -16,6 +16,13 @@ export const stackDependencyRepository = {
     });
   },
 
+  async findByStackIds(stackIds: string[]): Promise<StackDependencyEntity[]> {
+    if (stackIds.length === 0) return [];
+    return getDb().query.stackDependency.findMany({
+      where: { stackId: { in: stackIds } }
+    });
+  },
+
   async findByNpmPackage(npmPackage: string): Promise<StackDependencyEntity | undefined> {
     return getDb().query.stackDependency.findFirst({
       where: { npmPackage }

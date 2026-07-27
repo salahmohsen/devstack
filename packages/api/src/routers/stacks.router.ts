@@ -47,19 +47,21 @@ export const stacksRouter = {
       method: "GET"
     })
     .output(StackListOutputSchema)
-    .handler(async () => {
-      const stacks = await stackRepository.findAllWithDependencies();
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+      const stacks = await stackRepository.findAllWithDependenciesByUserId(userId);
       return stacks.map(toStackOutput);
     }),
-  get: publicProcedure
+  get: protectedProcedure
     .route({
       description: "Get a single stack by ID",
       method: "GET"
     })
     .input(z.object({ id: z.string() }))
     .output(StackOutputSchema.nullable())
-    .handler(async ({ input }) => {
-      const stack = await stackRepository.findById(input.id);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const stack = await stackRepository.findByIdForUser(input.id, userId);
       if (!stack) return null;
       const deps = await stackDependencyRepository.findByStackId(input.id);
       return toStackOutput({
@@ -104,18 +106,25 @@ export const stacksRouter = {
     })
     .input(StackCreateInputSchema)
     .output(StackOutputSchema)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { includedInPortfolio, name, description, icon, dependencies, projectIds } = input;
-      const existing = await stackRepository.findByName(name);
+      const existing = await stackRepository.findByNameForUser(userId, name);
       if (existing) {
         throw new ORPCError("CONFLICT", {
           message: "A stack with this name already exists."
         });
       }
-      const all = await stackRepository.findAll();
+      const all = await stackRepository.findAllByUserId(userId);
       const nextSortOrder = all.length > 0 ? Math.max(...all.map((s) => s.sortOrder)) + 1 : 0;
       const created = await stackRepository.create(
-        { name, description: description ?? null, icon: icon ?? null, sortOrder: nextSortOrder },
+        {
+          userId,
+          name,
+          description: description ?? null,
+          icon: icon ?? null,
+          sortOrder: nextSortOrder
+        },
         { includedInPortfolio, dependencies: dependencies ?? [], projectIds }
       );
       return toStackOutput({
@@ -145,17 +154,18 @@ export const stacksRouter = {
     })
     .input(z.object({ id: z.string(), data: StackUpdateInputSchema }))
     .output(StackOutputSchema.nullable())
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { includedInPortfolio, dependencies, projectIds, ...updateData } = input.data;
       if (updateData.name) {
-        const existing = await stackRepository.findByName(updateData.name);
+        const existing = await stackRepository.findByNameForUser(userId, updateData.name);
         if (existing && existing.id !== input.id) {
           throw new ORPCError("CONFLICT", {
             message: "A stack with this name already exists."
           });
         }
       }
-      const updated = await stackRepository.update(input.id, updateData, {
+      const updated = await stackRepository.update(input.id, userId, updateData, {
         includedInPortfolio,
         dependencies,
         projectIds
@@ -169,8 +179,9 @@ export const stacksRouter = {
     })
     .input(ReorderInputSchema)
     .output(ReorderResponseSchema)
-    .handler(async ({ input }) => {
-      await stackRepository.reorder(input.items);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      await stackRepository.reorder(userId, input.items);
       return { success: true };
     }),
   delete: protectedProcedure
@@ -180,8 +191,9 @@ export const stacksRouter = {
     })
     .input(z.object({ id: z.string() }))
     .output(DeleteResponseSchema)
-    .handler(async ({ input }) => {
-      const deleted = await stackRepository.delete(input.id);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const deleted = await stackRepository.delete(input.id, userId);
       return { success: deleted !== null };
     }),
   merge: protectedProcedure
@@ -191,9 +203,10 @@ export const stacksRouter = {
     })
     .input(z.object({ survivorId: z.string(), victimId: z.string() }))
     .output(z.object({ merged: z.object({ id: z.string(), name: z.string() }) }))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       try {
-        return await stackRepository.merge(input.survivorId, input.victimId);
+        return await stackRepository.merge(userId, input.survivorId, input.victimId);
       } catch (error) {
         throw new Error(error instanceof Error ? error.message : "Failed to merge stacks");
       }
@@ -205,9 +218,10 @@ export const stacksRouter = {
     })
     .input(z.object({ items: z.array(z.object({ survivorId: z.string(), victimId: z.string() })) }))
     .output(z.array(z.object({ merged: z.object({ id: z.string(), name: z.string() }) })))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       try {
-        return await stackRepository.batchMerge(input.items);
+        return await stackRepository.batchMerge(userId, input.items);
       } catch (error) {
         throw new Error(error instanceof Error ? error.message : "Failed to batch merge stacks");
       }
@@ -228,7 +242,8 @@ export const stacksRouter = {
       })
     )
     .output(z.array(z.object({ id: z.string(), name: z.string() })))
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       // Pre-check name uniqueness (same as single update) to avoid 500s on unique index
       const claimedNames = new Map<string, string>(); // lower(name) → stack id
       for (const item of input.items) {
@@ -244,7 +259,7 @@ export const stacksRouter = {
         }
         claimedNames.set(key, item.id);
 
-        const existing = await stackRepository.findByName(name);
+        const existing = await stackRepository.findByNameForUser(userId, name);
         if (existing && existing.id !== item.id) {
           throw new ORPCError("CONFLICT", {
             message: `A stack with the name "${name}" already exists.`
@@ -253,6 +268,7 @@ export const stacksRouter = {
       }
 
       return stackRepository.batchUpdate(
+        userId,
         input.items.map((item) => {
           return {
             id: item.id,
@@ -325,7 +341,14 @@ export const stacksRouter = {
       method: "GET"
     })
     .input(z.object({ stackId: z.string() }))
-    .handler(async ({ input }) => stackDependencyRepository.findByStackId(input.stackId)),
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const existing = await stackRepository.findByIdForUser(input.stackId, userId);
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Stack not found" });
+      }
+      return stackDependencyRepository.findByStackId(input.stackId);
+    }),
   addDependency: protectedProcedure
     .route({
       description: "Add an npm dependency to a stack",
@@ -340,9 +363,10 @@ export const stacksRouter = {
         homepage: z.string().nullable().optional()
       })
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { stackId, ...data } = input;
-      const existing = await stackRepository.findById(stackId);
+      const existing = await stackRepository.findByIdForUser(stackId, userId);
       if (!existing) {
         throw new ORPCError("NOT_FOUND", { message: "Stack not found" });
       }
@@ -360,7 +384,12 @@ export const stacksRouter = {
     })
     .input(z.object({ stackId: z.string(), npmPackage: z.string() }))
     .output(DeleteResponseSchema)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const existing = await stackRepository.findByIdForUser(input.stackId, userId);
+      if (!existing) {
+        throw new ORPCError("NOT_FOUND", { message: "Stack not found" });
+      }
       await stackDependencyRepository.deleteByNpmPackage(input.stackId, input.npmPackage);
       return { success: true };
     }),
@@ -397,7 +426,8 @@ export const stacksRouter = {
         })
       )
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const results: Array<{
         id: string;
         name: string;
@@ -413,16 +443,19 @@ export const stacksRouter = {
         seenKeys.add(dedupeKey);
 
         let stack =
-          (s.existingStackId ? await stackRepository.findById(s.existingStackId) : null) ??
-          (await stackRepository.findByNpmPackageAlias(s.npmPackage)) ??
-          (await stackRepository.findByName(s.name));
+          (s.existingStackId
+            ? await stackRepository.findByIdForUser(s.existingStackId, userId)
+            : null) ??
+          (await stackRepository.findByNpmPackageAliasForUser(userId, s.npmPackage)) ??
+          (await stackRepository.findByNameForUser(userId, s.name));
 
         if (!stack) {
-          const all = await stackRepository.findAll();
+          const all = await stackRepository.findAllByUserId(userId);
           const nextSortOrder = all.length > 0 ? Math.max(...all.map((st) => st.sortOrder)) + 1 : 0;
           try {
             stack = await stackRepository.create(
               {
+                userId,
                 name: s.name,
                 description: s.description ?? null,
                 icon: s.iconSvg ? sanitizeSvg(s.iconSvg) : null,
@@ -435,8 +468,8 @@ export const stacksRouter = {
           } catch {
             // Race / unique name: re-fetch by name or npm alias.
             stack =
-              (await stackRepository.findByNpmPackageAlias(s.npmPackage)) ??
-              (await stackRepository.findByName(s.name));
+              (await stackRepository.findByNpmPackageAliasForUser(userId, s.npmPackage)) ??
+              (await stackRepository.findByNameForUser(userId, s.name));
           }
         }
 

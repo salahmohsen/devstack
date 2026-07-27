@@ -23,7 +23,7 @@ export type CreateProjectData = Omit<
 };
 
 export type UpdateProjectData = Partial<
-  Omit<InferInsertModel<typeof project>, "id" | "createdAt" | "updatedAt">
+  Omit<InferInsertModel<typeof project>, "id" | "createdAt" | "updatedAt" | "userId">
 > & {
   stackIds?: string[];
 };
@@ -31,8 +31,9 @@ export type UpdateProjectData = Partial<
 export type ReorderProjectItem = { id: string; sortOrder: number };
 
 export const projectRepository = {
-  async findAll() {
+  async findAllByUserId(userId: string) {
     return getDb().query.project.findMany({
+      where: { userId },
       orderBy: (proj, { asc }) => [asc(proj.sortOrder), asc(proj.title)],
       with: {
         stacks: {
@@ -42,23 +43,23 @@ export const projectRepository = {
     });
   },
 
-  async findOptedIn(extraWhere?: SQL) {
+  async findOptedInByUserId(userId: string, extraWhere?: SQL) {
     const rows = await getDb()
       .select({ id: project.id })
       .from(project)
       .where(
         extraWhere
-          ? and(isNotNull(project.portfolioEntryId), extraWhere)
-          : isNotNull(project.portfolioEntryId)
+          ? and(eq(project.userId, userId), isNotNull(project.portfolioEntryId), extraWhere)
+          : and(eq(project.userId, userId), isNotNull(project.portfolioEntryId))
       )
       .orderBy(project.sortOrder, project.title);
 
-    return Promise.all(rows.map(({ id }) => this.findById(id)!));
+    return Promise.all(rows.map(({ id }) => this.findByIdForUser(id, userId)!));
   },
 
-  async findById(id: string) {
+  async findByIdForUser(id: string, userId: string) {
     return getDb().query.project.findFirst({
-      where: { id },
+      where: { id, userId },
       with: {
         stacks: {
           with: { stack: true }
@@ -76,6 +77,7 @@ export const projectRepository = {
       if (pid) {
         await tx.insert(portfolioEntry).values({
           id: pid,
+          userId: input.userId,
           type: "project",
           entityId: projectId
         });
@@ -83,6 +85,7 @@ export const projectRepository = {
 
       await tx.insert(project).values({
         id: projectId,
+        userId: input.userId,
         logo: input.logo ?? null,
         repos: input.repos ?? [],
         demoUrl: input.demoUrl ?? null,
@@ -103,7 +106,7 @@ export const projectRepository = {
         const existing = await tx
           .select({ id: stack.id })
           .from(stack)
-          .where(inArray(stack.id, unique));
+          .where(and(eq(stack.userId, input.userId), inArray(stack.id, unique)));
         if (existing.length !== unique.length) {
           throw new Error("One or more stacks not found");
         }
@@ -115,10 +118,15 @@ export const projectRepository = {
       }
     });
 
-    return projectRepository.findById(projectId);
+    return projectRepository.findByIdForUser(projectId, input.userId);
   },
 
-  async update(id: string, input: UpdateProjectData, options?: { includedInPortfolio?: boolean }) {
+  async update(
+    id: string,
+    userId: string,
+    input: UpdateProjectData,
+    options?: { includedInPortfolio?: boolean }
+  ) {
     const { stackIds, ...projectFields } = input;
     let notFound = false;
 
@@ -153,7 +161,7 @@ export const projectRepository = {
       const [updated] = await tx
         .update(project)
         .set(updateData)
-        .where(eq(project.id, id))
+        .where(and(eq(project.id, id), eq(project.userId, userId)))
         .returning();
 
       if (!updated) {
@@ -168,7 +176,7 @@ export const projectRepository = {
           const existing = await tx
             .select({ id: stack.id })
             .from(stack)
-            .where(inArray(stack.id, unique));
+            .where(and(eq(stack.userId, userId), inArray(stack.id, unique)));
           if (existing.length !== unique.length) {
             throw new Error("One or more stacks not found");
           }
@@ -182,38 +190,51 @@ export const projectRepository = {
 
       if (options?.includedInPortfolio !== undefined) {
         const existing = await tx.query.portfolioEntry.findFirst({
-          where: { type: "project", entityId: id }
+          where: { userId, type: "project", entityId: id }
         });
 
         if (options.includedInPortfolio && !existing) {
           const pid = crypto.randomUUID();
           await tx.insert(portfolioEntry).values({
             id: pid,
+            userId,
             type: "project",
             entityId: id
           });
-          await tx.update(project).set({ portfolioEntryId: pid }).where(eq(project.id, id));
+          await tx
+            .update(project)
+            .set({ portfolioEntryId: pid })
+            .where(and(eq(project.id, id), eq(project.userId, userId)));
         } else if (!options.includedInPortfolio && existing) {
           await tx
             .delete(portfolioEntry)
-            .where(and(eq(portfolioEntry.type, "project"), eq(portfolioEntry.entityId, id)));
-          await tx.update(project).set({ portfolioEntryId: null }).where(eq(project.id, id));
+            .where(
+              and(
+                eq(portfolioEntry.userId, userId),
+                eq(portfolioEntry.type, "project"),
+                eq(portfolioEntry.entityId, id)
+              )
+            );
+          await tx
+            .update(project)
+            .set({ portfolioEntryId: null })
+            .where(and(eq(project.id, id), eq(project.userId, userId)));
         }
       }
     });
 
     if (notFound) return null;
-    return projectRepository.findById(id);
+    return projectRepository.findByIdForUser(id, userId);
   },
 
-  async reorder(items: ReorderProjectItem[]) {
+  async reorder(userId: string, items: ReorderProjectItem[]) {
     if (items.length === 0) return;
 
     const ids = items.map((item) => item.id);
     const existing = await getDb()
       .select({ id: project.id })
       .from(project)
-      .where(inArray(project.id, ids));
+      .where(and(eq(project.userId, userId), inArray(project.id, ids)));
 
     if (existing.length !== ids.length) {
       throw new Error("One or more projects not found");
@@ -221,16 +242,19 @@ export const projectRepository = {
 
     await getDb().transaction(async (tx) => {
       for (const item of items) {
-        await tx.update(project).set({ sortOrder: item.sortOrder }).where(eq(project.id, item.id));
+        await tx
+          .update(project)
+          .set({ sortOrder: item.sortOrder })
+          .where(and(eq(project.id, item.id), eq(project.userId, userId)));
       }
     });
   },
 
-  async toggleArchived(id: string) {
+  async toggleArchived(id: string, userId: string) {
     const [current] = await getDb()
       .select({ isArchived: project.isArchived })
       .from(project)
-      .where(eq(project.id, id))
+      .where(and(eq(project.id, id), eq(project.userId, userId)))
       .limit(1);
 
     if (!current) return null;
@@ -240,18 +264,18 @@ export const projectRepository = {
     const [updated] = await getDb()
       .update(project)
       .set({ isArchived: next })
-      .where(eq(project.id, id))
+      .where(and(eq(project.id, id), eq(project.userId, userId)))
       .returning();
 
     if (!updated) return null;
 
-    return projectRepository.findById(updated.id);
+    return projectRepository.findByIdForUser(updated.id, userId);
   },
 
-  async delete(id: string) {
+  async delete(id: string, userId: string) {
     const [deleted] = await getDb()
       .delete(project)
-      .where(eq(project.id, id))
+      .where(and(eq(project.id, id), eq(project.userId, userId)))
       .returning({ id: project.id });
 
     return deleted ?? null;

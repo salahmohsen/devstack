@@ -23,8 +23,9 @@ export const projectsRouter = {
       method: "GET"
     })
     .output(ProjectListOutputSchema)
-    .handler(async () => {
-      const projects = await projectRepository.findAll();
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+      const projects = await projectRepository.findAllByUserId(userId);
       return projects.map(toProjectOutput);
     }),
   get: protectedProcedure
@@ -34,8 +35,9 @@ export const projectsRouter = {
     })
     .input(z.object({ id: z.string() }))
     .output(ProjectOutputSchema.nullable())
-    .handler(async ({ input }) => {
-      const proj = await projectRepository.findById(input.id);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const proj = await projectRepository.findByIdForUser(input.id, userId);
       return proj ? toProjectOutput(proj) : null;
     }),
   create: protectedProcedure
@@ -45,9 +47,13 @@ export const projectsRouter = {
     })
     .input(CreateProjectInputSchema)
     .output(ProjectOutputSchema)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { includedInPortfolio, ...createData } = input;
-      const proj = await projectRepository.create(createData, { includedInPortfolio });
+      const proj = await projectRepository.create(
+        { ...createData, userId },
+        { includedInPortfolio }
+      );
       return toProjectOutput(proj!);
     }),
   update: protectedProcedure
@@ -57,9 +63,12 @@ export const projectsRouter = {
     })
     .input(z.object({ id: z.string(), data: UpdateProjectInputSchema }))
     .output(ProjectOutputSchema.nullable())
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { includedInPortfolio, ...updateData } = input.data;
-      const proj = await projectRepository.update(input.id, updateData, { includedInPortfolio });
+      const proj = await projectRepository.update(input.id, userId, updateData, {
+        includedInPortfolio
+      });
       return proj ? toProjectOutput(proj) : null;
     }),
   reorder: protectedProcedure
@@ -69,8 +78,9 @@ export const projectsRouter = {
     })
     .input(ReorderInputSchema)
     .output(ReorderResponseSchema)
-    .handler(async ({ input }) => {
-      await projectRepository.reorder(input.items);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      await projectRepository.reorder(userId, input.items);
       return { success: true };
     }),
   toggleArchived: protectedProcedure
@@ -80,8 +90,9 @@ export const projectsRouter = {
     })
     .input(z.object({ id: z.string() }))
     .output(ToggleProjectArchivedResponseSchema)
-    .handler(async ({ input }) => {
-      const proj = await projectRepository.toggleArchived(input.id);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const proj = await projectRepository.toggleArchived(input.id, userId);
       if (!proj) {
         throw new ORPCError("NOT_FOUND", { message: "Project not found" });
       }
@@ -94,8 +105,9 @@ export const projectsRouter = {
     })
     .input(z.object({ id: z.string() }))
     .output(DeleteResponseSchema)
-    .handler(async ({ input }) => {
-      const deleted = await projectRepository.delete(input.id);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const deleted = await projectRepository.delete(input.id, userId);
       return { success: deleted !== null };
     })
 };

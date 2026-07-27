@@ -1,4 +1,4 @@
-import { eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { resume } from "../schema/resume.schema.ts";
@@ -8,23 +8,28 @@ export type CreateResumeData = Omit<
   InferInsertModel<typeof resume>,
   "id" | "createdAt" | "updatedAt" | "default"
 >;
-export type UpdateResumeData = Partial<CreateResumeData>;
+export type UpdateResumeData = Partial<Omit<CreateResumeData, "userId">>;
 
 export const resumeRepository = {
-  async findAll() {
+  async findAllByUserId(userId: string) {
     return getDb().query.resume.findMany({
+      where: { userId },
       orderBy: (r, { desc }) => [desc(r.createdAt)]
     });
   },
 
-  async findById(id: string) {
+  async findByIdForUser(id: string, userId: string) {
     return getDb().query.resume.findFirst({
-      where: { id }
+      where: { id, userId }
     });
   },
 
-  async findDefault() {
-    const rows = await getDb().select().from(resume).where(eq(resume.default, true)).limit(1);
+  async findDefaultByUserId(userId: string) {
+    const rows = await getDb()
+      .select()
+      .from(resume)
+      .where(and(eq(resume.userId, userId), eq(resume.default, true)))
+      .limit(1);
     return rows[0];
   },
 
@@ -34,6 +39,7 @@ export const resumeRepository = {
       .insert(resume)
       .values({
         id,
+        userId: input.userId,
         prompt: input.prompt ?? null,
         author: input.author,
         filename: input.filename,
@@ -45,19 +51,29 @@ export const resumeRepository = {
     return created;
   },
 
-  async setDefault(id: string) {
+  async setDefault(id: string, userId: string) {
+    const owned = await resumeRepository.findByIdForUser(id, userId);
+    if (!owned) return null;
+
     await getDb().transaction(async (tx) => {
-      await tx.update(resume).set({ default: false }).where(eq(resume.default, true));
-      await tx.update(resume).set({ default: true }).where(eq(resume.id, id));
+      await tx
+        .update(resume)
+        .set({ default: false })
+        .where(and(eq(resume.userId, userId), eq(resume.default, true)));
+      await tx
+        .update(resume)
+        .set({ default: true })
+        .where(and(eq(resume.id, id), eq(resume.userId, userId)));
     });
 
-    return resumeRepository.findById(id);
+    return resumeRepository.findByIdForUser(id, userId);
   },
 
-  async deleteMany(ids: string[]) {
+  async deleteMany(ids: string[], userId: string) {
+    if (ids.length === 0) return [];
     return getDb()
       .delete(resume)
-      .where(inArray(resume.id, ids))
+      .where(and(eq(resume.userId, userId), inArray(resume.id, ids)))
       .returning({ id: resume.id, r2Key: resume.r2Key });
   }
 };

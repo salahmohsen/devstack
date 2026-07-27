@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { contactOutputSchema } from "@tsu-stack/core";
-import { contactRepository, userRepository } from "@tsu-stack/db";
+import { contactRepository } from "@tsu-stack/db";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toContactOutput } from "#@/routers/portfolio.mappers";
@@ -15,12 +15,9 @@ export const portfolioContactRouter = {
     .output(z.array(contactOutputSchema))
     .handler(async ({ context }) => {
       context.logger.set({ route: "portfolio.contact.get" });
-      const userRow = await userRepository.findFirst();
-      if (!userRow) {
-        throw new Error("Session references a user that no longer exists");
-      }
-      const adminContacts = await contactRepository.findByUserId(userRow.id);
+      const userId = context.session.user.id;
+      const contacts = await contactRepository.findByUserId(userId);
 
-      return adminContacts?.map((c) => toContactOutput(c)) ?? [];
+      return contacts?.map((c) => toContactOutput(c)) ?? [];
     })
 };

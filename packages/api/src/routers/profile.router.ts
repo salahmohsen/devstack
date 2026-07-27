@@ -51,12 +51,15 @@ export const profileRouter = {
     }),
   getContacts: publicProcedure
     .route({
-      description: "Get admin contacts",
+      description: "Get public contacts for the primary portfolio owner",
       method: "GET"
     })
     .output(z.array(contactOutputSchema))
     .handler(async () => {
-      const contacts = await contactRepository.getAdminContact();
+      // TODO(Phase C): resolve userId from profileName / verified custom domain Host.
+      const owner = await userRepository.findFirst();
+      if (!owner) return [];
+      const contacts = await contactRepository.findOptedInByUserId(owner.id);
       return (contacts ?? []).map((c) => {
         return {
           type: c.type,

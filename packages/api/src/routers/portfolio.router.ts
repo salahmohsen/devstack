@@ -33,56 +33,63 @@ import {
 async function syncPortfolioFK(
   type: PortfolioEntityType,
   entityId: string,
+  userId: string,
   portfolioEntryId: string | null
 ): Promise<void> {
   if (type === "experience") {
-    await getDb().update(experience).set({ portfolioEntryId }).where(eq(experience.id, entityId));
+    await getDb()
+      .update(experience)
+      .set({ portfolioEntryId })
+      .where(and(eq(experience.id, entityId), eq(experience.userId, userId)));
   } else if (type === "project") {
-    await getDb().update(project).set({ portfolioEntryId }).where(eq(project.id, entityId));
+    await getDb()
+      .update(project)
+      .set({ portfolioEntryId })
+      .where(and(eq(project.id, entityId), eq(project.userId, userId)));
   } else if (type === "stack") {
-    await getDb().update(stack).set({ portfolioEntryId }).where(eq(stack.id, entityId));
+    await getDb()
+      .update(stack)
+      .set({ portfolioEntryId })
+      .where(and(eq(stack.id, entityId), eq(stack.userId, userId)));
   } else if (type === "contact") {
-    const adminUser = await userRepository.findFirst();
-    if (adminUser) {
-      await getDb()
-        .update(contact)
-        .set({ portfolioEntryId })
-        .where(and(eq(contact.id, entityId), eq(contact.userId, adminUser.id)));
-    }
+    await getDb()
+      .update(contact)
+      .set({ portfolioEntryId })
+      .where(and(eq(contact.id, entityId), eq(contact.userId, userId)));
   }
 }
 
-async function assertEntityExists(type: PortfolioEntityType, entityId: string): Promise<void> {
+async function assertEntityExists(
+  type: PortfolioEntityType,
+  entityId: string,
+  userId: string
+): Promise<void> {
   if (type === "experience") {
-    const exp = await experienceRepository.findById(entityId);
+    const exp = await experienceRepository.findByIdForUser(entityId, userId);
     if (!exp) throw new ORPCError("NOT_FOUND", { message: "Experience not found" });
     return;
   }
   if (type === "project") {
-    const proj = await projectRepository.findById(entityId);
+    const proj = await projectRepository.findByIdForUser(entityId, userId);
     if (!proj) throw new ORPCError("NOT_FOUND", { message: "Project not found" });
     return;
   }
   if (type === "stack") {
-    const stack = await stackRepository.findById(entityId);
-    if (!stack) throw new ORPCError("NOT_FOUND", { message: "Stack not found" });
+    const stackRow = await stackRepository.findByIdForUser(entityId, userId);
+    if (!stackRow) throw new ORPCError("NOT_FOUND", { message: "Stack not found" });
     return;
-  }
-  const adminUser = await userRepository.findFirst();
-  if (!adminUser) {
-    throw new ORPCError("NOT_FOUND", { message: "Owner user not found" });
   }
   const existing = await getDb()
     .select({ type: contact.type })
     .from(contact)
-    .where(and(eq(contact.id, entityId), eq(contact.userId, adminUser.id)))
+    .where(and(eq(contact.id, entityId), eq(contact.userId, userId)))
     .limit(1);
   if (existing.length === 0) {
     throw new ORPCError("NOT_FOUND", { message: "Contact not found" });
   }
 }
 
-async function listAllOptedIn(filterString?: string) {
+async function listAllOptedIn(userId: string, filterString?: string) {
   const experienceFilter = filterString
     ? buildPortfolioEntityFilter(filterString, "experience")
     : undefined;
@@ -94,18 +101,15 @@ async function listAllOptedIn(filterString?: string) {
     ? buildPortfolioEntityFilter(filterString, "contact")
     : undefined;
 
-  const experiences = await experienceRepository.findOptedIn(experienceFilter);
-  const projects = await projectRepository.findOptedIn(projectFilter);
-  const stacks = await stackRepository.findOptedIn(stackFilter);
-  const adminUser = await userRepository.findFirst();
-  const contacts = adminUser
-    ? await contactRepository.findOptedInByUserId(adminUser.id, contactFilter)
-    : [];
+  const experiences = await experienceRepository.findOptedInByUserId(userId, experienceFilter);
+  const projects = await projectRepository.findOptedInByUserId(userId, projectFilter);
+  const stacks = await stackRepository.findOptedInByUserId(userId, stackFilter);
+  const contacts = await contactRepository.findOptedInByUserId(userId, contactFilter);
 
   return {
     experiences: experiences.map((exp) => toExperiencePublicOutput(exp!)),
     projects: projects.map((proj) => toProjectPublicOutput(proj!)),
-    stacks: stacks.map((stack) => toStackOutput(stack!)),
+    stacks: stacks.map((stackRow) => toStackOutput(stackRow!)),
     contacts: contacts.map(toContactOutput)
   };
 }
@@ -125,7 +129,19 @@ export const PortfolioRouter = {
     })
     .handler(async ({ input }) => {
       try {
-        const all = await listAllOptedIn(input.filter);
+        // TODO(Phase C): resolve userId from profileName / verified custom domain Host.
+        // Temporary bridge so the primary owner's public site still works after tenant scoping.
+        const owner = await userRepository.findFirst();
+        if (!owner) {
+          return {
+            experiences: [],
+            projects: [],
+            stacks: [],
+            contacts: [],
+            nextCursor: null
+          };
+        }
+        const all = await listAllOptedIn(owner.id, input.filter);
         return {
           experiences: all.experiences,
           projects: all.projects,
@@ -147,7 +163,8 @@ export const PortfolioRouter = {
     })
     .input(PortfolioToggleInputSchema)
     .output(PortfolioToggleOutputSchema)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { type, entityId, included } = input;
 
       if (!isEntityType(type)) {
@@ -156,16 +173,21 @@ export const PortfolioRouter = {
         });
       }
 
-      await assertEntityExists(type, entityId);
+      await assertEntityExists(type, entityId, userId);
 
-      const existing = await portfolioEntryRepository.findByTypeAndEntityId(type, entityId);
+      const existing = await portfolioEntryRepository.findByTypeAndEntityIdForUser(
+        userId,
+        type,
+        entityId
+      );
 
       if (included) {
         if (existing) {
-          await syncPortfolioFK(type, entityId, existing.id);
+          await syncPortfolioFK(type, entityId, userId, existing.id);
           return { included: true, entry: existing };
         }
         const created = await portfolioEntryRepository.create({
+          userId,
           type,
           entityId
         });
@@ -175,13 +197,13 @@ export const PortfolioRouter = {
           });
         }
 
-        await syncPortfolioFK(type, entityId, created.id);
+        await syncPortfolioFK(type, entityId, userId, created.id);
         return { included: true, entry: created };
       }
 
       if (existing) {
-        await portfolioEntryRepository.deleteByTypeAndEntityId(type, entityId);
-        await syncPortfolioFK(type, entityId, null);
+        await portfolioEntryRepository.deleteByTypeAndEntityIdForUser(userId, type, entityId);
+        await syncPortfolioFK(type, entityId, userId, null);
       }
       return { included: false, entry: null };
     })

@@ -17,12 +17,13 @@ export type CreateExperienceData = Omit<
   InferInsertModel<typeof experience>,
   "id" | "createdAt" | "updatedAt"
 >;
-export type UpdateExperienceData = Partial<CreateExperienceData>;
+export type UpdateExperienceData = Partial<Omit<CreateExperienceData, "userId">>;
 export type ReorderExperienceItem = { id: string; sortOrder: number };
 
 export const experienceRepository = {
-  async findAll() {
+  async findAllByUserId(userId: string) {
     return getDb().query.experience.findMany({
+      where: { userId },
       orderBy: (exp, { asc }) => [asc(exp.sortOrder), asc(exp.title)],
       with: {
         projects: {
@@ -37,23 +38,23 @@ export const experienceRepository = {
     });
   },
 
-  async findOptedIn(extraWhere?: SQL) {
+  async findOptedInByUserId(userId: string, extraWhere?: SQL) {
     const rows = await getDb()
       .select({ id: experience.id })
       .from(experience)
       .where(
         extraWhere
-          ? and(isNotNull(experience.portfolioEntryId), extraWhere)
-          : isNotNull(experience.portfolioEntryId)
+          ? and(eq(experience.userId, userId), isNotNull(experience.portfolioEntryId), extraWhere)
+          : and(eq(experience.userId, userId), isNotNull(experience.portfolioEntryId))
       )
       .orderBy(experience.sortOrder, experience.title);
 
-    return Promise.all(rows.map(({ id }) => this.findById(id)!));
+    return Promise.all(rows.map(({ id }) => this.findByIdForUser(id, userId)!));
   },
 
-  async findById(id: string) {
+  async findByIdForUser(id: string, userId: string) {
     return getDb().query.experience.findFirst({
-      where: { id },
+      where: { id, userId },
       with: {
         projects: {
           orderBy: (proj, { asc }) => [asc(proj.sortOrder), asc(proj.title)],
@@ -68,7 +69,7 @@ export const experienceRepository = {
   },
 
   async create(input: CreateExperienceData, options?: { includedInPortfolio?: boolean }) {
-    const all = await experienceRepository.findAll();
+    const all = await experienceRepository.findAllByUserId(input.userId);
     const nextSortOrder = all.length > 0 ? Math.max(...all.map((e) => e.sortOrder)) + 1 : 0;
     const id = crypto.randomUUID();
     const pid = options?.includedInPortfolio ? crypto.randomUUID() : null;
@@ -78,6 +79,7 @@ export const experienceRepository = {
       if (pid) {
         await tx.insert(portfolioEntry).values({
           id: pid,
+          userId: input.userId,
           type: "experience",
           entityId: id
         });
@@ -85,6 +87,7 @@ export const experienceRepository = {
 
       await tx.insert(experience).values({
         id,
+        userId: input.userId,
         title: input.title,
         organization: input.organization,
         description: input.description,
@@ -96,11 +99,12 @@ export const experienceRepository = {
       });
     });
 
-    return experienceRepository.findById(id);
+    return experienceRepository.findByIdForUser(id, input.userId);
   },
 
   async update(
     id: string,
+    userId: string,
     input: UpdateExperienceData,
     options?: { includedInPortfolio?: boolean }
   ) {
@@ -110,7 +114,7 @@ export const experienceRepository = {
       const [updated] = await tx
         .update(experience)
         .set(input)
-        .where(eq(experience.id, id))
+        .where(and(eq(experience.id, id), eq(experience.userId, userId)))
         .returning();
 
       if (!updated) {
@@ -120,38 +124,51 @@ export const experienceRepository = {
 
       if (options?.includedInPortfolio !== undefined) {
         const existing = await tx.query.portfolioEntry.findFirst({
-          where: { type: "experience", entityId: id }
+          where: { userId, type: "experience", entityId: id }
         });
 
         if (options.includedInPortfolio && !existing) {
           const pid = crypto.randomUUID();
           await tx.insert(portfolioEntry).values({
             id: pid,
+            userId,
             type: "experience",
             entityId: id
           });
-          await tx.update(experience).set({ portfolioEntryId: pid }).where(eq(experience.id, id));
+          await tx
+            .update(experience)
+            .set({ portfolioEntryId: pid })
+            .where(and(eq(experience.id, id), eq(experience.userId, userId)));
         } else if (!options.includedInPortfolio && existing) {
           await tx
             .delete(portfolioEntry)
-            .where(and(eq(portfolioEntry.type, "experience"), eq(portfolioEntry.entityId, id)));
-          await tx.update(experience).set({ portfolioEntryId: null }).where(eq(experience.id, id));
+            .where(
+              and(
+                eq(portfolioEntry.userId, userId),
+                eq(portfolioEntry.type, "experience"),
+                eq(portfolioEntry.entityId, id)
+              )
+            );
+          await tx
+            .update(experience)
+            .set({ portfolioEntryId: null })
+            .where(and(eq(experience.id, id), eq(experience.userId, userId)));
         }
       }
     });
 
     if (notFound) return null;
-    return experienceRepository.findById(id);
+    return experienceRepository.findByIdForUser(id, userId);
   },
 
-  async reorder(items: ReorderExperienceItem[]) {
+  async reorder(userId: string, items: ReorderExperienceItem[]) {
     if (items.length === 0) return;
 
     const ids = items.map((item) => item.id);
     const existing = await getDb()
       .select({ id: experience.id })
       .from(experience)
-      .where(inArray(experience.id, ids));
+      .where(and(eq(experience.userId, userId), inArray(experience.id, ids)));
 
     if (existing.length !== ids.length) {
       throw new Error("One or more experiences not found");
@@ -162,15 +179,15 @@ export const experienceRepository = {
         await tx
           .update(experience)
           .set({ sortOrder: item.sortOrder })
-          .where(eq(experience.id, item.id));
+          .where(and(eq(experience.id, item.id), eq(experience.userId, userId)));
       }
     });
   },
 
-  async delete(id: string) {
+  async delete(id: string, userId: string) {
     const [deleted] = await getDb()
       .delete(experience)
-      .where(eq(experience.id, id))
+      .where(and(eq(experience.id, id), eq(experience.userId, userId)))
       .returning({ id: experience.id });
 
     return deleted ?? null;

@@ -41,13 +41,14 @@ export async function promoteResumeSourceToDefault(options: {
   });
 
   const created = await resumeRepository.create({
+    userId,
     prompt: null,
     author: "admin",
     filename: displayFilename,
     r2Key
   });
 
-  await resumeRepository.setDefault(created.id);
+  await resumeRepository.setDefault(created.id, userId);
 
   try {
     await mediaBucket.delete(sourceKey);
