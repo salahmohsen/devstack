@@ -66,7 +66,7 @@ The auto-generated auth relations and the hand-written app relations in `package
 ## Gotchas
 
 - **Cross-subdomain cookies are required in production.** Web (`https://salahmohsen.com`) and API (`https://api.salahmohsen.com`) are different hosts. OAuth sets the session cookie on the API host; the web SSR `$getUser` guard only sees it when Better Auth `advanced.crossSubDomainCookies` is enabled with the shared parent domain (`.salahmohsen.com`). `getSharedCookieDomain()` in `@tsu-stack/env/utils/url` derives this from `VITE_WEB_URL` + `VITE_SERVER_URL`. Localhost leaves host-only cookies (ports share the `localhost` host, so local works without the flag).
-- Single-user portfolio: `databaseHooks.user.create` rejects every user after the first (`REGISTRATION_CLOSED`). GitHub sign-in for an existing admin must **link** via matching email (`account.accountLinking.trustedProviders: ["github"]`), not create a second user.
+- **Invite-gated multi-user:** empty DB bootstraps the first user without an invite; further `user.create` requires a valid invite code (body, cookie, or OAuth state). Each user is a tenant (`userId` on domain rows) with a public `profileName`. GitHub account linking still uses matching email (`account.accountLinking.trustedProviders: ["github"]`) when linking to an existing user.
 - Cross-domain auth setups still require deliberate cookie/domain/CORS configuration even with Better Auth defaults
 - `SameSite=Strict` is usually too brittle for OAuth, email links, and other redirect-based auth flows
 - The auth query uses `refetchOnWindowFocus: "always"` for cross-tab session sync

@@ -4,6 +4,61 @@ A glossary of terms specific to the portfolio's evidence, output, stack, and
 cache-invalidation layers. General programming terms (workflow, tool, vector,
 etc.) do not belong here even if the project uses them heavily.
 
+## Multi-user tenancy
+
+**Profile name** (`profileName`):
+Public URL slug on the primary app host (`/{profileName}/…`). Required at
+signup, unique, renamable. Validated in `@tsu-stack/core` (length, charset,
+reserved path segments such as `dashboard`, `api`, `sign-in`).
+_Avoid_: username alone when you mean the public path key; handle (ambiguous).
+
+**Slug alias** (`profile_slug_alias`):
+Row mapping a former `profileName` to the same `userId` so old path URLs
+redirect after rename. New names must not collide with live profile names or
+existing aliases.
+_Avoid_: redirect table (generic), vanity URL.
+
+**Invite**:
+Single-use (or revocable) registration code. Empty database bootstraps the
+first user without an invite; later signups require a valid invite. Not a
+user column — code arrives via signup body, short-lived cookie, or OAuth state.
+_Avoid_: open registration, invite-as-role.
+
+**Custom domain** (`user_custom_domain`):
+Optional verified hostname that maps Host → that tenant’s portfolio at `/`.
+App stores hostname + verification state only; operator terminates TLS.
+_Avoid_: white-label SaaS domain product, automatic cert issuance.
+
+**Primary app host**:
+Canonical community origin from `VITE_WEB_URL` (and optional `PUBLIC_APP_HOST`
+for CNAME instructions when the marketing host differs). Dashboard, auth, and
+path portfolios (`/{profileName}`) live here. Custom domains may not claim this
+hostname.
+_Avoid_: “main domain” without distinguishing path vs Host routing.
+
+**Tenant `userId`**:
+Every private domain row (experience, project, stack, resume, portfolio entry,
+etc.) is scoped by the Better Auth user id. Public RPCs resolve Host and/or
+`profileName` → `userId` then load only that tenant’s opted-in evidence.
+_Avoid_: `ownerId`, “admin user” as the sole portfolio owner, unscoped `findAll()`.
+
+**BYO AI**:
+LLM features use operator-supplied provider keys (`DEEPSEEK_API_KEY`, etc.).
+No platform-funded model budget. Missing keys: detect-stacks skips AI categorize
+and falls back; resume import returns extract warnings; CRUD still works.
+_Avoid_: assuming a shared cloud key for all tenants.
+
+**BYO Resend**:
+Transactional mail is optional. Set `RESEND_API_KEY` (and `EMAIL_FROM`) to
+enable; unset skips sending. Auth/product mail only — not employer apply spam.
+_Avoid_: platform-paid unlimited mail.
+
+**TLS is not an app concern**:
+Operators terminate HTTPS (Cloudflare, Caddy, reverse proxy). The app verifies
+domain ownership (DNS) and routes by Host; it does **not** issue or renew
+certificates.
+_Avoid_: ACME in-app, Let’s Encrypt automation as a product feature.
+
 ## Cache invalidation
 
 **Revalidation signal**:
