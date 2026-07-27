@@ -26,7 +26,13 @@ export const ProjectOutputSchema = z.object({
     .describe("Stack counts grouped by type (e.g., { framework: 2, ui: 3 })"),
   updatedAt: z.date(),
   createdAt: z.date()
-}) satisfies z.ZodType<ProjectSchemaSelect>;
+}) satisfies z.ZodType<
+  Omit<ProjectSchemaSelect, "userId"> & {
+    includedInPortfolio: boolean;
+    stacks: z.infer<typeof StackOutputSchema>[];
+    stackTypeSummary: Record<string, number>;
+  }
+>;
 
 export const ProjectPublicOutputSchema = ProjectOutputSchema.omit({ analysis: true });
 
