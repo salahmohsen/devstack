@@ -8,6 +8,7 @@ import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+import { useRepoRouteLinks } from "@/shared/lib/use-repo-route-links";
 
 import { useGetGithubTreeEntryCommitsQuery } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
 
@@ -89,6 +90,8 @@ function FolderViewRow({
   const Icon = entry.type === "dir" ? Folder : File;
   const isDir = entry.type === "dir";
   const entryPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
+  const { entryLink } = useRepoRouteLinks();
+  const link = entryLink(repoName, currentRef, entryPath, isDir);
 
   return (
     <div
@@ -97,14 +100,7 @@ function FolderViewRow({
         !isLast && "border-b"
       )}
     >
-      <Link
-        to={isDir ? "/repos/$repo/tree/$" : "/repos/$repo/blob/$"}
-        params={{
-          repo: repoName,
-          _splat: `${currentRef}/${entryPath}`
-        }}
-        className="flex min-w-0 items-center gap-2.5"
-      >
+      <Link to={link.to} params={link.params} className="flex min-w-0 items-center gap-2.5">
         <Icon
           size={15}
           strokeWidth={1.8}

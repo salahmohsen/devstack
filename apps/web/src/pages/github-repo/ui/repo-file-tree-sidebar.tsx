@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, File, Folder } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 
@@ -15,6 +15,7 @@ import {
   useIsAncestorPath
 } from "@/shared/lib/explorer-path-store";
 import { type FileSearchEntry, type FileSearchResult } from "@/shared/lib/fuzzy-file-search";
+import { useRepoRouteLinks } from "@/shared/lib/use-repo-route-links";
 import { FileSearchCard } from "@/shared/ui/file-search-card";
 
 import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-github-repo-tree.query";
@@ -52,24 +53,6 @@ function useAllCachedFiles(repo: string, ref: string): FileSearchEntry[] {
   return allFiles;
 }
 
-function useRepoLinkMode() {
-  const params = useParams({ strict: false }) as { profileName?: string };
-  const profileName = params.profileName;
-  return {
-    profileName,
-    treeTo: profileName
-      ? ("/$profileName/repos/$repo/tree/$" as const)
-      : ("/repos/$repo/tree/$" as const),
-    blobTo: profileName
-      ? ("/$profileName/repos/$repo/blob/$" as const)
-      : ("/repos/$repo/blob/$" as const),
-    treeParams: (repo: string, splat: string) =>
-      profileName ? { profileName, repo, _splat: splat } : { repo, _splat: splat },
-    blobParams: (repo: string, splat: string) =>
-      profileName ? { profileName, repo, _splat: splat } : { repo, _splat: splat }
-  };
-}
-
 export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
   currentRef,
   entries,
@@ -82,6 +65,7 @@ export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
   const navigate = useNavigate();
   const currentPath = useExplorerPath();
   const allFiles = useAllCachedFiles(repoName, currentRef);
+  const links = useRepoRouteLinks();
 
   const defaultEntries = useMemo(
     () => allFiles.filter((f) => f.type === "file" && f.path.includes("/")),
@@ -91,15 +75,13 @@ export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
   const handleSelect = useCallback(
     (entry: FileSearchResult) => {
       const isDir = entry.type === "dir";
+      const link = links.entryLink(repoName, currentRef, entry.path, isDir);
       void navigate({
-        params: {
-          repo: repoName,
-          _splat: `${currentRef}/${entry.path}`
-        },
-        to: isDir ? "/repos/$repo/tree/$" : "/repos/$repo/blob/$"
+        to: link.to,
+        params: link.params
       });
     },
-    [navigate, repoName, currentRef]
+    [navigate, repoName, currentRef, links]
   );
 
   return (
@@ -185,8 +167,8 @@ const DirectoryNode = memo(function DirectoryNode({
   const [isOpen, setIsOpen] = useState(isAncestor || isActive);
   const hasMounted = useIsClient();
   const { user } = useAuth();
-  const linkMode = useRepoLinkMode();
-  const profileName = linkMode.profileName ?? "";
+  const links = useRepoRouteLinks();
+  const profileName = links.profileName ?? "";
   const sessionProfileName =
     typeof (user as { profileName?: string } | null)?.profileName === "string"
       ? (user as { profileName: string }).profileName
@@ -224,8 +206,8 @@ const DirectoryNode = memo(function DirectoryNode({
           />
         </button>
         <Link
-          to={linkMode.treeTo}
-          params={linkMode.treeParams(repoName, `${currentRef}/${entryPath}`)}
+          to={links.treeTo}
+          params={links.treeParams(repoName, `${currentRef}/${entryPath}`)}
           onClick={(e) => {
             if (isActive) {
               e.preventDefault();
@@ -282,12 +264,12 @@ const FileNode = memo(function FileNode({
   repoName: string;
 }) {
   const isActive = useIsActivePath(entryPath);
-  const linkMode = useRepoLinkMode();
+  const links = useRepoRouteLinks();
 
   return (
     <Link
-      to={linkMode.blobTo}
-      params={linkMode.blobParams(repoName, `${currentRef}/${entryPath}`)}
+      to={links.blobTo}
+      params={links.blobParams(repoName, `${currentRef}/${entryPath}`)}
       onClick={(e) => {
         if (isActive) e.preventDefault();
       }}

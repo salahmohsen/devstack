@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+import { useRepoRouteLinks } from "@/shared/lib/use-repo-route-links";
 
 import { useGetGithubTreeEntryCommitsQuery } from "@/pages/github-repo/api/get-github-tree-entry-commits.query";
 
@@ -63,6 +64,8 @@ function FileTreeRow({
   isLast: boolean;
 }) {
   const isDir = entry.type === "dir";
+  const { entryLink } = useRepoRouteLinks();
+  const link = entryLink(repo, refName, entry.path, isDir);
 
   return (
     <div
@@ -78,8 +81,8 @@ function FileTreeRow({
           <FileCode className="size-4 shrink-0 text-base-500" />
         )}
         <Link
-          to={isDir ? "/repos/$repo/tree/$" : "/repos/$repo/blob/$"}
-          params={{ repo, _splat: `${refName}/${entry.path}` }}
+          to={link.to}
+          params={link.params}
           className="truncate text-accent-foreground hover:underline"
         >
           {entry.name}
