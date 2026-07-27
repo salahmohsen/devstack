@@ -20,7 +20,7 @@ import {
   cancelMastraWorkflowRun,
   streamMastraWorkflow
 } from "#@/lib/agent/workflow-stream";
-import { ownerProcedure, protectedProcedure } from "#@/lib/procedures/factory";
+import { protectedProcedure } from "#@/lib/procedures/factory";
 
 // Parse GitHub URL to owner/repo format
 function parseGitHubRepo(url: string): string {
@@ -426,7 +426,7 @@ export const agentRouter = {
    * Prefer this from the client in addition to aborting the event stream —
    * request disconnect alone is not always enough to stop in-flight steps.
    */
-  cancelWorkflowRun: ownerProcedure
+  cancelWorkflowRun: protectedProcedure
     .route({
       description: "Cancel a Mastra workflow run (POST .../runs/:runId/cancel)",
       method: "POST"
@@ -467,8 +467,9 @@ export const agentRouter = {
   /**
    * Detect stacks from project repos via Mastra workflow.
    * Streams workflow events for progress tracking.
+   * Scoped to the session user's stacks (tenant userId).
    */
-  detectStacks: ownerProcedure
+  detectStacks: protectedProcedure
     .route({
       description: "Detect stacks from project repos via Mastra workflow",
       method: "POST"
@@ -647,8 +648,9 @@ export const agentRouter = {
   /**
    * Organize stacks — merge duplicates, rename, enrich metadata.
    * Streams workflow events for progress tracking.
+   * Scoped to the session user's stacks (tenant userId).
    */
-  organizeStacks: ownerProcedure
+  organizeStacks: protectedProcedure
     .route({
       description: "Organize stacks — merge duplicates, rename, enrich metadata",
       method: "POST"
