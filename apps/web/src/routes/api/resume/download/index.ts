@@ -9,10 +9,13 @@ export const Route = createFileRoute("/api/resume/download/")({
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const resumeId = url.searchParams.get("id");
+        const profileName = url.searchParams.get("profileName");
 
         const resumeRow = resumeId
           ? await orpcClient.resume.get({ id: resumeId })
-          : await orpcClient.resume.getDefault();
+          : profileName
+            ? await orpcClient.resume.getDefault({ profileName })
+            : null;
 
         if (!resumeRow) {
           return new Response("Resume not found", { status: 404 });

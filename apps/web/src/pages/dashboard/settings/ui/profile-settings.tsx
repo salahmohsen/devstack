@@ -47,7 +47,7 @@ import { useAppForm } from "@/shared/form";
 import { IconLetter } from "@/shared/ui/icon";
 import { IconPicker, PickerIconRenderer } from "@/shared/ui/icon-picker";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
   getUpdateProfileMutationOptions,
   useRenameProfileMutation,
@@ -141,7 +141,7 @@ export function ProfileSettings() {
     onSuccess: (data) => {
       queryClient.setQueryData(orpcQueryClient.profile.get.queryOptions().queryKey, data);
       void queryClient.invalidateQueries({
-        queryKey: getPortfolioListQueryOptions().queryKey
+        queryKey: getPortfolioListQueryKey()
       });
       form.reset({
         name: data.name,

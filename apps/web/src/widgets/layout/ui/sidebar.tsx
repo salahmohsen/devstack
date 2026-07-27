@@ -1,4 +1,4 @@
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useParams } from "@tanstack/react-router";
 
 import { useAuthSuspense } from "@tsu-stack/auth/react";
 import {
@@ -14,7 +14,7 @@ import { ContactButton } from "@/shared/ui/contact-button";
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 const PublicItems = [
-  { href: "/", label: "Portfolio" },
+  { href: "/", label: "Home" },
   { href: "/repos", label: "Repositories" }
 ] as const;
 
@@ -53,17 +53,32 @@ function groupBySection(items: readonly NavItem[]): Section[] {
   return sections;
 }
 
+function sessionProfileName(user: unknown): string | undefined {
+  if (typeof user !== "object" || user === null) return undefined;
+  if (!("profileName" in user)) return undefined;
+  const value = (user as { profileName?: unknown }).profileName;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
 export function PublicSidebar() {
   const location = useLocation();
   const pathname = location.pathname;
+  const params = useParams({ strict: false }) as { profileName?: string };
   const { user } = useAuthSuspense();
-  const isAdmin = !!user;
+  const isSignedIn = !!user;
 
-  const portfolioQuery = useGetPortfolioListQuery();
+  // Prefer the public profile route param; fall back to the signed-in user's name for dashboard.
+  const profileName = params.profileName ?? sessionProfileName(user) ?? "";
+  const portfolioQuery = useGetPortfolioListQuery(profileName, { enabled: Boolean(profileName) });
+
+  const publicItems: NavItem[] = [
+    ...PublicItems,
+    ...(profileName ? [{ href: `/${profileName}`, label: "Portfolio" }] : [])
+  ];
 
   const sections = [
-    ...groupBySection(PublicItems),
-    ...(isAdmin ? groupBySection(DashboardItems) : [])
+    ...groupBySection(publicItems),
+    ...(isSignedIn ? groupBySection(DashboardItems) : [])
   ];
 
   return (
@@ -76,7 +91,7 @@ export function PublicSidebar() {
                 key={item.href}
                 href={item.href}
                 label={item.label}
-                isActive={"isExternal" in item ? false : pathname === item.href}
+                isActive={pathname === item.href}
               />
             ))}
           </Sidebar001Section>
@@ -85,7 +100,7 @@ export function PublicSidebar() {
       <Sidebar001Footer>
         <div className="flex justify-center gap-2">
           {(portfolioQuery.data?.contacts ?? []).map((contact) => (
-            <ContactButton key={contact.createdAt.toISOString()} contact={contact} />
+            <ContactButton key={contact.id} contact={contact} />
           ))}
         </div>
       </Sidebar001Footer>

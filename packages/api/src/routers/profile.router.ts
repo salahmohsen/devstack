@@ -5,12 +5,14 @@ import {
   parseProfileName,
   ProfileOutputSchema,
   ProfileUpdateInputSchema,
+  PublicProfileNameInputSchema,
   RenameProfileInputSchema
 } from "@tsu-stack/core";
 import { contactRepository, profileSlugAliasRepository, userRepository } from "@tsu-stack/db";
 import { type UserSchemaSelect } from "@tsu-stack/db/types";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { resolveUserIdByProfileName } from "#@/lib/public-portfolio/resolve-context";
 
 function toProfileOutput(
   userRow: UserSchemaSelect,
@@ -51,15 +53,23 @@ export const profileRouter = {
     }),
   getContacts: publicProcedure
     .route({
-      description: "Get public contacts for the primary portfolio owner",
+      description: "Get public contacts for a profile by profileName",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema)
     .output(z.array(contactOutputSchema))
-    .handler(async () => {
-      // TODO(Phase C): resolve userId from profileName / verified custom domain Host.
-      const owner = await userRepository.findFirst();
-      if (!owner) return [];
-      const contacts = await contactRepository.findOptedInByUserId(owner.id);
+    .errors({
+      NOT_FOUND: {
+        message: "Profile not found",
+        status: 404
+      }
+    })
+    .handler(async ({ input, errors }) => {
+      const userId = await resolveUserIdByProfileName(input.profileName);
+      if (!userId) {
+        throw errors.NOT_FOUND();
+      }
+      const contacts = await contactRepository.findOptedInByUserId(userId);
       return (contacts ?? []).map((c) => {
         return {
           type: c.type,

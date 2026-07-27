@@ -57,7 +57,7 @@ function StackSelector(props: StackSelectorProps) {
           queryKey: orpcQueryClient.stacks.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.list.queryKey({ input: {} })
+          queryKey: orpcQueryClient.portfolio.list.key()
         });
         field.handleChange([...selectedIds, created.id]);
         setCreateOpen(false);

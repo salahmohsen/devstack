@@ -22,7 +22,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { Icon } from "@/shared/ui/icon";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 
@@ -86,7 +86,7 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
           queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Stack deleted.");
         setDeleteDialogOpen(false);
@@ -101,10 +101,10 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
     orpcQueryClient.portfolio.toggle.mutationOptions({
       onSuccess: async (_data, variables) => {
         await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.portfolio.list.queryOptions({ input: {} }).queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
       },

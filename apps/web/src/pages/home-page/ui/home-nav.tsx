@@ -1,22 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-
 import { useIntersection } from "@/shared/providers/intersection.provider";
 
-import { useGetPortfolioListQuery } from "@/features/portfolio";
+import { useGetDefaultResumeQuery, useGetPortfolioListQuery } from "@/features/portfolio";
 
 import { Contact } from "@/pages/home-page/ui/contact";
 
-export const HomeNav = () => {
-  const portfolioQuery = useGetPortfolioListQuery();
-  const defaultResumeQuery = useQuery(orpcQueryClient.resume.getDefault.queryOptions());
+export const HomeNav = ({ profileName }: { profileName: string }) => {
+  const portfolioQuery = useGetPortfolioListQuery(profileName);
+  const defaultResumeQuery = useGetDefaultResumeQuery(profileName);
   const defaultResume = defaultResumeQuery.data;
 
   const navItems: (string | [string, string])[] = ["projects", "experience", "certificates"];
 
   if (defaultResume) {
-    navItems.push(["Resume", `/api/resume/download?id=${defaultResume.id}`]);
+    navItems.push([
+      "Resume",
+      `/api/resume/download?id=${defaultResume.id}&profileName=${encodeURIComponent(profileName)}`
+    ]);
   }
 
   return (

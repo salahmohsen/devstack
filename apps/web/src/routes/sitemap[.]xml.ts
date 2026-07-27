@@ -26,6 +26,10 @@ export const Route = createFileRoute("/sitemap.xml")({
           }
         }
 
+        // TODO(multi-user): expand sitemap with /{profileName} URLs for users who
+        // have public portfolio content (query user.profileName + aliases). Static
+        // route-tree generation cannot enumerate dynamic profile segments.
+
         const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${Array.from(

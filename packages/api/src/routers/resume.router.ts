@@ -4,6 +4,7 @@ import { buildDocumentPDFBytes } from "pdfnative";
 import {
   DeleteInputSchema,
   DeleteResponseSchema,
+  PublicProfileNameInputSchema,
   ResumeListOutputSchema,
   ResumeOutputSchema,
   SetDefaultInputSchema
@@ -17,6 +18,7 @@ import {
 } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { resolveUserIdByProfileName } from "#@/lib/public-portfolio/resolve-context";
 import {
   toContactOutput,
   toExperienceOutput,
@@ -71,15 +73,23 @@ export const resumeRouter = {
     }),
   getDefault: publicProcedure
     .route({
-      description: "Get the default resume",
+      description: "Get the default resume for a public profile",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema)
     .output(ResumeOutputSchema.optional())
-    .handler(async () => {
-      // TODO(Phase C): resolve userId from profileName / verified custom domain Host.
-      const owner = await userRepository.findFirst();
-      if (!owner) return undefined;
-      return resumeRepository.findDefaultByUserId(owner.id);
+    .errors({
+      NOT_FOUND: {
+        message: "Profile not found",
+        status: 404
+      }
+    })
+    .handler(async ({ input, errors }) => {
+      const userId = await resolveUserIdByProfileName(input.profileName);
+      if (!userId) {
+        throw errors.NOT_FOUND();
+      }
+      return resumeRepository.findDefaultByUserId(userId);
     }),
   setDefault: protectedProcedure
     .route({

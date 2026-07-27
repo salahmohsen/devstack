@@ -99,3 +99,13 @@ export const RenameProfileInputSchema = z.object({
 });
 
 export type RenameProfileInput = z.infer<typeof RenameProfileInputSchema>;
+
+/** Public procedures that scope data to a profile path segment. */
+export const PublicProfileNameInputSchema = z.object({
+  profileName: z
+    .string()
+    .min(1)
+    .describe("Public profile path key (user.profileName or a slug alias)")
+});
+
+export type PublicProfileNameInput = z.infer<typeof PublicProfileNameInputSchema>;

@@ -43,7 +43,7 @@ import { GithubProfileUnavailableState } from "@/pages/home-page/ui/github-setup
 import { PinnedRepoCard } from "@/pages/home-page/ui/pinned-repo-card";
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
-export function HomePage() {
+export function HomePage({ profileName }: { profileName: string }) {
   const hasMounted = useIsClient();
   const location = useRouterState({
     select: (state) => state.location
@@ -217,12 +217,12 @@ export function HomePage() {
 
             <section id="projects" className="flex flex-col gap-2 pt-16">
               <h2 className="mb-10 text-sm font-medium text-muted-foreground">Projects</h2>
-              <ProjectsSection />
+              <ProjectsSection profileName={profileName} />
             </section>
 
             <section id="experience" className="flex flex-col gap-2 pt-16">
               <h2 className="mb-10 text-sm font-medium text-muted-foreground">Experience</h2>
-              <Experience />
+              <Experience profileName={profileName} />
             </section>
           </div>
         </div>

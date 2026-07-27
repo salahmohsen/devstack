@@ -18,6 +18,7 @@ import { Route as ApiFilesIndexRouteImport } from './routes/api/files/index'
 import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(root-layout)/terms-of-service/index'
 import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
 import { Route as rootLayoutPrivacyPolicyIndexRouteImport } from './routes/(root-layout)/privacy-policy/index'
+import { Route as rootLayoutProfileNameIndexRouteImport } from './routes/(root-layout)/$profileName/index'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
@@ -86,6 +87,12 @@ const rootLayoutPrivacyPolicyIndexRoute =
   rootLayoutPrivacyPolicyIndexRouteImport.update({
     id: '/privacy-policy/',
     path: '/privacy-policy/',
+    getParentRoute: () => rootLayoutRouteRoute,
+  } as any)
+const rootLayoutProfileNameIndexRoute =
+  rootLayoutProfileNameIndexRouteImport.update({
+    id: '/$profileName/',
+    path: '/$profileName/',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
 const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
@@ -232,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
+  '/$profileName/': typeof rootLayoutProfileNameIndexRoute
   '/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos/': typeof rootLayoutReposIndexRoute
   '/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
@@ -262,6 +270,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
+  '/$profileName': typeof rootLayoutProfileNameIndexRoute
   '/privacy-policy': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos': typeof rootLayoutReposIndexRoute
   '/terms-of-service': typeof rootLayoutTermsOfServiceIndexRoute
@@ -295,6 +304,7 @@ export interface FileRoutesById {
   '/(root-layout)/(guest)/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/(root-layout)/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
+  '/(root-layout)/$profileName/': typeof rootLayoutProfileNameIndexRoute
   '/(root-layout)/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/(root-layout)/repos/': typeof rootLayoutReposIndexRoute
   '/(root-layout)/terms-of-service/': typeof rootLayoutTermsOfServiceIndexRoute
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/repos/$repo'
     | '/_api/health/live'
+    | '/$profileName/'
     | '/privacy-policy/'
     | '/repos/'
     | '/terms-of-service/'
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/'
     | '/_api/health/live'
+    | '/$profileName'
     | '/privacy-policy'
     | '/repos'
     | '/terms-of-service'
@@ -391,6 +403,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/(guest)/sign-in'
     | '/(root-layout)/repos/$repo'
     | '/_api/health/live'
+    | '/(root-layout)/$profileName/'
     | '/(root-layout)/privacy-policy/'
     | '/(root-layout)/repos/'
     | '/(root-layout)/terms-of-service/'
@@ -489,6 +502,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy-policy'
       fullPath: '/privacy-policy/'
       preLoaderRoute: typeof rootLayoutPrivacyPolicyIndexRouteImport
+      parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/(root-layout)/$profileName/': {
+      id: '/(root-layout)/$profileName/'
+      path: '/$profileName'
+      fullPath: '/$profileName/'
+      preLoaderRoute: typeof rootLayoutProfileNameIndexRouteImport
       parentRoute: typeof rootLayoutRouteRoute
     }
     '/_api/health/live': {
@@ -785,6 +805,7 @@ interface rootLayoutRouteRouteChildren {
   rootLayoutIndexRoute: typeof rootLayoutIndexRoute
   rootLayoutguestSignInRouteRoute: typeof rootLayoutguestSignInRouteRouteWithChildren
   rootLayoutReposRepoRouteRoute: typeof rootLayoutReposRepoRouteRouteWithChildren
+  rootLayoutProfileNameIndexRoute: typeof rootLayoutProfileNameIndexRoute
   rootLayoutPrivacyPolicyIndexRoute: typeof rootLayoutPrivacyPolicyIndexRoute
   rootLayoutReposIndexRoute: typeof rootLayoutReposIndexRoute
   rootLayoutTermsOfServiceIndexRoute: typeof rootLayoutTermsOfServiceIndexRoute
@@ -795,6 +816,7 @@ const rootLayoutRouteRouteChildren: rootLayoutRouteRouteChildren = {
   rootLayoutIndexRoute: rootLayoutIndexRoute,
   rootLayoutguestSignInRouteRoute: rootLayoutguestSignInRouteRouteWithChildren,
   rootLayoutReposRepoRouteRoute: rootLayoutReposRepoRouteRouteWithChildren,
+  rootLayoutProfileNameIndexRoute: rootLayoutProfileNameIndexRoute,
   rootLayoutPrivacyPolicyIndexRoute: rootLayoutPrivacyPolicyIndexRoute,
   rootLayoutReposIndexRoute: rootLayoutReposIndexRoute,
   rootLayoutTermsOfServiceIndexRoute: rootLayoutTermsOfServiceIndexRoute,

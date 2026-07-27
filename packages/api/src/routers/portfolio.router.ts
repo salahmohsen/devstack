@@ -7,7 +7,7 @@ import {
   PortfolioToggleInputSchema,
   PortfolioToggleOutputSchema
 } from "@tsu-stack/core";
-import { contactRepository, getDb, userRepository } from "@tsu-stack/db";
+import { contactRepository, getDb } from "@tsu-stack/db";
 import {
   experienceRepository,
   portfolioEntryRepository,
@@ -17,6 +17,7 @@ import {
 import { contact, experience, project, stack } from "@tsu-stack/db/schema";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { resolveUserIdByProfileName } from "#@/lib/public-portfolio/resolve-context";
 import {
   toContactOutput,
   toExperiencePublicOutput,
@@ -117,7 +118,7 @@ async function listAllOptedIn(userId: string, filterString?: string) {
 export const PortfolioRouter = {
   list: publicProcedure
     .route({
-      description: "List all portfolio entries categorized by type"
+      description: "List all portfolio entries categorized by type for a public profile"
     })
     .input(PortfolioListInputSchema)
     .output(PortfolioListOutputSchema)
@@ -125,23 +126,19 @@ export const PortfolioRouter = {
       BAD_REQUEST: {
         message: "Invalid filter",
         status: 400
+      },
+      NOT_FOUND: {
+        message: "Profile not found",
+        status: 404
       }
     })
-    .handler(async ({ input }) => {
+    .handler(async ({ input, errors }) => {
       try {
-        // TODO(Phase C): resolve userId from profileName / verified custom domain Host.
-        // Temporary bridge so the primary owner's public site still works after tenant scoping.
-        const owner = await userRepository.findFirst();
-        if (!owner) {
-          return {
-            experiences: [],
-            projects: [],
-            stacks: [],
-            contacts: [],
-            nextCursor: null
-          };
+        const userId = await resolveUserIdByProfileName(input.profileName);
+        if (!userId) {
+          throw errors.NOT_FOUND();
         }
-        const all = await listAllOptedIn(owner.id, input.filter);
+        const all = await listAllOptedIn(userId, input.filter);
         return {
           experiences: all.experiences,
           projects: all.projects,

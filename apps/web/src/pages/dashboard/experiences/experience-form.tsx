@@ -28,7 +28,7 @@ import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 type ExperienceFormProps = {
   initialData?: ExperienceOutput | null;
@@ -56,7 +56,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
           queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Experience created.");
         onOpenChange(false);
@@ -79,7 +79,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
           })
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Experience updated.");
         onOpenChange(false);

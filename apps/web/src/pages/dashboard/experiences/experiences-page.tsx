@@ -23,7 +23,7 @@ import { ListItem } from "@/shared/ui/list-item";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
   ItemInfoPanel,
@@ -87,7 +87,7 @@ export function ExperiencesPage() {
           queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Experience deleted.");
       }
@@ -101,7 +101,7 @@ export function ExperiencesPage() {
           queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
       },
@@ -149,7 +149,7 @@ export function ExperiencesPage() {
           queryKey: orpcQueryClient.experiences.list.queryKey()
         });
         void queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
       }
     })
@@ -207,7 +207,7 @@ export function ExperiencesPage() {
     );
 
     await queryClient.invalidateQueries({ queryKey: orpcQueryClient.experiences.list.queryKey() });
-    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
 
@@ -241,7 +241,7 @@ export function ExperiencesPage() {
     );
 
     await queryClient.invalidateQueries({ queryKey: orpcQueryClient.experiences.list.queryKey() });
-    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
 
