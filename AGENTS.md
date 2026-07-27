@@ -28,9 +28,9 @@ Pick the most specific file for the task. Use links within that file instead of 
 - [TanStack patterns](.agents/tanstack-patterns.md) for route structure, `beforeLoad`, layouts, and route-level preloading.
 - [API fetching patterns](.agents/api-fetching-patterns.md) for slice-local TanStack Query and oRPC client wrappers in `apps/web`.
 - [oRPC patterns](.agents/orpc.md) for server procedures, router shape, typed errors, and request-scoped handler logging.
-- [Auth patterns](.agents/auth.md) for Better Auth architecture, auth query behavior, and protected/guest route rules.
-- [i18n guidelines](.agents/i18n.md) for copy keys, locale file policy, and Paraglide codegen.
+- [Auth patterns](.agents/auth.md) for Better Auth architecture, invite-gated signup, auth query behavior, and protected/guest route rules.
 - [SEO patterns](.agents/seo.md) for route `head()` usage and `@tsu-stack/seo` integration.
+- [Product glossary](./CONTEXT.md) for multi-user terms (`profileName`, invite, custom domain, tenant `userId`, public GitHub surface).
 
 ### Shared Packages And Platform
 

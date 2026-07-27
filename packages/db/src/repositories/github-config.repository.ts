@@ -1,33 +1,14 @@
-import { desc, isNotNull, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { githubConfig } from "../schema/github-config.schema.ts";
 
 /**
- * Portfolio-owner identity for GitHub public routes.
- * Tokens live on Better Auth `account` (OAuth) — not on this table.
+ * Per-tenant GitHub display config (`userId` + username).
+ * Tokens live on Better Auth `account` (OAuth) for that user — not here.
+ * Do not add global “first row” lookups; always scope by `userId`.
  */
 export const githubConfigRepository = {
-  async findPublicGithubSourceSettings() {
-    const [settings] = await getDb()
-      .select()
-      .from(githubConfig)
-      .where(isNotNull(githubConfig.githubUsername))
-      .orderBy(desc(githubConfig.updatedAt))
-      .limit(1);
-
-    if (settings) return settings;
-
-    // Fall back to any row (owner may only have userId until username is synced).
-    const [anyRow] = await getDb()
-      .select()
-      .from(githubConfig)
-      .orderBy(desc(githubConfig.updatedAt))
-      .limit(1);
-
-    return anyRow ?? null;
-  },
-
   async findByUserId(userId: string) {
     return getDb().query.githubConfig.findFirst({
       where: { userId }

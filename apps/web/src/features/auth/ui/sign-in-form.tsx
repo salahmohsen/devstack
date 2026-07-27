@@ -52,12 +52,17 @@ function createOAuthErrorCallbackUrl(redirectTo?: string): string {
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   account_not_linked:
     "This GitHub account is not linked to an existing user. Sign in with email first, or use the GitHub account that matches your registered email.",
+  // Legacy code from single-owner era; treat as invite-required if still returned.
   REGISTRATION_CLOSED:
     "Registration requires a valid invite. Ask an existing user for an invite code.",
   registration_closed:
     "Registration requires a valid invite. Ask an existing user for an invite code.",
   INVITE_INVALID: "That invite code is invalid or already used.",
   invite_invalid: "That invite code is invalid or already used.",
+  INVITE_REQUIRED: "Registration requires a valid invite. Ask an existing user for an invite code.",
+  invite_required: "Registration requires a valid invite. Ask an existing user for an invite code.",
+  PROFILE_NAME_TAKEN: "That profile name is already taken. Choose another.",
+  profile_name_taken: "That profile name is already taken. Choose another.",
   email_not_found:
     "GitHub did not return an email address. Make sure your GitHub email is public or verified.",
   unable_to_create_user: "Could not create a session for this GitHub account.",

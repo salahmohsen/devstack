@@ -1,5 +1,7 @@
 # Multi-User Tenancy Restructure Implementation Plan
 
+> **Status:** Core phases (A–E) implemented on `feat/multi-user-tenancy`. Remaining checkboxes are historical task tracking; prefer live code + [CONTEXT.md](../../../CONTEXT.md) + `.agents/*` over this plan for current conventions.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Convert the single-portfolio app into invite-gated multi-user tenancy (`userId` on all domain rows), public portfolios at `/{profileName}`, optional verified custom domains (Host → portfolio at `/`), free OSS / BYO AI+Resend posture — no Seeker CRM, billing, or TLS automation in this epic.

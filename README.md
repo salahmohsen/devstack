@@ -18,6 +18,8 @@ See [CONTEXT.md](./CONTEXT.md) for product glossary terms (profile name, invite,
 | **Registration**              | First user bootstraps an empty DB; further signups need an **invite** |
 | **Public portfolio (path)**   | `/{profileName}/…` on the primary app host                            |
 | **Public portfolio (domain)** | Optional **verified custom domain** → that user’s portfolio at `/`    |
+| **Public GitHub (path)**      | `/{profileName}/repos` on the primary app host                        |
+| **Public GitHub (domain)**    | `/repos` on a verified custom domain Host                             |
 | **Dashboard / auth**          | Always on the **primary app host** (`VITE_WEB_URL`)                   |
 | **Tenancy**                   | Every private domain row is scoped by **`userId`**                    |
 

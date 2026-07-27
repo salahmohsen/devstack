@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-27  
 **Updated:** 2026-07-27 (custom domains in plan; free OSS / community; no SaaS business)  
-**Status:** Agreed product direction — ready to implement in phased PRs  
+**Status:** **Implemented** on `feat/multi-user-tenancy` (Phases A–E). Historical “current state / single-owner” sections below describe the pre-restructure app for context. Seeker CRM and marketplace remain out of scope.  
 **Goal:** Convert the single-portfolio app into a multi-user, invite-gated, open-source career OS foundation with public profiles at `/{profileName}/…` **and** optional **custom domains** (dashboard domain settings → Host routes to that user’s portfolio at `/`), without shipping Seeker CRM, marketplace, billing, or outbound apply mail in this epic.
 
 ---

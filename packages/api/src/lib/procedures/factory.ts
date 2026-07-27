@@ -57,7 +57,7 @@ export const ownerProcedure = publicProcedure
   .use(requireOwner)
   .errors({
     FORBIDDEN: {
-      message: "Only the GitHub owner can access this procedure",
+      message: "Link a GitHub account to access this procedure",
       status: 403
     }
   })

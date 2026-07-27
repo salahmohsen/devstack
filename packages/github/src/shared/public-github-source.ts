@@ -64,17 +64,6 @@ export async function resolvePublicGitHubSourceForUser(
   return promise;
 }
 
-/**
- * @deprecated Global single-owner resolution. Always returns not configured.
- * Use {@link resolvePublicGitHubSourceForUser} with a tenant `userId`.
- */
-export async function resolvePublicGitHubSource(): Promise<PublicGitHubSource> {
-  return {
-    isConfigured: false,
-    reason: "missing_github_configuration"
-  };
-}
-
 /** Drop cache (e.g. after sign-in / config change). */
 export function invalidatePublicGitHubSourceCache(userId?: string): void {
   if (userId) {

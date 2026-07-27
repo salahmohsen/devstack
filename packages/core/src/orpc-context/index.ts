@@ -17,25 +17,28 @@
  * The `github` sub-object carries two Octokits so callers can pick the right
  * one for the auth level they need:
  *
- * - `publicOctokit` is the **portfolio owner's** server-side OAuth token
- *   (Better Auth GitHub account + refresh). Used for public homepage/repo
- *   routes so rate limits are reasonable. The token never leaves the server.
- * - `privateOctokit` is the **signed-in user's** OAuth token when present,
- *   otherwise the same owner OAuth source. Used for private repo reads
+ * - `publicOctokit` defaults to the **session user's** OAuth source when
+ *   signed in. Public portfolio/repo RPCs re-scope via
+ *   `withPublicGitHubContext` / `resolvePublicGitHubSourceForUser(tenantUserId)`
+ *   so each path/Host portfolio uses **that tenant's** token — never a global
+ *   first account. The token never leaves the server.
+ * - `privateOctokit` is the **signed-in user's** live OAuth token when present,
+ *   else their cached/refreshed source. Used for private repo reads
  *   (detect-stacks, dashboard tools).
  *
  * # Token safety
  *
- * Tokens live only in Better Auth `account` rows and in-memory Octokit
- * instances. They must never be returned by any handler or appear in any
- * response shape. Visitors only receive already-fetched public data.
+ * Tokens live only in Better Auth `account` rows (per user) and in-memory
+ * Octokit instances. They must never be returned by any handler or appear in
+ * any response shape. Visitors only receive already-fetched public data.
  */
 
 import { type Octokit } from "octokit";
 
+/** `owner` is the GitHub login, not an app role. `userId` is the app tenant. */
 export type OrpcContextGithubSource =
   | { isConfigured: false; reason: "missing_github_configuration" }
-  | { isConfigured: true; owner: string; token: string };
+  | { isConfigured: true; owner: string; token: string; userId?: string };
 
 export type OrpcContextGithubBinding = {
   kv?: {

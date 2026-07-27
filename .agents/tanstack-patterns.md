@@ -42,17 +42,26 @@ segment-name/
 
 ### Route Hierarchy
 
-- `(github-layout)/` — Navbar + Footer wrapper for public marketing pages and the guest auth surface (`(guest)/sign-in`, `(guest)/create-an-account`)
-- `(guest)/` — Pathless layout nested under `(github-layout)/`; marks `sign-in` and `sign-in/create-an-account` as guest-only so `validateNavigateTo` can filter them out
-- `__protected/` — Auth guard + Suspense boundary (sits directly under root, NOT inside `(github-layout)/`, so dashboard does not inherit navbar/footer)
-- Dashboard has its own sidebar layout via `__protected/dashboard/route.tsx`
+Under `apps/web/src/routes/(root-layout)/`:
+
+| Segment               | Role                                                                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `(guest)/`            | Pathless guest-only shell for `sign-in` and `sign-in/create-an-account`                                                           |
+| `__protected/`        | Auth guard + Suspense; dashboard sidebar via `__protected/dashboard/route.tsx` (no public navbar/footer)                          |
+| `$profileName/`       | Public path portfolio for a tenant (`/{profileName}/…`)                                                                           |
+| `$profileName/repos/` | Public GitHub repos for that profile                                                                                              |
+| `repos/`              | Custom-domain-only public GitHub hub (`/repos` on verified Host); on primary app host this redirects away from a global owner hub |
+| Marketing / legal     | e.g. privacy, terms — public layout                                                                                               |
+
+There is **no** `{-$locale}` route segment in this app today. Prefer profile-aware helpers (e.g. `useRepoRouteLinks`) when the same UI must work under `/{profileName}/repos` and Host-scoped `/repos`.
 
 ### Adding a Route
 
 1. Create page component in `pages/<name>/ui/<name>-page.tsx`, export via `pages/<name>/index.ts`
-2. Create route in `routes/{-$locale}/(layout-group)/<name>/index.tsx`
+2. Create route under `routes/(root-layout)/…` (or the appropriate layout group)
 3. Route file imports the page component and wires `beforeLoad` with React Query preloading
 4. Keep route files thin: route metadata, guards, preloading, and component wiring only
+5. Public portfolio/GitHub routes: resolve tenant via `profileName` and/or Host — never a global site owner
 
 ## Route Files Stay Thin
 

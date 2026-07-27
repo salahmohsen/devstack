@@ -53,26 +53,6 @@ export const betterAuthAccountRepository = {
     return rows[0] ?? null;
   },
 
-  /** Portfolio owner: first GitHub-linked account (single-user portfolio). */
-  async findAnyGitHubAccount(): Promise<GitHubAccountTokens | null> {
-    const rows = await getDb()
-      .select({
-        id: account.id,
-        userId: account.userId,
-        accountId: account.accountId,
-        accessToken: account.accessToken,
-        refreshToken: account.refreshToken,
-        accessTokenExpiresAt: account.accessTokenExpiresAt,
-        refreshTokenExpiresAt: account.refreshTokenExpiresAt,
-        scope: account.scope
-      })
-      .from(account)
-      .where(eq(account.providerId, "github"))
-      .limit(1);
-
-    return rows[0] ?? null;
-  },
-
   async updateGitHubTokens(
     accountRowId: string,
     tokens: {
