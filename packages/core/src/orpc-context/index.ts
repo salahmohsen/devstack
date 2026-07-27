@@ -88,4 +88,9 @@ export type OrpcContext = {
   session: OrpcContextSession;
   mediaBucket: OrpcContextMediaBucket;
   agentWorker?: OrpcContextAgentWorker;
+  /**
+   * Request Host (normalized when available). Used for custom-domain public
+   * portfolio resolution. Prefer `x-forwarded-host` only behind a trusted proxy.
+   */
+  host?: string | null;
 };

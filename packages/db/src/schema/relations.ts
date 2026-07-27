@@ -119,6 +119,12 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         from: r.profileSlugAlias.userId,
         to: r.user.id
       })
+    },
+    userCustomDomain: {
+      user: r.one.user({
+        from: r.userCustomDomain.userId,
+        to: r.user.id
+      })
     }
   };
 });

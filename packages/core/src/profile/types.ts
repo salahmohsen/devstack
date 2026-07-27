@@ -100,12 +100,18 @@ export const RenameProfileInputSchema = z.object({
 
 export type RenameProfileInput = z.infer<typeof RenameProfileInputSchema>;
 
-/** Public procedures that scope data to a profile path segment. */
+/**
+ * Public procedures that scope data to a profile path segment and/or verified Host.
+ * When `profileName` is omitted, the request Host (verified custom domain) must resolve.
+ */
 export const PublicProfileNameInputSchema = z.object({
   profileName: z
     .string()
     .min(1)
-    .describe("Public profile path key (user.profileName or a slug alias)")
+    .optional()
+    .describe(
+      "Public profile path key (user.profileName or a slug alias). Optional when Host is a verified custom domain."
+    )
 });
 
 export type PublicProfileNameInput = z.infer<typeof PublicProfileNameInputSchema>;

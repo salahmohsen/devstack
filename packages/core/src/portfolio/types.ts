@@ -44,7 +44,10 @@ export const PortfolioListInputSchema = z.object({
   profileName: z
     .string()
     .min(1)
-    .describe("Public profile path key (user.profileName or a slug alias)"),
+    .optional()
+    .describe(
+      "Public profile path key (user.profileName or a slug alias). Optional when Host is a verified custom domain."
+    ),
   filter: z.string().optional().describe("RSQL filter string, e.g. `type==experience;year>=2024`"),
   paginated: z.boolean().optional().default(false).describe("Enable cursor-based pagination"),
   cursor: z.string().optional().describe("Cursor from previous response (opaque)"),

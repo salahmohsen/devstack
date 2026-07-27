@@ -1,4 +1,5 @@
 export * from "#@/common/index";
+export * from "#@/domain/index";
 export * from "#@/experience/index";
 export * from "#@/github-config/index";
 export * from "#@/health/index";
