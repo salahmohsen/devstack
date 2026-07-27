@@ -10,7 +10,6 @@ import {
 import { getDb } from "../index.ts";
 import { contact } from "../schema/contact.schema.ts";
 import { portfolioEntry } from "../schema/portfolio-entry.schema.ts";
-import { type ContactSchemaSelect } from "../types/contact.schema.ts";
 
 export type ContactEntity = InferSelectModel<typeof contact>;
 
@@ -38,10 +37,6 @@ export const contactRepository = {
           ? and(eq(contact.userId, userId), isNotNull(contact.portfolioEntryId), extraWhere)
           : and(eq(contact.userId, userId), isNotNull(contact.portfolioEntryId))
       );
-  },
-
-  async getAdminContact(): Promise<ContactSchemaSelect[]> {
-    return await getDb().query.contact.findMany();
   },
 
   /**
@@ -98,7 +93,7 @@ export const contactRepository = {
         if (!row) continue;
 
         const existing = await tx.query.portfolioEntry.findFirst({
-          where: { type: "contact", entityId: row.id }
+          where: { userId, type: "contact", entityId: row.id }
         });
 
         if (item.includedInPortfolio) {
@@ -106,6 +101,7 @@ export const contactRepository = {
             const pid = crypto.randomUUID();
             await tx.insert(portfolioEntry).values({
               id: pid,
+              userId,
               type: "contact",
               entityId: row.id
             });
@@ -119,7 +115,13 @@ export const contactRepository = {
         } else if (existing) {
           await tx
             .delete(portfolioEntry)
-            .where(and(eq(portfolioEntry.type, "contact"), eq(portfolioEntry.entityId, row.id)));
+            .where(
+              and(
+                eq(portfolioEntry.userId, userId),
+                eq(portfolioEntry.type, "contact"),
+                eq(portfolioEntry.entityId, row.id)
+              )
+            );
           if (row.portfolioEntryId !== null) {
             await tx.update(contact).set({ portfolioEntryId: null }).where(eq(contact.id, row.id));
           }

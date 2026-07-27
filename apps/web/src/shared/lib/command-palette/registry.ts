@@ -49,7 +49,7 @@ registerCommands([
     icon: ArchiveIcon,
     keywords: ["repos", "code"],
     shortcut: ["G", "O"],
-    action: { type: "navigate", to: "/repos" }
+    action: { type: "navigate", to: "/$profileName/repos" }
   },
   {
     id: "admin:projects",

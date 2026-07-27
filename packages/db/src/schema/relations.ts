@@ -21,6 +21,10 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       })
     },
     experience: {
+      user: r.one.user({
+        from: r.experience.userId,
+        to: r.user.id
+      }),
       projects: r.many.project({
         from: r.experience.id,
         to: r.project.experienceId
@@ -30,9 +34,23 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         to: r.portfolioEntry.id
       })
     },
-    portfolioEntry: {},
-    resume: {},
+    portfolioEntry: {
+      user: r.one.user({
+        from: r.portfolioEntry.userId,
+        to: r.user.id
+      })
+    },
+    resume: {
+      user: r.one.user({
+        from: r.resume.userId,
+        to: r.user.id
+      })
+    },
     project: {
+      user: r.one.user({
+        from: r.project.userId,
+        to: r.user.id
+      }),
       experience: r.one.experience({
         from: r.project.experienceId,
         to: r.experience.id
@@ -57,6 +75,10 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       })
     },
     stack: {
+      user: r.one.user({
+        from: r.stack.userId,
+        to: r.user.id
+      }),
       projects: r.many.projectStack({
         from: r.stack.id,
         to: r.projectStack.stackId
@@ -80,6 +102,28 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       project: r.one.project({
         from: r.projectStackScan.projectId,
         to: r.project.id
+      })
+    },
+    invite: {
+      createdBy: r.one.user({
+        from: r.invite.createdByUserId,
+        to: r.user.id
+      }),
+      usedBy: r.one.user({
+        from: r.invite.usedByUserId,
+        to: r.user.id
+      })
+    },
+    profileSlugAlias: {
+      user: r.one.user({
+        from: r.profileSlugAlias.userId,
+        to: r.user.id
+      })
+    },
+    userCustomDomain: {
+      user: r.one.user({
+        from: r.userCustomDomain.userId,
+        to: r.user.id
       })
     }
   };

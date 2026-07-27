@@ -19,8 +19,8 @@ Use `@tsu-stack/seo` for TanStack Start route `head()` objects.
 ## Route Pattern
 
 - Use route `head()` for page SEO, following TanStack Start docs.
-- Pass a route-relative `canonicalPath` such as `"/articles"` or `` `/profile/${params.id}` ``.
-- Pass `locale` from route params when building alternates.
+- Pass a route-relative `canonicalPath` such as `"/articles"` or `` `/${params.profileName}` `` (path portfolio) or `/` on a custom-domain Host portfolio.
+- Pass `locale` only when the app actually has locale route params; this app currently has no `{-$locale}` segment.
 - Use `loaderData` for dynamic titles, descriptions, and images.
 - Use `robots: { index: false, follow: false }` for dashboards, auth pages, editors, and internal search pages.
 

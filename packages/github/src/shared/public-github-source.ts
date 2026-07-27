@@ -10,6 +10,7 @@ export type PublicGitHubSource =
       isConfigured: true;
       owner: string;
       token: string;
+      userId: string;
     };
 
 const GITHUB_TOKEN_ENDPOINT = "https://github.com/login/oauth/access_token";
@@ -22,53 +23,61 @@ const GITHUB_HTTP_TIMEOUT_MS = 5_000;
  */
 const SOURCE_CACHE_TTL_MS = 30_000;
 
-let cachedSource: { value: PublicGitHubSource; expiresAt: number } | null = null;
-let inflightSource: Promise<PublicGitHubSource> | null = null;
+const cachedByUserId = new Map<string, { value: PublicGitHubSource; expiresAt: number }>();
+const inflightByUserId = new Map<string, Promise<PublicGitHubSource>>();
 /** Serialize token refresh so concurrent requests don't stampede GitHub. */
 let inflightRefresh: Promise<string | null> | null = null;
 
 /**
- * Resolve the portfolio owner's GitHub credentials for **server-side** use.
+ * Resolve GitHub credentials for a **specific app user** (tenant).
  *
  * Tokens come from Better Auth's GitHub `account` row (OAuth), with refresh
- * when expired. The classic PAT on `github_config` is no longer used.
+ * when expired. Never uses a global "first configured" owner.
  *
  * The token never leaves the server — public HTTP handlers only return
  * already-fetched public data shapes.
  */
-export async function resolvePublicGitHubSource(): Promise<PublicGitHubSource> {
+export async function resolvePublicGitHubSourceForUser(
+  userId: string
+): Promise<PublicGitHubSource> {
   const now = Date.now();
-  if (cachedSource && cachedSource.expiresAt > now) {
-    return cachedSource.value;
+  const cached = cachedByUserId.get(userId);
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
   }
 
-  if (inflightSource) {
-    return inflightSource;
+  const inflight = inflightByUserId.get(userId);
+  if (inflight) {
+    return inflight;
   }
 
-  inflightSource = resolvePublicGitHubSourceUncached()
+  const promise = resolvePublicGitHubSourceForUserUncached(userId)
     .then((value) => {
-      cachedSource = { value, expiresAt: Date.now() + SOURCE_CACHE_TTL_MS };
+      cachedByUserId.set(userId, { value, expiresAt: Date.now() + SOURCE_CACHE_TTL_MS });
       return value;
     })
     .finally(() => {
-      inflightSource = null;
+      inflightByUserId.delete(userId);
     });
 
-  return inflightSource;
+  inflightByUserId.set(userId, promise);
+  return promise;
 }
 
 /** Drop cache (e.g. after sign-in / config change). */
-export function invalidatePublicGitHubSourceCache(): void {
-  cachedSource = null;
+export function invalidatePublicGitHubSourceCache(userId?: string): void {
+  if (userId) {
+    cachedByUserId.delete(userId);
+    return;
+  }
+  cachedByUserId.clear();
 }
 
-async function resolvePublicGitHubSourceUncached(): Promise<PublicGitHubSource> {
-  const settings = await githubConfigRepository.findPublicGithubSourceSettings();
-  const githubAccount =
-    (settings?.userId
-      ? await betterAuthAccountRepository.findGitHubAccountForUser(settings.userId)
-      : null) ?? (await betterAuthAccountRepository.findAnyGitHubAccount());
+async function resolvePublicGitHubSourceForUserUncached(
+  userId: string
+): Promise<PublicGitHubSource> {
+  const settings = await githubConfigRepository.findByUserId(userId);
+  const githubAccount = await betterAuthAccountRepository.findGitHubAccountForUser(userId);
 
   if (!githubAccount?.accessToken && !githubAccount?.refreshToken) {
     return {
@@ -87,23 +96,28 @@ async function resolvePublicGitHubSourceUncached(): Promise<PublicGitHubSource> 
 
   const ownerFromConfig = settings?.githubUsername?.trim();
   // Prefer stored username — avoid a GitHub /user round-trip on every request.
-  // `??` short-circuits so fetchGitHubLogin only runs when config has no username.
   const owner =
     (ownerFromConfig && ownerFromConfig.length > 0 ? ownerFromConfig : null) ??
     (await fetchGitHubLogin(token)) ??
-    "owner";
+    null;
 
-  // Keep username in github_config for ownerProcedure identity without storing a PAT.
-  if (settings?.userId && owner && owner !== settings.githubUsername) {
-    await githubConfigRepository.upsertUsername(settings.userId, owner).catch(() => undefined);
-  } else if (!settings && githubAccount.userId && owner) {
-    await githubConfigRepository.upsertUsername(githubAccount.userId, owner).catch(() => undefined);
+  if (!owner) {
+    return {
+      isConfigured: false,
+      reason: "missing_github_configuration"
+    };
+  }
+
+  // Keep username in github_config for identity without storing a PAT.
+  if (owner !== settings?.githubUsername) {
+    await githubConfigRepository.upsertUsername(userId, owner).catch(() => undefined);
   }
 
   return {
     isConfigured: true,
     owner,
-    token
+    token,
+    userId
   };
 }
 
@@ -118,7 +132,6 @@ async function getValidAccessToken(
   const expiresAt = row.accessTokenExpiresAt ? new Date(row.accessTokenExpiresAt).getTime() : null;
 
   // Only refresh when we know the token is expired/near-expiry, or we have no access token.
-  // Do NOT treat `expiresAt == null` as "always refresh" — that stampeded GitHub on every RPC.
   const knownExpired = expiresAt != null && expiresAt - Date.now() < ACCESS_TOKEN_SKEW_MS;
   const needsRefresh = Boolean(refreshToken) && (!accessToken || knownExpired);
 

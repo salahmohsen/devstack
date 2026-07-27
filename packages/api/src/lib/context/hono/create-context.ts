@@ -4,7 +4,7 @@ import { auth } from "@tsu-stack/auth/index";
 import { type OrpcContextMediaBucket } from "@tsu-stack/core";
 import { createRedisCacheAdapter } from "@tsu-stack/github/infrastructure/cache/redis-cache-adapter";
 import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/client";
-import { resolvePublicGitHubSource } from "@tsu-stack/github/shared/public-github-source";
+import { resolvePublicGitHubSourceForUser } from "@tsu-stack/github/shared/public-github-source";
 import { type RequestLogger } from "@tsu-stack/logger/server";
 
 import { createAgentWorker } from "#@/lib/agent/worker";
@@ -36,6 +36,19 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
 }): Promise<OrpcContext> {
   const headers = context.req.raw.headers;
 
+  // Host for custom-domain public portfolio resolution.
+  // Prefer x-forwarded-host only when a trusted reverse proxy sets it (documented
+  // operator note). Fall back to Host. Strip port for storage-compatible form.
+  const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim() ?? "";
+  const requestHost = headers.get("host")?.trim() ?? "";
+  const rawHost =
+    forwardedHost.length > 0 ? forwardedHost : requestHost.length > 0 ? requestHost : null;
+  const host = rawHost
+    ? rawHost.includes(":") && !rawHost.startsWith("[")
+      ? (rawHost.split(":")[0] ?? rawHost)
+      : rawHost
+    : null;
+
   // Session lookup must not take down public RPCs when the pool is briefly wedged.
   // Protected procedures still fail closed via their own session checks.
   let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
@@ -47,26 +60,16 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
     session = null;
   }
 
-  // Portfolio owner credentials (OAuth + refresh) for public routes & fallbacks.
-  // Token never leaves the server.
-  let githubSource: Awaited<ReturnType<typeof resolvePublicGitHubSource>> = {
+  /**
+   * Per-tenant GitHub: only resolve credentials for the **session user**.
+   * Public portfolio GitHub is scoped per profileName in github.router
+   * via `resolvePublicGitHubSourceForUser` — never a global "first owner".
+   */
+  let sessionOAuthToken: string | null = null;
+  let sessionUserSource: Awaited<ReturnType<typeof resolvePublicGitHubSourceForUser>> = {
     isConfigured: false,
     reason: "missing_github_configuration"
   };
-  try {
-    githubSource = await resolvePublicGitHubSource();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    logger.error(`resolvePublicGitHubSource failed: ${message}`);
-  }
-
-  /**
-   * When the portfolio owner is signed in, prefer a request-scoped
-   * getAccessToken (refreshes via Better Auth). Otherwise use the
-   * owner OAuth source resolved above for public/anonymous requests.
-   */
-  let sessionOAuthToken: string | null = null;
-  let oauthRefreshFailed = false;
 
   if (session?.user?.id) {
     try {
@@ -76,39 +79,42 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
       });
       sessionOAuthToken = tokens.accessToken ?? null;
     } catch {
-      oauthRefreshFailed = true;
+      // Session may lack GitHub link; private GitHub RPCs fail closed.
+    }
+
+    try {
+      sessionUserSource = await resolvePublicGitHubSourceForUser(session.user.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`resolvePublicGitHubSourceForUser failed: ${message}`);
     }
   }
 
-  type ConfiguredSource = {
-    isConfigured: true;
-    owner: string;
-    token: string;
-  };
+  type ConfiguredSource = Extract<
+    Awaited<ReturnType<typeof resolvePublicGitHubSourceForUser>>,
+    { isConfigured: true }
+  >;
 
-  const ownerSource: ConfiguredSource | undefined = githubSource.isConfigured
-    ? { isConfigured: true, owner: githubSource.owner, token: githubSource.token }
+  const sessionConfigured: ConfiguredSource | undefined = sessionUserSource.isConfigured
+    ? sessionUserSource
     : undefined;
 
-  const privateSource: ConfiguredSource | undefined = sessionOAuthToken
-    ? {
-        isConfigured: true,
-        owner: ownerSource?.owner ?? "oauth-user",
-        token: sessionOAuthToken
-      }
-    : ownerSource;
+  // Private: prefer live session OAuth token; fall back to cached refresh path source.
+  const privateSource: ConfiguredSource | undefined =
+    sessionOAuthToken && session?.user?.id
+      ? {
+          isConfigured: true,
+          owner: sessionConfigured?.owner ?? "oauth-user",
+          token: sessionOAuthToken,
+          userId: session.user.id
+        }
+      : sessionConfigured;
 
-  if (session?.user?.id) {
-    // eslint-disable-next-line no-console
-    console.log("[create-context] github token source:", {
-      userId: session.user.id,
-      usedSessionOAuth: Boolean(sessionOAuthToken),
-      usedOwnerOAuth: !sessionOAuthToken && Boolean(ownerSource),
-      noTokenAtAll: !sessionOAuthToken && !ownerSource,
-      oauthRefreshFailed,
-      owner: ownerSource?.owner ?? null
-    });
-  }
+  // Anonymous public octokit has no global tenant — handlers inject per-user source.
+  const unconfigured: Awaited<ReturnType<typeof resolvePublicGitHubSourceForUser>> = {
+    isConfigured: false,
+    reason: "missing_github_configuration"
+  };
 
   return {
     github: {
@@ -116,16 +122,14 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
         kv: createRedisCacheAdapter(runtime.redis),
         broadcast: runtime.broadcastSignals
       },
-      // Authenticated private reads: session OAuth → owner OAuth.
       privateOctokit: createGitHubOctokit(privateSource),
-      // Public routes: owner OAuth on the server only (never sent to client).
-      // Raises rate limits vs anonymous while keeping secrets server-side.
-      publicOctokit: createGitHubOctokit(ownerSource),
-      source: privateSource ?? githubSource
+      publicOctokit: createGitHubOctokit(sessionConfigured),
+      source: privateSource ?? unconfigured
     },
     logger,
     session,
     mediaBucket: runtime.files,
-    agentWorker: createAgentWorker({ AGENT_WORKER_URL: runtime.agentWorkerUrl })
+    agentWorker: createAgentWorker({ AGENT_WORKER_URL: runtime.agentWorkerUrl }),
+    host
   };
 }

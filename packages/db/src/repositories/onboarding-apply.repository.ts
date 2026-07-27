@@ -237,8 +237,8 @@ export async function applyOnboardingDraft(
       }
     }
 
-    // 3. Selected stacks — case-insensitive name match; payload authoritative for description/type
-    const allStacks = await tx.select().from(stack);
+    // 3. Selected stacks — case-insensitive name match within this user only
+    const allStacks = await tx.select().from(stack).where(eq(stack.userId, userId));
     const stackIdByLowerName = new Map<string, string>();
     for (const row of allStacks) {
       stackIdByLowerName.set(row.name.toLowerCase(), row.id);
@@ -259,20 +259,24 @@ export async function applyOnboardingDraft(
             description: draftStack.description ?? null,
             type: draftStack.type ?? null
           })
-          .where(eq(stack.id, existingId));
+          .where(and(eq(stack.id, existingId), eq(stack.userId, userId)));
 
         if (includedInPortfolio) {
           const existingPe = await tx.query.portfolioEntry.findFirst({
-            where: { type: "stack", entityId: existingId }
+            where: { userId, type: "stack", entityId: existingId }
           });
           if (!existingPe) {
             const pid = crypto.randomUUID();
             await tx.insert(portfolioEntry).values({
               id: pid,
+              userId,
               type: "stack",
               entityId: existingId
             });
-            await tx.update(stack).set({ portfolioEntryId: pid }).where(eq(stack.id, existingId));
+            await tx
+              .update(stack)
+              .set({ portfolioEntryId: pid })
+              .where(and(eq(stack.id, existingId), eq(stack.userId, userId)));
           }
         }
 
@@ -285,6 +289,7 @@ export async function applyOnboardingDraft(
         if (pid) {
           await tx.insert(portfolioEntry).values({
             id: pid,
+            userId,
             type: "stack",
             entityId: id
           });
@@ -292,6 +297,7 @@ export async function applyOnboardingDraft(
 
         await tx.insert(stack).values({
           id,
+          userId,
           name,
           description: draftStack.description ?? null,
           icon: null,
@@ -319,12 +325,14 @@ export async function applyOnboardingDraft(
 
         await tx.insert(portfolioEntry).values({
           id: pid,
+          userId,
           type: "stack",
           entityId: id
         });
 
         await tx.insert(stack).values({
           id,
+          userId,
           name,
           description: null,
           icon: null,
@@ -338,12 +346,13 @@ export async function applyOnboardingDraft(
       }
     }
 
-    // 5. Selected experiences — sequential sortOrder from max+1; map clientId → real id
+    // 5. Selected experiences — sequential sortOrder from max+1 for this user
     const [expMaxRow] = await tx
       .select({
         max: sql<number>`coalesce(max(${experience.sortOrder}), -1)`.mapWith(Number)
       })
-      .from(experience);
+      .from(experience)
+      .where(eq(experience.userId, userId));
     let nextExperienceSort = (expMaxRow?.max ?? -1) + 1;
 
     const experienceIdByClientId = new Map<string, string>();
@@ -357,6 +366,7 @@ export async function applyOnboardingDraft(
       if (pid) {
         await tx.insert(portfolioEntry).values({
           id: pid,
+          userId,
           type: "experience",
           entityId: id
         });
@@ -364,6 +374,7 @@ export async function applyOnboardingDraft(
 
       await tx.insert(experience).values({
         id,
+        userId,
         title: exp.title,
         organization: exp.organization,
         description: exp.description ?? "",
@@ -384,7 +395,8 @@ export async function applyOnboardingDraft(
       .select({
         max: sql<number>`coalesce(max(${project.sortOrder}), -1)`.mapWith(Number)
       })
-      .from(project);
+      .from(project)
+      .where(eq(project.userId, userId));
     let nextProjectSort = (projMaxRow?.max ?? -1) + 1;
 
     for (const proj of selectedProjects) {
@@ -411,6 +423,7 @@ export async function applyOnboardingDraft(
       if (pid) {
         await tx.insert(portfolioEntry).values({
           id: pid,
+          userId,
           type: "project",
           entityId: id
         });
@@ -418,6 +431,7 @@ export async function applyOnboardingDraft(
 
       await tx.insert(project).values({
         id,
+        userId,
         logo: null,
         repos: [],
         demoUrl: null,

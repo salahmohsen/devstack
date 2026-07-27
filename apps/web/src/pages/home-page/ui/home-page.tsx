@@ -12,17 +12,11 @@ import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
-import { githubProfileTabs, resolveGithubProfileTab } from "@/shared/lib/profile-tabs";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
-import {
-  getGithubProfileReposQueryOptions,
-  useGetGithubProfileReposQuery,
-  useGetGithubSetupStatusQuery
-} from "@/features/github";
+import { getGithubProfileReposQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
 
 import { useGetGithubActivityQuery } from "@/pages/home-page/api/get-github-activity.query";
 import {
@@ -39,94 +33,78 @@ import {
   type GithubProfileQueryResult
 } from "@/pages/home-page/api/get-github-profile.query";
 import { Experience } from "@/pages/home-page/ui/experience-section";
-import { GithubProfileUnavailableState } from "@/pages/home-page/ui/github-setup-component";
 import { PinnedRepoCard } from "@/pages/home-page/ui/pinned-repo-card";
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
-export function HomePage() {
+/**
+ * Public portfolio home for a given profileName.
+ * Portfolio evidence (projects, experience) always renders.
+ * GitHub chrome is optional and only loads when **this profile** linked GitHub.
+ */
+export function HomePage({ profileName }: { profileName: string }) {
   const hasMounted = useIsClient();
   const location = useRouterState({
     select: (state) => state.location
   });
-  const setupStatusQuery = useGetGithubSetupStatusQuery();
-  const owner = setupStatusQuery.data?.owner ?? "salahnmohsen";
-  const currentSearch = new URLSearchParams(location.searchStr);
-  const activeTab = resolveGithubProfileTab(currentSearch.get("tab"));
-  const isRepositoriesTab = activeTab === githubProfileTabs.repositories;
-  const profileQuery = useGetGithubProfileQuery();
-  const contributionsQuery = useGetGithubContributionsQuery();
-  const admin = useAuth();
-  const isPrivate = !!admin.user;
+  const auth = useAuth();
+  const sessionProfileName =
+    typeof (auth.user as { profileName?: string } | null | undefined)?.profileName === "string"
+      ? (auth.user as { profileName: string }).profileName
+      : null;
+  /** Private GitHub APIs only when viewing your own portfolio while signed in. */
+  const isOwnProfile = Boolean(auth.user && sessionProfileName === profileName);
+  const isPrivate = isOwnProfile;
 
-  const pinnedReposQuery = useGetGithubPinnedReposQuery();
-  useGetGithubProfileReposQuery(isRepositoriesTab);
-  const activityQuery = useGetGithubActivityQuery(1);
+  const setupStatusQuery = useGetGithubSetupStatusQuery(profileName);
+  const githubReady = Boolean(setupStatusQuery.data?.isConfigured && setupStatusQuery.data?.owner);
+  const owner = setupStatusQuery.data?.owner ?? "";
+
+  const profileQuery = useGetGithubProfileQuery(profileName, isPrivate, githubReady);
+  const contributionsQuery = useGetGithubContributionsQuery(profileName, isPrivate, githubReady);
+  const pinnedReposQuery = useGetGithubPinnedReposQuery(profileName, isPrivate, githubReady);
+  useGetGithubActivityQuery(profileName, 1, isPrivate, githubReady);
+
   const signalTargets = useMemo(
     () =>
-      [
-        {
-          queryKey: getGithubProfileQueryOptions(isPrivate).queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerProfile(owner)]
-        },
-        {
-          queryKey: getGithubContributionsQueryOptions(isPrivate).queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerContributions(owner)]
-        },
-        {
-          queryKey: getGithubPinnedReposQueryOptions(isPrivate).queryKey,
-          signalKeys: [githubRevalidationSignalKeys.ownerPinnedRepos(owner)]
-        },
-        {
-          queryKey: getGithubProfileReposQueryOptions(isPrivate).queryKey,
-          signalKeys: [
-            isPrivate
-              ? githubRevalidationSignalKeys.PrivateOwnerRepos(owner)
-              : githubRevalidationSignalKeys.PublicOwnerRepos(owner)
-          ]
-        }
-      ] as const,
-    [owner, isPrivate]
+      githubReady && owner
+        ? ([
+            {
+              queryKey: getGithubProfileQueryOptions(profileName, isPrivate).queryKey,
+              signalKeys: [githubRevalidationSignalKeys.ownerProfile(owner)]
+            },
+            {
+              queryKey: getGithubContributionsQueryOptions(profileName, isPrivate).queryKey,
+              signalKeys: [githubRevalidationSignalKeys.ownerContributions(owner)]
+            },
+            {
+              queryKey: getGithubPinnedReposQueryOptions(profileName, isPrivate).queryKey,
+              signalKeys: [githubRevalidationSignalKeys.ownerPinnedRepos(owner)]
+            },
+            {
+              queryKey: getGithubProfileReposQueryOptions(profileName, isPrivate).queryKey,
+              signalKeys: [
+                isPrivate
+                  ? githubRevalidationSignalKeys.PrivateOwnerRepos(owner)
+                  : githubRevalidationSignalKeys.PublicOwnerRepos(owner)
+              ]
+            }
+          ] as const)
+        : [],
+    [githubReady, owner, profileName, isPrivate]
   );
   useGitHubSignalStream(signalTargets);
 
-  if (setupStatusQuery.isLoading && !setupStatusQuery.data) {
-    return <GithubProfileSkeleton />;
-  }
-
-  if (!setupStatusQuery.data?.isConfigured || !owner) {
-    return <GithubProfileUnavailableState />;
-  }
-
-  if (profileQuery.isLoading && !profileQuery.data) {
-    return <GithubProfileSkeleton />;
-  }
-
-  if (
-    profileQuery.isError ||
-    pinnedReposQuery.isError ||
-    contributionsQuery.isError ||
-    activityQuery.isError
-  ) {
-    return <GithubProfileUnavailableState />;
-  }
+  // Silence unused location for now (tabs were GitHub-centric; portfolio is default).
+  void location;
 
   const profile = profileQuery.data;
-  if (!profile) {
-    return <GithubProfileUnavailableState />;
-  }
+  const showGithubHero = githubReady && profile && !profileQuery.isError;
 
   return (
     <>
       <div className="w-full overflow-hidden pb-16">
         <div className="relative h-48 w-screen overflow-hidden sm:h-56">
-          {contributionsQuery.data && hasMounted ? (
-            // The `ContributionGraph` is a `lazy()` chunk, so it suspends on
-            // first render after hydration. The `<Suspense>` boundary lets the
-            // chunk resolve without tripping the root `errorComponent`; the
-            // fallback is the same gradient the `else` branch renders, so the
-            // first paint is identical to the current behaviour.
-            // `hasMounted` is still required: the graph uses `createPortal` to
-            // `document.body` and would crash during SSR.
+          {showGithubHero && contributionsQuery.data && hasMounted ? (
             <Suspense
               fallback={
                 <>
@@ -153,96 +131,95 @@ export function HomePage() {
         </div>
 
         <div className="relative mx-auto max-w-3xl space-y-5 px-6">
-          <div className="-mt-16 flex items-end justify-between sm:-mt-20">
-            <Avatar className="size-28 border sm:size-32">
-              <AvatarImage
-                alt={profile.login}
-                src={profile.avatarUrl}
-                fetchPriority="high"
-                width={128}
-                height={128}
-                sizes="(min-width: 640px) 128px, 112px"
-              />
-              <AvatarFallback>
-                {(profile.name ?? profile.login).charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-
-            {admin.user && !admin.isPending && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="mb-1 size-8 rounded-full hover:bg-white/5"
-                render={
-                  <a
-                    href="https://github.com/settings/profile"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Edit GitHub profile"
+          {showGithubHero ? (
+            <>
+              <div className="-mt-16 flex items-end justify-between sm:-mt-20">
+                <Avatar className="size-28 border sm:size-32">
+                  <AvatarImage
+                    alt={profile.login}
+                    src={profile.avatarUrl}
+                    fetchPriority="high"
+                    width={128}
+                    height={128}
+                    sizes="(min-width: 640px) 128px, 112px"
                   />
-                }
-                aria-label="Edit GitHub profile"
-              >
-                <Edit className="size-3.5" />
-              </Button>
-            )}
-          </div>
-          <div className="mx-auto flex max-w-3xl flex-col gap-3">
-            <div className="flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <h1 className="text-2xl font-semibold tracking-tight capitalize">
-                  {profile.name ?? profile.login}
-                </h1>
+                  <AvatarFallback>
+                    {(profile.name ?? profile.login).charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+
+                {isOwnProfile && !auth.isPending && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="mb-1 size-8 rounded-full hover:bg-white/5"
+                    render={
+                      <a
+                        href="https://github.com/settings/profile"
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="Edit GitHub profile"
+                      />
+                    }
+                    aria-label="Edit GitHub profile"
+                  >
+                    <Edit className="size-3.5" />
+                  </Button>
+                )}
               </div>
+              <div className="mx-auto flex max-w-3xl flex-col gap-3">
+                <div className="flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <h1 className="text-2xl font-semibold tracking-tight capitalize">
+                      {profile.name ?? profile.login}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">@{profileName}</p>
+                  </div>
+                </div>
+              </div>
+
+              {profile.bio ? (
+                <p className="max-w-lg text-sm leading-relaxed text-primary/80">{profile.bio}</p>
+              ) : null}
+
+              <ProfileMetadata profile={profile} />
+
+              {(pinnedReposQuery.data ?? []).length > 0 ? (
+                <section className="flex flex-col gap-2 pt-6">
+                  <h2 className="text-sm font-medium text-muted-foreground">Pinned</h2>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {(pinnedReposQuery.data ?? []).map((repo) => (
+                      <PinnedRepoCard
+                        key={`${repo.owner}/${repo.name}`}
+                        profileName={profileName}
+                        repo={repo}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </>
+          ) : (
+            <div className="-mt-8 space-y-2 sm:-mt-10">
+              <h1 className="text-2xl font-semibold tracking-tight">@{profileName}</h1>
+              <p className="text-sm text-muted-foreground">Portfolio</p>
             </div>
-          </div>
-
-          {profile.bio ? (
-            <p className="max-w-lg text-sm leading-relaxed text-primary/80">{profile.bio}</p>
-          ) : null}
-
-          <ProfileMetadata profile={profile} />
+          )}
 
           <div className="mx-auto max-w-3xl">
-            {(pinnedReposQuery.data ?? []).length > 0 ? (
-              <section className="flex flex-col gap-2 pt-6">
-                <h2 className="text-sm font-medium text-muted-foreground">Pinned</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {(pinnedReposQuery.data ?? []).map((repo) => (
-                    <PinnedRepoCard key={`${repo.owner}/${repo.name}`} repo={repo} />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
             <section id="projects" className="flex flex-col gap-2 pt-16">
               <h2 className="mb-10 text-sm font-medium text-muted-foreground">Projects</h2>
-              <ProjectsSection />
+              <ProjectsSection profileName={profileName} />
             </section>
 
             <section id="experience" className="flex flex-col gap-2 pt-16">
               <h2 className="mb-10 text-sm font-medium text-muted-foreground">Experience</h2>
-              <Experience />
+              <Experience profileName={profileName} />
             </section>
           </div>
         </div>
       </div>
     </>
-  );
-}
-
-function GithubProfileSkeleton() {
-  return (
-    <div className="w-full overflow-hidden pb-16">
-      <div className="h-48 sm:h-56" />
-      <div className="relative mx-auto max-w-3xl px-6">
-        <div className="-mt-16 flex items-end justify-between sm:-mt-20">
-          <Skeleton className="size-28 rounded-full border-4 border-background sm:size-32" />
-          <Skeleton className="mb-1 size-8 rounded-full" />
-        </div>
-        <ProfileSkeleton />
-      </div>
-    </div>
   );
 }
 
@@ -259,11 +236,6 @@ function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryR
   if (profile.location) {
     items.push({ icon: MapPin, label: profile.location });
   }
-  // if (profile.blog) {
-  //   const href = profile.blog.startsWith("http") ? profile.blog : `https://${profile.blog}`;
-  //   const displayUrl = profile.blog.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  //   items.push({ icon: ExternalLink, label: displayUrl, href });
-  // }
   if (profile.twitterUsername) {
     items.push({
       icon: ExternalLink,
@@ -302,27 +274,6 @@ function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryR
 
         return <span key={item.label}>{content}</span>;
       })}
-    </div>
-  );
-}
-
-function ProfileSkeleton() {
-  return (
-    <div className="mx-auto mt-3 flex max-w-3xl flex-col gap-3 pb-8">
-      <div className="flex flex-col gap-1.5">
-        <Skeleton className="h-7 w-48" />
-        <Skeleton className="h-5 w-32" />
-      </div>
-      <Skeleton className="h-4 w-72" />
-      <div className="flex items-center gap-3">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-28" />
-      </div>
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-20" />
-      </div>
     </div>
   );
 }

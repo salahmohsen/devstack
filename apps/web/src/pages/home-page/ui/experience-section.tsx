@@ -1,9 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ExperiencePublicOutput } from "@tsu-stack/core";
 
-import { useGetPortfolioListQuery } from "@/features/portfolio";
+import { useGetDefaultResumeQuery, useGetPortfolioListQuery } from "@/features/portfolio";
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -25,9 +22,9 @@ function formatDuration(
   return from ? `${from} — ${to}` : to;
 }
 
-export const Experience = () => {
-  const portfolioQuery = useGetPortfolioListQuery();
-  const defaultResumeQuery = useQuery(orpcQueryClient.resume.getDefault.queryOptions());
+export const Experience = ({ profileName }: { profileName: string }) => {
+  const portfolioQuery = useGetPortfolioListQuery(profileName);
+  const defaultResumeQuery = useGetDefaultResumeQuery(profileName);
   const experiences = portfolioQuery.data?.experiences ?? [];
   const defaultResume = defaultResumeQuery.data;
 
@@ -41,7 +38,7 @@ export const Experience = () => {
       {defaultResume && (
         <div className="mt-10 flex gap-1">
           <a
-            href={`/api/resume/download/?id=${defaultResume.id}`}
+            href={`/api/resume/download/?id=${defaultResume.id}&profileName=${encodeURIComponent(profileName)}`}
             target="_blank"
             rel="noreferrer noopener"
             className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-accent"

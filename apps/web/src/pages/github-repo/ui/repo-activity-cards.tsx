@@ -43,36 +43,50 @@ import { REPO_ACTIVITY_CARDS_PER_PAGE } from "@/pages/github-repo/api/repo-activ
 
 export function RepoActivityCards({
   owner,
+  profileName,
   repo,
   repoData
 }: {
   owner: string;
+  profileName: string;
   repo: string;
   repoData: RepoOverview;
 }) {
-  const pullsQuery = useGetGithubRepoPullsQuery({
-    repo,
-    perPage: REPO_ACTIVITY_CARDS_PER_PAGE,
-    sort: "updated",
-    state: "open"
-  });
+  const pullsQuery = useGetGithubRepoPullsQuery(
+    {
+      repo,
+      perPage: REPO_ACTIVITY_CARDS_PER_PAGE,
+      sort: "updated",
+      state: "open"
+    },
+    profileName
+  );
 
-  const issuesQuery = useGetGithubRepoIssuesQuery({
-    repo,
-    perPage: REPO_ACTIVITY_CARDS_PER_PAGE,
-    sort: "updated",
-    state: "open"
-  });
+  const issuesQuery = useGetGithubRepoIssuesQuery(
+    {
+      repo,
+      perPage: REPO_ACTIVITY_CARDS_PER_PAGE,
+      sort: "updated",
+      state: "open"
+    },
+    profileName
+  );
 
-  const runsQuery = useGetGithubRepoWorkflowRunsQuery({
-    repo,
-    perPage: REPO_ACTIVITY_CARDS_PER_PAGE
-  });
+  const runsQuery = useGetGithubRepoWorkflowRunsQuery(
+    {
+      repo,
+      perPage: REPO_ACTIVITY_CARDS_PER_PAGE
+    },
+    profileName
+  );
 
-  const discussionsQuery = useGetGithubRepoDiscussionsQuery({
-    first: REPO_ACTIVITY_CARDS_PER_PAGE,
-    repo
-  });
+  const discussionsQuery = useGetGithubRepoDiscussionsQuery(
+    {
+      first: REPO_ACTIVITY_CARDS_PER_PAGE,
+      repo
+    },
+    profileName
+  );
 
   const discussions = discussionsQuery.data?.discussions;
   const discussionCount = discussionsQuery.data?.totalCount;

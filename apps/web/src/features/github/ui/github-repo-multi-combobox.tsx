@@ -35,8 +35,11 @@ function GitHubRepoMultiCombobox(props: GitHubRepoMultiComboboxProps) {
   const { user } = useAuthSuspense();
   const [open, setOpen] = useState(false);
 
-  const isPrivate = !!user;
-  const reposQuery = useQuery(getGithubProfileReposQueryOptions(isPrivate));
+  const profileName =
+    typeof (user as { profileName?: string }).profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : "me";
+  const reposQuery = useQuery(getGithubProfileReposQueryOptions(profileName, true));
   const repos: GitHubUserRepoSummary[] = reposQuery.data ?? [];
   const isLoading = reposQuery.isLoading;
 

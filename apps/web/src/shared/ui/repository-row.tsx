@@ -49,10 +49,12 @@ function VisibilityBadge({ visibility }: { visibility: GitHubUserRepoSummary["vi
 export const RepositoryRow = memo(function RepositoryRow({
   repo,
   isAdmin,
+  profileName,
   ...props
 }: React.ComponentProps<"div"> & {
   repo: GitHubUserRepoSummary;
   isAdmin: boolean;
+  profileName: string;
 }) {
   const metaEntries: { key: string; node: ReactNode }[] = [];
   if (repo.language) {
@@ -104,8 +106,8 @@ export const RepositoryRow = memo(function RepositoryRow({
     <Card
       render={
         <Link
-          to="/repos/$repo"
-          params={{ repo: repo.name }}
+          to="/$profileName/repos/$repo"
+          params={{ profileName, repo: repo.name }}
           className="grid w-full grid-cols-1 items-center gap-x-4 gap-y-2 px-4 py-3 transition-all duration-200 hover:scale-99 hover:shadow-none md:grid-cols-[minmax(10rem,22%)_minmax(0,1fr)_minmax(10rem,auto)_11rem] md:gap-y-1"
         >
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -140,7 +142,7 @@ export const RepositoryRow = memo(function RepositoryRow({
               <span className="text-xs text-muted-foreground/40">-</span>
             </div>
           )}
-          <LazyRepoCommitSparkline repo={repo.name} />
+          <LazyRepoCommitSparkline profileName={profileName} repo={repo.name} />
         </Link>
       }
       {...props}

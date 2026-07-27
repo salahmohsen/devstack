@@ -8,6 +8,7 @@ import { z } from "zod";
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
+import { ProfileNameSchema } from "@tsu-stack/core";
 import { FieldDescription, FieldGroup, FieldSeparator } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -18,31 +19,65 @@ import { LogoIcon } from "@/shared/ui/logo";
 
 import { appConfig } from "@/config/app.config";
 
+const SIGNUP_ERROR_MESSAGES: Record<string, string> = {
+  INVITE_REQUIRED: "An invite code is required to create an account.",
+  INVITE_INVALID: "This invite code is invalid or has already been used.",
+  PROFILE_NAME_TAKEN: "That profile name is already taken. Try another.",
+  PROFILE_NAME_INVALID:
+    "Invalid profile name. Use 3–30 lowercase letters, numbers, and single hyphens."
+};
+
+function messageForSignUpError(error: { code?: string | null; message?: string | null }): string {
+  const code = error.code?.trim();
+  if (code && SIGNUP_ERROR_MESSAGES[code]) {
+    return SIGNUP_ERROR_MESSAGES[code];
+  }
+  return error.message?.trim() ?? "Sign up failed";
+}
+
+type SignUpEmailBody = {
+  email: string;
+  name: string;
+  password: string;
+  /** User additionalField (input: true) — persisted after auth hooks normalize. */
+  profileName: string;
+  /**
+   * Non-persisted body field read by auth hooks (`extractInviteCode`).
+   * Must not be treated as a user column.
+   */
+  inviteCode: string;
+};
+
 export function CreateAnAccountForm({
   redirectTo = "/",
+  inviteCode: inviteCodePrefill = "",
   className,
   ...props
-}: React.ComponentProps<"div"> & { redirectTo?: NavigateOptions["to"] }) {
+}: React.ComponentProps<"div"> & {
+  redirectTo?: NavigateOptions["to"];
+  /** Prefill from `?invite=` search param. */
+  inviteCode?: string;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isPending } = useAuth();
 
   const signUpMutation = useMutation({
-    mutationFn: async (values: { email: string; name: string; password: string }) => {
-      const result = await authClient.signUp.email({
-        email: values.email,
-        name: values.name,
-        password: values.password
-      });
+    mutationFn: async (values: SignUpEmailBody) => {
+      // better-auth sign-up body is open-ended (`.and(z.record(...))`);
+      // profileName is additionalFields.input; inviteCode is body-only for hooks.
+      const result = await authClient.signUp.email(values as never);
 
       if (!result.data) {
-        throw new Error(result.error?.message ?? "Sign up failed");
+        const err = new Error(messageForSignUpError(result.error ?? {}));
+        (err as Error & { code?: string }).code = result.error?.code ?? undefined;
+        throw err;
       }
 
       return result;
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Sign up failed");
+    onError: (error: Error & { code?: string }) => {
+      toast.error(messageForSignUpError(error));
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries(getAuthUserQueryOptions());
@@ -58,11 +93,19 @@ export function CreateAnAccountForm({
       confirmPassword: "",
       email: "",
       name: "",
-      password: ""
+      password: "",
+      profileName: "",
+      inviteCode: inviteCodePrefill
     },
     onSubmit: async ({ value }) => {
-      const { email, name, password } = value;
-      signUpMutation.mutate({ email, name, password });
+      const { email, name, password, profileName, inviteCode } = value;
+      signUpMutation.mutate({
+        email,
+        name,
+        password,
+        profileName,
+        inviteCode: inviteCode.trim()
+      });
     },
     validators: {
       onSubmit: z
@@ -70,7 +113,10 @@ export function CreateAnAccountForm({
           confirmPassword: z.string(),
           email: z.email("Invalid email address"),
           name: z.string().min(2, "Name must be at least 2 characters"),
-          password: z.string().min(8, "Password must be at least 8 characters")
+          password: z.string().min(8, "Password must be at least 8 characters"),
+          profileName: ProfileNameSchema,
+          // Empty allowed for first-user bootstrap; server returns INVITE_REQUIRED otherwise.
+          inviteCode: z.string().trim()
         })
         .refine((data) => data.password === data.confirmPassword, {
           message: "Passwords do not match",
@@ -111,9 +157,25 @@ export function CreateAnAccountForm({
             {(field) => <field.InputField label="Name" placeholder="John Doe" />}
           </form.AppField>
 
+          <form.AppField name="profileName">
+            {(field) => (
+              <field.InputField
+                label="Profile name"
+                placeholder="johndoe"
+                description="Public URL: /your-profile-name (lowercase, hyphens ok)"
+              />
+            )}
+          </form.AppField>
+
           <form.AppField name="email">
             {(field) => (
               <field.InputField label="Email" placeholder="john-doe@example.com" type="email" />
+            )}
+          </form.AppField>
+
+          <form.AppField name="inviteCode">
+            {(field) => (
+              <field.InputField label="Invite code" placeholder="Paste your invite code" />
             )}
           </form.AppField>
 
@@ -134,6 +196,11 @@ export function CreateAnAccountForm({
           <FieldSeparator>Or</FieldSeparator>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            {/*
+              TODO(multi-user Task later): OAuth (Google/GitHub) with invite preflight —
+              set tsu_invite_code cookie (or OAuth additionalData.inviteCode) before redirect
+              when ?invite= is present. Email path above is required for now.
+            */}
             <button
               className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xs border border-input bg-background px-4 py-2 text-sm shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
               onClick={() => toast.error("Not yet implemented.")}

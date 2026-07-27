@@ -93,7 +93,14 @@ const repositorySortOptions: SortOption[] = [
 
 const EMPTY_REPO_ITEMS: RepositoryFilterItem[] = [];
 
-export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilterStore }) {
+export function RepositoriesPage({
+  filterStore,
+  profileName
+}: {
+  filterStore: SerializedFilterStore;
+  /** Portfolio profile that owns this public/private repos list */
+  profileName: string;
+}) {
   const [page, setPage] = useQueryState("page", repoListPageQueryParser);
 
   const filterState = useListFilters({
@@ -126,10 +133,15 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
   }, [debouncedSearch, visibilityValues, filterState.sortId, limit]);
 
   const { user } = useAuth();
-  const isAdmin = !!user;
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isOwnProfile = Boolean(user && sessionProfileName === profileName);
+  const isAdmin = isOwnProfile;
 
   const hubQuery = useQuery({
-    ...githubReposHubQueryOptions(hubInput, isAdmin),
+    ...githubReposHubQueryOptions(hubInput, isOwnProfile, profileName),
     placeholderData: keepPreviousData
   });
 
@@ -172,7 +184,7 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
     <Frame className="mx-auto h-full w-full max-w-7xl gap-5 bg-background p-5 px-3 md:px-6">
       <FrameHeader className="m-0 max-h-fit p-0 pt-5 pb-0">
         <FrameTitle>Repositories</FrameTitle>
-        <FrameDescription>Browse and filter the repositories you can access.</FrameDescription>
+        <FrameDescription>Repositories for @{profileName}.</FrameDescription>
       </FrameHeader>
       <div className="flex flex-col gap-3">
         <FilterBar state={filterState} searchPlaceholder="Search by title..." />
@@ -210,6 +222,7 @@ export function RepositoriesPage({ filterStore }: { filterStore: SerializedFilte
                 }}
                 repo={repo}
                 isAdmin={isAdmin}
+                profileName={profileName}
               />
             ))}
             {repoListHasNextPage(safePage, matchingCount) ? (

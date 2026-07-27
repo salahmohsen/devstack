@@ -11,9 +11,24 @@ export {
   type OnboardingApplyResult
 } from "./onboarding-apply.repository.ts";
 export {
+  inviteRepository,
+  type CreateInviteInput,
+  type InviteEntity
+} from "./invite.repository.ts";
+export {
   portfolioEntryRepository,
   type PortfolioEntryEntity
 } from "./portfolio-entry.repository.ts";
+export {
+  profileSlugAliasRepository,
+  type CreateProfileSlugAliasInput,
+  type ProfileSlugAliasEntity
+} from "./profile-slug-alias.repository.ts";
+export {
+  userCustomDomainRepository,
+  type UpsertUserCustomDomainInput,
+  type UserCustomDomainEntity
+} from "./user-custom-domain.repository.ts";
 export { projectRepository } from "./project.repository.ts";
 export { projectStackScanRepository } from "./project-stack-scan.repository.ts";
 export { resumeRepository } from "./resume.repository.ts";

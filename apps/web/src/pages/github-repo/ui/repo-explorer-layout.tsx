@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useParams, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, PanelLeft } from "lucide-react";
 import { memo, useCallback, useMemo, useState, useSyncExternalStore } from "react";
 
@@ -45,11 +45,15 @@ function useIsDesktop() {
 export function RepoExplorerLayout({
   currentPath,
   currentRef: currentRefProp,
+  profileName,
+  pathProfileName = profileName,
   repo: repoName,
   viewMode
 }: {
   currentPath: string;
   currentRef: string | null;
+  profileName: string;
+  pathProfileName?: string | null;
   repo: string;
   viewMode: "blob" | "tree";
 }) {
@@ -58,10 +62,14 @@ export function RepoExplorerLayout({
   const isDesktop = useIsDesktop();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user } = useAuth();
-  const isPrivate = !!user;
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
 
   const overviewQuery = useQuery({
-    ...getGithubRepoOverviewQueryOptions(repoName, isPrivate),
+    ...getGithubRepoOverviewQueryOptions(repoName, isPrivate, profileName),
     enabled: hasMounted
   });
 
@@ -85,6 +93,7 @@ export function RepoExplorerLayout({
           title: explorerTabTitle,
           type: "repo",
           url: buildRepoTabUrl({
+            profileName: pathProfileName,
             repo: repoName,
             view: viewMode,
             ref: activeRef,
@@ -95,7 +104,7 @@ export function RepoExplorerLayout({
   );
 
   const rootTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, activeRef, "", isPrivate),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef, "", isPrivate, profileName),
     enabled: hasMounted && !!repoData
   });
 
@@ -123,7 +132,7 @@ export function RepoExplorerLayout({
       } else {
         void navigate({
           params: { repo: repoName },
-          to: "/repos/$repo"
+          to: profileName ? "/$profileName/repos/$repo" : "/repos/$repo"
         });
       }
     },
@@ -141,7 +150,12 @@ export function RepoExplorerLayout({
   const contentPane =
     viewMode === "blob" ? (
       <div className="h-full overflow-y-auto p-4">
-        <CodeFileView currentRef={activeRef} path={currentPath} repo={repoName} />
+        <CodeFileView
+          currentRef={activeRef}
+          path={currentPath}
+          profileName={profileName}
+          repo={repoName}
+        />
       </div>
     ) : treeEntries ? (
       <div className="h-full overflow-y-auto p-4">
@@ -149,6 +163,7 @@ export function RepoExplorerLayout({
           currentPath={currentPath}
           currentRef={activeRef}
           entries={treeEntries}
+          profileName={profileName}
           repo={repoData}
           repoName={repoName}
         />
@@ -179,6 +194,7 @@ export function RepoExplorerLayout({
           <BranchComparisonBanner
             currentBranch={activeRef}
             defaultBranch={repoData.defaultBranch ?? "main"}
+            profileName={profileName}
             repo={repoName}
           />
         </div>
@@ -224,6 +240,8 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   repo: RepoOverview;
   repoName: string;
 }) {
+  const params = useParams({ strict: false }) as { profileName?: string };
+  const profileName = params.profileName;
   return (
     <div className="flex shrink-0 items-center gap-2 border-b bg-card px-3 py-2 md:gap-3 md:px-4">
       {!isDesktop && (
@@ -238,8 +256,8 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
       )}
 
       <Link
-        to="/repos/$repo"
-        params={{ repo: repoName }}
+        to={profileName ? "/$profileName/repos/$repo" : "/repos/$repo"}
+        params={profileName ? { profileName, repo: repoName } : { repo: repoName }}
         className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft size={16} />

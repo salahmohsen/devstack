@@ -4,6 +4,7 @@ import { buildDocumentPDFBytes } from "pdfnative";
 import {
   DeleteInputSchema,
   DeleteResponseSchema,
+  PublicProfileNameInputSchema,
   ResumeListOutputSchema,
   ResumeOutputSchema,
   SetDefaultInputSchema
@@ -17,6 +18,7 @@ import {
 } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
+import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 import {
   toContactOutput,
   toExperienceOutput,
@@ -25,17 +27,16 @@ import {
 } from "#@/routers/portfolio.mappers";
 import { buildResumeDocument } from "#@/routers/resume-pdf";
 
-async function fetchPortfolioData() {
-  const experiences = await experienceRepository.findOptedIn();
-  const projects = await projectRepository.findOptedIn();
-  const stacks = await stackRepository.findOptedIn();
-  const adminUser = await userRepository.findFirst();
-  const contacts = adminUser ? await contactRepository.findOptedInByUserId(adminUser.id) : [];
+async function fetchPortfolioData(userId: string) {
+  const experiences = await experienceRepository.findOptedInByUserId(userId);
+  const projects = await projectRepository.findOptedInByUserId(userId);
+  const stacks = await stackRepository.findOptedInByUserId(userId);
+  const contacts = await contactRepository.findOptedInByUserId(userId);
 
   return {
     experiences: experiences.map((exp) => toExperienceOutput(exp!)),
     projects: projects.map((proj) => toProjectOutput(proj!)),
-    stacks: stacks.map((stack) => toStackOutput(stack!)),
+    stacks: stacks.map((stackRow) => toStackOutput(stackRow!)),
     contacts: contacts.map(toContactOutput)
   };
 }
@@ -49,28 +50,50 @@ function formatFilename(): string {
 }
 
 export const resumeRouter = {
-  list: publicProcedure
+  list: protectedProcedure
     .route({
       description: "List all generated resumes",
       method: "GET"
     })
     .output(ResumeListOutputSchema)
-    .handler(async () => resumeRepository.findAll()),
-  get: publicProcedure
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+      return resumeRepository.findAllByUserId(userId);
+    }),
+  get: protectedProcedure
     .route({
       description: "Get a single resume by ID",
       method: "GET"
     })
     .input(SetDefaultInputSchema)
     .output(ResumeOutputSchema.optional())
-    .handler(async ({ input }) => resumeRepository.findById(input.id)),
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      return (await resumeRepository.findByIdForUser(input.id, userId)) ?? undefined;
+    }),
   getDefault: publicProcedure
     .route({
-      description: "Get the default resume",
+      description: "Get the default resume for a public profile",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema)
     .output(ResumeOutputSchema.optional())
-    .handler(async () => resumeRepository.findDefault()),
+    .errors({
+      NOT_FOUND: {
+        message: "Profile not found",
+        status: 404
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const resolved = await resolvePublicPortfolioContext({
+        host: context.host,
+        pathProfileName: input.profileName
+      });
+      if (!resolved) {
+        throw errors.NOT_FOUND();
+      }
+      return resumeRepository.findDefaultByUserId(resolved.userId);
+    }),
   setDefault: protectedProcedure
     .route({
       description: "Set a resume as the default (unsets any previous default)",
@@ -78,15 +101,20 @@ export const resumeRouter = {
     })
     .input(SetDefaultInputSchema)
     .output(ResumeOutputSchema.optional())
-    .handler(async ({ input }) => resumeRepository.setDefault(input.id)),
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const updated = await resumeRepository.setDefault(input.id, userId);
+      return updated ?? undefined;
+    }),
   generate: protectedProcedure
     .route({
       description: "Generate a new resume PDF from portfolio data",
       method: "POST"
     })
     .handler(async ({ context }) => {
-      const portfolio = await fetchPortfolioData();
-      const userRow = await userRepository.findById(context.session.user.id);
+      const userId = context.session.user.id;
+      const portfolio = await fetchPortfolioData(userId);
+      const userRow = await userRepository.findById(userId);
       if (!userRow) {
         throw new ORPCError("NOT_FOUND", { message: "Session user not found" });
       }
@@ -107,6 +135,7 @@ export const resumeRouter = {
       });
 
       const created = await resumeRepository.create({
+        userId,
         prompt: null,
         author: "admin",
         filename,
@@ -123,13 +152,14 @@ export const resumeRouter = {
     .input(DeleteInputSchema)
     .output(DeleteResponseSchema)
     .handler(async ({ input, context }) => {
-      const allResumes = await resumeRepository.findAll();
+      const userId = context.session.user.id;
+      const allResumes = await resumeRepository.findAllByUserId(userId);
       const toDelete = allResumes.filter((r) => input.ids.includes(r.id));
       const r2Keys = toDelete.map((r) => r.r2Key).filter(Boolean);
 
       await Promise.all(r2Keys.map((key) => context.mediaBucket.delete(key)));
 
-      const deleted = await resumeRepository.deleteMany(input.ids);
+      const deleted = await resumeRepository.deleteMany(input.ids, userId);
       return { success: deleted.length > 0 };
     })
 };

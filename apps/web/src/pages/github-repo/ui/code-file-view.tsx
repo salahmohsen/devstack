@@ -150,28 +150,38 @@ function formatFileSize(bytes: number): string {
 export function CodeFileView({
   currentRef,
   path,
+  profileName,
   repo
 }: {
   currentRef: string;
   path: string;
+  profileName: string;
   repo: string;
 }) {
   const { user } = useAuth();
-  const isPrivate = !!user;
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
 
   const contentQuery = useQuery(
-    getGithubRepoFileContentQueryOptions(repo, currentRef, path, isPrivate)
+    getGithubRepoFileContentQueryOptions(repo, currentRef, path, isPrivate, profileName)
   );
 
   const fileName = path.split("/").pop() ?? path;
   const parentPath = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
 
-  const fileCommitQuery = useGetGithubTreeEntryCommitsQuery(repo, currentRef, parentPath, [
-    fileName
-  ]);
+  const fileCommitQuery = useGetGithubTreeEntryCommitsQuery(
+    repo,
+    currentRef,
+    parentPath,
+    [fileName],
+    profileName
+  );
 
   const parentTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repo, currentRef, parentPath, isPrivate),
+    ...getGithubRepoTreeQueryOptions(repo, currentRef, parentPath, isPrivate, profileName),
     enabled: parentPath.length > 0 || fileName.length > 0
   });
 

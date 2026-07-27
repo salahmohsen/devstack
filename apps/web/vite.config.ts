@@ -141,11 +141,21 @@ export default defineConfig({
       // Prefer globs (cheaper) + function for path-segment edge cases.
       // Watching monorepo noise (node_modules, agent mastra, dist) is a
       // common EMFILE trigger even with a high ulimit.
+      //
+      // IMPORTANT: do NOT blanket-ignore `**/.worktrees/**` when THIS app is
+      // running from a git worktree under `.worktrees/<name>/`. Absolute paths
+      // then all contain `/.worktrees/`, so HMR would ignore every source file
+      // and only a full restart would pick up changes.
       ignored: [
         "**/node_modules/**",
         "**/.pnpm/**",
         "**/.git/**",
-        "**/.worktrees/**",
+        // Only when not running inside a worktree (see shouldIgnoreWatchPath).
+        ...(!resolve(import.meta.dirname, "../..")
+          .replaceAll("\\", "/")
+          .includes("/.worktrees/")
+          ? (["**/.worktrees/**"] as const)
+          : []),
         "**/dist/**",
         "**/.output/**",
         "**/.vinxi/**",
@@ -159,12 +169,14 @@ export default defineConfig({
         "**/apps/server/dist/**",
         (watchPath: string) => {
           const p = watchPath.replaceAll("\\", "/");
-          return (
+          const monorepoRoot = resolve(import.meta.dirname, "../..").replaceAll("\\", "/");
+          const runningInsideWorktree = monorepoRoot.includes("/.worktrees/");
+
+          if (
             p.includes("/node_modules/") ||
             p.endsWith("/node_modules") ||
             p.includes("/.pnpm/") ||
             p.includes("/.git/") ||
-            p.includes("/.worktrees/") ||
             p.includes("/dist/") ||
             p.includes("/.output/") ||
             p.includes("/.vinxi/") ||
@@ -175,7 +187,23 @@ export default defineConfig({
             p.includes("/playwright-report/") ||
             p.includes("/test-results/") ||
             p.includes("/apps/agent/")
-          );
+          ) {
+            return true;
+          }
+
+          // Ignore other worktrees, but never ignore our own root when we are one.
+          if (p.includes("/.worktrees/")) {
+            if (runningInsideWorktree) {
+              const rootPrefix = monorepoRoot.endsWith("/") ? monorepoRoot : `${monorepoRoot}/`;
+              if (p === monorepoRoot || p.startsWith(rootPrefix)) {
+                return false;
+              }
+              return true;
+            }
+            return true;
+          }
+
+          return false;
         }
       ]
     }

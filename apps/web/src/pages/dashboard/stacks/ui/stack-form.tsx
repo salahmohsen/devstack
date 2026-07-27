@@ -30,7 +30,7 @@ import { DefaultLoader } from "@/shared/ui/default-loader";
 import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 import { Icon } from "@/shared/ui/icon";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 type StackFormProps = {
   initialData?: StackOutput | null;
@@ -65,7 +65,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Stack created.");
         onOpenChange(false);
@@ -91,7 +91,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Stack updated.");
         onOpenChange(false);

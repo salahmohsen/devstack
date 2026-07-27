@@ -10,14 +10,14 @@ export type CreatePortfolioEntryData = Omit<
 >;
 
 export const portfolioEntryRepository = {
-  async findByTypeAndEntityId(type: PortfolioEntryType, entityId: string) {
+  async findByTypeAndEntityIdForUser(userId: string, type: PortfolioEntryType, entityId: string) {
     return getDb().query.portfolioEntry.findFirst({
-      where: { type, entityId }
+      where: { userId, type, entityId }
     });
   },
 
-  async findById(id: string) {
-    return getDb().query.portfolioEntry.findFirst({ where: { id } });
+  async findByIdForUser(id: string, userId: string) {
+    return getDb().query.portfolioEntry.findFirst({ where: { id, userId } });
   },
 
   async create(input: CreatePortfolioEntryData) {
@@ -25,6 +25,7 @@ export const portfolioEntryRepository = {
       .insert(portfolioEntry)
       .values({
         id: crypto.randomUUID(),
+        userId: input.userId,
         type: input.type,
         entityId: input.entityId
       })
@@ -33,19 +34,25 @@ export const portfolioEntryRepository = {
     return created ?? null;
   },
 
-  async deleteByTypeAndEntityId(type: PortfolioEntryType, entityId: string) {
+  async deleteByTypeAndEntityIdForUser(userId: string, type: PortfolioEntryType, entityId: string) {
     const [deleted] = await getDb()
       .delete(portfolioEntry)
-      .where(and(eq(portfolioEntry.type, type), eq(portfolioEntry.entityId, entityId)))
+      .where(
+        and(
+          eq(portfolioEntry.userId, userId),
+          eq(portfolioEntry.type, type),
+          eq(portfolioEntry.entityId, entityId)
+        )
+      )
       .returning({ id: portfolioEntry.id });
 
     return deleted ?? null;
   },
 
-  async deleteById(id: string) {
+  async deleteByIdForUser(id: string, userId: string) {
     const [deleted] = await getDb()
       .delete(portfolioEntry)
-      .where(eq(portfolioEntry.id, id))
+      .where(and(eq(portfolioEntry.id, id), eq(portfolioEntry.userId, userId)))
       .returning({ id: portfolioEntry.id });
 
     return deleted ?? null;

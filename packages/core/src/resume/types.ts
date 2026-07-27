@@ -14,7 +14,7 @@ export const ResumeOutputSchema = z.object({
   default: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date()
-}) satisfies z.ZodType<ResumeSchemaSelect>;
+}) satisfies z.ZodType<Omit<ResumeSchemaSelect, "userId">>;
 
 export type ResumeOutput = z.infer<typeof ResumeOutputSchema>;
 

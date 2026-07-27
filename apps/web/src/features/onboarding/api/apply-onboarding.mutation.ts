@@ -32,13 +32,13 @@ export function useApplyOnboardingMutation() {
             queryKey: orpcQueryClient.stacks.list.queryKey()
           }),
           queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.portfolio.list.queryKey({ input: {} })
+            queryKey: orpcQueryClient.portfolio.list.key()
           }),
           queryClient.invalidateQueries({
             queryKey: orpcQueryClient.resume.list.queryKey()
           }),
           queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.resume.getDefault.queryKey()
+            queryKey: orpcQueryClient.resume.getDefault.key()
           })
         ]);
       }

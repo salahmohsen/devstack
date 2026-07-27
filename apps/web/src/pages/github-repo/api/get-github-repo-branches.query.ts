@@ -7,13 +7,22 @@ import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
-export function getGithubRepoBranchesQueryOptions(repo: string, isPrivate = false) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetRepoBranches
-      : orpcQueryClient.github.publicGetRepoBranches
-  ).queryOptions({
-    input: { repo },
+export function getGithubRepoBranchesQueryOptions(
+  repo: string,
+  isPrivate = false,
+  profileName?: string
+) {
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetRepoBranches.queryOptions({
+      input: { repo },
+      staleTime: githubCachePolicy.repoMeta.staleTimeMs,
+      gcTime: githubCachePolicy.repoMeta.gcTimeMs,
+      meta: persistedMeta,
+      enabled: isValidGithubRepoSlug(repo)
+    });
+  }
+  return orpcQueryClient.github.publicGetRepoBranches.queryOptions({
+    input: { repo, profileName },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta,
@@ -21,7 +30,12 @@ export function getGithubRepoBranchesQueryOptions(repo: string, isPrivate = fals
   });
 }
 
-export function useGetGithubRepoBranchesQuery(repo: string) {
+export function useGetGithubRepoBranchesQuery(repo: string, profileName: string) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoBranchesQueryOptions(repo, !!user));
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  return useQuery(getGithubRepoBranchesQueryOptions(repo, isPrivate, profileName));
 }

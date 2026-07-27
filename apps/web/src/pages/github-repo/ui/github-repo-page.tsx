@@ -40,15 +40,28 @@ import { RepoSidebar } from "@/pages/github-repo/ui/repo-sidebar";
 
 type GithubRepoPageProps = {
   repo: string;
+  /** Portfolio profile that owns this GitHub data (API scope). */
+  profileName: string;
+  /**
+   * Path segment for in-app links.
+   * string → /{profileName}/repos; null → /repos (custom domain).
+   */
+  pathProfileName?: string | null;
   routeSplat?: string;
   view?: "blob" | "repo" | "tree";
 };
 
-export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPageProps) {
-  const githubSetup = useGetGithubSetupQuery();
-  const owner = githubSetup.data?.owner ?? "salahmohsen";
-  const overviewQuery = useGetGithubRepoOverviewQuery(repo);
-  const branchesQuery = useGetGithubRepoBranchesQuery(repo);
+export function GithubRepoPage({
+  repo,
+  profileName,
+  pathProfileName = profileName,
+  routeSplat,
+  view = "repo"
+}: GithubRepoPageProps) {
+  const githubSetup = useGetGithubSetupQuery(profileName);
+  const owner = githubSetup.data?.owner ?? "";
+  const overviewQuery = useGetGithubRepoOverviewQuery(repo, profileName);
+  const branchesQuery = useGetGithubRepoBranchesQuery(repo, profileName);
 
   useEffect(() => {
     const source = getGitHubDataSource(overviewQuery.data);
@@ -83,7 +96,7 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
   // Always call hooks (no conditional returns above). Explorer views skip the
   // overview tree query via `enabled`.
-  const treeQuery = useGetGithubRepoTreeQuery(repo, branchName, directoryPath, {
+  const treeQuery = useGetGithubRepoTreeQuery(repo, branchName, directoryPath, profileName, {
     enabled: !isExplorerView
   });
 
@@ -96,28 +109,30 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
     return [
       {
-        queryKey: getGithubRepoOverviewQueryOptions(repo).queryKey,
+        queryKey: getGithubRepoOverviewQueryOptions(repo, false, profileName).queryKey,
         signalKeys: repoSignalKeys
       },
       {
-        queryKey: getGithubRepoBranchesQueryOptions(repo).queryKey,
+        queryKey: getGithubRepoBranchesQueryOptions(repo, false, profileName).queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       },
       {
-        queryKey: getGithubRepoTreeQueryOptions(repo, branchName, directoryPath).queryKey,
+        queryKey: getGithubRepoTreeQueryOptions(repo, branchName, directoryPath, false, profileName)
+          .queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       },
       {
-        queryKey: getGithubRepoRefCommitQueryOptions(repo, branchName).queryKey,
+        queryKey: getGithubRepoRefCommitQueryOptions(repo, branchName, false, profileName).queryKey,
         signalKeys: [githubRevalidationSignalKeys.repoCode({ owner, repo })]
       }
     ];
-  }, [branchName, directoryPath, isExplorerView, repo, owner]);
+  }, [branchName, directoryPath, isExplorerView, repo, owner, profileName]);
   useGitHubSignalStream(signalTargets);
 
   // Register immediately — do not wait for overviewQuery. Bare repo slug is
   // enough for a tab; avatar/title enrich when overview lands.
   const tabUrl = buildRepoTabUrl({
+    profileName: pathProfileName,
     repo,
     view: view === "blob" ? "blob" : view === "tree" ? "tree" : "repo",
     ref: branchName,
@@ -142,6 +157,8 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
       <RepoExplorerLayout
         currentPath={routePath}
         currentRef={branchName}
+        pathProfileName={pathProfileName}
+        profileName={profileName}
         repo={repo}
         viewMode="blob"
       />
@@ -153,6 +170,8 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
       <RepoExplorerLayout
         currentPath={routePath}
         currentRef={branchName}
+        pathProfileName={pathProfileName}
+        profileName={profileName}
         repo={repo}
         viewMode="tree"
       />
@@ -183,16 +202,16 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
   const handleBranchChange = (nextBranch: string) => {
     if (routePath) {
-      window.location.assign(repoTreePath(repo, nextBranch, routePath));
+      window.location.assign(repoTreePath(pathProfileName, repo, nextBranch, routePath));
       return;
     }
 
     if (nextBranch === overview.defaultBranch) {
-      window.location.assign(repoOverviewPath(repo));
+      window.location.assign(repoOverviewPath(pathProfileName, repo));
       return;
     }
 
-    window.location.assign(repoTreePath(repo, nextBranch));
+    window.location.assign(repoTreePath(pathProfileName, repo, nextBranch));
   };
 
   return (
@@ -209,6 +228,7 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
 
           {!isDefaultBranch && (
             <BranchComparisonBanner
+              profileName={profileName}
               currentBranch={branchName}
               defaultBranch={overview.defaultBranch ?? "main"}
               repo={repo}
@@ -226,6 +246,7 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
               <FileTree
                 directoryPath={directoryPath}
                 entries={treeQuery.data}
+                profileName={profileName}
                 refName={branchName}
                 repo={repo}
               />
@@ -240,7 +261,12 @@ export function GithubRepoPage({ repo, routeSplat, view = "repo" }: GithubRepoPa
         <RepoSidebar repo={overview} />
       </div>
       <SidePanelPortal>
-        <RepoActivityCards owner={owner} repo={repo} repoData={overview} />
+        <RepoActivityCards
+          owner={owner}
+          profileName={profileName}
+          repo={repo}
+          repoData={overview}
+        />
       </SidePanelPortal>
     </>
   );

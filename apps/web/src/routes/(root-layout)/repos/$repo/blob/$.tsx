@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, getRouteApi } from "@tanstack/react-router";
 
 import { GithubRepoPage } from "@/pages/github-repo";
+
+const parentRoute = getRouteApi("/(root-layout)/repos/$repo");
 
 export const Route = createFileRoute("/(root-layout)/repos/$repo/blob/$")({
   ssr: true,
@@ -9,6 +11,15 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo/blob/$")({
 
 function GithubRepoBlobRoutePage() {
   const { _splat, repo } = Route.useParams();
+  const parentData = parentRoute.useLoaderData() as { profileName: string };
 
-  return <GithubRepoPage repo={repo} routeSplat={_splat} view="blob" />;
+  return (
+    <GithubRepoPage
+      profileName={parentData.profileName}
+      pathProfileName={null}
+      repo={repo}
+      routeSplat={_splat}
+      view="blob"
+    />
+  );
 }

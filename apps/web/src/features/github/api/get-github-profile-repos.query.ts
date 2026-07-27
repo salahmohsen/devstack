@@ -1,27 +1,33 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
-export function getGithubProfileReposQueryOptions(isPrivate = false) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetProfileRepos
-      : orpcQueryClient.github.publicGetProfileRepos
-  ).queryOptions({
+export function getGithubProfileReposQueryOptions(profileName: string, isPrivate = false) {
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetProfileRepos.queryOptions({
+      meta: persistedMeta,
+      staleTime: githubCachePolicy.reposList.staleTimeMs,
+      gcTime: githubCachePolicy.reposList.gcTimeMs
+    });
+  }
+  return orpcQueryClient.github.publicGetProfileRepos.queryOptions({
+    input: { profileName },
     meta: persistedMeta,
     staleTime: githubCachePolicy.reposList.staleTimeMs,
     gcTime: githubCachePolicy.reposList.gcTimeMs
   });
 }
 
-export function useGetGithubProfileReposQuery(enabled = true) {
-  const { user } = useAuth();
+export function useGetGithubProfileReposQuery(
+  profileName: string,
+  isPrivate = false,
+  enabled = true
+) {
   return useQuery({
-    ...getGithubProfileReposQueryOptions(!!user),
+    ...getGithubProfileReposQueryOptions(profileName, isPrivate),
     enabled
   });
 }

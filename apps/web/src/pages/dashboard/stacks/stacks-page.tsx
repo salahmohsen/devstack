@@ -26,7 +26,7 @@ import { Icon } from "@/shared/ui/icon";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
   cancelOrganizeStacksJob,
   dismissOrganizeStacksJob,
@@ -185,7 +185,7 @@ export function StacksPage() {
       }
 
       await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
-      await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+      await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
       const totalActions = mergeActions.length + renameActions.length + enrichActions.length;
       const totalChanges = totalActions + (planSortOrder.length > 0 ? 1 : 0);
@@ -233,7 +233,7 @@ export function StacksPage() {
       },
       onSettled: () => {
         void queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
-        void queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+        void queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
       }
     })
   );
@@ -291,7 +291,7 @@ export function StacksPage() {
     orpcQueryClient.stacks.merge.mutationOptions({
       onSuccess: async (data) => {
         await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
-        await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+        await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
         toast.success(`Merged into "${data.merged.name}".`);
         clearSelection();
         setMergeDialogOpen(false);
@@ -342,7 +342,7 @@ export function StacksPage() {
     const results = await Promise.allSettled(ids.map((id) => orpcClient.stacks.delete({ id })));
 
     await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
-    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
 
@@ -374,7 +374,7 @@ export function StacksPage() {
     );
 
     await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
-    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryOptions().queryKey });
+    await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
 

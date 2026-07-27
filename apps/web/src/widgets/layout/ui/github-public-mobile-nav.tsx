@@ -20,6 +20,8 @@ import {
 } from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { primaryAppUrl } from "@/shared/lib/primary-app-url";
+
 import { getGithubSetupStatusQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
 
 const themeOptions = [
@@ -33,7 +35,11 @@ export function MobileNav() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const setupStatusQuery = useGetGithubSetupStatusQuery();
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : undefined;
+  const setupStatusQuery = useGetGithubSetupStatusQuery(sessionProfileName);
   const { theme, setTheme } = useTheme();
 
   const owner = setupStatusQuery.data?.owner ?? null;
@@ -49,7 +55,7 @@ export function MobileNav() {
       // Drop cached session immediately (query staleTime is 5m).
       queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
       await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions().queryKey
+        queryKey: getGithubSetupStatusQueryOptions(sessionProfileName).queryKey
       });
       await router.invalidate();
       await navigate({ to: "/" });
@@ -79,7 +85,8 @@ export function MobileNav() {
         <House size={22} strokeWidth={1.8} />
       </Link>
       <Link
-        to="/repos"
+        to={sessionProfileName ? "/$profileName/repos" : "/repos"}
+        params={sessionProfileName ? { profileName: sessionProfileName } : undefined}
         preload={false}
         activeOptions={{ exact: true }}
         activeProps={{ className: "active" }}
@@ -146,7 +153,7 @@ export function MobileNav() {
                 Repositories
               </MenuItem>
             )}
-            <MenuLinkItem render={<Link to="/dashboard" />}>
+            <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
               <IconRotate mode="hover">
                 <Settings className="size-4" />
               </IconRotate>

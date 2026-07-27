@@ -24,7 +24,12 @@ export const ExperienceOutputSchema = z.object({
   projects: z.array(ProjectOutputSchema),
   updatedAt: z.date(),
   createdAt: z.date()
-}) satisfies z.ZodType<ExperienceSchemaSelect>;
+}) satisfies z.ZodType<
+  Omit<ExperienceSchemaSelect, "userId"> & {
+    includedInPortfolio: boolean;
+    projects: z.infer<typeof ProjectOutputSchema>[];
+  }
+>;
 
 export const ExperiencePublicOutputSchema = ExperienceOutputSchema.extend({
   projects: z.array(ProjectPublicOutputSchema)

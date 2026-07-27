@@ -33,7 +33,7 @@ import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
 import { Icon } from "@/shared/ui/icon";
 
 import { useGetGithubProfileReposQuery } from "@/features/github";
-import { getPortfolioListQueryOptions } from "@/features/portfolio";
+import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { useDetectStacksMutation } from "@/features/stacks";
 
 import { DetectStacksDialog } from "./detect-stacks-dialog";
@@ -51,7 +51,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
   const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
-  const reposQuery = useGetGithubProfileReposQuery();
+  // Dashboard form: session user's private repos only.
+  const reposQuery = useGetGithubProfileReposQuery("me", true);
   const stacks = stacksQuery.data ?? [];
   const repos = reposQuery.data ?? [];
 
@@ -149,7 +150,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           queryKey: orpcQueryClient.projects.list.queryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Project created.");
         onOpenChange(false);
@@ -172,7 +173,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           })
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryOptions().queryKey
+          queryKey: getPortfolioListQueryKey()
         });
         toast.success("Project updated.");
         onOpenChange(false);

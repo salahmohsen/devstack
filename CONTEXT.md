@@ -4,6 +4,77 @@ A glossary of terms specific to the portfolio's evidence, output, stack, and
 cache-invalidation layers. General programming terms (workflow, tool, vector,
 etc.) do not belong here even if the project uses them heavily.
 
+## Multi-user tenancy
+
+**Profile name** (`profileName`):
+Public URL slug on the primary app host (`/{profileName}/…`). Required at
+signup, unique, renamable. Validated in `@tsu-stack/core` (length, charset,
+reserved path segments such as `dashboard`, `api`, `sign-in`).
+_Avoid_: username alone when you mean the public path key; handle (ambiguous).
+
+**Slug alias** (`profile_slug_alias`):
+Row mapping a former `profileName` to the same `userId` so old path URLs
+redirect after rename. New names must not collide with live profile names or
+existing aliases.
+_Avoid_: redirect table (generic), vanity URL.
+
+**Invite**:
+Single-use (or revocable) registration code. Empty database bootstraps the
+first user without an invite; later signups require a valid invite. Not a
+user column — code arrives via signup body, short-lived cookie, or OAuth state.
+_Avoid_: open registration, invite-as-role.
+
+**Custom domain** (`user_custom_domain`):
+Optional verified hostname that maps Host → that tenant’s portfolio at `/`.
+App stores hostname + verification state only; operator terminates TLS.
+_Avoid_: white-label SaaS domain product, automatic cert issuance.
+
+**Primary app host**:
+Canonical community origin from `VITE_WEB_URL` (and optional `PUBLIC_APP_HOST`
+for CNAME instructions when the marketing host differs). Dashboard, auth, and
+path portfolios (`/{profileName}`) live here. Custom domains may not claim this
+hostname.
+_Avoid_: “main domain” without distinguishing path vs Host routing.
+
+**Tenant `userId`**:
+Every private domain row (experience, project, stack, resume, portfolio entry,
+etc.) is scoped by the Better Auth user id. Public RPCs resolve Host and/or
+`profileName` → `userId` then load only that tenant’s opted-in evidence.
+_Avoid_: `ownerId`, “admin user” as the sole portfolio owner, unscoped `findAll()`.
+
+**BYO AI**:
+LLM features use operator-supplied provider keys (`DEEPSEEK_API_KEY`, etc.).
+No platform-funded model budget. Missing keys: detect-stacks skips AI categorize
+and falls back; resume import returns extract warnings; CRUD still works.
+_Avoid_: assuming a shared cloud key for all tenants.
+
+**BYO Resend**:
+Transactional mail is optional. Set `RESEND_API_KEY` (and `EMAIL_FROM`) to
+enable; unset skips sending. Auth/product mail only — not employer apply spam.
+_Avoid_: platform-paid unlimited mail.
+
+**TLS is not an app concern**:
+Operators terminate HTTPS (Cloudflare, Caddy, reverse proxy). The app verifies
+domain ownership (DNS) and routes by Host; it does **not** issue or renew
+certificates.
+_Avoid_: ACME in-app, Let’s Encrypt automation as a product feature.
+
+**Public GitHub surface**:
+Per-tenant public GitHub pages and APIs. Path form:
+`/{profileName}/repos` (and tree/blob under that). On a **verified custom
+domain**, Host-scoped `/repos` (no profileName segment). Public RPCs take
+`profileName` and/or resolve Host → `userId`, then use that tenant’s OAuth
+token server-side (`resolvePublicGitHubSourceForUser`). Never a global
+“first GitHub account”.
+_Avoid_: bare `/repos` on the primary app host as a global owner hub;
+unscoped `findPublicGithubSourceSettings` / `findAnyGitHubAccount`.
+
+**github_config**:
+Per-user row (`userId`) holding display `githubUsername` (and legacy
+columns cleared of PATs). Tokens live on Better Auth `account` for that
+user only — not env vars and not a shared site-owner secret.
+_Avoid_: env-owned public token, single global github_config row.
+
 ## Cache invalidation
 
 **Revalidation signal**:
@@ -47,15 +118,14 @@ _Avoid_: Webhook dedup, idempotency cache.
 
 **Portfolio entry**:
 A row in `portfolio_entry` representing one evidence item
-(experience, project, stack, or contact) that the owner has opted to
-expose to the public portfolio surface and to AI agents. Acts as a
-visibility gate — the row's existence, not a boolean column on the
-entity, is what makes the item visible. The owning entity holds a
-nullable `portfolio_entry_id` FK. Created and removed synchronously
-with the entity's own create/update/toggle operations, inside the same
-database transaction, so the FK and the portfolio*entry row are always
-consistent.
-\_Avoid*: Inclusion flag, visibility toggle, AI flag, include-in-portfolio.
+(experience, project, stack, or contact) that the **tenant user** has
+opted to expose on their public portfolio surface and to AI agents.
+Scoped by `userId`. Acts as a visibility gate — the row's existence,
+not a boolean column on the entity, is what makes the item visible. The
+entity holds a nullable `portfolio_entry_id` FK. Created and removed
+synchronously with the entity's create/update/toggle, in the same
+transaction.
+_Avoid_: Inclusion flag, visibility toggle, AI flag, global portfolio list.
 
 **Entity type**:
 The `type` column on `portfolio_entry`. One of
@@ -93,7 +163,7 @@ the public project page and is excluded from `ProjectPublicOutputSchema`
 so it never leaves the server in a public response. Optional; default
 `null`. Lives in the evidence layer alongside `summary` and
 `description`, distinct from them in audience and rendering: those are
-the public recruiter-facing copy, this is the owner's private notes to
+the public recruiter-facing copy, this is the tenant's private notes to
 the agent.
 _Avoid_: `narrative` (different scope, different layer), `caseStudy`,
 `writeup`, `breakdown` (all imply a public surface), `notes`,
@@ -129,31 +199,32 @@ _Avoid_: PDF generator, resume service, resume orchestrator.
 
 **Resume** (generated):
 A row in the `resume` table representing a portfolio-derived PDF
-artifact (filename, storage key under `resumes/…`, author admin|agent,
-optional default). Output only — never an uploaded source for import.
+artifact for a tenant (`userId`), storage key under `{userId}/resumes/…`
+(or legacy `resumes/…`), author `user|agent` (historical enum value
+`admin` means human/user), optional default **per user**. Output only —
+never an uploaded source for import.
 _Avoid_: Uploaded CV, resume source, import PDF.
 
-## Owner onboarding
+## Onboarding
 
-**Owner onboarding**:
-The first-run or re-import flow that helps the portfolio owner populate
-evidence and profile from a resume source. Completes when the owner
-Applies a resume import draft or Skips; completion is recorded as
-`onboardingCompletedAt` on the user. Soft CTAs only — does not hard-lock
-dashboard routes.
-_Avoid_: Setup wizard lock, forced onboarding, account activation.
+**User onboarding** (resume import):
+First-run or re-import flow that helps a **signed-in user** populate
+their profile and evidence from a resume PDF. Completes when they Apply
+a resume import draft or Skip; completion is `onboardingCompletedAt` on
+that user. Soft CTAs only — does not hard-lock dashboard routes.
+_Avoid_: Setup wizard lock, forced onboarding, “site owner onboarding”.
 
 **Onboarding completed at**:
-Nullable timestamp on the owner user set by Apply or Skip. Soft CTAs
-and empty-state banners treat a null value as incomplete onboarding.
+Nullable timestamp on **each** user set by Apply or Skip. Soft CTAs and
+empty-state banners treat null as incomplete for that session user.
 _Avoid_: onboarding flag, setup done boolean (prefer timestamp).
 
 **Resume source (session)**:
 A temporary PDF object in storage used only as input to resume import,
-keyed under the owner's files-sdk prefix at `resume-sources/…`. Not a
-`resume` row. Deleted after Apply, Skip (when key known), Discard, or
-replace-upload. No durable source table in v1.
-_Avoid_: Uploaded resume record, media_asset resume, resumes/ prefix.
+keyed under the session user's prefix at `{userId}/resume-sources/…`.
+Not a `resume` row. Deleted after Apply, Skip (when key known), Discard,
+or replace-upload. No durable source table in v1.
+_Avoid_: Uploaded resume record, media_asset resume, global resumes/ prefix.
 
 **Resume import draft**:
 The structured, client-held proposal produced by the resume-import
@@ -178,7 +249,7 @@ Linked to projects via the `project_stack` join table. Each stack has a
 display `name` (customizable by the user), an optional `npmPackage`
 (the raw npm package name for deduplication and auto-detection), a
 `type` category, and an optional `icon`.
-\_Avably: Tech, technology, skill, dependency.
+_Avoid_: Tech, technology, skill, dependency.
 
 **Stack type**:
 The `type` column on `stack`. One of `"framework" | "language" |
@@ -186,16 +257,15 @@ The `type` column on `stack`. One of `"framework" | "language" |
 "tooling" | "storage" | "other"`. Categorizes the stack for
 filtering and display grouping. Assigned by the LLM during
 auto-detection, editable by the user.
-\_Avably: Category, kind, group.
+_Avoid_: Category, kind, group.
 
 **npm package**:
 The `npm_package` column on `stack`. The raw npm package name as it
 appears in `package.json` (e.g., `"react"`, `"@tanstack/react-query"`).
 Nullable — not every stack has an npm package (e.g., "REST API", "Docker").
-Used as the deduplication key: one npm package maps to at most one stack.
-Filled automatically by the detect-stacks workflow; optional in the
-manual stack form.
-\_Avably: Package name, npm name, dependency name.
+Dedup and alias matching are **per tenant** (`userId`). Stack display
+`name` is unique per `(userId, name)`.
+_Avoid_: Package name, npm name, dependency name as a global unique.
 
 **Detect-stacks workflow**:
 A Mastra workflow (`detect-stacks-workflow`) that scans GitHub
@@ -207,40 +277,40 @@ to the UI via oRPC for real-time `ShimmeringText` feedback. Includes
 10 enhancements: auto-icon mapping, health metadata, confidence
 scoring, stack aliases, usage frequency, stack diff, batch detection,
 language aggregation, auto-descriptions, and portfolio tech section.
-\_Avably: Stack scanner, dependency detector, auto-stack.
+_Avoid_: Stack scanner, dependency detector, auto-stack.
 
 **Stack alias**:
 A row in `stack_alias` mapping an alternative npm package name to an
 existing stack. Prevents duplicate stacks when multiple npm packages
 represent the same technology (e.g., `react` and `react-dom` both
 map to the "React" stack). Checked alongside `stack.npm_package`
-during deduplication.
-\_Avably: Package alias, alternative name, npm alias.
+during deduplication. Scoped with the parent stack’s tenant.
+_Avoid_: Package alias, alternative name, npm alias.
 
 **Stack health**:
 Cached npm registry metadata stored in `stack.health_status`: whether
 the package is deprecated, its weekly download count, and last publish
 date. Refreshed on each detect-stacks scan. Displayed as badges in
 the review dialog and on stack cards.
-\_Avably: Package health, npm status, dependency health.
+_Avoid_: Package health, npm status, dependency health.
 
 **Stack confidence**:
 The LLM's confidence level (`high | medium | low`) in its type
 categorization of a dependency. Stored in `stack.confidence`. Low-
 confidence items get a warning badge in the review dialog to surface
 potential misclassifications.
-\_Avably: Classification confidence, categorization certainty.
+_Avoid_: Classification confidence, categorization certainty.
 
 **Stack scan**:
 A row in `project_stack_scan` recording one detect-stacks workflow
 execution for a project: the timestamp, detected npm package names,
 and resulting stack IDs. Used to compute stack diffs on re-scan
 (new/unchanged/removed packages).
-\_Avably: Detection scan, package scan, dependency scan.
+_Avoid_: Detection scan, package scan, dependency scan.
 
 **Language aggregation**:
 The computed breakdown of programming languages across a project's
 linked GitHub repositories. Derived from `GitHubUserRepoSummary.language`
 weighted by repo relevance. Displayed on the project page as percentage
 badges (e.g., "TypeScript 60%").
-\_Avably: Repo languages, language breakdown, tech breakdown.
+_Avoid_: Repo languages, language breakdown, tech breakdown.

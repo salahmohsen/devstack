@@ -9,3 +9,4 @@ export type * from "./project-stack-scan.schema.ts";
 export type * from "./resume.schema.ts";
 export type * from "./stack-dependency.schema.ts";
 export type * from "./stack.schema.ts";
+export type * from "./user-custom-domain.schema.ts";

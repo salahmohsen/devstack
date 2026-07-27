@@ -1,11 +1,15 @@
 import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
+import { user } from "./auth.schema.ts";
 import { portfolioEntry } from "./portfolio-entry.schema.ts";
 
 export const experience = pgTable(
   "experience",
   {
     id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     organization: text("organization").notNull(),
     description: text("description").notNull(),
@@ -23,7 +27,7 @@ export const experience = pgTable(
       .$onUpdate(() => new Date())
   },
   (table) => [
-    index("experience_sort_order_idx").on(table.sortOrder),
+    index("experience_user_id_sort_order_idx").on(table.userId, table.sortOrder),
     index("experience_portfolio_entry_id_idx").on(table.portfolioEntryId)
   ]
 );

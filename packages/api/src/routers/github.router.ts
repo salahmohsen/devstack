@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { GitHubUsernameSchema } from "@tsu-stack/core";
+import { GitHubUsernameSchema, PublicProfileNameInputSchema } from "@tsu-stack/core";
 import { getDb } from "@tsu-stack/db";
 import {
   bumpGitHubCacheNamespaces,
@@ -63,6 +63,10 @@ import {
   RepoOverviewSchema
 } from "@tsu-stack/github/schemas";
 
+import {
+  getPublicGitHubSetupStatus,
+  withPublicGitHubContext
+} from "#@/lib/github/with-public-github-context";
 import { ownerProcedure, protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 
 const PublicGitHubStatusOutputSchema = z.object({
@@ -154,6 +158,12 @@ const RevalidationResultSchema = z.object({
   ok: z.boolean()
 });
 
+/** Merge optional profileName (tenant) onto public GitHub inputs. */
+const withProfileName = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) =>
+  schema.extend({
+    profileName: PublicProfileNameInputSchema.shape.profileName
+  });
+
 export const githubRouter = {
   getRevalidationSignals: publicProcedure
     .route({ description: "Get revalidation signal timestamps", method: "GET" })
@@ -162,17 +172,14 @@ export const githubRouter = {
     .handler(async ({ input }) => getGitHubRevalidationSignals(input.signalKeys)),
   getSetupStatus: publicProcedure
     .route({
-      description: "Get the public GitHub setup status for this app",
+      description: "Get GitHub setup status for a public profile (path or custom domain Host)",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema.optional())
     .output(PublicGitHubStatusOutputSchema)
-    .handler(async ({ context }) => {
-      const source = context.github.source;
-      return {
-        isConfigured: source.isConfigured,
-        owner: source.isConfigured ? source.owner : null
-      };
-    }),
+    .handler(async ({ context, input }) =>
+      getPublicGitHubSetupStatus(context, { profileName: input?.profileName })
+    ),
   refreshInstallationAccess: protectedProcedure
     .route({ description: "Refresh installation access cache", method: "POST" })
     .output(RevalidationResultSchema)
@@ -210,11 +217,14 @@ export const githubRouter = {
     }),
   publicGetProfileRepos: publicProcedure
     .route({
-      description: "Get the public repository list for a GitHub user",
+      description: "Get the public repository list for a portfolio profile's linked GitHub",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema)
     .output(z.array(GitHubUserRepoSummarySchema))
-    .handler(async ({ context }) => getProfileRepos(context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getProfileRepos(scoped))
+    ),
   privateGetProfileRepos: ownerProcedure
     .route({
       description: "Get the owner's full repository list, including private repos",
@@ -227,9 +237,11 @@ export const githubRouter = {
       description: "Get commit comparison between two branches for a public GitHub repository",
       method: "GET"
     })
-    .input(RepoBranchComparisonInputSchema)
+    .input(withProfileName(RepoBranchComparisonInputSchema))
     .output(GitHubRepoBranchComparisonSchema.nullable())
-    .handler(async ({ context, input }) => getRepoBranchComparison(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoBranchComparison(input, scoped))
+    ),
   privateGetRepoBranchComparison: ownerProcedure
     .route({
       description: "Get commit comparison between two branches for any of the owner's repositories",
@@ -243,9 +255,11 @@ export const githubRouter = {
       description: "Get the public pull requests for a GitHub repository",
       method: "GET"
     })
-    .input(RepoPullsInputSchema)
+    .input(withProfileName(RepoPullsInputSchema))
     .output(z.array(GitHubPullSummarySchema))
-    .handler(async ({ context, input }) => getRepoPulls(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoPulls(input, scoped))
+    ),
   privateGetRepoPulls: ownerProcedure
     .route({
       description: "Get the pull requests for any of the owner's repositories",
@@ -259,9 +273,11 @@ export const githubRouter = {
       description: "Get the public issues for a GitHub repository",
       method: "GET"
     })
-    .input(RepoIssuesInputSchema)
+    .input(withProfileName(RepoIssuesInputSchema))
     .output(z.array(GitHubIssueSummarySchema))
-    .handler(async ({ context, input }) => getRepoIssues(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoIssues(input, scoped))
+    ),
   privateGetRepoIssues: ownerProcedure
     .route({
       description: "Get the issues for any of the owner's repositories",
@@ -275,9 +291,11 @@ export const githubRouter = {
       description: "Get the public GitHub Actions workflow runs for a repository",
       method: "GET"
     })
-    .input(RepoWorkflowRunsInputSchema)
+    .input(withProfileName(RepoWorkflowRunsInputSchema))
     .output(z.array(GitHubWorkflowRunSchema))
-    .handler(async ({ context, input }) => getRepoWorkflowRuns(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoWorkflowRuns(input, scoped))
+    ),
   privateGetRepoWorkflowRuns: ownerProcedure
     .route({
       description: "Get the GitHub Actions workflow runs for any of the owner's repositories",
@@ -291,9 +309,11 @@ export const githubRouter = {
       description: "Get the public discussions for a GitHub repository",
       method: "GET"
     })
-    .input(RepoDiscussionsInputSchema)
+    .input(withProfileName(RepoDiscussionsInputSchema))
     .output(GitHubDiscussionsResultSchema)
-    .handler(async ({ context, input }) => getRepoDiscussions(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoDiscussions(input, scoped))
+    ),
   privateGetRepoDiscussions: ownerProcedure
     .route({
       description: "Get the discussions for any of the owner's repositories",
@@ -307,9 +327,11 @@ export const githubRouter = {
       description: "Get the public branches for a GitHub repository",
       method: "GET"
     })
-    .input(RepoInputSchema)
+    .input(withProfileName(RepoInputSchema))
     .output(z.array(GitHubRepoBranchSchema))
-    .handler(async ({ context, input }) => getRepoBranches(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoBranches(input, scoped))
+    ),
   privateGetRepoBranches: ownerProcedure
     .route({
       description: "Get the branches for any of the owner's repositories",
@@ -323,9 +345,11 @@ export const githubRouter = {
       description: "Get the public contributors for a GitHub repository",
       method: "GET"
     })
-    .input(RepoInputSchema)
+    .input(withProfileName(RepoInputSchema))
     .output(RepoContributorsResultSchema)
-    .handler(async ({ context, input }) => getRepoContributors(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoContributors(input, scoped))
+    ),
   privateGetRepoContributors: ownerProcedure
     .route({
       description: "Get the contributors for any of the owner's repositories",
@@ -339,9 +363,11 @@ export const githubRouter = {
       description: "Get public commit sparkline data for a GitHub repository",
       method: "GET"
     })
-    .input(RepoInputSchema)
+    .input(withProfileName(RepoInputSchema))
     .output(GitHubRepoCommitSparklineSchema)
-    .handler(async ({ context, input }) => getRepoCommitSparkline(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoCommitSparkline(input, scoped))
+    ),
   privateGetRepoCommitSparkline: ownerProcedure
     .route({
       description: "Get commit sparkline data for any of the owner's repositories",
@@ -355,9 +381,11 @@ export const githubRouter = {
       description: "Get public file content for a GitHub repository path",
       method: "GET"
     })
-    .input(RepoFileContentInputSchema)
+    .input(withProfileName(RepoFileContentInputSchema))
     .output(z.string().nullable())
-    .handler(async ({ context, input }) => getRepoFileContent(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoFileContent(input, scoped))
+    ),
   privateGetRepoFileContent: ownerProcedure
     .route({
       description: "Get file content for any of the owner's repositories",
@@ -371,9 +399,11 @@ export const githubRouter = {
       description: "Get the latest commit for a specific ref in a public GitHub repository",
       method: "GET"
     })
-    .input(RepoRefCommitInputSchema)
+    .input(withProfileName(RepoRefCommitInputSchema))
     .output(GitHubRepoLatestCommitSchema.nullable())
-    .handler(async ({ context, input }) => getRepoRefCommit(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoRefCommit(input, scoped))
+    ),
   privateGetRefCommit: ownerProcedure
     .route({
       description: "Get the latest commit for a specific ref in any of the owner's repositories",
@@ -387,9 +417,11 @@ export const githubRouter = {
       description: "Get the public overview for a GitHub repository",
       method: "GET"
     })
-    .input(RepoInputSchema)
+    .input(withProfileName(RepoInputSchema))
     .output(RepoOverviewSchema.nullable())
-    .handler(async ({ input, context }) => getRepoOverview(input, context)),
+    .handler(async ({ input, context }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoOverview(input, scoped))
+    ),
   privateGetRepoOverview: ownerProcedure
     .route({
       description: "Get the overview for any of the owner's repositories",
@@ -403,9 +435,11 @@ export const githubRouter = {
       description: "Get public directory entries for a GitHub repository path",
       method: "GET"
     })
-    .input(RepoTreeInputSchema)
+    .input(withProfileName(RepoTreeInputSchema))
     .output(z.array(GitHubRepoTreeEntrySchema))
-    .handler(async ({ context, input }) => getRepoTree(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getRepoTree(input, scoped))
+    ),
   privateGetRepoTree: ownerProcedure
     .route({
       description: "Get directory entries for any of the owner's repositories",
@@ -419,9 +453,11 @@ export const githubRouter = {
       description: "Get latest commits for public repository tree entries",
       method: "GET"
     })
-    .input(RepoTreeEntryCommitsInputSchema)
+    .input(withProfileName(RepoTreeEntryCommitsInputSchema))
     .output(z.record(z.string(), GitHubTreeEntryCommitSchema.nullable()))
-    .handler(async ({ context, input }) => getTreeEntryCommits(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getTreeEntryCommits(input, scoped))
+    ),
   privateGetTreeEntryCommits: ownerProcedure
     .route({
       description: "Get latest commits for tree entries in any of the owner's repositories",
@@ -435,9 +471,11 @@ export const githubRouter = {
       description: "Get public GitHub activity for a user",
       method: "GET"
     })
-    .input(UserActivityInputSchema)
+    .input(withProfileName(UserActivityInputSchema))
     .output(z.array(GitHubUserActivityEventSchema))
-    .handler(async ({ context, input }) => getUserActivity(input, context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getUserActivity(input, scoped))
+    ),
   privateGetUserActivity: ownerProcedure
     .route({
       description: "Get GitHub activity for the owner, including private-repo activity",
@@ -451,8 +489,11 @@ export const githubRouter = {
       description: "Get the public GitHub contribution calendar for a user",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema)
     .output(GitHubContributionCalendarSchema.nullable())
-    .handler(async ({ context }) => getUserContributions(context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getUserContributions(scoped))
+    ),
   privateGetUserContributions: ownerProcedure
     .route({
       description:
@@ -466,8 +507,11 @@ export const githubRouter = {
       description: "Get the pinned public GitHub repositories for a user",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema)
     .output(z.array(GitHubPinnedRepoSchema))
-    .handler(async ({ context }) => getUserPinnedRepos(context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getUserPinnedRepos(scoped))
+    ),
   privateGetUserPinnedRepos: ownerProcedure
     .route({
       description: "Get the pinned GitHub repositories for the owner, including private repos",
@@ -480,8 +524,11 @@ export const githubRouter = {
       description: "Get the public GitHub profile for a user",
       method: "GET"
     })
+    .input(PublicProfileNameInputSchema)
     .output(GitHubUserProfileSchema.nullable())
-    .handler(async ({ context }) => getUserProfile(context)),
+    .handler(async ({ context, input }) =>
+      withPublicGitHubContext(context, input, (scoped) => getUserProfile(scoped))
+    ),
   privateGetUserProfile: ownerProcedure
     .route({
       description: "Get the full GitHub profile for the owner",

@@ -14,7 +14,11 @@ export const user = pgTable("user", {
     .notNull(),
   summary: text("summary").default(""),
   phone: text("phone"),
-  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true })
+  // withTimezone kept in sync with the live column (hand-owned beyond auth:generate).
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
+  // NOT NULL enforced in migration after backfill; create hook always sets a value.
+  // auth:generate emits optional — re-apply .notNull() after regenerate.
+  profileName: text("profile_name").notNull().unique()
 });
 
 export const session = pgTable(

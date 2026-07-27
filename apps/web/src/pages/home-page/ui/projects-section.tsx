@@ -6,8 +6,8 @@ import { Icon } from "@/shared/ui/icon";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
-export const ProjectsSection = () => {
-  const portfolioQuery = useGetPortfolioListQuery();
+export const ProjectsSection = ({ profileName }: { profileName: string }) => {
+  const portfolioQuery = useGetPortfolioListQuery(profileName);
   const projects = portfolioQuery.data?.projects ?? [];
 
   return (

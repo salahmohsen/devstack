@@ -29,11 +29,20 @@ function getHeaders(): Record<string, string> {
   const headers = getRequestHeaders();
   // Forward the incoming request's cookies (and any other relevant headers)
   // so the Hono server sees the same session for SSR oRPC calls.
+  // Also forward Host as x-forwarded-host so public portfolio RPCs can resolve
+  // verified custom domains during SSR (internal RPC URL is not the public Host).
+  const out: Record<string, string> = {};
   const cookie = headers.get?.("cookie");
   if (cookie) {
-    return { cookie };
+    out.cookie = cookie;
   }
-  return {};
+  const xfh = headers.get?.("x-forwarded-host")?.split(",")[0]?.trim() ?? "";
+  const hostHeader = headers.get?.("host")?.trim() ?? "";
+  const forwardedHost = xfh.length > 0 ? xfh : hostHeader.length > 0 ? hostHeader : null;
+  if (forwardedHost) {
+    out["x-forwarded-host"] = forwardedHost;
+  }
+  return out;
 }
 
 function isAbortError(error: unknown): boolean {

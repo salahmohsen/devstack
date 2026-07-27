@@ -17,8 +17,8 @@ export function GithubProfileUnavailableState() {
         <EmptyHeader>
           <EmptyTitle>GitHub profile is temporarily unavailable</EmptyTitle>
           <EmptyDescription>
-            Public GitHub data could not be loaded. The portfolio owner should sign in with GitHub
-            so the server can use a valid OAuth token (tokens stay on the server and never reach
+            Public GitHub data could not be loaded. This profile’s owner should sign in with GitHub
+            so the server can use their OAuth token (tokens stay on the server and never reach
             visitors).
           </EmptyDescription>
         </EmptyHeader>

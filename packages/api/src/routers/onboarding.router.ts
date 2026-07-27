@@ -267,7 +267,7 @@ export const onboardingRouter = {
       // Prefetch profile + stacks for workflow input (no resume text logging).
       const [userRow, existingStacks] = await Promise.all([
         userRepository.findById(userId),
-        stackRepository.findAll()
+        stackRepository.findAllByUserId(userId)
       ]);
       if (!userRow) {
         throw new Error("Session references a user that no longer exists");

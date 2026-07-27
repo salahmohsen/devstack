@@ -21,8 +21,9 @@ export const experiencesRouter = {
       method: "GET"
     })
     .output(ExperienceListOutputSchema)
-    .handler(async () => {
-      const experiences = await experienceRepository.findAll();
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+      const experiences = await experienceRepository.findAllByUserId(userId);
       return experiences.map(toExperienceOutput);
     }),
   get: protectedProcedure
@@ -32,8 +33,9 @@ export const experiencesRouter = {
     })
     .input(z.object({ id: z.string() }))
     .output(ExperienceOutputSchema.nullable())
-    .handler(async ({ input }) => {
-      const exp = await experienceRepository.findById(input.id);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const exp = await experienceRepository.findByIdForUser(input.id, userId);
       return exp ? toExperienceOutput(exp) : null;
     }),
   create: protectedProcedure
@@ -43,9 +45,13 @@ export const experiencesRouter = {
     })
     .input(CreateExperienceInputSchema)
     .output(ExperienceOutputSchema)
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { includedInPortfolio, ...createData } = input;
-      const exp = await experienceRepository.create(createData, { includedInPortfolio });
+      const exp = await experienceRepository.create(
+        { ...createData, userId },
+        { includedInPortfolio }
+      );
       return toExperienceOutput(exp!);
     }),
   update: protectedProcedure
@@ -55,9 +61,12 @@ export const experiencesRouter = {
     })
     .input(z.object({ id: z.string(), data: UpdateExperienceInputSchema }))
     .output(ExperienceOutputSchema.nullable())
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
       const { includedInPortfolio, ...updateData } = input.data;
-      const exp = await experienceRepository.update(input.id, updateData, { includedInPortfolio });
+      const exp = await experienceRepository.update(input.id, userId, updateData, {
+        includedInPortfolio
+      });
       return exp ? toExperienceOutput(exp) : null;
     }),
   reorder: protectedProcedure
@@ -67,8 +76,9 @@ export const experiencesRouter = {
     })
     .input(ReorderInputSchema)
     .output(ReorderResponseSchema)
-    .handler(async ({ input }) => {
-      await experienceRepository.reorder(input.items);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      await experienceRepository.reorder(userId, input.items);
       return { success: true };
     }),
   delete: protectedProcedure
@@ -78,8 +88,9 @@ export const experiencesRouter = {
     })
     .input(z.object({ id: z.string() }))
     .output(DeleteResponseSchema)
-    .handler(async ({ input }) => {
-      const deleted = await experienceRepository.delete(input.id);
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const deleted = await experienceRepository.delete(input.id, userId);
       return { success: deleted !== null };
     })
 };

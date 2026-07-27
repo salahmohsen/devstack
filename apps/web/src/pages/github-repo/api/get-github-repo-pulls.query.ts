@@ -17,19 +17,35 @@ type GetGithubRepoPullsInput = {
   direction?: "asc" | "desc";
 };
 
-export function getGithubRepoPullsQueryOptions(input: GetGithubRepoPullsInput, isPrivate = false) {
-  return (
-    isPrivate
-      ? orpcQueryClient.github.privateGetRepoPulls
-      : orpcQueryClient.github.publicGetRepoPulls
-  ).queryOptions({
+export function getGithubRepoPullsQueryOptions(
+  input: GetGithubRepoPullsInput,
+  isPrivate = false,
+  profileName?: string
+) {
+  if (isPrivate) {
+    return orpcQueryClient.github.privateGetRepoPulls.queryOptions({
+      input: {
+        direction: input.direction ?? "desc",
+        page: input.page ?? 1,
+        perPage: input.perPage ?? REPO_ACTIVITY_CARDS_PER_PAGE,
+        repo: input.repo,
+        sort: input.sort ?? "updated",
+        state: input.state ?? "open"
+      },
+      staleTime: githubCachePolicy.list.staleTimeMs,
+      gcTime: githubCachePolicy.list.gcTimeMs,
+      meta: persistedMeta
+    });
+  }
+  return orpcQueryClient.github.publicGetRepoPulls.queryOptions({
     input: {
       direction: input.direction ?? "desc",
       page: input.page ?? 1,
       perPage: input.perPage ?? REPO_ACTIVITY_CARDS_PER_PAGE,
       repo: input.repo,
       sort: input.sort ?? "updated",
-      state: input.state ?? "open"
+      state: input.state ?? "open",
+      profileName
     },
     staleTime: githubCachePolicy.list.staleTimeMs,
     gcTime: githubCachePolicy.list.gcTimeMs,
@@ -37,9 +53,17 @@ export function getGithubRepoPullsQueryOptions(input: GetGithubRepoPullsInput, i
   });
 }
 
-export function useGetGithubRepoPullsQuery(input: GetGithubRepoPullsInput) {
+export function useGetGithubRepoPullsQuery(input: GetGithubRepoPullsInput, profileName: string) {
   const { user } = useAuth();
-  return useQuery(getGithubRepoPullsQueryOptions(input, !!user));
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  return useQuery({
+    ...getGithubRepoPullsQueryOptions(input, isPrivate, profileName),
+    enabled: true
+  });
 }
 
 export type GithubRepoPullsQueryResult = Awaited<

@@ -7,6 +7,13 @@ import {
   type UserSchemaSelect
 } from "@tsu-stack/db/types";
 
+import {
+  PROFILE_NAME_MAX,
+  PROFILE_NAME_MIN,
+  PROFILE_NAME_REGEX,
+  RESERVED_PROFILE_PATH_SET
+} from "#@/profile/constants";
+
 export const contactTypeSchema = z.enum([
   "website",
   "email",
@@ -62,7 +69,8 @@ export const ProfileOutputSchema = z.object({
   createdAt: z.coerce.date(),
   contacts: z.array(contactOutputSchema),
   summary: z.string().nullable(),
-  phone: z.string().nullable()
+  phone: z.string().nullable(),
+  profileName: z.string()
 }) satisfies z.ZodType<
   Omit<UserSchemaSelect, "updatedAt" | "onboardingCompletedAt"> & {
     contacts: z.infer<typeof contactOutputSchema>[];
@@ -73,3 +81,37 @@ export type ContactOutput = z.infer<typeof contactOutputSchema>;
 export type ContactInput = z.infer<typeof contactInputSchema>;
 export type ProfileOutput = z.infer<typeof ProfileOutputSchema>;
 export type ProfileOutputContact = z.infer<typeof contactOutputSchema>[];
+
+export const ProfileNameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(PROFILE_NAME_MIN)
+  .max(PROFILE_NAME_MAX)
+  .regex(PROFILE_NAME_REGEX, "Use lowercase letters, numbers, and single hyphens")
+  .refine((s) => !RESERVED_PROFILE_PATH_SET.has(s), "This name is reserved");
+
+export type ProfileName = z.infer<typeof ProfileNameSchema>;
+
+/** Input for renaming a user's public profile path key. */
+export const RenameProfileInputSchema = z.object({
+  profileName: z.string()
+});
+
+export type RenameProfileInput = z.infer<typeof RenameProfileInputSchema>;
+
+/**
+ * Public procedures that scope data to a profile path segment and/or verified Host.
+ * When `profileName` is omitted, the request Host (verified custom domain) must resolve.
+ */
+export const PublicProfileNameInputSchema = z.object({
+  profileName: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Public profile path key (user.profileName or a slug alias). Optional when Host is a verified custom domain."
+    )
+});
+
+export type PublicProfileNameInput = z.infer<typeof PublicProfileNameInputSchema>;

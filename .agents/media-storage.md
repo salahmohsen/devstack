@@ -124,10 +124,10 @@ await files.upload(key, file, { contentType: "application/pdf" });
 ### Generated resumes (`resumes/…`)
 
 - Written server-side with `context.mediaBucket.put` in `packages/api/src/routers/resume.router.ts`.
-- Keys are **not** under the per-user gateway prefix (`resumes/{filename}` or `resumes/{uuid}-{filename}`).
-- Linked from the resume domain row (`r2Key` column name is historical; storage is S3/MinIO).
+- Prefer keys under the tenant prefix (`{userId}/resumes/…`); legacy keys may still be `resumes/{filename}` or `resumes/{uuid}-{filename}`.
+- Linked from the resume domain row (`r2Key` column name is historical; storage is S3/MinIO). Each resume row is scoped by `userId`.
 - Delete removes the DB row and the object (synchronized hard delete).
-- **Onboarding promote:** after a successful `onboarding.apply` with a session source key, the API copies the PDF into `resumes/{uuid}-{filename}`, creates a resume row (`author: "admin"`), sets it as default, then deletes the temporary `resume-sources/` object (`packages/api/src/lib/onboarding/promote-resume-source.ts`). Skip/discard still only delete the session source.
+- **Onboarding promote:** after a successful `onboarding.apply` with a session source key, the API copies the PDF into a durable resume key, creates a resume row for **that session user** with `author: "admin"` (historical enum value for human/user-authored — not a site-admin role), sets it as default for that user, then deletes the temporary `resume-sources/` object (`packages/api/src/lib/onboarding/promote-resume-source.ts`). Skip/discard still only delete the session source.
 
 ## What Is Not Built Yet
 

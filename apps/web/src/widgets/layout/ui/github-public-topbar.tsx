@@ -34,6 +34,7 @@ import { ThemeSwitcher } from "@tsu-stack/ui/components/theme-switcher";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { setCommandPaletteOpen } from "@/shared/lib/command-palette/open-state";
+import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
@@ -64,10 +65,17 @@ export function Topbar() {
 
   const queryClient = useQueryClient();
   const { user: admin } = useAuthSuspense();
-  const setupStatus = queryClient.getQueryData(getGithubSetupStatusQueryOptions().queryKey);
   const isClient = useIsClient();
   const openTabs = useTabs();
 
+  // Prefer session user's profile for GitHub chrome; never a global site owner.
+  const sessionProfileName =
+    typeof (admin as { profileName?: string } | null)?.profileName === "string"
+      ? (admin as { profileName: string }).profileName
+      : undefined;
+  const setupStatus = sessionProfileName
+    ? queryClient.getQueryData(getGithubSetupStatusQueryOptions(sessionProfileName).queryKey)
+    : undefined;
   const owner = setupStatus?.owner ?? null;
 
   const handleSignOut = async () => {
@@ -81,7 +89,7 @@ export function Topbar() {
       // Drop cached session immediately (query staleTime is 5m; suspense keeps UI mounted).
       queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
       await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions().queryKey
+        queryKey: getGithubSetupStatusQueryOptions(sessionProfileName).queryKey
       });
       await router.invalidate();
       await navigateRef.current({ to: "/" });
@@ -257,7 +265,16 @@ export function Topbar() {
                   </MenuItem>
                 )}
                 {owner ? (
-                  <MenuLinkItem render={<Link to="/repos" />}>
+                  <MenuLinkItem
+                    render={
+                      <Link
+                        to={sessionProfileName ? "/$profileName/repos" : "/repos"}
+                        params={
+                          sessionProfileName ? { profileName: sessionProfileName } : undefined
+                        }
+                      />
+                    }
+                  >
                     <Archive size={16} strokeWidth={2} />
                     Repositories
                     <MenuShortcut>G O</MenuShortcut>
@@ -269,7 +286,7 @@ export function Topbar() {
                     <MenuShortcut>G O</MenuShortcut>
                   </MenuItem>
                 )}
-                <MenuLinkItem render={<Link to="/dashboard" />}>
+                <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
                   <LayoutDashboard size={16} strokeWidth={2} />
                   Dashboard
                   <MenuShortcut>G D</MenuShortcut>

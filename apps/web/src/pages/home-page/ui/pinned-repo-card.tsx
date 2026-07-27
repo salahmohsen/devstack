@@ -5,6 +5,7 @@ import { formatCompactCount } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 
 type PinnedRepoCardProps = {
+  profileName: string;
   repo: {
     description: string | null;
     forks: number;
@@ -17,11 +18,11 @@ type PinnedRepoCardProps = {
   };
 };
 
-export function PinnedRepoCard({ repo }: PinnedRepoCardProps) {
+export function PinnedRepoCard({ profileName, repo }: PinnedRepoCardProps) {
   return (
     <Link
-      to="/repos/$repo"
-      params={{ repo: repo.name }}
+      to="/$profileName/repos/$repo"
+      params={{ profileName, repo: repo.name }}
       className="flex min-h-36 flex-col gap-3 rounded-md border bg-background p-4 transition-colors"
     >
       <div className="flex min-w-0 items-center gap-2">

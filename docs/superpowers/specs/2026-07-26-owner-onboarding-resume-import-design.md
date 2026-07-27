@@ -2,7 +2,7 @@
 
 **Status:** Design session approved 2026-07-26; spec revised after review (transaction/tx, contacts, keys, protectedProcedure, MIME scope).
 
-**Goal:** Let the portfolio owner upload a PDF resume; AI extracts profile, experiences, projects, and stacks into a reviewable draft; owner applies in one transaction (with portfolio opt-in) or skips. First-run soft onboarding plus always-available re-import.
+**Goal:** Let a **signed-in user** (tenant) upload a PDF resume; AI extracts profile, experiences, projects, and stacks into a reviewable draft; they apply in one transaction (with portfolio opt-in) or skip. First-run soft onboarding plus always-available re-import. (Pre multi-user wording said “portfolio owner”; behavior is per-session user.)
 
 ## Architecture
 
