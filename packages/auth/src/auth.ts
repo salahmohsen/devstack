@@ -1,19 +1,104 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { APIError, betterAuth } from "better-auth";
+import { getOAuthState } from "better-auth/api";
 import { openAPI } from "better-auth/plugins";
 
-import { db } from "@tsu-stack/db";
+import { db, inviteRepository, userRepository } from "@tsu-stack/db";
 import * as schema from "@tsu-stack/db/schema";
 import { sendEmail, VerifyEmail } from "@tsu-stack/email";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { getApiBasePath, getSharedCookieDomain, joinApiPath } from "@tsu-stack/env/utils/url";
+
+import {
+  INVITE_COOKIE_NAME,
+  readInviteCodeFromCookieHeader,
+  serializeInviteClearCookie
+} from "./invite-cookie";
+import { resolveUniqueProfileName } from "./profile-name";
 
 const webOrigin = new URL(ENV_SERVER.VITE_WEB_URL).origin;
 const sharedCookieDomain = getSharedCookieDomain(
   ENV_SERVER.VITE_WEB_URL,
   ENV_SERVER.VITE_SERVER_URL
 );
+
+type AuthEndpointContext = {
+  body?: unknown;
+  headers?: Headers | null;
+  getCookie?: (name: string) => string | null;
+  path?: string;
+  setCookie?: (name: string, value: string, options?: Record<string, unknown>) => void;
+  context?: {
+    responseHeaders?: Headers;
+  };
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readStringField(source: unknown, key: string): string | null {
+  if (!isRecord(source)) return null;
+  const value = source[key];
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+/**
+ * Invite code sources (never a user column):
+ * 1. Email sign-up body field `inviteCode` (not in additionalFields → not persisted)
+ * 2. Short-lived `tsu_invite_code` cookie (OAuth preflight)
+ * 3. OAuth state `additionalData.inviteCode` via getOAuthState()
+ */
+async function extractInviteCode(ctx: AuthEndpointContext | null): Promise<string | null> {
+  if (!ctx) return null;
+
+  const fromBody = readStringField(ctx.body, "inviteCode");
+  if (fromBody) return fromBody;
+
+  if (typeof ctx.getCookie === "function") {
+    const fromGetCookie = ctx.getCookie(INVITE_COOKIE_NAME);
+    if (fromGetCookie?.trim()) return fromGetCookie.trim();
+  }
+
+  const fromHeader = readInviteCodeFromCookieHeader(ctx.headers?.get?.("cookie") ?? null);
+  if (fromHeader) return fromHeader;
+
+  try {
+    const oauthState = await getOAuthState();
+    const fromState = readStringField(oauthState, "inviteCode");
+    if (fromState) return fromState;
+  } catch {
+    // Outside OAuth callback request — ignore.
+  }
+
+  return null;
+}
+
+function clearInviteCookie(ctx: AuthEndpointContext | null): void {
+  if (!ctx) return;
+  if (typeof ctx.setCookie === "function") {
+    ctx.setCookie(INVITE_COOKIE_NAME, "", {
+      path: "/",
+      maxAge: 0,
+      httpOnly: true,
+      sameSite: "lax",
+      ...(sharedCookieDomain ? { domain: sharedCookieDomain } : {}),
+      secure: !ENV_SERVER.VITE_SERVER_URL.includes("localhost")
+    });
+    return;
+  }
+
+  // Fallback: append Set-Cookie on response headers if available.
+  const clear = serializeInviteClearCookie({
+    domain: sharedCookieDomain,
+    secure: !ENV_SERVER.VITE_SERVER_URL.includes("localhost")
+  });
+  const headers = ctx.context?.responseHeaders;
+  if (headers && typeof headers.append === "function") {
+    headers.append("Set-Cookie", clear);
+  }
+}
 
 export const auth = betterAuth({
   baseURL: new URL(ENV_SERVER.VITE_SERVER_URL).origin,
@@ -30,21 +115,105 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async () => {
-          // Single-user portfolio: only allow the first-ever user to
-          // be created (via email/password or GitHub). Any subsequent
-          // `user.create` — which Better Auth also runs at the end
-          // of a social sign-in for a new account — is rejected.
-          // The error is surfaced to the client with code
-          // `REGISTRATION_CLOSED` so the toast can render a real
-          // message instead of the generic fallback.
-          const existingUsers = await db.query.user.findMany({ limit: 1 });
-          if (existingUsers.length > 0) {
-            throw new APIError("FORBIDDEN", {
-              code: "REGISTRATION_CLOSED",
-              message: "Registration is closed. Only the portfolio owner can sign in."
+        before: async (userData, ctx) => {
+          const isBootstrap = (await userRepository.countUsers()) === 0;
+
+          if (!isBootstrap) {
+            const inviteCode = await extractInviteCode(ctx as AuthEndpointContext | null);
+            if (!inviteCode) {
+              throw new APIError("FORBIDDEN", {
+                code: "INVITE_REQUIRED",
+                message: "An invite code is required to register."
+              });
+            }
+
+            const invite = await inviteRepository.findValidByCode(inviteCode);
+            if (!invite) {
+              throw new APIError("FORBIDDEN", {
+                code: "INVITE_INVALID",
+                message: "This invite code is invalid or has already been used."
+              });
+            }
+          }
+
+          let profileName: string;
+          try {
+            profileName = await resolveUniqueProfileName({
+              profileName: readStringField(userData, "profileName"),
+              name: typeof userData.name === "string" ? userData.name : null,
+              email: typeof userData.email === "string" ? userData.email : null
+            });
+          } catch (error) {
+            const code =
+              isRecord(error) && typeof error.code === "string"
+                ? error.code
+                : "PROFILE_NAME_INVALID";
+            const message = error instanceof Error ? error.message : "Invalid profile name";
+            if (code === "PROFILE_NAME_TAKEN") {
+              throw new APIError("CONFLICT", { code, message });
+            }
+            // Zod issues from parseProfileName
+            if (isRecord(error) && Array.isArray(error.issues)) {
+              throw new APIError("BAD_REQUEST", {
+                code: "PROFILE_NAME_INVALID",
+                message: "Invalid profile name. Use 3–30 lowercase letters, numbers, and hyphens."
+              });
+            }
+            throw new APIError("BAD_REQUEST", {
+              code: "PROFILE_NAME_INVALID",
+              message
             });
           }
+
+          // Drop any accidental inviteCode if a client put it on user payload.
+          const { inviteCode: _drop, ...rest } = userData as typeof userData & {
+            inviteCode?: unknown;
+          };
+
+          return {
+            data: {
+              ...rest,
+              profileName
+            }
+          };
+        },
+        after: async (createdUser, ctx) => {
+          const endpointCtx = ctx as AuthEndpointContext | null;
+          // Bootstrap: only one user exists after create — no invite to consume.
+          if ((await userRepository.countUsers()) <= 1) {
+            clearInviteCookie(endpointCtx);
+            return;
+          }
+
+          const inviteCode = await extractInviteCode(endpointCtx);
+          if (!inviteCode) {
+            // Fail closed: user was created without a recoverable invite.
+            await userRepository.deleteById(createdUser.id);
+            throw new APIError("FORBIDDEN", {
+              code: "INVITE_REQUIRED",
+              message: "An invite code is required to register."
+            });
+          }
+
+          const invite = await inviteRepository.findValidByCode(inviteCode);
+          if (!invite) {
+            await userRepository.deleteById(createdUser.id);
+            throw new APIError("FORBIDDEN", {
+              code: "INVITE_INVALID",
+              message: "This invite code is invalid or has already been used."
+            });
+          }
+
+          const marked = await inviteRepository.markUsed(invite.id, createdUser.id);
+          if (!marked) {
+            await userRepository.deleteById(createdUser.id);
+            throw new APIError("FORBIDDEN", {
+              code: "INVITE_INVALID",
+              message: "This invite code is invalid or has already been used."
+            });
+          }
+
+          clearInviteCookie(endpointCtx);
         }
       }
     }
@@ -71,6 +240,19 @@ export const auth = betterAuth({
       phone: {
         type: "string",
         required: false
+      },
+      // Hand-owned field historically; keep it in additionalFields so auth:generate
+      // does not wipe the column on regenerate. Not user-input at sign-up.
+      onboardingCompletedAt: {
+        type: "date",
+        required: false,
+        input: false
+      },
+      profileName: {
+        type: "string",
+        required: false,
+        unique: true,
+        input: true
       }
     },
     changeEmail: {
@@ -87,7 +269,7 @@ export const auth = betterAuth({
 
   // Link GitHub onto the existing admin row when the GitHub primary email
   // matches. Without this, a first-time GitHub sign-in for an email/password
-  // admin tries to create a second user and hits REGISTRATION_CLOSED.
+  // admin tries to create a second user and hits invite gates.
   account: {
     accountLinking: {
       enabled: true,
@@ -138,7 +320,7 @@ export const auth = betterAuth({
     enabled: false
   },
 
-  // OAuth failures (account not linked, registration closed, etc.) should
+  // OAuth failures (account not linked, invite required, etc.) should
   // land on the web app, not the API host's bare /error page.
   onAPIError: {
     errorURL: `${webOrigin}/sign-in`

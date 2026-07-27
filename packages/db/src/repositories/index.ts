@@ -11,6 +11,11 @@ export {
   type OnboardingApplyResult
 } from "./onboarding-apply.repository.ts";
 export {
+  inviteRepository,
+  type CreateInviteInput,
+  type InviteEntity
+} from "./invite.repository.ts";
+export {
   portfolioEntryRepository,
   type PortfolioEntryEntity
 } from "./portfolio-entry.repository.ts";
