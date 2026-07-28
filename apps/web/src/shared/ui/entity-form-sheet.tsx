@@ -83,7 +83,11 @@ export function EntityFormSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetPopup className={cn("max-w-lg sm:max-w-lg", className)} side="right" showCloseButton>
+        <SheetPopup
+          className={cn("w-full max-w-lg sm:max-w-lg", className)}
+          side="right"
+          showCloseButton
+        >
           <SheetHeader>
             <SheetTitle>{title}</SheetTitle>
             {description ? <SheetDescription>{description}</SheetDescription> : null}

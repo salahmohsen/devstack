@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSelector } from "@tanstack/react-store";
 import { SparklesIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -14,22 +15,13 @@ import {
   type StackOutput
 } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPanel,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 import { Form } from "@tsu-stack/ui/components/form";
 import { Group } from "@tsu-stack/ui/components/group";
 import { Label } from "@tsu-stack/ui/components/label";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
-import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
+import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
 import { Icon } from "@/shared/ui/icon";
 
 import { useGetGithubProfileReposQuery } from "@/features/github";
@@ -68,7 +60,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   /**
    * Abort in-flight detect-stacks. Call when the detect dialog closes or the
-   * parent project form dialog closes — never leave a stream running detached.
+   * parent project form sheet closes — never leave a stream running detached.
    */
   const handleCancelDetect = (options?: { silent?: boolean }) => {
     const controller = detectAbortRef.current;
@@ -77,7 +69,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       setCurrentStep(null);
       return;
     }
-    // Abort first — oRPC closes the stream; mutation cancels the Mastra run
     controller.abort();
     detectAbortRef.current = null;
     setIsDetecting(false);
@@ -103,7 +94,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     setDetectError(null);
     setCurrentStep("Initializing");
     setIsDetecting(true);
-    // Open immediately so progress/errors live in the dialog, not the form button.
     setDetectDialogOpen(true);
 
     void detectionHook
@@ -125,7 +115,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           (error instanceof DOMException && error.name === "AbortError") ||
           (error instanceof Error && error.name === "AbortError");
         if (aborted) {
-          // Cancel toast is shown in handleCancelDetect
           return;
         }
         const message =
@@ -223,16 +212,20 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     }
   });
 
-  const handleClose = () => {
-    handleCancelDetect();
-    setDetectDialogOpen(false);
-    onOpenChange(false);
-  };
-  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
+  const isDirty = useSelector(form.store, (s) => s.isDirty && s.isTouched);
+  const busy = createMutation.isPending || updateMutation.isPending;
 
-  // Reset only when the dialog opens or the edited project id changes.
-  // Do NOT depend on `initialData` object identity — projects.list refetches
-  // create a new reference and would wipe stackIds set by detect-stacks.
+  const handleSheetOpenChange = (next: boolean) => {
+    if (!next) {
+      handleCancelDetect({ silent: true });
+      setDetectDialogOpen(false);
+      setResults(null);
+      setDetectError(null);
+    }
+    onOpenChange(next);
+  };
+
+  // Reset only when the sheet opens or the edited project id changes.
   const projectIdKey = initialData?.id ?? "new";
 
   useEffect(() => {
@@ -268,23 +261,21 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       });
       setSelectedExperienceId(null);
     }
-    // Reset only when the dialog opens or project id changes (not every
+    // Reset only when the sheet opens or project id changes (not every
     // projects.list identity change), so detect-stacks can keep stackIds.
   }, [open, projectIdKey, form]);
 
-  // Parent form closed (X / overlay / Escape / external) — always stop detect.
+  // Parent sheet closed from outside — always stop detect.
   useEffect(() => {
     if (open) return;
     handleCancelDetect({ silent: true });
-    // Reset detect dialog state when the form is closed from outside this tree.
     // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- sync detect UI to closed form prop
     setDetectDialogOpen(false);
     setResults(null);
     setDetectError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to form dialog open
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to form open
   }, [open]);
 
-  // Unmount safety net
   useEffect(
     () => () => {
       detectAbortRef.current?.abort();
@@ -293,25 +284,34 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     []
   );
 
-  const handleFormDialogOpenChange = (next: boolean) => {
-    if (next) {
-      onOpenChange(true);
-      return;
-    }
-    // Dirty guard → handleClose aborts detect when confirmed
-    handleCloseAttempt();
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleFormDialogOpenChange}>
-      <DialogContent className="form-dialog">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Project" : "New Project"}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? "Update your project details." : "Add a new project to your portfolio."}
-          </DialogDescription>
-        </DialogHeader>
-
+    <>
+      <EntityFormSheet
+        open={open}
+        onOpenChange={handleSheetOpenChange}
+        isDirty={isDirty}
+        className="max-w-xl sm:max-w-xl"
+        title={isEdit ? "Edit Project" : "New Project"}
+        description={
+          isEdit ? "Update your project details." : "Add a new project to your portfolio."
+        }
+        footer={({ requestClose }) => (
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" type="button" disabled={busy} onClick={requestClose}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
+              {isEdit
+                ? updateMutation.isPending
+                  ? "Saving..."
+                  : "Save"
+                : createMutation.isPending
+                  ? "Creating..."
+                  : "Create"}
+            </Button>
+          </div>
+        )}
+      >
         <Form
           className="contents"
           onSubmit={(e) => {
@@ -320,7 +320,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
             void form.handleSubmit();
           }}
         >
-          <DialogPanel className="space-y-4">
+          <div className="space-y-4">
             <form.AppField name="logo">
               {(field) => <field.ImageField label="Project logo" />}
             </form.AppField>
@@ -393,7 +393,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                   placeholder="Select repositories..."
                   emptyMessage="No repositories found."
                   classNames={{
-                    // Long GitHub lists: keep the menu short in this dialog
                     content: "max-h-48 [&_[data-slot=scroll-area-viewport]]:max-h-44",
                     chips: "max-h-24"
                   }}
@@ -465,81 +464,61 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                 />
               )}
             </form.AppField>
-          </DialogPanel>
-
-          <DialogFooter>
-            <form.AppForm>
-              <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
-                {isEdit
-                  ? updateMutation.isPending
-                    ? "Saving..."
-                    : "Save"
-                  : createMutation.isPending
-                    ? "Creating..."
-                    : "Create"}
-              </form.SubmitButton>
-            </form.AppForm>
-            <Button variant="outline" type="button" onClick={handleCloseAttempt}>
-              Cancel
-            </Button>
-          </DialogFooter>
+          </div>
         </Form>
-        {alertDialog}
-        <DetectStacksDialog
-          open={detectDialogOpen}
-          setOpen={(next) => {
-            if (!next) {
-              // Closing detect dialog (Cancel / Escape / X) aborts the run
-              handleCancelDetect();
-              setResults(null);
-              setDetectError(null);
+      </EntityFormSheet>
+
+      <DetectStacksDialog
+        open={detectDialogOpen}
+        setOpen={(next) => {
+          if (!next) {
+            handleCancelDetect();
+            setResults(null);
+            setDetectError(null);
+          }
+          setDetectDialogOpen(next);
+        }}
+        onStacksSelected={async (upserted) => {
+          const stackIds = upserted.map((s) => s.id);
+          const current = form.getFieldValue("stackIds") ?? [];
+          const merged = Array.from(new Set([...current, ...stackIds]));
+          form.setFieldValue("stackIds", merged);
+
+          const listKey = orpcQueryClient.stacks.list.queryKey();
+          queryClient.setQueryData<StackOutput[]>(listKey, (prev) => {
+            const existing = prev ?? [];
+            const byId = new Map(existing.map((s) => [s.id, s]));
+            for (const s of upserted) {
+              if (byId.has(s.id)) continue;
+              byId.set(s.id, {
+                id: s.id,
+                name: s.name,
+                description: s.description,
+                icon: s.icon,
+                type: s.type,
+                healthStatus: null,
+                confidence: null,
+                projectCount: 0,
+                sortOrder: existing.length,
+                portfolioEntryId: null,
+                includedInPortfolio: false,
+                dependencies: [],
+                projects: [],
+                updatedAt: new Date(),
+                createdAt: new Date()
+              });
             }
-            setDetectDialogOpen(next);
-          }}
-          onStacksSelected={async (upserted) => {
-            const stackIds = upserted.map((s) => s.id);
-            const current = form.getFieldValue("stackIds") ?? [];
-            const merged = Array.from(new Set([...current, ...stackIds]));
-            form.setFieldValue("stackIds", merged);
+            return Array.from(byId.values());
+          });
 
-            // Optimistic list merge so Combobox chips resolve to names/icons
-            // immediately without waiting on a full stacks.list round-trip.
-            const listKey = orpcQueryClient.stacks.list.queryKey();
-            queryClient.setQueryData<StackOutput[]>(listKey, (prev) => {
-              const existing = prev ?? [];
-              const byId = new Map(existing.map((s) => [s.id, s]));
-              for (const s of upserted) {
-                if (byId.has(s.id)) continue;
-                byId.set(s.id, {
-                  id: s.id,
-                  name: s.name,
-                  description: s.description,
-                  icon: s.icon,
-                  type: s.type,
-                  healthStatus: null,
-                  confidence: null,
-                  projectCount: 0,
-                  sortOrder: existing.length,
-                  portfolioEntryId: null,
-                  includedInPortfolio: false,
-                  dependencies: [],
-                  projects: [],
-                  updatedAt: new Date(),
-                  createdAt: new Date()
-                });
-              }
-              return Array.from(byId.values());
-            });
-
-            void queryClient.invalidateQueries({ queryKey: listKey });
-          }}
-          isDetecting={isDetecting}
-          currentStep={currentStep}
-          results={results}
-          error={detectError}
-          onCancel={() => handleCancelDetect()}
-        />
-      </DialogContent>
-    </Dialog>
+          void queryClient.invalidateQueries({ queryKey: listKey });
+        }}
+        isDetecting={isDetecting}
+        currentStep={currentStep}
+        results={results}
+        error={detectError}
+        onCancel={() => handleCancelDetect()}
+      />
+    </>
   );
 }
