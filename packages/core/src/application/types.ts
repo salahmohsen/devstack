@@ -1,0 +1,110 @@
+import { z } from "zod";
+
+import { type ApplicationSchemaInsert, type ApplicationSchemaSelect } from "@tsu-stack/db/types";
+
+export const ApplicationStageSchema = z.enum([
+  "saved",
+  "applied",
+  "screening",
+  "interview",
+  "offer"
+]);
+export type ApplicationStage = z.infer<typeof ApplicationStageSchema>;
+
+export const ApplicationOutcomeSchema = z.enum(["rejected", "withdrawn", "ghosted", "accepted"]);
+export type ApplicationOutcome = z.infer<typeof ApplicationOutcomeSchema>;
+
+export const HiringUrgencySchema = z.enum(["unknown", "immediate", "soon", "flexible"]);
+export type HiringUrgency = z.infer<typeof HiringUrgencySchema>;
+
+const optionalText = z
+  .union([z.string(), z.literal(""), z.null()])
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? null : value));
+
+const optionalUrl = z
+  .union([z.string().url(), z.literal(""), z.null()])
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? null : value));
+
+export const ApplicationOutputSchema = z.object({
+  id: z.string(),
+  companyName: z.string(),
+  title: z.string(),
+  url: z.string().nullable(),
+  source: z.string().nullable(),
+  location: z.string().nullable(),
+  salaryRange: z.string().nullable(),
+  description: z.string().nullable(),
+  notes: z.string().nullable(),
+  stage: ApplicationStageSchema,
+  stageChangedAt: z.date(),
+  outcome: ApplicationOutcomeSchema.nullable(),
+  outcomeAt: z.date().nullable(),
+  hiringUrgency: HiringUrgencySchema,
+  resumeId: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+}) satisfies z.ZodType<Omit<ApplicationSchemaSelect, "userId">>;
+
+export const ApplicationListOutputSchema = z.array(ApplicationOutputSchema);
+
+export const CreateApplicationInputSchema = z.object({
+  companyName: z.string().min(1),
+  title: z.string().min(1),
+  url: optionalUrl,
+  source: optionalText,
+  location: optionalText,
+  salaryRange: optionalText,
+  description: optionalText,
+  notes: optionalText,
+  stage: ApplicationStageSchema.optional(),
+  hiringUrgency: HiringUrgencySchema.optional(),
+  resumeId: z.string().nullable().optional()
+}) satisfies z.ZodType<
+  Partial<
+    Omit<
+      ApplicationSchemaInsert,
+      "id" | "userId" | "createdAt" | "updatedAt" | "stageChangedAt" | "outcome" | "outcomeAt"
+    >
+  > & {
+    companyName: string;
+    title: string;
+  }
+>;
+
+/** Body-field patch only — never stage/outcome (use dedicated procedures). */
+export const UpdateApplicationInputSchema = z.object({
+  companyName: z.string().min(1).optional(),
+  title: z.string().min(1).optional(),
+  url: optionalUrl,
+  source: optionalText,
+  location: optionalText,
+  salaryRange: optionalText,
+  description: optionalText,
+  notes: optionalText,
+  hiringUrgency: HiringUrgencySchema.optional(),
+  resumeId: z.string().nullable().optional()
+});
+
+export const UpdateStageInputSchema = z.object({
+  id: z.string().min(1),
+  stage: ApplicationStageSchema
+});
+
+export const SetOutcomeInputSchema = z.object({
+  id: z.string().min(1),
+  outcome: ApplicationOutcomeSchema
+});
+
+export const DeleteApplicationsInputSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1)
+});
+
+export type ApplicationOutput = z.infer<typeof ApplicationOutputSchema>;
+export type ApplicationListOutput = z.infer<typeof ApplicationListOutputSchema>;
+export type CreateApplicationInput = z.infer<typeof CreateApplicationInputSchema>;
+export type UpdateApplicationInput = z.infer<typeof UpdateApplicationInputSchema>;
+export type UpdateStageInput = z.infer<typeof UpdateStageInputSchema>;
+export type SetOutcomeInput = z.infer<typeof SetOutcomeInputSchema>;
+export type DeleteApplicationsInput = z.infer<typeof DeleteApplicationsInputSchema>;

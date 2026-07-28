@@ -1,6 +1,7 @@
 import { type RouterClient } from "@orpc/server";
 
 import { agentRouter } from "#@/routers/agent.router";
+import { applicationsRouter } from "#@/routers/applications.router";
 import { portfolioContactRouter } from "#@/routers/contact.router";
 import { domainRouter } from "#@/routers/domain.router";
 import { experiencesRouter } from "#@/routers/experiences.router";
@@ -16,6 +17,7 @@ import { stacksRouter } from "#@/routers/stacks.router";
 
 export const appRouter = {
   agent: agentRouter,
+  applications: applicationsRouter,
   github: githubRouter,
   health: healthRouter,
   experiences: experiencesRouter,
