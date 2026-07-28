@@ -9,9 +9,11 @@ import {
   APPLICATION_OUTCOME_LABELS,
   CreateApplicationInputSchema,
   UpdateApplicationInputSchema,
+  applicationSourceOptions,
   hiringUrgencyOptions,
   type ApplicationOutcome,
-  type ApplicationOutput
+  type ApplicationOutput,
+  type ApplicationSource
 } from "@tsu-stack/core";
 import {
   AlertDialog,
@@ -50,7 +52,7 @@ type FormValues = {
   companyName: string;
   title: string;
   url: string;
-  source: string;
+  source: ApplicationSource | "";
   location: string;
   salaryRange: string;
   description: string;
@@ -100,7 +102,7 @@ export function ApplicationFormSheet({
         companyName: value.companyName,
         title: value.title,
         url: value.url || null,
-        source: value.source || null,
+        source: value.source === "" ? null : value.source,
         location: value.location || null,
         salaryRange: value.salaryRange || null,
         description: value.description || null,
@@ -159,45 +161,47 @@ export function ApplicationFormSheet({
             : "Track a job and link a resume from your library."
         }
         footer={({ requestClose }) => (
-          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-2">
-              {isEdit && id ? (
-                <>
-                  <Menu>
-                    <MenuTrigger
-                      render={<Button type="button" variant="outline" disabled={busy} />}
-                    >
-                      Close as…
-                    </MenuTrigger>
-                    <MenuPopup align="start">
-                      {(Object.keys(APPLICATION_OUTCOME_LABELS) as ApplicationOutcome[]).map(
-                        (outcome) => (
-                          <MenuItem
-                            key={outcome}
-                            onClick={() =>
-                              setOutcomeMutation.mutate(
-                                { id, outcome },
-                                { onSuccess: () => onOpenChange(false) }
-                              )
-                            }
-                          >
-                            {APPLICATION_OUTCOME_LABELS[outcome]}
-                          </MenuItem>
-                        )
-                      )}
-                    </MenuPopup>
-                  </Menu>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    disabled={busy}
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    Delete
-                  </Button>
-                </>
-              ) : null}
-            </div>
+          <div
+            className={
+              isEdit && id
+                ? "flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"
+                : "flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end"
+            }
+          >
+            {isEdit && id ? (
+              <div className="flex gap-2">
+                <Menu>
+                  <MenuTrigger render={<Button type="button" variant="outline" disabled={busy} />}>
+                    Close as…
+                  </MenuTrigger>
+                  <MenuPopup align="start">
+                    {(Object.keys(APPLICATION_OUTCOME_LABELS) as ApplicationOutcome[]).map(
+                      (outcome) => (
+                        <MenuItem
+                          key={outcome}
+                          onClick={() =>
+                            setOutcomeMutation.mutate(
+                              { id, outcome },
+                              { onSuccess: () => onOpenChange(false) }
+                            )
+                          }
+                        >
+                          {APPLICATION_OUTCOME_LABELS[outcome]}
+                        </MenuItem>
+                      )
+                    )}
+                  </MenuPopup>
+                </Menu>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={busy}
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Delete
+                </Button>
+              </div>
+            ) : null}
             <div className="flex gap-2 sm:justify-end">
               <Button type="button" variant="ghost" disabled={busy} onClick={requestClose}>
                 Cancel
@@ -229,7 +233,21 @@ export function ApplicationFormSheet({
             </form.AppField>
             <div className="grid gap-4 sm:grid-cols-2">
               <form.AppField name="source">
-                {(field) => <field.InputField label="Source" placeholder="LinkedIn, Referral…" />}
+                {(field) => (
+                  <field.DropdownField
+                    label="Source"
+                    placeholder="How you found this role"
+                    items={[
+                      { value: "", label: "Not set" },
+                      ...applicationSourceOptions().map((o) => {
+                        return {
+                          value: o.value,
+                          label: o.label
+                        };
+                      })
+                    ]}
+                  />
+                )}
               </form.AppField>
               <form.AppField name="location">
                 {(field) => (

@@ -8,7 +8,10 @@ type ListFilter = "open" | "closed" | "all";
 type ApplicationUIState = {
   sheetOpen: boolean;
   sheetMode: SheetMode;
-  openedItem: ApplicationOutput | null;
+  /** Item being edited in the form sheet (null when creating). */
+  editItem: ApplicationOutput | null;
+  /** Item shown in the list side panel (view only). */
+  viewItem: ApplicationOutput | null;
   selectedIds: string[];
   listFilter: ListFilter;
   stageInFlightIds: Record<string, true>;
@@ -18,6 +21,8 @@ type ApplicationUIActions = {
   openCreate: () => void;
   openEdit: (item: ApplicationOutput) => void;
   closeSheet: () => void;
+  openView: (item: ApplicationOutput) => void;
+  closeView: () => void;
   setListFilter: (filter: ListFilter) => void;
   toggleSelect: (id: string) => void;
   selectAll: (ids: string[]) => void;
@@ -28,7 +33,8 @@ type ApplicationUIActions = {
 let state: ApplicationUIState = {
   sheetOpen: false,
   sheetMode: "create",
-  openedItem: null,
+  editItem: null,
+  viewItem: null,
   selectedIds: [],
   listFilter: "open",
   stageInFlightIds: {}
@@ -46,9 +52,11 @@ function setState(patch: Partial<ApplicationUIState>) {
 }
 
 const actions: ApplicationUIActions = {
-  openCreate: () => setState({ sheetOpen: true, sheetMode: "create", openedItem: null }),
-  openEdit: (item) => setState({ sheetOpen: true, sheetMode: "edit", openedItem: item }),
-  closeSheet: () => setState({ sheetOpen: false, openedItem: null }),
+  openCreate: () => setState({ sheetOpen: true, sheetMode: "create", editItem: null }),
+  openEdit: (item) => setState({ sheetOpen: true, sheetMode: "edit", editItem: item }),
+  closeSheet: () => setState({ sheetOpen: false, editItem: null }),
+  openView: (item) => setState({ viewItem: item }),
+  closeView: () => setState({ viewItem: null }),
   setListFilter: (listFilter) => setState({ listFilter }),
   toggleSelect: (id) =>
     setState({
@@ -75,10 +83,6 @@ function getSnapshot() {
   return state;
 }
 
-/**
- * Applications page UI store (sheet, selection, list filter, drag in-flight).
- * Same external-store pattern as items-page — no zustand dependency.
- */
 export function useApplicationStore(): ApplicationUIState & ApplicationUIActions {
   const snap = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   return useMemo(() => {

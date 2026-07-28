@@ -25,6 +25,15 @@ export const hiringUrgencyEnum = pgEnum("hiring_urgency", [
   "flexible"
 ]);
 
+export const applicationSourceEnum = pgEnum("application_source", [
+  "linkedin",
+  "referral",
+  "company_site",
+  "job_board",
+  "recruiter",
+  "other"
+]);
+
 export const application = pgTable(
   "application",
   {
@@ -35,7 +44,7 @@ export const application = pgTable(
     companyName: text("company_name").notNull(),
     title: text("title").notNull(),
     url: text("url"),
-    source: text("source"),
+    source: applicationSourceEnum("source"),
     location: text("location"),
     salaryRange: text("salary_range"),
     description: text("description"),
@@ -61,3 +70,4 @@ export const application = pgTable(
 export type ApplicationStage = (typeof applicationStageEnum.enumValues)[number];
 export type ApplicationOutcome = (typeof applicationOutcomeEnum.enumValues)[number];
 export type HiringUrgency = (typeof hiringUrgencyEnum.enumValues)[number];
+export type ApplicationSource = (typeof applicationSourceEnum.enumValues)[number];

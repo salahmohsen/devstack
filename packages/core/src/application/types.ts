@@ -17,6 +17,16 @@ export type ApplicationOutcome = z.infer<typeof ApplicationOutcomeSchema>;
 export const HiringUrgencySchema = z.enum(["unknown", "immediate", "soon", "flexible"]);
 export type HiringUrgency = z.infer<typeof HiringUrgencySchema>;
 
+export const ApplicationSourceSchema = z.enum([
+  "linkedin",
+  "referral",
+  "company_site",
+  "job_board",
+  "recruiter",
+  "other"
+]);
+export type ApplicationSource = z.infer<typeof ApplicationSourceSchema>;
+
 const optionalText = z
   .union([z.string(), z.literal(""), z.null()])
   .optional()
@@ -27,12 +37,17 @@ const optionalUrl = z
   .optional()
   .transform((value) => (value === "" || value === undefined ? null : value));
 
+const optionalSource = z
+  .union([ApplicationSourceSchema, z.literal(""), z.null()])
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? null : value));
+
 export const ApplicationOutputSchema = z.object({
   id: z.string(),
   companyName: z.string(),
   title: z.string(),
   url: z.string().nullable(),
-  source: z.string().nullable(),
+  source: ApplicationSourceSchema.nullable(),
   location: z.string().nullable(),
   salaryRange: z.string().nullable(),
   description: z.string().nullable(),
@@ -53,7 +68,7 @@ export const CreateApplicationInputSchema = z.object({
   companyName: z.string().min(1),
   title: z.string().min(1),
   url: optionalUrl,
-  source: optionalText,
+  source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,
   description: optionalText,
@@ -78,7 +93,7 @@ export const UpdateApplicationInputSchema = z.object({
   companyName: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   url: optionalUrl,
-  source: optionalText,
+  source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,
   description: optionalText,

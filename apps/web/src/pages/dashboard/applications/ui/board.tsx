@@ -46,7 +46,7 @@ function ApplicationCard({
   isOverlay?: boolean;
   disabled?: boolean;
 }) {
-  const { openEdit } = useApplicationStore();
+  const { openEdit, openView } = useApplicationStore();
   const updateStage = useUpdateStageMutation();
   const setOutcome = useSetOutcomeMutation();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -75,7 +75,7 @@ function ApplicationCard({
           {...listeners}
           {...attributes}
           onClick={() => {
-            if (!isDragging) openEdit(app);
+            if (!isDragging) openView(app);
           }}
         >
           <div className="truncate font-medium">{app.companyName}</div>
@@ -95,6 +95,7 @@ function ApplicationCard({
                 Move to {APPLICATION_STAGE_LABELS[stage]}
               </MenuItem>
             ))}
+            <MenuItem onClick={() => openView(app)}>View</MenuItem>
             <MenuItem onClick={() => openEdit(app)}>Edit</MenuItem>
             {(["rejected", "withdrawn", "ghosted", "accepted"] as const).map((outcome) => (
               <MenuItem key={outcome} onClick={() => setOutcome.mutate({ id: app.id, outcome })}>
@@ -132,15 +133,15 @@ function StageColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex min-h-70 w-64 shrink-0 flex-col rounded-xl border border-border bg-muted/30",
+        "flex h-full min-h-0 min-w-56 flex-1 flex-col rounded-xl border border-border bg-muted/30",
         (isOver || overId === stage) && "border-primary/50 bg-primary/5"
       )}
     >
-      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
         <span className="text-sm font-medium">{APPLICATION_STAGE_LABELS[stage]}</span>
         <span className="text-xs text-muted-foreground">{items.length}</span>
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
         {items.map((app) => (
           <ApplicationCard key={app.id} app={app} disabled={Boolean(inFlight[app.id])} />
         ))}
@@ -223,7 +224,7 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
-      <div className="flex gap-3 overflow-x-auto pb-4">
+      <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto">
         {APPLICATION_STAGES.map((stage) => (
           <StageColumn key={stage} stage={stage} items={byStage[stage]} overId={overColumn} />
         ))}
