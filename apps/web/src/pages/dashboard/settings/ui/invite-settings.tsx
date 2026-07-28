@@ -27,6 +27,8 @@ import {
   useRevokeInviteMutation
 } from "@/features/invite";
 
+import { ItemsEmpty } from "@/widgets/items-page";
+
 function inviteSignupPath(code: string): string {
   return `/sign-in/create-an-account?invite=${encodeURIComponent(code)}`;
 }
@@ -132,21 +134,23 @@ export const InviteSettings = () => {
         ) : isError ? (
           <p className="text-sm text-destructive">Failed to load invites.</p>
         ) : invites.length === 0 ? (
-          <div className="flex flex-col items-start gap-3 py-4">
-            <p className="text-sm text-muted-foreground">
-              No invites yet. Create one to share a signup link.
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCreate}
-              disabled={createInvite.isPending}
-            >
-              <Plus className="size-4" />
-              Create invite
-            </Button>
-          </div>
+          <ItemsEmpty
+            className="py-10 md:py-12"
+            icon={<Link2 aria-hidden />}
+            title="No invites yet"
+            description="Create a single-use invite code and share the signup link."
+            action={
+              <Button
+                type="button"
+                onClick={handleCreate}
+                disabled={createInvite.isPending}
+                loading={createInvite.isPending}
+              >
+                <Plus aria-hidden />
+                Create invite
+              </Button>
+            }
+          />
         ) : (
           <Table>
             <TableHeader>

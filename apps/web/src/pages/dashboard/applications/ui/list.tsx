@@ -1,24 +1,29 @@
 "use client";
 
-import { Building2Icon, MapPinIcon } from "lucide-react";
+import { Building2Icon, BriefcaseIcon, MapPinIcon, PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 
-import {
-  APPLICATION_OUTCOME_LABELS,
-  APPLICATION_STAGE_LABELS,
-  isApplicationOpen,
-  type ApplicationOutput
-} from "@tsu-stack/core";
-import { Badge } from "@tsu-stack/ui/components/badge";
+import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
+import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { ListItem } from "@/shared/ui/list-item";
 
-import { useDeleteApplicationsMutation } from "@/features/applications";
+import {
+  ApplicationStageBadge,
+  ApplicationStatusBadge,
+  useDeleteApplicationsMutation
+} from "@/features/applications";
 
 import { ItemsEmpty, ListSkeleton } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
+
+const LIST_FILTERS = [
+  { value: "open", label: "Open" },
+  { value: "closed", label: "Closed" },
+  { value: "all", label: "All" }
+] as const;
 
 type ApplicationsListProps = {
   applications: ApplicationOutput[];
@@ -27,8 +32,16 @@ type ApplicationsListProps = {
 };
 
 export function ApplicationsList({ applications, isLoading, listRef }: ApplicationsListProps) {
-  const { listFilter, setListFilter, selectedIds, toggleSelect, openView, openEdit, viewItem } =
-    useApplicationStore();
+  const {
+    listFilter,
+    setListFilter,
+    selectedIds,
+    toggleSelect,
+    openView,
+    openEdit,
+    openCreate,
+    viewItem
+  } = useApplicationStore();
   const deleteMutation = useDeleteApplicationsMutation();
 
   const filtered = useMemo(() => {
@@ -42,34 +55,72 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
   if (applications.length === 0) {
     return (
       <ItemsEmpty
+        icon={<BriefcaseIcon aria-hidden />}
         title="No applications yet"
         description="Add a job to track it on the board or list."
+        action={
+          <Button type="button" onClick={openCreate}>
+            <PlusIcon aria-hidden />
+            Add application
+          </Button>
+        }
       />
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex flex-wrap gap-1">
-        {(["open", "closed", "all"] as const).map((f) => (
-          <Button
-            key={f}
-            type="button"
-            size="sm"
-            variant={listFilter === f ? "default" : "outline"}
-            onClick={() => setListFilter(f)}
-          >
-            {f === "open" ? "Open" : f === "closed" ? "Closed" : "All"}
-          </Button>
+    <Tabs
+      value={listFilter}
+      onValueChange={(value) => {
+        if (value === "open" || value === "closed" || value === "all") {
+          setListFilter(value);
+        }
+      }}
+      className="flex min-h-0 flex-1 flex-col gap-3"
+    >
+      <TabsList>
+        {LIST_FILTERS.map((filter) => (
+          <TabsTrigger key={filter.value} value={filter.value}>
+            {filter.label}
+          </TabsTrigger>
         ))}
-      </div>
+      </TabsList>
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          No applications in this filter.
-        </p>
+        <ItemsEmpty
+          icon={<BriefcaseIcon aria-hidden />}
+          title={
+            listFilter === "open"
+              ? "No open applications"
+              : listFilter === "closed"
+                ? "No closed applications"
+                : "No applications"
+          }
+          description={
+            listFilter === "open"
+              ? "Everything is closed, or you have not added any open roles yet."
+              : listFilter === "closed"
+                ? "Close an application from the board or list when a role wraps up."
+                : "Add a job to start tracking your pipeline."
+          }
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {listFilter !== "all" ? (
+                <Button type="button" variant="outline" onClick={() => setListFilter("all")}>
+                  Show all
+                </Button>
+              ) : null}
+              <Button type="button" onClick={openCreate}>
+                <PlusIcon aria-hidden />
+                Add application
+              </Button>
+            </div>
+          }
+        />
       ) : (
-        <ul ref={listRef} className="space-y-2">
+        // flex-1 + min-h-0: fill remaining viewport; overflow only when content exceeds it.
+        // overflow-x-clip + light py: ListItem hover/selected scale should not spawn a scroller.
+        <ul ref={listRef} className="min-h-0 flex-1 space-y-2 overflow-x-clip overflow-y-auto py-1">
           {filtered.map((app) => {
             const selected = viewItem?.id === app.id;
             const batchSelected = selectedIds.includes(app.id);
@@ -88,14 +139,8 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                 title={app.title}
                 titleEnd={
                   <span className="flex shrink-0 items-center gap-1.5">
-                    <Badge variant="outline" className="font-normal">
-                      {APPLICATION_STAGE_LABELS[app.stage]}
-                    </Badge>
-                    {app.outcome ? (
-                      <Badge variant="secondary" className="font-normal">
-                        {APPLICATION_OUTCOME_LABELS[app.outcome]}
-                      </Badge>
-                    ) : null}
+                    <ApplicationStageBadge stage={app.stage} />
+                    {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
                   </span>
                 }
                 meta={
@@ -117,6 +162,6 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
           })}
         </ul>
       )}
-    </div>
+    </Tabs>
   );
 }

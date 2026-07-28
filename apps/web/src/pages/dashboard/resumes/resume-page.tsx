@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { FileTextIcon, StarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +35,8 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useResumeStore } from "@/pages/dashboard/resumes/_lib/resume.slice";
 
+const resumesRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/resumes/");
+
 export function ResumesPage() {
   const {
     openedItem,
@@ -48,9 +51,32 @@ export function ResumesPage() {
   } = useResumeStore();
   const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { resumeId: deepLinkResumeId } = resumesRouteApi.useSearch();
 
   const resumesQuery = useQuery(orpcQueryClient.resume.list.queryOptions());
   const visibleResumes = useMemo(() => resumesQuery.data ?? [], [resumesQuery.data]);
+
+  // Open side panel when arriving with ?resumeId= from applications (or elsewhere).
+  useEffect(() => {
+    if (!deepLinkResumeId || resumesQuery.isLoading) return;
+    const resume = visibleResumes.find((r) => r.id === deepLinkResumeId);
+    if (!resume) return;
+    setOpenedItem(resume);
+    setIsItemOpen({ [resume.id]: true });
+    void navigate({
+      to: "/dashboard/resumes",
+      search: {},
+      replace: true
+    });
+  }, [
+    deepLinkResumeId,
+    visibleResumes,
+    resumesQuery.isLoading,
+    setOpenedItem,
+    setIsItemOpen,
+    navigate
+  ]);
 
   const invalidateQueries = useCallback(async () => {
     await queryClient.invalidateQueries({
@@ -140,6 +166,7 @@ export function ResumesPage() {
 
   const emptyState = (
     <ItemsEmpty
+      icon={<FileTextIcon aria-hidden />}
       title="No resumes yet"
       description="Generate your first resume to get started."
       action={
@@ -227,6 +254,7 @@ export function ResumesPage() {
               <ItemInfoPanel
                 title={item.filename}
                 description={`Author: ${item.author}${item.default ? " • Default" : ""}`}
+                updatedAt={item.updatedAt}
                 createdAt={item.createdAt}
                 className="p-0"
               >

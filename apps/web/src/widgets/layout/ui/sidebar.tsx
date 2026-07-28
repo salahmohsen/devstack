@@ -23,11 +23,16 @@ const DashboardItems = [
   { href: "/dashboard/stacks", label: "Stack", group: "Dashboard" },
   { href: "/dashboard/resumes", label: "Resumes", group: "Dashboard" },
   { href: "/dashboard/applications", label: "Applications", group: "Dashboard" },
-  { href: "/dashboard/settings/profile", label: "Profile", group: "Dashboard" },
-  { href: "/dashboard/settings/account", label: "Account", group: "Dashboard" }
+  {
+    href: "/dashboard/settings/profile",
+    label: "Settings",
+    group: "Dashboard",
+    /** Keep Settings active across profile/account/invites/domain tabs. */
+    matchPrefix: "/dashboard/settings"
+  }
 ] as const;
 
-type NavItem = { href: string; label: string; group?: string };
+type NavItem = { href: string; label: string; group?: string; matchPrefix?: string };
 
 type Section = { label?: string; items: NavItem[] };
 
@@ -94,7 +99,11 @@ export function PublicSidebar() {
                 key={item.href}
                 href={item.href}
                 label={item.label}
-                isActive={pathname === item.href}
+                isActive={
+                  item.matchPrefix
+                    ? pathname === item.matchPrefix || pathname.startsWith(`${item.matchPrefix}/`)
+                    : pathname === item.href || pathname === `${item.href}/`
+                }
               />
             ))}
           </Sidebar001Section>

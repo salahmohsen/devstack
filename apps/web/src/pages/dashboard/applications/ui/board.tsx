@@ -5,6 +5,7 @@ import {
   DragOverlay,
   PointerSensor,
   closestCorners,
+  useDraggable,
   useDroppable,
   useSensor,
   useSensors,
@@ -12,11 +13,11 @@ import {
   type DragOverEvent,
   type DragStartEvent
 } from "@dnd-kit/core";
-import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowRightLeftIcon,
   BookmarkIcon,
+  BriefcaseIcon,
   CheckCircle2Icon,
   CircleDashedIcon,
   CircleDotIcon,
@@ -26,6 +27,7 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   PhoneIcon,
+  PlusIcon,
   SparklesIcon,
   XCircleIcon
 } from "lucide-react";
@@ -65,7 +67,13 @@ import {
 } from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useSetOutcomeMutation, useUpdateStageMutation } from "@/features/applications";
+import {
+  APPLICATION_STAGE_BADGE_VARIANT,
+  useSetOutcomeMutation,
+  useUpdateStageMutation
+} from "@/features/applications";
+
+import { ItemsEmpty } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
 
@@ -79,18 +87,6 @@ const STAGE_ICONS: Record<ApplicationStage, ComponentType<{ className?: string }
   screening: PhoneIcon,
   interview: CircleDotIcon,
   offer: SparklesIcon
-};
-
-/** Count badge colors per pipeline stage (coss Badge variants). */
-const STAGE_COUNT_BADGE: Record<
-  ApplicationStage,
-  "secondary" | "info" | "warning" | "default" | "success"
-> = {
-  saved: "secondary",
-  applied: "info",
-  screening: "warning",
-  interview: "default",
-  offer: "success"
 };
 
 const OUTCOME_ICONS: Record<ApplicationOutcome, ComponentType<{ className?: string }>> = {
@@ -333,7 +329,7 @@ function StageColumn({
           <span className="truncate">{APPLICATION_STAGE_LABELS[stage]}</span>
         </span>
         <Badge
-          variant={STAGE_COUNT_BADGE[stage]}
+          variant={APPLICATION_STAGE_BADGE_VARIANT[stage]}
           size="sm"
           className="tabular-nums"
           aria-label={`${items.length} applications in ${APPLICATION_STAGE_LABELS[stage]}`}
@@ -352,7 +348,7 @@ function StageColumn({
 
 export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
   const updateStage = useUpdateStageMutation();
-  const { markStageInFlight: markInFlight } = useApplicationStore();
+  const { markStageInFlight: markInFlight, openCreate } = useApplicationStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<string | null>(null);
 
@@ -360,6 +356,22 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
     () => applications.filter((a) => isApplicationOpen(a.outcome)),
     [applications]
   );
+
+  if (applications.length === 0) {
+    return (
+      <ItemsEmpty
+        icon={<BriefcaseIcon aria-hidden />}
+        title="No applications yet"
+        description="Add a job to track stages on the board."
+        action={
+          <Button type="button" onClick={openCreate}>
+            <PlusIcon aria-hidden />
+            Add application
+          </Button>
+        }
+      />
+    );
+  }
 
   const byStage = useMemo(() => {
     const map = Object.fromEntries(

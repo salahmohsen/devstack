@@ -8,3 +8,11 @@ export { useUpdateApplicationMutation } from "@/features/applications/api/update
 export { useUpdateStageMutation } from "@/features/applications/api/update-stage.mutation";
 export { useSetOutcomeMutation } from "@/features/applications/api/set-outcome.mutation";
 export { useDeleteApplicationsMutation } from "@/features/applications/api/delete-applications.mutation";
+export {
+  APPLICATION_OPEN_BADGE_VARIANT,
+  APPLICATION_OUTCOME_BADGE_VARIANT,
+  APPLICATION_STAGE_BADGE_VARIANT,
+  ApplicationStageBadge,
+  ApplicationStatusBadge,
+  type ApplicationBadgeVariant
+} from "@/features/applications/ui/application-badges";

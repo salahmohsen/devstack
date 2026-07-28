@@ -74,6 +74,21 @@ const emptyValues: FormValues = {
   resumeId: ""
 };
 
+function toFormValues(item: ApplicationOutput): FormValues {
+  return {
+    companyName: item.companyName,
+    title: item.title,
+    url: item.url ?? "",
+    source: item.source ?? "",
+    location: item.location ?? "",
+    salaryRange: item.salaryRange ?? "",
+    description: item.description ?? "",
+    notes: item.notes ?? "",
+    hiringUrgency: item.hiringUrgency,
+    resumeId: item.resumeId ?? ""
+  };
+}
+
 export function ApplicationFormSheet({
   open,
   onOpenChange,
@@ -82,6 +97,8 @@ export function ApplicationFormSheet({
 }: ApplicationFormSheetProps) {
   const isEdit = mode === "edit";
   const id = initialData?.id;
+  /** Remount / reset when create vs this application id changes. */
+  const formKey = isEdit && id ? id : "new";
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const resumesQuery = useQuery(orpcQueryClient.resume.list.queryOptions());
@@ -91,7 +108,7 @@ export function ApplicationFormSheet({
   const deleteMutation = useDeleteApplicationsMutation();
 
   const form = useAppForm({
-    defaultValues: emptyValues,
+    defaultValues: isEdit && initialData ? toFormValues(initialData) : emptyValues,
     validators: {
       onBlur: createZodFormValidator(
         isEdit ? UpdateApplicationInputSchema : CreateApplicationInputSchema
@@ -118,25 +135,12 @@ export function ApplicationFormSheet({
     }
   });
 
+  // Reset when the sheet opens or the edited application changes (not every list refetch).
   useEffect(() => {
     if (!open) return;
-    if (isEdit && initialData) {
-      form.reset({
-        companyName: initialData.companyName,
-        title: initialData.title,
-        url: initialData.url ?? "",
-        source: initialData.source ?? "",
-        location: initialData.location ?? "",
-        salaryRange: initialData.salaryRange ?? "",
-        description: initialData.description ?? "",
-        notes: initialData.notes ?? "",
-        hiringUrgency: initialData.hiringUrgency,
-        resumeId: initialData.resumeId ?? ""
-      });
-    } else {
-      form.reset(emptyValues);
-    }
-  }, [open, isEdit, initialData, form]);
+    form.reset(isEdit && initialData ? toFormValues(initialData) : emptyValues);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- formKey drives intentional resets
+  }, [open, formKey, form]);
 
   const isDirty = useEntityFormDirty(form, open);
 

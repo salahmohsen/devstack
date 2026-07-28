@@ -144,6 +144,7 @@ export function ApplicationsPage() {
         </ItemsInfoPanel>
 
         <ApplicationFormSheet
+          key={editItem?.id ?? "new"}
           open={sheetOpen}
           onOpenChange={(open) => {
             if (!open) closeSheet();

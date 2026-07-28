@@ -9,8 +9,10 @@ type ItemInfoPanelProps = {
   title: string | React.ReactNode;
   description: string | React.ReactNode;
   children: React.ReactNode;
-  updatedAt?: string | Date;
-  createdAt?: string | Date;
+  /** Passed through to the shared side-panel footer. */
+  updatedAt?: string | Date | null;
+  /** Passed through to the shared side-panel footer. */
+  createdAt?: string | Date | null;
   className?: string;
 };
 

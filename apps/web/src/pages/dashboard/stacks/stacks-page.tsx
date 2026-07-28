@@ -391,6 +391,7 @@ export function StacksPage() {
 
   const emptyState = (
     <ItemsEmpty
+      icon={<Package aria-hidden />}
       title="No stacks configured"
       description="Add a stack to reuse it across multiple projects."
       action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Stack" }} />}
@@ -513,6 +514,8 @@ export function StacksPage() {
                     )}
                   </>
                 }
+                updatedAt={item.updatedAt}
+                createdAt={item.createdAt}
               >
                 {item.description ? (
                   <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">

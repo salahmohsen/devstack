@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Building2Icon, CalendarIcon } from "lucide-react";
+import { BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -306,6 +306,7 @@ export function ExperiencesPage() {
 
   const emptyState = (
     <ItemsEmpty
+      icon={<BriefcaseIcon aria-hidden />}
       title="No experiences yet"
       description="Add a new experience to start tracking your work history."
       action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Experience" }} />}
@@ -409,6 +410,8 @@ export function ExperiencesPage() {
               <ItemInfoPanel
                 title={item.title}
                 description={`${item.organization} · ${formatRangeFull(item.fromDate, item.toDate)}`}
+                updatedAt={item.updatedAt}
+                createdAt={item.createdAt}
               >
                 {item.description ? (
                   <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
