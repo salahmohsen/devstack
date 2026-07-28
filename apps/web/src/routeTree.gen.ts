@@ -38,6 +38,7 @@ import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from '.
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/onboarding/index'
 import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
+import { Route as rootLayout_protectedDashboardApplicationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/applications/index'
 import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
 import { Route as rootLayoutProfileNameReposRepoIndexRouteImport } from './routes/(root-layout)/$profileName/repos/$repo/index'
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
@@ -213,6 +214,12 @@ const rootLayout_protectedDashboardExperiencesIndexRoute =
     path: '/',
     getParentRoute: () => rootLayout_protectedDashboardExperiencesRouteRoute,
   } as any)
+const rootLayout_protectedDashboardApplicationsIndexRoute =
+  rootLayout_protectedDashboardApplicationsIndexRouteImport.update({
+    id: '/dashboard/applications/',
+    path: '/dashboard/applications/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
 const rootLayoutguestSignInCreateAnAccountIndexRoute =
   rootLayoutguestSignInCreateAnAccountIndexRouteImport.update({
     id: '/create-an-account/',
@@ -300,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$profileName/repos/$repo/': typeof rootLayoutProfileNameReposRepoIndexRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/dashboard/applications/': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
@@ -334,6 +342,7 @@ export interface FileRoutesByTo {
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$profileName/repos/$repo': typeof rootLayoutProfileNameReposRepoIndexRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/dashboard/applications': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/onboarding': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
@@ -376,6 +385,7 @@ export interface FileRoutesById {
   '/(root-layout)/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/(root-layout)/$profileName/repos/$repo/': typeof rootLayoutProfileNameReposRepoIndexRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
+  '/(root-layout)/__protected/dashboard/applications/': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/(root-layout)/__protected/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/(root-layout)/__protected/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/repos/$repo/tree/$'
     | '/$profileName/repos/$repo/'
     | '/sign-in/create-an-account/'
+    | '/dashboard/applications/'
     | '/dashboard/experiences/'
     | '/dashboard/onboarding/'
     | '/dashboard/projects/'
@@ -451,6 +462,7 @@ export interface FileRouteTypes {
     | '/repos/$repo/tree/$'
     | '/$profileName/repos/$repo'
     | '/sign-in/create-an-account'
+    | '/dashboard/applications'
     | '/dashboard/experiences'
     | '/dashboard/onboarding'
     | '/dashboard/projects'
@@ -492,6 +504,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/repos/$repo/tree/$'
     | '/(root-layout)/$profileName/repos/$repo/'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
+    | '/(root-layout)/__protected/dashboard/applications/'
     | '/(root-layout)/__protected/dashboard/experiences/'
     | '/(root-layout)/__protected/dashboard/onboarding/'
     | '/(root-layout)/__protected/dashboard/projects/'
@@ -720,6 +733,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardExperiencesRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/applications/': {
+      id: '/(root-layout)/__protected/dashboard/applications/'
+      path: '/dashboard/applications'
+      fullPath: '/dashboard/applications/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardApplicationsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
     '/(root-layout)/(guest)/sign-in/create-an-account/': {
       id: '/(root-layout)/(guest)/sign-in/create-an-account/'
       path: '/create-an-account'
@@ -853,6 +873,7 @@ interface rootLayout_protectedRouteRouteChildren {
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
   rootLayout_protectedPlaygroundIndexRoute: typeof rootLayout_protectedPlaygroundIndexRoute
+  rootLayout_protectedDashboardApplicationsIndexRoute: typeof rootLayout_protectedDashboardApplicationsIndexRoute
   rootLayout_protectedDashboardOnboardingIndexRoute: typeof rootLayout_protectedDashboardOnboardingIndexRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
@@ -871,6 +892,8 @@ const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChil
       rootLayout_protectedDashboardIndexRoute,
     rootLayout_protectedPlaygroundIndexRoute:
       rootLayout_protectedPlaygroundIndexRoute,
+    rootLayout_protectedDashboardApplicationsIndexRoute:
+      rootLayout_protectedDashboardApplicationsIndexRoute,
     rootLayout_protectedDashboardOnboardingIndexRoute:
       rootLayout_protectedDashboardOnboardingIndexRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:

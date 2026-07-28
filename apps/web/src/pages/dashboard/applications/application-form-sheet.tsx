@@ -1,0 +1,326 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "@tanstack/react-store";
+import { useEffect, useState } from "react";
+
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  APPLICATION_OUTCOME_LABELS,
+  CreateApplicationInputSchema,
+  UpdateApplicationInputSchema,
+  hiringUrgencyOptions,
+  type ApplicationOutcome,
+  type ApplicationOutput
+} from "@tsu-stack/core";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
+import { Button } from "@tsu-stack/ui/components/button";
+import { FieldGroup } from "@tsu-stack/ui/components/field";
+import { Form } from "@tsu-stack/ui/components/form";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
+
+import { useAppForm } from "@/shared/form";
+import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
+import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
+
+import {
+  useCreateApplicationMutation,
+  useDeleteApplicationsMutation,
+  useSetOutcomeMutation,
+  useUpdateApplicationMutation
+} from "@/features/applications";
+
+type ApplicationFormSheetProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "create" | "edit";
+  initialData?: ApplicationOutput | null;
+};
+
+type FormValues = {
+  companyName: string;
+  title: string;
+  url: string;
+  source: string;
+  location: string;
+  salaryRange: string;
+  description: string;
+  notes: string;
+  hiringUrgency: "unknown" | "immediate" | "soon" | "flexible";
+  resumeId: string;
+};
+
+const emptyValues: FormValues = {
+  companyName: "",
+  title: "",
+  url: "",
+  source: "",
+  location: "",
+  salaryRange: "",
+  description: "",
+  notes: "",
+  hiringUrgency: "unknown",
+  resumeId: ""
+};
+
+export function ApplicationFormSheet({
+  open,
+  onOpenChange,
+  mode,
+  initialData
+}: ApplicationFormSheetProps) {
+  const isEdit = mode === "edit";
+  const id = initialData?.id;
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const resumesQuery = useQuery(orpcQueryClient.resume.list.queryOptions());
+  const createMutation = useCreateApplicationMutation();
+  const updateMutation = useUpdateApplicationMutation();
+  const setOutcomeMutation = useSetOutcomeMutation();
+  const deleteMutation = useDeleteApplicationsMutation();
+
+  const form = useAppForm({
+    defaultValues: emptyValues,
+    validators: {
+      onBlur: createZodFormValidator(
+        isEdit ? UpdateApplicationInputSchema : CreateApplicationInputSchema
+      )
+    },
+    onSubmit: ({ value }) => {
+      const payload = {
+        companyName: value.companyName,
+        title: value.title,
+        url: value.url || null,
+        source: value.source || null,
+        location: value.location || null,
+        salaryRange: value.salaryRange || null,
+        description: value.description || null,
+        notes: value.notes || null,
+        hiringUrgency: value.hiringUrgency,
+        resumeId: value.resumeId ? value.resumeId : null
+      };
+      if (isEdit && id) {
+        updateMutation.mutate({ id, data: payload }, { onSuccess: () => onOpenChange(false) });
+      } else {
+        createMutation.mutate(payload, { onSuccess: () => onOpenChange(false) });
+      }
+    }
+  });
+
+  const isDirty = useSelector(form.store, (s) => s.isDirty && s.isTouched);
+
+  useEffect(() => {
+    if (!open) return;
+    if (isEdit && initialData) {
+      form.reset({
+        companyName: initialData.companyName,
+        title: initialData.title,
+        url: initialData.url ?? "",
+        source: initialData.source ?? "",
+        location: initialData.location ?? "",
+        salaryRange: initialData.salaryRange ?? "",
+        description: initialData.description ?? "",
+        notes: initialData.notes ?? "",
+        hiringUrgency: initialData.hiringUrgency,
+        resumeId: initialData.resumeId ?? ""
+      });
+    } else {
+      form.reset(emptyValues);
+    }
+  }, [open, isEdit, initialData, form]);
+
+  const busy =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    setOutcomeMutation.isPending ||
+    deleteMutation.isPending;
+
+  const resumeOptions = resumesQuery.data ?? [];
+
+  return (
+    <>
+      <EntityFormSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        isDirty={isDirty}
+        title={isEdit ? "Edit application" : "Add application"}
+        description={
+          isEdit
+            ? "Update details or close this application with an outcome."
+            : "Track a job and link a resume from your library."
+        }
+        footer={({ requestClose }) => (
+          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-2">
+              {isEdit && id ? (
+                <>
+                  <Menu>
+                    <MenuTrigger
+                      render={<Button type="button" variant="outline" disabled={busy} />}
+                    >
+                      Close as…
+                    </MenuTrigger>
+                    <MenuPopup align="start">
+                      {(Object.keys(APPLICATION_OUTCOME_LABELS) as ApplicationOutcome[]).map(
+                        (outcome) => (
+                          <MenuItem
+                            key={outcome}
+                            onClick={() =>
+                              setOutcomeMutation.mutate(
+                                { id, outcome },
+                                { onSuccess: () => onOpenChange(false) }
+                              )
+                            }
+                          >
+                            {APPLICATION_OUTCOME_LABELS[outcome]}
+                          </MenuItem>
+                        )
+                      )}
+                    </MenuPopup>
+                  </Menu>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={busy}
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    Delete
+                  </Button>
+                </>
+              ) : null}
+            </div>
+            <div className="flex gap-2 sm:justify-end">
+              <Button type="button" variant="ghost" disabled={busy} onClick={requestClose}>
+                Cancel
+              </Button>
+              <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
+                {isEdit ? "Save" : "Add to pipeline"}
+              </Button>
+            </div>
+          </div>
+        )}
+      >
+        <Form
+          className="contents"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void form.handleSubmit();
+          }}
+        >
+          <FieldGroup className="gap-4">
+            <form.AppField name="companyName">
+              {(field) => <field.InputField label="Company *" placeholder="Acme Corp" />}
+            </form.AppField>
+            <form.AppField name="title">
+              {(field) => <field.InputField label="Role / title *" placeholder="Senior Engineer" />}
+            </form.AppField>
+            <form.AppField name="url">
+              {(field) => <field.InputField label="Job posting URL" placeholder="https://…" />}
+            </form.AppField>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <form.AppField name="source">
+                {(field) => <field.InputField label="Source" placeholder="LinkedIn, Referral…" />}
+              </form.AppField>
+              <form.AppField name="location">
+                {(field) => (
+                  <field.InputField label="Location" placeholder="Remote, Hybrid, city…" />
+                )}
+              </form.AppField>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <form.AppField name="salaryRange">
+                {(field) => <field.InputField label="Salary range" placeholder="e.g. $150–180k" />}
+              </form.AppField>
+              <form.AppField name="hiringUrgency">
+                {(field) => (
+                  <field.DropdownField
+                    label="Hiring urgency"
+                    items={hiringUrgencyOptions().map((o) => {
+                      return {
+                        value: o.value,
+                        label: o.label
+                      };
+                    })}
+                  />
+                )}
+              </form.AppField>
+            </div>
+            <form.AppField name="resumeId">
+              {(field) => (
+                <field.DropdownField
+                  label="Resume"
+                  items={[
+                    { value: "", label: "No resume linked" },
+                    ...resumeOptions.map((r) => {
+                      return {
+                        value: r.id,
+                        label: r.default ? `${r.filename} (default)` : r.filename
+                      };
+                    })
+                  ]}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="description">
+              {(field) => (
+                <field.MarkdownField
+                  label="Job description"
+                  placeholder="Paste the posting — powers future match scoring."
+                />
+              )}
+            </form.AppField>
+            <form.AppField name="notes">
+              {(field) => (
+                <field.MarkdownField
+                  label="Notes"
+                  placeholder="Referred by…, things to emphasize…"
+                />
+              )}
+            </form.AppField>
+          </FieldGroup>
+        </Form>
+      </EntityFormSheet>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete application?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the application. Closed outcomes keep history without
+              deleting — only use delete for mistakes or test data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!id) return;
+                deleteMutation.mutate(
+                  { ids: [id] },
+                  {
+                    onSuccess: () => {
+                      setDeleteOpen(false);
+                      onOpenChange(false);
+                    }
+                  }
+                );
+              }}
+            >
+              Delete permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
