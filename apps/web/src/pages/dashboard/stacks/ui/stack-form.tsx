@@ -12,23 +12,15 @@ import {
   type StackOutput
 } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPanel,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
-import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
+import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
 import { Icon } from "@/shared/ui/icon";
+import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
@@ -47,7 +39,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
     ...orpcQueryClient.stacks.get.queryOptions({
       input: { id: id! }
     }),
-    enabled: isEdit,
+    enabled: isEdit && open,
     placeholderData: initialData ?? undefined
   });
 
@@ -151,10 +143,10 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
     }
   });
 
-  const handleClose = () => onOpenChange(false);
-  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
+  const busy = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
+    if (!open) return;
     if (stack) {
       form.reset({
         name: stack.name,
@@ -171,142 +163,150 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
         }),
         projectIds: stack.projects.map((p) => p.id)
       });
+    } else if (!isEdit) {
+      form.reset({
+        name: "",
+        description: "",
+        icon: "",
+        type: "",
+        includedInPortfolio: false,
+        dependencies: [],
+        projectIds: []
+      });
     }
-  }, [stack, form]);
+  }, [open, stack, isEdit, form]);
 
-  if (isEdit && stackQuery.isLoading && !stack) {
-    return <DefaultLoader />;
-  }
+  const isDirty = useEntityFormDirty(form, open);
 
-  if (isEdit && !stackQuery.isLoading && !stack) {
-    return <div className="py-8 text-center text-muted-foreground">Stack not found.</div>;
-  }
+  const body =
+    isEdit && stackQuery.isLoading && !stack ? (
+      <DefaultLoader />
+    ) : isEdit && !stackQuery.isLoading && !stack ? (
+      <div className="py-8 text-center text-muted-foreground">Stack not found.</div>
+    ) : (
+      <Form
+        className="contents"
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void form.handleSubmit();
+        }}
+      >
+        <FieldGroup className="gap-4">
+          <form.AppField name="name">
+            {(field) => <field.InputField label="Name" placeholder="e.g. React" />}
+          </form.AppField>
+
+          <form.AppField name="icon">
+            {(field) => (
+              <field.IconifyField
+                label="Stack Icon"
+                description="Search for an icon from Iconify."
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="description">
+            {(field) => (
+              <field.RichTextField
+                label="Description"
+                placeholder="Brief description of the stack"
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="type">
+            {(field) => (
+              <field.DropdownField
+                label="Type"
+                description="Categorize this stack."
+                placeholder="Select type..."
+                items={[
+                  { value: "framework", label: "Framework" },
+                  { value: "language", label: "Language" },
+                  { value: "database", label: "Database" },
+                  { value: "ui", label: "UI" },
+                  { value: "auth", label: "Auth" },
+                  { value: "deployment", label: "Deployment" },
+                  { value: "testing", label: "Testing" },
+                  { value: "ai", label: "AI" },
+                  { value: "tooling", label: "Tooling" },
+                  { value: "storage", label: "Storage" },
+                  { value: "state management", label: "State Management" },
+                  { value: "other", label: "Other" }
+                ]}
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="dependencies">
+            {(field) => (
+              <field.NpmPackageField
+                label="Dependencies"
+                description="Search and add npm packages used by this stack."
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="projectIds">
+            {(field) => (
+              <field.ComboboxMultipleField
+                label="Projects"
+                description="Link projects that use this stack."
+                placeholder="Search projects..."
+                emptyMessage="No projects found."
+                items={(projectsQuery.data ?? []).map((p) => {
+                  return {
+                    value: p.id,
+                    label: p.title,
+                    icon: p.logo ? <Icon icon={p.logo} className="size-4" /> : null
+                  };
+                })}
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="includedInPortfolio">
+            {(field) => (
+              <field.SwitchField
+                label="In portfolio"
+                description="Include this stack in your public portfolio."
+              />
+            )}
+          </form.AppField>
+        </FieldGroup>
+      </Form>
+    );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="form-dialog">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Stack" : "New Stack"}</DialogTitle>
-          <DialogDescription>
+    <EntityFormSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      isDirty={isDirty}
+      title={isEdit ? "Edit Stack" : "New Stack"}
+      description={
+        isEdit
+          ? "Update the name or icon. Changes apply to every project using this stack."
+          : "Add a shared tech stack that can be attached to any project."
+      }
+      footer={({ requestClose }) => (
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" type="button" disabled={busy} onClick={requestClose}>
+            Cancel
+          </Button>
+          <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
             {isEdit
-              ? "Update the name or icon. Changes apply to every project using this stack."
-              : "Add a shared tech stack that can be attached to any project."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form
-          className="contents"
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void form.handleSubmit();
-          }}
-        >
-          <DialogPanel>
-            <FieldGroup>
-              <form.AppField name="name">
-                {(field) => <field.InputField label="Name" placeholder="e.g. React" />}
-              </form.AppField>
-
-              <form.AppField name="icon">
-                {(field) => (
-                  <field.IconifyField
-                    label="Stack Icon"
-                    description="Search for an icon from Iconify."
-                  />
-                )}
-              </form.AppField>
-
-              <form.AppField name="description">
-                {(field) => (
-                  <field.RichTextField
-                    label="Description"
-                    placeholder="Brief description of the stack"
-                  />
-                )}
-              </form.AppField>
-
-              <form.AppField name="type">
-                {(field) => (
-                  <field.DropdownField
-                    label="Type"
-                    description="Categorize this stack."
-                    placeholder="Select type..."
-                    items={[
-                      { value: "framework", label: "Framework" },
-                      { value: "language", label: "Language" },
-                      { value: "database", label: "Database" },
-                      { value: "ui", label: "UI" },
-                      { value: "auth", label: "Auth" },
-                      { value: "deployment", label: "Deployment" },
-                      { value: "testing", label: "Testing" },
-                      { value: "ai", label: "AI" },
-                      { value: "tooling", label: "Tooling" },
-                      { value: "storage", label: "Storage" },
-                      { value: "state management", label: "State Management" },
-                      { value: "other", label: "Other" }
-                    ]}
-                  />
-                )}
-              </form.AppField>
-
-              <form.AppField name="dependencies">
-                {(field) => (
-                  <field.NpmPackageField
-                    label="Dependencies"
-                    description="Search and add npm packages used by this stack."
-                  />
-                )}
-              </form.AppField>
-
-              <form.AppField name="projectIds">
-                {(field) => (
-                  <field.ComboboxMultipleField
-                    label="Projects"
-                    description="Link projects that use this stack."
-                    placeholder="Search projects..."
-                    emptyMessage="No projects found."
-                    items={(projectsQuery.data ?? []).map((p) => {
-                      return {
-                        value: p.id,
-                        label: p.title,
-                        icon: p.logo ? <Icon icon={p.logo} className="size-4" /> : null
-                      };
-                    })}
-                  />
-                )}
-              </form.AppField>
-
-              <form.AppField name="includedInPortfolio">
-                {(field) => (
-                  <field.SwitchField
-                    label="In portfolio"
-                    description="Include this stack in your public portfolio."
-                  />
-                )}
-              </form.AppField>
-            </FieldGroup>
-          </DialogPanel>
-
-          <DialogFooter>
-            <form.AppForm>
-              <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
-                {isEdit
-                  ? updateMutation.isPending
-                    ? "Saving..."
-                    : "Save"
-                  : createMutation.isPending
-                    ? "Creating..."
-                    : "Create"}
-              </form.SubmitButton>
-            </form.AppForm>
-            <Button variant="outline" type="button" onClick={handleCloseAttempt}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </Form>
-        {alertDialog}
-      </DialogContent>
-    </Dialog>
+              ? updateMutation.isPending
+                ? "Saving..."
+                : "Save"
+              : createMutation.isPending
+                ? "Creating..."
+                : "Create"}
+          </Button>
+        </div>
+      )}
+    >
+      {body}
+    </EntityFormSheet>
   );
 }

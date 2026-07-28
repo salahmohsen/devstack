@@ -503,16 +503,17 @@ Do not merge PR3 without PR2. PR5 depends on PR4 (public portfolio surface exist
 
 ---
 
-## Follow-up epic: Seeker CRM (not this plan)
+## Follow-up epic: Seeker CRM
 
-Depends on this foundation. Still **free OSS / BYO keys** — not a paid product.
+**Pipeline MVP designed:** `docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md`  
+**Plan:** `docs/superpowers/plans/2026-07-28-seeker-applications-crm.md`  
+**ADRs:** `0024-application-stage-and-outcome.md`, `0025-entity-form-sheet.md`
 
-- `job_preference` (`userId`, remote/hybrid/onsite, start-immediate, salary, locations, stack signals, …)
-- `application` (+ stages, tags, JD, notes, follow-ups, linked `resumeId`, uploads)
-- Dashboard `/dashboard/applications`
-- Match / tailor resume from evidence (BYO AI)
-- Resend: optional product → user reminders (BYO); no employer send until explicitly designed
-- Later (optional): drafts, Resend→employer with Reply-To, inbound, thin “publish a job” — only if still aligned with community intention
+Depends on this multi-user foundation. Still **free OSS / BYO keys** — not a paid product.
+
+**In MVP design:** `application` (active stages + terminal outcomes, board + list, Sheet CRUD, linked `resumeId`, hiring urgency); entity form Sheet migration for experiences/projects/stacks.
+
+**Still later:** `job_preference`; tags/follow-ups/uploads; match / tailor resume (BYO AI); Resend product→user reminders; drafts / employer send / inbound / thin job publish — only if still aligned with community intention.
 
 ---
 

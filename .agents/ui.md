@@ -85,6 +85,35 @@ type CardProps = {
 - Shared components should accept injected link or image components instead of importing app wrappers directly.
 - Keep base URL, CDN, and proxy decisions outside shared primitives.
 
+## Listing empty states
+
+Dashboard list/grid empty states must use the shared `ItemsEmpty` wrapper (`@/widgets/items-page`), which composes coss `Empty`:
+
+```tsx
+import { ItemsEmpty } from "@/widgets/items-page";
+
+<ItemsEmpty
+  icon={<SomeLucideIcon aria-hidden />}
+  title="No items yet"
+  description="Short guidance on what to do next."
+  action={
+    <Button type="button" onClick={onAdd}>
+      <PlusIcon aria-hidden />
+      Add item
+    </Button>
+  }
+/>;
+```
+
+Rules:
+
+- Always use `ItemsEmpty` for entity listings (experiences, projects, stacks, resumes, applications, and similar).
+- Always pass an `action` (primary create/add, plus optional secondary like "Show all").
+- Put actions only in `action` — never as raw siblings outside `EmptyContent`.
+- Prefer a Lucide `icon` via `EmptyMedia variant="icon"`.
+- Do not use plain `<p>` / custom empty copy for list/filter empty states.
+- Filtered-empty (e.g. Open/Closed tabs) should still use `ItemsEmpty` with a recovery action.
+
 ## Do And Don't
 
 - Do keep `packages/ui` reusable and free of app imports.
@@ -93,3 +122,4 @@ type CardProps = {
 - Don't hardcode router, locale, analytics, or env behavior into `packages/ui`.
 - Don't introduce React context or excessive prop drilling for simple shared UI state when a colocated store is enough.
 - Don't expose app-specific implementation details unless reuse requires them.
+- Don't invent ad-hoc empty UIs for listings — use `ItemsEmpty` + coss Empty.

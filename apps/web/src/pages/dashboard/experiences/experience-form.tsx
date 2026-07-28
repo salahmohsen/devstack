@@ -11,22 +11,14 @@ import {
   type ExperienceOutput
 } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPanel,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
-import { useFormDirtyGuard } from "@/shared/ui/form-dirty-guard";
+import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
+import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
@@ -45,7 +37,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
     ...orpcQueryClient.experiences.get.queryOptions({
       input: { id: id! }
     }),
-    enabled: isEdit,
+    enabled: isEdit && open,
     placeholderData: initialData ?? undefined
   });
 
@@ -123,10 +115,10 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
     }
   });
 
-  const handleClose = () => onOpenChange(false);
-  const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, handleClose);
+  const busy = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
+    if (!open) return;
     if (experience) {
       form.reset({
         title: experience.title,
@@ -137,105 +129,111 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
         isPresent: experience.isPresent,
         includedInPortfolio: !!experience.portfolioEntryId
       });
+    } else if (!isEdit) {
+      form.reset({
+        title: "",
+        organization: "",
+        description: "",
+        fromDate: "",
+        toDate: "",
+        isPresent: false,
+        includedInPortfolio: false
+      });
     }
-  }, [experience, form]);
+  }, [open, experience, isEdit, form]);
 
-  if (isEdit && experienceQuery.isLoading && !experience) {
-    return <DefaultLoader />;
-  }
+  const isDirty = useEntityFormDirty(form, open);
 
-  if (isEdit && !experienceQuery.isLoading && !experience) {
-    return <div className="py-8 text-center text-muted-foreground">Experience not found.</div>;
-  }
+  const body =
+    isEdit && experienceQuery.isLoading && !experience ? (
+      <DefaultLoader />
+    ) : isEdit && !experienceQuery.isLoading && !experience ? (
+      <div className="py-8 text-center text-muted-foreground">Experience not found.</div>
+    ) : (
+      <Form
+        className="contents"
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void form.handleSubmit();
+        }}
+      >
+        <FieldGroup className="gap-4">
+          <form.AppField name="title">
+            {(field) => (
+              <field.InputField label="Title" placeholder="e.g. Senior Software Engineer" />
+            )}
+          </form.AppField>
+
+          <form.AppField name="organization">
+            {(field) => <field.InputField label="Organization" placeholder="e.g. Acme Corp" />}
+          </form.AppField>
+
+          <form.AppField name="description">
+            {(field) => (
+              <field.RichTextField
+                label="Description"
+                placeholder="Brief description of your role"
+              />
+            )}
+          </form.AppField>
+
+          <div className="grid grid-cols-2 gap-4">
+            <form.AppField name="fromDate">
+              {(field) => <field.CalendarField label="From Date" />}
+            </form.AppField>
+
+            <form.AppField name="toDate">
+              {(field) => <field.CalendarField label="To Date" />}
+            </form.AppField>
+
+            <form.AppField name="isPresent">
+              {(field) => (
+                <field.SwitchField
+                  label="Currently present"
+                  description="Mark this experience as your current role."
+                />
+              )}
+            </form.AppField>
+          </div>
+
+          <form.AppField name="includedInPortfolio">
+            {(field) => (
+              <field.SwitchField
+                label="In portfolio"
+                description="Include this experience in your public portfolio."
+              />
+            )}
+          </form.AppField>
+        </FieldGroup>
+      </Form>
+    );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="form-dialog">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Experience" : "New Experience"}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? "Update your position details." : "Add a new position to your resume."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form
-          className="contents"
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void form.handleSubmit();
-          }}
-        >
-          <DialogPanel>
-            <FieldGroup className="gap-4">
-              <form.AppField name="title">
-                {(field) => (
-                  <field.InputField label="Title" placeholder="e.g. Senior Software Engineer" />
-                )}
-              </form.AppField>
-
-              <form.AppField name="organization">
-                {(field) => <field.InputField label="Organization" placeholder="e.g. Acme Corp" />}
-              </form.AppField>
-
-              <form.AppField name="description">
-                {(field) => (
-                  <field.RichTextField
-                    label="Description"
-                    placeholder="Brief description of your role"
-                  />
-                )}
-              </form.AppField>
-
-              <div className="grid grid-cols-2 gap-4">
-                <form.AppField name="fromDate">
-                  {(field) => <field.CalendarField label="From Date" />}
-                </form.AppField>
-
-                <form.AppField name="toDate">
-                  {(field) => <field.CalendarField label="To Date" />}
-                </form.AppField>
-
-                <form.AppField name="isPresent">
-                  {(field) => (
-                    <field.SwitchField
-                      label="Currently present"
-                      description="Mark this experience as your current role."
-                    />
-                  )}
-                </form.AppField>
-              </div>
-
-              <form.AppField name="includedInPortfolio">
-                {(field) => (
-                  <field.SwitchField
-                    label="In portfolio"
-                    description="Include this experience in your public portfolio."
-                  />
-                )}
-              </form.AppField>
-            </FieldGroup>
-          </DialogPanel>
-
-          <DialogFooter>
-            <form.AppForm>
-              <form.SubmitButton isLoading={createMutation.isPending || updateMutation.isPending}>
-                {isEdit
-                  ? updateMutation.isPending
-                    ? "Saving..."
-                    : "Save"
-                  : createMutation.isPending
-                    ? "Creating..."
-                    : "Create"}
-              </form.SubmitButton>
-            </form.AppForm>
-            <Button variant="outline" type="button" onClick={handleCloseAttempt}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </Form>
-        {alertDialog}
-      </DialogContent>
-    </Dialog>
+    <EntityFormSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      isDirty={isDirty}
+      title={isEdit ? "Edit Experience" : "New Experience"}
+      description={isEdit ? "Update your position details." : "Add a new position to your resume."}
+      footer={({ requestClose }) => (
+        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" type="button" disabled={busy} onClick={requestClose}>
+            Cancel
+          </Button>
+          <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
+            {isEdit
+              ? updateMutation.isPending
+                ? "Saving..."
+                : "Save"
+              : createMutation.isPending
+                ? "Creating..."
+                : "Create"}
+          </Button>
+        </div>
+      )}
+    >
+      {body}
+    </EntityFormSheet>
   );
 }

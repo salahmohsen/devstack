@@ -44,6 +44,20 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       user: r.one.user({
         from: r.resume.userId,
         to: r.user.id
+      }),
+      applications: r.many.application({
+        from: r.resume.id,
+        to: r.application.resumeId
+      })
+    },
+    application: {
+      user: r.one.user({
+        from: r.application.userId,
+        to: r.user.id
+      }),
+      resume: r.one.resume({
+        from: r.application.resumeId,
+        to: r.resume.id
       })
     },
     project: {

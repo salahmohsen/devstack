@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, type NavigateOptions } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FolderKanbanIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -296,6 +296,7 @@ export function ProjectsPage() {
 
   const emptyState = (
     <ItemsEmpty
+      icon={<FolderKanbanIcon aria-hidden />}
       title="No projects yet"
       description="Add your first project to showcase your work."
       action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Project" }} />}
@@ -435,6 +436,8 @@ export function ProjectsPage() {
                     ) : null}
                   </>
                 }
+                updatedAt={item.updatedAt}
+                createdAt={item.createdAt}
               >
                 <div className="space-y-4">
                   {item.summary ? (

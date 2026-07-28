@@ -75,6 +75,40 @@ columns cleared of PATs). Tokens live on Better Auth `account` for that
 user only — not env vars and not a shared site-owner secret.
 _Avoid_: env-owned public token, single global github_config row.
 
+## Seeker applications (CRM)
+
+**Application** (`application`):
+Private per-tenant job application row (`userId`). Tracks a role at a
+company through the hiring pipeline; may link a generated `resumeId`.
+Never public portfolio. Spec:
+`docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md`.
+ADR: `docs/adr/0024-application-stage-and-outcome.md`.
+_Avoid_: treating applications as portfolio_entry types; employer job posts.
+
+**Application stage**:
+Active pipeline position: `saved | applied | screening | interview | offer`.
+Board columns; drag between columns updates stage only. Open apps only
+(`outcome` null) appear on the board.
+_Avoid_: using stage for terminal endings (rejected/ghosted).
+
+**Application outcome**:
+Terminal close label: `rejected | withdrawn | ghosted | accepted`, or null
+if open. Set on close with `outcomeAt`; last stage is frozen. Closed rows
+live in list filters, not board columns.
+_Avoid_: modeling outcomes as extra kanban stages in v1.
+
+**Hiring urgency**:
+Per-application hiring pressure: `unknown | immediate | soon | flexible`.
+Not the user’s global job preference profile.
+_Avoid_: conflating with `job_preference` (future).
+
+**Entity form Sheet**:
+Dashboard create/edit for applications, experiences, projects, and stacks
+uses a right side Sheet (drawer), not a centered Dialog. Short tools and
+delete confirms stay Dialog/AlertDialog. ADR:
+`docs/adr/0025-entity-form-sheet.md`.
+_Avoid_: long multi-field entity forms in modals that cover the list/board.
+
 ## Cache invalidation
 
 **Revalidation signal**:
