@@ -29,7 +29,10 @@ type ApplicationInfoPanelProps = {
 };
 
 export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
-  const sourceLabel = item.source ? APPLICATION_SOURCE_LABELS[item.source] : null;
+  const sourceLabel =
+    item.source && item.source in APPLICATION_SOURCE_LABELS
+      ? APPLICATION_SOURCE_LABELS[item.source as keyof typeof APPLICATION_SOURCE_LABELS]
+      : null;
 
   return (
     <ItemInfoPanel

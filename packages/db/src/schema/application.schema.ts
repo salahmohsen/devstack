@@ -27,9 +27,9 @@ export const hiringUrgencyEnum = pgEnum("hiring_urgency", [
 
 export const applicationSourceEnum = pgEnum("application_source", [
   "linkedin",
+  "indeed",
+  "company_website",
   "referral",
-  "company_site",
-  "job_board",
   "recruiter",
   "other"
 ]);

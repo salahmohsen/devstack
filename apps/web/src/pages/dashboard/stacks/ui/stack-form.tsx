@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSelector } from "@tanstack/react-store";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -21,6 +20,7 @@ import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
 import { Icon } from "@/shared/ui/icon";
+import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
@@ -143,7 +143,6 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
     }
   });
 
-  const isDirty = useSelector(form.store, (s) => s.isDirty && s.isTouched);
   const busy = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
@@ -176,6 +175,8 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
       });
     }
   }, [open, stack, isEdit, form]);
+
+  const isDirty = useEntityFormDirty(form, open);
 
   const body =
     isEdit && stackQuery.isLoading && !stack ? (

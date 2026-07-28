@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useSelector } from "@tanstack/react-store";
 import { useEffect, useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -33,6 +32,7 @@ import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
+import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import {
   useCreateApplicationMutation,
@@ -118,8 +118,6 @@ export function ApplicationFormSheet({
     }
   });
 
-  const isDirty = useSelector(form.store, (s) => s.isDirty && s.isTouched);
-
   useEffect(() => {
     if (!open) return;
     if (isEdit && initialData) {
@@ -139,6 +137,8 @@ export function ApplicationFormSheet({
       form.reset(emptyValues);
     }
   }, [open, isEdit, initialData, form]);
+
+  const isDirty = useEntityFormDirty(form, open);
 
   const busy =
     createMutation.isPending ||

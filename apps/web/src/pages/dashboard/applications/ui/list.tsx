@@ -23,9 +23,10 @@ import { useApplicationStore } from "@/pages/dashboard/applications/_lib/applica
 type ApplicationsListProps = {
   applications: ApplicationOutput[];
   isLoading?: boolean;
+  listRef?: React.RefObject<HTMLUListElement | null>;
 };
 
-export function ApplicationsList({ applications, isLoading }: ApplicationsListProps) {
+export function ApplicationsList({ applications, isLoading, listRef }: ApplicationsListProps) {
   const { listFilter, setListFilter, selectedIds, toggleSelect, openView, openEdit, viewItem } =
     useApplicationStore();
   const deleteMutation = useDeleteApplicationsMutation();
@@ -68,7 +69,7 @@ export function ApplicationsList({ applications, isLoading }: ApplicationsListPr
           No applications in this filter.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul ref={listRef} className="space-y-2">
           {filtered.map((app) => {
             const selected = viewItem?.id === app.id;
             const batchSelected = selectedIds.includes(app.id);

@@ -19,9 +19,9 @@ export type HiringUrgency = z.infer<typeof HiringUrgencySchema>;
 
 export const ApplicationSourceSchema = z.enum([
   "linkedin",
+  "indeed",
+  "company_website",
   "referral",
-  "company_site",
-  "job_board",
   "recruiter",
   "other"
 ]);
@@ -53,13 +53,14 @@ export const ApplicationOutputSchema = z.object({
   description: z.string().nullable(),
   notes: z.string().nullable(),
   stage: ApplicationStageSchema,
-  stageChangedAt: z.date(),
+  // coerce: JSON transport may string-serialize timestamps
+  stageChangedAt: z.coerce.date(),
   outcome: ApplicationOutcomeSchema.nullable(),
-  outcomeAt: z.date().nullable(),
+  outcomeAt: z.coerce.date().nullable(),
   hiringUrgency: HiringUrgencySchema,
   resumeId: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date()
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date()
 }) satisfies z.ZodType<Omit<ApplicationSchemaSelect, "userId">>;
 
 export const ApplicationListOutputSchema = z.array(ApplicationOutputSchema);

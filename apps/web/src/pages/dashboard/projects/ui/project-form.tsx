@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSelector } from "@tanstack/react-store";
 import { SparklesIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +22,7 @@ import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
 import { Icon } from "@/shared/ui/icon";
+import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import { useGetGithubProfileReposQuery } from "@/features/github";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
@@ -212,7 +212,6 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     }
   });
 
-  const isDirty = useSelector(form.store, (s) => s.isDirty && s.isTouched);
   const busy = createMutation.isPending || updateMutation.isPending;
 
   const handleSheetOpenChange = (next: boolean) => {
@@ -264,6 +263,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     // Reset only when the sheet opens or project id changes (not every
     // projects.list identity change), so detect-stacks can keep stackIds.
   }, [open, projectIdKey, form]);
+
+  const isDirty = useEntityFormDirty(form, open);
 
   // Parent sheet closed from outside — always stop detect.
   useEffect(() => {

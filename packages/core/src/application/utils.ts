@@ -42,9 +42,9 @@ export const HIRING_URGENCY_LABELS: Record<HiringUrgency, string> = {
 
 export const APPLICATION_SOURCE_LABELS: Record<ApplicationSource, string> = {
   linkedin: "LinkedIn",
+  indeed: "Indeed",
+  company_website: "Company website",
   referral: "Referral",
-  company_site: "Company site",
-  job_board: "Job board",
   recruiter: "Recruiter",
   other: "Other"
 };
