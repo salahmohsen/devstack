@@ -42,7 +42,6 @@ export function ApplicationsPage() {
   } = useApplicationStore();
 
   const applications = listQuery.data ?? [];
-  const isListView = view === "list";
 
   const filtered = useMemo(() => {
     if (listFilter === "open") return applications.filter((a) => a.outcome == null);
@@ -50,8 +49,9 @@ export function ApplicationsPage() {
     return applications;
   }, [applications, listFilter]);
 
+  // Side panel works for both board (View / card click) and list (row click).
   const isItemOpen = useMemo(() => (viewItem ? { [viewItem.id]: true } : null), [viewItem]);
-  const isAnyOpen = isAnyOpened(isItemOpen) && isListView;
+  const isAnyOpen = isAnyOpened(isItemOpen);
 
   const setOpenedItem = useCallback(
     (item: (typeof applications)[number] | null) => {
@@ -101,10 +101,7 @@ export function ApplicationsPage() {
                   type="button"
                   size="sm"
                   variant={view === "board" ? "default" : "outline"}
-                  onClick={() => {
-                    closeView();
-                    setView("board");
-                  }}
+                  onClick={() => setView("board")}
                 >
                   <LayoutGridIcon className="size-4" />
                   Board

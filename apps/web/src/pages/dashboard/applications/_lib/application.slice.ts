@@ -55,7 +55,11 @@ const actions: ApplicationUIActions = {
   openCreate: () => setState({ sheetOpen: true, sheetMode: "create", editItem: null }),
   openEdit: (item) => setState({ sheetOpen: true, sheetMode: "edit", editItem: item }),
   closeSheet: () => setState({ sheetOpen: false, editItem: null }),
-  openView: (item) => setState({ viewItem: item }),
+  /** Toggle side panel: same item closes, different item switches. */
+  openView: (item) =>
+    setState({
+      viewItem: state.viewItem?.id === item.id ? null : item
+    }),
   closeView: () => setState({ viewItem: null }),
   setListFilter: (listFilter) => setState({ listFilter }),
   toggleSelect: (id) =>
