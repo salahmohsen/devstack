@@ -81,6 +81,18 @@ const STAGE_ICONS: Record<ApplicationStage, ComponentType<{ className?: string }
   offer: SparklesIcon
 };
 
+/** Count badge colors per pipeline stage (coss Badge variants). */
+const STAGE_COUNT_BADGE: Record<
+  ApplicationStage,
+  "secondary" | "info" | "warning" | "default" | "success"
+> = {
+  saved: "secondary",
+  applied: "info",
+  screening: "warning",
+  interview: "default",
+  offer: "success"
+};
+
 const OUTCOME_ICONS: Record<ApplicationOutcome, ComponentType<{ className?: string }>> = {
   rejected: XCircleIcon,
   withdrawn: CircleDashedIcon,
@@ -305,6 +317,7 @@ function StageColumn({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const { stageInFlightIds: inFlight } = useApplicationStore();
+  const StageIcon = STAGE_ICONS[stage];
 
   return (
     <div
@@ -314,9 +327,19 @@ function StageColumn({
         (isOver || overId === stage) && "border-primary/50 bg-primary/5"
       )}
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
-        <span className="text-sm font-medium">{APPLICATION_STAGE_LABELS[stage]}</span>
-        <span className="text-xs text-muted-foreground">{items.length}</span>
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <span className="flex min-w-0 items-center gap-2 text-sm font-medium">
+          <StageIcon className="size-4 shrink-0 opacity-80" aria-hidden="true" />
+          <span className="truncate">{APPLICATION_STAGE_LABELS[stage]}</span>
+        </span>
+        <Badge
+          variant={STAGE_COUNT_BADGE[stage]}
+          size="sm"
+          className="tabular-nums"
+          aria-label={`${items.length} applications in ${APPLICATION_STAGE_LABELS[stage]}`}
+        >
+          {items.length}
+        </Badge>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
         {items.map((app) => (
