@@ -72,23 +72,23 @@ Resume: FK SET NULL is not enough — on create/update if `resumeId` set, `resum
 - Modify: repositories index
 - Generate migration
 
-- [ ] **Step 1: pgEnums** `application_stage`, `application_outcome`, `hiring_urgency`
+- [x] **Step 1: pgEnums** `application_stage`, `application_outcome`, `hiring_urgency`
 
-- [ ] **Step 2: Table columns** per design: id, userId CASCADE, companyName, title, url, source, location, salaryRange, description, notes, stage, stageChangedAt, outcome, outcomeAt, hiringUrgency, resumeId SET NULL, createdAt, updatedAt
+- [x] **Step 2: Table columns** per design: id, userId CASCADE, companyName, title, url, source, location, salaryRange, description, notes, stage, stageChangedAt, outcome, outcomeAt, hiringUrgency, resumeId SET NULL, createdAt, updatedAt
 
-- [ ] **Step 3: Indexes** `(userId)`, `(userId, stage)`
+- [x] **Step 3: Indexes** `(userId)`, `(userId, stage)`
 
-- [ ] **Step 4: Relations** application → user, application → resume
+- [x] **Step 4: Relations** application → user, application → resume
 
-- [ ] **Step 5: Generate migration**
+- [x] **Step 5: Generate migration** (`20260728153443_polite_nekra`)
 
 ```bash
 vp run db:generate
 ```
 
-- [ ] **Step 6: DATABASE_URL host check** (not production) then migrate per `.agents/workflow.md`
+- [ ] **Step 6: DATABASE_URL host check** (not production) then migrate per `.agents/workflow.md` — _SQL ready; apply when Postgres is up_
 
-- [ ] **Step 7: Repository**
+- [x] **Step 7: Repository**
 
 ```ts
 findAllByUserId(userId); // order updatedAt desc
