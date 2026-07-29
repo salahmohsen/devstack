@@ -47,6 +47,7 @@ import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root
 import { Route as rootLayout_protectedDashboardMailCategoryRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/$category'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/notifications/index'
+import { Route as rootLayout_protectedDashboardSettingsMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/mail/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
 import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/domain/index'
 import { Route as rootLayout_protectedDashboardSettingsAiIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/ai/index'
@@ -272,6 +273,12 @@ const rootLayout_protectedDashboardSettingsNotificationsIndexRoute =
     path: '/notifications/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsMailIndexRoute =
+  rootLayout_protectedDashboardSettingsMailIndexRouteImport.update({
+    id: '/mail/',
+    path: '/mail/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsInvitesIndexRoute =
   rootLayout_protectedDashboardSettingsInvitesIndexRouteImport.update({
     id: '/invites/',
@@ -350,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -389,6 +397,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/ai': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/dashboard/settings/domain': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/mail': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -436,6 +445,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/(root-layout)/__protected/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/(root-layout)/__protected/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/(root-layout)/__protected/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/ai/'
     | '/dashboard/settings/domain/'
     | '/dashboard/settings/invites/'
+    | '/dashboard/settings/mail/'
     | '/dashboard/settings/notifications/'
     | '/dashboard/settings/profile/'
   fileRoutesByTo: FileRoutesByTo
@@ -521,6 +532,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/ai'
     | '/dashboard/settings/domain'
     | '/dashboard/settings/invites'
+    | '/dashboard/settings/mail'
     | '/dashboard/settings/notifications'
     | '/dashboard/settings/profile'
   id:
@@ -567,6 +579,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings/ai/'
     | '/(root-layout)/__protected/dashboard/settings/domain/'
     | '/(root-layout)/__protected/dashboard/settings/invites/'
+    | '/(root-layout)/__protected/dashboard/settings/mail/'
     | '/(root-layout)/__protected/dashboard/settings/notifications/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
   fileRoutesById: FileRoutesById
@@ -848,6 +861,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/mail/': {
+      id: '/(root-layout)/__protected/dashboard/settings/mail/'
+      path: '/mail'
+      fullPath: '/dashboard/settings/mail/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/invites/': {
       id: '/(root-layout)/__protected/dashboard/settings/invites/'
       path: '/invites'
@@ -928,6 +948,7 @@ interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsAiIndexRoute: typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   rootLayout_protectedDashboardSettingsDomainIndexRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   rootLayout_protectedDashboardSettingsInvitesIndexRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  rootLayout_protectedDashboardSettingsMailIndexRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   rootLayout_protectedDashboardSettingsNotificationsIndexRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
@@ -942,6 +963,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
       rootLayout_protectedDashboardSettingsDomainIndexRoute,
     rootLayout_protectedDashboardSettingsInvitesIndexRoute:
       rootLayout_protectedDashboardSettingsInvitesIndexRoute,
+    rootLayout_protectedDashboardSettingsMailIndexRoute:
+      rootLayout_protectedDashboardSettingsMailIndexRoute,
     rootLayout_protectedDashboardSettingsNotificationsIndexRoute:
       rootLayout_protectedDashboardSettingsNotificationsIndexRoute,
     rootLayout_protectedDashboardSettingsProfileIndexRoute:

@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Bell, Building2, KeyRound, Mail, Sparkles, UserRound } from "lucide-react";
+import { Bell, Building2, Inbox, KeyRound, Mail, Sparkles, UserRound } from "lucide-react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -15,6 +15,7 @@ type NavItem = {
     | "/dashboard/settings/profile"
     | "/dashboard/settings/account"
     | "/dashboard/settings/domain"
+    | "/dashboard/settings/mail"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
     | "/dashboard/settings/invites";
@@ -46,6 +47,14 @@ const SETTINGS_NAV: readonly NavItem[] = [
     description: "Custom hostname for your portfolio",
     to: "/dashboard/settings/domain",
     icon: Building2,
+    group: "Workspace"
+  },
+  {
+    id: "mail",
+    label: "Mail",
+    description: "BYO Resend for Career Inbox inbound",
+    to: "/dashboard/settings/mail",
+    icon: Inbox,
     group: "Workspace"
   },
   {

@@ -13,6 +13,7 @@ import {
   createContext,
   type OrpcContextBindings
 } from "@tsu-stack/api/lib/context/hono/create-context";
+import { handleResendInboundWebhook } from "@tsu-stack/api/lib/mail/handle-resend-inbound";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
 import { createDb, runWithDb } from "@tsu-stack/db";
@@ -222,6 +223,74 @@ app.post("/webhooks/github", async (c) => {
     });
 
     return c.json({ ok: true }, result.status);
+  });
+});
+
+/**
+ * BYO Resend inbound — each tenant pastes a unique URL from Settings → Mail.
+ * Secrets and API keys live on user_mail_settings (not platform env).
+ */
+app.post("/webhooks/resend/:webhookToken", async (c) => {
+  const requestLog = c.get("log");
+  const webhookToken = c.req.param("webhookToken")?.trim() ?? "";
+
+  requestLog?.set({
+    event: "resend_webhook_received",
+    resend: { tokenPrefix: webhookToken.slice(0, 6) || null }
+  });
+
+  if (!webhookToken || webhookToken.length < 16) {
+    requestLog?.set({ event: "resend_webhook_bad_token", status: 404 });
+    return c.json({ message: "Unknown webhook." }, 404);
+  }
+
+  const rawBody = await c.req.text();
+  const svixId = c.req.header("svix-id");
+  const svixTimestamp = c.req.header("svix-timestamp");
+  const svixSignature = c.req.header("svix-signature");
+
+  const db = createDb();
+  return runWithDb(db, async () => {
+    const result = await handleResendInboundWebhook({
+      webhookToken,
+      rawBody,
+      svixId: svixId ?? null,
+      svixTimestamp: svixTimestamp ?? null,
+      svixSignature: svixSignature ?? null
+    });
+
+    requestLog?.set({
+      event: "resend_webhook_handled",
+      status: result.status,
+      resend: {
+        reason: result.reason,
+        messageId: result.messageId ?? null,
+        duplicate: result.duplicate ?? false
+      }
+    });
+
+    if (result.status === 401) {
+      return c.json({ message: "Invalid webhook signature." }, 401);
+    }
+    if (result.status === 404) {
+      return c.json({ message: "Unknown webhook." }, 404);
+    }
+    if (result.status === 503) {
+      return c.json({ message: "Inbound mail is not enabled for this endpoint." }, 503);
+    }
+    if (result.status === 400) {
+      return c.json({ message: "Invalid webhook payload." }, 400);
+    }
+
+    return c.json(
+      {
+        ok: true,
+        reason: result.reason,
+        messageId: result.messageId ?? null,
+        duplicate: result.duplicate ?? false
+      },
+      result.status
+    );
   });
 });
 

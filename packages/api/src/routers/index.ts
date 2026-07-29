@@ -9,6 +9,7 @@ import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
 import { inviteRouter } from "#@/routers/invite.router";
+import { mailSettingsRouter } from "#@/routers/mail-settings.router";
 import { mailRouter } from "#@/routers/mail.router";
 import { notificationSettingsRouter } from "#@/routers/notification-settings.router";
 import { onboardingRouter } from "#@/routers/onboarding.router";
@@ -35,6 +36,7 @@ export const appRouter = {
   invite: inviteRouter,
   domain: domainRouter,
   mail: mailRouter,
+  mailSettings: mailSettingsRouter,
   notificationSettings: notificationSettingsRouter
 };
 

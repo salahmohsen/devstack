@@ -25,15 +25,15 @@ See [SETTINGS.md](./SETTINGS.md) — `/dashboard/settings/ai` + `/dashboard/sett
 
 See [MAIL-BACKEND.md](./MAIL-BACKEND.md) — contracts, `mail_message`, list/get, Resend inbound, Redis classify scaffold.
 
-| Ticket | Title                         | Status   |
-| ------ | ----------------------------- | -------- |
-| `20`   | Core contracts                | **Done** |
-| `21`   | `mail_message` DB             | **Done** |
-| `22`   | Repository + oRPC list/get    | **Done** |
-| `23`   | Web wire-up                   | Pending  |
-| `24`   | Resend inbound webhook        | Pending  |
-| `25`   | Redis classify queue scaffold | Pending  |
-| `26`   | Wave docs                     | Pending  |
+| Ticket | Title                           | Status   |
+| ------ | ------------------------------- | -------- |
+| `20`   | Core contracts                  | **Done** |
+| `21`   | `mail_message` DB               | **Done** |
+| `22`   | Repository + oRPC list/get      | **Done** |
+| `23`   | Web wire-up                     | Done     |
+| `24`   | Resend inbound (BYO + settings) | Done     |
+| `25`   | Redis classify queue scaffold   | Pending  |
+| `26`   | Wave docs                       | Pending  |
 
 ## Next frontier
 

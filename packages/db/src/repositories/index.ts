@@ -50,6 +50,11 @@ export {
   type UserAiSettingsEntity
 } from "./user-ai-settings.repository.ts";
 export {
+  userMailSettingsRepository,
+  type UpsertUserMailSettingsInput,
+  type UserMailSettingsEntity
+} from "./user-mail-settings.repository.ts";
+export {
   userNotificationSettingsRepository,
   type UpsertUserNotificationSettingsInput,
   type UserNotificationSettingsEntity

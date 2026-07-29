@@ -16,7 +16,8 @@ Persist tenant-scoped Career Inbox mail, expose protected list/get by category, 
 | `mail_message` (+ attachment meta) | Tenant `userId`, labels, purpose, ingress idempotency keys, indexes                        |
 | oRPC mail                          | Session-scoped list by category + get by id; **excludes** `system_notification` by default |
 | Web mail                           | Drill-in list/reader uses real API; empty state when no rows (no mock fallback)            |
-| Resend inbound                     | Webhook verifies signature (if Resend pattern), maps to tenant, persists, idempotent       |
+| Resend inbound                     | BYO per user: Settings → Mail secrets; `POST /webhooks/resend/:token`; idempotent persist  |
+| Mail settings                      | Sealed Resend API key + webhook secret, inbound address, enable toggle, rotate URL         |
 | Classify queue                     | BullMQ (or repo Redis patterns) job scaffold for classify — worker can be stub             |
 
 ## Dependency graph
@@ -41,12 +42,12 @@ Persist tenant-scoped Career Inbox mail, expose protected list/get by category, 
 
 ## Env notes (no secrets inventing)
 
-| Variable                        | When                 | Notes                                                                                                                          |
-| ------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                  | Always (existing)    | **Migrate only if host is `localhost` / `127.0.0.1`**                                                                          |
-| `REDIS_URL`                     | Queue scaffold (25)  | Already used by server (ioredis cache + Socket.IO); queues reuse same Redis                                                    |
-| `RESEND_API_KEY` / `EMAIL_FROM` | Outbound only today  | Existing BYO Resend for product mail                                                                                           |
-| `RESEND_WEBHOOK_SECRET`         | Inbound webhook (24) | Required to verify Resend inbound signatures when 24 lands — wire via `@tsu-stack/env` when implementing; do not invent values |
+| Variable                        | When                       | Notes                                                                                                          |
+| ------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                  | Always (existing)          | **Migrate only if host is `localhost` / `127.0.0.1`**                                                          |
+| `REDIS_URL`                     | Queue scaffold (25)        | Already used by server (ioredis cache + Socket.IO); queues reuse same Redis                                    |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Outbound product/auth mail | Platform/operator Resend for product mail only — **not** Career Inbox inbound                                  |
+| (per-user sealed)               | Career Inbox inbound (24)  | Resend API key + webhook signing secret on `user_mail_settings` (Settings → Mail). No platform inbound secret. |
 
 ## Multi-tenant rules
 
@@ -75,6 +76,6 @@ Persist tenant-scoped Career Inbox mail, expose protected list/get by category, 
 | 21 db             | done    | `mail_message` + attachments, migration applied local |
 | 22 repo + oRPC    | done    | `mail.list` / `mail.get` protected                    |
 | 23 web wire-up    | done    | Real list/get + empty state; mock fixtures only       |
-| 24 Resend inbound | pending | Webhook + tenant map + idempotency                    |
+| 24 Resend inbound | done    | BYO Settings → Mail + `/webhooks/resend/:token`       |
 | 25 classify queue | pending | BullMQ/redis scaffold after 22/24                     |
 | 26 docs           | pending | After 22+; ideally after 23–25                        |
