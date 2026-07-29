@@ -175,10 +175,13 @@ services:
       PORT: "5100"
       NODE_ENV: production
     healthcheck:
+      # Migrations run before listen — allow a long start_period so first
+      # deploy does not mark the container unhealthy mid-migrate.
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5100/health/live || exit 1"]
-      interval: 15s
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 12
+      start_period: 120s
     labels:
       - "traefik.enable=true"
       # Prefer a dedicated host (e.g. api.example.com) via Dokploy domain.

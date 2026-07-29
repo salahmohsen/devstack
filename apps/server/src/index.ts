@@ -17,22 +17,27 @@ async function start(): Promise<void> {
   // RUN_MIGRATIONS=true). Leave unset in local dev — use `pnpm db:migrate`.
   if (process.env.RUN_MIGRATIONS === "true" || process.env.RUN_MIGRATIONS === "1") {
     const migrateLog = createLogger({ operation: "server__database_migration" });
+    const folder = process.env.MIGRATIONS_FOLDER ?? "(default packages/db/migrations)";
+    migrateLog.set({ event: "database_migration_starting", migrationsFolder: folder });
+    migrateLog.emit();
     try {
       const { migrateDatabase } = await import("@tsu-stack/db/migrate");
       await migrateDatabase();
-      migrateLog.set({ event: "database_migration_completed" });
+      migrateLog.set({ event: "database_migration_completed", migrationsFolder: folder });
       migrateLog.emit();
     } catch (error) {
       migrateLog.error(error instanceof Error ? error : new Error(String(error)), {
-        event: "database_migration_failed"
+        event: "database_migration_failed",
+        migrationsFolder: folder
       });
       migrateLog.emit({ _forceKeep: true });
       throw error;
     }
   }
 
+  // Bind all interfaces so container healthchecks on 127.0.0.1 succeed.
   const port = Number(ENV_SERVER.PORT ?? 5100);
-  const httpServer = serve({ fetch: app.fetch, port }, (info) => {
+  const httpServer = serve({ fetch: app.fetch, port, hostname: "0.0.0.0" }, (info) => {
     const bootLog = createLogger({ operation: "server__http_listen" });
     bootLog.set({
       event: "server_started",
@@ -43,11 +48,29 @@ async function start(): Promise<void> {
   }) as unknown as HTTPServer;
 
   if (ENV_SERVER.REDIS_URL) {
-    createGithubGateway(httpServer, ENV_SERVER.REDIS_URL);
-    setBroadcastSignals(broadcastSignals);
-    // Career Inbox classify queue (BullMQ on same REDIS_URL). Worker is a stub until Mastra epic.
-    const { startMailClassifyQueue } = await import("#@/queues/mail-classify-queue");
-    startMailClassifyQueue(ENV_SERVER.REDIS_URL);
+    try {
+      createGithubGateway(httpServer, ENV_SERVER.REDIS_URL);
+      setBroadcastSignals(broadcastSignals);
+    } catch (error) {
+      const log = createLogger({ operation: "server__github_gateway" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "github_gateway_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
+
+    // Career Inbox classify queue (BullMQ). Soft-fail so Redis/BullMQ issues
+    // never keep /health/live from answering.
+    try {
+      const { startMailClassifyQueue } = await import("#@/queues/mail-classify-queue");
+      startMailClassifyQueue(ENV_SERVER.REDIS_URL);
+    } catch (error) {
+      const log = createLogger({ operation: "server__mail_classify_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "mail_classify_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
   }
 }
 

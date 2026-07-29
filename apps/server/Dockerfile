@@ -93,8 +93,9 @@ ENV RUN_MIGRATIONS=true
 # Default when runtime env does not override; entrypoint prefers /etc/tsu-source-commit.
 ENV SOURCE_COMMIT=unknown
 
-HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:${PORT}/health/live || exit 1
+# start-period covers RUN_MIGRATIONS before the process binds the port.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=120s --retries=12 \
+  CMD wget -qO- http://127.0.0.1:5100/health/live || exit 1
 
 ENTRYPOINT ["/usr/local/bin/encode-db-url.sh"]
 CMD ["node", "/app/apps/server/dist/index.mjs"]
