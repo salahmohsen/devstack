@@ -594,6 +594,9 @@ importers:
       pdfnative:
         specifier: 'catalog:'
         version: 1.4.0
+      pg:
+        specifier: 'catalog:'
+        version: 8.22.0
       socket.io:
         specifier: 'catalog:'
         version: 4.8.3

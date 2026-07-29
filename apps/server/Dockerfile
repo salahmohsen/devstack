@@ -4,9 +4,9 @@
 # Convention: official Vite+ image + `vp` CLI
 # https://viteplus.dev/guide/docker
 #
-# Runtime keeps monorepo paths so pnpm app-level symlinks
-# (`apps/server/node_modules` → `../../node_modules/.pnpm/...`) stay valid.
-# No manual symlink rewriting.
+# Vite SSR externalises native drivers (`pg`, `ioredis`, `bullmq`, …).
+# Runtime ships a **flattened** production tree via `pnpm deploy` so ESM
+# can resolve those packages (monorepo symlink copies break under Docker).
 
 FROM ghcr.io/voidzero-dev/vite-plus:latest AS build
 WORKDIR /app
@@ -60,6 +60,28 @@ ENV SOURCE_COMMIT=unknown \
 RUN export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
   && vp run --filter @tsu-stack/server build
 
+# Flatten production deps so externalised packages (pg, ioredis, bullmq, …)
+# resolve next to the entrypoint. Same pattern as apps/web Dockerfile.
+ENV PNPM_FETCH_TIMEOUT=600000 \
+    npm_config_fetch_timeout=600000 \
+    npm_config_fetch_retries=5
+RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid=1000,gid=1000 \
+    corepack enable \
+  && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate \
+  && pnpm config set store-dir /home/vp/.local/share/pnpm/store \
+  && pnpm config set fetch-timeout 600000 \
+  && pnpm config set fetch-retries 5 \
+  && pnpm --filter @tsu-stack/server deploy --prod --legacy --prefer-offline --no-optional /tmp/server-deploy \
+  && mkdir -p /tmp/server-deploy/dist \
+  && cp -a /app/apps/server/dist/. /tmp/server-deploy/dist/ \
+  && mkdir -p /tmp/server-deploy/dist/migrations \
+  && cp -a /app/packages/db/migrations/. /tmp/server-deploy/dist/migrations/ \
+  && cp -a /app/docker/encode-db-url.sh /app/docker/ensure-db.js /tmp/server-deploy/ \
+  && test -e /tmp/server-deploy/node_modules/pg/package.json \
+  && test -e /tmp/server-deploy/node_modules/ioredis/package.json \
+  && test -e /tmp/server-deploy/node_modules/bullmq/package.json \
+  && echo "server deploy OK (pg/ioredis/bullmq present)"
+
 RUN cp "$(vp env which node | head -1)" /tmp/node
 
 FROM debian:bookworm-slim AS runtime
@@ -74,21 +96,17 @@ RUN apt-get update \
 
 COPY --from=build /tmp/node /usr/local/bin/node
 COPY --from=build /tmp/SOURCE_COMMIT /etc/tsu-source-commit
-COPY --from=build --chown=server:nodejs /app/apps/server/dist /app/apps/server/dist
-COPY --from=build --chown=server:nodejs /app/packages/db/migrations /app/apps/server/dist/migrations
-COPY --from=build --chown=server:nodejs /app/node_modules /app/node_modules
-COPY --from=build --chown=server:nodejs /app/apps/server/node_modules /app/apps/server/node_modules
-COPY --from=build --chown=server:nodejs /app/packages /app/packages
-COPY --from=build --chown=server:nodejs /app/package.json /app/package.json
-COPY --from=build --chown=server:nodejs --chmod=755 /app/docker/encode-db-url.sh /usr/local/bin/encode-db-url.sh
-COPY --from=build --chown=server:nodejs --chmod=755 /app/docker/ensure-db.js /usr/local/bin/ensure-db.js
+COPY --from=build --chown=server:nodejs /tmp/server-deploy /app
+COPY --from=build --chown=server:nodejs --chmod=755 /tmp/server-deploy/encode-db-url.sh /usr/local/bin/encode-db-url.sh
+COPY --from=build --chown=server:nodejs --chmod=755 /tmp/server-deploy/ensure-db.js /usr/local/bin/ensure-db.js
 
 USER server
 
 # ensure-db.js (outside /app) resolves bare `require("pg")` via NODE_PATH.
-ENV NODE_PATH=/app/node_modules:/app/apps/server/node_modules
+# dist/index.mjs resolves packages by walking up to /app/node_modules (deploy).
+ENV NODE_PATH=/app/node_modules
 ENV PORT=5100
-ENV MIGRATIONS_FOLDER=/app/apps/server/dist/migrations
+ENV MIGRATIONS_FOLDER=/app/dist/migrations
 ENV RUN_MIGRATIONS=true
 # Default when runtime env does not override; entrypoint prefers /etc/tsu-source-commit.
 ENV SOURCE_COMMIT=unknown
@@ -98,4 +116,4 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=120s --retries=12 \
   CMD wget -qO- http://127.0.0.1:5100/health/live || exit 1
 
 ENTRYPOINT ["/usr/local/bin/encode-db-url.sh"]
-CMD ["node", "/app/apps/server/dist/index.mjs"]
+CMD ["node", "/app/dist/index.mjs"]
