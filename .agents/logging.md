@@ -202,26 +202,36 @@ The Mastra agent process should use `@tsu-stack/logger/server` for **product/ops
 
 See program design: `docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md` and `apps/agent/AGENTS.md`.
 
-## evlog CLI
+## evlog CLI (workspace)
 
-Install/use the CLI from the monorepo workspace after `evlog` is on the catalog. Official overview: [evlog CLI](https://www.evlog.dev/cli/overview).
+Catalog: `evlog` (runtime **only** via `@tsu-stack/logger`) and `@evlog/cli` (root `devDependency`). Official overview: [evlog CLI](https://www.evlog.dev/cli/overview).
 
-Typical commands (confirm flags against Context7 / installed CLI help before CI):
+From repo root (preferred):
+
+```bash
+vp run log:doctor          # apps/web — primary app using @tsu-stack/logger
+vp run log:doctor:logger   # packages/logger
+vp run log:doctor:server   # apps/server
+vp run log:map             # apps/web TanStack Start score (--no-write)
+vp run log:map:write       # same, writes evlog.map.json
+```
 
 | Command                   | Purpose                                                    |
 | ------------------------- | ---------------------------------------------------------- |
-| `evlog map`               | Score logging coverage across entry points                 |
-| `evlog doctor`            | Verify installation / log writing                          |
+| `evlog map`               | Score wide-event coverage (entry points)                   |
+| `evlog doctor`            | Verify Node, package resolve, evlog install, local sink    |
 | `evlog telemetry disable` | Opt out of CLI telemetry (`DO_NOT_TRACK=1` also respected) |
 
-Workspace scripts (add when wiring foundation epic), e.g.:
+**Monorepo:** CLI scans **one** package per run. Never bare `evlog map` at the workspace root without `--cwd <package>`.
 
-```json
-"log:map": "evlog map",
-"log:doctor": "evlog doctor"
+```bash
+evlog map --cwd apps/web --framework tanstack-start --no-write
+evlog doctor --cwd apps/web
 ```
 
-Run from repo root with the package that owns entry points in scope. Prefer JSON output in CI when enforcing a minimum score. Always verify current CLI flags with `evlog --help` or Context7 (`/hugorcd/evlog`, `/websites/evlog_dev`) after upgrades — do not invent flags from memory.
+Map adapters today: Nuxt, Nitro, Next.js App Router, TanStack Start. Hono server routes may not be fully scored until an adapter exists — use doctor there and logger wide events for jobs.
+
+Pin `@evlog/cli` in the catalog so CI scores do not jump on accidental upgrades. Prefer Context7 (`/websites/evlog_dev`, `/hugorcd/evlog`) or `evlog --help` before new flags. Do not invent flags from memory.
 
 ## Hosted sinks (deployment)
 

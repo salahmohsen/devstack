@@ -16,6 +16,7 @@ catalog:
   "@commitlint/config-conventional": ^21.2.0
   "@cloudflare/vite-plugin": ^1.42.4
   "@dotenvx/dotenvx": 1.75.1
+  "@evlog/cli": ^0.3.0
   "@fontsource-variable/geist": ^5.2.9
   "@fontsource-variable/geist-mono": ^5.2.8
 
@@ -64,7 +65,7 @@ catalog:
   drizzle-orm: 1.0.0-rc.4-5d5b77c
   eslint-plugin-fsd-lint: ^1.2.1
   eslint-plugin-react-hooks: ^7.1.1
-  evlog: ^2.19.2
+  evlog: ^2.22.4
   hono: ^4.12.27
   lucide-react: ^1.22.0
   next-themes: ^0.4.6
@@ -180,6 +181,7 @@ minimumReleaseAgeExclude:
   - mastra@1.18.2
   - "@dotenvx/primitives@1.8.1"
   - "@dotenvx/tooling@1.0.2"
+  - "@evlog/cli@0.3.0"
 
 overrides:
   vite: "catalog:"

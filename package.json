@@ -35,7 +35,12 @@
     "ui:web": "vp run --filter @tsu-stack/web ui",
     "auth:secret": "npx auth@latest secret",
     "auth:generate": "pnpm --filter @tsu-stack/db run auth:generate",
-    "cf-typegen": "vp run --filter @tsu-stack/server cf-typegen"
+    "cf-typegen": "vp run --filter @tsu-stack/server cf-typegen",
+    "log:map": "evlog map --cwd apps/web --framework tanstack-start --no-write",
+    "log:map:write": "evlog map --cwd apps/web --framework tanstack-start",
+    "log:doctor": "evlog doctor --cwd apps/web",
+    "log:doctor:logger": "evlog doctor --cwd packages/logger",
+    "log:doctor:server": "evlog doctor --cwd apps/server"
   },
   "dependencies": {
     "tailwindcss": "catalog:"
@@ -44,6 +49,7 @@
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
     "@dotenvx/dotenvx": "catalog:",
+    "@evlog/cli": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/eslint-plugin-query": "catalog:",
     "@tanstack/eslint-plugin-router": "catalog:",
