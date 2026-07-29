@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import {
   APPLICATION_STAGE_LABELS,
   MAIL_SYSTEM_CATEGORY_CARDS,
+  MAIL_SYSTEM_LABELS,
   MailListCategorySchema,
   mailCategoryToSlug,
   mailSlugToCategoryId,
@@ -15,7 +16,8 @@ import {
   type MailCategoryCard,
   type MailListCategory,
   type MailMessageDetail,
-  type MailMessageListItem
+  type MailMessageListItem,
+  type MailSystemLabel
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -25,7 +27,12 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
-import { useGetMailQuery, useListMailQuery, useUndoMailCrmApplyMutation } from "@/features/mail";
+import {
+  useCorrectMailClassificationMutation,
+  useGetMailQuery,
+  useListMailQuery,
+  useUndoMailCrmApplyMutation
+} from "@/features/mail";
 import { useListMailSmartRulesQuery } from "@/features/mail-smart-rules";
 import { useCreateReplyDraftMutation } from "@/features/review";
 
@@ -345,8 +352,10 @@ function MessageReaderBody({
   const [draft, setDraft] = useState("");
   const [agentBanner, setAgentBanner] = useState(false);
   const undoCrm = useUndoMailCrmApplyMutation();
+  const correct = useCorrectMailClassificationMutation();
   const createDraft = useCreateReplyDraftMutation();
   const navigate = useNavigate();
+  const [correctOpen, setCorrectOpen] = useState(false);
 
   const message = detail ?? listItem;
   const labels = careerLabels(message.labels);
@@ -360,6 +369,22 @@ function MessageReaderBody({
     crmApply?.stageAfter != null ? APPLICATION_STAGE_LABELS[crmApply.stageAfter] : null;
   const stageBeforeLabel =
     crmApply?.stageBefore != null ? APPLICATION_STAGE_LABELS[crmApply.stageBefore] : null;
+  const currentSystem = labels[0] as MailSystemLabel | undefined;
+  const canCorrect = Boolean(detail?.id && detail.classifiedAt);
+
+  function submitCorrection(correctedSystemLabels: MailSystemLabel[]) {
+    if (!detail?.id) return;
+    correct.mutate(
+      {
+        messageId: detail.id,
+        correctedSystemLabels,
+        undoCrm: true
+      },
+      {
+        onSuccess: () => setCorrectOpen(false)
+      }
+    );
+  }
 
   function openManualReply() {
     setAgentBanner(false);
@@ -434,6 +459,52 @@ function MessageReaderBody({
             >
               {undoCrm.isPending ? "Undoing…" : "Undo"}
             </Button>
+          </div>
+        ) : null}
+        {canCorrect ? (
+          <div className="space-y-2 rounded-md border border-dashed border-border/80 px-2.5 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                Wrong label? Correct it to teach classify (few-shot).
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-7 shrink-0 text-xs"
+                disabled={correct.isPending}
+                onClick={() => setCorrectOpen((o) => !o)}
+              >
+                {correctOpen ? "Cancel" : "Correct"}
+              </Button>
+            </div>
+            {correctOpen ? (
+              <div className="flex flex-wrap gap-1.5">
+                {(MAIL_SYSTEM_LABELS as readonly MailSystemLabel[]).map((label) => (
+                  <Button
+                    key={label}
+                    type="button"
+                    size="sm"
+                    variant={currentSystem === label ? "default" : "outline"}
+                    className="h-7 capitalize"
+                    disabled={correct.isPending || currentSystem === label}
+                    onClick={() => submitCorrection([label])}
+                  >
+                    {label}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={!currentSystem ? "default" : "outline"}
+                  className="h-7"
+                  disabled={correct.isPending || !currentSystem}
+                  onClick={() => submitCorrection([])}
+                >
+                  None
+                </Button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </header>

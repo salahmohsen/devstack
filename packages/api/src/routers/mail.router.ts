@@ -1,4 +1,6 @@
 import {
+  CreateAiCorrectionInputSchema,
+  CreateAiCorrectionOutputSchema,
   MailCrmApplySummarySchema,
   MailCrmAuditSnapshotSchema,
   MailCrmEffectKindSchema,
@@ -11,6 +13,7 @@ import {
 } from "@tsu-stack/core";
 import { mailCrmApplyRepository, mailMessageRepository } from "@tsu-stack/db/repositories";
 
+import { createAiCorrectionFromMail } from "#@/lib/mail/create-ai-correction";
 import { undoMailCrmApply } from "#@/lib/mail/undo-mail-crm-apply";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
@@ -144,6 +147,29 @@ export const mailRouter = {
         if (result.code === "ALREADY_UNDONE") throw errors.ALREADY_UNDONE();
         throw errors.RESTORE_FAILED();
       }
+      return result.result;
+    }),
+
+  correctClassification: protectedProcedure
+    .route({
+      description:
+        "Correct AI classify labels for a mail message; stores few-shot correction and optionally undoes CRM apply",
+      method: "POST"
+    })
+    .input(CreateAiCorrectionInputSchema)
+    .output(CreateAiCorrectionOutputSchema)
+    .errors({
+      NOT_FOUND: {
+        message: "Mail message not found",
+        status: 404
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const result = await createAiCorrectionFromMail({
+        userId: context.session.user.id,
+        data: input
+      });
+      if (!result.ok) throw errors.NOT_FOUND();
       return result.result;
     })
 };

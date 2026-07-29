@@ -2,6 +2,7 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import {
+  formatCorrectionsFewShot,
   MAIL_SYSTEM_LABELS,
   MailClassifyOutputSchema,
   MailSystemLabelSchema,
@@ -56,6 +57,7 @@ export const llmStep = createStep({
     }
 
     const bodySnippet = original.bodyText.slice(0, 6_000);
+    const fewShot = formatCorrectionsFewShot(original.fewShotCorrections ?? []);
     const prompt = `Classify this career inbox email.
 
 From: ${original.fromName} <${original.fromEmail}>
@@ -66,7 +68,8 @@ Body:
 ${bodySnippet}
 
 Return systemLabel as one of: ${MAIL_SYSTEM_LABELS.join(", ")} — or null if none fit.
-Heuristic suggestion (may be empty): ${heuristic.systemLabels[0] ?? "(none)"} (${heuristic.notes ?? ""})`;
+Heuristic suggestion (may be empty): ${heuristic.systemLabels[0] ?? "(none)"} (${heuristic.notes ?? ""})
+${fewShot ? `\n${fewShot}` : ""}`;
 
     try {
       const result = await Promise.race([

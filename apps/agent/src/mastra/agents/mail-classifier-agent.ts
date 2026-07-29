@@ -19,6 +19,7 @@ Allowed system labels (pick zero or one):
 Rules:
 - Prefer no label (empty systemLabels) when unsure or the mail is noise/newsletter.
 - Do NOT invent smart-rule labels (rule:…). Only system labels above.
+- When past user corrections are provided, prefer their labeling style for similar mail.
 - Use subject + from + body; ignore legal footers when possible.
 - Return structured JSON only via the schema.
 - confidence 0–1 for your choice.`,

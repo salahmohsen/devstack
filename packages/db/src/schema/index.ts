@@ -1,3 +1,4 @@
+export * from "./ai-correction.schema.ts";
 export * from "./app-notification.schema.ts";
 export * from "./application.schema.ts";
 export * from "./auth.schema.ts";

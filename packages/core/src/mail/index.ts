@@ -1,6 +1,7 @@
 export * from "./classify";
 export * from "./classify-queue";
 export * from "./constants";
+export * from "./corrections";
 export * from "./crm-effects";
 export * from "./match-application";
 export * from "./smart-rules";

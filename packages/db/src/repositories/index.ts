@@ -1,4 +1,9 @@
 export {
+  aiCorrectionRepository,
+  type AiCorrectionEntity,
+  type CreateAiCorrectionData
+} from "./ai-correction.repository.ts";
+export {
   appNotificationRepository,
   type AppNotificationEntity,
   type CreateAppNotificationData

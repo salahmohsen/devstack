@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { AiCorrectionFewShotExampleSchema } from "./corrections";
 import {
   matchSmartRuleLabels,
   mergeClassifyLabelsWithSmartRules,
@@ -28,7 +29,9 @@ export const MailClassifyInputSchema = z.object({
       })
     )
     .optional()
-    .default([])
+    .default([]),
+  /** Last-K user corrections for few-shot (server loads, userId-scoped). */
+  fewShotCorrections: z.array(AiCorrectionFewShotExampleSchema).optional().default([])
 });
 export type MailClassifyInput = z.infer<typeof MailClassifyInputSchema>;
 

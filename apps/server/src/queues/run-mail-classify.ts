@@ -2,11 +2,15 @@ import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-no
 import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
 import {
+  AI_CORRECTION_FEW_SHOT_K,
   applySmartRulesToClassifyResult,
   heuristicClassifyMail,
-  type MailClassifyOutput
+  MailSystemLabelSchema,
+  type MailClassifyOutput,
+  type MailSystemLabel
 } from "@tsu-stack/core";
 import {
+  aiCorrectionRepository,
   mailMessageRepository,
   mailSmartRuleRepository,
   userAiSettingsRepository
@@ -75,6 +79,25 @@ export async function runMailClassify(input: {
   const smartRules = await mailSmartRuleRepository.findByUserId(row.userId, {
     enabledOnly: true
   });
+  const recentCorrections = await aiCorrectionRepository.findRecentByUserId(
+    row.userId,
+    AI_CORRECTION_FEW_SHOT_K
+  );
+  const fewShotCorrections = recentCorrections.map((c) => {
+    const parseLabels = (raw: string[]): MailSystemLabel[] =>
+      raw
+        .map((l) => MailSystemLabelSchema.safeParse(l))
+        .filter((r): r is { success: true; data: MailSystemLabel } => r.success)
+        .map((r) => r.data);
+    return {
+      fromName: c.fromName,
+      fromEmail: c.fromEmail,
+      subject: c.subject,
+      preview: c.preview,
+      predictedSystemLabels: parseLabels(c.predictedSystemLabels ?? []),
+      correctedSystemLabels: parseLabels(c.correctedSystemLabels ?? [])
+    };
+  });
   const classifyInput = {
     messageId: row.id,
     userId: row.userId,
@@ -86,7 +109,8 @@ export async function runMailClassify(input: {
     labels: row.labels ?? [],
     smartRules: smartRules.map((r) => {
       return { slug: r.slug, keywords: r.keywords ?? [], enabled: r.enabled };
-    })
+    }),
+    fewShotCorrections
   };
 
   let result: MailClassifyOutput | null = await callMailClassifyAgent(classifyInput);

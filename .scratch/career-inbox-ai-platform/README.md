@@ -140,6 +140,17 @@ See [NOTIFICATIONS.md](./NOTIFICATIONS.md).
 | `59`   | Resend email on channel prefs | **Done** |
 | `60`   | Wave docs                     | **Done** |
 
+## Learning / corrections Phase A (wave 15)
+
+See [LEARNING.md](./LEARNING.md).
+
+| Ticket | Title                             | Status   |
+| ------ | --------------------------------- | -------- |
+| `61`   | Core + `ai_correction` DB         | **Done** |
+| `62`   | `mail.correctClassification` API  | **Done** |
+| `63`   | Few-shot last-K into classify LLM | **Done** |
+| `64`   | Mail reader Correct UI            | **Done** |
+
 ## Next frontier
 
-**Learning / corrections** · Mastra reply agent · scheduled Gmail sync · digest batching
+**Mastra feedback dual-write** · retrieval few-shot · reply agent · scheduled Gmail sync · digest batching
