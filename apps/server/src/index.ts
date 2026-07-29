@@ -62,8 +62,15 @@ async function start(): Promise<void> {
     // Career Inbox classify queue (BullMQ). Soft-fail so Redis/BullMQ issues
     // never keep /health/live from answering.
     try {
-      const { startMailClassifyQueue } = await import("#@/queues/mail-classify-queue");
+      const { startMailClassifyQueue, enqueueMailClassify } =
+        await import("#@/queues/mail-classify-queue");
       startMailClassifyQueue(ENV_SERVER.REDIS_URL);
+      const { registerMailClassifyEnqueue } =
+        await import("@tsu-stack/api/lib/mail/classify-enqueue-hook");
+      registerMailClassifyEnqueue(async ({ messageId, userId }) => {
+        const result = await enqueueMailClassify({ messageId, userId });
+        return result.enqueued;
+      });
     } catch (error) {
       const log = createLogger({ operation: "server__mail_classify_queue" });
       log.error(error instanceof Error ? error : new Error(String(error)), {

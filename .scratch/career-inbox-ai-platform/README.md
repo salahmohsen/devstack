@@ -19,6 +19,7 @@
 | **9 — Outbound reply**     | Resend send on confirm + Full auto-send           | `47`–`49` | **Done** |
 | **10 — App notifications** | Durable bell + emit on classify/CRM/draft         | `50`–`53` | **Done** |
 | **11 — Connections**       | Settings Connections + Google/Gmail OAuth         | `54`      | **Done** |
+| **12 — Gmail sync**        | History/list import into Career Inbox             | `55`–`56` | **Done** |
 
 ## Mail UI (done)
 
@@ -113,6 +114,13 @@ See [CONNECTIONS.md](./CONNECTIONS.md).
 | ------ | ----------------------------------- | -------- |
 | `54`   | Settings Connections + Google/Gmail | **Done** |
 
+## Gmail sync (wave 12)
+
+| Ticket | Title                          | Status   |
+| ------ | ------------------------------ | -------- |
+| `55`   | Cursor table + Gmail import    | **Done** |
+| `56`   | Sync button + classify enqueue | **Done** |
+
 ## Next frontier
 
-**Gmail History sync** · smart rules CRUD · email notification channel · learning/corrections · Mastra reply agent.
+**Smart rules CRUD** · email notification channel · learning/corrections · Mastra reply agent · scheduled Gmail sync

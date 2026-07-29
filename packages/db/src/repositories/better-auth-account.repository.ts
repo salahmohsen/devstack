@@ -74,6 +74,19 @@ export const betterAuthAccountRepository = {
       scope?: string | null;
     }
   ) {
+    return this.updateProviderTokens(accountRowId, tokens);
+  },
+
+  async updateProviderTokens(
+    accountRowId: string,
+    tokens: {
+      accessToken: string;
+      refreshToken?: string | null;
+      accessTokenExpiresAt?: Date | null;
+      refreshTokenExpiresAt?: Date | null;
+      scope?: string | null;
+    }
+  ) {
     await getDb()
       .update(account)
       .set({

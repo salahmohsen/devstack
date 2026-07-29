@@ -60,6 +60,11 @@ export {
   type UserAiSettingsEntity
 } from "./user-ai-settings.repository.ts";
 export {
+  userGmailSyncRepository,
+  type UpsertUserGmailSyncInput,
+  type UserGmailSyncEntity
+} from "./user-gmail-sync.repository.ts";
+export {
   userMailSettingsRepository,
   type UpsertUserMailSettingsInput,
   type UserMailSettingsEntity

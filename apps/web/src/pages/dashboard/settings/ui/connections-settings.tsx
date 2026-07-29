@@ -21,7 +21,11 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 
-import { connectionsQueryKeys, useGetConnectionsStatusQuery } from "@/features/connections";
+import {
+  connectionsQueryKeys,
+  useGetConnectionsStatusQuery,
+  useSyncGmailMutation
+} from "@/features/connections";
 
 import { SettingsSection } from "./settings-section";
 
@@ -62,6 +66,7 @@ function StatusBadge({
 export function ConnectionsSettings() {
   const query = useGetConnectionsStatusQuery();
   const queryClient = useQueryClient();
+  const syncGmail = useSyncGmailMutation();
   const [busy, setBusy] = useState<"google" | "github" | "unlink-google" | null>(null);
 
   async function connectGmail() {
@@ -178,15 +183,31 @@ export function ConnectionsSettings() {
                 {googleState === "unavailable"
                   ? "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET on the server to enable."
                   : googleState === "connected"
-                    ? "Gmail scopes granted. Inbox history sync ships next; tokens stay on your account."
+                    ? "Gmail scopes granted. Sync pulls recent inbox into Career Inbox and runs classify."
                     : googleState === "partial"
                       ? "Google is linked for sign-in only. Connect Gmail to allow reading career mail."
                       : "Not linked. Connect Gmail to grant read + send scopes for Career Inbox."}
               </p>
-              {googleStatus.accountId ? (
+              {query.data.gmailSync.emailAddress ? (
+                <p className="text-xs text-muted-foreground">
+                  Mailbox · {query.data.gmailSync.emailAddress}
+                </p>
+              ) : googleStatus.accountId ? (
                 <p className="font-mono text-[11px] text-muted-foreground">
                   Account · {googleStatus.accountId.slice(0, 12)}…
                 </p>
+              ) : null}
+              {query.data.gmailSync.lastSyncedAt ? (
+                <p className="text-[11px] text-muted-foreground">
+                  Last sync ·{" "}
+                  {new Date(query.data.gmailSync.lastSyncedAt).toLocaleString(undefined, {
+                    dateStyle: "medium",
+                    timeStyle: "short"
+                  })}
+                </p>
+              ) : null}
+              {query.data.gmailSync.lastError ? (
+                <p className="text-[11px] text-destructive">{query.data.gmailSync.lastError}</p>
               ) : null}
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
@@ -200,6 +221,18 @@ export function ConnectionsSettings() {
                   }}
                 >
                   {busy === "google" ? "Redirecting…" : "Connect Gmail"}
+                </Button>
+              ) : null}
+              {googleStatus.gmailConnected ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={syncGmail.isPending}
+                  onClick={() => {
+                    syncGmail.mutate({});
+                  }}
+                >
+                  {syncGmail.isPending ? "Syncing…" : "Sync inbox"}
                 </Button>
               ) : null}
               {googleStatus.connected ? (

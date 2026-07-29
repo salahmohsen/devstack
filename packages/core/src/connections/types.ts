@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { GmailSyncStatusSchema } from "./gmail-sync";
+
 export const ProviderConnectionStatusSchema = z.object({
   providerId: z.enum(["google", "github"]),
   /** Provider is linked on the Better Auth account table. */
@@ -17,6 +19,7 @@ export type ProviderConnectionStatus = z.infer<typeof ProviderConnectionStatusSc
 
 export const ConnectionsStatusOutputSchema = z.object({
   google: ProviderConnectionStatusSchema,
-  github: ProviderConnectionStatusSchema
+  github: ProviderConnectionStatusSchema,
+  gmailSync: GmailSyncStatusSchema
 });
 export type ConnectionsStatusOutput = z.infer<typeof ConnectionsStatusOutputSchema>;
