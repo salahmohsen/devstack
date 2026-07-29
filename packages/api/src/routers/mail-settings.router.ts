@@ -133,9 +133,27 @@ export const mailSettingsRouter = {
         }
       }
 
-      const inboundEnabled = input.inboundEnabled ?? existing?.inboundEnabled ?? false;
-      if (inboundEnabled && (!resendApiKeyCiphertext || !webhookSecretCiphertext)) {
-        throw errors.SECRETS_REQUIRED_FOR_ENABLE();
+      const hasSecrets = Boolean(resendApiKeyCiphertext && webhookSecretCiphertext);
+      const hadSecrets = Boolean(
+        existing?.resendApiKeyCiphertext && existing?.webhookSecretCiphertext
+      );
+      const secretsCompletedThisSave = hasSecrets && !hadSecrets;
+
+      // Auto-enable when both secrets first become available. Respect explicit
+      // kill-switch (toggle off) only after secrets were already complete.
+      // Clearing either secret always forces inbound off.
+      let inboundEnabled: boolean;
+      if (!hasSecrets) {
+        if (input.inboundEnabled === true) {
+          throw errors.SECRETS_REQUIRED_FOR_ENABLE();
+        }
+        inboundEnabled = false;
+      } else if (secretsCompletedThisSave) {
+        inboundEnabled = true;
+      } else if (input.inboundEnabled !== undefined) {
+        inboundEnabled = input.inboundEnabled;
+      } else {
+        inboundEnabled = existing?.inboundEnabled ?? true;
       }
 
       const row = await userMailSettingsRepository.upsert({

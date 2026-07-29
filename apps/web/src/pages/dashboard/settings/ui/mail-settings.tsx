@@ -186,13 +186,37 @@ export function MailSettings() {
         <FramePanel className="space-y-6">
           <SettingsSection
             title="Inbound"
-            description="Enable only after you paste your Resend API key and webhook signing secret."
+            description="Saving both the Resend API key and webhook secret turns Accept inbound on automatically. Use the switch later as a pause/kill switch."
           >
+            {data.hasResendApiKey && data.hasWebhookSecret && !data.inboundEnabled ? (
+              <Alert>
+                <AlertTitle>Inbound is paused</AlertTitle>
+                <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    API key and webhook secret are saved, but Accept inbound is off — Resend gets
+                    503 and mail is not stored.
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={() => {
+                      patch((c) => {
+                        return { ...c, inboundEnabled: true };
+                      });
+                    }}
+                  >
+                    Enable inbound
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : null}
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border/80 px-3 py-2.5">
               <div className="min-w-0">
                 <p className="text-sm font-medium">Accept inbound mail</p>
                 <p className="text-xs text-muted-foreground">
-                  When off, your webhook URL returns 503.
+                  Auto-on when secrets are complete. Off returns 503 on your webhook URL.
                 </p>
               </div>
               <Switch
