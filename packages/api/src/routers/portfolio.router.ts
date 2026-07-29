@@ -134,13 +134,20 @@ export const PortfolioRouter = {
     })
     .handler(async ({ input, context, errors }) => {
       try {
+        const sessionUserId = context.session?.user?.id ?? null;
         const resolved = await resolvePublicPortfolioContext({
           host: context.host,
           pathProfileName: input.profileName,
-          // Dashboard sidebar/contacts may omit profileName; resolve as self.
-          sessionUserId: context.session?.user?.id
+          // Dashboard chrome omits profileName; resolve as the signed-in user.
+          sessionUserId
         });
         if (!resolved) {
+          context.logger.set({
+            event: "portfolio_list_unresolved",
+            host: context.host ?? null,
+            pathProfileName: input.profileName ?? null,
+            hasSession: Boolean(sessionUserId)
+          });
           throw errors.NOT_FOUND();
         }
         const all = await listAllOptedIn(resolved.userId, input.filter);

@@ -13,9 +13,24 @@ import {
 
 import { ContactButton } from "@/shared/ui/contact-button";
 
-import { useGetPortfolioListQuery } from "@/features/portfolio";
+import { useGetOwnPortfolioListQuery, useGetPortfolioListQuery } from "@/features/portfolio";
 
 const PublicItems = [{ href: "/", label: "Home" }] as const;
+
+/** True when the URL is a public `/{profileName}` (or nested) portfolio surface. */
+function isPublicProfilePath(pathname: string, pathProfileName: string | undefined): boolean {
+  if (!pathProfileName?.trim()) return false;
+  // Dashboard / auth / playground must never treat a param as a public slug.
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/playground") ||
+    pathname.startsWith("/repos")
+  ) {
+    return false;
+  }
+  return true;
+}
 
 const DashboardItems = [
   { href: "/dashboard", label: "Agent", group: "Dashboard" },
@@ -84,12 +99,24 @@ export function PublicSidebar() {
     enabled: isSignedIn
   });
 
-  // Prefer the public profile route param; fall back to session / own profile for dashboard.
-  const profileName =
-    params.profileName ?? sessionProfileName(user) ?? ownProfileQuery.data?.profileName ?? "";
-  const portfolioQuery = useGetPortfolioListQuery(profileName, {
-    enabled: Boolean(profileName)
+  const pathProfileName = params.profileName;
+  const onPublicProfile = isPublicProfilePath(pathname, pathProfileName);
+  const ownProfileName = sessionProfileName(user) ?? ownProfileQuery.data?.profileName ?? undefined;
+
+  // Nav links: public page slug, else own slug for "Portfolio" / "Repositories".
+  const profileName = (onPublicProfile ? pathProfileName : ownProfileName) ?? "";
+
+  // Contacts footer:
+  // - Public profile pages: list by path slug (no session required).
+  // - Dashboard: list via session only (omit profileName) so a missing/stale client
+  //   slug cannot 404 "Profile not found" while the user is signed in.
+  const publicPortfolioQuery = useGetPortfolioListQuery(pathProfileName ?? "", {
+    enabled: onPublicProfile
   });
+  const ownPortfolioQuery = useGetOwnPortfolioListQuery({
+    enabled: isSignedIn && !onPublicProfile
+  });
+  const portfolioQuery = onPublicProfile ? publicPortfolioQuery : ownPortfolioQuery;
 
   const publicItems: NavItem[] = [
     ...PublicItems,

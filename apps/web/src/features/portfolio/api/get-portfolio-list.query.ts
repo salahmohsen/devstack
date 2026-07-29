@@ -16,9 +16,22 @@ function isUsableProfileName(profileName: string | undefined | null): profileNam
   return parseProfileName(profileName).success;
 }
 
+/** Public portfolio by path slug (or verified custom domain + slug). */
 export function getPortfolioListQueryOptions(profileName: string) {
   return orpcQueryClient.portfolio.list.queryOptions({
     input: { profileName },
+    staleTime: PORTFOLIO_STALE_TIME,
+    gcTime: PORTFOLIO_GC_TIME
+  });
+}
+
+/**
+ * Dashboard chrome: omit profileName so the API resolves the signed-in user
+ * via session (avoids 404 when the client slug is missing/stale).
+ */
+export function getOwnPortfolioListQueryOptions() {
+  return orpcQueryClient.portfolio.list.queryOptions({
+    input: {},
     staleTime: PORTFOLIO_STALE_TIME,
     gcTime: PORTFOLIO_GC_TIME
   });
@@ -29,6 +42,14 @@ export function useGetPortfolioListQuery(profileName: string, options?: { enable
     ...getPortfolioListQueryOptions(profileName),
     // Skip reserved / invalid slugs so dashboard chrome does not spam NOT_FOUND.
     enabled: (options?.enabled ?? true) && isUsableProfileName(profileName)
+  });
+}
+
+/** Session-scoped portfolio list for authenticated dashboard layout. */
+export function useGetOwnPortfolioListQuery(options?: { enabled?: boolean }) {
+  return useQuery({
+    ...getOwnPortfolioListQueryOptions(),
+    enabled: options?.enabled ?? true
   });
 }
 

@@ -35,7 +35,28 @@ import "#@/shared/lib/logger";
 const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
 /** Empty when `VITE_SERVER_URL` has no path (e.g. `https://api.example.com`). */
 const apiBasePath = getApiBasePath(ENV_SERVER.VITE_SERVER_URL);
-const allowedOrigins = new Set([new URL(ENV_SERVER.VITE_WEB_URL).origin]);
+
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
+
+function buildAllowedOrigins(): Set<string> {
+  const origins = new Set<string>();
+  try {
+    const web = new URL(ENV_SERVER.VITE_WEB_URL);
+    origins.add(web.origin);
+    // Local dev: allow localhost ↔ 127.0.0.1 so credentials work either way.
+    if (LOOPBACK_HOSTS.has(web.hostname)) {
+      for (const host of LOOPBACK_HOSTS) {
+        if (host.startsWith("[")) continue;
+        origins.add(`${web.protocol}//${host}${web.port ? `:${web.port}` : ""}`);
+      }
+    }
+  } catch {
+    // ignore invalid VITE_WEB_URL at boot; CORS will deny everything
+  }
+  return origins;
+}
+
+const allowedOrigins = buildAllowedOrigins();
 
 const corsOptions: NonNullable<Parameters<typeof cors>[0]> = {
   allowHeaders: ["Content-Type", "Authorization", "X-Request-Id", "x-evlog-source"],

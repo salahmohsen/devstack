@@ -5,8 +5,10 @@ export {
 } from "@/features/portfolio/api/get-default-resume.query";
 export type { DefaultResumeQueryResult } from "@/features/portfolio/api/get-default-resume.query";
 export {
+  getOwnPortfolioListQueryOptions,
   getPortfolioListQueryKey,
   getPortfolioListQueryOptions,
+  useGetOwnPortfolioListQuery,
   useGetPortfolioListQuery
 } from "@/features/portfolio/api/get-portfolio-list.query";
 export type { PortfolioListQueryResult } from "@/features/portfolio/api/get-portfolio-list.query";
