@@ -15,6 +15,7 @@
 | **5 — Classify**       | Heuristic + worker + Mastra LLM path              | `27`–`30` | **Done** |
 | **6 — CRM from mail**  | Label → stage effects + audit + undo              | `31`–`36` | **Done** |
 | **7 — Match unlinked** | Company match / auto-create application from mail | `37`–`40` | **Done** |
+| **8 — Review queue**   | Reply drafts + `/dashboard/review` confirm path   | `41`–`46` | **Done** |
 
 ## Mail UI (done)
 
@@ -69,6 +70,19 @@ See [CRM-FROM-CLASSIFY.md](./CRM-FROM-CLASSIFY.md).
 | `39`   | Undo deletes auto-created app | **Done** |
 | `40`   | Wave docs                     | **Done** |
 
+## Review queue (wave 8)
+
+See [REVIEW.md](./REVIEW.md).
+
+| Ticket | Title                         | Status   |
+| ------ | ----------------------------- | -------- |
+| `41`   | Core contracts                | **Done** |
+| `42`   | `review_item` DB              | **Done** |
+| `43`   | oRPC review router            | **Done** |
+| `44`   | Draft from classify + mail UI | **Done** |
+| `45`   | `/dashboard/review` page      | **Done** |
+| `46`   | Wave docs                     | **Done** |
+
 ## Next frontier
 
-**Reply / Review queue** · Gmail OAuth sync · smart rules CRUD · learning/corrections.
+**Outbound reply send** · Gmail OAuth sync · smart rules CRUD · app notifications · learning/corrections.

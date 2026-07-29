@@ -1,6 +1,6 @@
 "use client";
 
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { BriefcaseBusiness, CalendarDays, Gift, Inbox, Mail, Sparkles, Users } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -25,6 +25,7 @@ import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import { useGetMailQuery, useListMailQuery, useUndoMailCrmApplyMutation } from "@/features/mail";
+import { useCreateReplyDraftMutation } from "@/features/review";
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
 
@@ -329,6 +330,8 @@ function MessageReaderBody({
   const [draft, setDraft] = useState("");
   const [agentBanner, setAgentBanner] = useState(false);
   const undoCrm = useUndoMailCrmApplyMutation();
+  const createDraft = useCreateReplyDraftMutation();
+  const navigate = useNavigate();
 
   const message = detail ?? listItem;
   const labels = careerLabels(message.labels);
@@ -349,9 +352,21 @@ function MessageReaderBody({
   }
 
   function openAgentDraft() {
-    setComposerOpen(true);
-    setAgentBanner(true);
-    setDraft(agentDraftHtml(message.fromName));
+    // Prefer durable Review queue draft (Assist path) over ephemeral composer text.
+    if (!detail?.id) {
+      setComposerOpen(true);
+      setAgentBanner(true);
+      setDraft(agentDraftHtml(message.fromName));
+      return;
+    }
+    createDraft.mutate(
+      { messageId: detail.id },
+      {
+        onSuccess: () => {
+          void navigate({ to: "/dashboard/review" });
+        }
+      }
+    );
   }
 
   return (
@@ -439,8 +454,14 @@ function MessageReaderBody({
                 Send
               </Button>
               {!agentBanner ? (
-                <Button type="button" size="sm" variant="outline" onClick={openAgentDraft}>
-                  Draft with agent
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={createDraft.isPending}
+                  onClick={openAgentDraft}
+                >
+                  {createDraft.isPending ? "Creating draft…" : "Draft with agent"}
                 </Button>
               ) : null}
               <Button
@@ -462,8 +483,14 @@ function MessageReaderBody({
             <Button type="button" size="sm" onClick={openManualReply}>
               Reply
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={openAgentDraft}>
-              Draft with agent
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={createDraft.isPending}
+              onClick={openAgentDraft}
+            >
+              {createDraft.isPending ? "Creating draft…" : "Draft with agent"}
             </Button>
             <Button
               type="button"

@@ -96,6 +96,20 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         to: r.application.id
       })
     },
+    reviewItem: {
+      user: r.one.user({
+        from: r.reviewItem.userId,
+        to: r.user.id
+      }),
+      message: r.one.mailMessage({
+        from: r.reviewItem.messageId,
+        to: r.mailMessage.id
+      }),
+      application: r.one.application({
+        from: r.reviewItem.applicationId,
+        to: r.application.id
+      })
+    },
     mailAttachment: {
       message: r.one.mailMessage({
         from: r.mailAttachment.messageId,

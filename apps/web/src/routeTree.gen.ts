@@ -34,6 +34,7 @@ import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } fro
 import { Route as rootLayoutProfileNameReposRepoRouteRouteImport } from './routes/(root-layout)/$profileName/repos/$repo/route'
 import { Route as rootLayout_protectedPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/__protected/playground/agent/index'
 import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
+import { Route as rootLayout_protectedDashboardReviewIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/review/index'
 import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/onboarding/index'
@@ -195,6 +196,12 @@ const rootLayout_protectedDashboardStacksIndexRoute =
     path: '/dashboard/stacks/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
+const rootLayout_protectedDashboardReviewIndexRoute =
+  rootLayout_protectedDashboardReviewIndexRouteImport.update({
+    id: '/dashboard/review/',
+    path: '/dashboard/review/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardResumesIndexRoute =
   rootLayout_protectedDashboardResumesIndexRouteImport.update({
     id: '/',
@@ -349,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
+  '/dashboard/review/': typeof rootLayout_protectedDashboardReviewIndexRoute
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/$profileName/repos/$repo/blob/$': typeof rootLayoutProfileNameReposRepoBlobSplatRoute
@@ -389,6 +397,7 @@ export interface FileRoutesByTo {
   '/dashboard/onboarding': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesIndexRoute
+  '/dashboard/review': typeof rootLayout_protectedDashboardReviewIndexRoute
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/playground/agent': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/$profileName/repos/$repo/blob/$': typeof rootLayoutProfileNameReposRepoBlobSplatRoute
@@ -437,6 +446,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/(root-layout)/__protected/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
+  '/(root-layout)/__protected/dashboard/review/': typeof rootLayout_protectedDashboardReviewIndexRoute
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
   '/(root-layout)/__protected/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/(root-layout)/$profileName/repos/$repo/blob/$': typeof rootLayoutProfileNameReposRepoBlobSplatRoute
@@ -484,6 +494,7 @@ export interface FileRouteTypes {
     | '/dashboard/onboarding/'
     | '/dashboard/projects/'
     | '/dashboard/resumes/'
+    | '/dashboard/review/'
     | '/dashboard/stacks/'
     | '/playground/agent/'
     | '/$profileName/repos/$repo/blob/$'
@@ -524,6 +535,7 @@ export interface FileRouteTypes {
     | '/dashboard/onboarding'
     | '/dashboard/projects'
     | '/dashboard/resumes'
+    | '/dashboard/review'
     | '/dashboard/stacks'
     | '/playground/agent'
     | '/$profileName/repos/$repo/blob/$'
@@ -571,6 +583,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/onboarding/'
     | '/(root-layout)/__protected/dashboard/projects/'
     | '/(root-layout)/__protected/dashboard/resumes/'
+    | '/(root-layout)/__protected/dashboard/review/'
     | '/(root-layout)/__protected/dashboard/stacks/'
     | '/(root-layout)/__protected/playground/agent/'
     | '/(root-layout)/$profileName/repos/$repo/blob/$'
@@ -768,6 +781,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/stacks'
       fullPath: '/dashboard/stacks/'
       preLoaderRoute: typeof rootLayout_protectedDashboardStacksIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/review/': {
+      id: '/(root-layout)/__protected/dashboard/review/'
+      path: '/dashboard/review'
+      fullPath: '/dashboard/review/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardReviewIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/dashboard/resumes/': {
@@ -987,6 +1007,7 @@ interface rootLayout_protectedRouteRouteChildren {
   rootLayout_protectedDashboardMailIndexRoute: typeof rootLayout_protectedDashboardMailIndexRoute
   rootLayout_protectedDashboardOnboardingIndexRoute: typeof rootLayout_protectedDashboardOnboardingIndexRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
+  rootLayout_protectedDashboardReviewIndexRoute: typeof rootLayout_protectedDashboardReviewIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
   rootLayout_protectedPlaygroundAgentIndexRoute: typeof rootLayout_protectedPlaygroundAgentIndexRoute
 }
@@ -1013,6 +1034,8 @@ const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChil
       rootLayout_protectedDashboardOnboardingIndexRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:
       rootLayout_protectedDashboardProjectsIndexRoute,
+    rootLayout_protectedDashboardReviewIndexRoute:
+      rootLayout_protectedDashboardReviewIndexRoute,
     rootLayout_protectedDashboardStacksIndexRoute:
       rootLayout_protectedDashboardStacksIndexRoute,
     rootLayout_protectedPlaygroundAgentIndexRoute:

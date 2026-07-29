@@ -1,3 +1,4 @@
+import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
 import { heuristicClassifyMail, type MailClassifyOutput } from "@tsu-stack/core";
 import { mailMessageRepository } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
@@ -93,6 +94,18 @@ export async function runMailClassify(input: {
     systemLabels: result.systemLabels
   });
 
+  // Career-labeled mail → ensure Assist review draft exists (idempotent).
+  let reviewDraftCreated: boolean | null = null;
+  if (result.systemLabels.length > 0) {
+    const draft = await createReplyDraftFromMail({
+      messageId: row.id,
+      userId: row.userId
+    });
+    if (draft.ok) {
+      reviewDraftCreated = draft.created;
+    }
+  }
+
   log.set({
     event: "mail_classify_applied",
     messageId: row.id,
@@ -102,7 +115,8 @@ export async function runMailClassify(input: {
     notes: result.notes ?? null,
     crmApplied: crm.applied,
     crmKind: crm.effect.kind,
-    crmReason: crm.effect.reason
+    crmReason: crm.effect.reason,
+    reviewDraftCreated
   });
   log.emit();
 

@@ -64,6 +64,12 @@ export {
   type UpsertUserNotificationSettingsInput,
   type UserNotificationSettingsEntity
 } from "./user-notification-settings.repository.ts";
+export {
+  reviewItemRepository,
+  type CreateReviewItemData,
+  type ReviewItemEntity,
+  type ReviewItemWithContext
+} from "./review-item.repository.ts";
 export { projectRepository } from "./project.repository.ts";
 export { projectStackScanRepository } from "./project-stack-scan.repository.ts";
 export { resumeRepository } from "./resume.repository.ts";

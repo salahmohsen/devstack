@@ -17,6 +17,7 @@ import { PortfolioRouter } from "#@/routers/portfolio.router";
 import { profileRouter } from "#@/routers/profile.router";
 import { projectsRouter } from "#@/routers/projects.router";
 import { resumeRouter } from "#@/routers/resume.router";
+import { reviewRouter } from "#@/routers/review.router";
 import { stacksRouter } from "#@/routers/stacks.router";
 
 export const appRouter = {
@@ -37,7 +38,8 @@ export const appRouter = {
   domain: domainRouter,
   mail: mailRouter,
   mailSettings: mailSettingsRouter,
-  notificationSettings: notificationSettingsRouter
+  notificationSettings: notificationSettingsRouter,
+  review: reviewRouter
 };
 
 export type AppRouter = typeof appRouter;

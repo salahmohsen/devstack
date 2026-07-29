@@ -15,5 +15,6 @@ export * from "#@/portfolio/index";
 export * from "#@/profile/index";
 export * from "#@/project/index";
 export * from "#@/resume/index";
+export * from "#@/review/index";
 export * from "#@/stack/index";
 export * from "#@/utils/index";
