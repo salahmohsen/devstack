@@ -38,6 +38,10 @@ Make the monorepo safe to build Career Inbox on: current **evlog** + **Mastra**,
 
 Merge order flexible for 01/02/03; land 04 after 01+02; 05/06 after 01.
 
+## Progress
+
+- [x] **01** — branch `chore/upgrade-evlog-cli` (plan + implement done)
+
 ## Done when
 
 - [ ] All six tickets acceptance criteria checked
