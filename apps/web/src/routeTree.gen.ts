@@ -37,12 +37,14 @@ import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './
 import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/onboarding/index'
+import { Route as rootLayout_protectedDashboardMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/index'
 import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
 import { Route as rootLayout_protectedDashboardApplicationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/applications/index'
 import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
 import { Route as rootLayoutProfileNameReposRepoIndexRouteImport } from './routes/(root-layout)/$profileName/repos/$repo/index'
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
 import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
+import { Route as rootLayout_protectedDashboardMailCategoryRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/$category'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
 import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/domain/index'
@@ -208,6 +210,12 @@ const rootLayout_protectedDashboardOnboardingIndexRoute =
     path: '/dashboard/onboarding/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
+const rootLayout_protectedDashboardMailIndexRoute =
+  rootLayout_protectedDashboardMailIndexRouteImport.update({
+    id: '/dashboard/mail/',
+    path: '/dashboard/mail/',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardExperiencesIndexRoute =
   rootLayout_protectedDashboardExperiencesIndexRouteImport.update({
     id: '/',
@@ -243,6 +251,12 @@ const rootLayoutReposRepoBlobSplatRoute =
     id: '/blob/$',
     path: '/blob/$',
     getParentRoute: () => rootLayoutReposRepoRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardMailCategoryRoute =
+  rootLayout_protectedDashboardMailCategoryRouteImport.update({
+    id: '/dashboard/mail/$category',
+    path: '/dashboard/mail/$category',
+    getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
 const rootLayout_protectedDashboardSettingsProfileIndexRoute =
   rootLayout_protectedDashboardSettingsProfileIndexRouteImport.update({
@@ -303,12 +317,14 @@ export interface FileRoutesByFullPath {
   '/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
+  '/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$profileName/repos/$repo/': typeof rootLayoutProfileNameReposRepoIndexRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/applications/': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
+  '/dashboard/mail/': typeof rootLayout_protectedDashboardMailIndexRoute
   '/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
@@ -338,12 +354,14 @@ export interface FileRoutesByTo {
   '/playground': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download': typeof ApiResumeDownloadIndexRoute
+  '/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$profileName/repos/$repo': typeof rootLayoutProfileNameReposRepoIndexRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/dashboard/applications': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesIndexRoute
+  '/dashboard/mail': typeof rootLayout_protectedDashboardMailIndexRoute
   '/dashboard/onboarding': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesIndexRoute
@@ -381,12 +399,14 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
+  '/(root-layout)/__protected/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/(root-layout)/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
   '/(root-layout)/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/(root-layout)/$profileName/repos/$repo/': typeof rootLayoutProfileNameReposRepoIndexRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
   '/(root-layout)/__protected/dashboard/applications/': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/(root-layout)/__protected/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
+  '/(root-layout)/__protected/dashboard/mail/': typeof rootLayout_protectedDashboardMailIndexRoute
   '/(root-layout)/__protected/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/(root-layout)/__protected/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
@@ -423,12 +443,14 @@ export interface FileRouteTypes {
     | '/playground/'
     | '/repos/$repo/'
     | '/api/resume/download/'
+    | '/dashboard/mail/$category'
     | '/repos/$repo/blob/$'
     | '/repos/$repo/tree/$'
     | '/$profileName/repos/$repo/'
     | '/sign-in/create-an-account/'
     | '/dashboard/applications/'
     | '/dashboard/experiences/'
+    | '/dashboard/mail/'
     | '/dashboard/onboarding/'
     | '/dashboard/projects/'
     | '/dashboard/resumes/'
@@ -458,12 +480,14 @@ export interface FileRouteTypes {
     | '/playground'
     | '/repos/$repo'
     | '/api/resume/download'
+    | '/dashboard/mail/$category'
     | '/repos/$repo/blob/$'
     | '/repos/$repo/tree/$'
     | '/$profileName/repos/$repo'
     | '/sign-in/create-an-account'
     | '/dashboard/applications'
     | '/dashboard/experiences'
+    | '/dashboard/mail'
     | '/dashboard/onboarding'
     | '/dashboard/projects'
     | '/dashboard/resumes'
@@ -500,12 +524,14 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/playground/'
     | '/(root-layout)/repos/$repo/'
     | '/api/resume/download/'
+    | '/(root-layout)/__protected/dashboard/mail/$category'
     | '/(root-layout)/repos/$repo/blob/$'
     | '/(root-layout)/repos/$repo/tree/$'
     | '/(root-layout)/$profileName/repos/$repo/'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
     | '/(root-layout)/__protected/dashboard/applications/'
     | '/(root-layout)/__protected/dashboard/experiences/'
+    | '/(root-layout)/__protected/dashboard/mail/'
     | '/(root-layout)/__protected/dashboard/onboarding/'
     | '/(root-layout)/__protected/dashboard/projects/'
     | '/(root-layout)/__protected/dashboard/resumes/'
@@ -726,6 +752,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardOnboardingIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/mail/': {
+      id: '/(root-layout)/__protected/dashboard/mail/'
+      path: '/dashboard/mail'
+      fullPath: '/dashboard/mail/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardMailIndexRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/experiences/': {
       id: '/(root-layout)/__protected/dashboard/experiences/'
       path: '/'
@@ -767,6 +800,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/repos/$repo/blob/$'
       preLoaderRoute: typeof rootLayoutReposRepoBlobSplatRouteImport
       parentRoute: typeof rootLayoutReposRepoRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/mail/$category': {
+      id: '/(root-layout)/__protected/dashboard/mail/$category'
+      path: '/dashboard/mail/$category'
+      fullPath: '/dashboard/mail/$category'
+      preLoaderRoute: typeof rootLayout_protectedDashboardMailCategoryRouteImport
+      parentRoute: typeof rootLayout_protectedRouteRoute
     }
     '/(root-layout)/__protected/dashboard/settings/profile/': {
       id: '/(root-layout)/__protected/dashboard/settings/profile/'
@@ -873,7 +913,9 @@ interface rootLayout_protectedRouteRouteChildren {
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
   rootLayout_protectedPlaygroundIndexRoute: typeof rootLayout_protectedPlaygroundIndexRoute
+  rootLayout_protectedDashboardMailCategoryRoute: typeof rootLayout_protectedDashboardMailCategoryRoute
   rootLayout_protectedDashboardApplicationsIndexRoute: typeof rootLayout_protectedDashboardApplicationsIndexRoute
+  rootLayout_protectedDashboardMailIndexRoute: typeof rootLayout_protectedDashboardMailIndexRoute
   rootLayout_protectedDashboardOnboardingIndexRoute: typeof rootLayout_protectedDashboardOnboardingIndexRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
@@ -892,8 +934,12 @@ const rootLayout_protectedRouteRouteChildren: rootLayout_protectedRouteRouteChil
       rootLayout_protectedDashboardIndexRoute,
     rootLayout_protectedPlaygroundIndexRoute:
       rootLayout_protectedPlaygroundIndexRoute,
+    rootLayout_protectedDashboardMailCategoryRoute:
+      rootLayout_protectedDashboardMailCategoryRoute,
     rootLayout_protectedDashboardApplicationsIndexRoute:
       rootLayout_protectedDashboardApplicationsIndexRoute,
+    rootLayout_protectedDashboardMailIndexRoute:
+      rootLayout_protectedDashboardMailIndexRoute,
     rootLayout_protectedDashboardOnboardingIndexRoute:
       rootLayout_protectedDashboardOnboardingIndexRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:
