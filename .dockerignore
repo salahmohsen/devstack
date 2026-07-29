@@ -47,7 +47,13 @@ pnpm-debug.log*
 # -----------------------------
 # VCS
 # -----------------------------
-.git
+# Keep enough of .git for `git rev-parse HEAD` during image build so Dokploy
+# (which does not yet inject SOURCE_COMMIT) can still stamp health/logs.
+# Full object packs can be large; HEAD + refs + packed-refs covers normal clones.
+.git/**
+!.git/HEAD
+!.git/refs/**
+!.git/packed-refs
 .gitignore
 .gitattributes
 .gitmodules

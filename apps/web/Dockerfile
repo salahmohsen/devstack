@@ -36,15 +36,25 @@ RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid
 
 COPY --chown=vp:vp . .
 
-ARG SOURCE_COMMIT VITE_SERVER_URL VITE_WEB_URL VITE_IMGPROXY_URL DATABASE_URL BETTER_AUTH_SECRET
-ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
+# Commit SHA: compose/CI, future Dokploy DOKPLOY_COMMIT_*, or git (see .dockerignore).
+ARG SOURCE_COMMIT=
+ARG DOKPLOY_COMMIT_HASH=
+ARG DOKPLOY_COMMIT_SHORT=
+ARG VITE_SERVER_URL VITE_WEB_URL VITE_IMGPROXY_URL DATABASE_URL BETTER_AUTH_SECRET
+RUN chmod +x docker/resolve-source-commit.sh \
+  && docker/resolve-source-commit.sh > /tmp/SOURCE_COMMIT \
+  && echo "build SOURCE_COMMIT=$(cat /tmp/SOURCE_COMMIT)"
+
+ENV SOURCE_COMMIT=unknown \
     VITE_SERVER_URL=${VITE_SERVER_URL} \
     VITE_WEB_URL=${VITE_WEB_URL} \
     VITE_IMGPROXY_URL=${VITE_IMGPROXY_URL} \
     DATABASE_URL=${DATABASE_URL} \
     BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 
-RUN vp run --filter @tsu-stack/web build
+# Vite bakes SOURCE_COMMIT into the client bundle at build time.
+RUN export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
+  && vp run --filter @tsu-stack/web build
 
 # Flatten web's production dependency tree next to Nitro output. SSR chunks
 # externalise native/driver packages (`pg`, `drizzle-orm/node-postgres`);
@@ -89,12 +99,16 @@ RUN apt-get update \
 
 # Only ship Nitro output (includes flattened node_modules from deploy).
 COPY --from=build /tmp/node /usr/local/bin/node
+COPY --from=build /tmp/SOURCE_COMMIT /etc/tsu-source-commit
 COPY --from=build --chown=web:nodejs /app/apps/web/.output /app/.output
+COPY --from=build --chmod=755 /app/docker/run-with-source-commit.sh /usr/local/bin/run-with-source-commit.sh
 
 USER web
 ENV PORT=3000
+ENV SOURCE_COMMIT=unknown
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   CMD wget -qO- http://127.0.0.1:${PORT}/_api/health/live || exit 1
 
+ENTRYPOINT ["/usr/local/bin/run-with-source-commit.sh"]
 CMD ["node", "/app/.output/server/index.mjs"]

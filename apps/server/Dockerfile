@@ -35,8 +35,16 @@ RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid
 
 COPY --chown=vp:vp . .
 
-ARG SOURCE_COMMIT VITE_SERVER_URL VITE_WEB_URL DATABASE_URL BETTER_AUTH_SECRET GITHUB_WEBHOOK_SECRET RESEND_API_KEY EMAIL_FROM OPENCODE_API_KEY OPENAI_API_KEY EMBEDDING_MODEL
-ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
+# Commit SHA: compose/CI `SOURCE_COMMIT`, future Dokploy `DOKPLOY_COMMIT_*`, or git.
+ARG SOURCE_COMMIT=
+ARG DOKPLOY_COMMIT_HASH=
+ARG DOKPLOY_COMMIT_SHORT=
+ARG VITE_SERVER_URL VITE_WEB_URL DATABASE_URL BETTER_AUTH_SECRET GITHUB_WEBHOOK_SECRET RESEND_API_KEY EMAIL_FROM OPENCODE_API_KEY OPENAI_API_KEY EMBEDDING_MODEL
+RUN chmod +x docker/resolve-source-commit.sh \
+  && docker/resolve-source-commit.sh > /tmp/SOURCE_COMMIT \
+  && echo "build SOURCE_COMMIT=$(cat /tmp/SOURCE_COMMIT)"
+
+ENV SOURCE_COMMIT=unknown \
     VITE_SERVER_URL=${VITE_SERVER_URL} \
     VITE_WEB_URL=${VITE_WEB_URL} \
     DATABASE_URL=${DATABASE_URL} \
@@ -48,7 +56,9 @@ ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
     OPENAI_API_KEY=${OPENAI_API_KEY} \
     EMBEDDING_MODEL=${EMBEDDING_MODEL}
 
-RUN vp run --filter @tsu-stack/server build
+# Export resolved SHA for the build (ENV above is only a default placeholder).
+RUN export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
+  && vp run --filter @tsu-stack/server build
 
 RUN cp "$(vp env which node | head -1)" /tmp/node
 
@@ -63,6 +73,7 @@ RUN apt-get update \
   && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" server
 
 COPY --from=build /tmp/node /usr/local/bin/node
+COPY --from=build /tmp/SOURCE_COMMIT /etc/tsu-source-commit
 COPY --from=build --chown=server:nodejs /app/apps/server/dist /app/apps/server/dist
 COPY --from=build --chown=server:nodejs /app/packages/db/migrations /app/apps/server/dist/migrations
 COPY --from=build --chown=server:nodejs /app/node_modules /app/node_modules
@@ -79,6 +90,8 @@ ENV NODE_PATH=/app/node_modules:/app/apps/server/node_modules
 ENV PORT=5100
 ENV MIGRATIONS_FOLDER=/app/apps/server/dist/migrations
 ENV RUN_MIGRATIONS=true
+# Default when runtime env does not override; entrypoint prefers /etc/tsu-source-commit.
+ENV SOURCE_COMMIT=unknown
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   CMD wget -qO- http://127.0.0.1:${PORT}/health/live || exit 1

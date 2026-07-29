@@ -38,8 +38,13 @@ export const ENV_SERVER = createEnv({
     // for `VITE_*` URL vars). Putting the spread last would silently
     // overwrite these defaults.
     ...process.env,
-    // Prefer SOURCE_COMMIT; accept legacy WORKERS_CI_COMMIT_SHA only as input alias.
-    SOURCE_COMMIT: process.env.SOURCE_COMMIT ?? process.env.WORKERS_CI_COMMIT_SHA ?? "unknown",
+    // Prefer SOURCE_COMMIT; accept Dokploy future inject + legacy Coolify alias.
+    SOURCE_COMMIT:
+      process.env.SOURCE_COMMIT ??
+      process.env.DOKPLOY_COMMIT_HASH ??
+      process.env.DOKPLOY_COMMIT_SHORT ??
+      process.env.WORKERS_CI_COMMIT_SHA ??
+      "unknown",
     VITE_SERVER_URL: process.env.VITE_SERVER_URL ?? "http://localhost:5200",
     VITE_WEB_URL: process.env.VITE_WEB_URL ?? "http://localhost:3000"
   } as Record<string, string | undefined>,

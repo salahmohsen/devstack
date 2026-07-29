@@ -7,7 +7,14 @@ console.debug("⏳ [ENV_WEB_SERVER] Loading environment variables...");
 
 export const ENV_WEB_SERVER = createEnv({
   emptyStringAsUndefined: true,
-  runtimeEnv: process.env,
+  runtimeEnv: {
+    ...process.env,
+    SOURCE_COMMIT:
+      process.env.SOURCE_COMMIT ??
+      process.env.DOKPLOY_COMMIT_HASH ??
+      process.env.DOKPLOY_COMMIT_SHORT ??
+      "unknown"
+  },
   server: {
     NODE_ENV: z.enum(["development", "production"]).default("development"),
     SOURCE_COMMIT: z.string().min(1).default("unknown"),

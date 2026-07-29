@@ -35,13 +35,21 @@ RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid
 
 COPY --chown=vp:vp . .
 
-ARG SOURCE_COMMIT DATABASE_URL NODE_ENV
-ENV SOURCE_COMMIT=${SOURCE_COMMIT} \
+ARG SOURCE_COMMIT=
+ARG DOKPLOY_COMMIT_HASH=
+ARG DOKPLOY_COMMIT_SHORT=
+ARG DATABASE_URL NODE_ENV
+RUN chmod +x docker/resolve-source-commit.sh \
+  && docker/resolve-source-commit.sh > /tmp/SOURCE_COMMIT \
+  && echo "build SOURCE_COMMIT=$(cat /tmp/SOURCE_COMMIT)"
+
+ENV SOURCE_COMMIT=unknown \
     DATABASE_URL=${DATABASE_URL} \
     NODE_ENV=${NODE_ENV}
 
 # Mastra's nested install can hang on flaky registries — hard cap the step.
-RUN timeout 600 vp run --filter @tsu-stack/agent build
+RUN export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
+  && timeout 600 vp run --filter @tsu-stack/agent build
 
 RUN cp "$(vp env which node | head -1)" /tmp/node
 
@@ -56,12 +64,15 @@ RUN apt-get update \
   && adduser --uid 1001 --ingroup nodejs --disabled-password --gecos "" agent
 
 COPY --from=build /tmp/node /usr/local/bin/node
+COPY --from=build /tmp/SOURCE_COMMIT /etc/tsu-source-commit
 COPY --from=build --chown=agent:nodejs /app/apps/agent/.mastra/output /app/apps/agent/.mastra/output
 COPY --from=build --chown=agent:nodejs /app/apps/agent/package.json /app/apps/agent/package.json
 COPY --from=build --chown=agent:nodejs /app/node_modules /app/node_modules
 COPY --from=build --chown=agent:nodejs /app/apps/agent/node_modules /app/apps/agent/node_modules
 COPY --from=build --chown=agent:nodejs /app/packages /app/packages
 COPY --from=build --chown=agent:nodejs /app/package.json /app/package.json
+# Bake resolved SHA into the runtime image env (file is source of truth if empty).
+ENV SOURCE_COMMIT=unknown
 COPY --from=build --chown=agent:nodejs --chmod=755 /app/docker/encode-db-url.sh /usr/local/bin/encode-db-url.sh
 COPY --from=build --chown=agent:nodejs --chmod=755 /app/docker/ensure-db.js /usr/local/bin/ensure-db.js
 

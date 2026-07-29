@@ -5,6 +5,14 @@
 # When CREATE_DB=true, also creates the target database via ensure-db.js.
 set -eu
 
+# Prefer baked build SHA (see docker/resolve-source-commit.sh) over empty env.
+if [ -z "${SOURCE_COMMIT:-}" ] || [ "${SOURCE_COMMIT}" = "unknown" ]; then
+  if [ -f /etc/tsu-source-commit ]; then
+    SOURCE_COMMIT="$(cat /etc/tsu-source-commit)"
+    export SOURCE_COMMIT
+  fi
+fi
+
 _user="${POSTGRES_USER:?}"
 _pass="${POSTGRES_PASSWORD:?}"
 _db="${POSTGRES_DB:-personal_hub}"

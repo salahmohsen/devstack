@@ -9,6 +9,19 @@
 # Required: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB (default personal_hub),
 # REDIS_PASSWORD, MINIO_*, BETTER_AUTH_SECRET, VITE_SERVER_URL, VITE_WEB_URL,
 # GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, FILES_API_SECRET
+#
+# SOURCE_COMMIT / build SHA
+# -------------------------
+# Dokploy does **not** inject git commit SHA into compose env today
+# (open: Dokploy#2715, #4006 / PR #4007 for DOKPLOY_COMMIT_HASH).
+# Our Dockerfiles therefore:
+#   1. Accept build-args SOURCE_COMMIT / DOKPLOY_COMMIT_HASH / DOKPLOY_COMMIT_SHORT
+#   2. Fall back to `git rev-parse HEAD` from the cloned repo (.git partial in context)
+# Optional: set SOURCE_COMMIT in Dokploy Environment to force a value.
+# Optional Advanced → custom command (prefixes with `docker`):
+#   compose -p <project> -f docker-compose.yml up -d --build
+#   after exporting SOURCE_COMMIT=$(git rev-parse HEAD) is not available via UI alone —
+#   rely on Dockerfile git fallback instead.
 # =============================================================================
 
 services:
@@ -114,7 +127,10 @@ services:
       context: .
       dockerfile: apps/server/Dockerfile
       args:
+        # Prefer explicit env; Dockerfiles also accept DOKPLOY_COMMIT_* + git fallback.
         SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+        DOKPLOY_COMMIT_HASH: ${DOKPLOY_COMMIT_HASH:-}
+        DOKPLOY_COMMIT_SHORT: ${DOKPLOY_COMMIT_SHORT:-}
         VITE_SERVER_URL: ${VITE_SERVER_URL}
         VITE_WEB_URL: ${VITE_WEB_URL}
         # Dummy URL for build-time module load only — runtime uses encode-db-url.sh
@@ -209,6 +225,8 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+        DOKPLOY_COMMIT_HASH: ${DOKPLOY_COMMIT_HASH:-}
+        DOKPLOY_COMMIT_SHORT: ${DOKPLOY_COMMIT_SHORT:-}
         VITE_SERVER_URL: ${VITE_SERVER_URL}
         VITE_WEB_URL: ${VITE_WEB_URL}
         # Dummy URL for build-time only — prerender is disabled
