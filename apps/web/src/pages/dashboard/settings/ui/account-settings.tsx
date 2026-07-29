@@ -55,8 +55,14 @@ export const AccountSettings = () => {
             className="w-full max-w-none"
           />
           <p className="text-xs text-muted-foreground">
-            Password and connected-account management will live here as security features expand.
-            Sessions above control signed-in devices.
+            Linked apps (Google, Gmail, GitHub) live under{" "}
+            <a
+              href="/dashboard/settings/connections"
+              className="underline-offset-2 hover:underline"
+            >
+              Connections
+            </a>
+            . Sessions above control signed-in devices.
           </p>
         </SettingsSection>
       </FramePanel>

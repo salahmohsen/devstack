@@ -35,6 +35,17 @@ export const betterAuthAccountRepository = {
   },
 
   async findGitHubAccountForUser(userId: string): Promise<GitHubAccountTokens | null> {
+    return this.findProviderAccountForUser(userId, "github");
+  },
+
+  async findGoogleAccountForUser(userId: string): Promise<GitHubAccountTokens | null> {
+    return this.findProviderAccountForUser(userId, "google");
+  },
+
+  async findProviderAccountForUser(
+    userId: string,
+    providerId: string
+  ): Promise<GitHubAccountTokens | null> {
     const rows = await getDb()
       .select({
         id: account.id,
@@ -47,7 +58,7 @@ export const betterAuthAccountRepository = {
         scope: account.scope
       })
       .from(account)
-      .where(and(eq(account.userId, userId), eq(account.providerId, "github")))
+      .where(and(eq(account.userId, userId), eq(account.providerId, providerId)))
       .limit(1);
 
     return rows[0] ?? null;

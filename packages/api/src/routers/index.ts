@@ -3,6 +3,7 @@ import { type RouterClient } from "@orpc/server";
 import { agentRouter } from "#@/routers/agent.router";
 import { aiSettingsRouter } from "#@/routers/ai-settings.router";
 import { applicationsRouter } from "#@/routers/applications.router";
+import { connectionsRouter } from "#@/routers/connections.router";
 import { portfolioContactRouter } from "#@/routers/contact.router";
 import { domainRouter } from "#@/routers/domain.router";
 import { experiencesRouter } from "#@/routers/experiences.router";
@@ -37,6 +38,7 @@ export const appRouter = {
   onboarding: onboardingRouter,
   invite: inviteRouter,
   domain: domainRouter,
+  connections: connectionsRouter,
   mail: mailRouter,
   mailSettings: mailSettingsRouter,
   notificationSettings: notificationSettingsRouter,

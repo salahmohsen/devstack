@@ -180,7 +180,7 @@ export function MailSettings() {
           </FrameTitle>
           <FrameDescription>
             Bring your own Resend project for inbound career mail. Secrets stay sealed on the
-            server; the platform never uses a shared Resend key for your inbox.
+            server. Gmail OAuth is under Settings → Connections — separate from Resend.
           </FrameDescription>
         </FrameHeader>
         <FramePanel className="space-y-6">

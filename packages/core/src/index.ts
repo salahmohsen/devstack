@@ -1,6 +1,7 @@
 export * from "#@/ai-settings/index";
 export * from "#@/application/index";
 export * from "#@/common/index";
+export * from "#@/connections/index";
 export * from "#@/domain/index";
 export * from "#@/experience/index";
 export * from "#@/github-config/index";

@@ -73,6 +73,9 @@ export const ENV_SERVER = createEnv({
     GITHUB_WEBHOOK_SECRET: z.string().min(1).optional(),
     GITHUB_CLIENT_ID: runtimeRequired(z.string().min(1)),
     GITHUB_CLIENT_SECRET: runtimeRequired(z.string().min(1)),
+    /** Google OAuth (login + Gmail connect). Optional until Connections is used. */
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
     // Optional Axiom sink for @tsu-stack/logger wide events (both required to enable).

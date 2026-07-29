@@ -51,6 +51,7 @@ import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteIm
 import { Route as rootLayout_protectedDashboardSettingsMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/mail/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
 import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/domain/index'
+import { Route as rootLayout_protectedDashboardSettingsConnectionsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/connections/index'
 import { Route as rootLayout_protectedDashboardSettingsAiIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/ai/index'
 import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
 import { Route as rootLayoutProfileNameReposRepoTreeSplatRouteImport } from './routes/(root-layout)/$profileName/repos/$repo/tree/$'
@@ -298,6 +299,12 @@ const rootLayout_protectedDashboardSettingsDomainIndexRoute =
     path: '/domain/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsConnectionsIndexRoute =
+  rootLayout_protectedDashboardSettingsConnectionsIndexRouteImport.update({
+    id: '/connections/',
+    path: '/connections/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsAiIndexRoute =
   rootLayout_protectedDashboardSettingsAiIndexRouteImport.update({
     id: '/ai/',
@@ -363,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/$profileName/repos/$repo/tree/$': typeof rootLayoutProfileNameReposRepoTreeSplatRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
+  '/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
@@ -404,6 +412,7 @@ export interface FileRoutesByTo {
   '/$profileName/repos/$repo/tree/$': typeof rootLayoutProfileNameReposRepoTreeSplatRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/dashboard/settings/ai': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
+  '/dashboard/settings/connections': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/dashboard/settings/domain': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/dashboard/settings/mail': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
@@ -453,6 +462,7 @@ export interface FileRoutesById {
   '/(root-layout)/$profileName/repos/$repo/tree/$': typeof rootLayoutProfileNameReposRepoTreeSplatRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   '/(root-layout)/__protected/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/(root-layout)/__protected/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   '/(root-layout)/__protected/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/$profileName/repos/$repo/tree/$'
     | '/dashboard/settings/account/'
     | '/dashboard/settings/ai/'
+    | '/dashboard/settings/connections/'
     | '/dashboard/settings/domain/'
     | '/dashboard/settings/invites/'
     | '/dashboard/settings/mail/'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/$profileName/repos/$repo/tree/$'
     | '/dashboard/settings/account'
     | '/dashboard/settings/ai'
+    | '/dashboard/settings/connections'
     | '/dashboard/settings/domain'
     | '/dashboard/settings/invites'
     | '/dashboard/settings/mail'
@@ -590,6 +602,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/$profileName/repos/$repo/tree/$'
     | '/(root-layout)/__protected/dashboard/settings/account/'
     | '/(root-layout)/__protected/dashboard/settings/ai/'
+    | '/(root-layout)/__protected/dashboard/settings/connections/'
     | '/(root-layout)/__protected/dashboard/settings/domain/'
     | '/(root-layout)/__protected/dashboard/settings/invites/'
     | '/(root-layout)/__protected/dashboard/settings/mail/'
@@ -902,6 +915,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/connections/': {
+      id: '/(root-layout)/__protected/dashboard/settings/connections/'
+      path: '/connections'
+      fullPath: '/dashboard/settings/connections/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsConnectionsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/ai/': {
       id: '/(root-layout)/__protected/dashboard/settings/ai/'
       path: '/ai'
@@ -966,6 +986,7 @@ const rootLayout_protectedDashboardResumesRouteRouteWithChildren =
 interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsAccountIndexRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
   rootLayout_protectedDashboardSettingsAiIndexRoute: typeof rootLayout_protectedDashboardSettingsAiIndexRoute
+  rootLayout_protectedDashboardSettingsConnectionsIndexRoute: typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   rootLayout_protectedDashboardSettingsDomainIndexRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   rootLayout_protectedDashboardSettingsInvitesIndexRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
   rootLayout_protectedDashboardSettingsMailIndexRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRoute
@@ -979,6 +1000,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
       rootLayout_protectedDashboardSettingsAccountIndexRoute,
     rootLayout_protectedDashboardSettingsAiIndexRoute:
       rootLayout_protectedDashboardSettingsAiIndexRoute,
+    rootLayout_protectedDashboardSettingsConnectionsIndexRoute:
+      rootLayout_protectedDashboardSettingsConnectionsIndexRoute,
     rootLayout_protectedDashboardSettingsDomainIndexRoute:
       rootLayout_protectedDashboardSettingsDomainIndexRoute,
     rootLayout_protectedDashboardSettingsInvitesIndexRoute:

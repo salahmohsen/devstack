@@ -18,6 +18,7 @@
 | **8 — Review queue**       | Reply drafts + `/dashboard/review` confirm path   | `41`–`46` | **Done** |
 | **9 — Outbound reply**     | Resend send on confirm + Full auto-send           | `47`–`49` | **Done** |
 | **10 — App notifications** | Durable bell + emit on classify/CRM/draft         | `50`–`53` | **Done** |
+| **11 — Connections**       | Settings Connections + Google/Gmail OAuth         | `54`      | **Done** |
 
 ## Mail UI (done)
 
@@ -104,6 +105,14 @@ See [NOTIFICATIONS.md](./NOTIFICATIONS.md).
 | `52`   | Topbar bell UI | **Done** |
 | `53`   | Wave docs      | **Done** |
 
+## Connections (wave 11)
+
+See [CONNECTIONS.md](./CONNECTIONS.md).
+
+| Ticket | Title                               | Status   |
+| ------ | ----------------------------------- | -------- |
+| `54`   | Settings Connections + Google/Gmail | **Done** |
+
 ## Next frontier
 
-**Gmail OAuth sync** · smart rules CRUD · email notification channel · learning/corrections · Mastra reply agent.
+**Gmail History sync** · smart rules CRUD · email notification channel · learning/corrections · Mastra reply agent.

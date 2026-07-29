@@ -273,9 +273,10 @@ export const auth = betterAuth({
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ["github"],
+      // Google (login + Gmail connect) and GitHub (portfolio) may link by email.
+      trustedProviders: ["github", "google"],
       // Portfolio admin may have been seeded / signed up before verifying
-      // email; still allow GitHub to attach when emails match.
+      // email; still allow GitHub/Google to attach when emails match.
       requireLocalEmailVerified: false
     }
   },
@@ -328,116 +329,130 @@ export const auth = betterAuth({
 
   socialProviders: (() => {
     // GITHUB_CLIENT_ID/SECRET are runtimeRequired (optional at build, required
-    // at runtime). At build we accept an empty provider so the bundle can be
-    // produced without secrets present; at runtime we throw so misconfiguration
-    // fails fast instead of silently breaking OAuth.
+    // at runtime). Google is optional until Settings → Connections is used.
+    // At build we accept missing secrets so the bundle can be produced without
+    // them present.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const providers: Record<string, any> = {};
+
     if (ENV_SERVER.GITHUB_CLIENT_ID && ENV_SERVER.GITHUB_CLIENT_SECRET) {
-      return {
-        github: {
-          clientId: ENV_SERVER.GITHUB_CLIENT_ID,
-          clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET,
-          // Request every available OAuth scope (per
-          // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps)
-          // so the access token can read private repositories and any
-          // other resource the app may need. GitHub returns a
-          // normalized list on the stored token, so requesting
-          // overlapping scopes (e.g. `user` and `user:email`) is
-          // safe — only the broader scope is kept. Order mirrors the
-          // docs for easy diffing when GitHub adds a new scope.
-          scope: [
-            "repo",
-            "repo:status",
-            "repo_deployment",
-            "public_repo",
-            "repo:invite",
-            "security_events",
-            "admin:repo_hook",
-            "write:repo_hook",
-            "read:repo_hook",
-            "admin:org",
-            "write:org",
-            "read:org",
-            "admin:public_key",
-            "write:public_key",
-            "read:public_key",
-            "admin:org_hook",
-            "gist",
-            "notifications",
-            "user",
-            "read:user",
-            "user:email",
-            "user:follow",
-            "project",
-            "read:project",
-            "delete_repo",
-            "write:packages",
-            "read:packages",
-            "delete:packages",
-            "admin:gpg_key",
-            "write:gpg_key",
-            "read:gpg_key",
-            "codespace",
-            "workflow",
-            "read:audit_log"
-          ],
-          async getUserInfo({ accessToken }) {
-            const headers = {
-              "User-Agent": "better-auth",
-              authorization: `Bearer ${accessToken}`
-            };
+      providers.github = {
+        clientId: ENV_SERVER.GITHUB_CLIENT_ID,
+        clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET,
+        // Request every available OAuth scope (per
+        // https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps)
+        // so the access token can read private repositories and any
+        // other resource the app may need. GitHub returns a
+        // normalized list on the stored token, so requesting
+        // overlapping scopes (e.g. `user` and `user:email`) is
+        // safe — only the broader scope is kept. Order mirrors the
+        // docs for easy diffing when GitHub adds a new scope.
+        scope: [
+          "repo",
+          "repo:status",
+          "repo_deployment",
+          "public_repo",
+          "repo:invite",
+          "security_events",
+          "admin:repo_hook",
+          "write:repo_hook",
+          "read:repo_hook",
+          "admin:org",
+          "write:org",
+          "read:org",
+          "admin:public_key",
+          "write:public_key",
+          "read:public_key",
+          "admin:org_hook",
+          "gist",
+          "notifications",
+          "user",
+          "read:user",
+          "user:email",
+          "user:follow",
+          "project",
+          "read:project",
+          "delete_repo",
+          "write:packages",
+          "read:packages",
+          "delete:packages",
+          "admin:gpg_key",
+          "write:gpg_key",
+          "read:gpg_key",
+          "codespace",
+          "workflow",
+          "read:audit_log"
+        ],
+        async getUserInfo({ accessToken }: { accessToken: string }) {
+          const headers = {
+            "User-Agent": "better-auth",
+            authorization: `Bearer ${accessToken}`
+          };
 
-            const profileRes = await fetch("https://api.github.com/user", { headers });
-            const profile = await profileRes.json();
+          const profileRes = await fetch("https://api.github.com/user", { headers });
+          const profile = await profileRes.json();
 
-            if (!profileRes.ok || !profile.id) {
-              // eslint-disable-next-line no-console
-              console.error("[auth] GitHub user fetch failed:", profile);
-              return null;
-            }
+          if (!profileRes.ok || !profile.id) {
+            // eslint-disable-next-line no-console
+            console.error("[auth] GitHub user fetch failed:", profile);
+            return null;
+          }
 
-            let email = profile.email ?? null;
-            let emailVerified = false;
+          let email = profile.email ?? null;
+          let emailVerified = false;
 
-            if (!email) {
-              const emailsRes = await fetch("https://api.github.com/user/emails", { headers });
-              if (emailsRes.ok) {
-                const emails = await emailsRes.json();
-                if (Array.isArray(emails) && emails.length > 0) {
-                  const primary = emails.find((e) => e.primary) ?? emails[0];
-                  if (primary) {
-                    email = primary.email;
-                    emailVerified = primary.verified ?? false;
-                  }
+          if (!email) {
+            const emailsRes = await fetch("https://api.github.com/user/emails", { headers });
+            if (emailsRes.ok) {
+              const emails = await emailsRes.json();
+              if (Array.isArray(emails) && emails.length > 0) {
+                const primary = emails.find((e: { primary?: boolean }) => e.primary) ?? emails[0];
+                if (primary) {
+                  email = primary.email;
+                  emailVerified = primary.verified ?? false;
                 }
               }
             }
-
-            if (!email) {
-              email = `${profile.id}+${profile.login}@users.noreply.github.com`;
-              emailVerified = true;
-            }
-
-            return {
-              user: {
-                id: String(profile.id),
-                name: profile.name ?? profile.login ?? "",
-                email,
-                emailVerified,
-                image: profile.avatar_url
-              },
-              data: profile
-            };
           }
+
+          if (!email) {
+            email = `${profile.id}+${profile.login}@users.noreply.github.com`;
+            emailVerified = true;
+          }
+
+          return {
+            user: {
+              id: String(profile.id),
+              name: profile.name ?? profile.login ?? "",
+              email,
+              emailVerified,
+              image: profile.avatar_url
+            },
+            data: profile
+          };
         }
       };
-    }
-    if (!ENV_SERVER.IS_BUILD) {
+    } else if (!ENV_SERVER.IS_BUILD) {
       throw new Error(
         "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are required at runtime. " +
           "Set both in the server environment."
       );
     }
-    return {};
+
+    // Google: basic OIDC for login; Settings → Connections requests Gmail scopes
+    // via authClient.linkSocial({ scopes: GMAIL_CONNECT_SCOPES }).
+    if (ENV_SERVER.GOOGLE_CLIENT_ID && ENV_SERVER.GOOGLE_CLIENT_SECRET) {
+      providers.google = {
+        clientId: ENV_SERVER.GOOGLE_CLIENT_ID,
+        clientSecret: ENV_SERVER.GOOGLE_CLIENT_SECRET,
+        // Login/register only — not Gmail. Mail scopes are requested at connect time.
+        scope: ["openid", "email", "profile"],
+        accessType: "offline",
+        prompt: "select_account consent"
+      };
+    }
+
+    return providers;
   })()
 });
 

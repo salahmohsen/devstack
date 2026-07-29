@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Bell, Building2, Inbox, KeyRound, Mail, Sparkles, UserRound } from "lucide-react";
+import { Bell, Building2, Inbox, KeyRound, Link2, Mail, Sparkles, UserRound } from "lucide-react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -16,6 +16,7 @@ type NavItem = {
     | "/dashboard/settings/account"
     | "/dashboard/settings/domain"
     | "/dashboard/settings/mail"
+    | "/dashboard/settings/connections"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
     | "/dashboard/settings/invites";
@@ -23,7 +24,7 @@ type NavItem = {
   group: "You" | "Workspace" | "Intelligence";
 };
 
-/** Order: identity/hosting first, intelligence second, admin last (UX audit). */
+/** Order: identity/hosting first, integrations, intelligence, admin (modern settings IA). */
 const SETTINGS_NAV: readonly NavItem[] = [
   {
     id: "profile",
@@ -55,6 +56,14 @@ const SETTINGS_NAV: readonly NavItem[] = [
     description: "BYO Resend for Career Inbox inbound",
     to: "/dashboard/settings/mail",
     icon: Inbox,
+    group: "Workspace"
+  },
+  {
+    id: "connections",
+    label: "Connections",
+    description: "Google, Gmail, and GitHub links",
+    to: "/dashboard/settings/connections",
+    icon: Link2,
     group: "Workspace"
   },
   {
