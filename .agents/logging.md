@@ -227,11 +227,13 @@ Run from repo root with the package that owns entry points in scope. Prefer JSON
 
 Wide-event **destination** is independent of the CLI. Prefer configuring drains inside `@tsu-stack/logger`, not per-app imports of `evlog` adapters.
 
-| Concern                                                  | Default for this monorepo                                                                                                                                |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Structured wide events (requests, jobs, agent workflows) | **Axiom** (generous free personal ingest for small projects)                                                                                             |
-| Exception product (stack traces, sourcemaps, replay)     | **Optional**, separate from wide events — Sentry SDK, GlitchTip, Highlight, etc. Do **not** require routing every INFO wide event into the error product |
+| Concern                                                  | Default for this monorepo                                                                                        |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Structured wide events (requests, jobs, agent workflows) | **Axiom** (generous free personal ingest for small projects)                                                     |
+| Product analytics, session replay, feature flags         | **PostHog** SDK — intentional product events only (do not dump every request log)                                |
+| Exception product                                        | **PostHog** error tracking first (~100k free exceptions, unlimited seats); Sentry/GlitchTip only if needed later |
+| Mixing layers                                            | Do **not** route every INFO wide event into PostHog or Sentry free quotas                                        |
 
-`evlog init` can scaffold Axiom, Sentry, OTLP, Better Stack, Datadog, HyperDX, PostHog, and more; use it as a recipe (`--dry-run`) if helpful. Error tracking **need not** use an evlog drain — a dedicated SDK is fine and keeps free error quotas from being burned by high-volume logs.
+`evlog init` can scaffold Axiom, Sentry, OTLP, Better Stack, Datadog, HyperDX, PostHog, and more; use it as a recipe (`--dry-run`) if helpful. Product and error tracking **need not** use an evlog drain — dedicated SDKs are preferred so free quotas stay separate from ops logs.
 
 Program decision detail: `docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md` (appendix: Observability sinks).

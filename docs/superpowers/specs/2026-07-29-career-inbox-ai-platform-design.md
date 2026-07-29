@@ -444,35 +444,52 @@ Numbers change; re-check vendor pages before locking production.
 
 #### Error / exception products (optional; not required to be an evlog drain)
 
-| Product              | Free generosity (approx.)                                             | Notes                                            |
-| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------ |
-| **Sentry Developer** | **5k errors / mo**, **1 user**, tiny replays (~50), some tracing      | Best crash UX; **seat limit** bites if >1 person |
-| **Highlight.io**     | Free tier commonly **~1k sessions/mo** (+ error/replay style product) | More “session” oriented; check current quotas    |
-| **GlitchTip**        | Self-host = **unlimited** (your infra cost)                           | Sentry-compatible API; ops burden                |
-| **Better Stack**     | Free often short trial / limited                                      | Logs + incidents, not classic Sentry clone       |
-| **Self-host Sentry** | Unlimited volume                                                      | Heavy ops; rarely worth it for solo              |
+| Product              | Free generosity (approx.)                                             | Notes                                              |
+| -------------------- | --------------------------------------------------------------------- | -------------------------------------------------- |
+| **PostHog**          | **~100k exceptions / mo**, **unlimited seats**, plus product suite    | Strong free default when also using PH for product |
+| **Sentry Developer** | **5k errors / mo**, **1 user**, tiny replays (~50), some tracing      | Best pure crash/APM UX; seat + quota tight         |
+| **Highlight.io**     | Free tier commonly **~1k sessions/mo** (+ error/replay style product) | More “session” oriented; check current quotas      |
+| **GlitchTip**        | Self-host = **unlimited** (your infra cost)                           | Sentry-compatible API; ops burden                  |
+| **Better Stack**     | Free often short trial / limited                                      | Logs + incidents, not classic Sentry clone         |
+| **Self-host Sentry** | Unlimited volume                                                      | Heavy ops; rarely worth it for solo                |
 
-**More generous than Sentry free for raw error volume:**
+**More generous free error volume than Sentry Developer:** PostHog (~20× errors, unlimited seats) and self-host GlitchTip/Sentry. Sentry still leads for mature exception/APM workflow if you outgrow PostHog errors.
 
-1. **GlitchTip (or self-host Sentry)** if you accept ops — no vendor error cap.
-2. **Highlight** may feel more generous for **session** quotas, not always for pure error counts — verify live.
-3. **Sentry free** remains best _product_ for “exception → stack → release” with zero ops, but **least generous on seats** (1 user) and caps hard at 5k errors.
+#### Product analytics / replay / flags (optional)
+
+| Product     | Free generosity (approx.)                                                                         | Notes                                              |
+| ----------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **PostHog** | **~1M analytics events**, **~5k session replays**, **~1M feature-flag requests**, unlimited seats | Primary free product platform; self-host available |
+| Sentry      | ~50 free replays                                                                                  | Not a product-analytics suite                      |
+
+Do **not** ship every ops wide event into PostHog analytics — that burns the 1M event quota. Use intentional product events (`review.draft_confirmed`, `ai.autonomy_changed`, etc.).
 
 ### Frozen observability decision for this program
 
-| Concern                                                      | Choice                                                                                                                                            |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Wide events (mail, queue, agent jobs, review, notifications) | **Axiom** as primary sink via `@tsu-stack/logger`                                                                                                 |
-| Sampling                                                     | Keep **errors 100%**; sample **info** when volume grows (evlog sampling presets)                                                                  |
-| Exception / FE crash product                                 | **Optional.** Prefer **Sentry SDK** for UX if free 5k/1 seat is enough; explore **GlitchTip** if multi-user free or unlimited volume matters more |
-| Wire error tool via `evlog init --prod-drain sentry`?        | **Not required.** Prefer dedicated SDK for errors so free quotas aren’t burned by wide-event spam                                                 |
-| CLI                                                          | `@evlog/cli` for **map/doctor/CI**; not the source of truth for which error SaaS we pick                                                          |
-| Agent                                                        | Wide events via logger → Axiom; Mastra traces stay Mastra/DuckDB/Studio                                                                           |
+| Concern                                                      | Choice                                                                                                                                                                                                            |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wide events (mail, queue, agent jobs, review, notifications) | **Axiom** as primary sink via `@tsu-stack/logger`                                                                                                                                                                 |
+| Sampling                                                     | Keep **errors 100%** on log path; sample **info** when volume grows (evlog sampling presets)                                                                                                                      |
+| Product analytics, session replay, feature flags             | **PostHog** (SDK) — free tier is generous for small multi-user projects                                                                                                                                           |
+| Exception / FE crash product                                 | **PostHog error tracking** first (~100k free, unlimited seats). **Sentry** only if APM/sourcemap/release needs outgrow PostHog. **GlitchTip** if self-host unlimited is preferred later                           |
+| Wire errors via `evlog init --prod-drain sentry\|posthog`?   | **Not required** for the error product. Prefer dedicated PostHog (or Sentry) **SDK** so free quotas are not mixed with high-volume wide events. Optional: sparse `posthog` drain only for curated business events |
+| CLI                                                          | `@evlog/cli` for **map/doctor/CI**; not the source of truth for which product/error SaaS we pick                                                                                                                  |
+| Agent                                                        | Wide events via logger → Axiom; Mastra traces stay Mastra/DuckDB/Studio; optional PostHog only for product-level AI outcomes if useful                                                                            |
+
+### Target free stack (small project)
+
+```text
+@tsu-stack/logger  ──wide events──►  Axiom
+PostHog SDK        ──product──────►  analytics, flags, session replay
+PostHog            ──exceptions───►  error tracking (free tier first)
+@evlog/cli         ──map/doctor───►  CI / local coverage only
+```
 
 ### Implementation notes (foundation epic)
 
 1. Upgrade `evlog` + pin `@evlog/cli`; scripts `log:map`, `log:doctor`.
 2. Axiom env: `AXIOM_DATASET`, `AXIOM_API_KEY` in server/agent deploy.
-3. Do not force Sentry until a concrete need (sourcemaps, replay, multi-project issues).
-4. If adding errors SaaS: one project per surface or tags `service=web|server|agent`.
-5. Document chosen sinks in `.agents/logging.md` when implemented (link-only from root `Agents.md` already).
+3. PostHog env: project key / host for web (and server if capturing server-side product or errors).
+4. Do **not** default-fanout all wide events to PostHog; whitelist intentional product events.
+5. Defer Sentry unless PostHog errors prove insufficient.
+6. Document chosen sinks in `.agents/logging.md` when implemented (link-only from root `Agents.md` already).
