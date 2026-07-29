@@ -207,13 +207,15 @@ echo -e "  ${CYAN}Agent${RESET}            → http://localhost:4111"
 echo ""
 if [ "$PUBLIC_SERVER_URL" = "http://localhost:5200" ]; then
   echo -e "  ${YELLOW}Resend webhooks need public HTTPS. Re-run with:${RESET}"
-  echo -e "  ${YELLOW}  DEV_TUNNEL=1 pnpm dev${RESET}"
-  echo -e "  ${YELLOW}  # or: pnpm dev --tunnel${RESET}"
+  echo -e "  ${YELLOW}  pnpm dev:tunnel${RESET}"
+  echo -e "  ${YELLOW}  # or: DEV_TUNNEL=1 pnpm dev${RESET}"
   echo ""
-fi
-echo -e "  ${YELLOW}GitHub OAuth callback (local): http://localhost:5200/auth/callback/github${RESET}"
-if [ "$PUBLIC_SERVER_URL" != "http://localhost:5200" ]; then
-  echo -e "  ${YELLOW}Webhook / public API origin: ${PUBLIC_SERVER_URL}${RESET}"
+  echo -e "  ${YELLOW}GitHub OAuth callback: ${PUBLIC_SERVER_URL}/auth/callback/github${RESET}"
+else
+  # Tunnel / fixed public URL: Better Auth baseURL follows VITE_SERVER_URL.
+  echo -e "  ${YELLOW}GitHub OAuth callback (register in GitHub app):${RESET}"
+  echo -e "  ${GREEN}  ${PUBLIC_SERVER_URL}/auth/callback/github${RESET}"
+  echo -e "  ${YELLOW}(Local bind stays http://localhost:5200; public API origin is the tunnel.)${RESET}"
 fi
 echo ""
 echo -e "  ${YELLOW}Press Ctrl+C to stop all services${RESET}"
