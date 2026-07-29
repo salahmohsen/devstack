@@ -2,16 +2,7 @@
 
 import { Link, useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import {
-  ArrowLeft,
-  BriefcaseBusiness,
-  CalendarDays,
-  Gift,
-  Inbox,
-  Mail,
-  Sparkles,
-  Users
-} from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, Gift, Inbox, Mail, Sparkles, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
@@ -57,16 +48,7 @@ export function MailCategoryPage() {
 
   return (
     <PageLayout>
-      <PageHeader
-        title={category.title}
-        description={category.description}
-        actions={
-          <Button variant="outline" size="sm" render={<Link to="/dashboard/mail" />}>
-            <ArrowLeft className="size-3.5" />
-            Hub
-          </Button>
-        }
-      />
+      <PageHeader title={category.title} description={category.description} />
 
       <SurfaceIslandLayout
         islandClassName="md:w-44 lg:w-48"

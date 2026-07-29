@@ -24,7 +24,7 @@ const DashboardItems = [
   { href: "/dashboard/resumes", label: "Resumes", group: "Dashboard" },
   { href: "/dashboard/applications", label: "Applications", group: "Dashboard" },
   {
-    href: "/dashboard/mail",
+    href: "/dashboard/mail/applications",
     label: "Mail",
     group: "Dashboard",
     matchPrefix: "/dashboard/mail"

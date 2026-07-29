@@ -1,7 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { MailHubPage } from "@/pages/dashboard/mail";
-
+/**
+ * Hub card grid is unused — Career Inbox lives in the island layout at
+ * `/dashboard/mail/$category` (default: applications).
+ */
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/mail/")({
-  component: MailHubPage
+  beforeLoad: () => {
+    throw redirect({
+      to: "/dashboard/mail/$category",
+      params: { category: "applications" }
+    });
+  }
 });
