@@ -39,6 +39,13 @@ Pick the most specific file for the task. Use links within that file instead of 
 - [UI guidelines](.agents/ui.md) for app UI composition, extraction decisions, and `packages/ui` boundaries.
 - [TypeScript conventions](.agents/typescript.md) for schema placement, import boundaries, and `lib/` vs `utils/`.
 - [Environment variables](.agents/environment-variables.md) for env scoping, validation, and Docker propagation.
+- [Logging](.agents/logging.md) for `@tsu-stack/logger` / evlog wide events, levels, request-scoped emit-once rules, agent jobs, and CLI (`map` / `doctor`). Load when adding durable logs, upgrading evlog, or wiring the agent app logger.
+- [Mastra agent app](apps/agent/AGENTS.md) for agents, workflows, tools, scorers, memory threads, feedback/datasets, and AI job conventions. Load the `mastra` skill first for any Mastra work.
+
+### Active program specs
+
+- [Career Inbox + AI platform](docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md) — mail hub, review queue, notifications, AI autonomy, learning, logging/Mastra foundation.
+- [Seeker applications CRM](docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md) — pipeline board/list that Career Inbox advances.
 
 ## Task Entry Points
 

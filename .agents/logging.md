@@ -190,3 +190,35 @@ When browser transport is enabled, remember that client logs are sent to the ser
 ## Bootstrap Console
 
 Bootstrap/config packages such as `@tsu-stack/env` may use small `console.debug` statements because they are loaded before logger initialization and by Vite config. Do not route env bootstrap through `@tsu-stack/logger`.
+
+## Agent app (`apps/agent`)
+
+The Mastra agent process should use `@tsu-stack/logger/server` for **product/ops wide events** (job start/end, queue outcomes, ingress failures). Mastra observability/traces remain for AI debugging; they complement evlog, they do not replace it.
+
+- `initLogger` once at process boot with a stable service name (e.g. `LOG_SERVICES.agent` when added).
+- Prefer `createLogger({ operation: "…" })` per workflow/job; `set` context (`userId`, `jobType`, Mastra `traceId`); **one** `emit()` on terminal outcome.
+- Do not import `evlog` or `@mastra/loggers` as a substitute for product wide events unless integrating Mastra’s own logger bridge deliberately in the logger package.
+- Career Inbox AI jobs (classify, reply-assist, etc.) must log terminal outcomes at INFO/ERROR, not every token.
+
+See program design: `docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md` and `apps/agent/AGENTS.md`.
+
+## evlog CLI
+
+Install/use the CLI from the monorepo workspace after `evlog` is on the catalog. Official overview: [evlog CLI](https://www.evlog.dev/cli/overview).
+
+Typical commands (confirm flags against Context7 / installed CLI help before CI):
+
+| Command                   | Purpose                                                    |
+| ------------------------- | ---------------------------------------------------------- |
+| `evlog map`               | Score logging coverage across entry points                 |
+| `evlog doctor`            | Verify installation / log writing                          |
+| `evlog telemetry disable` | Opt out of CLI telemetry (`DO_NOT_TRACK=1` also respected) |
+
+Workspace scripts (add when wiring foundation epic), e.g.:
+
+```json
+"log:map": "evlog map",
+"log:doctor": "evlog doctor"
+```
+
+Run from repo root with the package that owns entry points in scope. Prefer JSON output in CI when enforcing a minimum score. Always verify current CLI flags with `evlog --help` or Context7 (`/hugorcd/evlog`, `/websites/evlog_dev`) after upgrades — do not invent flags from memory.

@@ -109,6 +109,52 @@ delete confirms stay Dialog/AlertDialog. ADR:
 `docs/adr/0025-entity-form-sheet.md`.
 _Avoid_: long multi-field entity forms in modals that cover the list/board.
 
+## Career Inbox and AI platform
+
+**Career Inbox**:
+Tenant-scoped in-app mail product for hiring signal (recruiters, ATS,
+application-linked threads). Hybrid product: career-first intelligence with
+mail-client chrome. Spec:
+`docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md`.
+_Avoid_: personal Gmail clone; treating all synced mail as portfolio content.
+
+**Unsorted**:
+Career Inbox bucket for messages with no system career label and no user
+smart-rule label. Not abuse spam filtering.
+_Avoid_: spam, junk, noise (as product folder names).
+
+**Smart rule**:
+User-defined mail category (icon, title, description) that extends the
+classify allowlist and prompt; may appear as a hub card when count > 0.
+_Avoid_: Gmail label sync as the source of truth.
+
+**Review item**:
+Durable unit on `/dashboard/review` awaiting human confirmation (e.g. a
+reply draft in Assist mode). List + confirm CTA + edit drawer + view panel.
+_Avoid_: burying confirm-only state only inside the mail reader.
+
+**AI autonomy**:
+Per-user policy for how far agents may act without confirm. Mail replies:
+Assist (always generate draft, wait for confirm) or Full (auto-send).
+Controlled only in AI settings — never in notification settings.
+_Avoid_: tying send policy to notification toggles.
+
+**Notification email**:
+User-chosen destination for system emails (draft ready, security OTP, etc.).
+May be Gmail or another address; not the Career Inbox product From identity.
+_Avoid_: assuming Resend From address is where the user reads notifications.
+
+**System notification mail**:
+Messages with product purpose “notification” (or matching the notification
+identity). Hidden from default Career Inbox lists automatically.
+_Avoid_: showing OTP/draft-ready mail as recruiter threads.
+
+**AI correction**:
+User-selected correct action after an auto-apply (stage, labels, etc.).
+Stored per tenant for few-shot learning; also recorded as Mastra feedback /
+dataset ground truth where applicable.
+_Avoid_: treating thumbs-up alone as model fine-tuning.
+
 ## Cache invalidation
 
 **Revalidation signal**:
