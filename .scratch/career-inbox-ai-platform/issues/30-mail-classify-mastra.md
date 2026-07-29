@@ -4,9 +4,9 @@
 
 **Blocked by:** 29
 
-**Status:** pending
+**Status:** done
 
-- [ ] Workflow `mail-classify-workflow` with input/output from core
-- [ ] Optional LLM step using AI settings model for `classify`
-- [ ] Server worker: try agent HTTP, fall back to local heuristic
+- [x] Workflow `mail-classify-workflow` with input/output from core
+- [x] Heuristic step + optional LLM step (`mailClassifierAgent`)
+- [x] Server worker: try agent HTTP (`AGENT_WORKER_URL`), fall back to local heuristic
 - [ ] CRM effects + undo — later tickets

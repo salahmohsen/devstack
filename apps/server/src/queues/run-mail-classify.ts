@@ -2,11 +2,15 @@ import { heuristicClassifyMail, type MailClassifyOutput } from "@tsu-stack/core"
 import { mailMessageRepository } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { callMailClassifyAgent } from "#@/queues/call-mail-classify-agent";
+
 /**
  * Classify a single Career Inbox message (tenant-scoped).
  *
- * v1: heuristic prefilter only (no LLM). Mastra workflow will replace/extend
- * this path once registered on the agent (ticket 30+).
+ * Order:
+ * 1. Skip if missing / already classified / system notification
+ * 2. Prefer Mastra `mail-classify-workflow` on AGENT_WORKER_URL when set
+ * 3. Fall back to local heuristic
  */
 export async function runMailClassify(input: {
   messageId: string;
@@ -55,7 +59,7 @@ export async function runMailClassify(input: {
     };
   }
 
-  const result = heuristicClassifyMail({
+  const classifyInput = {
     messageId: row.id,
     userId: row.userId,
     fromName: row.fromName,
@@ -64,7 +68,20 @@ export async function runMailClassify(input: {
     preview: row.preview,
     bodyText: row.bodyText,
     labels: row.labels ?? []
-  });
+  };
+
+  let result: MailClassifyOutput | null = await callMailClassifyAgent(classifyInput);
+
+  if (!result) {
+    result = heuristicClassifyMail(classifyInput);
+    log.set({
+      event: "mail_classify_local_heuristic",
+      messageId: row.id,
+      userId: row.userId,
+      systemLabels: result.systemLabels
+    });
+    log.emit();
+  }
 
   await mailMessageRepository.applyClassification(row.id, row.userId, result.labels);
 

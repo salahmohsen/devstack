@@ -5,14 +5,14 @@
 
 ## Waves
 
-| Wave                 | Focus                                          | Tickets   | Status          |
-| -------------------- | ---------------------------------------------- | --------- | --------------- |
-| **0 — Foundation**   | Upgrades, logging, Axiom, CLI                  | `01`–`06` | **Done**        |
-| **1 — Shell**        | Surface + island + settings                    | `07`–`10` | **Done**        |
-| **2 — Mail UI**      | Hub cards + drill-in (mock)                    | `11`–`13` | **Done**        |
-| **3 — Settings**     | AI settings + notification settings            | `14`–`19` | **Done**        |
-| **4 — Mail backend** | Core + DB + list API + Resend + queue scaffold | `20`–`26` | **Done**        |
-| **5 — Classify**     | Heuristic + worker; Mastra LLM next            | `27`–`30` | **In progress** |
+| Wave                 | Focus                                          | Tickets   | Status   |
+| -------------------- | ---------------------------------------------- | --------- | -------- |
+| **0 — Foundation**   | Upgrades, logging, Axiom, CLI                  | `01`–`06` | **Done** |
+| **1 — Shell**        | Surface + island + settings                    | `07`–`10` | **Done** |
+| **2 — Mail UI**      | Hub cards + drill-in (mock)                    | `11`–`13` | **Done** |
+| **3 — Settings**     | AI settings + notification settings            | `14`–`19` | **Done** |
+| **4 — Mail backend** | Core + DB + list API + Resend + queue scaffold | `20`–`26` | **Done** |
+| **5 — Classify**     | Heuristic + worker + Mastra LLM path           | `27`–`30` | **Done** |
 
 ## Mail UI (done)
 
@@ -38,13 +38,13 @@ See [MAIL-BACKEND.md](./MAIL-BACKEND.md) — contracts, `mail_message`, list/get
 
 ## Classify (wave 5)
 
-| Ticket | Title                     | Status      |
-| ------ | ------------------------- | ----------- |
-| `27`   | Classify core + heuristic | **Done**    |
-| `28`   | Persist classification    | **Done**    |
-| `29`   | Worker heuristic path     | **Done**    |
-| `30`   | Mastra LLM workflow       | **Pending** |
+| Ticket | Title                     | Status   |
+| ------ | ------------------------- | -------- |
+| `27`   | Classify core + heuristic | **Done** |
+| `28`   | Persist classification    | **Done** |
+| `29`   | Worker heuristic path     | **Done** |
+| `30`   | Mastra LLM workflow       | **Done** |
 
 ## Next frontier
 
-**Ticket 30** — Mastra mail-classify workflow (LLM labels when heuristic is weak). Then CRM auto-apply + undo, reply/Review queue, Gmail OAuth sync, smart rules CRUD.
+**CRM from classify** (stage/events + undo + corrections). Then reply/Review queue, Gmail OAuth sync, smart rules CRUD.
