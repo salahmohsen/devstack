@@ -3,27 +3,33 @@
 **Spec (approved):** `docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md`  
 **Tracker:** local markdown under `issues/`  
 **Label:** `ready-for-agent`  
-**Process:** work the **frontier** (no open blockers) with `/implement` + `/tdd`; clear context between tickets; `/code-review` before merge.
+**Process:** work the **frontier** (no open blockers) with `/implement` + `/tdd`; clear context between tickets; `/code-review` before merge. Prefer Superpowers `writing-plans` per non-trivial ticket.
 
 ## Waves
 
-| Wave               | Focus                                          | Tickets              |
-| ------------------ | ---------------------------------------------- | -------------------- |
-| **0 — Foundation** | Upgrades, weather removal, logging, Axiom, CLI | `01`–`06`            |
-| **1 — Shell**      | Surface + island + settings shell (later)      | TBD after foundation |
-| **2+**             | Mail, review, AI, notifications, …             | TBD                  |
+| Wave               | Focus                                          | Tickets   | Status                   |
+| ------------------ | ---------------------------------------------- | --------- | ------------------------ |
+| **0 — Foundation** | Upgrades, weather removal, logging, Axiom, CLI | `01`–`06` | **Done** (merged `main`) |
+| **1 — Shell**      | Surface + island + settings shell + fade       | `07`–`10` | **Ready**                |
+| **2+**             | Mail, review, AI, notifications, …             | TBD       | After shell              |
 
-## Foundation frontier (start here)
+## Shell frontier (start here)
 
-| #   | Title                                                | Blocked by                                 |
-| --- | ---------------------------------------------------- | ------------------------------------------ |
-| 01  | Upgrade evlog + pin `@evlog/cli` + workspace scripts | None                                       |
-| 02  | Upgrade Mastra packages + fix agent build            | None                                       |
-| 03  | Remove weather example from agent                    | None (prefer after 02 if Mastra API churn) |
-| 04  | Wire `@tsu-stack/logger` in agent app                | 01, 02                                     |
-| 05  | Axiom drain behind logger facade (env-gated)         | 01                                         |
-| 06  | Logging hygiene + map baseline for web               | 01                                         |
+| #      | Title                                      | Blocked by |
+| ------ | ------------------------------------------ | ---------- |
+| **07** | Shared dashboard surface shell (main card) | None       |
+| 08     | Darker floating island card primitive      | 07         |
+| 09     | Settings layout: island nav + content pane | 07, 08     |
+| 10     | Shell tokens, docs, and reuse contract     | 09         |
 
-**Recommended start order:** `01` ‖ `02` → `03` → `04` ‖ `05` → `06`.
+**Recommended start order:** `07` → `08` → `09` → `10`.
 
-PostHog product/error SDKs are **not** foundation — schedule after shell or with notifications settings unless free capacity.
+Guide: [SHELL.md](./SHELL.md)
+
+## Foundation (done)
+
+| #     | Title                                | Status |
+| ----- | ------------------------------------ | ------ |
+| 01–06 | See [FOUNDATION.md](./FOUNDATION.md) | done   |
+
+PostHog product/error SDKs still later (with AI/notifications settings), not shell.

@@ -55,4 +55,4 @@ Branch: `chore/upgrade-evlog-cli` (full foundation wave)
 - [x] Agent builds without weather
 - [x] Doctor + map runnable for web
 - [x] Axiom optional in prod via env
-- [ ] Ready to open Shell wave tickets (surface + island)
+- [x] Ready to open Shell wave tickets (surface + island) — see `issues/07`–`10` + `SHELL.md`
