@@ -167,6 +167,7 @@ catalog:
   marked: ^18.0.7
   remark-breaks: ^4.0.0
   unpdf: ^1.8.0
+  vite-node: ^6.0.0
 
 catalogMode: prefer
 

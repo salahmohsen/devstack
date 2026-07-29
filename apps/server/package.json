@@ -10,7 +10,8 @@
   },
   "scripts": {
     "build": "vp build",
-    "dev": "PORT=5200 pnpm dotenvx run -f ../../packages/env/.env -- tsx watch src/index.ts",
+    "dev": "PORT=5200 pnpm dotenvx run -f ../../packages/env/.env -- vite-node --watch --config vite.config.ts src/index.ts",
+    "dev:tsx": "PORT=5200 pnpm dotenvx run -f ../../packages/env/.env -- tsx watch --clear-screen=false --include ../../packages --exclude ../../packages/**/node_modules --exclude ../../packages/**/dist src/index.ts",
     "start": "node dist/index.mjs"
   },
   "dependencies": {
@@ -39,6 +40,8 @@
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "tsx": "^4.19.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-node": "catalog:",
+    "vite-plus": "catalog:"
   }
 }
