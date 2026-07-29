@@ -18,7 +18,11 @@ import { Label } from "@tsu-stack/ui/components/label";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
-import { useGetMailSettingsQuery, useUpdateMailSettingsMutation } from "@/features/mail-settings";
+import {
+  useGetMailSettingsQuery,
+  useUpdateMailSettingsMutation,
+  type MailSettingsQueryResult
+} from "@/features/mail-settings";
 
 import { useSettingsDirtyGuard } from "./settings-dirty-guard";
 import { SettingsSaveBar } from "./settings-save-bar";
@@ -35,6 +39,20 @@ type FormState = {
   rotateWebhookToken: boolean;
 };
 
+function formFromQuery(data: MailSettingsQueryResult, sourceKey: number): FormState {
+  return {
+    sourceKey,
+    inboundEnabled: Boolean(data.inboundEnabled),
+    inboundAddress: data.inboundAddress ?? "",
+    // Secrets are write-only in the form; server returns last4 only.
+    resendApiKey: "",
+    clearResendApiKey: false,
+    webhookSecret: "",
+    clearWebhookSecret: false,
+    rotateWebhookToken: false
+  };
+}
+
 export function MailSettings() {
   const query = useGetMailSettingsQuery();
   const update = useUpdateMailSettingsMutation();
@@ -44,24 +62,15 @@ export function MailSettings() {
   const form = useMemo(() => {
     if (!query.data) return null;
     if (draft && draft.sourceKey === query.dataUpdatedAt) return draft;
-    return {
-      sourceKey: query.dataUpdatedAt,
-      inboundEnabled: query.data.inboundEnabled,
-      inboundAddress: query.data.inboundAddress ?? "",
-      resendApiKey: "",
-      clearResendApiKey: false,
-      webhookSecret: "",
-      clearWebhookSecret: false,
-      rotateWebhookToken: false
-    } satisfies FormState;
+    return formFromQuery(query.data, query.dataUpdatedAt);
   }, [query.data, query.dataUpdatedAt, draft]);
 
   const dirty = useMemo(() => {
     if (!form || !query.data) return false;
-    if (form.inboundEnabled !== query.data.inboundEnabled) return true;
+    if (form.inboundEnabled !== Boolean(query.data.inboundEnabled)) return true;
     if (form.inboundAddress.trim() !== (query.data.inboundAddress ?? "").trim()) return true;
-    if (form.resendApiKey.trim() || form.clearResendApiKey) return true;
-    if (form.webhookSecret.trim() || form.clearWebhookSecret) return true;
+    if (form.resendApiKey.trim().length > 0 || form.clearResendApiKey) return true;
+    if (form.webhookSecret.trim().length > 0 || form.clearWebhookSecret) return true;
     if (form.rotateWebhookToken) return true;
     return false;
   }, [form, query.data]);
@@ -69,16 +78,7 @@ export function MailSettings() {
   function ensureDraft(): FormState | null {
     if (!query.data) return null;
     if (draft && draft.sourceKey === query.dataUpdatedAt) return draft;
-    const next: FormState = {
-      sourceKey: query.dataUpdatedAt,
-      inboundEnabled: query.data.inboundEnabled,
-      inboundAddress: query.data.inboundAddress ?? "",
-      resendApiKey: "",
-      clearResendApiKey: false,
-      webhookSecret: "",
-      clearWebhookSecret: false,
-      rotateWebhookToken: false
-    };
+    const next = formFromQuery(query.data, query.dataUpdatedAt);
     setDraft(next);
     return next;
   }
@@ -100,7 +100,7 @@ export function MailSettings() {
     try {
       await update.mutateAsync({
         inboundEnabled: form.inboundEnabled,
-        inboundAddress: form.inboundAddress.trim() || null,
+        inboundAddress: form.inboundAddress.trim() === "" ? null : form.inboundAddress.trim(),
         resendApiKey: form.resendApiKey.trim() || undefined,
         clearResendApiKey: form.clearResendApiKey || undefined,
         webhookSecret: form.webhookSecret.trim() || undefined,
@@ -126,7 +126,34 @@ export function MailSettings() {
     }
   }
 
-  if (query.isLoading || !form || !query.data) {
+  // Match AI / Notifications: error first so failures never look like infinite loading.
+  if (query.isError) {
+    return (
+      <Frame>
+        <FrameHeader>
+          <FrameTitle className="flex items-center gap-2">
+            <InboxIcon className="size-4 opacity-80" aria-hidden />
+            Career Inbox · Resend
+          </FrameTitle>
+          <FrameDescription>Could not load mail settings.</FrameDescription>
+        </FrameHeader>
+        <FramePanel>
+          <Alert variant="error">
+            <AlertTitle>Failed to load</AlertTitle>
+            <AlertDescription>
+              Refresh the page or try again later. If this persists, restart the API server so
+              <code className="mx-1 rounded bg-muted px-1">mailSettings</code>
+              is registered.
+            </AlertDescription>
+          </Alert>
+        </FramePanel>
+      </Frame>
+    );
+  }
+
+  const isBusy = query.isLoading || query.isPending || !form || !query.data;
+
+  if (isBusy) {
     return (
       <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
         <Spinner className="size-4" />
@@ -135,16 +162,9 @@ export function MailSettings() {
     );
   }
 
-  if (query.isError) {
-    return (
-      <Alert variant="error">
-        <AlertTitle>Could not load mail settings</AlertTitle>
-        <AlertDescription>Refresh the page or try again in a moment.</AlertDescription>
-      </Alert>
-    );
-  }
-
+  // Narrowed: form + data exist after isBusy check.
   const data = query.data;
+  const currentForm = form;
 
   return (
     <div className="space-y-6 pb-4">
@@ -174,7 +194,7 @@ export function MailSettings() {
                 </p>
               </div>
               <Switch
-                checked={form.inboundEnabled}
+                checked={currentForm.inboundEnabled}
                 onCheckedChange={(checked) => {
                   patch((c) => {
                     return { ...c, inboundEnabled: checked };
@@ -191,7 +211,7 @@ export function MailSettings() {
                 type="email"
                 autoComplete="off"
                 placeholder="jobs@your-domain.com"
-                value={form.inboundAddress}
+                value={currentForm.inboundAddress}
                 onChange={(e) => {
                   const value = e.target.value;
                   patch((c) => {
@@ -207,7 +227,7 @@ export function MailSettings() {
 
           <SettingsSection
             title="Resend API key"
-            description="Used to fetch full email bodies after email.received webhooks."
+            description="Used to fetch full email bodies after email.received webhooks. Leave blank to keep the saved key."
           >
             <div className="space-y-1.5">
               <Label htmlFor="mail-resend-key">API key</Label>
@@ -220,8 +240,8 @@ export function MailSettings() {
                     ? `Saved ···${data.resendApiKeyLast4 ?? "****"} — paste to replace`
                     : "re_…"
                 }
-                value={form.resendApiKey}
-                disabled={form.clearResendApiKey}
+                value={currentForm.resendApiKey}
+                disabled={currentForm.clearResendApiKey}
                 onChange={(e) => {
                   const value = e.target.value;
                   patch((c) => {
@@ -233,6 +253,7 @@ export function MailSettings() {
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <p className="text-xs text-muted-foreground">
                     Key on file ends with ···{data.resendApiKeyLast4}
+                    {currentForm.clearResendApiKey ? " (will remove on save)" : ""}
                   </p>
                   <Button
                     type="button"
@@ -249,16 +270,18 @@ export function MailSettings() {
                       });
                     }}
                   >
-                    {form.clearResendApiKey ? "Keep existing key" : "Remove key"}
+                    {currentForm.clearResendApiKey ? "Keep existing key" : "Remove key"}
                   </Button>
                 </div>
-              ) : null}
+              ) : (
+                <p className="text-xs text-muted-foreground">No API key saved yet.</p>
+              )}
             </div>
           </SettingsSection>
 
           <SettingsSection
             title="Webhook signing secret"
-            description="From Resend → Webhooks → your endpoint → Signing secret (whsec_…)."
+            description="From Resend → Webhooks → your endpoint → Signing secret (whsec_…). Leave blank to keep the saved secret."
           >
             <div className="space-y-1.5">
               <Label htmlFor="mail-webhook-secret">Signing secret</Label>
@@ -271,8 +294,8 @@ export function MailSettings() {
                     ? `Saved ···${data.webhookSecretLast4 ?? "****"} — paste to replace`
                     : "whsec_…"
                 }
-                value={form.webhookSecret}
-                disabled={form.clearWebhookSecret}
+                value={currentForm.webhookSecret}
+                disabled={currentForm.clearWebhookSecret}
                 onChange={(e) => {
                   const value = e.target.value;
                   patch((c) => {
@@ -284,6 +307,7 @@ export function MailSettings() {
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <p className="text-xs text-muted-foreground">
                     Secret on file ends with ···{data.webhookSecretLast4}
+                    {currentForm.clearWebhookSecret ? " (will remove on save)" : ""}
                   </p>
                   <Button
                     type="button"
@@ -300,10 +324,12 @@ export function MailSettings() {
                       });
                     }}
                   >
-                    {form.clearWebhookSecret ? "Keep existing secret" : "Remove secret"}
+                    {currentForm.clearWebhookSecret ? "Keep existing secret" : "Remove secret"}
                   </Button>
                 </div>
-              ) : null}
+              ) : (
+                <p className="text-xs text-muted-foreground">No webhook secret saved yet.</p>
+              )}
             </div>
           </SettingsSection>
 
@@ -340,7 +366,7 @@ export function MailSettings() {
                 <Button
                   type="button"
                   size="sm"
-                  variant={form.rotateWebhookToken ? "default" : "ghost"}
+                  variant={currentForm.rotateWebhookToken ? "default" : "ghost"}
                   onClick={() => {
                     patch((c) => {
                       return { ...c, rotateWebhookToken: !c.rotateWebhookToken };
@@ -348,11 +374,11 @@ export function MailSettings() {
                   }}
                 >
                   <RefreshCwIcon className="size-3.5" />
-                  {form.rotateWebhookToken ? "Will rotate on save" : "Rotate URL"}
+                  {currentForm.rotateWebhookToken ? "Will rotate on save" : "Rotate URL"}
                 </Button>
               </div>
             </div>
-            {form.rotateWebhookToken ? (
+            {currentForm.rotateWebhookToken ? (
               <p className="text-xs text-amber-600 dark:text-amber-400">
                 Saving will issue a new URL. Update Resend or inbound will stop.
               </p>

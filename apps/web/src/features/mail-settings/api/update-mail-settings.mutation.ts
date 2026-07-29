@@ -10,7 +10,9 @@ export function useUpdateMailSettingsMutation() {
 
   return useMutation(
     orpcQueryClient.mailSettings.update.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (data) => {
+        // Seed cache immediately so the form remounts with server values (last4, URL, toggles).
+        queryClient.setQueryData(mailSettingsQueryKeys.current(), data);
         await queryClient.invalidateQueries({
           queryKey: mailSettingsQueryKeys.current()
         });

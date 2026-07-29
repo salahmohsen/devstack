@@ -19,16 +19,26 @@ function webhookUrlFor(token: string): string {
 function toOutput(
   row: NonNullable<Awaited<ReturnType<typeof userMailSettingsRepository.findByUserId>>>
 ) {
+  // Normalize DB nullables so client form always gets stable booleans / null emails.
+  const inboundRaw = row.inboundAddress?.trim() ?? "";
+  const inboundAddress =
+    inboundRaw.length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inboundRaw)
+      ? inboundRaw.toLowerCase()
+      : null;
+
+  const apiKeyLast4 = row.resendApiKeyLast4?.trim() ?? "";
+  const webhookLast4 = row.webhookSecretLast4?.trim() ?? "";
+
   return MailSettingsOutputSchema.parse({
-    inboundEnabled: row.inboundEnabled,
-    inboundAddress: row.inboundAddress,
+    inboundEnabled: Boolean(row.inboundEnabled),
+    inboundAddress,
     hasResendApiKey: Boolean(row.resendApiKeyCiphertext),
-    resendApiKeyLast4: row.resendApiKeyLast4,
+    resendApiKeyLast4: apiKeyLast4.length > 0 ? apiKeyLast4 : null,
     hasWebhookSecret: Boolean(row.webhookSecretCiphertext),
-    webhookSecretLast4: row.webhookSecretLast4,
+    webhookSecretLast4: webhookLast4.length > 0 ? webhookLast4 : null,
     webhookToken: row.webhookToken,
     webhookUrl: webhookUrlFor(row.webhookToken),
-    updatedAt: row.updatedAt
+    updatedAt: row.updatedAt ?? null
   });
 }
 

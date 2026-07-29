@@ -12,8 +12,13 @@ export const MailInboundAddressSchema = z
 export const MailSettingsOutputSchema = z.object({
   /** When false, inbound webhook returns 503 for this tenant. */
   inboundEnabled: z.boolean(),
-  /** Address that should receive career mail (optional soft-match on webhook). */
-  inboundAddress: z.string().email().nullable(),
+  /**
+   * Address that should receive career mail (optional soft-match on webhook).
+   * Empty string coerced to null so forms never choke on blank DB values.
+   */
+  inboundAddress: z
+    .union([z.string().email(), z.literal(""), z.null()])
+    .transform((v) => (v === "" || v == null ? null : v)),
   hasResendApiKey: z.boolean(),
   resendApiKeyLast4: z.string().max(4).nullable(),
   hasWebhookSecret: z.boolean(),
