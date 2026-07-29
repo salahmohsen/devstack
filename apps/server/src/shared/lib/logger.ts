@@ -5,6 +5,6 @@ initLogger({
   env: {
     environment: ENV_SERVER.NODE_ENV,
     service: LOG_SERVICES.SERVER,
-    version: ENV_SERVER.WORKERS_CI_COMMIT_SHA
+    version: ENV_SERVER.SOURCE_COMMIT
   }
 });

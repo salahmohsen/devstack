@@ -388,7 +388,7 @@ export const openApiHandler = new OpenAPIHandler(appRouter, {
         info: {
           description: `This is the API for @tsu-stack/server.\n## Usage\nFor authentication, you can sign in via the \`/sign-in\` endpoint in [the Auth Reference](${ENV_SERVER.VITE_SERVER_URL}/docs#auth-api-reference). Include the session cookie in subsequent requests to access protected endpoints.\n## Resources\n - [Official Website](${ENV_SERVER.VITE_WEB_URL})\n - [Auth API Reference](${ENV_SERVER.VITE_SERVER_URL}/docs#auth-api-reference)`,
           title: "@tsu-stack/server API",
-          version: ENV_SERVER.WORKERS_CI_COMMIT_SHA
+          version: ENV_SERVER.SOURCE_COMMIT
         },
         servers: [
           {

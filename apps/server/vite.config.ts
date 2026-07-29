@@ -7,6 +7,34 @@ import { defineConfig, type Plugin } from "vite-plus";
 const root = path.dirname(fileURLToPath(import.meta.url));
 const packagesRoot = path.resolve(root, "../../packages");
 const monorepoRoot = path.resolve(root, "../..");
+const appsRoot = path.resolve(root, "..");
+
+/**
+ * package.json `"imports"` values may be a string, a conditional object
+ * (`{ default: "./x" }`), or a fallback array. Always normalize to a string.
+ */
+function importTargetToString(target: unknown): string | null {
+  if (typeof target === "string") return target;
+  if (Array.isArray(target)) {
+    for (const entry of target) {
+      const hit = importTargetToString(entry);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (target && typeof target === "object") {
+    const map = target as Record<string, unknown>;
+    for (const key of ["default", "node", "import", "require", "module"]) {
+      const hit = importTargetToString(map[key]);
+      if (hit) return hit;
+    }
+    for (const value of Object.values(map)) {
+      const hit = importTargetToString(value);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
 
 /**
  * Resolve package.json `"imports"` maps like `"#@/*": "./src/*.ts"` for
@@ -14,7 +42,7 @@ const monorepoRoot = path.resolve(root, "../..");
  * we teach it (vite-tsconfig-paths alone won't cover package `imports`).
  */
 function packageImportsPlugin(): Plugin {
-  const cache = new Map<string, { dir: string; imports: Record<string, string> } | null>();
+  const cache = new Map<string, { dir: string; imports: Record<string, unknown> } | null>();
 
   function normalizeImporter(importer: string): string {
     let value = importer;
@@ -27,17 +55,43 @@ function packageImportsPlugin(): Plugin {
     return value;
   }
 
-  function loadPackage(fromFile: string): { dir: string; imports: Record<string, string> } | null {
+  function isMonorepoPath(filePath: string): boolean {
+    const normalized = path.resolve(filePath);
+    return (
+      normalized.startsWith(packagesRoot + path.sep) ||
+      normalized.startsWith(appsRoot + path.sep) ||
+      normalized === packagesRoot ||
+      normalized === appsRoot
+    );
+  }
+
+  function loadPackage(fromFile: string): { dir: string; imports: Record<string, unknown> } | null {
     let cur = path.dirname(fromFile);
     while (cur !== path.dirname(cur)) {
       if (cache.has(cur)) return cache.get(cur)!;
+      // Never resolve `#@` against node_modules package.json maps (conditional objects).
+      if (
+        cur.includes(`${path.sep}node_modules${path.sep}`) ||
+        cur.endsWith(`${path.sep}node_modules`)
+      ) {
+        cache.set(cur, null);
+        cur = path.dirname(cur);
+        continue;
+      }
+      if (!isMonorepoPath(cur) && cur !== monorepoRoot) {
+        // Walk past non-workspace dirs until monorepo root or stop.
+        if (!cur.startsWith(monorepoRoot)) {
+          return null;
+        }
+      }
       const pkgPath = path.join(cur, "package.json");
       if (fs.existsSync(pkgPath)) {
         try {
           const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as {
-            imports?: Record<string, string>;
+            imports?: Record<string, unknown>;
           };
-          const entry = pkg.imports ? { dir: cur, imports: pkg.imports } : null;
+          const entry =
+            pkg.imports && isMonorepoPath(cur) ? { dir: cur, imports: pkg.imports } : null;
           cache.set(cur, entry);
           return entry;
         } catch {
@@ -68,21 +122,25 @@ function packageImportsPlugin(): Plugin {
     name: "tsu-package-imports",
     enforce: "pre",
     resolveId(id, importer) {
-      if (!id.startsWith("#") || !importer) return null;
+      // Rolldown may pass non-string ids in edge cases; never call string methods blindly.
+      if (typeof id !== "string" || !id.startsWith("#") || typeof importer !== "string") {
+        return null;
+      }
       const pkg = loadPackage(normalizeImporter(importer));
       if (!pkg) return null;
 
       // Exact match
-      if (pkg.imports[id]) {
-        const target = pkg.imports[id]!;
-        if (target.startsWith(".")) {
+      if (pkg.imports[id] !== undefined) {
+        const target = importTargetToString(pkg.imports[id]);
+        if (target?.startsWith(".")) {
           return tryFile(path.resolve(pkg.dir, target));
         }
       }
 
       // Pattern match `#@/*` → `./src/*.ts` (or packages/ui: `./*.ts`)
-      for (const [pattern, target] of Object.entries(pkg.imports)) {
-        if (!pattern.includes("*") || !target.includes("*")) continue;
+      for (const [pattern, rawTarget] of Object.entries(pkg.imports)) {
+        const target = importTargetToString(rawTarget);
+        if (!target || !pattern.includes("*") || !target.includes("*")) continue;
         const prefix = pattern.slice(0, pattern.indexOf("*"));
         const suffix = pattern.slice(pattern.indexOf("*") + 1);
         if (!id.startsWith(prefix) || (suffix && !id.endsWith(suffix))) continue;

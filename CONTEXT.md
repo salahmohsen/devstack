@@ -30,8 +30,7 @@ App stores hostname + verification state only; operator terminates TLS.
 _Avoid_: white-label SaaS domain product, automatic cert issuance.
 
 **Primary app host**:
-Canonical community origin from `VITE_WEB_URL` (and optional `PUBLIC_APP_HOST`
-for CNAME instructions when the marketing host differs). Dashboard, auth, and
+Canonical community origin from the host of `VITE_WEB_URL`. Dashboard, auth, and
 path portfolios (`/{profileName}`) live here. Custom domains may not claim this
 hostname.
 _Avoid_: “main domain” without distinguishing path vs Host routing.

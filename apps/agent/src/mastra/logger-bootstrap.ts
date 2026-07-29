@@ -8,7 +8,7 @@ initLogger({
   env: {
     environment: process.env.NODE_ENV === "production" ? "production" : "development",
     service: LOG_SERVICES.AGENT,
-    version: process.env.SOURCE_COMMIT ?? process.env.WORKERS_CI_COMMIT_SHA ?? "unknown"
+    version: process.env.SOURCE_COMMIT ?? "unknown"
   }
 });
 

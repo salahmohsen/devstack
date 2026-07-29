@@ -29,7 +29,7 @@ See [CONTEXT.md](./CONTEXT.md) for product glossary terms (profile name, invite,
 2. **Operator** points DNS at the app and terminates **TLS** (Cloudflare, Caddy, reverse proxy, etc.).
 3. The app does **not** issue or renew certificates — only Host routing + ownership verify.
 
-Optional env: `PUBLIC_APP_HOST` for CNAME copy when it differs from the host of `VITE_WEB_URL` (see `packages/env/.env.example`).
+Primary app host for custom-domain checks is the host of `VITE_WEB_URL` (see `packages/env/.env.example`).
 
 ## Quick start (local)
 
