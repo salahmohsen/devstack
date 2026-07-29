@@ -2,6 +2,7 @@ import { heuristicClassifyMail, type MailClassifyOutput } from "@tsu-stack/core"
 import { mailMessageRepository } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { applyMailCrmEffectFromClassify } from "#@/queues/apply-mail-crm-effect";
 import { callMailClassifyAgent } from "#@/queues/call-mail-classify-agent";
 
 /**
@@ -11,6 +12,7 @@ import { callMailClassifyAgent } from "#@/queues/call-mail-classify-agent";
  * 1. Skip if missing / already classified / system notification
  * 2. Prefer Mastra `mail-classify-workflow` on AGENT_WORKER_URL when set
  * 3. Fall back to local heuristic
+ * 4. Propose/apply CRM stage effects when message is linked (audit for undo)
  */
 export async function runMailClassify(input: {
   messageId: string;
@@ -85,13 +87,22 @@ export async function runMailClassify(input: {
 
   await mailMessageRepository.applyClassification(row.id, row.userId, result.labels);
 
+  const crm = await applyMailCrmEffectFromClassify({
+    messageId: row.id,
+    userId: row.userId,
+    systemLabels: result.systemLabels
+  });
+
   log.set({
     event: "mail_classify_applied",
     messageId: row.id,
     userId: row.userId,
     source: result.source,
     systemLabels: result.systemLabels,
-    notes: result.notes ?? null
+    notes: result.notes ?? null,
+    crmApplied: crm.applied,
+    crmKind: crm.effect.kind,
+    crmReason: crm.effect.reason
   });
   log.emit();
 

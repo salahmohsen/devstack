@@ -244,5 +244,19 @@ export const mailMessageRepository = {
       .where(and(eq(mailMessage.id, id), eq(mailMessage.userId, userId)))
       .returning();
     return updated ?? null;
+  },
+
+  /** Link (or clear) a Career Inbox message to an Applications CRM row. */
+  async setApplicationId(
+    id: string,
+    userId: string,
+    applicationId: string | null
+  ): Promise<MailMessageEntity | null> {
+    const [updated] = await getDb()
+      .update(mailMessage)
+      .set({ applicationId })
+      .where(and(eq(mailMessage.id, id), eq(mailMessage.userId, userId)))
+      .returning();
+    return updated ?? null;
   }
 };

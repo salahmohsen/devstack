@@ -22,6 +22,11 @@ export {
   type InviteEntity
 } from "./invite.repository.ts";
 export {
+  mailCrmApplyRepository,
+  type CreateMailCrmApplyData,
+  type MailCrmApplyEntity
+} from "./mail-crm-apply.repository.ts";
+export {
   mailMessageRepository,
   type CreateMailAttachmentData,
   type CreateMailMessageData,

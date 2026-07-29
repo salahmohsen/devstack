@@ -76,6 +76,24 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       attachments: r.many.mailAttachment({
         from: r.mailMessage.id,
         to: r.mailAttachment.messageId
+      }),
+      crmApplies: r.many.mailCrmApply({
+        from: r.mailMessage.id,
+        to: r.mailCrmApply.messageId
+      })
+    },
+    mailCrmApply: {
+      user: r.one.user({
+        from: r.mailCrmApply.userId,
+        to: r.user.id
+      }),
+      message: r.one.mailMessage({
+        from: r.mailCrmApply.messageId,
+        to: r.mailMessage.id
+      }),
+      application: r.one.application({
+        from: r.mailCrmApply.applicationId,
+        to: r.application.id
       })
     },
     mailAttachment: {
