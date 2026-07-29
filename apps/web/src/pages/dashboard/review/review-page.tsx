@@ -227,7 +227,7 @@ function ReviewDetail({
             void confirm.mutateAsync({ id: detail.id }).then(() => onResolved());
           }}
         >
-          {confirm.isPending ? "Confirming…" : "Confirm"}
+          {confirm.isPending ? "Sending…" : "Send reply"}
         </Button>
         <Button
           type="button"

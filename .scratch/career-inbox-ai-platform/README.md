@@ -16,6 +16,7 @@
 | **6 — CRM from mail**  | Label → stage effects + audit + undo              | `31`–`36` | **Done** |
 | **7 — Match unlinked** | Company match / auto-create application from mail | `37`–`40` | **Done** |
 | **8 — Review queue**   | Reply drafts + `/dashboard/review` confirm path   | `41`–`46` | **Done** |
+| **9 — Outbound reply** | Resend send on confirm + Full auto-send           | `47`–`49` | **Done** |
 
 ## Mail UI (done)
 
@@ -83,6 +84,14 @@ See [REVIEW.md](./REVIEW.md).
 | `45`   | `/dashboard/review` page      | **Done** |
 | `46`   | Wave docs                     | **Done** |
 
+## Outbound reply (wave 9)
+
+| Ticket | Title                          | Status   |
+| ------ | ------------------------------ | -------- |
+| `47`   | `sendCareerReply` (BYO/env)    | **Done** |
+| `48`   | Confirm = send; Full auto-send | **Done** |
+| `49`   | Docs + Review UI “Send reply”  | **Done** |
+
 ## Next frontier
 
-**Outbound reply send** · Gmail OAuth sync · smart rules CRUD · app notifications · learning/corrections.
+**Gmail OAuth sync** · smart rules CRUD · app notifications · learning/corrections · Mastra reply agent.

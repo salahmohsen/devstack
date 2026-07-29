@@ -9,7 +9,7 @@ export function useConfirmReviewMutation() {
   return useMutation(
     orpcQueryClient.review.confirm.mutationOptions({
       onSuccess: async (data) => {
-        toast.success(data.sent ? "Marked sent (outbound stub)" : "Confirmed");
+        toast.success(data.note ?? (data.sent ? "Reply sent" : "Confirmed"));
         await Promise.all([
           queryClient.invalidateQueries({
             queryKey: orpcQueryClient.review.list.key({ type: "query" })
@@ -20,7 +20,7 @@ export function useConfirmReviewMutation() {
         ]);
       },
       onError: (error) => {
-        toast.error(error.message || "Could not confirm");
+        toast.error(error.message || "Could not send reply");
       }
     })
   );

@@ -1,6 +1,7 @@
+import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
 import { heuristicClassifyMail, type MailClassifyOutput } from "@tsu-stack/core";
-import { mailMessageRepository } from "@tsu-stack/db";
+import { mailMessageRepository, userAiSettingsRepository } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { applyMailCrmEffectFromClassify } from "#@/queues/apply-mail-crm-effect";
@@ -94,8 +95,9 @@ export async function runMailClassify(input: {
     systemLabels: result.systemLabels
   });
 
-  // Career-labeled mail → ensure Assist review draft exists (idempotent).
+  // Career-labeled mail → ensure review draft; Full autonomy auto-sends.
   let reviewDraftCreated: boolean | null = null;
+  let reviewAutoSent: boolean | null = null;
   if (result.systemLabels.length > 0) {
     const draft = await createReplyDraftFromMail({
       messageId: row.id,
@@ -103,6 +105,23 @@ export async function runMailClassify(input: {
     });
     if (draft.ok) {
       reviewDraftCreated = draft.created;
+      if (draft.created) {
+        const ai = await userAiSettingsRepository.findByUserId(row.userId);
+        if ((ai?.mailReplyAutonomy ?? "assist") === "full") {
+          const sent = await sendPendingReplyDraft({ item: draft.item, userId: row.userId });
+          reviewAutoSent = sent.ok && sent.result.sent;
+          if (!sent.ok) {
+            log.set({
+              event: "mail_reply_auto_send_failed",
+              messageId: row.id,
+              userId: row.userId,
+              code: sent.code,
+              message: sent.message ?? null
+            });
+            log.emit();
+          }
+        }
+      }
     }
   }
 
@@ -116,7 +135,8 @@ export async function runMailClassify(input: {
     crmApplied: crm.applied,
     crmKind: crm.effect.kind,
     crmReason: crm.effect.reason,
-    reviewDraftCreated
+    reviewDraftCreated,
+    reviewAutoSent
   });
   log.emit();
 

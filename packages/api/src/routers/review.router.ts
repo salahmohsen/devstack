@@ -11,6 +11,7 @@ import {
 import { reviewItemRepository, userAiSettingsRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { confirmReviewItem, sendPendingReplyDraft } from "#@/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "#@/lib/review/create-reply-draft-from-mail";
 
 function toListItem(
@@ -103,6 +104,15 @@ export const reviewRouter = {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
         throw errors.NOT_CAREER();
       }
+
+      // Full autonomy: send immediately after creating a new draft.
+      if (result.created) {
+        const ai = await userAiSettingsRepository.findByUserId(userId);
+        if ((ai?.mailReplyAutonomy ?? "assist") === "full") {
+          await sendPendingReplyDraft({ item: result.item, userId });
+        }
+      }
+
       const detail = await reviewItemRepository.findByIdForUser(result.item.id, userId);
       if (!detail) throw errors.NOT_FOUND();
       return toDetail(detail);
@@ -146,37 +156,30 @@ export const reviewRouter = {
   confirm: protectedProcedure
     .route({
       description:
-        "Confirm a pending review item. Assist → confirmed; Full → mark sent (outbound stub in v1).",
+        "Confirm a pending review item. Reply drafts are sent via Resend (BYO key preferred).",
       method: "POST"
     })
     .input(ReviewItemIdInputSchema)
     .output(ConfirmReviewItemOutputSchema)
     .errors({
       NOT_FOUND: { message: "Review item not found", status: 404 },
-      NOT_PENDING: { message: "Only pending items can be confirmed", status: 409 }
+      NOT_PENDING: { message: "Only pending items can be confirmed", status: 409 },
+      SEND_FAILED: {
+        message: "Could not send the reply",
+        status: 502
+      }
     })
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
-      const existing = await reviewItemRepository.findByIdForUser(input.id, userId);
-      if (!existing) throw errors.NOT_FOUND();
-      if (existing.status !== "pending") throw errors.NOT_PENDING();
-
-      const ai = await userAiSettingsRepository.findByUserId(userId);
-      const autonomy = ai?.mailReplyAutonomy ?? "assist";
-      // Full autonomy will send via Resend later; v1 records intent without outbound.
-      const wantSend = autonomy === "full" && existing.kind === "reply_draft";
-      const status = wantSend ? "sent" : "confirmed";
-      const updated = await reviewItemRepository.setStatus(input.id, userId, status);
-      if (!updated) throw errors.NOT_FOUND();
-
-      return {
-        id: updated.id,
-        status: updated.status,
-        sent: wantSend,
-        note: wantSend
-          ? "Marked sent under Full autonomy (outbound email not wired yet)."
-          : "Confirmed. Send from Review when Full autonomy + outbound ship."
-      };
+      const result = await confirmReviewItem({ applyId: input.id, userId });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "NOT_PENDING") throw errors.NOT_PENDING();
+        throw errors.SEND_FAILED({
+          message: result.message ?? "Could not send the reply"
+        });
+      }
+      return result.result;
     }),
 
   discard: protectedProcedure

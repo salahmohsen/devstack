@@ -74,7 +74,7 @@ export type ReviewItemIdInput = z.infer<typeof ReviewItemIdInputSchema>;
 export const ConfirmReviewItemOutputSchema = z.object({
   id: z.string(),
   status: ReviewItemStatusSchema,
-  /** True when Full autonomy path would send; v1 may stub outbound. */
+  /** True when the reply was accepted by Resend. */
   sent: z.boolean(),
   note: z.string().optional()
 });
