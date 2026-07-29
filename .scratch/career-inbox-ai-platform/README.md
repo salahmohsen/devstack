@@ -131,6 +131,15 @@ See [SMART-RULES.md](./SMART-RULES.md).
 | `57`   | Core/DB/API + classify keywords  | **Done** |
 | `58`   | Settings Rules UI + mail hub nav | **Done** |
 
+## Email notification channel (wave 14)
+
+See [NOTIFICATIONS.md](./NOTIFICATIONS.md).
+
+| Ticket | Title                         | Status   |
+| ------ | ----------------------------- | -------- |
+| `59`   | Resend email on channel prefs | **Done** |
+| `60`   | Wave docs                     | **Done** |
+
 ## Next frontier
 
-**Email notification channel** · learning/corrections · Mastra reply agent · scheduled Gmail sync
+**Learning / corrections** · Mastra reply agent · scheduled Gmail sync · digest batching

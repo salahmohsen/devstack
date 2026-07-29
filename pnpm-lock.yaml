@@ -911,6 +911,9 @@ importers:
       '@tsu-stack/db':
         specifier: workspace:*
         version: link:../db
+      '@tsu-stack/email':
+        specifier: workspace:*
+        version: link:../email
       '@tsu-stack/env':
         specifier: workspace:*
         version: link:../env
@@ -19993,7 +19996,7 @@ snapshots:
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
-      semver: 7.8.4
+      semver: 7.8.5
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.35.2
       '@img/sharp-darwin-x64': 0.35.2

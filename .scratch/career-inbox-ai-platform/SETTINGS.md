@@ -22,7 +22,7 @@ Per-user **AI settings** (providers, models per feature, reply Assist|Full) and 
 - Real provider API calls from settings (validate keys later)
 - Gmail connect (Connections epic)
 - Device OTP (later)
-- Full notification delivery pipeline (bell + email send)
+- ~~Full notification delivery pipeline (bell + email send)~~ → shipped waves 10 + 14
 
 ## Dependency graph
 
