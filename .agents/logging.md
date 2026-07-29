@@ -239,7 +239,7 @@ Wide-event **destination** is independent of the CLI. Prefer configuring drains 
 
 | Concern                                                  | Default for this monorepo                                                                                        |
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Structured wide events (requests, jobs, agent workflows) | **Axiom** (generous free personal ingest for small projects)                                                     |
+| Structured wide events (requests, jobs, agent workflows) | **Axiom** when `AXIOM_API_KEY` + `AXIOM_DATASET` are set (wired in `@tsu-stack/logger` `initLogger`)             |
 | Product analytics, session replay, feature flags         | **PostHog** SDK — intentional product events only (do not dump every request log)                                |
 | Exception product                                        | **PostHog** error tracking first (~100k free exceptions, unlimited seats); Sentry/GlitchTip only if needed later |
 | Mixing layers                                            | Do **not** route every INFO wide event into PostHog or Sentry free quotas                                        |

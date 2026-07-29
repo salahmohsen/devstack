@@ -19,7 +19,7 @@ export const MODEL_PRESETS = {
     // { model: "opencode/big-pickle", maxRetries: 2 }
   ],
 
-  /** Full fallback chain (hub supervisor, weather agent, etc.) */
+  /** Full fallback chain (hub supervisor and multi-step agents) */
   fullChain: [
     { model: "deepseek/deepseek-v4-flash", maxRetries: 1 }
     // { model: "deepseek/deepseek-v4-pro", maxRetries: 1 },

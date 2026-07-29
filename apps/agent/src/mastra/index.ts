@@ -18,16 +18,10 @@ import { PostgresStore } from "@mastra/pg";
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
 import { createResumeImportExtractorAgent } from "#@/mastra/agents/resume-import-extractor-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
-import { createWeatherAgent } from "#@/mastra/agents/weather-agent";
-import {
-  completenessScorer,
-  toolCallAppropriatenessScorer,
-  translationScorer
-} from "#@/mastra/scorers/weather-scorer";
+import "#@/mastra/logger-bootstrap";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
 import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow";
-import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 
 // Fail loud in logs when LLM keys required by model-config are missing.
 // Without this, detect-stacks fails mid-run with a generic agent-stream error.
@@ -97,18 +91,15 @@ export const mastra = new Mastra({
     ]
   },
   workflows: {
-    weatherWorkflow,
     detectStacksWorkflow,
     organizeStacksWorkflow,
     resumeImportWorkflow
   },
   agents: {
-    weatherAgent: createWeatherAgent(),
     stackCategorizerAgent: createStackCategorizerAgent(),
     hubSupervisor: createHubSupervisor(),
     resumeImportExtractor: createResumeImportExtractorAgent()
   },
-  scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
   storage,
   logger: new PinoLogger({
     name: "personal-hub-agent",

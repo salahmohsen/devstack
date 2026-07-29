@@ -33,7 +33,9 @@
     "@tsu-stack/core": "workspace:*",
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
+    "@tsu-stack/logger": "workspace:*",
     "drizzle-orm": "catalog:",
+    "hono": "catalog:",
     "ollama-ai-provider-v2": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"

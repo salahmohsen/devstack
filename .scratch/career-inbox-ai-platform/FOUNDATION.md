@@ -40,12 +40,19 @@ Merge order flexible for 01/02/03; land 04 after 01+02; 05/06 after 01.
 
 ## Progress
 
-- [x] **01** — branch `chore/upgrade-evlog-cli` (plan + implement done)
+- [x] **01** — upgrade evlog + CLI
+- [x] **02** — upgrade Mastra
+- [x] **03** — remove weather
+- [x] **04** — agent logger
+- [x] **05** — Axiom drain (env-gated)
+- [x] **06** — map baseline (score 53) + health probe suppress
+
+Branch: `chore/upgrade-evlog-cli` (full foundation wave)
 
 ## Done when
 
-- [ ] All six tickets acceptance criteria checked
-- [ ] Agent builds without weather
-- [ ] Doctor + map runnable for web
-- [ ] Axiom optional in prod via env
+- [x] All six tickets acceptance criteria checked
+- [x] Agent builds without weather
+- [x] Doctor + map runnable for web
+- [x] Axiom optional in prod via env
 - [ ] Ready to open Shell wave tickets (surface + island)

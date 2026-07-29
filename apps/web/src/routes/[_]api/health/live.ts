@@ -9,6 +9,7 @@ import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
 export const Route = createFileRoute("/_api/health/live")({
   server: {
     handlers: {
+      // evlog-map-disable-next-line wide-event, context -- liveness probe, deliberately silent
       GET: () => {
         const body = HealthLiveOutputSchema.parse({
           buildSha: ENV_WEB_SERVER.SOURCE_COMMIT,

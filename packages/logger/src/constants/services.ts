@@ -5,6 +5,7 @@
  * - `web__server`: TanStack Start / web SSR logs
  * - `web__client`: browser logs sent through the Hono ingest endpoint
  * - `server`: standalone Hono server logs
+ * - `agent`: Mastra agent process / AI job wide events
  * - `default`: fallback when a service is not explicitly selected
  *
  * Future feature-specific services should append segments, for example
@@ -16,6 +17,7 @@
 export const LOG_SERVICES = Object.freeze({
   DEFAULT: "default",
   SERVER: "server",
+  AGENT: "agent",
   WEB_CLIENT: "web__client",
   WEB_SERVER: "web__server"
 });

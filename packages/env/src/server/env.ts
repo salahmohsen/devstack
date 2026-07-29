@@ -67,6 +67,10 @@ export const ENV_SERVER = createEnv({
     GITHUB_CLIENT_SECRET: runtimeRequired(z.string().min(1)),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().optional(),
+    // Optional Axiom sink for @tsu-stack/logger wide events (both required to enable).
+    AXIOM_API_KEY: z.string().optional(),
+    AXIOM_DATASET: z.string().optional(),
+
     // Agent Worker URL — used as a fallback in dev when no Cloudflare service
     // binding is available. In production, prefer the AGENT_WORKER service
     // binding (which `createAgentWorker` checks first).

@@ -11,6 +11,7 @@ import {
   type ParsedError as EvlogParsedError,
   type RequestLogger as EvlogRequestLogger
 } from "evlog";
+import { createAxiomDrain } from "evlog/axiom";
 
 import { LOG_SERVICES } from "#@/constants/services";
 
@@ -42,6 +43,20 @@ const DEFAULT_SERVER_LOGGER_CONFIG = {
 let isInitialized = false;
 
 /**
+ * When `AXIOM_API_KEY` and `AXIOM_DATASET` are both set, attach Axiom as the
+ * wide-event drain. Callers can still pass an explicit `drain` in `config`
+ * to override. Local/dev without those env vars keeps the default sink.
+ */
+function resolveAxiomDrainFromEnv(): ServerLoggerConfig["drain"] | undefined {
+  const apiKey = process.env.AXIOM_API_KEY?.trim();
+  const dataset = process.env.AXIOM_DATASET?.trim();
+  if (!apiKey || !dataset) {
+    return undefined;
+  }
+  return createAxiomDrain({ apiKey, dataset });
+}
+
+/**
  * Initialize server-side evlog once for the current package.
  *
  * If `env.service` is omitted, logs use `LOG_SERVICES.DEFAULT`.
@@ -64,7 +79,14 @@ export function initLogger(config: ServerLoggerConfig = {}) {
     return;
   }
 
-  initEvlogLogger(defu(config, DEFAULT_SERVER_LOGGER_CONFIG) as ServerLoggerConfig);
+  const axiomDrain = config.drain === undefined ? resolveAxiomDrainFromEnv() : undefined;
+  const merged = defu(
+    config,
+    axiomDrain ? { drain: axiomDrain } : {},
+    DEFAULT_SERVER_LOGGER_CONFIG
+  ) as ServerLoggerConfig;
+
+  initEvlogLogger(merged);
   isInitialized = true;
 }
 

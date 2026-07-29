@@ -66,7 +66,7 @@ catalog:
   eslint-plugin-fsd-lint: ^1.2.1
   eslint-plugin-react-hooks: ^7.1.1
   evlog: ^2.22.4
-  hono: ^4.12.27
+  hono: ^4.12.32
   lucide-react: ^1.22.0
   next-themes: ^0.4.6
 
@@ -138,20 +138,20 @@ catalog:
   pdfnative: ^1.4.0
   pdfnative-react: ^0.2.0
   "@better-auth/drizzle-adapter": 1.7.0-rc.1
-  "mastra": "^1.18.2"
-  "@mastra/core": "^1.50.1"
-  "@mastra/duckdb": "^1.5.1"
-  "@mastra/evals": "^1.5.1"
+  "mastra": "^1.20.3"
+  "@mastra/core": "^1.54.0"
+  "@mastra/duckdb": "^1.5.2"
+  "@mastra/evals": "^1.6.0"
   "@mastra/libsql": "^1.15.1"
   "@mastra/loggers": "^1.2.0"
-  "@mastra/memory": "^1.22.2"
-  "@mastra/observability": "^1.16.0"
+  "@mastra/memory": "^1.24.0"
+  "@mastra/observability": "^1.16.3"
   "@mastra/hono": ^1.5.6
   "@mastra/deployer-cloudflare": ^1.2.7
-  "@mastra/ai-sdk": ^1.6.1
+  "@mastra/ai-sdk": ^1.7.0
   # Mastra's peerDep requires ai >= 5.0.76; current resolved is ai@6.0.208
   "@mastra/cloudflare-d1": ^1.1.1
-  "@mastra/pg": ^1.15.1
+  "@mastra/pg": ^1.18.0
   pg: ^8.21.0
   ai: ^6.0.208
   "@ai-sdk/react": ^2.0.212
@@ -173,20 +173,24 @@ catalogMode: prefer
 minimumReleaseAgeExclude:
   - miniflare@4.20260529.0
   - wrangler@4.96.0
-  - "@mastra/core@1.50.1"
-  - "@mastra/deployer@1.50.1"
-  - "@mastra/duckdb@1.5.1"
-  - "@mastra/memory@1.22.2"
-  - "@mastra/server@1.50.1"
-  - mastra@1.18.2
+  - "@mastra/core@1.54.0"
+  - "@mastra/deployer@1.54.0"
+  - "@mastra/duckdb@1.5.2"
+  - "@mastra/memory@1.24.0"
+  - "@mastra/server@1.54.0"
+  - mastra@1.20.3
   - "@dotenvx/primitives@1.8.1"
   - "@dotenvx/tooling@1.0.2"
   - "@evlog/cli@0.3.0"
+  - "@mastra/ai-sdk@1.7.0"
+  - "@mastra/observability@1.16.3"
+  - "@mastra/pg@1.18.0"
 
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
   drizzle-orm: "catalog:"
+  hono: "catalog:"
   kysely: 0.28.17
   yoga-layout: 2.0.1
 
