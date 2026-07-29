@@ -1,7 +1,7 @@
 # Career Inbox, AI Platform & Review — Program Design
 
 **Date:** 2026-07-29  
-**Status:** Draft (grilled; pending user review after spec polish)  
+**Status:** **Approved** (2026-07-29) — tickets under `.scratch/career-inbox-ai-platform/issues/`  
 **Goal:** Ship a multi-tenant **Career Inbox** and supporting **AI platform** (autonomy levels, providers/models, scorers, learning from corrections, notifications, confirmation review) that closes the loop on Applications CRM — plus foundation work (evlog/Mastra upgrades, logging, remove weather example, agent conventions).
 
 **Related:**
@@ -364,15 +364,15 @@ After this program spec is approved: **`/to-tickets`** (or superpowers **`writin
 
 ## Skill path (Ask Matt + Superpowers)
 
-| Phase               | Matt flow                               | Superpowers equivalent                               | Status                                      |
-| ------------------- | --------------------------------------- | ---------------------------------------------------- | ------------------------------------------- |
-| Sharpen idea        | `/grill-with-docs` + `/domain-modeling` | `/brainstorming` + grilling                          | **Done** (this thread)                      |
-| Spec                | `/to-spec`                              | Write `docs/superpowers/specs/…`                     | **This document**                           |
-| Tickets             | `/to-tickets`                           | `/writing-plans`                                     | Next after user approves spec               |
-| Build               | `/implement` + `/tdd`                   | `/subagent-driven-development` or `/executing-plans` | Per ticket, fresh context                   |
-| Review              | `/code-review`                          | `/code-review` / `/requesting-code-review`           | End of each ticket                          |
-| Cross-session       | `/handoff`                              | handoff skill                                        | If context near smart-zone                  |
-| Fog / huge map only | `/wayfinder`                            | —                                                    | **Not required** — decisions already frozen |
+| Phase               | Matt flow                               | Superpowers equivalent                               | Status                                                                      |
+| ------------------- | --------------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| Sharpen idea        | `/grill-with-docs` + `/domain-modeling` | `/brainstorming` + grilling                          | **Done** (this thread)                                                      |
+| Spec                | `/to-spec`                              | Write `docs/superpowers/specs/…`                     | **This document**                                                           |
+| Tickets             | `/to-tickets`                           | `/writing-plans`                                     | **Foundation published** (`.scratch/career-inbox-ai-platform/issues/01–06`) |
+| Build               | `/implement` + `/tdd`                   | `/subagent-driven-development` or `/executing-plans` | Per ticket, fresh context                                                   |
+| Review              | `/code-review`                          | `/code-review` / `/requesting-code-review`           | End of each ticket                                                          |
+| Cross-session       | `/handoff`                              | handoff skill                                        | If context near smart-zone                                                  |
+| Fog / huge map only | `/wayfinder`                            | —                                                    | **Not required** — decisions already frozen                                 |
 
 **Do not** re-triage tickets produced by `/to-tickets`.
 
