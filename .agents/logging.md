@@ -222,3 +222,16 @@ Workspace scripts (add when wiring foundation epic), e.g.:
 ```
 
 Run from repo root with the package that owns entry points in scope. Prefer JSON output in CI when enforcing a minimum score. Always verify current CLI flags with `evlog --help` or Context7 (`/hugorcd/evlog`, `/websites/evlog_dev`) after upgrades — do not invent flags from memory.
+
+## Hosted sinks (deployment)
+
+Wide-event **destination** is independent of the CLI. Prefer configuring drains inside `@tsu-stack/logger`, not per-app imports of `evlog` adapters.
+
+| Concern                                                  | Default for this monorepo                                                                                                                                |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Structured wide events (requests, jobs, agent workflows) | **Axiom** (generous free personal ingest for small projects)                                                                                             |
+| Exception product (stack traces, sourcemaps, replay)     | **Optional**, separate from wide events — Sentry SDK, GlitchTip, Highlight, etc. Do **not** require routing every INFO wide event into the error product |
+
+`evlog init` can scaffold Axiom, Sentry, OTLP, Better Stack, Datadog, HyperDX, PostHog, and more; use it as a recipe (`--dry-run`) if helpful. Error tracking **need not** use an evlog drain — a dedicated SDK is fine and keeps free error quotas from being burned by high-volume logs.
+
+Program decision detail: `docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md` (appendix: Observability sinks).

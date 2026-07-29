@@ -385,3 +385,94 @@ After this program spec is approved: **`/to-tickets`** (or superpowers **`writin
 - Design reference checkout: `/tmp/shadcn-mail-ref/mail-example` (ephemeral; re-fetch if missing).
 - CONTEXT.md updated with Career Inbox terms in the same change as this spec.
 - Historical hub-chat spec mentioning weather remains historical; implementation must not restore weather.
+
+---
+
+## Appendix: Observability sinks (evlog CLI + free-tier choices)
+
+### Separation of concerns (important)
+
+| Layer               | Role                                                               | Bound to CLI?                                 |
+| ------------------- | ------------------------------------------------------------------ | --------------------------------------------- |
+| **Runtime logging** | `@tsu-stack/logger` / evlog **wide events** (request/job outcomes) | No — drains configured in logger package      |
+| **`@evlog/cli`**    | Static **map** / **doctor** / optional **init** scaffolding        | CLI only; never required at runtime           |
+| **Error product**   | Exceptions, stack traces, source maps, optional session replay     | **Independent** of CLI — any SDK or self-host |
+
+**Yes:** if Sentry (or any error tool) is used **only for errors**, it does **not** have to go through `evlog init` or an evlog drain. Wire the Sentry (or alternative) SDK in web/server/agent for uncaught exceptions and leave **wide events → Axiom** via the logger facade.
+
+Conversely, sending every wide event _into_ Sentry as a log sink is optional and often wasteful on free tiers.
+
+### What `@evlog/cli` actually supports for prod drains
+
+`evlog init --prod-drain` is **not** limited to Axiom + Sentry. Documented destinations include at least:
+
+| Id             | Destination                 |
+| -------------- | --------------------------- |
+| `axiom`        | Axiom                       |
+| `sentry`       | Sentry                      |
+| `otlp`         | Any OpenTelemetry collector |
+| `posthog`      | PostHog                     |
+| `better-stack` | Better Stack                |
+| `datadog`      | Datadog                     |
+| `hyperdx`      | HyperDX                     |
+| `fs` / `none`  | Local files / console       |
+
+Multiple prod drains can fan out the **same** wide event. Prefer implementing drains **behind `@tsu-stack/logger`**, not scattering `createAxiomDrain` in apps. Use `init --dry-run` as a recipe if useful.
+
+CLI commands for coverage (orthogonal to SaaS choice):
+
+| Command                                  | Use for us                                 |
+| ---------------------------------------- | ------------------------------------------ |
+| `evlog map --cwd apps/web`               | Score dark routes (TanStack Start adapter) |
+| `evlog map --min-score N` / `--baseline` | CI ratchet                                 |
+| `evlog doctor`                           | Install / sink health after upgrades       |
+| `evlog telemetry disable`                | CLI privacy                                |
+
+### Free-tier comparison (small projects, ~2026)
+
+Numbers change; re-check vendor pages before locking production.
+
+#### Wide events / logs (primary for this monorepo)
+
+| Product      | Free-ish offer                                                                 | Best for                                                         |
+| ------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| **Axiom**    | Personal plan order of magnitude **~25 GB ingest / mo**, **~30-day** retention | Structured wide events, APL query, multi-service `service=` tags |
+| Sentry Logs  | Small free allotment on paid framing; not the reason to pick Sentry            | Secondary if already on Sentry                                   |
+| Better Stack | Free tier often time-limited or lower volume                                   | Logs + uptime in one brand                                       |
+
+**Primary free recommendation for wide events: Axiom.**
+
+#### Error / exception products (optional; not required to be an evlog drain)
+
+| Product              | Free generosity (approx.)                                             | Notes                                            |
+| -------------------- | --------------------------------------------------------------------- | ------------------------------------------------ |
+| **Sentry Developer** | **5k errors / mo**, **1 user**, tiny replays (~50), some tracing      | Best crash UX; **seat limit** bites if >1 person |
+| **Highlight.io**     | Free tier commonly **~1k sessions/mo** (+ error/replay style product) | More “session” oriented; check current quotas    |
+| **GlitchTip**        | Self-host = **unlimited** (your infra cost)                           | Sentry-compatible API; ops burden                |
+| **Better Stack**     | Free often short trial / limited                                      | Logs + incidents, not classic Sentry clone       |
+| **Self-host Sentry** | Unlimited volume                                                      | Heavy ops; rarely worth it for solo              |
+
+**More generous than Sentry free for raw error volume:**
+
+1. **GlitchTip (or self-host Sentry)** if you accept ops — no vendor error cap.
+2. **Highlight** may feel more generous for **session** quotas, not always for pure error counts — verify live.
+3. **Sentry free** remains best _product_ for “exception → stack → release” with zero ops, but **least generous on seats** (1 user) and caps hard at 5k errors.
+
+### Frozen observability decision for this program
+
+| Concern                                                      | Choice                                                                                                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wide events (mail, queue, agent jobs, review, notifications) | **Axiom** as primary sink via `@tsu-stack/logger`                                                                                                 |
+| Sampling                                                     | Keep **errors 100%**; sample **info** when volume grows (evlog sampling presets)                                                                  |
+| Exception / FE crash product                                 | **Optional.** Prefer **Sentry SDK** for UX if free 5k/1 seat is enough; explore **GlitchTip** if multi-user free or unlimited volume matters more |
+| Wire error tool via `evlog init --prod-drain sentry`?        | **Not required.** Prefer dedicated SDK for errors so free quotas aren’t burned by wide-event spam                                                 |
+| CLI                                                          | `@evlog/cli` for **map/doctor/CI**; not the source of truth for which error SaaS we pick                                                          |
+| Agent                                                        | Wide events via logger → Axiom; Mastra traces stay Mastra/DuckDB/Studio                                                                           |
+
+### Implementation notes (foundation epic)
+
+1. Upgrade `evlog` + pin `@evlog/cli`; scripts `log:map`, `log:doctor`.
+2. Axiom env: `AXIOM_DATASET`, `AXIOM_API_KEY` in server/agent deploy.
+3. Do not force Sentry until a concrete need (sourcemaps, replay, multi-project issues).
+4. If adding errors SaaS: one project per surface or tags `service=web|server|agent`.
+5. Document chosen sinks in `.agents/logging.md` when implemented (link-only from root `Agents.md` already).
