@@ -37,6 +37,12 @@ export type ResolvePublicPortfolioContextInput = {
   host?: string | null;
   /** Path segment `/:profileName` when present. */
   pathProfileName?: string | null;
+  /**
+   * Authenticated user id. Used only when Host/path do not resolve a public
+   * identity (dashboard chrome calling portfolio.list without a public slug).
+   * Never overrides an explicit pathProfileName — wrong slugs still 404.
+   */
+  sessionUserId?: string | null;
 };
 
 /**
@@ -45,7 +51,8 @@ export type ResolvePublicPortfolioContextInput = {
  * Order:
  * 1. Host matches a **verified** custom domain → that user, mode `custom_domain`
  * 2. Else path profileName / slug alias → that user, mode `path`
- * 3. Else null (community landing / 404)
+ * 3. Else session user (no path/host match) → that user, mode `path`
+ * 4. Else null (community landing / 404)
  */
 export async function resolvePublicPortfolioContext(
   input: ResolvePublicPortfolioContextInput
@@ -78,6 +85,20 @@ export async function resolvePublicPortfolioContext(
           mode: "path"
         };
       }
+    }
+    // Explicit slug that does not resolve stays not-found (do not fall back to session).
+    return null;
+  }
+
+  const sessionUserId = input.sessionUserId?.trim();
+  if (sessionUserId) {
+    const user = await userRepository.findById(sessionUserId);
+    if (user?.profileName) {
+      return {
+        userId: user.id,
+        profileName: user.profileName,
+        mode: "path"
+      };
     }
   }
 

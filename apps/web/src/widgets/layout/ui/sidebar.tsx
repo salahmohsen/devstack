@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { useLocation, useParams } from "@tanstack/react-router";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react";
 import {
   Sidebar001,
@@ -76,9 +78,18 @@ export function PublicSidebar() {
   const { user } = useAuthSuspense();
   const isSignedIn = !!user;
 
-  // Prefer the public profile route param; fall back to the signed-in user's name for dashboard.
-  const profileName = params.profileName ?? sessionProfileName(user) ?? "";
-  const portfolioQuery = useGetPortfolioListQuery(profileName, { enabled: Boolean(profileName) });
+  // Session may omit additionalFields depending on client plugins; profile.get is authoritative.
+  const ownProfileQuery = useQuery({
+    ...orpcQueryClient.profile.get.queryOptions({ input: { disableContacts: true } }),
+    enabled: isSignedIn
+  });
+
+  // Prefer the public profile route param; fall back to session / own profile for dashboard.
+  const profileName =
+    params.profileName ?? sessionProfileName(user) ?? ownProfileQuery.data?.profileName ?? "";
+  const portfolioQuery = useGetPortfolioListQuery(profileName, {
+    enabled: Boolean(profileName)
+  });
 
   const publicItems: NavItem[] = [
     ...PublicItems,

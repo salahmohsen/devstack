@@ -136,7 +136,9 @@ export const PortfolioRouter = {
       try {
         const resolved = await resolvePublicPortfolioContext({
           host: context.host,
-          pathProfileName: input.profileName
+          pathProfileName: input.profileName,
+          // Dashboard sidebar/contacts may omit profileName; resolve as self.
+          sessionUserId: context.session?.user?.id
         });
         if (!resolved) {
           throw errors.NOT_FOUND();
