@@ -1,6 +1,8 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
+import { createLogger } from "@tsu-stack/logger/server";
+
 import {
   EnrichActionSchema,
   MergeActionSchema,
@@ -113,7 +115,11 @@ Return ALL remaining stack IDs in order.`;
         sortOrder: validOrder
       };
     } catch (error) {
-      console.error("[organize-stacks] Sort analysis failed:", error);
+      const log = createLogger({ operation: "agent__organize_stacks_sort" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "organize_stacks_sort_failed"
+      });
+      log.emit({ _forceKeep: true });
       return {
         stacks,
         mergeActions,

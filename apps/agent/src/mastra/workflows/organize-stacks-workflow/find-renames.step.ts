@@ -2,6 +2,7 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import { normalizeOrganizeName } from "@tsu-stack/core";
+import { createLogger } from "@tsu-stack/logger/server";
 
 import {
   MergeActionSchema,
@@ -151,7 +152,11 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
           });
         }
       } catch (error) {
-        console.error("[organize-stacks] Rename analysis failed for chunk:", error);
+        const log = createLogger({ operation: "agent__organize_stacks_rename" });
+        log.error(error instanceof Error ? error : new Error(String(error)), {
+          event: "organize_stacks_rename_chunk_failed"
+        });
+        log.emit({ _forceKeep: true });
       }
     }
 

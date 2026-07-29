@@ -1,6 +1,8 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
+import { createLogger } from "@tsu-stack/logger/server";
+
 import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 import {
   EnrichActionSchema,
@@ -178,7 +180,11 @@ Do not invent icons for stacks that already have one.`;
           });
         }
       } catch (error) {
-        console.error("[organize-stacks] Enrichment analysis failed for chunk:", error);
+        const log = createLogger({ operation: "agent__organize_stacks_enrich" });
+        log.error(error instanceof Error ? error : new Error(String(error)), {
+          event: "organize_stacks_enrich_chunk_failed"
+        });
+        log.emit({ _forceKeep: true });
       }
     }
 

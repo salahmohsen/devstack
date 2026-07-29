@@ -20,7 +20,7 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { getApiBasePath, joinApiPath } from "@tsu-stack/env/utils/url";
 import { handleGitHubWebhook } from "@tsu-stack/github";
 import { createRedisCacheAdapter } from "@tsu-stack/github/infrastructure/cache/redis-cache-adapter";
-import { log, parseError } from "@tsu-stack/logger/server";
+import { createLogger, log, parseError } from "@tsu-stack/logger/server";
 import {
   honoLogIngestionMiddleware,
   honoLoggerMiddleware,
@@ -99,6 +99,16 @@ app.get("/health/ready", async (c) => {
   }
 
   const allHealthy = Object.values(checks).every((v) => v.status === "healthy");
+  if (!allHealthy) {
+    // Health routes are excluded from honoLoggerMiddleware — emit a durable event only when degraded.
+    const readyLog = createLogger({ operation: "server__health_ready" });
+    readyLog.set({
+      event: "health_ready_unhealthy",
+      checks
+    });
+    readyLog.emit({ _forceKeep: true });
+  }
+
   return c.json(
     {
       status: allHealthy ? "healthy" : "unhealthy",
@@ -151,7 +161,13 @@ app.get("/auth/open-api/generate-schema", async (c) => {
 app.on(["POST", "GET"], "/auth/*", async (c) => auth.handler(c.req.raw));
 
 app.post("/webhooks/github", async (c) => {
+  const requestLog = c.get("log");
+
   if (!ENV_SERVER.GITHUB_WEBHOOK_SECRET) {
+    requestLog?.set({
+      event: "github_webhook_not_configured",
+      status: 503
+    });
     return c.json({ message: "GitHub webhook secret is not configured." }, 503);
   }
 
@@ -159,7 +175,16 @@ app.post("/webhooks/github", async (c) => {
   const event = c.req.header("x-github-event");
   const signature256 = c.req.header("x-hub-signature-256");
 
+  requestLog?.set({
+    event: "github_webhook_received",
+    github: {
+      deliveryId: deliveryId ?? null,
+      event: event ?? null
+    }
+  });
+
   if (!deliveryId || !event) {
+    requestLog?.set({ event: "github_webhook_missing_headers", status: 400 });
     return c.json({ message: "Missing GitHub webhook headers." }, 400);
   }
 
@@ -169,6 +194,7 @@ app.post("/webhooks/github", async (c) => {
   try {
     payload = JSON.parse(rawBody);
   } catch {
+    requestLog?.set({ event: "github_webhook_invalid_json", status: 400 });
     return c.json({ message: "GitHub webhook body must be valid JSON." }, 400);
   }
 
@@ -188,6 +214,11 @@ app.post("/webhooks/github", async (c) => {
       },
       signature256: signature256 ?? null,
       webhookSecret
+    });
+
+    requestLog?.set({
+      event: "github_webhook_handled",
+      status: result.status
     });
 
     return c.json({ ok: true }, result.status);

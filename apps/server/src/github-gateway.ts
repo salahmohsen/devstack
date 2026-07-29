@@ -4,6 +4,8 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import Redis from "ioredis";
 import { Server as SocketIOServer } from "socket.io";
 
+import { createLogger } from "@tsu-stack/logger/server";
+
 let _broadcastSignals: ((keys: string[]) => void) | null = null;
 
 export function createGithubGateway(httpServer: HTTPServer, redisUrl: string) {
@@ -28,26 +30,34 @@ export function createGithubGateway(httpServer: HTTPServer, redisUrl: string) {
 
   const onRedisError = (err: Error) => {
     if (err.message.includes("ECONNREFUSED")) return;
-    console.warn("[ws-redis]", err.message);
+    const log = createLogger({ operation: "server__ws_redis_error" });
+    log.set({ event: "ws_redis_error", message: err.message });
+    log.emit({ _forceKeep: true });
   };
   pubClient.on("error", onRedisError);
   subClient.on("error", onRedisError);
 
   Promise.all([pubClient.ping().catch(() => null), subClient.ping().catch(() => null)])
     .then(([pubOk, subOk]) => {
+      const log = createLogger({ operation: "server__ws_redis_adapter" });
       if (pubOk && subOk) {
         io.adapter(createAdapter(pubClient, subClient));
-        console.log("[ws] Redis adapter connected");
+        log.set({ event: "ws_redis_adapter_connected" });
+        log.emit();
       } else {
-        console.warn("[ws] Redis unavailable — running without Redis adapter");
+        log.set({ event: "ws_redis_adapter_unavailable" });
+        log.emit({ _forceKeep: true });
       }
     })
     .catch(() => {
-      console.warn("[ws] Redis unavailable — running without Redis adapter");
+      const log = createLogger({ operation: "server__ws_redis_adapter" });
+      log.set({ event: "ws_redis_adapter_unavailable" });
+      log.emit({ _forceKeep: true });
     });
 
   io.on("connection", (socket) => {
-    console.log(`[WS] Client connected: ${socket.id}`);
+    // Connection volume can be high — keep at debug-equivalent by omitting routine connect/disconnect
+    // from durable wide events. Subscribe failures would be a future enhancement.
 
     socket.on("subscribe", (payload: { keys: string[] }) => {
       if (payload?.keys && Array.isArray(payload.keys)) {
@@ -55,10 +65,6 @@ export function createGithubGateway(httpServer: HTTPServer, redisUrl: string) {
           void socket.join(`signal:${key}`);
         }
       }
-    });
-
-    socket.on("disconnect", () => {
-      console.log(`[WS] Client disconnected: ${socket.id}`);
     });
   });
 
