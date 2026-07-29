@@ -1,5 +1,13 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type PluginOption } from "vite-plus";
+
+/** Monorepo root — oxlint-tailwind entryPoints must not depend on process.cwd(). */
+const monorepoRoot = dirname(fileURLToPath(import.meta.url));
+const uiGlobalsCss = resolve(monorepoRoot, "packages/ui/styles/globals.css");
+const webAppCss = resolve(monorepoRoot, "apps/web/src/shared/styles/app.css");
 
 const fsdEslintPluginOptions = {
   rootPath: "/apps/web/src/",
@@ -157,11 +165,21 @@ export default defineConfig({
       "oxlint-tailwindcss"
     ],
     settings: {
+      /**
+       * Absolute CSS paths: relative entryPoints resolve against oxlint cwd, so
+       * package-local `vp check` from apps/web looked for
+       * `apps/web/packages/ui/styles/globals.css` and failed. Absolute paths work
+       * from root and from package packages. Extra globs cover cwd-relative paths
+       * when linting inside apps/web (`src/**`) or packages/ui.
+       */
       tailwindcss: {
         entryPoint: [
-          { files: "packages/ui/**", use: "./packages/ui/styles/globals.css" },
-          { files: "apps/web/**", use: "./apps/web/src/shared/styles/app.css" },
-          { files: "**", use: "./packages/ui/styles/globals.css" }
+          { files: "packages/ui/**", use: uiGlobalsCss },
+          { files: "**/packages/ui/**", use: uiGlobalsCss },
+          { files: "apps/web/**", use: webAppCss },
+          // When `vp check` runs with cwd=apps/web, files are `src/...` not `apps/web/...`
+          { files: "src/**", use: webAppCss },
+          { files: "**", use: uiGlobalsCss }
         ]
       }
     },

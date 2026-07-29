@@ -45,6 +45,9 @@ async function start(): Promise<void> {
   if (ENV_SERVER.REDIS_URL) {
     createGithubGateway(httpServer, ENV_SERVER.REDIS_URL);
     setBroadcastSignals(broadcastSignals);
+    // Career Inbox classify queue (BullMQ on same REDIS_URL). Worker is a stub until Mastra epic.
+    const { startMailClassifyQueue } = await import("#@/queues/mail-classify-queue");
+    startMailClassifyQueue(ENV_SERVER.REDIS_URL);
   }
 }
 

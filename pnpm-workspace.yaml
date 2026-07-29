@@ -160,6 +160,7 @@ catalog:
   "@hono/node-server": ^1.19.14
   "@socket.io/redis-adapter": ^8.3.0
   "ioredis": ^5.4.2
+  bullmq: ^5.58.0
   "socket.io": ^4.7.5
   "socket.io-client": ^4.7.5
   nitro: npm:nitro-nightly@3.0.1-20260128-211656-ae83c97e

@@ -18,7 +18,7 @@ Persist tenant-scoped Career Inbox mail, expose protected list/get by category, 
 | Web mail                           | Drill-in list/reader uses real API; empty state when no rows (no mock fallback)            |
 | Resend inbound                     | BYO per user: Settings → Mail secrets; `POST /webhooks/resend/:token`; idempotent persist  |
 | Mail settings                      | Sealed Resend API key + webhook secret, inbound address, enable toggle, rotate URL         |
-| Classify queue                     | BullMQ (or repo Redis patterns) job scaffold for classify — worker can be stub             |
+| Classify queue                     | BullMQ on `REDIS_URL`; producer from webhook; worker stub logs payload                     |
 
 ## Dependency graph
 
@@ -45,7 +45,7 @@ Persist tenant-scoped Career Inbox mail, expose protected list/get by category, 
 | Variable                        | When                       | Notes                                                                                                          |
 | ------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`                  | Always (existing)          | **Migrate only if host is `localhost` / `127.0.0.1`**                                                          |
-| `REDIS_URL`                     | Queue scaffold (25)        | Already used by server (ioredis cache + Socket.IO); queues reuse same Redis                                    |
+| `REDIS_URL`                     | Queue scaffold (25)        | Shared: GitHub cache + Socket.IO + BullMQ classify. Without it, enqueue is no-op and worker is not started.    |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Outbound product/auth mail | Platform/operator Resend for product mail only — **not** Career Inbox inbound                                  |
 | (per-user sealed)               | Career Inbox inbound (24)  | Resend API key + webhook signing secret on `user_mail_settings` (Settings → Mail). No platform inbound secret. |
 
@@ -55,27 +55,31 @@ Persist tenant-scoped Career Inbox mail, expose protected list/get by category, 
 - Never unscoped `findAll()` for private mail.
 - Default mail query: `purpose != system_notification` (and not matching notification identity when that lands).
 
-## Redis
+## Redis / classify queue
 
-- **In use today:** ioredis for GitHub cache + Socket.IO adapter (`apps/server`).
-- **Wave 4:** add BullMQ-class queue for classify jobs only — do **not** invent a second Redis client stack if ioredis connection patterns already exist; share `REDIS_URL`.
+- **In use:** ioredis for GitHub cache + Socket.IO adapter (`apps/server`).
+- **Classify:** BullMQ queue `mail-classify`, job `classify-message`, payload `{ messageId, userId, enqueuedAt? }`.
+- **Producer:** `enqueueMailClassify` from Resend webhook after successful persist (not on duplicate).
+- **Worker:** same `apps/server` process when `REDIS_URL` is set — stub logs `mail_classify_job_stub` (Mastra later).
+- **Code:** `apps/server/src/queues/mail-classify-queue.ts`, contracts in `packages/core/src/mail/classify-queue.ts`.
 - Sessions stay Postgres (Better Auth).
 
 ## Related UI
 
 - Live category drill-in: `apps/web/src/pages/dashboard/mail/mail-category-page.tsx`
 - Query wrappers: `apps/web/src/features/mail/` (`list-mail.query.ts`, `get-mail.query.ts`)
+- Settings BYO Resend: `apps/web/src/pages/dashboard/settings/ui/mail-settings.tsx`
 - Categories: applications, recruiters, interviews, offers, unsorted, all (+ future `rule:*`)
 - Nav counts: active category shows `list.length` only (no unread aggregate yet)
 
 ## Progress
 
-| Ticket            | Status  | Notes                                                 |
-| ----------------- | ------- | ----------------------------------------------------- |
-| 20 core           | done    | `packages/core/src/mail/`                             |
-| 21 db             | done    | `mail_message` + attachments, migration applied local |
-| 22 repo + oRPC    | done    | `mail.list` / `mail.get` protected                    |
-| 23 web wire-up    | done    | Real list/get + empty state; mock fixtures only       |
-| 24 Resend inbound | done    | BYO Settings → Mail + `/webhooks/resend/:token`       |
-| 25 classify queue | pending | BullMQ/redis scaffold after 22/24                     |
-| 26 docs           | pending | After 22+; ideally after 23–25                        |
+| Ticket            | Status | Notes                                                 |
+| ----------------- | ------ | ----------------------------------------------------- |
+| 20 core           | done   | `packages/core/src/mail/`                             |
+| 21 db             | done   | `mail_message` + attachments, migration applied local |
+| 22 repo + oRPC    | done   | `mail.list` / `mail.get` protected                    |
+| 23 web wire-up    | done   | Real list/get + empty state; mock fixtures only       |
+| 24 Resend inbound | done   | BYO Settings → Mail + `/webhooks/resend/:token`       |
+| 25 classify queue | done   | BullMQ `mail-classify` producer + worker stub         |
+| 26 docs           | done   | This file + program README                            |

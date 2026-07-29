@@ -17,6 +17,7 @@ export type HandleResendInboundResult = {
   status: 200 | 202 | 400 | 401 | 404 | 503;
   reason: string;
   messageId?: string;
+  userId?: string;
   duplicate?: boolean;
 };
 
@@ -116,6 +117,7 @@ export async function handleResendInboundWebhook(input: {
       status: 200,
       reason: "duplicate",
       messageId: existing.id,
+      userId: settings.userId,
       duplicate: true
     };
   }
@@ -204,11 +206,11 @@ export async function handleResendInboundWebhook(input: {
     });
   }
 
-  // Classify queue (ticket 25) — stub: no-op enqueue.
   return {
     status: 200,
     reason: "persisted",
     messageId: message.id,
+    userId: settings.userId,
     duplicate: false
   };
 }

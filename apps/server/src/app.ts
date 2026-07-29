@@ -28,6 +28,7 @@ import {
   type HonoLogVariables
 } from "@tsu-stack/logger/server/hono/middleware";
 
+import { enqueueMailClassify } from "#@/queues/mail-classify-queue";
 import { getRuntime } from "#@/runtime-context";
 import "#@/shared/lib/logger";
 
@@ -259,13 +260,36 @@ app.post("/webhooks/resend/:webhookToken", async (c) => {
       svixSignature: svixSignature ?? null
     });
 
+    let classifyJobId: string | null = null;
+    if (
+      result.status === 200 &&
+      result.reason === "persisted" &&
+      result.messageId &&
+      result.userId &&
+      !result.duplicate
+    ) {
+      try {
+        const enqueued = await enqueueMailClassify({
+          messageId: result.messageId,
+          userId: result.userId
+        });
+        classifyJobId = enqueued.jobId ?? null;
+      } catch (error) {
+        requestLog?.error(error instanceof Error ? error : String(error), {
+          event: "resend_classify_enqueue_failed",
+          messageId: result.messageId
+        });
+      }
+    }
+
     requestLog?.set({
       event: "resend_webhook_handled",
       status: result.status,
       resend: {
         reason: result.reason,
         messageId: result.messageId ?? null,
-        duplicate: result.duplicate ?? false
+        duplicate: result.duplicate ?? false,
+        classifyJobId
       }
     });
 
@@ -287,7 +311,8 @@ app.post("/webhooks/resend/:webhookToken", async (c) => {
         ok: true,
         reason: result.reason,
         messageId: result.messageId ?? null,
-        duplicate: result.duplicate ?? false
+        duplicate: result.duplicate ?? false,
+        classifyJobId
       },
       result.status
     );

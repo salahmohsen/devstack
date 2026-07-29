@@ -4,10 +4,10 @@
 
 **Blocked by:** 22 (message ids exist); 24 can call enqueue
 
-**Status:** pending
+**Status:** done
 
-- [ ] Inspect current ioredis usage (`apps/server` runtime, github gateway)
-- [ ] Queue name + job payload type (messageId, userId)
-- [ ] Producer helper callable from webhook
-- [ ] Worker process or agent-adjacent consumer stub (no full Mastra classify)
-- [ ] Document run command / env (`REDIS_URL`)
+- [x] Inspect current ioredis usage (`apps/server` runtime, github gateway)
+- [x] Queue name + job payload type (`messageId`, `userId`) in `packages/core/src/mail/classify-queue.ts`
+- [x] Producer helper callable from webhook (`enqueueMailClassify` in `apps/server/src/queues/mail-classify-queue.ts`)
+- [x] Worker process in `apps/server` when `REDIS_URL` set — logs job stub (no full Mastra classify)
+- [x] Document run command / env (`REDIS_URL` in `.env.example` + MAIL-BACKEND.md)
