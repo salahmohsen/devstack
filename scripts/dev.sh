@@ -137,20 +137,89 @@ for port in 3000 4206 5200 4111 9229; do
   lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
 done
 
+# ─── Step 5b: Optional public HTTPS tunnel for Resend webhooks ────
+# Resend (and most SaaS webhooks) cannot POST to http://localhost — they
+# need a public HTTPS origin. Local mkcert HTTPS still is not reachable
+# from the internet. Use a Cloudflare quick tunnel to :5200 instead:
+#
+#   DEV_TUNNEL=1 pnpm dev
+#   pnpm dev --tunnel
+#   DEV_PUBLIC_SERVER_URL=https://your-fixed-tunnel.example pnpm dev
+#
+# Web stays on http://localhost:3000 (browser). API public URL becomes HTTPS
+# so Settings → Mail webhook URL + CORS-facing VITE_SERVER_URL match Resend.
+USE_TUNNEL=0
+for arg in "$@"; do
+  case "$arg" in
+    --tunnel|-t) USE_TUNNEL=1 ;;
+  esac
+done
+if [ "${DEV_TUNNEL:-0}" = "1" ] || [ "${DEV_TUNNEL:-}" = "true" ]; then
+  USE_TUNNEL=1
+fi
+
+PUBLIC_SERVER_URL="${DEV_PUBLIC_SERVER_URL:-}"
+TUNNEL_PID=""
+TUNNEL_LOG="${TMPDIR:-/tmp}/tsu-stack-cloudflared-$$.log"
+
+if [ -n "$PUBLIC_SERVER_URL" ]; then
+  ok "Using fixed public API URL: $PUBLIC_SERVER_URL"
+elif [ "$USE_TUNNEL" = "1" ]; then
+  command -v cloudflared >/dev/null 2>&1 || fail "cloudflared not installed (brew install cloudflared) — required for DEV_TUNNEL=1"
+  info "Starting Cloudflare quick tunnel → http://127.0.0.1:5200 ..."
+  : >"$TUNNEL_LOG"
+  cloudflared tunnel --url "http://127.0.0.1:5200" --no-autoupdate >"$TUNNEL_LOG" 2>&1 &
+  TUNNEL_PID=$!
+
+  PUBLIC_SERVER_URL=""
+  for _i in $(seq 1 40); do
+    if ! kill -0 "$TUNNEL_PID" 2>/dev/null; then
+      fail "cloudflared exited early — see $TUNNEL_LOG"
+    fi
+    # Quick tunnels print https://*.trycloudflare.com once ready.
+    PUBLIC_SERVER_URL="$(
+      grep -oE 'https://[a-zA-Z0-9.-]+\.trycloudflare\.com' "$TUNNEL_LOG" 2>/dev/null | head -1 || true
+    )"
+    if [ -n "$PUBLIC_SERVER_URL" ]; then
+      break
+    fi
+    sleep 0.5
+  done
+
+  if [ -z "$PUBLIC_SERVER_URL" ]; then
+    fail "Timed out waiting for cloudflared HTTPS URL — see $TUNNEL_LOG"
+  fi
+  ok "Public API tunnel: $PUBLIC_SERVER_URL"
+else
+  PUBLIC_SERVER_URL="http://localhost:5200"
+fi
+
 # ─── Step 6: Start apps ──────────────────────────────────────────
 info "Starting all apps in dev mode..."
 echo ""
-echo -e "  ${CYAN}Server${RESET}  → http://localhost:5200"
-echo -e "  ${CYAN}Web${RESET}     → http://localhost:3000"
-echo -e "  ${CYAN}Agent${RESET}  → http://localhost:4111"
+echo -e "  ${CYAN}Server (local)${RESET}  → http://localhost:5200"
+if [ "$PUBLIC_SERVER_URL" != "http://localhost:5200" ]; then
+  echo -e "  ${CYAN}Server (public)${RESET} → ${GREEN}${PUBLIC_SERVER_URL}${RESET}"
+  echo -e "  ${CYAN}Resend webhook${RESET}  → ${PUBLIC_SERVER_URL}/webhooks/resend/<token>"
+fi
+echo -e "  ${CYAN}Web${RESET}              → http://localhost:3000"
+echo -e "  ${CYAN}Agent${RESET}            → http://localhost:4111"
 echo ""
-echo -e "  ${YELLOW}Note: GitHub OAuth callback URL: http://localhost:5200/auth/callback/github${RESET}"
-echo -e "  ${YELLOW}Make sure this is registered in your GitHub OAuth app settings.${RESET}"
+if [ "$PUBLIC_SERVER_URL" = "http://localhost:5200" ]; then
+  echo -e "  ${YELLOW}Resend webhooks need public HTTPS. Re-run with:${RESET}"
+  echo -e "  ${YELLOW}  DEV_TUNNEL=1 pnpm dev${RESET}"
+  echo -e "  ${YELLOW}  # or: pnpm dev --tunnel${RESET}"
+  echo ""
+fi
+echo -e "  ${YELLOW}GitHub OAuth callback (local): http://localhost:5200/auth/callback/github${RESET}"
+if [ "$PUBLIC_SERVER_URL" != "http://localhost:5200" ]; then
+  echo -e "  ${YELLOW}Webhook / public API origin: ${PUBLIC_SERVER_URL}${RESET}"
+fi
 echo ""
 echo -e "  ${YELLOW}Press Ctrl+C to stop all services${RESET}"
 echo ""
 
-# Trap Ctrl+C to also stop docker infra
+# Trap Ctrl+C to also stop docker infra + tunnel
 cleanup() {
   echo ""
   info "Stopping apps..."
@@ -160,10 +229,17 @@ cleanup() {
   for port in 3000 4206 5200 4111 9229; do
     lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
   done
+  if [ -n "${TUNNEL_PID:-}" ] && kill -0 "$TUNNEL_PID" 2>/dev/null; then
+    info "Stopping Cloudflare tunnel (pid $TUNNEL_PID)..."
+    kill "$TUNNEL_PID" 2>/dev/null || true
+  fi
+  # Best-effort: any leftover cloudflared for this log file
+  pkill -f "cloudflared tunnel --url http://127.0.0.1:5200" 2>/dev/null || true
   kill $(jobs -p) 2>/dev/null || true
   sleep 1
   info "Stopping infrastructure..."
   docker compose -f "$INFRA_COMPOSE" down
+  rm -f "$TUNNEL_LOG" 2>/dev/null || true
   ok "All services stopped"
 }
 trap cleanup EXIT INT TERM
@@ -175,6 +251,6 @@ trap cleanup EXIT INT TERM
 #
 # API mounts at URL root (no /server path). VITE_SERVER_URL pathname is
 # empty → Hono has no basePath; oRPC client calls `${VITE_SERVER_URL}/rpc`.
-# Keep this in sync with packages/env/.env — a leftover `/server` suffix
-# (from the pre-dedicated-api-host setup) causes 404 on every procedure.
-VITE_SERVER_URL="http://localhost:5200" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev
+# When tunneling, VITE_SERVER_URL is the public HTTPS origin so webhook URL
+# generation (Settings → Mail) and Resend match.
+VITE_SERVER_URL="$PUBLIC_SERVER_URL" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev

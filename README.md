@@ -45,9 +45,14 @@ pnpm db:setup
 
 # Apps (web + server + agent via scripts/dev.sh)
 pnpm dev
+
+# Public HTTPS tunnel for Resend (and other) webhooks — needs cloudflared
+pnpm dev:tunnel
 ```
 
 Configure `VITE_WEB_URL`, `VITE_SERVER_URL`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, and GitHub OAuth as needed. LLM features need `DEEPSEEK_API_KEY` (or other keys matching agent model config); leave empty to skip AI-heavy steps.
+
+**Local Resend webhooks:** SaaS providers cannot reach `http://localhost`. `pnpm dev:tunnel` starts a Cloudflare quick tunnel to the API (`:5200`), sets `VITE_SERVER_URL` to the public `https://…trycloudflare.com` origin, and prints the webhook base URL for Settings → Mail. The web app still opens at `http://localhost:3000`. Fixed tunnels: `DEV_PUBLIC_SERVER_URL=https://… pnpm dev`.
 
 ## Monorepo layout
 
