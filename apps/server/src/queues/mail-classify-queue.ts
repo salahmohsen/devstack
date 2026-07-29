@@ -6,17 +6,19 @@ import {
   MailClassifyJobPayloadSchema,
   type MailClassifyJobPayload
 } from "@tsu-stack/core";
+import { createDb, runWithDb } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { runMailClassify } from "#@/queues/run-mail-classify";
+
 /**
- * Career Inbox classify queue scaffold.
+ * Career Inbox classify queue.
  *
  * - Shares `REDIS_URL` with Socket.IO adapter / GitHub cache (no second Redis stack).
  * - Producer: {@link enqueueMailClassify}
- * - Worker: logs job payload; Mastra classify is a later epic.
+ * - Worker: heuristic classify (v1) → labels + classifiedAt; Mastra LLM later.
  *
  * Run: started from `apps/server` when `REDIS_URL` is set (`src/index.ts`).
- * Env: `REDIS_URL` (optional — without it, enqueue is a no-op and worker is not started).
  */
 
 let queue: Queue<MailClassifyJobPayload> | null = null;
@@ -48,12 +50,22 @@ export function startMailClassifyQueue(redisUrl: string): void {
         return;
       }
 
-      // Stub: full Mastra classify (labels + CRM effects + undo) is a later epic.
+      const db = createDb();
+      const result = await runWithDb(db, () =>
+        runMailClassify({
+          messageId: parsed.data.messageId,
+          userId: parsed.data.userId
+        })
+      );
+
       log.set({
-        event: "mail_classify_job_stub",
+        event: "mail_classify_job_done",
         jobId: job.id ?? null,
         messageId: parsed.data.messageId,
         userId: parsed.data.userId,
+        source: result.source,
+        systemLabels: result.systemLabels,
+        skipped: result.skipped ?? false,
         enqueuedAt: parsed.data.enqueuedAt ?? null
       });
       log.emit();

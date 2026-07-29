@@ -59,9 +59,11 @@ export function MailSettings() {
   const [draft, setDraft] = useState<FormState | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Keep an open draft across refetches / focus changes. Only re-sync from the
+  // server when there is no local draft (initial load or after save/discard).
   const form = useMemo(() => {
     if (!query.data) return null;
-    if (draft && draft.sourceKey === query.dataUpdatedAt) return draft;
+    if (draft) return draft;
     return formFromQuery(query.data, query.dataUpdatedAt);
   }, [query.data, query.dataUpdatedAt, draft]);
 
@@ -77,7 +79,7 @@ export function MailSettings() {
 
   function ensureDraft(): FormState | null {
     if (!query.data) return null;
-    if (draft && draft.sourceKey === query.dataUpdatedAt) return draft;
+    if (draft) return draft;
     const next = formFromQuery(query.data, query.dataUpdatedAt);
     setDraft(next);
     return next;

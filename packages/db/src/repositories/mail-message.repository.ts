@@ -224,5 +224,25 @@ export const mailMessageRepository = {
       .where(and(eq(mailMessage.id, id), eq(mailMessage.userId, userId)))
       .returning();
     return updated ?? null;
+  },
+
+  /**
+   * Apply classification: replace system career labels, keep smart-rule labels
+   * passed in `labels`, stamp `classifiedAt`.
+   */
+  async applyClassification(
+    id: string,
+    userId: string,
+    labels: string[]
+  ): Promise<MailMessageEntity | null> {
+    const [updated] = await getDb()
+      .update(mailMessage)
+      .set({
+        labels,
+        classifiedAt: new Date()
+      })
+      .where(and(eq(mailMessage.id, id), eq(mailMessage.userId, userId)))
+      .returning();
+    return updated ?? null;
   }
 };

@@ -9,7 +9,12 @@ export const mailSettingsQueryKeys = {
 };
 
 export function getMailSettingsQueryOptions() {
-  return orpcQueryClient.mailSettings.get.queryOptions();
+  return orpcQueryClient.mailSettings.get.queryOptions({
+    // Settings forms keep local drafts; refetch-on-focus was wiping unsaved fields.
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
+  });
 }
 
 export function useGetMailSettingsQuery() {
