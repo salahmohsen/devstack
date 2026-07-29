@@ -6,6 +6,7 @@ import { BriefcaseBusiness, CalendarDays, Gift, Inbox, Mail, Sparkles, Users } f
 import { useMemo, useState } from "react";
 
 import {
+  APPLICATION_STAGE_LABELS,
   MAIL_SYSTEM_CATEGORY_CARDS,
   MailListCategorySchema,
   mailCategoryToSlug,
@@ -23,7 +24,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
-import { useGetMailQuery, useListMailQuery } from "@/features/mail";
+import { useGetMailQuery, useListMailQuery, useUndoMailCrmApplyMutation } from "@/features/mail";
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
 
@@ -327,6 +328,7 @@ function MessageReaderBody({
   const [composerOpen, setComposerOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [agentBanner, setAgentBanner] = useState(false);
+  const undoCrm = useUndoMailCrmApplyMutation();
 
   const message = detail ?? listItem;
   const labels = careerLabels(message.labels);
@@ -335,6 +337,11 @@ function MessageReaderBody({
   const isUnsorted =
     !hasSystemCareerOrRuleLabel(message.labels) &&
     message.labels.every((l) => !CAREER_LABELS.has(l));
+  const crmApply = detail?.crmApply ?? null;
+  const stageAfterLabel =
+    crmApply?.stageAfter != null ? APPLICATION_STAGE_LABELS[crmApply.stageAfter] : null;
+  const stageBeforeLabel =
+    crmApply?.stageBefore != null ? APPLICATION_STAGE_LABELS[crmApply.stageBefore] : null;
 
   function openManualReply() {
     setAgentBanner(false);
@@ -374,6 +381,30 @@ function MessageReaderBody({
           <p className="text-[11px] text-muted-foreground">
             Unsorted — no career or smart-rule label yet.
           </p>
+        ) : null}
+        {crmApply && crmApply.effectKind !== "noop" ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/80 bg-muted/40 px-2.5 py-2">
+            <p className="text-xs text-muted-foreground">
+              {stageAfterLabel
+                ? `Stage updated from mail → ${stageAfterLabel}`
+                : "CRM updated from this mail"}
+              {stageBeforeLabel ? (
+                <span className="text-muted-foreground/80"> · was {stageBeforeLabel}</span>
+              ) : null}
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 shrink-0 text-xs"
+              disabled={undoCrm.isPending}
+              onClick={() => {
+                undoCrm.mutate({ applyId: crmApply.id });
+              }}
+            >
+              {undoCrm.isPending ? "Undoing…" : "Undo"}
+            </Button>
+          </div>
         ) : null}
       </header>
 

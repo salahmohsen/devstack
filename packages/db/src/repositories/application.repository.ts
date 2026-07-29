@@ -155,6 +155,36 @@ export const applicationRepository = {
     return updated ?? null;
   },
 
+  /**
+   * Restore stage/outcome timestamps from a CRM apply audit snapshot (undo).
+   * Bypasses open-only stage guards so a mistaken auto-stage can roll back.
+   */
+  async restorePipelineState(
+    id: string,
+    userId: string,
+    state: {
+      stage: ApplicationStage;
+      stageChangedAt: Date;
+      outcome: ApplicationOutcome | null;
+      outcomeAt: Date | null;
+    }
+  ): Promise<ApplicationEntity | null> {
+    const owned = await applicationRepository.findByIdForUser(id, userId);
+    if (!owned) return null;
+
+    const [updated] = await getDb()
+      .update(application)
+      .set({
+        stage: state.stage,
+        stageChangedAt: state.stageChangedAt,
+        outcome: state.outcome,
+        outcomeAt: state.outcomeAt
+      })
+      .where(and(eq(application.id, id), eq(application.userId, userId)))
+      .returning();
+    return updated ?? null;
+  },
+
   async deleteMany(ids: string[], userId: string) {
     if (ids.length === 0) return [];
     return getDb()

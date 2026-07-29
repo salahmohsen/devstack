@@ -106,6 +106,24 @@ export const MailCrmApplyResultSchema = z.object({
 });
 export type MailCrmApplyResult = z.infer<typeof MailCrmApplyResultSchema>;
 
+export const UndoMailCrmApplyInputSchema = z.object({
+  /** Audit row id from mail_crm_apply. */
+  applyId: z.string().min(1)
+});
+export type UndoMailCrmApplyInput = z.infer<typeof UndoMailCrmApplyInputSchema>;
+
+export const UndoMailCrmApplyOutputSchema = z.object({
+  applyId: z.string().min(1),
+  messageId: z.string().min(1),
+  applicationId: z.string().nullable(),
+  restoredStage: ApplicationStageSchema.nullable(),
+  undoneAt: z.coerce.date()
+});
+export type UndoMailCrmApplyOutput = z.infer<typeof UndoMailCrmApplyOutputSchema>;
+
+// Re-export summary from types for a single import path via mail/crm-effects consumers.
+export { MailCrmApplySummarySchema, type MailCrmApplySummary } from "./types";
+
 /**
  * Pure proposal from classify labels + optional current application state.
  * Does not touch DB; worker/repository tickets apply this.

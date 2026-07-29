@@ -4,10 +4,11 @@
 
 **Blocked by:** 33 (minimum); update when 34–35 land
 
-**Status:** pending
+**Status:** done
 
 **Parent:** Career Inbox — CRM from classify (wave 6).
 
-- [ ] README wave 6 status
-- [ ] Tickets 31–35 status accurate
-- [ ] Next frontier called out
+- [x] README wave 6 status
+- [x] Tickets 31–35 status accurate
+- [x] Next frontier called out (reply/review / match unlinked)
+- [x] `CRM-FROM-CLASSIFY.md` guide

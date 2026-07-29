@@ -1,11 +1,17 @@
 import {
+  MailCrmApplySummarySchema,
+  MailCrmAuditSnapshotSchema,
+  MailCrmEffectKindSchema,
   MailGetInputSchema,
   MailListInputSchema,
   MailMessageDetailSchema,
-  MailMessageListOutputSchema
+  MailMessageListOutputSchema,
+  UndoMailCrmApplyInputSchema,
+  UndoMailCrmApplyOutputSchema
 } from "@tsu-stack/core";
-import { mailMessageRepository } from "@tsu-stack/db/repositories";
+import { mailCrmApplyRepository, mailMessageRepository } from "@tsu-stack/db/repositories";
 
+import { undoMailCrmApply } from "#@/lib/mail/undo-mail-crm-apply";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toListItem(
@@ -32,9 +38,30 @@ function toListItem(
   };
 }
 
-function toDetail(
-  row: NonNullable<Awaited<ReturnType<typeof mailMessageRepository.findByIdForUser>>>
+function toCrmApplySummary(
+  apply: NonNullable<Awaited<ReturnType<typeof mailCrmApplyRepository.findActiveByMessageId>>>
 ) {
+  const before = MailCrmAuditSnapshotSchema.safeParse(apply.before);
+  const after = MailCrmAuditSnapshotSchema.safeParse(apply.after);
+  const kindParsed = MailCrmEffectKindSchema.safeParse(apply.effectKind);
+
+  return MailCrmApplySummarySchema.parse({
+    id: apply.id,
+    effectKind: kindParsed.success ? kindParsed.data : "noop",
+    reason: apply.reason,
+    applicationId: apply.applicationId,
+    stageAfter: after.success ? after.data.stage : null,
+    stageBefore: before.success ? before.data.stage : null,
+    createdAt: apply.createdAt,
+    undoneAt: apply.undoneAt
+  });
+}
+
+async function toDetail(
+  row: NonNullable<Awaited<ReturnType<typeof mailMessageRepository.findByIdForUser>>>,
+  userId: string
+) {
+  const activeApply = await mailCrmApplyRepository.findActiveByMessageId(row.id, userId);
   return {
     ...toListItem(row),
     bodyText: row.bodyText,
@@ -42,7 +69,8 @@ function toDetail(
     provider: row.provider,
     classifiedAt: row.classifiedAt,
     createdAt: row.createdAt,
-    updatedAt: row.updatedAt
+    updatedAt: row.updatedAt,
+    crmApply: activeApply ? toCrmApplySummary(activeApply) : null
   };
 }
 
@@ -84,6 +112,38 @@ export const mailRouter = {
         includeSystem: input.includeSystem
       });
       if (!row) throw errors.NOT_FOUND();
-      return toDetail(row);
+      return toDetail(row, userId);
+    }),
+
+  undoCrmApply: protectedProcedure
+    .route({
+      description: "Undo a Career Inbox auto CRM stage apply and restore the before snapshot",
+      method: "POST"
+    })
+    .input(UndoMailCrmApplyInputSchema)
+    .output(UndoMailCrmApplyOutputSchema)
+    .errors({
+      NOT_FOUND: {
+        message: "CRM apply not found",
+        status: 404
+      },
+      ALREADY_UNDONE: {
+        message: "This CRM apply was already undone",
+        status: 409
+      },
+      RESTORE_FAILED: {
+        message: "Could not restore application state from the audit snapshot",
+        status: 500
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const result = await undoMailCrmApply({ applyId: input.applyId, userId });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "ALREADY_UNDONE") throw errors.ALREADY_UNDONE();
+        throw errors.RESTORE_FAILED();
+      }
+      return result.result;
     })
 };

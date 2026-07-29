@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ApplicationStageSchema } from "#@/application/types";
+
 /** Hub card categories (system). Smart rules use `rule:{slug}` separately. */
 export const MailCategoryIdSchema = z.enum([
   "applications",
@@ -89,6 +91,22 @@ export type MailMessageListItem = z.infer<typeof MailMessageListItemSchema>;
 export const MailMessageListOutputSchema = z.array(MailMessageListItemSchema);
 export type MailMessageListOutput = z.infer<typeof MailMessageListOutputSchema>;
 
+/**
+ * Active CRM auto-apply summary on message detail (reader undo).
+ * Kept here (not crm-effects) to avoid circular imports with label schemas.
+ */
+export const MailCrmApplySummarySchema = z.object({
+  id: z.string().min(1),
+  effectKind: z.enum(["noop", "link_only", "advance_stage", "set_outcome"]),
+  reason: z.string(),
+  applicationId: z.string().nullable(),
+  stageAfter: ApplicationStageSchema.nullable(),
+  stageBefore: ApplicationStageSchema.nullable(),
+  createdAt: z.coerce.date(),
+  undoneAt: z.coerce.date().nullable()
+});
+export type MailCrmApplySummary = z.infer<typeof MailCrmApplySummarySchema>;
+
 /** Full message for reader. */
 export const MailMessageDetailSchema = MailMessageListItemSchema.extend({
   bodyText: z.string(),
@@ -96,7 +114,9 @@ export const MailMessageDetailSchema = MailMessageListItemSchema.extend({
   provider: MailProviderSchema,
   classifiedAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date()
+  updatedAt: z.coerce.date(),
+  /** Active (not undone) CRM auto-apply from classify, if any. */
+  crmApply: MailCrmApplySummarySchema.nullable().optional()
 });
 export type MailMessageDetail = z.infer<typeof MailMessageDetailSchema>;
 

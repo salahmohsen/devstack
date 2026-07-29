@@ -5,15 +5,15 @@
 
 ## Waves
 
-| Wave                  | Focus                                          | Tickets   | Status          |
-| --------------------- | ---------------------------------------------- | --------- | --------------- |
-| **0 — Foundation**    | Upgrades, logging, Axiom, CLI                  | `01`–`06` | **Done**        |
-| **1 — Shell**         | Surface + island + settings                    | `07`–`10` | **Done**        |
-| **2 — Mail UI**       | Hub cards + drill-in (mock)                    | `11`–`13` | **Done**        |
-| **3 — Settings**      | AI settings + notification settings            | `14`–`19` | **Done**        |
-| **4 — Mail backend**  | Core + DB + list API + Resend + queue scaffold | `20`–`26` | **Done**        |
-| **5 — Classify**      | Heuristic + worker + Mastra LLM path           | `27`–`30` | **Done**        |
-| **6 — CRM from mail** | Label → stage effects + audit + undo           | `31`–`36` | **In progress** |
+| Wave                  | Focus                                          | Tickets   | Status   |
+| --------------------- | ---------------------------------------------- | --------- | -------- |
+| **0 — Foundation**    | Upgrades, logging, Axiom, CLI                  | `01`–`06` | **Done** |
+| **1 — Shell**         | Surface + island + settings                    | `07`–`10` | **Done** |
+| **2 — Mail UI**       | Hub cards + drill-in (mock)                    | `11`–`13` | **Done** |
+| **3 — Settings**      | AI settings + notification settings            | `14`–`19` | **Done** |
+| **4 — Mail backend**  | Core + DB + list API + Resend + queue scaffold | `20`–`26` | **Done** |
+| **5 — Classify**      | Heuristic + worker + Mastra LLM path           | `27`–`30` | **Done** |
+| **6 — CRM from mail** | Label → stage effects + audit + undo           | `31`–`36` | **Done** |
 
 ## Mail UI (done)
 
@@ -48,15 +48,17 @@ See [MAIL-BACKEND.md](./MAIL-BACKEND.md) — contracts, `mail_message`, list/get
 
 ## CRM from classify (wave 6)
 
+See [CRM-FROM-CLASSIFY.md](./CRM-FROM-CLASSIFY.md).
+
 | Ticket | Title                      | Status   |
 | ------ | -------------------------- | -------- |
 | `31`   | Effect contracts (core)    | **Done** |
 | `32`   | Apply audit DB             | **Done** |
 | `33`   | Apply from classify worker | **Done** |
-| `34`   | Undo oRPC                  | Pending  |
-| `35`   | Reader undo UI             | Pending  |
-| `36`   | Wave docs                  | Pending  |
+| `34`   | Undo oRPC                  | **Done** |
+| `35`   | Reader undo UI             | **Done** |
+| `36`   | Wave docs                  | **Done** |
 
 ## Next frontier
 
-Finish **CRM from classify** (`32`–`36`). Then reply/Review queue, Gmail OAuth sync, smart rules CRUD, learning/corrections.
+**Match/create application** for unlinked career mail · **reply/Review queue** · Gmail OAuth sync · smart rules CRUD · learning/corrections.

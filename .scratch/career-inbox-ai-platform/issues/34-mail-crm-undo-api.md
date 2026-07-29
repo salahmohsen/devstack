@@ -4,11 +4,11 @@
 
 **Blocked by:** 32–33
 
-**Status:** pending
+**Status:** done
 
 **Parent:** Career Inbox — CRM from classify (wave 6).
 
-- [ ] `mail.undoCrmApply` (or `applications.undoMailCrmApply`) protected
-- [ ] Tenant-scoped; restore stage/outcome/link from `before`
-- [ ] Typed NOT_FOUND / ALREADY_UNDONE errors
-- [ ] Core input/output schemas
+- [x] `mail.undoCrmApply` protected
+- [x] Tenant-scoped; restore stage/outcome/link from `before`
+- [x] Typed NOT_FOUND / ALREADY_UNDONE / RESTORE_FAILED errors
+- [x] Core input/output schemas; `mail.get` includes active `crmApply`

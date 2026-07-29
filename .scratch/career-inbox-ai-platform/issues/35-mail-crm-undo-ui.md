@@ -4,10 +4,10 @@
 
 **Blocked by:** 34
 
-**Status:** pending
+**Status:** done
 
 **Parent:** Career Inbox — CRM from classify (wave 6).
 
-- [ ] Reader surfaces last apply summary when present (list/get field or separate query)
-- [ ] Undo button → mutation → toast
-- [ ] No dead ends when no apply exists
+- [x] Reader surfaces last apply summary from `mail.get` → `crmApply`
+- [x] Undo button → mutation → toast + invalidate mail/applications
+- [x] No dead ends when no apply exists
