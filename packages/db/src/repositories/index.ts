@@ -1,4 +1,9 @@
 export {
+  appNotificationRepository,
+  type AppNotificationEntity,
+  type CreateAppNotificationData
+} from "./app-notification.repository.ts";
+export {
   applicationRepository,
   type ApplicationEntity,
   type CreateApplicationData,

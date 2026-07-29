@@ -1,3 +1,4 @@
+import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
 import { heuristicClassifyMail, type MailClassifyOutput } from "@tsu-stack/core";
@@ -95,10 +96,19 @@ export async function runMailClassify(input: {
     systemLabels: result.systemLabels
   });
 
-  // Career-labeled mail → ensure review draft; Full autonomy auto-sends.
+  // Career-labeled mail → notify + ensure review draft; Full autonomy auto-sends.
   let reviewDraftCreated: boolean | null = null;
   let reviewAutoSent: boolean | null = null;
   if (result.systemLabels.length > 0) {
+    await emitAppNotification({
+      userId: row.userId,
+      kind: "mail.classified.important",
+      title: "Career mail classified",
+      body: `${result.systemLabels.join(", ")} · ${row.subject || "(no subject)"}`,
+      href: "/dashboard/mail/all",
+      messageId: row.id
+    });
+
     const draft = await createReplyDraftFromMail({
       messageId: row.id,
       userId: row.userId

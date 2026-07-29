@@ -43,6 +43,7 @@ import { useGlobalShortcuts } from "@/shared/lib/use-global-shortcuts";
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
+import { NotificationsBell } from "@/widgets/layout/ui/notifications-bell";
 
 const MAX_TAB_SHORTCUTS = 9;
 
@@ -352,6 +353,8 @@ export function Topbar() {
 
       <div className="hidden shrink-0 items-center gap-1 md:flex">
         <ThemeSwitcher variant="ghost" />
+
+        {admin && pathname.includes("dashboard") ? <NotificationsBell /> : null}
 
         <Button variant="outline" onClick={() => setCommandPaletteOpen(true)} aria-label="Search">
           <SearchIcon />

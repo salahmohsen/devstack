@@ -12,6 +12,7 @@ import { inviteRouter } from "#@/routers/invite.router";
 import { mailSettingsRouter } from "#@/routers/mail-settings.router";
 import { mailRouter } from "#@/routers/mail.router";
 import { notificationSettingsRouter } from "#@/routers/notification-settings.router";
+import { notificationsRouter } from "#@/routers/notifications.router";
 import { onboardingRouter } from "#@/routers/onboarding.router";
 import { PortfolioRouter } from "#@/routers/portfolio.router";
 import { profileRouter } from "#@/routers/profile.router";
@@ -39,6 +40,7 @@ export const appRouter = {
   mail: mailRouter,
   mailSettings: mailSettingsRouter,
   notificationSettings: notificationSettingsRouter,
+  notifications: notificationsRouter,
   review: reviewRouter
 };
 

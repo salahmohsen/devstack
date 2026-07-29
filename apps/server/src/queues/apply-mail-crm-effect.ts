@@ -1,4 +1,6 @@
+import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import {
+  APPLICATION_STAGE_LABELS,
   extractMailApplicationHints,
   MailCrmAuditSnapshotSchema,
   proposeMailCrmEffect,
@@ -292,6 +294,23 @@ export async function applyMailCrmEffectFromClassify(input: {
     createdApplication
   });
   log.emit();
+
+  const stageLabel = afterStage != null ? APPLICATION_STAGE_LABELS[afterStage] : null;
+  await emitAppNotification({
+    userId: input.userId,
+    kind: "application.stage_auto",
+    title: createdApplication
+      ? "Application created from mail"
+      : stageLabel
+        ? `Stage updated → ${stageLabel}`
+        : "Application updated from mail",
+    body: createdApplication
+      ? "A pipeline row was auto-created and linked to this message."
+      : "Career Inbox classify updated your Applications board.",
+    href: "/dashboard/applications",
+    messageId: input.messageId,
+    applicationId: appId
+  });
 
   return { applied: true, effect: effectWithReason, before, after };
 }

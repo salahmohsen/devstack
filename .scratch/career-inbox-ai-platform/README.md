@@ -5,18 +5,19 @@
 
 ## Waves
 
-| Wave                   | Focus                                             | Tickets   | Status   |
-| ---------------------- | ------------------------------------------------- | --------- | -------- |
-| **0 — Foundation**     | Upgrades, logging, Axiom, CLI                     | `01`–`06` | **Done** |
-| **1 — Shell**          | Surface + island + settings                       | `07`–`10` | **Done** |
-| **2 — Mail UI**        | Hub cards + drill-in (mock)                       | `11`–`13` | **Done** |
-| **3 — Settings**       | AI settings + notification settings               | `14`–`19` | **Done** |
-| **4 — Mail backend**   | Core + DB + list API + Resend + queue scaffold    | `20`–`26` | **Done** |
-| **5 — Classify**       | Heuristic + worker + Mastra LLM path              | `27`–`30` | **Done** |
-| **6 — CRM from mail**  | Label → stage effects + audit + undo              | `31`–`36` | **Done** |
-| **7 — Match unlinked** | Company match / auto-create application from mail | `37`–`40` | **Done** |
-| **8 — Review queue**   | Reply drafts + `/dashboard/review` confirm path   | `41`–`46` | **Done** |
-| **9 — Outbound reply** | Resend send on confirm + Full auto-send           | `47`–`49` | **Done** |
+| Wave                       | Focus                                             | Tickets   | Status   |
+| -------------------------- | ------------------------------------------------- | --------- | -------- |
+| **0 — Foundation**         | Upgrades, logging, Axiom, CLI                     | `01`–`06` | **Done** |
+| **1 — Shell**              | Surface + island + settings                       | `07`–`10` | **Done** |
+| **2 — Mail UI**            | Hub cards + drill-in (mock)                       | `11`–`13` | **Done** |
+| **3 — Settings**           | AI settings + notification settings               | `14`–`19` | **Done** |
+| **4 — Mail backend**       | Core + DB + list API + Resend + queue scaffold    | `20`–`26` | **Done** |
+| **5 — Classify**           | Heuristic + worker + Mastra LLM path              | `27`–`30` | **Done** |
+| **6 — CRM from mail**      | Label → stage effects + audit + undo              | `31`–`36` | **Done** |
+| **7 — Match unlinked**     | Company match / auto-create application from mail | `37`–`40` | **Done** |
+| **8 — Review queue**       | Reply drafts + `/dashboard/review` confirm path   | `41`–`46` | **Done** |
+| **9 — Outbound reply**     | Resend send on confirm + Full auto-send           | `47`–`49` | **Done** |
+| **10 — App notifications** | Durable bell + emit on classify/CRM/draft         | `50`–`53` | **Done** |
 
 ## Mail UI (done)
 
@@ -92,6 +93,17 @@ See [REVIEW.md](./REVIEW.md).
 | `48`   | Confirm = send; Full auto-send | **Done** |
 | `49`   | Docs + Review UI “Send reply”  | **Done** |
 
+## App notifications (wave 10)
+
+See [NOTIFICATIONS.md](./NOTIFICATIONS.md).
+
+| Ticket | Title          | Status   |
+| ------ | -------------- | -------- |
+| `50`   | Core + DB      | **Done** |
+| `51`   | oRPC + emit    | **Done** |
+| `52`   | Topbar bell UI | **Done** |
+| `53`   | Wave docs      | **Done** |
+
 ## Next frontier
 
-**Gmail OAuth sync** · smart rules CRUD · app notifications · learning/corrections · Mastra reply agent.
+**Gmail OAuth sync** · smart rules CRUD · email notification channel · learning/corrections · Mastra reply agent.

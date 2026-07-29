@@ -8,8 +8,10 @@ export * from "#@/health/index";
 export * from "#@/invite/index";
 export * from "#@/mail/index";
 export * from "#@/mail-settings/index";
+export * from "#@/notification/index";
 export * from "#@/notification-settings/index";
 export * from "#@/onboarding/index";
+
 export * from "#@/orpc-context/index";
 export * from "#@/portfolio/index";
 export * from "#@/profile/index";

@@ -1,3 +1,4 @@
+export type * from "./app-notification.schema.ts";
 export type * from "./application.schema.ts";
 export type * from "./auth.schema.ts";
 export type * from "./contact.schema.ts";

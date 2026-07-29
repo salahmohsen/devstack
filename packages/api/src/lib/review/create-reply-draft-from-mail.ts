@@ -1,6 +1,8 @@
 import { buildHeuristicReplyDraft } from "@tsu-stack/core";
 import { mailMessageRepository, reviewItemRepository, type ReviewItemEntity } from "@tsu-stack/db";
 
+import { emitAppNotification } from "#@/lib/notification/emit-app-notification";
+
 export type CreateReplyDraftResult =
   | { ok: true; item: ReviewItemEntity; created: boolean }
   | { ok: false; code: "NOT_FOUND" | "NOT_CAREER" };
@@ -11,6 +13,8 @@ export type CreateReplyDraftResult =
 export async function createReplyDraftFromMail(input: {
   messageId: string;
   userId: string;
+  /** When true (default), emit draft_ready app notification if created. */
+  notify?: boolean;
 }): Promise<CreateReplyDraftResult> {
   const message = await mailMessageRepository.findByIdForUser(input.messageId, input.userId, {
     includeSystem: true
@@ -38,6 +42,19 @@ export async function createReplyDraftFromMail(input: {
     messageId: message.id,
     applicationId: message.applicationId
   });
+
+  if (input.notify !== false) {
+    await emitAppNotification({
+      userId: input.userId,
+      kind: "mail.reply.draft_ready",
+      title: "Reply draft ready",
+      body: draft.title,
+      href: "/dashboard/review",
+      messageId: message.id,
+      applicationId: message.applicationId,
+      reviewItemId: item.id
+    });
+  }
 
   return { ok: true, item, created: true };
 }
