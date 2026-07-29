@@ -46,8 +46,10 @@ import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root
 import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
 import { Route as rootLayout_protectedDashboardMailCategoryRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/$category'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
+import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/notifications/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
 import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/domain/index'
+import { Route as rootLayout_protectedDashboardSettingsAiIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/ai/index'
 import { Route as rootLayout_protectedDashboardSettingsAccountIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/account/index'
 import { Route as rootLayoutProfileNameReposRepoTreeSplatRouteImport } from './routes/(root-layout)/$profileName/repos/$repo/tree/$'
 import { Route as rootLayoutProfileNameReposRepoBlobSplatRouteImport } from './routes/(root-layout)/$profileName/repos/$repo/blob/$'
@@ -264,6 +266,12 @@ const rootLayout_protectedDashboardSettingsProfileIndexRoute =
     path: '/profile/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsNotificationsIndexRoute =
+  rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsInvitesIndexRoute =
   rootLayout_protectedDashboardSettingsInvitesIndexRouteImport.update({
     id: '/invites/',
@@ -274,6 +282,12 @@ const rootLayout_protectedDashboardSettingsDomainIndexRoute =
   rootLayout_protectedDashboardSettingsDomainIndexRouteImport.update({
     id: '/domain/',
     path: '/domain/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
+const rootLayout_protectedDashboardSettingsAiIndexRoute =
+  rootLayout_protectedDashboardSettingsAiIndexRouteImport.update({
+    id: '/ai/',
+    path: '/ai/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
 const rootLayout_protectedDashboardSettingsAccountIndexRoute =
@@ -333,8 +347,10 @@ export interface FileRoutesByFullPath {
   '/$profileName/repos/$repo/blob/$': typeof rootLayoutProfileNameReposRepoBlobSplatRoute
   '/$profileName/repos/$repo/tree/$': typeof rootLayoutProfileNameReposRepoTreeSplatRoute
   '/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  '/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRoutesByTo {
@@ -370,8 +386,10 @@ export interface FileRoutesByTo {
   '/$profileName/repos/$repo/blob/$': typeof rootLayoutProfileNameReposRepoBlobSplatRoute
   '/$profileName/repos/$repo/tree/$': typeof rootLayoutProfileNameReposRepoTreeSplatRoute
   '/dashboard/settings/account': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  '/dashboard/settings/ai': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/dashboard/settings/domain': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/notifications': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRoutesById {
@@ -415,8 +433,10 @@ export interface FileRoutesById {
   '/(root-layout)/$profileName/repos/$repo/blob/$': typeof rootLayoutProfileNameReposRepoBlobSplatRoute
   '/(root-layout)/$profileName/repos/$repo/tree/$': typeof rootLayoutProfileNameReposRepoTreeSplatRoute
   '/(root-layout)/__protected/dashboard/settings/account/': typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/ai/': typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   '/(root-layout)/__protected/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/(root-layout)/__protected/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 export interface FileRouteTypes {
@@ -459,8 +479,10 @@ export interface FileRouteTypes {
     | '/$profileName/repos/$repo/blob/$'
     | '/$profileName/repos/$repo/tree/$'
     | '/dashboard/settings/account/'
+    | '/dashboard/settings/ai/'
     | '/dashboard/settings/domain/'
     | '/dashboard/settings/invites/'
+    | '/dashboard/settings/notifications/'
     | '/dashboard/settings/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -496,8 +518,10 @@ export interface FileRouteTypes {
     | '/$profileName/repos/$repo/blob/$'
     | '/$profileName/repos/$repo/tree/$'
     | '/dashboard/settings/account'
+    | '/dashboard/settings/ai'
     | '/dashboard/settings/domain'
     | '/dashboard/settings/invites'
+    | '/dashboard/settings/notifications'
     | '/dashboard/settings/profile'
   id:
     | '__root__'
@@ -540,8 +564,10 @@ export interface FileRouteTypes {
     | '/(root-layout)/$profileName/repos/$repo/blob/$'
     | '/(root-layout)/$profileName/repos/$repo/tree/$'
     | '/(root-layout)/__protected/dashboard/settings/account/'
+    | '/(root-layout)/__protected/dashboard/settings/ai/'
     | '/(root-layout)/__protected/dashboard/settings/domain/'
     | '/(root-layout)/__protected/dashboard/settings/invites/'
+    | '/(root-layout)/__protected/dashboard/settings/notifications/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
   fileRoutesById: FileRoutesById
 }
@@ -815,6 +841,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/notifications/': {
+      id: '/(root-layout)/__protected/dashboard/settings/notifications/'
+      path: '/notifications'
+      fullPath: '/dashboard/settings/notifications/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/invites/': {
       id: '/(root-layout)/__protected/dashboard/settings/invites/'
       path: '/invites'
@@ -827,6 +860,13 @@ declare module '@tanstack/react-router' {
       path: '/domain'
       fullPath: '/dashboard/settings/domain/'
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
+    '/(root-layout)/__protected/dashboard/settings/ai/': {
+      id: '/(root-layout)/__protected/dashboard/settings/ai/'
+      path: '/ai'
+      fullPath: '/dashboard/settings/ai/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsAiIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
     '/(root-layout)/__protected/dashboard/settings/account/': {
@@ -885,8 +925,10 @@ const rootLayout_protectedDashboardResumesRouteRouteWithChildren =
 
 interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsAccountIndexRoute: typeof rootLayout_protectedDashboardSettingsAccountIndexRoute
+  rootLayout_protectedDashboardSettingsAiIndexRoute: typeof rootLayout_protectedDashboardSettingsAiIndexRoute
   rootLayout_protectedDashboardSettingsDomainIndexRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   rootLayout_protectedDashboardSettingsInvitesIndexRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  rootLayout_protectedDashboardSettingsNotificationsIndexRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
 }
 
@@ -894,10 +936,14 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
   {
     rootLayout_protectedDashboardSettingsAccountIndexRoute:
       rootLayout_protectedDashboardSettingsAccountIndexRoute,
+    rootLayout_protectedDashboardSettingsAiIndexRoute:
+      rootLayout_protectedDashboardSettingsAiIndexRoute,
     rootLayout_protectedDashboardSettingsDomainIndexRoute:
       rootLayout_protectedDashboardSettingsDomainIndexRoute,
     rootLayout_protectedDashboardSettingsInvitesIndexRoute:
       rootLayout_protectedDashboardSettingsInvitesIndexRoute,
+    rootLayout_protectedDashboardSettingsNotificationsIndexRoute:
+      rootLayout_protectedDashboardSettingsNotificationsIndexRoute,
     rootLayout_protectedDashboardSettingsProfileIndexRoute:
       rootLayout_protectedDashboardSettingsProfileIndexRoute,
   }

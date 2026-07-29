@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { type InviteOutput } from "@tsu-stack/core";
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -118,9 +119,7 @@ export const InviteSettings = () => {
       <FrameHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div className="space-y-1.5">
           <FrameTitle>Invites</FrameTitle>
-          <FrameDescription>
-            Create single-use invite codes and share the signup link with the invite query param.
-          </FrameDescription>
+          <FrameDescription>Share a one-time signup link. Each code works once.</FrameDescription>
         </div>
         <Button type="button" size="sm" onClick={handleCreate} disabled={createInvite.isPending}>
           <Plus className="size-4" />
@@ -132,13 +131,16 @@ export const InviteSettings = () => {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading invites…</p>
         ) : isError ? (
-          <p className="text-sm text-destructive">Failed to load invites.</p>
+          <Alert variant="error">
+            <AlertTitle>Failed to load</AlertTitle>
+            <AlertDescription>Refresh the page or try again later.</AlertDescription>
+          </Alert>
         ) : invites.length === 0 ? (
           <ItemsEmpty
             className="py-10 md:py-12"
             icon={<Link2 aria-hidden />}
             title="No invites yet"
-            description="Create a single-use invite code and share the signup link."
+            description="Share a one-time signup link. Each code works once."
             action={
               <Button
                 type="button"

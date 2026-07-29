@@ -35,6 +35,16 @@ export {
   type UpsertUserCustomDomainInput,
   type UserCustomDomainEntity
 } from "./user-custom-domain.repository.ts";
+export {
+  userAiSettingsRepository,
+  type UpsertUserAiSettingsInput,
+  type UserAiSettingsEntity
+} from "./user-ai-settings.repository.ts";
+export {
+  userNotificationSettingsRepository,
+  type UpsertUserNotificationSettingsInput,
+  type UserNotificationSettingsEntity
+} from "./user-notification-settings.repository.ts";
 export { projectRepository } from "./project.repository.ts";
 export { projectStackScanRepository } from "./project-stack-scan.repository.ts";
 export { resumeRepository } from "./resume.repository.ts";

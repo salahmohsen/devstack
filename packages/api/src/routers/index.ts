@@ -1,6 +1,7 @@
 import { type RouterClient } from "@orpc/server";
 
 import { agentRouter } from "#@/routers/agent.router";
+import { aiSettingsRouter } from "#@/routers/ai-settings.router";
 import { applicationsRouter } from "#@/routers/applications.router";
 import { portfolioContactRouter } from "#@/routers/contact.router";
 import { domainRouter } from "#@/routers/domain.router";
@@ -8,6 +9,7 @@ import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
 import { inviteRouter } from "#@/routers/invite.router";
+import { notificationSettingsRouter } from "#@/routers/notification-settings.router";
 import { onboardingRouter } from "#@/routers/onboarding.router";
 import { PortfolioRouter } from "#@/routers/portfolio.router";
 import { profileRouter } from "#@/routers/profile.router";
@@ -17,6 +19,7 @@ import { stacksRouter } from "#@/routers/stacks.router";
 
 export const appRouter = {
   agent: agentRouter,
+  aiSettings: aiSettingsRouter,
   applications: applicationsRouter,
   github: githubRouter,
   health: healthRouter,
@@ -29,7 +32,8 @@ export const appRouter = {
   resume: resumeRouter,
   onboarding: onboardingRouter,
   invite: inviteRouter,
-  domain: domainRouter
+  domain: domainRouter,
+  notificationSettings: notificationSettingsRouter
 };
 
 export type AppRouter = typeof appRouter;

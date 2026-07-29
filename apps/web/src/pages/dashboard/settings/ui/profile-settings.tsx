@@ -1,3 +1,4 @@
+import { useStore } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -8,6 +9,7 @@ import {
   Edit,
   ExternalLink,
   FileUp,
+  Mail,
   UserRoundPen,
   X
 } from "lucide-react";
@@ -18,6 +20,7 @@ import { z } from "zod";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { contactTypeSchema, ProfileNameSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -55,6 +58,9 @@ import {
 } from "@/features/profile";
 
 import { appConfig } from "@/config/app.config";
+
+import { useSettingsDirtyGuard } from "./settings-dirty-guard";
+import { SettingsSection } from "./settings-section";
 
 const RenameProfileFormSchema = z.object({
   profileName: ProfileNameSchema
@@ -115,6 +121,7 @@ export function ProfileSettings() {
   const { data: session } = authClient.useSession();
   const profileQuery = useQuery(orpcQueryClient.profile.get.queryOptions());
   const [isEditing, setIsEditing] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
   const renameMutation = useRenameProfileMutation();
 
   const currentProfileName =
@@ -205,6 +212,20 @@ export function ProfileSettings() {
     setIsEditing(false);
   };
 
+  const handleLeaveDiscard = () => {
+    renameForm.reset({ profileName: currentProfileName });
+    form.reset(serverValues);
+    setIsEditing(false);
+  };
+
+  const isFormDirty = useStore(form.store, (state) => state.isDirty);
+  const renameProfileName = useStore(renameForm.store, (state) => state.values.profileName);
+  const isRenameDirty = Boolean(currentProfileName) && renameProfileName !== currentProfileName;
+  const isDirty = (isEditing && isFormDirty) || isRenameDirty;
+  const leaveGuard = useSettingsDirtyGuard(isDirty, {
+    onDiscard: handleLeaveDiscard
+  });
+
   const publicUrl = useMemo(
     () => (currentProfileName ? publicProfileUrl(currentProfileName) : ""),
     [currentProfileName]
@@ -221,13 +242,43 @@ export function ProfileSettings() {
     }
   };
 
+  const handleSendVerification = async () => {
+    const email = session?.user?.email;
+    if (!email) {
+      toast.error("No email on this session");
+      return;
+    }
+    setSendingVerification(true);
+    try {
+      const result = await authClient.sendVerificationEmail({ email });
+      if (result.error) {
+        toast.error(result.error.message ?? "Could not send verification email");
+        return;
+      }
+      toast.success("Verification email sent — check your inbox");
+    } catch {
+      toast.error("Could not send verification email");
+    } finally {
+      setSendingVerification(false);
+    }
+  };
+
   const userImage = session?.user?.image ?? undefined;
   const displayName = profileQuery.data?.name ?? session?.user?.name ?? "";
   const displayEmail = profileQuery.data?.email ?? session?.user?.email ?? "";
   const contacts = profileQuery.data?.contacts ?? [];
+  const emailVerified = !!session?.user?.emailVerified;
 
   return (
     <div className="flex flex-col gap-6">
+      {leaveGuard.alertDialog}
+      {profileQuery.isError ? (
+        <Alert variant="error">
+          <AlertTitle>Failed to load profile</AlertTitle>
+          <AlertDescription>Refresh the page or try again later.</AlertDescription>
+        </Alert>
+      ) : null}
+
       <form.Subscribe
         selector={(state) => {
           return {
@@ -248,7 +299,7 @@ export function ProfileSettings() {
                   </FrameDescription>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" render={<Link to="/dashboard/onboarding" />}>
+                  <Button size="sm" variant="ghost" render={<Link to="/dashboard/onboarding" />}>
                     <FileUp aria-hidden="true" />
                     Import from resume
                   </Button>
@@ -273,6 +324,7 @@ export function ProfileSettings() {
                       onClick={() => setIsEditing(true)}
                       size="sm"
                       variant="outline"
+                      disabled={profileQuery.isError}
                     >
                       <Edit aria-hidden="true" />
                       Edit Profile
@@ -288,7 +340,15 @@ export function ProfileSettings() {
                   <AvatarImage alt={displayName} src={userImage} />
                   <AvatarFallback className="text-lg">{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
-                <Button className="absolute -right-2 -bottom-2 rounded-full" size="icon-sm">
+                <Button
+                  type="button"
+                  className="absolute -right-2 -bottom-2 rounded-full"
+                  size="icon-sm"
+                  variant="outline"
+                  disabled
+                  aria-label="Change photo coming soon"
+                  title="Change photo coming soon"
+                >
                   <UserRoundPen aria-hidden="true" />
                 </Button>
               </div>
@@ -298,16 +358,30 @@ export function ProfileSettings() {
 
                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   <span className="truncate">{values.email || displayEmail}</span>
-                  {session?.user?.emailVerified ? (
+                  {emailVerified ? (
                     <Badge variant="secondary">
                       <Check aria-hidden="true" className="size-3" />
                       Verified
                     </Badge>
                   ) : (
-                    <Badge variant="destructive">
-                      <X aria-hidden="true" className="size-3" />
-                      Unverified
-                    </Badge>
+                    <>
+                      <Badge variant="destructive">
+                        <X aria-hidden="true" className="size-3" />
+                        Unverified
+                      </Badge>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2"
+                        loading={sendingVerification}
+                        disabled={sendingVerification || !session?.user?.email}
+                        onClick={() => void handleSendVerification()}
+                      >
+                        <Mail aria-hidden="true" className="size-3.5" />
+                        Send verification
+                      </Button>
+                    </>
                   )}
                 </div>
 
@@ -521,87 +595,89 @@ export function ProfileSettings() {
       </form.Subscribe>
 
       <Frame>
-        <FrameHeader>
-          <div className="min-w-0">
-            <FrameTitle>Public profile name</FrameTitle>
-            <FrameDescription>
-              Your portfolio is available at this path. Renaming keeps the old name as a redirect
-              alias.
-            </FrameDescription>
-          </div>
-        </FrameHeader>
-
-        <FramePanel className="flex flex-col gap-4">
-          {currentProfileName ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">Public path</p>
-                <p className="truncate font-mono text-sm text-muted-foreground">{publicPath}</p>
-                <p className="truncate text-xs text-muted-foreground">{publicUrl}</p>
-              </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
-                <Button onClick={() => void handleCopyPublicUrl()} size="sm" variant="outline">
-                  <Copy aria-hidden="true" />
-                  Copy URL
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  render={<a href={publicUrl} rel="noopener noreferrer" target="_blank" />}
-                >
-                  <ExternalLink aria-hidden="true" />
-                  Open
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Loading profile name…</p>
-          )}
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void renameForm.handleSubmit();
-            }}
-            className="flex flex-col gap-3 sm:flex-row sm:items-end"
+        <FramePanel className="space-y-4">
+          <SettingsSection
+            title="Public profile name"
+            description="Your portfolio is available at this path. Renaming keeps the old name as a redirect alias."
           >
-            <div className="min-w-0 flex-1">
-              <renameForm.AppField name="profileName">
-                {(field) => (
-                  <field.InputField
-                    label="Profile name"
-                    description="3–30 lowercase letters, numbers, and single hyphens"
-                  />
-                )}
-              </renameForm.AppField>
-            </div>
-            <renameForm.Subscribe
-              selector={(state) => {
-                return {
-                  canSubmit: state.canSubmit,
-                  isSubmitting: state.isSubmitting,
-                  profileName: state.values.profileName
-                };
+            {currentProfileName ? (
+              <div className="flex flex-col gap-2 rounded-xl border border-border/80 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground">Public path</p>
+                  <p className="truncate font-mono text-sm text-muted-foreground">{publicPath}</p>
+                  <p className="truncate text-xs text-muted-foreground">{publicUrl}</p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button onClick={() => void handleCopyPublicUrl()} size="sm" variant="outline">
+                    <Copy aria-hidden="true" />
+                    Copy URL
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    render={
+                      <a
+                        href={publicUrl}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        aria-label="Open public profile"
+                      />
+                    }
+                  >
+                    <ExternalLink aria-hidden="true" />
+                    Open
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Loading profile name…</p>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void renameForm.handleSubmit();
               }}
+              className="flex flex-col gap-3 sm:flex-row sm:items-end"
             >
-              {({ canSubmit, isSubmitting, profileName }) => (
-                <Button
-                  disabled={
-                    !canSubmit ||
-                    isSubmitting ||
-                    renameMutation.isPending ||
-                    profileName === currentProfileName
-                  }
-                  loading={isSubmitting || renameMutation.isPending}
-                  size="sm"
-                  type="submit"
-                >
-                  Rename
-                </Button>
-              )}
-            </renameForm.Subscribe>
-          </form>
+              <div className="min-w-0 flex-1">
+                <renameForm.AppField name="profileName">
+                  {(field) => (
+                    <field.InputField
+                      label="Profile name"
+                      description="3–30 lowercase letters, numbers, and single hyphens"
+                    />
+                  )}
+                </renameForm.AppField>
+              </div>
+              <renameForm.Subscribe
+                selector={(state) => {
+                  return {
+                    canSubmit: state.canSubmit,
+                    isSubmitting: state.isSubmitting,
+                    profileName: state.values.profileName
+                  };
+                }}
+              >
+                {({ canSubmit, isSubmitting, profileName }) => (
+                  <Button
+                    disabled={
+                      !canSubmit ||
+                      isSubmitting ||
+                      renameMutation.isPending ||
+                      profileName === currentProfileName
+                    }
+                    loading={isSubmitting || renameMutation.isPending}
+                    size="sm"
+                    type="submit"
+                  >
+                    Rename
+                  </Button>
+                )}
+              </renameForm.Subscribe>
+            </form>
+          </SettingsSection>
         </FramePanel>
       </Frame>
     </div>

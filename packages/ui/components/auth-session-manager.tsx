@@ -46,6 +46,12 @@ export type AuthSessionManagerProps = {
   onRevokeAll?: () => void;
   className?: string;
   isLoading?: boolean;
+  /**
+   * When true, omits the Card header (title + description). Use when nested under
+   * an external section title so "Active sessions" is not doubled.
+   * The revoke-all action still renders above the session list when applicable.
+   */
+  hideHeader?: boolean;
   errors?: {
     general?: string;
   };
@@ -317,6 +323,7 @@ export default function AuthSessionManager({
   onRevokeAll,
   className,
   isLoading = false,
+  hideHeader = false,
   errors
 }: AuthSessionManagerProps) {
   const [revokingAll, setRevokingAll] = useState(false);
@@ -332,6 +339,55 @@ export default function AuthSessionManager({
 
   const otherSessions = sessions.filter((s) => !s.isCurrent);
   const currentSession = sessions.find((s) => s.isCurrent);
+  const showRevokeAll = otherSessions.length > 0 && !!onRevokeAll;
+
+  const revokeAllControl = showRevokeAll ? (
+    <RevokeAllDialog
+      isLoading={isLoading}
+      onRevokeAll={handleRevokeAll}
+      revokingAll={revokingAll}
+    />
+  ) : null;
+
+  const body = (
+    <div className="flex flex-col gap-6">
+      {errors?.general && <ErrorAlert message={errors.general} />}
+
+      {sessions.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {currentSession && (
+            <>
+              <CurrentSessionSection
+                isLoading={isLoading}
+                onRevoke={onRevoke}
+                session={currentSession}
+              />
+              {otherSessions.length > 0 && <Separator />}
+            </>
+          )}
+
+          <OtherSessionsSection
+            isLoading={isLoading}
+            onRevoke={onRevoke}
+            sessions={otherSessions}
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  if (hideHeader) {
+    return (
+      <div className={cn("w-full", className)}>
+        {revokeAllControl ? (
+          <div className="mb-4 flex justify-end sm:justify-start">{revokeAllControl}</div>
+        ) : null}
+        {body}
+      </div>
+    );
+  }
 
   return (
     <Card className={cn("w-full max-w-sm shadow-xs", className)}>
@@ -341,43 +397,10 @@ export default function AuthSessionManager({
             <CardTitle>Active sessions</CardTitle>
             <CardDescription>Manage devices that are signed in to your account</CardDescription>
           </div>
-          {otherSessions.length > 0 && onRevokeAll && (
-            <RevokeAllDialog
-              isLoading={isLoading}
-              onRevokeAll={handleRevokeAll}
-              revokingAll={revokingAll}
-            />
-          )}
+          {revokeAllControl}
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
-          {errors?.general && <ErrorAlert message={errors.general} />}
-
-          {sessions.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <div className="flex flex-col gap-4">
-              {currentSession && (
-                <>
-                  <CurrentSessionSection
-                    isLoading={isLoading}
-                    onRevoke={onRevoke}
-                    session={currentSession}
-                  />
-                  {otherSessions.length > 0 && <Separator />}
-                </>
-              )}
-
-              <OtherSessionsSection
-                isLoading={isLoading}
-                onRevoke={onRevoke}
-                sessions={otherSessions}
-              />
-            </div>
-          )}
-        </div>
-      </CardContent>
+      <CardContent>{body}</CardContent>
     </Card>
   );
 }

@@ -12,4 +12,6 @@ export * from "./project-stack-scan.schema.ts";
 export * from "./resume.schema.ts";
 export * from "./stack-dependency.schema.ts";
 export * from "./stack.schema.ts";
+export * from "./user-ai-settings.schema.ts";
 export * from "./user-custom-domain.schema.ts";
+export * from "./user-notification-settings.schema.ts";
