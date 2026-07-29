@@ -19,13 +19,17 @@ Never request Gmail scopes at login. Users grant mail access only when they choo
 2. Redirect: `{VITE_SERVER_URL}/auth/callback/google`
 3. Env: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
-## Gmail sync (wave 12)
+## Gmail sync (wave 12 + 17)
 
 - **Sync inbox** on Connections when Gmail scopes are granted
 - First pull: recent `in:inbox` (25). Later pulls: History API deltas via stored `historyId`
 - Messages land as `provider=gmail` with idempotent `providerMessageId`
 - Classify is enqueued when Redis is available
+- **Auto-sync** (default on): BullMQ tick every **15 minutes** fans out per-user History sync
+  - Requires `REDIS_URL` on server
+  - Toggle under Settings → Connections
+  - Eligible: Google account with Gmail scopes and `autoSyncEnabled !== false`
 
 ## Next
 
-Scheduled / push Gmail sync · smart rules CRUD · email notification channel
+Push/watch Gmail (Pub/Sub) · retrieval few-shot

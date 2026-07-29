@@ -78,6 +78,18 @@ async function start(): Promise<void> {
       });
       log.emit({ _forceKeep: true });
     }
+
+    // Periodic Gmail History sync for users with Gmail scopes + auto-sync on.
+    try {
+      const { startGmailSyncQueue } = await import("#@/queues/gmail-sync-queue");
+      startGmailSyncQueue(ENV_SERVER.REDIS_URL);
+    } catch (error) {
+      const log = createLogger({ operation: "server__gmail_sync_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "gmail_sync_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
   }
 }
 

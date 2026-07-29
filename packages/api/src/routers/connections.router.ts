@@ -1,7 +1,9 @@
 import {
   ConnectionsStatusOutputSchema,
   GmailSyncResultSchema,
-  scopeListIncludesGmail
+  scopeListIncludesGmail,
+  UpdateGmailAutoSyncInputSchema,
+  UpdateGmailAutoSyncOutputSchema
 } from "@tsu-stack/core";
 import { betterAuthAccountRepository, userGmailSyncRepository } from "@tsu-stack/db/repositories";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -54,7 +56,8 @@ export const connectionsRouter = {
           emailAddress: gmailSync?.emailAddress ?? null,
           historyId: gmailSync?.historyId ?? null,
           lastSyncedAt: gmailSync?.lastSyncedAt ?? null,
-          lastError: gmailSync?.lastError ?? null
+          lastError: gmailSync?.lastError ?? null,
+          autoSyncEnabled: gmailSync?.autoSyncEnabled ?? true
         }
       };
     }),
@@ -88,5 +91,28 @@ export const connectionsRouter = {
         throw errors.SYNC_FAILED({ message: result.message });
       }
       return result.result;
+    }),
+
+  setGmailAutoSync: protectedProcedure
+    .route({
+      description: "Enable or disable periodic Gmail History sync for the current user",
+      method: "POST"
+    })
+    .input(UpdateGmailAutoSyncInputSchema)
+    .output(UpdateGmailAutoSyncOutputSchema)
+    .errors({
+      NO_GMAIL_SCOPE: {
+        message: "Connect Gmail under Settings → Connections first.",
+        status: 400
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const google = await betterAuthAccountRepository.findGoogleAccountForUser(userId);
+      if (!scopeListIncludesGmail(google?.scope)) {
+        throw errors.NO_GMAIL_SCOPE();
+      }
+      const row = await userGmailSyncRepository.setAutoSyncEnabled(userId, input.autoSyncEnabled);
+      return { autoSyncEnabled: row.autoSyncEnabled };
     })
 };

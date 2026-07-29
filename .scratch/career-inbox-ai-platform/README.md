@@ -158,6 +158,15 @@ See [LEARNING.md](./LEARNING.md).
 | `65`   | Capture classify run/trace on mail message | **Done** |
 | `66`   | Dual-write correction → observability API  | **Done** |
 
+## Scheduled Gmail sync (wave 17)
+
+See [CONNECTIONS.md](./CONNECTIONS.md).
+
+| Ticket | Title                                    | Status   |
+| ------ | ---------------------------------------- | -------- |
+| `67`   | BullMQ tick + per-user History sync jobs | **Done** |
+| `68`   | autoSyncEnabled + Settings toggle        | **Done** |
+
 ## Next frontier
 
-**Retrieval few-shot** · reply agent · scheduled Gmail sync · digest batching
+**Mastra reply agent** · retrieval few-shot · digest batching · Gmail Pub/Sub

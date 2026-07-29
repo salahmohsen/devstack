@@ -16,7 +16,9 @@ import {
   FramePanel,
   FrameTitle
 } from "@tsu-stack/ui/components/frame";
+import { Label } from "@tsu-stack/ui/components/label";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
+import { Switch } from "@tsu-stack/ui/components/switch";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
@@ -24,6 +26,7 @@ import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 import {
   connectionsQueryKeys,
   useGetConnectionsStatusQuery,
+  useSetGmailAutoSyncMutation,
   useSyncGmailMutation
 } from "@/features/connections";
 
@@ -67,6 +70,7 @@ export function ConnectionsSettings() {
   const query = useGetConnectionsStatusQuery();
   const queryClient = useQueryClient();
   const syncGmail = useSyncGmailMutation();
+  const setAutoSync = useSetGmailAutoSyncMutation();
   const [busy, setBusy] = useState<"google" | "github" | "unlink-google" | null>(null);
 
   async function connectGmail() {
@@ -208,6 +212,24 @@ export function ConnectionsSettings() {
               ) : null}
               {query.data.gmailSync.lastError ? (
                 <p className="text-[11px] text-destructive">{query.data.gmailSync.lastError}</p>
+              ) : null}
+              {googleStatus.gmailConnected ? (
+                <div className="flex items-center gap-2 pt-1">
+                  <Switch
+                    id="gmail-auto-sync"
+                    checked={query.data.gmailSync.autoSyncEnabled}
+                    disabled={setAutoSync.isPending}
+                    onCheckedChange={(checked) => {
+                      setAutoSync.mutate({ autoSyncEnabled: checked });
+                    }}
+                  />
+                  <Label
+                    htmlFor="gmail-auto-sync"
+                    className="text-xs font-normal text-muted-foreground"
+                  >
+                    Auto-sync every ~15 minutes (History API)
+                  </Label>
+                </div>
               ) : null}
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">

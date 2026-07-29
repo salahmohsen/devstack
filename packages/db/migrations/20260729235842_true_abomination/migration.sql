@@ -1,0 +1,1 @@
+ALTER TABLE "user_gmail_sync" ADD COLUMN "auto_sync_enabled" boolean DEFAULT true NOT NULL;
