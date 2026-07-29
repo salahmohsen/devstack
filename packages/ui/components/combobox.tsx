@@ -176,7 +176,15 @@ export function ComboboxPopup({
       >
         <ComboboxPrimitive.Popup
           className={cn(
-            "t-dropdown relative flex max-h-[min(var(--available-height),23rem)] max-w-(--available-width) min-w-(--anchor-width) flex-1 origin-(--transform-origin) flex-col rounded-lg border bg-popover text-foreground shadow-lg/5 not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
+            // max-h alone does not give percentage children a definite height —
+            // overflow-hidden + min-h-0 on the flex column is required so
+            // ComboboxList's ScrollArea can scroll instead of painting past the
+            // viewport (long model lists, multi-select repos, etc.).
+            "t-dropdown relative flex max-h-[min(var(--available-height),23rem)] min-h-0 max-w-(--available-width) min-w-(--anchor-width) flex-1 origin-(--transform-origin) flex-col overflow-hidden rounded-lg border bg-popover text-foreground shadow-lg/5 not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
+            // ScrollArea uses size-full; pin the viewport to the popup max so
+            // long lists scroll inside the rounded surface instead of overflowing.
+            "[&_[data-slot=scroll-area]]:min-h-0 [&_[data-slot=scroll-area]]:flex-1",
+            "**:data-[slot=scroll-area-viewport]:max-h-[min(var(--available-height),23rem)] [&_[data-slot=scroll-area-viewport]]:overflow-y-auto",
             className
           )}
           data-slot="combobox-popup"
@@ -295,7 +303,14 @@ export function ComboboxList({
   ...props
 }: ComboboxPrimitive.List.Props): React.ReactElement {
   return (
-    <ScrollArea scrollbarGutter scrollFade>
+    <ScrollArea
+      // Override ScrollArea's default `size-full` (h-full): a max-h parent is
+      // not a definite height, so h-full expands with content and overflows.
+      className="h-auto max-h-full min-h-0 w-full flex-1"
+      data-slot="scroll-area"
+      scrollbarGutter
+      scrollFade
+    >
       <ComboboxPrimitive.List
         className={cn(
           "not-empty:scroll-py-1 not-empty:px-1 not-empty:py-1 in-data-has-overflow-y:pe-3",

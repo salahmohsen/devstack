@@ -41,19 +41,12 @@ type ComboboxMultipleFieldProps = {
 };
 
 /**
- * Form-layer defaults for multi-combobox inside dialogs / dense layouts.
- * Kept here (not packages/ui ComboboxPopup) so the installed primitive stays stock.
- * - chips: don't let many selections expand the field over the form
- * - popup: shorter than the primitive's ~23rem default so the list doesn't blanket
- *   the rest of a dialog; force the internal ScrollArea viewport to scroll
+ * Form-layer density tweaks for multi-combobox in dialogs.
+ * Scroll/overflow is owned by packages/ui ComboboxPopup + ComboboxList;
+ * only keep a shorter max-height and chip clamp for dense forms.
  */
 const CHIPS_FORM_CLASS = "max-h-28 overflow-y-auto";
-const POPUP_FORM_CLASS = cn(
-  "max-h-60 overflow-hidden",
-  // Primitive ComboboxList wraps items in ScrollArea (size-full). Without a
-  // real height on the viewport, the list grows and covers sibling fields.
-  "[&_[data-slot=scroll-area-viewport]]:max-h-52 [&_[data-slot=scroll-area-viewport]]:overflow-y-auto"
-);
+const POPUP_FORM_CLASS = "max-h-60";
 
 function ComboboxMultipleField(props: ComboboxMultipleFieldProps) {
   const field = useFieldContext<string[]>();
