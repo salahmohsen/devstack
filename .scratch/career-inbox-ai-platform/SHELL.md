@@ -8,6 +8,14 @@
 
 Shared **main surface card** + **darker floating island** + minimal fade-in, proven on **Settings**, ready for Mail hub and Review.
 
+## Implementation
+
+| Piece             | Path                                                           |
+| ----------------- | -------------------------------------------------------------- |
+| Shell primitives  | `apps/web/src/shared/ui/dashboard-shell.tsx`                   |
+| Settings consumer | `apps/web/src/pages/dashboard/settings/ui/settings-layout.tsx` |
+| Docs              | `.agents/ui.md` (Dashboard surface + island shell)             |
+
 ## Dependency graph
 
 ```text
@@ -17,16 +25,9 @@ Shared **main surface card** + **darker floating island** + minimal fade-in, pro
                 └──► 10 docs + reuse contract
 ```
 
-## Skills while building
-
-- coss / coss-particles
-- `.agents/ui.md`, `.agents/tanstack-patterns.md`
-- transitions / minimal fade (no heavy bounce)
-- `/implement` + `/tdd` + `/code-review`
-- Superpowers `writing-plans` per ticket if multi-file
-
 ## Done when
 
-- [ ] Settings uses surface + island
-- [ ] Docs describe reuse
+- [x] Settings uses surface + island
+- [x] Docs describe reuse
+- [x] Components live under `shared/ui/dashboard-shell.tsx`
 - [ ] Ready for Mail hub tickets (wave 2)

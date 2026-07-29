@@ -4,12 +4,12 @@
 
 **Blocked by:** None — foundation done.
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Parent:** Career Inbox + AI platform — Shell wave.
 
-- [ ] Reusable surface shell component (app-local or `packages/ui` only if truly app-agnostic) using coss/`@tsu-stack/ui` Card or equivalent
-- [ ] Settings layout uses the surface shell without breaking existing tabs/routes
-- [ ] Fade-in utility or motion tokens for section enter (minimal, no bounce)
-- [ ] No Mail routes required yet — shell must be reusable for hub + settings
-- [ ] Matches design: main surface card inside dashboard content area
+- [x] Reusable surface shell component (app-local or `packages/ui` only if truly app-agnostic) using coss/`@tsu-stack/ui` Card or equivalent
+- [x] Settings layout uses the surface shell without breaking existing tabs/routes
+- [x] Fade-in utility or motion tokens for section enter (minimal, no bounce)
+- [x] No Mail routes required yet — shell must be reusable for hub + settings
+- [x] Matches design: main surface card inside dashboard content area

@@ -24,6 +24,23 @@ This file is the source of truth for app UI composition, extraction decisions, a
 - Prefer composing `@tsu-stack/ui` primitives instead of duplicating styling across many leaf components.
 - Keep route files thin. Put UI composition in page, feature, widget, or shared components, not in route files.
 
+## Dashboard surface + island shell
+
+For multi-pane dashboard sections (Settings, Career Inbox hub, Review), use the app-local shell in `apps/web/src/shared/ui/dashboard-shell.tsx` — not a one-off layout per feature.
+
+| Piece                     | Role                                                                    |
+| ------------------------- | ----------------------------------------------------------------------- |
+| **`SurfaceShell`**        | Main elevated `Card` surface for the section body                       |
+| **`IslandCard`**          | Darker nested island (`bg-muted/…`) for nav, folders, or category lists |
+| **`SurfaceIslandLayout`** | Composes island (first) + primary pane with staggered fade-in           |
+
+Rules:
+
+- Island sits **inside** the surface (darker step of the same family — not a random second gray).
+- Prefer island nav over horizontal tabs for section switching when the list can grow (AI, Notifications, Mail rules).
+- Reuse this shell for Mail hub cards and `/dashboard/review` — do not fork styles.
+- Motion: minimal opacity/y fade only; respect `prefers-reduced-motion` (built into the shell).
+
 ## Extraction Rule
 
 - Extract a component to `packages/ui` when it is reusable, app-agnostic, and the shared package can own its styling and accessibility.

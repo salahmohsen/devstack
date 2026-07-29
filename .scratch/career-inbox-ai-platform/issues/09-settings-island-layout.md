@@ -4,13 +4,13 @@
 
 **Blocked by:** 07, 08
 
-**Status:** ready-for-agent
+**Status:** done
 
 **Parent:** Career Inbox + AI platform — Shell wave.
 
-- [ ] Settings pages use surface + island layout
-- [ ] Existing routes still work: profile, account, invites, domain
-- [ ] Active section highlighted in island
-- [ ] Mobile-friendly: island collapses or stacks without blocking content (reasonable v1)
-- [ ] No new AI/Notifications sections required yet (those are later tickets)
-- [ ] Fade-in: island then content on enter
+- [x] Settings pages use surface + island layout
+- [x] Existing routes still work: profile, account, invites, domain
+- [x] Active section highlighted in island
+- [x] Mobile-friendly: island collapses or stacks without blocking content (reasonable v1)
+- [x] No new AI/Notifications sections required yet (those are later tickets)
+- [x] Fade-in: island then content on enter

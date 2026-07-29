@@ -10,21 +10,14 @@
 | Wave               | Focus                                          | Tickets   | Status                   |
 | ------------------ | ---------------------------------------------- | --------- | ------------------------ |
 | **0 — Foundation** | Upgrades, weather removal, logging, Axiom, CLI | `01`–`06` | **Done** (merged `main`) |
-| **1 — Shell**      | Surface + island + settings shell + fade       | `07`–`10` | **Ready**                |
-| **2+**             | Mail, review, AI, notifications, …             | TBD       | After shell              |
+| **1 — Shell**      | Surface + island + settings shell + fade       | `07`–`10` | **Done**                 |
+| **2+**             | Mail, review, AI, notifications, …             | TBD       | **Next frontier**        |
 
-## Shell frontier (start here)
+## Shell (done)
 
-| #      | Title                                      | Blocked by |
-| ------ | ------------------------------------------ | ---------- |
-| **07** | Shared dashboard surface shell (main card) | None       |
-| 08     | Darker floating island card primitive      | 07         |
-| 09     | Settings layout: island nav + content pane | 07, 08     |
-| 10     | Shell tokens, docs, and reuse contract     | 09         |
-
-**Recommended start order:** `07` → `08` → `09` → `10`.
-
-Guide: [SHELL.md](./SHELL.md)
+| #     | Title                      | Status |
+| ----- | -------------------------- | ------ |
+| 07–10 | See [SHELL.md](./SHELL.md) | done   |
 
 ## Foundation (done)
 
@@ -32,4 +25,4 @@ Guide: [SHELL.md](./SHELL.md)
 | ----- | ------------------------------------ | ------ |
 | 01–06 | See [FOUNDATION.md](./FOUNDATION.md) | done   |
 
-PostHog product/error SDKs still later (with AI/notifications settings), not shell.
+PostHog product/error SDKs still later (with AI/notifications settings).
