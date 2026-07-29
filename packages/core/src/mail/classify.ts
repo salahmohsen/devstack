@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { MAIL_SYSTEM_LABELS } from "./constants";
+import {
+  matchSmartRuleLabels,
+  mergeClassifyLabelsWithSmartRules,
+  type SmartRuleMatchInput
+} from "./smart-rules";
 import { MailSystemLabelSchema, type MailSystemLabel } from "./types";
 
 /** Job payload already lives in classify-queue.ts; this is workflow I/O. */
@@ -13,7 +17,18 @@ export const MailClassifyInputSchema = z.object({
   preview: z.string().default(""),
   bodyText: z.string().default(""),
   /** Existing labels (smart rules preserved). */
-  labels: z.array(z.string()).default([])
+  labels: z.array(z.string()).default([]),
+  /** Optional tenant smart rules for keyword match (server loads). */
+  smartRules: z
+    .array(
+      z.object({
+        slug: z.string().min(1),
+        keywords: z.array(z.string()),
+        enabled: z.boolean().optional()
+      })
+    )
+    .optional()
+    .default([])
 });
 export type MailClassifyInput = z.infer<typeof MailClassifyInputSchema>;
 
@@ -67,17 +82,50 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
     notes = "heuristic:application";
   }
 
-  const preserved = input.labels.filter(
-    (l) => !(MAIL_SYSTEM_LABELS as readonly string[]).includes(l)
-  );
   const systemLabels = system ? [system] : [];
-  const labels = [...systemLabels, ...preserved];
+  const smartRuleLabels = matchSmartRuleLabels(
+    haystack,
+    (input.smartRules ?? []) as SmartRuleMatchInput[]
+  );
+  const labels = mergeClassifyLabelsWithSmartRules({
+    systemLabels,
+    existingLabels: input.labels,
+    smartRuleLabels
+  });
+
+  const ruleNote = smartRuleLabels.length > 0 ? `smart:${smartRuleLabels.join(",")}` : undefined;
 
   return {
     labels,
     systemLabels,
     source: "heuristic",
-    confidence,
-    notes
+    confidence: smartRuleLabels.length > 0 && !system ? 0.7 : confidence,
+    notes: [notes, ruleNote].filter(Boolean).join(";")
+  };
+}
+
+/** Apply smart-rule keyword match onto any classify result (agent or heuristic). */
+export function applySmartRulesToClassifyResult(
+  input: MailClassifyInput,
+  result: MailClassifyOutput
+): MailClassifyOutput {
+  const haystack = [input.fromName, input.fromEmail, input.subject, input.preview, input.bodyText]
+    .join("\n")
+    .slice(0, 20_000);
+  const smartRuleLabels = matchSmartRuleLabels(
+    haystack,
+    (input.smartRules ?? []) as SmartRuleMatchInput[]
+  );
+  if (smartRuleLabels.length === 0) return result;
+
+  const labels = mergeClassifyLabelsWithSmartRules({
+    systemLabels: result.systemLabels,
+    existingLabels: result.labels,
+    smartRuleLabels
+  });
+  return {
+    ...result,
+    labels,
+    notes: [result.notes, `smart:${smartRuleLabels.join(",")}`].filter(Boolean).join(";")
   };
 }

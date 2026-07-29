@@ -8,6 +8,7 @@ export * from "./github-config.schema.ts";
 export * from "./invite.schema.ts";
 export * from "./mail-crm-apply.schema.ts";
 export * from "./mail-message.schema.ts";
+export * from "./mail-smart-rule.schema.ts";
 export * from "./review-item.schema.ts";
 export * from "./portfolio-entry.schema.ts";
 export * from "./profile-slug-alias.schema.ts";

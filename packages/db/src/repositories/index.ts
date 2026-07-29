@@ -41,6 +41,12 @@ export {
   type MailMessageWithApplication
 } from "./mail-message.repository.ts";
 export {
+  mailSmartRuleRepository,
+  type CreateMailSmartRuleData,
+  type MailSmartRuleEntity,
+  type UpdateMailSmartRuleData
+} from "./mail-smart-rule.repository.ts";
+export {
   portfolioEntryRepository,
   type PortfolioEntryEntity
 } from "./portfolio-entry.repository.ts";

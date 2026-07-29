@@ -11,6 +11,7 @@ import {
   MailListCategorySchema,
   mailCategoryToSlug,
   mailSlugToCategoryId,
+  smartRuleToCategoryCard,
   type MailCategoryCard,
   type MailListCategory,
   type MailMessageDetail,
@@ -25,6 +26,7 @@ import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import { useGetMailQuery, useListMailQuery, useUndoMailCrmApplyMutation } from "@/features/mail";
+import { useListMailSmartRulesQuery } from "@/features/mail-smart-rules";
 import { useCreateReplyDraftMutation } from "@/features/review";
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
@@ -127,10 +129,23 @@ function MessageTags({
 export function MailCategoryPage() {
   const params = useParams({ strict: false }) as { category?: string };
   const categoryId = parseCategoryParam(params.category);
-  const category = resolveCategoryCard(categoryId);
 
   const listQuery = useListMailQuery({ category: categoryId });
+  const rulesQuery = useListMailSmartRulesQuery();
   const messages = listQuery.data ?? EMPTY_MESSAGES;
+
+  const navCards = useMemo(() => {
+    const system = [...MAIL_SYSTEM_CATEGORY_CARDS];
+    const rules = (rulesQuery.data ?? [])
+      .filter((r) => r.enabled)
+      .map((r) => smartRuleToCategoryCard(r));
+    // Insert smart rules before unsorted/all (last two system cards).
+    const head = system.slice(0, -2);
+    const tail = system.slice(-2);
+    return [...head, ...rules, ...tail] as MailCategoryCard[];
+  }, [rulesQuery.data]);
+
+  const category = navCards.find((c) => c.id === categoryId) ?? resolveCategoryCard(categoryId);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -158,8 +173,8 @@ export function MailCategoryPage() {
             aria-label="Mail categories"
             className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto p-2"
           >
-            {MAIL_SYSTEM_CATEGORY_CARDS.map((item) => {
-              const Icon = ICONS[item.icon];
+            {navCards.map((item) => {
+              const Icon = ICONS[item.icon] ?? Sparkles;
               const active = item.id === categoryId;
               return (
                 <Link

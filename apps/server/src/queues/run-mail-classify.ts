@@ -1,8 +1,16 @@
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
-import { heuristicClassifyMail, type MailClassifyOutput } from "@tsu-stack/core";
-import { mailMessageRepository, userAiSettingsRepository } from "@tsu-stack/db";
+import {
+  applySmartRulesToClassifyResult,
+  heuristicClassifyMail,
+  type MailClassifyOutput
+} from "@tsu-stack/core";
+import {
+  mailMessageRepository,
+  mailSmartRuleRepository,
+  userAiSettingsRepository
+} from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { applyMailCrmEffectFromClassify } from "#@/queues/apply-mail-crm-effect";
@@ -64,6 +72,9 @@ export async function runMailClassify(input: {
     };
   }
 
+  const smartRules = await mailSmartRuleRepository.findByUserId(row.userId, {
+    enabledOnly: true
+  });
   const classifyInput = {
     messageId: row.id,
     userId: row.userId,
@@ -72,7 +83,10 @@ export async function runMailClassify(input: {
     subject: row.subject,
     preview: row.preview,
     bodyText: row.bodyText,
-    labels: row.labels ?? []
+    labels: row.labels ?? [],
+    smartRules: smartRules.map((r) => {
+      return { slug: r.slug, keywords: r.keywords ?? [], enabled: r.enabled };
+    })
   };
 
   let result: MailClassifyOutput | null = await callMailClassifyAgent(classifyInput);
@@ -86,6 +100,9 @@ export async function runMailClassify(input: {
       systemLabels: result.systemLabels
     });
     log.emit();
+  } else {
+    // Agent path may not know tenant rules — always merge keyword smart rules.
+    result = applySmartRulesToClassifyResult(classifyInput, result);
   }
 
   await mailMessageRepository.applyClassification(row.id, row.userId, result.labels);

@@ -46,6 +46,7 @@ import { Route as rootLayoutProfileNameReposRepoIndexRouteImport } from './route
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
 import { Route as rootLayoutReposRepoBlobSplatRouteImport } from './routes/(root-layout)/repos/$repo/blob/$'
 import { Route as rootLayout_protectedDashboardMailCategoryRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/$category'
+import { Route as rootLayout_protectedDashboardSettingsRulesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/rules/index'
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/notifications/index'
 import { Route as rootLayout_protectedDashboardSettingsMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/mail/index'
@@ -269,6 +270,12 @@ const rootLayout_protectedDashboardMailCategoryRoute =
     path: '/dashboard/mail/$category',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsRulesIndexRoute =
+  rootLayout_protectedDashboardSettingsRulesIndexRouteImport.update({
+    id: '/rules/',
+    path: '/rules/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsProfileIndexRoute =
   rootLayout_protectedDashboardSettingsProfileIndexRouteImport.update({
     id: '/profile/',
@@ -376,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
+  '/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
 }
 export interface FileRoutesByTo {
   '/robots.txt': typeof RobotsDottxtRoute
@@ -418,6 +426,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/mail': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
+  '/dashboard/settings/rules': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -468,6 +477,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/(root-layout)/__protected/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -517,6 +527,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/mail/'
     | '/dashboard/settings/notifications/'
     | '/dashboard/settings/profile/'
+    | '/dashboard/settings/rules/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/robots.txt'
@@ -559,6 +570,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/mail'
     | '/dashboard/settings/notifications'
     | '/dashboard/settings/profile'
+    | '/dashboard/settings/rules'
   id:
     | '__root__'
     | '/(root-layout)'
@@ -608,6 +620,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings/mail/'
     | '/(root-layout)/__protected/dashboard/settings/notifications/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
+    | '/(root-layout)/__protected/dashboard/settings/rules/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -880,6 +893,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardMailCategoryRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/rules/': {
+      id: '/(root-layout)/__protected/dashboard/settings/rules/'
+      path: '/rules'
+      fullPath: '/dashboard/settings/rules/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsRulesIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/profile/': {
       id: '/(root-layout)/__protected/dashboard/settings/profile/'
       path: '/profile'
@@ -992,6 +1012,7 @@ interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsMailIndexRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   rootLayout_protectedDashboardSettingsNotificationsIndexRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
+  rootLayout_protectedDashboardSettingsRulesIndexRoute: typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
 }
 
 const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protectedDashboardSettingsRouteRouteChildren =
@@ -1012,6 +1033,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
       rootLayout_protectedDashboardSettingsNotificationsIndexRoute,
     rootLayout_protectedDashboardSettingsProfileIndexRoute:
       rootLayout_protectedDashboardSettingsProfileIndexRoute,
+    rootLayout_protectedDashboardSettingsRulesIndexRoute:
+      rootLayout_protectedDashboardSettingsRulesIndexRoute,
   }
 
 const rootLayout_protectedDashboardSettingsRouteRouteWithChildren =

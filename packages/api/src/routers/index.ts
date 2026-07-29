@@ -11,6 +11,7 @@ import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
 import { inviteRouter } from "#@/routers/invite.router";
 import { mailSettingsRouter } from "#@/routers/mail-settings.router";
+import { mailSmartRulesRouter } from "#@/routers/mail-smart-rules.router";
 import { mailRouter } from "#@/routers/mail.router";
 import { notificationSettingsRouter } from "#@/routers/notification-settings.router";
 import { notificationsRouter } from "#@/routers/notifications.router";
@@ -41,6 +42,7 @@ export const appRouter = {
   connections: connectionsRouter,
   mail: mailRouter,
   mailSettings: mailSettingsRouter,
+  mailSmartRules: mailSmartRulesRouter,
   notificationSettings: notificationSettingsRouter,
   notifications: notificationsRouter,
   review: reviewRouter

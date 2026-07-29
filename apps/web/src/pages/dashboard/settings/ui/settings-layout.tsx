@@ -1,5 +1,15 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Bell, Building2, Inbox, KeyRound, Link2, Mail, Sparkles, UserRound } from "lucide-react";
+import {
+  Bell,
+  Building2,
+  Filter,
+  Inbox,
+  KeyRound,
+  Link2,
+  Mail,
+  Sparkles,
+  UserRound
+} from "lucide-react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -17,6 +27,7 @@ type NavItem = {
     | "/dashboard/settings/domain"
     | "/dashboard/settings/mail"
     | "/dashboard/settings/connections"
+    | "/dashboard/settings/rules"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
     | "/dashboard/settings/invites";
@@ -64,6 +75,14 @@ const SETTINGS_NAV: readonly NavItem[] = [
     description: "Google, Gmail, and GitHub links",
     to: "/dashboard/settings/connections",
     icon: Link2,
+    group: "Workspace"
+  },
+  {
+    id: "rules",
+    label: "Rules",
+    description: "Smart mail categories and keywords",
+    to: "/dashboard/settings/rules",
+    icon: Filter,
     group: "Workspace"
   },
   {

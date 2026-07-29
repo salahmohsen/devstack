@@ -20,6 +20,7 @@
 | **10 — App notifications** | Durable bell + emit on classify/CRM/draft         | `50`–`53` | **Done** |
 | **11 — Connections**       | Settings Connections + Google/Gmail OAuth         | `54`      | **Done** |
 | **12 — Gmail sync**        | History/list import into Career Inbox             | `55`–`56` | **Done** |
+| **13 — Smart rules**       | CRUD + keyword classify + hub nav                 | `57`–`58` | **Done** |
 
 ## Mail UI (done)
 
@@ -121,6 +122,15 @@ See [CONNECTIONS.md](./CONNECTIONS.md).
 | `55`   | Cursor table + Gmail import    | **Done** |
 | `56`   | Sync button + classify enqueue | **Done** |
 
+## Smart rules (wave 13)
+
+See [SMART-RULES.md](./SMART-RULES.md).
+
+| Ticket | Title                            | Status   |
+| ------ | -------------------------------- | -------- |
+| `57`   | Core/DB/API + classify keywords  | **Done** |
+| `58`   | Settings Rules UI + mail hub nav | **Done** |
+
 ## Next frontier
 
-**Smart rules CRUD** · email notification channel · learning/corrections · Mastra reply agent · scheduled Gmail sync
+**Email notification channel** · learning/corrections · Mastra reply agent · scheduled Gmail sync
