@@ -18,12 +18,18 @@ After Career Inbox classify labels land, **auto-apply** pipeline stage effects w
 | oRPC undo        | `mail.undoCrmApply` restores `before`, sets `undoneAt`                         |
 | Reader UI        | Banner when active apply; **Undo** invalidates mail + applications             |
 
+## Match unlinked (wave 7)
+
+- Heuristic company/title from From domain + subject
+- Match open applications by normalized company; else create pipeline row
+- Undo removes auto-created open applications
+
 ## Out of scope (later)
 
-- Match/create application from unlinked mail (`unlinked_needs_match`)
 - Learning / corrections / few-shot
 - Reply Review queue
 - Calendar events from mail
+- LLM company extraction
 
 ## Ops notes
 

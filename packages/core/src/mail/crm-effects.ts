@@ -177,7 +177,8 @@ export function proposeMailCrmEffect(input: {
   const applicationId = input.mailApplicationId ?? null;
 
   if (!applicationId) {
-    // Match/create is a later ticket — still propose the stage target.
+    // Caller should resolve match/create first and re-call with applicationId.
+    // Still emit target stage so unlinked logs stay useful.
     return {
       kind: "advance_stage",
       applicationId: null,

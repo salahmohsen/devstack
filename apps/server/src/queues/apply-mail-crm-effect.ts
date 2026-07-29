@@ -1,7 +1,10 @@
 import {
+  extractMailApplicationHints,
   MailCrmAuditSnapshotSchema,
   proposeMailCrmEffect,
+  resolveMailApplicationMatch,
   type ApplicationOutcome,
+  type ApplicationSource,
   type ApplicationStage,
   type MailCrmApplyResult,
   type MailCrmAuditSnapshot
@@ -31,10 +34,14 @@ function snapshotFromApp(input: {
   });
 }
 
+function sourceFromLabels(systemLabels: readonly string[]): ApplicationSource {
+  if (systemLabels.includes("recruiter")) return "recruiter";
+  return "other";
+}
+
 /**
- * After classify labels land: propose CRM effect and apply when the message is
- * already linked to an open application. Unlinked messages log only (match later).
- * Writes an audit row for undo.
+ * After classify labels land: match or create an application when unlinked,
+ * then apply monotonic stage effects with an audit row for undo.
  */
 export async function applyMailCrmEffectFromClassify(input: {
   messageId: string;
@@ -75,6 +82,8 @@ export async function applyMailCrmEffectFromClassify(input: {
   let stageChangedAt: Date | null = null;
   let outcomeAt: Date | null = null;
   let appId = message.applicationId ?? null;
+  let createdApplication = false;
+  let resolveReason: string | null = null;
 
   if (appId) {
     const app = await applicationRepository.findByIdForUser(appId, input.userId);
@@ -88,6 +97,84 @@ export async function applyMailCrmEffectFromClassify(input: {
     }
   }
 
+  // Unlinked + career labels: match open apps or create a pipeline row.
+  if (!appId && input.systemLabels.length > 0) {
+    const hints = extractMailApplicationHints({
+      fromName: message.fromName,
+      fromEmail: message.fromEmail,
+      subject: message.subject
+    });
+    const open = await applicationRepository.findOpenByUserId(input.userId);
+    const match = resolveMailApplicationMatch({
+      openApplications: open.map((a) => {
+        return { id: a.id, companyName: a.companyName, title: a.title };
+      }),
+      companyCandidates: hints.companyCandidates,
+      titleHint: hints.titleHint
+    });
+
+    resolveReason = match.reason;
+
+    if (match.kind === "matched_existing") {
+      appId = match.applicationId;
+      const app = await applicationRepository.findByIdForUser(appId, input.userId);
+      if (app) {
+        currentStage = app.stage;
+        currentOutcome = app.outcome;
+        stageChangedAt = app.stageChangedAt;
+        outcomeAt = app.outcomeAt;
+      }
+      log.set({
+        event: "mail_crm_match_existing",
+        messageId: input.messageId,
+        userId: input.userId,
+        applicationId: appId,
+        reason: match.reason
+      });
+      log.emit();
+    } else if (match.kind === "create_new") {
+      const stage =
+        proposeMailCrmEffect({
+          systemLabels: input.systemLabels,
+          mailApplicationId: null
+        }).targetStage ?? "applied";
+      const created = await applicationRepository.create({
+        userId: input.userId,
+        companyName: match.companyName,
+        title: match.title,
+        source: sourceFromLabels(input.systemLabels),
+        notes: `Auto-created from Career Inbox (${message.id.slice(0, 8)}…)`,
+        stage,
+        description: message.preview?.slice(0, 2000) || null
+      });
+      appId = created.id;
+      currentStage = created.stage;
+      currentOutcome = created.outcome;
+      stageChangedAt = created.stageChangedAt;
+      outcomeAt = created.outcomeAt;
+      createdApplication = true;
+      log.set({
+        event: "mail_crm_create_application",
+        messageId: input.messageId,
+        userId: input.userId,
+        applicationId: appId,
+        companyName: match.companyName,
+        title: match.title,
+        stage
+      });
+      log.emit();
+    } else {
+      log.set({
+        event: "mail_crm_match_skip",
+        messageId: input.messageId,
+        userId: input.userId,
+        reason: match.reason,
+        kind: match.kind
+      });
+      log.emit();
+    }
+  }
+
   const effect = proposeMailCrmEffect({
     systemLabels: input.systemLabels,
     mailApplicationId: appId,
@@ -95,48 +182,64 @@ export async function applyMailCrmEffectFromClassify(input: {
     currentOutcome
   });
 
-  if (effect.kind === "noop") {
+  // Annotate reason when we just created (stage already set on create).
+  const effectWithReason =
+    createdApplication && effect.kind !== "noop"
+      ? { ...effect, reason: "created_application", applicationId: appId }
+      : resolveReason === "company_match" && effect.kind !== "noop"
+        ? {
+            ...effect,
+            reason: effect.reason === "advance_stage" ? "matched_and_advance" : "matched_link_only",
+            applicationId: appId
+          }
+        : effect;
+
+  if (effectWithReason.kind === "noop") {
     log.set({
       event: "mail_crm_apply_noop",
       messageId: input.messageId,
       userId: input.userId,
-      reason: effect.reason
+      reason: effectWithReason.reason
     });
     log.emit();
-    return { applied: false, effect };
+    return { applied: false, effect: effectWithReason };
   }
 
-  // Match/create application is a later ticket — only mutate when already linked.
   if (!appId) {
     log.set({
       event: "mail_crm_apply_unlinked",
       messageId: input.messageId,
       userId: input.userId,
-      targetStage: effect.targetStage ?? null,
-      reason: effect.reason
+      targetStage: effectWithReason.targetStage ?? null,
+      reason: effectWithReason.reason,
+      resolveReason
     });
     log.emit();
-    return { applied: false, effect };
+    return { applied: false, effect: effectWithReason };
   }
 
   const before = snapshotFromApp({
-    applicationId: appId,
-    stage: currentStage,
-    stageChangedAt,
-    outcome: currentOutcome,
-    outcomeAt,
+    applicationId: createdApplication ? null : appId,
+    stage: createdApplication ? null : currentStage,
+    stageChangedAt: createdApplication ? null : stageChangedAt,
+    outcome: createdApplication ? null : currentOutcome,
+    outcomeAt: createdApplication ? null : outcomeAt,
     mailMessageApplicationId: message.applicationId ?? null
   });
 
+  // For creates, stage is already set; only advance when matching existing apps.
   let afterStage = currentStage;
   let afterStageChangedAt = stageChangedAt;
-  let afterMailAppId = message.applicationId ?? null;
 
-  if (effect.kind === "advance_stage" && effect.targetStage) {
+  if (
+    !createdApplication &&
+    effectWithReason.kind === "advance_stage" &&
+    effectWithReason.targetStage
+  ) {
     const updated = await applicationRepository.updateStage(
       appId,
       input.userId,
-      effect.targetStage
+      effectWithReason.targetStage
     );
     if (!updated.ok) {
       log.set({
@@ -147,18 +250,17 @@ export async function applyMailCrmEffectFromClassify(input: {
         reason: updated.reason
       });
       log.emit();
-      return { applied: false, effect: { ...effect, reason: `stage_${updated.reason}` } };
+      return {
+        applied: false,
+        effect: { ...effectWithReason, reason: `stage_${updated.reason}` }
+      };
     }
     afterStage = updated.row.stage;
     afterStageChangedAt = updated.row.stageChangedAt;
   }
 
-  if (message.applicationId !== appId) {
-    await mailMessageRepository.setApplicationId(message.id, input.userId, appId);
-    afterMailAppId = appId;
-  } else {
-    afterMailAppId = message.applicationId ?? appId;
-  }
+  await mailMessageRepository.setApplicationId(message.id, input.userId, appId);
+  const afterMailAppId = appId;
 
   const after = snapshotFromApp({
     applicationId: appId,
@@ -173,8 +275,8 @@ export async function applyMailCrmEffectFromClassify(input: {
     userId: input.userId,
     messageId: input.messageId,
     applicationId: appId,
-    effectKind: effect.kind,
-    reason: effect.reason,
+    effectKind: effectWithReason.kind,
+    reason: effectWithReason.reason,
     before: before as unknown as Record<string, unknown>,
     after: after as unknown as Record<string, unknown>
   });
@@ -184,11 +286,12 @@ export async function applyMailCrmEffectFromClassify(input: {
     messageId: input.messageId,
     userId: input.userId,
     applyId: applyRow.id,
-    effectKind: effect.kind,
-    targetStage: effect.targetStage ?? null,
-    applicationId: appId
+    effectKind: effectWithReason.kind,
+    targetStage: effectWithReason.targetStage ?? afterStage,
+    applicationId: appId,
+    createdApplication
   });
   log.emit();
 
-  return { applied: true, effect, before, after };
+  return { applied: true, effect: effectWithReason, before, after };
 }

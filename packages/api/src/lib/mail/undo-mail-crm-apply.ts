@@ -12,6 +12,8 @@ export type UndoMailCrmApplyErr = { ok: false; code: UndoMailCrmApplyErrorCode }
 
 /**
  * Restore application + mail link from the audit `before` snapshot and mark apply undone.
+ * If the apply created a new application (`before.applicationId` null, `after` has id),
+ * unlink mail and hard-delete that application when it is still open.
  */
 export async function undoMailCrmApply(input: {
   applyId: string;
@@ -22,28 +24,42 @@ export async function undoMailCrmApply(input: {
   if (row.undoneAt) return { ok: false, code: "ALREADY_UNDONE" };
 
   const before = MailCrmAuditSnapshotSchema.safeParse(row.before);
+  const after = MailCrmAuditSnapshotSchema.safeParse(row.after);
   if (!before.success) return { ok: false, code: "RESTORE_FAILED" };
 
   const snap = before.data;
-  const applicationId = snap.applicationId ?? row.applicationId;
+  const afterSnap = after.success ? after.data : null;
+  const createdAppId =
+    !snap.applicationId && afterSnap?.applicationId ? afterSnap.applicationId : null;
 
-  if (applicationId && snap.stage) {
-    const restored = await applicationRepository.restorePipelineState(applicationId, input.userId, {
-      stage: snap.stage,
-      stageChangedAt: snap.stageChangedAt ?? new Date(),
-      outcome: snap.outcome,
-      outcomeAt: snap.outcomeAt
-    });
+  // Restore prior pipeline state when an application existed before the apply.
+  if (snap.applicationId && snap.stage) {
+    const restored = await applicationRepository.restorePipelineState(
+      snap.applicationId,
+      input.userId,
+      {
+        stage: snap.stage,
+        stageChangedAt: snap.stageChangedAt ?? new Date(),
+        outcome: snap.outcome,
+        outcomeAt: snap.outcomeAt
+      }
+    );
     if (!restored) return { ok: false, code: "RESTORE_FAILED" };
   }
 
-  // Restore mail ↔ application link from before snapshot when present.
-  if (snap.mailMessageApplicationId !== undefined) {
-    await mailMessageRepository.setApplicationId(
-      row.messageId,
-      input.userId,
-      snap.mailMessageApplicationId
-    );
+  // Restore mail ↔ application link from before snapshot.
+  await mailMessageRepository.setApplicationId(
+    row.messageId,
+    input.userId,
+    snap.mailMessageApplicationId
+  );
+
+  // Auto-created applications: remove if still open (undo create).
+  if (createdAppId) {
+    const created = await applicationRepository.findByIdForUser(createdAppId, input.userId);
+    if (created && created.outcome == null) {
+      await applicationRepository.deleteMany([createdAppId], input.userId);
+    }
   }
 
   const marked = await mailCrmApplyRepository.markUndone(row.id, input.userId);
@@ -54,7 +70,7 @@ export async function undoMailCrmApply(input: {
     result: {
       applyId: marked.id,
       messageId: marked.messageId,
-      applicationId: applicationId ?? null,
+      applicationId: snap.applicationId ?? null,
       restoredStage: snap.stage,
       undoneAt: marked.undoneAt
     }

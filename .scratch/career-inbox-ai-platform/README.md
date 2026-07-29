@@ -5,15 +5,16 @@
 
 ## Waves
 
-| Wave                  | Focus                                          | Tickets   | Status   |
-| --------------------- | ---------------------------------------------- | --------- | -------- |
-| **0 — Foundation**    | Upgrades, logging, Axiom, CLI                  | `01`–`06` | **Done** |
-| **1 — Shell**         | Surface + island + settings                    | `07`–`10` | **Done** |
-| **2 — Mail UI**       | Hub cards + drill-in (mock)                    | `11`–`13` | **Done** |
-| **3 — Settings**      | AI settings + notification settings            | `14`–`19` | **Done** |
-| **4 — Mail backend**  | Core + DB + list API + Resend + queue scaffold | `20`–`26` | **Done** |
-| **5 — Classify**      | Heuristic + worker + Mastra LLM path           | `27`–`30` | **Done** |
-| **6 — CRM from mail** | Label → stage effects + audit + undo           | `31`–`36` | **Done** |
+| Wave                   | Focus                                             | Tickets   | Status   |
+| ---------------------- | ------------------------------------------------- | --------- | -------- |
+| **0 — Foundation**     | Upgrades, logging, Axiom, CLI                     | `01`–`06` | **Done** |
+| **1 — Shell**          | Surface + island + settings                       | `07`–`10` | **Done** |
+| **2 — Mail UI**        | Hub cards + drill-in (mock)                       | `11`–`13` | **Done** |
+| **3 — Settings**       | AI settings + notification settings               | `14`–`19` | **Done** |
+| **4 — Mail backend**   | Core + DB + list API + Resend + queue scaffold    | `20`–`26` | **Done** |
+| **5 — Classify**       | Heuristic + worker + Mastra LLM path              | `27`–`30` | **Done** |
+| **6 — CRM from mail**  | Label → stage effects + audit + undo              | `31`–`36` | **Done** |
+| **7 — Match unlinked** | Company match / auto-create application from mail | `37`–`40` | **Done** |
 
 ## Mail UI (done)
 
@@ -59,6 +60,15 @@ See [CRM-FROM-CLASSIFY.md](./CRM-FROM-CLASSIFY.md).
 | `35`   | Reader undo UI             | **Done** |
 | `36`   | Wave docs                  | **Done** |
 
+## Match unlinked mail (wave 7)
+
+| Ticket | Title                         | Status   |
+| ------ | ----------------------------- | -------- |
+| `37`   | Match contracts (core)        | **Done** |
+| `38`   | Match/create in CRM worker    | **Done** |
+| `39`   | Undo deletes auto-created app | **Done** |
+| `40`   | Wave docs                     | **Done** |
+
 ## Next frontier
 
-**Match/create application** for unlinked career mail · **reply/Review queue** · Gmail OAuth sync · smart rules CRUD · learning/corrections.
+**Reply / Review queue** · Gmail OAuth sync · smart rules CRUD · learning/corrections.
