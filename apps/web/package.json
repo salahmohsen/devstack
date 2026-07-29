@@ -44,6 +44,7 @@
     "ai": "catalog:",
     "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
+    "evlog": "catalog:",
     "files-sdk": "catalog:",
     "fuse.js": "catalog:",
     "lucide-react": "catalog:",

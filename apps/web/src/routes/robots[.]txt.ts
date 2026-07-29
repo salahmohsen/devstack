@@ -5,6 +5,7 @@ import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 export const Route = createFileRoute("/robots.txt")({
   server: {
     handlers: {
+      // evlog-map-disable-next-line wide-event, context -- static SEO asset, deliberately silent
       GET: () => {
         const robotsTxt = `User-agent: *
 Allow: /

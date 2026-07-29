@@ -2,6 +2,8 @@
 
 Use `evlog` through `@tsu-stack/logger` only. Do not install or import `evlog` directly from `apps/*` or feature packages; the logger package is the facade and adapter boundary.
 
+**Exception for `evlog map` on web API routes:** TanStack Start handlers that need static coverage credit may import `createLogger` / `createRequestLogger` from `apps/web/src/shared/lib/evlog.ts` (a local barrel that re-exports from `evlog` so the CLI module key resolves). Do not scatter `from "evlog"` across features. Boot and middleware still use `@tsu-stack/logger/server`.
+
 If logging is not part of the task, stop here and do not add new durable logs.
 
 ## Default Rule

@@ -10,6 +10,7 @@ export const Route = createFileRoute("/sitemap.xml")({
   preload: false,
   server: {
     handlers: {
+      // evlog-map-disable-next-line wide-event, context -- static SEO asset, deliberately silent
       GET: () => {
         const allRoutes = getRouteTreePaths(routeTree);
         const { baseUrl } = appConfig.site;
