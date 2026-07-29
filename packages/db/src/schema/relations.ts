@@ -58,6 +58,34 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       resume: r.one.resume({
         from: r.application.resumeId,
         to: r.resume.id
+      }),
+      mailMessages: r.many.mailMessage({
+        from: r.application.id,
+        to: r.mailMessage.applicationId
+      })
+    },
+    mailMessage: {
+      user: r.one.user({
+        from: r.mailMessage.userId,
+        to: r.user.id
+      }),
+      application: r.one.application({
+        from: r.mailMessage.applicationId,
+        to: r.application.id
+      }),
+      attachments: r.many.mailAttachment({
+        from: r.mailMessage.id,
+        to: r.mailAttachment.messageId
+      })
+    },
+    mailAttachment: {
+      message: r.one.mailMessage({
+        from: r.mailAttachment.messageId,
+        to: r.mailMessage.id
+      }),
+      user: r.one.user({
+        from: r.mailAttachment.userId,
+        to: r.user.id
       })
     },
     project: {

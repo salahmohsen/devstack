@@ -22,6 +22,15 @@ export {
   type InviteEntity
 } from "./invite.repository.ts";
 export {
+  mailMessageRepository,
+  type CreateMailAttachmentData,
+  type CreateMailMessageData,
+  type MailAttachmentEntity,
+  type MailListFilter,
+  type MailMessageEntity,
+  type MailMessageWithApplication
+} from "./mail-message.repository.ts";
+export {
   portfolioEntryRepository,
   type PortfolioEntryEntity
 } from "./portfolio-entry.repository.ts";

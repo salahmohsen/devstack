@@ -5,6 +5,7 @@ export * from "./experience.schema.ts";
 export * from "./github-cache.schema.ts";
 export * from "./github-config.schema.ts";
 export * from "./invite.schema.ts";
+export * from "./mail-message.schema.ts";
 export * from "./portfolio-entry.schema.ts";
 export * from "./profile-slug-alias.schema.ts";
 export * from "./project.schema.ts";

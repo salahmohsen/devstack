@@ -6,6 +6,7 @@ export * from "#@/experience/index";
 export * from "#@/github-config/index";
 export * from "#@/health/index";
 export * from "#@/invite/index";
+export * from "#@/mail/index";
 export * from "#@/notification-settings/index";
 export * from "#@/onboarding/index";
 export * from "#@/orpc-context/index";

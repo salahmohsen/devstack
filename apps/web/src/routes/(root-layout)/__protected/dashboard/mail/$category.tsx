@@ -1,21 +1,28 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { MailCategoryPage } from "@/pages/dashboard/mail";
-import { getCategory, isMailCategoryId } from "@/pages/dashboard/mail/_lib/mail-mock";
+import {
+  MailListCategorySchema,
+  mailSlugToCategoryId,
+  type MailListCategory
+} from "@tsu-stack/core";
 
-function isKnownCategoryParam(value: string): boolean {
-  if (isMailCategoryId(value)) return true;
-  if (value.startsWith("rule-")) {
-    return Boolean(getCategory(`rule:${value.slice("rule-".length)}`));
-  }
-  return false;
+import { getListMailQueryOptions } from "@/features/mail";
+
+import { MailCategoryPage } from "@/pages/dashboard/mail";
+
+function parseKnownCategory(value: string): MailListCategory | null {
+  const categoryId = mailSlugToCategoryId(value);
+  const parsed = MailListCategorySchema.safeParse(categoryId);
+  return parsed.success ? parsed.data : null;
 }
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/mail/$category")({
   component: MailCategoryPage,
-  beforeLoad: ({ params }) => {
-    if (!isKnownCategoryParam(params.category)) {
+  beforeLoad: ({ context, params }) => {
+    const category = parseKnownCategory(params.category);
+    if (!category) {
       throw redirect({ to: "/dashboard/mail" });
     }
+    void context.queryClient.ensureQueryData(getListMailQueryOptions({ category }));
   }
 });
