@@ -113,9 +113,16 @@ export async function runMailClassify(input: {
     fewShotCorrections
   };
 
-  let result: MailClassifyOutput | null = await callMailClassifyAgent(classifyInput);
+  let result: MailClassifyOutput | null = null;
+  let mastraClassifyRunId: string | null = null;
+  let mastraClassifyTraceId: string | null = null;
 
-  if (!result) {
+  const agentCall = await callMailClassifyAgent(classifyInput);
+  if (agentCall) {
+    result = applySmartRulesToClassifyResult(classifyInput, agentCall.output);
+    mastraClassifyRunId = agentCall.runId;
+    mastraClassifyTraceId = agentCall.traceId;
+  } else {
     result = heuristicClassifyMail(classifyInput);
     log.set({
       event: "mail_classify_local_heuristic",
@@ -124,12 +131,12 @@ export async function runMailClassify(input: {
       systemLabels: result.systemLabels
     });
     log.emit();
-  } else {
-    // Agent path may not know tenant rules — always merge keyword smart rules.
-    result = applySmartRulesToClassifyResult(classifyInput, result);
   }
 
-  await mailMessageRepository.applyClassification(row.id, row.userId, result.labels);
+  await mailMessageRepository.applyClassification(row.id, row.userId, result.labels, {
+    mastraClassifyRunId,
+    mastraClassifyTraceId
+  });
 
   const crm = await applyMailCrmEffectFromClassify({
     messageId: row.id,

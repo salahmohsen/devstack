@@ -49,6 +49,10 @@ export const mailMessage = pgTable(
       onDelete: "set null"
     }),
     classifiedAt: timestamp("classified_at", { withTimezone: true }),
+    /** Mastra workflow run id from mail-classify (for feedback anchoring). */
+    mastraClassifyRunId: text("mastra_classify_run_id"),
+    /** Observability trace id when agent path produced one. */
+    mastraClassifyTraceId: text("mastra_classify_trace_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

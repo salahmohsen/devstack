@@ -18,6 +18,8 @@ export type CreateAiCorrectionData = {
   predictedStage?: string | null;
   correctedStage?: string | null;
   crmApplyId?: string | null;
+  mastraTraceId?: string | null;
+  mastraRunId?: string | null;
   note?: string | null;
 };
 
@@ -38,6 +40,8 @@ export const aiCorrectionRepository = {
         predictedStage: input.predictedStage ?? null,
         correctedStage: input.correctedStage ?? null,
         crmApplyId: input.crmApplyId ?? null,
+        mastraTraceId: input.mastraTraceId ?? null,
+        mastraRunId: input.mastraRunId ?? null,
         note: input.note ?? null
       })
       .returning();

@@ -29,6 +29,9 @@ export const aiCorrection = pgTable(
     crmApplyId: text("crm_apply_id").references(() => mailCrmApply.id, {
       onDelete: "set null"
     }),
+    /** Copied from message at correction time for Mastra feedback dual-write. */
+    mastraTraceId: text("mastra_trace_id"),
+    mastraRunId: text("mastra_run_id"),
     note: text("note"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },

@@ -34,9 +34,20 @@ Does **not** re-apply CRM after correction (no surprise stage moves).
 - `applyCorrectedSystemLabels` / `extractSystemLabels`
 - `formatCorrectionsFewShot` / `AI_CORRECTION_FEW_SHOT_K`
 
-## Out of scope (this phase)
+## Phase B — Mastra feedback dual-write
+
+On correction (after `ai_correction` insert):
+
+1. Copy `mastraClassifyTraceId` / `mastraClassifyRunId` from the message onto the correction row
+2. Best-effort `POST {AGENT_WORKER_URL}/api/observability/feedback` with  
+   `feedbackType: "correction"`, `value: "predicted->corrected"`, `sourceId: correctionId`,  
+   optional `traceId` when known
+3. Failures never block the product path
+
+Classify agent path stores `mastra_classify_run_id` (+ `trace_id` when the workflow returns it) on the message.
+
+## Still out of scope
 
 - Retrieval-ranked few-shot
-- Mastra `addFeedback` dual-write
 - Dataset export / live scorers
 - Fine-tuning

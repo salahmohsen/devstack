@@ -151,6 +151,13 @@ See [LEARNING.md](./LEARNING.md).
 | `63`   | Few-shot last-K into classify LLM | **Done** |
 | `64`   | Mail reader Correct UI            | **Done** |
 
+## Learning Phase B — Mastra feedback (wave 16)
+
+| Ticket | Title                                      | Status   |
+| ------ | ------------------------------------------ | -------- |
+| `65`   | Capture classify run/trace on mail message | **Done** |
+| `66`   | Dual-write correction → observability API  | **Done** |
+
 ## Next frontier
 
-**Mastra feedback dual-write** · retrieval few-shot · reply agent · scheduled Gmail sync · digest batching
+**Retrieval few-shot** · reply agent · scheduled Gmail sync · digest batching

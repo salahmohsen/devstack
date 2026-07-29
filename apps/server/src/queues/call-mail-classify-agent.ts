@@ -10,13 +10,20 @@ import { createLogger } from "@tsu-stack/logger/server";
 const WORKFLOW_ID = "mail-classify-workflow";
 const TIMEOUT_MS = 45_000;
 
+export type MailClassifyAgentCallResult = {
+  output: MailClassifyOutput;
+  runId: string;
+  /** Observability trace id when present on the workflow response. */
+  traceId: string | null;
+};
+
 /**
  * Run mail-classify-workflow on the agent worker and return the final result.
  * Returns null when agent is not configured or the call fails (caller falls back).
  */
 export async function callMailClassifyAgent(
   input: MailClassifyInput
-): Promise<MailClassifyOutput | null> {
+): Promise<MailClassifyAgentCallResult | null> {
   const baseUrl = ENV_SERVER.AGENT_WORKER_URL?.trim();
   if (!baseUrl) return null;
 
@@ -66,13 +73,16 @@ export async function callMailClassifyAgent(
       const json = (await startRes.json()) as unknown;
       const extracted = extractWorkflowResult(json);
       if (extracted) {
+        const traceId = extractTraceId(json);
         log.set({
           event: "mail_classify_agent_ok",
           source: extracted.source,
-          systemLabels: extracted.systemLabels
+          systemLabels: extracted.systemLabels,
+          runId,
+          traceId: traceId ?? undefined
         });
         log.emit();
-        return extracted;
+        return { output: extracted, runId, traceId };
       }
     }
 
@@ -101,12 +111,14 @@ export async function callMailClassifyAgent(
     if (fromStream) {
       log.set({
         event: "mail_classify_agent_ok",
-        source: fromStream.source,
-        systemLabels: fromStream.systemLabels,
-        via: "stream"
+        source: fromStream.output.source,
+        systemLabels: fromStream.output.systemLabels,
+        via: "stream",
+        runId,
+        traceId: fromStream.traceId ?? undefined
       });
       log.emit();
-      return fromStream;
+      return { output: fromStream.output, runId, traceId: fromStream.traceId };
     }
 
     return null;
@@ -121,6 +133,20 @@ export async function callMailClassifyAgent(
   }
 }
 
+function extractTraceId(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const obj = payload as Record<string, unknown>;
+  if (typeof obj.traceId === "string" && obj.traceId.length > 0) return obj.traceId;
+  for (const key of ["result", "output", "data"]) {
+    const nested = obj[key];
+    if (nested && typeof nested === "object") {
+      const n = nested as Record<string, unknown>;
+      if (typeof n.traceId === "string" && n.traceId.length > 0) return n.traceId;
+    }
+  }
+  return null;
+}
+
 function extractWorkflowResult(payload: unknown): MailClassifyOutput | null {
   if (!payload || typeof payload !== "object") return null;
   const obj = payload as Record<string, unknown>;
@@ -129,7 +155,7 @@ function extractWorkflowResult(payload: unknown): MailClassifyOutput | null {
   const direct = MailClassifyOutputSchema.safeParse(obj);
   if (direct.success) return direct.data;
 
-  // Common wrappers: { result }, { output }, { status, result }
+  // Common wrappers: { result }, { output }, { data }
   for (const key of ["result", "output", "data"]) {
     const nested = MailClassifyOutputSchema.safeParse(obj[key]);
     if (nested.success) return nested.data;
@@ -149,18 +175,18 @@ function extractWorkflowResult(payload: unknown): MailClassifyOutput | null {
 
 async function readResultFromStream(
   body: ReadableStream<Uint8Array>
-): Promise<MailClassifyOutput | null> {
+): Promise<{ output: MailClassifyOutput; traceId: string | null } | null> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let last: MailClassifyOutput | null = null;
+  let traceId: string | null = null;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
-    // NDJSON or concatenated JSON objects
     const lines = buffer.split("\n");
     buffer = lines.pop() ?? "";
     for (const line of lines) {
@@ -172,12 +198,15 @@ async function readResultFromStream(
         const event = JSON.parse(jsonLine) as unknown;
         const hit = extractWorkflowResult(event);
         if (hit) last = hit;
-        // Also check nested payload.result on stream events
+        const t = extractTraceId(event);
+        if (t) traceId = t;
         if (event && typeof event === "object") {
           const e = event as Record<string, unknown>;
           if (e.payload && typeof e.payload === "object") {
             const p = extractWorkflowResult(e.payload);
             if (p) last = p;
+            const pt = extractTraceId(e.payload);
+            if (pt) traceId = pt;
           }
         }
       } catch {
@@ -186,5 +215,5 @@ async function readResultFromStream(
     }
   }
 
-  return last;
+  return last ? { output: last, traceId } : null;
 }

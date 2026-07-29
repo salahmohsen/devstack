@@ -233,13 +233,23 @@ export const mailMessageRepository = {
   async applyClassification(
     id: string,
     userId: string,
-    labels: string[]
+    labels: string[],
+    meta?: {
+      mastraClassifyRunId?: string | null;
+      mastraClassifyTraceId?: string | null;
+    }
   ): Promise<MailMessageEntity | null> {
     const [updated] = await getDb()
       .update(mailMessage)
       .set({
         labels,
-        classifiedAt: new Date()
+        classifiedAt: new Date(),
+        ...(meta?.mastraClassifyRunId !== undefined
+          ? { mastraClassifyRunId: meta.mastraClassifyRunId }
+          : {}),
+        ...(meta?.mastraClassifyTraceId !== undefined
+          ? { mastraClassifyTraceId: meta.mastraClassifyTraceId }
+          : {})
       })
       .where(and(eq(mailMessage.id, id), eq(mailMessage.userId, userId)))
       .returning();

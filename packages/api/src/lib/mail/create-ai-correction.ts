@@ -16,6 +16,7 @@ import {
   mailMessageRepository
 } from "@tsu-stack/db/repositories";
 
+import { postMastraCorrectionFeedback } from "#@/lib/mail/post-mastra-correction-feedback";
 import { undoMailCrmApply } from "#@/lib/mail/undo-mail-crm-apply";
 
 export type CreateAiCorrectionResult =
@@ -70,6 +71,9 @@ export async function createAiCorrectionFromMail(input: {
 
   await mailMessageRepository.applyClassification(message.id, input.userId, nextLabels);
 
+  const mastraTraceId = message.mastraClassifyTraceId ?? null;
+  const mastraRunId = message.mastraClassifyRunId ?? null;
+
   const row = await aiCorrectionRepository.create({
     id: randomUUID(),
     userId: input.userId,
@@ -83,6 +87,20 @@ export async function createAiCorrectionFromMail(input: {
     predictedStage,
     correctedStage: input.data.correctedStage ?? null,
     crmApplyId,
+    mastraTraceId,
+    mastraRunId,
+    note: input.data.note ?? null
+  });
+
+  // Observability dual-write — fire-and-forget; never blocks product path.
+  void postMastraCorrectionFeedback({
+    correctionId: row.id,
+    userId: input.userId,
+    messageId: message.id,
+    predictedSystemLabels,
+    correctedSystemLabels,
+    mastraTraceId,
+    mastraRunId,
     note: input.data.note ?? null
   });
 
