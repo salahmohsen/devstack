@@ -13,7 +13,7 @@ import {
 import { useEffect, useMemo, useRef } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
-import { useAuthSuspense } from "@tsu-stack/auth/react/tanstack-start/hooks";
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -65,7 +65,9 @@ export function Topbar() {
   }, [router]);
 
   const queryClient = useQueryClient();
-  const { user: admin } = useAuthSuspense();
+  // Non-suspense: Topbar must paint even while auth is resolving (suspense hid the
+  // whole nav chrome on some navigations and made the avatar look "missing").
+  const { user: admin, isPending: authPending } = useAuth();
   const isClient = useIsClient();
   const openTabs = useTabs();
 
@@ -216,143 +218,128 @@ export function Topbar() {
     }
   ]);
 
-  return (
-    <nav className="flex h-(--navbar-height) min-w-0 items-center gap-3 overflow-hidden px-3 py-2">
-      {admin && !pathname.includes("dashboard") && (
-        <div className="hidden md:block">
-          <Menu>
-            <MenuTrigger
+  const accountControl = admin ? (
+    <Menu>
+      <MenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Open account menu"
+            className="size-8 shrink-0 rounded-full p-0"
+          />
+        }
+      >
+        <Avatar className="size-7 border border-border">
+          <AvatarImage src={admin.image ?? undefined} alt={displayName} />
+          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+        </Avatar>
+      </MenuTrigger>
+      <MenuPopup align="end" className="w-56">
+        <MenuGroup>
+          <MenuGroupLabel className="flex items-center gap-3 py-2">
+            <Avatar className="size-8 border border-border">
+              <AvatarImage src={admin.image ?? undefined} alt={displayName} />
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium text-foreground">{displayName}</span>
+              {owner ? (
+                <span className="truncate text-xs font-normal text-muted-foreground">@{owner}</span>
+              ) : null}
+            </div>
+          </MenuGroupLabel>
+        </MenuGroup>
+        <MenuSeparator />
+        <MenuGroup>
+          {owner ? (
+            <MenuLinkItem render={<Link to="/" />}>
+              <UserCircle size={16} strokeWidth={2} />
+              Profile
+              <MenuShortcut>G U</MenuShortcut>
+            </MenuLinkItem>
+          ) : (
+            <MenuItem disabled>
+              <UserCircle size={16} strokeWidth={2} />
+              Profile
+              <MenuShortcut>G U</MenuShortcut>
+            </MenuItem>
+          )}
+          {owner ? (
+            <MenuLinkItem
               render={
-                <button
-                  type="button"
-                  aria-label="Open account menu"
-                  className="flex size-8 items-center justify-center rounded-full"
+                <Link
+                  to={sessionProfileName ? "/$profileName/repos" : "/repos"}
+                  params={sessionProfileName ? { profileName: sessionProfileName } : undefined}
                 />
               }
             >
-              <Avatar className="size-7 border border-border">
-                <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
-                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-              </Avatar>
-            </MenuTrigger>
-            <MenuPopup align="start" className="w-56">
-              <MenuGroup>
-                <MenuGroupLabel className="flex items-center gap-3 py-2">
-                  <Avatar className="size-8 border border-border">
-                    <AvatarImage src={admin?.image ?? undefined} alt={displayName} />
-                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-foreground">{displayName}</span>
-                    {owner && (
-                      <span className="text-xs font-normal text-muted-foreground">@{owner}</span>
-                    )}
-                  </div>
-                </MenuGroupLabel>
-              </MenuGroup>
-              <MenuSeparator />
-              <MenuGroup>
-                {owner ? (
-                  <MenuLinkItem render={<Link to="/" />}>
-                    <UserCircle size={16} strokeWidth={2} />
-                    Profile
-                    <MenuShortcut>G U</MenuShortcut>
-                  </MenuLinkItem>
-                ) : (
-                  <MenuItem disabled>
-                    <UserCircle size={16} strokeWidth={2} />
-                    Profile
-                    <MenuShortcut>G U</MenuShortcut>
-                  </MenuItem>
-                )}
-                {owner ? (
-                  <MenuLinkItem
-                    render={
-                      <Link
-                        to={sessionProfileName ? "/$profileName/repos" : "/repos"}
-                        params={
-                          sessionProfileName ? { profileName: sessionProfileName } : undefined
-                        }
-                      />
-                    }
-                  >
-                    <Archive size={16} strokeWidth={2} />
-                    Repositories
-                    <MenuShortcut>G O</MenuShortcut>
-                  </MenuLinkItem>
-                ) : (
-                  <MenuItem disabled>
-                    <Archive size={16} strokeWidth={2} />
-                    Repositories
-                    <MenuShortcut>G O</MenuShortcut>
-                  </MenuItem>
-                )}
-                <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
-                  <LayoutDashboard size={16} strokeWidth={2} />
-                  Dashboard
-                  <MenuShortcut>G D</MenuShortcut>
-                </MenuLinkItem>
-              </MenuGroup>
-              <MenuSeparator />
-              <MenuGroup>
-                {admin ? (
-                  <MenuItem
-                    nativeButton
-                    closeOnClick
-                    onClick={() => {
-                      void handleSignOut();
-                    }}
-                  >
-                    <LogOut size={16} strokeWidth={2} />
-                    Sign out
-                  </MenuItem>
-                ) : (
-                  <MenuLinkItem render={<Link to="/sign-in" />}>
-                    <UserCircle size={16} strokeWidth={2} />
-                    Sign in
-                  </MenuLinkItem>
-                )}
-              </MenuGroup>
-            </MenuPopup>
-          </Menu>
-        </div>
-      )}
+              <Archive size={16} strokeWidth={2} />
+              Repositories
+              <MenuShortcut>G O</MenuShortcut>
+            </MenuLinkItem>
+          ) : (
+            <MenuItem disabled>
+              <Archive size={16} strokeWidth={2} />
+              Repositories
+              <MenuShortcut>G O</MenuShortcut>
+            </MenuItem>
+          )}
+          <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
+            <LayoutDashboard size={16} strokeWidth={2} />
+            Dashboard
+            <MenuShortcut>G D</MenuShortcut>
+          </MenuLinkItem>
+        </MenuGroup>
+        <MenuSeparator />
+        <MenuGroup>
+          <MenuItem
+            nativeButton
+            closeOnClick
+            onClick={() => {
+              void handleSignOut();
+            }}
+          >
+            <LogOut size={16} strokeWidth={2} />
+            Sign out
+          </MenuItem>
+        </MenuGroup>
+      </MenuPopup>
+    </Menu>
+  ) : authPending ? (
+    <div
+      aria-hidden
+      className="size-8 shrink-0 animate-pulse rounded-full border border-border bg-muted"
+    />
+  ) : (
+    <Button
+      variant="outline"
+      size="sm"
+      className="shrink-0"
+      render={<Link to="/sign-in" />}
+      aria-label="Sign in"
+    >
+      <UserCircle size={16} strokeWidth={2} />
+      <span className="hidden sm:inline">Sign in</span>
+    </Button>
+  );
 
-      <Link to="/">
+  return (
+    <nav className="flex h-(--navbar-height) min-w-0 items-center gap-3 px-3 py-2">
+      <Link to="/" className="shrink-0">
         <TextAnimate animation="slideLeft" by="character">
           Salah Mohsen
         </TextAnimate>
       </Link>
 
-      {/* <div className="hidden shrink-0 items-center gap-0.5 md:flex">
-        {navItems.map((item) => (
-          <Button
-            key={item.label}
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground [&.active]:bg-surface-1 [&.active]:text-foreground"
-            render={
-              <Link
-                to={item.to}
-                params={item.params}
-                preload={false}
-                activeOptions={{ exact: true }}
-                activeProps={{ className: "active" }}
-              >
-                <item.icon size={15} strokeWidth={2} />
-                <span>{item.label}</span>
-              </Link>
-            }
-          />
-        ))}
-      </div> */}
-
       <div className="min-w-0 flex-1 overflow-hidden">
         <Tabs tabsReady={isClient} routerRef={routerRef} />
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        {/* Bell stays visible below md — the rest of this cluster was desktop-only. */}
+      {/* shrink-0 + no overflow here so avatar/actions never get clipped by tabs */}
+      <div className="relative z-10 flex shrink-0 items-center gap-1">
+        {/* Bell stays visible below md on dashboard. */}
         {admin && pathname.includes("dashboard") ? <NotificationsBell /> : null}
 
         <div className="hidden items-center gap-1 md:flex">
@@ -410,6 +397,9 @@ export function Topbar() {
             </MenuPopup>
           </Menu>
         </div>
+
+        {/* Always top-right: avatar when signed in, sign-in CTA otherwise (all routes). */}
+        {accountControl}
       </div>
     </nav>
   );
