@@ -8,6 +8,7 @@ import {
   NOTIFICATION_KIND_DESCRIPTIONS,
   NOTIFICATION_KIND_LABELS,
   NOTIFICATION_KINDS,
+  type EmailDeliveryMode,
   type NotificationChannelPrefs,
   type NotificationKind
 } from "@tsu-stack/core";
@@ -38,6 +39,7 @@ type FormState = {
   sourceKey: number;
   email: string;
   channels: NotificationChannelPrefs;
+  emailDeliveryMode: EmailDeliveryMode;
   accountEmail: string;
 };
 
@@ -72,6 +74,7 @@ export function NotificationSettings() {
       sourceKey: query.dataUpdatedAt,
       email: query.data.notificationEmail ?? query.data.accountEmail,
       channels: query.data.channels,
+      emailDeliveryMode: query.data.emailDeliveryMode ?? "immediate",
       accountEmail: query.data.accountEmail
     } satisfies FormState;
   }, [query.data, query.dataUpdatedAt, draft]);
@@ -80,6 +83,7 @@ export function NotificationSettings() {
     if (!form || !query.data) return false;
     const serverEmail = query.data.notificationEmail ?? query.data.accountEmail;
     if (form.email.trim() !== serverEmail.trim()) return true;
+    if (form.emailDeliveryMode !== (query.data.emailDeliveryMode ?? "immediate")) return true;
     return !channelsEqual(form.channels, query.data.channels);
   }, [form, query.data]);
 
@@ -90,6 +94,7 @@ export function NotificationSettings() {
       sourceKey: query.dataUpdatedAt,
       email: query.data.notificationEmail ?? query.data.accountEmail,
       channels: query.data.channels,
+      emailDeliveryMode: query.data.emailDeliveryMode ?? "immediate",
       accountEmail: query.data.accountEmail
     };
     setDraft(next);
@@ -113,7 +118,8 @@ export function NotificationSettings() {
     try {
       await update.mutateAsync({
         notificationEmail: form.email.trim(),
-        channels: form.channels
+        channels: form.channels,
+        emailDeliveryMode: form.emailDeliveryMode
       });
       toast.success("Notification settings saved");
       setDraft(null);
@@ -218,6 +224,40 @@ export function NotificationSettings() {
                       Use account email
                     </Button>
                   ) : null}
+                </div>
+              </SettingsSection>
+
+              <SettingsSection
+                title="Email delivery"
+                description="Security codes always send immediately. Other kinds can batch hourly."
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="email-delivery-mode"
+                      checked={form.emailDeliveryMode === "immediate"}
+                      onChange={() =>
+                        patch((current) => {
+                          return { ...current, emailDeliveryMode: "immediate" };
+                        })
+                      }
+                    />
+                    Immediate
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="email-delivery-mode"
+                      checked={form.emailDeliveryMode === "digest"}
+                      onChange={() =>
+                        patch((current) => {
+                          return { ...current, emailDeliveryMode: "digest" };
+                        })
+                      }
+                    />
+                    Hourly digest
+                  </label>
                 </div>
               </SettingsSection>
 

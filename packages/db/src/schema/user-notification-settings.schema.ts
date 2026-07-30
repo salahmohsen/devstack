@@ -29,6 +29,12 @@ export const userNotificationSettings = pgTable(
     /** Destination for system notification emails; null → fall back to account email. */
     notificationEmail: text("notification_email"),
     channels: jsonb("channels").$type<StoredNotificationChannels>().notNull(),
+    /**
+     * immediate — email each event; digest — batch non-security emails hourly.
+     * Stored as text; validated in core (`EmailDeliveryModeSchema`).
+     */
+    emailDeliveryMode: text("email_delivery_mode").notNull().default("immediate"),
+    lastDigestAt: timestamp("last_digest_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

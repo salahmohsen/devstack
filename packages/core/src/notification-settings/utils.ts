@@ -8,6 +8,7 @@ export function defaultNotificationSettingsOutput(
     notificationEmail: accountEmail,
     accountEmail,
     channels: defaultNotificationChannelPrefs(),
+    emailDeliveryMode: "immediate",
     updatedAt: null
   };
 }

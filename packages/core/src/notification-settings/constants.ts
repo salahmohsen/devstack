@@ -34,3 +34,11 @@ export function defaultNotificationChannelPrefs(): NotificationChannelPrefs {
     "security.new_device_otp": { app: true, email: true }
   };
 }
+
+/** Kinds that always send email immediately (never digests). */
+export const IMMEDIATE_EMAIL_NOTIFICATION_KINDS = ["security.new_device_otp"] as const;
+
+export const NOTIFICATION_DIGEST_QUEUE_NAME = "notification-digest" as const;
+export const NOTIFICATION_DIGEST_TICK_JOB_NAME = "notification-digest-tick" as const;
+/** Default digest fan-out interval. */
+export const NOTIFICATION_DIGEST_TICK_INTERVAL_MS = 60 * 60 * 1000;

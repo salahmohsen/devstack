@@ -13,6 +13,8 @@ export type UpsertUserNotificationSettingsInput = {
   userId: string;
   notificationEmail: string | null;
   channels: StoredNotificationChannels;
+  emailDeliveryMode?: "immediate" | "digest";
+  lastDigestAt?: Date | null;
 };
 
 export const userNotificationSettingsRepository = {
@@ -23,6 +25,14 @@ export const userNotificationSettingsRepository = {
       .where(eq(userNotificationSettings.userId, userId))
       .limit(1);
     return row ?? null;
+  },
+
+  async listDigestModeUserIds(): Promise<string[]> {
+    const rows = await getDb()
+      .select({ userId: userNotificationSettings.userId })
+      .from(userNotificationSettings)
+      .where(eq(userNotificationSettings.emailDeliveryMode, "digest"));
+    return rows.map((r) => r.userId);
   },
 
   async upsert(
@@ -37,6 +47,9 @@ export const userNotificationSettingsRepository = {
         .set({
           notificationEmail: input.notificationEmail,
           channels: input.channels,
+          emailDeliveryMode: input.emailDeliveryMode ?? existing.emailDeliveryMode,
+          lastDigestAt:
+            input.lastDigestAt !== undefined ? input.lastDigestAt : existing.lastDigestAt,
           updatedAt: new Date()
         })
         .where(eq(userNotificationSettings.userId, input.userId))
@@ -51,10 +64,19 @@ export const userNotificationSettingsRepository = {
         id: input.id,
         userId: input.userId,
         notificationEmail: input.notificationEmail,
-        channels: input.channels
+        channels: input.channels,
+        emailDeliveryMode: input.emailDeliveryMode ?? "immediate",
+        lastDigestAt: input.lastDigestAt ?? null
       })
       .returning();
     if (!row) throw new Error("Failed to insert user_notification_settings");
     return row;
+  },
+
+  async markDigestSent(userId: string, at = new Date()): Promise<void> {
+    await getDb()
+      .update(userNotificationSettings)
+      .set({ lastDigestAt: at, updatedAt: at })
+      .where(eq(userNotificationSettings.userId, userId));
   }
 };

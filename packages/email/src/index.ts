@@ -1,6 +1,7 @@
 export { sendEmail } from "./resend";
 
 export { default as AppNotificationEmail } from "./templates/app-notification-email";
+export { default as NotificationDigestEmail } from "./templates/notification-digest-email";
 export { default as ResetPasswordEmail } from "./templates/reset-password-email";
 export { default as SendMagicLinkEmail } from "./templates/send-magic-link-email";
 export { default as SendVerificationOTP } from "./templates/send-verification-otp";

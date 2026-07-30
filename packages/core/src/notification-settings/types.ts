@@ -32,17 +32,23 @@ export const NotificationEmailSchema = z
   .or(z.literal(""))
   .transform((v) => (v === "" ? null : v));
 
+/** How career email notifications are delivered (security OTP always immediate). */
+export const EmailDeliveryModeSchema = z.enum(["immediate", "digest"]);
+export type EmailDeliveryMode = z.infer<typeof EmailDeliveryModeSchema>;
+
 export const NotificationSettingsOutputSchema = z.object({
   notificationEmail: z.string().email().nullable(),
   /** Account email for “use account email” affordance. */
   accountEmail: z.string().email(),
   channels: NotificationChannelPrefsSchema,
+  emailDeliveryMode: EmailDeliveryModeSchema,
   updatedAt: z.coerce.date().nullable()
 });
 export type NotificationSettingsOutput = z.infer<typeof NotificationSettingsOutputSchema>;
 
 export const UpdateNotificationSettingsInputSchema = z.object({
   notificationEmail: z.string().trim().max(320).optional().nullable(),
-  channels: NotificationChannelPrefsSchema.partial().optional()
+  channels: NotificationChannelPrefsSchema.partial().optional(),
+  emailDeliveryMode: EmailDeliveryModeSchema.optional()
 });
 export type UpdateNotificationSettingsInput = z.infer<typeof UpdateNotificationSettingsInputSchema>;

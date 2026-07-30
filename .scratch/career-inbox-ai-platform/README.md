@@ -184,6 +184,15 @@ See [LEARNING.md](./LEARNING.md).
 | ------ | ------------------------------------------- | -------- |
 | `71`   | Lexical rank top-K corrections for classify | **Done** |
 
+## Notification digest (wave 20)
+
+See [NOTIFICATIONS.md](./NOTIFICATIONS.md).
+
+| Ticket | Title                      | Status   |
+| ------ | -------------------------- | -------- |
+| `72`   | Digest mode + queue + send | **Done** |
+| `73`   | Settings delivery mode UI  | **Done** |
+
 ## Next frontier
 
-**Digest batching** · Gmail Pub/Sub · reply tools · embedding retrieval
+**Reply tools** · embedding retrieval · Gmail Pub/Sub

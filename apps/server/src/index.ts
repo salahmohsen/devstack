@@ -90,6 +90,18 @@ async function start(): Promise<void> {
       });
       log.emit({ _forceKeep: true });
     }
+
+    // Hourly email digests for users on digest delivery mode.
+    try {
+      const { startNotificationDigestQueue } = await import("#@/queues/notification-digest-queue");
+      startNotificationDigestQueue(ENV_SERVER.REDIS_URL);
+    } catch (error) {
+      const log = createLogger({ operation: "server__notification_digest_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "notification_digest_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
   }
 }
 

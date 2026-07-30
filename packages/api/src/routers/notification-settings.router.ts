@@ -3,9 +3,11 @@ import { randomUUID } from "node:crypto";
 import {
   defaultNotificationChannelPrefs,
   defaultNotificationSettingsOutput,
+  EmailDeliveryModeSchema,
   mergeNotificationChannels,
   NotificationSettingsOutputSchema,
   UpdateNotificationSettingsInputSchema,
+  type EmailDeliveryMode,
   type NotificationChannelPrefs
 } from "@tsu-stack/core";
 import { userNotificationSettingsRepository, userRepository } from "@tsu-stack/db";
@@ -21,6 +23,11 @@ async function accountEmailFor(userId: string): Promise<string> {
   return user.email;
 }
 
+function parseDeliveryMode(raw: string | null | undefined): EmailDeliveryMode {
+  const parsed = EmailDeliveryModeSchema.safeParse(raw);
+  return parsed.success ? parsed.data : "immediate";
+}
+
 function toOutput(
   row: NonNullable<Awaited<ReturnType<typeof userNotificationSettingsRepository.findByUserId>>>,
   accountEmail: string
@@ -29,6 +36,7 @@ function toOutput(
     notificationEmail: row.notificationEmail ?? accountEmail,
     accountEmail,
     channels: row.channels,
+    emailDeliveryMode: parseDeliveryMode(row.emailDeliveryMode),
     updatedAt: row.updatedAt
   });
 }
@@ -87,11 +95,15 @@ export const notificationSettingsRouter = {
         input.channels
       ) as StoredNotificationChannels;
 
+      const emailDeliveryMode: EmailDeliveryMode =
+        input.emailDeliveryMode ?? parseDeliveryMode(existing?.emailDeliveryMode);
+
       const row = await userNotificationSettingsRepository.upsert({
         id: existing?.id ?? randomUUID(),
         userId,
         notificationEmail,
-        channels
+        channels,
+        emailDeliveryMode
       });
 
       return toOutput(row, accountEmail);

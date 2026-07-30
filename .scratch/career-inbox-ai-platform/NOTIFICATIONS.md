@@ -35,8 +35,16 @@ Requires `RESEND_API_KEY` (and optional `EMAIL_FROM`). Without the key, `sendEma
 - `notifications.markRead` / `markAllRead`
 - `notificationSettings.get` / `update` → channel toggles + destination email
 
+## Email delivery mode (wave 20)
+
+| Mode        | Behavior                                                                |
+| ----------- | ----------------------------------------------------------------------- |
+| `immediate` | One Resend email per event (default)                                    |
+| `digest`    | Non-security emails queue (`email_digest_pending`); hourly BullMQ batch |
+
+`security.new_device_otp` always immediate. Digest template: `NotificationDigestEmail`.
+
 ## Out of scope
 
 - Toast policy matrix
 - Real-time websocket push (poll 60s on bell)
-- Digest / batching

@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, sql, type InferSelectModel } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { appNotification } from "../schema/app-notification.schema.ts";
@@ -15,6 +15,8 @@ export type CreateAppNotificationData = {
   messageId?: string | null;
   applicationId?: string | null;
   reviewItemId?: string | null;
+  emailDigestPending?: boolean;
+  emailedAt?: Date | null;
 };
 
 export const appNotificationRepository = {
@@ -65,10 +67,49 @@ export const appNotificationRepository = {
         href: input.href ?? null,
         messageId: input.messageId ?? null,
         applicationId: input.applicationId ?? null,
-        reviewItemId: input.reviewItemId ?? null
+        reviewItemId: input.reviewItemId ?? null,
+        emailDigestPending: input.emailDigestPending ?? false,
+        emailedAt: input.emailedAt ?? null
       })
       .returning();
     return created;
+  },
+
+  async listPendingDigestForUser(userId: string, limit = 50): Promise<AppNotificationEntity[]> {
+    return getDb()
+      .select()
+      .from(appNotification)
+      .where(and(eq(appNotification.userId, userId), eq(appNotification.emailDigestPending, true)))
+      .orderBy(desc(appNotification.createdAt))
+      .limit(limit);
+  },
+
+  async listUserIdsWithPendingDigest(): Promise<string[]> {
+    const rows = await getDb()
+      .selectDistinct({ userId: appNotification.userId })
+      .from(appNotification)
+      .where(eq(appNotification.emailDigestPending, true));
+    return rows.map((r) => r.userId);
+  },
+
+  async markDigestEmailed(ids: string[], userId: string): Promise<number> {
+    if (ids.length === 0) return 0;
+    const now = new Date();
+    const rows = await getDb()
+      .update(appNotification)
+      .set({
+        emailDigestPending: false,
+        emailedAt: now
+      })
+      .where(
+        and(
+          eq(appNotification.userId, userId),
+          eq(appNotification.emailDigestPending, true),
+          inArray(appNotification.id, ids)
+        )
+      )
+      .returning({ id: appNotification.id });
+    return rows.length;
   },
 
   async markRead(id: string, userId: string): Promise<AppNotificationEntity | null> {
