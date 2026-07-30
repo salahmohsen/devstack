@@ -64,14 +64,27 @@ export function ReviewPage() {
                 <div className="flex justify-center py-10">
                   <DefaultLoader />
                 </div>
+              ) : listQuery.isError ? (
+                <div className="flex flex-col items-center gap-2 px-3 py-10 text-center">
+                  <p className="text-sm text-muted-foreground">Couldn’t load the review queue.</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void listQuery.refetch()}
+                  >
+                    Retry
+                  </Button>
+                </div>
               ) : items.length === 0 ? (
                 <ItemsEmpty
                   className="py-10"
+                  icon={<ClipboardCheckIcon aria-hidden />}
                   title="Queue clear"
                   description="No pending review items. Drafts appear after career mail is classified, or from Mail → Draft with agent."
                 />
               ) : (
-                <ul className="divide-y">
+                <ul className="divide-y" aria-label="Pending review items">
                   {items.map((item) => {
                     const active = item.id === activeId;
                     return (
@@ -79,6 +92,7 @@ export function ReviewPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedId(item.id)}
+                          aria-current={active ? "true" : undefined}
                           className={cn(
                             "w-full px-3 py-2.5 text-left transition-colors hover:bg-muted/50",
                             active && "bg-muted/70"
@@ -164,6 +178,23 @@ function ReviewDetail({
     setEdit(null);
   }
 
+  /** Flush dirty local edits before send so confirm uses the text the user sees. */
+  async function handleSend() {
+    if (!detail) return;
+    if (edit) {
+      await update.mutateAsync({
+        id: detail.id,
+        bodyText: edit.body,
+        subject: edit.subject.trim() || null
+      });
+      setEdit(null);
+    }
+    await confirm.mutateAsync({ id: detail.id });
+    onResolved();
+  }
+
+  const busy = confirm.isPending || discard.isPending || update.isPending;
+
   return (
     <article className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-background">
       <header className="shrink-0 space-y-1 border-b px-4 py-3">
@@ -211,29 +242,29 @@ function ReviewDetail({
         <Button
           type="button"
           size="sm"
-          disabled={!dirty || update.isPending || !detail}
+          variant="outline"
+          disabled={!dirty || busy || !detail}
           onClick={() => {
             void handleSave();
           }}
         >
-          {update.isPending ? "Saving…" : "Save edits"}
+          {update.isPending && !confirm.isPending ? "Saving…" : "Save edits"}
         </Button>
         <Button
           type="button"
           size="sm"
-          disabled={confirm.isPending || discard.isPending || !detail}
+          disabled={busy || !detail}
           onClick={() => {
-            if (!detail) return;
-            void confirm.mutateAsync({ id: detail.id }).then(() => onResolved());
+            void handleSend();
           }}
         >
-          {confirm.isPending ? "Sending…" : "Send reply"}
+          {confirm.isPending ? "Sending…" : dirty ? "Save & send reply" : "Send reply"}
         </Button>
         <Button
           type="button"
           size="sm"
-          variant="outline"
-          disabled={discard.isPending || confirm.isPending || !detail}
+          variant="ghost"
+          disabled={busy || !detail}
           onClick={() => {
             if (!detail) return;
             void discard.mutateAsync({ id: detail.id }).then(() => onResolved());

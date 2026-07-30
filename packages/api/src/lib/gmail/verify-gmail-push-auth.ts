@@ -12,8 +12,8 @@ export type GmailPushAuthResult =
   | { ok: true; method: "oidc" | "shared_secret" }
   | { ok: false; reason: string };
 
-function isProduction(): boolean {
-  return process.env.NODE_ENV === "production";
+function isProdEnv(): boolean {
+  return ENV_SERVER.NODE_ENV === "production" || process.env.NODE_ENV === "production";
 }
 
 /**
@@ -23,7 +23,8 @@ function isProduction(): boolean {
  * 1. Google OIDC JWT (Bearer) — preferred; set GMAIL_PUSH_OIDC_AUDIENCE
  * 2. Shared secret — GMAIL_PUSH_SHARED_SECRET as Bearer token
  *
- * Production: refuses when no credentials configured (unless REQUIRE_AUTH=false).
+ * Production: always requires a configured credential + valid token.
+ * `GMAIL_PUSH_REQUIRE_AUTH=false` only enables open mode in non-production when no secrets are set.
  */
 export async function verifyGmailPushAuth(
   authorizationHeader: string | null
@@ -55,22 +56,16 @@ export async function verifyGmailPushAuth(
     .toLowerCase();
 
   const hasCredential = Boolean(sharedSecret) || Boolean(oidcAudience);
-  const requireAuth =
-    requireAuthEnv === "true" ||
-    requireAuthEnv === "1" ||
-    (isProduction() && requireAuthEnv !== "false");
+  // Production is always closed. Dev may open only when explicitly opted out and no secrets.
+  const allowOpenDev =
+    !isProdEnv() && (requireAuthEnv === "false" || requireAuthEnv === "0") && !hasCredential;
 
-  if (requireAuth && !hasCredential) {
+  if (!hasCredential) {
+    if (allowOpenDev) {
+      return { ok: true, method: "shared_secret" }; // open_dev — keep union small for logs
+    }
     return { ok: false, reason: "push_auth_not_configured" };
   }
-
-  if (!requireAuth && !hasCredential) {
-    // Dev open mode only when auth is explicitly not required and no secrets set.
-    return { ok: true, method: "shared_secret" }; // open_dev — keep union small for logs
-  }
-
-  // Never allow REQUIRE_AUTH=false to open prod when credentials exist but token is wrong.
-  // (requireAuth already true in production by default.)
 
   const auth = authorizationHeader?.trim() ?? "";
   const token = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : auth;
@@ -90,7 +85,7 @@ export async function verifyGmailPushAuth(
         audience: oidcAudience
       });
       if (oidcEmail) {
-        const email = String(payload.email ?? "").toLowerCase();
+        const email = typeof payload.email === "string" ? payload.email.toLowerCase() : "";
         const verified = payload.email_verified === true || payload.email_verified === "true";
         if (!verified || email !== oidcEmail) {
           return { ok: false, reason: "oidc_email_mismatch" };

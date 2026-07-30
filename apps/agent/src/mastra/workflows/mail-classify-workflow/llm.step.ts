@@ -28,9 +28,12 @@ export const llmStep = createStep({
   outputSchema: MailClassifyOutputSchema,
   execute: async ({ inputData, mastra, abortSignal }) => {
     const { original, result: heuristic } = inputData;
+    const fewShotCount = original.fewShotCorrections?.length ?? 0;
 
-    // Strong heuristic hit — skip LLM.
+    // Strong heuristic hit — skip LLM only when we have no user corrections to teach.
+    // Corrections must still reach the model so keyword-matched mail can be overridden.
     if (
+      fewShotCount === 0 &&
       heuristic.systemLabels.length > 0 &&
       (heuristic.confidence ?? 0) >= HEURISTIC_CONFIDENCE_SKIP
     ) {

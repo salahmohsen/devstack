@@ -97,14 +97,17 @@ async function runTick(): Promise<void> {
   const userIds = await runWithDb(db, () => userGmailSyncRepository.listUserIdsForScheduledSync());
 
   let enqueued = 0;
+  // Bucket id dedupes concurrent ticks for the same user while still allowing the next
+  // interval after completion (fixed `gmail-sync-user:${id}` blocked re-enqueue while completed).
+  const bucket = Math.floor(Date.now() / GMAIL_SYNC_TICK_INTERVAL_MS);
   for (const userId of userIds) {
     await queue.add(
       GMAIL_SYNC_USER_JOB_NAME,
       { userId, reason: "scheduled" satisfies GmailSyncUserJobPayload["reason"] },
       {
-        jobId: `gmail-sync-user:${userId}`,
-        removeOnComplete: 200,
-        removeOnFail: 500,
+        jobId: `gmail-sync-user:${userId}:${bucket}`,
+        removeOnComplete: true,
+        removeOnFail: 100,
         attempts: 2,
         backoff: { type: "exponential", delay: 5000 }
       }

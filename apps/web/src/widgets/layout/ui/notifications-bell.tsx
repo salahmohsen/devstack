@@ -72,6 +72,17 @@ export function NotificationsBell() {
         <div className="max-h-80 overflow-y-auto">
           {listQuery.isLoading ? (
             <p className="px-3 py-6 text-center text-xs text-muted-foreground">Loading…</p>
+          ) : listQuery.isError ? (
+            <div className="flex flex-col items-center gap-2 px-3 py-6 text-center">
+              <p className="text-xs text-muted-foreground">Couldn’t load notifications.</p>
+              <button
+                type="button"
+                className="text-xs font-medium text-foreground underline-offset-2 hover:underline"
+                onClick={() => void listQuery.refetch()}
+              >
+                Retry
+              </button>
+            </div>
           ) : items.length === 0 ? (
             <p className="px-3 py-6 text-center text-xs text-muted-foreground">
               No notifications yet.
@@ -88,6 +99,7 @@ export function NotificationsBell() {
                         unread ? "font-medium text-foreground" : "text-muted-foreground"
                       )}
                     >
+                      {unread ? <span className="sr-only">Unread. </span> : null}
                       {item.title}
                     </span>
                     {item.body ? (
@@ -112,9 +124,12 @@ export function NotificationsBell() {
                         }}
                       >
                         {unread ? (
-                          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                          <span
+                            className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"
+                            aria-hidden
+                          />
                         ) : (
-                          <span className="mt-1.5 size-1.5 shrink-0" />
+                          <span className="mt-1.5 size-1.5 shrink-0" aria-hidden />
                         )}
                         {content}
                       </MenuItem>
@@ -126,9 +141,12 @@ export function NotificationsBell() {
                         }}
                       >
                         {unread ? (
-                          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                          <span
+                            className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary"
+                            aria-hidden
+                          />
                         ) : (
-                          <span className="mt-1.5 size-1.5 shrink-0" />
+                          <span className="mt-1.5 size-1.5 shrink-0" aria-hidden />
                         )}
                         {content}
                       </MenuItem>

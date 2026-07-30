@@ -34,7 +34,7 @@ import {
   useUndoMailCrmApplyMutation
 } from "@/features/mail";
 import { useListMailSmartRulesQuery } from "@/features/mail-smart-rules";
-import { useCreateReplyDraftMutation } from "@/features/review";
+import { useCreateReplyDraftMutation, useUpdateReviewMutation } from "@/features/review";
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
 
@@ -282,6 +282,11 @@ function MessageList({
               type="button"
               onClick={() => onSelect(message.id)}
               aria-current={active ? "true" : undefined}
+              aria-label={
+                message.unread
+                  ? `Unread: ${message.fromName}, ${message.subject}`
+                  : `${message.fromName}, ${message.subject}`
+              }
               className={cn(
                 "flex w-full flex-col gap-1 border-b px-3 py-2.5 text-left transition-colors last:border-b-0",
                 active ? "bg-muted/70" : "hover:bg-muted/40"
@@ -294,6 +299,7 @@ function MessageList({
                     message.unread ? "font-semibold" : "font-medium"
                   )}
                 >
+                  {message.unread ? <span className="sr-only">Unread. </span> : null}
                   {message.fromName}
                 </span>
                 <span className="shrink-0 text-[10px] text-muted-foreground">
@@ -351,9 +357,11 @@ function MessageReaderBody({
   const [composerOpen, setComposerOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [agentBanner, setAgentBanner] = useState(false);
+  const [queueing, setQueueing] = useState(false);
   const undoCrm = useUndoMailCrmApplyMutation();
   const correct = useCorrectMailClassificationMutation();
   const createDraft = useCreateReplyDraftMutation();
+  const updateReview = useUpdateReviewMutation();
   const navigate = useNavigate();
   const [correctOpen, setCorrectOpen] = useState(false);
 
@@ -407,6 +415,34 @@ function MessageReaderBody({
         }
       }
     );
+  }
+
+  /** Queue the composer text as a Review item (Assist send path). */
+  async function queueComposerForReview() {
+    if (!detail?.id) return;
+    const plain = draft
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!plain) return;
+    setQueueing(true);
+    try {
+      const item = await createDraft.mutateAsync({ messageId: detail.id });
+      // Full autonomy may have already sent on create — only overwrite while still pending.
+      if (item.status === "pending") {
+        await updateReview.mutateAsync({
+          id: item.id,
+          bodyText: plain,
+          subject: item.subject ?? `Re: ${message.subject}`
+        });
+      }
+      setComposerOpen(false);
+      setAgentBanner(false);
+      setDraft("");
+      void navigate({ to: "/dashboard/review" });
+    } finally {
+      setQueueing(false);
+    }
   }
 
   return (
@@ -516,7 +552,7 @@ function MessageReaderBody({
           </div>
         ) : (
           <p className="max-w-[72ch] text-sm leading-relaxed whitespace-pre-wrap">
-            {bodyText ?? message.preview}
+            {bodyText || message.preview}
           </p>
         )}
       </div>
@@ -526,9 +562,13 @@ function MessageReaderBody({
           <div className="space-y-2">
             {agentBanner ? (
               <p className="rounded-md bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
-                Agent draft — confirm in Review before send when Assist mode is on.
+                Agent-style starter — edit freely, then queue for Review to send (Assist mode).
               </p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Replies send from the Review queue so you can confirm first (Assist mode).
+              </p>
+            )}
             <RichTextEditor
               value={draft}
               onChange={setDraft}
@@ -536,24 +576,38 @@ function MessageReaderBody({
               className="bg-background"
             />
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" size="sm" disabled title="Wires with mail backend">
-                Send
+              <Button
+                type="button"
+                size="sm"
+                disabled={
+                  queueing ||
+                  createDraft.isPending ||
+                  updateReview.isPending ||
+                  !detail?.id ||
+                  !draft.replace(/<[^>]+>/g, "").trim()
+                }
+                onClick={() => {
+                  void queueComposerForReview();
+                }}
+              >
+                {queueing || createDraft.isPending || updateReview.isPending
+                  ? "Queueing…"
+                  : "Queue for review"}
               </Button>
-              {!agentBanner ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={createDraft.isPending}
-                  onClick={openAgentDraft}
-                >
-                  {createDraft.isPending ? "Creating draft…" : "Draft with agent"}
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={createDraft.isPending || queueing}
+                onClick={openAgentDraft}
+              >
+                {createDraft.isPending && !queueing ? "Creating draft…" : "Draft with agent"}
+              </Button>
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
+                disabled={queueing}
                 onClick={() => {
                   setComposerOpen(false);
                   setAgentBanner(false);
@@ -577,15 +631,6 @@ function MessageReaderBody({
               onClick={openAgentDraft}
             >
               {createDraft.isPending ? "Creating draft…" : "Draft with agent"}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled
-              title="Wires with mail backend"
-            >
-              Mark unread
             </Button>
           </div>
         )}

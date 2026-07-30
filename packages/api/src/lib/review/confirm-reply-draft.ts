@@ -12,8 +12,8 @@ export type ConfirmReplyDraftResult =
     };
 
 /**
- * Confirm a reply draft: send via Resend, then mark status `sent`.
- * Non-reply kinds are marked `confirmed` without outbound.
+ * Confirm a reply draft: CAS-claim pending, send via Resend, then mark `sent`.
+ * Non-reply kinds are CAS-claimed to `confirmed` without outbound.
  */
 export async function confirmReviewItem(input: {
   applyId: string;
@@ -24,13 +24,13 @@ export async function confirmReviewItem(input: {
   if (existing.status !== "pending") return { ok: false, code: "NOT_PENDING" };
 
   if (existing.kind !== "reply_draft") {
-    const updated = await reviewItemRepository.setStatus(existing.id, input.userId, "confirmed");
-    if (!updated) return { ok: false, code: "NOT_FOUND" };
+    const claimed = await reviewItemRepository.claimPending(existing.id, input.userId, "confirmed");
+    if (!claimed) return { ok: false, code: "NOT_PENDING" };
     return {
       ok: true,
       result: {
-        id: updated.id,
-        status: updated.status,
+        id: claimed.id,
+        status: claimed.status,
         sent: false,
         note: "Confirmed."
       }
@@ -71,15 +71,21 @@ async function sendAndMark(
     };
   }
 
+  // Claim before external send so concurrent confirm/Full-auto cannot double-send.
+  const claimed = await reviewItemRepository.claimPending(existing.id, userId, "confirmed");
+  if (!claimed) return { ok: false, code: "NOT_PENDING" };
+
   const sent = await sendCareerReply({
     userId,
-    to: existing.toEmail,
-    subject: existing.subject ?? "",
-    bodyText: existing.bodyText,
-    bodyHtml: existing.bodyHtml
+    to: claimed.toEmail ?? existing.toEmail,
+    subject: claimed.subject ?? existing.subject ?? "",
+    bodyText: claimed.bodyText,
+    bodyHtml: claimed.bodyHtml
   });
 
   if (!sent.ok) {
+    // Release claim so the user can retry.
+    await reviewItemRepository.setStatus(existing.id, userId, "pending");
     return {
       ok: false,
       code: "SEND_FAILED",

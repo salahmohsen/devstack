@@ -25,6 +25,9 @@ tmp
 
 .worktrees
 
+# Local agent review dumps (ticket tracker under .scratch stays tracked)
+.scratch/**/reviews/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

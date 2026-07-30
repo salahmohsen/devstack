@@ -99,6 +99,25 @@ export function SmartRulesSettings() {
     );
   }
 
+  if (list.isError) {
+    return (
+      <Frame>
+        <FrameHeader>
+          <FrameTitle className="flex items-center gap-2">
+            <FilterIcon className="size-4 opacity-80" aria-hidden />
+            Smart rules
+          </FrameTitle>
+          <FrameDescription>Couldn’t load your rules.</FrameDescription>
+        </FrameHeader>
+        <FramePanel>
+          <Button type="button" size="sm" variant="outline" onClick={() => void list.refetch()}>
+            Retry
+          </Button>
+        </FramePanel>
+      </Frame>
+    );
+  }
+
   return (
     <Frame>
       <FrameHeader>

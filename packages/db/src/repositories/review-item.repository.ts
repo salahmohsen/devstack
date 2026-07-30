@@ -159,5 +159,27 @@ export const reviewItemRepository = {
       .where(and(eq(reviewItem.id, id), eq(reviewItem.userId, userId)))
       .returning();
     return updated ?? null;
+  },
+
+  /**
+   * CAS claim: only one caller wins when status is still `pending`.
+   * Uses `confirmed` as in-flight claim for reply sends (released back to `pending` on send failure).
+   */
+  async claimPending(
+    id: string,
+    userId: string,
+    nextStatus: ReviewItemStatusDb = "confirmed"
+  ): Promise<ReviewItemEntity | null> {
+    const [updated] = await getDb()
+      .update(reviewItem)
+      .set({
+        status: nextStatus,
+        resolvedAt: nextStatus === "pending" ? null : new Date()
+      })
+      .where(
+        and(eq(reviewItem.id, id), eq(reviewItem.userId, userId), eq(reviewItem.status, "pending"))
+      )
+      .returning();
+    return updated ?? null;
   }
 };
