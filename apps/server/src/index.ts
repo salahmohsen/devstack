@@ -2,11 +2,13 @@ import { type Server as HTTPServer } from "node:http";
 
 import { serve } from "@hono/node-server";
 
+import { registerMailClassifyEnqueue } from "@tsu-stack/api/lib/mail/classify-enqueue-hook";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { app } from "#@/app";
 import { createGithubGateway, broadcastSignals } from "#@/github-gateway";
+import { enqueueMailClassify, startMailClassifyQueue } from "#@/queues/mail-classify-queue";
 import { initRuntime, setBroadcastSignals } from "#@/runtime-context";
 import "#@/shared/lib/logger";
 
@@ -64,12 +66,10 @@ async function start(): Promise<void> {
 
     // Career Inbox classify queue (BullMQ). Soft-fail so Redis/BullMQ issues
     // never keep /health/live from answering.
+    // Static imports: already pulled in by app.ts / gmail sync — dynamic import
+    // would be ineffective (same chunk) and only adds bundler noise.
     try {
-      const { startMailClassifyQueue, enqueueMailClassify } =
-        await import("#@/queues/mail-classify-queue");
       startMailClassifyQueue(ENV_SERVER.REDIS_URL);
-      const { registerMailClassifyEnqueue } =
-        await import("@tsu-stack/api/lib/mail/classify-enqueue-hook");
       registerMailClassifyEnqueue(async ({ messageId, userId }) => {
         const result = await enqueueMailClassify({ messageId, userId });
         return result.enqueued;
