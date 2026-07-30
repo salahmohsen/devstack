@@ -52,6 +52,11 @@ export type AuthSessionManagerProps = {
    * The revoke-all action still renders above the session list when applicable.
    */
   hideHeader?: boolean;
+  /**
+   * Max height for the scrollable session list (current + others).
+   * CSS length, e.g. `"20rem"`. Omit for unbounded list height.
+   */
+  maxListHeight?: string;
   errors?: {
     general?: string;
   };
@@ -324,6 +329,7 @@ export default function AuthSessionManager({
   className,
   isLoading = false,
   hideHeader = false,
+  maxListHeight,
   errors
 }: AuthSessionManagerProps) {
   const [revokingAll, setRevokingAll] = useState(false);
@@ -349,31 +355,39 @@ export default function AuthSessionManager({
     />
   ) : null;
 
+  const listBody =
+    sessions.length === 0 ? (
+      <EmptyState />
+    ) : (
+      <div className="flex flex-col gap-4">
+        {currentSession ? (
+          <>
+            <CurrentSessionSection
+              isLoading={isLoading}
+              onRevoke={onRevoke}
+              session={currentSession}
+            />
+            {otherSessions.length > 0 ? <Separator /> : null}
+          </>
+        ) : null}
+
+        <OtherSessionsSection isLoading={isLoading} onRevoke={onRevoke} sessions={otherSessions} />
+      </div>
+    );
+
   const body = (
     <div className="flex flex-col gap-6">
-      {errors?.general && <ErrorAlert message={errors.general} />}
+      {errors?.general ? <ErrorAlert message={errors.general} /> : null}
 
-      {sessions.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="flex flex-col gap-4">
-          {currentSession && (
-            <>
-              <CurrentSessionSection
-                isLoading={isLoading}
-                onRevoke={onRevoke}
-                session={currentSession}
-              />
-              {otherSessions.length > 0 && <Separator />}
-            </>
-          )}
-
-          <OtherSessionsSection
-            isLoading={isLoading}
-            onRevoke={onRevoke}
-            sessions={otherSessions}
-          />
+      {maxListHeight ? (
+        <div
+          className="overflow-y-auto overscroll-contain pe-1 [-webkit-overflow-scrolling:touch]"
+          style={{ maxHeight: maxListHeight }}
+        >
+          {listBody}
         </div>
+      ) : (
+        listBody
       )}
     </div>
   );

@@ -314,7 +314,14 @@ export const auth = betterAuth({
     openAPI({
       theme: "deepSpace"
     }),
-    passkey()
+    passkey({
+      // WebAuthn rpID must match the browser host (no port). Local 127.0.0.1 → localhost.
+      rpID: (() => {
+        const host = new URL(ENV_SERVER.VITE_WEB_URL).hostname;
+        return host === "127.0.0.1" ? "localhost" : host;
+      })(),
+      rpName: "Personal Hub"
+    })
   ],
 
   telemetry: {
