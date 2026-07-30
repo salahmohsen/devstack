@@ -27,6 +27,7 @@ import {
   TableRow
 } from "@tsu-stack/ui/components/table";
 
+import { AiErrorBanner } from "@/shared/ui/ai-error-banner";
 import { Icon } from "@/shared/ui/icon";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -55,10 +56,14 @@ type OrganizeDialogProps = {
   onOpenChange: (open: boolean) => void;
   actions: OrganizeAction[];
   sortOrder: string[];
+  /** Soft-failure notes from LLM steps (skip / provider errors). */
+  notes?: string[];
   stacks: StackOutput[];
   isPending: boolean;
   onConfirm: (selectedActions: OrganizeAction[]) => void;
   onClearSortOrder: () => void;
+  /** Re-run organize from the degradation banner. */
+  onRetry?: () => void;
 };
 
 function actionRowId(action: OrganizeAction, index: number): string {
@@ -70,10 +75,12 @@ export function OrganizeDialog({
   onOpenChange,
   actions,
   sortOrder,
+  notes = [],
   stacks,
   isPending,
   onConfirm,
-  onClearSortOrder
+  onClearSortOrder,
+  onRetry
 }: OrganizeDialogProps) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 
@@ -260,6 +267,7 @@ export function OrganizeDialog({
   const hasActions = actions.length > 0;
   const hasSortOnly = !hasActions && sortOrder.length > 0;
   const isEmpty = !hasActions && sortOrder.length === 0;
+  const hasNotes = notes.length > 0;
 
   const summary = useMemo(() => {
     const merges = actions.filter((a) => a.type === "merge").length;
@@ -288,9 +296,11 @@ export function OrganizeDialog({
 
   const confirmLabel = isPending
     ? "Applying…"
-    : hasSortOnly
-      ? "Apply reorder"
-      : `Apply selected (${selectedCount})`;
+    : isEmpty
+      ? "Close"
+      : hasSortOnly
+        ? "Apply reorder"
+        : `Apply selected (${selectedCount})`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -303,80 +313,98 @@ export function OrganizeDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {isEmpty ? (
-          <DialogPanel>
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              Nothing to apply — your stacks are already organized.
-            </div>
-          </DialogPanel>
-        ) : (
-          <DialogPanel className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">
-              {summary || "Review changes below."}
-              {hasActions ? " All actions are selected by default." : null}
-            </p>
+        <DialogPanel className="flex flex-col gap-4">
+          {hasNotes ? (
+            <AiErrorBanner
+              notes={notes}
+              feature="organize"
+              severity="partial"
+              density="compact"
+              onRetry={
+                onRetry && !isPending
+                  ? () => {
+                      onRetry();
+                    }
+                  : undefined
+              }
+            />
+          ) : null}
 
-            {hasActions ? (
-              <CardFrame className="w-full">
-                <Table variant="card">
-                  <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id}>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(header.column.columnDef.header, header.getContext())}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows.length > 0 ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow data-state={row.getIsSelected() && "selected"} key={row.id}>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
+          {isEmpty ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              {hasNotes
+                ? "Nothing ready to apply yet."
+                : "Nothing to apply — your stacks are already organized."}
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {summary || "Review changes below."}
+                {hasActions ? " All actions are selected by default." : null}
+              </p>
+
+              {hasActions ? (
+                <CardFrame className="w-full">
+                  <Table variant="card">
+                    <TableHeader>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => (
+                            <TableHead key={header.id}>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
                           ))}
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell className="h-24 text-center" colSpan={columns.length}>
-                          No actions.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardFrame>
-            ) : null}
+                      ))}
+                    </TableHeader>
+                    <TableBody>
+                      {table.getRowModel().rows.length > 0 ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRow data-state={row.getIsSelected() && "selected"} key={row.id}>
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell className="h-24 text-center" colSpan={columns.length}>
+                            No actions.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardFrame>
+              ) : null}
 
-            {sortOrder.length > 0 ? (
-              <p className="text-xs text-muted-foreground">
-                A new importance order will be applied for {sortOrder.length} stack
-                {sortOrder.length === 1 ? "" : "s"}.
-              </p>
-            ) : null}
-          </DialogPanel>
-        )}
+              {sortOrder.length > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  A new importance order will be applied for {sortOrder.length} stack
+                  {sortOrder.length === 1 ? "" : "s"}.
+                </p>
+              ) : null}
+            </>
+          )}
+        </DialogPanel>
 
         <DialogFooter>
           <DialogClose render={<Button variant="outline" type="button" onClick={handleClose} />}>
-            Cancel
+            {isEmpty ? "Dismiss" : "Cancel"}
           </DialogClose>
-          <Button
-            type="button"
-            disabled={
-              isPending || isEmpty || (hasActions && selectedCount === 0 && sortOrder.length === 0)
-            }
-            onClick={handleConfirm}
-          >
-            {confirmLabel}
-          </Button>
+          {isEmpty ? null : (
+            <Button
+              type="button"
+              disabled={isPending || (hasActions && selectedCount === 0 && sortOrder.length === 0)}
+              onClick={handleConfirm}
+            >
+              {confirmLabel}
+            </Button>
+          )}
         </DialogFooter>
       </DialogPopup>
     </Dialog>

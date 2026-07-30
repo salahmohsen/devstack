@@ -9,13 +9,22 @@ import {
   reviewItemRepository,
   type ReviewItemEntity
 } from "@tsu-stack/db";
+import { createLogger } from "@tsu-stack/logger/server";
 
+import { agentFailureUserMessage, type AgentCallFailure } from "#@/lib/agent/agent-call-result";
 import { emitAppNotification } from "#@/lib/notification/emit-app-notification";
 import { callMailReplyAgent } from "#@/lib/review/call-mail-reply-agent";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type CreateReplyDraftResult =
-  | { ok: true; item: ReviewItemEntity; created: boolean; source?: MailReplyDraftOutput["source"] }
+  | {
+      ok: true;
+      item: ReviewItemEntity;
+      created: boolean;
+      source?: MailReplyDraftOutput["source"];
+      /** Present when AI agent failed and heuristic draft was used instead. */
+      agentFailure?: AgentCallFailure;
+    }
   | { ok: false; code: "NOT_FOUND" | "NOT_CAREER" };
 
 /**
@@ -64,8 +73,30 @@ export async function createReplyDraftFromMail(input: {
     llm
   };
 
-  let draft: MailReplyDraftOutput | null = await callMailReplyAgent(draftInput);
-  draft ??= heuristicMailReplyDraft(draftInput);
+  const agentCall = await callMailReplyAgent(draftInput);
+  let draft: MailReplyDraftOutput;
+  let agentFailure: AgentCallFailure | undefined;
+
+  if (agentCall.ok) {
+    draft = agentCall.data;
+  } else {
+    draft = heuristicMailReplyDraft(draftInput);
+    agentFailure = agentCall.failure;
+    const hadByo = Boolean(llm.apiKey?.trim());
+    if (hadByo || agentCall.failure.reason !== "not_configured") {
+      const failLog = createLogger({ operation: "api__mail_reply_agent_fallback" });
+      failLog.error(new Error(`Mail reply agent fallback: ${agentCall.failure.reason}`), {
+        event: "mail_reply_agent_fallback",
+        messageId: message.id,
+        userId: input.userId,
+        agentFailReason: agentCall.failure.reason,
+        agentFailStatus: agentCall.failure.status ?? null,
+        agentFailMessage: agentCall.failure.message ?? null,
+        hadByo
+      });
+      failLog.emit({ _forceKeep: true });
+    }
+  }
 
   const item = await reviewItemRepository.create({
     userId: input.userId,
@@ -83,8 +114,10 @@ export async function createReplyDraftFromMail(input: {
     await emitAppNotification({
       userId: input.userId,
       kind: "mail.reply.draft_ready",
-      title: "Reply draft ready",
-      body: draft.title,
+      title: agentFailure ? "Reply draft ready (AI skipped)" : "Reply draft ready",
+      body: agentFailure
+        ? `${draft.title} · ${agentFailureUserMessage(agentFailure)}`
+        : draft.title,
       href: "/dashboard/review",
       messageId: message.id,
       applicationId: message.applicationId,
@@ -92,5 +125,5 @@ export async function createReplyDraftFromMail(input: {
     });
   }
 
-  return { ok: true, item, created: true, source: draft.source };
+  return { ok: true, item, created: true, source: draft.source, agentFailure };
 }

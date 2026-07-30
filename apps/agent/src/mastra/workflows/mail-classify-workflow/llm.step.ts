@@ -9,8 +9,8 @@ import {
   MailSystemLabelSchema,
   type MailSystemLabel
 } from "@tsu-stack/core";
-import { createLogger } from "@tsu-stack/logger/server";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
 import { heuristicStep } from "#@/mastra/workflows/mail-classify-workflow/heuristic.step";
 

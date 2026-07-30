@@ -1,5 +1,7 @@
 import { type OrpcContextAgentWorker } from "@tsu-stack/core";
 
+import { withAgentFetchRetry } from "#@/lib/agent/agent-fetch-retry";
+
 type LoggerLike = {
   set?(details: Record<string, unknown>): void;
   warn?(details: unknown): void;
@@ -110,14 +112,16 @@ export async function* streamMastraWorkflow(
     return;
   }
 
-  const createRunRes = await agentWorker.fetch(
-    `/api/workflows/${encodeURIComponent(workflowId)}/create-run`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-      signal
-    }
+  // Retry create-run on deploy/overload (502/503/504) — same policy as agentFetch retry.
+  const createRunRes = await withAgentFetchRetry(
+    () =>
+      agentWorker.fetch(`/api/workflows/${encodeURIComponent(workflowId)}/create-run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+        signal
+      }),
+    { attempts: 4, signal }
   );
 
   if (!createRunRes.ok) {

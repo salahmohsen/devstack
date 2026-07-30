@@ -2,9 +2,14 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import { type OrganizeStacksInput } from "@tsu-stack/core";
-import { createLogger } from "@tsu-stack/logger/server";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
+import {
+  organizeLlmFailedNote,
+  organizeMissingAgentNote,
+  organizeMissingByoNote
+} from "#@/mastra/workflows/organize-stacks-workflow/organize-note";
 import {
   EnrichActionSchema,
   MergeActionSchema,
@@ -19,19 +24,23 @@ export const sortStacks = createStep({
     stacks: StackSchema,
     mergeActions: z.array(MergeActionSchema),
     renameActions: z.array(RenameActionSchema),
-    enrichActions: z.array(EnrichActionSchema)
+    enrichActions: z.array(EnrichActionSchema),
+    notes: z.array(z.string()).default([])
   }),
   outputSchema: z.object({
     stacks: StackSchema,
     mergeActions: z.array(MergeActionSchema),
     renameActions: z.array(RenameActionSchema),
     enrichActions: z.array(EnrichActionSchema),
-    sortOrder: z.array(z.string())
+    sortOrder: z.array(z.string()),
+    notes: z.array(z.string()).default([])
   }),
   execute: async (params) => {
     const { inputData, mastra, abortSignal } = params;
+    const priorNotes = inputData.notes ?? [];
     if (abortSignal?.aborted) {
-      return { ...inputData, sortOrder: inputData.stacks.map((s) => s.id) };
+      // Do not invent a fake reorder when aborted — leave order unchanged.
+      return { ...inputData, sortOrder: [], notes: priorNotes };
     }
     const { stacks, mergeActions, renameActions, enrichActions } = inputData;
 
@@ -40,7 +49,14 @@ export const sortStacks = createStep({
     const remaining = stacks.filter((s) => !victimIds.has(s.id));
 
     if (remaining.length === 0) {
-      return { stacks, mergeActions, renameActions, enrichActions, sortOrder: [] };
+      return {
+        stacks,
+        mergeActions,
+        renameActions,
+        enrichActions,
+        sortOrder: [],
+        notes: priorNotes
+      };
     }
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
@@ -50,7 +66,9 @@ export const sortStacks = createStep({
         mergeActions,
         renameActions,
         enrichActions,
-        sortOrder: remaining.map((s) => s.id)
+        // Empty = no reorder suggestion (not "identity order as success")
+        sortOrder: [],
+        notes: [...priorNotes, organizeMissingAgentNote("sort")]
       };
     }
 
@@ -62,7 +80,8 @@ export const sortStacks = createStep({
         mergeActions,
         renameActions,
         enrichActions,
-        sortOrder: remaining.map((s) => s.id)
+        sortOrder: [],
+        notes: [...priorNotes, organizeMissingByoNote("sort")]
       };
     }
 
@@ -128,7 +147,8 @@ Return ALL remaining stack IDs in order.`;
         mergeActions,
         renameActions,
         enrichActions,
-        sortOrder: validOrder
+        sortOrder: validOrder,
+        notes: priorNotes
       };
     } catch (error) {
       const log = createLogger({ operation: "agent__organize_stacks_sort" });
@@ -141,7 +161,9 @@ Return ALL remaining stack IDs in order.`;
         mergeActions,
         renameActions,
         enrichActions,
-        sortOrder: remaining.map((s) => s.id)
+        // Leave order unchanged — do not surface identity order as a "reorder"
+        sortOrder: [],
+        notes: [...priorNotes, organizeLlmFailedNote("sort", error)]
       };
     }
   }

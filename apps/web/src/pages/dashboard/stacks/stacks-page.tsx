@@ -166,6 +166,7 @@ export function StacksPage() {
   const organizeDialogOpen = useOrganizeStacksJobSelector((s) => s.dialogOpen);
   const organizeActions = useOrganizeStacksJobSelector((s) => s.actions);
   const organizeSortOrder = useOrganizeStacksJobSelector((s) => s.sortOrder);
+  const organizeNotes = useOrganizeStacksJobSelector((s) => s.notes);
   const [isApplyingOrganize, setIsApplyingOrganize] = useState(false);
 
   function handleStartOrganize() {
@@ -649,12 +650,17 @@ export function StacksPage() {
           }}
           actions={organizeActions}
           sortOrder={organizeSortOrder}
+          notes={organizeNotes}
           stacks={stacks}
           isPending={isApplyingOrganize}
           onConfirm={handleConfirmOrganize}
           onClearSortOrder={() => {
             // sort order is part of the ready job; clearing keeps dialog openable
             setOrganizeReviewOpen(false);
+          }}
+          onRetry={() => {
+            dismissOrganizeStacksJob();
+            startOrganizeStacksJob();
           }}
         />
       </PageLayout>

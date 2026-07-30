@@ -20,6 +20,7 @@ import {
   workflowFailedMessage,
   workflowStepErrorMessage
 } from "@/shared/lib/ai-job";
+import { toastAiError } from "@/shared/lib/toast-ai-error";
 
 import {
   getOrganizeJobState,
@@ -63,7 +64,8 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
   const result: OrganizeStacksOutput = {
     actions: [],
     sortOrder: [],
-    summary: { merges: 0, renames: 0, enrichments: 0, sorted: false }
+    summary: { merges: 0, renames: 0, enrichments: 0, sorted: false },
+    notes: []
   };
 
   let runId: string | null = null;
@@ -115,6 +117,9 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
           result.actions = (output.actions ?? []) as OrganizeAction[];
           result.sortOrder = (output.sortOrder ?? []) as string[];
           result.summary = (output.summary ?? result.summary) as OrganizeStacksOutput["summary"];
+          result.notes = Array.isArray(output.notes)
+            ? (output.notes as string[]).filter((n) => typeof n === "string" && n.trim())
+            : [];
           setOrganizeJobState({ stepLabel: null });
         }
       }
@@ -160,7 +165,10 @@ export function startOrganizeStacksJob() {
   }
 
   // Ready results waiting for review — open dialog instead of re-running
-  if (current.status === "ready" && (current.actions.length > 0 || current.sortOrder.length > 0)) {
+  if (
+    current.status === "ready" &&
+    (current.actions.length > 0 || current.sortOrder.length > 0 || current.notes.length > 0)
+  ) {
     setOrganizeJobState({ dialogOpen: true });
     return;
   }
@@ -173,6 +181,7 @@ export function startOrganizeStacksJob() {
     runId: null,
     actions: [],
     sortOrder: [],
+    notes: [],
     error: null,
     dialogOpen: false,
     startedAt: Date.now()
@@ -197,12 +206,39 @@ export function startOrganizeStacksJob() {
       }
 
       const { actions, sortOrder } = normalizeOrganizeActions(raw.actions, stacks, raw.sortOrder);
+      const notes = (raw.notes ?? []).filter((n) => typeof n === "string" && n.trim());
 
       if (!jobController.isCurrent(generation)) return;
 
       toast.dismiss(ORGANIZE_TOAST_ID);
 
+      // No actions and no reorder — either truly clean, or AI soft-failed with notes
       if (actions.length === 0 && sortOrder.length === 0) {
+        if (notes.length > 0) {
+          setOrganizeJobState({
+            status: "ready",
+            stepLabel: null,
+            actions: [],
+            sortOrder: [],
+            notes,
+            error: null,
+            dialogOpen: true
+          });
+          toastAiError(null, {
+            feature: "organize",
+            severity: "partial",
+            notes,
+            action: {
+              label: "Review",
+              to: "/dashboard/stacks",
+              onClick: () => {
+                setOrganizeJobState({ dialogOpen: true });
+              }
+            }
+          });
+          return;
+        }
+
         resetOrganizeJobState();
         toast.success("All stacks are already organized!");
         return;
@@ -213,26 +249,42 @@ export function startOrganizeStacksJob() {
         stepLabel: null,
         actions,
         sortOrder,
+        notes,
         error: null,
         dialogOpen: true
       });
 
       const changeCount = actions.length + (sortOrder.length > 0 ? 1 : 0);
-      toast.success("Stack organize ready", {
-        description: `${changeCount} suggested change${changeCount === 1 ? "" : "s"} to review.`,
-        action: (
-          <Link
-            to="/dashboard/stacks"
-            data-button
-            onClick={() => {
+      if (notes.length > 0) {
+        toastAiError(null, {
+          feature: "organize",
+          severity: "partial",
+          notes,
+          action: {
+            label: "Review",
+            to: "/dashboard/stacks",
+            onClick: () => {
               setOrganizeJobState({ dialogOpen: true });
-            }}
-          >
-            Review
-          </Link>
-        ),
-        duration: 12_000
-      });
+            }
+          }
+        });
+      } else {
+        toast.success("Organize ready", {
+          description: `${changeCount} suggested change${changeCount === 1 ? "" : "s"} to review.`,
+          action: (
+            <Link
+              to="/dashboard/stacks"
+              data-button
+              onClick={() => {
+                setOrganizeJobState({ dialogOpen: true });
+              }}
+            >
+              Review
+            </Link>
+          ),
+          duration: 12_000
+        });
+      }
     } catch (error) {
       if (!jobController.isCurrent(generation)) return;
 
@@ -254,9 +306,13 @@ export function startOrganizeStacksJob() {
         status: "failed",
         stepLabel: null,
         error: message,
+        notes: [],
         dialogOpen: false
       });
-      toast.error("Failed to organize stacks.", { description: message });
+      toastAiError(message, {
+        feature: "organize",
+        severity: "hard"
+      });
     } finally {
       jobController.clearIf(controller);
     }

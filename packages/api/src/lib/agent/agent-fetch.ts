@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
+import { withAgentFetchRetry } from "#@/lib/agent/agent-fetch-retry";
+
 /** Header value sent to the agent worker for Better Auth session authentication. */
 export const AGENT_AUTH_HEADER = "Authorization";
 
@@ -30,6 +32,11 @@ export type AgentFetchInit = RequestInit & {
   timeoutMs?: number;
   /** Better Auth session token (raw or signed cookie value). */
   sessionToken?: string | null;
+  /**
+   * Retry network failures and 502/503/504 (deploy/overload).
+   * Default false — set true for create-run and other idempotent POSTs.
+   */
+  retry?: boolean | { attempts?: number; baseDelayMs?: number; maxDelayMs?: number };
 };
 
 /**
@@ -40,25 +47,46 @@ export async function agentFetch(path: string, init?: AgentFetchInit): Promise<R
   const baseUrl = ENV_SERVER.AGENT_WORKER_URL?.trim();
   if (!baseUrl) return null;
 
-  const { timeoutMs = 45_000, headers: initHeaders, sessionToken, ...rest } = init ?? {};
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const { timeoutMs = 45_000, headers: initHeaders, sessionToken, retry, ...rest } = init ?? {};
 
-  try {
-    const headers = new Headers(initHeaders);
-    for (const [k, v] of Object.entries(agentAuthHeaders(sessionToken))) {
-      if (!headers.has(k)) headers.set(k, v);
-    }
-    if (!headers.has("Content-Type") && rest.body) {
-      headers.set("Content-Type", "application/json");
+  const runOnce = async (): Promise<Response> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    // Combine caller abort with timeout
+    const onCallerAbort = () => controller.abort();
+    rest.signal?.addEventListener("abort", onCallerAbort, { once: true });
+    if (rest.signal?.aborted) {
+      clearTimeout(timer);
+      throw new DOMException("Aborted", "AbortError");
     }
 
-    return await fetch(new URL(path, baseUrl), {
-      ...rest,
-      headers,
-      signal: rest.signal ?? controller.signal
-    });
-  } finally {
-    clearTimeout(timer);
+    try {
+      const headers = new Headers(initHeaders);
+      for (const [k, v] of Object.entries(agentAuthHeaders(sessionToken))) {
+        if (!headers.has(k)) headers.set(k, v);
+      }
+      if (!headers.has("Content-Type") && rest.body) {
+        headers.set("Content-Type", "application/json");
+      }
+
+      return await fetch(new URL(path, baseUrl), {
+        ...rest,
+        headers,
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timer);
+      rest.signal?.removeEventListener("abort", onCallerAbort);
+    }
+  };
+
+  if (!retry) {
+    return runOnce();
   }
+
+  const retryOpts = typeof retry === "object" ? retry : {};
+  return withAgentFetchRetry(runOnce, {
+    ...retryOpts,
+    signal: rest.signal ?? undefined
+  });
 }

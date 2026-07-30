@@ -2,10 +2,15 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import { type OrganizeStacksInput } from "@tsu-stack/core";
-import { createLogger } from "@tsu-stack/logger/server";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
 import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
+import {
+  organizeLlmFailedNote,
+  organizeMissingAgentNote,
+  organizeMissingByoNote
+} from "#@/mastra/workflows/organize-stacks-workflow/organize-note";
 import {
   EnrichActionSchema,
   MergeActionSchema,
@@ -19,13 +24,15 @@ export const findEnrichments = createStep({
   inputSchema: z.object({
     stacks: StackSchema,
     mergeActions: z.array(MergeActionSchema),
-    renameActions: z.array(RenameActionSchema)
+    renameActions: z.array(RenameActionSchema),
+    notes: z.array(z.string()).default([])
   }),
   outputSchema: z.object({
     stacks: StackSchema,
     mergeActions: z.array(MergeActionSchema),
     renameActions: z.array(RenameActionSchema),
-    enrichActions: z.array(EnrichActionSchema)
+    enrichActions: z.array(EnrichActionSchema),
+    notes: z.array(z.string()).default([])
   }),
   execute: async (params) => {
     const { inputData, mastra, abortSignal } = params;
@@ -34,10 +41,12 @@ export const findEnrichments = createStep({
         stacks: inputData.stacks,
         mergeActions: inputData.mergeActions,
         renameActions: inputData.renameActions,
-        enrichActions: []
+        enrichActions: [],
+        notes: inputData.notes ?? []
       };
     }
     const { stacks, mergeActions, renameActions } = inputData;
+    const priorNotes = inputData.notes ?? [];
 
     // Only skip merge victims — renamed stacks still need metadata
     const victimIds = new Set(mergeActions.map((m) => m.victimId));
@@ -48,23 +57,36 @@ export const findEnrichments = createStep({
     );
 
     if (candidates.length === 0) {
-      return { stacks, mergeActions, renameActions, enrichActions: [] };
+      return { stacks, mergeActions, renameActions, enrichActions: [], notes: priorNotes };
     }
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
-      return { stacks, mergeActions, renameActions, enrichActions: [] };
+      return {
+        stacks,
+        mergeActions,
+        renameActions,
+        enrichActions: [],
+        notes: [...priorNotes, organizeMissingAgentNote("enrich")]
+      };
     }
 
     const init = params.getInitData() as OrganizeStacksInput;
     const { model } = generateModelOption(init.llm);
     // Missing BYO: skip enrichments (merge/rename heuristics still apply).
     if (!model) {
-      return { stacks, mergeActions, renameActions, enrichActions: [] };
+      return {
+        stacks,
+        mergeActions,
+        renameActions,
+        enrichActions: [],
+        notes: [...priorNotes, organizeMissingByoNote("enrich")]
+      };
     }
 
     const CHUNK_SIZE = 50;
     const enrichActions: z.infer<typeof EnrichActionSchema>[] = [];
+    const notes = [...priorNotes];
 
     for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
       const chunk = candidates.slice(i, i + CHUNK_SIZE);
@@ -196,9 +218,12 @@ Do not invent icons for stacks that already have one.`;
           event: "organize_stacks_enrich_chunk_failed"
         });
         log.emit({ _forceKeep: true });
+        if (!notes.some((n) => n.startsWith("AI enrichments failed"))) {
+          notes.push(organizeLlmFailedNote("enrich", error));
+        }
       }
     }
 
-    return { stacks, mergeActions, renameActions, enrichActions };
+    return { stacks, mergeActions, renameActions, enrichActions, notes };
   }
 });

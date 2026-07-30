@@ -7,6 +7,7 @@ import {
   normalizeOrganizeActions
 } from "@tsu-stack/core";
 
+import { uniqueNotes } from "#@/mastra/workflows/organize-stacks-workflow/organize-note";
 import {
   EnrichActionSchema,
   MergeActionSchema,
@@ -22,11 +23,13 @@ export const formatOutput = createStep({
     mergeActions: z.array(MergeActionSchema),
     renameActions: z.array(RenameActionSchema),
     enrichActions: z.array(EnrichActionSchema),
-    sortOrder: z.array(z.string())
+    sortOrder: z.array(z.string()),
+    notes: z.array(z.string()).default([])
   }),
   outputSchema: OrganizeStacksOutputSchema,
   execute: async ({ inputData }) => {
     const { stacks, mergeActions, renameActions, enrichActions, sortOrder } = inputData;
+    const notes = uniqueNotes(inputData.notes);
     const raw: OrganizeAction[] = [];
 
     for (const m of mergeActions) {
@@ -80,7 +83,8 @@ export const formatOutput = createStep({
         renames: actions.filter((a) => a.type === "rename").length,
         enrichments: actions.filter((a) => a.type === "enrich").length,
         sorted: normalizedSortOrder.length > 0
-      }
+      },
+      notes
     };
   }
 });

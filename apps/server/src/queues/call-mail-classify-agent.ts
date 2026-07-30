@@ -1,3 +1,4 @@
+import { type AgentCallResult } from "@tsu-stack/api/lib/agent/agent-call-result";
 import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
 import { resolveSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
 import {
@@ -13,7 +14,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 const WORKFLOW_ID = "mail-classify-workflow";
 const TIMEOUT_MS = 45_000;
 
-export type MailClassifyAgentCallResult = {
+export type MailClassifyAgentSuccess = {
   output: MailClassifyOutput;
   runId: string;
   /** Observability trace id when present on the workflow response. */
@@ -21,15 +22,17 @@ export type MailClassifyAgentCallResult = {
 };
 
 /**
- * Run mail-classify-workflow on the agent worker and return the final result.
- * Returns null when agent is not configured or the call fails (caller falls back).
+ * Run mail-classify-workflow on the agent worker.
+ * Returns structured ok/failure so callers can fall back without staying silent.
  *
  * Auth: Better Auth session Bearer for the mail owner (MastraAuthBetterAuth).
  */
 export async function callMailClassifyAgent(
   input: MailClassifyInput
-): Promise<MailClassifyAgentCallResult | null> {
-  if (!ENV_SERVER.AGENT_WORKER_URL?.trim()) return null;
+): Promise<AgentCallResult<MailClassifyAgentSuccess>> {
+  if (!ENV_SERVER.AGENT_WORKER_URL?.trim()) {
+    return { ok: false, failure: { reason: "not_configured", message: "AGENT_WORKER_URL unset" } };
+  }
 
   const log = createLogger({ operation: "server__mail_classify_agent" });
 
@@ -49,8 +52,14 @@ export async function callMailClassifyAgent(
         ...base,
         fixHint: "User needs an active Better Auth session for agent workflows"
       });
-      log.emit();
-      return null;
+      log.emit({ _forceKeep: true });
+      return {
+        ok: false,
+        failure: {
+          reason: "no_session",
+          message: "No active Better Auth session for mail owner"
+        }
+      };
     }
 
     const createRes = await agentFetch(
@@ -59,21 +68,25 @@ export async function callMailClassifyAgent(
         method: "POST",
         body: JSON.stringify({}),
         timeoutMs: TIMEOUT_MS,
-        sessionToken
+        sessionToken,
+        retry: true
       }
     );
     if (!createRes) {
-      log.set({
+      log.error(new Error("Agent create-run unreachable"), {
         event: "mail_classify_agent_unreachable",
         ...base,
         fixHint: "AGENT_WORKER_URL fetch failed — check agent deploy and network"
       });
-      log.emit();
-      return null;
+      log.emit({ _forceKeep: true });
+      return {
+        ok: false,
+        failure: { reason: "unreachable", message: "fetch failed after retries" }
+      };
     }
     if (!createRes.ok) {
       const body = await createRes.text().catch(() => "");
-      log.set({
+      log.error(new Error(`Agent create-run ${createRes.status}`), {
         event: "mail_classify_agent_create_run_failed",
         ...base,
         status: createRes.status,
@@ -81,20 +94,29 @@ export async function callMailClassifyAgent(
         fixHint:
           createRes.status === 401
             ? "Agent rejected session — ensure BETTER_AUTH_SECRET matches and agent uses MastraAuthBetterAuth"
-            : undefined
+            : createRes.status === 503
+              ? "Agent overloaded or restarting — retries exhausted"
+              : undefined
       });
-      log.emit();
-      return null;
+      log.emit({ _forceKeep: true });
+      return {
+        ok: false,
+        failure: {
+          reason: "create_run_failed",
+          status: createRes.status,
+          message: body.slice(0, 120) || `HTTP ${createRes.status}`
+        }
+      };
     }
 
     const { runId } = (await createRes.json()) as { runId?: string };
     if (!runId) {
-      log.set({
+      log.error(new Error("Agent create-run missing runId"), {
         event: "mail_classify_agent_missing_run_id",
         ...base
       });
-      log.emit();
-      return null;
+      log.emit({ _forceKeep: true });
+      return { ok: false, failure: { reason: "missing_run_id" } };
     }
 
     const startRes = await agentFetch(
@@ -103,7 +125,8 @@ export async function callMailClassifyAgent(
         method: "POST",
         body: JSON.stringify({ inputData: parsedInput }),
         timeoutMs: TIMEOUT_MS,
-        sessionToken
+        sessionToken,
+        retry: { attempts: 2 }
       }
     );
 
@@ -122,7 +145,7 @@ export async function callMailClassifyAgent(
           via: "start"
         });
         log.emit();
-        return { output: extracted, runId, traceId };
+        return { ok: true, data: { output: extracted, runId, traceId }, runId, traceId };
       }
     }
 
@@ -137,14 +160,21 @@ export async function callMailClassifyAgent(
     );
 
     if (!streamRes?.ok || !streamRes.body) {
-      log.set({
+      log.error(new Error("Agent stream failed"), {
         event: "mail_classify_agent_stream_failed",
         ...base,
         runId,
         status: streamRes?.status
       });
-      log.emit();
-      return null;
+      log.emit({ _forceKeep: true });
+      return {
+        ok: false,
+        failure: {
+          reason: "stream_failed",
+          status: streamRes?.status,
+          message: streamRes ? `HTTP ${streamRes.status}` : "no response"
+        }
+      };
     }
 
     const fromStream = await readResultFromStream(streamRes.body);
@@ -159,25 +189,38 @@ export async function callMailClassifyAgent(
         traceId: fromStream.traceId ?? undefined
       });
       log.emit();
-      return { output: fromStream.output, runId, traceId: fromStream.traceId };
+      return {
+        ok: true,
+        data: {
+          output: fromStream.output,
+          runId,
+          traceId: fromStream.traceId
+        },
+        runId,
+        traceId: fromStream.traceId
+      };
     }
 
-    log.set({
+    log.error(new Error("Agent empty result"), {
       event: "mail_classify_agent_empty_result",
       ...base,
       runId
     });
-    log.emit();
-    return null;
+    log.emit({ _forceKeep: true });
+    return { ok: false, failure: { reason: "empty_result", message: "no parseable output" } };
   } catch (error) {
-    log.error(error instanceof Error ? error : new Error(String(error)), {
+    const msg = error instanceof Error ? error.message : String(error);
+    log.error(error instanceof Error ? error : new Error(msg), {
       event: "mail_classify_agent_error",
       userId: input.userId,
       messageId: input.messageId,
       ...llmLogFields(input.llm)
     });
     log.emit({ _forceKeep: true });
-    return null;
+    return {
+      ok: false,
+      failure: { reason: "error", message: msg.slice(0, 160) }
+    };
   }
 }
 

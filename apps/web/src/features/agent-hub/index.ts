@@ -7,5 +7,12 @@ export {
   suspendedRunsQueryOptions
 } from "./api/use-hub-approval";
 export { hubKeys } from "./api/query-keys";
-export { parseHubChatError } from "./lib/parse-hub-chat-error";
-export type { HubChatErrorKind, HubChatErrorPresentation } from "./lib/parse-hub-chat-error";
+export { parseAiError, parseHubChatError, presentAiError } from "@/shared/lib/parse-ai-error";
+export type {
+  AiErrorFeature,
+  AiErrorKind,
+  AiErrorPresentation,
+  AiErrorSeverity,
+  HubChatErrorKind,
+  HubChatErrorPresentation
+} from "@/shared/lib/parse-ai-error";

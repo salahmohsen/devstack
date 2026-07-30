@@ -18,6 +18,7 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
 
+import { toastAiError } from "@/shared/lib/toast-ai-error";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
 
@@ -99,9 +100,10 @@ export function ResumesPage() {
     try {
       await orpcClient.resume.generate();
       await invalidateQueries();
-      toast.success("Resume generated!");
-    } catch {
-      toast.error("Failed to generate resume.");
+      toast.success("Resume generated");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate resume.";
+      toastAiError(message, { feature: "resume", severity: "hard" });
     } finally {
       setIsGenerating(false);
     }

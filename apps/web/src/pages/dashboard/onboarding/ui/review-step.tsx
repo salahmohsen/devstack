@@ -55,6 +55,8 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@tsu-stack/ui/components/tab
 import { Textarea } from "@tsu-stack/ui/components/textarea";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { AiErrorBanner } from "@/shared/ui/ai-error-banner";
+
 import { useApplyOnboardingMutation, useDiscardSourceMutation } from "@/features/onboarding";
 
 import { DraftExperienceFields } from "@/pages/dashboard/onboarding/ui/draft-experience-fields";
@@ -434,22 +436,17 @@ export function ReviewStep({
   return (
     <div className="flex w-full flex-col gap-4 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
       {warnings.length > 0 ? (
-        <Alert variant="warning">
-          <AlertTitle>Notes from extract</AlertTitle>
-          <AlertDescription>
-            <ul className="list-disc space-y-1 ps-4">
-              {warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
+        <AiErrorBanner notes={warnings} feature="resume" severity="partial" density="compact" />
       ) : null}
 
       {error ? (
-        <Alert variant="error" role="alert">
-          <AlertTitle>Apply failed</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="error">
+          <AlertTitle>Unable to apply draft</AlertTitle>
+          <AlertDescription>
+            {error.trim().length > 0 && error.length < 160
+              ? error
+              : "Check the fields below and try again."}
+          </AlertDescription>
         </Alert>
       ) : null}
 

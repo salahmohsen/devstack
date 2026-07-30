@@ -2,9 +2,14 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import { normalizeOrganizeName, type OrganizeStacksInput } from "@tsu-stack/core";
-import { createLogger } from "@tsu-stack/logger/server";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
+import {
+  organizeLlmFailedNote,
+  organizeMissingAgentNote,
+  organizeMissingByoNote
+} from "#@/mastra/workflows/organize-stacks-workflow/organize-note";
 import {
   MergeActionSchema,
   RenameActionSchema,
@@ -21,12 +26,18 @@ export const findRenames = createStep({
   outputSchema: z.object({
     stacks: StackSchema,
     mergeActions: z.array(MergeActionSchema),
-    renameActions: z.array(RenameActionSchema)
+    renameActions: z.array(RenameActionSchema),
+    notes: z.array(z.string()).default([])
   }),
   execute: async (params) => {
     const { inputData, mastra, abortSignal } = params;
     if (abortSignal?.aborted) {
-      return { stacks: inputData.stacks, mergeActions: inputData.mergeActions, renameActions: [] };
+      return {
+        stacks: inputData.stacks,
+        mergeActions: inputData.mergeActions,
+        renameActions: [],
+        notes: []
+      };
     }
     const { stacks, mergeActions } = inputData;
 
@@ -34,23 +45,34 @@ export const findRenames = createStep({
     const candidates = stacks.filter((s) => !victimIds.has(s.id));
 
     if (candidates.length === 0) {
-      return { stacks, mergeActions, renameActions: [] };
+      return { stacks, mergeActions, renameActions: [], notes: [] };
     }
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
-      return { stacks, mergeActions, renameActions: [] };
+      return {
+        stacks,
+        mergeActions,
+        renameActions: [],
+        notes: [organizeMissingAgentNote("rename")]
+      };
     }
 
     const init = params.getInitData() as OrganizeStacksInput;
     const { model } = generateModelOption(init.llm);
     if (!model) {
-      return { stacks, mergeActions, renameActions: [] };
+      return {
+        stacks,
+        mergeActions,
+        renameActions: [],
+        notes: [organizeMissingByoNote("rename")]
+      };
     }
 
     const CHUNK_SIZE = 50;
     const renameActions: z.infer<typeof RenameActionSchema>[] = [];
     const extraMerges: z.infer<typeof MergeActionSchema>[] = [];
+    const notes: string[] = [];
     const usedStackIds = new Set<string>();
     // Normalized name → owner after planned renames/merges
     const nameOwner = new Map<string, { id: string; name: string }>();
@@ -166,13 +188,18 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
           event: "organize_stacks_rename_chunk_failed"
         });
         log.emit({ _forceKeep: true });
+        // One note per step — avoid spamming N chunk failures in the dialog
+        if (notes.length === 0) {
+          notes.push(organizeLlmFailedNote("rename", error));
+        }
       }
     }
 
     return {
       stacks,
       mergeActions: [...mergeActions, ...extraMerges],
-      renameActions
+      renameActions,
+      notes
     };
   }
 });

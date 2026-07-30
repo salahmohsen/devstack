@@ -15,6 +15,11 @@ export type OrganizeJobState = {
   /** Proposed actions awaiting review */
   actions: OrganizeAction[];
   sortOrder: string[];
+  /**
+   * Soft-failure notes from the workflow (LLM skip/fail).
+   * Shown in the review dialog so partial results are never silent.
+   */
+  notes: string[];
   error: string | null;
   /** Open review dialog (survives navigation) */
   dialogOpen: boolean;
@@ -27,6 +32,7 @@ const initialState: OrganizeJobState = {
   runId: null,
   actions: [],
   sortOrder: [],
+  notes: [],
   error: null,
   dialogOpen: false,
   startedAt: null

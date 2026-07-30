@@ -180,16 +180,43 @@ export async function runMailClassify(input: {
   let mastraClassifyRunId: string | null = null;
   let mastraClassifyTraceId: string | null = null;
   let usedAgent = false;
+  let agentFailReason: string | null = null;
   const byo = llmLogFields(llm);
+  const hadByo = Boolean(llm.apiKey?.trim());
 
   const agentCall = await callMailClassifyAgent(classifyInput);
-  if (agentCall) {
-    result = applySmartRulesToClassifyResult(classifyInput, agentCall.output);
-    mastraClassifyRunId = agentCall.runId;
-    mastraClassifyTraceId = agentCall.traceId;
+  if (agentCall.ok) {
+    result = applySmartRulesToClassifyResult(classifyInput, agentCall.data.output);
+    mastraClassifyRunId = agentCall.data.runId;
+    mastraClassifyTraceId = agentCall.data.traceId;
     usedAgent = true;
   } else {
+    // Heuristic still labels mail so the inbox keeps working — never silent about AI miss.
     result = heuristicClassifyMail(classifyInput);
+    agentFailReason = agentCall.failure.reason;
+    const failNote = [
+      result.notes,
+      `agent:${agentCall.failure.reason}${agentCall.failure.status != null ? `:${agentCall.failure.status}` : ""}`
+    ]
+      .filter(Boolean)
+      .join(";");
+    result = { ...result, notes: failNote };
+
+    // Error-level when BYO was configured (user expected AI) or agent was reachable-but-failing.
+    if (hadByo || agentCall.failure.reason !== "not_configured") {
+      const failLog = createLogger({ operation: "server__mail_classify_agent_fallback" });
+      failLog.error(new Error(`Mail classify agent fallback: ${agentCall.failure.reason}`), {
+        event: "mail_classify_agent_fallback",
+        messageId: row.id,
+        userId: row.userId,
+        agentFailReason: agentCall.failure.reason,
+        agentFailStatus: agentCall.failure.status ?? null,
+        agentFailMessage: agentCall.failure.message ?? null,
+        hadByo,
+        ...byo
+      });
+      failLog.emit({ _forceKeep: true });
+    }
   }
 
   // LinkedIn/Indeed digests must not create Interview CRM rows or notify as career.
@@ -270,6 +297,7 @@ export async function runMailClassify(input: {
     notes: result.notes ?? null,
     usedAgent,
     agentFallback: !usedAgent,
+    agentFailReason,
     mastraClassifyRunId,
     mastraClassifyTraceId,
     crmApplied: crm.applied,

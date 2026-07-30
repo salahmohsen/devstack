@@ -2,8 +2,9 @@
 
 import { FileTextIcon } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
+
+import { AiErrorBanner } from "@/shared/ui/ai-error-banner";
 
 import { AnalyzingProgress } from "@/pages/dashboard/onboarding/ui/analyzing-progress";
 
@@ -40,16 +41,15 @@ export function AnalyzingStep({
       ) : null}
 
       {error ? (
-        <Alert variant="error" className="w-full" role="alert">
-          <AlertTitle>Analysis failed</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <AiErrorBanner message={error} feature="resume" severity="hard" onRetry={onRetry} />
       ) : (
         <AnalyzingProgress stepLabel={stepLabel} isRunning={isRunning} />
       )}
 
       {!error && isRunning ? (
-        <p className="text-xs text-muted-foreground">We’ll notify you when the draft is ready.</p>
+        <p className="text-xs text-muted-foreground">
+          You will be notified when the draft is ready.
+        </p>
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
@@ -68,11 +68,6 @@ export function AnalyzingStep({
             Back
           </Button>
         )}
-        {error ? (
-          <Button type="button" onClick={onRetry}>
-            Retry
-          </Button>
-        ) : null}
       </div>
     </div>
   );

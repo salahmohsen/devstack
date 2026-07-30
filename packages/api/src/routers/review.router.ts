@@ -1,6 +1,7 @@
 import {
   ConfirmReviewItemOutputSchema,
   CreateReplyDraftFromMailInputSchema,
+  CreateReplyDraftFromMailOutputSchema,
   ReviewItemDetailSchema,
   ReviewItemGetInputSchema,
   ReviewItemIdInputSchema,
@@ -10,6 +11,7 @@ import {
 } from "@tsu-stack/core";
 import { reviewItemRepository, userAiSettingsRepository } from "@tsu-stack/db/repositories";
 
+import { agentFailureUserMessage } from "#@/lib/agent/agent-call-result";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { confirmReviewItem, sendPendingReplyDraft } from "#@/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "#@/lib/review/create-reply-draft-from-mail";
@@ -86,7 +88,7 @@ export const reviewRouter = {
       method: "POST"
     })
     .input(CreateReplyDraftFromMailInputSchema)
-    .output(ReviewItemDetailSchema)
+    .output(CreateReplyDraftFromMailOutputSchema)
     .errors({
       NOT_FOUND: { message: "Mail message not found", status: 404 },
       NOT_CAREER: {
@@ -115,7 +117,11 @@ export const reviewRouter = {
 
       const detail = await reviewItemRepository.findByIdForUser(result.item.id, userId);
       if (!detail) throw errors.NOT_FOUND();
-      return toDetail(detail);
+      return {
+        ...toDetail(detail),
+        draftSource: result.source,
+        agentWarning: result.agentFailure ? agentFailureUserMessage(result.agentFailure) : undefined
+      };
     }),
 
   update: protectedProcedure

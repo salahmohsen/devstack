@@ -61,7 +61,15 @@ export const OrganizeStacksOutputSchema = z.object({
       enrichments: z.number().int().describe("Number of enrichment actions"),
       sorted: z.boolean().describe("Whether stacks were re-sorted by importance")
     })
-    .describe("Summary of recommended actions")
+    .describe("Summary of recommended actions"),
+  /**
+   * User-visible degradation notes when LLM steps skip or fail.
+   * Empty when every AI step completed cleanly. Never include API keys.
+   */
+  notes: z
+    .array(z.string())
+    .default([])
+    .describe("Soft-failure notes for UI (missing BYO, provider errors, timeouts)")
 });
 
 export type OrganizeStacksInput = z.infer<typeof OrganizeStacksInputSchema>;

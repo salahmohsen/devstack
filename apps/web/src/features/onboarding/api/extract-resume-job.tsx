@@ -9,6 +9,7 @@ import {
   isAbortError,
   showAiJobRunningToast
 } from "@/shared/lib/ai-job";
+import { toastAiError } from "@/shared/lib/toast-ai-error";
 
 import {
   RESUME_IMPORT_WORKFLOW_ID,
@@ -155,13 +156,13 @@ export function startExtractResumeJob(input?: { objectKey?: string; filename?: s
         extractError: message,
         extractRunId: null
       });
-      toast.error("Failed to analyze resume.", {
-        description: message,
-        action: (
-          <Link to="/dashboard/onboarding" data-button>
-            Retry
-          </Link>
-        )
+      toastAiError(message, {
+        feature: "resume",
+        severity: "hard",
+        action: {
+          label: "Open onboarding",
+          to: "/dashboard/onboarding"
+        }
       });
     } finally {
       jobController.clearIf(controller);

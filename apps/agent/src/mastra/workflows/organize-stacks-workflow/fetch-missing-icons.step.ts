@@ -16,16 +16,19 @@ export const fetchMissingIcons = createStep({
     stacks: StackSchema,
     mergeActions: z.array(MergeActionSchema),
     renameActions: z.array(RenameActionSchema),
-    enrichActions: z.array(EnrichActionSchema)
+    enrichActions: z.array(EnrichActionSchema),
+    notes: z.array(z.string()).default([])
   }),
   outputSchema: z.object({
     stacks: StackSchema,
     mergeActions: z.array(MergeActionSchema),
     renameActions: z.array(RenameActionSchema),
-    enrichActions: z.array(EnrichActionSchema)
+    enrichActions: z.array(EnrichActionSchema),
+    notes: z.array(z.string()).default([])
   }),
   execute: async ({ inputData }) => {
     const { stacks, mergeActions, renameActions, enrichActions } = inputData;
+    const notes = inputData.notes ?? [];
 
     const victimIds = new Set(mergeActions.map((m) => m.victimId));
     const enrichedWithIcon = new Set(enrichActions.filter((e) => e.icon).map((e) => e.stackId));
@@ -37,7 +40,7 @@ export const fetchMissingIcons = createStep({
     );
 
     if (missing.length === 0) {
-      return { stacks, mergeActions, renameActions, enrichActions };
+      return { stacks, mergeActions, renameActions, enrichActions, notes };
     }
 
     // Prefer canonical (renamed) name for Iconify search quality
@@ -75,6 +78,6 @@ export const fetchMissingIcons = createStep({
       }
     }
 
-    return { stacks, mergeActions, renameActions, enrichActions: newEnrichActions };
+    return { stacks, mergeActions, renameActions, enrichActions: newEnrichActions, notes };
   }
 });
