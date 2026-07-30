@@ -86,6 +86,20 @@ export const ENV_SERVER = createEnv({
     // binding is available. In production, prefer the AGENT_WORKER service
     // binding (which `createAgentWorker` checks first).
     AGENT_WORKER_URL: z.url().optional(),
+    /**
+     * Shared secret for server → Mastra agent HTTP.
+     * Required in production when calling AGENT_WORKER_URL (agent rejects without it).
+     */
+    AGENT_SERVICE_SECRET: z.string().min(16).optional(),
+    /**
+     * Gmail Pub/Sub push auth (see packages/api gmail verify helper).
+     * OIDC audience is typically the full push endpoint URL.
+     */
+    GMAIL_PUSH_SHARED_SECRET: z.string().min(16).optional(),
+    GMAIL_PUSH_OIDC_AUDIENCE: z.string().min(1).optional(),
+    GMAIL_PUSH_OIDC_EMAIL: z.string().email().optional(),
+    GMAIL_PUSH_REQUIRE_AUTH: z.stringbool().optional(),
+    GMAIL_PUBSUB_TOPIC: z.string().min(1).optional(),
     // Redis
     REDIS_URL: z.string().optional()
   }

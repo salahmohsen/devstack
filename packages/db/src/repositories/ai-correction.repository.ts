@@ -1,7 +1,8 @@
-import { desc, eq, type InferSelectModel } from "drizzle-orm";
+import { desc, eq, sql, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { aiCorrection } from "../schema/ai-correction.schema.ts";
+import { OPENAI_EMBEDDING_DIMENSIONS } from "../schema/vector-column.ts";
 
 export type AiCorrectionEntity = InferSelectModel<typeof aiCorrection>;
 
@@ -24,8 +25,19 @@ export type CreateAiCorrectionData = {
   note?: string | null;
 };
 
+function isValidEmbedding(emb: number[] | null | undefined): emb is number[] {
+  if (!emb || emb.length !== OPENAI_EMBEDDING_DIMENSIONS) return false;
+  return emb.every((n) => typeof n === "number" && Number.isFinite(n));
+}
+
+/** Safe pgvector literal — only finite numbers. */
+function toVectorLiteral(emb: number[]): string {
+  return `[${emb.join(",")}]`;
+}
+
 export const aiCorrectionRepository = {
   async create(input: CreateAiCorrectionData): Promise<AiCorrectionEntity> {
+    const emb = isValidEmbedding(input.embedding) ? input.embedding : null;
     const [row] = await getDb()
       .insert(aiCorrection)
       .values({
@@ -43,14 +55,15 @@ export const aiCorrectionRepository = {
         crmApplyId: input.crmApplyId ?? null,
         mastraTraceId: input.mastraTraceId ?? null,
         mastraRunId: input.mastraRunId ?? null,
-        embedding: input.embedding ?? null,
+        embedding: emb,
+        embeddingVec: emb,
         note: input.note ?? null
       })
       .returning();
     return row!;
   },
 
-  /** Newest first — for few-shot load. */
+  /** Newest first — lexical candidate pool. */
   async findRecentByUserId(userId: string, limit = 5): Promise<AiCorrectionEntity[]> {
     return getDb()
       .select()
@@ -58,5 +71,31 @@ export const aiCorrectionRepository = {
       .where(eq(aiCorrection.userId, userId))
       .orderBy(desc(aiCorrection.createdAt))
       .limit(limit);
+  },
+
+  /**
+   * Nearest corrections by cosine distance (pgvector `<=>`).
+   * Returns [] when embedding invalid or extension/query fails (caller falls back).
+   */
+  async findSimilarByEmbedding(
+    userId: string,
+    embedding: number[],
+    limit = 5
+  ): Promise<AiCorrectionEntity[]> {
+    if (!isValidEmbedding(embedding)) return [];
+
+    try {
+      const literal = toVectorLiteral(embedding);
+      // sql.raw is safe: only digits, commas, brackets from validated floats.
+      const rows = await getDb()
+        .select()
+        .from(aiCorrection)
+        .where(sql`${aiCorrection.userId} = ${userId} AND ${aiCorrection.embeddingVec} IS NOT NULL`)
+        .orderBy(sql`${aiCorrection.embeddingVec} <=> ${sql.raw(`'${literal}'::vector`)}`)
+        .limit(limit);
+      return rows;
+    } catch {
+      return [];
+    }
   }
 };

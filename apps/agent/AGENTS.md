@@ -24,6 +24,7 @@ Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge â
 - Reply-assist: **job/application context is a required first step**; fail closed without it
 - Learning: user corrections â†’ app storage + Mastra feedback/datasets; do not assume fine-tuning APIs
 - Logging: `initLogger` / `createLogger` from `@tsu-stack/logger/server` for job outcomes; include `traceId` when present; one `emit()` per wide-event lifetime
+- **Service auth:** set `AGENT_SERVICE_SECRET` (same value on server). Middleware on `/api/*` requires `Authorization: Bearer <secret>` in production. Never expose the agent HTTP port publicly without this secret.
 
 ## Layout conventions
 

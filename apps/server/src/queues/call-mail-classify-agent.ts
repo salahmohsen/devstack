@@ -1,3 +1,4 @@
+import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
 import {
   MailClassifyInputSchema,
   MailClassifyOutputSchema,
@@ -24,25 +25,22 @@ export type MailClassifyAgentCallResult = {
 export async function callMailClassifyAgent(
   input: MailClassifyInput
 ): Promise<MailClassifyAgentCallResult | null> {
-  const baseUrl = ENV_SERVER.AGENT_WORKER_URL?.trim();
-  if (!baseUrl) return null;
+  if (!ENV_SERVER.AGENT_WORKER_URL?.trim()) return null;
 
   const log = createLogger({ operation: "server__mail_classify_agent" });
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
     const parsedInput = MailClassifyInputSchema.parse(input);
 
-    const createRes = await fetch(
-      new URL(`/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`, baseUrl),
+    const createRes = await agentFetch(
+      `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
-        signal: controller.signal
+        timeoutMs: TIMEOUT_MS
       }
     );
+    if (!createRes) return null;
     if (!createRes.ok) {
       const body = await createRes.text().catch(() => "");
       log.set({
@@ -57,19 +55,16 @@ export async function callMailClassifyAgent(
     const { runId } = (await createRes.json()) as { runId?: string };
     if (!runId) return null;
 
-    // Prefer start (await result). Fall back to stream parse if needed.
-    const startUrl = new URL(
+    const startRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/start?runId=${encodeURIComponent(runId)}`,
-      baseUrl
+      {
+        method: "POST",
+        body: JSON.stringify({ inputData: parsedInput }),
+        timeoutMs: TIMEOUT_MS
+      }
     );
-    const startRes = await fetch(startUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputData: parsedInput }),
-      signal: controller.signal
-    });
 
-    if (startRes.ok) {
+    if (startRes?.ok) {
       const json = (await startRes.json()) as unknown;
       const extracted = extractWorkflowResult(json);
       if (extracted) {
@@ -86,22 +81,19 @@ export async function callMailClassifyAgent(
       }
     }
 
-    // Stream fallback (some Mastra builds only expose stream for runs).
-    const streamUrl = new URL(
+    const streamRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/stream?runId=${encodeURIComponent(runId)}`,
-      baseUrl
+      {
+        method: "POST",
+        body: JSON.stringify({ inputData: parsedInput }),
+        timeoutMs: TIMEOUT_MS
+      }
     );
-    const streamRes = await fetch(streamUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputData: parsedInput }),
-      signal: controller.signal
-    });
 
-    if (!streamRes.ok || !streamRes.body) {
+    if (!streamRes?.ok || !streamRes.body) {
       log.set({
         event: "mail_classify_agent_stream_failed",
-        status: streamRes.status
+        status: streamRes?.status
       });
       log.emit();
       return null;
@@ -128,8 +120,6 @@ export async function callMailClassifyAgent(
     });
     log.emit({ _forceKeep: true });
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -151,17 +141,14 @@ function extractWorkflowResult(payload: unknown): MailClassifyOutput | null {
   if (!payload || typeof payload !== "object") return null;
   const obj = payload as Record<string, unknown>;
 
-  // Direct result
   const direct = MailClassifyOutputSchema.safeParse(obj);
   if (direct.success) return direct.data;
 
-  // Common wrappers: { result }, { output }, { data }
   for (const key of ["result", "output", "data"]) {
     const nested = MailClassifyOutputSchema.safeParse(obj[key]);
     if (nested.success) return nested.data;
   }
 
-  // Nested run result
   if (obj.result && typeof obj.result === "object") {
     const r = obj.result as Record<string, unknown>;
     for (const key of ["result", "output", "data"]) {

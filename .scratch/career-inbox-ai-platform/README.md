@@ -213,6 +213,14 @@ See [CONNECTIONS.md](./CONNECTIONS.md).
 | ------ | ----------------------------------- | -------- |
 | `76`   | users.watch + push webhook scaffold | **Done** |
 
+## Production hardening (wave 24)
+
+| Ticket | Title                                     | Status   |
+| ------ | ----------------------------------------- | -------- |
+| `77`   | Agent `AGENT_SERVICE_SECRET` service auth | **Done** |
+| `78`   | Gmail push OIDC + production auth gate    | **Done** |
+| `79`   | pgvector `embedding_vec` + HNSW few-shot  | **Done** |
+
 ## Program status
 
-Career Inbox waves through **23** are implemented for this track. Optional later: pgvector ANN, Pub/Sub OIDC verify, richer reply tools.
+Career Inbox waves through **24** (incl. production hardening). Optional later: richer reply evidence tools, embedding backfill job.

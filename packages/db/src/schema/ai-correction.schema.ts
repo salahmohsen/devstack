@@ -3,6 +3,7 @@ import { index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "./auth.schema.ts";
 import { mailCrmApply } from "./mail-crm-apply.schema.ts";
 import { mailMessage } from "./mail-message.schema.ts";
+import { OPENAI_EMBEDDING_DIMENSIONS, vector } from "./vector-column.ts";
 
 /**
  * User correction of AI classify / CRM suggestion.
@@ -32,8 +33,13 @@ export const aiCorrection = pgTable(
     /** Copied from message at correction time for Mastra feedback dual-write. */
     mastraTraceId: text("mastra_trace_id"),
     mastraRunId: text("mastra_run_id"),
-    /** Optional embedding vector for retrieval few-shot (float array JSON). */
+    /**
+     * Legacy JSON embedding (pre-pgvector). Prefer `embeddingVec`.
+     * Kept for back-compat reads until backfill completes.
+     */
     embedding: jsonb("embedding").$type<number[]>(),
+    /** pgvector column for ANN cosine retrieval (text-embedding-3-small = 1536). */
+    embeddingVec: vector("embedding_vec", { dimensions: OPENAI_EMBEDDING_DIMENSIONS }),
     note: text("note"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
   },

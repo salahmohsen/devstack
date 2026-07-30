@@ -30,11 +30,16 @@ Never request Gmail scopes at login. Users grant mail access only when they choo
   - Toggle under Settings → Connections
   - Eligible: Google account with Gmail scopes and `autoSyncEnabled !== false`
 
-## Gmail Pub/Sub push (wave 23)
+## Gmail Pub/Sub push (wave 23 + 24 OIDC)
 
 1. Create GCP topic; grant `gmail-api-push@system.gserviceaccount.com` publisher
 2. Set `GMAIL_PUBSUB_TOPIC=projects/{project}/topics/{topic}`
-3. Push subscription → `{VITE_SERVER_URL}/webhooks/gmail-push`
-4. Call `connections.startGmailWatch` (or renew periodically; watch expires ~7 days)
+3. Push subscription → `{VITE_SERVER_URL}/webhooks/gmail-push` with **OIDC auth**
+4. Env:
+   - `GMAIL_PUSH_OIDC_AUDIENCE` = full push URL (preferred)
+   - optional `GMAIL_PUSH_OIDC_EMAIL`
+   - and/or `GMAIL_PUSH_SHARED_SECRET`
+   - Production refuses pushes if no auth credential is configured
+5. Call `connections.startGmailWatch` (renew ~every 7 days)
 
-On push: decode Pub/Sub message → match `user_gmail_sync.emailAddress` → `syncGmailInbox`.
+On push: verify OIDC/secret → decode message → match `emailAddress` → `syncGmailInbox` (respects auto-sync).

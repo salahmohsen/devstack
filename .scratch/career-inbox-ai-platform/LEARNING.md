@@ -58,12 +58,17 @@ At classify time:
 2. Score each vs live mail: from-domain, exact from-email, subject Jaccard, body/preview Jaccard
 3. Inject top **K=5**; if all scores weak (`minScore` 0.05), fall back to newest K
 
-## Phase D — Embedding-assisted retrieval (optional)
+## Phase D — Embedding + pgvector (wave 24)
 
-When `OPENAI_API_KEY` is set: embed on correction create; at classify blend cosine (0.65) + lexical (0.35). Without the key, pure lexical still works.
+When `OPENAI_API_KEY` is set:
+
+1. Correction create embeds → `embedding` (jsonb legacy) + `embedding_vec` (pgvector 1536)
+2. Classify embeds live mail → SQL `ORDER BY embedding_vec <=> query` (HNSW)
+3. Fallback: lexical ranking over last 40
+
+Requires `CREATE EXTENSION vector` (Neon). Without API key, pure lexical remains.
 
 ## Still out of scope
 
-- pgvector ANN index
 - Dataset export / live scorers
 - Fine-tuning

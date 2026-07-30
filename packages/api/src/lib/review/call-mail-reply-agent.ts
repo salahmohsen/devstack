@@ -7,6 +7,8 @@ import {
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { agentFetch } from "#@/lib/agent/agent-fetch";
+
 const WORKFLOW_ID = "mail-reply-workflow";
 const TIMEOUT_MS = 45_000;
 
@@ -17,25 +19,22 @@ const TIMEOUT_MS = 45_000;
 export async function callMailReplyAgent(
   input: MailReplyDraftInput
 ): Promise<MailReplyDraftOutput | null> {
-  const baseUrl = ENV_SERVER.AGENT_WORKER_URL?.trim();
-  if (!baseUrl) return null;
+  if (!ENV_SERVER.AGENT_WORKER_URL?.trim()) return null;
 
   const log = createLogger({ operation: "api__mail_reply_agent" });
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
     const parsedInput = MailReplyDraftInputSchema.parse(input);
 
-    const createRes = await fetch(
-      new URL(`/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`, baseUrl),
+    const createRes = await agentFetch(
+      `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
-        signal: controller.signal
+        timeoutMs: TIMEOUT_MS
       }
     );
+    if (!createRes) return null;
     if (!createRes.ok) {
       const body = await createRes.text().catch(() => "");
       log.set({
@@ -50,18 +49,16 @@ export async function callMailReplyAgent(
     const { runId } = (await createRes.json()) as { runId?: string };
     if (!runId) return null;
 
-    const startUrl = new URL(
+    const startRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/start?runId=${encodeURIComponent(runId)}`,
-      baseUrl
+      {
+        method: "POST",
+        body: JSON.stringify({ inputData: parsedInput }),
+        timeoutMs: TIMEOUT_MS
+      }
     );
-    const startRes = await fetch(startUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputData: parsedInput }),
-      signal: controller.signal
-    });
 
-    if (startRes.ok) {
+    if (startRes?.ok) {
       const json = (await startRes.json()) as unknown;
       const extracted = extractWorkflowResult(json);
       if (extracted) {
@@ -75,21 +72,19 @@ export async function callMailReplyAgent(
       }
     }
 
-    const streamUrl = new URL(
+    const streamRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/stream?runId=${encodeURIComponent(runId)}`,
-      baseUrl
+      {
+        method: "POST",
+        body: JSON.stringify({ inputData: parsedInput }),
+        timeoutMs: TIMEOUT_MS
+      }
     );
-    const streamRes = await fetch(streamUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ inputData: parsedInput }),
-      signal: controller.signal
-    });
 
-    if (!streamRes.ok || !streamRes.body) {
+    if (!streamRes?.ok || !streamRes.body) {
       log.set({
         event: "mail_reply_agent_stream_failed",
-        status: streamRes.status
+        status: streamRes?.status
       });
       log.emit();
       return null;
@@ -114,8 +109,6 @@ export async function callMailReplyAgent(
     });
     log.emit({ _forceKeep: true });
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 

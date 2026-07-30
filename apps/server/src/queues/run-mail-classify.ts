@@ -84,16 +84,25 @@ export async function runMailClassify(input: {
   const smartRules = await mailSmartRuleRepository.findByUserId(row.userId, {
     enabledOnly: true
   });
-  const recentCorrections = await aiCorrectionRepository.findRecentByUserId(
-    row.userId,
-    AI_CORRECTION_CANDIDATE_POOL
-  );
   const parseLabels = (raw: string[]): MailSystemLabel[] =>
     raw
       .map((l) => MailSystemLabelSchema.safeParse(l))
       .filter((r): r is { success: true; data: MailSystemLabel } => r.success)
       .map((r) => r.data);
-  const candidates: AiCorrectionFewShotExample[] = recentCorrections.map((c) => {
+
+  const toFewShot = (c: {
+    fromName: string;
+    fromEmail: string;
+    subject: string;
+    preview: string;
+    predictedSystemLabels: string[] | null;
+    correctedSystemLabels: string[] | null;
+    embedding?: number[] | null;
+    embeddingVec?: number[] | null;
+  }): AiCorrectionFewShotExample => {
+    const emb =
+      (Array.isArray(c.embeddingVec) && c.embeddingVec.length > 0 ? c.embeddingVec : null) ??
+      (Array.isArray(c.embedding) ? c.embedding : null);
     return {
       fromName: c.fromName,
       fromEmail: c.fromEmail,
@@ -101,9 +110,10 @@ export async function runMailClassify(input: {
       preview: c.preview,
       predictedSystemLabels: parseLabels(c.predictedSystemLabels ?? []),
       correctedSystemLabels: parseLabels(c.correctedSystemLabels ?? []),
-      embedding: Array.isArray(c.embedding) ? c.embedding : null
+      embedding: emb
     };
-  });
+  };
+
   const queryEmbedding = await embedTextForCorrections(
     correctionEmbedText({
       fromName: row.fromName,
@@ -113,17 +123,36 @@ export async function runMailClassify(input: {
       bodyText: row.bodyText
     })
   );
-  const fewShotCorrections = selectCorrectionsForFewShot(
-    {
-      fromName: row.fromName,
-      fromEmail: row.fromEmail,
-      subject: row.subject,
-      preview: row.preview,
-      bodyText: row.bodyText
-    },
-    candidates,
-    { max: AI_CORRECTION_FEW_SHOT_K, queryEmbedding }
-  );
+
+  // Prefer pgvector ANN when we have a query embedding; else lexical pool.
+  let fewShotCorrections: AiCorrectionFewShotExample[] = [];
+  if (queryEmbedding && queryEmbedding.length > 0) {
+    const vectorHits = await aiCorrectionRepository.findSimilarByEmbedding(
+      row.userId,
+      queryEmbedding,
+      AI_CORRECTION_FEW_SHOT_K
+    );
+    if (vectorHits.length > 0) {
+      fewShotCorrections = vectorHits.map(toFewShot);
+    }
+  }
+  if (fewShotCorrections.length === 0) {
+    const recentCorrections = await aiCorrectionRepository.findRecentByUserId(
+      row.userId,
+      AI_CORRECTION_CANDIDATE_POOL
+    );
+    fewShotCorrections = selectCorrectionsForFewShot(
+      {
+        fromName: row.fromName,
+        fromEmail: row.fromEmail,
+        subject: row.subject,
+        preview: row.preview,
+        bodyText: row.bodyText
+      },
+      recentCorrections.map(toFewShot),
+      { max: AI_CORRECTION_FEW_SHOT_K, queryEmbedding }
+    );
+  }
   const classifyInput = {
     messageId: row.id,
     userId: row.userId,

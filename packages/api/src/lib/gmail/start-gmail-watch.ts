@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { userGmailSyncRepository } from "@tsu-stack/db";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { getGoogleAccessTokenForUser } from "#@/lib/gmail/google-access-token";
 
@@ -16,7 +17,7 @@ export type StartGmailWatchResult =
  * and a push subscription hitting POST /webhooks/gmail-push.
  */
 export async function startGmailWatch(userId: string): Promise<StartGmailWatchResult> {
-  const topic = process.env.GMAIL_PUBSUB_TOPIC?.trim();
+  const topic = ENV_SERVER.GMAIL_PUBSUB_TOPIC?.trim() ?? process.env.GMAIL_PUBSUB_TOPIC?.trim();
   if (!topic) {
     return {
       ok: false,

@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -85,8 +86,74 @@ const storage = new MastraCompositeStore({
   }
 });
 
+function agentServiceSecret(): string {
+  return process.env.AGENT_SERVICE_SECRET?.trim() ?? "";
+}
+
+function agentSecretMatches(provided: string, expected: string): boolean {
+  const ba = Buffer.from(provided, "utf8");
+  const bb = Buffer.from(expected, "utf8");
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
+
+const agentSecret = agentServiceSecret();
+if (!agentSecret && process.env.NODE_ENV === "production") {
+  console.error(
+    "[agent] AGENT_SERVICE_SECRET is required in production. " +
+      "Set the same secret on the server (ENV AGENT_SERVICE_SECRET)."
+  );
+} else if (!agentSecret) {
+  console.debug(
+    "[agent] AGENT_SERVICE_SECRET unset — API routes are open (dev only). " +
+      "Set a ≥16 char secret for server↔agent auth."
+  );
+}
+
 export const mastra = new Mastra({
   server: {
+    middleware: [
+      {
+        path: "/api/*",
+        handler: async (c, next) => {
+          const path = c.req.path;
+          // Health / openapi-ish probes without secret
+          if (
+            path.includes("/health") ||
+            path.endsWith("/openapi.json") ||
+            path.includes("/swagger")
+          ) {
+            await next();
+            return;
+          }
+
+          const secret = agentServiceSecret();
+          if (!secret) {
+            if (process.env.NODE_ENV === "production") {
+              return new Response(JSON.stringify({ error: "agent_auth_not_configured" }), {
+                status: 503,
+                headers: { "Content-Type": "application/json" }
+              });
+            }
+            await next();
+            return;
+          }
+
+          const auth = c.req.header("Authorization") ?? c.req.header("authorization") ?? "";
+          const token = auth.toLowerCase().startsWith("bearer ")
+            ? auth.slice(7).trim()
+            : auth.trim();
+          if (!token || !agentSecretMatches(token, secret)) {
+            return new Response(JSON.stringify({ error: "unauthorized" }), {
+              status: 401,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
+
+          await next();
+        }
+      }
+    ],
     apiRoutes: [
       chatRoute({
         path: "/chat/:agentId",

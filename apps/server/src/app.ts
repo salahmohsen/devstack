@@ -14,6 +14,7 @@ import {
   type OrpcContextBindings
 } from "@tsu-stack/api/lib/context/hono/create-context";
 import { handleGmailPushNotification } from "@tsu-stack/api/lib/gmail/handle-gmail-push";
+import { verifyGmailPushAuth } from "@tsu-stack/api/lib/gmail/verify-gmail-push-auth";
 import { handleResendInboundWebhook } from "@tsu-stack/api/lib/mail/handle-resend-inbound";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
@@ -251,23 +252,26 @@ app.post("/webhooks/github", async (c) => {
 
 /**
  * Gmail Pub/Sub push (users.watch). Body is Google Cloud Pub/Sub push envelope.
+ * Auth: Google OIDC JWT (GMAIL_PUSH_OIDC_AUDIENCE) and/or GMAIL_PUSH_SHARED_SECRET.
  * Configure subscription → {VITE_SERVER_URL}/webhooks/gmail-push
- * Optional: GMAIL_PUSH_SHARED_SECRET as Authorization: Bearer <secret>
  */
 app.post("/webhooks/gmail-push", async (c) => {
   const requestLog = c.get("log");
-  const expected = process.env.GMAIL_PUSH_SHARED_SECRET?.trim();
-  if (expected) {
-    const auth = c.req.header("authorization") ?? "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : auth.trim();
-    if (token !== expected) {
-      requestLog?.set({ event: "gmail_push_unauthorized", status: 401 });
-      return c.json({ ok: false }, 401);
-    }
+  const authResult = await verifyGmailPushAuth(c.req.header("authorization") ?? null);
+  if (!authResult.ok) {
+    requestLog?.set({
+      event: "gmail_push_unauthorized",
+      status: 401,
+      reason: authResult.reason
+    });
+    return c.json({ ok: false }, 401);
   }
 
   const rawBody = await c.req.text();
-  requestLog?.set({ event: "gmail_push_received" });
+  requestLog?.set({
+    event: "gmail_push_received",
+    authMethod: authResult.method
+  });
 
   const db = createDb();
   return runWithDb(db, async () => {
