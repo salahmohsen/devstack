@@ -46,6 +46,9 @@ let isInitialized = false;
  * When `AXIOM_API_KEY` and `AXIOM_DATASET` are both set, attach Axiom as the
  * wide-event drain. Callers can still pass an explicit `drain` in `config`
  * to override. Local/dev without those env vars keeps the default sink.
+ *
+ * Optional `AXIOM_EDGE_URL` routes ingest through the dataset edge deployment
+ * (e.g. https://us-east-1.aws.edge.axiom.co) instead of api.axiom.co.
  */
 function resolveAxiomDrainFromEnv(): ServerLoggerConfig["drain"] | undefined {
   const apiKey = process.env.AXIOM_API_KEY?.trim();
@@ -53,7 +56,12 @@ function resolveAxiomDrainFromEnv(): ServerLoggerConfig["drain"] | undefined {
   if (!apiKey || !dataset) {
     return undefined;
   }
-  return createAxiomDrain({ apiKey, dataset });
+  const edgeUrl = process.env.AXIOM_EDGE_URL?.trim();
+  return createAxiomDrain({
+    apiKey,
+    dataset,
+    ...(edgeUrl ? { edgeUrl } : {})
+  });
 }
 
 /**

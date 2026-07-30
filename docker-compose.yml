@@ -172,6 +172,10 @@ services:
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
+      # Optional Axiom wide-event drain (@tsu-stack/logger / evlog)
+      AXIOM_API_KEY: ${AXIOM_API_KEY:-}
+      AXIOM_DATASET: ${AXIOM_DATASET:-}
+      AXIOM_EDGE_URL: ${AXIOM_EDGE_URL:-}
       ENABLE_OPEN_API_DOCS: ${ENABLE_OPEN_API_DOCS:-false}
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
       # Same MinIO mapping as web — extractResume / resume PDF puts need mediaBucket.
@@ -221,6 +225,10 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       # Must match server AGENT_SERVICE_SECRET
       AGENT_SERVICE_SECRET: ${AGENT_SERVICE_SECRET:-}
+      # Optional Axiom wide-event drain (agent process logs)
+      AXIOM_API_KEY: ${AXIOM_API_KEY:-}
+      AXIOM_DATASET: ${AXIOM_DATASET:-}
+      AXIOM_EDGE_URL: ${AXIOM_EDGE_URL:-}
       NODE_ENV: production
     healthcheck:
       # /api/health is auth-exempt; /api/agents requires Bearer when secret is set
@@ -289,6 +297,10 @@ services:
       MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-${VITE_WEB_URL}/media}
       AGENT_WORKER_URL: http://agent:4111
       FILES_API_SECRET: ${FILES_API_SECRET}
+      # Optional Axiom wide-event drain (web SSR / request logs)
+      AXIOM_API_KEY: ${AXIOM_API_KEY:-}
+      AXIOM_DATASET: ${AXIOM_DATASET:-}
+      AXIOM_EDGE_URL: ${AXIOM_EDGE_URL:-}
       NODE_ENV: production
       PORT: "3000"
     healthcheck:
