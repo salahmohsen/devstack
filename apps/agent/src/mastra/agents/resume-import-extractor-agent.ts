@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 
-import { MODEL_PRESETS } from "#@/mastra/model-config";
+import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 
 export function createResumeImportExtractorAgent() {
   return new Agent({
@@ -45,7 +45,7 @@ IMPORTANT RULES:
 - Prefer empty arrays over guessing.
 - Keep descriptions concise; preserve key achievements when present.
 - Return structured output matching the requested schema exactly.`,
-    model: MODEL_PRESETS.qualityFirst
+    model: byoModelFromRequestContext
   });
 }
 

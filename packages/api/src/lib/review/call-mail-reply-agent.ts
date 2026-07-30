@@ -8,6 +8,7 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { agentFetch } from "#@/lib/agent/agent-fetch";
+import { resolveSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 
 const WORKFLOW_ID = "mail-reply-workflow";
 const TIMEOUT_MS = 45_000;
@@ -15,6 +16,7 @@ const TIMEOUT_MS = 45_000;
 /**
  * Run mail-reply-workflow on the agent worker.
  * Returns null when agent is not configured or the call fails (caller uses heuristic).
+ * Auth: Better Auth session Bearer (MastraAuthBetterAuth).
  */
 export async function callMailReplyAgent(
   input: MailReplyDraftInput
@@ -25,13 +27,23 @@ export async function callMailReplyAgent(
 
   try {
     const parsedInput = MailReplyDraftInputSchema.parse(input);
+    const sessionToken = await resolveSessionTokenForUser(parsedInput.userId);
+    if (!sessionToken) {
+      log.set({
+        event: "mail_reply_agent_no_session",
+        userId: parsedInput.userId
+      });
+      log.emit();
+      return null;
+    }
 
     const createRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`,
       {
         method: "POST",
         body: JSON.stringify({}),
-        timeoutMs: TIMEOUT_MS
+        timeoutMs: TIMEOUT_MS,
+        sessionToken
       }
     );
     if (!createRes) return null;
@@ -54,7 +66,8 @@ export async function callMailReplyAgent(
       {
         method: "POST",
         body: JSON.stringify({ inputData: parsedInput }),
-        timeoutMs: TIMEOUT_MS
+        timeoutMs: TIMEOUT_MS,
+        sessionToken
       }
     );
 
@@ -77,7 +90,8 @@ export async function callMailReplyAgent(
       {
         method: "POST",
         body: JSON.stringify({ inputData: parsedInput }),
-        timeoutMs: TIMEOUT_MS
+        timeoutMs: TIMEOUT_MS,
+        sessionToken
       }
     );
 

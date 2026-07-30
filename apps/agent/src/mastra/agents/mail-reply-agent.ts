@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 
-import { MODEL_PRESETS } from "#@/mastra/model-config";
+import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
 import { listOpenApplicationsTool } from "#@/mastra/tools/list-open-applications.tool";
 
@@ -27,7 +27,7 @@ Rules:
 - Subject should be a proper Re: line when the original subject is present.
 - title is a short queue label for the review list (e.g. "Reply · Acme screener").
 - Prefer structured JSON output via the schema when provided.`,
-    model: MODEL_PRESETS.default,
+    model: byoModelFromRequestContext,
     tools: {
       listOpenApplications: listOpenApplicationsTool,
       getApplication: getApplicationTool

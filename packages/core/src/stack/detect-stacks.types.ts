@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
+
 /**
  * What the client sends (just projectId + repos)
  */
@@ -55,7 +57,9 @@ export const DetectStacksWorkflowInputSchema = z.object({
       detectedPackages: z.array(z.string()).describe("npm packages from previous scan")
     })
     .nullable()
-    .describe("Previous scan result for diff, null if first scan")
+    .describe("Previous scan result for diff, null if first scan"),
+  /** Server-resolved BYO model + key. Never log `llm.apiKey`. */
+  llm: RuntimeLlmConfigSchema.optional()
 });
 
 /**

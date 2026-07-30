@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
+
 import { AiCorrectionFewShotExampleSchema } from "./corrections";
 import {
   matchSmartRuleLabels,
@@ -31,7 +33,12 @@ export const MailClassifyInputSchema = z.object({
     .optional()
     .default([]),
   /** Last-K user corrections for few-shot (server loads, userId-scoped). */
-  fewShotCorrections: z.array(AiCorrectionFewShotExampleSchema).optional().default([])
+  fewShotCorrections: z.array(AiCorrectionFewShotExampleSchema).optional().default([]),
+  /**
+   * Server-resolved BYO model + key for this run (Settings → AI).
+   * Agent must not log `llm.apiKey`.
+   */
+  llm: RuntimeLlmConfigSchema.optional()
 });
 export type MailClassifyInput = z.infer<typeof MailClassifyInputSchema>;
 

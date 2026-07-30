@@ -149,6 +149,7 @@ catalog:
   "@mastra/hono": ^1.5.6
   "@mastra/deployer-cloudflare": ^1.2.7
   "@mastra/ai-sdk": ^1.7.0
+  "@mastra/auth-better-auth": ^1.1.2
   # Mastra's peerDep requires ai >= 5.0.76; current resolved is ai@6.0.208
   "@mastra/cloudflare-d1": ^1.1.1
   "@mastra/pg": ^1.18.0

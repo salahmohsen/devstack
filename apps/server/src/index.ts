@@ -13,11 +13,6 @@ import "#@/shared/lib/logger";
 initRuntime();
 
 async function start(): Promise<void> {
-  if (!ENV_SERVER.AGENT_SERVICE_SECRET?.trim() && ENV_SERVER.NODE_ENV === "production") {
-    console.error(
-      "[server] AGENT_SERVICE_SECRET is unset in production — mail classify/reply LLM will fail with agent_auth_not_configured. Set the same secret on server and agent."
-    );
-  }
   // Apply DB migrations before accepting traffic when opted in (Docker sets
   // RUN_MIGRATIONS=true). Leave unset in local dev — use `pnpm db:migrate`.
   if (process.env.RUN_MIGRATIONS === "true" || process.env.RUN_MIGRATIONS === "1") {

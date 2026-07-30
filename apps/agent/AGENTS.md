@@ -24,7 +24,8 @@ Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge �
 - Reply-assist: **job/application context is a required first step**; fail closed without it
 - Learning: user corrections → app storage + Mastra feedback/datasets; do not assume fine-tuning APIs
 - Logging: `initLogger` / `createLogger` from `@tsu-stack/logger/server` for job outcomes; include `traceId` when present; one `emit()` per wide-event lifetime
-- **Service auth:** set `AGENT_SERVICE_SECRET` (same value on server). Middleware on `/api/*` requires `Authorization: Bearer <secret>` in production. Never expose the agent HTTP port publicly without this secret.
+- **Auth:** `MastraAuthBetterAuth` (`@mastra/auth-better-auth`) with the shared Better Auth instance. Server forwards the user's session as `Authorization: Bearer <session_token>`. Same `BETTER_AUTH_SECRET` + app `DATABASE_URL` as the API. Never expose the agent HTTP port without auth.
+- **LLM keys:** BYO only via Settings → AI (workflow `input.llm` / requestContext). No `DEEPSEEK_API_KEY` or other provider env keys.
 
 ## Layout conventions
 
@@ -34,8 +35,10 @@ src/mastra/
   workflows/       # <name>-workflow/ with steps + index.ts
   tools/           # createTool definitions
   scorers/         # createScorer + prebuilt re-exports; register in index
-  model-config.ts  # MODEL_PRESETS (operator defaults; user AI settings override at runtime)
-  index.ts         # single registration surface
+  model-config.ts  # optional preset lists (docs/defaults); runtime model = Settings BYO
+  runtime-llm.ts   # BYO model resolution for generate() / requestContext
+  byo-model.ts     # thin re-exports for agents/workflows
+  index.ts         # single registration surface (MastraAuthBetterAuth + agents/workflows)
 ```
 
 ## Resources

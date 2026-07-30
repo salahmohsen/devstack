@@ -3,11 +3,13 @@ import { type OrpcContextAgentWorker } from "#@/lib/context/types";
 
 export type AgentWorkerEnv = {
   AGENT_WORKER_URL?: string;
+  /** Better Auth session token for MastraAuthBetterAuth. */
+  sessionToken?: string | null;
 };
 
 /**
  * Thin fetch wrapper for the Mastra agent process.
- * Always injects AGENT_SERVICE_SECRET Bearer when configured.
+ * Injects the user's Better Auth session as Bearer (Mastra docs: Better Auth).
  */
 export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
   return {
@@ -19,9 +21,6 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
       const inputUrl = input instanceof Request ? input.url : String(input);
       const resolved = new URL(inputUrl, baseUrl).href;
 
-      // Pass body through as-is. Re-wrapping a string body via `new Request`
-      // turns it into a ReadableStream that requires `duplex: "half"` and can
-      // fail under some Node fetch implementations.
       const body = init?.body;
       const needsDuplex =
         typeof body === "object" &&
@@ -34,10 +33,9 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
           body instanceof URLSearchParams);
 
       const headers = new Headers(init?.headers);
-      for (const [k, v] of Object.entries(agentAuthHeaders())) {
+      for (const [k, v] of Object.entries(agentAuthHeaders(env.sessionToken))) {
         if (!headers.has(k)) headers.set(k, v);
       }
-      // Also copy auth from Request object if present
       if (input instanceof Request) {
         input.headers.forEach((value, key) => {
           if (!headers.has(key)) headers.set(key, value);

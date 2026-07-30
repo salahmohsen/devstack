@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 
-import { MODEL_PRESETS } from "#@/mastra/model-config";
+import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 
 export function createStackCategorizerAgent() {
   return new Agent({
@@ -31,7 +31,7 @@ IMPORTANT RULES:
   library/family as another package already categorized. Only invent a NEW
   unique name for genuinely distinct libraries.
 - Do NOT use any tools. Process all packages from the information provided.`,
-    model: MODEL_PRESETS.default
+    model: byoModelFromRequestContext
   });
 }
 

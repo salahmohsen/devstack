@@ -9,6 +9,7 @@ import {
   type MailSystemLabel
 } from "@tsu-stack/core";
 
+import { generateModelOption } from "#@/mastra/byo-model";
 import { heuristicStep } from "#@/mastra/workflows/mail-classify-workflow/heuristic.step";
 
 const LlmLabelSchema = z.object({
@@ -52,10 +53,11 @@ export const llmStep = createStep({
       };
     }
 
-    if (!process.env.DEEPSEEK_API_KEY?.trim()) {
+    const { model, skipNote } = generateModelOption(original.llm);
+    if (!model) {
       return {
         ...heuristic,
-        notes: [heuristic.notes, "llm:missing_DEEPSEEK_API_KEY"].filter(Boolean).join(";")
+        notes: [heuristic.notes, skipNote ?? "llm:missing_byo"].filter(Boolean).join(";")
       };
     }
 
@@ -77,7 +79,8 @@ ${fewShot ? `\n${fewShot}` : ""}`;
     try {
       const result = await Promise.race([
         agent.generate([{ role: "user", content: prompt }], {
-          structuredOutput: { schema: LlmLabelSchema }
+          structuredOutput: { schema: LlmLabelSchema },
+          model
         }),
         new Promise<never>((_, reject) => {
           setTimeout(

@@ -8,6 +8,8 @@ import {
   MailReplyDraftOutputSchema
 } from "@tsu-stack/core";
 
+import { generateModelOption } from "#@/mastra/byo-model";
+
 const LlmDraftSchema = z.object({
   title: z.string().min(1).max(200),
   subject: z.string().min(1).max(500),
@@ -31,8 +33,9 @@ export const draftStep = createStep({
       return { ...fallback, notes: "llm:agent_missing" };
     }
 
-    if (!process.env.DEEPSEEK_API_KEY?.trim()) {
-      return { ...fallback, notes: "llm:missing_DEEPSEEK_API_KEY" };
+    const { model, skipNote } = generateModelOption(inputData.llm);
+    if (!model) {
+      return { ...fallback, notes: skipNote ?? "llm:missing_byo" };
     }
 
     const job = inputData.jobContext;
@@ -65,7 +68,8 @@ Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
         agent.generate([{ role: "user", content: prompt }], {
           structuredOutput: { schema: LlmDraftSchema },
           requestContext,
-          maxSteps: 4
+          maxSteps: 4,
+          model
         }),
         new Promise<never>((_, reject) => {
           setTimeout(

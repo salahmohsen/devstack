@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
 import { contactTypeSchema } from "#@/profile/types";
 
 export const ResumeImportContactSchema = z.object({
@@ -117,7 +118,9 @@ export const ResumeImportWorkflowInputSchema = z.object({
       id: z.string(),
       name: z.string()
     })
-  )
+  ),
+  /** Server-resolved BYO model + key. Never log `llm.apiKey`. */
+  llm: RuntimeLlmConfigSchema.optional()
 });
 
 export type ResumeImportWorkflowInput = z.infer<typeof ResumeImportWorkflowInputSchema>;

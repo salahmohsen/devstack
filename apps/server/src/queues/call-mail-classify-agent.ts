@@ -1,4 +1,5 @@
 import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
+import { resolveSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
 import {
   MailClassifyInputSchema,
   MailClassifyOutputSchema,
@@ -21,6 +22,8 @@ export type MailClassifyAgentCallResult = {
 /**
  * Run mail-classify-workflow on the agent worker and return the final result.
  * Returns null when agent is not configured or the call fails (caller falls back).
+ *
+ * Auth: Better Auth session Bearer for the mail owner (MastraAuthBetterAuth).
  */
 export async function callMailClassifyAgent(
   input: MailClassifyInput
@@ -31,28 +34,37 @@ export async function callMailClassifyAgent(
 
   try {
     const parsedInput = MailClassifyInputSchema.parse(input);
+    const sessionToken = await resolveSessionTokenForUser(parsedInput.userId);
+    if (!sessionToken) {
+      log.set({
+        event: "mail_classify_agent_no_session",
+        userId: parsedInput.userId,
+        fixHint: "User needs an active Better Auth session for agent workflows"
+      });
+      log.emit();
+      return null;
+    }
 
     const createRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`,
       {
         method: "POST",
         body: JSON.stringify({}),
-        timeoutMs: TIMEOUT_MS
+        timeoutMs: TIMEOUT_MS,
+        sessionToken
       }
     );
     if (!createRes) return null;
     if (!createRes.ok) {
       const body = await createRes.text().catch(() => "");
-      const agentAuthMissing =
-        createRes.status === 503 && body.includes("agent_auth_not_configured");
       log.set({
         event: "mail_classify_agent_create_run_failed",
         status: createRes.status,
         body: body.slice(0, 200),
-        agentAuthMissing: agentAuthMissing || undefined,
-        fixHint: agentAuthMissing
-          ? "Set AGENT_SERVICE_SECRET on both server and agent, then redeploy"
-          : undefined
+        fixHint:
+          createRes.status === 401
+            ? "Agent rejected session — ensure BETTER_AUTH_SECRET matches and agent uses MastraAuthBetterAuth"
+            : undefined
       });
       log.emit();
       return null;
@@ -66,7 +78,8 @@ export async function callMailClassifyAgent(
       {
         method: "POST",
         body: JSON.stringify({ inputData: parsedInput }),
-        timeoutMs: TIMEOUT_MS
+        timeoutMs: TIMEOUT_MS,
+        sessionToken
       }
     );
 
@@ -92,7 +105,8 @@ export async function callMailClassifyAgent(
       {
         method: "POST",
         body: JSON.stringify({ inputData: parsedInput }),
-        timeoutMs: TIMEOUT_MS
+        timeoutMs: TIMEOUT_MS,
+        sessionToken
       }
     );
 

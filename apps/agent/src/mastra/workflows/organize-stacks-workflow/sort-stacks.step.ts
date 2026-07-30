@@ -1,8 +1,10 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
+import { type OrganizeStacksInput } from "@tsu-stack/core";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { generateModelOption } from "#@/mastra/byo-model";
 import {
   EnrichActionSchema,
   MergeActionSchema,
@@ -26,7 +28,8 @@ export const sortStacks = createStep({
     enrichActions: z.array(EnrichActionSchema),
     sortOrder: z.array(z.string())
   }),
-  execute: async ({ inputData, mastra, abortSignal }) => {
+  execute: async (params) => {
+    const { inputData, mastra, abortSignal } = params;
     if (abortSignal?.aborted) {
       return { ...inputData, sortOrder: inputData.stacks.map((s) => s.id) };
     }
@@ -42,6 +45,18 @@ export const sortStacks = createStep({
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
+      return {
+        stacks,
+        mergeActions,
+        renameActions,
+        enrichActions,
+        sortOrder: remaining.map((s) => s.id)
+      };
+    }
+
+    const init = params.getInitData() as OrganizeStacksInput;
+    const { model } = generateModelOption(init.llm);
+    if (!model) {
       return {
         stacks,
         mergeActions,
@@ -91,7 +106,8 @@ Return ALL remaining stack IDs in order.`;
             schema: z.object({
               orderedIds: z.array(z.string())
             })
-          }
+          },
+          model
         }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("LLM timeout after 60s")), 60_000)

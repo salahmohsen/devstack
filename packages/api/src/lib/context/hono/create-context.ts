@@ -7,6 +7,7 @@ import { createGitHubOctokit } from "@tsu-stack/github/infrastructure/octokit/cl
 import { resolvePublicGitHubSourceForUser } from "@tsu-stack/github/shared/public-github-source";
 import { type RequestLogger } from "@tsu-stack/logger/server";
 
+import { resolveAgentSessionToken } from "#@/lib/agent/resolve-session-token";
 import { createAgentWorker } from "#@/lib/agent/worker";
 import { type OrpcContext } from "#@/lib/context/types";
 
@@ -129,7 +130,20 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
     logger,
     session,
     mediaBucket: runtime.files,
-    agentWorker: createAgentWorker({ AGENT_WORKER_URL: runtime.agentWorkerUrl }),
+    agentWorker: createAgentWorker({
+      AGENT_WORKER_URL: runtime.agentWorkerUrl,
+      // MastraAuthBetterAuth: forward Better Auth session (cookie/Bearer or session.token).
+      sessionToken: await resolveAgentSessionToken({
+        headers,
+        sessionToken:
+          typeof session?.session === "object" &&
+          session.session !== null &&
+          "token" in session.session &&
+          typeof (session.session as { token?: unknown }).token === "string"
+            ? (session.session as { token: string }).token
+            : null
+      })
+    }),
     host
   };
 }

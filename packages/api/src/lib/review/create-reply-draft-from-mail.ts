@@ -12,6 +12,7 @@ import {
 
 import { emitAppNotification } from "#@/lib/notification/emit-app-notification";
 import { callMailReplyAgent } from "#@/lib/review/call-mail-reply-agent";
+import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type CreateReplyDraftResult =
   | { ok: true; item: ReviewItemEntity; created: boolean; source?: MailReplyDraftOutput["source"] }
@@ -48,6 +49,8 @@ export async function createReplyDraftFromMail(input: {
     }
   }
 
+  const llm = await resolveRuntimeAiCredentials(input.userId, "reply");
+
   const draftInput: MailReplyDraftInput = {
     messageId: message.id,
     userId: input.userId,
@@ -57,7 +60,8 @@ export async function createReplyDraftFromMail(input: {
     preview: message.preview,
     bodyText: message.bodyText,
     labels: message.labels ?? [],
-    jobContext
+    jobContext,
+    llm
   };
 
   let draft: MailReplyDraftOutput | null = await callMailReplyAgent(draftInput);

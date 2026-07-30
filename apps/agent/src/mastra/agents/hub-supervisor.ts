@@ -2,7 +2,7 @@ import { Agent } from "@mastra/core/agent";
 import { Memory } from "@mastra/memory";
 
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
-import { MODEL_PRESETS } from "#@/mastra/model-config";
+import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
 
@@ -40,7 +40,7 @@ Always:
 - Use the tool with the most specific name. Prefer a workflow over a sub-agent when the task is a defined multi-step process.
 - If a tool result is empty or an error, surface that to the user plainly.
 - Keep the final response concise and actionable. Markdown is fine but don't pad.`,
-    model: MODEL_PRESETS.fullChain,
+    model: byoModelFromRequestContext,
     agents: {
       stackCategorizerAgent: createStackCategorizerAgent()
     },

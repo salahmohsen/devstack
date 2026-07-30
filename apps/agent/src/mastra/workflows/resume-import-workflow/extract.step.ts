@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { ResumeImportWorkflowInputSchema } from "@tsu-stack/core";
 
+import { generateModelOption } from "#@/mastra/byo-model";
 import {
   ResumeExtractOutputSchema,
   type ResumeExtractOutput
@@ -57,6 +58,17 @@ export const extract = createStep({
       };
     }
 
+    const { model, skipNote } = generateModelOption(inputData.llm ?? undefined);
+    if (!model) {
+      return {
+        ...base,
+        extract: emptyExtract([
+          skipNote ?? "llm:missing_byo",
+          "Configure Settings → AI provider key and resumeImport model"
+        ])
+      };
+    }
+
     const existingStackLines =
       existingStacks.length > 0
         ? existingStacks.map((s) => `- ${s.name} (id: ${s.id})`).join("\n")
@@ -87,7 +99,8 @@ Dates ISO when possible. Prefer empty arrays over invention.`;
         agent.generate([{ role: "user", content: prompt }], {
           structuredOutput: {
             schema: ResumeExtractOutputSchema
-          }
+          },
+          model
         }),
         new Promise<never>((_, reject) =>
           setTimeout(

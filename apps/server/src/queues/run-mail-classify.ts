@@ -2,6 +2,7 @@ import { embedTextForCorrections } from "@tsu-stack/api/lib/mail/embed-text";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
+import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
   AI_CORRECTION_CANDIDATE_POOL,
   AI_CORRECTION_FEW_SHOT_K,
@@ -155,6 +156,9 @@ export async function runMailClassify(input: {
       { max: AI_CORRECTION_FEW_SHOT_K, queryEmbedding }
     );
   }
+  // BYO AI: Settings models + sealed keys — not Dokploy DEEPSEEK_*.
+  const llm = await resolveRuntimeAiCredentials(row.userId, "classify");
+
   const classifyInput = {
     messageId: row.id,
     userId: row.userId,
@@ -167,7 +171,8 @@ export async function runMailClassify(input: {
     smartRules: smartRules.map((r) => {
       return { slug: r.slug, keywords: r.keywords ?? [], enabled: r.enabled };
     }),
-    fewShotCorrections
+    fewShotCorrections,
+    llm
   };
 
   let result: MailClassifyOutput | null = null;

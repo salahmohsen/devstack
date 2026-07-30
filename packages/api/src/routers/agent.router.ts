@@ -1,7 +1,11 @@
 import { ORPCError, streamToEventIterator } from "@orpc/server";
 import { z } from "zod";
 
-import { DetectStacksClientInputSchema, type OrpcContext } from "@tsu-stack/core";
+import {
+  DetectStacksClientInputSchema,
+  llmRequestContextFields,
+  type OrpcContext
+} from "@tsu-stack/core";
 import {
   projectStackScanRepository,
   stackDependencyRepository,
@@ -21,6 +25,7 @@ import {
   streamMastraWorkflow
 } from "#@/lib/agent/workflow-stream";
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 // Parse GitHub URL to owner/repo format
 function parseGitHubRepo(url: string): string {
@@ -274,6 +279,14 @@ export const agentRouter = {
         throw new Error("agentWorker not configured");
       }
 
+      const llm = await resolveRuntimeAiCredentials(context.session.user.id, "hubChat");
+      if (!llm.apiKey) {
+        throw new ORPCError("BAD_REQUEST", {
+          message:
+            "Configure an AI provider API key in Settings → AI before using Hub chat (BYO keys)."
+        });
+      }
+
       const response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -281,7 +294,8 @@ export const agentRouter = {
           messages: input.messages,
           requestContext: {
             resourceId: context.session.user.id,
-            threadId: `dashboard-home:${context.session.user.id}`
+            threadId: `dashboard-home:${context.session.user.id}`,
+            ...llmRequestContextFields(llm)
           }
         })
       });
@@ -336,6 +350,14 @@ export const agentRouter = {
         throw new Error("agentWorker not configured");
       }
 
+      const llm = await resolveRuntimeAiCredentials(context.session.user.id, "hubChat");
+      if (!llm.apiKey) {
+        throw new ORPCError("BAD_REQUEST", {
+          message:
+            "Configure an AI provider API key in Settings → AI before using Hub chat (BYO keys)."
+        });
+      }
+
       const upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
         method: "POST",
         headers: {
@@ -347,6 +369,7 @@ export const agentRouter = {
           messages: input.messages,
           requestContext: {
             resourceId: context.session.user.id,
+            ...llmRequestContextFields(llm),
             threadId: `dashboard-home:${context.session.user.id}`
           }
         })
@@ -595,7 +618,8 @@ export const agentRouter = {
             ? {
                 detectedPackages: lastScan.detectedPackages ?? []
               }
-            : null
+            : null,
+          llm: await resolveRuntimeAiCredentials(context.session.user.id, "stacks")
         };
 
         if (signal?.aborted) return;
@@ -672,7 +696,8 @@ export const agentRouter = {
             icon: stack.icon,
             projectCount: stack.projectCount ?? 0
           };
-        })
+        }),
+        llm: await resolveRuntimeAiCredentials(userId, "stacks")
       };
 
       // 3. Stream workflow execution — cancels Mastra run on client abort

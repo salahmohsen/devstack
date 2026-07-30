@@ -421,7 +421,7 @@ function MessageReaderBody({
           // Surface agent misconfig (503 agent_auth_not_configured) clearly.
           if (/agent|503|auth_not_configured|WORKER/i.test(msg)) {
             toast.error(
-              "Agent is unavailable. Set AGENT_SERVICE_SECRET on server and agent, then redeploy."
+              "Agent is unavailable. Ensure you are signed in (Better Auth session) and AGENT_WORKER_URL is set."
             );
             return;
           }

@@ -155,8 +155,6 @@ services:
       POSTGRES_HOST: hub-postgres
       REDIS_URL: redis://:${REDIS_PASSWORD}@hub-redis:6379
       AGENT_WORKER_URL: ${AGENT_WORKER_URL:-http://agent:4111}
-      # Same secret on agent — required for server→agent Bearer auth in production.
-      AGENT_SERVICE_SECRET: ${AGENT_SERVICE_SECRET:-}
       # Gmail Pub/Sub push auth (OIDC and/or shared secret)
       GMAIL_PUBSUB_TOPIC: ${GMAIL_PUBSUB_TOPIC:-}
       GMAIL_PUSH_SHARED_SECRET: ${GMAIL_PUSH_SHARED_SECRET:-}
@@ -216,25 +214,23 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: mastra_agent
+      # App DB for Better Auth session verification (MastraAuthBetterAuth)
+      POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
       POSTGRES_HOST: hub-postgres
+      # Dedicated Mastra storage DB (created if missing)
+      MASTRA_POSTGRES_DB: mastra_agent
       CREATE_DB: "true"
-      # Mastra model strings like "deepseek/deepseek-v4-flash" read DEEPSEEK_API_KEY
-      # (see apps/agent/src/mastra/model-config.ts). Must be listed here — Dokploy
-      # project env alone does not inject into containers unless referenced.
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      # Optional fallbacks if you switch models in model-config.ts:
-      OPENCODE_API_KEY: ${OPENCODE_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      # Must match server AGENT_SERVICE_SECRET
-      AGENT_SERVICE_SECRET: ${AGENT_SERVICE_SECRET:-}
+      # Same secret as API — session signing for MastraAuthBetterAuth
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      VITE_WEB_URL: ${VITE_WEB_URL}
+      VITE_SERVER_URL: ${VITE_SERVER_URL}
       # Optional Axiom wide-event drain (agent process logs)
       AXIOM_API_KEY: ${AXIOM_API_KEY:-}
       AXIOM_DATASET: ${AXIOM_DATASET:-}
       AXIOM_EDGE_URL: ${AXIOM_EDGE_URL:-}
       NODE_ENV: production
     healthcheck:
-      # /api/health is auth-exempt; /api/agents requires Bearer when secret is set
+      # /api/health is auth-exempt; other /api/* require Better Auth session
       test:
         [
           "CMD-SHELL",

@@ -42,7 +42,7 @@ etc.) is scoped by the Better Auth user id. Public RPCs resolve Host and/or
 _Avoid_: `ownerId`, “admin user” as the sole portfolio owner, unscoped `findAll()`.
 
 **BYO AI**:
-LLM features use operator-supplied provider keys (`DEEPSEEK_API_KEY`, etc.).
+LLM features use per-user BYO provider keys in Settings → AI (sealed in `user_ai_settings`). Agent HTTP uses Better Auth sessions via `MastraAuthBetterAuth`.
 No platform-funded model budget. Missing keys: detect-stacks skips AI categorize
 and falls back; resume import returns extract warnings; CRUD still works.
 _Avoid_: assuming a shared cloud key for all tenants.

@@ -16,7 +16,8 @@ export const prepare = createStep({
       resumeText: inputData.resumeText,
       sourceFilename: inputData.sourceFilename,
       existingProfile: inputData.existingProfile,
-      existingStacks: inputData.existingStacks
+      existingStacks: inputData.existingStacks,
+      llm: inputData.llm
     };
   }
 });

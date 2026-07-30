@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
+
 /**
  * Input for the organize-stacks workflow.
  * Takes all existing stacks and lets the workflow clean them up.
@@ -16,7 +18,9 @@ export const OrganizeStacksInputSchema = z.object({
         projectCount: z.number().int().describe("Number of projects using this stack")
       })
     )
-    .describe("All existing stacks from the database")
+    .describe("All existing stacks from the database"),
+  /** Server-resolved BYO model + key. Never log `llm.apiKey`. */
+  llm: RuntimeLlmConfigSchema.optional()
 });
 
 /**

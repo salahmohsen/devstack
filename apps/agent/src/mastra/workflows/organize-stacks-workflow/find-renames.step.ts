@@ -1,9 +1,10 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { normalizeOrganizeName } from "@tsu-stack/core";
+import { normalizeOrganizeName, type OrganizeStacksInput } from "@tsu-stack/core";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { generateModelOption } from "#@/mastra/byo-model";
 import {
   MergeActionSchema,
   RenameActionSchema,
@@ -22,7 +23,8 @@ export const findRenames = createStep({
     mergeActions: z.array(MergeActionSchema),
     renameActions: z.array(RenameActionSchema)
   }),
-  execute: async ({ inputData, mastra, abortSignal }) => {
+  execute: async (params) => {
+    const { inputData, mastra, abortSignal } = params;
     if (abortSignal?.aborted) {
       return { stacks: inputData.stacks, mergeActions: inputData.mergeActions, renameActions: [] };
     }
@@ -37,6 +39,12 @@ export const findRenames = createStep({
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
+      return { stacks, mergeActions, renameActions: [] };
+    }
+
+    const init = params.getInitData() as OrganizeStacksInput;
+    const { model } = generateModelOption(init.llm);
+    if (!model) {
       return { stacks, mergeActions, renameActions: [] };
     }
 
@@ -93,6 +101,7 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
       try {
         const result = await Promise.race([
           agent.generate([{ role: "user", content: prompt }], {
+            model,
             structuredOutput: {
               schema: z.object({
                 renames: z.array(RenameActionSchema).default([])

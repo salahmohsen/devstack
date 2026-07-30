@@ -1,6 +1,6 @@
 import { Agent } from "@mastra/core/agent";
 
-import { MODEL_PRESETS } from "#@/mastra/model-config";
+import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 
 export function createMailClassifierAgent() {
   return new Agent({
@@ -23,7 +23,8 @@ Rules:
 - Use subject + from + body; ignore legal footers when possible.
 - Return structured JSON only via the schema.
 - confidence 0–1 for your choice.`,
-    model: MODEL_PRESETS.default
+    // Per-call override from workflow input.llm; requestContext BYO for HTTP.
+    model: byoModelFromRequestContext
   });
 }
 

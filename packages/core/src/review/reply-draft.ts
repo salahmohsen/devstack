@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
+
 import { buildHeuristicReplyDraft } from "./utils";
 
 /** Optional CRM/job context for a more grounded reply. */
@@ -19,7 +21,9 @@ export const MailReplyDraftInputSchema = z.object({
   preview: z.string().default(""),
   bodyText: z.string().default(""),
   labels: z.array(z.string()).default([]),
-  jobContext: MailReplyJobContextSchema.nullable().optional()
+  jobContext: MailReplyJobContextSchema.nullable().optional(),
+  /** Server-resolved BYO model + key for this run. Never log `llm.apiKey`. */
+  llm: RuntimeLlmConfigSchema.optional()
 });
 export type MailReplyDraftInput = z.infer<typeof MailReplyDraftInputSchema>;
 

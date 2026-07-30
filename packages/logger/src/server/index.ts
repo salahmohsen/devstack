@@ -20,6 +20,7 @@ type ServerLoggerConfig = EvlogLoggerConfig;
 const DEFAULT_REDACT_PATHS = [
   ...(auditRedactPreset.paths ?? []),
   "apiKey",
+  "llm.apiKey",
   "authorization",
   "cookie",
   "cookies",

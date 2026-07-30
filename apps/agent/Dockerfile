@@ -83,7 +83,7 @@ ENV NODE_PATH=/app/node_modules:/app/apps/agent/node_modules
 
 EXPOSE 4111
 
-# Prefer auth-exempt health paths (Bearer required on /api/* when AGENT_SERVICE_SECRET is set)
+# Prefer auth-exempt health paths (/api/* uses MastraAuthBetterAuth sessions)
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
   CMD wget -qO- http://127.0.0.1:4111/api/health || wget -qO- http://127.0.0.1:4111/health || exit 1
 

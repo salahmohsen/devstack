@@ -25,6 +25,7 @@ import {
 import { extractTextFromPdf, PdfTextError } from "#@/lib/onboarding/pdf-text";
 import { promoteResumeSourceToDefault } from "#@/lib/onboarding/promote-resume-source";
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 const OnboardingApplyOutputSchema = z.object({
   experiencesCreated: z.number().int(),
@@ -286,7 +287,8 @@ export const onboardingRouter = {
             id: stack.id,
             name: stack.name
           };
-        })
+        }),
+        llm: await resolveRuntimeAiCredentials(userId, "resumeImport")
       };
 
       if (signal?.aborted) return;

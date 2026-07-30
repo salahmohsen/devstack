@@ -15,7 +15,8 @@ initLogger({
 const boot = createLogger({ operation: "agent__process_boot" });
 boot.set({
   event: "agent_process_boot",
-  hasDeepseekKey: Boolean(process.env.DEEPSEEK_API_KEY?.trim()),
+  llmAuth: "byo_settings",
+  agentAuth: "mastra_auth_better_auth",
   hasMastraDatabaseUrl: Boolean(
     process.env.MASTRA_DATABASE_URL?.trim() ?? process.env.DATABASE_URL?.trim()
   )

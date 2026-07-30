@@ -1,9 +1,9 @@
-import { timingSafeEqual } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { chatRoute } from "@mastra/ai-sdk";
+import { MastraAuthBetterAuth } from "@mastra/auth-better-auth";
 import { Mastra } from "@mastra/core/mastra";
 import { MastraCompositeStore } from "@mastra/core/storage";
 import { DuckDBStore } from "@mastra/duckdb";
@@ -15,6 +15,8 @@ import {
   SensitiveDataFilter
 } from "@mastra/observability";
 import { PostgresStore } from "@mastra/pg";
+
+import { auth } from "@tsu-stack/auth";
 
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
 import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agent";
@@ -28,14 +30,7 @@ import { mailReplyWorkflow } from "#@/mastra/workflows/mail-reply-workflow";
 import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
 import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow";
 
-// Fail loud in logs when LLM keys required by model-config are missing.
-// Without this, detect-stacks fails mid-run with a generic agent-stream error.
-if (!process.env.DEEPSEEK_API_KEY?.trim()) {
-  console.debug(
-    "[agent] DEEPSEEK_API_KEY is not set. Models deepseek/* will fail. " +
-      "Add it to packages/env/.env and restart the agent (dotenvx does not hot-reload env)."
-  );
-}
+// Product LLM: Settings BYO only (workflow input.llm / requestContext). No provider env keys.
 
 /**
  * Storage layout (Mastra docs — observability/storage):
@@ -86,97 +81,41 @@ const storage = new MastraCompositeStore({
   }
 });
 
-function agentServiceSecret(): string {
-  return process.env.AGENT_SERVICE_SECRET?.trim() ?? "";
-}
+/**
+ * Better Auth session verification for all Mastra HTTP routes.
+ * @see https://mastra.ai/docs/server/auth/better-auth
+ * Server/API forwards the user's session as Authorization: Bearer <token>.
+ */
+const mastraAuth = new MastraAuthBetterAuth({
+  // better-auth Auth generics differ slightly across package versions.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shared app `auth` is the runtime instance
+  auth: auth as any,
+  public: ["/api/health", "/health", "/", "/api", "/openapi.json", "/api/openapi.json"],
+  // Multi-tenant memory / threads: bind Mastra resourceId to Better Auth user id
+  // (docs: mapUserToResourceId — prevents client-supplied resourceId spoofing).
+  mapUserToResourceId: (user) => {
+    const id =
+      (user as { user?: { id?: string }; id?: string } | null)?.user?.id ??
+      (user as { id?: string } | null)?.id;
+    return typeof id === "string" && id.length > 0 ? id : undefined;
+  }
+});
 
-function agentSecretMatches(provided: string, expected: string): boolean {
-  const ba = Buffer.from(provided, "utf8");
-  const bb = Buffer.from(expected, "utf8");
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(ba, bb);
-}
-
-const agentSecret = agentServiceSecret();
-if (!agentSecret && process.env.NODE_ENV === "production") {
-  console.error(
-    "[agent] AGENT_SERVICE_SECRET is required in production. " +
-      "Set the same secret on the server (ENV AGENT_SERVICE_SECRET)."
-  );
-} else if (!agentSecret) {
+if (!process.env.BETTER_AUTH_SECRET?.trim()) {
   console.debug(
-    "[agent] AGENT_SERVICE_SECRET unset — API routes are open (dev only). " +
-      "Set a ≥16 char secret for server↔agent auth."
+    "[agent] BETTER_AUTH_SECRET unset — MastraAuthBetterAuth cannot verify sessions. " +
+      "Set the same BETTER_AUTH_SECRET as the API server."
   );
 }
 
 export const mastra = new Mastra({
   server: {
-    middleware: [
-      {
-        path: "/api/*",
-        handler: async (c, next) => {
-          const path = new URL(c.req.url).pathname;
-          const publicExact = new Set(["/api/health", "/health", "/", "/api"]);
-          if (publicExact.has(path) || path.endsWith("/openapi.json")) {
-            await next();
-            return;
-          }
-
-          const secret = agentServiceSecret();
-          if (!secret) {
-            if (process.env.NODE_ENV === "production") {
-              return new Response(JSON.stringify({ error: "agent_auth_not_configured" }), {
-                status: 503,
-                headers: { "Content-Type": "application/json" }
-              });
-            }
-            await next();
-            return;
-          }
-
-          const auth = c.req.header("Authorization") ?? c.req.header("authorization") ?? "";
-          const token = auth.toLowerCase().startsWith("bearer ")
-            ? auth.slice(7).trim()
-            : auth.trim();
-          if (!token || !agentSecretMatches(token, secret)) {
-            return new Response(JSON.stringify({ error: "unauthorized" }), {
-              status: 401,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-
-          await next();
-        }
-      },
-      {
-        path: "/chat/*",
-        handler: async (c, next) => {
-          const secret = agentServiceSecret();
-          if (!secret) {
-            if (process.env.NODE_ENV === "production") {
-              return new Response(JSON.stringify({ error: "agent_auth_not_configured" }), {
-                status: 503,
-                headers: { "Content-Type": "application/json" }
-              });
-            }
-            await next();
-            return;
-          }
-          const auth = c.req.header("Authorization") ?? "";
-          const token = auth.toLowerCase().startsWith("bearer ")
-            ? auth.slice(7).trim()
-            : auth.trim();
-          if (!token || !agentSecretMatches(token, secret)) {
-            return new Response(JSON.stringify({ error: "unauthorized" }), {
-              status: 401,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
-          await next();
-        }
-      }
-    ],
+    auth: mastraAuth,
+    cors: {
+      // Studio / browser clients with cookie sessions
+      origin: process.env.VITE_WEB_URL?.trim() ?? "http://localhost:3000",
+      credentials: true
+    },
     apiRoutes: [
       chatRoute({
         path: "/chat/:agentId",

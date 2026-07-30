@@ -78,8 +78,39 @@ else
   export DATABASE_URL="postgresql://$(encode "$_user"):$(encode "$_pass")@${_host}:${_port}/${_db}"
 fi
 
-# When CREATE_DB is set, attempt to create the target database.
-if [ "${CREATE_DB:-false}" = "true" ]; then
+# Optional second DB for Mastra agent storage (app DB stays DATABASE_URL for auth).
+if [ -n "${MASTRA_POSTGRES_DB:-}" ]; then
+  if command -v node >/dev/null 2>&1; then
+    export MASTRA_DATABASE_URL="$(
+      POSTGRES_DB="${MASTRA_POSTGRES_DB}" node -e '
+        const user = process.env.POSTGRES_USER;
+        const pass = process.env.POSTGRES_PASSWORD;
+        const host = process.env.POSTGRES_HOST || "postgres";
+        const port = process.env.POSTGRES_PORT || "5432";
+        const db = process.env.POSTGRES_DB || "mastra_agent";
+        process.stdout.write(
+          "postgresql://" +
+            encodeURIComponent(user) +
+            ":" +
+            encodeURIComponent(pass) +
+            "@" +
+            host +
+            ":" +
+            port +
+            "/" +
+            encodeURIComponent(db)
+        );
+      '
+    )"
+  fi
+  # Create mastra DB when CREATE_DB=true (ensure-db uses POSTGRES_DB).
+  if [ "${CREATE_DB:-false}" = "true" ]; then
+    POSTGRES_DB="${MASTRA_POSTGRES_DB}" node /usr/local/bin/ensure-db.js 2>&1 || true
+  fi
+fi
+
+# When CREATE_DB is set and we did not already create MASTRA DB as primary, create primary.
+if [ "${CREATE_DB:-false}" = "true" ] && [ -z "${MASTRA_POSTGRES_DB:-}" ]; then
   node /usr/local/bin/ensure-db.js 2>&1 || true
 fi
 

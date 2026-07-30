@@ -1,8 +1,10 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
+import { type OrganizeStacksInput } from "@tsu-stack/core";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { generateModelOption } from "#@/mastra/byo-model";
 import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 import {
   EnrichActionSchema,
@@ -25,7 +27,8 @@ export const findEnrichments = createStep({
     renameActions: z.array(RenameActionSchema),
     enrichActions: z.array(EnrichActionSchema)
   }),
-  execute: async ({ inputData, mastra, abortSignal }) => {
+  execute: async (params) => {
+    const { inputData, mastra, abortSignal } = params;
     if (abortSignal?.aborted) {
       return {
         stacks: inputData.stacks,
@@ -50,6 +53,13 @@ export const findEnrichments = createStep({
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
+      return { stacks, mergeActions, renameActions, enrichActions: [] };
+    }
+
+    const init = params.getInitData() as OrganizeStacksInput;
+    const { model } = generateModelOption(init.llm);
+    // Missing BYO: skip enrichments (merge/rename heuristics still apply).
+    if (!model) {
       return { stacks, mergeActions, renameActions, enrichActions: [] };
     }
 
@@ -109,7 +119,8 @@ Do not invent icons for stacks that already have one.`;
               schema: z.object({
                 enrichments: z.array(EnrichActionSchema).default([])
               })
-            }
+            },
+            model
           }),
           new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error("LLM timeout after 60s")), 60_000)
