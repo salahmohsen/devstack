@@ -46,7 +46,8 @@ function decodeBase64Url(data: string | undefined): string {
 
 function collectBodies(part: GmailPart | undefined, acc: { text: string; html: string }) {
   if (!part) return;
-  const mime = part.mimeType ?? "";
+  // Gmail uses `text/html; charset=UTF-8` — match by prefix, not exact equality.
+  const mime = (part.mimeType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
   if (mime === "text/plain" && part.body?.data) {
     acc.text += decodeBase64Url(part.body.data);
   }

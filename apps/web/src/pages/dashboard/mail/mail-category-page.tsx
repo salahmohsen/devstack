@@ -28,6 +28,7 @@ import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import {
+  MailBody,
   useCorrectMailClassificationMutation,
   useGetMailQuery,
   useListMailQuery,
@@ -369,6 +370,7 @@ function MessageReaderBody({
   const labels = careerLabels(message.labels);
   const hasChips = labels.length > 0 || Boolean(message.application);
   const bodyText = detail?.bodyText ?? "";
+  const bodyHtml = detail?.bodyHtml ?? null;
   const isUnsorted =
     !hasSystemCareerOrRuleLabel(message.labels) &&
     message.labels.every((l) => !CAREER_LABELS.has(l));
@@ -551,9 +553,7 @@ function MessageReaderBody({
             <DefaultLoader />
           </div>
         ) : (
-          <p className="max-w-[72ch] text-sm leading-relaxed whitespace-pre-wrap">
-            {bodyText || message.preview}
-          </p>
+          <MailBody bodyHtml={bodyHtml} bodyText={bodyText} preview={message.preview} />
         )}
       </div>
 

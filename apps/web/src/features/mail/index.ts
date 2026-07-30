@@ -12,3 +12,4 @@ export {
 } from "@/features/mail/api/get-mail.query";
 export { useUndoMailCrmApplyMutation } from "@/features/mail/api/undo-mail-crm-apply.mutation";
 export { useCorrectMailClassificationMutation } from "@/features/mail/api/correct-classification.mutation";
+export { MailBody } from "@/features/mail/ui/mail-body";
