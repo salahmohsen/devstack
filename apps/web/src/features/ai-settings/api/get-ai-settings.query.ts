@@ -9,7 +9,12 @@ export const aiSettingsQueryKeys = {
 };
 
 export function getAiSettingsQueryOptions() {
-  return orpcQueryClient.aiSettings.get.queryOptions();
+  return orpcQueryClient.aiSettings.get.queryOptions({
+    // Settings forms keep local drafts; refetch-on-focus was wiping unsaved fields.
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
+  });
 }
 
 export function useGetAiSettingsQuery() {

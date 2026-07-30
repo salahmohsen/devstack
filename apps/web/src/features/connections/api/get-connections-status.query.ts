@@ -9,7 +9,11 @@ export const connectionsQueryKeys = {
 };
 
 export function getConnectionsStatusQueryOptions() {
-  return orpcQueryClient.connections.getStatus.queryOptions({});
+  return orpcQueryClient.connections.getStatus.queryOptions({
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
+  });
 }
 
 export function useGetConnectionsStatusQuery(options?: { enabled?: boolean }) {

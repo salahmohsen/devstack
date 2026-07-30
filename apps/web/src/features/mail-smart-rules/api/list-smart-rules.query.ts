@@ -9,7 +9,12 @@ export const mailSmartRulesQueryKeys = {
 };
 
 export function getListMailSmartRulesQueryOptions() {
-  return orpcQueryClient.mailSmartRules.list.queryOptions({});
+  return orpcQueryClient.mailSmartRules.list.queryOptions({
+    // Inline rule editors keep local drafts; avoid wipe on tab focus.
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
+  });
 }
 
 export function useListMailSmartRulesQuery(options?: { enabled?: boolean }) {

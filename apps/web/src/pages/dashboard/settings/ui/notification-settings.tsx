@@ -37,7 +37,6 @@ import { SettingsSaveBar } from "./settings-save-bar";
 import { SettingsSection } from "./settings-section";
 
 type FormState = {
-  sourceKey: number;
   email: string;
   channels: NotificationChannelPrefs;
   emailDeliveryMode: EmailDeliveryMode;
@@ -63,9 +62,8 @@ function channelsEqual(a: NotificationChannelPrefs, b: NotificationChannelPrefs)
   return NOTIFICATION_KINDS.every((k) => a[k].app === b[k].app && a[k].email === b[k].email);
 }
 
-function formFromQuery(data: NotificationSettingsQueryResult, sourceKey: number): FormState {
+function formFromQuery(data: NotificationSettingsQueryResult): FormState {
   return {
-    sourceKey,
     email: data.notificationEmail ?? data.accountEmail,
     channels: data.channels,
     emailDeliveryMode: data.emailDeliveryMode ?? "immediate",
@@ -129,16 +127,10 @@ export function NotificationSettings() {
     );
   }
 
-  return <NotificationSettingsForm data={query.data} dataUpdatedAt={query.dataUpdatedAt} />;
+  return <NotificationSettingsForm data={query.data} />;
 }
 
-function NotificationSettingsForm({
-  data,
-  dataUpdatedAt
-}: {
-  data: NotificationSettingsQueryResult;
-  dataUpdatedAt: number;
-}) {
+function NotificationSettingsForm({ data }: { data: NotificationSettingsQueryResult }) {
   const update = useUpdateNotificationSettingsMutation();
   const [draft, setDraft] = useState<FormState | null>(null);
 
@@ -146,8 +138,8 @@ function NotificationSettingsForm({
   // is no local draft (initial load or after save/discard).
   const form = useMemo(() => {
     if (draft) return draft;
-    return formFromQuery(data, dataUpdatedAt);
-  }, [data, dataUpdatedAt, draft]);
+    return formFromQuery(data);
+  }, [data, draft]);
 
   const dirty = useMemo(() => {
     const serverEmail = data.notificationEmail ?? data.accountEmail;
@@ -164,7 +156,7 @@ function NotificationSettingsForm({
 
   function ensureDraft(): FormState {
     if (draft) return draft;
-    const next = formFromQuery(data, dataUpdatedAt);
+    const next = formFromQuery(data);
     setDraft(next);
     return next;
   }

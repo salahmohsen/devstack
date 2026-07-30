@@ -54,6 +54,7 @@ import {
 } from "@tsu-stack/ui/components/frame";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Label } from "@tsu-stack/ui/components/label";
+import { SecretInput } from "@tsu-stack/ui/components/secret-input";
 import {
   Select,
   SelectItem,
@@ -83,7 +84,6 @@ type DraftProvider = {
 };
 
 type FormState = {
-  sourceKey: number;
   providers: DraftProvider[];
   models: AiModelsMap;
   autonomy: MailReplyAutonomy;
@@ -120,16 +120,12 @@ function toDraftProviders(providers: AiProviderPublic[]): DraftProvider[] {
   });
 }
 
-function formFromQuery(
-  data: {
-    providers: AiProviderPublic[];
-    models: AiModelsMap;
-    mailReplyAutonomy: MailReplyAutonomy;
-  },
-  sourceKey: number
-): FormState {
+function formFromQuery(data: {
+  providers: AiProviderPublic[];
+  models: AiModelsMap;
+  mailReplyAutonomy: MailReplyAutonomy;
+}): FormState {
   return {
-    sourceKey,
     providers: toDraftProviders(data.providers),
     models: data.models,
     autonomy: data.mailReplyAutonomy
@@ -219,16 +215,20 @@ export function AiSettings() {
   const [draft, setDraft] = useState<FormState | null>(null);
   const [customizeModels, setCustomizeModels] = useState(false);
 
+  // Keep an open draft across refetches / tab focus. Only re-sync from the
+  // server when there is no local draft (initial load or after save/discard).
+  // Do NOT key drafts to query.dataUpdatedAt — focus refetch updates that and
+  // was wiping unsaved edits.
   const form = useMemo(() => {
     if (!query.data) return null;
-    if (draft && draft.sourceKey === query.dataUpdatedAt) return draft;
-    return formFromQuery(query.data, query.dataUpdatedAt);
-  }, [query.data, query.dataUpdatedAt, draft]);
+    if (draft) return draft;
+    return formFromQuery(query.data);
+  }, [query.data, draft]);
 
   const serverSnapshot = useMemo(() => {
     if (!query.data) return null;
-    return formFromQuery(query.data, query.dataUpdatedAt);
-  }, [query.data, query.dataUpdatedAt]);
+    return formFromQuery(query.data);
+  }, [query.data]);
 
   const dirty = useMemo(() => {
     if (!form || !serverSnapshot || !query.data) return false;
@@ -239,8 +239,8 @@ export function AiSettings() {
 
   function ensureDraft(): FormState | null {
     if (!query.data) return null;
-    if (draft && draft.sourceKey === query.dataUpdatedAt) return draft;
-    const next = formFromQuery(query.data, query.dataUpdatedAt);
+    if (draft) return draft;
+    const next = formFromQuery(query.data);
     setDraft(next);
     return next;
   }
@@ -437,102 +437,105 @@ export function AiSettings() {
                       return (
                         <li
                           key={p.id ?? `new-${index}`}
-                          className="grid gap-2 rounded-xl border border-border/80 p-3 sm:grid-cols-[minmax(10rem,1fr)_1fr_1fr_auto]"
+                          className="relative space-y-3 rounded-xl border border-border/80 p-3 pe-12"
                         >
-                          <div className="space-y-1">
-                            <Label className="text-xs">Provider</Label>
-                            <Combobox
-                              value={p.kind || null}
-                              onValueChange={(val) => {
-                                if (!val) return;
-                                const kind = val as AiProviderKind;
-                                patch((current) => {
-                                  return {
-                                    ...current,
-                                    providers: current.providers.map((row, i) =>
-                                      i === index
-                                        ? { ...row, kind, label: aiProviderLabel(kind) }
-                                        : row
-                                    )
-                                  };
-                                });
-                              }}
-                              items={PROVIDER_OPTIONS}
-                            >
-                              <ComboboxInput placeholder="Search providers…" showClear={false} />
-                              <ComboboxContent>
-                                <ComboboxEmpty>No provider found.</ComboboxEmpty>
-                                <ComboboxList>
-                                  {(item: ProviderOption) => (
-                                    <ComboboxItem key={item.value} value={item.value}>
-                                      {item.label}
-                                    </ComboboxItem>
-                                  )}
-                                </ComboboxList>
-                              </ComboboxContent>
-                            </Combobox>
-                            {catalog ? (
-                              <p className="text-xs text-muted-foreground">
-                                {catalog.models.length} models in catalog
-                              </p>
-                            ) : null}
+                          <Button
+                            type="button"
+                            size="icon-sm"
+                            variant="ghost"
+                            className="absolute inset-e-2 top-2 text-muted-foreground hover:text-destructive"
+                            aria-label="Remove provider"
+                            onClick={() =>
+                              patch((current) => {
+                                return {
+                                  ...current,
+                                  providers: current.providers.filter((_, i) => i !== index)
+                                };
+                              })
+                            }
+                          >
+                            <Trash2Icon className="size-3.5" />
+                          </Button>
+
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Provider</Label>
+                              <Combobox
+                                value={p.kind || null}
+                                onValueChange={(val) => {
+                                  if (!val) return;
+                                  const kind = val as AiProviderKind;
+                                  patch((current) => {
+                                    return {
+                                      ...current,
+                                      providers: current.providers.map((row, i) =>
+                                        i === index
+                                          ? { ...row, kind, label: aiProviderLabel(kind) }
+                                          : row
+                                      )
+                                    };
+                                  });
+                                }}
+                                items={PROVIDER_OPTIONS}
+                              >
+                                <ComboboxInput placeholder="Search providers…" showClear={false} />
+                                <ComboboxContent>
+                                  <ComboboxEmpty>No provider found.</ComboboxEmpty>
+                                  <ComboboxList>
+                                    {(item: ProviderOption) => (
+                                      <ComboboxItem key={item.value} value={item.value}>
+                                        {item.label}
+                                      </ComboboxItem>
+                                    )}
+                                  </ComboboxList>
+                                </ComboboxContent>
+                              </Combobox>
+                              {catalog ? (
+                                <p className="text-xs text-muted-foreground">
+                                  {catalog.models.length} models in catalog
+                                </p>
+                              ) : null}
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Label</Label>
+                              <Input
+                                value={p.label}
+                                onChange={(e) =>
+                                  patch((current) => {
+                                    return {
+                                      ...current,
+                                      providers: current.providers.map((row, i) =>
+                                        i === index ? { ...row, label: e.target.value } : row
+                                      )
+                                    };
+                                  })
+                                }
+                                placeholder="Display name"
+                              />
+                            </div>
                           </div>
+
                           <div className="space-y-1">
-                            <Label className="text-xs">Label</Label>
-                            <Input
-                              value={p.label}
-                              onChange={(e) =>
-                                patch((current) => {
-                                  return {
-                                    ...current,
-                                    providers: current.providers.map((row, i) =>
-                                      i === index ? { ...row, label: e.target.value } : row
-                                    )
-                                  };
-                                })
-                              }
-                              placeholder="Display name"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs">
+                            <Label className="text-xs" htmlFor={`ai-provider-key-${p.id ?? index}`}>
                               API key
-                              {p.hasApiKey && p.apiKeyLast4 ? ` (saved ···${p.apiKeyLast4})` : ""}
                             </Label>
-                            <Input
-                              type="password"
-                              autoComplete="off"
+                            <SecretInput
+                              id={`ai-provider-key-${p.id ?? index}`}
                               value={p.apiKey}
-                              onChange={(e) =>
+                              hasSavedSecret={p.hasApiKey}
+                              savedLast4={p.apiKeyLast4}
+                              placeholder={p.hasApiKey ? "Leave blank to keep" : "API key"}
+                              onChange={(next) =>
                                 patch((current) => {
                                   return {
                                     ...current,
                                     providers: current.providers.map((row, i) =>
-                                      i === index ? { ...row, apiKey: e.target.value } : row
+                                      i === index ? { ...row, apiKey: next } : row
                                     )
                                   };
                                 })
                               }
-                              placeholder={p.hasApiKey ? "Leave blank to keep" : "API key"}
                             />
-                          </div>
-                          <div className="flex items-end">
-                            <Button
-                              type="button"
-                              size="icon-sm"
-                              variant="ghost"
-                              aria-label="Remove provider"
-                              onClick={() =>
-                                patch((current) => {
-                                  return {
-                                    ...current,
-                                    providers: current.providers.filter((_, i) => i !== index)
-                                  };
-                                })
-                              }
-                            >
-                              <Trash2Icon className="size-3.5" />
-                            </Button>
                           </div>
                         </li>
                       );

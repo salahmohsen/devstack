@@ -1,5 +1,5 @@
 import { useStore } from "@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   Calendar,
@@ -17,7 +17,6 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { contactTypeSchema, ProfileNameSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
@@ -53,7 +52,9 @@ import { IconPicker, PickerIconRenderer } from "@/shared/ui/icon-picker";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
+  getProfileQueryOptions,
   getUpdateProfileMutationOptions,
+  useGetProfileQuery,
   useRenameProfileMutation,
   type ProfileUpdateInput
 } from "@/features/profile";
@@ -120,7 +121,7 @@ function publicProfileUrl(profileName: string): string {
 export function ProfileSettings() {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
-  const profileQuery = useQuery(orpcQueryClient.profile.get.queryOptions());
+  const profileQuery = useGetProfileQuery();
   const [isEditing, setIsEditing] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const renameMutation = useRenameProfileMutation();
@@ -147,7 +148,7 @@ export function ProfileSettings() {
   const updateMutation = useMutation({
     ...getUpdateProfileMutationOptions(),
     onSuccess: (data) => {
-      queryClient.setQueryData(orpcQueryClient.profile.get.queryOptions().queryKey, data);
+      queryClient.setQueryData(getProfileQueryOptions().queryKey, data);
       void queryClient.invalidateQueries({
         queryKey: getPortfolioListQueryKey()
       });
@@ -202,6 +203,8 @@ export function ProfileSettings() {
   });
 
   useEffect(() => {
+    // Don't wipe an in-progress rename when profile query refetches.
+    if (renameForm.store.state.isDirty) return;
     if (currentProfileName) {
       renameForm.reset({ profileName: currentProfileName });
     }

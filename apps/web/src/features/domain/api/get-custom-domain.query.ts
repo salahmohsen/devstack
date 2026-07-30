@@ -32,6 +32,9 @@ export function getCustomDomainQueryOptions() {
   return orpcQueryClient.domain.get.queryOptions({
     staleTime: 30_000,
     refetchOnMount: "always",
+    // Settings forms keep local drafts; tab focus must not clobber hostname input.
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: (failureCount, error) => {
       if (isAbortError(error)) return false;
       // Brief session/cookie races after navigation — retry a couple times.

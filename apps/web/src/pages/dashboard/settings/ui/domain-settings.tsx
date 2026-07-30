@@ -209,6 +209,8 @@ function DomainHostnameForm({
   });
 
   useEffect(() => {
+    // Don't wipe in-progress edits when parent re-renders after a query refetch.
+    if (form.store.state.isDirty) return;
     form.reset({ hostname: initialHostname });
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- re-sync when server hostname changes
   }, [initialHostname]);

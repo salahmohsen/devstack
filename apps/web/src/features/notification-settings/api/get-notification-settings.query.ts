@@ -9,7 +9,12 @@ export const notificationSettingsQueryKeys = {
 };
 
 export function getNotificationSettingsQueryOptions() {
-  return orpcQueryClient.notificationSettings.get.queryOptions();
+  return orpcQueryClient.notificationSettings.get.queryOptions({
+    // Settings forms keep local drafts; refetch-on-focus was wiping unsaved fields.
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
+  });
 }
 
 export function useGetNotificationSettingsQuery() {

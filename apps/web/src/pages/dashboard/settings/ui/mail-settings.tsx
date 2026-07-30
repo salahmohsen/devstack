@@ -15,6 +15,7 @@ import {
 } from "@tsu-stack/ui/components/frame";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Label } from "@tsu-stack/ui/components/label";
+import { SecretInput } from "@tsu-stack/ui/components/secret-input";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
@@ -29,7 +30,6 @@ import { SettingsSaveBar } from "./settings-save-bar";
 import { SettingsSection } from "./settings-section";
 
 type FormState = {
-  sourceKey: number;
   inboundEnabled: boolean;
   inboundAddress: string;
   resendApiKey: string;
@@ -39,9 +39,8 @@ type FormState = {
   rotateWebhookToken: boolean;
 };
 
-function formFromQuery(data: MailSettingsQueryResult, sourceKey: number): FormState {
+function formFromQuery(data: MailSettingsQueryResult): FormState {
   return {
-    sourceKey,
     inboundEnabled: Boolean(data.inboundEnabled),
     inboundAddress: data.inboundAddress ?? "",
     // Secrets are write-only in the form; server returns last4 only.
@@ -64,8 +63,8 @@ export function MailSettings() {
   const form = useMemo(() => {
     if (!query.data) return null;
     if (draft) return draft;
-    return formFromQuery(query.data, query.dataUpdatedAt);
-  }, [query.data, query.dataUpdatedAt, draft]);
+    return formFromQuery(query.data);
+  }, [query.data, draft]);
 
   const dirty = useMemo(() => {
     if (!form || !query.data) return false;
@@ -80,7 +79,7 @@ export function MailSettings() {
   function ensureDraft(): FormState | null {
     if (!query.data) return null;
     if (draft) return draft;
-    const next = formFromQuery(query.data, query.dataUpdatedAt);
+    const next = formFromQuery(query.data);
     setDraft(next);
     return next;
   }
@@ -257,19 +256,15 @@ export function MailSettings() {
           >
             <div className="space-y-1.5">
               <Label htmlFor="mail-resend-key">API key</Label>
-              <Input
+              <SecretInput
                 id="mail-resend-key"
-                type="password"
                 autoComplete="new-password"
-                placeholder={
-                  data.hasResendApiKey
-                    ? `Saved ···${data.resendApiKeyLast4 ?? "****"} — paste to replace`
-                    : "re_…"
-                }
                 value={currentForm.resendApiKey}
+                hasSavedSecret={data.hasResendApiKey}
+                savedLast4={data.resendApiKeyLast4}
                 disabled={currentForm.clearResendApiKey}
-                onChange={(e) => {
-                  const value = e.target.value;
+                placeholder={data.hasResendApiKey ? "Leave blank to keep" : "re_…"}
+                onChange={(value) => {
                   patch((c) => {
                     return { ...c, resendApiKey: value, clearResendApiKey: false };
                   });
@@ -277,10 +272,9 @@ export function MailSettings() {
               />
               {data.hasResendApiKey ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <p className="text-xs text-muted-foreground">
-                    Key on file ends with ···{data.resendApiKeyLast4}
-                    {currentForm.clearResendApiKey ? " (will remove on save)" : ""}
-                  </p>
+                  {currentForm.clearResendApiKey ? (
+                    <p className="text-xs text-muted-foreground">Will remove on save</p>
+                  ) : null}
                   <Button
                     type="button"
                     size="sm"
@@ -299,9 +293,7 @@ export function MailSettings() {
                     {currentForm.clearResendApiKey ? "Keep existing key" : "Remove key"}
                   </Button>
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">No API key saved yet.</p>
-              )}
+              ) : null}
             </div>
           </SettingsSection>
 
@@ -311,19 +303,15 @@ export function MailSettings() {
           >
             <div className="space-y-1.5">
               <Label htmlFor="mail-webhook-secret">Signing secret</Label>
-              <Input
+              <SecretInput
                 id="mail-webhook-secret"
-                type="password"
                 autoComplete="new-password"
-                placeholder={
-                  data.hasWebhookSecret
-                    ? `Saved ···${data.webhookSecretLast4 ?? "****"} — paste to replace`
-                    : "whsec_…"
-                }
                 value={currentForm.webhookSecret}
+                hasSavedSecret={data.hasWebhookSecret}
+                savedLast4={data.webhookSecretLast4}
                 disabled={currentForm.clearWebhookSecret}
-                onChange={(e) => {
-                  const value = e.target.value;
+                placeholder={data.hasWebhookSecret ? "Leave blank to keep" : "whsec_…"}
+                onChange={(value) => {
                   patch((c) => {
                     return { ...c, webhookSecret: value, clearWebhookSecret: false };
                   });
@@ -331,10 +319,9 @@ export function MailSettings() {
               />
               {data.hasWebhookSecret ? (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <p className="text-xs text-muted-foreground">
-                    Secret on file ends with ···{data.webhookSecretLast4}
-                    {currentForm.clearWebhookSecret ? " (will remove on save)" : ""}
-                  </p>
+                  {currentForm.clearWebhookSecret ? (
+                    <p className="text-xs text-muted-foreground">Will remove on save</p>
+                  ) : null}
                   <Button
                     type="button"
                     size="sm"
@@ -353,9 +340,7 @@ export function MailSettings() {
                     {currentForm.clearWebhookSecret ? "Keep existing secret" : "Remove secret"}
                   </Button>
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">No webhook secret saved yet.</p>
-              )}
+              ) : null}
             </div>
           </SettingsSection>
 
