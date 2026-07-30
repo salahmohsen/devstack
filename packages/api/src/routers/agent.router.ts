@@ -287,14 +287,22 @@ export const agentRouter = {
         });
       }
 
+      const userId = context.session.user.id;
+      const threadId = `dashboard-home:${userId}`;
+      // Memory requires top-level threadId/resourceId (not only requestContext).
+      // Per-call `model` survives auth middleware requestContext priority.
       const response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: input.messages,
+          threadId,
+          resourceId: userId,
+          model: { id: llm.modelId, apiKey: llm.apiKey },
           requestContext: {
-            resourceId: context.session.user.id,
-            threadId: `dashboard-home:${context.session.user.id}`,
+            userId,
+            resourceId: userId,
+            threadId,
             ...llmRequestContextFields(llm)
           }
         })
@@ -358,26 +366,41 @@ export const agentRouter = {
         });
       }
 
+      const userId = context.session.user.id;
+      const threadId = `dashboard-home:${userId}`;
+      // chatRoute params = AgentExecutionOptions + messages.
+      // Memory needs top-level threadId/resourceId; auth middleware may override
+      // body requestContext, so also pass model as a top-level execution option.
       const upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-User-Id": context.session.user.id,
-          "X-Thread-Id": `dashboard-home:${context.session.user.id}`
+          "X-User-Id": userId,
+          "X-Thread-Id": threadId
         },
         body: JSON.stringify({
           messages: input.messages,
+          threadId,
+          resourceId: userId,
+          model: { id: llm.modelId, apiKey: llm.apiKey },
           requestContext: {
-            resourceId: context.session.user.id,
-            ...llmRequestContextFields(llm),
-            threadId: `dashboard-home:${context.session.user.id}`
+            userId,
+            resourceId: userId,
+            threadId,
+            ...llmRequestContextFields(llm)
           }
         })
       });
 
       if (!upstream.ok || !upstream.body) {
         const body = await upstream.text();
-        throw new Error(`Agent stream returned ${upstream.status}: ${body}`);
+        // Surface agent body (Memory / BYO / provider errors) instead of opaque 500.
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message:
+            body.trim().length > 0
+              ? `Hub agent error (${upstream.status}): ${body.slice(0, 400)}`
+              : `Hub agent returned ${upstream.status} with an empty body`
+        });
       }
 
       // Parse Mastra SSE → UIMessageChunk objects, then hand oRPC an
