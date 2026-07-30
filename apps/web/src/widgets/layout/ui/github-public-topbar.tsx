@@ -396,10 +396,17 @@ export function Topbar() {
                 <Bug size={16} strokeWidth={2} />
                 Report an issue
               </MenuLinkItem>
-              <MenuLinkItem render={<Link to="/sign-in" />}>
-                <ExternalLink size={16} strokeWidth={2} />
-                login
-              </MenuLinkItem>
+              {admin ? (
+                <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
+                  <LayoutDashboard size={16} strokeWidth={2} />
+                  Dashboard
+                </MenuLinkItem>
+              ) : (
+                <MenuLinkItem render={<Link to="/sign-in" />}>
+                  <UserCircle size={16} strokeWidth={2} />
+                  Sign in
+                </MenuLinkItem>
+              )}
             </MenuPopup>
           </Menu>
         </div>
