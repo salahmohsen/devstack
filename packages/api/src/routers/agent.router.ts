@@ -297,8 +297,9 @@ export const agentRouter = {
 
       const userId = context.session.user.id;
       const threadId = `dashboard-home:${userId}`;
-      // Memory requires top-level threadId/resourceId (not only requestContext).
-      // Per-call `model` survives auth middleware requestContext priority.
+      // Mastra Agent.stream/generate resolve Memory from `memory.thread` /
+      // `memory.resource` (not top-level threadId). Auth middleware requestContext
+      // wins over body requestContext, so memory must be top-level.
       let response: Response;
       try {
         response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
@@ -306,13 +307,13 @@ export const agentRouter = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: input.messages,
-            threadId,
-            resourceId: userId,
+            memory: {
+              thread: threadId,
+              resource: userId
+            },
             model: { id: llm.modelId, apiKey: llm.apiKey },
             requestContext: {
               userId,
-              resourceId: userId,
-              threadId,
               ...llmRequestContextFields(llm)
             }
           })
@@ -414,9 +415,9 @@ export const agentRouter = {
 
       const userId = context.session.user.id;
       const threadId = `dashboard-home:${userId}`;
-      // chatRoute params = AgentExecutionOptions + messages.
-      // Memory needs top-level threadId/resourceId; auth middleware may override
-      // body requestContext, so also pass model as a top-level execution option.
+      // chatRoute → agent.stream resolves Memory via `memory.thread` / `memory.resource`
+      // (Mastra docs). Top-level threadId is ignored on the prepare-stream path.
+      // Auth middleware owns requestContext (resourceId via mapUserToResourceId).
       let upstream: Response;
       try {
         upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
@@ -428,13 +429,13 @@ export const agentRouter = {
           },
           body: JSON.stringify({
             messages: input.messages,
-            threadId,
-            resourceId: userId,
+            memory: {
+              thread: threadId,
+              resource: userId
+            },
             model: { id: llm.modelId, apiKey: llm.apiKey },
             requestContext: {
               userId,
-              resourceId: userId,
-              threadId,
               ...llmRequestContextFields(llm)
             }
           })
