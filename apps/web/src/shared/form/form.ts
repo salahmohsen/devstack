@@ -19,6 +19,7 @@ import { MarkdownField } from "./markdown-field";
 import { NumberFieldForm } from "./number-field";
 import { PasswordInputField } from "./password-input-field";
 import { RichTextField } from "./rich-text-field";
+import { SecretInputField } from "./secret-input-field";
 import { SubmitButton } from "./submit-button";
 import { YearField } from "./year-field";
 
@@ -35,6 +36,7 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       NpmPackageField,
       NumberFieldForm,
       PasswordInputField,
+      SecretInputField,
       RichTextField,
       YearField,
       InputGroupField,

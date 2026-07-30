@@ -11,6 +11,7 @@ export { NpmPackageField } from "./npm-package-field";
 export type { NpmPackage } from "./npm-package-field";
 export { NumberFieldForm } from "./number-field";
 export { PasswordInputField } from "./password-input-field";
+export { SecretInputField } from "./secret-input-field";
 export { RichTextField } from "./rich-text-field";
 export { StackSelector } from "./stack-selector";
 export { SubmitButton } from "./submit-button";

@@ -18,10 +18,14 @@ function PasswordInput({
 
   return (
     <div className="relative">
-      <Input className="pr-9" type={visible ? "text" : "password"} {...props} />
-      {showToggle && (
+      <Input
+        className={cn(showToggle && "pr-9", className)}
+        type={visible ? "text" : "password"}
+        {...props}
+      />
+      {showToggle ? (
         <Button
-          className={cn("absolute top-0 right-0 h-full px-2.5 hover:bg-transparent", className)}
+          className="absolute top-0 right-0 h-full px-2.5 hover:bg-transparent"
           onClick={() => setVisible(!visible)}
           size="icon"
           tabIndex={-1}
@@ -36,7 +40,7 @@ function PasswordInput({
           />
           <span className="sr-only">{visible ? "Hide" : "Show"} password</span>
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }
