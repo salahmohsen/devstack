@@ -2,10 +2,13 @@ import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-no
 import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
 import {
+  AI_CORRECTION_CANDIDATE_POOL,
   AI_CORRECTION_FEW_SHOT_K,
   applySmartRulesToClassifyResult,
   heuristicClassifyMail,
   MailSystemLabelSchema,
+  selectCorrectionsForFewShot,
+  type AiCorrectionFewShotExample,
   type MailClassifyOutput,
   type MailSystemLabel
 } from "@tsu-stack/core";
@@ -81,14 +84,14 @@ export async function runMailClassify(input: {
   });
   const recentCorrections = await aiCorrectionRepository.findRecentByUserId(
     row.userId,
-    AI_CORRECTION_FEW_SHOT_K
+    AI_CORRECTION_CANDIDATE_POOL
   );
-  const fewShotCorrections = recentCorrections.map((c) => {
-    const parseLabels = (raw: string[]): MailSystemLabel[] =>
-      raw
-        .map((l) => MailSystemLabelSchema.safeParse(l))
-        .filter((r): r is { success: true; data: MailSystemLabel } => r.success)
-        .map((r) => r.data);
+  const parseLabels = (raw: string[]): MailSystemLabel[] =>
+    raw
+      .map((l) => MailSystemLabelSchema.safeParse(l))
+      .filter((r): r is { success: true; data: MailSystemLabel } => r.success)
+      .map((r) => r.data);
+  const candidates: AiCorrectionFewShotExample[] = recentCorrections.map((c) => {
     return {
       fromName: c.fromName,
       fromEmail: c.fromEmail,
@@ -98,6 +101,17 @@ export async function runMailClassify(input: {
       correctedSystemLabels: parseLabels(c.correctedSystemLabels ?? [])
     };
   });
+  const fewShotCorrections = selectCorrectionsForFewShot(
+    {
+      fromName: row.fromName,
+      fromEmail: row.fromEmail,
+      subject: row.subject,
+      preview: row.preview,
+      bodyText: row.bodyText
+    },
+    candidates,
+    { max: AI_CORRECTION_FEW_SHOT_K }
+  );
   const classifyInput = {
     messageId: row.id,
     userId: row.userId,

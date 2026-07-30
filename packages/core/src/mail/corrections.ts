@@ -5,8 +5,10 @@ import { ApplicationStageSchema } from "#@/application/types";
 import { MAIL_SYSTEM_LABELS } from "./constants";
 import { MailSystemLabelSchema, type MailSystemLabel } from "./types";
 
-/** How many recent corrections to inject as few-shot demos (per tenant). */
+/** How many demos to inject as few-shot (per tenant). */
 export const AI_CORRECTION_FEW_SHOT_K = 5;
+/** Candidate pool size before similarity rank (newest first from DB). */
+export const AI_CORRECTION_CANDIDATE_POOL = 40;
 
 export const AiCorrectionSchema = z.object({
   id: z.string().min(1),
@@ -76,9 +78,152 @@ export function extractSystemLabels(labels: readonly string[]): MailSystemLabel[
   );
 }
 
+export type CorrectionSimilarityQuery = {
+  fromName?: string;
+  fromEmail?: string;
+  subject?: string;
+  preview?: string;
+  bodyText?: string;
+};
+
+const STOP = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "or",
+  "to",
+  "for",
+  "of",
+  "in",
+  "on",
+  "at",
+  "is",
+  "are",
+  "was",
+  "be",
+  "as",
+  "by",
+  "with",
+  "from",
+  "your",
+  "you",
+  "we",
+  "our",
+  "this",
+  "that",
+  "re",
+  "fw",
+  "hi",
+  "hello",
+  "thanks",
+  "thank"
+]);
+
+function emailDomain(email: string): string {
+  const at = email.lastIndexOf("@");
+  if (at < 0) return "";
+  return email
+    .slice(at + 1)
+    .toLowerCase()
+    .trim();
+}
+
+/** Tokenize mail-ish text for overlap scoring. */
+export function tokenizeMailText(text: string): Set<string> {
+  const out = new Set<string>();
+  const raw = text.toLowerCase().match(/[a-z0-9][a-z0-9._+-]{1,}/g) ?? [];
+  for (const t of raw) {
+    if (t.length < 2) continue;
+    if (STOP.has(t)) continue;
+    out.add(t);
+    // Domain-ish splits
+    if (t.includes(".")) {
+      for (const part of t.split(".")) {
+        if (part.length >= 2 && !STOP.has(part)) out.add(part);
+      }
+    }
+  }
+  return out;
+}
+
+function jaccard(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let inter = 0;
+  for (const t of a) {
+    if (b.has(t)) inter += 1;
+  }
+  const union = a.size + b.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
+/**
+ * Lexical similarity between a live mail and a stored correction.
+ * Heavier weight on from-domain / subject; no embeddings required.
+ */
+export function scoreCorrectionSimilarity(
+  query: CorrectionSimilarityQuery,
+  example: Pick<AiCorrectionFewShotExample, "fromName" | "fromEmail" | "subject" | "preview">
+): number {
+  const qDomain = emailDomain(query.fromEmail ?? "");
+  const eDomain = emailDomain(example.fromEmail);
+  let score = 0;
+
+  if (qDomain && eDomain && qDomain === eDomain) score += 0.45;
+  else if (qDomain && eDomain && (qDomain.endsWith(eDomain) || eDomain.endsWith(qDomain))) {
+    score += 0.25;
+  }
+
+  const qEmail = (query.fromEmail ?? "").toLowerCase().trim();
+  const eEmail = example.fromEmail.toLowerCase().trim();
+  if (qEmail && eEmail && qEmail === eEmail) score += 0.2;
+
+  const qSubject = tokenizeMailText(query.subject ?? "");
+  const eSubject = tokenizeMailText(example.subject);
+  score += 0.25 * jaccard(qSubject, eSubject);
+
+  const qBody = tokenizeMailText(
+    [query.fromName, query.preview, (query.bodyText ?? "").slice(0, 1500)].join("\n")
+  );
+  const eBody = tokenizeMailText([example.fromName, example.preview].join("\n"));
+  score += 0.2 * jaccard(qBody, eBody);
+
+  return score;
+}
+
+/**
+ * Rank a candidate pool of corrections for the current mail and take top-K.
+ * Tie-break: keep input order (newest-first from DB).
+ */
+export function selectCorrectionsForFewShot(
+  query: CorrectionSimilarityQuery,
+  candidates: readonly AiCorrectionFewShotExample[],
+  opts?: { max?: number; minScore?: number }
+): AiCorrectionFewShotExample[] {
+  const max = opts?.max ?? AI_CORRECTION_FEW_SHOT_K;
+  const minScore = opts?.minScore ?? 0.05;
+  if (candidates.length === 0) return [];
+  if (candidates.length <= max) return [...candidates];
+
+  const ranked = candidates
+    .map((ex, index) => {
+      return { ex, index, score: scoreCorrectionSimilarity(query, ex) };
+    })
+    .toSorted((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.index - b.index; // prefer newer when scores tie
+    });
+
+  const strong = ranked.filter((r) => r.score >= minScore).slice(0, max);
+  if (strong.length > 0) return strong.map((r) => r.ex);
+
+  // All weak — fall back to newest max (original last-K behavior).
+  return candidates.slice(0, max);
+}
+
 /**
  * Format tenant corrections as few-shot blocks for the classifier prompt.
- * Newest-first input; rendered oldest→newest so latest is recency-biased at the end.
+ * Input is already selected (retrieval or last-K); rendered oldest→newest for recency bias.
  */
 export function formatCorrectionsFewShot(
   examples: readonly AiCorrectionFewShotExample[],
@@ -100,7 +245,7 @@ User corrected to: ${corrected}`;
   });
 
   return [
-    "Past corrections from this user (follow their labeling preferences):",
+    "Similar past corrections from this user (follow their labeling preferences):",
     ...blocks,
     "Use these only as preference signals; still prefer no label when unsure."
   ].join("\n\n");

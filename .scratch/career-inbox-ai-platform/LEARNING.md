@@ -1,17 +1,17 @@
-# Learning / corrections — Phase A guide
+# Learning / corrections — guide
 
-**Tickets:** `61`–`64`  
+**Tickets:** `61`–`64` (Phase A), `65`–`66` (feedback), `71` (retrieval few-shot)  
 **Route UX:** Mail reader → **Correct** (after classify)  
 **Migration:** `packages/db/migrations/20260729235117_perpetual_overlord/`
 
 ## Ownership (locked)
 
-| Layer                                    | Role                                                                     |
-| ---------------------------------------- | ------------------------------------------------------------------------ |
-| **`ai_correction` (app Postgres)**       | Source of truth for multi-tenant learning + audit                        |
-| **Few-shot inject**                      | Last **K=5** corrections into classify LLM prompt                        |
-| **Smart rules**                          | Prefer for sticky keyword patterns (not infinite corrections)            |
-| **Mastra feedback / datasets / scorers** | Later dual-write (observability + offline eval) — **not** runtime memory |
+| Layer                                    | Role                                                                         |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| **`ai_correction` (app Postgres)**       | Source of truth for multi-tenant learning + audit                            |
+| **Few-shot inject**                      | Top-**K=5** similar corrections into classify LLM prompt (lexical retrieval) |
+| **Smart rules**                          | Prefer for sticky keyword patterns (not infinite corrections)                |
+| **Mastra feedback / datasets / scorers** | Dual-write observability + offline eval — **not** runtime memory             |
 
 ## Flow
 
@@ -20,7 +20,10 @@ User opens classified mail → Correct → pick label or None
   → update message system labels
   → undo active CRM apply (default)
   → insert ai_correction (predicted vs corrected + mail snapshot)
-  → next classify: load last K → formatCorrectionsFewShot → LLM prompt
+  → next classify:
+       load last 40 candidates
+       → selectCorrectionsForFewShot (similarity)
+       → formatCorrectionsFewShot → LLM prompt
 ```
 
 Does **not** re-apply CRM after correction (no surprise stage moves).
@@ -32,7 +35,8 @@ Does **not** re-apply CRM after correction (no surprise stage moves).
 ## Core helpers
 
 - `applyCorrectedSystemLabels` / `extractSystemLabels`
-- `formatCorrectionsFewShot` / `AI_CORRECTION_FEW_SHOT_K`
+- `scoreCorrectionSimilarity` / `selectCorrectionsForFewShot`
+- `formatCorrectionsFewShot` / `AI_CORRECTION_FEW_SHOT_K` / `AI_CORRECTION_CANDIDATE_POOL`
 
 ## Phase B — Mastra feedback dual-write
 
@@ -46,8 +50,18 @@ On correction (after `ai_correction` insert):
 
 Classify agent path stores `mastra_classify_run_id` (+ `trace_id` when the workflow returns it) on the message.
 
+## Phase C — Retrieval-ranked few-shot (lexical)
+
+At classify time:
+
+1. Load last **40** corrections for the user (`AI_CORRECTION_CANDIDATE_POOL`)
+2. Score each vs live mail: from-domain, exact from-email, subject Jaccard, body/preview Jaccard
+3. Inject top **K=5**; if all scores weak (`minScore` 0.05), fall back to newest K
+
+No embeddings / pgvector — pure lexical. Upgrade path: embed correction snapshots later.
+
 ## Still out of scope
 
-- Retrieval-ranked few-shot
+- Vector / embedding retrieval
 - Dataset export / live scorers
 - Fine-tuning

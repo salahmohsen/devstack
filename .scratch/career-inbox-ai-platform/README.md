@@ -176,6 +176,14 @@ See [REVIEW.md](./REVIEW.md).
 | `69`   | mail-reply agent + workflow + core contracts | **Done** |
 | `70`   | Wire createReplyDraftFromMail + job context  | **Done** |
 
+## Retrieval few-shot (wave 19)
+
+See [LEARNING.md](./LEARNING.md).
+
+| Ticket | Title                                       | Status   |
+| ------ | ------------------------------------------- | -------- |
+| `71`   | Lexical rank top-K corrections for classify | **Done** |
+
 ## Next frontier
 
-**Retrieval few-shot** · digest batching · Gmail Pub/Sub · reply tools
+**Digest batching** · Gmail Pub/Sub · reply tools · embedding retrieval
