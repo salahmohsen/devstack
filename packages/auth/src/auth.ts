@@ -221,7 +221,8 @@ export const auth = betterAuth({
 
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      void sendEmail({
+      // Await so Resend failures surface instead of fire-and-forget.
+      await sendEmail({
         to: user.email,
         subject: "Verify your email address",
         template: VerifyEmail({ username: user.name, url: url })
@@ -277,7 +278,11 @@ export const auth = betterAuth({
       trustedProviders: ["github", "google"],
       // Portfolio admin may have been seeded / signed up before verifying
       // email; still allow GitHub/Google to attach when emails match.
-      requireLocalEmailVerified: false
+      requireLocalEmailVerified: false,
+      // Hub identity email (e.g. contact@…) may differ from Gmail/GitHub
+      // mailbox used for Connections. linkSocial still requires a session;
+      // this only allows the linked provider email to differ from user.email.
+      allowDifferentEmails: true
     }
   },
 

@@ -21,7 +21,7 @@ export async function sendEmail({
   const from = ENV_SERVER.EMAIL_FROM ?? DEFAULT_FROM;
 
   if (!ENV_SERVER.RESEND_API_KEY) {
-    console.debug("RESEND_API_KEY is not configured; skipping email delivery", {
+    console.error("[email] RESEND_API_KEY is not configured; skipping email delivery", {
       subject,
       to
     });
@@ -40,9 +40,16 @@ export async function sendEmail({
   });
 
   if (error) {
-    console.debug("Failed to send email", { subject, to, error });
+    console.error("[email] Failed to send email", { subject, to, error });
     throw error;
   }
+
+  console.info("[email] sent", {
+    subject,
+    to,
+    from,
+    id: data?.id ?? null
+  });
 
   return data;
 }
