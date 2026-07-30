@@ -218,7 +218,8 @@ function ActivityCard<T>({
 }) {
   return (
     <Card className="rounded-xl border bg-card">
-      <CardHeader className="flex items-center gap-2 px-4 py-3">
+      {/* p-0 kills CardHeader/CardPanel defaults so rows can span full width */}
+      <CardHeader className="flex items-center gap-2 p-0 px-4 py-3">
         <Icon className="text-muted-foreground" size={14} strokeWidth={2} />
         <CardTitle className="flex-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
           {title}
@@ -235,7 +236,8 @@ function ActivityCard<T>({
           </Link>
         )}
       </CardHeader>
-      <CardContent className="flex flex-col">
+      {/* Shared by PRs / Issues / Actions / Discussions — row hover fills the card */}
+      <CardContent className="flex flex-col gap-0 p-0">
         {!items ? (
           <ActivityCardSkeleton />
         ) : (
@@ -245,10 +247,10 @@ function ActivityCard<T>({
                 No open {title.toLowerCase()}
               </p>
             ) : (
-              items.map(renderItem)
+              <div className="flex flex-col">{items.map(renderItem)}</div>
             )}
             <Link
-              className="border-t px-4 py-2.5 text-center text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="border-t px-4 py-2.5 text-center text-xs font-medium text-muted-foreground transition-colors hover:bg-surface-1 hover:text-foreground"
               to={viewAllHref}
             >
               View all
@@ -260,15 +262,20 @@ function ActivityCard<T>({
   );
 }
 
+/**
+ * Shared list row for Pulls, Issues, Actions, Discussions.
+ * - `w-full` + no parent pad → hover fills the card edge-to-edge
+ * - `px-4` → text/icon stay padded inside that fill
+ */
+const activityRowClassName =
+  "flex w-full min-w-0 items-start gap-2.5 px-4 py-2 transition-colors hover:bg-surface-1";
+
 function PullItem({ pr }: { pr: PullSummary }) {
   const { icon: StateIcon, color } = getPrStateConfig(pr);
   const href = `/${pr.repository.owner}/${pr.repository.name}/pull/${pr.number}`;
 
   return (
-    <Link
-      className="flex items-start gap-2.5 px-4 py-2 transition-colors hover:bg-surface-1"
-      to={href}
-    >
+    <Link className={activityRowClassName} to={href}>
       <div className={cn("mt-0.5 shrink-0", color)}>
         <StateIcon size={14} strokeWidth={2} />
       </div>
@@ -292,10 +299,7 @@ function IssueItem({ issue }: { issue: IssueSummary }) {
   const href = `/${issue.repository.owner}/${issue.repository.name}/issues/${issue.number}`;
 
   return (
-    <Link
-      className="flex items-start gap-2.5 px-4 py-2 transition-colors hover:bg-surface-1"
-      to={href}
-    >
+    <Link className={activityRowClassName} to={href}>
       <div className={cn("mt-0.5 shrink-0", color)}>
         <AlertCircle size={14} strokeWidth={2} />
       </div>
@@ -313,7 +317,7 @@ function RunItem({ run, owner, repo }: { run: WorkflowRun; owner: string; repo: 
   const state = getCheckState(run);
   const href = `/${owner}/${repo}/actions/runs/${run.id}`;
   return (
-    <Link className="flex items-start gap-2.5 py-2 transition-colors hover:bg-surface-1" to={href}>
+    <Link className={activityRowClassName} to={href}>
       <div className="mt-0.5 shrink-0">
         <CheckStateIcon state={state} />
       </div>
@@ -330,7 +334,7 @@ function RunItem({ run, owner, repo }: { run: WorkflowRun; owner: string; repo: 
 function DiscussionItem({ discussion }: { discussion: DiscussionSummary }) {
   return (
     <a
-      className="flex items-start gap-2.5 px-4 py-2 transition-colors hover:bg-surface-1"
+      className={activityRowClassName}
       href={discussion.url}
       rel="noopener noreferrer"
       target="_blank"
@@ -362,11 +366,11 @@ function DiscussionItem({ discussion }: { discussion: DiscussionSummary }) {
 
 function ActivityCardSkeleton() {
   return (
-    <div className="flex flex-col gap-1 pb-3">
+    <div className="flex flex-col pb-3">
       {[0, 1, 2].map((i) => (
-        <div className="flex items-start gap-2.5 py-2" key={i}>
+        <div className="flex items-start gap-2.5 px-4 py-2" key={i}>
           <Skeleton className="mt-0.5 size-3.5 shrink-0 rounded-full" />
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <Skeleton className="h-4 w-full rounded" />
             <Skeleton className="mt-1.5 h-3 w-20 rounded" />
           </div>

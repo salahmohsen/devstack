@@ -149,6 +149,28 @@ const TreeNode = memo(function TreeNode({
   );
 });
 
+/** Tree depth indent (px) past the base row padding. */
+const TREE_INDENT = 12;
+/** Space for the chevron column so files align with folder names. */
+const CHEVRON_COL = 16;
+/** Horizontal inset from the sidebar edge — hover fills this padded box. */
+const ROW_INSET = 4;
+
+function treeRowClassName(isActive: boolean) {
+  return cn(
+    // Full-width fill of the inset box (not content-sized)
+    "flex w-full min-w-0 items-center gap-1.5 rounded-md py-1.5 text-[13px] transition-colors",
+    "hover:bg-surface-1",
+    isActive && "bg-surface-1"
+  );
+}
+
+function treeRowPaddingLeft(depth: number, includeChevronGutter: boolean) {
+  const base = 8; // inner pad inside the inset box
+  const indent = depth * TREE_INDENT;
+  return base + indent + (includeChevronGutter ? CHEVRON_COL : 0);
+}
+
 const DirectoryNode = memo(function DirectoryNode({
   currentRef,
   depth,
@@ -188,52 +210,57 @@ const DirectoryNode = memo(function DirectoryNode({
 
   return (
     <div>
-      <div
-        className={cn(
-          "flex w-full items-center text-[13px] transition-colors hover:bg-surface-1",
-          isActive && "bg-surface-1"
-        )}
-      >
-        <button
-          type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="shrink-0 py-1.5 pl-3 text-muted-foreground"
-          style={{ paddingLeft: `${depth * 12 + 12}px` }}
+      {/* Outer inset so hover/active bg has padding from the sidebar edges */}
+      <div style={{ paddingInline: ROW_INSET }}>
+        <div
+          className={treeRowClassName(isActive)}
+          style={{ paddingLeft: treeRowPaddingLeft(depth, false), paddingRight: 8 }}
         >
-          <ChevronRight
-            size={12}
-            className={cn("shrink-0 transition-transform", isOpen && "rotate-90")}
-          />
-        </button>
-        <Link
-          to={links.treeTo}
-          params={links.treeParams(repoName, `${currentRef}/${entryPath}`)}
-          onClick={(e) => {
-            if (isActive) {
-              e.preventDefault();
-              setIsOpen((prev) => !prev);
-              return;
-            }
-            if (!isOpen) setIsOpen(true);
-          }}
-          className="flex min-w-0 flex-1 items-center gap-1.5 py-1.5 pr-3 pl-1.5"
-        >
-          <Folder size={15} strokeWidth={1.8} className="shrink-0 text-accent-foreground" />
-          <span className="truncate text-foreground">{entry.name}</span>
-        </Link>
+          <button
+            type="button"
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="flex size-4 shrink-0 items-center justify-center text-muted-foreground"
+            aria-label={isOpen ? `Collapse ${entry.name}` : `Expand ${entry.name}`}
+          >
+            <ChevronRight
+              size={12}
+              className={cn("shrink-0 transition-transform", isOpen && "rotate-90")}
+            />
+          </button>
+          <Link
+            to={links.treeTo}
+            params={links.treeParams(repoName, `${currentRef}/${entryPath}`)}
+            activeOptions={{ exact: true }}
+            onClick={(e) => {
+              if (isActive) {
+                e.preventDefault();
+                setIsOpen((prev) => !prev);
+                return;
+              }
+              if (!isOpen) setIsOpen(true);
+            }}
+            className="flex min-w-0 flex-1 items-center gap-1.5"
+          >
+            <Folder size={15} strokeWidth={1.8} className="shrink-0 text-accent-foreground" />
+            <span className="truncate text-foreground">{entry.name}</span>
+          </Link>
+        </div>
       </div>
 
-      {isOpen && (
+      {isOpen ? (
         <div>
-          {treeQuery.isLoading && (
+          {treeQuery.isLoading ? (
             <div
-              className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground"
-              style={{ paddingLeft: `${(depth + 1) * 12 + 12}px` }}
+              className="flex items-center gap-2 py-1.5 text-xs text-muted-foreground"
+              style={{
+                paddingLeft: ROW_INSET + treeRowPaddingLeft(depth + 1, true),
+                paddingRight: ROW_INSET + 8
+              }}
             >
               <Spinner className="size-3" />
               <span>Loading...</span>
             </div>
-          )}
+          ) : null}
           {treeQuery.data?.map((child) => (
             <TreeNode
               key={child.name}
@@ -245,7 +272,7 @@ const DirectoryNode = memo(function DirectoryNode({
             />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 });
@@ -267,22 +294,26 @@ const FileNode = memo(function FileNode({
   const links = useRepoRouteLinks();
 
   return (
-    <Link
-      to={links.blobTo}
-      params={links.blobParams(repoName, `${currentRef}/${entryPath}`)}
-      onClick={(e) => {
-        if (isActive) e.preventDefault();
-      }}
-      className={cn(
-        "flex w-full items-center gap-1.5 px-3 py-1.5 text-[13px] transition-colors hover:bg-surface-1",
-        isActive && "bg-surface-1"
-      )}
-      style={{ paddingLeft: `${depth * 12 + 26}px` }}
-    >
-      <File size={15} strokeWidth={1.8} className="shrink-0 text-muted-foreground" />
-      <span className={cn("truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
-        {entry.name}
-      </span>
-    </Link>
+    // Outer inset: hover fill is the rounded box, not edge-to-edge flush
+    <div style={{ paddingInline: ROW_INSET }}>
+      <Link
+        to={links.blobTo}
+        params={links.blobParams(repoName, `${currentRef}/${entryPath}`)}
+        activeOptions={{ exact: true }}
+        onClick={(e) => {
+          if (isActive) e.preventDefault();
+        }}
+        className={treeRowClassName(isActive)}
+        style={{
+          paddingLeft: treeRowPaddingLeft(depth, true),
+          paddingRight: 8
+        }}
+      >
+        <File size={15} strokeWidth={1.8} className="shrink-0 text-muted-foreground" />
+        <span className={cn("truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
+          {entry.name}
+        </span>
+      </Link>
+    </div>
   );
 });
