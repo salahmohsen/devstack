@@ -1,5 +1,7 @@
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
+import { agentFetch } from "#@/lib/agent/agent-fetch";
+
 export type MastraCorrectionFeedbackInput = {
   correctionId: string;
   userId: string;
@@ -21,8 +23,9 @@ export type MastraCorrectionFeedbackInput = {
 export async function postMastraCorrectionFeedback(
   input: MastraCorrectionFeedbackInput
 ): Promise<{ ok: boolean; skipped?: string }> {
-  const baseUrl = ENV_SERVER.AGENT_WORKER_URL?.trim();
-  if (!baseUrl) return { ok: false, skipped: "AGENT_WORKER_URL_unset" };
+  if (!ENV_SERVER.AGENT_WORKER_URL?.trim()) {
+    return { ok: false, skipped: "AGENT_WORKER_URL_unset" };
+  }
 
   const predicted = input.predictedSystemLabels[0] ?? "(none)";
   const corrected = input.correctedSystemLabels[0] ?? "(none)";
@@ -51,22 +54,16 @@ export async function postMastraCorrectionFeedback(
   }
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8_000);
-    try {
-      const res = await fetch(new URL("/api/observability/feedback", baseUrl), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback }),
-        signal: controller.signal
-      });
-      if (!res.ok) {
-        return { ok: false, skipped: `http_${res.status}` };
-      }
-      return { ok: true };
-    } finally {
-      clearTimeout(timer);
+    const res = await agentFetch("/api/observability/feedback", {
+      method: "POST",
+      body: JSON.stringify({ feedback }),
+      timeoutMs: 8_000
+    });
+    if (!res) return { ok: false, skipped: "AGENT_WORKER_URL_unset" };
+    if (!res.ok) {
+      return { ok: false, skipped: `http_${res.status}` };
     }
+    return { ok: true };
   } catch {
     return { ok: false, skipped: "network_or_timeout" };
   }

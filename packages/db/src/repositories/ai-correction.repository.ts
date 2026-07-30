@@ -94,7 +94,10 @@ export const aiCorrectionRepository = {
         .orderBy(sql`${aiCorrection.embeddingVec} <=> ${sql.raw(`'${literal}'::vector`)}`)
         .limit(limit);
       return rows;
-    } catch {
+    } catch (error) {
+      console.debug("[ai_correction] findSimilarByEmbedding failed; using lexical fallback", {
+        message: error instanceof Error ? error.message : String(error)
+      });
       return [];
     }
   }

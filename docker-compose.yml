@@ -34,7 +34,8 @@ services:
   # container (28P01 password auth failure). Agent-only-on-project-network
   # can luck out; server cannot.
   postgres:
-    image: postgres:17-alpine
+    # pgvector-enabled image (CREATE EXTENSION vector for few-shot ANN)
+    image: pgvector/pgvector:pg17
     restart: unless-stopped
     volumes:
       - pg_data:/var/lib/postgresql/data
@@ -154,6 +155,15 @@ services:
       POSTGRES_HOST: hub-postgres
       REDIS_URL: redis://:${REDIS_PASSWORD}@hub-redis:6379
       AGENT_WORKER_URL: ${AGENT_WORKER_URL:-http://agent:4111}
+      # Same secret on agent — required for server→agent Bearer auth in production.
+      AGENT_SERVICE_SECRET: ${AGENT_SERVICE_SECRET:-}
+      # Gmail Pub/Sub push auth (OIDC and/or shared secret)
+      GMAIL_PUBSUB_TOPIC: ${GMAIL_PUBSUB_TOPIC:-}
+      GMAIL_PUSH_SHARED_SECRET: ${GMAIL_PUSH_SHARED_SECRET:-}
+      GMAIL_PUSH_OIDC_AUDIENCE: ${GMAIL_PUSH_OIDC_AUDIENCE:-}
+      GMAIL_PUSH_OIDC_EMAIL: ${GMAIL_PUSH_OIDC_EMAIL:-}
+      GMAIL_PUSH_REQUIRE_AUTH: ${GMAIL_PUSH_REQUIRE_AUTH:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       VITE_SERVER_URL: ${VITE_SERVER_URL}
       VITE_WEB_URL: ${VITE_WEB_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -209,9 +219,16 @@ services:
       # Optional fallbacks if you switch models in model-config.ts:
       OPENCODE_API_KEY: ${OPENCODE_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Must match server AGENT_SERVICE_SECRET
+      AGENT_SERVICE_SECRET: ${AGENT_SERVICE_SECRET:-}
       NODE_ENV: production
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4111/api/agents || exit 1"]
+      # /api/health is auth-exempt; /api/agents requires Bearer when secret is set
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:4111/api/health || wget -qO- http://127.0.0.1:4111/health || exit 1"
+        ]
       interval: 15s
       timeout: 5s
       retries: 3

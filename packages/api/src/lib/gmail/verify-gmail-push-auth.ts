@@ -66,8 +66,11 @@ export async function verifyGmailPushAuth(
 
   if (!requireAuth && !hasCredential) {
     // Dev open mode only when auth is explicitly not required and no secrets set.
-    return { ok: true, method: "shared_secret" };
+    return { ok: true, method: "shared_secret" }; // open_dev — keep union small for logs
   }
+
+  // Never allow REQUIRE_AUTH=false to open prod when credentials exist but token is wrong.
+  // (requireAuth already true in production by default.)
 
   const auth = authorizationHeader?.trim() ?? "";
   const token = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : auth;
@@ -88,7 +91,8 @@ export async function verifyGmailPushAuth(
       });
       if (oidcEmail) {
         const email = String(payload.email ?? "").toLowerCase();
-        if (email !== oidcEmail) {
+        const verified = payload.email_verified === true || payload.email_verified === "true";
+        if (!verified || email !== oidcEmail) {
           return { ok: false, reason: "oidc_email_mismatch" };
         }
       }

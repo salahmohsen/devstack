@@ -1,9 +1,14 @@
+import { agentAuthHeaders } from "#@/lib/agent/agent-fetch";
 import { type OrpcContextAgentWorker } from "#@/lib/context/types";
 
 export type AgentWorkerEnv = {
   AGENT_WORKER_URL?: string;
 };
 
+/**
+ * Thin fetch wrapper for the Mastra agent process.
+ * Always injects AGENT_SERVICE_SECRET Bearer when configured.
+ */
 export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
   return {
     fetch(input, init) {
@@ -28,10 +33,21 @@ export function createAgentWorker(env: AgentWorkerEnv): OrpcContextAgentWorker {
           body instanceof FormData ||
           body instanceof URLSearchParams);
 
+      const headers = new Headers(init?.headers);
+      for (const [k, v] of Object.entries(agentAuthHeaders())) {
+        if (!headers.has(k)) headers.set(k, v);
+      }
+      // Also copy auth from Request object if present
+      if (input instanceof Request) {
+        input.headers.forEach((value, key) => {
+          if (!headers.has(key)) headers.set(key, value);
+        });
+      }
+
       return fetch(resolved, {
         ...init,
         method: init?.method ?? (input instanceof Request ? input.method : "GET"),
-        headers: init?.headers,
+        headers,
         body,
         ...(needsDuplex
           ? ({

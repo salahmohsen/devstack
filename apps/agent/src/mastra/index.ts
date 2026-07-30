@@ -116,13 +116,9 @@ export const mastra = new Mastra({
       {
         path: "/api/*",
         handler: async (c, next) => {
-          const path = c.req.path;
-          // Health / openapi-ish probes without secret
-          if (
-            path.includes("/health") ||
-            path.endsWith("/openapi.json") ||
-            path.includes("/swagger")
-          ) {
+          const path = new URL(c.req.url).pathname;
+          const publicExact = new Set(["/api/health", "/health", "/", "/api"]);
+          if (publicExact.has(path) || path.endsWith("/openapi.json")) {
             await next();
             return;
           }
@@ -150,6 +146,33 @@ export const mastra = new Mastra({
             });
           }
 
+          await next();
+        }
+      },
+      {
+        path: "/chat/*",
+        handler: async (c, next) => {
+          const secret = agentServiceSecret();
+          if (!secret) {
+            if (process.env.NODE_ENV === "production") {
+              return new Response(JSON.stringify({ error: "agent_auth_not_configured" }), {
+                status: 503,
+                headers: { "Content-Type": "application/json" }
+              });
+            }
+            await next();
+            return;
+          }
+          const auth = c.req.header("Authorization") ?? "";
+          const token = auth.toLowerCase().startsWith("bearer ")
+            ? auth.slice(7).trim()
+            : auth.trim();
+          if (!token || !agentSecretMatches(token, secret)) {
+            return new Response(JSON.stringify({ error: "unauthorized" }), {
+              status: 401,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
           await next();
         }
       }
