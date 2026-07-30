@@ -172,6 +172,8 @@ Be careful with:
 
 Prefer IDs over full records. Prefer allowlisted fields, then rely on centralized evlog redaction as the backstop.
 
+For BYO AI runs, never log `apiKey` / `llm.apiKey` / requestContext key material. Use `llmLogFields()` from `@tsu-stack/core` (`modelId`, `providerKind`, `hasByoApiKey` only) when attaching LLM context to wide events.
+
 ## Request Logging
 
 Request logging should be sampled and outcome-oriented.

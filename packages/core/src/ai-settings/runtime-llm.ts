@@ -64,3 +64,21 @@ export function llmRequestContextFields(llm: RuntimeLlmConfig): Record<string, s
     ...(llm.apiKey ? { [LLM_REQUEST_CONTEXT_KEYS.apiKey]: llm.apiKey } : {})
   };
 }
+
+/**
+ * Safe BYO fields for wide events. Never includes `apiKey`.
+ * Prefer this over spreading `RuntimeLlmConfig` into loggers.
+ */
+export function llmLogFields(
+  llm: Pick<RuntimeLlmConfig, "modelId" | "providerKind" | "apiKey"> | null | undefined
+): {
+  llmModelId: string | null;
+  llmProviderKind: string | null;
+  hasByoApiKey: boolean;
+} {
+  return {
+    llmModelId: llm?.modelId?.trim() ? llm.modelId : null,
+    llmProviderKind: llm?.providerKind?.trim() ? llm.providerKind : null,
+    hasByoApiKey: Boolean(llm?.apiKey?.trim())
+  };
+}

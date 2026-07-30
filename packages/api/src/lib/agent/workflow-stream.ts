@@ -1,8 +1,9 @@
 import { type OrpcContextAgentWorker } from "@tsu-stack/core";
 
 type LoggerLike = {
+  set?(details: Record<string, unknown>): void;
   warn?(details: unknown): void;
-  error?(error: unknown): void;
+  error?(error: unknown, details?: Record<string, unknown>): void;
 };
 
 /** Promise that rejects when `signal` aborts (for racing long work). */
@@ -41,6 +42,13 @@ export async function cancelMastraWorkflowRun(
     const res = await agentWorker.fetch(path, { method: "POST" });
     const body = await res.text().catch(() => "");
     if (!res.ok) {
+      logger?.set?.({
+        event: "mastra_workflow_cancel_failed",
+        workflowId,
+        runId,
+        status: res.status,
+        bodyPreview: body.slice(0, 200)
+      });
       logger?.warn?.({
         msg: `[mastra] cancel failed for ${workflowId}/${runId}`,
         status: res.status,
@@ -48,18 +56,22 @@ export async function cancelMastraWorkflowRun(
       });
       return { ok: false, status: res.status, body: body.slice(0, 500) };
     }
-    logger?.warn?.({
-      msg: `[mastra] cancelled workflow run`,
+    logger?.set?.({
+      event: "mastra_workflow_cancelled",
       workflowId,
-      runId
+      runId,
+      status: res.status
     });
     return { ok: true, status: res.status, body: body.slice(0, 500) };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    logger?.warn?.({
-      msg: `[mastra] cancel error for ${workflowId}/${runId}`,
-      error: message
+    logger?.set?.({
+      event: "mastra_workflow_cancel_error",
+      workflowId,
+      runId,
+      errorMessage: message
     });
+    logger?.error?.(error instanceof Error ? error : message);
     return { ok: false, status: 0, body: message };
   }
 }

@@ -10,6 +10,7 @@ import {
   correctionEmbedText,
   heuristicClassifyMail,
   isJobAlertDigestMail,
+  llmLogFields,
   MailSystemLabelSchema,
   selectCorrectionsForFewShot,
   suppressCareerLabelsForJobAlertDigest,
@@ -178,21 +179,17 @@ export async function runMailClassify(input: {
   let result: MailClassifyOutput | null = null;
   let mastraClassifyRunId: string | null = null;
   let mastraClassifyTraceId: string | null = null;
+  let usedAgent = false;
+  const byo = llmLogFields(llm);
 
   const agentCall = await callMailClassifyAgent(classifyInput);
   if (agentCall) {
     result = applySmartRulesToClassifyResult(classifyInput, agentCall.output);
     mastraClassifyRunId = agentCall.runId;
     mastraClassifyTraceId = agentCall.traceId;
+    usedAgent = true;
   } else {
     result = heuristicClassifyMail(classifyInput);
-    log.set({
-      event: "mail_classify_local_heuristic",
-      messageId: row.id,
-      userId: row.userId,
-      systemLabels: result.systemLabels
-    });
-    log.emit();
   }
 
   // LinkedIn/Indeed digests must not create Interview CRM rows or notify as career.
@@ -223,6 +220,7 @@ export async function runMailClassify(input: {
   // Career-labeled mail → notify + ensure review draft; Full autonomy auto-sends.
   let reviewDraftCreated: boolean | null = null;
   let reviewAutoSent: boolean | null = null;
+  let reviewAutoSendCode: string | null = null;
   if (result.systemLabels.length > 0 && !isDigest) {
     await emitAppNotification({
       userId: row.userId,
@@ -245,20 +243,24 @@ export async function runMailClassify(input: {
           const sent = await sendPendingReplyDraft({ item: draft.item, userId: row.userId });
           reviewAutoSent = sent.ok && sent.result.sent;
           if (!sent.ok) {
-            log.set({
+            reviewAutoSendCode = sent.code ?? "auto_send_failed";
+            // Separate logger — main classify logger emits once below.
+            const autoSendLog = createLogger({ operation: "server__mail_reply_auto_send" });
+            autoSendLog.set({
               event: "mail_reply_auto_send_failed",
               messageId: row.id,
               userId: row.userId,
               code: sent.code,
               message: sent.message ?? null
             });
-            log.emit();
+            autoSendLog.emit({ _forceKeep: true });
           }
         }
       }
     }
   }
 
+  // One wide event for the classify run (never emit intermediate outcomes on this logger).
   log.set({
     event: "mail_classify_applied",
     messageId: row.id,
@@ -266,11 +268,18 @@ export async function runMailClassify(input: {
     source: result.source,
     systemLabels: result.systemLabels,
     notes: result.notes ?? null,
+    usedAgent,
+    agentFallback: !usedAgent,
+    mastraClassifyRunId,
+    mastraClassifyTraceId,
     crmApplied: crm.applied,
     crmKind: crm.effect.kind,
     crmReason: crm.effect.reason,
     reviewDraftCreated,
-    reviewAutoSent
+    reviewAutoSent,
+    reviewAutoSendCode,
+    isDigest,
+    ...byo
   });
   log.emit();
 

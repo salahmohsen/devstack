@@ -3,11 +3,13 @@ import { z } from "zod";
 
 import {
   formatCorrectionsFewShot,
+  llmLogFields,
   MAIL_SYSTEM_LABELS,
   MailClassifyOutputSchema,
   MailSystemLabelSchema,
   type MailSystemLabel
 } from "@tsu-stack/core";
+import { createLogger } from "@tsu-stack/logger/server";
 
 import { generateModelOption } from "#@/mastra/byo-model";
 import { heuristicStep } from "#@/mastra/workflows/mail-classify-workflow/heuristic.step";
@@ -53,8 +55,18 @@ export const llmStep = createStep({
       };
     }
 
+    const byo = llmLogFields(original.llm);
     const { model, skipNote } = generateModelOption(original.llm);
     if (!model) {
+      const log = createLogger({ operation: "agent__mail_classify_llm" });
+      log.set({
+        event: "mail_classify_llm_skipped",
+        reason: skipNote ?? "llm:missing_byo",
+        messageId: original.messageId,
+        userId: original.userId,
+        ...byo
+      });
+      log.emit();
       return {
         ...heuristic,
         notes: [heuristic.notes, skipNote ?? "llm:missing_byo"].filter(Boolean).join(";")
@@ -92,6 +104,14 @@ ${fewShot ? `\n${fewShot}` : ""}`;
 
       const parsed = LlmLabelSchema.safeParse(result.object);
       if (!parsed.success) {
+        const log = createLogger({ operation: "agent__mail_classify_llm" });
+        log.set({
+          event: "mail_classify_llm_invalid_output",
+          messageId: original.messageId,
+          userId: original.userId,
+          ...byo
+        });
+        log.emit({ _forceKeep: true });
         return {
           ...heuristic,
           notes: [heuristic.notes, "llm:invalid_output"].filter(Boolean).join(";")
@@ -103,6 +123,18 @@ ${fewShot ? `\n${fewShot}` : ""}`;
         (l) => !(MAIL_SYSTEM_LABELS as readonly string[]).includes(l)
       );
       const systemLabels: MailSystemLabel[] = system ? [system] : [];
+
+      const log = createLogger({ operation: "agent__mail_classify_llm" });
+      log.set({
+        event: "mail_classify_llm_ok",
+        messageId: original.messageId,
+        userId: original.userId,
+        systemLabels,
+        confidence: parsed.data.confidence ?? null,
+        fewShotCount,
+        ...byo
+      });
+      log.emit();
 
       return {
         labels: [...systemLabels, ...preserved],
@@ -117,6 +149,14 @@ ${fewShot ? `\n${fewShot}` : ""}`;
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+      const log = createLogger({ operation: "agent__mail_classify_llm" });
+      log.error(error instanceof Error ? error : new Error(msg), {
+        event: "mail_classify_llm_error",
+        messageId: original.messageId,
+        userId: original.userId,
+        ...byo
+      });
+      log.emit({ _forceKeep: true });
       return {
         ...heuristic,
         notes: [heuristic.notes, `llm:error:${msg.slice(0, 120)}`].filter(Boolean).join(";")

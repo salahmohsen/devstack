@@ -21,6 +21,10 @@ const DEFAULT_REDACT_PATHS = [
   ...(auditRedactPreset.paths ?? []),
   "apiKey",
   "llm.apiKey",
+  "llmApiKey",
+  "model.apiKey",
+  "requestContext.llmApiKey",
+  "requestContext.apiKey",
   "authorization",
   "cookie",
   "cookies",
@@ -29,7 +33,9 @@ const DEFAULT_REDACT_PATHS = [
   "set-cookie",
   "token",
   "accessToken",
-  "refreshToken"
+  "refreshToken",
+  "sessionToken",
+  "apiKeyCiphertext"
 ];
 
 const DEFAULT_SERVER_LOGGER_CONFIG = {

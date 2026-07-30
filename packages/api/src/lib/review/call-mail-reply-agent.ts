@@ -1,4 +1,5 @@
 import {
+  llmLogFields,
   MailReplyDraftInputSchema,
   MailReplyDraftOutputSchema,
   type MailReplyDraftInput,
@@ -27,11 +28,19 @@ export async function callMailReplyAgent(
 
   try {
     const parsedInput = MailReplyDraftInputSchema.parse(input);
+    const byo = llmLogFields(parsedInput.llm);
+    const base = {
+      userId: parsedInput.userId,
+      messageId: parsedInput.messageId,
+      ...byo
+    };
+
     const sessionToken = await resolveSessionTokenForUser(parsedInput.userId);
     if (!sessionToken) {
       log.set({
         event: "mail_reply_agent_no_session",
-        userId: parsedInput.userId
+        ...base,
+        fixHint: "User needs an active Better Auth session for agent workflows"
       });
       log.emit();
       return null;
@@ -46,20 +55,39 @@ export async function callMailReplyAgent(
         sessionToken
       }
     );
-    if (!createRes) return null;
+    if (!createRes) {
+      log.set({
+        event: "mail_reply_agent_unreachable",
+        ...base
+      });
+      log.emit();
+      return null;
+    }
     if (!createRes.ok) {
       const body = await createRes.text().catch(() => "");
       log.set({
         event: "mail_reply_agent_create_run_failed",
+        ...base,
         status: createRes.status,
-        body: body.slice(0, 200)
+        bodyPreview: body.slice(0, 200),
+        fixHint:
+          createRes.status === 401
+            ? "Agent rejected session — ensure BETTER_AUTH_SECRET matches and agent uses MastraAuthBetterAuth"
+            : undefined
       });
       log.emit();
       return null;
     }
 
     const { runId } = (await createRes.json()) as { runId?: string };
-    if (!runId) return null;
+    if (!runId) {
+      log.set({
+        event: "mail_reply_agent_missing_run_id",
+        ...base
+      });
+      log.emit();
+      return null;
+    }
 
     const startRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/start?runId=${encodeURIComponent(runId)}`,
@@ -77,8 +105,10 @@ export async function callMailReplyAgent(
       if (extracted) {
         log.set({
           event: "mail_reply_agent_ok",
+          ...base,
           source: extracted.source,
-          runId
+          runId,
+          via: "start"
         });
         log.emit();
         return extracted;
@@ -98,6 +128,8 @@ export async function callMailReplyAgent(
     if (!streamRes?.ok || !streamRes.body) {
       log.set({
         event: "mail_reply_agent_stream_failed",
+        ...base,
+        runId,
         status: streamRes?.status
       });
       log.emit();
@@ -108,6 +140,7 @@ export async function callMailReplyAgent(
     if (fromStream) {
       log.set({
         event: "mail_reply_agent_ok",
+        ...base,
         source: fromStream.source,
         via: "stream",
         runId
@@ -116,10 +149,19 @@ export async function callMailReplyAgent(
       return fromStream;
     }
 
+    log.set({
+      event: "mail_reply_agent_empty_result",
+      ...base,
+      runId
+    });
+    log.emit();
     return null;
   } catch (error) {
     log.error(error instanceof Error ? error : new Error(String(error)), {
-      event: "mail_reply_agent_error"
+      event: "mail_reply_agent_error",
+      userId: input.userId,
+      messageId: input.messageId,
+      ...llmLogFields(input.llm)
     });
     log.emit({ _forceKeep: true });
     return null;

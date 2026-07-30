@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   DetectStacksClientInputSchema,
+  llmLogFields,
   llmRequestContextFields,
   type OrpcContext
 } from "@tsu-stack/core";
@@ -280,7 +281,14 @@ export const agentRouter = {
       }
 
       const llm = await resolveRuntimeAiCredentials(context.session.user.id, "hubChat");
+      const byo = llmLogFields(llm);
       if (!llm.apiKey) {
+        context.logger.set({
+          event: "agent_hub_chat_missing_byo",
+          route: "agent.chat",
+          agentId: input.agentId,
+          ...byo
+        });
         throw new ORPCError("BAD_REQUEST", {
           message:
             "Configure an AI provider API key in Settings → AI before using Hub chat (BYO keys)."
@@ -291,25 +299,48 @@ export const agentRouter = {
       const threadId = `dashboard-home:${userId}`;
       // Memory requires top-level threadId/resourceId (not only requestContext).
       // Per-call `model` survives auth middleware requestContext priority.
-      const response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: input.messages,
-          threadId,
-          resourceId: userId,
-          model: { id: llm.modelId, apiKey: llm.apiKey },
-          requestContext: {
-            userId,
-            resourceId: userId,
+      let response: Response;
+      try {
+        response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: input.messages,
             threadId,
-            ...llmRequestContextFields(llm)
-          }
-        })
-      });
+            resourceId: userId,
+            model: { id: llm.modelId, apiKey: llm.apiKey },
+            requestContext: {
+              userId,
+              resourceId: userId,
+              threadId,
+              ...llmRequestContextFields(llm)
+            }
+          })
+        });
+      } catch (error) {
+        context.logger.set({
+          event: "agent_hub_chat_failed",
+          route: "agent.chat",
+          agentId: input.agentId,
+          threadId,
+          ...byo
+        });
+        context.logger.error(error instanceof Error ? error : String(error));
+        throw error;
+      }
 
       if (!response.ok) {
         const body = await response.text();
+        context.logger.set({
+          event: "agent_hub_chat_upstream_error",
+          route: "agent.chat",
+          agentId: input.agentId,
+          threadId,
+          status: response.status,
+          bodyPreview: body.slice(0, 200),
+          ...byo
+        });
+        context.logger.error(new Error(`Agent returned ${response.status}: ${body.slice(0, 200)}`));
         throw new Error(`Agent returned ${response.status}: ${body}`);
       }
 
@@ -317,9 +348,17 @@ export const agentRouter = {
         text?: string;
         object?: unknown;
       };
-      return {
-        content: data.text ?? (data.object != null ? JSON.stringify(data.object) : "")
-      };
+      const content = data.text ?? (data.object != null ? JSON.stringify(data.object) : "");
+      context.logger.set({
+        event: "agent_hub_chat_ok",
+        route: "agent.chat",
+        agentId: input.agentId,
+        threadId,
+        messageCount: input.messages.length,
+        contentLength: content.length,
+        ...byo
+      });
+      return { content };
     }),
 
   /**
@@ -359,7 +398,14 @@ export const agentRouter = {
       }
 
       const llm = await resolveRuntimeAiCredentials(context.session.user.id, "hubChat");
+      const byo = llmLogFields(llm);
       if (!llm.apiKey) {
+        context.logger.set({
+          event: "agent_hub_chat_stream_missing_byo",
+          route: "agent.chatStream",
+          agentId: input.agentId,
+          ...byo
+        });
         throw new ORPCError("BAD_REQUEST", {
           message:
             "Configure an AI provider API key in Settings → AI before using Hub chat (BYO keys)."
@@ -371,29 +417,58 @@ export const agentRouter = {
       // chatRoute params = AgentExecutionOptions + messages.
       // Memory needs top-level threadId/resourceId; auth middleware may override
       // body requestContext, so also pass model as a top-level execution option.
-      const upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-User-Id": userId,
-          "X-Thread-Id": threadId
-        },
-        body: JSON.stringify({
-          messages: input.messages,
-          threadId,
-          resourceId: userId,
-          model: { id: llm.modelId, apiKey: llm.apiKey },
-          requestContext: {
-            userId,
-            resourceId: userId,
+      let upstream: Response;
+      try {
+        upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-User-Id": userId,
+            "X-Thread-Id": threadId
+          },
+          body: JSON.stringify({
+            messages: input.messages,
             threadId,
-            ...llmRequestContextFields(llm)
-          }
-        })
-      });
+            resourceId: userId,
+            model: { id: llm.modelId, apiKey: llm.apiKey },
+            requestContext: {
+              userId,
+              resourceId: userId,
+              threadId,
+              ...llmRequestContextFields(llm)
+            }
+          })
+        });
+      } catch (error) {
+        context.logger.set({
+          event: "agent_hub_chat_stream_failed",
+          route: "agent.chatStream",
+          agentId: input.agentId,
+          threadId,
+          ...byo
+        });
+        context.logger.error(error instanceof Error ? error : String(error));
+        throw error;
+      }
 
       if (!upstream.ok || !upstream.body) {
         const body = await upstream.text();
+        context.logger.set({
+          event: "agent_hub_chat_stream_upstream_error",
+          route: "agent.chatStream",
+          agentId: input.agentId,
+          threadId,
+          status: upstream.status,
+          bodyPreview: body.slice(0, 200),
+          ...byo
+        });
+        context.logger.error(
+          new Error(
+            body.trim().length > 0
+              ? `Hub agent error (${upstream.status}): ${body.slice(0, 200)}`
+              : `Hub agent returned ${upstream.status} with an empty body`
+          )
+        );
         // Surface agent body (Memory / BYO / provider errors) instead of opaque 500.
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
           message:
@@ -402,6 +477,15 @@ export const agentRouter = {
               : `Hub agent returned ${upstream.status} with an empty body`
         });
       }
+
+      context.logger.set({
+        event: "agent_hub_chat_stream_started",
+        route: "agent.chatStream",
+        agentId: input.agentId,
+        threadId,
+        messageCount: Array.isArray(input.messages) ? input.messages.length : null,
+        ...byo
+      });
 
       // Parse Mastra SSE → UIMessageChunk objects, then hand oRPC an
       // object stream. Do NOT pipe raw Uint8Array SSE frames — those
@@ -622,6 +706,8 @@ export const agentRouter = {
             : null;
 
         // 3. Build DetectStacksWorkflowInputSchema payload
+        const llm = await resolveRuntimeAiCredentials(context.session.user.id, "stacks");
+        const byo = llmLogFields(llm);
         const workflowInput = {
           projectId: input.projectId || "draft",
           repoPackages,
@@ -642,7 +728,7 @@ export const agentRouter = {
                 detectedPackages: lastScan.detectedPackages ?? []
               }
             : null,
-          llm: await resolveRuntimeAiCredentials(context.session.user.id, "stacks")
+          llm
         };
 
         if (signal?.aborted) return;
@@ -655,6 +741,15 @@ export const agentRouter = {
           });
         }
 
+        context.logger.set({
+          event: "agent_detect_stacks_started",
+          route: "agent.detectStacks",
+          projectId: input.projectId || "draft",
+          repoCount: input.repos.length,
+          packageJsonCount: reposWithPackageJson.length,
+          ...byo
+        });
+
         try {
           yield* streamMastraWorkflow({
             agentWorker,
@@ -664,10 +759,21 @@ export const agentRouter = {
             parseStream: parseConcatenatedJsonStream,
             logger: context.logger
           });
+          context.logger.set({
+            event: "agent_detect_stacks_streamed",
+            route: "agent.detectStacks",
+            ...byo
+          });
         } catch (error) {
           if (signal?.aborted) return;
           if (error instanceof DOMException && error.name === "AbortError") return;
           const detail = error instanceof Error ? error.message : String(error);
+          context.logger.set({
+            event: "agent_detect_stacks_upstream_error",
+            route: "agent.detectStacks",
+            ...byo
+          });
+          context.logger.error(error instanceof Error ? error : detail);
           throw new ORPCError("INTERNAL_SERVER_ERROR", {
             message: `Cannot reach agent worker: ${detail}`
           });
@@ -685,6 +791,10 @@ export const agentRouter = {
                 ? error.cause
                 : JSON.stringify(error.cause)
               : null;
+        context.logger.set({
+          event: "agent_detect_stacks_failed",
+          route: "agent.detectStacks"
+        });
         context.logger.error(error instanceof Error ? error : message);
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
           message: cause ? `${message}\nCaused by: ${cause}` : message || "Stack detection failed"
@@ -709,6 +819,8 @@ export const agentRouter = {
       const allStacks = await stackRepository.findAllByUserId(userId);
 
       // 2. Build workflow input
+      const llm = await resolveRuntimeAiCredentials(userId, "stacks");
+      const byo = llmLogFields(llm);
       const workflowInput = {
         stacks: allStacks.map((stack) => {
           return {
@@ -720,7 +832,7 @@ export const agentRouter = {
             projectCount: stack.projectCount ?? 0
           };
         }),
-        llm: await resolveRuntimeAiCredentials(userId, "stacks")
+        llm
       };
 
       // 3. Stream workflow execution — cancels Mastra run on client abort
@@ -733,13 +845,37 @@ export const agentRouter = {
         return;
       }
 
-      yield* streamMastraWorkflow({
-        agentWorker,
-        workflowId: "organize-stacks-workflow",
-        inputData: workflowInput,
-        signal,
-        parseStream: parseConcatenatedJsonStream,
-        logger: context.logger
+      context.logger.set({
+        event: "agent_organize_stacks_started",
+        route: "agent.organizeStacks",
+        stackCount: allStacks.length,
+        ...byo
       });
+
+      try {
+        yield* streamMastraWorkflow({
+          agentWorker,
+          workflowId: "organize-stacks-workflow",
+          inputData: workflowInput,
+          signal,
+          parseStream: parseConcatenatedJsonStream,
+          logger: context.logger
+        });
+        context.logger.set({
+          event: "agent_organize_stacks_streamed",
+          route: "agent.organizeStacks",
+          ...byo
+        });
+      } catch (error) {
+        if (signal?.aborted) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        context.logger.set({
+          event: "agent_organize_stacks_failed",
+          route: "agent.organizeStacks",
+          ...byo
+        });
+        context.logger.error(error instanceof Error ? error : String(error));
+        throw error;
+      }
     })
 };
