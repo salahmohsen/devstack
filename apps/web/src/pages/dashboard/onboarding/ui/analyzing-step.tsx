@@ -49,9 +49,7 @@ export function AnalyzingStep({
       )}
 
       {!error && isRunning ? (
-        <p className="text-xs text-muted-foreground">
-          Feel free to navigate away — we’ll notify you when the draft is ready.
-        </p>
+        <p className="text-xs text-muted-foreground">We’ll notify you when the draft is ready.</p>
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">

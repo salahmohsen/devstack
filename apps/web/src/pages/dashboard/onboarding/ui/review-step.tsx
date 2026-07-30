@@ -17,6 +17,15 @@ import {
   AccordionTrigger
 } from "@tsu-stack/ui/components/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -77,13 +86,14 @@ export type ReviewStepProps = {
   onDiscarded: () => void;
 };
 
-function TabCount({ value }: { value: number }) {
+function TabCount({ selected, total }: { selected: number; total: number }) {
   return (
     <Badge
       variant="outline"
       className="ms-1 h-5 min-w-5 justify-center px-1.5 text-[10px] font-medium tabular-nums not-in-data-active:text-muted-foreground"
+      title={`${selected} selected of ${total}`}
     >
-      {value}
+      {selected}/{total}
     </Badge>
   );
 }
@@ -245,6 +255,7 @@ export function ReviewStep({
   const discardMutation = useDiscardSourceMutation();
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState("profile");
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   const counts = useMemo(() => {
     return {
@@ -254,7 +265,22 @@ export function ReviewStep({
     };
   }, [draft]);
 
+  const totals = useMemo(() => {
+    return {
+      experiences: draft.experiences.length,
+      projects: draft.projects.length,
+      stacks: draft.stacks.length
+    };
+  }, [draft]);
+
   const totalSelected = counts.experiences + counts.projects + counts.stacks;
+  const hasProfileContent =
+    (draft.profile.name?.trim().length ?? 0) > 0 ||
+    (draft.profile.summary?.trim().length ?? 0) > 0 ||
+    (draft.profile.email?.trim().length ?? 0) > 0 ||
+    (draft.profile.contacts?.length ?? 0) > 0;
+  /** Match server: need selected rows or a non-empty profile payload. */
+  const canApply = totalSelected > 0 || hasProfileContent;
 
   const experienceOptions = useMemo(
     () =>
@@ -406,7 +432,7 @@ export function ReviewStep({
   const warnings = draft.meta?.warnings ?? [];
 
   return (
-    <div className="flex w-full flex-col gap-4 pb-24">
+    <div className="flex w-full flex-col gap-4 pb-[max(6rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
       {warnings.length > 0 ? (
         <Alert variant="warning">
           <AlertTitle>Notes from extract</AlertTitle>
@@ -446,15 +472,15 @@ export function ReviewStep({
                 <TabsTab value="profile">Profile</TabsTab>
                 <TabsTab value="experiences">
                   Experiences
-                  <TabCount value={counts.experiences} />
+                  <TabCount selected={counts.experiences} total={totals.experiences} />
                 </TabsTab>
                 <TabsTab value="projects">
                   Projects
-                  <TabCount value={counts.projects} />
+                  <TabCount selected={counts.projects} total={totals.projects} />
                 </TabsTab>
                 <TabsTab value="stacks">
                   Stacks
-                  <TabCount value={counts.stacks} />
+                  <TabCount selected={counts.stacks} total={totals.stacks} />
                 </TabsTab>
               </TabsList>
 
@@ -658,7 +684,7 @@ export function ReviewStep({
                         variant="outline"
                         onClick={() => setAllStacksPortfolio(true)}
                       >
-                        Portfolio on
+                        Show on portfolio
                       </Button>
                       <GroupSeparator />
                       <Button
@@ -667,7 +693,7 @@ export function ReviewStep({
                         variant="outline"
                         onClick={() => setAllStacksPortfolio(false)}
                       >
-                        Off
+                        Hide from portfolio
                       </Button>
                     </Group>
                   ) : null}
@@ -768,13 +794,14 @@ export function ReviewStep({
         </Card>
       </CardFrame>
 
-      {/* Sticky action bar — full content width */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/70 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/90">
-        <div className="mx-auto flex w-full max-w-none flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+      {/* Sticky within main scroll — not viewport-fixed (avoids covering app chrome) */}
+      <div className="sticky bottom-0 z-20 -mx-4 mt-2 border-t border-border/70 bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-backdrop-filter:bg-background/90 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <p className="min-w-0 text-xs text-muted-foreground tabular-nums sm:text-sm">
             <span className="font-medium text-foreground">{totalSelected}</span>
-            {" · "}
-            {counts.experiences} exp · {counts.projects} projects · {counts.stacks} stacks
+            {" selected · "}
+            {counts.experiences}/{totals.experiences} exp · {counts.projects}/{totals.projects}{" "}
+            projects · {counts.stacks}/{totals.stacks} stacks
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -792,7 +819,7 @@ export function ReviewStep({
               size="sm"
               loading={discardMutation.isPending}
               disabled={applyMutation.isPending}
-              onClick={() => void handleDiscard()}
+              onClick={() => setDiscardOpen(true)}
             >
               Discard
             </Button>
@@ -800,14 +827,48 @@ export function ReviewStep({
               type="button"
               size="sm"
               loading={applyMutation.isPending}
-              disabled={discardMutation.isPending}
+              disabled={discardMutation.isPending || !canApply}
+              title={
+                !canApply
+                  ? "Select at least one item or fill in profile fields to import"
+                  : undefined
+              }
               onClick={() => void handleApply()}
             >
               Apply import
             </Button>
           </div>
         </div>
+        {!canApply ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Select experiences, projects, or stacks — or edit the profile — before applying.
+          </p>
+        ) : null}
       </div>
+
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this import?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The review draft and uploaded resume will be removed. You can start over from upload.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose render={<Button variant="ghost" />}>Keep editing</AlertDialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              loading={discardMutation.isPending}
+              onClick={() => {
+                void handleDiscard().then(() => setDiscardOpen(false));
+              }}
+            >
+              Discard draft
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
     </div>
   );
 }

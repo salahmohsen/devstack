@@ -48,7 +48,8 @@ export function UploadStep({
   onSkipped
 }: UploadStepProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const dropzoneId = useId();
+  const fileInputId = useId();
+  const readyStatusId = useId();
   const files = useFiles({ endpoint: "/api/files" });
   const discardMutation = useDiscardSourceMutation();
   const skipMutation = useSkipOnboardingMutation();
@@ -140,7 +141,7 @@ export function UploadStep({
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     setIsDragging(false);
     const file = event.dataTransfer.files?.[0];
@@ -178,28 +179,17 @@ export function UploadStep({
 
   return (
     <div className="flex w-full flex-col gap-5">
-      {/* Dropzone — empty / replacing state */}
+      {/* Dropzone — labeled file input + drag surface */}
       {!showReady ? (
         <div
-          id={dropzoneId}
-          role="button"
-          tabIndex={0}
-          aria-label="Upload resume PDF"
-          aria-disabled={isBusy}
           className={cn(
-            "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-5 py-10 text-center transition-[border-color,background-color] duration-150 outline-none motion-reduce:transition-none",
-            "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40",
+            "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-5 py-10 text-center transition-[border-color,background-color] duration-150 motion-reduce:transition-none",
+            "has-[:focus-visible]:border-ring has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
             isDragging
               ? "border-primary bg-primary/5"
               : "border-border/80 bg-muted/15 hover:border-muted-foreground/30 hover:bg-muted/25",
             isBusy && "pointer-events-none opacity-70"
           )}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
           onDragEnter={(e) => {
             e.preventDefault();
             setIsDragging(true);
@@ -210,9 +200,6 @@ export function UploadStep({
           }}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          onClick={() => {
-            if (!isBusy) inputRef.current?.click();
-          }}
         >
           <div
             className={cn(
@@ -223,24 +210,33 @@ export function UploadStep({
             <UploadCloudIcon className="size-5" aria-hidden />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
+            <label
+              htmlFor={fileInputId}
+              className={cn("text-sm font-medium text-foreground", !isBusy && "cursor-pointer")}
+            >
               {isDragging ? "Drop to upload" : "Drop your resume here"}
-            </p>
+            </label>
             <p className="text-xs text-muted-foreground">
               PDF · up to {formatBytes(RESUME_SOURCE_MAX_BYTES)} ·{" "}
-              <span className="text-foreground underline-offset-2 group-hover:underline">
+              <label
+                htmlFor={fileInputId}
+                className={cn(
+                  "text-foreground underline-offset-2 group-hover:underline",
+                  !isBusy && "cursor-pointer"
+                )}
+              >
                 browse
-              </span>
+              </label>
             </p>
           </div>
           <input
             ref={inputRef}
+            id={fileInputId}
             type="file"
             accept={RESUME_SOURCE_MIME}
-            className="hidden"
+            className="sr-only"
             onChange={handleInputChange}
             disabled={isBusy}
-            aria-labelledby={dropzoneId}
           />
         </div>
       ) : null}
@@ -249,7 +245,10 @@ export function UploadStep({
 
       {/* Ready file — single compact row, not a second card */}
       {showReady ? (
-        <output className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/20 px-3.5 py-3">
+        <output
+          id={readyStatusId}
+          className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/20 px-3.5 py-3"
+        >
           <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-foreground ring-1 ring-border/70">
             <FileTextIcon className="size-4" aria-hidden />
           </div>
@@ -265,7 +264,7 @@ export function UploadStep({
             disabled={isBusy}
             onClick={() => void handleRemove()}
           >
-            <Trash2Icon className="size-4" />
+            <Trash2Icon className="size-4" aria-hidden />
           </Button>
         </output>
       ) : null}
@@ -292,7 +291,12 @@ export function UploadStep({
         </Button>
 
         {showReady ? (
-          <Button type="button" disabled={isBusy} onClick={onAnalyze}>
+          <Button
+            type="button"
+            disabled={isBusy}
+            onClick={onAnalyze}
+            aria-describedby={readyStatusId}
+          >
             Analyze resume
           </Button>
         ) : null}

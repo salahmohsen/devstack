@@ -35,7 +35,7 @@ export function DoneStep({ summary, skipped, onImportAnother }: DoneStepProps) {
       <Empty className="w-full rounded-2xl border border-border/80 bg-card px-6 py-12 shadow-xs/5">
         <EmptyHeader>
           <EmptyMedia variant="icon" className="bg-success/10 text-success">
-            <CheckCircle2Icon className="size-5" />
+            <CheckCircle2Icon className="size-5" aria-hidden />
           </EmptyMedia>
           <EmptyTitle>{skipped ? "Onboarding skipped" : "Import complete"}</EmptyTitle>
           <EmptyDescription>

@@ -29,7 +29,7 @@ const COPY: Record<OnboardingFlowStep, { title: string; description: React.React
   },
   analyzing: {
     title: "Analyzing resume",
-    description: "You can leave this page — analysis continues in the background."
+    description: "Analysis continues if you leave this page."
   },
   review: {
     title: "Review before import",

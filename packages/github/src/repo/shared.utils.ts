@@ -80,6 +80,16 @@ export function setRepoLoggerOutcome(
   });
 }
 
+/** Short legend for log readers (mirrors GitHubDataSourceSchema). */
+const SOURCE_BLURB: Record<GitHubDataSource, string> = {
+  kv: "cache hit (kv)",
+  db: "cache hit (db)",
+  api: "live github fetch",
+  revalidated: "github 304 — cache kept",
+  "rate-limit": "stale cache after rate limit",
+  "error-cache": "stale cache after fetch error"
+};
+
 export function setRepoLoggerLocalFirstOutcome(
   context: OrpcContext | undefined,
   event: string,
@@ -87,10 +97,13 @@ export function setRepoLoggerLocalFirstOutcome(
   details: Record<string, unknown> = {}
 ) {
   setRepoLoggerOutcome(context, event, {
+    // cacheStatus: fresh | stale | miss — age/signal of the entry
     cacheStatus: meta.cacheStatus,
     fetchedAt: meta.fetchedAt,
     isRevalidating: meta.isRevalidating,
+    // source: where the payload was served from (see SOURCE_BLURB)
     source: meta.source,
+    sourceNote: SOURCE_BLURB[meta.source],
     ...details
   });
 }

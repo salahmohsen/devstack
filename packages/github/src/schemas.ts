@@ -12,13 +12,23 @@ export const GitHubActorSchema = z.object({
 });
 export type GitHubActor = z.infer<typeof GitHubActorSchema>;
 
+/**
+ * Where the payload was served from (for logs / UI cache chips).
+ *
+ * - `kv` — Redis/memory cache hit (still fresh)
+ * - `db` — Postgres response cache hit
+ * - `api` — live GitHub fetch (Octokit)
+ * - `revalidated` — GitHub HTTP 304; kept existing cache after conditional request
+ * - `rate-limit` — GitHub 403/429; served stale cache
+ * - `error-cache` — other fetch error; served stale cache
+ */
 export const GitHubDataSourceSchema = z.enum([
   "kv",
   "db",
-  "octokit",
-  "not-modified",
-  "rate-limited",
-  "stale-on-error"
+  "api",
+  "revalidated",
+  "rate-limit",
+  "error-cache"
 ]);
 export type GitHubDataSource = z.infer<typeof GitHubDataSourceSchema>;
 

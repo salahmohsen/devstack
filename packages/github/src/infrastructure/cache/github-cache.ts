@@ -123,7 +123,7 @@ export async function getCachedGitHubRequest<TData>(
             cacheStatus: "stale",
             fetchedAt: cached.fetchedAt.toISOString(),
             isRevalidating: false,
-            source: isRateLimited ? "rate-limited" : "stale-on-error"
+            source: isRateLimited ? "rate-limit" : "error-cache"
           }
         };
       }
@@ -154,7 +154,7 @@ async function fetchAndPersist<TData>(
   options: GitHubCacheOptions<TData>,
   cachedEntry: CachedGitHubEntry<TData> | null,
   namespaceVersion: number
-): Promise<{ data: TData; fetchedAt: Date; source: "octokit" | "not-modified" }> {
+): Promise<{ data: TData; fetchedAt: Date; source: "api" | "revalidated" }> {
   const conditionals: GitHubConditionalHeaders = {
     etag: cachedEntry?.etag ?? null,
     lastModified: cachedEntry?.lastModified ?? null
@@ -191,12 +191,13 @@ async function fetchAndPersist<TData>(
     return {
       data: cachedEntry.payload as TData,
       fetchedAt: updated.fetchedAt,
-      source: "not-modified"
+      // GitHub 304 — conditional request, body unchanged
+      source: "revalidated"
     };
   }
 
   if (result.kind !== "success") {
-    throw new Error("GitHub cache fetcher returned not-modified without a cached entry");
+    throw new Error("GitHub cache fetcher returned 304 without a cached entry");
   }
 
   const staleAt = new Date(Date.now() + getFreshWindowMs(options.freshForMs, result.metadata));
@@ -218,7 +219,7 @@ async function fetchAndPersist<TData>(
   return {
     data: result.data,
     fetchedAt: entry.fetchedAt,
-    source: "octokit"
+    source: "api"
   };
 }
 

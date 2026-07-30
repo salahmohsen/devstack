@@ -42,14 +42,22 @@ export function AnalyzingProgress({
         : 0
       : Math.min(100, ((activeIndex + 1) / PIPELINE.length) * 100);
 
+  const barValue = isRunning && activeIndex < 0 ? 12 : progressValue;
+  const activeLabel =
+    activeIndex >= 0 && activeIndex < PIPELINE.length
+      ? PIPELINE[activeIndex]?.label
+      : isRunning
+        ? "Starting analysis"
+        : "Analysis progress";
+
   return (
     <div className="flex w-full flex-col gap-4" aria-live="polite" aria-busy={isRunning}>
-      <div className="relative h-1 overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-foreground/80 transition-[width] duration-500 ease-out motion-reduce:transition-none"
-          style={{ width: `${isRunning && activeIndex < 0 ? 12 : progressValue}%` }}
-        />
-      </div>
+      <progress
+        className="h-1 w-full overflow-hidden rounded-full [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-foreground/80 [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-foreground/80"
+        max={100}
+        value={barValue}
+        aria-label={activeLabel}
+      />
 
       <ol className="flex flex-col gap-1">
         {PIPELINE.map((item, index) => {
@@ -86,7 +94,8 @@ export function AnalyzingProgress({
               <span
                 className={cn(
                   "min-w-0 flex-1 truncate text-sm",
-                  active && "shimmer font-medium text-foreground",
+                  // Shimmer is decorative motion; fall back to static weight under reduced motion
+                  active && "font-medium text-foreground motion-safe:shimmer",
                   done && "text-muted-foreground",
                   pending && "text-muted-foreground"
                 )}

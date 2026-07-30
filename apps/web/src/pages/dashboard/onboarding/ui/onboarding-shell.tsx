@@ -42,9 +42,17 @@ export function OnboardingStepIndicator({ step }: { step: OnboardingFlowStep }) 
                 >
                   {done ? <CheckIcon className="size-3.5" aria-hidden /> : index + 1}
                 </div>
+                <span className="sr-only">
+                  {done
+                    ? `${item.label}, completed`
+                    : active
+                      ? `${item.label}, current step`
+                      : item.label}
+                </span>
                 <span
+                  aria-hidden
                   className={cn(
-                    "hidden text-[11px] sm:block",
+                    "hidden max-w-full truncate text-xs sm:block",
                     active ? "font-medium text-foreground" : "text-muted-foreground"
                   )}
                 >
