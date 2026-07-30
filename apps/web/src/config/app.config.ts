@@ -12,10 +12,10 @@ export const appConfig = Object.freeze({
     baseUrl: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).origin,
     description: "Portfolio",
     emailSupport,
-    jurisdictionCountry: "the Republic of the Philippines",
-    longName: "Batteries-Included TanStack Start Monorepo Boilerplate Template | tsu!stack",
+    jurisdictionCountry: "Egypt",
+    longName: "complete job applying solution | DevHub",
     serverLocation: "Japan",
-    shortName: "Salah Mohsen",
+    shortName: "DevHub",
     url: ENV_WEB_ISOMORPHIC.VITE_WEB_URL,
     version: __BUILD_SOURCE_COMMIT__
   }

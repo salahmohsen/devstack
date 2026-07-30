@@ -285,8 +285,7 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       # Internal Docker-network URL of the Hono server, used by the web
-      # app's SSR-time oRPC client to call the server over HTTP without
-      # looping through the Cloudflare tunnel.
+      # app's SSR-time oRPC client (avoids hairpin via public hostname).
       SERVER_URL_INTERNAL: ${SERVER_URL_INTERNAL:-http://server:5100}
       S3_ENDPOINT: http://hub-minio:9000
       S3_ACCESS_KEY: ${MINIO_ROOT_USER}

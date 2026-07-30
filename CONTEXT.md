@@ -175,22 +175,19 @@ invalidation of a known cache group (e.g. `repos.list`, the
 _Avoid_: Cache group, invalidation counter.
 
 **Signal relay**:
-A Cloudflare Durable Object (binding `GITHUB_SIGNAL_RELAY`) that fans
-out recently-bumped signal keys to connected WebSocket clients. Uses
-the WebSocket Hibernation API so per-socket subscription state survives
-isolate restarts (see `0012-signal-relay-durable-hibernation`); clients
-that miss a broadcast reconcile against the durable signal rows via the
-`getRevalidationSignals` oRPC route, called from
-`use-github-signal-stream.ts` on WebSocket open, `visibilitychange`,
-`window focus`, `online`, and a 20s polling fallback when disconnected.
-_Avoid_: WebSocket hub, pub/sub relay.
+Socket.IO gateway on the Hono server with optional Redis adapter for
+cross-instance fan-out of recently-bumped GitHub signal keys to browser
+clients. Clients that miss a broadcast reconcile via the
+`getRevalidationSignals` oRPC route (`use-github-signal-stream.ts` on
+WebSocket open, `visibilitychange`, focus, `online`, and a 20s poll when
+disconnected). See ADR `0021-socketio-redis-pubsub-broadcast-adapter`.
+_Avoid_: WebSocket hub, pub/sub relay, Durable Object.
 
 **Delivery ID cache**:
 A row in `github_webhook_event` keyed by the GitHub webhook's
 `X-GitHub-Delivery` header. Prevents duplicate processing when GitHub
-redelivers an event. Persisted in Postgres (not the Cloudflare KV
-binding), so the dedup state survives across worker restarts without a
-7-day TTL — old rows are pruned by a separate retention job.
+redelivers an event. Persisted in Postgres so the dedup state survives
+restarts; old rows are pruned by a separate retention job.
 _Avoid_: Webhook dedup, idempotency cache.
 
 ## Evidence
