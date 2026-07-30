@@ -9,7 +9,7 @@ import { syncGmailInbox } from "#@/lib/gmail/sync-gmail-inbox";
  */
 export async function handleGmailPushNotification(rawBody: string): Promise<{
   handled: number;
-  errors: string[];
+  skipped: number;
 }> {
   let emailAddress: string | null = null;
   try {
@@ -17,28 +17,29 @@ export async function handleGmailPushNotification(rawBody: string): Promise<{
       message?: { data?: string };
     };
     const dataB64 = envelope.message?.data;
-    if (!dataB64) return { handled: 0, errors: ["missing_message_data"] };
+    if (!dataB64) return { handled: 0, skipped: 0 };
     const decoded = Buffer.from(dataB64, "base64").toString("utf8");
     const payload = JSON.parse(decoded) as { emailAddress?: string; historyId?: string };
     emailAddress = payload.emailAddress?.trim().toLowerCase() ?? null;
   } catch {
-    return { handled: 0, errors: ["invalid_pubsub_body"] };
+    return { handled: 0, skipped: 0 };
   }
 
-  if (!emailAddress) return { handled: 0, errors: ["missing_email"] };
+  if (!emailAddress) return { handled: 0, skipped: 0 };
 
-  // Find users with this mailbox address (usually one).
   const all = await userGmailSyncRepository.listByEmailAddress(emailAddress);
-  if (all.length === 0) {
-    return { handled: 0, errors: [`no_user_for_${emailAddress}`] };
-  }
+  if (all.length === 0) return { handled: 0, skipped: 0 };
 
-  const errors: string[] = [];
   let handled = 0;
+  let skipped = 0;
   for (const row of all) {
+    if (row.autoSyncEnabled === false) {
+      skipped += 1;
+      continue;
+    }
     const result = await syncGmailInbox(row.userId);
     if (result.ok) handled += 1;
-    else errors.push(`${row.userId}:${result.code}`);
+    else skipped += 1;
   }
-  return { handled, errors };
+  return { handled, skipped };
 }

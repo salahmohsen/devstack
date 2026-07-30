@@ -54,10 +54,21 @@ export async function startGmailWatch(userId: string): Promise<StartGmailWatchRe
 
   const json = (await res.json()) as { historyId?: string; expiration?: string };
   const historyId = json.historyId != null ? String(json.historyId) : null;
+
+  let emailAddress: string | null = null;
+  const profile = await fetch(`${GMAIL_API}/profile`, {
+    headers: { Authorization: `Bearer ${token.accessToken}` }
+  });
+  if (profile.ok) {
+    const p = (await profile.json()) as { emailAddress?: string };
+    emailAddress = p.emailAddress?.trim().toLowerCase() ?? null;
+  }
+
   await userGmailSyncRepository.upsert({
     id: randomUUID(),
     userId,
     historyId: historyId ?? undefined,
+    emailAddress: emailAddress ?? undefined,
     lastError: null
   });
 

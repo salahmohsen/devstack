@@ -64,12 +64,13 @@ export async function syncGmailInbox(userId: string): Promise<SyncGmailInboxResu
     };
   }
 
-  const emailAddress = profile.data.emailAddress?.trim() ?? null;
+  const emailAddress = profile.data.emailAddress?.trim().toLowerCase() ?? null;
   const profileHistoryId = profile.data.historyId != null ? String(profile.data.historyId) : null;
 
   const cursor = await userGmailSyncRepository.findByUserId(userId);
   const messageIdsToFetch = new Set<string>();
 
+  let usedHistory = false;
   if (cursor?.historyId) {
     const history = await gmailGet<{
       history?: Array<{
@@ -82,6 +83,7 @@ export async function syncGmailInbox(userId: string): Promise<SyncGmailInboxResu
     );
 
     if (history.ok) {
+      usedHistory = true;
       for (const h of history.data.history ?? []) {
         for (const added of h.messagesAdded ?? []) {
           const id = added.message?.id;
@@ -104,7 +106,8 @@ export async function syncGmailInbox(userId: string): Promise<SyncGmailInboxResu
     }
   }
 
-  if (messageIdsToFetch.size === 0) {
+  // Initial sync or expired historyId only — do not re-list on quiet history polls.
+  if (!usedHistory && messageIdsToFetch.size === 0) {
     const list = await gmailGet<{
       messages?: Array<{ id?: string }>;
     }>(accessToken, `/messages?maxResults=${INITIAL_MAX}&q=${encodeURIComponent("in:inbox")}`);

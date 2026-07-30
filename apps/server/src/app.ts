@@ -252,9 +252,20 @@ app.post("/webhooks/github", async (c) => {
 /**
  * Gmail Pub/Sub push (users.watch). Body is Google Cloud Pub/Sub push envelope.
  * Configure subscription → {VITE_SERVER_URL}/webhooks/gmail-push
+ * Optional: GMAIL_PUSH_SHARED_SECRET as Authorization: Bearer <secret>
  */
 app.post("/webhooks/gmail-push", async (c) => {
   const requestLog = c.get("log");
+  const expected = process.env.GMAIL_PUSH_SHARED_SECRET?.trim();
+  if (expected) {
+    const auth = c.req.header("authorization") ?? "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7).trim() : auth.trim();
+    if (token !== expected) {
+      requestLog?.set({ event: "gmail_push_unauthorized", status: 401 });
+      return c.json({ ok: false }, 401);
+    }
+  }
+
   const rawBody = await c.req.text();
   requestLog?.set({ event: "gmail_push_received" });
 
@@ -264,10 +275,10 @@ app.post("/webhooks/gmail-push", async (c) => {
     requestLog?.set({
       event: "gmail_push_handled",
       handled: result.handled,
-      errorCount: result.errors.length
+      skipped: result.skipped
     });
-    // Always 200 so Pub/Sub does not infinite-retry on unknown mailbox.
-    return c.json({ ok: true, ...result });
+    // Opaque 200 — never leak mailbox/user ids to the push client.
+    return c.json({ ok: true });
   });
 });
 
