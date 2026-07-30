@@ -29,7 +29,8 @@ export const userGmailSyncRepository = {
   },
 
   async listByEmailAddress(emailAddress: string): Promise<UserGmailSyncEntity[]> {
-    return getDb().select().from(userGmailSync).where(eq(userGmailSync.emailAddress, emailAddress));
+    const normalized = emailAddress.trim().toLowerCase();
+    return getDb().select().from(userGmailSync).where(eq(userGmailSync.emailAddress, normalized));
   },
 
   async upsert(input: UpsertUserGmailSyncInput): Promise<UserGmailSyncEntity> {
