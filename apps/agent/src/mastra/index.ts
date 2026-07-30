@@ -17,11 +17,13 @@ import { PostgresStore } from "@mastra/pg";
 
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
 import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agent";
+import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createResumeImportExtractorAgent } from "#@/mastra/agents/resume-import-extractor-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import "#@/mastra/logger-bootstrap";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
+import { mailReplyWorkflow } from "#@/mastra/workflows/mail-reply-workflow";
 import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
 import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow";
 
@@ -96,13 +98,15 @@ export const mastra = new Mastra({
     detectStacksWorkflow,
     organizeStacksWorkflow,
     resumeImportWorkflow,
-    mailClassifyWorkflow
+    mailClassifyWorkflow,
+    mailReplyWorkflow
   },
   agents: {
     stackCategorizerAgent: createStackCategorizerAgent(),
     hubSupervisor: createHubSupervisor(),
     resumeImportExtractor: createResumeImportExtractorAgent(),
-    mailClassifierAgent: createMailClassifierAgent()
+    mailClassifierAgent: createMailClassifierAgent(),
+    mailReplyAgent: createMailReplyAgent()
   },
   storage,
   logger: new PinoLogger({

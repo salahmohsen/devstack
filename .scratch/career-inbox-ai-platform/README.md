@@ -167,6 +167,15 @@ See [CONNECTIONS.md](./CONNECTIONS.md).
 | `67`   | BullMQ tick + per-user History sync jobs | **Done** |
 | `68`   | autoSyncEnabled + Settings toggle        | **Done** |
 
+## Mastra reply agent (wave 18)
+
+See [REVIEW.md](./REVIEW.md).
+
+| Ticket | Title                                        | Status   |
+| ------ | -------------------------------------------- | -------- |
+| `69`   | mail-reply agent + workflow + core contracts | **Done** |
+| `70`   | Wire createReplyDraftFromMail + job context  | **Done** |
+
 ## Next frontier
 
-**Mastra reply agent** · retrieval few-shot · digest batching · Gmail Pub/Sub
+**Retrieval few-shot** · digest batching · Gmail Pub/Sub · reply tools

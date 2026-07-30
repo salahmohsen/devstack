@@ -1,14 +1,25 @@
-import { buildHeuristicReplyDraft } from "@tsu-stack/core";
-import { mailMessageRepository, reviewItemRepository, type ReviewItemEntity } from "@tsu-stack/db";
+import {
+  heuristicMailReplyDraft,
+  type MailReplyDraftInput,
+  type MailReplyDraftOutput
+} from "@tsu-stack/core";
+import {
+  applicationRepository,
+  mailMessageRepository,
+  reviewItemRepository,
+  type ReviewItemEntity
+} from "@tsu-stack/db";
 
 import { emitAppNotification } from "#@/lib/notification/emit-app-notification";
+import { callMailReplyAgent } from "#@/lib/review/call-mail-reply-agent";
 
 export type CreateReplyDraftResult =
-  | { ok: true; item: ReviewItemEntity; created: boolean }
+  | { ok: true; item: ReviewItemEntity; created: boolean; source?: MailReplyDraftOutput["source"] }
   | { ok: false; code: "NOT_FOUND" | "NOT_CAREER" };
 
 /**
  * Ensure a pending reply draft exists for a career mail message (idempotent).
+ * Prefer Mastra mail-reply-workflow; fall back to local heuristic.
  */
 export async function createReplyDraftFromMail(input: {
   messageId: string;
@@ -25,11 +36,32 @@ export async function createReplyDraftFromMail(input: {
   const existing = await reviewItemRepository.findPendingReplyForMessage(message.id, input.userId);
   if (existing) return { ok: true, item: existing, created: false };
 
-  const draft = buildHeuristicReplyDraft({
+  let jobContext: MailReplyDraftInput["jobContext"] = null;
+  if (message.applicationId) {
+    const app = await applicationRepository.findByIdForUser(message.applicationId, input.userId);
+    if (app) {
+      jobContext = {
+        companyName: app.companyName ?? "",
+        title: app.title ?? "",
+        stage: app.stage ?? null
+      };
+    }
+  }
+
+  const draftInput: MailReplyDraftInput = {
+    messageId: message.id,
+    userId: input.userId,
     fromName: message.fromName,
+    fromEmail: message.fromEmail,
     subject: message.subject,
-    preview: message.preview
-  });
+    preview: message.preview,
+    bodyText: message.bodyText,
+    labels: message.labels ?? [],
+    jobContext
+  };
+
+  let draft: MailReplyDraftOutput | null = await callMailReplyAgent(draftInput);
+  draft ??= heuristicMailReplyDraft(draftInput);
 
   const item = await reviewItemRepository.create({
     userId: input.userId,
@@ -56,5 +88,5 @@ export async function createReplyDraftFromMail(input: {
     });
   }
 
-  return { ok: true, item, created: true };
+  return { ok: true, item, created: true, source: draft.source };
 }

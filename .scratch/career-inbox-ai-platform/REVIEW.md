@@ -1,6 +1,6 @@
-# Review queue — wave 8 guide
+# Review queue — guide
 
-**Tickets:** `41`–`46`  
+**Tickets:** `41`–`46` (queue), `47`–`49` (send), `69`–`70` (Mastra reply)  
 **Route:** `/dashboard/review`
 
 ## Goal
@@ -11,7 +11,8 @@ Durable **Assist** queue for reply drafts (and later other confirmations). Users
 
 ```text
 Career mail classified (system labels)
-  → heuristic reply draft (pending review_item)
+  → mail-reply-workflow (LLM) or heuristic fallback
+  → pending review_item
   → Assist: /dashboard/review → edit → Send reply (Resend)
   → Full: auto-send with BYO/platform Resend key
 
@@ -19,6 +20,15 @@ Mail reader “Draft with agent”
   → same createReplyDraftFromMail (idempotent)
   → navigate to Review (unless Full already sent)
 ```
+
+## Reply draft sources (wave 18)
+
+| Source      | When                                                |
+| ----------- | --------------------------------------------------- |
+| `llm`       | `AGENT_WORKER_URL` + `mail-reply-workflow` succeeds |
+| `heuristic` | Agent down, missing key, timeout, or invalid output |
+
+Job context (linked application company/title/stage) is injected when present; missing job context still drafts (send stays Assist-gated).
 
 ## Send config
 
@@ -29,6 +39,6 @@ Mail reader “Draft with agent”
 
 ## Out of scope (later)
 
-- Mastra reply agent / job context tools
-- App notification bell for `draft_ready`
+- Reply tools (CRM read, evidence search)
 - Threading headers / In-Reply-To
+- Per-user model override for reply feature
