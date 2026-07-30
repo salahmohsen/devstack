@@ -297,10 +297,7 @@ export const agentRouter = {
       }
 
       const userId = context.session.user.id;
-      const threadId = `dashboard-home:${userId}`;
-      // Mastra Agent.stream/generate resolve Memory from `memory.thread` /
-      // `memory.resource` (not top-level threadId). Auth middleware requestContext
-      // wins over body requestContext, so memory must be top-level.
+      const threadId = hubChatThreadId(userId);
       let response: Response;
       try {
         response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
@@ -308,10 +305,7 @@ export const agentRouter = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: input.messages,
-            memory: {
-              thread: threadId,
-              resource: userId
-            },
+            ...hubChatMemoryOptions(userId),
             model: { id: llm.modelId, apiKey: llm.apiKey },
             requestContext: {
               userId,
