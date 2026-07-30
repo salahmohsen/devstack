@@ -19,6 +19,7 @@ import {
   getRepoTree
 } from "@tsu-stack/github";
 
+import { hubChatMemoryOptions, hubChatThreadId } from "#@/lib/agent/hub-memory";
 import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
 import {
   abortPromise,
@@ -414,10 +415,7 @@ export const agentRouter = {
       }
 
       const userId = context.session.user.id;
-      const threadId = `dashboard-home:${userId}`;
-      // chatRoute → agent.stream resolves Memory via `memory.thread` / `memory.resource`
-      // (Mastra docs). Top-level threadId is ignored on the prepare-stream path.
-      // Auth middleware owns requestContext (resourceId via mapUserToResourceId).
+      const threadId = hubChatThreadId(userId);
       let upstream: Response;
       try {
         upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
@@ -429,10 +427,7 @@ export const agentRouter = {
           },
           body: JSON.stringify({
             messages: input.messages,
-            memory: {
-              thread: threadId,
-              resource: userId
-            },
+            ...hubChatMemoryOptions(userId),
             model: { id: llm.modelId, apiKey: llm.apiKey },
             requestContext: {
               userId,
