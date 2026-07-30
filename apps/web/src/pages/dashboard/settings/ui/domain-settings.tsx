@@ -344,10 +344,29 @@ export const DomainSettings = () => {
   const pathUrl = profileName ? `${primaryOrigin}/${profileName}` : primaryOrigin;
   const dashboardUrl = `${primaryOrigin}/dashboard`;
 
-  const { data: domain, isLoading, isError, refetch, isFetching } = useGetCustomDomainQuery();
+  const {
+    data: domain,
+    isLoading,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isFetching
+  } = useGetCustomDomainQuery();
   const setDomain = useSetCustomDomainMutation();
   const verifyDomain = useVerifyCustomDomainMutation();
   const removeDomain = useRemoveCustomDomainMutation();
+
+  const loadErrorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          typeof (error as { message: unknown }).message === "string"
+        ? (error as { message: string }).message
+        : null;
+  const isUnauthorized = loadErrorMessage != null && /unauthorized/i.test(loadErrorMessage);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [showChangeForm, setShowChangeForm] = useState(false);
@@ -452,28 +471,59 @@ export const DomainSettings = () => {
       </FrameHeader>
 
       <FramePanel className="space-y-8">
-        {isLoading ? (
+        {isPending || (isLoading && !isError) ? (
           <div className="space-y-3" aria-busy aria-label="Loading domain settings">
             <Skeleton className="h-16 w-full rounded-xl" />
             <Skeleton className="h-32 w-full rounded-xl" />
           </div>
-        ) : isError ? (
+        ) : isError && !isFetching ? (
           <Alert variant="error">
             <AlertCircleIcon />
-            <AlertTitle>Couldn’t load domain settings</AlertTitle>
+            <AlertTitle>
+              {isUnauthorized ? "Session expired" : "Couldn’t load domain settings"}
+            </AlertTitle>
             <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <span>Check your connection and try again.</span>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => void refetch()}
-                disabled={isFetching}
-              >
-                Retry
-              </Button>
+              <span className="text-pretty">
+                {isUnauthorized
+                  ? "Sign in again to manage custom domains."
+                  : loadErrorMessage && !/failed to fetch|network/i.test(loadErrorMessage)
+                    ? loadErrorMessage
+                    : "Check your connection and try again."}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {isUnauthorized ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    render={<a href="/sign-in?redirect=/dashboard/settings/domain" />}
+                  >
+                    Sign in
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void refetch()}
+                  disabled={isFetching}
+                >
+                  {isFetching ? (
+                    <>
+                      <Loader2Icon className="size-4 animate-spin" aria-hidden />
+                      Retrying
+                    </>
+                  ) : (
+                    "Retry"
+                  )}
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
+        ) : isError && isFetching ? (
+          <div className="space-y-3" aria-busy aria-label="Retrying domain settings">
+            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+          </div>
         ) : !domain ? (
           <div className="space-y-4">
             {!showAddForm ? (

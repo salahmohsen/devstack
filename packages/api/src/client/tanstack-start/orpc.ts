@@ -25,6 +25,21 @@ function getServerURL(): string {
   return ENV_WEB_ISOMORPHIC.SERVER_URL_INTERNAL ?? ENV_WEB_ISOMORPHIC.VITE_SERVER_URL;
 }
 
+function readRequestHeader(
+  headers:
+    | { get?: (name: string) => string | null | undefined }
+    | Record<string, string | undefined>,
+  name: string
+): string | undefined {
+  if (headers && typeof (headers as { get?: unknown }).get === "function") {
+    const value = (headers as { get: (n: string) => string | null | undefined }).get(name);
+    return value?.trim() ? value.trim() : undefined;
+  }
+  const record = headers as Record<string, string | undefined>;
+  const direct = record[name] ?? record[name.toLowerCase()] ?? record[name.toUpperCase()];
+  return direct?.trim() ? direct.trim() : undefined;
+}
+
 function getHeaders(): Record<string, string> {
   const headers = getRequestHeaders();
   // Forward the incoming request's cookies (and any other relevant headers)
@@ -32,12 +47,17 @@ function getHeaders(): Record<string, string> {
   // Also forward Host as x-forwarded-host so public portfolio RPCs can resolve
   // verified custom domains during SSR (internal RPC URL is not the public Host).
   const out: Record<string, string> = {};
-  const cookie = headers.get?.("cookie");
+  const cookie = readRequestHeader(headers, "cookie");
   if (cookie) {
     out.cookie = cookie;
   }
-  const xfh = headers.get?.("x-forwarded-host")?.split(",")[0]?.trim() ?? "";
-  const hostHeader = headers.get?.("host")?.trim() ?? "";
+  // Prefer Authorization when present (Bearer session) for same-origin API auth.
+  const authorization = readRequestHeader(headers, "authorization");
+  if (authorization) {
+    out.authorization = authorization;
+  }
+  const xfh = readRequestHeader(headers, "x-forwarded-host")?.split(",")[0]?.trim() ?? "";
+  const hostHeader = readRequestHeader(headers, "host") ?? "";
   const forwardedHost = xfh.length > 0 ? xfh : hostHeader.length > 0 ? hostHeader : null;
   if (forwardedHost) {
     out["x-forwarded-host"] = forwardedHost;

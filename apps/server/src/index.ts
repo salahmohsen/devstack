@@ -16,21 +16,24 @@ async function start(): Promise<void> {
   // Apply DB migrations before accepting traffic when opted in (Docker sets
   // RUN_MIGRATIONS=true). Leave unset in local dev — use `pnpm db:migrate`.
   if (process.env.RUN_MIGRATIONS === "true" || process.env.RUN_MIGRATIONS === "1") {
-    const migrateLog = createLogger({ operation: "server__database_migration" });
+    // One emit per logger lifetime (post-emit set is invalid).
     const folder = process.env.MIGRATIONS_FOLDER ?? "(default packages/db/migrations)";
-    migrateLog.set({ event: "database_migration_starting", migrationsFolder: folder });
-    migrateLog.emit();
+    const startLog = createLogger({ operation: "server__database_migration" });
+    startLog.set({ event: "database_migration_starting", migrationsFolder: folder });
+    startLog.emit();
     try {
       const { migrateDatabase } = await import("@tsu-stack/db/migrate");
       await migrateDatabase();
-      migrateLog.set({ event: "database_migration_completed", migrationsFolder: folder });
-      migrateLog.emit();
+      const doneLog = createLogger({ operation: "server__database_migration" });
+      doneLog.set({ event: "database_migration_completed", migrationsFolder: folder });
+      doneLog.emit();
     } catch (error) {
-      migrateLog.error(error instanceof Error ? error : new Error(String(error)), {
+      const failLog = createLogger({ operation: "server__database_migration" });
+      failLog.error(error instanceof Error ? error : new Error(String(error)), {
         event: "database_migration_failed",
         migrationsFolder: folder
       });
-      migrateLog.emit({ _forceKeep: true });
+      failLog.emit({ _forceKeep: true });
       throw error;
     }
   }

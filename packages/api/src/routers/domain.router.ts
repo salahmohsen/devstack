@@ -63,8 +63,26 @@ export const domainRouter = {
     })
     .output(CustomDomainOutputSchema.nullable())
     .handler(async ({ context }) => {
-      const row = await userCustomDomainRepository.findByUserId(context.session.user.id);
-      return row ? toDomainOutput(row) : null;
+      const userId = context.session.user.id;
+      try {
+        const row = await userCustomDomainRepository.findByUserId(userId);
+        const output = row ? toDomainOutput(row) : null;
+        context.logger.set({
+          event: "domain_get_ok",
+          route: "domain.get",
+          hasDomain: Boolean(output),
+          domainStatus: output?.status ?? null
+        });
+        return output;
+      } catch (error) {
+        context.logger.set({
+          event: "domain_get_failed",
+          route: "domain.get",
+          userId
+        });
+        context.logger.error(error instanceof Error ? error : String(error));
+        throw error;
+      }
     }),
 
   set: protectedProcedure
