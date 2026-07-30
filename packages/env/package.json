@@ -6,6 +6,7 @@
     "#@/*": "./src/*.ts"
   },
   "exports": {
+    ".": "./src/server/env.ts",
     "./*": "./src/*.ts"
   },
   "dependencies": {

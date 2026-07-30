@@ -16,14 +16,13 @@ import {
 } from "@mastra/observability";
 import { PostgresStore } from "@mastra/pg";
 
-import { auth } from "@tsu-stack/auth";
-
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
 import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agent";
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createResumeImportExtractorAgent } from "#@/mastra/agents/resume-import-extractor-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import "#@/mastra/logger-bootstrap";
+import { agentSessionAuth } from "#@/mastra/session-auth";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
 import { mailReplyWorkflow } from "#@/mastra/workflows/mail-reply-workflow";
@@ -87,9 +86,9 @@ const storage = new MastraCompositeStore({
  * Server/API forwards the user's session as Authorization: Bearer <token>.
  */
 const mastraAuth = new MastraAuthBetterAuth({
-  // better-auth Auth generics differ slightly across package versions.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- shared app `auth` is the runtime instance
-  auth: auth as any,
+  // Session-only Better Auth (same secret + session tables as API).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- better-auth Auth generics differ by version
+  auth: agentSessionAuth as any,
   public: ["/api/health", "/health", "/", "/api", "/openapi.json", "/api/openapi.json"],
   // Multi-tenant memory / threads: bind Mastra resourceId to Better Auth user id
   // (docs: mapUserToResourceId — prevents client-supplied resourceId spoofing).
@@ -100,13 +99,6 @@ const mastraAuth = new MastraAuthBetterAuth({
     return typeof id === "string" && id.length > 0 ? id : undefined;
   }
 });
-
-if (!process.env.BETTER_AUTH_SECRET?.trim()) {
-  console.debug(
-    "[agent] BETTER_AUTH_SECRET unset — MastraAuthBetterAuth cannot verify sessions. " +
-      "Set the same BETTER_AUTH_SECRET as the API server."
-  );
-}
 
 export const mastra = new Mastra({
   server: {

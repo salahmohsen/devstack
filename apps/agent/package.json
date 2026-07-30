@@ -22,6 +22,7 @@
     "check:fix": "vp check --fix"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "catalog:",
     "@mastra/ai-sdk": "catalog:",
     "@mastra/auth-better-auth": "catalog:",
     "@mastra/core": "catalog:",
@@ -31,7 +32,6 @@
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",
     "@mastra/pg": "catalog:",
-    "@tsu-stack/auth": "workspace:*",
     "@tsu-stack/core": "workspace:*",
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",

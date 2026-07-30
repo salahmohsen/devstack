@@ -24,7 +24,7 @@ Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge �
 - Reply-assist: **job/application context is a required first step**; fail closed without it
 - Learning: user corrections → app storage + Mastra feedback/datasets; do not assume fine-tuning APIs
 - Logging: `initLogger` / `createLogger` from `@tsu-stack/logger/server` for job outcomes; include `traceId` when present; one `emit()` per wide-event lifetime
-- **Auth:** `MastraAuthBetterAuth` (`@mastra/auth-better-auth`) with the shared Better Auth instance. Server forwards the user's session as `Authorization: Bearer <session_token>`. Same `BETTER_AUTH_SECRET` + app `DATABASE_URL` as the API. Never expose the agent HTTP port without auth.
+- **Auth:** `MastraAuthBetterAuth` with a **session-only** Better Auth instance (`session-auth.ts`) — same `BETTER_AUTH_SECRET` + app session tables as the API (do not import full `@tsu-stack/auth`; Mastra cannot bundle it). Server forwards the user's session as `Authorization: Bearer <session_token>`. Never expose the agent HTTP port without auth.
 - **LLM keys:** BYO only via Settings → AI (workflow `input.llm` / requestContext). No `DEEPSEEK_API_KEY` or other provider env keys.
 
 ## Layout conventions
