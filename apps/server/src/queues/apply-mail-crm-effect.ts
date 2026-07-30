@@ -2,6 +2,7 @@ import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-no
 import {
   APPLICATION_STAGE_LABELS,
   extractMailApplicationHints,
+  isJobAlertDigestMail,
   MailCrmAuditSnapshotSchema,
   proposeMailCrmEffect,
   resolveMailApplicationMatch,
@@ -77,6 +78,32 @@ export async function applyMailCrmEffectFromClassify(input: {
   if (!message) {
     const effect = proposeMailCrmEffect({ systemLabels: input.systemLabels });
     return { applied: false, effect: { ...effect, reason: "message_not_found" } };
+  }
+
+  if (
+    isJobAlertDigestMail({
+      fromName: message.fromName,
+      fromEmail: message.fromEmail,
+      subject: message.subject,
+      preview: message.preview,
+      bodyText: message.bodyText
+    })
+  ) {
+    const effect = proposeMailCrmEffect({
+      systemLabels: [],
+      mailApplicationId: message.applicationId
+    });
+    log.set({
+      event: "mail_crm_apply_noop",
+      messageId: input.messageId,
+      userId: input.userId,
+      reason: "job_alert_digest_skip_crm"
+    });
+    log.emit();
+    return {
+      applied: false,
+      effect: { ...effect, reason: "job_alert_digest_skip_crm" }
+    };
   }
 
   let currentStage: ApplicationStage | null = null;

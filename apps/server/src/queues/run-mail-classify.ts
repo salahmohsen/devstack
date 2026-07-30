@@ -8,8 +8,10 @@ import {
   applySmartRulesToClassifyResult,
   correctionEmbedText,
   heuristicClassifyMail,
+  isJobAlertDigestMail,
   MailSystemLabelSchema,
   selectCorrectionsForFewShot,
+  suppressCareerLabelsForJobAlertDigest,
   type AiCorrectionFewShotExample,
   type MailClassifyOutput,
   type MailSystemLabel
@@ -188,21 +190,35 @@ export async function runMailClassify(input: {
     log.emit();
   }
 
+  // LinkedIn/Indeed digests must not create Interview CRM rows or notify as career.
+  result = suppressCareerLabelsForJobAlertDigest(classifyInput, result);
+  const isDigest = isJobAlertDigestMail(classifyInput);
+
   await mailMessageRepository.applyClassification(row.id, row.userId, result.labels, {
     mastraClassifyRunId,
     mastraClassifyTraceId
   });
 
-  const crm = await applyMailCrmEffectFromClassify({
-    messageId: row.id,
-    userId: row.userId,
-    systemLabels: result.systemLabels
-  });
+  const crm = isDigest
+    ? {
+        applied: false,
+        effect: {
+          kind: "noop" as const,
+          applicationId: null,
+          systemLabels: [] as MailSystemLabel[],
+          reason: "job_alert_digest_skip_crm"
+        }
+      }
+    : await applyMailCrmEffectFromClassify({
+        messageId: row.id,
+        userId: row.userId,
+        systemLabels: result.systemLabels
+      });
 
   // Career-labeled mail → notify + ensure review draft; Full autonomy auto-sends.
   let reviewDraftCreated: boolean | null = null;
   let reviewAutoSent: boolean | null = null;
-  if (result.systemLabels.length > 0) {
+  if (result.systemLabels.length > 0 && !isDigest) {
     await emitAppNotification({
       userId: row.userId,
       kind: "mail.classified.important",

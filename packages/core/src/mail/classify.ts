@@ -53,6 +53,30 @@ const RECRUITER_RE =
   /\b(recruiter|talent\s+acquisition|i\s+came\s+across\s+your\s+profile|opportunity\s+for\s+you|are\s+you\s+open\s+to)\b/i;
 const APPLICATION_RE =
   /\b(application\s+(received|update|status)|thank\s+you\s+for\s+applying|we\s+received\s+your\s+application|candidate\s+portal|your\s+application)\b/i;
+/** LinkedIn/Indeed digests — must not become interview/offer or create CRM apps. */
+const JOB_ALERT_DIGEST_RE =
+  /\b(job\s+alert|jobs?\s+alerts?|your\s+job\s+alert|linkedin\s+job\s+alerts?|jobs?\s+you\s+may\s+be\s+interested|recommended\s+jobs?|see\s+all\s+jobs|manage\s+(your\s+)?alerts?|jobalerts?[-.]noreply|indeed\.com)\b/i;
+const JOB_ALERT_FROM_RE =
+  /\b(jobalerts?[-.]noreply@|jobs-noreply@|noreply@linkedin\.com|jobs@indeed\.com)\b/i;
+
+/**
+ * True for bulk job-alert digests (LinkedIn, Indeed, …). These should not get
+ * career system labels or CRM stage mutations.
+ */
+export function isJobAlertDigestMail(input: {
+  fromName?: string;
+  fromEmail?: string;
+  subject?: string;
+  preview?: string;
+  bodyText?: string;
+}): boolean {
+  const fromBlob = `${input.fromName ?? ""} ${input.fromEmail ?? ""}`;
+  if (JOB_ALERT_FROM_RE.test(fromBlob)) return true;
+  const haystack = [input.subject, input.preview, (input.bodyText ?? "").slice(0, 4_000)]
+    .join("\n")
+    .slice(0, 8_000);
+  return JOB_ALERT_DIGEST_RE.test(haystack);
+}
 
 /**
  * Cheap prefilter before any LLM call. Returns at most one primary system label
@@ -67,7 +91,12 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
   let confidence = 0.55;
   let notes: string | undefined;
 
-  if (OFFER_RE.test(haystack)) {
+  // Digests first — "interview" can appear inside a job card list.
+  if (isJobAlertDigestMail(input)) {
+    system = null;
+    confidence = 0.9;
+    notes = "heuristic:job_alert_digest";
+  } else if (OFFER_RE.test(haystack)) {
     system = "offer";
     confidence = 0.75;
     notes = "heuristic:offer";
@@ -130,5 +159,26 @@ export function applySmartRulesToClassifyResult(
     ...result,
     labels,
     notes: [result.notes, `smart:${smartRuleLabels.join(",")}`].filter(Boolean).join(";")
+  };
+}
+
+/**
+ * Strip career system labels from job-alert digests (LLM may still say "interview"
+ * because a job card mentions interviews). Smart-rule labels are kept.
+ */
+export function suppressCareerLabelsForJobAlertDigest(
+  input: MailClassifyInput,
+  result: MailClassifyOutput
+): MailClassifyOutput {
+  if (!isJobAlertDigestMail(input)) return result;
+  if (result.systemLabels.length === 0 && result.notes?.includes("job_alert")) return result;
+
+  const smartOnly = result.labels.filter((l) => l.startsWith("rule:"));
+  return {
+    ...result,
+    systemLabels: [],
+    labels: smartOnly,
+    confidence: Math.max(result.confidence ?? 0, 0.85),
+    notes: [result.notes, "suppress:job_alert_digest"].filter(Boolean).join(";")
   };
 }

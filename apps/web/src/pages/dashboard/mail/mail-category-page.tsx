@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { BriefcaseBusiness, CalendarDays, Gift, Inbox, Mail, Sparkles, Users } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import {
   APPLICATION_STAGE_LABELS,
@@ -414,6 +415,17 @@ function MessageReaderBody({
       {
         onSuccess: () => {
           void navigate({ to: "/dashboard/review" });
+        },
+        onError: (err) => {
+          const msg = err instanceof Error ? err.message : "Could not create draft";
+          // Surface agent misconfig (503 agent_auth_not_configured) clearly.
+          if (/agent|503|auth_not_configured|WORKER/i.test(msg)) {
+            toast.error(
+              "Agent is unavailable. Set AGENT_SERVICE_SECRET on server and agent, then redeploy."
+            );
+            return;
+          }
+          toast.error(msg);
         }
       }
     );

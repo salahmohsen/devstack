@@ -43,10 +43,16 @@ export async function callMailClassifyAgent(
     if (!createRes) return null;
     if (!createRes.ok) {
       const body = await createRes.text().catch(() => "");
+      const agentAuthMissing =
+        createRes.status === 503 && body.includes("agent_auth_not_configured");
       log.set({
         event: "mail_classify_agent_create_run_failed",
         status: createRes.status,
-        body: body.slice(0, 200)
+        body: body.slice(0, 200),
+        agentAuthMissing: agentAuthMissing || undefined,
+        fixHint: agentAuthMissing
+          ? "Set AGENT_SERVICE_SECRET on both server and agent, then redeploy"
+          : undefined
       });
       log.emit();
       return null;
