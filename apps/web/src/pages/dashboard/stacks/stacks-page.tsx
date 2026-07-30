@@ -32,7 +32,7 @@ import {
   dismissOrganizeStacksJob,
   setOrganizeReviewOpen,
   startOrganizeStacksJob,
-  useOrganizeStacksJob
+  useOrganizeStacksJobSelector
 } from "@/features/stacks";
 
 import {
@@ -53,9 +53,88 @@ import { OrganizeDialog } from "@/pages/dashboard/stacks/ui/organize-dialog";
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 
+/** List data changes infrequently — avoid refetch-on-focus re-render storms. */
+const STACKS_LIST_STALE_TIME_MS = 30_000;
+
+/** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
+function StackDetailPanel({ stack }: { stack: StackOutput }) {
+  const detailQuery = useQuery({
+    ...orpcQueryClient.stacks.get.queryOptions({ input: { id: stack.id } }),
+    staleTime: STACKS_LIST_STALE_TIME_MS
+  });
+  const item = detailQuery.data ?? stack;
+
+  return (
+    <ItemInfoPanel
+      title={
+        <div className="flex min-w-0 items-center gap-3">
+          {item.icon ? (
+            <Icon icon={item.icon} className="size-10 shrink-0 rounded object-contain" />
+          ) : (
+            <Package className="size-10 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+          )}
+          <FrameTitle className="text-lg">{item.name}</FrameTitle>
+        </div>
+      }
+      description={
+        <>
+          {item.projectCount > 0 ? (
+            <span>
+              {item.projectCount} {item.projectCount === 1 ? "project" : "projects"}
+            </span>
+          ) : null}
+        </>
+      }
+      updatedAt={item.updatedAt}
+      createdAt={item.createdAt}
+    >
+      {item.description ? (
+        <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+          {item.description}
+        </Markdown>
+      ) : (
+        <p className="text-sm text-muted-foreground">No description.</p>
+      )}
+
+      {detailQuery.isLoading && !detailQuery.data ? (
+        <p className="mt-4 text-xs text-muted-foreground">Loading details…</p>
+      ) : null}
+
+      {item.dependencies && item.dependencies.length > 0 ? (
+        <div className="mt-4">
+          <h4 className="mb-2 text-sm font-medium">Dependencies</h4>
+          <div className="flex flex-wrap gap-1.5">
+            {item.dependencies.map((dep) => (
+              <Badge key={dep.npmPackage} variant="secondary" size="sm">
+                {dep.npmPackage}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {item.projects && item.projects.length > 0 ? (
+        <div className="mt-4">
+          <h4 className="mb-2 text-sm font-medium">Projects</h4>
+          <div className="flex flex-wrap gap-1.5">
+            {item.projects.map((project) => (
+              <Badge key={project.id} variant="secondary" size="sm">
+                {project.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </ItemInfoPanel>
+  );
+}
+
 export function StacksPage() {
   const queryClient = useQueryClient();
-  const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
+  const stacksQuery = useQuery({
+    ...orpcQueryClient.stacks.list.queryOptions(),
+    staleTime: STACKS_LIST_STALE_TIME_MS
+  });
 
   const {
     openedItem,
@@ -64,7 +143,9 @@ export function StacksPage() {
     setIsItemOpen,
     selectedIds,
     selectAll,
-    clearSelection
+    clearSelection,
+    openItem,
+    toggleSelect
   } = useStackStore();
 
   const stacks = useMemo(() => stacksQuery.data ?? [], [stacksQuery.data]);
@@ -79,8 +160,12 @@ export function StacksPage() {
 
   const isAnyOpen = isAnyOpened(isItemOpen);
 
-  // ── Organize job (global; survives navigation) ───────────────────
-  const organizeJob = useOrganizeStacksJob();
+  // ── Organize job: field selectors so stepLabel ticks don't re-render the grid
+  const organizeStatus = useOrganizeStacksJobSelector((s) => s.status);
+  const organizeStepLabel = useOrganizeStacksJobSelector((s) => s.stepLabel);
+  const organizeDialogOpen = useOrganizeStacksJobSelector((s) => s.dialogOpen);
+  const organizeActions = useOrganizeStacksJobSelector((s) => s.actions);
+  const organizeSortOrder = useOrganizeStacksJobSelector((s) => s.sortOrder);
   const [isApplyingOrganize, setIsApplyingOrganize] = useState(false);
 
   function handleStartOrganize() {
@@ -99,7 +184,7 @@ export function StacksPage() {
       stacks.map((s) => {
         return { id: s.id, name: s.name, projectCount: s.projectCount };
       }),
-      organizeJob.sortOrder
+      organizeSortOrder
     );
 
     const mergeActions = plan.filter((a) => a.type === "merge");
@@ -335,6 +420,19 @@ export function StacksPage() {
     setDialogOpen(true);
   }, []);
 
+  const prefetchStack = useCallback(
+    (id: string) => {
+      void queryClient.prefetchQuery(
+        orpcQueryClient.stacks.get.queryOptions({
+          input: { id },
+          // Detail rarely changes while browsing the grid
+          staleTime: STACKS_LIST_STALE_TIME_MS
+        })
+      );
+    },
+    [queryClient]
+  );
+
   async function handleBatchDelete() {
     setBatchAction("delete");
     setBatchDeleteDialogOpen(false);
@@ -398,36 +496,36 @@ export function StacksPage() {
     />
   );
 
+  const displayItems = pendingOrder ?? stacks;
+
+  // Viewport breakpoints (not auto-fill): column count stays stable when the
+  // side panel opens and only card width animates — no item reflow/rearrange.
+  const gridClassName =
+    "grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 animate-grid";
+
   function renderGrid() {
     if (stacksQuery.isLoading) return <GridSkeleton count={8} />;
     if (stacks.length === 0) return emptyState;
 
-    const displayItems = pendingOrder ?? stacks;
-
-    // Viewport breakpoints (not auto-fill): column count stays stable when the
-    // side panel opens and only card width animates — no item reflow/rearrange.
-    const gridClassName =
-      "grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 animate-grid";
-
-    const grid = (
-      <div className={gridClassName}>
-        {displayItems.map((stack) => (
-          <div key={stack.id} className="animate-grid-item min-w-0">
-            <StackItem
-              stack={stack}
-              onEdit={openDialog}
-              onMouseEnter={() => {
-                void queryClient.prefetchQuery(
-                  orpcQueryClient.stacks.get.queryOptions({ input: { id: stack.id } })
-                );
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    );
-
-    if (!isSort) return grid;
+    if (!isSort) {
+      return (
+        <div className={gridClassName}>
+          {displayItems.map((stack) => (
+            <div key={stack.id} className="animate-grid-item min-w-0">
+              <StackItem
+                stack={stack}
+                isChecked={Boolean(selectedIds?.[stack.id])}
+                isOpen={Boolean(isItemOpen?.[stack.id])}
+                onEdit={openDialog}
+                onOpen={openItem}
+                onToggleSelect={toggleSelect}
+                onPrefetch={prefetchStack}
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
 
     return (
       <SortableList
@@ -439,7 +537,16 @@ export function StacksPage() {
       >
         {(stack, dragHandleProps) => (
           <div key={stack.id} className="animate-grid-item min-w-0">
-            <StackItem stack={stack} onEdit={openDialog} dragHandleProps={dragHandleProps} isSort />
+            <StackItem
+              stack={stack}
+              isChecked={Boolean(selectedIds?.[stack.id])}
+              isOpen={Boolean(isItemOpen?.[stack.id])}
+              onEdit={openDialog}
+              onOpen={openItem}
+              onToggleSelect={toggleSelect}
+              dragHandleProps={dragHandleProps}
+              isSort
+            />
           </div>
         )}
       </SortableList>
@@ -456,8 +563,8 @@ export function StacksPage() {
             <HeaderActions
               add={{ onAdd: () => openDialog(null), label: "Add Stack" }}
               organize={{
-                isRunning: organizeJob.status === "running",
-                currentStep: organizeJob.stepLabel,
+                isRunning: organizeStatus === "running",
+                currentStep: organizeStepLabel,
                 onStart: handleStartOrganize,
                 onCancel: handleCancelOrganize
               }}
@@ -490,68 +597,7 @@ export function StacksPage() {
         <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
           {(item) => {
             if (!item) return null;
-            return (
-              <ItemInfoPanel
-                title={
-                  <div className="flex min-w-0 items-center gap-3">
-                    {item.icon ? (
-                      <Icon icon={item.icon} className="size-10 shrink-0 rounded object-contain" />
-                    ) : (
-                      <Package
-                        className="size-10 shrink-0 text-muted-foreground"
-                        strokeWidth={1.5}
-                      />
-                    )}
-                    <FrameTitle className="text-lg">{item.name}</FrameTitle>
-                  </div>
-                }
-                description={
-                  <>
-                    {item.projectCount > 0 && (
-                      <span>
-                        {item.projectCount} {item.projectCount === 1 ? "project" : "projects"}
-                      </span>
-                    )}
-                  </>
-                }
-                updatedAt={item.updatedAt}
-                createdAt={item.createdAt}
-              >
-                {item.description ? (
-                  <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                    {item.description}
-                  </Markdown>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No description.</p>
-                )}
-
-                {item.dependencies && item.dependencies.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="mb-2 text-sm font-medium">Dependencies</h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {item.dependencies.map((dep) => (
-                        <Badge key={dep.npmPackage} variant="secondary" size="sm">
-                          {dep.npmPackage}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {item.projects && item.projects.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="mb-2 text-sm font-medium">Projects</h4>
-                    <div className="flex flex-wrap gap-1.5">
-                      {item.projects.map((project) => (
-                        <Badge key={project.id} variant="secondary" size="sm">
-                          {project.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </ItemInfoPanel>
-            );
+            return <StackDetailPanel stack={item} />;
           }}
         </ItemsInfoPanel>
 
@@ -596,13 +642,13 @@ export function StacksPage() {
 
         {/* ── Organize dialog (state from global job store) ───────── */}
         <OrganizeDialog
-          open={organizeJob.dialogOpen}
+          open={organizeDialogOpen}
           onOpenChange={(open) => {
             setOrganizeReviewOpen(open);
             // Dismissing without apply keeps ready results — re-open via Organize
           }}
-          actions={organizeJob.actions}
-          sortOrder={organizeJob.sortOrder}
+          actions={organizeActions}
+          sortOrder={organizeSortOrder}
           stacks={stacks}
           isPending={isApplyingOrganize}
           onConfirm={handleConfirmOrganize}

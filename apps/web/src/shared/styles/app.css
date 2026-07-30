@@ -223,18 +223,26 @@
   opacity: 1;
   scale: 1;
   translate: 0 0;
+  /* Prefer compositor-friendly props; skip width/max-width (layout thrash when side panel opens). */
   transition:
-    opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    scale 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    translate 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    max-width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    display 0.35s cubic-bezier(0.22, 1, 0.36, 1) allow-discrete;
+    opacity 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    scale 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    translate 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 
   @starting-style {
     opacity: 0;
-    scale: 0.92;
-    translate: 0 8px;
+    scale: 0.96;
+    translate: 0 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    @starting-style {
+      opacity: 1;
+      scale: 1;
+      translate: 0 0;
+    }
   }
 }
 

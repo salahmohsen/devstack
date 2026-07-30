@@ -43,14 +43,23 @@ const NpmSearchOutputSchema = z.object({
 export const stacksRouter = {
   list: protectedProcedure
     .route({
-      description: "List all tech stacks",
+      description:
+        "List all tech stacks (grid payload: counts only — use get for deps/projects detail)",
       method: "GET"
     })
     .output(StackListOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
-      const stacks = await stackRepository.findAllWithDependenciesByUserId(userId);
-      return stacks.map(toStackOutput);
+      // Avoid N+1 deps/projects on list — grid only needs identity + projectCount + icon.
+      // Detail panel / forms call stacks.get (or openItem hydrates after prefetch).
+      const stacks = await stackRepository.findAllByUserId(userId);
+      return stacks.map((s) =>
+        toStackOutput({
+          ...s,
+          dependencies: [],
+          projects: []
+        })
+      );
     }),
   get: protectedProcedure
     .route({

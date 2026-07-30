@@ -8,6 +8,7 @@ export {
 export {
   getOrganizeJobState,
   useOrganizeStacksJob,
+  useOrganizeStacksJobSelector,
   type OrganizeJobState,
   type OrganizeJobStatus
 } from "@/features/stacks/lib/organize-stacks-job-store";

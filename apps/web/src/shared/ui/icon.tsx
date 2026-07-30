@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 type IconProps = {
@@ -28,7 +30,8 @@ function renderSvg(svgRaw: string, className?: string): React.ReactElement {
   );
 }
 
-function Icon({
+/** Memoized — SVG parse + innerHTML is costly when N cards re-render. */
+const Icon = memo(function Icon({
   icon,
   className,
   fallbackToLetter = false,
@@ -53,7 +56,7 @@ function Icon({
   }
 
   return null;
-}
+});
 
 function IconLetter({
   letter,

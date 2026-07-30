@@ -1,3 +1,5 @@
+import { useRef, useSyncExternalStore } from "react";
+
 import { type OrganizeAction } from "@tsu-stack/core";
 
 import { createExternalStore, type AiJobStatus } from "@/shared/lib/ai-job";
@@ -50,4 +52,23 @@ export function resetOrganizeJobState() {
  */
 export function useOrganizeStacksJob() {
   return store.useStore();
+}
+
+/**
+ * Subscribe to a slice of the organize job. Avoids re-rendering the stacks
+ * grid on every stepLabel tick while the job runs.
+ */
+export function useOrganizeStacksJobSelector<S>(selector: (state: OrganizeJobState) => S): S {
+  const selectedRef = useRef<S>(selector(store.getState()));
+
+  return useSyncExternalStore(
+    store.subscribe,
+    () => {
+      const next = selector(store.getState());
+      if (Object.is(next, selectedRef.current)) return selectedRef.current;
+      selectedRef.current = next;
+      return next;
+    },
+    () => selector(store.getState())
+  );
 }

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { GripVertical } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -23,8 +23,6 @@ import { Icon } from "@/shared/ui/icon";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
-
-import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 
 const TYPE_LABELS: Record<string, string> = {
   framework: "Framework",
@@ -57,21 +55,40 @@ const TYPE_VARIANTS: Record<
   other: "outline"
 };
 
-type StackItemProps = React.ComponentProps<"div"> & { size?: "default" | "sm" } & {
+export type StackItemProps = {
   stack: StackOutput;
+  /** Multi-select checkbox state — pass from parent so memo can skip siblings. */
+  isChecked: boolean;
+  /** Side-panel open for this card. */
+  isOpen: boolean;
+  isSort?: boolean;
   onEdit: (id: string) => void;
+  onOpen: (id: string, stack: StackOutput) => void;
+  onToggleSelect: (id: string) => void;
+  onPrefetch?: (id: string) => void;
   dragHandleProps?: {
     attributes: Record<string, unknown>;
     listeners: Record<string, unknown> | undefined;
     className: string;
   };
-  isSort?: boolean;
 };
 
-export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: StackItemProps) {
+/**
+ * Grid card for one stack. Memoized — parent must pass primitive selection flags
+ * so selecting/opening one item does not re-render the whole grid.
+ */
+export const StackItem = memo(function StackItem({
+  stack,
+  isChecked,
+  isOpen,
+  isSort = false,
+  onEdit,
+  onOpen,
+  onToggleSelect,
+  onPrefetch,
+  dragHandleProps
+}: StackItemProps) {
   const queryClient = useQueryClient();
-  const { openItem, isItemOpen, selectedIds, toggleSelect } = useStackStore();
-  const selected = isItemOpen?.[stack.id] ?? false;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const usageCount = stack.projectCount ?? 0;
@@ -104,7 +121,7 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
           queryKey: getPortfolioListQueryKey()
         });
         await queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryKey()
+          queryKey: orpcQueryClient.stacks.list.queryKey()
         });
         toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
       },
@@ -131,32 +148,40 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
       <Card
         /* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role, jsx-a11y/interactive-supports-focus */
         role="button"
-        aria-pressed={selected}
+        aria-pressed={isOpen}
         aria-label={`View details for ${stack.name}`}
         data-item-id={stack.id}
-        data-selected={selected}
-        onClick={isSort ? undefined : () => openItem(stack.id, stack)}
+        data-selected={isOpen}
+        onClick={isSort ? undefined : () => onOpen(stack.id, stack)}
+        onMouseEnter={
+          isSort || !onPrefetch
+            ? undefined
+            : () => {
+                onPrefetch(stack.id);
+              }
+        }
         onKeyDown={
           isSort
             ? undefined
             : (event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  openItem(stack.id, stack);
+                  onOpen(stack.id, stack);
                 }
               }
         }
         className={cn(
+          // content-visibility skips layout/paint for off-screen cards in long grids
+          "[contain-intrinsic-size:12.5rem] [content-visibility:auto]",
           "group relative aspect-square cursor-pointer overflow-hidden py-0!",
-          "**:transition-all **:duration-200",
-          // Fixed footprint so selection / side-panel width changes don't reflow the grid
+          // Only transition interactive chrome — not every descendant (** → all)
+          "transition-[box-shadow,transform] duration-200",
           "h-50 w-full max-w-full shrink-0",
           isSort && "cursor-grab active:cursor-grabbing",
-          selected && "ring-1 ring-primary/40"
+          isOpen && "ring-1 ring-primary/40"
         )}
-        {...props}
       >
-        {isSort && dragHandleProps && (
+        {isSort && dragHandleProps ? (
           <div
             {...dragHandleProps.attributes}
             {...dragHandleProps.listeners}
@@ -164,32 +189,32 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
           >
             <GripVertical className="size-4" />
           </div>
-        )}
+        ) : null}
         <div
           role="presentation"
           className="absolute top-2 left-3 z-10"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          {!isSort && (
+          {!isSort ? (
             <Checkbox
-              checked={selectedIds?.[stack.id] ?? false}
-              onCheckedChange={() => toggleSelect(stack.id)}
+              checked={isChecked}
+              onCheckedChange={() => onToggleSelect(stack.id)}
               className={cn(
-                "transition-opacity",
-                selectedIds?.[stack.id] ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                "transition-opacity duration-150",
+                isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               )}
             />
-          )}
+          ) : null}
         </div>
         <CardContent
-          data-selected={selected}
+          data-selected={isOpen}
           className={cn(
-            "flex h-full flex-col items-center justify-center gap-2 p-4",
+            "flex h-full flex-col items-center justify-center gap-2 p-4 transition-transform duration-200",
             !isSort && "translate-y-4 scale-100 data-selected:translate-y-0 data-selected:scale-90"
           )}
         >
-          {stack.type && (
+          {stack.type ? (
             <Badge
               variant={TYPE_VARIANTS[stack.type] ?? "outline"}
               size="sm"
@@ -197,7 +222,7 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
             >
               {TYPE_LABELS[stack.type] ?? stack.type}
             </Badge>
-          )}
+          ) : null}
           <Icon
             icon={stack.icon}
             className="size-14 shrink-0 rounded object-contain"
@@ -211,16 +236,16 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
           >
             {stack.name}
           </p>
-          {usageCount > 0 && (
+          {usageCount > 0 ? (
             <p className="text-center text-xs text-muted-foreground">
               {usageCount} {usageCount === 1 ? "project" : "projects"}
             </p>
-          )}
+          ) : null}
         </CardContent>
-        {!isSort && (
+        {!isSort ? (
           <div
-            className="mx-auto translate-y-9 data-selected:-translate-y-2"
-            data-selected={selected}
+            className="mx-auto translate-y-9 transition-transform duration-200 data-selected:-translate-y-2"
+            data-selected={isOpen}
           >
             <ListItemActionButtons
               edit={{
@@ -238,7 +263,7 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
               }}
             />
           </div>
-        )}
+        ) : null}
       </Card>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -265,4 +290,4 @@ export function StackItem({ stack, onEdit, dragHandleProps, isSort, ...props }: 
       </Dialog>
     </>
   );
-}
+});
