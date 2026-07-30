@@ -18,10 +18,50 @@ import {
 import { resolveUniqueProfileName } from "./profile-name";
 
 const webOrigin = new URL(ENV_SERVER.VITE_WEB_URL).origin;
+const serverOrigin = new URL(ENV_SERVER.VITE_SERVER_URL).origin;
 const sharedCookieDomain = getSharedCookieDomain(
   ENV_SERVER.VITE_WEB_URL,
   ENV_SERVER.VITE_SERVER_URL
 );
+
+/** Default post-verify landing on the web app (never the API host). */
+const DEFAULT_VERIFY_CALLBACK_PATH = "/dashboard/settings/profile";
+
+/**
+ * Better Auth builds verify links as `{api}/auth/verify-email?…&callbackURL=…`.
+ * Relative callbackURL (default `/`) resolves against the API origin and dumps
+ * users on api.example.com after verify. Force a primary-app absolute URL.
+ */
+function withWebAppVerificationCallback(
+  url: string,
+  fallbackPath = DEFAULT_VERIFY_CALLBACK_PATH
+): string {
+  try {
+    const parsed = new URL(url);
+    const rawCallback = parsed.searchParams.get("callbackURL") ?? fallbackPath;
+    let callback = rawCallback;
+    try {
+      const resolved = new URL(rawCallback, serverOrigin);
+      // Relative path, or absolute that still points at the API host.
+      if (!/^https?:\/\//i.test(rawCallback) || resolved.origin === serverOrigin) {
+        const path =
+          rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : fallbackPath;
+        callback = new URL(path, webOrigin).href;
+      } else if (resolved.origin !== webOrigin) {
+        // Unknown external origin — keep only if already trusted web origin.
+        callback = new URL(fallbackPath, webOrigin).href;
+      } else {
+        callback = resolved.href;
+      }
+    } catch {
+      callback = new URL(fallbackPath, webOrigin).href;
+    }
+    parsed.searchParams.set("callbackURL", callback);
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
 
 type AuthEndpointContext = {
   body?: unknown;
@@ -222,10 +262,12 @@ export const auth = betterAuth({
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       // Await so Resend failures surface instead of fire-and-forget.
+      // Rewrite relative callbackURL so post-verify lands on the web app.
+      const safeUrl = withWebAppVerificationCallback(url);
       await sendEmail({
         to: user.email,
         subject: "Verify your email address",
-        template: VerifyEmail({ username: user.name, url: url })
+        template: VerifyEmail({ username: user.name, url: safeUrl })
       });
     },
     autoSignInAfterVerification: true
@@ -259,10 +301,11 @@ export const auth = betterAuth({
     changeEmail: {
       enabled: true,
       sendChangeEmailConfirmation: async ({ newEmail, url, user }) => {
+        const safeUrl = withWebAppVerificationCallback(url);
         await sendEmail({
           to: newEmail,
           subject: "Verify your email address",
-          template: VerifyEmail({ username: user.name, url: url })
+          template: VerifyEmail({ username: user.name, url: safeUrl })
         });
       }
     }

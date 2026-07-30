@@ -47,6 +47,7 @@ import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
+import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 import { IconLetter } from "@/shared/ui/icon";
 import { IconPicker, PickerIconRenderer } from "@/shared/ui/icon-picker";
 
@@ -250,7 +251,11 @@ export function ProfileSettings() {
     }
     setSendingVerification(true);
     try {
-      const result = await authClient.sendVerificationEmail({ email });
+      const result = await authClient.sendVerificationEmail({
+        email,
+        // Absolute web URL — relative "/" lands on the API host after verify.
+        callbackURL: primaryAppUrl("/dashboard/settings/profile")
+      });
       if (result.error) {
         toast.error(result.error.message ?? "Could not send verification email");
         return;
