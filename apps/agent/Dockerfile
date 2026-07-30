@@ -10,9 +10,16 @@
 FROM ghcr.io/voidzero-dev/vite-plus:latest AS build
 WORKDIR /app
 
+# Long timeouts for both the monorepo install and Mastra's nested output install.
+# Mastra DepsService picks package manager from the nearest lockfile under apps/agent
+# (walks up to root). Prefer monorepo pnpm-lock so nested install reuses this store.
 ENV NPM_CONFIG_FETCH_TIMEOUT=600000 \
     NPM_CONFIG_FETCH_RETRIES=5 \
-    NPM_CONFIG_PREFER_OFFLINE=true
+    NPM_CONFIG_PREFER_OFFLINE=true \
+    PNPM_FETCH_TIMEOUT=600000 \
+    npm_config_fetch_timeout=600000 \
+    npm_config_fetch_retries=5 \
+    npm_config_prefer_offline=true
 
 COPY --chown=vp:vp package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version* .npmrc* ./
 COPY --chown=vp:vp apps/agent/package.json apps/agent/
@@ -47,8 +54,20 @@ ENV SOURCE_COMMIT=unknown \
     DATABASE_URL=${DATABASE_URL} \
     NODE_ENV=${NODE_ENV}
 
-# Mastra's nested install can hang on flaky registries — hard cap the step.
-RUN export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
+# Mastra `mastra build` always runs a nested install in `.mastra/output`.
+# Reuse the same BuildKit pnpm store + npm cache so flaky registry reads
+# (ETIMEDOUT) do not fail the bundle stage. Hard-cap the step as a last resort.
+RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid=1000,gid=1000 \
+    --mount=type=cache,id=npm-cache,target=/home/vp/.npm,uid=1000,gid=1000 \
+    export SOURCE_COMMIT="$(cat /tmp/SOURCE_COMMIT)" \
+  && corepack enable \
+  && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate \
+  && pnpm config set store-dir /home/vp/.local/share/pnpm/store \
+  && pnpm config set fetch-timeout 600000 \
+  && pnpm config set fetch-retries 5 \
+  && npm config set fetch-timeout 600000 \
+  && npm config set fetch-retries 5 \
+  && npm config set prefer-offline true \
   && timeout 600 vp run --filter @tsu-stack/agent build
 
 RUN cp "$(vp env which node | head -1)" /tmp/node

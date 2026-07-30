@@ -15,6 +15,7 @@ Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge �
 
 - Register all agents, tools, workflows, and scorers in `src/mastra/index.ts`
 - Use the `dev` and `build` scripts from `package.json` instead of running `mastra dev` / `mastra build` directly
+- **Do not add `apps/agent/package-lock.json`** — Mastra's nested `.mastra/output` install detects the nearest lockfile; a local npm lock forces `npm install` (registry ETIMEDOUT in Docker). Use the monorepo `pnpm-lock.yaml` only.
 - **No weather example** — do not reintroduce weather agent, tool, scorers, or workflow
 - Prefer **workflow + steps** for multi-step jobs (see `resume-import-workflow/`); call agents inside steps when open-ended tool use is needed
 - Put shared Zod contracts in `@tsu-stack/core` when API/web also consume them
