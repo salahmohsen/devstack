@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -17,8 +18,16 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle
+} from "@tsu-stack/ui/components/empty";
+import { Field, FieldDescription, FieldLabel } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
-import { Label } from "@tsu-stack/ui/components/label";
+import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -30,6 +39,8 @@ type PasskeyRow = {
   createdAt?: Date | string | null;
   aaguid?: string | null;
 };
+
+const PASSKEYS_LIST_MAX_HEIGHT = "20rem";
 
 function formatCreatedAt(value: Date | string | null | undefined): string | null {
   if (!value) return null;
@@ -68,8 +79,8 @@ const passkeysQueryOptions = queryOptions({
 });
 
 /**
- * Manage WebAuthn passkeys (add / list / remove) for the signed-in user.
- * Production-style security settings pattern: list + primary “Add” action.
+ * WebAuthn passkeys list for Account settings (coss Empty / Alert / Field / ScrollArea).
+ * Frame chrome lives in AccountSettings — this is panel body only.
  */
 export function PasskeyManager({ className }: { className?: string }) {
   const queryClient = useQueryClient();
@@ -80,7 +91,6 @@ export function PasskeyManager({ className }: { className?: string }) {
   const [deleteTarget, setDeleteTarget] = useState<PasskeyRow | null>(null);
 
   const listQuery = useQuery(passkeysQueryOptions);
-
   const passkeys = useMemo(() => listQuery.data ?? [], [listQuery.data]);
 
   async function handleAddPasskey() {
@@ -99,7 +109,6 @@ export function PasskeyManager({ className }: { className?: string }) {
       await queryClient.invalidateQueries({ queryKey: passkeysQueryOptions.queryKey });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not add passkey";
-      // User canceling the browser prompt is not an error worth alarming about.
       if (/cancel|abort|not allowed|timed out/i.test(message)) {
         toast.message("Passkey registration canceled");
       } else {
@@ -127,19 +136,21 @@ export function PasskeyManager({ className }: { className?: string }) {
     }
   }
 
+  function openAddDialog() {
+    setNewName("");
+    setNameDialogOpen(true);
+  }
+
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
+    <div className={cn("flex flex-col gap-4", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          Sign in with Face ID, Touch ID, Windows Hello, or a hardware key.
+          Face ID, Touch ID, Windows Hello, or a hardware key.
         </p>
         <Button
           type="button"
           size="sm"
-          onClick={() => {
-            setNewName("");
-            setNameDialogOpen(true);
-          }}
+          onClick={openAddDialog}
           disabled={adding || listQuery.isLoading}
         >
           <PlusIcon className="size-3.5" aria-hidden />
@@ -148,101 +159,118 @@ export function PasskeyManager({ className }: { className?: string }) {
       </div>
 
       {listQuery.isLoading ? (
-        <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
           <Spinner className="size-4" />
           Loading passkeys…
         </div>
       ) : listQuery.isError ? (
-        <div className="flex flex-col items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-4">
-          <p className="text-sm text-destructive">
-            {listQuery.error instanceof Error ? listQuery.error.message : "Could not load passkeys"}
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => void listQuery.refetch()}
-          >
-            Retry
-          </Button>
-        </div>
+        <Alert variant="error">
+          <AlertTitle>Could not load passkeys</AlertTitle>
+          <AlertDescription className="flex flex-col items-start gap-2">
+            <span>
+              {listQuery.error instanceof Error
+                ? listQuery.error.message
+                : "Something went wrong. Try again."}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => void listQuery.refetch()}
+            >
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
       ) : passkeys.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/80 px-4 py-10 text-center">
-          <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <FingerprintIcon className="size-5" aria-hidden />
+        <Empty className="rounded-xl border border-dashed border-border/80 bg-muted/10 px-4 py-10 md:py-12">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" className="mb-3">
+              <FingerprintIcon className="size-4.5" aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle className="text-base">No passkeys yet</EmptyTitle>
+            <EmptyDescription>
+              Add a passkey for faster, phishing-resistant sign-in on this account.
+            </EmptyDescription>
+          </EmptyHeader>
+          <div className="mt-4">
+            <Button type="button" size="sm" variant="outline" onClick={openAddDialog}>
+              <PlusIcon className="size-3.5" aria-hidden />
+              Add your first passkey
+            </Button>
           </div>
-          <p className="text-sm font-medium text-foreground">No passkeys yet</p>
-          <p className="max-w-xs text-xs text-muted-foreground">
-            Add a passkey for faster, phishing-resistant sign-in on this account.
-          </p>
-        </div>
+        </Empty>
       ) : (
-        <ul
-          className="flex max-h-80 flex-col gap-2 overflow-y-auto overscroll-contain pe-0.5"
-          aria-label="Registered passkeys"
+        <ScrollArea
+          className="w-full rounded-xl"
+          style={{ maxHeight: PASSKEYS_LIST_MAX_HEIGHT }}
+          scrollFade
+          scrollbarGutter
         >
-          {passkeys.map((passkey) => {
-            const created = formatCreatedAt(passkey.createdAt);
-            const label = passkeyDisplayName(passkey);
-            return (
-              <li
-                key={passkey.id}
-                className="flex items-start gap-3 rounded-lg border border-border/80 bg-card p-3"
-              >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                  {passkey.deviceType === "cross-platform" ? (
-                    <KeyRoundIcon className="size-4" aria-hidden />
-                  ) : (
-                    <FingerprintIcon className="size-4" aria-hidden />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-medium text-foreground">{label}</p>
-                    {passkey.backedUp ? (
-                      <Badge variant="secondary" size="sm">
-                        Synced
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {deviceLabel(passkey.deviceType)}
-                    {created ? ` · Added ${created}` : null}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  size="icon-sm"
-                  variant="ghost"
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                  aria-label={`Remove ${label}`}
-                  disabled={busyId === passkey.id}
-                  onClick={() => setDeleteTarget(passkey)}
+          <ul className="flex flex-col gap-2 pe-1" aria-label="Registered passkeys">
+            {passkeys.map((passkey) => {
+              const created = formatCreatedAt(passkey.createdAt);
+              const label = passkeyDisplayName(passkey);
+              const isCrossPlatform = passkey.deviceType === "cross-platform";
+              return (
+                <li
+                  key={passkey.id}
+                  className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/20 p-3 sm:p-3.5"
                 >
-                  {busyId === passkey.id ? (
-                    <Loader2Icon className="size-3.5 animate-spin" aria-hidden />
-                  ) : (
-                    <Trash2Icon className="size-3.5" aria-hidden />
-                  )}
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background text-muted-foreground shadow-xs/5">
+                    {isCrossPlatform ? (
+                      <KeyRoundIcon className="size-4" aria-hidden />
+                    ) : (
+                      <FingerprintIcon className="size-4" aria-hidden />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-sm font-medium text-foreground">{label}</p>
+                      {passkey.backedUp ? (
+                        <Badge variant="secondary" size="sm">
+                          Synced
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {deviceLabel(passkey.deviceType)}
+                      {created ? ` · Added ${created}` : null}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    aria-label={`Remove ${label}`}
+                    disabled={busyId === passkey.id}
+                    onClick={() => setDeleteTarget(passkey)}
+                  >
+                    {busyId === passkey.id ? (
+                      <Loader2Icon className="size-3.5 animate-spin" aria-hidden />
+                    ) : (
+                      <Trash2Icon className="size-3.5" aria-hidden />
+                    )}
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </ScrollArea>
       )}
 
-      {/* Name before WebAuthn prompt — optional, modern apps always ask for a label */}
       <AlertDialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>Add a passkey</AlertDialogTitle>
             <AlertDialogDescription>
-              Give this passkey a name so you can tell devices apart (for example “MacBook” or
-              “iPhone”). Your browser will ask you to confirm with biometrics or a security key.
+              Name this passkey so you can tell devices apart. Your browser will ask you to confirm
+              with biometrics or a security key.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="space-y-2 px-1 pb-2">
-            <Label htmlFor="passkey-name">Name (optional)</Label>
+          <Field className="px-1 pb-1">
+            <FieldLabel htmlFor="passkey-name">Name</FieldLabel>
             <Input
               id="passkey-name"
               value={newName}
@@ -252,7 +280,8 @@ export function PasskeyManager({ className }: { className?: string }) {
               maxLength={64}
               disabled={adding}
             />
-          </div>
+            <FieldDescription>Optional — e.g. “iPhone” or “YubiKey”.</FieldDescription>
+          </Field>
           <AlertDialogFooter>
             <AlertDialogClose render={<Button variant="ghost" disabled={adding} />}>
               Cancel
@@ -278,7 +307,7 @@ export function PasskeyManager({ className }: { className?: string }) {
               <span className="font-medium text-foreground">
                 {deleteTarget ? passkeyDisplayName(deleteTarget) : "this passkey"}
               </span>
-              . You can add it again later from this device.
+              . You can register it again later from this device.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
