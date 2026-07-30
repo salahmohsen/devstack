@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import {
   ApplicationStageSchema,
   applyCorrectedSystemLabels,
+  correctionEmbedText,
   extractSystemLabels,
   MailSystemLabelSchema,
   type ApplicationStage,
@@ -16,6 +17,7 @@ import {
   mailMessageRepository
 } from "@tsu-stack/db/repositories";
 
+import { embedTextForCorrections } from "#@/lib/mail/embed-text";
 import { postMastraCorrectionFeedback } from "#@/lib/mail/post-mastra-correction-feedback";
 import { undoMailCrmApply } from "#@/lib/mail/undo-mail-crm-apply";
 
@@ -74,6 +76,16 @@ export async function createAiCorrectionFromMail(input: {
   const mastraTraceId = message.mastraClassifyTraceId ?? null;
   const mastraRunId = message.mastraClassifyRunId ?? null;
 
+  const embedding = await embedTextForCorrections(
+    correctionEmbedText({
+      fromName: message.fromName,
+      fromEmail: message.fromEmail,
+      subject: message.subject,
+      preview: message.preview,
+      bodyText: message.bodyText
+    })
+  );
+
   const row = await aiCorrectionRepository.create({
     id: randomUUID(),
     userId: input.userId,
@@ -89,6 +101,7 @@ export async function createAiCorrectionFromMail(input: {
     crmApplyId,
     mastraTraceId,
     mastraRunId,
+    embedding,
     note: input.data.note ?? null
   });
 

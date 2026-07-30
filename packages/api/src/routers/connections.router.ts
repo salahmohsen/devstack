@@ -2,12 +2,14 @@ import {
   ConnectionsStatusOutputSchema,
   GmailSyncResultSchema,
   scopeListIncludesGmail,
+  StartGmailWatchOutputSchema,
   UpdateGmailAutoSyncInputSchema,
   UpdateGmailAutoSyncOutputSchema
 } from "@tsu-stack/core";
 import { betterAuthAccountRepository, userGmailSyncRepository } from "@tsu-stack/db/repositories";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
+import { startGmailWatch } from "#@/lib/gmail/start-gmail-watch";
 import { syncGmailInbox } from "#@/lib/gmail/sync-gmail-inbox";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
@@ -114,5 +116,39 @@ export const connectionsRouter = {
       }
       const row = await userGmailSyncRepository.setAutoSyncEnabled(userId, input.autoSyncEnabled);
       return { autoSyncEnabled: row.autoSyncEnabled };
+    }),
+
+  startGmailWatch: protectedProcedure
+    .route({
+      description:
+        "Register Gmail users.watch → Pub/Sub (requires GMAIL_PUBSUB_TOPIC). Renews push notifications.",
+      method: "POST"
+    })
+    .output(StartGmailWatchOutputSchema)
+    .errors({
+      NO_GMAIL_SCOPE: {
+        message: "Connect Gmail under Settings → Connections first.",
+        status: 400
+      },
+      WATCH_FAILED: {
+        message: "Could not start Gmail watch",
+        status: 502
+      }
+    })
+    .handler(async ({ context, errors }) => {
+      const userId = context.session.user.id;
+      const google = await betterAuthAccountRepository.findGoogleAccountForUser(userId);
+      if (!scopeListIncludesGmail(google?.scope)) {
+        throw errors.NO_GMAIL_SCOPE();
+      }
+      const result = await startGmailWatch(userId);
+      if (!result.ok) {
+        throw errors.WATCH_FAILED({ message: result.message });
+      }
+      return {
+        ok: true,
+        historyId: result.historyId,
+        expiration: result.expiration
+      };
     })
 };

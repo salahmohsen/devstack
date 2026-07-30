@@ -1,3 +1,4 @@
+import { embedTextForCorrections } from "@tsu-stack/api/lib/mail/embed-text";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
@@ -5,6 +6,7 @@ import {
   AI_CORRECTION_CANDIDATE_POOL,
   AI_CORRECTION_FEW_SHOT_K,
   applySmartRulesToClassifyResult,
+  correctionEmbedText,
   heuristicClassifyMail,
   MailSystemLabelSchema,
   selectCorrectionsForFewShot,
@@ -98,9 +100,19 @@ export async function runMailClassify(input: {
       subject: c.subject,
       preview: c.preview,
       predictedSystemLabels: parseLabels(c.predictedSystemLabels ?? []),
-      correctedSystemLabels: parseLabels(c.correctedSystemLabels ?? [])
+      correctedSystemLabels: parseLabels(c.correctedSystemLabels ?? []),
+      embedding: Array.isArray(c.embedding) ? c.embedding : null
     };
   });
+  const queryEmbedding = await embedTextForCorrections(
+    correctionEmbedText({
+      fromName: row.fromName,
+      fromEmail: row.fromEmail,
+      subject: row.subject,
+      preview: row.preview,
+      bodyText: row.bodyText
+    })
+  );
   const fewShotCorrections = selectCorrectionsForFewShot(
     {
       fromName: row.fromName,
@@ -110,7 +122,7 @@ export async function runMailClassify(input: {
       bodyText: row.bodyText
     },
     candidates,
-    { max: AI_CORRECTION_FEW_SHOT_K }
+    { max: AI_CORRECTION_FEW_SHOT_K, queryEmbedding }
   );
   const classifyInput = {
     messageId: row.id,

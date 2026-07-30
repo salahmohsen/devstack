@@ -40,8 +40,19 @@ function mustEmailImmediately(kind: NotificationKind): boolean {
 /**
  * Emit in-app and/or email notification based on the user's channel prefs for `kind`.
  * Digest mode queues email for the hourly batch (except security OTP).
+ * Never throws — callers in classify/CRM/draft must not fail on notification.
  */
 export async function emitAppNotification(
+  input: EmitAppNotificationInput
+): Promise<AppNotificationEntity | null> {
+  try {
+    return await emitAppNotificationInner(input);
+  } catch {
+    return null;
+  }
+}
+
+async function emitAppNotificationInner(
   input: EmitAppNotificationInput
 ): Promise<AppNotificationEntity | null> {
   const settings = await userNotificationSettingsRepository.findByUserId(input.userId);
@@ -55,11 +66,12 @@ export async function emitAppNotification(
   const href = input.href ?? null;
 
   const wantsEmail = toggle.email === true;
+  const wantsApp = toggle.app !== false;
   const queueDigest = wantsEmail && deliveryMode === "digest" && !mustEmailImmediately(input.kind);
 
   let row: AppNotificationEntity | null = null;
-  if (toggle.app !== false || queueDigest) {
-    // Always persist a row when digest-queuing email so the batch has content.
+  // Persist when app channel on, or when we need a digest queue row.
+  if (wantsApp || queueDigest) {
     row = await appNotificationRepository.create({
       userId: input.userId,
       kind: input.kind,
@@ -70,37 +82,44 @@ export async function emitAppNotification(
       applicationId: input.applicationId ?? null,
       reviewItemId: input.reviewItemId ?? null,
       emailDigestPending: queueDigest,
-      emailedAt: wantsEmail && !queueDigest ? new Date() : null
+      // Only stamp emailedAt after a successful immediate send below.
+      emailedAt: null,
+      // Hide pure digest-queue rows from unread noise when app is off.
+      ...(wantsApp ? {} : { readAt: new Date() })
     });
   }
 
   if (wantsEmail && !queueDigest) {
-    await sendNotificationEmail({
+    const sent = await sendNotificationEmail({
       userId: input.userId,
       notificationEmail: settings?.notificationEmail ?? null,
       title,
       body,
       href
     });
+    if (sent && row) {
+      await appNotificationRepository.markEmailed(row.id, input.userId);
+    }
   }
 
   return row;
 }
 
+/** @returns true when Resend accepted the message */
 export async function sendNotificationEmail(input: {
   userId: string;
   notificationEmail: string | null;
   title: string;
   body: string | null;
   href: string | null;
-}): Promise<void> {
+}): Promise<boolean> {
   try {
     let to = input.notificationEmail?.trim() ?? null;
     if (!to) {
       const user = await userRepository.findById(input.userId);
       to = user?.email?.trim() ?? null;
     }
-    if (!to) return;
+    if (!to) return false;
 
     const actionUrl = absoluteActionUrl(input.href);
     await sendEmail({
@@ -113,8 +132,9 @@ export async function sendNotificationEmail(input: {
         actionLabel: actionUrl?.includes("/review") ? "Open Review" : "Open dashboard"
       })
     });
+    return true;
   } catch {
-    // Never fail classify/CRM/review paths on outbound notification mail.
+    return false;
   }
 }
 

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql, type InferSelectModel } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql, type InferSelectModel } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { appNotification } from "../schema/app-notification.schema.ts";
@@ -17,6 +17,7 @@ export type CreateAppNotificationData = {
   reviewItemId?: string | null;
   emailDigestPending?: boolean;
   emailedAt?: Date | null;
+  readAt?: Date | null;
 };
 
 export const appNotificationRepository = {
@@ -69,10 +70,18 @@ export const appNotificationRepository = {
         applicationId: input.applicationId ?? null,
         reviewItemId: input.reviewItemId ?? null,
         emailDigestPending: input.emailDigestPending ?? false,
-        emailedAt: input.emailedAt ?? null
+        emailedAt: input.emailedAt ?? null,
+        readAt: input.readAt ?? null
       })
       .returning();
     return created;
+  },
+
+  async markEmailed(id: string, userId: string): Promise<void> {
+    await getDb()
+      .update(appNotification)
+      .set({ emailedAt: new Date(), emailDigestPending: false })
+      .where(and(eq(appNotification.id, id), eq(appNotification.userId, userId)));
   },
 
   async listPendingDigestForUser(userId: string, limit = 50): Promise<AppNotificationEntity[]> {
@@ -80,7 +89,7 @@ export const appNotificationRepository = {
       .select()
       .from(appNotification)
       .where(and(eq(appNotification.userId, userId), eq(appNotification.emailDigestPending, true)))
-      .orderBy(desc(appNotification.createdAt))
+      .orderBy(asc(appNotification.createdAt))
       .limit(limit);
   },
 

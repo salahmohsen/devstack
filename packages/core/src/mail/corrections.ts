@@ -53,7 +53,9 @@ export const AiCorrectionFewShotExampleSchema = z.object({
   subject: z.string().default(""),
   preview: z.string().default(""),
   predictedSystemLabels: z.array(MailSystemLabelSchema).default([]),
-  correctedSystemLabels: z.array(MailSystemLabelSchema).default([])
+  correctedSystemLabels: z.array(MailSystemLabelSchema).default([]),
+  /** Optional embedding for cosine retrieval (same model as query). */
+  embedding: z.array(z.number()).optional().nullable()
 });
 export type AiCorrectionFewShotExample = z.infer<typeof AiCorrectionFewShotExampleSchema>;
 
@@ -191,34 +193,77 @@ export function scoreCorrectionSimilarity(
   return score;
 }
 
+/** Cosine similarity mapped to [0, 1]; 0 if unusable. */
+export function cosineSimilarity(a: readonly number[], b: readonly number[]): number {
+  if (a.length === 0 || a.length !== b.length) return 0;
+  let dot = 0;
+  let na = 0;
+  let nb = 0;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i] ?? 0;
+    const y = b[i] ?? 0;
+    dot += x * y;
+    na += x * x;
+    nb += y * y;
+  }
+  if (na === 0 || nb === 0) return 0;
+  return (dot / (Math.sqrt(na) * Math.sqrt(nb)) + 1) / 2;
+}
+
 /**
  * Rank a candidate pool of corrections for the current mail and take top-K.
- * Tie-break: keep input order (newest-first from DB).
+ * Blends embedding cosine (when available) with lexical score.
  */
 export function selectCorrectionsForFewShot(
   query: CorrectionSimilarityQuery,
   candidates: readonly AiCorrectionFewShotExample[],
-  opts?: { max?: number; minScore?: number }
+  opts?: { max?: number; minScore?: number; queryEmbedding?: readonly number[] | null }
 ): AiCorrectionFewShotExample[] {
   const max = opts?.max ?? AI_CORRECTION_FEW_SHOT_K;
   const minScore = opts?.minScore ?? 0.05;
+  const queryEmbedding = opts?.queryEmbedding ?? null;
   if (candidates.length === 0) return [];
   if (candidates.length <= max) return [...candidates];
 
   const ranked = candidates
     .map((ex, index) => {
-      return { ex, index, score: scoreCorrectionSimilarity(query, ex) };
+      const lexical = scoreCorrectionSimilarity(query, ex);
+      let score = lexical;
+      if (queryEmbedding && ex.embedding && ex.embedding.length > 0) {
+        const emb = cosineSimilarity(queryEmbedding, ex.embedding);
+        score = 0.65 * emb + 0.35 * lexical;
+      }
+      return { ex, index, score };
     })
     .toSorted((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      return a.index - b.index; // prefer newer when scores tie
+      return a.index - b.index;
     });
 
   const strong = ranked.filter((r) => r.score >= minScore).slice(0, max);
   if (strong.length > 0) return strong.map((r) => r.ex);
 
-  // All weak — fall back to newest max (original last-K behavior).
   return candidates.slice(0, max);
+}
+
+/** Compact text for embedding a correction or live mail. */
+export function correctionEmbedText(input: {
+  fromName?: string;
+  fromEmail?: string;
+  subject?: string;
+  preview?: string;
+  bodyText?: string;
+}): string {
+  return [
+    input.fromName ?? "",
+    input.fromEmail ?? "",
+    input.subject ?? "",
+    (input.preview ?? "").slice(0, 400),
+    (input.bodyText ?? "").slice(0, 800)
+  ]
+    .join("\n")
+    .trim()
+    .slice(0, 2000);
 }
 
 /**

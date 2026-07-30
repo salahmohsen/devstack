@@ -28,6 +28,10 @@ export const userGmailSyncRepository = {
     return row ?? null;
   },
 
+  async listByEmailAddress(emailAddress: string): Promise<UserGmailSyncEntity[]> {
+    return getDb().select().from(userGmailSync).where(eq(userGmailSync.emailAddress, emailAddress));
+  },
+
   async upsert(input: UpsertUserGmailSyncInput): Promise<UserGmailSyncEntity> {
     const existing = await this.findByUserId(input.userId);
     if (existing) {

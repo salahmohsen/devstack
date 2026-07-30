@@ -58,10 +58,12 @@ At classify time:
 2. Score each vs live mail: from-domain, exact from-email, subject Jaccard, body/preview Jaccard
 3. Inject top **K=5**; if all scores weak (`minScore` 0.05), fall back to newest K
 
-No embeddings / pgvector — pure lexical. Upgrade path: embed correction snapshots later.
+## Phase D — Embedding-assisted retrieval (optional)
+
+When `OPENAI_API_KEY` is set: embed on correction create; at classify blend cosine (0.65) + lexical (0.35). Without the key, pure lexical still works.
 
 ## Still out of scope
 
-- Vector / embedding retrieval
+- pgvector ANN index
 - Dataset export / live scorers
 - Fine-tuning

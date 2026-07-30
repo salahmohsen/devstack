@@ -37,8 +37,12 @@ Job context (linked application company/title/stage) is injected when present; m
 | API key    | Settings → Mail BYO key, else `RESEND_API_KEY`     |
 | From       | Settings → Mail inbound address, else `EMAIL_FROM` |
 
+## Reply CRM tools (wave 21)
+
+`list-open-applications` + `get-application` (tenant `userId` via requestContext). Agent may call tools before structured draft.
+
 ## Out of scope (later)
 
-- Reply tools (CRM read, evidence search)
+- Evidence search tools
 - Threading headers / In-Reply-To
 - Per-user model override for reply feature

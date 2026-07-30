@@ -1,3 +1,4 @@
+import { RequestContext } from "@mastra/core/request-context";
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
@@ -13,11 +14,11 @@ const LlmDraftSchema = z.object({
   bodyText: z.string().min(1).max(20_000)
 });
 
-const LLM_TIMEOUT_MS = 30_000;
+const LLM_TIMEOUT_MS = 45_000;
 
 export const draftStep = createStep({
   id: "llm-reply-draft",
-  description: "LLM structured reply draft with heuristic fallback",
+  description: "LLM structured reply draft with CRM tools + heuristic fallback",
   inputSchema: MailReplyDraftInputSchema,
   outputSchema: MailReplyDraftOutputSchema,
   execute: async ({ inputData, mastra, abortSignal }) => {
@@ -39,7 +40,7 @@ export const draftStep = createStep({
       ? `Job context: ${[job.title, job.companyName].filter(Boolean).join(" @ ")}${
           job.stage ? ` (stage: ${job.stage})` : ""
         }`
-      : "Job context: (none linked)";
+      : "Job context: (none linked — you may use list-open-applications if the company is clear)";
 
     const bodySnippet = inputData.bodyText.slice(0, 6_000);
     const prompt = `Draft a reply for this career email.
@@ -56,10 +57,15 @@ ${bodySnippet}
 
 Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
 
+    const requestContext = new RequestContext();
+    requestContext.set("userId", inputData.userId);
+
     try {
       const result = await Promise.race([
         agent.generate([{ role: "user", content: prompt }], {
-          structuredOutput: { schema: LlmDraftSchema }
+          structuredOutput: { schema: LlmDraftSchema },
+          requestContext,
+          maxSteps: 4
         }),
         new Promise<never>((_, reject) => {
           setTimeout(

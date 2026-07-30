@@ -34,11 +34,16 @@ export function startNotificationDigestQueue(redisUrl: string): void {
 
       let sent = 0;
       let total = 0;
+      let failed = 0;
       for (const userId of userIds) {
-        const result = await runWithDb(db, () => sendNotificationDigestForUser(userId));
-        if (result.sent) {
-          sent += 1;
-          total += result.count;
+        try {
+          const result = await runWithDb(db, () => sendNotificationDigestForUser(userId));
+          if (result.sent) {
+            sent += 1;
+            total += result.count;
+          }
+        } catch {
+          failed += 1;
         }
       }
 
@@ -46,7 +51,8 @@ export function startNotificationDigestQueue(redisUrl: string): void {
         event: "notification_digest_tick_done",
         users: userIds.length,
         digestsSent: sent,
-        items: total
+        items: total,
+        failed
       });
       log.emit();
     },

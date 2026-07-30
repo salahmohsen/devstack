@@ -1,0 +1,1 @@
+ALTER TABLE "ai_correction" ADD COLUMN "embedding" jsonb;

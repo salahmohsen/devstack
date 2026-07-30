@@ -13,6 +13,7 @@ import {
   createContext,
   type OrpcContextBindings
 } from "@tsu-stack/api/lib/context/hono/create-context";
+import { handleGmailPushNotification } from "@tsu-stack/api/lib/gmail/handle-gmail-push";
 import { handleResendInboundWebhook } from "@tsu-stack/api/lib/mail/handle-resend-inbound";
 import { appRouter } from "@tsu-stack/api/routers/index";
 import { auth } from "@tsu-stack/auth/index";
@@ -245,6 +246,28 @@ app.post("/webhooks/github", async (c) => {
     });
 
     return c.json({ ok: true }, result.status);
+  });
+});
+
+/**
+ * Gmail Pub/Sub push (users.watch). Body is Google Cloud Pub/Sub push envelope.
+ * Configure subscription → {VITE_SERVER_URL}/webhooks/gmail-push
+ */
+app.post("/webhooks/gmail-push", async (c) => {
+  const requestLog = c.get("log");
+  const rawBody = await c.req.text();
+  requestLog?.set({ event: "gmail_push_received" });
+
+  const db = createDb();
+  return runWithDb(db, async () => {
+    const result = await handleGmailPushNotification(rawBody);
+    requestLog?.set({
+      event: "gmail_push_handled",
+      handled: result.handled,
+      errorCount: result.errors.length
+    });
+    // Always 200 so Pub/Sub does not infinite-retry on unknown mailbox.
+    return c.json({ ok: true, ...result });
   });
 });
 

@@ -46,3 +46,11 @@ export const UpdateGmailAutoSyncOutputSchema = z.object({
   autoSyncEnabled: z.boolean()
 });
 export type UpdateGmailAutoSyncOutput = z.infer<typeof UpdateGmailAutoSyncOutputSchema>;
+
+export const StartGmailWatchOutputSchema = z.object({
+  ok: z.boolean(),
+  historyId: z.string().nullable().optional(),
+  expiration: z.string().nullable().optional(),
+  message: z.string().optional()
+});
+export type StartGmailWatchOutput = z.infer<typeof StartGmailWatchOutputSchema>;

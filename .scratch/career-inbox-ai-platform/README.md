@@ -193,6 +193,26 @@ See [NOTIFICATIONS.md](./NOTIFICATIONS.md).
 | `72`   | Digest mode + queue + send | **Done** |
 | `73`   | Settings delivery mode UI  | **Done** |
 
-## Next frontier
+## Reply CRM tools (wave 21)
 
-**Reply tools** · embedding retrieval · Gmail Pub/Sub
+| Ticket | Title                                | Status   |
+| ------ | ------------------------------------ | -------- |
+| `74`   | list/get application tools for reply | **Done** |
+
+## Embedding few-shot (wave 22)
+
+| Ticket | Title                               | Status   |
+| ------ | ----------------------------------- | -------- |
+| `75`   | Optional OpenAI embeddings + cosine | **Done** |
+
+## Gmail Pub/Sub watch (wave 23)
+
+See [CONNECTIONS.md](./CONNECTIONS.md).
+
+| Ticket | Title                               | Status   |
+| ------ | ----------------------------------- | -------- |
+| `76`   | users.watch + push webhook scaffold | **Done** |
+
+## Program status
+
+Career Inbox waves through **23** are implemented for this track. Optional later: pgvector ANN, Pub/Sub OIDC verify, richer reply tools.

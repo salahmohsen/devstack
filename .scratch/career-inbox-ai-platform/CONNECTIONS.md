@@ -30,6 +30,11 @@ Never request Gmail scopes at login. Users grant mail access only when they choo
   - Toggle under Settings → Connections
   - Eligible: Google account with Gmail scopes and `autoSyncEnabled !== false`
 
-## Next
+## Gmail Pub/Sub push (wave 23)
 
-Push/watch Gmail (Pub/Sub) · retrieval few-shot
+1. Create GCP topic; grant `gmail-api-push@system.gserviceaccount.com` publisher
+2. Set `GMAIL_PUBSUB_TOPIC=projects/{project}/topics/{topic}`
+3. Push subscription → `{VITE_SERVER_URL}/webhooks/gmail-push`
+4. Call `connections.startGmailWatch` (or renew periodically; watch expires ~7 days)
+
+On push: decode Pub/Sub message → match `user_gmail_sync.emailAddress` → `syncGmailInbox`.

@@ -20,6 +20,7 @@ export type CreateAiCorrectionData = {
   crmApplyId?: string | null;
   mastraTraceId?: string | null;
   mastraRunId?: string | null;
+  embedding?: number[] | null;
   note?: string | null;
 };
 
@@ -42,6 +43,7 @@ export const aiCorrectionRepository = {
         crmApplyId: input.crmApplyId ?? null,
         mastraTraceId: input.mastraTraceId ?? null,
         mastraRunId: input.mastraRunId ?? null,
+        embedding: input.embedding ?? null,
         note: input.note ?? null
       })
       .returning();
