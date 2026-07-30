@@ -18,8 +18,8 @@ import { type AppRouter } from "#@/routers/index";
  * producing the runtime `Class extends value #<Object> is not a constructor`
  * crash. The only safe path is to call the Hono server over HTTP, even
  * during SSR. So both the server and the client sides use RPCLink; the
- * server side just points at the internal Docker-network URL so we don't
- * loop through the Cloudflare tunnel for every SSR-time oRPC call.
+ * server side just points at the internal Docker-network URL so SSR does
+ * not hairpin through the public edge / local cloudflared hostname.
  */
 function getServerURL(): string {
   return ENV_WEB_ISOMORPHIC.SERVER_URL_INTERNAL ?? ENV_WEB_ISOMORPHIC.VITE_SERVER_URL;

@@ -28,12 +28,6 @@ const runtimeEnv = {
   ...(import.meta.env as Record<string, string | undefined>)
 };
 
-console.debug("⏳ [ENV_WEB_ISOMORPHIC] Loading environment variables...", {
-  VITE_SERVER_URL: runtimeEnv.VITE_SERVER_URL,
-  VITE_WEB_URL: runtimeEnv.VITE_WEB_URL,
-  hasServerUrlInternal: Boolean(runtimeEnv.SERVER_URL_INTERNAL)
-});
-
 export const ENV_WEB_ISOMORPHIC = createEnv({
   client: {
     VITE_IMGPROXY_URL: z.url().optional(),
@@ -48,9 +42,8 @@ export const ENV_WEB_ISOMORPHIC = createEnv({
     /**
      * Internal Docker-network URL of the Hono server. Used by the
      * web app's server-side oRPC client during SSR so it can call
-     * the server over HTTP without going through the Cloudflare
-     * tunnel. Falls back to VITE_SERVER_URL (the public URL) if
-     * not set, which is fine in dev or when no internal URL exists.
+     * the server over HTTP without hairpinning through the public edge.
+     * Falls back to VITE_SERVER_URL if unset (fine in local dev).
      */
     SERVER_URL_INTERNAL: normalizedUrlSchema.optional()
   },
@@ -58,5 +51,3 @@ export const ENV_WEB_ISOMORPHIC = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv
 });
-
-console.debug("✅ [ENV_WEB_ISOMORPHIC] Successfully loaded environment variables.");

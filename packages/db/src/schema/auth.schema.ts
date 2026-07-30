@@ -133,6 +133,10 @@ export const authRelations = defineRelationsPart(
           to: r.user.id
         })
       },
+      // No FKs — required so relations-v2 adapter exposes db.query.verification
+      // (OAuth state / email OTP tokens). Omitting this key drops the model from
+      // the query object and breaks social sign-in with experimental joins.
+      verification: {},
       passkey: {
         user: r.one.user({
           from: r.passkey.userId,

@@ -3,8 +3,6 @@ import process from "node:process";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-console.debug("⏳ [ENV_WEB_SERVER] Loading environment variables...");
-
 export const ENV_WEB_SERVER = createEnv({
   emptyStringAsUndefined: true,
   runtimeEnv: {
@@ -31,5 +29,3 @@ export const ENV_WEB_SERVER = createEnv({
     AGENT_WORKER_URL: z.string().optional()
   }
 });
-
-console.debug("✅ [ENV_WEB_SERVER] Successfully loaded environment variables.");

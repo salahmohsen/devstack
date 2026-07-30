@@ -23,6 +23,11 @@ dist-ssr
 tmp
 .dev.vars
 
+# Local cloudflared named tunnel (credentials path is user-specific; never commit)
+scripts/cloudflared.tunnel.yml
+**/.cloudflared/
+*.pem
+
 # Axiom skills/CLI credentials (token + org). Prefer ~/.axiom.toml; never commit.
 .axiom.toml
 

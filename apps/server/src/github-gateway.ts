@@ -28,10 +28,23 @@ export function createGithubGateway(httpServer: HTTPServer, redisUrl: string) {
   const pubClient = new Redis(redisUrl, redisOpts);
   const subClient = pubClient.duplicate(redisOpts);
 
+  // ioredis emits "error" on every reconnect attempt — log once, not a flood.
+  let redisErrorLogged = false;
   const onRedisError = (err: Error) => {
-    if (err.message.includes("ECONNREFUSED")) return;
+    const msg = err.message ?? String(err);
+    // Transient connect noise while Redis is still coming up / bad URL once
+    if (
+      msg.includes("ECONNREFUSED") ||
+      msg.includes("ENOENT") ||
+      msg.includes("ECONNRESET") ||
+      msg.includes("Connection is closed")
+    ) {
+      return;
+    }
+    if (redisErrorLogged) return;
+    redisErrorLogged = true;
     const log = createLogger({ operation: "server__ws_redis_error" });
-    log.set({ event: "ws_redis_error", message: err.message });
+    log.set({ event: "ws_redis_error", message: msg.slice(0, 200) });
     log.emit({ _forceKeep: true });
   };
   pubClient.on("error", onRedisError);
@@ -45,7 +58,17 @@ export function createGithubGateway(httpServer: HTTPServer, redisUrl: string) {
         log.set({ event: "ws_redis_adapter_connected" });
         log.emit();
       } else {
-        log.set({ event: "ws_redis_adapter_unavailable" });
+        log.set({
+          event: "ws_redis_adapter_unavailable",
+          // redacted host only — help spot bad REDIS_URL without secrets
+          redisHost: (() => {
+            try {
+              return new URL(redisUrl).host;
+            } catch {
+              return "invalid_url";
+            }
+          })()
+        });
         log.emit({ _forceKeep: true });
       }
     })

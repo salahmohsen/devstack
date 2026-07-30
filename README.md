@@ -46,13 +46,25 @@ pnpm db:setup
 # Apps (web + server + agent via scripts/dev.sh)
 pnpm dev
 
-# Public HTTPS tunnel for Resend (and other) webhooks — needs cloudflared
+# Public HTTPS tunnel for Resend / Gmail / GitHub webhooks (cloudflared CLI)
 pnpm dev:tunnel
 ```
 
-Configure `VITE_WEB_URL`, `VITE_SERVER_URL`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, and GitHub OAuth as needed. LLM features use **Settings → AI** BYO provider keys (no operator `DEEPSEEK_API_KEY`). The agent worker authenticates with Better Auth sessions (`MastraAuthBetterAuth`).
+Configure `VITE_WEB_URL`, `VITE_SERVER_URL`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, and OAuth as needed. LLM features use **Settings → AI** BYO provider keys. The agent worker authenticates with Better Auth sessions (`MastraAuthBetterAuth`).
 
-**Local Resend webhooks:** SaaS providers cannot reach `http://localhost`. `pnpm dev:tunnel` starts a Cloudflare quick tunnel to the API (`:5200`), sets `VITE_SERVER_URL` to the public `https://…trycloudflare.com` origin, and prints the webhook base URL for Settings → Mail. The web app still opens at `http://localhost:3000`. Fixed tunnels: `DEV_PUBLIC_SERVER_URL=https://… pnpm dev`.
+### Local inbound webhooks (`cloudflared`)
+
+SaaS providers cannot reach `http://localhost`. `scripts/dev.sh` can start a **cloudflared** tunnel to the API (`:5200`) and export `PUBLIC_SERVER_URL` / `DEV_PUBLIC_SERVER_URL` for inbound webhooks. **Browser OAuth and oRPC keep `VITE_SERVER_URL=http://localhost:5200`** so session cookies stay first-party (pointing the browser API at the tunnel host breaks OAuth state cookies). The web app stays at `http://localhost:3000` (override with `DEV_WEB_URL`).
+
+| Mode                  | When                                   | Env                                                                                                                                                   |
+| --------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Named (stable)**    | Gmail push + OAuth + Resend day-to-day | `DEV_TUNNEL=1`, `DEV_TUNNEL_MODE=named`, `DEV_PUBLIC_SERVER_URL=https://api-dev.your.domain`, `DEV_CLOUDFLARED_CONFIG=scripts/cloudflared.tunnel.yml` |
+| **Quick (ephemeral)** | One-off smoke tests                    | `pnpm dev:tunnel` only → `https://*.trycloudflare.com` (URL **changes every run**)                                                                    |
+| **External tunnel**   | You already run `cloudflared`          | `DEV_PUBLIC_SERVER_URL=https://…` without starting tunnel                                                                                             |
+
+Setup for a **named** tunnel: see `scripts/cloudflared.tunnel.example.yml` and the `DEV_*` block in `packages/env/.env.example`. Requires the **cloudflared** binary (`brew install cloudflared`) — not Workers, not Wrangler, not Cloudflare-as-app-host (prod is Dokploy/Docker).
+
+On start, the script prints a **webhook URL banner** (Resend, Gmail push, GitHub webhook, OAuth callbacks) and checks `GMAIL_PUSH_OIDC_AUDIENCE` against the public Gmail path when set. Settings → Mail webhook URLs use `PUBLIC_SERVER_URL` when set.
 
 ## Monorepo layout
 

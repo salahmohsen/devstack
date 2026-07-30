@@ -137,17 +137,58 @@ for port in 3000 4206 5200 4111 9229; do
   lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
 done
 
-# ─── Step 5b: Optional public HTTPS tunnel for Resend webhooks ────
-# Resend (and most SaaS webhooks) cannot POST to http://localhost — they
-# need a public HTTPS origin. Local mkcert HTTPS still is not reachable
-# from the internet. Use a Cloudflare quick tunnel to :5200 instead:
+# ─── Step 5b: Optional public HTTPS tunnel for webhooks ───────────
+# SaaS providers (Resend, Gmail Pub/Sub, GitHub) cannot POST to localhost.
+# Options (env from packages/env/.env — never hardcode hostnames in this script):
 #
+#   # Quick ephemeral URL (changes every run):
+#   pnpm dev:tunnel
 #   DEV_TUNNEL=1 pnpm dev
-#   pnpm dev --tunnel
-#   DEV_PUBLIC_SERVER_URL=https://your-fixed-tunnel.example pnpm dev
 #
-# Web stays on http://localhost:3000 (browser). API public URL becomes HTTPS
-# so Settings → Mail webhook URL + CORS-facing VITE_SERVER_URL match Resend.
+#   # Named tunnel + your subdomain (stable — recommended for Gmail/OAuth):
+#   DEV_TUNNEL=1
+#   DEV_TUNNEL_MODE=named
+#   DEV_PUBLIC_SERVER_URL=https://api-dev.example.com
+#   DEV_CLOUDFLARED_CONFIG=~/.cloudflared/tsu-stack-dev.yml
+#   # or: DEV_CLOUDFLARED_TUNNEL_NAME=tsu-stack-dev
+#
+#   # Public URL only (you already run cloudflared elsewhere):
+#   DEV_PUBLIC_SERVER_URL=https://api-dev.example.com pnpm dev
+#
+# Web stays on http://localhost:3000. Public HTTPS origin is PUBLIC_SERVER_URL
+# (inbound webhooks + Settings → Mail). Browser VITE_SERVER_URL stays
+# http://localhost:5200 so OAuth/session cookies stay first-party.
+# Uses cloudflared CLI only (not Workers/wrangler deploy).
+
+# Optional DEV_* keys from packages/env/.env if not already exported.
+load_dev_env_keys() {
+  [ -f "$ENV_FILE" ] || return 0
+  local line key val
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%$'\r'}"
+    case "$line" in
+      ''|\#*) continue ;;
+      DEV_*=*|GMAIL_PUSH_OIDC_AUDIENCE=*)
+        key="${line%%=*}"
+        val="${line#*=}"
+        # strip surrounding quotes
+        if [ "${val#\"}" != "$val" ] && [ "${val%\"}" != "$val" ]; then
+          val="${val#\"}"
+          val="${val%\"}"
+        elif [ "${val#\'}" != "$val" ] && [ "${val%\'}" != "$val" ]; then
+          val="${val#\'}"
+          val="${val%\'}"
+        fi
+        # do not override a value already set in the environment
+        if eval "[ -z \"\${${key}+x}\" ]"; then
+          export "${key}=${val}"
+        fi
+        ;;
+    esac
+  done <"$ENV_FILE"
+}
+load_dev_env_keys
+
 USE_TUNNEL=0
 for arg in "$@"; do
   case "$arg" in
@@ -158,15 +199,70 @@ if [ "${DEV_TUNNEL:-0}" = "1" ] || [ "${DEV_TUNNEL:-}" = "true" ]; then
   USE_TUNNEL=1
 fi
 
+# named | quick  (default: named when config/name present, else quick)
+TUNNEL_MODE="${DEV_TUNNEL_MODE:-}"
 PUBLIC_SERVER_URL="${DEV_PUBLIC_SERVER_URL:-}"
+# Expand ~ in config path
+CLOUDFLARED_CONFIG="${DEV_CLOUDFLARED_CONFIG:-}"
+if [ -n "$CLOUDFLARED_CONFIG" ] && [ "${CLOUDFLARED_CONFIG#\~}" != "$CLOUDFLARED_CONFIG" ]; then
+  CLOUDFLARED_CONFIG="${HOME}${CLOUDFLARED_CONFIG#\~}"
+fi
+# Resolve relative config paths against repo root (e.g. scripts/cloudflared.tunnel.yml)
+if [ -n "$CLOUDFLARED_CONFIG" ] && [ "${CLOUDFLARED_CONFIG#/}" = "$CLOUDFLARED_CONFIG" ]; then
+  CLOUDFLARED_CONFIG="$ROOT/$CLOUDFLARED_CONFIG"
+fi
+CLOUDFLARED_TUNNEL_NAME="${DEV_CLOUDFLARED_TUNNEL_NAME:-}"
+DEV_WEB_URL="${DEV_WEB_URL:-http://localhost:3000}"
+
+if [ -z "$TUNNEL_MODE" ]; then
+  if [ -n "$CLOUDFLARED_CONFIG" ] || [ -n "$CLOUDFLARED_TUNNEL_NAME" ]; then
+    TUNNEL_MODE="named"
+  else
+    TUNNEL_MODE="quick"
+  fi
+fi
+
 TUNNEL_PID=""
 TUNNEL_LOG="${TMPDIR:-/tmp}/tsu-stack-cloudflared-$$.log"
+TUNNEL_KIND="" # quick | named | external | none
 
-if [ -n "$PUBLIC_SERVER_URL" ]; then
-  ok "Using fixed public API URL: $PUBLIC_SERVER_URL"
-elif [ "$USE_TUNNEL" = "1" ]; then
+strip_trailing_slash() {
+  local u="$1"
+  while [ "${u%/}" != "$u" ]; do u="${u%/}"; done
+  printf '%s' "$u"
+}
+
+start_named_tunnel() {
+  command -v cloudflared >/dev/null 2>&1 || fail "cloudflared not installed (brew install cloudflared) — required for named tunnels"
+  [ -n "$PUBLIC_SERVER_URL" ] || fail "Named tunnel requires DEV_PUBLIC_SERVER_URL=https://your-stable-host (e.g. https://api-dev.example.com)"
+
+  local cmd=(cloudflared tunnel --no-autoupdate)
+  if [ -n "$CLOUDFLARED_CONFIG" ]; then
+    [ -f "$CLOUDFLARED_CONFIG" ] || fail "DEV_CLOUDFLARED_CONFIG not found: $CLOUDFLARED_CONFIG (see scripts/cloudflared.tunnel.example.yml)"
+    cmd+=(--config "$CLOUDFLARED_CONFIG" run)
+    info "Starting named tunnel (config: $CLOUDFLARED_CONFIG) → http://127.0.0.1:5200 ..."
+  elif [ -n "$CLOUDFLARED_TUNNEL_NAME" ]; then
+    # Ingress must already map hostname → http://127.0.0.1:5200 in account config / YAML.
+    cmd+=(run "$CLOUDFLARED_TUNNEL_NAME")
+    info "Starting named tunnel (name: $CLOUDFLARED_TUNNEL_NAME) → local :5200 ..."
+  else
+    fail "Named mode needs DEV_CLOUDFLARED_CONFIG or DEV_CLOUDFLARED_TUNNEL_NAME (or set DEV_PUBLIC_SERVER_URL only if the tunnel is already running)"
+  fi
+
+  : >"$TUNNEL_LOG"
+  "${cmd[@]}" >"$TUNNEL_LOG" 2>&1 &
+  TUNNEL_PID=$!
+  sleep 1
+  if ! kill -0 "$TUNNEL_PID" 2>/dev/null; then
+    fail "cloudflared named tunnel exited early — see $TUNNEL_LOG"
+  fi
+  ok "Named tunnel running (pid $TUNNEL_PID) → ${PUBLIC_SERVER_URL}"
+  TUNNEL_KIND="named"
+}
+
+start_quick_tunnel() {
   command -v cloudflared >/dev/null 2>&1 || fail "cloudflared not installed (brew install cloudflared) — required for DEV_TUNNEL=1"
-  info "Starting Cloudflare quick tunnel → http://127.0.0.1:5200 ..."
+  info "Starting cloudflared quick tunnel → http://127.0.0.1:5200 ..."
   : >"$TUNNEL_LOG"
   cloudflared tunnel --url "http://127.0.0.1:5200" --no-autoupdate >"$TUNNEL_LOG" 2>&1 &
   TUNNEL_PID=$!
@@ -176,7 +272,6 @@ elif [ "$USE_TUNNEL" = "1" ]; then
     if ! kill -0 "$TUNNEL_PID" 2>/dev/null; then
       fail "cloudflared exited early — see $TUNNEL_LOG"
     fi
-    # Quick tunnels print https://*.trycloudflare.com once ready.
     PUBLIC_SERVER_URL="$(
       grep -oE 'https://[a-zA-Z0-9.-]+\.trycloudflare\.com' "$TUNNEL_LOG" 2>/dev/null | head -1 || true
     )"
@@ -189,37 +284,137 @@ elif [ "$USE_TUNNEL" = "1" ]; then
   if [ -z "$PUBLIC_SERVER_URL" ]; then
     fail "Timed out waiting for cloudflared HTTPS URL — see $TUNNEL_LOG"
   fi
-  ok "Public API tunnel: $PUBLIC_SERVER_URL"
+  ok "Quick tunnel (ephemeral): $PUBLIC_SERVER_URL"
+  warn "URL changes each run — prefer DEV_TUNNEL_MODE=named + DEV_PUBLIC_SERVER_URL for Gmail/OAuth"
+  TUNNEL_KIND="quick"
+}
+
+# Featured developer links — high-visibility block (apps + Mastra + webhooks).
+# $1 public (tunnel) URL for inbound webhooks; $2 web origin; $3 browser API URL (OAuth).
+print_dev_links_banner() {
+  local public="$1"
+  local web="$2"
+  local browser_api="${3:-http://localhost:5200}"
+  public="$(strip_trailing_slash "$public")"
+  web="$(strip_trailing_slash "$web")"
+  browser_api="$(strip_trailing_slash "$browser_api")"
+  local api_local="http://localhost:5200"
+  local agent="http://localhost:4111"
+  local BOLD='\033[1m'
+  local DIM='\033[2m'
+  local MAGENTA='\033[35m'
+
+  echo ""
+  echo -e "${BOLD}${MAGENTA}╔══════════════════════════════════════════════════════════════════════════╗${RESET}"
+  echo -e "${BOLD}${MAGENTA}║${RESET}${BOLD}  tsu-stack · developer links${RESET}                                           ${BOLD}${MAGENTA}║${RESET}"
+  echo -e "${BOLD}${MAGENTA}╠══════════════════════════════════════════════════════════════════════════╣${RESET}"
+  echo -e "${BOLD}${MAGENTA}║${RESET}  ${BOLD}Apps${RESET}                                                                  ${BOLD}${MAGENTA}║${RESET}"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Web" "$web"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "API (browser)" "$browser_api"
+  if [ "$public" != "$browser_api" ] && [ "$public" != "$api_local" ]; then
+    printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "API (public)" "$public"
+  fi
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "API health" "$api_local/health/live"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "API OpenAPI" "$api_local/docs"
+  echo -e "${BOLD}${MAGENTA}║${RESET}  ${BOLD}Mastra agent${RESET}                                                          ${BOLD}${MAGENTA}║${RESET}"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Studio" "$agent"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "API" "$agent/api"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Swagger UI" "$agent/swagger-ui"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Health" "$agent/health"
+  echo -e "${BOLD}${MAGENTA}║${RESET}  ${BOLD}Realtime${RESET}                                                              ${BOLD}${MAGENTA}║${RESET}"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${DIM}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "GitHub WS" "$browser_api/api/ws/github-signals"
+  echo -e "${BOLD}${MAGENTA}║${RESET}  ${BOLD}OAuth callbacks${RESET} (register on GitHub / Google apps)                    ${BOLD}${MAGENTA}║${RESET}"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "GitHub" "$browser_api/auth/callback/github"
+  printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Google" "$browser_api/auth/callback/google"
+
+  if [ "$public" = "$api_local" ]; then
+    echo -e "${BOLD}${MAGENTA}║${RESET}  ${YELLOW}Webhooks${RESET}  ${DIM}need public HTTPS — run: pnpm dev:tunnel${RESET}                  ${BOLD}${MAGENTA}║${RESET}"
+    echo -e "${BOLD}${MAGENTA}║${RESET}            ${DIM}or set DEV_TUNNEL_MODE=named + DEV_PUBLIC_SERVER_URL${RESET}         ${BOLD}${MAGENTA}║${RESET}"
+  else
+    echo -e "${BOLD}${MAGENTA}║${RESET}  ${BOLD}Inbound webhooks${RESET} (public origin)                                      ${BOLD}${MAGENTA}║${RESET}"
+    printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Resend" "$public/webhooks/resend/<token>"
+    echo -e "${BOLD}${MAGENTA}║${RESET}            ${DIM}token from Settings → Mail; paste full URL in Resend${RESET}       ${BOLD}${MAGENTA}║${RESET}"
+    printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Gmail push" "$public/webhooks/gmail-push"
+    printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "GitHub hook" "$public/webhooks/github"
+    if [ -n "${GMAIL_PUSH_OIDC_AUDIENCE:-}" ]; then
+      if [ "${GMAIL_PUSH_OIDC_AUDIENCE}" = "${public}/webhooks/gmail-push" ]; then
+        echo -e "${BOLD}${MAGENTA}║${RESET}    ${GREEN}✔ GMAIL_PUSH_OIDC_AUDIENCE matches Gmail push URL${RESET}                   ${BOLD}${MAGENTA}║${RESET}"
+      else
+        echo -e "${BOLD}${MAGENTA}║${RESET}    ${YELLOW}⚠ GMAIL_PUSH_OIDC_AUDIENCE mismatch — expected:${RESET}                    ${BOLD}${MAGENTA}║${RESET}"
+        printf "${BOLD}${MAGENTA}║${RESET}      ${YELLOW}%-66s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "${public}/webhooks/gmail-push"
+      fi
+    else
+      echo -e "${BOLD}${MAGENTA}║${RESET}    ${YELLOW}⚠ set GMAIL_PUSH_OIDC_AUDIENCE=${public}/webhooks/gmail-push${RESET} ${BOLD}${MAGENTA}║${RESET}"
+    fi
+    echo -e "${BOLD}${MAGENTA}║${RESET}  ${DIM}API process binds :5200; cloudflared forwards public HTTPS.${RESET}          ${BOLD}${MAGENTA}║${RESET}"
+  fi
+
+  echo -e "${BOLD}${MAGENTA}╠══════════════════════════════════════════════════════════════════════════╣${RESET}"
+  echo -e "${BOLD}${MAGENTA}║${RESET}  ${YELLOW}Ctrl+C${RESET} stops apps, tunnel, and docker infra                             ${BOLD}${MAGENTA}║${RESET}"
+  echo -e "${BOLD}${MAGENTA}╚══════════════════════════════════════════════════════════════════════════╝${RESET}"
+  echo ""
+}
+
+if [ "$USE_TUNNEL" = "1" ]; then
+  case "$TUNNEL_MODE" in
+    named)
+      if [ -n "$CLOUDFLARED_CONFIG" ] || [ -n "$CLOUDFLARED_TUNNEL_NAME" ]; then
+        start_named_tunnel
+      elif [ -n "$PUBLIC_SERVER_URL" ]; then
+        ok "Using fixed public API URL (tunnel process not started by this script): $PUBLIC_SERVER_URL"
+        TUNNEL_KIND="external"
+      else
+        fail "DEV_TUNNEL_MODE=named needs DEV_PUBLIC_SERVER_URL and DEV_CLOUDFLARED_CONFIG (or DEV_CLOUDFLARED_TUNNEL_NAME)"
+      fi
+      ;;
+    quick)
+      if [ -n "$PUBLIC_SERVER_URL" ] && { [ -n "$CLOUDFLARED_CONFIG" ] || [ -n "$CLOUDFLARED_TUNNEL_NAME" ]; }; then
+        # Prefer named when config is present even if mode defaulted oddly
+        start_named_tunnel
+      elif [ -n "$PUBLIC_SERVER_URL" ]; then
+        ok "Using fixed public API URL: $PUBLIC_SERVER_URL"
+        TUNNEL_KIND="external"
+      else
+        start_quick_tunnel
+      fi
+      ;;
+    *)
+      fail "Unknown DEV_TUNNEL_MODE='$TUNNEL_MODE' (use named or quick)"
+      ;;
+  esac
+elif [ -n "$PUBLIC_SERVER_URL" ]; then
+  ok "Using fixed public API URL: $PUBLIC_SERVER_URL"
+  TUNNEL_KIND="external"
 else
   PUBLIC_SERVER_URL="http://localhost:5200"
+  TUNNEL_KIND="none"
 fi
+
+PUBLIC_SERVER_URL="$(strip_trailing_slash "$PUBLIC_SERVER_URL")"
+DEV_WEB_URL="$(strip_trailing_slash "$DEV_WEB_URL")"
+
+# Split tunnel public origin from browser API origin (see comment at export block).
+export PUBLIC_SERVER_URL
+export DEV_PUBLIC_SERVER_URL="$PUBLIC_SERVER_URL"
+export VITE_WEB_URL="$DEV_WEB_URL"
+case "$DEV_WEB_URL" in
+  *localhost*|*127.0.0.1*)
+    export VITE_SERVER_URL="http://localhost:5200"
+    if [ "$PUBLIC_SERVER_URL" != "http://localhost:5200" ]; then
+      info "Browser API/OAuth → http://localhost:5200 (first-party cookies)"
+      info "Inbound webhooks  → $PUBLIC_SERVER_URL (cloudflared)"
+    fi
+    ;;
+  *)
+    export VITE_SERVER_URL="$PUBLIC_SERVER_URL"
+    ;;
+esac
 
 # ─── Step 6: Start apps ──────────────────────────────────────────
 info "Starting all apps in dev mode..."
-echo ""
-echo -e "  ${CYAN}Server (local)${RESET}  → http://localhost:5200"
-if [ "$PUBLIC_SERVER_URL" != "http://localhost:5200" ]; then
-  echo -e "  ${CYAN}Server (public)${RESET} → ${GREEN}${PUBLIC_SERVER_URL}${RESET}"
-  echo -e "  ${CYAN}Resend webhook${RESET}  → ${PUBLIC_SERVER_URL}/webhooks/resend/<token>"
-fi
-echo -e "  ${CYAN}Web${RESET}              → http://localhost:3000"
-echo -e "  ${CYAN}Agent${RESET}            → http://localhost:4111"
-echo ""
-if [ "$PUBLIC_SERVER_URL" = "http://localhost:5200" ]; then
-  echo -e "  ${YELLOW}Resend webhooks need public HTTPS. Re-run with:${RESET}"
-  echo -e "  ${YELLOW}  pnpm dev:tunnel${RESET}"
-  echo -e "  ${YELLOW}  # or: DEV_TUNNEL=1 pnpm dev${RESET}"
-  echo ""
-  echo -e "  ${YELLOW}GitHub OAuth callback: ${PUBLIC_SERVER_URL}/auth/callback/github${RESET}"
-else
-  # Tunnel / fixed public URL: Better Auth baseURL follows VITE_SERVER_URL.
-  echo -e "  ${YELLOW}GitHub OAuth callback (register in GitHub app):${RESET}"
-  echo -e "  ${GREEN}  ${PUBLIC_SERVER_URL}/auth/callback/github${RESET}"
-  echo -e "  ${YELLOW}(Local bind stays http://localhost:5200; public API origin is the tunnel.)${RESET}"
-fi
-echo ""
-echo -e "  ${YELLOW}Press Ctrl+C to stop all services${RESET}"
-echo ""
+print_dev_links_banner "$PUBLIC_SERVER_URL" "$DEV_WEB_URL" "$VITE_SERVER_URL"
+
+APP_PIDS=()
 
 # Trap Ctrl+C to also stop docker infra + tunnel
 cleanup() {
@@ -231,28 +426,84 @@ cleanup() {
   for port in 3000 4206 5200 4111 9229; do
     lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
   done
+  for pid in "${APP_PIDS[@]:-}"; do
+    kill "$pid" 2>/dev/null || true
+  done
   if [ -n "${TUNNEL_PID:-}" ] && kill -0 "$TUNNEL_PID" 2>/dev/null; then
-    info "Stopping Cloudflare tunnel (pid $TUNNEL_PID)..."
+    info "Stopping cloudflared tunnel (pid $TUNNEL_PID)..."
     kill "$TUNNEL_PID" 2>/dev/null || true
+    wait "$TUNNEL_PID" 2>/dev/null || true
   fi
-  # Best-effort: any leftover cloudflared for this log file
+  # Best-effort cleanup of leftover quick-tunnel processes from this machine
   pkill -f "cloudflared tunnel --url http://127.0.0.1:5200" 2>/dev/null || true
   kill $(jobs -p) 2>/dev/null || true
   sleep 1
-  info "Stopping infrastructure..."
-  docker compose -f "$INFRA_COMPOSE" down
+  if [ "${DEV_KEEP_INFRA:-0}" = "1" ]; then
+    info "Leaving docker infra up (DEV_KEEP_INFRA=1)"
+  else
+    info "Stopping infrastructure..."
+    docker compose -f "$INFRA_COMPOSE" down
+  fi
   rm -f "$TUNNEL_LOG" 2>/dev/null || true
   ok "All services stopped"
 }
 trap cleanup EXIT INT TERM
 
-# Start all apps in parallel using pnpm's built-in parallel runner
-# Override production URLs with local dev equivalents. Both must be set:
-# the server's CORS allowlist is derived from VITE_WEB_URL, so leaving it
-# at the production origin would block the browser (localhost:3000).
+# Start apps as independent processes (not `pnpm -r --parallel`).
+# Recursive parallel fails the whole monorepo if one package exits (e.g. web
+# vite crash) — that SIGKILLed server/agent and made debugging harder.
 #
-# API mounts at URL root (no /server path). VITE_SERVER_URL pathname is
-# empty → Hono has no basePath; oRPC client calls `${VITE_SERVER_URL}/rpc`.
-# When tunneling, VITE_SERVER_URL is the public HTTPS origin so webhook URL
-# generation (Settings → Mail) and Resend match.
-VITE_SERVER_URL="$PUBLIC_SERVER_URL" VITE_WEB_URL="http://localhost:3000" pnpm -r --parallel dev
+# VITE_* / PUBLIC_SERVER_URL already exported above (before first banner).
+
+start_app() {
+  local name="$1"
+  local filter="$2"
+  local log="${TMPDIR:-/tmp}/tsu-stack-${name}-$$.log"
+  info "Starting ${name}… (log: ${log})"
+  # Stream with prefix; pipefail so pnpm's exit code is preserved.
+  # Sibling apps keep running if one exits (unlike pnpm -r --parallel).
+  (
+    set -o pipefail
+    pnpm --filter "$filter" dev 2>&1 | while IFS= read -r line || [ -n "$line" ]; do
+      printf '[%s] %s\n' "$name" "$line"
+      printf '%s\n' "$line" >>"$log"
+    done
+    code=$?
+    echo -e "${RED}✘ ${name} exited (code ${code}) — see ${log}${RESET}"
+  ) &
+  APP_PIDS+=($!)
+}
+
+start_app "server" "@tsu-stack/server"
+start_app "web" "@tsu-stack/web"
+start_app "agent" "@tsu-stack/agent"
+
+# Wait until something is listening, then re-print links (easy to spot after log noise)
+wait_port() {
+  local port=$1
+  local label=$2
+  local max=${3:-60}
+  local i=0
+  while [ $i -lt "$max" ]; do
+    if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+      ok "$label is listening on :$port"
+      return 0
+    fi
+    sleep 1
+    i=$((i + 1))
+  done
+  warn "$label not listening on :$port after ${max}s"
+  return 1
+}
+
+wait_port 5200 "API (server)" 90 || true
+wait_port 4111 "Mastra agent" 90 || true
+wait_port 3000 "Web" 120 || true
+
+echo ""
+ok "Stack ready — links again for convenience:"
+print_dev_links_banner "$PUBLIC_SERVER_URL" "$DEV_WEB_URL" "$VITE_SERVER_URL"
+
+# Block until all app wrappers exit (or Ctrl+C)
+wait
+

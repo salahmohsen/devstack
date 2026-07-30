@@ -13,7 +13,10 @@ import { protectedProcedure } from "#@/lib/procedures/factory";
 import { sealSecret } from "#@/lib/settings/seal-secret";
 
 function webhookUrlFor(token: string): string {
-  return buildResendWebhookUrl(ENV_SERVER.VITE_SERVER_URL, token);
+  // Prefer PUBLIC_SERVER_URL so Settings → Mail shows the tunnel origin while
+  // browser OAuth keeps using localhost VITE_SERVER_URL (first-party cookies).
+  const publicOrigin = ENV_SERVER.PUBLIC_SERVER_URL ?? ENV_SERVER.VITE_SERVER_URL;
+  return buildResendWebhookUrl(publicOrigin, token);
 }
 
 function toOutput(

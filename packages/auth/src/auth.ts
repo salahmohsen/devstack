@@ -326,7 +326,13 @@ export const auth = betterAuth({
       // mailbox used for Connections. linkSocial still requires a session;
       // this only allows the linked provider email to differ from user.email.
       allowDifferentEmails: true
-    }
+    },
+    // Tunnel dev: web is http://localhost:3000, API is https://api-dev… — different
+    // sites, so the OAuth state cookie set on the sign-in XHR is third-party and
+    // browsers drop it. State is still one-time in the verification table keyed by
+    // the OAuth `state` query param. Production shares `.salahmohsen.com` cookies.
+    // Local (both localhost) shares host cookies without this flag.
+    skipStateCookieCheck: !sharedCookieDomain && !ENV_SERVER.VITE_SERVER_URL.includes("localhost")
   },
 
   // https://www.better-auth.com/docs/concepts/session-management#session-caching

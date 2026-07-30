@@ -1,0 +1,29 @@
+# Example named Cloudflare Tunnel config for local API webhooks.
+#
+# Recommended path (gitignored): scripts/cloudflared.tunnel.yml
+# Credentials stay under ~/.cloudflared/ (never commit *.json or cert.pem).
+#
+#   brew install cloudflared
+#   cloudflared tunnel login
+#   cloudflared tunnel create tsu-stack-dev
+#   cloudflared tunnel route dns tsu-stack-dev api-dev.example.com
+#   cp scripts/cloudflared.tunnel.example.yml scripts/cloudflared.tunnel.yml
+#   # edit tunnel UUID, credentials-file, hostname
+#
+# packages/env/.env:
+#   DEV_TUNNEL=1
+#   DEV_TUNNEL_MODE=named
+#   DEV_PUBLIC_SERVER_URL=https://api-dev.example.com
+#   DEV_CLOUDFLARED_CONFIG=scripts/cloudflared.tunnel.yml
+#
+# Docs: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/
+
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: /Users/YOU/.cloudflared/REPLACE_WITH_TUNNEL_UUID.json
+
+ingress:
+  # Public HTTPS hostname → local Hono API (scripts/dev.sh binds :5200)
+  - hostname: api-dev.example.com
+    service: http://127.0.0.1:5200
+  # Catch-all (required)
+  - service: http_status:404

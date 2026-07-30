@@ -46,7 +46,9 @@ export const ENV_SERVER = createEnv({
       process.env.WORKERS_CI_COMMIT_SHA ??
       "unknown",
     VITE_SERVER_URL: process.env.VITE_SERVER_URL ?? "http://localhost:5200",
-    VITE_WEB_URL: process.env.VITE_WEB_URL ?? "http://localhost:3000"
+    VITE_WEB_URL: process.env.VITE_WEB_URL ?? "http://localhost:3000",
+    // Tunnel public origin for inbound webhooks (optional; falls back to VITE_SERVER_URL).
+    PUBLIC_SERVER_URL: process.env.PUBLIC_SERVER_URL ?? process.env.DEV_PUBLIC_SERVER_URL
   } as Record<string, string | undefined>,
   server: {
     VITE_SERVER_URL: isProduction
@@ -55,6 +57,12 @@ export const ENV_SERVER = createEnv({
     VITE_WEB_URL: isProduction
       ? normalizedUrlSchema
       : normalizedUrlSchema.default("http://localhost:3000"),
+    /**
+     * Public HTTPS origin for inbound webhooks when the browser API stays on
+     * localhost (local `pnpm dev:tunnel`). Prefer this for Resend/Gmail copy-paste
+     * URLs; falls back to VITE_SERVER_URL when unset.
+     */
+    PUBLIC_SERVER_URL: normalizedUrlSchema.optional(),
     // DATABASE_URL is used at module load by the Drizzle singleton in
     // packages/db/src/index.ts (Better Auth's drizzle adapter initializes
     // once at import time), so the value must be present for the build
