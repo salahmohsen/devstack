@@ -14,6 +14,15 @@ import {
 import { useState } from "react";
 
 import { type MailCategoryIcon, type MailSmartRule } from "@tsu-stack/core";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -251,6 +260,7 @@ function RuleRow({
 }) {
   const Icon = ICONS[rule.icon] ?? Sparkles;
   const [kw, setKw] = useState(rule.keywords.join(", "));
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const dirty = kw !== rule.keywords.join(", ");
 
   return (
@@ -290,7 +300,7 @@ function RuleRow({
             variant="ghost"
             className="size-8 text-muted-foreground"
             disabled={busy}
-            onClick={onDelete}
+            onClick={() => setDeleteOpen(true)}
             aria-label={`Delete ${rule.title}`}
           >
             <Trash2Icon className="size-3.5" />
@@ -325,6 +335,32 @@ function RuleRow({
           Save keywords
         </Button>
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete “{rule.title}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              New mail will no longer get the <code className="text-xs">rule:{rule.slug}</code>{" "}
+              label from keywords. Existing labels on messages are not removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => {
+                onDelete();
+                setDeleteOpen(false);
+              }}
+            >
+              Delete rule
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
     </li>
   );
 }

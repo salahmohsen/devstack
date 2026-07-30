@@ -1,12 +1,23 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { CheckCircle2Icon, Link2Icon, UnplugIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { GMAIL_CONNECT_SCOPES } from "@tsu-stack/core";
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -31,6 +42,16 @@ import {
 } from "@/features/connections";
 
 import { SettingsSection } from "./settings-section";
+
+const connectionsRoute = getRouteApi("/(root-layout)/__protected/dashboard/settings/connections/");
+
+const OAUTH_LINK_ERROR_MESSAGES: Record<string, string> = {
+  account_already_linked_to_different_user:
+    "That Google account is already linked to a different user.",
+  unable_to_link_account: "Could not link this account. Try again or use a different Google login.",
+  access_denied: "Google access was denied. No changes were made.",
+  oauth_provider_not_found: "This provider is not configured on the server."
+};
 
 function StatusBadge({
   state
@@ -69,9 +90,27 @@ function StatusBadge({
 export function ConnectionsSettings() {
   const query = useGetConnectionsStatusQuery();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { error: oauthError, error_description: oauthErrorDescription } =
+    connectionsRoute.useSearch();
   const syncGmail = useSyncGmailMutation();
   const setAutoSync = useSetGmailAutoSyncMutation();
   const [busy, setBusy] = useState<"google" | "github" | "unlink-google" | null>(null);
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
+
+  useEffect(() => {
+    if (!oauthError) return;
+    toast.error(
+      OAUTH_LINK_ERROR_MESSAGES[oauthError] ??
+        oauthErrorDescription ??
+        `Could not connect account (${oauthError.replaceAll("_", " ")}).`
+    );
+    void navigate({
+      to: "/dashboard/settings/connections",
+      search: {},
+      replace: true
+    });
+  }, [oauthError, oauthErrorDescription, navigate]);
 
   async function connectGmail() {
     setBusy("google");
@@ -110,6 +149,7 @@ export function ConnectionsSettings() {
         throw new Error(result.error.message ?? "Unlink failed");
       }
       toast.success("Google disconnected");
+      setDisconnectOpen(false);
       await queryClient.invalidateQueries({ queryKey: connectionsQueryKeys.status() });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not disconnect Google");
@@ -211,7 +251,12 @@ export function ConnectionsSettings() {
                 </p>
               ) : null}
               {query.data.gmailSync.lastError ? (
-                <p className="text-[11px] text-destructive">{query.data.gmailSync.lastError}</p>
+                <Alert variant="error" className="mt-1 py-2">
+                  <AlertTitle className="text-xs">Last sync failed</AlertTitle>
+                  <AlertDescription className="text-xs">
+                    {query.data.gmailSync.lastError}
+                  </AlertDescription>
+                </Alert>
               ) : null}
               {googleStatus.gmailConnected ? (
                 <div className="flex items-center gap-2 pt-1">
@@ -263,12 +308,10 @@ export function ConnectionsSettings() {
                   size="sm"
                   variant="outline"
                   disabled={busy === "unlink-google"}
-                  onClick={() => {
-                    void disconnectGoogle();
-                  }}
+                  onClick={() => setDisconnectOpen(true)}
                 >
                   <UnplugIcon className="size-3.5" aria-hidden />
-                  {busy === "unlink-google" ? "Disconnecting…" : "Disconnect"}
+                  Disconnect
                 </Button>
               ) : null}
             </div>
@@ -322,6 +365,31 @@ export function ConnectionsSettings() {
           .
         </p>
       </FramePanel>
+
+      <AlertDialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Google?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Gmail sync will stop and Career Inbox will no longer pull from this Google account
+              until you connect again. Existing mail already imported stays in place.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busy === "unlink-google"}
+              onClick={() => {
+                void disconnectGoogle();
+              }}
+            >
+              {busy === "unlink-google" ? "Disconnecting…" : "Disconnect Google"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
     </Frame>
   );
 }

@@ -351,55 +351,58 @@ export function Topbar() {
         <Tabs tabsReady={isClient} routerRef={routerRef} />
       </div>
 
-      <div className="hidden shrink-0 items-center gap-1 md:flex">
-        <ThemeSwitcher variant="ghost" />
-
+      <div className="flex shrink-0 items-center gap-1">
+        {/* Bell stays visible below md — the rest of this cluster was desktop-only. */}
         {admin && pathname.includes("dashboard") ? <NotificationsBell /> : null}
 
-        <Button variant="outline" onClick={() => setCommandPaletteOpen(true)} aria-label="Search">
-          <SearchIcon />
-          <KbdGroup>
-            <Kbd>⌘</Kbd>
-            <Kbd>K</Kbd>
-          </KbdGroup>
-        </Button>
+        <div className="hidden items-center gap-1 md:flex">
+          <ThemeSwitcher variant="ghost" />
 
-        <Menu>
-          <MenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 text-muted-foreground hover:bg-surface-1"
-                aria-label="More actions"
-              />
-            }
-          >
-            <MoreHorizontal className="size-5" strokeWidth={2} />
-          </MenuTrigger>
-          <MenuPopup align="end" className="w-48">
-            <MenuLinkItem
-              href="https://github.com/salahmohsen"
-              target="_blank"
-              rel="noopener noreferrer"
+          <Button variant="outline" onClick={() => setCommandPaletteOpen(true)} aria-label="Search">
+            <SearchIcon />
+            <KbdGroup>
+              <Kbd>⌘</Kbd>
+              <Kbd>K</Kbd>
+            </KbdGroup>
+          </Button>
+
+          <Menu>
+            <MenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-muted-foreground hover:bg-surface-1"
+                  aria-label="More actions"
+                />
+              }
             >
-              <ExternalLink size={16} strokeWidth={2} />
-              View GitHub profile
-            </MenuLinkItem>
-            <MenuLinkItem
-              href="https://github.com/salahmohsen/portfolio-v2/issues/new"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Bug size={16} strokeWidth={2} />
-              Report an issue
-            </MenuLinkItem>
-            <MenuLinkItem render={<Link to="/sign-in" />}>
-              <ExternalLink size={16} strokeWidth={2} />
-              login
-            </MenuLinkItem>
-          </MenuPopup>
-        </Menu>
+              <MoreHorizontal className="size-5" strokeWidth={2} />
+            </MenuTrigger>
+            <MenuPopup align="end" className="w-48">
+              <MenuLinkItem
+                href="https://github.com/salahmohsen"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink size={16} strokeWidth={2} />
+                View GitHub profile
+              </MenuLinkItem>
+              <MenuLinkItem
+                href="https://github.com/salahmohsen/portfolio-v2/issues/new"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Bug size={16} strokeWidth={2} />
+                Report an issue
+              </MenuLinkItem>
+              <MenuLinkItem render={<Link to="/sign-in" />}>
+                <ExternalLink size={16} strokeWidth={2} />
+                login
+              </MenuLinkItem>
+            </MenuPopup>
+          </Menu>
+        </div>
       </div>
     </nav>
   );
