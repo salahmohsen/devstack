@@ -35,8 +35,15 @@ export const Route = createFileRoute("/(root-layout)/(guest)/sign-in")({
 
 function RouteComponent() {
   return (
-    <div className="flex min-h-full w-full flex-col items-center justify-center">
-      <Outlet />
+    <div className="relative flex min-h-full w-full flex-1 flex-col items-center justify-center overflow-hidden">
+      {/* Soft ambient glow — decorative only */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,--theme(--color-primary/8%),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_50%_0%,--theme(--color-primary/12%),transparent_50%)]"
+      />
+      <div className="relative z-10 w-full">
+        <Outlet />
+      </div>
     </div>
   );
 }

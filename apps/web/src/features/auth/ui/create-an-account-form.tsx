@@ -2,6 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, type NavigateOptions, useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -9,7 +11,8 @@ import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { ProfileNameSchema } from "@tsu-stack/core";
-import { FieldDescription, FieldGroup, FieldSeparator } from "@tsu-stack/ui/components/field";
+import { Button } from "@tsu-stack/ui/components/button";
+import { FieldGroup, FieldSeparator } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useAppForm } from "@/shared/form";
@@ -145,12 +148,21 @@ export function CreateAnAccountForm({
               <span className="sr-only">{appConfig.site.shortName}</span>
             </Link>
             <h1 className="text-xl font-bold">Create an account</h1>
-            <FieldDescription>
+            {/* Plain text — FieldDescription must live inside Field.Root (Base UI). */}
+            <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/sign-in" search={{ redirect: redirectTo }}>
+              <Link
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+                to="/sign-in"
+                search={
+                  typeof redirectTo === "string" && redirectTo.length > 0
+                    ? { redirect: redirectTo }
+                    : {}
+                }
+              >
                 Sign in
               </Link>
-            </FieldDescription>
+            </p>
           </div>
 
           <form.AppField name="name">
@@ -195,32 +207,48 @@ export function CreateAnAccountForm({
 
           <FieldSeparator>Or</FieldSeparator>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/*
-              TODO(multi-user Task later): OAuth (Google/GitHub) with invite preflight —
-              set tsu_invite_code cookie (or OAuth additionalData.inviteCode) before redirect
-              when ?invite= is present. Email path above is required for now.
-            */}
-            <button
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xs border border-input bg-background px-4 py-2 text-sm shadow-xs hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
-              onClick={() => toast.error("Not yet implemented.")}
-              type="button"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                  d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                  fill="currentColor"
-                />
-              </svg>
-              Continue with Google
-            </button>
-          </div>
+          {/*
+            SVG without size classes filled the grid cell (broken “G” + stacked label).
+            Match sign-in: coss Button + fixed icon size.
+            OAuth invite preflight (cookie / additionalData) still TODO when signing up via Google.
+          */}
+          <Button
+            className="h-11 w-full justify-center gap-2.5 font-medium"
+            disabled={signUpMutation.isPending}
+            onClick={() =>
+              toast.error(
+                "Use email + invite for new accounts, or sign in with Google if you already have one."
+              )
+            }
+            type="button"
+            variant="outline"
+          >
+            {signUpMutation.isPending ? (
+              <Loader2 aria-hidden className="size-4 shrink-0 animate-spin" />
+            ) : (
+              <FcGoogle aria-hidden className="size-4 shrink-0" />
+            )}
+            Continue with Google
+          </Button>
         </FieldGroup>
       </form>
-      <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <Link to="/terms-of-service">Terms of Service</Link>{" "}
-        and <Link to="/privacy-policy">Privacy Policy</Link>.
-      </FieldDescription>
+      <p className="px-6 text-center text-xs leading-5 text-muted-foreground">
+        By clicking continue, you agree to our{" "}
+        <Link
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+          to="/terms-of-service"
+        >
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+          to="/privacy-policy"
+        >
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </Container>
   );
 }
