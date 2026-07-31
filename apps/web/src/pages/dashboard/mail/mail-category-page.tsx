@@ -52,8 +52,19 @@ const ICONS = {
   sparkles: Sparkles
 } as const;
 
-/** Labels that are user-actionable career signals (drop generic ATS noise). */
-const CAREER_LABELS = new Set(["recruiter", "interview", "offer", "application"]);
+/**
+ * System labels shown as reader/list badges (career buckets + assistant labels).
+ * Smart-rule labels (`rule:…`) are not shown as chips here.
+ */
+const CAREER_LABELS = new Set([
+  "recruiter",
+  "interview",
+  "offer",
+  "application",
+  "job_notifier",
+  "noise",
+  "application_status"
+]);
 
 const LABEL_BADGE_VARIANT: Record<
   string,
@@ -62,8 +73,15 @@ const LABEL_BADGE_VARIANT: Record<
   interview: "info",
   offer: "success",
   recruiter: "warning",
-  application: "secondary"
+  application: "secondary",
+  application_status: "info",
+  job_notifier: "outline",
+  noise: "outline"
 };
+
+function formatLabelChip(label: string): string {
+  return label.replaceAll("_", " ");
+}
 
 function resolveCategoryCard(categoryId: string): MailCategoryCard {
   const system = MAIL_SYSTEM_CATEGORY_CARDS.find((c) => c.id === categoryId);
@@ -122,7 +140,7 @@ function MessageTags({
           variant={LABEL_BADGE_VARIANT[label] ?? "outline"}
           className="capitalize"
         >
-          {label}
+          {formatLabelChip(label)}
         </Badge>
       ))}
       {application ? (
@@ -540,7 +558,7 @@ function MessageReaderBody({
                     disabled={correct.isPending || currentSystem === label}
                     onClick={() => submitCorrection([label])}
                   >
-                    {label}
+                    {formatLabelChip(label)}
                   </Button>
                 ))}
                 <Button

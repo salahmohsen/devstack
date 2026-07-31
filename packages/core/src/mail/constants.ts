@@ -28,8 +28,20 @@ export const MAIL_SYSTEM_LABELS = [
 ] as const satisfies readonly MailSystemLabel[];
 
 /**
+ * Labels that put a message in the **Needs action** hub filter (computed, not a stored label).
+ * Pure `noise` / pure `job_notifier` are excluded — they do not appear in this set.
+ * Keep in sync with `packages/db` mail-message.repository categoryClause.
+ */
+export const MAIL_NEEDS_ACTION_LABELS = [
+  "recruiter",
+  "interview",
+  "offer",
+  "application_status"
+] as const satisfies readonly MailSystemLabel[];
+
+/**
  * Hub category (except unsorted/all/needs_action) → primary system label for list filter.
- * `needs_action` is a computed filter (recruiter|interview|offer|application_status), not a label map.
+ * `needs_action` is a computed filter (see MAIL_NEEDS_ACTION_LABELS), not a label map.
  */
 export const MAIL_CATEGORY_TO_SYSTEM_LABEL = {
   applications: "application",

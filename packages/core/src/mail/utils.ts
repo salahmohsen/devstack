@@ -1,5 +1,6 @@
 import {
   MAIL_CATEGORY_TO_SYSTEM_LABEL,
+  MAIL_NEEDS_ACTION_LABELS,
   MAIL_SMART_RULE_LABEL_PREFIX,
   MAIL_SYSTEM_LABELS
 } from "./constants";
@@ -51,6 +52,15 @@ export function isUnsortedMail(labels: readonly string[]): boolean {
 }
 
 /**
+ * Needs action hub filter: labels overlap MAIL_NEEDS_ACTION_LABELS.
+ * Pure `noise` / pure `job_notifier` never match (no action labels).
+ */
+export function isNeedsActionMail(labels: readonly string[]): boolean {
+  const action = MAIL_NEEDS_ACTION_LABELS as readonly string[];
+  return labels.some((label) => action.includes(label));
+}
+
+/**
  * Whether a message belongs in a hub category / smart-rule card.
  * Does not apply purpose filter — callers exclude system notifications first.
  */
@@ -60,6 +70,7 @@ export function messageMatchesCategory(
 ): boolean {
   if (category === "all") return true;
   if (category === "unsorted") return isUnsortedMail(labels);
+  if (category === "needs_action") return isNeedsActionMail(labels);
   if (typeof category === "string" && category.startsWith(MAIL_SMART_RULE_LABEL_PREFIX)) {
     return labels.includes(category);
   }
@@ -71,16 +82,21 @@ export function messageMatchesCategory(
   return false;
 }
 
-/** Hub route slug ↔ category id (`rule-foo` ↔ `rule:foo`). */
+/**
+ * Hub route slug ↔ category id.
+ * - `rule:foo` ↔ `rule-foo`
+ * - `needs_action` ↔ `needs-action` (underscores → hyphens for URL segments)
+ */
 export function mailCategoryToSlug(id: string): string {
-  return id.startsWith(MAIL_SMART_RULE_LABEL_PREFIX)
-    ? id.replace(MAIL_SMART_RULE_LABEL_PREFIX, "rule-")
-    : id;
+  if (id.startsWith(MAIL_SMART_RULE_LABEL_PREFIX)) {
+    return id.replace(MAIL_SMART_RULE_LABEL_PREFIX, "rule-");
+  }
+  return id.replaceAll("_", "-");
 }
 
 export function mailSlugToCategoryId(slug: string): string {
   if (slug.startsWith("rule-")) {
     return `${MAIL_SMART_RULE_LABEL_PREFIX}${slug.slice("rule-".length)}`;
   }
-  return slug;
+  return slug.replaceAll("-", "_");
 }
