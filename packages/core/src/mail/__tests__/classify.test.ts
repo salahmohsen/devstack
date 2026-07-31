@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -7,6 +11,25 @@ import {
   type MailClassifyInput
 } from "#@/mail/classify";
 import { proposeMailCrmEffect } from "#@/mail/crm-effects";
+import { type MailSystemLabel } from "#@/mail/types";
+
+type ClassifyCaseFixture = {
+  id: string;
+  description: string;
+  fromEmail: string;
+  fromName: string;
+  subject: string;
+  preview: string;
+  expectedSystemLabels: MailSystemLabel[];
+};
+
+/** Redacted subjects/from only — no body PII in git (see design lock eval fixtures). */
+const classifyCases = JSON.parse(
+  readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "../__fixtures__/classify-cases.json"),
+    "utf8"
+  )
+) as ClassifyCaseFixture[];
 
 function baseInput(overrides: Partial<MailClassifyInput> = {}): MailClassifyInput {
   return {
@@ -36,58 +59,28 @@ describe("isJobAlertDigestMail", () => {
 });
 
 describe("heuristicClassifyMail", () => {
-  it("labels LinkedIn jobalerts as job_notifier", () => {
-    const result = heuristicClassifyMail(
-      baseInput({
-        fromEmail: "jobalerts-noreply@linkedin.com",
-        fromName: "LinkedIn Job Alerts",
-        subject: "12 new jobs for Software Engineer",
-        preview: "Your job alert for software engineer in remote"
-      })
-    );
-    expect(result.systemLabels).toEqual(["job_notifier"]);
-    expect(result.source).toBe("heuristic");
-    expect(result.notes).toMatch(/job_notifier/);
-    expect(result.labels).toContain("job_notifier");
-  });
-
-  it("labels “application was sent” as application_status", () => {
-    const result = heuristicClassifyMail(
-      baseInput({
-        fromEmail: "jobs-listings@linkedin.com",
-        subject: "Your application was sent to Acme",
-        preview: "Your application was sent to Acme Corp"
-      })
-    );
-    expect(result.systemLabels).toEqual(["application_status"]);
-    expect(result.notes).toMatch(/application_status/);
-  });
-
-  it("labels OpenAI product mail as noise", () => {
-    const result = heuristicClassifyMail(
-      baseInput({
-        fromEmail: "noreply@openai.com",
-        fromName: "OpenAI",
-        subject: "New features in ChatGPT",
-        preview: "See what's new in your workspace this week"
-      })
-    );
-    expect(result.systemLabels).toEqual(["noise"]);
-    expect(result.notes).toMatch(/noise/);
-  });
-
-  it("labels offer letter as offer", () => {
-    const result = heuristicClassifyMail(
-      baseInput({
-        fromEmail: "hr@acme.com",
-        subject: "Offer letter — Senior Engineer",
-        preview: "We are pleased to offer you the position",
-        bodyText: "Please find attached the offer letter and compensation package."
-      })
-    );
-    expect(result.systemLabels).toEqual(["offer"]);
-    expect(result.notes).toMatch(/offer/);
-  });
+  it.each(classifyCases as ClassifyCaseFixture[])(
+    "corpus fixture $id: $description → $expectedSystemLabels",
+    (fixture) => {
+      const result = heuristicClassifyMail(
+        baseInput({
+          messageId: `fixture_${fixture.id}`,
+          fromEmail: fixture.fromEmail,
+          fromName: fixture.fromName,
+          subject: fixture.subject,
+          preview: fixture.preview,
+          // No bodyText — fixtures are redacted subjects/from only (no PII bodies).
+          bodyText: ""
+        })
+      );
+      expect(result.systemLabels).toEqual(fixture.expectedSystemLabels);
+      expect(result.source).toBe("heuristic");
+      for (const label of fixture.expectedSystemLabels) {
+        expect(result.labels).toContain(label);
+        expect(result.notes).toMatch(new RegExp(label));
+      }
+    }
+  );
 
   it("does not treat career signals as noise even from product-adjacent domains", () => {
     const result = heuristicClassifyMail(
