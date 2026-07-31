@@ -27,3 +27,13 @@ export function mergeNotificationChannels(
   }
   return next;
 }
+
+/**
+ * Fill missing kind keys from product defaults so stored JSON from older kinds
+ * still validates against the full NotificationChannelPrefsSchema.
+ */
+export function normalizeNotificationChannels(
+  stored: Partial<NotificationChannelPrefs> | null | undefined
+): NotificationChannelPrefs {
+  return mergeNotificationChannels(defaultNotificationChannelPrefs(), stored ?? undefined);
+}

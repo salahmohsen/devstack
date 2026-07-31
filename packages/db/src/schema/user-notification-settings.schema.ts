@@ -10,6 +10,9 @@ export type StoredNotificationChannelToggle = {
 export type StoredNotificationChannels = {
   "mail.reply.draft_ready": StoredNotificationChannelToggle;
   "mail.classified.important": StoredNotificationChannelToggle;
+  "mail.needs_action": StoredNotificationChannelToggle;
+  "mail.apply_nudge": StoredNotificationChannelToggle;
+  "mail.job_alerts_ready": StoredNotificationChannelToggle;
   "application.stage_auto": StoredNotificationChannelToggle;
   "workflow.finished": StoredNotificationChannelToggle;
   "security.new_device_otp": StoredNotificationChannelToggle;
