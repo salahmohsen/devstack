@@ -9,6 +9,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 import { app } from "#@/app";
 import { createGithubGateway, broadcastSignals } from "#@/github-gateway";
 import { enqueueMailClassify, startMailClassifyQueue } from "#@/queues/mail-classify-queue";
+import { startMailJobHarvestQueue } from "#@/queues/mail-job-harvest-queue";
 import { initRuntime, setBroadcastSignals } from "#@/runtime-context";
 import "#@/shared/lib/logger";
 
@@ -78,6 +79,17 @@ async function start(): Promise<void> {
       const log = createLogger({ operation: "server__mail_classify_queue" });
       log.error(error instanceof Error ? error : new Error(String(error)), {
         event: "mail_classify_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
+
+    // Job harvest after job_notifier classify (P0 stub — log only).
+    try {
+      startMailJobHarvestQueue(ENV_SERVER.REDIS_URL);
+    } catch (error) {
+      const log = createLogger({ operation: "server__mail_job_harvest_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "mail_job_harvest_queue_start_failed"
       });
       log.emit({ _forceKeep: true });
     }

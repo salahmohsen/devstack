@@ -3,6 +3,7 @@ export * from "./classify-queue";
 export * from "./constants";
 export * from "./corrections";
 export * from "./crm-effects";
+export * from "./harvest-queue";
 export * from "./match-application";
 export * from "./smart-rules";
 export * from "./types";

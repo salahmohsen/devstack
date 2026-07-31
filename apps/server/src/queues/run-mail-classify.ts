@@ -28,6 +28,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { applyMailCrmEffectFromClassify } from "#@/queues/apply-mail-crm-effect";
 import { callMailClassifyAgent } from "#@/queues/call-mail-classify-agent";
+import { enqueueMailJobHarvest } from "#@/queues/mail-job-harvest-queue";
 
 /**
  * Classify a single Career Inbox message (tenant-scoped).
@@ -244,6 +245,18 @@ export async function runMailClassify(input: {
         systemLabels: result.systemLabels
       });
 
+  // job_notifier → harvest queue (P0 stub worker; P1 crawl/score/apps).
+  let harvestEnqueued: boolean | null = null;
+  const hasJobNotifier =
+    result.systemLabels.includes("job_notifier") || result.labels.includes("job_notifier");
+  if (hasJobNotifier) {
+    const harvest = await enqueueMailJobHarvest({
+      messageId: row.id,
+      userId: row.userId
+    });
+    harvestEnqueued = harvest.enqueued;
+  }
+
   // Career-labeled mail → notify + ensure review draft; Full autonomy auto-sends.
   let reviewDraftCreated: boolean | null = null;
   let reviewAutoSent: boolean | null = null;
@@ -303,6 +316,7 @@ export async function runMailClassify(input: {
     crmApplied: crm.applied,
     crmKind: crm.effect.kind,
     crmReason: crm.effect.reason,
+    harvestEnqueued,
     reviewDraftCreated,
     reviewAutoSent,
     reviewAutoSendCode,
