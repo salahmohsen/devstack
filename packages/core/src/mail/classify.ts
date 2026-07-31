@@ -58,8 +58,9 @@ const INTERVIEW_RE =
   /\b(interview|onsite|on-site|phone\s+screen|technical\s+screen|hirevue|loop\s+interview|scheduling\s+interview)\b/i;
 const RECRUITER_RE =
   /\b(recruiter|talent\s+acquisition|i\s+came\s+across\s+your\s+profile|opportunity\s+for\s+you|are\s+you\s+open\s+to)\b/i;
-const APPLICATION_RE =
-  /\b(application\s+(received|update|status)|thank\s+you\s+for\s+applying|we\s+received\s+your\s+application|candidate\s+portal|your\s+application)\b/i;
+/** Application status updates — CRM path, not new-job harvest. */
+const APPLICATION_STATUS_RE =
+  /\b(application\s+(was\s+)?(sent|received|update|status)|thank\s+you\s+for\s+applying|we\s+received\s+your\s+application|candidate\s+portal|your\s+application|application\s+was\s+sent)\b/i;
 /** LinkedIn/Indeed digests — must not become interview/offer or create CRM apps. */
 const JOB_ALERT_DIGEST_RE =
   /\b(job\s+alert|jobs?\s+alerts?|your\s+job\s+alert|linkedin\s+job\s+alerts?|jobs?\s+you\s+may\s+be\s+interested|recommended\s+jobs?|see\s+all\s+jobs|manage\s+(your\s+)?alerts?|jobalerts?[-.]noreply|indeed\.com)\b/i;
@@ -67,8 +68,19 @@ const JOB_ALERT_FROM_RE =
   /\b(jobalerts?[-.]noreply@|jobs-noreply@|noreply@linkedin\.com|jobs@indeed\.com)\b/i;
 
 /**
+ * Product / marketing noise domains from Gmail corpus (non-career).
+ * Careers/recruiting subdomains and subjects are handled by career heuristics first.
+ */
+const NOISE_FROM_DOMAIN_RE =
+  /@(?:[a-z0-9-]+\.)*(?:github\.com|spotify\.com|substack\.com|cloudflare\.com|openai\.com)\b/i;
+/** Airbnb product mail — exclude careers/recruiting-ish addresses. */
+const AIRBNB_PRODUCT_FROM_RE = /@(?!careers\.)(?:[a-z0-9-]+\.)*airbnb\.com\b/i;
+const WUZZUF_MARKETING_RE =
+  /\b(wuzzuf|complete\s+your\s+profile|boost\s+your\s+profile|profile\s+views?|employers?\s+viewed)\b/i;
+
+/**
  * True for bulk job-alert digests (LinkedIn, Indeed, …). These should not get
- * career system labels or CRM stage mutations.
+ * interview/offer CRM mutations; they classify as `job_notifier` for harvest.
  */
 export function isJobAlertDigestMail(input: {
   fromName?: string;
@@ -83,6 +95,30 @@ export function isJobAlertDigestMail(input: {
     .join("\n")
     .slice(0, 8_000);
   return JOB_ALERT_DIGEST_RE.test(haystack);
+}
+
+function isNoiseMail(input: {
+  fromName?: string;
+  fromEmail?: string;
+  subject?: string;
+  preview?: string;
+  bodyText?: string;
+}): boolean {
+  const fromBlob = `${input.fromName ?? ""} ${input.fromEmail ?? ""}`;
+  if (NOISE_FROM_DOMAIN_RE.test(fromBlob)) return true;
+  if (AIRBNB_PRODUCT_FROM_RE.test(fromBlob)) {
+    // Careful: recruiting from Airbnb should not be noise.
+    const careerish =
+      /\b(career|recruit|hiring|talent|interview|application|role|position)\b/i.test(
+        [input.subject, input.preview, (input.bodyText ?? "").slice(0, 1_000)].join("\n")
+      );
+    if (!careerish) return true;
+  }
+  const haystack = [input.subject, input.preview, (input.bodyText ?? "").slice(0, 2_000)]
+    .join("\n")
+    .slice(0, 4_000);
+  if (WUZZUF_MARKETING_RE.test(haystack) && /wuzzuf/i.test(fromBlob + haystack)) return true;
+  return false;
 }
 
 /**
@@ -100,9 +136,9 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
 
   // Digests first — "interview" can appear inside a job card list.
   if (isJobAlertDigestMail(input)) {
-    system = null;
+    system = "job_notifier";
     confidence = 0.9;
-    notes = "heuristic:job_alert_digest";
+    notes = "heuristic:job_notifier";
   } else if (OFFER_RE.test(haystack)) {
     system = "offer";
     confidence = 0.75;
@@ -115,10 +151,14 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
     system = "recruiter";
     confidence = 0.65;
     notes = "heuristic:recruiter";
-  } else if (APPLICATION_RE.test(haystack)) {
-    system = "application";
+  } else if (APPLICATION_STATUS_RE.test(haystack)) {
+    system = "application_status";
     confidence = 0.65;
-    notes = "heuristic:application";
+    notes = "heuristic:application_status";
+  } else if (isNoiseMail(input)) {
+    system = "noise";
+    confidence = 0.7;
+    notes = "heuristic:noise";
   }
 
   const systemLabels = system ? [system] : [];
@@ -170,22 +210,27 @@ export function applySmartRulesToClassifyResult(
 }
 
 /**
- * Strip career system labels from job-alert digests (LLM may still say "interview"
+ * Force job-alert digests to `job_notifier` (LLM may still say "interview"
  * because a job card mentions interviews). Smart-rule labels are kept.
+ * Does not CRM-mutate — workers skip CRM for digests / non-CRM labels.
  */
 export function suppressCareerLabelsForJobAlertDigest(
   input: MailClassifyInput,
   result: MailClassifyOutput
 ): MailClassifyOutput {
   if (!isJobAlertDigestMail(input)) return result;
-  if (result.systemLabels.length === 0 && result.notes?.includes("job_alert")) return result;
+
+  const onlyJobNotifier =
+    result.systemLabels.length === 1 && result.systemLabels[0] === "job_notifier";
+  if (onlyJobNotifier && result.notes?.includes("job_notifier")) return result;
 
   const smartOnly = result.labels.filter((l) => l.startsWith("rule:"));
+  const systemLabels: MailSystemLabel[] = ["job_notifier"];
   return {
     ...result,
-    systemLabels: [],
-    labels: smartOnly,
+    systemLabels,
+    labels: [...systemLabels, ...smartOnly],
     confidence: Math.max(result.confidence ?? 0, 0.85),
-    notes: [result.notes, "suppress:job_alert_digest"].filter(Boolean).join(";")
+    notes: [result.notes, "suppress:job_alert_digest→job_notifier"].filter(Boolean).join(";")
   };
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { MAIL_SMART_RULE_LABEL_PREFIX } from "./constants";
+import { MAIL_SMART_RULE_LABEL_PREFIX, MAIL_SYSTEM_LABELS } from "./constants";
 import { MailCategoryIconSchema } from "./types";
 import { smartRuleLabel } from "./utils";
 
@@ -114,9 +114,7 @@ export function mergeClassifyLabelsWithSmartRules(input: {
 }
 
 function isSystemCareer(label: string): boolean {
-  return (
-    label === "application" || label === "recruiter" || label === "interview" || label === "offer"
-  );
+  return (MAIL_SYSTEM_LABELS as readonly string[]).includes(label);
 }
 
 export function smartRuleToCategoryCard(

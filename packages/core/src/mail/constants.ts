@@ -7,10 +7,12 @@ import {
 } from "./types";
 
 export const MAIL_CATEGORY_IDS = [
+  "needs_action",
   "applications",
   "recruiters",
   "interviews",
   "offers",
+  "noise",
   "unsorted",
   "all"
 ] as const satisfies readonly MailCategoryId[];
@@ -19,23 +21,41 @@ export const MAIL_SYSTEM_LABELS = [
   "application",
   "recruiter",
   "interview",
-  "offer"
+  "offer",
+  "job_notifier",
+  "noise",
+  "application_status"
 ] as const satisfies readonly MailSystemLabel[];
 
-/** Hub category (except unsorted/all) → system career label. */
+/**
+ * Hub category (except unsorted/all/needs_action) → primary system label for list filter.
+ * `needs_action` is a computed filter (recruiter|interview|offer|application_status), not a label map.
+ */
 export const MAIL_CATEGORY_TO_SYSTEM_LABEL = {
   applications: "application",
   recruiters: "recruiter",
   interviews: "interview",
-  offers: "offer"
-} as const satisfies Record<Exclude<MailCategoryId, "unsorted" | "all">, MailSystemLabel>;
+  offers: "offer",
+  noise: "noise"
+} as const satisfies Record<
+  Exclude<MailCategoryId, "unsorted" | "all" | "needs_action">,
+  MailSystemLabel
+>;
 
+/**
+ * System label → hub card category.
+ * `job_notifier` has no dedicated card (harvest → Applications CRM).
+ */
 export const MAIL_SYSTEM_LABEL_TO_CATEGORY = {
   application: "applications",
+  application_status: "applications",
   recruiter: "recruiters",
   interview: "interviews",
-  offer: "offers"
-} as const satisfies Record<MailSystemLabel, Exclude<MailCategoryId, "unsorted" | "all">>;
+  offer: "offers",
+  noise: "noise"
+} as const satisfies Partial<
+  Record<MailSystemLabel, Exclude<MailCategoryId, "unsorted" | "all" | "needs_action">>
+>;
 
 export const MAIL_PURPOSE = [
   "career",
@@ -48,28 +68,34 @@ export const DEFAULT_MAIL_PURPOSE: MailPurpose = "career";
 export const MAIL_SMART_RULE_LABEL_PREFIX = "rule:" as const;
 
 export const MAIL_CATEGORY_LABELS: Record<MailCategoryId, string> = {
+  needs_action: "Needs action",
   applications: "Applications",
   recruiters: "Recruiters",
   interviews: "Interviews",
   offers: "Offers",
+  noise: "Noise",
   unsorted: "Unsorted",
   all: "All mail"
 };
 
 export const MAIL_CATEGORY_DESCRIPTIONS: Record<MailCategoryId, string> = {
+  needs_action: "Replies, interviews, and status that need you",
   applications: "Linked to roles in your pipeline",
   recruiters: "People and agencies reaching out",
   interviews: "Scheduling and interview loops",
   offers: "Offer letters and compensation",
+  noise: "Product updates and non-career mail",
   unsorted: "No career or smart-rule label yet",
   all: "Everything in Career Inbox"
 };
 
 export const MAIL_CATEGORY_ICONS: Record<MailCategoryId, MailCategoryIcon> = {
+  needs_action: "sparkles",
   applications: "briefcase",
   recruiters: "users",
   interviews: "calendar",
   offers: "gift",
+  noise: "inbox",
   unsorted: "inbox",
   all: "mail"
 };

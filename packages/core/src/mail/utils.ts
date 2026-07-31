@@ -33,7 +33,7 @@ export function isSystemNotificationPurpose(purpose: MailPurpose): boolean {
   return purpose === "system_notification";
 }
 
-/** Any system career label present (application | recruiter | interview | offer). */
+/** Any system label present (career buckets, job_notifier, noise, application_status). */
 export function hasSystemCareerLabel(labels: readonly string[]): boolean {
   return labels.some((label) => (MAIL_SYSTEM_LABELS as readonly string[]).includes(label));
 }
