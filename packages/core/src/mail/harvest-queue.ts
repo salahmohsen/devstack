@@ -8,7 +8,7 @@ export const MAIL_JOB_HARVEST_JOB_NAME = "harvest-message" as const;
 
 /**
  * Payload for a job-harvest job.
- * P0: producer + stub worker only. P1 implements crawl/score/create apps.
+ * Worker: extract links from mail → optional page enrich → score prefs → create Applications.
  */
 export const MailJobHarvestJobPayloadSchema = z.object({
   messageId: z.string().min(1),

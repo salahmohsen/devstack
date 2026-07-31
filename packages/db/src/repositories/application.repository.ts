@@ -55,6 +55,16 @@ export const applicationRepository = {
     return rows[0] ?? null;
   },
 
+  /** Dedup harvest: existing open/closed app with same listing URL for tenant. */
+  async findByUserIdAndUrl(userId: string, url: string) {
+    const rows = await getDb()
+      .select()
+      .from(application)
+      .where(and(eq(application.userId, userId), eq(application.url, url)))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
   async create(input: CreateApplicationData) {
     const id = crypto.randomUUID();
     const now = new Date();

@@ -83,7 +83,7 @@ async function start(): Promise<void> {
       log.emit({ _forceKeep: true });
     }
 
-    // Job harvest after job_notifier classify (P0 stub — log only).
+    // Job harvest after job_notifier classify (extract → score → Applications).
     try {
       startMailJobHarvestQueue(ENV_SERVER.REDIS_URL);
     } catch (error) {
