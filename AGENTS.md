@@ -45,6 +45,7 @@ Pick the most specific file for the task. Use links within that file instead of 
 ### Active program specs
 
 - [Career Inbox + AI platform](docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md) — mail hub, review queue, notifications, AI autonomy, learning, logging/Mastra foundation.
+- [Career Mail Assistant P0](docs/superpowers/specs/2026-07-31-career-mail-assistant-design.md) — design lock + [implementation plan](docs/superpowers/plans/2026-07-31-career-mail-assistant-p0.md).
 - [Seeker applications CRM](docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md) — pipeline board/list that Career Inbox advances.
 
 ## Task Entry Points
