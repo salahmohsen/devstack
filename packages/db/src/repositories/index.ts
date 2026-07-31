@@ -32,6 +32,11 @@ export {
   type InviteEntity
 } from "./invite.repository.ts";
 export {
+  jobPreferenceRepository,
+  type JobPreferenceEntity,
+  type UpsertJobPreferenceData
+} from "./job-preference.repository.ts";
+export {
   mailCrmApplyRepository,
   type CreateMailCrmApplyData,
   type MailCrmApplyEntity

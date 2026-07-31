@@ -10,6 +10,7 @@ import { experiencesRouter } from "#@/routers/experiences.router";
 import { githubRouter } from "#@/routers/github.router";
 import { healthRouter } from "#@/routers/health.router";
 import { inviteRouter } from "#@/routers/invite.router";
+import { jobPreferenceRouter } from "#@/routers/job-preference.router";
 import { mailSettingsRouter } from "#@/routers/mail-settings.router";
 import { mailSmartRulesRouter } from "#@/routers/mail-smart-rules.router";
 import { mailRouter } from "#@/routers/mail.router";
@@ -38,6 +39,7 @@ export const appRouter = {
   resume: resumeRouter,
   onboarding: onboardingRouter,
   invite: inviteRouter,
+  jobPreference: jobPreferenceRouter,
   domain: domainRouter,
   connections: connectionsRouter,
   mail: mailRouter,
