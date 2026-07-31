@@ -12,6 +12,9 @@ export {
   APPLICATION_OPEN_BADGE_VARIANT,
   APPLICATION_OUTCOME_BADGE_VARIANT,
   APPLICATION_STAGE_BADGE_VARIANT,
+  ApplicationApplyLinks,
+  ApplicationApplyMethodBadge,
+  ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
   type ApplicationBadgeVariant

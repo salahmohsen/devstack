@@ -1,6 +1,8 @@
 import {
+  APPLICATION_APPLY_METHOD_LABELS,
   APPLICATION_OUTCOME_LABELS,
   APPLICATION_STAGE_LABELS,
+  type ApplicationApplyMethod,
   type ApplicationOutcome,
   type ApplicationStage
 } from "@tsu-stack/core";
@@ -81,5 +83,92 @@ export function ApplicationStatusBadge({ outcome, size = "sm", className }: Stat
     >
       {APPLICATION_OUTCOME_LABELS[outcome]}
     </Badge>
+  );
+}
+
+type MatchScoreBadgeProps = {
+  matchScore: number | null | undefined;
+  size?: BadgeProps["size"];
+  className?: string;
+};
+
+/** `87% match` when score is known (0–100). */
+export function ApplicationMatchScoreBadge({
+  matchScore,
+  size = "sm",
+  className
+}: MatchScoreBadgeProps) {
+  if (matchScore == null) return null;
+
+  return (
+    <Badge variant="secondary" size={size} className={cn("font-normal tabular-nums", className)}>
+      {matchScore}% match
+    </Badge>
+  );
+}
+
+type ApplyMethodBadgeProps = {
+  applyMethod: ApplicationApplyMethod;
+  size?: BadgeProps["size"];
+  className?: string;
+};
+
+/** Easy Apply / External / Email — hidden when unknown. */
+export function ApplicationApplyMethodBadge({
+  applyMethod,
+  size = "sm",
+  className
+}: ApplyMethodBadgeProps) {
+  if (applyMethod === "unknown") return null;
+
+  return (
+    <Badge variant="outline" size={size} className={cn("font-normal", className)}>
+      {APPLICATION_APPLY_METHOD_LABELS[applyMethod]}
+    </Badge>
+  );
+}
+
+type ApplyLinksProps = {
+  applyUrl: string | null | undefined;
+  url: string | null | undefined;
+  className?: string;
+};
+
+function stopCardActivation(event: React.SyntheticEvent) {
+  event.stopPropagation();
+}
+
+/**
+ * External apply destination + listing URL.
+ * Only renders when `applyUrl` is set (Apply); View listing uses `url` when present.
+ */
+export function ApplicationApplyLinks({ applyUrl, url, className }: ApplyLinksProps) {
+  if (!applyUrl) return null;
+
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2 text-xs", className)}>
+      <a
+        href={applyUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="font-medium text-primary underline-offset-2 hover:underline"
+        onClick={stopCardActivation}
+        onPointerDown={stopCardActivation}
+      >
+        Apply
+      </a>
+      {url ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-muted-foreground underline-offset-2 hover:underline"
+          onClick={stopCardActivation}
+          onPointerDown={stopCardActivation}
+        >
+          View listing
+        </a>
+      ) : null}
+    </div>
   );
 }

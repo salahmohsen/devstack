@@ -10,6 +10,9 @@ import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 import { ListItem } from "@/shared/ui/list-item";
 
 import {
+  ApplicationApplyLinks,
+  ApplicationApplyMethodBadge,
+  ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
   useDeleteApplicationsMutation
@@ -138,7 +141,9 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                 deleteDescription="This permanently removes the application from your pipeline."
                 title={app.title}
                 titleEnd={
-                  <span className="flex shrink-0 items-center gap-1.5">
+                  <span className="flex shrink-0 flex-wrap items-center gap-1.5">
+                    <ApplicationMatchScoreBadge matchScore={app.matchScore} />
+                    <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
                     <ApplicationStageBadge stage={app.stage} />
                     {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
                   </span>
@@ -155,6 +160,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                         <span>{app.location}</span>
                       </p>
                     ) : null}
+                    <ApplicationApplyLinks applyUrl={app.applyUrl} url={app.url} className="mt-1" />
                   </>
                 }
               />
