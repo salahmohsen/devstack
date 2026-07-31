@@ -1,8 +1,10 @@
 import {
+  ApplicationApplyMethodSchema,
   ApplicationOutcomeSchema,
   ApplicationSourceSchema,
   ApplicationStageSchema,
   HiringUrgencySchema,
+  type ApplicationApplyMethod,
   type ApplicationOutcome,
   type ApplicationSource,
   type ApplicationStage,
@@ -17,6 +19,8 @@ export const APPLICATION_OUTCOMES = ApplicationOutcomeSchema.options;
 export const HIRING_URGENCIES = HiringUrgencySchema.options;
 
 export const APPLICATION_SOURCES = ApplicationSourceSchema.options;
+
+export const APPLICATION_APPLY_METHODS = ApplicationApplyMethodSchema.options;
 
 export const APPLICATION_STAGE_LABELS: Record<ApplicationStage, string> = {
   saved: "Saved",
@@ -47,6 +51,13 @@ export const APPLICATION_SOURCE_LABELS: Record<ApplicationSource, string> = {
   referral: "Referral",
   recruiter: "Recruiter",
   other: "Other"
+};
+
+export const APPLICATION_APPLY_METHOD_LABELS: Record<ApplicationApplyMethod, string> = {
+  easy_apply: "Easy Apply",
+  external: "External",
+  email: "Email",
+  unknown: "Unknown"
 };
 
 export function applicationStageOptions() {
@@ -81,6 +92,15 @@ export function applicationSourceOptions() {
     return {
       value,
       label: APPLICATION_SOURCE_LABELS[value]
+    };
+  });
+}
+
+export function applicationApplyMethodOptions() {
+  return APPLICATION_APPLY_METHODS.map((value) => {
+    return {
+      value,
+      label: APPLICATION_APPLY_METHOD_LABELS[value]
     };
   });
 }

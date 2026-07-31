@@ -27,6 +27,9 @@ export const ApplicationSourceSchema = z.enum([
 ]);
 export type ApplicationSource = z.infer<typeof ApplicationSourceSchema>;
 
+export const ApplicationApplyMethodSchema = z.enum(["easy_apply", "external", "email", "unknown"]);
+export type ApplicationApplyMethod = z.infer<typeof ApplicationApplyMethodSchema>;
+
 const optionalText = z
   .union([z.string(), z.literal(""), z.null()])
   .optional()
@@ -42,11 +45,17 @@ const optionalSource = z
   .optional()
   .transform((value) => (value === "" || value === undefined ? null : value));
 
+/** 0–100 score, or null to clear; omit to leave unchanged on update. */
+const optionalMatchScore = z.number().int().min(0).max(100).nullable().optional();
+
 export const ApplicationOutputSchema = z.object({
   id: z.string(),
   companyName: z.string(),
   title: z.string(),
   url: z.string().nullable(),
+  applyUrl: z.string().nullable(),
+  applyMethod: ApplicationApplyMethodSchema,
+  matchScore: z.number().int().min(0).max(100).nullable(),
   source: ApplicationSourceSchema.nullable(),
   location: z.string().nullable(),
   salaryRange: z.string().nullable(),
@@ -69,6 +78,9 @@ export const CreateApplicationInputSchema = z.object({
   companyName: z.string().min(1),
   title: z.string().min(1),
   url: optionalUrl,
+  applyUrl: optionalUrl,
+  applyMethod: ApplicationApplyMethodSchema.optional(),
+  matchScore: optionalMatchScore,
   source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,
@@ -94,6 +106,9 @@ export const UpdateApplicationInputSchema = z.object({
   companyName: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   url: optionalUrl,
+  applyUrl: optionalUrl,
+  applyMethod: ApplicationApplyMethodSchema.optional(),
+  matchScore: optionalMatchScore,
   source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,

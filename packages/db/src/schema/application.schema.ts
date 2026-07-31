@@ -1,4 +1,4 @@
-import { index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { index, integer, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
 import { resume } from "./resume.schema.ts";
@@ -34,6 +34,13 @@ export const applicationSourceEnum = pgEnum("application_source", [
   "other"
 ]);
 
+export const applicationApplyMethodEnum = pgEnum("application_apply_method", [
+  "easy_apply",
+  "external",
+  "email",
+  "unknown"
+]);
+
 export const application = pgTable(
   "application",
   {
@@ -43,7 +50,13 @@ export const application = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     companyName: text("company_name").notNull(),
     title: text("title").notNull(),
+    /** Listing / source URL (not the external apply destination). */
     url: text("url"),
+    /** External apply destination when applyMethod is external (or known). */
+    applyUrl: text("apply_url"),
+    applyMethod: applicationApplyMethodEnum("apply_method").notNull().default("unknown"),
+    /** 0–100 match score; null when unscored. */
+    matchScore: integer("match_score"),
     source: applicationSourceEnum("source"),
     location: text("location"),
     salaryRange: text("salary_range"),
@@ -71,3 +84,4 @@ export type ApplicationStage = (typeof applicationStageEnum.enumValues)[number];
 export type ApplicationOutcome = (typeof applicationOutcomeEnum.enumValues)[number];
 export type HiringUrgency = (typeof hiringUrgencyEnum.enumValues)[number];
 export type ApplicationSource = (typeof applicationSourceEnum.enumValues)[number];
+export type ApplicationApplyMethod = (typeof applicationApplyMethodEnum.enumValues)[number];
