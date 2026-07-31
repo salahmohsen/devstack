@@ -50,6 +50,7 @@ import { Route as rootLayout_protectedDashboardSettingsRulesIndexRouteImport } f
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/notifications/index'
 import { Route as rootLayout_protectedDashboardSettingsMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/mail/index'
+import { Route as rootLayout_protectedDashboardSettingsJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/jobs/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
 import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/domain/index'
 import { Route as rootLayout_protectedDashboardSettingsConnectionsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/connections/index'
@@ -294,6 +295,12 @@ const rootLayout_protectedDashboardSettingsMailIndexRoute =
     path: '/mail/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsJobsIndexRoute =
+  rootLayout_protectedDashboardSettingsJobsIndexRouteImport.update({
+    id: '/jobs/',
+    path: '/jobs/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsInvitesIndexRoute =
   rootLayout_protectedDashboardSettingsInvitesIndexRouteImport.update({
     id: '/invites/',
@@ -380,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/jobs/': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -423,6 +431,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/connections': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/dashboard/settings/domain': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/jobs': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/dashboard/settings/mail': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -474,6 +483,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/(root-layout)/__protected/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/jobs/': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/(root-layout)/__protected/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -524,6 +534,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/connections/'
     | '/dashboard/settings/domain/'
     | '/dashboard/settings/invites/'
+    | '/dashboard/settings/jobs/'
     | '/dashboard/settings/mail/'
     | '/dashboard/settings/notifications/'
     | '/dashboard/settings/profile/'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/connections'
     | '/dashboard/settings/domain'
     | '/dashboard/settings/invites'
+    | '/dashboard/settings/jobs'
     | '/dashboard/settings/mail'
     | '/dashboard/settings/notifications'
     | '/dashboard/settings/profile'
@@ -617,6 +629,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings/connections/'
     | '/(root-layout)/__protected/dashboard/settings/domain/'
     | '/(root-layout)/__protected/dashboard/settings/invites/'
+    | '/(root-layout)/__protected/dashboard/settings/jobs/'
     | '/(root-layout)/__protected/dashboard/settings/mail/'
     | '/(root-layout)/__protected/dashboard/settings/notifications/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
@@ -921,6 +934,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/jobs/': {
+      id: '/(root-layout)/__protected/dashboard/settings/jobs/'
+      path: '/jobs'
+      fullPath: '/dashboard/settings/jobs/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsJobsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/invites/': {
       id: '/(root-layout)/__protected/dashboard/settings/invites/'
       path: '/invites'
@@ -1009,6 +1029,7 @@ interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsConnectionsIndexRoute: typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   rootLayout_protectedDashboardSettingsDomainIndexRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   rootLayout_protectedDashboardSettingsInvitesIndexRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  rootLayout_protectedDashboardSettingsJobsIndexRoute: typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   rootLayout_protectedDashboardSettingsMailIndexRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   rootLayout_protectedDashboardSettingsNotificationsIndexRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -1027,6 +1048,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
       rootLayout_protectedDashboardSettingsDomainIndexRoute,
     rootLayout_protectedDashboardSettingsInvitesIndexRoute:
       rootLayout_protectedDashboardSettingsInvitesIndexRoute,
+    rootLayout_protectedDashboardSettingsJobsIndexRoute:
+      rootLayout_protectedDashboardSettingsJobsIndexRoute,
     rootLayout_protectedDashboardSettingsMailIndexRoute:
       rootLayout_protectedDashboardSettingsMailIndexRoute,
     rootLayout_protectedDashboardSettingsNotificationsIndexRoute:
