@@ -4,6 +4,7 @@ import {
   defaultJobPreference,
   enrichJobFromHtml,
   harvestJobsFromMailBody,
+  isValidHarvestedJob,
   scoreJobAgainstPreference,
   type HarvestedJob,
   type JobPreference,
@@ -130,6 +131,10 @@ export async function runMailJobHarvest(input: {
 
   for (const job of jobs) {
     try {
+      if (!isValidHarvestedJob(job)) {
+        skippedFailed += 1;
+        continue;
+      }
       const listingUrl = canonicalizeJobUrl(job.listingUrl) ?? job.listingUrl;
       const existing = await applicationRepository.findByUserIdAndUrl(row.userId, listingUrl);
       if (existing) {

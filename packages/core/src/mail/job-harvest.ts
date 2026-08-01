@@ -214,82 +214,206 @@ export function extractJobListingUrls(input: ExtractJobLinksInput): string[] {
   return (views.length > 0 ? views : values).slice(0, 25);
 }
 
+const SKIP_CONTEXT_LINES = new Set([
+  "apply with resume & profile",
+  "apply with resume and profile",
+  "apply now",
+  "view job",
+  "this company is actively hiring",
+  "expand your search",
+  "recommendations based on your activity",
+  "your other saved jobs",
+  "remote jobs",
+  "see all jobs"
+]);
+
+function isNoiseContextLine(line: string): boolean {
+  const t = line.trim().toLowerCase();
+  if (!t || t.startsWith("http")) return true;
+  if (t.startsWith("view job")) return true;
+  if (t.startsWith("---")) return true;
+  if (SKIP_CONTEXT_LINES.has(t)) return true;
+  if (t.includes("unsubscribe") || t.includes("manage alert")) return true;
+  if (/^your job alert/i.test(t)) return true;
+  return false;
+}
+
+/** Reject marketing subjects used as fake titles. */
+export function isGarbageJobTitle(title: string): boolean {
+  const t = title.trim();
+  if (t.length < 3 || t.length > 160) return true;
+  if (/^unknown role$/i.test(t)) return true;
+  if (/is hiring for a/i.test(t)) return true;
+  if (/^salah[,:]/i.test(t)) return true;
+  if (/apply now to/i.test(t)) return true;
+  if (/^\d+\s+new jobs?\s+for/i.test(t)) return true;
+  if (/^new jobs similar to/i.test(t)) return true;
+  if (/^job alert/i.test(t)) return true;
+  if (/^your saved job/i.test(t)) return true;
+  return false;
+}
+
+export function isGarbageCompany(company: string): boolean {
+  const c = company.trim();
+  if (c.length < 2 || c.length > 120) return true;
+  if (/^unknown company$/i.test(c)) return true;
+  if (/^apply /i.test(c)) return true;
+  if (/^view job/i.test(c)) return true;
+  if (/^https?:/i.test(c)) return true;
+  // Location strings mis-parsed as company
+  if (looksLikeLocationOnly(c)) return true;
+  return false;
+}
+
+function looksLikeLocationOnly(s: string): boolean {
+  const t = s.trim();
+  if (/^(remote|hybrid|on-?site)$/i.test(t)) return true;
+  if (/^(egypt|cairo|alexandria|giza|london|dubai|uae|ksa|usa|uk)$/i.test(t)) return true;
+  if (/^(cairo|new cairo|giza).*(egypt)?$/i.test(t) && t.split(/[\s,]+/).length <= 5) {
+    // "Cairo, Egypt" / "New Cairo, Cairo, Egypt"
+    if (!/\b(inc|ltd|llc|corp|labs|studio|technologies|systems)\b/i.test(t)) return true;
+  }
+  return false;
+}
+
+function looksLikeRoleTitle(s: string): boolean {
+  return /\b(engineer|developer|designer|manager|analyst|architect|lead|intern|scientist|consultant|specialist|officer)\b/i.test(
+    s
+  );
+}
+
 /**
- * Parse LinkedIn-style digest cards from plain text:
- * "Title | Company | Location" near a jobs/view URL.
+ * Quality gate before creating an Application.
+ */
+export function isValidHarvestedJob(job: HarvestedJob): boolean {
+  if (isGarbageJobTitle(job.title)) return false;
+  if (isGarbageCompany(job.companyName)) return false;
+  if (!job.listingUrl.startsWith("http")) return false;
+  // Prefer concrete job views over search-only
+  if (rankJobUrl(job.listingUrl) < 70) return false;
+  // Title should look like a role, not a company name alone
+  if (!looksLikeRoleTitle(job.title) && job.title.split(/\s+/).length < 2) return false;
+  return true;
+}
+
+/**
+ * Parse LinkedIn-style multi-line cards:
+ *
+ *   Title
+ *   Company
+ *   Location
+ *   Apply with resume & profile
+ *   View job: https://.../jobs/view/ID
  */
 export function harvestJobsFromMailBody(input: ExtractJobLinksInput): HarvestedJob[] {
-  const urls = extractJobListingUrls(input);
   const text = (input.bodyText ?? "").replace(/\u00A0/g, " ");
-  const jobs: HarvestedJob[] = [];
   const fromEmail = input.fromEmail ?? "";
+  const jobs: HarvestedJob[] = [];
+  const seenCanon = new Set<string>();
 
-  for (const listingUrl of urls) {
+  // Split on each job view URL occurrence (including "View job: url")
+  const urlRe =
+    /(?:View job:\s*)?(https?:\/\/[^\s]+?(?:\/jobs\/view\/\d+|indeed\.[^\s]*jk=|viewjob)[^\s]*)/gi;
+  const matches = [...text.matchAll(urlRe)];
+
+  for (const m of matches) {
+    const listingUrl = m[1]!.replace(/[),.;]+$/g, "");
+    if (!isLikelyJobListingUrl(listingUrl)) continue;
     const canon = canonicalizeJobUrl(listingUrl) ?? listingUrl;
-    const source = inferApplicationSource(listingUrl, fromEmail);
+    if (seenCanon.has(canon)) continue;
+    seenCanon.add(canon);
 
-    // Find context window around URL in text
-    const idx = text.indexOf(listingUrl.slice(0, 60));
-    const windowStart = Math.max(0, idx - 400);
-    const windowEnd = Math.min(text.length, (idx >= 0 ? idx : 0) + listingUrl.length + 100);
-    const ctx = idx >= 0 ? text.slice(windowStart, windowEnd) : text.slice(0, 800);
+    const idx = m.index ?? 0;
+    const before = text.slice(Math.max(0, idx - 500), idx);
+    const lines = before
+      .split(/\n+/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && !isNoiseContextLine(l));
 
-    let title = "Unknown role";
-    let companyName = "Unknown company";
+    // Take last 1–3 meaningful lines before the URL as title / company / location
+    const block = lines.slice(-4);
+    let title = "";
+    let companyName = "";
     let location: string | null = null;
-    let applyMethod: ApplicationApplyMethod = "unknown";
-    let workMode: WorkMode | null = null;
 
-    // Pattern: Title | Company | Location (allow en-dash/em-dash in titles)
-    const pipe = ctx.match(
-      /([A-Za-z0-9][^|\n]{2,100}?)\s*\|\s*([^|\n]{1,80}?)(?:\s*\|\s*([^|\n]{1,80}?))?(?=\s*\||\s*Apply|\s*View|$)/
-    );
-    if (pipe) {
-      title = pipe[1]!.trim();
-      companyName = pipe[2]!.trim();
-      location = pipe[3]?.trim() ?? null;
-      // Drop trailing "Apply with resume..." fragments if captured
-      companyName = companyName.replace(/\s*Apply with resume.*$/i, "").trim();
-    } else {
-      // Subject often "Title at Company"
-      const sub = input.subject ?? "";
-      const at = sub.match(/^(.+?)\s+at\s+(.+)$/i);
+    if (block.length >= 3) {
+      // title, company, location (location may be "Egypt" or "Cairo, Egypt")
+      location = block[block.length - 1]!;
+      companyName = block[block.length - 2]!;
+      title = block[block.length - 3]!;
+      // If "location" looks like a company (has "Inc", "Ltd") swap heuristics
+      if (/actively hiring/i.test(location)) {
+        location = null;
+        companyName = block[block.length - 1]!;
+        title = block[block.length - 2]!;
+      }
+    } else if (block.length === 2) {
+      title = block[0]!;
+      companyName = block[1]!;
+    } else if (block.length === 1) {
+      // "Title at Company"
+      const at = block[0]!.match(/^(.+?)\s+at\s+(.+)$/i);
       if (at) {
         title = at[1]!.trim();
         companyName = at[2]!.trim();
-      } else if (sub.length > 3 && sub.length < 120) {
-        title = sub.replace(/^job alert[:\s]*/i, "").trim() || title;
+      } else {
+        title = block[0]!;
       }
     }
 
-    const ctxLower = ctx.toLowerCase();
-    if (ctxLower.includes("easy apply") || ctxLower.includes("apply with resume")) {
+    // Clean common junk
+    title = title.replace(/^["'“]+|["'”]+$/g, "").trim();
+    companyName = companyName
+      .replace(/^["'“]+|["'”]+$/g, "")
+      .replace(/[’']$/g, "")
+      .trim();
+    if (location) {
+      location = location.replace(/^["']+|["']+$/g, "").trim();
+      if (isNoiseContextLine(location) || /^apply /i.test(location)) location = null;
+    }
+
+    // Subject fallback only for single-job "Title at Company" subjects
+    if ((!title || !companyName) && input.subject) {
+      const at = input.subject.match(/^(.+?)\s+at\s+(.+)$/i);
+      if (at && !isGarbageJobTitle(at[1]!)) {
+        title = title || at[1]!.trim();
+        companyName = companyName || at[2]!.trim();
+      }
+    }
+
+    const ctx = before.slice(-300).toLowerCase();
+    let applyMethod: ApplicationApplyMethod = "unknown";
+    if (ctx.includes("easy apply") || ctx.includes("apply with resume")) {
       applyMethod = "easy_apply";
-    } else if (ctxLower.includes("apply on company") || ctxLower.includes("company website")) {
+    } else if (ctx.includes("apply on company") || ctx.includes("company website")) {
       applyMethod = "external";
     }
 
-    if (/\bremote\b/i.test(ctx) || /\bremote\b/i.test(title)) workMode = "remote";
-    else if (/\bhybrid\b/i.test(ctx)) workMode = "hybrid";
-    else if (/\bon-?site\b/i.test(ctx) || /\bin office\b/i.test(ctx)) workMode = "onsite";
+    let workMode: WorkMode | null = null;
+    const modeBlob = `${title} ${companyName} ${location ?? ""} ${ctx}`;
+    if (/\bremote\b/i.test(modeBlob)) workMode = "remote";
+    else if (/\bhybrid\b/i.test(modeBlob)) workMode = "hybrid";
+    else if (/\bon-?site\b/i.test(modeBlob) || /\bin office\b/i.test(modeBlob)) workMode = "onsite";
 
-    // Google job alerts: "Title ... Company ... via Board"
-    if (fromEmail.includes("google.com") && title === "Unknown role") {
-      const lines = text
+    // Google job alerts (often few lines + redirect URLs)
+    if (fromEmail.includes("google.com") && (!title || isGarbageJobTitle(title))) {
+      const allLines = text
         .split(/\n+/)
         .map((l) => l.trim())
-        .filter(Boolean);
-      if (lines[0]) title = lines[0].slice(0, 200);
-      const via = text.match(/via\s+([A-Za-z0-9 ._-]+)/i);
-      if (lines[1] && !lines[1].toLowerCase().startsWith("near")) {
-        companyName = lines[1].slice(0, 200);
+        .filter((l) => l && !l.startsWith("http") && !isNoiseContextLine(l));
+      if (allLines[0] && !isGarbageJobTitle(allLines[0])) title = allLines[0].slice(0, 200);
+      // company often after location line
+      const via = text.match(/\bvia\s+([A-Za-z0-9 ._-]{2,40})/i);
+      if (via) companyName = via[1]!.trim();
+      else if (allLines[2] && !/^near /i.test(allLines[2])) companyName = allLines[2].slice(0, 200);
+      if (allLines[1] && /Egypt|Cairo|Remote|United|London/i.test(allLines[1])) {
+        location = allLines[1];
       }
-      if (via) companyName = companyName === "Unknown company" ? via[1]!.trim() : companyName;
     }
 
-    jobs.push({
-      title: title.slice(0, 300) || "Unknown role",
-      companyName: companyName.slice(0, 300) || "Unknown company",
+    const job: HarvestedJob = {
+      title: (title || "Unknown role").slice(0, 300),
+      companyName: (companyName || "Unknown company").slice(0, 300),
       location,
       salaryRange: null,
       description: null,
@@ -297,11 +421,14 @@ export function harvestJobsFromMailBody(input: ExtractJobLinksInput): HarvestedJ
       applyUrl: null,
       applyMethod,
       workMode,
-      source
-    });
+      source: inferApplicationSource(listingUrl, fromEmail)
+    };
+
+    if (!isValidHarvestedJob(job)) continue;
+    jobs.push(job);
   }
 
-  return jobs;
+  return jobs.slice(0, 25);
 }
 
 /**
@@ -364,6 +491,7 @@ function includesAny(haystack: string, needles: string[]): boolean {
 
 /**
  * Score a harvested job against user preferences (0–100). Rules-only.
+ * When role keywords are set, require a hit on the **title** (not random URL text).
  */
 export function scoreJobAgainstPreference(
   job: HarvestedJob,
@@ -371,42 +499,44 @@ export function scoreJobAgainstPreference(
 ): JobMatchScoreResult {
   const p = prefs ?? defaultJobPreference();
   const reasons: string[] = [];
-  let score = 50; // neutral base when little signal
+  let score = 40;
 
-  const blob = [
-    job.title,
-    job.companyName,
-    job.location ?? "",
-    job.description ?? "",
-    job.listingUrl
-  ]
+  const titleBlob = job.title.toLowerCase();
+  const blob = [job.title, job.companyName, job.location ?? "", job.description ?? ""]
     .join("\n")
     .toLowerCase();
 
-  // Hard fail: exclude keywords
-  if (p.excludeKeywords.length > 0 && includesAny(blob, p.excludeKeywords)) {
-    return {
-      score: 0,
-      passed: false,
-      reasons: [`excluded keyword match`]
-    };
+  if (isGarbageJobTitle(job.title) || isGarbageCompany(job.companyName)) {
+    return { score: 0, passed: false, reasons: ["invalid title/company"] };
   }
 
-  // Work mode
+  if (p.excludeKeywords.length > 0 && includesAny(blob, p.excludeKeywords)) {
+    return { score: 0, passed: false, reasons: ["excluded keyword match"] };
+  }
+
+  if (p.roleKeywords.length > 0) {
+    // Title-only — never score from fetched HTML description noise
+    const titleHits = p.roleKeywords.filter((k) => titleBlob.includes(k.toLowerCase()));
+    if (titleHits.length > 0) {
+      score += Math.min(40, 15 + titleHits.length * 10);
+      reasons.push(`title keywords: ${titleHits.slice(0, 3).join(", ")}`);
+    } else {
+      return { score: 15, passed: false, reasons: ["no role keyword in title"] };
+    }
+  }
+
   if (p.workModes.length > 0) {
     if (job.workMode && p.workModes.includes(job.workMode)) {
-      score += 25;
+      score += 20;
       reasons.push(`work mode ${job.workMode}`);
     } else if (job.workMode && !p.workModes.includes(job.workMode)) {
-      score -= 25;
+      score -= 20;
       reasons.push(`work mode ${job.workMode} not preferred`);
     } else {
-      // unknown mode — slight penalty only if user is strict
       reasons.push("work mode unknown");
     }
   }
 
-  // Location
   if (p.locations.length > 0) {
     const locFromJob =
       job.location != null && job.location.length > 0
@@ -420,20 +550,8 @@ export function scoreJobAgainstPreference(
       score += 15;
       reasons.push("location match");
     } else if (job.location) {
-      score -= 10;
-      reasons.push("location mismatch");
-    }
-  }
-
-  // Role keywords
-  if (p.roleKeywords.length > 0) {
-    const hits = p.roleKeywords.filter((k) => blob.includes(k.toLowerCase()));
-    if (hits.length > 0) {
-      score += Math.min(25, 10 + hits.length * 5);
-      reasons.push(`keywords: ${hits.slice(0, 3).join(", ")}`);
-    } else {
       score -= 15;
-      reasons.push("no role keyword match");
+      reasons.push("location mismatch");
     }
   }
 
