@@ -16,7 +16,7 @@ import {
 import { generateModelOption } from "#@/mastra/byo-model";
 import { fetchJobPageContent } from "#@/mastra/tools/fetch-job-page.tool";
 
-const MAIL_EXTRACT_TIMEOUT_MS = 60_000;
+const MAIL_EXTRACT_TIMEOUT_MS = 90_000;
 const PAGE_EXTRACT_TIMEOUT_MS = 45_000;
 const MAX_JOBS_TO_ENRICH = 8;
 
