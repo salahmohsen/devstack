@@ -17,6 +17,7 @@ import {
 import { PostgresStore } from "@mastra/pg";
 
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
+import { createJobNotifierMailExtractorAgent } from "#@/mastra/agents/job-notifier-mail-extractor-agent";
 import { createJobPageExtractorAgent } from "#@/mastra/agents/job-page-extractor-agent";
 import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agent";
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
@@ -131,6 +132,7 @@ export const mastra = new Mastra({
     resumeImportExtractor: createResumeImportExtractorAgent(),
     mailClassifierAgent: createMailClassifierAgent(),
     mailReplyAgent: createMailReplyAgent(),
+    jobNotifierMailExtractor: createJobNotifierMailExtractorAgent(),
     jobPageExtractor: createJobPageExtractorAgent()
   },
   storage,

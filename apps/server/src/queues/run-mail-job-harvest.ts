@@ -1,9 +1,8 @@
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
+import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
   canonicalizeJobUrl,
   defaultJobPreference,
-  enrichJobFromHtml,
-  harvestJobsFromMailBody,
   isValidHarvestedJob,
   scoreJobAgainstPreference,
   type HarvestedJob,
@@ -17,8 +16,7 @@ import {
 } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
-const FETCH_TIMEOUT_MS = 12_000;
-const MAX_FETCH_PER_MESSAGE = 8;
+import { callMailJobHarvestAgent } from "#@/queues/call-mail-job-harvest-agent";
 
 async function loadPreference(userId: string): Promise<JobPreference> {
   const row = await jobPreferenceRepository.findByUserId(userId);
@@ -34,35 +32,11 @@ async function loadPreference(userId: string): Promise<JobPreference> {
   };
 }
 
-async function tryEnrichFromNetwork(job: HarvestedJob): Promise<HarvestedJob> {
-  try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    const res = await fetch(job.listingUrl, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "CareerInboxHarvest/1.0 (+local; job alert enrich)",
-        Accept: "text/html,application/xhtml+xml"
-      },
-      redirect: "follow"
-    });
-    clearTimeout(t);
-    if (!res.ok) return job;
-    const html = await res.text();
-    if (html.length < 200) return job;
-    return enrichJobFromHtml(job, html.slice(0, 200_000));
-  } catch {
-    return job;
-  }
-}
-
 /**
- * Harvest job listings from a classified `job_notifier` mail:
- * 1. Extract job cards/URLs from body (primary — LinkedIn digests)
- * 2. Optionally enrich via HTTP fetch (apply method / external apply URL)
- * 3. Score vs JobPreference; hard-skip below minMatchScore
- * 4. Create Applications (dedupe by listing url)
- * 5. Batch notify mail.job_alerts_ready when any created
+ * Harvest job listings from a classified `job_notifier` mail via Mastra AI:
+ * 1. Workflow: AI reads mail → extract job cards/URLs
+ * 2. Workflow: fetch each listing URL (tool) → AI structured job fields
+ * 3. Score vs JobPreference; create Applications; notify
  */
 export async function runMailJobHarvest(input: {
   messageId: string;
@@ -108,21 +82,46 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
-  let jobs = harvestJobsFromMailBody({
+  const llm = await resolveRuntimeAiCredentials(row.userId, "classify");
+  const agentResult = await callMailJobHarvestAgent({
+    messageId: row.id,
+    userId: row.userId,
+    fromEmail: row.fromEmail ?? "",
+    fromName: row.fromName ?? "",
+    subject: row.subject ?? "",
     bodyText: row.bodyText ?? "",
     bodyHtml: row.bodyHtml,
-    subject: row.subject ?? "",
-    fromEmail: row.fromEmail ?? ""
+    llm
   });
 
-  jobs = await Promise.all(
-    jobs.map(async (j, i) => {
-      if (i >= MAX_FETCH_PER_MESSAGE) return j;
-      return tryEnrichFromNetwork(j);
-    })
-  );
+  if (!agentResult.ok) {
+    log.set({
+      event: "mail_job_harvest_ai_failed",
+      messageId: row.id,
+      userId: row.userId,
+      reason: agentResult.failure.reason,
+      message: agentResult.failure.message ?? null
+    });
+    log.emit({ _forceKeep: true });
+    return empty({
+      skippedFailed: 1
+    });
+  }
 
+  const { output } = agentResult.data;
+  if (!output.isJobNotifier) {
+    log.set({
+      event: "mail_job_harvest_ai_not_notifier",
+      messageId: row.id,
+      notes: output.notes ?? null
+    });
+    log.emit();
+    return empty();
+  }
+
+  const jobs: HarvestedJob[] = output.jobs.filter((j) => isValidHarvestedJob(j));
   const prefs = await loadPreference(row.userId);
+
   let created = 0;
   let skippedLowMatch = 0;
   let skippedDuplicate = 0;
@@ -131,10 +130,6 @@ export async function runMailJobHarvest(input: {
 
   for (const job of jobs) {
     try {
-      if (!isValidHarvestedJob(job)) {
-        skippedFailed += 1;
-        continue;
-      }
       const listingUrl = canonicalizeJobUrl(job.listingUrl) ?? job.listingUrl;
       const existing = await applicationRepository.findByUserIdAndUrl(row.userId, listingUrl);
       if (existing) {
@@ -160,7 +155,7 @@ export async function runMailJobHarvest(input: {
         location: job.location ?? null,
         salaryRange: job.salaryRange ?? null,
         description: job.description ?? null,
-        notes: `Harvested from mail ${row.id}. Match: ${match.reasons.join("; ") || "ok"}`,
+        notes: `AI harvest from mail ${row.id}. ${match.reasons.join("; ") || "ok"}`,
         stage: "saved",
         hiringUrgency: "unknown",
         resumeId: null
@@ -194,8 +189,8 @@ export async function runMailJobHarvest(input: {
           : `${created} jobs matched your preferences`,
       body:
         skippedLowMatch > 0
-          ? `From a job alert · skipped ${skippedLowMatch} low match`
-          : "From a job alert email",
+          ? `AI harvest · skipped ${skippedLowMatch} low match`
+          : "AI harvest from job alert email",
       href: "/dashboard/applications",
       messageId: row.id,
       applicationId: applicationIds[0] ?? null
@@ -215,6 +210,8 @@ export async function runMailJobHarvest(input: {
 
   log.set({
     event: "mail_job_harvest_done",
+    via: "mastra_ai",
+    notes: output.notes ?? null,
     ...result
   });
   log.emit();

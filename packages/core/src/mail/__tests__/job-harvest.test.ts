@@ -168,6 +168,7 @@ describe("scoreJobAgainstPreference", () => {
         companyName: "Acme",
         location: "Remote",
         listingUrl: "https://www.linkedin.com/jobs/view/1",
+        applyUrl: null,
         applyMethod: "easy_apply",
         workMode: "remote",
         source: "linkedin"
@@ -185,6 +186,7 @@ describe("scoreJobAgainstPreference", () => {
         companyName: "Studio",
         location: "Cairo",
         listingUrl: "https://www.linkedin.com/jobs/view/2",
+        applyUrl: null,
         applyMethod: "unknown",
         workMode: null,
         source: "linkedin"
@@ -200,6 +202,7 @@ describe("scoreJobAgainstPreference", () => {
         title: "Storyteller is hiring for a Remote role",
         companyName: "Unknown company",
         listingUrl: "https://www.linkedin.com/jobs/view/3",
+        applyUrl: null,
         applyMethod: "unknown",
         source: "linkedin"
       },

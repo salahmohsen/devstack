@@ -1,42 +1,41 @@
 import { Agent } from "@mastra/core/agent";
 
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
+import { fetchJobPageTool } from "#@/mastra/tools/fetch-job-page.tool";
 
 /**
- * Structured extract of a single job posting from page text or mail card context.
- * No tools — fetch happens outside the agent (workflow/server step).
+ * Fetches a job URL (via tool) and extracts structured application fields.
  */
 export function createJobPageExtractorAgent() {
   return new Agent({
     id: "job-page-extractor",
     name: "Job Page Extractor",
     description:
-      "Extracts company, title, location, apply method, and apply URL from job page or alert card text. Pure structured extract; no tools.",
-    instructions: `You extract structured job application data from job listing text (email card or page HTML converted to text).
+      "Fetches a job listing URL and extracts company, title, location, apply method, and apply URL.",
+    instructions: `You enrich ONE job listing for a career CRM.
 
-Return only facts present or clearly implied. Prefer null over invention.
+You usually receive pre-fetched page text from fetch-job-page (workflow injects it). If PAGE TEXT is missing, call tool fetch-job-page once with the listingUrl.
 
 Fields:
-- title: role title
-- companyName: hiring company
-- location: city/region or null
-- salaryRange: free text or null
-- description: short JD summary (max ~1500 chars) or null
-- listingUrl: the board/listing URL provided (do not invent)
-- applyUrl: external apply URL if the page says apply on company site; null for Easy Apply only
-- applyMethod: one of easy_apply | external | email | unknown
-  - easy_apply: Easy Apply / Apply with resume & profile on LinkedIn/Indeed
-  - external: Apply on company website with a separate URL
-  - email: mailto or recruiter email apply
-  - unknown: cannot tell
+- title, companyName (required — never "Unknown" when page or card has a real value)
+- location, salaryRange, description (short, max ~800 chars)
+- listingUrl: the canonical board URL (LinkedIn jobs/view/ID when possible)
+- applyUrl: external company/ATS apply URL if present; null for Easy Apply only
+- applyMethod: easy_apply | external | email | unknown
 - workMode: remote | hybrid | onsite | null
+- source: linkedin | indeed | company_website | other
 
 Rules:
-- Do NOT use tools.
-- Do NOT invent employers or titles.
-- If text is a login wall, return best-effort from title tags only and applyMethod unknown.
-- listingUrl must match the URL given in the user message when provided.`,
-    model: byoModelFromRequestContext
+- Prefer page title/text facts over mail-card hints when they conflict.
+- LinkedIn page titles often look like "Role | Company | LinkedIn" — split carefully.
+- If the page is a login wall or empty, keep title/company from mail-card hints when they look real.
+- Detect Easy Apply vs "Apply on company website" carefully.
+- Do not invent employers or URLs.
+- title must look like a job role (Engineer, Developer, Manager, …), not a marketing subject line.`,
+    model: byoModelFromRequestContext,
+    tools: {
+      fetchJobPage: fetchJobPageTool
+    }
   });
 }
 

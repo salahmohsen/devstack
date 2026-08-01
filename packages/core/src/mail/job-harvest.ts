@@ -18,12 +18,64 @@ export const HarvestedJobSchema = z.object({
   salaryRange: z.string().max(200).nullable().optional(),
   description: z.string().max(20_000).nullable().optional(),
   listingUrl: z.string().url(),
-  applyUrl: z.string().url().nullable().optional(),
+  applyUrl: z.string().url().nullable().optional().default(null),
   applyMethod: ApplicationApplyMethodSchema.default("unknown"),
   workMode: z.enum(["remote", "hybrid", "onsite"]).nullable().optional(),
   source: ApplicationSourceSchema.nullable().optional()
 });
 export type HarvestedJob = z.infer<typeof HarvestedJobSchema>;
+
+/**
+ * AI output from reading a job-notifier email (before page fetch).
+ * listingUrl required; other fields optional until page enrich.
+ */
+export const MailNotifierExtractSchema = z.object({
+  isJobNotifier: z.boolean(),
+  reason: z.string().max(500).optional(),
+  jobs: z
+    .array(
+      z.object({
+        listingUrl: z.string().url(),
+        title: z.string().max(300).optional().nullable(),
+        companyName: z.string().max(300).optional().nullable(),
+        location: z.string().max(300).optional().nullable(),
+        applyMethod: ApplicationApplyMethodSchema.optional().nullable(),
+        workMode: z.enum(["remote", "hybrid", "onsite"]).optional().nullable()
+      })
+    )
+    .max(25)
+    .default([])
+});
+export type MailNotifierExtract = z.infer<typeof MailNotifierExtractSchema>;
+
+/** Workflow I/O for Mastra mail-job-harvest-workflow */
+export const MailJobHarvestWorkflowInputSchema = z.object({
+  messageId: z.string().min(1),
+  userId: z.string().min(1),
+  fromEmail: z.string().default(""),
+  fromName: z.string().default(""),
+  subject: z.string().default(""),
+  bodyText: z.string().default(""),
+  bodyHtml: z.string().nullable().optional(),
+  /** BYO runtime LLM (same shape as mail classify). */
+  llm: z
+    .object({
+      modelId: z.string(),
+      providerKind: z.string(),
+      apiKey: z.string().optional()
+    })
+    .optional()
+});
+export type MailJobHarvestWorkflowInput = z.infer<typeof MailJobHarvestWorkflowInputSchema>;
+
+export const MailJobHarvestWorkflowOutputSchema = z.object({
+  messageId: z.string(),
+  userId: z.string(),
+  isJobNotifier: z.boolean(),
+  jobs: z.array(HarvestedJobSchema),
+  notes: z.string().optional()
+});
+export type MailJobHarvestWorkflowOutput = z.infer<typeof MailJobHarvestWorkflowOutputSchema>;
 
 export const JobMatchScoreResultSchema = z.object({
   score: z.number().int().min(0).max(100),
