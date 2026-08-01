@@ -13,7 +13,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 const WORKFLOW_ID = "mail-job-harvest-workflow";
 /** AI mail extract + per-job page fetch can be slow for multi-job digests. */
-const TIMEOUT_MS = 180_000;
+const TIMEOUT_MS = 300_000;
 
 export type MailJobHarvestAgentSuccess = {
   output: MailJobHarvestWorkflowOutput;
@@ -23,6 +23,7 @@ export type MailJobHarvestAgentSuccess = {
 
 /**
  * Run mail-job-harvest-workflow on the agent worker (AI mail extract + page fetch tools).
+ * Uses create-run + stream (Mastra start is fire-and-forget and does not return step output).
  */
 export async function callMailJobHarvestAgent(
   input: MailJobHarvestWorkflowInput
@@ -91,39 +92,8 @@ export async function callMailJobHarvestAgent(
       return { ok: false, failure: { reason: "missing_run_id" } };
     }
 
-    const startRes = await agentFetch(
-      `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/start?runId=${encodeURIComponent(runId)}`,
-      {
-        method: "POST",
-        body: JSON.stringify({ inputData: parsedInput }),
-        timeoutMs: TIMEOUT_MS,
-        sessionToken,
-        retry: { attempts: 2 }
-      }
-    );
-
-    if (startRes?.ok) {
-      const json = (await startRes.json()) as unknown;
-      const extracted = extractWorkflowResult(json);
-      if (extracted) {
-        log.set({
-          event: "mail_job_harvest_agent_ok",
-          ...base,
-          runId,
-          jobCount: extracted.jobs.length,
-          isJobNotifier: extracted.isJobNotifier,
-          via: "start"
-        });
-        log.emit();
-        return {
-          ok: true,
-          data: { output: extracted, runId, traceId: null },
-          runId,
-          traceId: null
-        };
-      }
-    }
-
+    // Stream starts the run and emits step results. Do not call /start first —
+    // modern Mastra returns only {"message":"Workflow run started"} from start.
     const streamRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/stream?runId=${encodeURIComponent(runId)}`,
       {
@@ -152,6 +122,8 @@ export async function callMailJobHarvestAgent(
         ...base,
         runId,
         jobCount: fromStream.jobs.length,
+        isJobNotifier: fromStream.isJobNotifier,
+        notes: fromStream.notes ?? null,
         via: "stream"
       });
       log.emit();
@@ -200,7 +172,44 @@ function extractWorkflowResult(payload: unknown): MailJobHarvestWorkflowOutput |
     }
   }
 
+  // Mastra stream: { type: "workflow-step-result", payload: { output: {...}, status } }
+  if (obj.payload && typeof obj.payload === "object") {
+    const p = obj.payload as Record<string, unknown>;
+    const fromPayload = extractWorkflowResult(p);
+    if (fromPayload) return fromPayload;
+  }
+
   return null;
+}
+
+/**
+ * Mastra workflow streams use ASCII RS (\x1e) between JSON events, sometimes
+ * also newlines. Flush remainder when the stream ends.
+ */
+function splitStreamFrames(buffer: string): { frames: string[]; rest: string } {
+  const frames: string[] = [];
+  let rest = buffer;
+  // Prefer RS delimiter used by Mastra workflow stream
+  const delim = rest.includes("\u001E") ? "\u001E" : "\n";
+  const parts = rest.split(delim);
+  rest = parts.pop() ?? "";
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (trimmed) frames.push(trimmed);
+  }
+  return { frames, rest };
+}
+
+function parseFrame(raw: string): unknown | null {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.startsWith(":")) return null;
+  const jsonLine = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
+  if (!jsonLine || jsonLine === "[DONE]") return null;
+  try {
+    return JSON.parse(jsonLine) as unknown;
+  } catch {
+    return null;
+  }
 }
 
 async function readResultFromStream(
@@ -211,34 +220,24 @@ async function readResultFromStream(
   let buffer = "";
   let last: MailJobHarvestWorkflowOutput | null = null;
 
+  const consume = (frame: string) => {
+    const event = parseFrame(frame);
+    if (!event) return;
+    const hit = extractWorkflowResult(event);
+    if (hit) last = hit;
+  };
+
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith(":")) continue;
-      const jsonLine = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
-      if (!jsonLine || jsonLine === "[DONE]") continue;
-      try {
-        const event = JSON.parse(jsonLine) as unknown;
-        const hit = extractWorkflowResult(event);
-        if (hit) last = hit;
-        if (event && typeof event === "object") {
-          const e = event as Record<string, unknown>;
-          if (e.payload && typeof e.payload === "object") {
-            const p = extractWorkflowResult(e.payload);
-            if (p) last = p;
-          }
-        }
-      } catch {
-        // ignore mid-stream parse errors
-      }
-    }
+    const { frames, rest } = splitStreamFrames(buffer);
+    buffer = rest;
+    for (const frame of frames) consume(frame);
   }
+
+  // Flush trailing frame (no final delimiter)
+  if (buffer.trim()) consume(buffer);
 
   return last;
 }

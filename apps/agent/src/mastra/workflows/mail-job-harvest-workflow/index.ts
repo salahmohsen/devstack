@@ -83,7 +83,15 @@ const extractFromMailAi = createStep({
     }
 
     const body = (inputData.bodyText ?? "").slice(0, 14_000);
-    const htmlSnippet = (inputData.bodyHtml ?? "").replace(/<[^>]+>/g, " ").slice(0, 4_000);
+    // Strip scripts/styles before tags so CSS rules do not flood the prompt
+    const htmlSnippet = (inputData.bodyHtml ?? "")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/@media[\s\S]*?\{[\s\S]*?\}/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 2_500);
     const prompt = `Analyze this email for job listings.
 
 From: ${inputData.fromName} <${inputData.fromEmail}>
@@ -93,7 +101,7 @@ Subject: ${inputData.subject}
 ${body}
 --- END BODY ---
 
-${htmlSnippet ? `--- HTML TEXT SNIPPET ---\n${htmlSnippet}\n--- END HTML ---` : ""}
+${htmlSnippet && htmlSnippet.length > 80 ? `--- HTML TEXT SNIPPET ---\n${htmlSnippet}\n--- END HTML ---` : ""}
 
 Return isJobNotifier and jobs[] with listingUrl for every role card.`;
 

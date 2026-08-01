@@ -350,6 +350,38 @@ export function isValidHarvestedJob(job: HarvestedJob): boolean {
 }
 
 /**
+ * Fill workMode / applyMethod gaps from title/location/description text when the model left them null.
+ */
+export function refineHarvestedJob(job: HarvestedJob): HarvestedJob {
+  const blob = `${job.title} ${job.location ?? ""} ${job.description ?? ""} ${job.salaryRange ?? ""}`;
+  let workMode = job.workMode ?? null;
+  if (!workMode) {
+    if (/\bremote\b/i.test(blob)) workMode = "remote";
+    else if (/\bhybrid\b/i.test(blob)) workMode = "hybrid";
+    else if (/\b(on-?site|in[- ]office)\b/i.test(blob)) workMode = "onsite";
+  }
+
+  let applyMethod = job.applyMethod ?? "unknown";
+  if (applyMethod === "unknown") {
+    if (/\beasy\s*apply\b/i.test(blob) || /apply with resume/i.test(blob)) {
+      applyMethod = "easy_apply";
+    } else if (/apply on (the )?company|external apply|company website/i.test(blob)) {
+      applyMethod = "external";
+    } else if (/mailto:|email to apply|send (your )?cv|send (your )?resume/i.test(blob)) {
+      applyMethod = "email";
+    }
+  }
+
+  return {
+    ...job,
+    workMode,
+    applyMethod,
+    title: job.title.trim().slice(0, 300),
+    companyName: job.companyName.trim().slice(0, 300)
+  };
+}
+
+/**
  * Parse LinkedIn-style multi-line cards:
  *
  *   Title

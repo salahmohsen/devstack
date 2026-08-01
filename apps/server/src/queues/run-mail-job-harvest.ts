@@ -4,6 +4,7 @@ import {
   canonicalizeJobUrl,
   defaultJobPreference,
   isValidHarvestedJob,
+  refineHarvestedJob,
   scoreJobAgainstPreference,
   type HarvestedJob,
   type JobPreference,
@@ -119,7 +120,9 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
-  const jobs: HarvestedJob[] = output.jobs.filter((j) => isValidHarvestedJob(j));
+  const jobs: HarvestedJob[] = output.jobs
+    .map((j) => refineHarvestedJob(j))
+    .filter((j) => isValidHarvestedJob(j));
   const prefs = await loadPreference(row.userId);
 
   let created = 0;
