@@ -248,6 +248,7 @@ export function isGarbageJobTitle(title: string): boolean {
   if (/apply now to/i.test(t)) return true;
   if (/^\d+\s+new jobs?\s+for/i.test(t)) return true;
   if (/^new jobs similar to/i.test(t)) return true;
+  if (/^jobs similar to/i.test(t)) return true;
   if (/^job alert/i.test(t)) return true;
   if (/^your saved job/i.test(t)) return true;
   return false;
