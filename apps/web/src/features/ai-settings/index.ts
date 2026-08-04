@@ -10,3 +10,15 @@ export type {
   UpdateAiSettingsInput,
   UpdateAiSettingsMutationResult
 } from "@/features/ai-settings/api/update-ai-settings.mutation";
+
+export { useTestAiProviderMutation } from "@/features/ai-settings/api/test-ai-provider.mutation";
+export type {
+  TestAiProviderInput,
+  TestAiProviderMutationResult
+} from "@/features/ai-settings/api/test-ai-provider.mutation";
+
+export { useListProviderModelsMutation } from "@/features/ai-settings/api/list-provider-models.mutation";
+export type {
+  ListProviderModelsInput,
+  ListProviderModelsMutationResult
+} from "@/features/ai-settings/api/list-provider-models.mutation";
