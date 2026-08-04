@@ -5,7 +5,8 @@ import {
   orpcClient
 } from "@tsu-stack/api/client/tanstack-start/orpc";
 
-export const DEFAULT_AGENT_ID = "weather-agent";
+/** Playground defaults to hub supervisor (weather agent removed). */
+export const DEFAULT_AGENT_ID = "hub-supervisor";
 
 /**
  * `useChat` transport that proxies through the oRPC `agent.chatStream`

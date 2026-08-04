@@ -1,15 +1,25 @@
 "use client";
 
-import { Building2Icon, BriefcaseIcon, MapPinIcon, PlusIcon } from "lucide-react";
-import { useMemo } from "react";
+import { Building2Icon, BriefcaseIcon, MapPinIcon, PencilIcon, PlusIcon } from "lucide-react";
+import { useMemo, type ComponentType, type ReactNode } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuPopup,
+  ContextMenuSeparator,
+  ContextMenuTrigger
+} from "@tsu-stack/ui/components/context-menu";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { ListItem } from "@/shared/ui/list-item";
 
 import {
+  ApplicationApplyLinks,
+  ApplicationApplyMethodBadge,
+  ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
   useDeleteApplicationsMutation
@@ -18,6 +28,7 @@ import {
 import { ItemsEmpty, ListSkeleton } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
+import { ApplyPackageMenuItems } from "@/pages/dashboard/applications/ui/apply-package-entry-actions";
 
 const LIST_FILTERS = [
   { value: "open", label: "Open" },
@@ -29,6 +40,22 @@ type ApplicationsListProps = {
   applications: ApplicationOutput[];
   isLoading?: boolean;
   listRef?: React.RefObject<HTMLUListElement | null>;
+};
+
+type ActionItemProps = {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  variant?: "default" | "destructive";
+};
+
+const contextSlots = {
+  Item: (({ children, onClick, disabled, variant }: ActionItemProps) => (
+    <ContextMenuItem onClick={onClick} disabled={disabled} variant={variant}>
+      {children}
+    </ContextMenuItem>
+  )) as ComponentType<ActionItemProps>,
+  Separator: (() => <ContextMenuSeparator />) as ComponentType
 };
 
 export function ApplicationsList({ applications, isLoading, listRef }: ApplicationsListProps) {
@@ -125,39 +152,59 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
             const selected = viewItem?.id === app.id;
             const batchSelected = selectedIds.includes(app.id);
             return (
-              <ListItem
-                key={app.id}
-                selected={selected}
-                onSelect={() => openView(app)}
-                isBatchSelected={batchSelected}
-                onToggleSelect={() => toggleSelect(app.id)}
-                onEdit={() => openEdit(app)}
-                onDelete={() => deleteMutation.mutate({ ids: [app.id] })}
-                isDeleting={deleteMutation.isPending}
-                deleteTitle="Delete this application?"
-                deleteDescription="This permanently removes the application from your pipeline."
-                title={app.title}
-                titleEnd={
-                  <span className="flex shrink-0 items-center gap-1.5">
-                    <ApplicationStageBadge stage={app.stage} />
-                    {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
-                  </span>
-                }
-                meta={
-                  <>
-                    <p className="flex items-center gap-1">
-                      <Building2Icon size={14} />
-                      <span>{app.companyName}</span>
-                    </p>
-                    {app.location ? (
-                      <p className="flex items-center gap-1">
-                        <MapPinIcon size={14} />
-                        <span>{app.location}</span>
-                      </p>
-                    ) : null}
-                  </>
-                }
-              />
+              <li key={app.id}>
+                <ContextMenu>
+                  <ContextMenuTrigger className="block w-full outline-none">
+                    <ListItem
+                      selected={selected}
+                      onSelect={() => openView(app)}
+                      isBatchSelected={batchSelected}
+                      onToggleSelect={() => toggleSelect(app.id)}
+                      onEdit={() => openEdit(app)}
+                      onDelete={() => deleteMutation.mutate({ ids: [app.id] })}
+                      isDeleting={deleteMutation.isPending}
+                      deleteTitle="Delete this application?"
+                      deleteDescription="This permanently removes the application from your pipeline."
+                      title={app.title}
+                      titleEnd={
+                        <span className="flex shrink-0 flex-wrap items-center gap-1.5">
+                          <ApplicationMatchScoreBadge matchScore={app.matchScore} />
+                          <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
+                          <ApplicationStageBadge stage={app.stage} />
+                          {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
+                        </span>
+                      }
+                      meta={
+                        <>
+                          <p className="flex items-center gap-1">
+                            <Building2Icon size={14} />
+                            <span>{app.companyName}</span>
+                          </p>
+                          {app.location ? (
+                            <p className="flex items-center gap-1">
+                              <MapPinIcon size={14} />
+                              <span>{app.location}</span>
+                            </p>
+                          ) : null}
+                          <ApplicationApplyLinks
+                            applyUrl={app.applyUrl}
+                            url={app.url}
+                            applyMethod={app.applyMethod}
+                            className="mt-1"
+                          />
+                        </>
+                      }
+                    />
+                  </ContextMenuTrigger>
+                  <ContextMenuPopup className="min-w-44">
+                    <ContextMenuItem onClick={() => openEdit(app)}>
+                      <PencilIcon aria-hidden="true" />
+                      Edit
+                    </ContextMenuItem>
+                    <ApplyPackageMenuItems app={app} slots={contextSlots} />
+                  </ContextMenuPopup>
+                </ContextMenu>
+              </li>
             );
           })}
         </ul>

@@ -11,7 +11,6 @@ import {
 } from "@tsu-stack/core";
 import { reviewItemRepository, userAiSettingsRepository } from "@tsu-stack/db/repositories";
 
-import { agentFailureUserMessage } from "#@/lib/agent/agent-call-result";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { confirmReviewItem, sendPendingReplyDraft } from "#@/lib/review/confirm-reply-draft";
 import { createReplyDraftFromMail } from "#@/lib/review/create-reply-draft-from-mail";
@@ -94,6 +93,10 @@ export const reviewRouter = {
       NOT_CAREER: {
         message: "System notification mail cannot create reply drafts",
         status: 400
+      },
+      AGENT_FAILED: {
+        message: "AI reply draft failed — check Settings → AI and try again",
+        status: 502
       }
     })
     .handler(async ({ input, context, errors }) => {
@@ -104,6 +107,7 @@ export const reviewRouter = {
       });
       if (!result.ok) {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "agent_failed") throw errors.AGENT_FAILED();
         throw errors.NOT_CAREER();
       }
 
@@ -119,8 +123,8 @@ export const reviewRouter = {
       if (!detail) throw errors.NOT_FOUND();
       return {
         ...toDetail(detail),
-        draftSource: result.source,
-        agentWarning: result.agentFailure ? agentFailureUserMessage(result.agentFailure) : undefined
+        // AI-only path: source is always llm when a draft was created successfully
+        draftSource: result.source === "llm" ? ("llm" as const) : undefined
       };
     }),
 

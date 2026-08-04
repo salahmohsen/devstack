@@ -1,6 +1,7 @@
 import { type OrpcContextAgentWorker } from "@tsu-stack/core";
 
 import { withAgentFetchRetry } from "#@/lib/agent/agent-fetch-retry";
+import { registerWorkflowRun } from "#@/lib/agent/workflow-run-registry";
 
 type LoggerLike = {
   set?(details: Record<string, unknown>): void;
@@ -94,6 +95,11 @@ export type StreamMastraWorkflowOptions = {
   signal?: AbortSignal;
   parseStream: (body: ReadableStream<Uint8Array>) => AsyncGenerator<unknown>;
   logger?: LoggerLike;
+  /**
+   * Authenticated user who started the run. Registered process-locally so
+   * `cancelWorkflowRun` can assert ownership before cancelling.
+   */
+  ownerUserId?: string;
 };
 
 /**
@@ -106,7 +112,7 @@ export type StreamMastraWorkflowOptions = {
 export async function* streamMastraWorkflow(
   options: StreamMastraWorkflowOptions
 ): AsyncGenerator<unknown> {
-  const { agentWorker, workflowId, inputData, signal, parseStream, logger } = options;
+  const { agentWorker, workflowId, inputData, signal, parseStream, logger, ownerUserId } = options;
 
   if (signal?.aborted) {
     return;
@@ -132,6 +138,11 @@ export async function* streamMastraWorkflow(
   const { runId } = (await createRunRes.json()) as { runId: string };
   if (!runId) {
     throw new Error("Workflow create-run did not return a runId");
+  }
+
+  // Bind run ownership as soon as runId is known (cancel RPC can race stream).
+  if (ownerUserId) {
+    registerWorkflowRun(runId, ownerUserId);
   }
 
   // Emit runId before any long work so the client can cancel via RPC.

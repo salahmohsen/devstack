@@ -1,8 +1,9 @@
 "use client";
 
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { PasswordInput } from "@tsu-stack/ui/components/password-input";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type PasswordInputFieldProps = {
@@ -16,7 +17,11 @@ function PasswordInputField(props: PasswordInputFieldProps) {
 
   return (
     <Field>
-      {props.label ? <FieldLabel htmlFor={field.name}>{props.label}</FieldLabel> : null}
+      <FieldLabelWithTooltip
+        label={props.label}
+        description={props.description}
+        htmlFor={field.name}
+      />
       <PasswordInput
         id={field.name}
         name={field.name}
@@ -25,7 +30,6 @@ function PasswordInputField(props: PasswordInputFieldProps) {
         value={field.state.value ?? ""}
         placeholder={props.placeholder}
       />
-      {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
       <FieldError errors={field.state.meta.errors} />
     </Field>
   );

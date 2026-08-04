@@ -161,7 +161,11 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
         <FieldGroup className="gap-4">
           <form.AppField name="title">
             {(field) => (
-              <field.InputField label="Title" placeholder="e.g. Senior Software Engineer" />
+              <field.InputField
+                description="test test test"
+                label="Title"
+                placeholder="e.g. Senior Software Engineer"
+              />
             )}
           </form.AppField>
 

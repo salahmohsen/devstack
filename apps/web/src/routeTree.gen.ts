@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as FirebaseMessagingSwDotjsRouteImport } from './routes/firebase-messaging-sw[.]js'
 import { Route as rootLayoutRouteRouteImport } from './routes/(root-layout)/route'
 import { Route as rootLayoutIndexRouteImport } from './routes/(root-layout)/index'
 import { Route as rootLayout_protectedRouteRouteImport } from './routes/(root-layout)/__protected/route'
@@ -23,6 +24,7 @@ import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
+import { Route as ApiCoverLetterDownloadIndexRouteImport } from './routes/api/cover-letter/download/index'
 import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
 import { Route as rootLayout_protectedPlaygroundIndexRouteImport } from './routes/(root-layout)/__protected/playground/index'
 import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
@@ -50,6 +52,7 @@ import { Route as rootLayout_protectedDashboardSettingsRulesIndexRouteImport } f
 import { Route as rootLayout_protectedDashboardSettingsProfileIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/profile/index'
 import { Route as rootLayout_protectedDashboardSettingsNotificationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/notifications/index'
 import { Route as rootLayout_protectedDashboardSettingsMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/mail/index'
+import { Route as rootLayout_protectedDashboardSettingsJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/jobs/index'
 import { Route as rootLayout_protectedDashboardSettingsInvitesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/invites/index'
 import { Route as rootLayout_protectedDashboardSettingsDomainIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/domain/index'
 import { Route as rootLayout_protectedDashboardSettingsConnectionsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/settings/connections/index'
@@ -68,6 +71,12 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FirebaseMessagingSwDotjsRoute =
+  FirebaseMessagingSwDotjsRouteImport.update({
+    id: '/firebase-messaging-sw.js',
+    path: '/firebase-messaging-sw.js',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const rootLayoutRouteRoute = rootLayoutRouteRouteImport.update({
   id: '/(root-layout)',
   getParentRoute: () => rootRouteImport,
@@ -132,6 +141,12 @@ const ApiResumeDownloadIndexRoute = ApiResumeDownloadIndexRouteImport.update({
   path: '/api/resume/download/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCoverLetterDownloadIndexRoute =
+  ApiCoverLetterDownloadIndexRouteImport.update({
+    id: '/api/cover-letter/download/',
+    path: '/api/cover-letter/download/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const rootLayoutReposRepoIndexRoute =
   rootLayoutReposRepoIndexRouteImport.update({
     id: '/',
@@ -294,6 +309,12 @@ const rootLayout_protectedDashboardSettingsMailIndexRoute =
     path: '/mail/',
     getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
   } as any)
+const rootLayout_protectedDashboardSettingsJobsIndexRoute =
+  rootLayout_protectedDashboardSettingsJobsIndexRouteImport.update({
+    id: '/jobs/',
+    path: '/jobs/',
+    getParentRoute: () => rootLayout_protectedDashboardSettingsRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardSettingsInvitesIndexRoute =
   rootLayout_protectedDashboardSettingsInvitesIndexRouteImport.update({
     id: '/invites/',
@@ -338,6 +359,7 @@ const rootLayoutProfileNameReposRepoBlobSplatRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
@@ -358,6 +380,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
+  '/api/cover-letter/download/': typeof ApiCoverLetterDownloadIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -380,12 +403,14 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/jobs/': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
   '/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
@@ -401,6 +426,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
   '/playground': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
+  '/api/cover-letter/download': typeof ApiCoverLetterDownloadIndexRoute
   '/api/resume/download': typeof ApiResumeDownloadIndexRoute
   '/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -423,6 +449,7 @@ export interface FileRoutesByTo {
   '/dashboard/settings/connections': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/dashboard/settings/domain': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/dashboard/settings/invites': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/dashboard/settings/jobs': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/dashboard/settings/mail': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/dashboard/settings/notifications': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/dashboard/settings/profile': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -431,6 +458,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(root-layout)': typeof rootLayoutRouteRouteWithChildren
+  '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/(root-layout)/__protected': typeof rootLayout_protectedRouteRouteWithChildren
@@ -452,6 +480,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/(root-layout)/__protected/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
+  '/api/cover-letter/download/': typeof ApiCoverLetterDownloadIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/(root-layout)/__protected/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/(root-layout)/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -474,6 +503,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/settings/connections/': typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/domain/': typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   '/(root-layout)/__protected/dashboard/settings/invites/': typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  '/(root-layout)/__protected/dashboard/settings/jobs/': typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/mail/': typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   '/(root-layout)/__protected/dashboard/settings/notifications/': typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   '/(root-layout)/__protected/dashboard/settings/profile/': typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -482,6 +512,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/firebase-messaging-sw.js'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/'
@@ -502,6 +533,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/playground/'
     | '/repos/$repo/'
+    | '/api/cover-letter/download/'
     | '/api/resume/download/'
     | '/dashboard/mail/$category'
     | '/repos/$repo/blob/$'
@@ -524,12 +556,14 @@ export interface FileRouteTypes {
     | '/dashboard/settings/connections/'
     | '/dashboard/settings/domain/'
     | '/dashboard/settings/invites/'
+    | '/dashboard/settings/jobs/'
     | '/dashboard/settings/mail/'
     | '/dashboard/settings/notifications/'
     | '/dashboard/settings/profile/'
     | '/dashboard/settings/rules/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/firebase-messaging-sw.js'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/'
@@ -545,6 +579,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/playground'
     | '/repos/$repo'
+    | '/api/cover-letter/download'
     | '/api/resume/download'
     | '/dashboard/mail/$category'
     | '/repos/$repo/blob/$'
@@ -567,6 +602,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/connections'
     | '/dashboard/settings/domain'
     | '/dashboard/settings/invites'
+    | '/dashboard/settings/jobs'
     | '/dashboard/settings/mail'
     | '/dashboard/settings/notifications'
     | '/dashboard/settings/profile'
@@ -574,6 +610,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/(root-layout)'
+    | '/firebase-messaging-sw.js'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/(root-layout)/__protected'
@@ -595,6 +632,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/'
     | '/(root-layout)/__protected/playground/'
     | '/(root-layout)/repos/$repo/'
+    | '/api/cover-letter/download/'
     | '/api/resume/download/'
     | '/(root-layout)/__protected/dashboard/mail/$category'
     | '/(root-layout)/repos/$repo/blob/$'
@@ -617,6 +655,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/settings/connections/'
     | '/(root-layout)/__protected/dashboard/settings/domain/'
     | '/(root-layout)/__protected/dashboard/settings/invites/'
+    | '/(root-layout)/__protected/dashboard/settings/jobs/'
     | '/(root-layout)/__protected/dashboard/settings/mail/'
     | '/(root-layout)/__protected/dashboard/settings/notifications/'
     | '/(root-layout)/__protected/dashboard/settings/profile/'
@@ -625,10 +664,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   rootLayoutRouteRoute: typeof rootLayoutRouteRouteWithChildren
+  FirebaseMessagingSwDotjsRoute: typeof FirebaseMessagingSwDotjsRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
   ApiFilesIndexRoute: typeof ApiFilesIndexRoute
+  ApiCoverLetterDownloadIndexRoute: typeof ApiCoverLetterDownloadIndexRoute
   ApiResumeDownloadIndexRoute: typeof ApiResumeDownloadIndexRoute
 }
 
@@ -646,6 +687,13 @@ declare module '@tanstack/react-router' {
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/firebase-messaging-sw.js': {
+      id: '/firebase-messaging-sw.js'
+      path: '/firebase-messaging-sw.js'
+      fullPath: '/firebase-messaging-sw.js'
+      preLoaderRoute: typeof FirebaseMessagingSwDotjsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root-layout)': {
@@ -730,6 +778,13 @@ declare module '@tanstack/react-router' {
       path: '/api/resume/download'
       fullPath: '/api/resume/download/'
       preLoaderRoute: typeof ApiResumeDownloadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cover-letter/download/': {
+      id: '/api/cover-letter/download/'
+      path: '/api/cover-letter/download'
+      fullPath: '/api/cover-letter/download/'
+      preLoaderRoute: typeof ApiCoverLetterDownloadIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root-layout)/repos/$repo/': {
@@ -921,6 +976,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/settings/jobs/': {
+      id: '/(root-layout)/__protected/dashboard/settings/jobs/'
+      path: '/jobs'
+      fullPath: '/dashboard/settings/jobs/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardSettingsJobsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardSettingsRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/settings/invites/': {
       id: '/(root-layout)/__protected/dashboard/settings/invites/'
       path: '/invites'
@@ -1009,6 +1071,7 @@ interface rootLayout_protectedDashboardSettingsRouteRouteChildren {
   rootLayout_protectedDashboardSettingsConnectionsIndexRoute: typeof rootLayout_protectedDashboardSettingsConnectionsIndexRoute
   rootLayout_protectedDashboardSettingsDomainIndexRoute: typeof rootLayout_protectedDashboardSettingsDomainIndexRoute
   rootLayout_protectedDashboardSettingsInvitesIndexRoute: typeof rootLayout_protectedDashboardSettingsInvitesIndexRoute
+  rootLayout_protectedDashboardSettingsJobsIndexRoute: typeof rootLayout_protectedDashboardSettingsJobsIndexRoute
   rootLayout_protectedDashboardSettingsMailIndexRoute: typeof rootLayout_protectedDashboardSettingsMailIndexRoute
   rootLayout_protectedDashboardSettingsNotificationsIndexRoute: typeof rootLayout_protectedDashboardSettingsNotificationsIndexRoute
   rootLayout_protectedDashboardSettingsProfileIndexRoute: typeof rootLayout_protectedDashboardSettingsProfileIndexRoute
@@ -1027,6 +1090,8 @@ const rootLayout_protectedDashboardSettingsRouteRouteChildren: rootLayout_protec
       rootLayout_protectedDashboardSettingsDomainIndexRoute,
     rootLayout_protectedDashboardSettingsInvitesIndexRoute:
       rootLayout_protectedDashboardSettingsInvitesIndexRoute,
+    rootLayout_protectedDashboardSettingsJobsIndexRoute:
+      rootLayout_protectedDashboardSettingsJobsIndexRoute,
     rootLayout_protectedDashboardSettingsMailIndexRoute:
       rootLayout_protectedDashboardSettingsMailIndexRoute,
     rootLayout_protectedDashboardSettingsNotificationsIndexRoute:
@@ -1182,10 +1247,12 @@ const rootLayoutRouteRouteWithChildren = rootLayoutRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   rootLayoutRouteRoute: rootLayoutRouteRouteWithChildren,
+  FirebaseMessagingSwDotjsRoute: FirebaseMessagingSwDotjsRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,
   ApiFilesIndexRoute: ApiFilesIndexRoute,
+  ApiCoverLetterDownloadIndexRoute: ApiCoverLetterDownloadIndexRoute,
   ApiResumeDownloadIndexRoute: ApiResumeDownloadIndexRoute,
 }
 export const routeTree = rootRouteImport

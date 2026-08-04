@@ -10,14 +10,20 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { type AgentCallResult } from "#@/lib/agent/agent-call-result";
 import { agentFetch } from "#@/lib/agent/agent-fetch";
-import { resolveSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
+import { readMastraResultStream } from "#@/lib/agent/read-mastra-result-stream";
+import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 
 const WORKFLOW_ID = "mail-reply-workflow";
 const TIMEOUT_MS = 45_000;
 
+/** True when workflow returned a usable AI draft (not a fail-closed stub). */
+function isSuccessfulLlmDraft(draft: MailReplyDraftOutput): boolean {
+  return draft.source === "llm" && draft.notes === "llm:ok";
+}
+
 /**
  * Run mail-reply-workflow on the agent worker.
- * Returns structured ok/failure so callers can fall back without staying silent.
+ * AI-only: fail-closed stubs from the workflow are treated as agent failures.
  * Auth: Better Auth session Bearer (MastraAuthBetterAuth).
  */
 export async function callMailReplyAgent(
@@ -38,22 +44,7 @@ export async function callMailReplyAgent(
       ...byo
     };
 
-    const sessionToken = await resolveSessionTokenForUser(parsedInput.userId);
-    if (!sessionToken) {
-      log.set({
-        event: "mail_reply_agent_no_session",
-        ...base,
-        fixHint: "User needs an active Better Auth session for agent workflows"
-      });
-      log.emit({ _forceKeep: true });
-      return {
-        ok: false,
-        failure: {
-          reason: "no_session",
-          message: "No active Better Auth session for mail owner"
-        }
-      };
-    }
+    const sessionToken = await ensureSessionTokenForUser(parsedInput.userId);
 
     const createRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`,
@@ -125,7 +116,7 @@ export async function callMailReplyAgent(
     if (startRes?.ok) {
       const json = (await startRes.json()) as unknown;
       const extracted = extractWorkflowResult(json);
-      if (extracted) {
+      if (extracted && isSuccessfulLlmDraft(extracted)) {
         log.set({
           event: "mail_reply_agent_ok",
           ...base,
@@ -135,6 +126,23 @@ export async function callMailReplyAgent(
         });
         log.emit();
         return { ok: true, data: extracted, runId };
+      }
+      if (extracted && !isSuccessfulLlmDraft(extracted)) {
+        log.error(new Error(`Mail reply LLM failed: ${extracted.notes ?? "unknown"}`), {
+          event: "mail_reply_agent_llm_failed",
+          ...base,
+          runId,
+          notes: extracted.notes ?? null,
+          via: "start"
+        });
+        log.emit({ _forceKeep: true });
+        return {
+          ok: false,
+          failure: {
+            reason: "error",
+            message: extracted.notes ?? "llm draft failed"
+          }
+        };
       }
     }
 
@@ -167,7 +175,7 @@ export async function callMailReplyAgent(
     }
 
     const fromStream = await readResultFromStream(streamRes.body);
-    if (fromStream) {
+    if (fromStream && isSuccessfulLlmDraft(fromStream)) {
       log.set({
         event: "mail_reply_agent_ok",
         ...base,
@@ -177,6 +185,23 @@ export async function callMailReplyAgent(
       });
       log.emit();
       return { ok: true, data: fromStream, runId };
+    }
+    if (fromStream && !isSuccessfulLlmDraft(fromStream)) {
+      log.error(new Error(`Mail reply LLM failed: ${fromStream.notes ?? "unknown"}`), {
+        event: "mail_reply_agent_llm_failed",
+        ...base,
+        runId,
+        notes: fromStream.notes ?? null,
+        via: "stream"
+      });
+      log.emit({ _forceKeep: true });
+      return {
+        ok: false,
+        failure: {
+          reason: "error",
+          message: fromStream.notes ?? "llm draft failed"
+        }
+      };
     }
 
     log.error(new Error("Agent empty result"), {
@@ -228,39 +253,19 @@ function extractWorkflowResult(payload: unknown): MailReplyDraftOutput | null {
 async function readResultFromStream(
   body: ReadableStream<Uint8Array>
 ): Promise<MailReplyDraftOutput | null> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let last: MailReplyDraftOutput | null = null;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith(":")) continue;
-      const jsonLine = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
-      if (!jsonLine || jsonLine === "[DONE]") continue;
-      try {
-        const event = JSON.parse(jsonLine) as unknown;
-        const hit = extractWorkflowResult(event);
-        if (hit) last = hit;
-        if (event && typeof event === "object") {
-          const e = event as Record<string, unknown>;
-          if (e.payload && typeof e.payload === "object") {
-            const p = extractWorkflowResult(e.payload);
-            if (p) last = p;
-          }
-        }
-      } catch {
-        // ignore mid-stream parse errors
+  await readMastraResultStream(body, (event) => {
+    const hit = extractWorkflowResult(event);
+    if (hit) last = hit;
+    if (event && typeof event === "object") {
+      const e = event as Record<string, unknown>;
+      if (e.payload && typeof e.payload === "object") {
+        const p = extractWorkflowResult(e.payload);
+        if (p) last = p;
       }
     }
-  }
+  });
 
   return last;
 }

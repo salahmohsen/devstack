@@ -6,14 +6,10 @@ import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve
 import {
   AI_CORRECTION_CANDIDATE_POOL,
   AI_CORRECTION_FEW_SHOT_K,
-  applySmartRulesToClassifyResult,
   correctionEmbedText,
-  heuristicClassifyMail,
-  isJobAlertDigestMail,
   llmLogFields,
   MailSystemLabelSchema,
   selectCorrectionsForFewShot,
-  suppressCareerLabelsForJobAlertDigest,
   type AiCorrectionFewShotExample,
   type MailClassifyOutput,
   type MailSystemLabel
@@ -28,19 +24,23 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { applyMailCrmEffectFromClassify } from "#@/queues/apply-mail-crm-effect";
 import { callMailClassifyAgent } from "#@/queues/call-mail-classify-agent";
+import { enqueueMailJobHarvest } from "#@/queues/mail-job-harvest-queue";
 
 /**
  * Classify a single Career Inbox message (tenant-scoped).
  *
  * Order:
  * 1. Skip if missing / already classified / system notification
- * 2. Prefer Mastra `mail-classify-workflow` on AGENT_WORKER_URL when set
- * 3. Fall back to local heuristic
- * 4. Propose/apply CRM stage effects when message is linked (audit for undo)
+ * 2. Mastra `mail-classify-workflow` + mail-classification skill (AI only)
+ * 3. Smart filters (user rules) are AI-assigned in the same call via skill injection
+ * 4. CRM stage effects when labels require CRM (job_notifier/noise skip CRM)
+ * 5. Enqueue job harvest when label is job_notifier
  */
 export async function runMailClassify(input: {
   messageId: string;
   userId: string;
+  /** When true, re-run AI even if already classified (hub reprocess). */
+  forceReprocess?: boolean;
 }): Promise<MailClassifyOutput & { skipped?: boolean }> {
   const log = createLogger({ operation: "server__mail_classify_run" });
 
@@ -63,7 +63,7 @@ export async function runMailClassify(input: {
     };
   }
 
-  if (row.classifiedAt) {
+  if (row.classifiedAt && !input.forceReprocess) {
     return {
       labels: row.labels ?? [],
       systemLabels: [],
@@ -79,7 +79,7 @@ export async function runMailClassify(input: {
     return {
       labels: row.labels ?? [],
       systemLabels: [],
-      source: "heuristic",
+      source: "skip_already_classified",
       notes: "system_notification_skip",
       skipped: true
     };
@@ -170,7 +170,13 @@ export async function runMailClassify(input: {
     bodyText: row.bodyText,
     labels: row.labels ?? [],
     smartRules: smartRules.map((r) => {
-      return { slug: r.slug, keywords: r.keywords ?? [], enabled: r.enabled };
+      return {
+        slug: r.slug,
+        title: r.title,
+        description: r.description ?? "",
+        keywords: r.keywords ?? [],
+        enabled: r.enabled
+      };
     }),
     fewShotCorrections,
     llm
@@ -186,27 +192,26 @@ export async function runMailClassify(input: {
 
   const agentCall = await callMailClassifyAgent(classifyInput);
   if (agentCall.ok) {
-    result = applySmartRulesToClassifyResult(classifyInput, agentCall.data.output);
+    // AI already assigned system + smart-filter labels (no keyword post-pass).
+    result = agentCall.data.output;
     mastraClassifyRunId = agentCall.data.runId;
     mastraClassifyTraceId = agentCall.data.traceId;
     usedAgent = true;
   } else {
-    // Heuristic still labels mail so the inbox keeps working — never silent about AI miss.
-    result = heuristicClassifyMail(classifyInput);
+    // AI-only: no regex/heuristic fallback for system or smart filters.
     agentFailReason = agentCall.failure.reason;
-    const failNote = [
-      result.notes,
-      `agent:${agentCall.failure.reason}${agentCall.failure.status != null ? `:${agentCall.failure.status}` : ""}`
-    ]
-      .filter(Boolean)
-      .join(";");
-    result = { ...result, notes: failNote };
+    result = {
+      labels: row.labels ?? [],
+      systemLabels: [],
+      source: "llm",
+      confidence: 0,
+      notes: `agent:${agentCall.failure.reason}${agentCall.failure.status != null ? `:${agentCall.failure.status}` : ""}`
+    };
 
-    // Error-level when BYO was configured (user expected AI) or agent was reachable-but-failing.
     if (hadByo || agentCall.failure.reason !== "not_configured") {
-      const failLog = createLogger({ operation: "server__mail_classify_agent_fallback" });
-      failLog.error(new Error(`Mail classify agent fallback: ${agentCall.failure.reason}`), {
-        event: "mail_classify_agent_fallback",
+      const failLog = createLogger({ operation: "server__mail_classify_agent_failed" });
+      failLog.error(new Error(`Mail classify agent failed: ${agentCall.failure.reason}`), {
+        event: "mail_classify_agent_failed",
         messageId: row.id,
         userId: row.userId,
         agentFailReason: agentCall.failure.reason,
@@ -219,36 +224,38 @@ export async function runMailClassify(input: {
     }
   }
 
-  // LinkedIn/Indeed digests must not create Interview CRM rows or notify as career.
-  result = suppressCareerLabelsForJobAlertDigest(classifyInput, result);
-  const isDigest = isJobAlertDigestMail(classifyInput);
+  // job_notifier / noise: CRM effects are no-ops via proposeMailCrmEffect label table.
+  const hasJobNotifier =
+    result.systemLabels.includes("job_notifier") || result.labels.includes("job_notifier");
+  const hasNoise = result.systemLabels.includes("noise") || result.labels.includes("noise");
+  const skipCareerNotify = hasJobNotifier || hasNoise;
 
   await mailMessageRepository.applyClassification(row.id, row.userId, result.labels, {
     mastraClassifyRunId,
     mastraClassifyTraceId
   });
 
-  const crm = isDigest
-    ? {
-        applied: false,
-        effect: {
-          kind: "noop" as const,
-          applicationId: null,
-          systemLabels: [] as MailSystemLabel[],
-          reason: "job_alert_digest_skip_crm"
-        }
-      }
-    : await applyMailCrmEffectFromClassify({
-        messageId: row.id,
-        userId: row.userId,
-        systemLabels: result.systemLabels
-      });
+  const crm = await applyMailCrmEffectFromClassify({
+    messageId: row.id,
+    userId: row.userId,
+    systemLabels: result.systemLabels
+  });
+
+  // job_notifier → harvest queue (AI extract + score + Applications).
+  let harvestEnqueued: boolean | null = null;
+  if (hasJobNotifier) {
+    const harvest = await enqueueMailJobHarvest({
+      messageId: row.id,
+      userId: row.userId
+    });
+    harvestEnqueued = harvest.enqueued;
+  }
 
   // Career-labeled mail → notify + ensure review draft; Full autonomy auto-sends.
   let reviewDraftCreated: boolean | null = null;
   let reviewAutoSent: boolean | null = null;
   let reviewAutoSendCode: string | null = null;
-  if (result.systemLabels.length > 0 && !isDigest) {
+  if (result.systemLabels.length > 0 && !skipCareerNotify) {
     await emitAppNotification({
       userId: row.userId,
       kind: "mail.classified.important",
@@ -303,10 +310,12 @@ export async function runMailClassify(input: {
     crmApplied: crm.applied,
     crmKind: crm.effect.kind,
     crmReason: crm.effect.reason,
+    harvestEnqueued,
     reviewDraftCreated,
     reviewAutoSent,
     reviewAutoSendCode,
-    isDigest,
+    hasJobNotifier,
+    hasNoise,
     ...byo
   });
   log.emit();

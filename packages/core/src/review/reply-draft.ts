@@ -31,12 +31,16 @@ export const MailReplyDraftOutputSchema = z.object({
   title: z.string().min(1).max(200),
   subject: z.string().min(1).max(500),
   bodyText: z.string().min(1).max(20_000),
+  /** Product path is AI-only (`llm`). `heuristic` retained for tests/fixtures only. */
   source: z.enum(["heuristic", "llm"]),
   notes: z.string().optional()
 });
 export type MailReplyDraftOutput = z.infer<typeof MailReplyDraftOutputSchema>;
 
-/** Local fallback when agent is down or rejects. */
+/**
+ * @deprecated Product path is AI-only. Kept for unit tests/fixtures.
+ * Do not use as a production fallback.
+ */
 export function heuristicMailReplyDraft(input: MailReplyDraftInput): MailReplyDraftOutput {
   const base = buildHeuristicReplyDraft({
     fromName: input.fromName,

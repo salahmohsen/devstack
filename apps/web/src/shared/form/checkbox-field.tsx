@@ -1,6 +1,9 @@
 "use client";
 
+import { InfoIcon } from "lucide-react";
+
 import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip.js";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useFieldContext } from "./form-contexts";
@@ -29,7 +32,16 @@ function CheckboxField(props: CheckboxFieldProps) {
         )}
       />
       {props.label ? <FieldLabel htmlFor={field.name}>{props.label}</FieldLabel> : null}
-      {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
+      {props.description ? (
+        <Tooltip>
+          <TooltipTrigger>
+            <InfoIcon size={16} className="text-muted-foreground" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <FieldDescription>{props.description}</FieldDescription>
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
       <FieldError errors={field.state.meta.errors} />
     </Field>
   );

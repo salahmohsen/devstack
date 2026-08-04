@@ -3,6 +3,9 @@ import { z } from "zod";
 export const NotificationKindSchema = z.enum([
   "mail.reply.draft_ready",
   "mail.classified.important",
+  "mail.needs_action",
+  "mail.apply_nudge",
+  "mail.job_alerts_ready",
   "application.stage_auto",
   "workflow.finished",
   "security.new_device_otp"
@@ -18,6 +21,9 @@ export type NotificationChannelToggle = z.infer<typeof NotificationChannelToggle
 export const NotificationChannelPrefsSchema = z.object({
   "mail.reply.draft_ready": NotificationChannelToggleSchema,
   "mail.classified.important": NotificationChannelToggleSchema,
+  "mail.needs_action": NotificationChannelToggleSchema,
+  "mail.apply_nudge": NotificationChannelToggleSchema,
+  "mail.job_alerts_ready": NotificationChannelToggleSchema,
   "application.stage_auto": NotificationChannelToggleSchema,
   "workflow.finished": NotificationChannelToggleSchema,
   "security.new_device_otp": NotificationChannelToggleSchema

@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import {
   Bell,
+  Briefcase,
   Building2,
   Filter,
   Inbox,
@@ -28,6 +29,7 @@ type NavItem = {
     | "/dashboard/settings/mail"
     | "/dashboard/settings/connections"
     | "/dashboard/settings/rules"
+    | "/dashboard/settings/jobs"
     | "/dashboard/settings/ai"
     | "/dashboard/settings/notifications"
     | "/dashboard/settings/invites";
@@ -84,6 +86,14 @@ const SETTINGS_NAV: readonly NavItem[] = [
     to: "/dashboard/settings/rules",
     icon: Filter,
     group: "Workspace"
+  },
+  {
+    id: "jobs",
+    label: "Jobs",
+    description: "Preferences for mail job-alert filtering",
+    to: "/dashboard/settings/jobs",
+    icon: Briefcase,
+    group: "Intelligence"
   },
   {
     id: "ai",

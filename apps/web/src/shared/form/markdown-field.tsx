@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 import { Textarea } from "@tsu-stack/ui/components/textarea";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { Markdown } from "@/shared/ui/markdown";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type MarkdownFieldProps = {
@@ -32,11 +33,15 @@ function MarkdownField({ label, placeholder, description, classNames }: Markdown
 
   return (
     <Field className={classNames?.field}>
-      {label ? (
-        <FieldLabel htmlFor={field.name} className={classNames?.label}>
-          {label}
-        </FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={label}
+        description={description}
+        htmlFor={field.name}
+        classNames={{
+          label: classNames?.label,
+          description: classNames?.description
+        }}
+      />
       <Tabs value={tab} onValueChange={(v) => setTab(v as "write" | "preview")}>
         <TabsList>
           <TabsTrigger value="write">Write</TabsTrigger>
@@ -70,9 +75,6 @@ function MarkdownField({ label, placeholder, description, classNames }: Markdown
           </div>
         </TabsContent>
       </Tabs>
-      {description ? (
-        <FieldDescription className={classNames?.description}>{description}</FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={classNames?.error} />
     </Field>
   );

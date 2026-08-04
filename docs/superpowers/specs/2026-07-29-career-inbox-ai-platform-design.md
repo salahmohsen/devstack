@@ -9,6 +9,7 @@
 - Applications CRM: `docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md`
 - Multi-user tenancy: `docs/superpowers/specs/2026-07-27-multi-user-tenancy-restructure-design.md`
 - Dashboard hub chat: `docs/superpowers/specs/2026-07-25-dashboard-apply-chat-ui-design.md` (weather paths deprecated by this program)
+- Career Mail Assistant (P0 design lock): `docs/superpowers/specs/2026-07-31-career-mail-assistant-design.md` (plan: `docs/superpowers/plans/2026-07-31-career-mail-assistant-p0.md`)
 - Glossary: `CONTEXT.md`
 - Logging: `.agents/logging.md`
 - Auth: `.agents/auth.md`

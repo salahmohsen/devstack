@@ -3,12 +3,19 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { openSecret } from "#@/lib/settings/seal-secret";
 
+export type SendCareerReplyAttachment = {
+  filename: string;
+  /** Binary payload or pre-encoded base64 string for Resend `attachments[].content`. */
+  content: Buffer | Uint8Array | string;
+};
+
 export type SendCareerReplyInput = {
   userId: string;
   to: string;
   subject: string;
   bodyText: string;
   bodyHtml?: string | null;
+  attachments?: SendCareerReplyAttachment[];
 };
 
 export type SendCareerReplyOk = {
@@ -28,6 +35,12 @@ function nonEmpty(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed || trimmed.length === 0) return null;
   return trimmed;
+}
+
+/** Resend REST expects attachment content as base64. Strings are treated as already-encoded. */
+function toBase64Content(content: Buffer | Uint8Array | string): string {
+  if (typeof content === "string") return content;
+  return Buffer.from(content).toString("base64");
 }
 
 /**
@@ -75,6 +88,16 @@ export async function sendCareerReply(
       .map((line) => `<p>${escapeHtml(line.length > 0 ? line : " ")}</p>`)
       .join("");
 
+  const attachments =
+    input.attachments && input.attachments.length > 0
+      ? input.attachments.map((a) => {
+          return {
+            filename: a.filename,
+            content: toBase64Content(a.content)
+          };
+        })
+      : undefined;
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -86,7 +109,8 @@ export async function sendCareerReply(
       to: [to],
       subject,
       text,
-      html
+      html,
+      ...(attachments ? { attachments } : {})
     })
   });
 

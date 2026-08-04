@@ -1,8 +1,4 @@
-import {
-  heuristicMailReplyDraft,
-  type MailReplyDraftInput,
-  type MailReplyDraftOutput
-} from "@tsu-stack/core";
+import { type MailReplyDraftInput, type MailReplyDraftOutput } from "@tsu-stack/core";
 import {
   applicationRepository,
   mailMessageRepository,
@@ -11,7 +7,6 @@ import {
 } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
-import { agentFailureUserMessage, type AgentCallFailure } from "#@/lib/agent/agent-call-result";
 import { emitAppNotification } from "#@/lib/notification/emit-app-notification";
 import { callMailReplyAgent } from "#@/lib/review/call-mail-reply-agent";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
@@ -22,14 +17,12 @@ export type CreateReplyDraftResult =
       item: ReviewItemEntity;
       created: boolean;
       source?: MailReplyDraftOutput["source"];
-      /** Present when AI agent failed and heuristic draft was used instead. */
-      agentFailure?: AgentCallFailure;
     }
-  | { ok: false; code: "NOT_FOUND" | "NOT_CAREER" };
+  | { ok: false; code: "NOT_FOUND" | "NOT_CAREER" | "agent_failed"; message?: string };
 
 /**
  * Ensure a pending reply draft exists for a career mail message (idempotent).
- * Prefer Mastra mail-reply-workflow; fall back to local heuristic.
+ * AI-only — no heuristic draft on failure.
  */
 export async function createReplyDraftFromMail(input: {
   messageId: string;
@@ -74,19 +67,12 @@ export async function createReplyDraftFromMail(input: {
   };
 
   const agentCall = await callMailReplyAgent(draftInput);
-  let draft: MailReplyDraftOutput;
-  let agentFailure: AgentCallFailure | undefined;
-
-  if (agentCall.ok) {
-    draft = agentCall.data;
-  } else {
-    draft = heuristicMailReplyDraft(draftInput);
-    agentFailure = agentCall.failure;
+  if (!agentCall.ok) {
     const hadByo = Boolean(llm.apiKey?.trim());
     if (hadByo || agentCall.failure.reason !== "not_configured") {
-      const failLog = createLogger({ operation: "api__mail_reply_agent_fallback" });
-      failLog.error(new Error(`Mail reply agent fallback: ${agentCall.failure.reason}`), {
-        event: "mail_reply_agent_fallback",
+      const failLog = createLogger({ operation: "api__mail_reply_agent_failed" });
+      failLog.error(new Error(`Mail reply agent failed: ${agentCall.failure.reason}`), {
+        event: "mail_reply_agent_failed",
         messageId: message.id,
         userId: input.userId,
         agentFailReason: agentCall.failure.reason,
@@ -96,7 +82,13 @@ export async function createReplyDraftFromMail(input: {
       });
       failLog.emit({ _forceKeep: true });
     }
+    return {
+      ok: false as const,
+      code: "agent_failed",
+      message: agentCall.failure.message ?? agentCall.failure.reason
+    };
   }
+  const draft: MailReplyDraftOutput = agentCall.data;
 
   const item = await reviewItemRepository.create({
     userId: input.userId,
@@ -114,10 +106,8 @@ export async function createReplyDraftFromMail(input: {
     await emitAppNotification({
       userId: input.userId,
       kind: "mail.reply.draft_ready",
-      title: agentFailure ? "Reply draft ready (AI skipped)" : "Reply draft ready",
-      body: agentFailure
-        ? `${draft.title} · ${agentFailureUserMessage(agentFailure)}`
-        : draft.title,
+      title: "Reply draft ready",
+      body: draft.title,
       href: "/dashboard/review",
       messageId: message.id,
       applicationId: message.applicationId,
@@ -125,5 +115,5 @@ export async function createReplyDraftFromMail(input: {
     });
   }
 
-  return { ok: true, item, created: true, source: draft.source, agentFailure };
+  return { ok: true, item, created: true, source: draft.source };
 }

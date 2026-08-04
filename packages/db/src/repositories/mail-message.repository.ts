@@ -37,7 +37,7 @@ export type CreateMailAttachmentData = Omit<
 export type MailListFilter = {
   userId: string;
   /**
-   * Hub category: applications|recruiters|interviews|offers|unsorted|all
+   * Hub category: needs_action|applications|recruiters|interviews|offers|noise|unsorted|all
    * or smart-rule id `rule:{slug}`.
    */
   category?: string;
@@ -46,14 +46,39 @@ export type MailListFilter = {
   limit?: number;
 };
 
-const SYSTEM_LABELS = ["application", "recruiter", "interview", "offer"] as const;
+/** All system labels stored on mail_message.labels (keep in sync with MailSystemLabel). */
+const SYSTEM_LABELS = [
+  "application",
+  "recruiter",
+  "interview",
+  "offer",
+  "job_notifier",
+  "noise",
+  "application_status"
+] as const;
 
+/**
+ * Needs action hub filter (P0) — labels that require user attention.
+ * Not a stored category label; pure `noise` / pure `job_notifier` are excluded
+ * by requiring overlap with this set (they have no action labels alone).
+ * Future: OR a denormalized needsAction flag.
+ * Keep in sync with MAIL_NEEDS_ACTION_LABELS in @tsu-stack/core.
+ */
+const NEEDS_ACTION_LABELS = ["recruiter", "interview", "offer", "application_status"] as const;
+
+/** Hub category id → primary system label for simple arrayContains filters. */
 const CATEGORY_TO_LABEL: Record<string, (typeof SYSTEM_LABELS)[number]> = {
   applications: "application",
   recruiters: "recruiter",
   interviews: "interview",
-  offers: "offer"
+  offers: "offer",
+  noise: "noise"
 };
+
+/** Safe: constants only (quoted literals), not user input. */
+function textArrayLiteral(values: readonly string[]) {
+  return sql.raw(`ARRAY[${values.map((v) => `'${v}'`).join(",")}]::text[]`);
+}
 
 function purposeClause(includeSystem: boolean) {
   if (includeSystem) return undefined;
@@ -64,14 +89,21 @@ function categoryClause(category: string | undefined) {
   if (!category || category === "all") return undefined;
 
   if (category === "unsorted") {
-    // No system career labels and no smart-rule labels (rule:…).
+    // No system labels and no smart-rule labels (rule:…).
     return and(
-      sql`NOT (COALESCE(${mailMessage.labels}, ARRAY[]::text[]) && ARRAY['application','recruiter','interview','offer']::text[])`,
+      sql`NOT (COALESCE(${mailMessage.labels}, ARRAY[]::text[]) && ${textArrayLiteral(SYSTEM_LABELS)})`,
       sql`NOT EXISTS (
         SELECT 1 FROM unnest(COALESCE(${mailMessage.labels}, ARRAY[]::text[])) AS lbl
         WHERE lbl LIKE 'rule:%'
       )`
     );
+  }
+
+  if (category === "needs_action") {
+    // Needs action (P0): labels ∩ NEEDS_ACTION_LABELS ≠ ∅.
+    // Pure `noise` and pure `job_notifier` (without those action labels) never match.
+    // Future: OR a denormalized needsAction flag.
+    return sql`COALESCE(${mailMessage.labels}, ARRAY[]::text[]) && ${textArrayLiteral(NEEDS_ACTION_LABELS)}`;
   }
 
   if (category.startsWith("rule:")) {

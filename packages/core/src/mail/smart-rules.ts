@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { MAIL_SMART_RULE_LABEL_PREFIX } from "./constants";
+import { MAIL_SMART_RULE_LABEL_PREFIX, MAIL_SYSTEM_LABELS } from "./constants";
 import { MailCategoryIconSchema } from "./types";
 import { smartRuleLabel } from "./utils";
 
@@ -16,7 +16,10 @@ export const MailSmartRuleSchema = z.object({
   title: z.string().min(1).max(80),
   description: z.string().max(280).default(""),
   icon: MailCategoryIconSchema.default("sparkles"),
-  /** Case-insensitive keywords; any hit labels the message `rule:{slug}`. */
+  /**
+   * Semantic hints for AI classify (not deterministic match keys).
+   * Injected into the dynamic user-smart-filters skill each run.
+   */
   keywords: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
   enabled: z.boolean(),
   sortOrder: z.number().int(),
@@ -71,8 +74,9 @@ export type SmartRuleMatchInput = {
 };
 
 /**
- * Match enabled smart rules against mail text (any keyword, case-insensitive).
- * Returns `rule:{slug}` labels (deduped, rule order preserved).
+ * @deprecated Keyword matching is removed from production classify.
+ * Smart filters are AI-judged via skill/prompt injection (`formatUserSmartFiltersSkillInstructions`).
+ * Kept only for offline tests — do not call from server paths.
  */
 export function matchSmartRuleLabels(
   haystack: string,
@@ -114,9 +118,7 @@ export function mergeClassifyLabelsWithSmartRules(input: {
 }
 
 function isSystemCareer(label: string): boolean {
-  return (
-    label === "application" || label === "recruiter" || label === "interview" || label === "offer"
-  );
+  return (MAIL_SYSTEM_LABELS as readonly string[]).includes(label);
 }
 
 export function smartRuleToCategoryCard(

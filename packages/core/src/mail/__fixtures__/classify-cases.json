@@ -1,0 +1,65 @@
+[
+  {
+    "id": "linkedin-jobalerts-multi",
+    "description": "LinkedIn jobalerts-noreply multi-job digest",
+    "fromEmail": "jobalerts-noreply@linkedin.com",
+    "fromName": "LinkedIn Job Alerts",
+    "subject": "12 new jobs for Software Engineer",
+    "preview": "Your job alert for software engineer in remote",
+    "expectedSystemLabels": ["job_notifier"]
+  },
+  {
+    "id": "linkedin-application-sent",
+    "description": "LinkedIn application was sent confirmation",
+    "fromEmail": "jobs-listings@linkedin.com",
+    "fromName": "LinkedIn",
+    "subject": "Your application was sent to Acme Corp",
+    "preview": "Your application was sent to Acme Corp",
+    "expectedSystemLabels": ["application_status"]
+  },
+  {
+    "id": "google-notify-job-alert",
+    "description": "Google notify-noreply job alert",
+    "fromEmail": "notify-noreply@google.com",
+    "fromName": "Google Alerts",
+    "subject": "New jobs matching Software Engineer — Job Alert",
+    "preview": "See recommended jobs and manage your alerts",
+    "expectedSystemLabels": ["job_notifier"]
+  },
+  {
+    "id": "wuzzuf-profile-marketing",
+    "description": "Wuzzuf profile marketing → noise",
+    "fromEmail": "hello@wuzzuf.net",
+    "fromName": "Wuzzuf",
+    "subject": "Employers viewed your profile this week",
+    "preview": "Complete your profile to boost your profile visibility",
+    "expectedSystemLabels": ["noise"]
+  },
+  {
+    "id": "openai-product",
+    "description": "OpenAI product mail → noise",
+    "fromEmail": "noreply@openai.com",
+    "fromName": "OpenAI",
+    "subject": "New features in ChatGPT",
+    "preview": "See what's new in your workspace this week",
+    "expectedSystemLabels": ["noise"]
+  },
+  {
+    "id": "github-product",
+    "description": "GitHub product mail → noise",
+    "fromEmail": "noreply@github.com",
+    "fromName": "GitHub",
+    "subject": "Your weekly security digest",
+    "preview": "Security alerts and dependency updates for your repositories",
+    "expectedSystemLabels": ["noise"]
+  },
+  {
+    "id": "offer-letter-positive",
+    "description": "Offer letter positive control",
+    "fromEmail": "hr@acme.example",
+    "fromName": "Acme Talent",
+    "subject": "Offer letter — Senior Engineer",
+    "preview": "We are pleased to offer you the position",
+    "expectedSystemLabels": ["offer"]
+  }
+]

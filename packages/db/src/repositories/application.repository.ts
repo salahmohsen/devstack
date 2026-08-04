@@ -4,6 +4,7 @@ import {
   eq,
   inArray,
   isNull,
+  sql,
   type InferInsertModel,
   type InferSelectModel
 } from "drizzle-orm";
@@ -55,6 +56,16 @@ export const applicationRepository = {
     return rows[0] ?? null;
   },
 
+  /** Dedup harvest: existing open/closed app with same listing URL for tenant. */
+  async findByUserIdAndUrl(userId: string, url: string) {
+    const rows = await getDb()
+      .select()
+      .from(application)
+      .where(and(eq(application.userId, userId), eq(application.url, url)))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
   async create(input: CreateApplicationData) {
     const id = crypto.randomUUID();
     const now = new Date();
@@ -66,6 +77,9 @@ export const applicationRepository = {
         companyName: input.companyName,
         title: input.title,
         url: input.url ?? null,
+        applyUrl: input.applyUrl ?? null,
+        applyMethod: input.applyMethod ?? "unknown",
+        matchScore: input.matchScore ?? null,
         source: input.source ?? null,
         location: input.location ?? null,
         salaryRange: input.salaryRange ?? null,
@@ -82,6 +96,57 @@ export const applicationRepository = {
     return created;
   },
 
+  /**
+   * Race-safe harvest insert: unique on (userId, url) where url is not null.
+   * Inserts when absent; on conflict returns the existing row without error.
+   */
+  async createIfAbsentByUrl(
+    input: CreateApplicationData & { url: string }
+  ): Promise<{ row: ApplicationEntity; created: boolean }> {
+    const id = crypto.randomUUID();
+    const now = new Date();
+    const [inserted] = await getDb()
+      .insert(application)
+      .values({
+        id,
+        userId: input.userId,
+        companyName: input.companyName,
+        title: input.title,
+        url: input.url,
+        applyUrl: input.applyUrl ?? null,
+        applyMethod: input.applyMethod ?? "unknown",
+        matchScore: input.matchScore ?? null,
+        source: input.source ?? null,
+        location: input.location ?? null,
+        salaryRange: input.salaryRange ?? null,
+        description: input.description ?? null,
+        notes: input.notes ?? null,
+        stage: input.stage ?? "saved",
+        stageChangedAt: input.stageChangedAt ?? now,
+        outcome: null,
+        outcomeAt: null,
+        hiringUrgency: input.hiringUrgency ?? "unknown",
+        resumeId: input.resumeId ?? null
+      })
+      .onConflictDoNothing({
+        target: [application.userId, application.url],
+        where: sql`${application.url} is not null`
+      })
+      .returning();
+
+    if (inserted) {
+      return { row: inserted, created: true };
+    }
+
+    const existing = await applicationRepository.findByUserIdAndUrl(input.userId, input.url);
+    if (!existing) {
+      throw new Error(
+        `createIfAbsentByUrl: conflict without existing row for userId=${input.userId} url=${input.url}`
+      );
+    }
+    return { row: existing, created: false };
+  },
+
   async update(id: string, userId: string, patch: UpdateApplicationData) {
     const owned = await applicationRepository.findByIdForUser(id, userId);
     if (!owned) return null;
@@ -92,13 +157,36 @@ export const applicationRepository = {
         ...(patch.companyName !== undefined ? { companyName: patch.companyName } : {}),
         ...(patch.title !== undefined ? { title: patch.title } : {}),
         ...(patch.url !== undefined ? { url: patch.url } : {}),
+        ...(patch.applyUrl !== undefined ? { applyUrl: patch.applyUrl } : {}),
+        ...(patch.applyMethod !== undefined ? { applyMethod: patch.applyMethod } : {}),
+        ...(patch.matchScore !== undefined ? { matchScore: patch.matchScore } : {}),
         ...(patch.source !== undefined ? { source: patch.source } : {}),
         ...(patch.location !== undefined ? { location: patch.location } : {}),
         ...(patch.salaryRange !== undefined ? { salaryRange: patch.salaryRange } : {}),
         ...(patch.description !== undefined ? { description: patch.description } : {}),
         ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
         ...(patch.hiringUrgency !== undefined ? { hiringUrgency: patch.hiringUrgency } : {}),
-        ...(patch.resumeId !== undefined ? { resumeId: patch.resumeId } : {})
+        ...(patch.resumeId !== undefined ? { resumeId: patch.resumeId } : {}),
+        ...(patch.recruiterEmail !== undefined ? { recruiterEmail: patch.recruiterEmail } : {}),
+        ...(patch.coverLetterBody !== undefined ? { coverLetterBody: patch.coverLetterBody } : {}),
+        ...(patch.coverLetterR2Key !== undefined
+          ? { coverLetterR2Key: patch.coverLetterR2Key }
+          : {}),
+        ...(patch.coverLetterFilename !== undefined
+          ? { coverLetterFilename: patch.coverLetterFilename }
+          : {}),
+        ...(patch.outreachSubject !== undefined ? { outreachSubject: patch.outreachSubject } : {}),
+        ...(patch.outreachBody !== undefined ? { outreachBody: patch.outreachBody } : {}),
+        ...(patch.outreachSentAt !== undefined ? { outreachSentAt: patch.outreachSentAt } : {}),
+        ...(patch.outreachProviderMessageId !== undefined
+          ? { outreachProviderMessageId: patch.outreachProviderMessageId }
+          : {}),
+        ...(patch.applyPackageDraft !== undefined
+          ? { applyPackageDraft: patch.applyPackageDraft }
+          : {}),
+        ...(patch.applyPackageDraftedAt !== undefined
+          ? { applyPackageDraftedAt: patch.applyPackageDraftedAt }
+          : {})
       })
       .where(and(eq(application.id, id), eq(application.userId, userId)))
       .returning();

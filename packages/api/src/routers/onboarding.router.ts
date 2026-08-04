@@ -17,6 +17,7 @@ import {
   userRepository
 } from "@tsu-stack/db/repositories";
 
+import { parseConcatenatedJsonStream } from "#@/lib/agent/parse-workflow-json-stream";
 import { streamMastraWorkflow } from "#@/lib/agent/workflow-stream";
 import {
   requireResumeSourceObjectKey,
@@ -74,91 +75,6 @@ async function bestEffortDeleteResumeSource(
     await mediaBucket.delete(fullKey);
   } catch {
     // best-effort only
-  }
-}
-
-/**
- * Parse Mastra workflow streams of concatenated JSON objects (NOT SSE).
- * String-aware so braces inside messages do not split events.
- * Kept in sync with `parseConcatenatedJsonStream` in agent.router.ts.
- */
-async function* streamWorkflowJsonEvents(
-  body: ReadableStream<Uint8Array>
-): AsyncGenerator<unknown> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  const drainCompleteObjects = function* (): Generator<unknown> {
-    let i = 0;
-    while (i < buffer.length) {
-      while (i < buffer.length && /\s/.test(buffer[i]!)) i++;
-      if (i >= buffer.length) {
-        buffer = "";
-        return;
-      }
-      if (buffer[i] !== "{") {
-        i++;
-        continue;
-      }
-
-      let depth = 0;
-      let inString = false;
-      let escaped = false;
-      const start = i;
-
-      for (; i < buffer.length; i++) {
-        const ch = buffer[i]!;
-        if (inString) {
-          if (escaped) {
-            escaped = false;
-          } else if (ch === "\\") {
-            escaped = true;
-          } else if (ch === '"') {
-            inString = false;
-          }
-          continue;
-        }
-
-        if (ch === '"') {
-          inString = true;
-        } else if (ch === "{") {
-          depth++;
-        } else if (ch === "}") {
-          depth--;
-          if (depth === 0) {
-            const slice = buffer.slice(start, i + 1);
-            try {
-              yield JSON.parse(slice) as unknown;
-            } catch {
-              // Ignore malformed JSON fragments
-            }
-            i++;
-            buffer = buffer.slice(i);
-            i = 0;
-            break;
-          }
-        }
-      }
-
-      if (depth > 0 || inString) {
-        buffer = buffer.slice(start);
-        return;
-      }
-    }
-  };
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      yield* drainCompleteObjects();
-    }
-    buffer += decoder.decode();
-    yield* drainCompleteObjects();
-  } finally {
-    reader.releaseLock();
   }
 }
 
@@ -309,8 +225,9 @@ export const onboardingRouter = {
           workflowId: "resume-import-workflow",
           inputData: workflowInput,
           signal,
-          parseStream: streamWorkflowJsonEvents,
-          logger: context.logger
+          parseStream: parseConcatenatedJsonStream,
+          logger: context.logger,
+          ownerUserId: userId
         });
       } catch (error) {
         if (signal?.aborted) return;

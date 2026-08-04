@@ -1,7 +1,12 @@
+import { randomBytes, randomUUID } from "node:crypto";
+
 import { and, desc, eq, gt } from "drizzle-orm";
 
 import { db } from "@tsu-stack/db";
 import { session as sessionTable } from "@tsu-stack/db/schema";
+
+/** Queue-minted sessions live 30 days. */
+const QUEUE_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * Raw session token for Mastra `MastraAuthBetterAuth` Bearer auth.
@@ -33,7 +38,7 @@ export function extractSessionTokenFromHeaders(headers: Headers): string | null 
   }
 }
 
-/** Latest valid session.token for a user (background jobs / queues). */
+/** Latest valid session.token for a user (read-only; does not mint). */
 export async function resolveSessionTokenForUser(userId: string): Promise<string | null> {
   const now = new Date();
   const rows = await db
@@ -48,8 +53,40 @@ export async function resolveSessionTokenForUser(userId: string): Promise<string
 }
 
 /**
- * Prefer request cookie/Bearer; else DB session for userId.
+ * Ensure a usable Better Auth session token for background agent calls.
+ * Reuses the latest non-expired session when present; otherwise inserts a
+ * queue-owned session row (userAgent `personal-hub-queue`, 30-day TTL).
+ *
+ * Prefer this over {@link resolveSessionTokenForUser} in queues / agent callers
+ * so jobs do not fail closed with `no_session`.
+ */
+export async function ensureSessionTokenForUser(userId: string): Promise<string> {
+  const existing = await resolveSessionTokenForUser(userId);
+  if (existing) return existing;
+
+  const now = new Date();
+  const token = randomBytes(32).toString("base64url");
+
+  await db.insert(sessionTable).values({
+    id: randomUUID(),
+    token,
+    userId,
+    expiresAt: new Date(now.getTime() + QUEUE_SESSION_TTL_MS),
+    createdAt: now,
+    updatedAt: now,
+    ipAddress: null,
+    userAgent: "personal-hub-queue"
+  });
+
+  return token;
+}
+
+/**
+ * Prefer request cookie/Bearer; else existing DB session for userId.
  * Returns null when the user has no active session (caller should fail closed).
+ *
+ * For queues / background agent workflows, use {@link ensureSessionTokenForUser}
+ * instead — this helper never mints sessions.
  */
 export async function resolveAgentSessionToken(input: {
   headers?: Headers | null;

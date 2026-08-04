@@ -58,14 +58,9 @@ export const CreateReplyDraftFromMailInputSchema = z.object({
 });
 export type CreateReplyDraftFromMailInput = z.infer<typeof CreateReplyDraftFromMailInputSchema>;
 
-/** Create-draft response: review item + optional AI soft-fail notice for the client. */
+/** Create-draft response: review item (AI-only — hard error on agent failure). */
 export const CreateReplyDraftFromMailOutputSchema = ReviewItemDetailSchema.extend({
-  draftSource: z.enum(["heuristic", "llm"]).optional(),
-  /**
-   * When set, AI agent failed and a heuristic draft was used.
-   * Client should toast a warning (not a hard error).
-   */
-  agentWarning: z.string().optional()
+  draftSource: z.enum(["llm"]).optional()
 });
 export type CreateReplyDraftFromMailOutput = z.infer<typeof CreateReplyDraftFromMailOutputSchema>;
 

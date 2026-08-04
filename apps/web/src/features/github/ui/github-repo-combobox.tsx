@@ -15,11 +15,12 @@ import {
   CommandItem,
   CommandList
 } from "@tsu-stack/ui/components/command";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { FieldLabelWithTooltip } from "@/shared/form/field-label-with-tooltip";
 import { useFieldContext } from "@/shared/form/form-contexts";
 
 import { getGithubProfileReposQueryOptions } from "@/features/github/api/get-github-profile-repos.query";
@@ -67,7 +68,7 @@ function GitHubRepoCombobox(props: GitHubRepoComboboxProps) {
 
   return (
     <Field>
-      {props.label ? <FieldLabel>{props.label}</FieldLabel> : null}
+      <FieldLabelWithTooltip label={props.label} description={props.description} />
       <div className="flex items-center gap-2">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger
@@ -137,7 +138,6 @@ function GitHubRepoCombobox(props: GitHubRepoComboboxProps) {
           </Button>
         ) : null}
       </div>
-      {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
       <FieldError errors={field.state.meta.errors} />
     </Field>
   );

@@ -1,0 +1,1 @@
+ALTER TABLE "user_ai_settings" ADD COLUMN "model_provider_ids" jsonb DEFAULT '{}' NOT NULL;

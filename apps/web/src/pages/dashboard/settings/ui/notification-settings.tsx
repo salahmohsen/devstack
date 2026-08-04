@@ -46,7 +46,14 @@ type FormState = {
 const KIND_GROUPS: { title: string; kinds: NotificationKind[] }[] = [
   {
     title: "Mail & career",
-    kinds: ["mail.reply.draft_ready", "mail.classified.important", "application.stage_auto"]
+    kinds: [
+      "mail.reply.draft_ready",
+      "mail.classified.important",
+      "mail.needs_action",
+      "mail.apply_nudge",
+      "mail.job_alerts_ready",
+      "application.stage_auto"
+    ]
   },
   {
     title: "Workflows",

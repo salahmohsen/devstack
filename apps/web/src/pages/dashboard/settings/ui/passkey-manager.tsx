@@ -25,11 +25,13 @@ import {
   EmptyMedia,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
-import { Field, FieldDescription, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { FieldLabelWithTooltip } from "@/shared/form/field-label-with-tooltip";
 
 type PasskeyRow = {
   id: string;
@@ -270,7 +272,11 @@ export function PasskeyManager({ className }: { className?: string }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Field className="px-1 pb-1">
-            <FieldLabel htmlFor="passkey-name">Name</FieldLabel>
+            <FieldLabelWithTooltip
+              label="Name"
+              description="Optional — e.g. “iPhone” or “YubiKey”."
+              htmlFor="passkey-name"
+            />
             <Input
               id="passkey-name"
               value={newName}
@@ -280,7 +286,6 @@ export function PasskeyManager({ className }: { className?: string }) {
               maxLength={64}
               disabled={adding}
             />
-            <FieldDescription>Optional — e.g. “iPhone” or “YubiKey”.</FieldDescription>
           </Field>
           <AlertDialogFooter>
             <AlertDialogClose render={<Button variant="ghost" disabled={adding} />}>

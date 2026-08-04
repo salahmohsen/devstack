@@ -1,9 +1,10 @@
 import { Button } from "@tsu-stack/ui/components/button";
 import { CalendarDropdown, type CalendarProps } from "@tsu-stack/ui/components/calendar-dropdown";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { FieldLabelWithTooltip } from "@/shared/form/field-label-with-tooltip";
 import { useFieldContext } from "@/shared/form/form-contexts";
 
 type CalendarFieldProps = Omit<CalendarProps, "mode"> & {
@@ -24,11 +25,15 @@ export const CalendarField = (props: CalendarFieldProps) => {
 
   return (
     <Field className={classNames?.field}>
-      {label ? (
-        <FieldLabel htmlFor={field.name} className={classNames?.label}>
-          {label}
-        </FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={label}
+        description={description}
+        htmlFor={field.name}
+        classNames={{
+          label: classNames?.label,
+          description: classNames?.description
+        }}
+      />
       <Popover>
         <PopoverTrigger
           render={
@@ -56,9 +61,6 @@ export const CalendarField = (props: CalendarFieldProps) => {
           />
         </PopoverContent>
       </Popover>
-      {description ? (
-        <FieldDescription className={classNames?.description}>{description}</FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={classNames?.error} />
     </Field>
   );

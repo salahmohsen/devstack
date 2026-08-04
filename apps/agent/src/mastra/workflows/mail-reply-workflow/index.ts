@@ -5,7 +5,7 @@ import { MailReplyDraftInputSchema, MailReplyDraftOutputSchema } from "@tsu-stac
 import { draftStep } from "#@/mastra/workflows/mail-reply-workflow/draft.step";
 
 /**
- * Career Inbox reply draft: Mastra agent with structured output, heuristic fallback.
+ * Career Inbox reply draft: Mastra agent with structured output only (AI fail-closed).
  * Assist/Full autonomy + send are product-layer (review queue / confirm).
  */
 export const mailReplyWorkflow = createWorkflow({

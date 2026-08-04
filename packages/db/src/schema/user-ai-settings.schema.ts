@@ -25,6 +25,22 @@ export type StoredAiModels = {
   stacks: string;
   hubChat: string;
   scorer: string;
+  /** Optional so pre-existing rows without this key still typecheck. */
+  applyPackage?: string;
+};
+
+/**
+ * Per-feature provider row id binding (which key row supplies generate/test).
+ * Aligns with core `AiModelProviderIdsMap` — all keys optional; empty object is default.
+ */
+export type StoredAiModelProviderIds = {
+  classify?: string;
+  reply?: string;
+  resumeImport?: string;
+  stacks?: string;
+  hubChat?: string;
+  scorer?: string;
+  applyPackage?: string;
 };
 
 /**
@@ -40,6 +56,11 @@ export const userAiSettings = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     providers: jsonb("providers").$type<StoredAiProvider[]>().notNull().default([]),
     models: jsonb("models").$type<StoredAiModels>().notNull(),
+    /** Feature → provider row id; empty for legacy rows / unbound features. */
+    modelProviderIds: jsonb("model_provider_ids")
+      .$type<StoredAiModelProviderIds>()
+      .notNull()
+      .default({}),
     mailReplyAutonomy: mailReplyAutonomyEnum("mail_reply_autonomy").notNull().default("assist"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })

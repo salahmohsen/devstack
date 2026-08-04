@@ -14,13 +14,23 @@ import { MailSystemLabelSchema, type MailSystemLabel } from "./types";
 /**
  * Primary system career label → suggested application stage.
  * Used by classify → CRM auto-apply (wave 6). Never invent stages outside this map.
+ *
+ * `job_notifier` and `noise` intentionally omit — no CRM mutation (harvest / demote paths).
+ * `application_status` maps to applied (status update, not new job crawl).
  */
 export const MAIL_SYSTEM_LABEL_TO_STAGE = {
   application: "applied",
+  application_status: "applied",
   recruiter: "screening",
   interview: "interview",
   offer: "offer"
-} as const satisfies Record<MailSystemLabel, ApplicationStage>;
+} as const satisfies Partial<Record<MailSystemLabel, ApplicationStage>>;
+
+/** System labels that must never drive CRM stage mutations. */
+export const MAIL_SYSTEM_LABELS_SKIP_CRM = [
+  "job_notifier",
+  "noise"
+] as const satisfies readonly MailSystemLabel[];
 
 /** Board order index for monotonic stage advances (higher = further along). */
 export function applicationStageRank(stage: ApplicationStage): number {
@@ -42,7 +52,12 @@ export function proposedStageFromSystemLabels(labels: readonly string[]): Applic
   for (const label of labels) {
     if (!(MAIL_SYSTEM_LABELS as readonly string[]).includes(label)) continue;
     const system = label as MailSystemLabel;
-    const stage = MAIL_SYSTEM_LABEL_TO_STAGE[system];
+    if ((MAIL_SYSTEM_LABELS_SKIP_CRM as readonly string[]).includes(system)) continue;
+    const stage =
+      system in MAIL_SYSTEM_LABEL_TO_STAGE
+        ? MAIL_SYSTEM_LABEL_TO_STAGE[system as keyof typeof MAIL_SYSTEM_LABEL_TO_STAGE]
+        : undefined;
+    if (!stage) continue;
     best = best ? maxApplicationStage(best, stage) : stage;
   }
   return best;
@@ -147,6 +162,18 @@ export function proposeMailCrmEffect(input: {
       applicationId: input.mailApplicationId ?? null,
       systemLabels: [],
       reason: "no_system_labels"
+    };
+  }
+
+  const crmLabels = systemLabels.filter(
+    (l) => !(MAIL_SYSTEM_LABELS_SKIP_CRM as readonly string[]).includes(l)
+  );
+  if (crmLabels.length === 0) {
+    return {
+      kind: "noop",
+      applicationId: input.mailApplicationId ?? null,
+      systemLabels,
+      reason: "non_crm_system_label"
     };
   }
 

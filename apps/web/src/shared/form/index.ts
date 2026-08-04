@@ -2,6 +2,7 @@ export { useFieldContext, useFormContext, fieldContext, formContext } from "./fo
 
 export { useAppForm, withForm, withFieldGroup } from "./form";
 
+export { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 export { CheckboxField } from "./checkbox-field";
 export { ComboboxMultipleField } from "./combobox-multiple-field";
 export { IconifyField } from "./iconify-field";

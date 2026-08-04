@@ -1,8 +1,17 @@
 import { type NotificationChannelPrefs, type NotificationKind } from "./types";
 
+/**
+ * Full product kind set (prefs + emit).
+ * Mail-assistant sparse kinds (`mail.needs_action`, `mail.apply_nudge`, `mail.job_alerts_ready`):
+ * emit only on those events — never on noise file, per-link crawl, or below-threshold skips.
+ * Emit wiring for the three assistant kinds may wait for P1 harvest/classify paths.
+ */
 export const NOTIFICATION_KINDS = [
   "mail.reply.draft_ready",
   "mail.classified.important",
+  "mail.needs_action",
+  "mail.apply_nudge",
+  "mail.job_alerts_ready",
   "application.stage_auto",
   "workflow.finished",
   "security.new_device_otp"
@@ -11,6 +20,9 @@ export const NOTIFICATION_KINDS = [
 export const NOTIFICATION_KIND_LABELS: Record<NotificationKind, string> = {
   "mail.reply.draft_ready": "Reply draft ready",
   "mail.classified.important": "Important mail classified",
+  "mail.needs_action": "Mail needs action",
+  "mail.apply_nudge": "Apply nudge",
+  "mail.job_alerts_ready": "Job alerts ready",
   "application.stage_auto": "Application stage auto-updated",
   "workflow.finished": "Workflow finished",
   "security.new_device_otp": "New device security code"
@@ -19,6 +31,11 @@ export const NOTIFICATION_KIND_LABELS: Record<NotificationKind, string> = {
 export const NOTIFICATION_KIND_DESCRIPTIONS: Record<NotificationKind, string> = {
   "mail.reply.draft_ready": "When a mail reply draft is waiting in Review (Assist mode).",
   "mail.classified.important": "When classify marks a message as high-signal career mail.",
+  "mail.needs_action":
+    "When mail is marked as recruiter, interview, offer, or another explicit action item.",
+  "mail.apply_nudge": "When a saved or expiring job listing needs an apply reminder.",
+  "mail.job_alerts_ready":
+    "When a job-alert digest creates matched applications (batched; not per-link crawl).",
   "application.stage_auto": "When CRM stage changes from mail classify.",
   "workflow.finished": "When a long-running AI workflow completes.",
   "security.new_device_otp": "One-time codes for new device trust (recommended on email)."
@@ -29,6 +46,9 @@ export function defaultNotificationChannelPrefs(): NotificationChannelPrefs {
   return {
     "mail.reply.draft_ready": { app: true, email: true },
     "mail.classified.important": { app: true, email: false },
+    "mail.needs_action": { app: true, email: false },
+    "mail.apply_nudge": { app: true, email: false },
+    "mail.job_alerts_ready": { app: true, email: false },
     "application.stage_auto": { app: true, email: false },
     "workflow.finished": { app: true, email: false },
     "security.new_device_otp": { app: true, email: true }

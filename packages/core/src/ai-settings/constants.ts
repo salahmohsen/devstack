@@ -8,7 +8,8 @@ export const AI_FEATURES = [
   "resumeImport",
   "stacks",
   "hubChat",
-  "scorer"
+  "scorer",
+  "applyPackage"
 ] as const satisfies readonly AiFeature[];
 
 export const AI_FEATURE_LABELS: Record<AiFeature, string> = {
@@ -17,7 +18,8 @@ export const AI_FEATURE_LABELS: Record<AiFeature, string> = {
   resumeImport: "Resume import",
   stacks: "Stacks",
   hubChat: "Hub chat",
-  scorer: "Scorers"
+  scorer: "Scorers",
+  applyPackage: "Apply package"
 };
 
 /**
@@ -88,7 +90,8 @@ export const DEFAULT_AI_MODELS: Record<AiFeature, string> = {
   resumeImport: "deepseek/deepseek-v4-flash",
   stacks: "deepseek/deepseek-v4-flash",
   hubChat: "deepseek/deepseek-v4-flash",
-  scorer: "deepseek/deepseek-v4-flash"
+  scorer: "deepseek/deepseek-v4-flash",
+  applyPackage: "deepseek/deepseek-v4-flash"
 };
 
 export const DEFAULT_MAIL_REPLY_AUTONOMY: MailReplyAutonomy = "assist";

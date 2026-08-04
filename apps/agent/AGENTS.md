@@ -37,11 +37,25 @@ src/mastra/
   workflows/       # <name>-workflow/ with steps + index.ts
   tools/           # createTool definitions
   scorers/         # createScorer + prebuilt re-exports; register in index
+  skills-paths.ts  # absolute paths into apps/agent/skills/
   model-config.ts  # optional preset lists (docs/defaults); runtime model = Settings BYO
   runtime-llm.ts   # BYO model resolution for generate() / requestContext
   byo-model.ts     # thin re-exports for agents/workflows
   index.ts         # single registration surface (MastraAuthBetterAuth + agents/workflows)
+skills/            # Mastra Agent Skills (SKILL.md) — progressive disclosure
+  write-skills/           # meta: how to author skills
+  mail-classification/    # Career Inbox system labels (AI-only)
+  job-notifier-harvest/   # extract jobs from digests (AI-only)
+  job-preference-match/   # score harvested jobs vs prefs
 ```
+
+## Career mail: AI + skills only
+
+- **Classify** and **job harvest** must not depend on regex/keyword prefilters or deterministic extractors.
+- Agents load skills from `skills/` via `skills: [path]` — see [Agent skills](https://mastra.ai/docs/agents/skills) and [Workspace skills](https://mastra.ai/docs/workspace/skills).
+- **User smart filters** are injected each classify run as a dynamic `createSkill({ name: "user-smart-filters", ... })` (title/description/hints → AI assigns `rule:{slug}`). No keyword matching.
+- To add a new classification skill: follow **write-skills**, add `skills/<slug>/SKILL.md`, attach path on the agent.
+- Server path: `run-mail-classify` → Mastra `mail-classify-workflow` → on `job_notifier` enqueue harvest → `mail-job-harvest-workflow`.
 
 ## Resources
 

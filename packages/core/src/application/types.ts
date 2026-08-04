@@ -27,6 +27,9 @@ export const ApplicationSourceSchema = z.enum([
 ]);
 export type ApplicationSource = z.infer<typeof ApplicationSourceSchema>;
 
+export const ApplicationApplyMethodSchema = z.enum(["easy_apply", "external", "email", "unknown"]);
+export type ApplicationApplyMethod = z.infer<typeof ApplicationApplyMethodSchema>;
+
 const optionalText = z
   .union([z.string(), z.literal(""), z.null()])
   .optional()
@@ -42,11 +45,22 @@ const optionalSource = z
   .optional()
   .transform((value) => (value === "" || value === undefined ? null : value));
 
+/** 0–100 score, or null to clear; omit to leave unchanged on update. */
+const optionalMatchScore = z.number().int().min(0).max(100).nullable().optional();
+
+const optionalEmail = z
+  .union([z.string().email(), z.literal(""), z.null()])
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? null : value));
+
 export const ApplicationOutputSchema = z.object({
   id: z.string(),
   companyName: z.string(),
   title: z.string(),
   url: z.string().nullable(),
+  applyUrl: z.string().nullable(),
+  applyMethod: ApplicationApplyMethodSchema,
+  matchScore: z.number().int().min(0).max(100).nullable(),
   source: ApplicationSourceSchema.nullable(),
   location: z.string().nullable(),
   salaryRange: z.string().nullable(),
@@ -59,6 +73,17 @@ export const ApplicationOutputSchema = z.object({
   outcomeAt: z.coerce.date().nullable(),
   hiringUrgency: HiringUrgencySchema,
   resumeId: z.string().nullable(),
+  recruiterEmail: z.string().nullable(),
+  coverLetterBody: z.string().nullable(),
+  coverLetterR2Key: z.string().nullable(),
+  coverLetterFilename: z.string().nullable(),
+  outreachSubject: z.string().nullable(),
+  outreachBody: z.string().nullable(),
+  outreachSentAt: z.coerce.date().nullable(),
+  outreachProviderMessageId: z.string().nullable(),
+  /** Structured draft JSON; validated at generate/accept, not on every list read. */
+  applyPackageDraft: z.unknown().nullable(),
+  applyPackageDraftedAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date()
 }) satisfies z.ZodType<Omit<ApplicationSchemaSelect, "userId">>;
@@ -69,6 +94,9 @@ export const CreateApplicationInputSchema = z.object({
   companyName: z.string().min(1),
   title: z.string().min(1),
   url: optionalUrl,
+  applyUrl: optionalUrl,
+  applyMethod: ApplicationApplyMethodSchema.optional(),
+  matchScore: optionalMatchScore,
   source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,
@@ -94,13 +122,21 @@ export const UpdateApplicationInputSchema = z.object({
   companyName: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
   url: optionalUrl,
+  applyUrl: optionalUrl,
+  applyMethod: ApplicationApplyMethodSchema.optional(),
+  matchScore: optionalMatchScore,
   source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,
   description: optionalText,
   notes: optionalText,
   hiringUrgency: HiringUrgencySchema.optional(),
-  resumeId: z.string().nullable().optional()
+  resumeId: z.string().nullable().optional(),
+  /** Editable after Accept (Review materials). */
+  recruiterEmail: optionalEmail,
+  coverLetterBody: optionalText,
+  outreachSubject: optionalText,
+  outreachBody: optionalText
 });
 
 export const UpdateStageInputSchema = z.object({

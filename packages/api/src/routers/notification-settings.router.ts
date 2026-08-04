@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 
 import {
-  defaultNotificationChannelPrefs,
   defaultNotificationSettingsOutput,
   EmailDeliveryModeSchema,
   mergeNotificationChannels,
+  normalizeNotificationChannels,
   NotificationSettingsOutputSchema,
   UpdateNotificationSettingsInputSchema,
   type EmailDeliveryMode,
@@ -35,7 +35,9 @@ function toOutput(
   return NotificationSettingsOutputSchema.parse({
     notificationEmail: row.notificationEmail ?? accountEmail,
     accountEmail,
-    channels: row.channels,
+    channels: normalizeNotificationChannels(
+      row.channels as Partial<NotificationChannelPrefs> | undefined
+    ),
     emailDeliveryMode: parseDeliveryMode(row.emailDeliveryMode),
     updatedAt: row.updatedAt
   });
@@ -87,9 +89,9 @@ export const notificationSettingsRouter = {
         }
       }
 
-      const baseChannels: NotificationChannelPrefs =
-        (existing?.channels as NotificationChannelPrefs | undefined) ??
-        defaultNotificationChannelPrefs();
+      const baseChannels = normalizeNotificationChannels(
+        existing?.channels as Partial<NotificationChannelPrefs> | undefined
+      );
       const channels = mergeNotificationChannels(
         baseChannels,
         input.channels

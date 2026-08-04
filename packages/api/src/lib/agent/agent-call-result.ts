@@ -61,8 +61,11 @@ export function agentFailureUserMessage(failure: AgentCallFailure): string {
       return "AI agent did not start a workflow run.";
     case "stream_failed":
       return "AI agent stream failed before results arrived.";
-    case "empty_result":
-      return "AI agent returned no usable result.";
+    case "empty_result": {
+      const msg = failure.message?.trim();
+      if (msg && !/^no parseable output$/i.test(msg)) return msg;
+      return "AI agent returned no usable result. The model may have hit its output limit — try again or switch model in AI settings.";
+    }
     case "error": {
       const msg = failure.message?.trim();
       return msg && msg.length > 0 ? msg : "AI agent call failed.";

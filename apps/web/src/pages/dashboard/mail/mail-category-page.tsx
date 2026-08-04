@@ -52,8 +52,11 @@ const ICONS = {
   sparkles: Sparkles
 } as const;
 
-/** Labels that are user-actionable career signals (drop generic ATS noise). */
-const CAREER_LABELS = new Set(["recruiter", "interview", "offer", "application"]);
+/**
+ * System labels shown as reader/list badges (career buckets + assistant labels).
+ * Smart-rule labels (`rule:…`) are not shown as chips here.
+ */
+const CAREER_LABELS = new Set<string>(MAIL_SYSTEM_LABELS);
 
 const LABEL_BADGE_VARIANT: Record<
   string,
@@ -62,8 +65,15 @@ const LABEL_BADGE_VARIANT: Record<
   interview: "info",
   offer: "success",
   recruiter: "warning",
-  application: "secondary"
+  application: "secondary",
+  application_status: "info",
+  job_notifier: "outline",
+  noise: "outline"
 };
+
+function formatLabelChip(label: string): string {
+  return label.replaceAll("_", " ");
+}
 
 function resolveCategoryCard(categoryId: string): MailCategoryCard {
   const system = MAIL_SYSTEM_CATEGORY_CARDS.find((c) => c.id === categoryId);
@@ -96,11 +106,6 @@ function careerLabels(labels: readonly string[]): string[] {
   return labels.filter((l) => CAREER_LABELS.has(l));
 }
 
-function agentDraftHtml(from: string): string {
-  const firstName = from.split(" ")[0] ?? from;
-  return `<p>Hi ${firstName},</p><p>Thanks for reaching out — happy to chat. I’m available later this week if that still works.</p><p>Best</p>`;
-}
-
 function MessageTags({
   labels,
   application,
@@ -122,7 +127,7 @@ function MessageTags({
           variant={LABEL_BADGE_VARIANT[label] ?? "outline"}
           className="capitalize"
         >
-          {label}
+          {formatLabelChip(label)}
         </Badge>
       ))}
       {application ? (
@@ -266,6 +271,15 @@ function MessageList({
           title="No messages"
           description={`Nothing in ${categoryTitle} yet. New career mail will show up here.`}
           className="border-0 p-0"
+          action={
+            <Button
+              size="sm"
+              variant="outline"
+              render={<Link to="/dashboard/mail/$category" params={{ category: "all" }} />}
+            >
+              View all mail
+            </Button>
+          }
         />
       </div>
     );
@@ -403,13 +417,8 @@ function MessageReaderBody({
   }
 
   function openAgentDraft() {
-    // Prefer durable Review queue draft (Assist path) over ephemeral composer text.
-    if (!detail?.id) {
-      setComposerOpen(true);
-      setAgentBanner(true);
-      setDraft(agentDraftHtml(message.fromName));
-      return;
-    }
+    // Durable Review queue draft only — wait for message detail before calling the API.
+    if (!detail?.id) return;
     createDraft.mutate(
       { messageId: detail.id },
       {
@@ -540,7 +549,7 @@ function MessageReaderBody({
                     disabled={correct.isPending || currentSystem === label}
                     onClick={() => submitCorrection([label])}
                   >
-                    {label}
+                    {formatLabelChip(label)}
                   </Button>
                 ))}
                 <Button
@@ -610,7 +619,7 @@ function MessageReaderBody({
                 type="button"
                 size="sm"
                 variant="outline"
-                disabled={createDraft.isPending || queueing}
+                disabled={createDraft.isPending || queueing || !detail?.id || isLoadingDetail}
                 onClick={openAgentDraft}
               >
                 {createDraft.isPending && !queueing ? "Creating draft…" : "Draft with agent"}
@@ -639,10 +648,14 @@ function MessageReaderBody({
               type="button"
               size="sm"
               variant="outline"
-              disabled={createDraft.isPending}
+              disabled={createDraft.isPending || !detail?.id || isLoadingDetail}
               onClick={openAgentDraft}
             >
-              {createDraft.isPending ? "Creating draft…" : "Draft with agent"}
+              {createDraft.isPending
+                ? "Creating draft…"
+                : isLoadingDetail || !detail?.id
+                  ? "Loading message…"
+                  : "Draft with agent"}
             </Button>
           </div>
         )}

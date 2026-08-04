@@ -1059,9 +1059,7 @@ import { weatherWorkflow } from "#@/mastra/workflows/weather-workflow";
 export const mastra = new Mastra({
   server: {
     // Keep the existing chatRoute import + config from the original file
-    apiRoutes: [
-      /* keep existing chatRoute(...) call */
-    ]
+    apiRoutes: [/* keep existing chatRoute(...) call */]
   },
   bundler: {
     // DROP the externals array entirely — it only listed "@mastra/duckdb" and

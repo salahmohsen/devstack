@@ -5,6 +5,9 @@ import { applicationRepository, createDb, runWithDb } from "@tsu-stack/db";
 
 /**
  * CRM read tool — single application by id for the current tenant.
+ *
+ * Tenant scope: `userId` is ALWAYS taken from `requestContext` (set by the
+ * workflow step / chat handler). Never accept `userId` from tool input.
  */
 export const getApplicationTool = createTool({
   id: "get-application",
@@ -12,6 +15,7 @@ export const getApplicationTool = createTool({
     "Fetch one application by id (company, title, stage, location, notes snippet) for the current user only.",
   inputSchema: z.object({
     applicationId: z.string().min(1)
+    // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
     found: z.boolean(),
@@ -27,6 +31,7 @@ export const getApplicationTool = createTool({
       .nullable()
   }),
   execute: async ({ applicationId }, context) => {
+    // Force tenant from requestContext — ignore any model-supplied identity.
     const userId = context.requestContext?.get?.("userId") as string | undefined;
     if (!userId) {
       return { found: false, application: null };

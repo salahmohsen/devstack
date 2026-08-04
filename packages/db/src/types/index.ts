@@ -6,7 +6,9 @@ export type * from "./contact.schema.ts";
 export type * from "./experience.schema.ts";
 export type * from "./github-cache.schema.ts";
 export type * from "./github-config.schema.ts";
+export type * from "./job-preference.schema.ts";
 export type * from "./mail-crm-apply.schema.ts";
+
 export type * from "./mail-message.schema.ts";
 export type * from "./mail-smart-rule.schema.ts";
 export type * from "./review-item.schema.ts";

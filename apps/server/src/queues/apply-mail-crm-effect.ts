@@ -1,16 +1,17 @@
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
+import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
   APPLICATION_STAGE_LABELS,
-  extractMailApplicationHints,
-  isJobAlertDigestMail,
   MailCrmAuditSnapshotSchema,
+  MailSystemLabelSchema,
   proposeMailCrmEffect,
-  resolveMailApplicationMatch,
+  resolveMonotonicStage,
   type ApplicationOutcome,
   type ApplicationSource,
   type ApplicationStage,
   type MailCrmApplyResult,
-  type MailCrmAuditSnapshot
+  type MailCrmAuditSnapshot,
+  type MailSystemLabel
 } from "@tsu-stack/core";
 import {
   applicationRepository,
@@ -18,6 +19,8 @@ import {
   mailMessageRepository
 } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
+
+import { callCrmApplicationMatcher, callCrmStageAdvisor } from "#@/queues/call-crm-ai-agents";
 
 function snapshotFromApp(input: {
   applicationId: string | null;
@@ -80,31 +83,7 @@ export async function applyMailCrmEffectFromClassify(input: {
     return { applied: false, effect: { ...effect, reason: "message_not_found" } };
   }
 
-  if (
-    isJobAlertDigestMail({
-      fromName: message.fromName,
-      fromEmail: message.fromEmail,
-      subject: message.subject,
-      preview: message.preview,
-      bodyText: message.bodyText
-    })
-  ) {
-    const effect = proposeMailCrmEffect({
-      systemLabels: [],
-      mailApplicationId: message.applicationId
-    });
-    log.set({
-      event: "mail_crm_apply_noop",
-      messageId: input.messageId,
-      userId: input.userId,
-      reason: "job_alert_digest_skip_crm"
-    });
-    log.emit();
-    return {
-      applied: false,
-      effect: { ...effect, reason: "job_alert_digest_skip_crm" }
-    };
-  }
+  // job_notifier / noise: proposeMailCrmEffect already no-ops (AI labels, not regex digests).
 
   let currentStage: ApplicationStage | null = null;
   let currentOutcome: ApplicationOutcome | null = null;
@@ -126,96 +105,159 @@ export async function applyMailCrmEffectFromClassify(input: {
     }
   }
 
-  // Unlinked + career labels: match open apps or create a pipeline row.
-  if (!appId && input.systemLabels.length > 0) {
-    const hints = extractMailApplicationHints({
-      fromName: message.fromName,
-      fromEmail: message.fromEmail,
-      subject: message.subject
-    });
+  // Unlinked + career labels: AI match open apps or create a pipeline row.
+  const systemLabelsParsed = input.systemLabels
+    .map((l) => MailSystemLabelSchema.safeParse(l))
+    .filter((r): r is { success: true; data: MailSystemLabel } => r.success)
+    .map((r) => r.data);
+
+  if (!appId && systemLabelsParsed.length > 0) {
+    const llm = await resolveRuntimeAiCredentials(input.userId, "classify");
     const open = await applicationRepository.findOpenByUserId(input.userId);
-    const match = resolveMailApplicationMatch({
+    const matchCall = await callCrmApplicationMatcher({
+      messageId: input.messageId,
+      userId: input.userId,
+      fromName: message.fromName ?? "",
+      fromEmail: message.fromEmail ?? "",
+      subject: message.subject ?? "",
+      preview: message.preview ?? "",
+      bodyText: message.bodyText ?? "",
+      systemLabels: systemLabelsParsed,
       openApplications: open.map((a) => {
-        return { id: a.id, companyName: a.companyName, title: a.title };
+        return { id: a.id, companyName: a.companyName, title: a.title, stage: a.stage };
       }),
-      companyCandidates: hints.companyCandidates,
-      titleHint: hints.titleHint
+      llm
     });
 
-    resolveReason = match.reason;
+    if (matchCall.ok) {
+      const match = matchCall.data.output;
+      resolveReason = match.reason ?? match.kind;
 
-    if (match.kind === "matched_existing") {
-      appId = match.applicationId;
-      const app = await applicationRepository.findByIdForUser(appId, input.userId);
-      if (app) {
-        currentStage = app.stage;
-        currentOutcome = app.outcome;
-        stageChangedAt = app.stageChangedAt;
-        outcomeAt = app.outcomeAt;
+      if (match.kind === "match_existing" && match.applicationId) {
+        const openIds = new Set(open.map((a) => a.id));
+        if (openIds.has(match.applicationId)) {
+          appId = match.applicationId;
+          const app = await applicationRepository.findByIdForUser(appId, input.userId);
+          if (app) {
+            currentStage = app.stage;
+            currentOutcome = app.outcome;
+            stageChangedAt = app.stageChangedAt;
+            outcomeAt = app.outcomeAt;
+          }
+          log.set({
+            event: "mail_crm_match_existing",
+            messageId: input.messageId,
+            userId: input.userId,
+            applicationId: appId,
+            reason: match.reason ?? "ai_match"
+          });
+          log.emit();
+        }
+      } else if (match.kind === "create_new") {
+        const companyName = (match.companyName ?? "").trim() || "Unknown company";
+        const title = (match.title ?? "").trim() || "Role from email";
+        const stage =
+          proposeMailCrmEffect({
+            systemLabels: input.systemLabels,
+            mailApplicationId: null
+          }).targetStage ?? "applied";
+        const created = await applicationRepository.create({
+          userId: input.userId,
+          companyName: companyName.slice(0, 300),
+          title: title.slice(0, 300),
+          source: sourceFromLabels(input.systemLabels),
+          notes: `Auto-created from Career Inbox (${message.id.slice(0, 8)}…) · AI match`,
+          stage,
+          description: message.preview?.slice(0, 2000) || null
+        });
+        appId = created.id;
+        currentStage = created.stage;
+        currentOutcome = created.outcome;
+        stageChangedAt = created.stageChangedAt;
+        outcomeAt = created.outcomeAt;
+        createdApplication = true;
+        log.set({
+          event: "mail_crm_create_application",
+          messageId: input.messageId,
+          userId: input.userId,
+          applicationId: appId,
+          companyName,
+          title,
+          stage
+        });
+        log.emit();
+      } else {
+        log.set({
+          event: "mail_crm_match_skip",
+          messageId: input.messageId,
+          userId: input.userId,
+          reason: match.reason ?? "ai_skip",
+          kind: match.kind
+        });
+        log.emit();
       }
-      log.set({
-        event: "mail_crm_match_existing",
-        messageId: input.messageId,
-        userId: input.userId,
-        applicationId: appId,
-        reason: match.reason
-      });
-      log.emit();
-    } else if (match.kind === "create_new") {
-      const stage =
-        proposeMailCrmEffect({
-          systemLabels: input.systemLabels,
-          mailApplicationId: null
-        }).targetStage ?? "applied";
-      const created = await applicationRepository.create({
-        userId: input.userId,
-        companyName: match.companyName,
-        title: match.title,
-        source: sourceFromLabels(input.systemLabels),
-        notes: `Auto-created from Career Inbox (${message.id.slice(0, 8)}…)`,
-        stage,
-        description: message.preview?.slice(0, 2000) || null
-      });
-      appId = created.id;
-      currentStage = created.stage;
-      currentOutcome = created.outcome;
-      stageChangedAt = created.stageChangedAt;
-      outcomeAt = created.outcomeAt;
-      createdApplication = true;
-      log.set({
-        event: "mail_crm_create_application",
-        messageId: input.messageId,
-        userId: input.userId,
-        applicationId: appId,
-        companyName: match.companyName,
-        title: match.title,
-        stage
-      });
-      log.emit();
     } else {
       log.set({
-        event: "mail_crm_match_skip",
+        event: "mail_crm_match_ai_failed",
         messageId: input.messageId,
         userId: input.userId,
-        reason: match.reason,
-        kind: match.kind
+        reason: matchCall.failure.reason
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
     }
   }
 
-  const effect = proposeMailCrmEffect({
+  // Stage: AI advisor when we have an app; fall back to label map proposal if AI unavailable.
+  let effect = proposeMailCrmEffect({
     systemLabels: input.systemLabels,
     mailApplicationId: appId,
     currentStage,
     currentOutcome
   });
 
-  // Annotate reason when we just created (stage already set on create).
+  if (appId && effect.kind !== "noop") {
+    const llm = await resolveRuntimeAiCredentials(input.userId, "classify");
+    const stageCall = await callCrmStageAdvisor({
+      messageId: input.messageId,
+      userId: input.userId,
+      systemLabels: systemLabelsParsed,
+      subject: message.subject ?? "",
+      preview: message.preview ?? "",
+      bodyText: message.bodyText ?? "",
+      currentStage,
+      currentOutcome,
+      llm
+    });
+    if (stageCall.ok) {
+      const advised = stageCall.data.output;
+      const mono = resolveMonotonicStage({
+        current: currentStage,
+        proposed: advised.targetStage ?? effect.targetStage ?? null
+      });
+      if (mono && mono !== currentStage) {
+        effect = {
+          ...effect,
+          kind: "advance_stage",
+          targetStage: mono,
+          reason: advised.reason ?? effect.reason,
+          applicationId: appId
+        };
+      } else if (advised.targetOutcome && !currentOutcome) {
+        effect = {
+          ...effect,
+          kind: "set_outcome",
+          targetOutcome: advised.targetOutcome,
+          reason: advised.reason ?? "ai_outcome",
+          applicationId: appId
+        };
+      }
+    }
+  }
+
   const effectWithReason =
     createdApplication && effect.kind !== "noop"
       ? { ...effect, reason: "created_application", applicationId: appId }
-      : resolveReason === "company_match" && effect.kind !== "noop"
+      : resolveReason && effect.kind !== "noop"
         ? {
             ...effect,
             reason: effect.reason === "advance_stage" ? "matched_and_advance" : "matched_link_only",

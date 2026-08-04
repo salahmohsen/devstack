@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
 
+import { MAIL_SYSTEM_LABELS } from "./constants";
 import { AiCorrectionFewShotExampleSchema } from "./corrections";
 import {
   matchSmartRuleLabels,
@@ -9,6 +10,18 @@ import {
   type SmartRuleMatchInput
 } from "./smart-rules";
 import { MailSystemLabelSchema, type MailSystemLabel } from "./types";
+import { smartRuleLabel } from "./utils";
+
+/** Tenant smart filter (user-defined) passed into AI classify as skill/prompt injection. */
+export const MailClassifySmartRuleSchema = z.object({
+  slug: z.string().min(1),
+  title: z.string().default(""),
+  description: z.string().default(""),
+  /** Soft hints for the model — not deterministic match keys. */
+  keywords: z.array(z.string()).default([]),
+  enabled: z.boolean().optional()
+});
+export type MailClassifySmartRule = z.infer<typeof MailClassifySmartRuleSchema>;
 
 /** Job payload already lives in classify-queue.ts; this is workflow I/O. */
 export const MailClassifyInputSchema = z.object({
@@ -19,19 +32,13 @@ export const MailClassifyInputSchema = z.object({
   subject: z.string().default(""),
   preview: z.string().default(""),
   bodyText: z.string().default(""),
-  /** Existing labels (smart rules preserved). */
+  /** Existing labels (non-system may be preserved). */
   labels: z.array(z.string()).default([]),
-  /** Optional tenant smart rules for keyword match (server loads). */
-  smartRules: z
-    .array(
-      z.object({
-        slug: z.string().min(1),
-        keywords: z.array(z.string()),
-        enabled: z.boolean().optional()
-      })
-    )
-    .optional()
-    .default([]),
+  /**
+   * Tenant smart filters (server loads). Injected into the classify agent as a
+   * dynamic skill + prompt section — AI decides `rule:{slug}` labels.
+   */
+  smartRules: z.array(MailClassifySmartRuleSchema).optional().default([]),
   /** Last-K user corrections for few-shot (server loads, userId-scoped). */
   fewShotCorrections: z.array(AiCorrectionFewShotExampleSchema).optional().default([]),
   /**
@@ -58,17 +65,34 @@ const INTERVIEW_RE =
   /\b(interview|onsite|on-site|phone\s+screen|technical\s+screen|hirevue|loop\s+interview|scheduling\s+interview)\b/i;
 const RECRUITER_RE =
   /\b(recruiter|talent\s+acquisition|i\s+came\s+across\s+your\s+profile|opportunity\s+for\s+you|are\s+you\s+open\s+to)\b/i;
-const APPLICATION_RE =
-  /\b(application\s+(received|update|status)|thank\s+you\s+for\s+applying|we\s+received\s+your\s+application|candidate\s+portal|your\s+application)\b/i;
-/** LinkedIn/Indeed digests — must not become interview/offer or create CRM apps. */
+/** Application status updates — CRM path, not new-job harvest. */
+const APPLICATION_STATUS_RE =
+  /\b(application\s+(was\s+)?(sent|received|update|status)|thank\s+you\s+for\s+applying|we\s+received\s+your\s+application|candidate\s+portal|your\s+application|application\s+was\s+sent)\b/i;
+/** LinkedIn/Indeed/Jack&Jill digests — must not become interview/offer or create CRM apps. */
 const JOB_ALERT_DIGEST_RE =
-  /\b(job\s+alert|jobs?\s+alerts?|your\s+job\s+alert|linkedin\s+job\s+alerts?|jobs?\s+you\s+may\s+be\s+interested|recommended\s+jobs?|see\s+all\s+jobs|manage\s+(your\s+)?alerts?|jobalerts?[-.]noreply|indeed\.com)\b/i;
+  /\b(job\s+alert|jobs?\s+alerts?|your\s+job\s+alert|linkedin\s+job\s+alerts?|jobs?\s+you\s+may\s+be\s+interested|recommended\s+jobs?|see\s+all\s+jobs|manage\s+(your\s+)?alerts?|jobalerts?[-.]noreply|indeed\.com|new\s+matches\s+for\s+you|fresh\s+sweep\s+of\s+the\s+market|new\s+senior\s+(frontend\s+)?roles?)\b|\d+\s+new\b[\s\S]{0,80}\broles?\b/i;
 const JOB_ALERT_FROM_RE =
   /\b(jobalerts?[-.]noreply@|jobs-noreply@|noreply@linkedin\.com|jobs@indeed\.com)\b/i;
+/** Jack and Jill AI job-search digests (multi-role + single-role pitches). */
+const JACK_AND_JILL_FROM_RE = /@jackandjill\.ai\b/i;
+/** Welcome/onboarding from Jack — not a job listing digest. */
+const JACK_AND_JILL_ONBOARDING_RE =
+  /\b(ready\s+to\s+kick\s+things\s+off|good\s+to\s+have\s+you\s+here|i['’]m\s+jack[,.]?\s+and\s+i['’]ll\s+be\s+doing)\b/i;
 
 /**
- * True for bulk job-alert digests (LinkedIn, Indeed, …). These should not get
- * career system labels or CRM stage mutations.
+ * Product / marketing noise domains from Gmail corpus (non-career).
+ * Careers/recruiting subdomains and subjects are handled by career heuristics first.
+ */
+const NOISE_FROM_DOMAIN_RE =
+  /@(?:[a-z0-9-]+\.)*(?:github\.com|spotify\.com|substack\.com|cloudflare\.com|openai\.com)\b/i;
+/** Airbnb product mail — exclude careers/recruiting-ish addresses. */
+const AIRBNB_PRODUCT_FROM_RE = /@(?!careers\.)(?:[a-z0-9-]+\.)*airbnb\.com\b/i;
+const WUZZUF_MARKETING_RE =
+  /\b(wuzzuf|complete\s+your\s+profile|boost\s+your\s+profile|profile\s+views?|employers?\s+viewed)\b/i;
+
+/**
+ * @deprecated Production classify is AI + `mail-classification` skill only.
+ * Kept for offline fixtures / migration scripts — do not call from server paths.
  */
 export function isJobAlertDigestMail(input: {
   fromName?: string;
@@ -79,15 +103,54 @@ export function isJobAlertDigestMail(input: {
 }): boolean {
   const fromBlob = `${input.fromName ?? ""} ${input.fromEmail ?? ""}`;
   if (JOB_ALERT_FROM_RE.test(fromBlob)) return true;
+
   const haystack = [input.subject, input.preview, (input.bodyText ?? "").slice(0, 4_000)]
     .join("\n")
     .slice(0, 8_000);
+
+  // Jack and Jill: role digests / pitches, but not welcome/onboarding mail.
+  if (JACK_AND_JILL_FROM_RE.test(fromBlob) || /jack\s+and\s+jill/i.test(fromBlob)) {
+    if (JACK_AND_JILL_ONBOARDING_RE.test(haystack)) return false;
+    // Role list, single-role pitch, or pipeline nudge with listings.
+    if (
+      /\b(roles?|matches?|engineer|frontend|backend|full[- ]?stack|react|remote|hybrid)\b/i.test(
+        haystack
+      )
+    ) {
+      return true;
+    }
+  }
+
   return JOB_ALERT_DIGEST_RE.test(haystack);
 }
 
+function isNoiseMail(input: {
+  fromName?: string;
+  fromEmail?: string;
+  subject?: string;
+  preview?: string;
+  bodyText?: string;
+}): boolean {
+  const fromBlob = `${input.fromName ?? ""} ${input.fromEmail ?? ""}`;
+  if (NOISE_FROM_DOMAIN_RE.test(fromBlob)) return true;
+  if (AIRBNB_PRODUCT_FROM_RE.test(fromBlob)) {
+    // Careful: recruiting from Airbnb should not be noise.
+    const careerish =
+      /\b(career|recruit|hiring|talent|interview|application|role|position)\b/i.test(
+        [input.subject, input.preview, (input.bodyText ?? "").slice(0, 1_000)].join("\n")
+      );
+    if (!careerish) return true;
+  }
+  const haystack = [input.subject, input.preview, (input.bodyText ?? "").slice(0, 2_000)]
+    .join("\n")
+    .slice(0, 4_000);
+  if (WUZZUF_MARKETING_RE.test(haystack) && /wuzzuf/i.test(fromBlob + haystack)) return true;
+  return false;
+}
+
 /**
- * Cheap prefilter before any LLM call. Returns at most one primary system label
- * (product default: single career bucket). Smart-rule labels are preserved.
+ * @deprecated Production classify is Mastra AI only (`mail-classify-workflow` + skills).
+ * Do not call from server or workflows.
  */
 export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOutput {
   const haystack = [input.fromName, input.fromEmail, input.subject, input.preview, input.bodyText]
@@ -100,9 +163,9 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
 
   // Digests first — "interview" can appear inside a job card list.
   if (isJobAlertDigestMail(input)) {
-    system = null;
+    system = "job_notifier";
     confidence = 0.9;
-    notes = "heuristic:job_alert_digest";
+    notes = "heuristic:job_notifier";
   } else if (OFFER_RE.test(haystack)) {
     system = "offer";
     confidence = 0.75;
@@ -115,10 +178,14 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
     system = "recruiter";
     confidence = 0.65;
     notes = "heuristic:recruiter";
-  } else if (APPLICATION_RE.test(haystack)) {
-    system = "application";
+  } else if (APPLICATION_STATUS_RE.test(haystack)) {
+    system = "application_status";
     confidence = 0.65;
-    notes = "heuristic:application";
+    notes = "heuristic:application_status";
+  } else if (isNoiseMail(input)) {
+    system = "noise";
+    confidence = 0.7;
+    notes = "heuristic:noise";
   }
 
   const systemLabels = system ? [system] : [];
@@ -143,7 +210,11 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
   };
 }
 
-/** Apply smart-rule keyword match onto any classify result (agent or heuristic). */
+/**
+ * @deprecated Keyword matching is removed from production.
+ * Smart filters are AI-assigned via skill/prompt injection in mail-classify-workflow.
+ * Prefer {@link assembleClassifyLabelsFromAi}.
+ */
 export function applySmartRulesToClassifyResult(
   input: MailClassifyInput,
   result: MailClassifyOutput
@@ -169,23 +240,120 @@ export function applySmartRulesToClassifyResult(
   };
 }
 
+/** Enabled smart filters only (for AI injection). */
+export function enabledSmartRulesForClassify(
+  rules: readonly MailClassifySmartRule[] | undefined | null
+): MailClassifySmartRule[] {
+  return (rules ?? []).filter((r) => r.enabled !== false && r.slug.trim().length > 0);
+}
+
 /**
- * Strip career system labels from job-alert digests (LLM may still say "interview"
- * because a job card mentions interviews). Smart-rule labels are kept.
+ * Markdown block for dynamic skill instructions / prompt injection.
+ * Describes filters for the model — does not match mail content.
+ */
+export function formatUserSmartFiltersSkillInstructions(
+  rules: readonly MailClassifySmartRule[]
+): string {
+  const enabled = enabledSmartRulesForClassify(rules);
+  if (enabled.length === 0) {
+    return `No user smart filters for this tenant. Do not invent rule: labels.`;
+  }
+
+  const lines = enabled.map((r, i) => {
+    const hints =
+      r.keywords.length > 0
+        ? `\n   Semantic hints (not exact keywords): ${r.keywords.join("; ")}`
+        : "";
+    return `${i + 1}. **${r.title || r.slug}** → label \`${smartRuleLabel(r.slug)}\`
+   Slug: \`${r.slug}\`
+   Intent: ${r.description?.trim() || "(no description — use title + hints)"}${hints}`;
+  });
+
+  return `# User smart filters (this tenant)
+
+These are user-defined Career Inbox categories, **equal in weight to system labels for hub cards**.
+You may assign **zero or more** of them in addition to at most one system label.
+
+Only use labels from this list (as \`rule:{slug}\`). Never invent new slugs.
+
+Judge **semantically** from from/subject/body — do not require literal keyword matches.
+A filter matches when the message intent fits the filter's title/description/hints.
+
+## Filters
+
+${lines.join("\n\n")}
+
+## Output
+
+- \`smartRuleSlugs\`: array of slugs from the list above that apply (without the \`rule:\` prefix is fine; both accepted).
+- Multiple smart filters may apply.
+- Smart filters do not replace system labels — pick both when appropriate.
+`;
+}
+
+/**
+ * Assemble final labels from AI system label + AI smart-rule slugs.
+ * Only allows smart-rule labels whose slug is in the enabled tenant list (anti-invention).
+ */
+export function assembleClassifyLabelsFromAi(input: {
+  systemLabels: MailSystemLabel[];
+  /** Slugs or rule:slug from the model. */
+  smartRuleSlugs: readonly string[];
+  /** Tenant enabled rules. */
+  smartRules: readonly MailClassifySmartRule[];
+  existingLabels?: readonly string[];
+}): string[] {
+  const allowed = new Set(
+    enabledSmartRulesForClassify(input.smartRules).map((r) => r.slug.toLowerCase())
+  );
+
+  const smartLabels: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of input.smartRuleSlugs) {
+    const slug = raw
+      .replace(/^rule:/i, "")
+      .trim()
+      .toLowerCase();
+    if (!slug || !allowed.has(slug)) continue;
+    const label = smartRuleLabel(slug);
+    if (seen.has(label)) continue;
+    seen.add(label);
+    smartLabels.push(label);
+  }
+
+  const existing = input.existingLabels ?? [];
+  const nonSystemExisting = existing.filter(
+    (l) => !(MAIL_SYSTEM_LABELS as readonly string[]).includes(l) && !l.startsWith("rule:")
+  );
+
+  return mergeClassifyLabelsWithSmartRules({
+    systemLabels: input.systemLabels,
+    existingLabels: nonSystemExisting,
+    smartRuleLabels: smartLabels
+  });
+}
+
+/**
+ * @deprecated AI mail-classification skill owns digest labeling.
+ * Do not call from server paths.
  */
 export function suppressCareerLabelsForJobAlertDigest(
   input: MailClassifyInput,
   result: MailClassifyOutput
 ): MailClassifyOutput {
   if (!isJobAlertDigestMail(input)) return result;
-  if (result.systemLabels.length === 0 && result.notes?.includes("job_alert")) return result;
+
+  const onlyJobNotifier =
+    result.systemLabels.length === 1 && result.systemLabels[0] === "job_notifier";
+  if (onlyJobNotifier && result.notes?.includes("job_notifier")) return result;
 
   const smartOnly = result.labels.filter((l) => l.startsWith("rule:"));
+  const systemLabels: MailSystemLabel[] = ["job_notifier"];
   return {
     ...result,
-    systemLabels: [],
-    labels: smartOnly,
+    systemLabels,
+    labels: [...systemLabels, ...smartOnly],
     confidence: Math.max(result.confidence ?? 0, 0.85),
-    notes: [result.notes, "suppress:job_alert_digest"].filter(Boolean).join(";")
+    notes: [result.notes, "suppress:job_alert_digest→job_notifier"].filter(Boolean).join(";")
   };
 }

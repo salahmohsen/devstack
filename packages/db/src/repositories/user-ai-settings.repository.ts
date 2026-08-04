@@ -3,6 +3,7 @@ import { eq, type InferSelectModel } from "drizzle-orm";
 import { getDb } from "../index.ts";
 import {
   userAiSettings,
+  type StoredAiModelProviderIds,
   type StoredAiModels,
   type StoredAiProvider
 } from "../schema/user-ai-settings.schema.ts";
@@ -14,6 +15,8 @@ export type UpsertUserAiSettingsInput = {
   userId: string;
   providers: StoredAiProvider[];
   models: StoredAiModels;
+  /** Omit to keep existing bindings (update) or default `{}` (insert). */
+  modelProviderIds?: StoredAiModelProviderIds;
   mailReplyAutonomy: "assist" | "full";
 };
 
@@ -30,6 +33,8 @@ export const userAiSettingsRepository = {
   async upsert(input: UpsertUserAiSettingsInput): Promise<UserAiSettingsEntity> {
     const db = getDb();
     const existing = await this.findByUserId(input.userId);
+    const modelProviderIds =
+      input.modelProviderIds ?? existing?.modelProviderIds ?? ({} as StoredAiModelProviderIds);
 
     if (existing) {
       const [row] = await db
@@ -37,6 +42,7 @@ export const userAiSettingsRepository = {
         .set({
           providers: input.providers,
           models: input.models,
+          modelProviderIds,
           mailReplyAutonomy: input.mailReplyAutonomy,
           updatedAt: new Date()
         })
@@ -53,6 +59,7 @@ export const userAiSettingsRepository = {
         userId: input.userId,
         providers: input.providers,
         models: input.models,
+        modelProviderIds,
         mailReplyAutonomy: input.mailReplyAutonomy
       })
       .returning();

@@ -3,7 +3,6 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import {
-  heuristicMailReplyDraft,
   llmLogFields,
   MailReplyDraftInputSchema,
   MailReplyDraftOutputSchema
@@ -20,19 +19,29 @@ const LlmDraftSchema = z.object({
 
 const LLM_TIMEOUT_MS = 45_000;
 
+/** Fail-closed draft when AI is unavailable (no heuristic success path). */
+function failDraft(notes: string): z.infer<typeof MailReplyDraftOutputSchema> {
+  return {
+    title: "Reply draft unavailable",
+    subject: "Re: (draft failed)",
+    bodyText:
+      "I could not generate an AI reply draft. Check Settings → AI (BYO key) and try again.",
+    source: "llm",
+    notes
+  };
+}
+
 export const draftStep = createStep({
   id: "llm-reply-draft",
-  description: "LLM structured reply draft with CRM tools + heuristic fallback",
+  description: "LLM structured reply draft only (no heuristic fallback)",
   inputSchema: MailReplyDraftInputSchema,
   outputSchema: MailReplyDraftOutputSchema,
   execute: async ({ inputData, mastra, abortSignal }) => {
-    const fallback = heuristicMailReplyDraft(inputData);
-
-    if (abortSignal?.aborted) return fallback;
+    if (abortSignal?.aborted) return failDraft("llm:aborted");
 
     const agent = mastra?.getAgent("mailReplyAgent");
     if (!agent) {
-      return { ...fallback, notes: "llm:agent_missing" };
+      return failDraft("llm:agent_missing");
     }
 
     const byo = llmLogFields(inputData.llm);
@@ -47,7 +56,7 @@ export const draftStep = createStep({
         ...byo
       });
       log.emit();
-      return { ...fallback, notes: skipNote ?? "llm:missing_byo" };
+      return failDraft(skipNote ?? "llm:missing_byo");
     }
 
     const job = inputData.jobContext;
@@ -101,7 +110,7 @@ Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
           ...byo
         });
         log.emit({ _forceKeep: true });
-        return { ...fallback, notes: "llm:invalid_output" };
+        return failDraft("llm:invalid_output");
       }
 
       const log = createLogger({ operation: "agent__mail_reply_llm" });
@@ -131,10 +140,7 @@ Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
         ...byo
       });
       log.emit({ _forceKeep: true });
-      return {
-        ...fallback,
-        notes: `llm:error:${msg.slice(0, 120)}`
-      };
+      return failDraft(`llm:error:${msg.slice(0, 120)}`);
     }
   }
 });

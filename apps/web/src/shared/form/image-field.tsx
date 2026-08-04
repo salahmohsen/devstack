@@ -6,8 +6,9 @@ import { Loader2, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 const MIN_LOADER_MS = 400;
@@ -52,7 +53,7 @@ function ImageField(props: ImageFieldProps) {
 
   return (
     <Field>
-      {props.label ? <FieldLabel>{props.label}</FieldLabel> : null}
+      <FieldLabelWithTooltip label={props.label} description={props.description} />
       <div className="flex flex-col gap-2">
         {value ? (
           <div className="relative inline-flex size-24 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
@@ -100,7 +101,6 @@ function ImageField(props: ImageFieldProps) {
           )}
         </Button>
       </div>
-      {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
       {files.error ? <FieldError errors={[{ message: files.error.message }]} /> : null}
     </Field>
   );

@@ -1,6 +1,6 @@
 import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
 
-import { isReservedProfilePath } from "@tsu-stack/core";
+import { parseProfileName } from "@tsu-stack/core";
 
 import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 
@@ -16,7 +16,7 @@ const RESERVED_NON_REPO_SEGMENTS = new Set([".well-known", "firebase-messaging-s
 export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")({
   component: RouteComponent,
   beforeLoad: async ({ context, params }) => {
-    if (isReservedProfilePath(params.profileName)) {
+    if (!parseProfileName(params.profileName).success) {
       throw notFound();
     }
     if (RESERVED_NON_REPO_SEGMENTS.has(params.repo) || !isValidGithubRepoSlug(params.repo)) {

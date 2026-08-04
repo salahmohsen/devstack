@@ -4,18 +4,30 @@ import {
   AiSettingsOutputSchema,
   defaultAiModels,
   defaultAiSettingsOutput,
+  ListProviderModelsInputSchema,
+  ListProviderModelsOutputSchema,
   maskApiKeyLast4,
   mergeAiModels,
+  stripDeadModelProviderIds,
+  TestAiProviderInputSchema,
+  TestAiProviderOutputSchema,
   UpdateAiSettingsInputSchema,
+  type AiModelProviderIdsMap,
   type AiModelsMap,
   type AiProviderKind,
   type AiProviderPublic
 } from "@tsu-stack/core";
 import { userAiSettingsRepository } from "@tsu-stack/db";
-import { type StoredAiModels, type StoredAiProvider } from "@tsu-stack/db/schema";
+import {
+  type StoredAiModelProviderIds,
+  type StoredAiModels,
+  type StoredAiProvider
+} from "@tsu-stack/db/schema";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { listProviderModels } from "#@/lib/settings/list-provider-models";
 import { sealSecret } from "#@/lib/settings/seal-secret";
+import { testAiProviderConnection } from "#@/lib/settings/test-ai-provider";
 
 function toPublicProviders(providers: StoredAiProvider[]): AiProviderPublic[] {
   return providers.map((p) => {
@@ -33,9 +45,12 @@ function toPublicProviders(providers: StoredAiProvider[]): AiProviderPublic[] {
 function toOutput(
   row: NonNullable<Awaited<ReturnType<typeof userAiSettingsRepository.findByUserId>>>
 ) {
+  // Merge defaults so existing users missing new feature keys still pass Zod.
+  const models = { ...defaultAiModels(), ...row.models };
   return AiSettingsOutputSchema.parse({
     providers: toPublicProviders(row.providers),
-    models: row.models,
+    models,
+    modelProviderIds: row.modelProviderIds ?? {},
     mailReplyAutonomy: row.mailReplyAutonomy,
     updatedAt: row.updatedAt
   });
@@ -70,7 +85,10 @@ export const aiSettingsRouter = {
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
       const existing = await userAiSettingsRepository.findByUserId(userId);
-      const baseModels: AiModelsMap = existing?.models ? { ...existing.models } : defaultAiModels();
+      const baseModels: AiModelsMap = {
+        ...defaultAiModels(),
+        ...existing?.models
+      };
       const models = mergeAiModels(baseModels, input.models) as StoredAiModels;
       const mailReplyAutonomy = input.mailReplyAutonomy ?? existing?.mailReplyAutonomy ?? "assist";
 
@@ -115,14 +133,53 @@ export const aiSettingsRouter = {
         }
       }
 
+      const rawBindings: AiModelProviderIdsMap =
+        input.modelProviderIds ?? ((existing?.modelProviderIds ?? {}) as AiModelProviderIdsMap);
+
+      const modelProviderIds = stripDeadModelProviderIds(
+        rawBindings,
+        new Set(providers.map((p) => p.id))
+      ) as StoredAiModelProviderIds;
+
       const row = await userAiSettingsRepository.upsert({
         id: existing?.id ?? randomUUID(),
         userId,
         providers,
         models,
+        modelProviderIds,
         mailReplyAutonomy
       });
 
       return toOutput(row);
+    }),
+
+  listProviderModels: protectedProcedure
+    .route({
+      description:
+        "List live or catalog models for a provider kind (draft or sealed key; POST so keys stay out of URLs)",
+      method: "POST"
     })
+    .input(ListProviderModelsInputSchema)
+    .output(ListProviderModelsOutputSchema)
+    .handler(async ({ input, context }) =>
+      listProviderModels({
+        userId: context.session.user.id,
+        input
+      })
+    ),
+
+  testProvider: protectedProcedure
+    .route({
+      description: "Probe a provider API key with a cheap BYO generate call for a model",
+      method: "POST"
+    })
+    .input(TestAiProviderInputSchema)
+    .output(TestAiProviderOutputSchema)
+    .handler(async ({ input, context }) =>
+      testAiProviderConnection({
+        userId: context.session.user.id,
+        agentWorker: context.agentWorker,
+        input
+      })
+    )
 };
