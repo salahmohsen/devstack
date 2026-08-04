@@ -133,20 +133,23 @@ export function cascadeDefaultModelChange(args: {
 - Combobox for provider kind + models (search + free type)
 - SecretInput for keys only (no Test)
 - Button outline Test next to Default model always
-- Feature rows: if `isFeatureOnDefault` → show text **Default** (not model string); else Combobox + Test
-- Exclude `reply` from customize feature list; include `applyPackage` and all other features
+- Feature rows: if `isFeatureOnDefault` (model **and** binding) → show text **Default**; else Combobox + Test
+- Exclude `reply` from customize; include `applyPackage` + all other features
 - Collapsible “Customize per feature”
-- Group model options by provider **label** when building items
-- Minimal helper text; SettingsSaveBar dirty guard unchanged
+- Options use multipes identity (see Multipes section); groups by provider label
+- Minimal helper text; SettingsSaveBar dirty includes bindings
 - a11y: labels, aria-label on Test, Spinner when testing
+- Section order: Providers · Models · Mail reply autonomy
 
-- [ ] **Step 1:** Remove Test from API key row (if still present)
-- [ ] **Step 2:** Build model options from listProviderModels for each provider with key + catalog fallback + free type
-- [ ] **Step 3:** Default row: combobox + Test → `testProvider({ kind, modelId, apiKey?, providerId? })`
-- [ ] **Step 4:** Customize rows with Default label / override + conditional Test
-- [ ] **Step 5:** Save sends `models` + `modelProviderIds`
-- [ ] **Step 6:** Manual smoke: Go key → Luna appears → Test succeeds
-- [ ] **Step 7:** Commit `feat(web): redesign ai settings models and test`
+- [ ] **Step 1:** Extend FormState with `modelProviderIds`; formFromQuery + dirty
+- [ ] **Step 2:** `addProvider` assigns `crypto.randomUUID()` as `id` immediately
+- [ ] **Step 3:** Remove Test from API key row
+- [ ] **Step 4:** Build grouped model options (live list + fallback) with providerId on each option
+- [ ] **Step 5:** Default row: combobox + Test; on change run cascadeDefaultModelChange
+- [ ] **Step 6:** Customize rows with Default label / override + conditional Test
+- [ ] **Step 7:** Save sends `models` + `modelProviderIds` + stable provider ids
+- [ ] **Step 8:** Manual smoke: Go → Luna → Test; Work/Personal multipes binding
+- [ ] **Step 9:** Commit `feat(web): redesign ai settings models and test`
 
 ---
 
@@ -165,6 +168,34 @@ export function cascadeDefaultModelChange(args: {
 
 ---
 
+## Multipes / binding lifecycle (locked — do not skip)
+
+1. **Client UUID on add:** when the user adds a provider row, assign `id: crypto.randomUUID()` immediately (draft). Always send that `id` on upsert so `modelProviderIds` references survive save. Server keeps provided id (`p.id ?? randomUUID()` only if missing).
+
+2. **Combobox option identity:** options are not bare model strings when multipes exist. Each option carries:
+
+   ```ts
+   {
+     value: string; // unique key e.g. `${providerId}::${modelId}` or structured
+     modelId: string; // full opencode-go/glm-5.2
+     providerId: string;
+     label: string;
+     groupLabel: string; // user provider label
+   }
+   ```
+
+   On select: write `models[feature] = modelId` **and** `modelProviderIds[feature] = providerId`.  
+   Free-type full `provider/model` without group: set model only; binding may stay unset (firstMatchingKind at runtime).  
+   **Test** resolves `providerId` from that field’s binding first, not `providers.find(kind)`.
+
+3. **Form state:** `FormState` includes `modelProviderIds`. `formFromQuery` loads it. Dirty includes binding map (not only `modelsEqual`). Default change uses `cascadeDefaultModelChange`. Customize uses `isFeatureOnDefault` for Default label / Test visibility.
+
+4. **IA order:** Providers → Models → Mail reply autonomy. Customize **excludes `reply`**; includes **`applyPackage`** and all other features.
+
+5. **Smoke:** two same-kind providers (Work/Personal) → pick model under Work → Test uses Work key → save → reload → binding intact.
+
+---
+
 ## Execution notes
 
 - Worktree: `.worktrees/career-mail-assistant-p0`
@@ -172,6 +203,8 @@ export function cascadeDefaultModelChange(args: {
 - Do not fetch models in the browser with raw key
 - Discard incomplete half-move of Test if it conflicts — implement this design fully
 - Catalog already updated for Go 25 models remains useful as **fallback**
+- Task 2: dedicated `model_provider_ids` jsonb column preferred
+- Task 3: wire get/update/toOutput/defaultAiSettingsOutput for bindings; invalidate list cache on key save
 
 ## Done when
 
