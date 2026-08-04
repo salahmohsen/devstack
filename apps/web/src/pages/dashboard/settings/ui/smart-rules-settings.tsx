@@ -82,6 +82,7 @@ export function SmartRulesSettings() {
   const rules = list.data ?? [];
 
   async function handleCreate() {
+    // Hints for AI classify (semantic), not deterministic keyword matches.
     const keywords = keywordsText
       .split(/[,;\n]/)
       .map((k) => k.trim())
@@ -135,13 +136,16 @@ export function SmartRulesSettings() {
           Smart rules
         </FrameTitle>
         <FrameDescription>
-          Custom Career Inbox categories. Keywords auto-label mail as{" "}
+          Custom Career Inbox categories. The AI classifier applies them as{" "}
           <code className="text-xs">rule:…</code> during classify and show in the mail sidebar.
         </FrameDescription>
       </FrameHeader>
 
       <FramePanel className="space-y-8">
-        <SettingsSection title="Your rules" description="Toggle, edit keywords, or remove a rule.">
+        <SettingsSection
+          title="Your rules"
+          description="Toggle, edit AI hints, or remove a filter. Classification is semantic — not exact keyword match."
+        >
           {rules.length === 0 ? (
             <p className="text-sm text-muted-foreground">No rules yet. Create one below.</p>
           ) : (
@@ -168,7 +172,7 @@ export function SmartRulesSettings() {
 
         <SettingsSection
           title="New rule"
-          description="Title is required. Keywords are optional but recommended."
+          description="Title is required. Description and hints teach the AI when to apply this filter."
         >
           <div className="space-y-3 rounded-xl border border-border/80 bg-muted/20 p-4">
             <div className="space-y-1.5">
@@ -190,16 +194,17 @@ export function SmartRulesSettings() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="rule-kw">Keywords</Label>
+              <Label htmlFor="rule-kw">AI hints (optional)</Label>
               <Textarea
                 id="rule-kw"
                 rows={3}
                 value={keywordsText}
-                placeholder="Comma-separated: visa, H1B, immigration"
+                placeholder="Comma-separated semantic hints: visa, H1B, immigration"
                 onChange={(e) => setKeywordsText(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Any keyword match (case-insensitive) labels the message with this rule.
+                Hints for the AI classifier — not exact string matching. Title and description
+                matter most.
               </p>
             </div>
             <div className="space-y-1.5">
@@ -310,7 +315,7 @@ function RuleRow({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="min-w-0 flex-1 space-y-1">
           <Label className="text-xs" htmlFor={`kw-${rule.id}`}>
-            Keywords
+            AI hints
           </Label>
           <Input
             id={`kw-${rule.id}`}
@@ -332,7 +337,7 @@ function RuleRow({
             onSaveKeywords(keywords);
           }}
         >
-          Save keywords
+          Save hints
         </Button>
       </div>
 
@@ -341,8 +346,9 @@ function RuleRow({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete “{rule.title}”?</AlertDialogTitle>
             <AlertDialogDescription>
-              New mail will no longer get the <code className="text-xs">rule:{rule.slug}</code>{" "}
-              label from keywords. Existing labels on messages are not removed.
+              New mail will no longer be offered the{" "}
+              <code className="text-xs">rule:{rule.slug}</code> filter to the AI classifier.
+              Existing labels on messages are not removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

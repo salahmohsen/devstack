@@ -11,8 +11,9 @@ import {
 import { user } from "./auth.schema.ts";
 
 /**
- * User-defined Career Inbox category (smart rule).
- * Messages get label `rule:{slug}` when keywords match during classify.
+ * User-defined Career Inbox category (smart rule / smart filter).
+ * Messages get label `rule:{slug}` when the AI classify agent assigns it
+ * (title/description/keywords are semantic hints, not deterministic matches).
  */
 export const mailSmartRule = pgTable(
   "mail_smart_rule",

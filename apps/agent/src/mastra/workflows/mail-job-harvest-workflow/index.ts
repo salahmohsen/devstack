@@ -2,15 +2,19 @@ import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import {
+  AiJobMatchBatchSchema,
   canonicalizeJobUrl,
   HarvestedJobSchema,
+  HarvestJobPreferenceSchema,
   inferApplicationSource,
   isValidHarvestedJob,
   MailJobHarvestWorkflowInputSchema,
   MailJobHarvestWorkflowOutputSchema,
   MailNotifierExtractSchema,
   type HarvestedJob,
-  type RuntimeLlmConfig
+  type HarvestJobPreference,
+  type RuntimeLlmConfig,
+  type ScoredHarvestedJob
 } from "@tsu-stack/core";
 
 import { generateModelOption } from "#@/mastra/byo-model";
@@ -18,6 +22,7 @@ import { fetchJobPageContent } from "#@/mastra/tools/fetch-job-page.tool";
 
 const MAIL_EXTRACT_TIMEOUT_MS = 90_000;
 const PAGE_EXTRACT_TIMEOUT_MS = 45_000;
+const SCORE_TIMEOUT_MS = 60_000;
 const MAX_JOBS_TO_ENRICH = 8;
 
 const afterMailExtractSchema = z.object({
@@ -26,8 +31,11 @@ const afterMailExtractSchema = z.object({
   isJobNotifier: z.boolean(),
   jobs: z.array(HarvestedJobSchema),
   notes: z.string().optional(),
+  preference: HarvestJobPreferenceSchema.optional(),
   llm: z.unknown().optional()
 });
+
+const afterPageEnrichSchema = afterMailExtractSchema;
 
 function toHarvestedFromMailCard(
   card: {
@@ -59,6 +67,10 @@ function toHarvestedFromMailCard(
   return job;
 }
 
+function urlKey(url: string): string {
+  return (canonicalizeJobUrl(url) ?? url).toLowerCase();
+}
+
 const extractFromMailAi = createStep({
   id: "ai-extract-jobs-from-mail",
   description: "LLM reads the email and extracts job listing cards + URLs",
@@ -68,6 +80,7 @@ const extractFromMailAi = createStep({
     const base = {
       messageId: inputData.messageId,
       userId: inputData.userId,
+      preference: inputData.preference,
       llm: inputData.llm
     };
 
@@ -82,17 +95,12 @@ const extractFromMailAi = createStep({
       };
     }
 
+    // Pass raw text + HTML (truncated). Agent + job-notifier-harvest skill extracts URLs — no regex harvest.
     const body = (inputData.bodyText ?? "").slice(0, 14_000);
-    // Strip scripts/styles before tags so CSS rules do not flood the prompt
-    const htmlSnippet = (inputData.bodyHtml ?? "")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/@media[\s\S]*?\{[\s\S]*?\}/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 2_500);
+    const html = (inputData.bodyHtml ?? "").slice(0, 12_000);
     const prompt = `Analyze this email for job listings.
+
+Activate the **job-notifier-harvest** skill first, then extract.
 
 From: ${inputData.fromName} <${inputData.fromEmail}>
 Subject: ${inputData.subject}
@@ -101,9 +109,11 @@ Subject: ${inputData.subject}
 ${body}
 --- END BODY ---
 
-${htmlSnippet && htmlSnippet.length > 80 ? `--- HTML TEXT SNIPPET ---\n${htmlSnippet}\n--- END HTML ---` : ""}
+--- BODY HTML (listing URLs often only appear in <a href>) ---
+${html}
+--- END HTML ---
 
-Return isJobNotifier and jobs[] with listingUrl for every role card.`;
+Return isJobNotifier and jobs[] with a real listingUrl for every role card. Never invent URLs.`;
 
     try {
       const result = await Promise.race([
@@ -129,15 +139,18 @@ Return isJobNotifier and jobs[] with listingUrl for every role card.`;
         };
       }
 
-      const jobs: HarvestedJob[] = [];
+      const jobsByUrl = new Map<string, HarvestedJob>();
       for (const card of parsed.data.jobs) {
         const job = toHarvestedFromMailCard(card, inputData.fromEmail);
-        if (job) jobs.push(job);
+        if (!job || !isValidHarvestedJob(job)) continue;
+        const key = urlKey(job.listingUrl);
+        if (!jobsByUrl.has(key)) jobsByUrl.set(key, job);
       }
 
+      const jobs = [...jobsByUrl.values()];
       return {
         ...base,
-        isJobNotifier: parsed.data.isJobNotifier,
+        isJobNotifier: parsed.data.isJobNotifier || jobs.length > 0,
         jobs,
         notes: parsed.data.reason ?? `ai_mail_extract_${jobs.length}`
       };
@@ -156,7 +169,7 @@ const enrichJobsFromPages = createStep({
   id: "ai-enrich-jobs-from-pages",
   description: "For each listing URL: fetch-job-page tool content, then LLM structured job fields",
   inputSchema: afterMailExtractSchema,
-  outputSchema: MailJobHarvestWorkflowOutputSchema,
+  outputSchema: afterPageEnrichSchema,
   execute: async ({ inputData, mastra }) => {
     if (!inputData.isJobNotifier || inputData.jobs.length === 0) {
       return {
@@ -164,14 +177,15 @@ const enrichJobsFromPages = createStep({
         userId: inputData.userId,
         isJobNotifier: inputData.isJobNotifier,
         jobs: [],
-        notes: inputData.notes ?? "not_notifier_or_empty"
+        notes: inputData.notes ?? "not_notifier_or_empty",
+        preference: inputData.preference,
+        llm: inputData.llm
       };
     }
 
     const agent = mastra?.getAgent("jobPageExtractor");
     const { model, skipNote } = generateModelOption(inputData.llm as RuntimeLlmConfig | undefined);
     if (!agent || !model) {
-      // Keep mail-only extract if page agent unavailable
       const kept = inputData.jobs.filter((j) => isValidHarvestedJob(j));
       return {
         messageId: inputData.messageId,
@@ -180,7 +194,9 @@ const enrichJobsFromPages = createStep({
         jobs: kept,
         notes: [inputData.notes, skipNote ?? "page_agent_skipped_mail_only"]
           .filter(Boolean)
-          .join(";")
+          .join(";"),
+        preference: inputData.preference,
+        llm: inputData.llm
       };
     }
 
@@ -191,7 +207,6 @@ const enrichJobsFromPages = createStep({
 
     for (const seed of slice) {
       try {
-        // Deterministic tool fetch first (do not rely on the model remembering to call tools)
         const page = await fetchJobPageContent(seed.listingUrl);
         if (page.ok) pagesOk += 1;
         else pagesFailed += 1;
@@ -225,7 +240,6 @@ If page is a login wall / empty, keep title/company from mail hints when they ar
           agent.generate([{ role: "user", content: prompt }], {
             structuredOutput: { schema: HarvestedJobSchema },
             model,
-            // Allow tool fallback if the model still wants fetch-job-page
             maxSteps: 3
           }),
           new Promise<never>((_, reject) =>
@@ -253,7 +267,6 @@ If page is a login wall / empty, keep title/company from mail hints when they ar
       }
     }
 
-    // Dedupe by listing URL
     const byUrl = new Map<string, HarvestedJob>();
     for (const j of enriched) {
       const key = canonicalizeJobUrl(j.listingUrl) ?? j.listingUrl;
@@ -272,8 +285,137 @@ If page is a login wall / empty, keep title/company from mail hints when they ar
         `fetch_fail_${pagesFailed}`
       ]
         .filter(Boolean)
-        .join(";")
+        .join(";"),
+      preference: inputData.preference,
+      llm: inputData.llm
     };
+  }
+});
+
+const scoreJobsAgainstPreferenceAi = createStep({
+  id: "ai-score-jobs-against-preference",
+  description: "LLM scores each job against seeker JobPreference (semantic, not keyword plumbing)",
+  inputSchema: afterPageEnrichSchema,
+  outputSchema: MailJobHarvestWorkflowOutputSchema,
+  execute: async ({ inputData, mastra }) => {
+    if (!inputData.isJobNotifier || inputData.jobs.length === 0) {
+      return {
+        messageId: inputData.messageId,
+        userId: inputData.userId,
+        isJobNotifier: inputData.isJobNotifier,
+        jobs: [],
+        notes: inputData.notes ?? "not_notifier_or_empty"
+      };
+    }
+
+    const prefs: HarvestJobPreference = inputData.preference ?? {
+      workModes: [],
+      locations: [],
+      roleKeywords: [],
+      excludeKeywords: [],
+      salaryMin: null,
+      salaryCurrency: null,
+      minMatchScore: 60
+    };
+    const minScore = prefs.minMatchScore ?? 60;
+
+    const agent = mastra?.getAgent("jobPreferenceMatchScorer");
+    const { model, skipNote } = generateModelOption(inputData.llm as RuntimeLlmConfig | undefined);
+
+    // No scorer / no model → fail closed (do not invent keyword scores)
+    if (!agent || !model) {
+      return {
+        messageId: inputData.messageId,
+        userId: inputData.userId,
+        isJobNotifier: true,
+        jobs: [],
+        notes: [inputData.notes, skipNote ?? "match_scorer_unavailable"].filter(Boolean).join(";")
+      };
+    }
+
+    const jobsJson = inputData.jobs.map((j) => {
+      return {
+        listingUrl: j.listingUrl,
+        title: j.title,
+        companyName: j.companyName,
+        location: j.location ?? null,
+        workMode: j.workMode ?? null,
+        applyMethod: j.applyMethod,
+        salaryRange: j.salaryRange ?? null,
+        description: (j.description ?? "").slice(0, 400) || null
+      };
+    });
+
+    const prompt = `Score these jobs for the seeker.
+
+JobPreference (JSON):
+${JSON.stringify(prefs, null, 2)}
+
+Jobs (JSON array):
+${JSON.stringify(jobsJson, null, 2)}
+
+Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${minScore} and not excluded), and reasons.
+Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.`;
+
+    try {
+      const result = await Promise.race([
+        agent.generate([{ role: "user", content: prompt }], {
+          structuredOutput: { schema: AiJobMatchBatchSchema },
+          model
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`match score timeout ${SCORE_TIMEOUT_MS}ms`)),
+            SCORE_TIMEOUT_MS
+          )
+        )
+      ]);
+
+      const parsed = AiJobMatchBatchSchema.safeParse(result.object);
+      if (!parsed.success) {
+        return {
+          messageId: inputData.messageId,
+          userId: inputData.userId,
+          isJobNotifier: true,
+          jobs: [],
+          notes: [inputData.notes, "match_score_schema_failed"].filter(Boolean).join(";")
+        };
+      }
+
+      const byUrl = new Map(parsed.data.matches.map((m) => [urlKey(m.listingUrl), m] as const));
+
+      const scored: ScoredHarvestedJob[] = [];
+      for (const job of inputData.jobs) {
+        const hit = byUrl.get(urlKey(job.listingUrl));
+        if (!hit) continue;
+        const score = Math.max(0, Math.min(100, Math.round(hit.score)));
+        const passed = hit.passed && score >= minScore;
+        scored.push({
+          ...job,
+          matchScore: score,
+          matchPassed: passed,
+          matchReasons: hit.reasons?.length ? hit.reasons : ["ai_match"]
+        });
+      }
+
+      return {
+        messageId: inputData.messageId,
+        userId: inputData.userId,
+        isJobNotifier: true,
+        jobs: scored,
+        notes: [inputData.notes, `ai_match_scored_${scored.length}`].filter(Boolean).join(";")
+      };
+    } catch (err) {
+      return {
+        messageId: inputData.messageId,
+        userId: inputData.userId,
+        isJobNotifier: true,
+        jobs: [],
+        notes: [inputData.notes, err instanceof Error ? err.message : "match_score_error"]
+          .filter(Boolean)
+          .join(";")
+      };
+    }
   }
 });
 
@@ -283,6 +425,7 @@ export const mailJobHarvestWorkflow = createWorkflow({
   outputSchema: MailJobHarvestWorkflowOutputSchema
 })
   .then(extractFromMailAi)
-  .then(enrichJobsFromPages);
+  .then(enrichJobsFromPages)
+  .then(scoreJobsAgainstPreferenceAi);
 
 mailJobHarvestWorkflow.commit();

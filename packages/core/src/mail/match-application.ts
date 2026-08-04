@@ -1,8 +1,9 @@
 import { z } from "zod";
 
 /**
+ * @deprecated Production uses AI `crm-application-matcher` agent + skill.
  * Heuristics to link Career Inbox mail → Applications CRM when unlinked.
- * Pure: no DB. Worker loads open apps and calls {@link resolveMailApplicationMatch}.
+ * Pure: no DB. Do not call from server hot paths.
  */
 
 /** Domains that almost never encode employer identity. */

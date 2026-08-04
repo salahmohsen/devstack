@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   canonicalizeJobUrl,
+  harvestJobsFromHtmlAnchors,
+  harvestJobsFromMail,
   harvestJobsFromMailBody,
   isValidHarvestedJob,
+  rankJobUrl,
   scoreJobAgainstPreference
 } from "#@/mail/job-harvest";
 
@@ -100,11 +103,47 @@ View job: https://www.linkedin.com/comm/jobs/view/4440801290?trackingId=&refId=
   bodyHtml: null as string | null
 };
 
+const JACK_AND_JILL_DIGEST = {
+  fromEmail: "jack@jackandjill.ai",
+  subject: "4 new senior frontend roles (Paires, Synapse Analytics, & more)",
+  bodyText:
+    "New matches for you: Design Engineer at Paires : Fully remote. Senior Frontend Engineer at Synapse Analytics : Hybrid.",
+  bodyHtml: `<h3>New matches for you:</h3>
+<ul>
+<li><a href="https://app.jackandjill.ai/jobs/65c9502b-2144-41d5-b62a-50ef8ac6ccb0/post?source=email&amp;campaign=jack_agent">Design Engineer at Paires</a>: Fully remote. You'd own the frontend architecture.</li>
+<li><a href="https://app.jackandjill.ai/jobs/b5cfdb2a-a67f-47ae-8e11-ee4a9826e979/post?source=email&amp;campaign=jack_agent">Senior Frontend Engineer at Synapse Analytics</a>: Based in Maadi, Cairo (Hybrid).</li>
+<li><a href="https://app.jackandjill.ai/jobs/d8b63f97-4853-4960-98c0-8d00f54cd176/post?source=email&amp;campaign=jack_agent">Frontend Lead at Talent-360.me</a>: Based in New Cairo (Hybrid).</li>
+<li><a href="https://app.jackandjill.ai/jobs/8166d8a8-0359-4a7b-98f6-fbdbda7e2828/post?source=email&amp;campaign=jack_agent">Senior Front-End Engineer at Yassir</a>: Alexandria-based (Hybrid).</li>
+</ul>
+<h3>Pipeline check</h3>
+<p>You also have <a href="https://app.jackandjill.ai/jobs/4524e1f2-f639-422d-ac5d-7547f265a52f/post?source=email&amp;campaign=jack_agent">HumanI</a> sitting in Saved.</p>`
+};
+
 describe("canonicalizeJobUrl", () => {
   it("strips LinkedIn tracking to stable job id", () => {
     const raw =
       "https://www.linkedin.com/comm/jobs/view/4443683970/?trackingId=abc&refId=xyz&lipi=foo";
     expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/jobs/view/4443683970");
+  });
+});
+
+describe("harvestJobsFromHtmlAnchors — Jack and Jill digests", () => {
+  it("parses Title at Company anchors with listing URLs", () => {
+    const jobs = harvestJobsFromHtmlAnchors(JACK_AND_JILL_DIGEST);
+    expect(jobs.length).toBe(4);
+    const paires = jobs.find((j) => j.companyName === "Paires");
+    expect(paires?.title).toBe("Design Engineer");
+    expect(paires?.listingUrl).toContain("jackandjill.ai/jobs/65c9502b");
+    expect(paires?.workMode).toBe("remote");
+    expect(rankJobUrl(paires!.listingUrl)).toBeGreaterThanOrEqual(70);
+    expect(isValidHarvestedJob(paires!)).toBe(true);
+    // Pipeline company-only chips are skipped
+    expect(jobs.every((j) => j.companyName !== "HumanI")).toBe(true);
+  });
+
+  it("harvestJobsFromMail merges HTML anchors when body text has no URLs", () => {
+    const jobs = harvestJobsFromMail(JACK_AND_JILL_DIGEST);
+    expect(jobs.length).toBe(4);
   });
 });
 

@@ -2,19 +2,16 @@ import { createWorkflow } from "@mastra/core/workflows";
 
 import { MailClassifyInputSchema, MailClassifyOutputSchema } from "@tsu-stack/core";
 
-import { heuristicStep } from "#@/mastra/workflows/mail-classify-workflow/heuristic.step";
-import { llmStep } from "#@/mastra/workflows/mail-classify-workflow/llm.step";
+import { aiClassifyStep } from "#@/mastra/workflows/mail-classify-workflow/ai.step";
 
 /**
- * Career Inbox classify: cheap heuristic first, LLM only when weak/empty.
- * CRM effects + undo are later tickets — this workflow only decides labels.
+ * Career Inbox classify: **AI agent + mail-classification skill only**.
+ * No keyword/heuristic prefilter. CRM effects run on the server after labels land.
  */
 export const mailClassifyWorkflow = createWorkflow({
   id: "mail-classify-workflow",
   inputSchema: MailClassifyInputSchema,
   outputSchema: MailClassifyOutputSchema
-})
-  .then(heuristicStep)
-  .then(llmStep);
+}).then(aiClassifyStep);
 
 mailClassifyWorkflow.commit();

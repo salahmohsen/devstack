@@ -1,17 +1,15 @@
 /**
- * Tag job-alert mails as job_notifier and run harvest.
+ * Run AI job harvest for mails already labeled job_notifier (or common alert senders).
+ * Production labeling is AI classify + mail-classification skill; this is an ops re-run tool.
  *
- * From worktree root:
- *   pnpm dotenvx run -f ./packages/env/.env -- pnpm exec tsx \
- *     --tsconfig apps/server/tsconfig.json \
+ *   pnpm dotenvx run -f ./packages/env/.env -- \
+ *     ./apps/server/node_modules/.bin/tsx --tsconfig apps/server/tsconfig.json \
  *     apps/server/scripts/reharvest-job-notifiers.mts
  */
 
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { isJobAlertDigestMail } from "@tsu-stack/core";
 
 import { runMailJobHarvest } from "#@/queues/run-mail-job-harvest";
 
@@ -24,10 +22,7 @@ type Row = {
   id: string;
   user_id: string;
   from_email: string;
-  from_name: string;
   subject: string;
-  preview: string;
-  body_text: string;
   labels: string[] | null;
 };
 
@@ -37,8 +32,9 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString: databaseUrl });
 
+  // Prefer AI-applied job_notifier labels; include known alert senders for backfill.
   const { rows } = await pool.query<Row>(`
-    SELECT id, user_id, from_email, from_name, subject, preview, body_text, labels
+    SELECT id, user_id, from_email, subject, labels
     FROM mail_message
     WHERE purpose = 'career'
       AND (
@@ -47,6 +43,7 @@ async function main() {
         OR from_email ILIKE '%jobs-noreply@linkedin.com%'
         OR (from_email ILIKE '%notify-noreply@google.com%' AND subject ILIKE '%job%')
         OR from_email ILIKE '%indeed%'
+        OR from_email ILIKE '%@jackandjill.ai%'
       )
     ORDER BY received_at DESC
   `);
@@ -59,34 +56,27 @@ async function main() {
   let skipped = 0;
 
   for (const row of rows) {
-    const statusy = /application (was )?sent|your application to/i.test(row.subject ?? "");
+    if (/application (was )?sent|your application to/i.test(row.subject ?? "")) {
+      skipped += 1;
+      continue;
+    }
+    if (/kick things off|good to have you/i.test(row.subject ?? "")) {
+      skipped += 1;
+      continue;
+    }
+
     const already = (row.labels ?? []).includes("job_notifier");
-    const digest = isJobAlertDigestMail({
-      fromEmail: row.from_email,
-      fromName: row.from_name,
-      subject: row.subject,
-      preview: row.preview,
-      bodyText: row.body_text
-    });
-
-    if (statusy && !already) {
-      skipped += 1;
-      continue;
+    if (!already) {
+      const nextLabels = Array.from(new Set([...(row.labels ?? []), "job_notifier"]));
+      await pool.query(
+        `UPDATE mail_message
+         SET labels = $1::text[],
+             classified_at = COALESCE(classified_at, NOW())
+         WHERE id = $2 AND user_id = $3`,
+        [nextLabels, row.id, row.user_id]
+      );
+      tagged += 1;
     }
-    if (!digest && !already) {
-      skipped += 1;
-      continue;
-    }
-
-    const nextLabels = Array.from(new Set([...(row.labels ?? []), "job_notifier"]));
-    await pool.query(
-      `UPDATE mail_message
-       SET labels = $1::text[],
-           classified_at = COALESCE(classified_at, NOW())
-       WHERE id = $2 AND user_id = $3`,
-      [nextLabels, row.id, row.user_id]
-    );
-    tagged += 1;
 
     const harvest = await runMailJobHarvest({
       messageId: row.id,
@@ -109,13 +99,7 @@ async function main() {
   const apps = await pool.query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM application`);
   console.log(
     JSON.stringify(
-      {
-        tagged,
-        harvested,
-        createdTotal,
-        skipped,
-        applicationsInDb: apps.rows[0]?.n
-      },
+      { tagged, harvested, createdTotal, skipped, applicationsInDb: apps.rows[0]?.n },
       null,
       2
     )

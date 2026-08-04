@@ -56,6 +56,38 @@ describe("isJobAlertDigestMail", () => {
       })
     ).toBe(true);
   });
+
+  it("detects Jack and Jill multi-role digests", () => {
+    expect(
+      isJobAlertDigestMail({
+        fromEmail: "jack@jackandjill.ai",
+        fromName: "Jack from Jack and Jill",
+        subject: "4 new senior frontend roles (Paires, Synapse Analytics, & more)",
+        preview:
+          "I've just run a fresh sweep of the market and found four new senior roles. New matches for you:"
+      })
+    ).toBe(true);
+  });
+
+  it("detects Jack and Jill single-role pitches", () => {
+    expect(
+      isJobAlertDigestMail({
+        fromEmail: "jack@jackandjill.ai",
+        subject: "Standout remote React role ($120k+) + GenAI prototypes in Cairo",
+        preview: "found a few high-impact roles that bridge your React expertise"
+      })
+    ).toBe(true);
+  });
+
+  it("does not treat Jack and Jill onboarding as a digest", () => {
+    expect(
+      isJobAlertDigestMail({
+        fromEmail: "jack@jackandjill.ai",
+        subject: "Salah, ready to kick things off?",
+        preview: "Hi Salah — good to have you here. I'm Jack, and I'll be doing the heavy lifting"
+      })
+    ).toBe(false);
+  });
 });
 
 describe("heuristicClassifyMail", () => {

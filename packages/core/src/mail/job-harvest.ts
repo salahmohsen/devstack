@@ -48,6 +48,18 @@ export const MailNotifierExtractSchema = z.object({
 });
 export type MailNotifierExtract = z.infer<typeof MailNotifierExtractSchema>;
 
+/** Preference slice passed into the harvest workflow for AI match scoring. */
+export const HarvestJobPreferenceSchema = z.object({
+  workModes: z.array(z.enum(["remote", "hybrid", "onsite"])).default([]),
+  locations: z.array(z.string()).default([]),
+  roleKeywords: z.array(z.string()).default([]),
+  excludeKeywords: z.array(z.string()).default([]),
+  salaryMin: z.number().nullable().optional(),
+  salaryCurrency: z.string().nullable().optional(),
+  minMatchScore: z.number().int().min(0).max(100).default(60)
+});
+export type HarvestJobPreference = z.infer<typeof HarvestJobPreferenceSchema>;
+
 /** Workflow I/O for Mastra mail-job-harvest-workflow */
 export const MailJobHarvestWorkflowInputSchema = z.object({
   messageId: z.string().min(1),
@@ -57,6 +69,8 @@ export const MailJobHarvestWorkflowInputSchema = z.object({
   subject: z.string().default(""),
   bodyText: z.string().default(""),
   bodyHtml: z.string().nullable().optional(),
+  /** Seeker job preferences — AI scores each harvested job against these. */
+  preference: HarvestJobPreferenceSchema.optional(),
   /** BYO runtime LLM (same shape as mail classify). */
   llm: z
     .object({
@@ -68,21 +82,44 @@ export const MailJobHarvestWorkflowInputSchema = z.object({
 });
 export type MailJobHarvestWorkflowInput = z.infer<typeof MailJobHarvestWorkflowInputSchema>;
 
-export const MailJobHarvestWorkflowOutputSchema = z.object({
-  messageId: z.string(),
-  userId: z.string(),
-  isJobNotifier: z.boolean(),
-  jobs: z.array(HarvestedJobSchema),
-  notes: z.string().optional()
-});
-export type MailJobHarvestWorkflowOutput = z.infer<typeof MailJobHarvestWorkflowOutputSchema>;
-
 export const JobMatchScoreResultSchema = z.object({
   score: z.number().int().min(0).max(100),
   passed: z.boolean(),
   reasons: z.array(z.string())
 });
 export type JobMatchScoreResult = z.infer<typeof JobMatchScoreResultSchema>;
+
+/** Harvested job + AI preference match (workflow output). */
+export const ScoredHarvestedJobSchema = HarvestedJobSchema.extend({
+  matchScore: z.number().int().min(0).max(100),
+  matchPassed: z.boolean(),
+  matchReasons: z.array(z.string()).default([])
+});
+export type ScoredHarvestedJob = z.infer<typeof ScoredHarvestedJobSchema>;
+
+/** Batch AI scorer response (one entry per listingUrl). */
+export const AiJobMatchBatchSchema = z.object({
+  matches: z
+    .array(
+      z.object({
+        listingUrl: z.string(),
+        score: z.number().int().min(0).max(100),
+        passed: z.boolean(),
+        reasons: z.array(z.string()).max(8).default([])
+      })
+    )
+    .default([])
+});
+export type AiJobMatchBatch = z.infer<typeof AiJobMatchBatchSchema>;
+
+export const MailJobHarvestWorkflowOutputSchema = z.object({
+  messageId: z.string(),
+  userId: z.string(),
+  isJobNotifier: z.boolean(),
+  jobs: z.array(ScoredHarvestedJobSchema),
+  notes: z.string().optional()
+});
+export type MailJobHarvestWorkflowOutput = z.infer<typeof MailJobHarvestWorkflowOutputSchema>;
 
 export const MailJobHarvestResultSchema = z.object({
   messageId: z.string(),
@@ -192,8 +229,10 @@ function isLikelyJobListingUrl(url: string): boolean {
   }
   if (u.includes("help/linkedin") || u.includes("premium/products")) return false;
   if (u.includes("notifications.googleapis.com/email/t/")) return false; // pixel
+  if (u.includes("jackandjill.") && !/\/jobs\//i.test(u)) return false; // dashboard/support links
   // Job-like paths
   if (/\/jobs\/view\/\d+/i.test(u)) return true;
+  if (/\/jobs\/[a-f0-9-]{10,}/i.test(u)) return true; // Jack and Jill, some ATS
   if (
     u.includes("indeed.") &&
     (u.includes("jk=") || u.includes("/viewjob") || u.includes("/rc/clk"))
@@ -221,10 +260,20 @@ function isLikelyJobListingUrl(url: string): boolean {
 export function rankJobUrl(url: string): number {
   const u = url.toLowerCase();
   if (/\/jobs\/view\/\d+/i.test(u)) return 100;
+  // Jack and Jill / ATS job post pages: /jobs/{uuid}/post
+  if (
+    (u.includes("jackandjill.") || u.includes("app.jackandjill.")) &&
+    /\/jobs\/[a-f0-9-]{10,}/i.test(u)
+  ) {
+    return 95;
+  }
+  if (/\/jobs\/[a-f0-9-]{10,}(?:\/|$|\?)/i.test(u)) return 90;
   if (u.includes("viewjob") || u.includes("jk=")) return 90;
   if (u.includes("email/redirect")) return 70;
   if (u.includes("/jobs/search")) return 20;
   if (u.includes("/careers/") || u.includes("greenhouse") || u.includes("lever")) return 80;
+  // Generic /jobs/ paths (not search)
+  if (u.includes("/jobs/") && !u.includes("search")) return 75;
   return 50;
 }
 
@@ -336,16 +385,20 @@ function looksLikeRoleTitle(s: string): boolean {
 }
 
 /**
- * Quality gate before creating an Application.
+ * Minimal structural gate after AI harvest (schema shape only).
+ * Role quality, URL choice, and fit scoring are the agents' responsibility.
  */
 export function isValidHarvestedJob(job: HarvestedJob): boolean {
-  if (isGarbageJobTitle(job.title)) return false;
-  if (isGarbageCompany(job.companyName)) return false;
-  if (!job.listingUrl.startsWith("http")) return false;
-  // Prefer concrete job views over search-only
-  if (rankJobUrl(job.listingUrl) < 70) return false;
-  // Title should look like a role, not a company name alone
-  if (!looksLikeRoleTitle(job.title) && job.title.split(/\s+/).length < 2) return false;
+  const title = job.title?.trim() ?? "";
+  const company = job.companyName?.trim() ?? "";
+  if (title.length < 2 || company.length === 0) return false;
+  if (!job.listingUrl?.startsWith("http")) return false;
+  try {
+    // eslint-disable-next-line no-new
+    new URL(job.listingUrl);
+  } catch {
+    return false;
+  }
   return true;
 }
 
@@ -379,6 +432,128 @@ export function refineHarvestedJob(job: HarvestedJob): HarvestedJob {
     title: job.title.trim().slice(0, 300),
     companyName: job.companyName.trim().slice(0, 300)
   };
+}
+
+/**
+ * Flatten HTML for LLM prompts while keeping anchor URLs (Jack and Jill digests
+ * only put listing links in hrefs — body text alone has none).
+ */
+export function htmlToTextPreservingLinks(html: string, maxLen = 8_000): string {
+  if (!html) return "";
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(
+      /<a[^>]+href=["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi,
+      (_full, href: string, inner: string) => {
+        const label = inner
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        const url = href.replace(/&amp;/g, "&");
+        return label ? `${label} (${url})` : url;
+      }
+    )
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim()
+    .slice(0, maxLen);
+}
+
+/**
+ * Parse Jack-and-Jill-style HTML digests:
+ *   <a href="https://app.jackandjill.ai/jobs/...">Design Engineer at Paires</a>: Fully remote...
+ */
+export function harvestJobsFromHtmlAnchors(input: ExtractJobLinksInput): HarvestedJob[] {
+  const html = input.bodyHtml ?? "";
+  if (!html.includes("<a") && !html.includes("<A")) return [];
+
+  const jobs: HarvestedJob[] = [];
+  const seenCanon = new Set<string>();
+  const fromEmail = input.fromEmail ?? "";
+
+  const re =
+    /<a[^>]+href=["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>(?:\s*:\s*([^<\n]{0,400}))?/gi;
+
+  for (const m of html.matchAll(re)) {
+    const listingUrl = (m[1] ?? "").replace(/&amp;/g, "&").replace(/[),.;]+$/g, "");
+    if (!isLikelyJobListingUrl(listingUrl)) continue;
+
+    const canon = canonicalizeJobUrl(listingUrl) ?? listingUrl;
+    if (seenCanon.has(canon)) continue;
+
+    const linkText = (m[2] ?? "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const blurb = (m[3] ?? "").replace(/\s+/g, " ").trim();
+
+    // Skip bare company pipeline chips without a role title ("HumanI", "Emergent Labs").
+    const at = linkText.match(/^(.+?)\s+at\s+(.+)$/i);
+    if (!at && !looksLikeRoleTitle(linkText) && blurb.length < 24) continue;
+
+    let title = "";
+    let companyName = "";
+    if (at) {
+      title = at[1]!.trim();
+      companyName = at[2]!.trim();
+    } else if (looksLikeRoleTitle(linkText)) {
+      title = linkText;
+      companyName = "Unknown company";
+    } else {
+      continue;
+    }
+
+    let workMode: WorkMode | null = null;
+    const modeBlob = `${title} ${companyName} ${blurb}`;
+    if (/\bremote\b/i.test(modeBlob)) workMode = "remote";
+    else if (/\bhybrid\b/i.test(modeBlob)) workMode = "hybrid";
+    else if (/\bon-?site\b/i.test(modeBlob) || /\bin office\b/i.test(modeBlob)) workMode = "onsite";
+
+    let location: string | null = null;
+    const loc = blurb.match(/\b(?:based in|in)\s+([A-Za-z0-9 .,'-]{2,60}?)(?:\s*\(|\.|,|$)/i);
+    if (loc) location = loc[1]!.trim();
+    else if (/\b(remote|hybrid)\b/i.test(blurb) && !location) {
+      // leave null; workMode already set
+    }
+
+    const job: HarvestedJob = {
+      title: title.slice(0, 300),
+      companyName: companyName.slice(0, 300),
+      location,
+      salaryRange: null,
+      description: blurb ? blurb.slice(0, 2_000) : null,
+      listingUrl: canon.startsWith("http") ? canon : listingUrl,
+      applyUrl: null,
+      applyMethod: "external",
+      workMode,
+      source: inferApplicationSource(listingUrl, fromEmail)
+    };
+
+    if (!isValidHarvestedJob(job)) continue;
+    seenCanon.add(canon);
+    jobs.push(job);
+  }
+
+  return jobs.slice(0, 25);
+}
+
+/**
+ * Union of text-card + HTML-anchor harvests (dedup by canonical URL).
+ */
+export function harvestJobsFromMail(input: ExtractJobLinksInput): HarvestedJob[] {
+  const merged = new Map<string, HarvestedJob>();
+  for (const job of [...harvestJobsFromHtmlAnchors(input), ...harvestJobsFromMailBody(input)]) {
+    const key = (canonicalizeJobUrl(job.listingUrl) ?? job.listingUrl).toLowerCase();
+    if (!merged.has(key)) merged.set(key, job);
+  }
+  return [...merged.values()].slice(0, 25);
 }
 
 /**

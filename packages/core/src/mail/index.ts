@@ -2,6 +2,7 @@ export * from "./classify";
 export * from "./classify-queue";
 export * from "./constants";
 export * from "./corrections";
+export * from "./crm-ai";
 export * from "./crm-effects";
 export * from "./harvest-queue";
 export * from "./job-harvest";
