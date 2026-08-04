@@ -4,17 +4,26 @@ import {
   AiSettingsOutputSchema,
   defaultAiModels,
   defaultAiSettingsOutput,
+  ListProviderModelsInputSchema,
+  ListProviderModelsOutputSchema,
   maskApiKeyLast4,
   mergeAiModels,
+  stripDeadModelProviderIds,
   UpdateAiSettingsInputSchema,
+  type AiModelProviderIdsMap,
   type AiModelsMap,
   type AiProviderKind,
   type AiProviderPublic
 } from "@tsu-stack/core";
 import { userAiSettingsRepository } from "@tsu-stack/db";
-import { type StoredAiModels, type StoredAiProvider } from "@tsu-stack/db/schema";
+import {
+  type StoredAiModelProviderIds,
+  type StoredAiModels,
+  type StoredAiProvider
+} from "@tsu-stack/db/schema";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
+import { listProviderModels } from "#@/lib/settings/list-provider-models";
 import { sealSecret } from "#@/lib/settings/seal-secret";
 
 function toPublicProviders(providers: StoredAiProvider[]): AiProviderPublic[] {
@@ -38,6 +47,7 @@ function toOutput(
   return AiSettingsOutputSchema.parse({
     providers: toPublicProviders(row.providers),
     models,
+    modelProviderIds: row.modelProviderIds ?? {},
     mailReplyAutonomy: row.mailReplyAutonomy,
     updatedAt: row.updatedAt
   });
@@ -120,14 +130,38 @@ export const aiSettingsRouter = {
         }
       }
 
+      const rawBindings: AiModelProviderIdsMap =
+        input.modelProviderIds ?? ((existing?.modelProviderIds ?? {}) as AiModelProviderIdsMap);
+
+      const modelProviderIds = stripDeadModelProviderIds(
+        rawBindings,
+        new Set(providers.map((p) => p.id))
+      ) as StoredAiModelProviderIds;
+
       const row = await userAiSettingsRepository.upsert({
         id: existing?.id ?? randomUUID(),
         userId,
         providers,
         models,
+        modelProviderIds,
         mailReplyAutonomy
       });
 
       return toOutput(row);
+    }),
+
+  listProviderModels: protectedProcedure
+    .route({
+      description:
+        "List live or catalog models for a provider kind (draft or sealed key; POST so keys stay out of URLs)",
+      method: "POST"
     })
+    .input(ListProviderModelsInputSchema)
+    .output(ListProviderModelsOutputSchema)
+    .handler(async ({ input, context }) =>
+      listProviderModels({
+        userId: context.session.user.id,
+        input
+      })
+    )
 };

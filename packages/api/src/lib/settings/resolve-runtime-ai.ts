@@ -14,6 +14,9 @@ import { openSecret } from "#@/lib/settings/seal-secret";
  *
  * Source of truth: Settings → AI (`user_ai_settings`).
  * Product rule: BYO only — agent does not use operator provider env keys.
+ *
+ * Provider binding: prefer `modelProviderIds[feature]` when the row exists and
+ * its kind matches `providerKindFromModelId(modelId)`; otherwise first matching kind.
  */
 export async function resolveRuntimeAiCredentials(
   userId: string,
@@ -31,14 +34,19 @@ export async function resolveRuntimeAiCredentials(
 
   const providerKind = providerKindFromModelId(modelId) ?? "deepseek";
   const providers = row?.providers ?? [];
+  const boundId = row?.modelProviderIds?.[feature]?.trim();
 
-  // Prefer a provider whose kind matches the model router prefix and has a sealed key.
-  const matched =
-    providers.find((p) => p.kind === providerKind && p.apiKeyCiphertext) ??
-    providers.find((p) => p.kind === providerKind) ??
-    null;
+  let provider = boundId ? providers.find((p) => p.id === boundId) : undefined;
 
-  const apiKey = matched ? openSecret(matched.apiKeyCiphertext) : null;
+  // Orphan: missing row, or kind mismatch vs modelId prefix → first matching kind.
+  if (!provider || provider.kind !== providerKind) {
+    provider =
+      providers.find((p) => p.kind === providerKind && p.apiKeyCiphertext) ??
+      providers.find((p) => p.kind === providerKind) ??
+      undefined;
+  }
+
+  const apiKey = provider ? openSecret(provider.apiKeyCiphertext) : null;
 
   return {
     modelId,
