@@ -8,6 +8,7 @@ import {
   DeleteApplicationsInputSchema,
   DeleteResponseSchema,
   GenerateApplyPackageInputSchema,
+  SendOutreachInputSchema,
   SetOutcomeInputSchema,
   UpdateApplicationInputSchema,
   UpdateStageInputSchema
@@ -16,6 +17,7 @@ import { applicationRepository, resumeRepository } from "@tsu-stack/db/repositor
 
 import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
+import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toApplicationOutput(
@@ -201,7 +203,32 @@ export const applicationsRouter = {
     .output(DeleteResponseSchema)
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
+
+      // Load cover keys before deleteMany (returns only ids). Do not delete resume objects.
+      const owned = (
+        await Promise.all(input.ids.map((id) => applicationRepository.findByIdForUser(id, userId)))
+      ).filter((row): row is NonNullable<typeof row> => row != null);
+
+      const coverKeyById = new Map(
+        owned
+          .filter((row) => row.coverLetterR2Key)
+          .map((row) => [row.id, row.coverLetterR2Key as string])
+      );
+
       const deleted = await applicationRepository.deleteMany(input.ids, userId);
+
+      await Promise.all(
+        deleted.map(async ({ id }) => {
+          const key = coverKeyById.get(id);
+          if (!key) return;
+          try {
+            await context.mediaBucket.delete(key);
+          } catch {
+            // Best-effort cover cleanup; row is already gone.
+          }
+        })
+      );
+
       return { success: deleted.length > 0 };
     }),
 
@@ -275,6 +302,54 @@ export const applicationsRouter = {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
         if (result.code === "NO_DRAFT") throw errors.NO_DRAFT({ message: result.message });
         throw errors.INVALID_DRAFT({ message: result.message });
+      }
+      return toApplicationOutput(result.application);
+    }),
+
+  sendOutreach: protectedProcedure
+    .route({
+      description:
+        "Send outreach email with resume PDF attachment; stamps send metadata and advances saved→applied",
+      method: "POST"
+    })
+    .input(SendOutreachInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: {
+        message: "Application not found"
+      },
+      CLOSED: {
+        message: "Cannot send outreach for a closed application"
+      },
+      NO_RESUME: {
+        message: "Link a resume before sending outreach"
+      },
+      NO_RECIPIENT: {
+        message: "Set a valid recruiter email before sending outreach"
+      },
+      MAIL_NOT_CONFIGURED: {
+        message: "Configure Resend under Settings → Mail before sending"
+      },
+      SEND_FAILED: {
+        message: "Failed to send outreach email"
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const result = await sendApplicationOutreach({
+        applicationId: input.applicationId,
+        userId,
+        mediaBucket: context.mediaBucket
+      });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "CLOSED") throw errors.CLOSED({ message: result.message });
+        if (result.code === "NO_RESUME") throw errors.NO_RESUME({ message: result.message });
+        if (result.code === "NO_RECIPIENT") throw errors.NO_RECIPIENT({ message: result.message });
+        if (result.code === "MAIL_NOT_CONFIGURED") {
+          throw errors.MAIL_NOT_CONFIGURED({ message: result.message });
+        }
+        throw errors.SEND_FAILED({ message: result.message });
       }
       return toApplicationOutput(result.application);
     })
