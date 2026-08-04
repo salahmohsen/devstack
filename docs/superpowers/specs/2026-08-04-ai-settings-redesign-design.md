@@ -133,9 +133,19 @@ modelProviderIds: {
 
 **Default model template (locked):** use **`models.reply` as the Default combobox value** (matches current UI). No separate `defaultModel` field.
 
-- **Default combobox change:** set every feature whose model id (and provider binding, if any) still matches the **previous** `models.reply` (and previous default binding) to the new model + new default binding. Features already customized (model ≠ previous reply template) are left alone.
-- **Uniform case:** all features equal `models.reply` → Default change updates all features.
-- **Customize:** changing a feature to a model other than current `models.reply` is an override (Test shown). Setting a feature back to equal `models.reply` shows **Default** and sets that feature’s `modelProviderIds[feature]` to the default binding (same as reply’s).
+**Override equality (model + binding):** a feature is “on Default” only when **both**:
+
+1. `models[feature] === models.reply`, and
+2. effective binding for feature equals effective binding for reply  
+   (`modelProviderIds[feature]` vs `modelProviderIds.reply`; treat **missing** binding as “same as resolve fallback” for both — i.e. both missing counts as match).
+
+If either differs → **override** (show model id + Test). If both match → show **Default**, no Test.
+
+**Who may edit `models.reply`:** only the **Default model** combobox. **Do not** expose `reply` again under Customize per feature (exclude from feature customize list). That way the cascade has a single write path.
+
+- **Default combobox change:** for every feature that is currently “on Default” (equality above using previous reply model + previous reply binding), set model + binding to the new default. Features that are overrides are left alone.
+- **Customize:** may edit every `AiFeature` **except** `reply` (and include `applyPackage`, `stacks`, etc.). Setting a feature onto the current default model **and** default binding shows **Default** and stores the same binding as reply.
+- **Provider row ids** stay stable on in-place edit/save so bindings survive.
 - **Invariant:** every generate path receives `modelId` + resolved `apiKey` from the bound provider row.
 
 ### Migration
@@ -214,11 +224,11 @@ When only one provider row exists for a kind, omit redundant group chrome if it 
 
 ### Placement
 
-| Control                   | Test visible?                |
-| ------------------------- | ---------------------------- |
-| Default model             | Always                       |
-| Feature model === default | No Test; display **Default** |
-| Feature model ≠ default   | Test yes                     |
+| Control                                    | Test visible?                |
+| ------------------------------------------ | ---------------------------- |
+| Default model                              | Always                       |
+| Feature on Default (model **and** binding) | No Test; display **Default** |
+| Feature override (model **or** binding)    | Test yes                     |
 
 ### Disable rules (explain via title/aria, not noise)
 
