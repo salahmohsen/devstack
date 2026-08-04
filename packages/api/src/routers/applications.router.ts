@@ -6,12 +6,14 @@ import {
   CreateApplicationInputSchema,
   DeleteApplicationsInputSchema,
   DeleteResponseSchema,
+  GenerateApplyPackageInputSchema,
   SetOutcomeInputSchema,
   UpdateApplicationInputSchema,
   UpdateStageInputSchema
 } from "@tsu-stack/core";
 import { applicationRepository, resumeRepository } from "@tsu-stack/db/repositories";
 
+import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toApplicationOutput(
@@ -199,5 +201,44 @@ export const applicationsRouter = {
       const userId = context.session.user.id;
       const deleted = await applicationRepository.deleteMany(input.ids, userId);
       return { success: deleted.length > 0 };
+    }),
+
+  generateApplyPackage: protectedProcedure
+    .route({
+      description:
+        "Generate (or regenerate) an AI apply package draft for an application (resume selection, cover letter, outreach)",
+      method: "POST"
+    })
+    .input(GenerateApplyPackageInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: {
+        message: "Application not found"
+      },
+      NO_EVIDENCE: {
+        message: "No portfolio experiences or projects opted in for resume evidence"
+      },
+      AI_NOT_CONFIGURED: {
+        message: "Configure a BYO API key under Settings → AI"
+      },
+      AGENT_FAILED: {
+        message: "Apply package generation failed — check Settings → AI and try again"
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const result = await generateApplyPackage({
+        applicationId: input.applicationId,
+        userId
+      });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "NO_EVIDENCE") throw errors.NO_EVIDENCE({ message: result.message });
+        if (result.code === "AI_NOT_CONFIGURED") {
+          throw errors.AI_NOT_CONFIGURED({ message: result.message });
+        }
+        throw errors.AGENT_FAILED({ message: result.message });
+      }
+      return toApplicationOutput(result.application);
     })
 };
