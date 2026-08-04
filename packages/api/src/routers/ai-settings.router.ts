@@ -9,6 +9,8 @@ import {
   maskApiKeyLast4,
   mergeAiModels,
   stripDeadModelProviderIds,
+  TestAiProviderInputSchema,
+  TestAiProviderOutputSchema,
   UpdateAiSettingsInputSchema,
   type AiModelProviderIdsMap,
   type AiModelsMap,
@@ -25,6 +27,7 @@ import {
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { listProviderModels } from "#@/lib/settings/list-provider-models";
 import { sealSecret } from "#@/lib/settings/seal-secret";
+import { testAiProviderConnection } from "#@/lib/settings/test-ai-provider";
 
 function toPublicProviders(providers: StoredAiProvider[]): AiProviderPublic[] {
   return providers.map((p) => {
@@ -161,6 +164,21 @@ export const aiSettingsRouter = {
     .handler(async ({ input, context }) =>
       listProviderModels({
         userId: context.session.user.id,
+        input
+      })
+    ),
+
+  testProvider: protectedProcedure
+    .route({
+      description: "Probe a provider API key with a cheap BYO generate call for a model",
+      method: "POST"
+    })
+    .input(TestAiProviderInputSchema)
+    .output(TestAiProviderOutputSchema)
+    .handler(async ({ input, context }) =>
+      testAiProviderConnection({
+        userId: context.session.user.id,
+        agentWorker: context.agentWorker,
         input
       })
     )
