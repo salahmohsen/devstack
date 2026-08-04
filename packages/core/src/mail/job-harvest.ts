@@ -7,7 +7,7 @@ import {
   type ApplicationSource
 } from "#@/application/types";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
-import { type JobPreference, type WorkMode } from "#@/job-preference/types";
+import { WorkModeSchema, type JobPreference, type WorkMode } from "#@/job-preference/types";
 import { defaultJobPreference } from "#@/job-preference/utils";
 
 /** Structured job extracted from a mail card and/or job page. */
@@ -20,7 +20,7 @@ export const HarvestedJobSchema = z.object({
   listingUrl: z.string().url(),
   applyUrl: z.string().url().nullable().optional().default(null),
   applyMethod: ApplicationApplyMethodSchema.default("unknown"),
-  workMode: z.enum(["remote", "hybrid", "onsite"]).nullable().optional(),
+  workMode: WorkModeSchema.nullable().optional(),
   source: ApplicationSourceSchema.nullable().optional()
 });
 export type HarvestedJob = z.infer<typeof HarvestedJobSchema>;
@@ -40,7 +40,7 @@ export const MailNotifierExtractSchema = z.object({
         companyName: z.string().max(300).optional().nullable(),
         location: z.string().max(300).optional().nullable(),
         applyMethod: ApplicationApplyMethodSchema.optional().nullable(),
-        workMode: z.enum(["remote", "hybrid", "onsite"]).optional().nullable()
+        workMode: WorkModeSchema.optional().nullable()
       })
     )
     .max(25)
@@ -50,7 +50,7 @@ export type MailNotifierExtract = z.infer<typeof MailNotifierExtractSchema>;
 
 /** Preference slice passed into the harvest workflow for AI match scoring. */
 export const HarvestJobPreferenceSchema = z.object({
-  workModes: z.array(z.enum(["remote", "hybrid", "onsite"])).default([]),
+  workModes: z.array(WorkModeSchema).default([]),
   locations: z.array(z.string()).default([]),
   roleKeywords: z.array(z.string()).default([]),
   excludeKeywords: z.array(z.string()).default([]),

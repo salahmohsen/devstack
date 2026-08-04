@@ -1,3 +1,4 @@
+import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -30,6 +31,24 @@ export function useAcceptApplyPackageMutation() {
         toast.success("Package accepted — resume and cover letter are ready.");
       },
       onError: (error) => {
+        if (isDefinedError(error)) {
+          switch (error.code) {
+            case "NO_DRAFT":
+              toast.error(
+                error.message || "No apply package draft to accept — prepare a package first."
+              );
+              return;
+            case "INVALID_DRAFT":
+              toast.error(
+                error.message || "Apply package draft is invalid — regenerate the package."
+              );
+              return;
+            case "NOT_FOUND":
+              toast.error(error.message || "Application not found.");
+              return;
+          }
+        }
+
         toastAiError(error.message || "Could not accept apply package", {
           feature: "generic",
           severity: "hard"

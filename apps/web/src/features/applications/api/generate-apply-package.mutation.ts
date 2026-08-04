@@ -1,3 +1,4 @@
+import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -27,6 +28,43 @@ export function useGenerateApplyPackageMutation() {
         toast.success("Apply package draft ready to review.");
       },
       onError: (error) => {
+        if (isDefinedError(error)) {
+          switch (error.code) {
+            case "NO_EVIDENCE":
+              toast.error(
+                error.message ||
+                  "No portfolio experiences or projects opted in for resume evidence."
+              );
+              return;
+            case "AI_NOT_CONFIGURED":
+              toastAiError(error.message || "Configure a BYO API key under Settings → AI", {
+                feature: "generic",
+                severity: "hard",
+                action: {
+                  label: "AI settings",
+                  to: "/dashboard/settings/ai"
+                }
+              });
+              return;
+            case "AGENT_FAILED":
+              toastAiError(
+                error.message || "Apply package generation failed — check Settings → AI.",
+                {
+                  feature: "generic",
+                  severity: "hard",
+                  action: {
+                    label: "AI settings",
+                    to: "/dashboard/settings/ai"
+                  }
+                }
+              );
+              return;
+            case "NOT_FOUND":
+              toast.error(error.message || "Application not found.");
+              return;
+          }
+        }
+
         toastAiError(error.message || "Could not generate apply package", {
           feature: "generic",
           severity: "hard",

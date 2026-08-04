@@ -287,7 +287,12 @@ function ApplicationCard({
           ) : null}
         </div>
       )}
-      <ApplicationApplyLinks applyUrl={app.applyUrl} url={app.url} className="mt-2" />
+      <ApplicationApplyLinks
+        applyUrl={app.applyUrl}
+        url={app.url}
+        applyMethod={app.applyMethod}
+        className="mt-2"
+      />
       {app.resumeId ? (
         <div className="mt-2 text-xs text-muted-foreground">Resume linked</div>
       ) : null}

@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { ClipboardCheckIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -82,6 +83,15 @@ export function ReviewPage() {
                   icon={<ClipboardCheckIcon aria-hidden />}
                   title="Queue clear"
                   description="No pending review items. Drafts appear after career mail is classified, or from Mail → Draft with agent."
+                  action={
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      render={<Link to="/dashboard/mail/$category" params={{ category: "all" }} />}
+                    >
+                      Open mail hub
+                    </Button>
+                  }
                 />
               ) : (
                 <ul className="divide-y" aria-label="Pending review items">

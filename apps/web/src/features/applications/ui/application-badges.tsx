@@ -131,6 +131,8 @@ export function ApplicationApplyMethodBadge({
 type ApplyLinksProps = {
   applyUrl: string | null | undefined;
   url: string | null | undefined;
+  /** Used when only the listing `url` is present (e.g. Easy Apply without a separate apply link). */
+  applyMethod?: ApplicationApplyMethod | null;
   className?: string;
 };
 
@@ -140,26 +142,34 @@ function stopCardActivation(event: React.SyntheticEvent) {
 
 /**
  * External apply destination + listing URL.
- * Only renders when `applyUrl` is set (Apply); View listing uses `url` when present.
+ * Prefer `applyUrl` for Apply; when it is missing, fall back to `url` (Easy Apply / View listing).
  */
-export function ApplicationApplyLinks({ applyUrl, url, className }: ApplyLinksProps) {
-  if (!applyUrl) return null;
+export function ApplicationApplyLinks({ applyUrl, url, applyMethod, className }: ApplyLinksProps) {
+  if (!applyUrl && !url) return null;
+
+  const primaryHref = applyUrl ?? url!;
+  const primaryLabel = applyUrl
+    ? "Apply"
+    : applyMethod === "easy_apply"
+      ? "Easy Apply"
+      : "View listing";
+  const showListing = Boolean(url && applyUrl && url !== applyUrl);
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 text-xs", className)}>
       <a
-        href={applyUrl}
+        href={primaryHref}
         target="_blank"
         rel="noreferrer"
         className="font-medium text-primary underline-offset-2 hover:underline"
         onClick={stopCardActivation}
         onPointerDown={stopCardActivation}
       >
-        Apply
+        {primaryLabel}
       </a>
-      {url ? (
+      {showListing ? (
         <a
-          href={url}
+          href={url!}
           target="_blank"
           rel="noreferrer"
           className="text-muted-foreground underline-offset-2 hover:underline"

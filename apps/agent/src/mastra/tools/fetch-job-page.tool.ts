@@ -1,6 +1,8 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
+import { assertPublicHttpUrl } from "@tsu-stack/core";
+
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_CHARS = 14_000;
 
@@ -33,6 +35,7 @@ export type FetchJobPageResult = {
  */
 export async function fetchJobPageContent(url: string): Promise<FetchJobPageResult> {
   try {
+    assertPublicHttpUrl(url);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     const res = await fetch(url, {
@@ -46,6 +49,20 @@ export async function fetchJobPageContent(url: string): Promise<FetchJobPageResu
       }
     });
     clearTimeout(timer);
+
+    const finalUrl = res.url || url;
+    try {
+      assertPublicHttpUrl(finalUrl);
+    } catch (err) {
+      return {
+        ok: false,
+        finalUrl,
+        status: res.status,
+        text: "",
+        error: err instanceof Error ? err.message : String(err)
+      };
+    }
+
     const html = await res.text();
     const title =
       html
@@ -57,7 +74,7 @@ export async function fetchJobPageContent(url: string): Promise<FetchJobPageResu
     const text = htmlToText(html).slice(0, MAX_CHARS);
     return {
       ok: res.ok,
-      finalUrl: res.url || url,
+      finalUrl,
       status: res.status,
       title,
       text: text.length > 0 ? text : "(empty page body — may be JS-only or blocked)",

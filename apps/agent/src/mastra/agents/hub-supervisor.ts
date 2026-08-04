@@ -21,6 +21,11 @@ import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow
 /**
  * Hub supervisor — single /dashboard chat orchestrator.
  * Career mail agents/workflows are the same ones queues use (no second path).
+ *
+ * Tenant auth: chat handlers set `requestContext.userId` from the session.
+ * When starting workflows that take a `userId` input field, that value MUST be
+ * the authenticated user's id from context — never invent or accept a different
+ * tenant id. CRM tools never take `userId` from tool input (requestContext only).
  */
 export function createHubSupervisor() {
   return new Agent({
@@ -29,6 +34,11 @@ export function createHubSupervisor() {
     description:
       "Coordinates the personal hub: stacks, resume import, Career Inbox classify/harvest/CRM, and applications help.",
     instructions: `You are the Hub Supervisor — the single point of contact for the user's personal hub.
+
+## Tenant / identity
+- All work is scoped to the authenticated user. \`requestContext.userId\` is set by the server.
+- When invoking workflows that require a \`userId\` input, use ONLY the authenticated user's id from context. Never invent, guess, or substitute another userId.
+- CRM tools resolve tenant from requestContext only — do not pass userId as a tool argument.
 
 ## Stacks & projects
 - \`stackCategorizerAgent\` — classify packages into stack types

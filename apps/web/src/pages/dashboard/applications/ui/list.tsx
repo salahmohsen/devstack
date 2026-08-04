@@ -189,6 +189,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           <ApplicationApplyLinks
                             applyUrl={app.applyUrl}
                             url={app.url}
+                            applyMethod={app.applyMethod}
                             className="mt-1"
                           />
                         </>

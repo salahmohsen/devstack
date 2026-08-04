@@ -22,6 +22,7 @@
     "@loadable/component": "catalog:",
     "@lonik/oh-image": "catalog:",
     "@number-flow/react": "catalog:",
+    "@orpc/client": "catalog:",
     "@shadcn/react": "catalog:",
     "@tanstack/react-form": "^1.33.1",
     "@tanstack/react-query": "catalog:",

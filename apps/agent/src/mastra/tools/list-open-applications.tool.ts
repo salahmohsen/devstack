@@ -5,7 +5,9 @@ import { applicationRepository, createDb, runWithDb } from "@tsu-stack/db";
 
 /**
  * CRM read tool for mail-reply agent — list open applications for the tenant.
- * userId comes from requestContext (set by the workflow step).
+ *
+ * Tenant scope: `userId` is ALWAYS taken from `requestContext` (set by the
+ * workflow step / chat handler). Never accept `userId` from tool input.
  */
 export const listOpenApplicationsTool = createTool({
   id: "list-open-applications",
@@ -13,6 +15,7 @@ export const listOpenApplicationsTool = createTool({
     "List the seeker's open (no outcome) job applications: company, title, stage. Use to ground a reply in real CRM rows.",
   inputSchema: z.object({
     limit: z.number().int().min(1).max(20).optional().default(8)
+    // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
     applications: z.array(
@@ -25,6 +28,7 @@ export const listOpenApplicationsTool = createTool({
     )
   }),
   execute: async ({ limit }, context) => {
+    // Force tenant from requestContext — ignore any model-supplied identity.
     const userId = context.requestContext?.get?.("userId") as string | undefined;
     if (!userId) {
       return { applications: [] };

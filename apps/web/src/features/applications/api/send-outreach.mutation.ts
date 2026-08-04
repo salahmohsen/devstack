@@ -1,3 +1,4 @@
+import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -30,6 +31,39 @@ export function useSendOutreachMutation() {
         );
       },
       onError: (error) => {
+        if (isDefinedError(error)) {
+          switch (error.code) {
+            case "NO_RESUME":
+              toast.error(error.message || "Link a resume before sending outreach.");
+              return;
+            case "NO_RECIPIENT":
+              toast.error(error.message || "Set a valid recruiter email before sending outreach.");
+              return;
+            case "MAIL_NOT_CONFIGURED":
+              toastAiError(
+                error.message || "Configure Resend under Settings → Mail before sending.",
+                {
+                  feature: "generic",
+                  severity: "hard",
+                  action: {
+                    label: "Mail settings",
+                    to: "/dashboard/settings/mail"
+                  }
+                }
+              );
+              return;
+            case "CLOSED":
+              toast.error(error.message || "Cannot send outreach for a closed application.");
+              return;
+            case "SEND_FAILED":
+              toast.error(error.message || "Failed to send outreach email.");
+              return;
+            case "NOT_FOUND":
+              toast.error(error.message || "Application not found.");
+              return;
+          }
+        }
+
         toastAiError(error.message || "Could not send outreach", {
           feature: "generic",
           severity: "hard",

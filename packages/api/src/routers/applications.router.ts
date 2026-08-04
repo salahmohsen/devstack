@@ -132,9 +132,12 @@ export const applicationsRouter = {
       method: "PATCH"
     })
     .input(z.object({ id: z.string(), data: UpdateApplicationInputSchema }))
-    .output(ApplicationOutputSchema.nullable())
+    .output(ApplicationOutputSchema)
     .errors({
       NOT_FOUND: {
+        message: "Application not found"
+      },
+      RESUME_NOT_FOUND: {
         message: "Resume not found"
       }
     })
@@ -144,10 +147,11 @@ export const applicationsRouter = {
         input.data.resumeId !== undefined &&
         !(await isResumeOwned(input.data.resumeId, userId))
       ) {
-        throw errors.NOT_FOUND();
+        throw errors.RESUME_NOT_FOUND();
       }
       const updated = await applicationRepository.update(input.id, userId, input.data);
-      return updated ? toApplicationOutput(updated) : null;
+      if (!updated) throw errors.NOT_FOUND();
+      return toApplicationOutput(updated);
     }),
 
   updateStage: protectedProcedure

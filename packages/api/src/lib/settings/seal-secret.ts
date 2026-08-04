@@ -5,8 +5,12 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 const SALT = "tsu-ai-provider-key-v1";
 const PREFIX = "v1:";
 
+/** Memoize scrypt key derivation — seal/open run on every LLM resolve. */
+let cachedKey: Buffer | null = null;
 function deriveKey(): Buffer {
-  return scryptSync(ENV_SERVER.BETTER_AUTH_SECRET, SALT, 32);
+  if (cachedKey) return cachedKey;
+  cachedKey = scryptSync(ENV_SERVER.BETTER_AUTH_SECRET, SALT, 32);
+  return cachedKey;
 }
 
 /** Seal API key for storage. Returns base64 payload with version prefix. */
