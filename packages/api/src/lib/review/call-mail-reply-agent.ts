@@ -15,9 +15,14 @@ import { resolveSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 const WORKFLOW_ID = "mail-reply-workflow";
 const TIMEOUT_MS = 45_000;
 
+/** True when workflow returned a usable AI draft (not a fail-closed stub). */
+function isSuccessfulLlmDraft(draft: MailReplyDraftOutput): boolean {
+  return draft.source === "llm" && draft.notes === "llm:ok";
+}
+
 /**
  * Run mail-reply-workflow on the agent worker.
- * Returns structured ok/failure so callers can fall back without staying silent.
+ * AI-only: fail-closed stubs from the workflow are treated as agent failures.
  * Auth: Better Auth session Bearer (MastraAuthBetterAuth).
  */
 export async function callMailReplyAgent(
@@ -125,7 +130,7 @@ export async function callMailReplyAgent(
     if (startRes?.ok) {
       const json = (await startRes.json()) as unknown;
       const extracted = extractWorkflowResult(json);
-      if (extracted) {
+      if (extracted && isSuccessfulLlmDraft(extracted)) {
         log.set({
           event: "mail_reply_agent_ok",
           ...base,
@@ -135,6 +140,23 @@ export async function callMailReplyAgent(
         });
         log.emit();
         return { ok: true, data: extracted, runId };
+      }
+      if (extracted && !isSuccessfulLlmDraft(extracted)) {
+        log.error(new Error(`Mail reply LLM failed: ${extracted.notes ?? "unknown"}`), {
+          event: "mail_reply_agent_llm_failed",
+          ...base,
+          runId,
+          notes: extracted.notes ?? null,
+          via: "start"
+        });
+        log.emit({ _forceKeep: true });
+        return {
+          ok: false,
+          failure: {
+            reason: "error",
+            message: extracted.notes ?? "llm draft failed"
+          }
+        };
       }
     }
 
@@ -167,7 +189,7 @@ export async function callMailReplyAgent(
     }
 
     const fromStream = await readResultFromStream(streamRes.body);
-    if (fromStream) {
+    if (fromStream && isSuccessfulLlmDraft(fromStream)) {
       log.set({
         event: "mail_reply_agent_ok",
         ...base,
@@ -177,6 +199,23 @@ export async function callMailReplyAgent(
       });
       log.emit();
       return { ok: true, data: fromStream, runId };
+    }
+    if (fromStream && !isSuccessfulLlmDraft(fromStream)) {
+      log.error(new Error(`Mail reply LLM failed: ${fromStream.notes ?? "unknown"}`), {
+        event: "mail_reply_agent_llm_failed",
+        ...base,
+        runId,
+        notes: fromStream.notes ?? null,
+        via: "stream"
+      });
+      log.emit({ _forceKeep: true });
+      return {
+        ok: false,
+        failure: {
+          reason: "error",
+          message: fromStream.notes ?? "llm draft failed"
+        }
+      };
     }
 
     log.error(new Error("Agent empty result"), {

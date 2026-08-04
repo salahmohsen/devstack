@@ -4,11 +4,9 @@ import {
   canonicalizeJobUrl,
   defaultJobPreference,
   isValidHarvestedJob,
-  refineHarvestedJob,
-  scoreJobAgainstPreference,
-  type HarvestedJob,
   type JobPreference,
-  type MailJobHarvestResult
+  type MailJobHarvestResult,
+  type ScoredHarvestedJob
 } from "@tsu-stack/core";
 import {
   applicationRepository,
@@ -37,7 +35,8 @@ async function loadPreference(userId: string): Promise<JobPreference> {
  * Harvest job listings from a classified `job_notifier` mail via Mastra AI:
  * 1. Workflow: AI reads mail → extract job cards/URLs
  * 2. Workflow: fetch each listing URL (tool) → AI structured job fields
- * 3. Score vs JobPreference; create Applications; notify
+ * 3. Workflow: AI scores each job against JobPreference (semantic)
+ * 4. Create Applications for matchPassed jobs
  */
 export async function runMailJobHarvest(input: {
   messageId: string;
@@ -83,6 +82,7 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
+  const prefs = await loadPreference(row.userId);
   const llm = await resolveRuntimeAiCredentials(row.userId, "classify");
   const agentResult = await callMailJobHarvestAgent({
     messageId: row.id,
@@ -92,6 +92,7 @@ export async function runMailJobHarvest(input: {
     subject: row.subject ?? "",
     bodyText: row.bodyText ?? "",
     bodyHtml: row.bodyHtml,
+    preference: prefs,
     llm
   });
 
@@ -120,10 +121,8 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
-  const jobs: HarvestedJob[] = output.jobs
-    .map((j) => refineHarvestedJob(j))
-    .filter((j) => isValidHarvestedJob(j));
-  const prefs = await loadPreference(row.userId);
+  // AI already extracted + scored; only structural http(s)/title gate remains local
+  const jobs: ScoredHarvestedJob[] = output.jobs.filter((j) => isValidHarvestedJob(j));
 
   let created = 0;
   let skippedLowMatch = 0;
@@ -133,6 +132,7 @@ export async function runMailJobHarvest(input: {
 
   for (const job of jobs) {
     try {
+      // Strip tracking query params only — AI chooses multi-source listing URL
       const listingUrl = canonicalizeJobUrl(job.listingUrl) ?? job.listingUrl;
       const existing = await applicationRepository.findByUserIdAndUrl(row.userId, listingUrl);
       if (existing) {
@@ -140,8 +140,7 @@ export async function runMailJobHarvest(input: {
         continue;
       }
 
-      const match = scoreJobAgainstPreference({ ...job, listingUrl }, prefs);
-      if (!match.passed) {
+      if (!job.matchPassed) {
         skippedLowMatch += 1;
         continue;
       }
@@ -153,12 +152,12 @@ export async function runMailJobHarvest(input: {
         url: listingUrl,
         applyUrl: job.applyUrl ?? null,
         applyMethod: job.applyMethod ?? "unknown",
-        matchScore: match.score,
+        matchScore: job.matchScore,
         source: job.source ?? null,
         location: job.location ?? null,
         salaryRange: job.salaryRange ?? null,
         description: job.description ?? null,
-        notes: `AI harvest from mail ${row.id}. ${match.reasons.join("; ") || "ok"}`,
+        notes: `AI harvest from mail ${row.id}. AI match: ${(job.matchReasons ?? []).join("; ") || "ok"}`,
         stage: "saved",
         hiringUrgency: "unknown",
         resumeId: null

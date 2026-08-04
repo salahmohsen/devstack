@@ -39,6 +39,8 @@ import { enqueueMailJobHarvest } from "#@/queues/mail-job-harvest-queue";
 export async function runMailClassify(input: {
   messageId: string;
   userId: string;
+  /** When true, re-run AI even if already classified (hub reprocess). */
+  forceReprocess?: boolean;
 }): Promise<MailClassifyOutput & { skipped?: boolean }> {
   const log = createLogger({ operation: "server__mail_classify_run" });
 
@@ -61,7 +63,7 @@ export async function runMailClassify(input: {
     };
   }
 
-  if (row.classifiedAt) {
+  if (row.classifiedAt && !input.forceReprocess) {
     return {
       labels: row.labels ?? [],
       systemLabels: [],
@@ -77,7 +79,7 @@ export async function runMailClassify(input: {
     return {
       labels: row.labels ?? [],
       systemLabels: [],
-      source: "heuristic",
+      source: "skip_already_classified",
       notes: "system_notification_skip",
       skipped: true
     };

@@ -16,7 +16,7 @@ import { runMailClassify } from "#@/queues/run-mail-classify";
  *
  * - Shares `REDIS_URL` with Socket.IO adapter / GitHub cache (no second Redis stack).
  * - Producer: {@link enqueueMailClassify}
- * - Worker: heuristic classify (v1) → labels + classifiedAt; Mastra LLM later.
+ * - Worker: AI mail-process-workflow (classify + smart filters + branch).
  *
  * Run: started from `apps/server` when `REDIS_URL` is set (`src/index.ts`).
  */
@@ -54,7 +54,8 @@ export function startMailClassifyQueue(redisUrl: string): void {
       const result = await runWithDb(db, () =>
         runMailClassify({
           messageId: parsed.data.messageId,
-          userId: parsed.data.userId
+          userId: parsed.data.userId,
+          forceReprocess: parsed.data.forceReprocess
         })
       );
 

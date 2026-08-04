@@ -5,13 +5,17 @@ import {
   llmLogFields,
   MailClassifyInputSchema,
   MailClassifyOutputSchema,
+  MailProcessInputSchema,
+  MailProcessOutputSchema,
   type MailClassifyInput,
-  type MailClassifyOutput
+  type MailClassifyOutput,
+  type MailProcessOutput
 } from "@tsu-stack/core";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
-const WORKFLOW_ID = "mail-classify-workflow";
+/** Prefer unified process spine; falls back to classify-only id if needed. */
+const WORKFLOW_ID = "mail-process-workflow";
 const TIMEOUT_MS = 45_000;
 
 export type MailClassifyAgentSuccess = {
@@ -21,10 +25,18 @@ export type MailClassifyAgentSuccess = {
   traceId: string | null;
 };
 
+function processToClassifyOutput(p: MailProcessOutput): MailClassifyOutput {
+  return MailClassifyOutputSchema.parse({
+    labels: p.labels,
+    systemLabels: p.systemLabels,
+    source: "llm",
+    confidence: p.confidence,
+    notes: [p.classifyNotes, p.branch ? `branch:${p.branch}` : null].filter(Boolean).join(";")
+  });
+}
+
 /**
- * Run mail-classify-workflow on the agent worker.
- * Returns structured ok/failure so callers can fall back without staying silent.
- *
+ * Run mail-process-workflow (AI classify + smart filters + branch) on the agent worker.
  * Auth: Better Auth session Bearer for the mail owner (MastraAuthBetterAuth).
  */
 export async function callMailClassifyAgent(
@@ -38,6 +50,12 @@ export async function callMailClassifyAgent(
 
   try {
     const parsedInput = MailClassifyInputSchema.parse(input);
+    // Process workflow accepts the same payload shape (+ optional force flags unused here).
+    const processInput = MailProcessInputSchema.parse({
+      ...parsedInput,
+      bodyHtml: null,
+      forceReprocess: false
+    });
     const byo = llmLogFields(parsedInput.llm);
     const base = {
       userId: parsedInput.userId,
@@ -123,7 +141,7 @@ export async function callMailClassifyAgent(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/start?runId=${encodeURIComponent(runId)}`,
       {
         method: "POST",
-        body: JSON.stringify({ inputData: parsedInput }),
+        body: JSON.stringify({ inputData: processInput }),
         timeoutMs: TIMEOUT_MS,
         sessionToken,
         retry: { attempts: 2 }
@@ -142,7 +160,8 @@ export async function callMailClassifyAgent(
           systemLabels: extracted.systemLabels,
           runId,
           traceId: traceId ?? undefined,
-          via: "start"
+          via: "start",
+          workflowId: WORKFLOW_ID
         });
         log.emit();
         return { ok: true, data: { output: extracted, runId, traceId }, runId, traceId };
@@ -153,7 +172,7 @@ export async function callMailClassifyAgent(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/stream?runId=${encodeURIComponent(runId)}`,
       {
         method: "POST",
-        body: JSON.stringify({ inputData: parsedInput }),
+        body: JSON.stringify({ inputData: processInput }),
         timeoutMs: TIMEOUT_MS,
         sessionToken
       }
@@ -242,19 +261,27 @@ function extractWorkflowResult(payload: unknown): MailClassifyOutput | null {
   if (!payload || typeof payload !== "object") return null;
   const obj = payload as Record<string, unknown>;
 
-  const direct = MailClassifyOutputSchema.safeParse(obj);
-  if (direct.success) return direct.data;
+  const tryParse = (value: unknown): MailClassifyOutput | null => {
+    const process = MailProcessOutputSchema.safeParse(value);
+    if (process.success) return processToClassifyOutput(process.data);
+    const classify = MailClassifyOutputSchema.safeParse(value);
+    if (classify.success) return classify.data;
+    return null;
+  };
+
+  const direct = tryParse(obj);
+  if (direct) return direct;
 
   for (const key of ["result", "output", "data"]) {
-    const nested = MailClassifyOutputSchema.safeParse(obj[key]);
-    if (nested.success) return nested.data;
+    const nested = tryParse(obj[key]);
+    if (nested) return nested;
   }
 
   if (obj.result && typeof obj.result === "object") {
     const r = obj.result as Record<string, unknown>;
     for (const key of ["result", "output", "data"]) {
-      const nested = MailClassifyOutputSchema.safeParse(r[key]);
-      if (nested.success) return nested.data;
+      const nested = tryParse(r[key]);
+      if (nested) return nested;
     }
   }
 

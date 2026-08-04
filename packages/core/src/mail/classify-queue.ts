@@ -14,6 +14,8 @@ export const MailClassifyJobPayloadSchema = z.object({
   messageId: z.string().min(1),
   userId: z.string().min(1),
   /** When the message was accepted (ingress or re-queue). */
-  enqueuedAt: z.string().datetime().optional()
+  enqueuedAt: z.string().datetime().optional(),
+  /** When true, re-run AI even if already classified (hub reprocess). */
+  forceReprocess: z.boolean().optional()
 });
 export type MailClassifyJobPayload = z.infer<typeof MailClassifyJobPayloadSchema>;

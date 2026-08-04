@@ -153,30 +153,19 @@ const TRACKING_QUERY_KEYS = new Set([
 ]);
 
 /**
- * Canonical listing URL for dedup: strip tracking query params, normalize host.
+ * Dedup hygiene only: strip common tracking query params.
+ * Does **not** rewrite hosts/paths for LinkedIn/Indeed — multi-source AI supplies the URL.
  */
 export function canonicalizeJobUrl(raw: string): string | null {
   try {
     const u = new URL(raw.trim());
     if (!/^https?:$/i.test(u.protocol)) return null;
-    // Drop common tracking params
-    for (const key of u.searchParams.keys()) {
+    for (const key of [...u.searchParams.keys()]) {
       if (TRACKING_QUERY_KEYS.has(key.toLowerCase())) {
         u.searchParams.delete(key);
       }
     }
-    // LinkedIn job id path
-    const li = u.pathname.match(/\/jobs\/view\/(\d+)/i);
-    if (li && (u.hostname.includes("linkedin.com") || u.hostname.includes("lnkd.in"))) {
-      return `https://www.linkedin.com/jobs/view/${li[1]}`;
-    }
-    // Indeed jk=
-    const jk = u.searchParams.get("jk");
-    if (jk && u.hostname.includes("indeed.")) {
-      return `https://www.indeed.com/viewjob?jk=${jk}`;
-    }
     u.hash = "";
-    // Prefer https + no trailing slash
     let href = u.toString();
     if (href.endsWith("/") && u.pathname !== "/") href = href.slice(0, -1);
     return href;
@@ -403,32 +392,12 @@ export function isValidHarvestedJob(job: HarvestedJob): boolean {
 }
 
 /**
- * Fill workMode / applyMethod gaps from title/location/description text when the model left them null.
+ * @deprecated Prefer AI extract/enrich fields. No regex refinement on the hot path.
+ * Kept for tests only — trims title/company.
  */
 export function refineHarvestedJob(job: HarvestedJob): HarvestedJob {
-  const blob = `${job.title} ${job.location ?? ""} ${job.description ?? ""} ${job.salaryRange ?? ""}`;
-  let workMode = job.workMode ?? null;
-  if (!workMode) {
-    if (/\bremote\b/i.test(blob)) workMode = "remote";
-    else if (/\bhybrid\b/i.test(blob)) workMode = "hybrid";
-    else if (/\b(on-?site|in[- ]office)\b/i.test(blob)) workMode = "onsite";
-  }
-
-  let applyMethod = job.applyMethod ?? "unknown";
-  if (applyMethod === "unknown") {
-    if (/\beasy\s*apply\b/i.test(blob) || /apply with resume/i.test(blob)) {
-      applyMethod = "easy_apply";
-    } else if (/apply on (the )?company|external apply|company website/i.test(blob)) {
-      applyMethod = "external";
-    } else if (/mailto:|email to apply|send (your )?cv|send (your )?resume/i.test(blob)) {
-      applyMethod = "email";
-    }
-  }
-
   return {
     ...job,
-    workMode,
-    applyMethod,
     title: job.title.trim().slice(0, 300),
     companyName: job.companyName.trim().slice(0, 300)
   };

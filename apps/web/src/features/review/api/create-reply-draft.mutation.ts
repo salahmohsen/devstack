@@ -12,15 +12,8 @@ export function useCreateReplyDraftMutation() {
 
   return useMutation(
     orpcQueryClient.review.createReplyDraftFromMail.mutationOptions({
-      onSuccess: async (data) => {
+      onSuccess: async () => {
         toast.success("Reply draft ready in Review");
-        // Soft-fail: draft exists but AI agent did not run
-        if (data.agentWarning) {
-          toastAiError(data.agentWarning, {
-            feature: "review",
-            severity: "partial"
-          });
-        }
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.review.list.key({ type: "query" })
         });
