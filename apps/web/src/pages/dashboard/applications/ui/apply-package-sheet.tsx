@@ -136,24 +136,87 @@ function ApplyPackageSheetForm({
       </SheetHeader>
 
       <SheetPanel className="min-h-0 flex-1 space-y-6">
-        <section className="space-y-2">
+        <section className="space-y-2" aria-labelledby="apply-job-context-heading">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold">Job context</h3>
+            <h3 id="apply-job-context-heading" className="text-sm font-semibold">
+              Job used for this package
+            </h3>
             {draft.jobContext.listingFetched ? (
               <Badge variant="secondary" size="sm">
-                Listing fetched
+                Listing page included
               </Badge>
             ) : null}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-medium text-foreground">
             {draft.jobContext.companyName} · {draft.jobContext.title}
           </p>
-          {draft.notes ? (
-            <p className="rounded-md border border-border/60 bg-muted/30 p-3 text-sm text-muted-foreground">
-              {draft.notes}
+          {draft.jobContext.listingUrl ? (
+            <p className="text-xs text-muted-foreground">
+              <a
+                href={draft.jobContext.listingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                Open listing URL
+              </a>
             </p>
           ) : null}
+          {draft.jobContext.descriptionUsed.trim().length > 0 ? (
+            <details className="group rounded-md border border-border/60 bg-muted/20">
+              <summary
+                className={cn(
+                  "cursor-pointer list-none px-3 py-2 text-sm font-medium text-muted-foreground",
+                  "hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                  "[&::-webkit-details-marker]:hidden"
+                )}
+              >
+                Description used for generation
+                <span className="ms-1.5 font-normal text-muted-foreground/80 group-open:hidden">
+                  (show)
+                </span>
+                <span className="ms-1.5 hidden font-normal text-muted-foreground/80 group-open:inline">
+                  (hide)
+                </span>
+              </summary>
+              <div className="max-h-56 overflow-auto border-t border-border/50 px-3 py-2">
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                  {draft.jobContext.descriptionUsed}
+                </p>
+              </div>
+            </details>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No job description was available when this package was generated.
+            </p>
+          )}
         </section>
+
+        {draft.notes != null ? (
+          <section className="space-y-2" aria-labelledby="apply-ai-notes-heading">
+            <div className="space-y-0.5">
+              <h3 id="apply-ai-notes-heading" className="text-sm font-semibold">
+                AI notes
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Reviewer commentary from the model — not the job posting.
+              </p>
+            </div>
+            <Field>
+              <FieldLabel htmlFor="apply-ai-notes" className="sr-only">
+                AI notes
+              </FieldLabel>
+              <Textarea
+                id="apply-ai-notes"
+                value={draft.notes}
+                disabled={busy}
+                rows={4}
+                className="min-h-20 text-sm"
+                onChange={(e) => updateDraft({ notes: e.target.value })}
+              />
+            </Field>
+          </section>
+        ) : null}
 
         <Field>
           <FieldLabel htmlFor="apply-recruiter-email">Recruiter email</FieldLabel>
