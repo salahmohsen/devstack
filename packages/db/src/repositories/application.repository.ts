@@ -4,6 +4,7 @@ import {
   eq,
   inArray,
   isNull,
+  sql,
   type InferInsertModel,
   type InferSelectModel
 } from "drizzle-orm";
@@ -93,6 +94,57 @@ export const applicationRepository = {
       })
       .returning();
     return created;
+  },
+
+  /**
+   * Race-safe harvest insert: unique on (userId, url) where url is not null.
+   * Inserts when absent; on conflict returns the existing row without error.
+   */
+  async createIfAbsentByUrl(
+    input: CreateApplicationData & { url: string }
+  ): Promise<{ row: ApplicationEntity; created: boolean }> {
+    const id = crypto.randomUUID();
+    const now = new Date();
+    const [inserted] = await getDb()
+      .insert(application)
+      .values({
+        id,
+        userId: input.userId,
+        companyName: input.companyName,
+        title: input.title,
+        url: input.url,
+        applyUrl: input.applyUrl ?? null,
+        applyMethod: input.applyMethod ?? "unknown",
+        matchScore: input.matchScore ?? null,
+        source: input.source ?? null,
+        location: input.location ?? null,
+        salaryRange: input.salaryRange ?? null,
+        description: input.description ?? null,
+        notes: input.notes ?? null,
+        stage: input.stage ?? "saved",
+        stageChangedAt: input.stageChangedAt ?? now,
+        outcome: null,
+        outcomeAt: null,
+        hiringUrgency: input.hiringUrgency ?? "unknown",
+        resumeId: input.resumeId ?? null
+      })
+      .onConflictDoNothing({
+        target: [application.userId, application.url],
+        where: sql`${application.url} is not null`
+      })
+      .returning();
+
+    if (inserted) {
+      return { row: inserted, created: true };
+    }
+
+    const existing = await applicationRepository.findByUserIdAndUrl(input.userId, input.url);
+    if (!existing) {
+      throw new Error(
+        `createIfAbsentByUrl: conflict without existing row for userId=${input.userId} url=${input.url}`
+      );
+    }
+    return { row: existing, created: false };
   },
 
   async update(id: string, userId: string, patch: UpdateApplicationData) {

@@ -1,6 +1,6 @@
 import { type AgentCallResult } from "@tsu-stack/api/lib/agent/agent-call-result";
 import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
-import { resolveSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
+import { ensureSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
 import {
   CrmApplicationMatchInputSchema,
   CrmApplicationMatchOutputSchema,
@@ -30,13 +30,7 @@ async function generateAgentObject<T>(input: {
   }
 
   const log = createLogger({ operation: input.operation });
-  const sessionToken = await resolveSessionTokenForUser(input.userId);
-  if (!sessionToken) {
-    return {
-      ok: false,
-      failure: { reason: "no_session", message: "No active Better Auth session for mail owner" }
-    };
-  }
+  const sessionToken = await ensureSessionTokenForUser(input.userId);
 
   const llm = input.llm;
   const modelId = llm?.modelId;

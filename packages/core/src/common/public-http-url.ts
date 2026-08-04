@@ -1,8 +1,12 @@
 /**
  * SSRF guard for outbound public HTTP(S) fetches.
  * Blocks non-http(s) schemes and private/reserved/metadata hosts.
- * Uses hostname string checks + IPv4 parse (no DNS re-resolution).
+ * Sync path: hostname string checks + IPv4/IPv6 literal parse (no DNS).
+ * Async path: {@link assertPublicHttpUrlResolved} also DNS-resolves and
+ * rejects private/reserved A/AAAA answers (DNS rebinding mitigation).
  */
+
+import { promises as dns, type LookupAddress } from "node:dns";
 
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "169.254.169.254"]);
 
@@ -57,6 +61,9 @@ function isPrivateOrReservedIpv6(hostname: string): boolean {
   // Loopback
   if (hostname === "::1") return true;
 
+  // Unspecified
+  if (hostname === "::") return true;
+
   // fc00::/7 — unique local (fc00::/8 and fd00::/8)
   if (hostname.startsWith("fc") || hostname.startsWith("fd")) return true;
 
@@ -74,8 +81,15 @@ function normalizeHostname(hostname: string): string {
     .toLowerCase();
 }
 
+function isIpLiteral(hostname: string): boolean {
+  if (parseIpv4(hostname)) return true;
+  // IPv6 (may include dots only for IPv4-mapped forms already handled above)
+  return hostname.includes(":");
+}
+
 /**
  * Assert `url` is an absolute http(s) URL targeting a non-private host.
+ * Hostname string / IP-literal checks only (no DNS).
  * @returns parsed URL on success
  * @throws Error when scheme/host is unsafe or URL is invalid
  */
@@ -114,6 +128,56 @@ export function assertPublicHttpUrl(url: string): URL {
   if (hostname.includes(":")) {
     if (isPrivateOrReservedIpv6(hostname)) {
       throw new Error(`URL host is private/reserved: ${hostname}`);
+    }
+  }
+
+  return parsed;
+}
+
+/**
+ * Assert `url` is a public http(s) URL and that DNS does not resolve to
+ * private/reserved addresses (DNS rebinding mitigation).
+ *
+ * Skips DNS for already-literal IP hosts (validated by {@link assertPublicHttpUrl}).
+ *
+ * @returns parsed URL on success
+ * @throws Error when scheme/host is unsafe, DNS fails, or any resolved address is private
+ */
+export async function assertPublicHttpUrlResolved(url: string): Promise<URL> {
+  const parsed = assertPublicHttpUrl(url);
+  const hostname = normalizeHostname(parsed.hostname);
+
+  // Literal IPs already checked by assertPublicHttpUrl — no DNS needed.
+  if (isIpLiteral(hostname)) {
+    return parsed;
+  }
+
+  let addresses: LookupAddress[];
+  try {
+    addresses = await dns.lookup(hostname, { all: true, verbatim: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`DNS lookup failed for ${hostname}: ${msg}`);
+  }
+
+  if (addresses.length === 0) {
+    throw new Error(`DNS lookup returned no addresses for ${hostname}`);
+  }
+
+  for (const { address, family } of addresses) {
+    const addr = normalizeHostname(address);
+    if (family === 4 || parseIpv4(addr)) {
+      const octets = parseIpv4(addr);
+      if (octets && isPrivateOrReservedIpv4(octets)) {
+        throw new Error(`URL host resolves to private/reserved address: ${addr}`);
+      }
+      continue;
+    }
+
+    if (family === 6 || addr.includes(":")) {
+      if (isPrivateOrReservedIpv6(addr)) {
+        throw new Error(`URL host resolves to private/reserved address: ${addr}`);
+      }
     }
   }
 

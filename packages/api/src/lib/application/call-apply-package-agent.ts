@@ -12,7 +12,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 import { type AgentCallResult } from "#@/lib/agent/agent-call-result";
 import { agentFetch } from "#@/lib/agent/agent-fetch";
 import { readMastraResultStream } from "#@/lib/agent/read-mastra-result-stream";
-import { resolveSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
+import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 
 const WORKFLOW_ID = "apply-package-workflow";
 /** Large portfolio rewrite budget — must match agent generate timeout headroom. */
@@ -42,22 +42,7 @@ export async function callApplyPackageAgent(
       ...byo
     };
 
-    const sessionToken = await resolveSessionTokenForUser(opts.userId);
-    if (!sessionToken) {
-      log.set({
-        event: "apply_package_agent_no_session",
-        ...base,
-        fixHint: "User needs an active Better Auth session for agent workflows"
-      });
-      log.emit({ _forceKeep: true });
-      return {
-        ok: false,
-        failure: {
-          reason: "no_session",
-          message: "No active Better Auth session for application owner"
-        }
-      };
-    }
+    const sessionToken = await ensureSessionTokenForUser(opts.userId);
 
     const createRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`,

@@ -237,15 +237,9 @@ export async function acceptApplyPackage(input: {
     r2Key: resumeR2Key
   });
 
-  // Re-Accept: delete prior cover object before writing the new one.
-  if (app.coverLetterR2Key) {
-    try {
-      await input.mediaBucket.delete(app.coverLetterR2Key);
-    } catch {
-      // Best-effort cleanup; do not block accept if old object is already gone.
-    }
-  }
-
+  // Write the new cover object first so DB never points at a deleted key.
+  // Only delete the previous cover after the application row commits.
+  const previousCoverKey = app.coverLetterR2Key;
   const coverUuid = crypto.randomUUID();
   const coverFilename = formatCoverFilename(app.companyName, app.title);
   const coverR2Key = `${input.userId}/cover-letters/${app.id}-${coverUuid}.pdf`;
@@ -277,7 +271,23 @@ export async function acceptApplyPackage(input: {
     applyPackageDraftedAt: null
   });
 
-  if (!updated) return { ok: false, code: "NOT_FOUND" };
+  if (!updated) {
+    // Best-effort: drop the orphan new cover if the row update failed.
+    try {
+      await input.mediaBucket.delete(coverR2Key);
+    } catch {
+      // ignore
+    }
+    return { ok: false, code: "NOT_FOUND" };
+  }
+
+  if (previousCoverKey && previousCoverKey !== coverR2Key) {
+    try {
+      await input.mediaBucket.delete(previousCoverKey);
+    } catch {
+      // Best-effort cleanup of prior object.
+    }
+  }
 
   return { ok: true, application: updated };
 }

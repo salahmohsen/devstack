@@ -1,4 +1,14 @@
-import { index, integer, jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex
+} from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
 import { resume } from "./resume.schema.ts";
@@ -88,7 +98,11 @@ export const application = pgTable(
   },
   (table) => [
     index("application_user_id_idx").on(table.userId),
-    index("application_user_id_stage_idx").on(table.userId, table.stage)
+    index("application_user_id_stage_idx").on(table.userId, table.stage),
+    // Partial unique: manual apps may omit url (multiple nulls allowed).
+    uniqueIndex("application_user_id_url_uidx")
+      .on(table.userId, table.url)
+      .where(sql`${table.url} is not null`)
   ]
 );
 

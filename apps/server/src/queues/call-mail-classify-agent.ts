@@ -1,7 +1,7 @@
 import { type AgentCallResult } from "@tsu-stack/api/lib/agent/agent-call-result";
 import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
 import { readMastraResultStream } from "@tsu-stack/api/lib/agent/read-mastra-result-stream";
-import { resolveSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
+import { ensureSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
 import {
   llmLogFields,
   MailClassifyInputSchema,
@@ -64,22 +64,7 @@ export async function callMailClassifyAgent(
       ...byo
     };
 
-    const sessionToken = await resolveSessionTokenForUser(parsedInput.userId);
-    if (!sessionToken) {
-      log.set({
-        event: "mail_classify_agent_no_session",
-        ...base,
-        fixHint: "User needs an active Better Auth session for agent workflows"
-      });
-      log.emit({ _forceKeep: true });
-      return {
-        ok: false,
-        failure: {
-          reason: "no_session",
-          message: "No active Better Auth session for mail owner"
-        }
-      };
-    }
+    const sessionToken = await ensureSessionTokenForUser(parsedInput.userId);
 
     const createRes = await agentFetch(
       `/api/workflows/${encodeURIComponent(WORKFLOW_ID)}/create-run`,

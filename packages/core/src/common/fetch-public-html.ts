@@ -1,4 +1,4 @@
-import { assertPublicHttpUrl } from "#@/common/public-http-url";
+import { assertPublicHttpUrl, assertPublicHttpUrlResolved } from "#@/common/public-http-url";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 /** Soft default when callers omit maxChars (agent listing pages). */
@@ -47,9 +47,21 @@ export function extractHtmlTitle(html: string): string | null {
   );
 }
 
+function hostKey(url: string): string {
+  try {
+    return new URL(url).hostname
+      .replace(/^\[|\]$/g, "")
+      .replace(/\.$/, "")
+      .toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 /**
  * SSRF-safe public HTML fetch → plain text.
- * Asserts `assertPublicHttpUrl` on the input URL and on the final URL after redirects.
+ * DNS-resolves the request URL (rebinding guard), then asserts the final URL
+ * after redirects (string host check + resolve when hostname changed).
  */
 export async function fetchPublicHtmlAsText(
   url: string,
@@ -59,7 +71,7 @@ export async function fetchPublicHtmlAsText(
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   try {
-    assertPublicHttpUrl(url);
+    await assertPublicHttpUrlResolved(url);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let res: Response;
@@ -75,7 +87,12 @@ export async function fetchPublicHtmlAsText(
 
     const finalUrl = res.url || url;
     try {
+      // Always re-check final URL string form (scheme/host literals).
       assertPublicHttpUrl(finalUrl);
+      // If redirect landed on a different host, re-resolve DNS for rebinding.
+      if (hostKey(finalUrl) !== hostKey(url)) {
+        await assertPublicHttpUrlResolved(finalUrl);
+      }
     } catch (err) {
       return {
         ok: false,

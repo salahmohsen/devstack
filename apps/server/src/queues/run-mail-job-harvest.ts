@@ -134,18 +134,14 @@ export async function runMailJobHarvest(input: {
     try {
       // Strip tracking query params only — AI chooses multi-source listing URL
       const listingUrl = canonicalizeJobUrl(job.listingUrl) ?? job.listingUrl;
-      const existing = await applicationRepository.findByUserIdAndUrl(row.userId, listingUrl);
-      if (existing) {
-        skippedDuplicate += 1;
-        continue;
-      }
 
       if (!job.matchPassed) {
         skippedLowMatch += 1;
         continue;
       }
 
-      const app = await applicationRepository.create({
+      // Race-safe: unique (userId, url) + onConflictDoNothing
+      const { row: app, created: wasCreated } = await applicationRepository.createIfAbsentByUrl({
         userId: row.userId,
         companyName: job.companyName,
         title: job.title,
@@ -163,12 +159,15 @@ export async function runMailJobHarvest(input: {
         resumeId: null
       });
 
-      if (app?.id) {
-        created += 1;
-        applicationIds.push(app.id);
-        if (created === 1 && !row.applicationId) {
-          await mailMessageRepository.setApplicationId(row.id, row.userId, app.id);
-        }
+      if (!wasCreated) {
+        skippedDuplicate += 1;
+        continue;
+      }
+
+      created += 1;
+      applicationIds.push(app.id);
+      if (created === 1 && !row.applicationId) {
+        await mailMessageRepository.setApplicationId(row.id, row.userId, app.id);
       }
     } catch (err) {
       skippedFailed += 1;
