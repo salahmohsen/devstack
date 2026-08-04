@@ -7,6 +7,7 @@ import {
   defaultAiSettingsOutput,
   effectiveBinding,
   isFeatureOnDefault,
+  resolveProviderRowForModel,
   stripDeadModelProviderIds,
   type FeatureBindings
 } from "#@/ai-settings/utils";
@@ -180,5 +181,31 @@ describe("stripDeadModelProviderIds", () => {
 describe("defaultAiSettingsOutput", () => {
   it("includes empty modelProviderIds", () => {
     expect(defaultAiSettingsOutput().modelProviderIds).toEqual({});
+  });
+});
+
+describe("resolveProviderRowForModel", () => {
+  const providers = [
+    { id: workId, kind: "opencode-go" },
+    { id: personalId, kind: "opencode-go" },
+    { id: "ds1", kind: "deepseek" }
+  ];
+
+  it("uses preferred binding when kind matches model", () => {
+    const row = resolveProviderRowForModel({
+      modelId: sharedModel,
+      preferredProviderId: personalId,
+      providers
+    });
+    expect(row?.id).toBe(personalId);
+  });
+
+  it("ignores preferred binding when kind mismatches model (orphan rule)", () => {
+    const row = resolveProviderRowForModel({
+      modelId: otherModel,
+      preferredProviderId: workId,
+      providers
+    });
+    expect(row?.id).toBe("ds1");
   });
 });

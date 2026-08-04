@@ -203,6 +203,7 @@ export async function listProviderModels(
   const live = await fetchLiveModels(kind, apiKey);
   if (live) {
     const value = withProviderId({ models: live, source: "live" }, providerId);
+    // Only cache successful live lists for the full TTL.
     modelsCache.set(ck, { expiresAt: Date.now() + CACHE_TTL_MS, value });
     return value;
   }
@@ -226,6 +227,10 @@ export async function listProviderModels(
     },
     providerId
   );
-  modelsCache.set(ck, { expiresAt: Date.now() + CACHE_TTL_MS, value });
+  // Do not cache fallback after a failed live fetch — allow retry on next open.
+  // Cache pure catalog-only kinds (no live endpoint) briefly to avoid hammering.
+  if (!hadLiveEndpoint) {
+    modelsCache.set(ck, { expiresAt: Date.now() + CACHE_TTL_MS, value });
+  }
   return value;
 }

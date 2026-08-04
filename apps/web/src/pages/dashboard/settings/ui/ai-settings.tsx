@@ -25,6 +25,7 @@ import {
   MAIL_REPLY_AUTONOMY_LABELS,
   MASTRA_PROVIDER_CATALOG,
   providerKindFromModelId,
+  resolveProviderRowForModel,
   toMastraModelId,
   type AiFeature,
   type AiModelProviderIdsMap,
@@ -287,7 +288,8 @@ function ModelCombobox({
         id={id}
         placeholder="provider/model"
         showClear={false}
-        onChange={(e) => onFreeType(e.target.value)}
+        // Free-type commits only via onValueChange when the value is not a listed option.
+        // Per-keystroke onChange would race picks and wipe multipes provider bindings.
       />
       <ComboboxContent>
         <ComboboxEmpty>Type a full provider/model id.</ComboboxEmpty>
@@ -414,6 +416,7 @@ export function AiSettings() {
 
     try {
       const next: Record<string, Array<{ id: string; label: string }>> = {};
+      let anyLive = false;
       await Promise.all(
         eligible.map(async (p) => {
           const draftKey = p.apiKey.trim();
@@ -423,14 +426,29 @@ export function AiSettings() {
               ...(draftKey ? { apiKey: draftKey } : {}),
               ...(p.id ? { providerId: p.id } : {})
             });
-            next[p.id] = result.models.length > 0 ? result.models : catalogModelsForKind(p.kind);
+            if (result.source === "live" && result.models.length > 0) {
+              anyLive = true;
+              next[p.id] = result.models;
+            } else {
+              next[p.id] = result.models.length > 0 ? result.models : catalogModelsForKind(p.kind);
+            }
           } catch {
             next[p.id] = catalogModelsForKind(p.kind);
           }
         })
       );
       setLiveModelsByProviderId(next);
-      loadedListKeyRef.current = fingerprint;
+      // Only stick the fingerprint when we got at least one live list (allow retry after failures).
+      if (anyLive || eligible.every((p) => (next[p.id]?.length ?? 0) > 0)) {
+        // Stick when we have models to show; still allow retry if nothing live and catalog-only
+        // for kinds that support live by not setting fingerprint when all failed to live.
+        const supportsLive = eligible.some(
+          (p) => p.kind === "opencode-go" || p.kind === "opencode"
+        );
+        if (anyLive || !supportsLive) {
+          loadedListKeyRef.current = fingerprint;
+        }
+      }
     } finally {
       modelsLoadInFlightRef.current = false;
       setModelsLoading(false);
@@ -573,16 +591,24 @@ export function AiSettings() {
 
   function setFeatureFreeType(feature: AiFeature, modelId: string) {
     patch((current) => {
-      // Free-type sets model only; leave binding as-is (optional at runtime).
+      // Free-type: set model; clear binding if it no longer matches model kind.
+      const modelProviderIds = { ...current.modelProviderIds };
+      const kind = providerKindFromModelId(modelId.trim());
+      const boundId = modelProviderIds[feature]?.trim();
+      const bound = boundId ? current.providers.find((p) => p.id === boundId) : undefined;
+      if (!bound || !kind || bound.kind !== kind) {
+        delete modelProviderIds[feature];
+      }
       return {
         ...current,
-        models: { ...current.models, [feature]: modelId }
+        models: { ...current.models, [feature]: modelId },
+        modelProviderIds
       };
     });
   }
 
   /**
-   * Probe a concrete model. Resolve key from feature binding first, then kind match.
+   * Probe a concrete model. Resolve key with same orphan/kind rules as runtime.
    */
   async function handleTestModel(feature: AiFeature) {
     const current = form;
@@ -594,20 +620,22 @@ export function AiSettings() {
       return;
     }
 
-    const boundId = current.modelProviderIds[feature]?.trim();
-    let provider = boundId ? current.providers.find((p) => p.id === boundId) : undefined;
+    const kind = providerKindFromModelId(modelId);
+    if (!kind) {
+      toast.error("Could not read provider from model id");
+      return;
+    }
+
+    const provider = resolveProviderRowForModel({
+      modelId,
+      preferredProviderId: current.modelProviderIds[feature],
+      providers: current.providers,
+      prefer: (p) => Boolean(p.apiKey.trim() || (p.hasApiKey && p.id))
+    });
 
     if (!provider) {
-      const kind = providerKindFromModelId(modelId);
-      if (!kind) {
-        toast.error("Could not read provider from model id");
-        return;
-      }
-      provider = current.providers.find((p) => p.kind === kind);
-      if (!provider) {
-        toast.error(`Add a ${aiProviderLabel(kind)} provider with an API key first`);
-        return;
-      }
+      toast.error(`Add a ${aiProviderLabel(kind)} provider with an API key first`);
+      return;
     }
 
     const draftKey = provider.apiKey.trim();
@@ -649,13 +677,12 @@ export function AiSettings() {
     const modelId = form.models[feature]?.trim() ?? "";
     if (!modelId.includes("/")) return false;
 
-    const boundId = form.modelProviderIds[feature]?.trim();
-    let provider = boundId ? form.providers.find((p) => p.id === boundId) : undefined;
-    if (!provider) {
-      const kind = providerKindFromModelId(modelId);
-      if (!kind) return false;
-      provider = form.providers.find((p) => p.kind === kind);
-    }
+    const provider = resolveProviderRowForModel({
+      modelId,
+      preferredProviderId: form.modelProviderIds[feature],
+      providers: form.providers,
+      prefer: (p) => Boolean(p.apiKey.trim() || (p.hasApiKey && p.id))
+    });
     if (!provider) return false;
     return Boolean(provider.apiKey.trim() || (provider.hasApiKey && provider.id));
   }

@@ -1,5 +1,6 @@
 import { AI_FEATURES, DEFAULT_AI_MODELS, DEFAULT_MAIL_REPLY_AUTONOMY } from "./constants";
 import { getMastraProvider, toMastraModelId } from "./mastra-provider-catalog";
+import { providerKindFromModelId } from "./runtime-llm";
 import {
   type AiFeature,
   type AiModelsMap,
@@ -142,6 +143,34 @@ export function stripDeadModelProviderIds(
     }
   }
   return next;
+}
+
+/**
+ * Pick the provider row for a model: preferred binding if kind matches model prefix,
+ * else first provider of that kind (prefer rows that look key-ready).
+ * Shared by Test UI and runtime resolve semantics.
+ */
+export function resolveProviderRowForModel<T extends { id: string; kind: string }>(args: {
+  modelId: string;
+  preferredProviderId?: string | null;
+  providers: T[];
+  /** Prefer providers that satisfy this (e.g. has sealed key / draft key). */
+  prefer?: (p: T) => boolean;
+}): T | undefined {
+  const kind = providerKindFromModelId(args.modelId.trim());
+  if (!kind) return undefined;
+
+  const preferredId = args.preferredProviderId?.trim();
+  const preferred = preferredId ? args.providers.find((p) => p.id === preferredId) : undefined;
+
+  if (preferred && preferred.kind === kind) return preferred;
+
+  if (args.prefer) {
+    const preferredKind = args.providers.find((p) => p.kind === kind && args.prefer!(p));
+    if (preferredKind) return preferredKind;
+  }
+
+  return args.providers.find((p) => p.kind === kind);
 }
 
 export function isMailReplyAutonomy(value: string): value is MailReplyAutonomy {
