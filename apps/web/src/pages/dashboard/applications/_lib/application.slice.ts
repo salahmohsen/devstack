@@ -15,6 +15,10 @@ type ApplicationUIState = {
   selectedIds: string[];
   listFilter: ListFilter;
   stageInFlightIds: Record<string, true>;
+  /** Apply package draft review sheet (application id). */
+  packageSheetAppId: string | null;
+  /** Send outreach confirm dialog (application id). */
+  sendOutreachAppId: string | null;
 };
 
 type ApplicationUIActions = {
@@ -22,12 +26,18 @@ type ApplicationUIActions = {
   openEdit: (item: ApplicationOutput) => void;
   closeSheet: () => void;
   openView: (item: ApplicationOutput) => void;
+  /** Always open the info panel for this item (no toggle). */
+  showView: (item: ApplicationOutput) => void;
   closeView: () => void;
   setListFilter: (filter: ListFilter) => void;
   toggleSelect: (id: string) => void;
   selectAll: (ids: string[]) => void;
   clearSelection: () => void;
   markStageInFlight: (id: string, inFlight: boolean) => void;
+  openPackageSheet: (applicationId: string) => void;
+  closePackageSheet: () => void;
+  openSendOutreach: (applicationId: string) => void;
+  closeSendOutreach: () => void;
 };
 
 let state: ApplicationUIState = {
@@ -37,7 +47,9 @@ let state: ApplicationUIState = {
   viewItem: null,
   selectedIds: [],
   listFilter: "open",
-  stageInFlightIds: {}
+  stageInFlightIds: {},
+  packageSheetAppId: null,
+  sendOutreachAppId: null
 };
 
 const listeners = new Set<() => void>();
@@ -60,6 +72,7 @@ const actions: ApplicationUIActions = {
     setState({
       viewItem: state.viewItem?.id === item.id ? null : item
     }),
+  showView: (item) => setState({ viewItem: item }),
   closeView: () => setState({ viewItem: null }),
   setListFilter: (listFilter) => setState({ listFilter }),
   toggleSelect: (id) =>
@@ -75,7 +88,11 @@ const actions: ApplicationUIActions = {
     if (inFlight) next[id] = true;
     else delete next[id];
     setState({ stageInFlightIds: next });
-  }
+  },
+  openPackageSheet: (applicationId) => setState({ packageSheetAppId: applicationId }),
+  closePackageSheet: () => setState({ packageSheetAppId: null }),
+  openSendOutreach: (applicationId) => setState({ sendOutreachAppId: applicationId }),
+  closeSendOutreach: () => setState({ sendOutreachAppId: null })
 };
 
 function subscribe(listener: () => void) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLinkIcon, FileTextIcon } from "lucide-react";
+import { DownloadIcon, ExternalLinkIcon, FileTextIcon } from "lucide-react";
 import { useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -23,9 +23,16 @@ import { FrameDescription } from "@tsu-stack/ui/components/frame";
 
 import { Markdown } from "@/shared/ui/markdown";
 
-import { ApplicationStageBadge, ApplicationStatusBadge } from "@/features/applications";
+import {
+  ApplicationStageBadge,
+  ApplicationStatusBadge,
+  coverLetterDownloadUrl,
+  resumeDownloadUrl
+} from "@/features/applications";
 
 import { ItemInfoPanel } from "@/widgets/items-page";
+
+import { ApplyPackagePanelActions } from "@/pages/dashboard/applications/ui/apply-package-entry-actions";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";
@@ -70,6 +77,10 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
     ? resumesQuery.data?.find((r) => r.id === item.resumeId)
     : undefined;
 
+  const hasMaterials = Boolean(
+    item.resumeId ?? item.coverLetterR2Key ?? item.coverLetterBody ?? item.outreachBody
+  );
+
   return (
     <>
       <ItemInfoPanel
@@ -92,6 +103,99 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
         {item.hiringUrgency !== "unknown" ? (
           <div className="mb-4 flex flex-wrap gap-2">
             <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
+          </div>
+        ) : null}
+
+        <ApplyPackagePanelActions app={item} className="mb-4" />
+
+        {hasMaterials ? (
+          <div className="mb-4 space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              Materials
+            </p>
+            <dl className="space-y-2.5">
+              {item.resumeId ? (
+                <MetaRow label="Resume">
+                  <span className="inline-flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
+                      onClick={() => setResumePreviewOpen(true)}
+                    >
+                      <FileTextIcon className="size-3.5" aria-hidden />
+                      Preview
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-foreground hover:text-foreground"
+                      render={
+                        <a
+                          href={resumeDownloadUrl(item.resumeId)}
+                          download
+                          aria-label="Download resume PDF"
+                        >
+                          Download
+                        </a>
+                      }
+                    >
+                      <DownloadIcon className="size-3.5" aria-hidden />
+                    </Button>
+                  </span>
+                </MetaRow>
+              ) : null}
+              {item.coverLetterR2Key ? (
+                <MetaRow label="Cover letter">
+                  <span className="inline-flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
+                      render={
+                        <a
+                          href={coverLetterDownloadUrl(item.id, true)}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Preview cover letter PDF"
+                        >
+                          Preview
+                        </a>
+                      }
+                    >
+                      <FileTextIcon className="size-3.5" aria-hidden />
+                      Preview
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-foreground hover:text-foreground"
+                      render={
+                        <a
+                          href={coverLetterDownloadUrl(item.id)}
+                          download
+                          aria-label="Download cover letter PDF"
+                        >
+                          Download
+                        </a>
+                      }
+                    >
+                      <DownloadIcon className="size-3.5" aria-hidden />
+                    </Button>
+                  </span>
+                </MetaRow>
+              ) : null}
+              {item.recruiterEmail ? (
+                <MetaRow label="Recruiter">{item.recruiterEmail}</MetaRow>
+              ) : null}
+              {item.outreachSentAt ? (
+                <MetaRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</MetaRow>
+              ) : null}
+            </dl>
           </div>
         ) : null}
 
@@ -121,7 +225,7 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
           {sourceLabel ? <MetaRow label="Source">{sourceLabel}</MetaRow> : null}
           <MetaRow label="Stage changed">{formatWhen(item.stageChangedAt)}</MetaRow>
           {item.outcomeAt ? <MetaRow label="Closed">{formatWhen(item.outcomeAt)}</MetaRow> : null}
-          {item.resumeId ? (
+          {item.resumeId && !hasMaterials ? (
             <MetaRow label="Resume">
               <Button
                 type="button"
@@ -180,7 +284,7 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
             </DialogHeader>
             <div className="min-h-0 flex-1 bg-muted/30">
               <embed
-                src={`/api/resume/download/?id=${item.resumeId}&view=1`}
+                src={resumeDownloadUrl(item.resumeId, true)}
                 type="application/pdf"
                 className="h-full min-h-0 w-full"
                 title={linkedResume?.filename ?? "Resume PDF"}

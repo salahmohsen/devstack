@@ -79,6 +79,7 @@ import {
 import { ItemsEmpty } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
+import { ApplyPackageMenuItems } from "@/pages/dashboard/applications/ui/apply-package-entry-actions";
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
@@ -182,6 +183,8 @@ function ApplicationCardActions({ app, slots }: { app: ApplicationOutput; slots:
           })}
         </SubPopup>
       </Sub>
+
+      <ApplyPackageMenuItems app={app} slots={{ Item, Separator }} />
 
       <Sub>
         <SubTrigger>

@@ -3,6 +3,7 @@
 import { LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
 
+import { type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
@@ -23,8 +24,12 @@ import { useApplicationStore } from "@/pages/dashboard/applications/_lib/applica
 import { useApplicationsView } from "@/pages/dashboard/applications/_lib/use-applications-view";
 import { ApplicationFormSheet } from "@/pages/dashboard/applications/application-form-sheet";
 import { ApplicationInfoPanel } from "@/pages/dashboard/applications/ui/application-info-panel";
+import { ApplyPackageSheet } from "@/pages/dashboard/applications/ui/apply-package-sheet";
 import { ApplicationsBoard } from "@/pages/dashboard/applications/ui/board";
 import { ApplicationsList } from "@/pages/dashboard/applications/ui/list";
+import { SendOutreachDialog } from "@/pages/dashboard/applications/ui/send-outreach-dialog";
+
+const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 
 export function ApplicationsPage() {
   const { view, setView } = useApplicationsView();
@@ -38,10 +43,15 @@ export function ApplicationsPage() {
     closeSheet,
     closeView,
     openView,
-    listFilter
+    listFilter,
+    packageSheetAppId,
+    closePackageSheet,
+    sendOutreachAppId,
+    closeSendOutreach
   } = useApplicationStore();
 
-  const applications = listQuery.data ?? [];
+  // Stable empty fallback so memo deps do not thrash every render.
+  const applications = listQuery.data ?? EMPTY_APPLICATIONS;
 
   const filtered = useMemo(() => {
     if (listFilter === "open") return applications.filter((a) => a.outcome == null);
@@ -49,8 +59,27 @@ export function ApplicationsPage() {
     return applications;
   }, [applications, listFilter]);
 
+  // Keep side panel in sync with list refetches (package generate/accept/send).
+  const liveViewItem = useMemo(() => {
+    if (!viewItem) return null;
+    return applications.find((a) => a.id === viewItem.id) ?? viewItem;
+  }, [viewItem, applications]);
+
+  const packageApplication = useMemo(() => {
+    if (!packageSheetAppId) return null;
+    return applications.find((a) => a.id === packageSheetAppId) ?? null;
+  }, [packageSheetAppId, applications]);
+
+  const sendApplication = useMemo(() => {
+    if (!sendOutreachAppId) return null;
+    return applications.find((a) => a.id === sendOutreachAppId) ?? null;
+  }, [sendOutreachAppId, applications]);
+
   // Side panel works for both board (View / card click) and list (row click).
-  const isItemOpen = useMemo(() => (viewItem ? { [viewItem.id]: true } : null), [viewItem]);
+  const isItemOpen = useMemo(
+    () => (liveViewItem ? { [liveViewItem.id]: true } : null),
+    [liveViewItem]
+  );
   const isAnyOpen = isAnyOpened(isItemOpen);
 
   const setOpenedItem = useCallback(
@@ -81,7 +110,7 @@ export function ApplicationsPage() {
   const containerRef = useRef<HTMLUListElement | null>(null);
   const { handleNext, handlePrev } = useItemsNavigation({
     items: filtered,
-    openedItem: viewItem,
+    openedItem: liveViewItem,
     isItemOpen,
     setOpenedItem,
     setIsItemOpen,
@@ -139,7 +168,7 @@ export function ApplicationsPage() {
           )}
         </div>
 
-        <ItemsInfoPanel open={isAnyOpen} item={viewItem}>
+        <ItemsInfoPanel open={isAnyOpen} item={liveViewItem}>
           {(item) => <ApplicationInfoPanel item={item} />}
         </ItemsInfoPanel>
 
@@ -152,6 +181,22 @@ export function ApplicationsPage() {
           }}
           mode={sheetMode}
           initialData={editItem}
+        />
+
+        <ApplyPackageSheet
+          open={packageSheetAppId != null}
+          application={packageApplication}
+          onOpenChange={(open) => {
+            if (!open) closePackageSheet();
+          }}
+        />
+
+        <SendOutreachDialog
+          open={sendOutreachAppId != null}
+          application={sendApplication}
+          onOpenChange={(open) => {
+            if (!open) closeSendOutreach();
+          }}
         />
       </PageLayout>
     </ItemsNavProvider>

@@ -59,6 +59,7 @@ type FormValues = {
   notes: string;
   hiringUrgency: "unknown" | "immediate" | "soon" | "flexible";
   resumeId: string;
+  recruiterEmail: string;
 };
 
 const emptyValues: FormValues = {
@@ -71,7 +72,8 @@ const emptyValues: FormValues = {
   description: "",
   notes: "",
   hiringUrgency: "unknown",
-  resumeId: ""
+  resumeId: "",
+  recruiterEmail: ""
 };
 
 function toFormValues(item: ApplicationOutput): FormValues {
@@ -85,7 +87,8 @@ function toFormValues(item: ApplicationOutput): FormValues {
     description: item.description ?? "",
     notes: item.notes ?? "",
     hiringUrgency: item.hiringUrgency,
-    resumeId: item.resumeId ?? ""
+    resumeId: item.resumeId ?? "",
+    recruiterEmail: item.recruiterEmail ?? ""
   };
 }
 
@@ -125,7 +128,10 @@ export function ApplicationFormSheet({
         description: value.description || null,
         notes: value.notes || null,
         hiringUrgency: value.hiringUrgency,
-        resumeId: value.resumeId ? value.resumeId : null
+        resumeId: value.resumeId ? value.resumeId : null,
+        ...(isEdit
+          ? { recruiterEmail: value.recruiterEmail.trim() ? value.recruiterEmail.trim() : null }
+          : {})
       };
       if (isEdit && id) {
         updateMutation.mutate({ id, data: payload }, { onSuccess: () => onOpenChange(false) });
@@ -293,6 +299,17 @@ export function ApplicationFormSheet({
                 />
               )}
             </form.AppField>
+            {isEdit ? (
+              <form.AppField name="recruiterEmail">
+                {(field) => (
+                  <field.InputField
+                    label="Recruiter email"
+                    type="email"
+                    placeholder="recruiter@company.com"
+                  />
+                )}
+              </form.AppField>
+            ) : null}
             <form.AppField name="description">
               {(field) => (
                 <field.MarkdownField
