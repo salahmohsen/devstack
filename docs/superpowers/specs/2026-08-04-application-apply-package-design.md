@@ -9,6 +9,7 @@
 - Seeker Applications CRM — `docs/superpowers/specs/2026-07-28-seeker-applications-crm-design.md`
 - Career Inbox / AI platform — `docs/superpowers/specs/2026-07-29-career-inbox-ai-platform-design.md`
 - Career mail assistant — `docs/superpowers/specs/2026-07-31-career-mail-assistant-design.md`
+- Apply package workflow split — `docs/superpowers/specs/2026-08-04-apply-package-workflow-split-design.md` (generation: rewrite-all + multi-step)
 - Resume import (source PDF ≠ generated resume) — ADR-0023 / onboarding design
 - Generated resumes — `resume` table, `packages/api` resume router + `buildResumeDocument`
 
@@ -30,25 +31,25 @@ Not in scope: Easy Apply automation, ATS form bots, Review-queue for this packag
 
 ## Frozen decisions (grill log)
 
-| #   | Topic           | Decision                                                                             |
-| --- | --------------- | ------------------------------------------------------------------------------------ |
-| 1   | Product object  | Linked package on the application                                                    |
-| 2   | Resume AI       | Select + rewrite bullets (grounded; no inventing employers)                          |
-| 3   | Storage / send  | Columns on `application` + Confirm & send (not Review queue)                         |
-| 4   | Engine          | Mastra workflow (AI judgment; schema rails only)                                     |
-| 5   | Commit          | Structured draft → **Accept** materializes                                           |
-| 6   | Recruiter email | Optional field; AI may propose; user confirms; required to send                      |
-| 7   | Evidence        | Portfolio-opted-in only (`portfolioEntryId` set)                                     |
-| 8   | Re-run          | New draft; Accept creates **new** resume PDF + retargets `resumeId`; old resume kept |
-| 9   | Attachment      | Always attach resume PDF on send                                                     |
-| 10  | Stage           | Successful send: `saved` → `applied`                                                 |
-| 11  | Thin JD         | Fetch listing when description empty/short                                           |
-| 12  | Draft store     | Server-persisted draft JSON on application                                           |
-| 13  | Copy            | Separate cover letter **and** outreach subject/body                                  |
-| 14  | CTA             | Application info panel + board/list row menu                                         |
-| 15  | Send metadata   | `outreachSentAt` + `outreachProviderMessageId` only (no body snapshot v1)            |
-| 16  | Preflight       | Fail closed (portfolio / AI / mail)                                                  |
-| 17  | Cover artifact  | Text + cover-letter PDF on Accept                                                    |
+| #   | Topic           | Decision                                                                                                                                                                                                                                                                          |
+| --- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Product object  | Linked package on the application                                                                                                                                                                                                                                                 |
+| 2   | Resume AI       | **Superseded for generation** by workflow-split: rewrite **all** portfolio-opted-in items with `include: true` on PDF (grounded; no inventing employers). User may still toggle `include` in review before Accept. Original “select + rewrite” no longer describes AI generation. |
+| 3   | Storage / send  | Columns on `application` + Confirm & send (not Review queue)                                                                                                                                                                                                                      |
+| 4   | Engine          | Mastra workflow (AI judgment; schema rails only)                                                                                                                                                                                                                                  |
+| 5   | Commit          | Structured draft → **Accept** materializes                                                                                                                                                                                                                                        |
+| 6   | Recruiter email | Optional field; AI may propose; user confirms; required to send                                                                                                                                                                                                                   |
+| 7   | Evidence        | Portfolio-opted-in only (`portfolioEntryId` set)                                                                                                                                                                                                                                  |
+| 8   | Re-run          | New draft; Accept creates **new** resume PDF + retargets `resumeId`; old resume kept                                                                                                                                                                                              |
+| 9   | Attachment      | Always attach resume PDF on send                                                                                                                                                                                                                                                  |
+| 10  | Stage           | Successful send: `saved` → `applied`                                                                                                                                                                                                                                              |
+| 11  | Thin JD         | Fetch listing when description empty/short                                                                                                                                                                                                                                        |
+| 12  | Draft store     | Server-persisted draft JSON on application                                                                                                                                                                                                                                        |
+| 13  | Copy            | Separate cover letter **and** outreach subject/body                                                                                                                                                                                                                               |
+| 14  | CTA             | Application info panel + board/list row menu                                                                                                                                                                                                                                      |
+| 15  | Send metadata   | `outreachSentAt` + `outreachProviderMessageId` only (no body snapshot v1)                                                                                                                                                                                                         |
+| 16  | Preflight       | Fail closed (portfolio / AI / mail)                                                                                                                                                                                                                                               |
+| 17  | Cover artifact  | Text + cover-letter PDF on Accept                                                                                                                                                                                                                                                 |
 
 ---
 
@@ -179,8 +180,10 @@ Thin structured agent (e.g. `applyPackageAgent`) with BYO model via `requestCont
 ### Steps (logical)
 
 1. **prepare** — server builds workflow input (app + portfolio + llm + optional page text)
-2. **analyze-and-draft** — single agent.generate structured `ApplyPackageDraft` (or split analyze/select/write if timeouts force it)
-3. **validate** — schema + id membership; strip unknown ids
+2. **apply-package-workflow (split)** — see `2026-08-04-apply-package-workflow-split-design.md`:
+   prepare-context → rewrite-experiences (chunks of 3) → rewrite-projects (chunks of 3) → draft-summary-and-letters → assemble-draft.
+   Product: rewrite all portfolio-opted-in items; all `include: true` on PDF.
+3. **validate** — schema + id membership; strip unknown ids (also enforced inside `assemble-draft`)
 
 ### Thin JD threshold
 
