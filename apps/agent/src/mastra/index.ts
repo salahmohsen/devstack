@@ -16,6 +16,7 @@ import {
 } from "@mastra/observability";
 import { PostgresStore } from "@mastra/pg";
 
+import { createApplyPackageAgent } from "#@/mastra/agents/apply-package-agent";
 import { createCrmApplicationMatcherAgent } from "#@/mastra/agents/crm-application-matcher-agent";
 import { createCrmStageAdvisorAgent } from "#@/mastra/agents/crm-stage-advisor-agent";
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
@@ -29,6 +30,7 @@ import { createResumeImportExtractorAgent } from "#@/mastra/agents/resume-import
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import "#@/mastra/logger-bootstrap";
 import { agentSessionAuth } from "#@/mastra/session-auth";
+import { applyPackageWorkflow } from "#@/mastra/workflows/apply-package-workflow";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
 import { mailJobHarvestWorkflow } from "#@/mastra/workflows/mail-job-harvest-workflow";
@@ -130,7 +132,8 @@ export const mastra = new Mastra({
     mailProcessWorkflow,
     mailClassifyWorkflow,
     mailReplyWorkflow,
-    mailJobHarvestWorkflow
+    mailJobHarvestWorkflow,
+    applyPackageWorkflow
   },
   agents: {
     stackCategorizerAgent: createStackCategorizerAgent(),
@@ -143,7 +146,8 @@ export const mastra = new Mastra({
     jobPreferenceMatchScorer: createJobPreferenceMatchScorerAgent(),
     crmApplicationMatcher: createCrmApplicationMatcherAgent(),
     crmStageAdvisor: createCrmStageAdvisorAgent(),
-    providerPingAgent: createProviderPingAgent()
+    providerPingAgent: createProviderPingAgent(),
+    applyPackageAgent: createApplyPackageAgent()
   },
   storage,
   logger: new PinoLogger({

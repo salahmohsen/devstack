@@ -32,3 +32,6 @@ export const CRM_APPLICATION_MATCH_SKILL_PATH = skillPath("crm-application-match
 
 /** Propose pipeline stage/outcome from mail. */
 export const CRM_STAGE_POLICY_SKILL_PATH = skillPath("crm-stage-policy");
+
+/** Tailored apply package (resume rewrite + cover + outreach). */
+export const APPLICATION_APPLY_PACKAGE_SKILL_PATH = skillPath("application-apply-package");
