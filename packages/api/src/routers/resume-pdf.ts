@@ -12,6 +12,11 @@ export type ResumeBuilderData = {
       isPresent: boolean;
       description: string;
       includedInPortfolio: boolean;
+      /**
+       * Optional pre-rewritten bullets (e.g. apply package).
+       * When set and non-empty, used instead of parsing `description` HTML.
+       */
+      bullets?: string[];
     }>;
     projects: Array<{
       title: string;
@@ -19,6 +24,8 @@ export type ResumeBuilderData = {
       stacks: Array<{ name: string }>;
       includedInPortfolio: boolean;
       isArchived: boolean;
+      /** Optional rewritten bullets for apply-package tailored resumes. */
+      bullets?: string[];
     }>;
     stacks: Array<{
       name: string;
@@ -33,6 +40,8 @@ export type ResumeBuilderData = {
     name: string;
     email: string;
   };
+  /** Optional tailored professional summary (apply package Accept). */
+  professionalSummary?: string | null;
 };
 
 const SPACING = {
@@ -137,6 +146,17 @@ export function buildResumeDocument(data: ResumeBuilderData): {
 
   blocks.push({ type: "spacer" as const, height: SPACING.contactToFirstSection });
 
+  const professionalSummary = data.professionalSummary?.trim();
+  if (professionalSummary) {
+    blocks.push({ type: "heading" as const, text: "SUMMARY", level: 2 as const });
+    blocks.push({
+      type: "paragraph" as const,
+      text: professionalSummary,
+      fontSize: 9
+    });
+    blocks.push({ type: "spacer" as const, height: SPACING.itemMarginBottom });
+  }
+
   if (experiences.length > 0) {
     blocks.push({ type: "heading" as const, text: "EXPERIENCE", level: 2 as const });
     for (const exp of experiences) {
@@ -151,7 +171,8 @@ export function buildResumeDocument(data: ResumeBuilderData): {
         fontSize: 9,
         color: COLORS.secondary
       });
-      const bullets = extractBullets(exp.description);
+      const rewritten = (exp.bullets ?? []).map((b) => b.trim()).filter(Boolean);
+      const bullets = rewritten.length > 0 ? rewritten : extractBullets(exp.description);
       if (bullets.length > 0) {
         blocks.push({
           type: "list" as const,
@@ -172,6 +193,15 @@ export function buildResumeDocument(data: ResumeBuilderData): {
         blocks.push({
           type: "paragraph" as const,
           text: stripHtml(proj.summary),
+          fontSize: 9
+        });
+      }
+      const projectBullets = (proj.bullets ?? []).map((b) => b.trim()).filter(Boolean);
+      if (projectBullets.length > 0) {
+        blocks.push({
+          type: "list" as const,
+          items: projectBullets,
+          style: "bullet" as const,
           fontSize: 9
         });
       }

@@ -23,6 +23,7 @@ import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
 import { Route as ApiResumeDownloadIndexRouteImport } from './routes/api/resume/download/index'
+import { Route as ApiCoverLetterDownloadIndexRouteImport } from './routes/api/cover-letter/download/index'
 import { Route as rootLayoutReposRepoIndexRouteImport } from './routes/(root-layout)/repos/$repo/index'
 import { Route as rootLayout_protectedPlaygroundIndexRouteImport } from './routes/(root-layout)/__protected/playground/index'
 import { Route as rootLayout_protectedDashboardIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/index'
@@ -133,6 +134,12 @@ const ApiResumeDownloadIndexRoute = ApiResumeDownloadIndexRouteImport.update({
   path: '/api/resume/download/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCoverLetterDownloadIndexRoute =
+  ApiCoverLetterDownloadIndexRouteImport.update({
+    id: '/api/cover-letter/download/',
+    path: '/api/cover-letter/download/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const rootLayoutReposRepoIndexRoute =
   rootLayoutReposRepoIndexRouteImport.update({
     id: '/',
@@ -365,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
+  '/api/cover-letter/download/': typeof ApiCoverLetterDownloadIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -409,6 +417,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof rootLayout_protectedDashboardIndexRoute
   '/playground': typeof rootLayout_protectedPlaygroundIndexRoute
   '/repos/$repo': typeof rootLayoutReposRepoIndexRoute
+  '/api/cover-letter/download': typeof ApiCoverLetterDownloadIndexRoute
   '/api/resume/download': typeof ApiResumeDownloadIndexRoute
   '/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -461,6 +470,7 @@ export interface FileRoutesById {
   '/(root-layout)/__protected/dashboard/': typeof rootLayout_protectedDashboardIndexRoute
   '/(root-layout)/__protected/playground/': typeof rootLayout_protectedPlaygroundIndexRoute
   '/(root-layout)/repos/$repo/': typeof rootLayoutReposRepoIndexRoute
+  '/api/cover-letter/download/': typeof ApiCoverLetterDownloadIndexRoute
   '/api/resume/download/': typeof ApiResumeDownloadIndexRoute
   '/(root-layout)/__protected/dashboard/mail/$category': typeof rootLayout_protectedDashboardMailCategoryRoute
   '/(root-layout)/repos/$repo/blob/$': typeof rootLayoutReposRepoBlobSplatRoute
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/playground/'
     | '/repos/$repo/'
+    | '/api/cover-letter/download/'
     | '/api/resume/download/'
     | '/dashboard/mail/$category'
     | '/repos/$repo/blob/$'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/playground'
     | '/repos/$repo'
+    | '/api/cover-letter/download'
     | '/api/resume/download'
     | '/dashboard/mail/$category'
     | '/repos/$repo/blob/$'
@@ -607,6 +619,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/__protected/dashboard/'
     | '/(root-layout)/__protected/playground/'
     | '/(root-layout)/repos/$repo/'
+    | '/api/cover-letter/download/'
     | '/api/resume/download/'
     | '/(root-layout)/__protected/dashboard/mail/$category'
     | '/(root-layout)/repos/$repo/blob/$'
@@ -642,6 +655,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
   ApiFilesIndexRoute: typeof ApiFilesIndexRoute
+  ApiCoverLetterDownloadIndexRoute: typeof ApiCoverLetterDownloadIndexRoute
   ApiResumeDownloadIndexRoute: typeof ApiResumeDownloadIndexRoute
 }
 
@@ -743,6 +757,13 @@ declare module '@tanstack/react-router' {
       path: '/api/resume/download'
       fullPath: '/api/resume/download/'
       preLoaderRoute: typeof ApiResumeDownloadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cover-letter/download/': {
+      id: '/api/cover-letter/download/'
+      path: '/api/cover-letter/download'
+      fullPath: '/api/cover-letter/download/'
+      preLoaderRoute: typeof ApiCoverLetterDownloadIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root-layout)/repos/$repo/': {
@@ -1209,6 +1230,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,
   ApiFilesIndexRoute: ApiFilesIndexRoute,
+  ApiCoverLetterDownloadIndexRoute: ApiCoverLetterDownloadIndexRoute,
   ApiResumeDownloadIndexRoute: ApiResumeDownloadIndexRoute,
 }
 export const routeTree = rootRouteImport

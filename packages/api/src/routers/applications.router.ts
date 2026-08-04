@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  AcceptApplyPackageInputSchema,
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
   CreateApplicationInputSchema,
@@ -13,6 +14,7 @@ import {
 } from "@tsu-stack/core";
 import { applicationRepository, resumeRepository } from "@tsu-stack/db/repositories";
 
+import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
@@ -238,6 +240,41 @@ export const applicationsRouter = {
           throw errors.AI_NOT_CONFIGURED({ message: result.message });
         }
         throw errors.AGENT_FAILED({ message: result.message });
+      }
+      return toApplicationOutput(result.application);
+    }),
+
+  acceptApplyPackage: protectedProcedure
+    .route({
+      description:
+        "Accept an apply package draft: materialize tailored resume + cover PDFs and write accepted fields",
+      method: "POST"
+    })
+    .input(AcceptApplyPackageInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: {
+        message: "Application not found"
+      },
+      NO_DRAFT: {
+        message: "No apply package draft to accept — prepare a package first"
+      },
+      INVALID_DRAFT: {
+        message: "Apply package draft is invalid — regenerate the package"
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const result = await acceptApplyPackage({
+        applicationId: input.applicationId,
+        userId,
+        draft: input.draft,
+        mediaBucket: context.mediaBucket
+      });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "NO_DRAFT") throw errors.NO_DRAFT({ message: result.message });
+        throw errors.INVALID_DRAFT({ message: result.message });
       }
       return toApplicationOutput(result.application);
     })
