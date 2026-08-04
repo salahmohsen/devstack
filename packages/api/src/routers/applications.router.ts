@@ -36,6 +36,16 @@ function toApplicationOutput(
     outcomeAt: row.outcomeAt,
     hiringUrgency: row.hiringUrgency,
     resumeId: row.resumeId,
+    recruiterEmail: row.recruiterEmail,
+    coverLetterBody: row.coverLetterBody,
+    coverLetterR2Key: row.coverLetterR2Key,
+    coverLetterFilename: row.coverLetterFilename,
+    outreachSubject: row.outreachSubject,
+    outreachBody: row.outreachBody,
+    outreachSentAt: row.outreachSentAt,
+    outreachProviderMessageId: row.outreachProviderMessageId,
+    applyPackageDraft: row.applyPackageDraft,
+    applyPackageDraftedAt: row.applyPackageDraftedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt
   };

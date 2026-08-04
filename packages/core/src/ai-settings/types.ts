@@ -8,7 +8,8 @@ export const AiFeatureSchema = z.enum([
   "resumeImport",
   "stacks",
   "hubChat",
-  "scorer"
+  "scorer",
+  "applyPackage"
 ]);
 export type AiFeature = z.infer<typeof AiFeatureSchema>;
 
@@ -53,7 +54,8 @@ export const AiModelsMapSchema = z.object({
   resumeImport: AiModelIdSchema,
   stacks: AiModelIdSchema,
   hubChat: AiModelIdSchema,
-  scorer: AiModelIdSchema
+  scorer: AiModelIdSchema,
+  applyPackage: AiModelIdSchema
 });
 export type AiModelsMap = z.infer<typeof AiModelsMapSchema>;
 

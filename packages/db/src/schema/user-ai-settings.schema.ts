@@ -25,6 +25,8 @@ export type StoredAiModels = {
   stacks: string;
   hubChat: string;
   scorer: string;
+  /** Optional so pre-existing rows without this key still typecheck. */
+  applyPackage?: string;
 };
 
 /**

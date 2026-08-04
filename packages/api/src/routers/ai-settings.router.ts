@@ -33,9 +33,11 @@ function toPublicProviders(providers: StoredAiProvider[]): AiProviderPublic[] {
 function toOutput(
   row: NonNullable<Awaited<ReturnType<typeof userAiSettingsRepository.findByUserId>>>
 ) {
+  // Merge defaults so existing users missing new feature keys still pass Zod.
+  const models = { ...defaultAiModels(), ...row.models };
   return AiSettingsOutputSchema.parse({
     providers: toPublicProviders(row.providers),
-    models: row.models,
+    models,
     mailReplyAutonomy: row.mailReplyAutonomy,
     updatedAt: row.updatedAt
   });
@@ -70,7 +72,10 @@ export const aiSettingsRouter = {
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
       const existing = await userAiSettingsRepository.findByUserId(userId);
-      const baseModels: AiModelsMap = existing?.models ? { ...existing.models } : defaultAiModels();
+      const baseModels: AiModelsMap = {
+        ...defaultAiModels(),
+        ...existing?.models
+      };
       const models = mergeAiModels(baseModels, input.models) as StoredAiModels;
       const mailReplyAutonomy = input.mailReplyAutonomy ?? existing?.mailReplyAutonomy ?? "assist";
 
