@@ -2,6 +2,12 @@ import { Bubble, BubbleContent } from "@tsu-stack/ui/components/bubble";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
+  collapseConsecutiveTextParts,
+  filterTextWhileStreaming,
+  type CollapseMessagePart
+} from "@/features/agent-hub";
+
+import {
   Markdown,
   Reasoning,
   ReasoningContent,
@@ -10,21 +16,13 @@ import {
   type ToolPart
 } from "@/components/prompt-kit";
 
-type MessagePart = {
-  type: string;
-  text?: string;
-  toolCallId?: string;
-  toolName?: string;
-  input?: unknown;
-  output?: unknown;
-  errorText?: string;
-  state?: string;
-  approval?: { id: string };
-};
+type MessagePart = CollapseMessagePart;
 
 type AgentHubMessagePartsProps = {
   parts: MessagePart[];
   role: "user" | "assistant" | "system";
+  /** When true, suppress completed intermediate text drafts between agent steps. */
+  isStreaming?: boolean;
 };
 
 function TextPart({ text, isUser }: { text: string; isUser: boolean }) {
@@ -94,15 +92,29 @@ function toToolPart(part: MessagePart): ToolPart {
   };
 }
 
-export function AgentHubMessageParts({ parts, role }: AgentHubMessagePartsProps) {
-  if (parts.length === 0) return null;
+export function AgentHubMessageParts({
+  parts,
+  role,
+  isStreaming = false
+}: AgentHubMessagePartsProps) {
+  const visibleParts = filterTextWhileStreaming(
+    collapseConsecutiveTextParts(parts),
+    isStreaming && role === "assistant"
+  );
+  if (visibleParts.length === 0) return null;
 
   const isUser = role === "user";
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-2.5">
-      {parts.map((part, i) => {
-        const key = `part-${i}-${part.type}`;
+      {visibleParts.map((part, i) => {
+        const key = part.toolCallId
+          ? `tool-${part.toolCallId}`
+          : part.type === "text"
+            ? `text-${i}`
+            : part.type === "reasoning"
+              ? `reasoning-${i}`
+              : `part-${i}-${part.type}`;
 
         if (part.type === "text") {
           return part.text ? <TextPart key={key} text={part.text} isUser={isUser} /> : null;

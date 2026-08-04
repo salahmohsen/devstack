@@ -1,12 +1,20 @@
 export { HUB_SUGGESTIONS } from "./api/hub-suggestions";
 export type { HubSuggestion } from "./api/hub-suggestions";
-export { useHubChat } from "./api/use-hub-chat";
+export { HUB_AGENT_ID, useHubChat } from "./api/use-hub-chat";
 export {
-  useSuspendedRuns,
-  useApproveToolCall,
-  suspendedRunsQueryOptions
-} from "./api/use-hub-approval";
-export { hubKeys } from "./api/query-keys";
+  useListSuspendedRunsQuery,
+  listSuspendedRunsQueryOptions
+} from "./api/list-suspended-runs.query";
+export type { SuspendedRun } from "./api/list-suspended-runs.query";
+export {
+  useListHubMessagesQuery,
+  listHubMessagesQueryOptions
+} from "./api/list-hub-messages.query";
+export {
+  collapseConsecutiveTextParts,
+  filterTextWhileStreaming
+} from "./lib/collapse-consecutive-text-parts";
+export type { CollapseMessagePart } from "./lib/collapse-consecutive-text-parts";
 export { parseAiError, parseHubChatError, presentAiError } from "@/shared/lib/parse-ai-error";
 export type {
   AiErrorFeature,

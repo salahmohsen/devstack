@@ -19,7 +19,14 @@ import {
   getRepoTree
 } from "@tsu-stack/github";
 
-import { hubChatMemoryOptions, hubChatThreadId } from "#@/lib/agent/hub-memory";
+import {
+  CHAT_ALLOWED_AGENT_IDS,
+  HUB_CHAT_AGENT_ID,
+  HUB_CHAT_MAX_STEPS,
+  hubChatMemoryOptions,
+  hubChatThreadId,
+  isChatAllowedAgentId
+} from "#@/lib/agent/hub-memory";
 import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
 import {
   abortPromise,
@@ -241,7 +248,7 @@ async function resolveWorkspacePackageJsons(
   return results;
 }
 
-const agentIdSchema = z.string().default("weather-agent");
+const agentIdSchema = z.enum(CHAT_ALLOWED_AGENT_IDS).default(HUB_CHAT_AGENT_ID);
 
 const messagesSchema = z.array(
   z.object({
@@ -252,8 +259,8 @@ const messagesSchema = z.array(
 
 // AI SDK UIMessage[] — typed as `z.array(z.any())` to avoid leaking
 // AI SDK types into the input contract. The client passes whatever
-// `useChat` gives it.
-const uiMessagesSchema = z.array(z.any());
+// `useChat` gives it. Cap length to reduce abuse surface.
+const uiMessagesSchema = z.array(z.any()).max(80);
 
 export const agentRouter = {
   /**
@@ -306,6 +313,7 @@ export const agentRouter = {
           body: JSON.stringify({
             messages: input.messages,
             ...hubChatMemoryOptions(userId),
+            maxSteps: HUB_CHAT_MAX_STEPS,
             model: { id: llm.modelId, apiKey: llm.apiKey },
             requestContext: {
               userId,
@@ -321,8 +329,7 @@ export const agentRouter = {
           threadId,
           ...byo
         });
-        context.logger.error(error instanceof Error ? error : String(error));
-        throw error;
+        throw error instanceof Error ? error : new Error(String(error));
       }
 
       if (!response.ok) {
@@ -336,8 +343,7 @@ export const agentRouter = {
           bodyPreview: body.slice(0, 200),
           ...byo
         });
-        context.logger.error(new Error(`Agent returned ${response.status}: ${body.slice(0, 200)}`));
-        throw new Error(`Agent returned ${response.status}: ${body}`);
+        throw new Error(`Agent returned ${response.status}: ${body.slice(0, 200)}`);
       }
 
       const data = (await response.json()) as {
@@ -388,7 +394,7 @@ export const agentRouter = {
         messages: uiMessagesSchema
       })
     )
-    .handler(async ({ input, context }) => {
+    .handler(async ({ input, context, signal }) => {
       if (!context.agentWorker) {
         throw new Error("agentWorker not configured");
       }
@@ -422,14 +428,27 @@ export const agentRouter = {
           body: JSON.stringify({
             messages: input.messages,
             ...hubChatMemoryOptions(userId),
+            maxSteps: HUB_CHAT_MAX_STEPS,
             model: { id: llm.modelId, apiKey: llm.apiKey },
             requestContext: {
               userId,
               ...llmRequestContextFields(llm)
             }
-          })
+          }),
+          // Forward client stop/abort so the agent worker request cancels.
+          signal
         });
       } catch (error) {
+        if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) {
+          context.logger.set({
+            event: "agent_hub_chat_stream_aborted",
+            route: "agent.chatStream",
+            agentId: input.agentId,
+            threadId,
+            ...byo
+          });
+          throw error instanceof Error ? error : new Error("Aborted");
+        }
         context.logger.set({
           event: "agent_hub_chat_stream_failed",
           route: "agent.chatStream",
@@ -437,8 +456,7 @@ export const agentRouter = {
           threadId,
           ...byo
         });
-        context.logger.error(error instanceof Error ? error : String(error));
-        throw error;
+        throw error instanceof Error ? error : new Error(String(error));
       }
 
       if (!upstream.ok || !upstream.body) {
@@ -452,13 +470,6 @@ export const agentRouter = {
           bodyPreview: body.slice(0, 200),
           ...byo
         });
-        context.logger.error(
-          new Error(
-            body.trim().length > 0
-              ? `Hub agent error (${upstream.status}): ${body.slice(0, 200)}`
-              : `Hub agent returned ${upstream.status} with an empty body`
-          )
-        );
         // Surface agent body (Memory / BYO / provider errors) instead of opaque 500.
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
           message:
@@ -485,22 +496,17 @@ export const agentRouter = {
     }),
 
   /**
-   * List suspended (paused) runs on a thread. Called lazily from
-   * the dashboard home — once on mount when `messages.length === 0` —
-   * to surface a "Resume previous conversation" banner if the user
-   * has a pending tool-approval from a prior session. Not a polling
-   * endpoint.
+   * List suspended (paused) runs for the caller's hub thread only.
+   * threadId / resourceId are derived from the session — never trusted from the client.
    */
   listSuspendedRuns: protectedProcedure
     .route({
-      description: "List suspended runs on a thread for HITL resume",
+      description: "List suspended runs on the caller's hub thread for HITL resume",
       method: "POST"
     })
     .input(
       z.object({
-        agentId: z.string().default("hub-supervisor"),
-        threadId: z.string().min(1),
-        resourceId: z.string().min(1)
+        agentId: agentIdSchema.optional()
       })
     )
     .output(
@@ -523,12 +529,25 @@ export const agentRouter = {
         throw new Error("agentWorker not configured");
       }
 
+      const userId = context.session.user.id;
+      const agentId = input.agentId ?? HUB_CHAT_AGENT_ID;
+      if (!isChatAllowedAgentId(agentId)) {
+        throw new ORPCError("BAD_REQUEST", { message: "Invalid agentId" });
+      }
+      const threadId = hubChatThreadId(userId);
+      const resourceId = userId;
+
       const upstream = await context.agentWorker.fetch(
-        `/agents/${input.agentId}/suspended-runs?threadId=${encodeURIComponent(input.threadId)}&resourceId=${encodeURIComponent(input.resourceId)}`
+        `/agents/${agentId}/suspended-runs?threadId=${encodeURIComponent(threadId)}&resourceId=${encodeURIComponent(resourceId)}`
       );
       if (!upstream.ok) {
         const body = await upstream.text();
-        throw new Error(`List suspended returned ${upstream.status}: ${body}`);
+        context.logger.set({
+          event: "agent_hub_list_suspended_upstream_error",
+          status: upstream.status,
+          bodyPreview: body.slice(0, 200)
+        });
+        throw new Error(`List suspended returned ${upstream.status}: ${body.slice(0, 200)}`);
       }
       return (await upstream.json()) as Array<{
         runId: string;
@@ -539,6 +558,71 @@ export const agentRouter = {
           requiresApproval: boolean;
         }>;
       }>;
+    }),
+
+  /**
+   * Hydrate hub chat UI from Mastra Memory (session-scoped thread only).
+   */
+  listHubMessages: protectedProcedure
+    .route({
+      description: "List recent hub chat messages for the caller's memory thread",
+      method: "POST"
+    })
+    .input(
+      z.object({
+        agentId: agentIdSchema.optional(),
+        limit: z.number().int().min(1).max(80).optional().default(40)
+      })
+    )
+    .output(
+      z.object({
+        messages: z.array(z.unknown()),
+        uiMessages: z.array(z.unknown()).nullable()
+      })
+    )
+    .handler(async ({ input, context }) => {
+      if (!context.agentWorker) {
+        throw new Error("agentWorker not configured");
+      }
+
+      const userId = context.session.user.id;
+      const agentId = input.agentId ?? HUB_CHAT_AGENT_ID;
+      if (!isChatAllowedAgentId(agentId)) {
+        throw new ORPCError("BAD_REQUEST", { message: "Invalid agentId" });
+      }
+      const threadId = hubChatThreadId(userId);
+      const qs = new URLSearchParams({
+        agentId,
+        resourceId: userId,
+        page: "0",
+        perPage: String(input.limit ?? 40)
+      });
+
+      const upstream = await context.agentWorker.fetch(
+        `/memory/threads/${encodeURIComponent(threadId)}/messages?${qs.toString()}`
+      );
+      if (!upstream.ok) {
+        // Empty / missing thread is fine — return empty history.
+        if (upstream.status === 404) {
+          return { messages: [], uiMessages: [] };
+        }
+        const body = await upstream.text();
+        context.logger.set({
+          event: "agent_hub_list_messages_upstream_error",
+          status: upstream.status,
+          bodyPreview: body.slice(0, 200)
+        });
+        throw new Error(`List hub messages returned ${upstream.status}: ${body.slice(0, 200)}`);
+      }
+
+      const data = (await upstream.json()) as {
+        messages?: unknown[];
+        uiMessages?: unknown[] | null;
+      };
+      return {
+        messages: Array.isArray(data.messages) ? data.messages : [],
+        uiMessages: data.uiMessages ?? null
+      };
     }),
 
   /**
