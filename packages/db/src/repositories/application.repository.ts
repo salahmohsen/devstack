@@ -114,7 +114,27 @@ export const applicationRepository = {
         ...(patch.description !== undefined ? { description: patch.description } : {}),
         ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
         ...(patch.hiringUrgency !== undefined ? { hiringUrgency: patch.hiringUrgency } : {}),
-        ...(patch.resumeId !== undefined ? { resumeId: patch.resumeId } : {})
+        ...(patch.resumeId !== undefined ? { resumeId: patch.resumeId } : {}),
+        ...(patch.recruiterEmail !== undefined ? { recruiterEmail: patch.recruiterEmail } : {}),
+        ...(patch.coverLetterBody !== undefined ? { coverLetterBody: patch.coverLetterBody } : {}),
+        ...(patch.coverLetterR2Key !== undefined
+          ? { coverLetterR2Key: patch.coverLetterR2Key }
+          : {}),
+        ...(patch.coverLetterFilename !== undefined
+          ? { coverLetterFilename: patch.coverLetterFilename }
+          : {}),
+        ...(patch.outreachSubject !== undefined ? { outreachSubject: patch.outreachSubject } : {}),
+        ...(patch.outreachBody !== undefined ? { outreachBody: patch.outreachBody } : {}),
+        ...(patch.outreachSentAt !== undefined ? { outreachSentAt: patch.outreachSentAt } : {}),
+        ...(patch.outreachProviderMessageId !== undefined
+          ? { outreachProviderMessageId: patch.outreachProviderMessageId }
+          : {}),
+        ...(patch.applyPackageDraft !== undefined
+          ? { applyPackageDraft: patch.applyPackageDraft }
+          : {}),
+        ...(patch.applyPackageDraftedAt !== undefined
+          ? { applyPackageDraftedAt: patch.applyPackageDraftedAt }
+          : {})
       })
       .where(and(eq(application.id, id), eq(application.userId, userId)))
       .returning();
