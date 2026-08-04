@@ -759,13 +759,13 @@ export function AiSettings() {
                     {form.providers.map((p, index) => (
                       <li
                         key={p.id}
-                        className="relative space-y-3 rounded-xl border border-border/80 p-3 pe-12"
+                        className="relative space-y-3 rounded-xl border border-border/80 p-4 pe-12"
                       >
                         <Button
                           type="button"
                           size="icon-sm"
                           variant="ghost"
-                          className="absolute inset-e-2 top-2 text-muted-foreground hover:text-destructive"
+                          className="absolute inset-e-2 top-3 text-muted-foreground hover:text-destructive"
                           aria-label="Remove provider"
                           onClick={() =>
                             patch((current) => {
@@ -779,8 +779,9 @@ export function AiSettings() {
                           <Trash2Icon className="size-3.5" />
                         </Button>
 
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-end">
-                          <div className="space-y-1">
+                        {/* Provider · Label · API key — one row on large screens */}
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.4fr)]">
+                          <div className="space-y-1.5">
                             <Label className="text-xs">Provider</Label>
                             <Combobox
                               value={p.kind || null}
@@ -824,7 +825,7 @@ export function AiSettings() {
                               </ComboboxContent>
                             </Combobox>
                           </div>
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <Label className="text-xs">Label</Label>
                             <Input
                               value={p.label}
@@ -841,29 +842,28 @@ export function AiSettings() {
                               placeholder="Display name"
                             />
                           </div>
-                        </div>
-
-                        <div className="space-y-1">
-                          <Label className="text-xs" htmlFor={`ai-provider-key-${p.id}`}>
-                            API key
-                          </Label>
-                          <SecretInput
-                            id={`ai-provider-key-${p.id}`}
-                            value={p.apiKey}
-                            hasSavedSecret={p.hasApiKey}
-                            savedLast4={p.apiKeyLast4}
-                            placeholder={p.hasApiKey ? "Leave blank to keep" : "API key"}
-                            onChange={(next) =>
-                              patch((current) => {
-                                return {
-                                  ...current,
-                                  providers: current.providers.map((row, i) =>
-                                    i === index ? { ...row, apiKey: next } : row
-                                  )
-                                };
-                              })
-                            }
-                          />
+                          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+                            <Label className="text-xs" htmlFor={`ai-provider-key-${p.id}`}>
+                              API key
+                            </Label>
+                            <SecretInput
+                              id={`ai-provider-key-${p.id}`}
+                              value={p.apiKey}
+                              hasSavedSecret={p.hasApiKey}
+                              savedLast4={p.apiKeyLast4}
+                              placeholder={p.hasApiKey ? "Leave blank to keep" : "API key"}
+                              onChange={(next) =>
+                                patch((current) => {
+                                  return {
+                                    ...current,
+                                    providers: current.providers.map((row, i) =>
+                                      i === index ? { ...row, apiKey: next } : row
+                                    )
+                                  };
+                                })
+                              }
+                            />
+                          </div>
                         </div>
                       </li>
                     ))}
@@ -875,211 +875,221 @@ export function AiSettings() {
                 title="Models"
                 description="Test runs a small request with this model and the matching provider key."
               >
-                <div className="space-y-1">
-                  <Label className="text-xs" htmlFor="ai-default-model">
-                    Default model
-                  </Label>
-                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                    <div className="min-w-0 flex-1">
-                      <ModelCombobox
-                        id="ai-default-model"
-                        modelId={defaultModel}
-                        providerId={defaultProviderId}
-                        options={modelOptions}
-                        onPick={setDefaultFromOption}
-                        onFreeType={setDefaultFreeType}
-                        onOpen={() => {
-                          void ensureLiveModels();
-                        }}
-                      />
+                <div className="space-y-5">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs" htmlFor="ai-default-model">
+                      Default model
+                    </Label>
+                    {/*
+                      Model + Test share one row from sm. items-end keeps the button
+                      on the input baseline (label sits above the field only).
+                    */}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                      <div className="min-w-0 flex-1">
+                        <ModelCombobox
+                          id="ai-default-model"
+                          modelId={defaultModel}
+                          providerId={defaultProviderId}
+                          options={modelOptions}
+                          onPick={setDefaultFromOption}
+                          onFreeType={setDefaultFreeType}
+                          onOpen={() => {
+                            void ensureLiveModels();
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="w-full shrink-0 sm:w-auto"
+                        disabled={testingFeature !== null || !canTestFeature("reply")}
+                        aria-label={`Test model ${defaultModel}`}
+                        onClick={() => void handleTestModel("reply")}
+                      >
+                        {testingFeature === "reply" ? (
+                          <Spinner className="size-3.5" />
+                        ) : (
+                          <UnplugIcon className="size-3.5" />
+                        )}
+                        {testingFeature === "reply" ? "Testing…" : "Test"}
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="w-full shrink-0 lg:w-auto"
-                      disabled={testingFeature !== null || !canTestFeature("reply")}
-                      aria-label={`Test model ${defaultModel}`}
-                      onClick={() => void handleTestModel("reply")}
-                    >
-                      {testingFeature === "reply" ? (
-                        <Spinner className="size-3.5" />
-                      ) : (
-                        <UnplugIcon className="size-3.5" />
-                      )}
-                      {testingFeature === "reply" ? "Testing…" : "Test"}
-                    </Button>
+                    {modelsLoading ? (
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Spinner className="size-3" />
+                        Loading models…
+                      </p>
+                    ) : null}
                   </div>
-                  {modelsLoading ? (
-                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Spinner className="size-3" />
-                      Loading models…
-                    </p>
-                  ) : null}
-                </div>
 
-                <Collapsible open={customizeModels} onOpenChange={setCustomizeModels}>
-                  <CollapsibleTrigger
-                    className={cn(
-                      "flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    )}
-                  >
-                    <ChevronDownIcon
+                  <Collapsible open={customizeModels} onOpenChange={setCustomizeModels}>
+                    <CollapsibleTrigger
                       className={cn(
-                        "size-3.5 transition-transform",
-                        customizeModels && "rotate-180"
+                        "flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                       )}
-                    />
-                    Customize per feature
-                  </CollapsibleTrigger>
-                  <CollapsiblePanel className="mt-3 space-y-5">
-                    {CUSTOMIZE_FEATURE_GROUPS.map((group) => (
-                      <div key={group.title} className="space-y-2.5">
-                        <p className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                          {group.title}
-                        </p>
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {group.features.map((feature) => {
-                            const onDefault = isFeatureOnDefault({
-                              feature,
-                              models: form.models,
-                              bindings: form.modelProviderIds
-                            });
-                            const featureModel = form.models[feature];
-                            const featureProviderId = form.modelProviderIds[feature];
-                            const isTesting = testingFeature === feature;
-                            const forceEdit = Boolean(editingFeatures[feature]);
-                            const showDefaultLabel = onDefault && !forceEdit;
+                    >
+                      <ChevronDownIcon
+                        className={cn(
+                          "size-3.5 shrink-0 transition-transform",
+                          customizeModels && "rotate-180"
+                        )}
+                      />
+                      Customize per feature
+                    </CollapsibleTrigger>
+                    <CollapsiblePanel className="mt-4 space-y-6">
+                      {CUSTOMIZE_FEATURE_GROUPS.map((group) => (
+                        <div key={group.title} className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">{group.title}</p>
+                          <div
+                            className={cn(
+                              "grid auto-rows-[1fr] gap-3",
+                              group.features.length > 1 && "sm:grid-cols-2"
+                            )}
+                          >
+                            {group.features.map((feature) => {
+                              const onDefault = isFeatureOnDefault({
+                                feature,
+                                models: form.models,
+                                bindings: form.modelProviderIds
+                              });
+                              const featureModel = form.models[feature];
+                              const featureProviderId = form.modelProviderIds[feature];
+                              const isTesting = testingFeature === feature;
+                              const forceEdit = Boolean(editingFeatures[feature]);
+                              const showDefaultLabel = onDefault && !forceEdit;
 
-                            if (showDefaultLabel) {
+                              // Shared tile shell so Default vs override align on edges/height.
                               return (
                                 <div
                                   key={feature}
-                                  className="flex min-h-18 flex-col justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5"
+                                  className="flex h-full min-h-20 flex-col gap-2 rounded-lg border border-border/80 px-3 py-3"
                                 >
-                                  <Label className="text-xs font-medium text-foreground">
-                                    {AI_FEATURE_LABELS[feature]}
-                                  </Label>
-                                  <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center rounded-md border border-border/70 bg-background/80 px-2 py-0.5 text-xs text-muted-foreground">
-                                      Default
-                                    </span>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 px-2 text-xs"
-                                      onClick={() =>
-                                        setEditingFeatures((prev) => {
-                                          return { ...prev, [feature]: true };
-                                        })
-                                      }
-                                    >
-                                      Change
-                                    </Button>
+                                  <div className="flex min-h-5 items-center justify-between gap-2">
+                                    <Label className="text-xs font-medium text-foreground">
+                                      {AI_FEATURE_LABELS[feature]}
+                                    </Label>
+                                    {showDefaultLabel ? (
+                                      <span className="inline-flex shrink-0 items-center rounded-md border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                        Default
+                                      </span>
+                                    ) : null}
                                   </div>
+
+                                  {showDefaultLabel ? (
+                                    <div className="mt-auto flex items-center justify-between gap-2">
+                                      <span className="truncate text-xs text-muted-foreground">
+                                        Uses default model
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 shrink-0 px-2 text-xs"
+                                        onClick={() =>
+                                          setEditingFeatures((prev) => {
+                                            return { ...prev, [feature]: true };
+                                          })
+                                        }
+                                      >
+                                        Change
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center">
+                                      <div className="min-w-0 flex-1">
+                                        <ModelCombobox
+                                          modelId={featureModel}
+                                          providerId={featureProviderId}
+                                          options={modelOptions}
+                                          onPick={(opt) => {
+                                            setFeatureFromOption(feature, opt);
+                                            setEditingFeatures((prev) => {
+                                              return { ...prev, [feature]: false };
+                                            });
+                                          }}
+                                          onFreeType={(next) => {
+                                            setFeatureFreeType(feature, next);
+                                          }}
+                                          onOpen={() => {
+                                            void ensureLiveModels();
+                                          }}
+                                        />
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full shrink-0 sm:w-auto"
+                                        disabled={
+                                          testingFeature !== null || !canTestFeature(feature)
+                                        }
+                                        aria-label={`Test ${AI_FEATURE_LABELS[feature]} model`}
+                                        onClick={() => void handleTestModel(feature)}
+                                      >
+                                        {isTesting ? (
+                                          <Spinner className="size-3.5" />
+                                        ) : (
+                                          <UnplugIcon className="size-3.5" />
+                                        )}
+                                        {isTesting ? "Testing…" : "Test"}
+                                      </Button>
+                                    </div>
+                                  )}
                                 </div>
                               );
-                            }
-
-                            return (
-                              <div
-                                key={feature}
-                                className="flex min-h-18 flex-col gap-2 rounded-lg border border-border/80 bg-background/40 px-3 py-2.5"
-                              >
-                                <Label className="text-xs font-medium text-foreground">
-                                  {AI_FEATURE_LABELS[feature]}
-                                </Label>
-                                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                                  <div className="min-w-0 flex-1">
-                                    <ModelCombobox
-                                      modelId={featureModel}
-                                      providerId={featureProviderId}
-                                      options={modelOptions}
-                                      onPick={(opt) => {
-                                        setFeatureFromOption(feature, opt);
-                                        setEditingFeatures((prev) => {
-                                          return { ...prev, [feature]: false };
-                                        });
-                                      }}
-                                      onFreeType={(next) => {
-                                        setFeatureFreeType(feature, next);
-                                      }}
-                                      onOpen={() => {
-                                        void ensureLiveModels();
-                                      }}
-                                    />
-                                  </div>
-                                  {!onDefault ? (
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="outline"
-                                      className="w-full shrink-0 lg:w-auto"
-                                      disabled={testingFeature !== null || !canTestFeature(feature)}
-                                      aria-label={`Test ${AI_FEATURE_LABELS[feature]} model`}
-                                      onClick={() => void handleTestModel(feature)}
-                                    >
-                                      {isTesting ? (
-                                        <Spinner className="size-3.5" />
-                                      ) : (
-                                        <UnplugIcon className="size-3.5" />
-                                      )}
-                                      {isTesting ? "Testing…" : "Test"}
-                                    </Button>
-                                  ) : null}
-                                </div>
-                              </div>
-                            );
-                          })}
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </CollapsiblePanel>
-                </Collapsible>
+                      ))}
+                    </CollapsiblePanel>
+                  </Collapsible>
+                </div>
               </SettingsSection>
 
               <SettingsSection
                 title="Mail reply autonomy"
                 description="Assist always generates a draft and waits for confirm in Review. Full auto-sends after generation when job context is present."
               >
-                <Select
-                  value={form.autonomy}
-                  onValueChange={(value) => {
-                    if (!value) return;
-                    patch((current) => {
-                      return {
-                        ...current,
-                        autonomy: value as MailReplyAutonomy
-                      };
-                    });
-                  }}
-                  itemToStringLabel={(value) =>
-                    MAIL_REPLY_AUTONOMY_LABELS[value as MailReplyAutonomy] ?? String(value)
-                  }
-                >
-                  <SelectTrigger className="max-w-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectPopup>
-                    <SelectList>
-                      {MAIL_REPLY_AUTONOMY.map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {MAIL_REPLY_AUTONOMY_LABELS[value]}
-                        </SelectItem>
-                      ))}
-                    </SelectList>
-                  </SelectPopup>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Where alerts go:{" "}
-                  <Link
-                    to="/dashboard/settings/notifications"
-                    className="font-medium text-foreground underline-offset-2 hover:underline"
+                <div className="space-y-2">
+                  <Select
+                    value={form.autonomy}
+                    onValueChange={(value) => {
+                      if (!value) return;
+                      patch((current) => {
+                        return {
+                          ...current,
+                          autonomy: value as MailReplyAutonomy
+                        };
+                      });
+                    }}
+                    itemToStringLabel={(value) =>
+                      MAIL_REPLY_AUTONOMY_LABELS[value as MailReplyAutonomy] ?? String(value)
+                    }
                   >
-                    Notifications
-                  </Link>
-                </p>
+                    <SelectTrigger className="max-w-lg">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectPopup>
+                      <SelectList>
+                        {MAIL_REPLY_AUTONOMY.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {MAIL_REPLY_AUTONOMY_LABELS[value]}
+                          </SelectItem>
+                        ))}
+                      </SelectList>
+                    </SelectPopup>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Where alerts go:{" "}
+                    <Link
+                      to="/dashboard/settings/notifications"
+                      className="font-medium text-foreground underline-offset-2 hover:underline"
+                    >
+                      Notifications
+                    </Link>
+                  </p>
+                </div>
               </SettingsSection>
 
               <SettingsSaveBar
