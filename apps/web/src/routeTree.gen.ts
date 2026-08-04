@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as FirebaseMessagingSwDotjsRouteImport } from './routes/firebase-messaging-sw[.]js'
 import { Route as rootLayoutRouteRouteImport } from './routes/(root-layout)/route'
 import { Route as rootLayoutIndexRouteImport } from './routes/(root-layout)/index'
 import { Route as rootLayout_protectedRouteRouteImport } from './routes/(root-layout)/__protected/route'
@@ -70,6 +71,12 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FirebaseMessagingSwDotjsRoute =
+  FirebaseMessagingSwDotjsRouteImport.update({
+    id: '/firebase-messaging-sw.js',
+    path: '/firebase-messaging-sw.js',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const rootLayoutRouteRoute = rootLayoutRouteRouteImport.update({
   id: '/(root-layout)',
   getParentRoute: () => rootRouteImport,
@@ -352,6 +359,7 @@ const rootLayoutProfileNameReposRepoBlobSplatRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
@@ -402,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/settings/rules/': typeof rootLayout_protectedDashboardSettingsRulesIndexRoute
 }
 export interface FileRoutesByTo {
+  '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
@@ -449,6 +458,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(root-layout)': typeof rootLayoutRouteRouteWithChildren
+  '/firebase-messaging-sw.js': typeof FirebaseMessagingSwDotjsRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/(root-layout)/__protected': typeof rootLayout_protectedRouteRouteWithChildren
@@ -502,6 +512,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/firebase-messaging-sw.js'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/'
@@ -552,6 +563,7 @@ export interface FileRouteTypes {
     | '/dashboard/settings/rules/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/firebase-messaging-sw.js'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/'
@@ -598,6 +610,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/(root-layout)'
+    | '/firebase-messaging-sw.js'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/(root-layout)/__protected'
@@ -651,6 +664,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   rootLayoutRouteRoute: typeof rootLayoutRouteRouteWithChildren
+  FirebaseMessagingSwDotjsRoute: typeof FirebaseMessagingSwDotjsRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
@@ -673,6 +687,13 @@ declare module '@tanstack/react-router' {
       path: '/robots.txt'
       fullPath: '/robots.txt'
       preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/firebase-messaging-sw.js': {
+      id: '/firebase-messaging-sw.js'
+      path: '/firebase-messaging-sw.js'
+      fullPath: '/firebase-messaging-sw.js'
+      preLoaderRoute: typeof FirebaseMessagingSwDotjsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(root-layout)': {
@@ -1226,6 +1247,7 @@ const rootLayoutRouteRouteWithChildren = rootLayoutRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   rootLayoutRouteRoute: rootLayoutRouteRouteWithChildren,
+  FirebaseMessagingSwDotjsRoute: FirebaseMessagingSwDotjsRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,

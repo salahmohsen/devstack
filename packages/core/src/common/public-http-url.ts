@@ -4,9 +4,13 @@
  * Sync path: hostname string checks + IPv4/IPv6 literal parse (no DNS).
  * Async path: {@link assertPublicHttpUrlResolved} also DNS-resolves and
  * rejects private/reserved A/AAAA answers (DNS rebinding mitigation).
+ *
+ * IMPORTANT: no static `node:*` imports — `@tsu-stack/core` is barrel-imported
+ * by the web client. A top-level `node:dns` import externalizes and throws in
+ * the browser, which prevents hydration (page hangs after SSR HTML).
  */
 
-import { promises as dns, type LookupAddress } from "node:dns";
+import { type LookupAddress } from "node:dns";
 
 const BLOCKED_HOSTNAMES = new Set(["localhost", "metadata.google.internal", "169.254.169.254"]);
 
@@ -151,6 +155,10 @@ export async function assertPublicHttpUrlResolved(url: string): Promise<URL> {
   if (isIpLiteral(hostname)) {
     return parsed;
   }
+
+  // Dynamic import so browser bundles that only need assertPublicHttpUrl do not
+  // evaluate node:dns at module load (Vite externalizes it and throws).
+  const { promises: dns } = await import("node:dns");
 
   let addresses: LookupAddress[];
   try {

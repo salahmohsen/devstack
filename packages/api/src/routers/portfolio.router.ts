@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
 import {
+  parseProfileName,
   PortfolioListInputSchema,
   PortfolioListOutputSchema,
   PortfolioToggleInputSchema,
@@ -142,12 +143,18 @@ export const PortfolioRouter = {
           sessionUserId
         });
         if (!resolved) {
-          context.logger.set({
-            event: "portfolio_list_unresolved",
-            host: context.host ?? null,
-            pathProfileName: input.profileName ?? null,
-            hasSession: Boolean(sessionUserId)
-          });
+          // Browser probes (e.g. firebase-messaging-sw.js) and other invalid
+          // segments used to match `/$profileName` and spam ERROR logs.
+          const pathLooksLikeProfile =
+            !input.profileName || parseProfileName(input.profileName).success;
+          if (pathLooksLikeProfile) {
+            context.logger.set({
+              event: "portfolio_list_unresolved",
+              host: context.host ?? null,
+              pathProfileName: input.profileName ?? null,
+              hasSession: Boolean(sessionUserId)
+            });
+          }
           throw errors.NOT_FOUND();
         }
         const all = await listAllOptedIn(resolved.userId, input.filter);

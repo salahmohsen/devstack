@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
-import { isReservedProfilePath } from "@tsu-stack/core";
+import { parseProfileName } from "@tsu-stack/core";
 
 import { generateAppSeo } from "@/shared/lib/seo";
 
@@ -18,7 +18,9 @@ import {
 export const Route = createFileRoute("/(root-layout)/$profileName/")({
   ssr: true,
   beforeLoad: ({ params }) => {
-    if (isReservedProfilePath(params.profileName)) {
+    // Reject reserved segments and non-profile junk (e.g. firebase-messaging-sw.js)
+    // before any portfolio RPC / SSR loader work.
+    if (!parseProfileName(params.profileName).success) {
       throw notFound();
     }
   },

@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 
-import { isReservedProfilePath } from "@tsu-stack/core";
+import { parseProfileName } from "@tsu-stack/core";
 
 import { generateAppSeo } from "@/shared/lib/seo";
 
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/")({
   },
   ssr: false,
   beforeLoad: ({ params }) => {
-    if (isReservedProfilePath(params.profileName)) {
+    if (!parseProfileName(params.profileName).success) {
       throw notFound();
     }
   },

@@ -15,6 +15,12 @@ describe("parseProfileName", () => {
   it("rejects bad chars", () => {
     expect(parseProfileName("Hello World").success).toBe(false);
   });
+
+  it("rejects browser service-worker probes and file-like segments", () => {
+    expect(parseProfileName("firebase-messaging-sw.js").success).toBe(false);
+    expect(parseProfileName("favicon.ico").success).toBe(false);
+    expect(parseProfileName(".well-known").success).toBe(false);
+  });
 });
 
 describe("isReservedProfilePath", () => {
