@@ -1,6 +1,7 @@
 import {
   ApplyPackageDraftSchema,
   ApplyPackageWorkflowInputSchema,
+  extractMastraWorkflowStreamError,
   llmLogFields,
   type ApplyPackageDraft,
   type ApplyPackageWorkflowInput
@@ -14,7 +15,7 @@ import { resolveSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 
 const WORKFLOW_ID = "apply-package-workflow";
 /** Large portfolio rewrite budget — must match agent generate timeout headroom. */
-const TIMEOUT_MS = 180_000;
+const TIMEOUT_MS = 240_000;
 
 /**
  * Run apply-package-workflow on the agent worker.
@@ -138,26 +139,35 @@ export async function callApplyPackageAgent(
     }
 
     const fromStream = await readResultFromStream(streamRes.body);
-    if (fromStream) {
+    if (fromStream.draft) {
       log.set({
         event: "apply_package_agent_ok",
         ...base,
         runId,
-        experienceCount: fromStream.experiences.length,
-        projectCount: fromStream.projects.length,
+        experienceCount: fromStream.draft.experiences.length,
+        projectCount: fromStream.draft.projects.length,
         via: "stream"
       });
       log.emit();
-      return { ok: true, data: fromStream, runId, traceId: null };
+      return { ok: true, data: fromStream.draft, runId, traceId: null };
     }
 
     log.error(new Error("Agent empty result"), {
       event: "apply_package_agent_empty_result",
       ...base,
-      runId
+      runId,
+      streamError: fromStream.errorMessage?.slice(0, 200)
     });
     log.emit({ _forceKeep: true });
-    return { ok: false, failure: { reason: "empty_result", message: "no parseable output" } };
+    return {
+      ok: false,
+      failure: {
+        reason: "empty_result",
+        message:
+          fromStream.errorMessage?.trim() ??
+          "Apply package agent returned no usable draft (empty or truncated output)."
+      }
+    };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     log.error(error instanceof Error ? error : new Error(msg), {
@@ -231,19 +241,23 @@ function parseFrame(raw: string): unknown {
   }
 }
 
-async function readResultFromStream(
-  body: ReadableStream<Uint8Array>
-): Promise<ApplyPackageDraft | null> {
+async function readResultFromStream(body: ReadableStream<Uint8Array>): Promise<{
+  draft: ApplyPackageDraft | null;
+  errorMessage: string | null;
+}> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let last: ApplyPackageDraft | null = null;
+  let draft: ApplyPackageDraft | null = null;
+  let errorMessage: string | null = null;
 
   const consume = (frame: string) => {
     const event = parseFrame(frame);
     if (!event) return;
     const hit = extractWorkflowResult(event);
-    if (hit) last = hit;
+    if (hit) draft = hit;
+    const err = extractMastraWorkflowStreamError(event);
+    if (err) errorMessage = err;
   };
 
   while (true) {
@@ -257,5 +271,5 @@ async function readResultFromStream(
 
   if (buffer.trim()) consume(buffer);
 
-  return last;
+  return { draft, errorMessage };
 }
