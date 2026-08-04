@@ -590,10 +590,7 @@ git commit -m "feat(web): onboarding review apply and done steps"
 
 ```tsx
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/onboarding/")({
-  head: () =>
-    generateAppSeo({
-      /* noindex, title Onboarding */
-    }),
+  head: () => generateAppSeo({/* noindex, title Onboarding */}),
   component: OnboardingPage
 });
 ```

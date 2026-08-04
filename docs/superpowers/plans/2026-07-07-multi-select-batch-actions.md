@@ -218,9 +218,7 @@ Update render logic so batch takes priority over default but sort still wins:
 ```tsx
 {
   isSort ? (
-    {
-      /* existing sort group — unchanged */
-    }
+    {/* existing sort group — unchanged */}
   ) : batch && batch.selectedCount > 0 ? (
     <Group>
       <Button
@@ -256,9 +254,7 @@ Update render logic so batch takes priority over default but sort still wins:
       )}
     </Group>
   ) : (
-    {
-      /* existing default: Reorder + Add — unchanged */
-    }
+    {/* existing default: Reorder + Add — unchanged */}
   );
 }
 ```

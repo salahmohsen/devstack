@@ -77,18 +77,18 @@ Specs:
 
 ### Dashboard surfaces (web)
 
-| Route area                | Business purpose                                                                           |
+| Route area | Business purpose |
 | ------------------------- | ------------------------------------------------------------------------------------------ | ------- | --------------------------- |
-| `/dashboard`              | Hub home                                                                                   |
-| `/dashboard/mail/*`       | Career Inbox by category                                                                   |
-| `/dashboard/review`       | Confirm AI drafts / review items                                                           |
-| `/dashboard/applications` | Job pipeline board/list                                                                    |
+| `/dashboard` | Hub home |
+| `/dashboard/mail/*` | Career Inbox by category |
+| `/dashboard/review` | Confirm AI drafts / review items |
+| `/dashboard/applications` | Job pipeline board/list |
 | `/dashboard/experiences   | projects                                                                                   | stacks` | Evidence CRUD (Sheet forms) |
-| `/dashboard/resumes`      | Resume library                                                                             |
-| `/dashboard/onboarding`   | Owner onboarding / resume import                                                           |
-| `/dashboard/settings/*`   | Profile, account, domain, invites, connections, mail, AI, jobs prefs, rules, notifications |
-| `/{profileName}`          | Public portfolio                                                                           |
-| `/{profileName}/repos`    | Public GitHub surface                                                                      |
+| `/dashboard/resumes` | Resume library |
+| `/dashboard/onboarding` | Owner onboarding / resume import |
+| `/dashboard/settings/*` | Profile, account, domain, invites, connections, mail, AI, jobs prefs, rules, notifications |
+| `/{profileName}` | Public portfolio |
+| `/{profileName}/repos` | Public GitHub surface |
 
 ---
 
