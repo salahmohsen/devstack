@@ -106,11 +106,12 @@ await files.upload(key, file, { contentType: "application/pdf" });
 
 ## Object Key Conventions
 
-| Purpose                                       | Who writes               | Client / relative key       | Full object key                      |
-| --------------------------------------------- | ------------------------ | --------------------------- | ------------------------------------ |
-| Session resume source (onboarding PDF import) | Browser via `/api/files` | `resume-sources/{uuid}.pdf` | `{userId}/resume-sources/{uuid}.pdf` |
-| Generated resume PDF                          | Server `mediaBucket.put` | n/a (server-only)           | `resumes/{filename}`                 |
-| Ad hoc image field                            | Browser via `/api/files` | filename or relative path   | `{userId}/…`                         |
+| Purpose                                       | Who writes               | Client / relative key       | Full object key                                     |
+| --------------------------------------------- | ------------------------ | --------------------------- | --------------------------------------------------- |
+| Session resume source (onboarding PDF import) | Browser via `/api/files` | `resume-sources/{uuid}.pdf` | `{userId}/resume-sources/{uuid}.pdf`                |
+| Generated resume PDF                          | Server `mediaBucket.put` | n/a (server-only)           | `resumes/{filename}` or `{userId}/resumes/…`        |
+| Apply package cover letter PDF                | Server `mediaBucket.put` | n/a (server-only)           | `{userId}/cover-letters/{applicationId}-{uuid}.pdf` |
+| Ad hoc image field                            | Browser via `/api/files` | filename or relative path   | `{userId}/…`                                        |
 
 ### Resume sources (`resume-sources/…`)
 
@@ -128,6 +129,14 @@ await files.upload(key, file, { contentType: "application/pdf" });
 - Linked from the resume domain row (`r2Key` column name is historical; storage is S3/MinIO). Each resume row is scoped by `userId`.
 - Delete removes the DB row and the object (synchronized hard delete).
 - **Onboarding promote:** after a successful `onboarding.apply` with a session source key, the API copies the PDF into a durable resume key, creates a resume row for **that session user** with `author: "admin"` (historical enum value for human/user-authored — not a site-admin role), sets it as default for that user, then deletes the temporary `resume-sources/` object (`packages/api/src/lib/onboarding/promote-resume-source.ts`). Skip/discard still only delete the session source.
+- **Apply package accept** also writes a tailored resume under the tenant resume tree (`packages/api/src/lib/application/accept-apply-package.ts`, `author: "agent"`).
+
+### Cover letters (`{userId}/cover-letters/…`)
+
+- Server-only PDFs from **apply package accept** (`packages/api/src/lib/application/accept-apply-package.ts`).
+- Full key: `{userId}/cover-letters/{applicationId}-{uuid}.pdf`.
+- Linked from the application row (`coverLetterR2Key`, `coverLetterFilename`, `coverLetterBody`). Served via `/api/cover-letter/download/`.
+- Re-accept best-effort deletes the prior cover object before writing a new one (synchronized hard delete of the old key).
 
 ## What Is Not Built Yet
 
