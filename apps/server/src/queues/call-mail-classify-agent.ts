@@ -1,5 +1,6 @@
 import { type AgentCallResult } from "@tsu-stack/api/lib/agent/agent-call-result";
 import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
+import { readMastraResultStream } from "@tsu-stack/api/lib/agent/read-mastra-result-stream";
 import { resolveSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
 import {
   llmLogFields,
@@ -291,44 +292,24 @@ function extractWorkflowResult(payload: unknown): MailClassifyOutput | null {
 async function readResultFromStream(
   body: ReadableStream<Uint8Array>
 ): Promise<{ output: MailClassifyOutput; traceId: string | null } | null> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let last: MailClassifyOutput | null = null;
   let traceId: string | null = null;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith(":")) continue;
-      const jsonLine = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
-      if (!jsonLine || jsonLine === "[DONE]") continue;
-      try {
-        const event = JSON.parse(jsonLine) as unknown;
-        const hit = extractWorkflowResult(event);
-        if (hit) last = hit;
-        const t = extractTraceId(event);
-        if (t) traceId = t;
-        if (event && typeof event === "object") {
-          const e = event as Record<string, unknown>;
-          if (e.payload && typeof e.payload === "object") {
-            const p = extractWorkflowResult(e.payload);
-            if (p) last = p;
-            const pt = extractTraceId(e.payload);
-            if (pt) traceId = pt;
-          }
-        }
-      } catch {
-        // ignore parse errors mid-stream
+  await readMastraResultStream(body, (event) => {
+    const hit = extractWorkflowResult(event);
+    if (hit) last = hit;
+    const t = extractTraceId(event);
+    if (t) traceId = t;
+    if (event && typeof event === "object") {
+      const e = event as Record<string, unknown>;
+      if (e.payload && typeof e.payload === "object") {
+        const p = extractWorkflowResult(e.payload);
+        if (p) last = p;
+        const pt = extractTraceId(e.payload);
+        if (pt) traceId = pt;
       }
     }
-  }
+  });
 
   return last ? { output: last, traceId } : null;
 }

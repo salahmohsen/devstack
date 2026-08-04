@@ -1,3 +1,4 @@
+import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -19,6 +20,30 @@ export function useCreateReplyDraftMutation() {
         });
       },
       onError: (error) => {
+        if (isDefinedError(error)) {
+          switch (error.code) {
+            case "NOT_FOUND":
+              toast.error(error.message || "Mail message not found.");
+              return;
+            case "NOT_CAREER":
+              toast.error(error.message || "System notification mail cannot create reply drafts.");
+              return;
+            case "AGENT_FAILED":
+              toastAiError(
+                error.message || "AI reply draft failed — check Settings → AI and try again",
+                {
+                  feature: "review",
+                  severity: "hard",
+                  action: {
+                    label: "AI settings",
+                    to: "/dashboard/settings/ai"
+                  }
+                }
+              );
+              return;
+          }
+        }
+
         toastAiError(error.message || "Could not create reply draft", {
           feature: "review",
           severity: "hard"

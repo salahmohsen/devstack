@@ -23,10 +23,14 @@ function parseIpv4(hostname: string): [number, number, number, number] | null {
 
 function isPrivateOrReservedIpv4(octets: [number, number, number, number]): boolean {
   const [a, b] = octets;
+  // 0.0.0.0/8 — "this" network / unspecified
+  if (a === 0) return true;
   // 127.0.0.0/8 — loopback
   if (a === 127) return true;
   // 10.0.0.0/8 — private
   if (a === 10) return true;
+  // 100.64.0.0/10 — CGNAT / carrier-grade NAT
+  if (a === 100 && b >= 64 && b <= 127) return true;
   // 172.16.0.0/12 — private
   if (a === 172 && b >= 16 && b <= 31) return true;
   // 192.168.0.0/16 — private

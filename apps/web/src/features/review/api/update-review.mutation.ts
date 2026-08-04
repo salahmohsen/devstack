@@ -1,3 +1,4 @@
+import { isDefinedError } from "@orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -17,6 +18,17 @@ export function useUpdateReviewMutation() {
         });
       },
       onError: (error) => {
+        if (isDefinedError(error)) {
+          switch (error.code) {
+            case "NOT_FOUND":
+              toast.error(error.message || "Review item not found.");
+              return;
+            case "NOT_PENDING":
+              toast.error(error.message || "Only pending items can be edited.");
+              return;
+          }
+        }
+
         toast.error(error.message || "Could not save draft");
       }
     })

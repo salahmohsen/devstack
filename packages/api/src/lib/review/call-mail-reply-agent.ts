@@ -10,6 +10,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { type AgentCallResult } from "#@/lib/agent/agent-call-result";
 import { agentFetch } from "#@/lib/agent/agent-fetch";
+import { readMastraResultStream } from "#@/lib/agent/read-mastra-result-stream";
 import { resolveSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 
 const WORKFLOW_ID = "mail-reply-workflow";
@@ -267,39 +268,19 @@ function extractWorkflowResult(payload: unknown): MailReplyDraftOutput | null {
 async function readResultFromStream(
   body: ReadableStream<Uint8Array>
 ): Promise<MailReplyDraftOutput | null> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let last: MailReplyDraftOutput | null = null;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith(":")) continue;
-      const jsonLine = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
-      if (!jsonLine || jsonLine === "[DONE]") continue;
-      try {
-        const event = JSON.parse(jsonLine) as unknown;
-        const hit = extractWorkflowResult(event);
-        if (hit) last = hit;
-        if (event && typeof event === "object") {
-          const e = event as Record<string, unknown>;
-          if (e.payload && typeof e.payload === "object") {
-            const p = extractWorkflowResult(e.payload);
-            if (p) last = p;
-          }
-        }
-      } catch {
-        // ignore mid-stream parse errors
+  await readMastraResultStream(body, (event) => {
+    const hit = extractWorkflowResult(event);
+    if (hit) last = hit;
+    if (event && typeof event === "object") {
+      const e = event as Record<string, unknown>;
+      if (e.payload && typeof e.payload === "object") {
+        const p = extractWorkflowResult(e.payload);
+        if (p) last = p;
       }
     }
-  }
+  });
 
   return last;
 }

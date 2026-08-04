@@ -1,5 +1,6 @@
 import { type AgentCallResult } from "@tsu-stack/api/lib/agent/agent-call-result";
 import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
+import { readMastraResultStream } from "@tsu-stack/api/lib/agent/read-mastra-result-stream";
 import { resolveSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
 import {
   llmLogFields,
@@ -182,62 +183,15 @@ function extractWorkflowResult(payload: unknown): MailJobHarvestWorkflowOutput |
   return null;
 }
 
-/**
- * Mastra workflow streams use ASCII RS (\x1e) between JSON events, sometimes
- * also newlines. Flush remainder when the stream ends.
- */
-function splitStreamFrames(buffer: string): { frames: string[]; rest: string } {
-  const frames: string[] = [];
-  let rest = buffer;
-  // Prefer RS delimiter used by Mastra workflow stream
-  const delim = rest.includes("\u001E") ? "\u001E" : "\n";
-  const parts = rest.split(delim);
-  rest = parts.pop() ?? "";
-  for (const part of parts) {
-    const trimmed = part.trim();
-    if (trimmed) frames.push(trimmed);
-  }
-  return { frames, rest };
-}
-
-function parseFrame(raw: string): unknown | null {
-  const trimmed = raw.trim();
-  if (!trimmed || trimmed.startsWith(":")) return null;
-  const jsonLine = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
-  if (!jsonLine || jsonLine === "[DONE]") return null;
-  try {
-    return JSON.parse(jsonLine) as unknown;
-  } catch {
-    return null;
-  }
-}
-
 async function readResultFromStream(
   body: ReadableStream<Uint8Array>
 ): Promise<MailJobHarvestWorkflowOutput | null> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let last: MailJobHarvestWorkflowOutput | null = null;
 
-  const consume = (frame: string) => {
-    const event = parseFrame(frame);
-    if (!event) return;
+  await readMastraResultStream(body, (event) => {
     const hit = extractWorkflowResult(event);
     if (hit) last = hit;
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const { frames, rest } = splitStreamFrames(buffer);
-    buffer = rest;
-    for (const frame of frames) consume(frame);
-  }
-
-  // Flush trailing frame (no final delimiter)
-  if (buffer.trim()) consume(buffer);
+  });
 
   return last;
 }

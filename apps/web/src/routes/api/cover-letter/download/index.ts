@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { createFiles } from "@tsu-stack/api/lib/storage/index";
 
+import { buildContentDisposition } from "@/shared/lib/content-disposition";
 import { createLogger } from "@/shared/lib/evlog";
 
 export const Route = createFileRoute("/api/cover-letter/download/")({
@@ -70,7 +71,11 @@ export const Route = createFileRoute("/api/cover-letter/download/")({
           return new Response(body, {
             headers: {
               "content-type": "application/pdf",
-              "content-disposition": `${disposition}; filename="${filename}"`,
+              "content-disposition": buildContentDisposition(
+                disposition,
+                filename,
+                `cover-letter-${application.id}.pdf`
+              ),
               "cache-control": "private, max-age=3600"
             }
           });

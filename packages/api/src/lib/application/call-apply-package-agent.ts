@@ -11,6 +11,7 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { type AgentCallResult } from "#@/lib/agent/agent-call-result";
 import { agentFetch } from "#@/lib/agent/agent-fetch";
+import { readMastraResultStream } from "#@/lib/agent/read-mastra-result-stream";
 import { resolveSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 
 const WORKFLOW_ID = "apply-package-workflow";
@@ -212,64 +213,19 @@ function extractWorkflowResult(payload: unknown): ApplyPackageDraft | null {
   return null;
 }
 
-/**
- * Mastra workflow streams use ASCII RS (\x1e) between JSON events, sometimes
- * also newlines. Flush remainder when the stream ends.
- */
-function splitStreamFrames(buffer: string): { frames: string[]; rest: string } {
-  const frames: string[] = [];
-  let rest = buffer;
-  const delim = rest.includes("\u001E") ? "\u001E" : "\n";
-  const parts = rest.split(delim);
-  rest = parts.pop() ?? "";
-  for (const part of parts) {
-    const trimmed = part.trim();
-    if (trimmed) frames.push(trimmed);
-  }
-  return { frames, rest };
-}
-
-function parseFrame(raw: string): unknown {
-  const trimmed = raw.trim();
-  if (!trimmed || trimmed.startsWith(":")) return null;
-  const jsonLine = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
-  if (!jsonLine || jsonLine === "[DONE]") return null;
-  try {
-    return JSON.parse(jsonLine) as unknown;
-  } catch {
-    return null;
-  }
-}
-
 async function readResultFromStream(body: ReadableStream<Uint8Array>): Promise<{
   draft: ApplyPackageDraft | null;
   errorMessage: string | null;
 }> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let draft: ApplyPackageDraft | null = null;
   let errorMessage: string | null = null;
 
-  const consume = (frame: string) => {
-    const event = parseFrame(frame);
-    if (!event) return;
+  await readMastraResultStream(body, (event) => {
     const hit = extractWorkflowResult(event);
     if (hit) draft = hit;
     const err = extractMastraWorkflowStreamError(event);
     if (err) errorMessage = err;
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const { frames, rest } = splitStreamFrames(buffer);
-    buffer = rest;
-    for (const frame of frames) consume(frame);
-  }
-
-  if (buffer.trim()) consume(buffer);
+  });
 
   return { draft, errorMessage };
 }
