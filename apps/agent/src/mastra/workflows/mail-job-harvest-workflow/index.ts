@@ -1,3 +1,4 @@
+import { RequestContext } from "@mastra/core/request-context";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 
@@ -8,6 +9,7 @@ import {
   HarvestJobPreferenceSchema,
   inferApplicationSource,
   isValidHarvestedJob,
+  LLM_REQUEST_CONTEXT_KEYS,
   MailJobHarvestWorkflowInputSchema,
   MailJobHarvestWorkflowOutputSchema,
   MailNotifierExtractSchema,
@@ -19,6 +21,18 @@ import {
 
 import { generateModelOption } from "#@/mastra/byo-model";
 import { fetchJobPageContent } from "#@/mastra/tools/fetch-job-page.tool";
+
+/** BYO model agents still resolve via requestContext when model override is incomplete. */
+function harvestRequestContext(llm: RuntimeLlmConfig | undefined, userId: string): RequestContext {
+  const requestContext = new RequestContext();
+  requestContext.set("userId", userId);
+  if (llm?.modelId) {
+    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.modelId, llm.modelId);
+    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.providerKind, llm.providerKind);
+    if (llm.apiKey) requestContext.set(LLM_REQUEST_CONTEXT_KEYS.apiKey, llm.apiKey);
+  }
+  return requestContext;
+}
 
 const MAIL_EXTRACT_TIMEOUT_MS = 90_000;
 const PAGE_EXTRACT_TIMEOUT_MS = 45_000;
@@ -115,11 +129,17 @@ ${html}
 
 Return isJobNotifier and jobs[] with a real listingUrl for every role card. Never invent URLs.`;
 
+    const requestContext = harvestRequestContext(
+      inputData.llm as RuntimeLlmConfig | undefined,
+      inputData.userId
+    );
+
     try {
       const result = await Promise.race([
         agent.generate([{ role: "user", content: prompt }], {
           structuredOutput: { schema: MailNotifierExtractSchema },
-          model
+          model,
+          requestContext
         }),
         new Promise<never>((_, reject) =>
           setTimeout(
@@ -204,6 +224,10 @@ const enrichJobsFromPages = createStep({
     const slice = inputData.jobs.slice(0, MAX_JOBS_TO_ENRICH);
     let pagesOk = 0;
     let pagesFailed = 0;
+    const requestContext = harvestRequestContext(
+      inputData.llm as RuntimeLlmConfig | undefined,
+      inputData.userId
+    );
 
     for (const seed of slice) {
       try {
@@ -240,6 +264,7 @@ If page is a login wall / empty, keep title/company from mail hints when they ar
           agent.generate([{ role: "user", content: prompt }], {
             structuredOutput: { schema: HarvestedJobSchema },
             model,
+            requestContext,
             maxSteps: 3
           }),
           new Promise<never>((_, reject) =>
@@ -357,11 +382,17 @@ ${JSON.stringify(jobsJson, null, 2)}
 Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${minScore} and not excluded), and reasons.
 Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.`;
 
+    const requestContext = harvestRequestContext(
+      inputData.llm as RuntimeLlmConfig | undefined,
+      inputData.userId
+    );
+
     try {
       const result = await Promise.race([
         agent.generate([{ role: "user", content: prompt }], {
           structuredOutput: { schema: AiJobMatchBatchSchema },
-          model
+          model,
+          requestContext
         }),
         new Promise<never>((_, reject) =>
           setTimeout(
