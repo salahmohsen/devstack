@@ -169,3 +169,51 @@ export const SendOutreachInputSchema = z.object({
   applicationId: z.string().min(1)
 });
 export type SendOutreachInput = z.infer<typeof SendOutreachInputSchema>;
+
+/** Max portfolio experiences/projects per rewrite LLM step. */
+export const APPLY_PACKAGE_REWRITE_CHUNK_SIZE = 3 as const;
+
+export function chunkArray<T>(items: readonly T[], size: number): T[][] {
+  if (size <= 0) throw new Error("chunk size must be positive");
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size) as T[]);
+  }
+  return out;
+}
+
+/** Intermediate LLM output for one experience rewrite chunk. */
+export const ApplyPackageExperienceRewriteChunkSchema = z.object({
+  items: z.array(
+    z.object({
+      experienceId: z.string().min(1),
+      rewrittenBullets: z.array(z.string())
+    })
+  )
+});
+export type ApplyPackageExperienceRewriteChunk = z.infer<
+  typeof ApplyPackageExperienceRewriteChunkSchema
+>;
+
+/** Intermediate LLM output for one project rewrite chunk. */
+export const ApplyPackageProjectRewriteChunkSchema = z.object({
+  items: z.array(
+    z.object({
+      projectId: z.string().min(1),
+      rewrittenSummary: z.string(),
+      rewrittenBullets: z.array(z.string()).optional()
+    })
+  )
+});
+export type ApplyPackageProjectRewriteChunk = z.infer<typeof ApplyPackageProjectRewriteChunkSchema>;
+
+/** Intermediate LLM output for summary + cover letter + outreach. */
+export const ApplyPackageSummaryAndLettersSchema = z.object({
+  professionalSummary: z.string().nullable(),
+  coverLetterBody: z.string(),
+  outreachSubject: z.string(),
+  outreachBody: z.string(),
+  proposedRecruiterEmail: optionalNullableEmail.nullable(),
+  notes: z.string().optional()
+});
+export type ApplyPackageSummaryAndLetters = z.infer<typeof ApplyPackageSummaryAndLettersSchema>;

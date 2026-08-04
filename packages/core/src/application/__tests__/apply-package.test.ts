@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  APPLY_PACKAGE_REWRITE_CHUNK_SIZE,
   ApplyPackageDraftSchema,
+  ApplyPackageExperienceRewriteChunkSchema,
+  ApplyPackageProjectRewriteChunkSchema,
+  ApplyPackageSummaryAndLettersSchema,
+  chunkArray,
   isThinJobDescription,
   THIN_JD_DESCRIPTION_CHARS
 } from "#@/application/apply-package";
@@ -109,5 +114,48 @@ describe("isThinJobDescription", () => {
   it("is not thin at or above threshold", () => {
     expect(isThinJobDescription("x".repeat(THIN_JD_DESCRIPTION_CHARS))).toBe(false);
     expect(isThinJobDescription("x".repeat(THIN_JD_DESCRIPTION_CHARS + 50))).toBe(false);
+  });
+});
+
+describe("chunkArray", () => {
+  it("chunks by 3", () => {
+    expect(chunkArray([1, 2, 3, 4, 5, 6, 7], 3)).toEqual([[1, 2, 3], [4, 5, 6], [7]]);
+  });
+  it("handles empty", () => {
+    expect(chunkArray([], 3)).toEqual([]);
+  });
+  it("handles fewer than size", () => {
+    expect(chunkArray(["a"], 3)).toEqual([["a"]]);
+  });
+});
+
+describe("rewrite chunk schemas", () => {
+  it("accepts experience rewrite chunk", () => {
+    const p = ApplyPackageExperienceRewriteChunkSchema.safeParse({
+      items: [{ experienceId: "e1", rewrittenBullets: ["Did X"] }]
+    });
+    expect(p.success).toBe(true);
+  });
+  it("accepts project rewrite chunk", () => {
+    const p = ApplyPackageProjectRewriteChunkSchema.safeParse({
+      items: [{ projectId: "p1", rewrittenSummary: "App", rewrittenBullets: ["Built"] }]
+    });
+    expect(p.success).toBe(true);
+  });
+  it("accepts summary and letters", () => {
+    const p = ApplyPackageSummaryAndLettersSchema.safeParse({
+      professionalSummary: "x",
+      coverLetterBody: "Dear...",
+      outreachSubject: "Re:",
+      outreachBody: "Hi",
+      proposedRecruiterEmail: null
+    });
+    expect(p.success).toBe(true);
+  });
+});
+
+describe("APPLY_PACKAGE_REWRITE_CHUNK_SIZE", () => {
+  it("is 3", () => {
+    expect(APPLY_PACKAGE_REWRITE_CHUNK_SIZE).toBe(3);
   });
 });
