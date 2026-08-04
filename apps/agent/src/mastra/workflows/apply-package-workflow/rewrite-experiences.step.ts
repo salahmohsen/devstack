@@ -68,7 +68,8 @@ Rules:
 - rewrittenBullets: 2–5 impact-oriented bullets grounded only in the item description (+ job fit).
 - Do not rename company/organization or title.
 - Do not invent employers, metrics, tools, or achievements not in the source text.
-- Return structured output only (schema ids: experienceId, rewrittenBullets).`;
+- Return a single JSON object shaped as { "items": [ { "experienceId", "rewrittenBullets" }, ... ] }.
+- Never return a bare top-level array — always wrap rewrites under "items".`;
 }
 
 function assertChunkCoverage(

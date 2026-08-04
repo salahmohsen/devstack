@@ -182,29 +182,40 @@ export function chunkArray<T>(items: readonly T[], size: number): T[][] {
   return out;
 }
 
-/** Intermediate LLM output for one experience rewrite chunk. */
-export const ApplyPackageExperienceRewriteChunkSchema = z.object({
-  items: z.array(
-    z.object({
-      experienceId: z.string().min(1),
-      rewrittenBullets: z.array(z.string())
-    })
-  )
+/**
+ * Intermediate LLM output for one experience rewrite chunk.
+ * Models often emit a bare array; coerce to `{ items }` so structured-output
+ * validation still succeeds (Mastra validates with Zod before returning).
+ */
+export const ApplyPackageExperienceRewriteItemSchema = z.object({
+  experienceId: z.string().min(1),
+  rewrittenBullets: z.array(z.string())
 });
+export const ApplyPackageExperienceRewriteChunkSchema = z.preprocess(
+  (val) => (Array.isArray(val) ? { items: val } : val),
+  z.object({
+    items: z.array(ApplyPackageExperienceRewriteItemSchema)
+  })
+);
 export type ApplyPackageExperienceRewriteChunk = z.infer<
   typeof ApplyPackageExperienceRewriteChunkSchema
 >;
 
-/** Intermediate LLM output for one project rewrite chunk. */
-export const ApplyPackageProjectRewriteChunkSchema = z.object({
-  items: z.array(
-    z.object({
-      projectId: z.string().min(1),
-      rewrittenSummary: z.string(),
-      rewrittenBullets: z.array(z.string()).optional()
-    })
-  )
+/**
+ * Intermediate LLM output for one project rewrite chunk.
+ * Same bare-array coercion as experience chunks.
+ */
+export const ApplyPackageProjectRewriteItemSchema = z.object({
+  projectId: z.string().min(1),
+  rewrittenSummary: z.string(),
+  rewrittenBullets: z.array(z.string()).optional()
 });
+export const ApplyPackageProjectRewriteChunkSchema = z.preprocess(
+  (val) => (Array.isArray(val) ? { items: val } : val),
+  z.object({
+    items: z.array(ApplyPackageProjectRewriteItemSchema)
+  })
+);
 export type ApplyPackageProjectRewriteChunk = z.infer<typeof ApplyPackageProjectRewriteChunkSchema>;
 
 /** Intermediate LLM output for summary + cover letter + outreach. */

@@ -70,7 +70,8 @@ Rules:
 - Keep project title/name as provided (do not rename).
 - Private analysis is rewrite signal only: never print "Analysis:", never quote it as a labeled section, never put "private analysis" into the rewrite text.
 - Do not invent metrics, tools, or achievements not grounded in the source.
-- Return structured output only (schema ids: projectId, rewrittenSummary, optional rewrittenBullets).`;
+- Return a single JSON object shaped as { "items": [ { "projectId", "rewrittenSummary", optional "rewrittenBullets" }, ... ] }.
+- Never return a bare top-level array — always wrap rewrites under "items".`;
 }
 
 function assertChunkCoverage(

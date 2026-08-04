@@ -137,11 +137,31 @@ describe("rewrite chunk schemas", () => {
     });
     expect(p.success).toBe(true);
   });
+  it("coerces bare experience array to items object", () => {
+    const p = ApplyPackageExperienceRewriteChunkSchema.safeParse([
+      { experienceId: "e1", rewrittenBullets: ["Did X"] },
+      { experienceId: "e2", rewrittenBullets: ["Did Y"] }
+    ]);
+    expect(p.success).toBe(true);
+    if (p.success) {
+      expect(p.data.items).toHaveLength(2);
+      expect(p.data.items[0]?.experienceId).toBe("e1");
+    }
+  });
   it("accepts project rewrite chunk", () => {
     const p = ApplyPackageProjectRewriteChunkSchema.safeParse({
       items: [{ projectId: "p1", rewrittenSummary: "App", rewrittenBullets: ["Built"] }]
     });
     expect(p.success).toBe(true);
+  });
+  it("coerces bare project array to items object", () => {
+    const p = ApplyPackageProjectRewriteChunkSchema.safeParse([
+      { projectId: "p1", rewrittenSummary: "App" }
+    ]);
+    expect(p.success).toBe(true);
+    if (p.success) {
+      expect(p.data.items[0]?.projectId).toBe("p1");
+    }
   });
   it("accepts summary and letters", () => {
     const p = ApplyPackageSummaryAndLettersSchema.safeParse({
