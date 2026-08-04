@@ -1,8 +1,9 @@
 "use client";
 
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type InputFieldProps = {
@@ -24,11 +25,15 @@ function InputField(props: InputFieldProps) {
 
   return (
     <Field className={props.classNames?.field}>
-      {props.label ? (
-        <FieldLabel htmlFor={field.name} className={props.classNames?.label}>
-          {props.label}
-        </FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={props.label}
+        description={props.description}
+        htmlFor={field.name}
+        classNames={{
+          label: props.classNames?.label,
+          description: props.classNames?.description
+        }}
+      />
       <Input
         id={field.name}
         name={field.name}
@@ -39,11 +44,7 @@ function InputField(props: InputFieldProps) {
         placeholder={props.placeholder}
         className={props.classNames?.input}
       />
-      {props.description ? (
-        <FieldDescription className={props.classNames?.description}>
-          {props.description}
-        </FieldDescription>
-      ) : null}
+
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );

@@ -2,9 +2,10 @@
 
 import { type PropsWithChildren } from "react";
 
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { InputGroup, InputGroupInput } from "@tsu-stack/ui/components/input-group";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type InputFieldProps = {
@@ -27,11 +28,15 @@ function InputGroupField(props: PropsWithChildren<InputFieldProps>) {
 
   return (
     <Field className={props.classNames?.field}>
-      {props.label ? (
-        <FieldLabel htmlFor={field.name} className={props.classNames?.label}>
-          {props.label}
-        </FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={props.label}
+        description={props.description}
+        htmlFor={field.name}
+        classNames={{
+          label: props.classNames?.label,
+          description: props.classNames?.description
+        }}
+      />
       <InputGroup className={props.classNames?.inputGroup}>
         <InputGroupInput
           id={field.name}
@@ -45,11 +50,6 @@ function InputGroupField(props: PropsWithChildren<InputFieldProps>) {
         />
         {props.children}
       </InputGroup>
-      {props.description ? (
-        <FieldDescription className={props.classNames?.description}>
-          {props.description}
-        </FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );

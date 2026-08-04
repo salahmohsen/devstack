@@ -8,8 +8,9 @@ import {
   ComboboxItem,
   ComboboxList
 } from "@tsu-stack/ui/components/combobox";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type ComboboxItemType = {
@@ -40,9 +41,14 @@ function ComboboxField(props: ComboboxFieldProps) {
 
   return (
     <Field className={props.classNames?.field}>
-      {props.label ? (
-        <FieldLabel className={props.classNames?.label}>{props.label}</FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={props.label}
+        description={props.description}
+        classNames={{
+          label: props.classNames?.label,
+          description: props.classNames?.description
+        }}
+      />
       <Combobox
         value={field.state.value || null}
         onValueChange={(val) => field.handleChange(val ?? "")}
@@ -64,11 +70,6 @@ function ComboboxField(props: ComboboxFieldProps) {
           </ComboboxList>
         </ComboboxContent>
       </Combobox>
-      {props.description ? (
-        <FieldDescription className={props.classNames?.description}>
-          {props.description}
-        </FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );

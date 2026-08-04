@@ -11,9 +11,10 @@ import {
   ComboboxPopup,
   ComboboxValue
 } from "@tsu-stack/ui/components/combobox";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type ComboboxItemType = {
@@ -61,9 +62,14 @@ function ComboboxMultipleField(props: ComboboxMultipleFieldProps) {
 
   return (
     <Field className={props.classNames?.field}>
-      {props.label ? (
-        <FieldLabel className={props.classNames?.label}>{props.label}</FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={props.label}
+        description={props.description}
+        classNames={{
+          label: props.classNames?.label,
+          description: props.classNames?.description
+        }}
+      />
       <Combobox
         items={listItems}
         multiple
@@ -116,11 +122,6 @@ function ComboboxMultipleField(props: ComboboxMultipleFieldProps) {
           </ComboboxList>
         </ComboboxPopup>
       </Combobox>
-      {props.description ? (
-        <FieldDescription className={props.classNames?.description}>
-          {props.description}
-        </FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );

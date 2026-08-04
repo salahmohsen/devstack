@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchIconSvg, searchIcon } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
@@ -21,6 +21,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { renderSvg } from "@/shared/ui/icon";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type IconifyFieldProps = {
@@ -119,11 +120,15 @@ function IconifyField({
 
   return (
     <Field className={classNames?.field}>
-      {label ? (
-        <FieldLabel htmlFor={field.name} className={classNames?.label}>
-          {label}
-        </FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={label}
+        description={description}
+        htmlFor={field.name}
+        classNames={{
+          label: classNames?.label,
+          description: classNames?.description
+        }}
+      />
       <div className="flex items-start gap-3">
         <div className="flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-muted">
           {currentValue ? (
@@ -217,9 +222,6 @@ function IconifyField({
         </div>
         {isResolving && <span className="text-xs text-muted-foreground">Loading...</span>}
       </div>
-      {description ? (
-        <FieldDescription className={classNames?.description}>{description}</FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={classNames?.error} />
     </Field>
   );

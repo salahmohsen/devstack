@@ -1,9 +1,10 @@
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import {
   RichTextEditor,
   type RichTextEditorProps
 } from "@tsu-stack/ui/components/rich-text-editor";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type RichTextFieldProps = Omit<RichTextEditorProps, "value" | "onChange" | "onBlur"> & {
@@ -16,7 +17,7 @@ function RichTextField({ label, description, ...editorProps }: RichTextFieldProp
 
   return (
     <Field>
-      {label ? <FieldLabel>{label}</FieldLabel> : null}
+      <FieldLabelWithTooltip label={label} description={description} />
       <RichTextEditor
         value={field.state.value ?? ""}
         onChange={(html) => field.handleChange(html)}
@@ -24,7 +25,6 @@ function RichTextField({ label, description, ...editorProps }: RichTextFieldProp
         className="w-full"
         {...editorProps}
       />
-      {description ? <FieldDescription>{description}</FieldDescription> : null}
       <FieldError errors={field.state.meta.errors} />
     </Field>
   );

@@ -23,11 +23,12 @@ import {
   DialogHeader,
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type StackSelectorProps = {
@@ -87,7 +88,7 @@ function StackSelector(props: StackSelectorProps) {
 
   return (
     <Field>
-      {props.label ? <FieldLabel>{props.label}</FieldLabel> : null}
+      <FieldLabelWithTooltip label={props.label} description={props.description} />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           aria-expanded={open}
@@ -172,7 +173,6 @@ function StackSelector(props: StackSelectorProps) {
         </div>
       ) : null}
 
-      {props.description ? <FieldDescription>{props.description}</FieldDescription> : null}
       <FieldError errors={field.state.meta.errors} />
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -195,14 +195,17 @@ function StackSelector(props: StackSelectorProps) {
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="new-stack-icon">Icon URL</FieldLabel>
+              <FieldLabelWithTooltip
+                label="Icon URL"
+                description="Optional image URL."
+                htmlFor="new-stack-icon"
+              />
               <Input
                 id="new-stack-icon"
                 value={newIcon}
                 onChange={(e) => setNewIcon(e.target.value)}
                 placeholder="https://..."
               />
-              <FieldDescription>Optional image URL.</FieldDescription>
             </Field>
             {createMutation.error ? (
               <p className="text-sm text-destructive">

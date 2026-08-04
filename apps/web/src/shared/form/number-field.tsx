@@ -1,6 +1,6 @@
 "use client";
 
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import {
   NumberField,
   NumberFieldDecrement,
@@ -9,6 +9,7 @@ import {
   NumberFieldInput
 } from "@tsu-stack/ui/components/number-field";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type NumberFieldFormProps = {
@@ -34,9 +35,14 @@ function NumberFieldForm(props: NumberFieldFormProps) {
 
   return (
     <Field className={props.classNames?.field}>
-      {props.label ? (
-        <FieldLabel className={props.classNames?.label}>{props.label}</FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={props.label}
+        description={props.description}
+        classNames={{
+          label: props.classNames?.label,
+          description: props.classNames?.description
+        }}
+      />
       <NumberField
         className={props.classNames?.root}
         max={props.max}
@@ -60,11 +66,6 @@ function NumberFieldForm(props: NumberFieldFormProps) {
           <NumberFieldIncrement />
         </NumberFieldGroup>
       </NumberField>
-      {props.description ? (
-        <FieldDescription className={props.classNames?.description}>
-          {props.description}
-        </FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>
   );

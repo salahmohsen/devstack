@@ -1,9 +1,10 @@
 "use client";
 
-import { Field, FieldDescription, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
+import { Field, FieldError } from "@tsu-stack/ui/components/field";
 
 import { IconPicker, type IconPickerProps } from "@/shared/ui/icon-picker";
 
+import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
 type IconPickerFieldProps = {
@@ -24,11 +25,15 @@ function IconPickerField(props: IconPickerFieldProps) {
 
   return (
     <Field className={classNames?.field}>
-      {props.label ? (
-        <FieldLabel htmlFor={field.name} className={classNames?.label}>
-          {props.label}
-        </FieldLabel>
-      ) : null}
+      <FieldLabelWithTooltip
+        label={props.label}
+        description={props.description}
+        htmlFor={field.name}
+        classNames={{
+          label: classNames?.label,
+          description: classNames?.description
+        }}
+      />
       <IconPicker
         id={field.name}
         name={field.name}
@@ -38,9 +43,6 @@ function IconPickerField(props: IconPickerFieldProps) {
         className={classNames?.input}
         {...rest}
       />
-      {props.description ? (
-        <FieldDescription className={classNames?.description}>{props.description}</FieldDescription>
-      ) : null}
       <FieldError errors={field.state.meta.errors} className={classNames?.error} />
     </Field>
   );
