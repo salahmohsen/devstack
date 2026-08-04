@@ -51,3 +51,9 @@ scripts/cloudflared.tunnel.yml
 *.playwright-mcp
 
 docs/superpowers/*.dev.vars
+
+# Wayfinder Gmail analysis corpus (PII)
+.scratch/job-alert-mail-applications/corpus/
+
+# Brainstorm visual companion
+.superpowers/
