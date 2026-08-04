@@ -217,3 +217,90 @@ export const ApplyPackageSummaryAndLettersSchema = z.object({
   notes: z.string().optional()
 });
 export type ApplyPackageSummaryAndLetters = z.infer<typeof ApplyPackageSummaryAndLettersSchema>;
+
+export type AssembleApplyPackageDraftInput = {
+  applicationId: string;
+  jobContext: ApplyPackageJobContext;
+  portfolio: ApplyPackagePortfolioSnapshot;
+  experienceRewrites: Array<{ experienceId: string; rewrittenBullets: string[] }>;
+  projectRewrites: Array<{
+    projectId: string;
+    rewrittenSummary: string;
+    rewrittenBullets?: string[];
+  }>;
+  letters: ApplyPackageSummaryAndLetters;
+  generatedAt?: string;
+};
+
+/**
+ * Merge multi-step rewrite + letter outputs into a public {@link ApplyPackageDraft}.
+ * Experiences/projects follow portfolio snapshot order; all items default to include: true.
+ * Throws if any portfolio experience/project lacks a matching rewrite.
+ */
+export function assembleApplyPackageDraft(
+  input: AssembleApplyPackageDraftInput
+): ApplyPackageDraft {
+  const expMap = new Map(input.experienceRewrites.map((r) => [r.experienceId, r] as const));
+  const projMap = new Map(input.projectRewrites.map((r) => [r.projectId, r] as const));
+
+  const experiences = input.portfolio.experiences.map((e) => {
+    const rewrite = expMap.get(e.id);
+    if (!rewrite) {
+      throw new Error(`missing rewrite for experience ${e.id}`);
+    }
+    return {
+      experienceId: e.id,
+      include: true as const,
+      companyName: e.organization,
+      title: e.title,
+      rewrittenBullets: rewrite.rewrittenBullets
+    };
+  });
+
+  const projects = input.portfolio.projects.map((p) => {
+    const rewrite = projMap.get(p.id);
+    if (!rewrite) {
+      throw new Error(`missing rewrite for project ${p.id}`);
+    }
+    return {
+      projectId: p.id,
+      include: true as const,
+      name: p.title,
+      rewrittenSummary: rewrite.rewrittenSummary,
+      ...(rewrite.rewrittenBullets ? { rewrittenBullets: rewrite.rewrittenBullets } : {})
+    };
+  });
+
+  const stacks = input.portfolio.stacks.map((s) => {
+    return {
+      stackId: s.id,
+      include: true as const,
+      name: s.name
+    };
+  });
+
+  const generatedAtTrimmed = input.generatedAt?.trim();
+  const draft = {
+    applicationId: input.applicationId,
+    generatedAt:
+      generatedAtTrimmed === undefined || generatedAtTrimmed.length === 0
+        ? new Date().toISOString()
+        : generatedAtTrimmed,
+    jobContext: input.jobContext,
+    proposedRecruiterEmail: input.letters.proposedRecruiterEmail ?? null,
+    professionalSummary: input.letters.professionalSummary,
+    experiences,
+    projects,
+    stacks,
+    coverLetterBody: input.letters.coverLetterBody,
+    outreachSubject: input.letters.outreachSubject,
+    outreachBody: input.letters.outreachBody,
+    ...(input.letters.notes != null ? { notes: input.letters.notes } : {})
+  };
+
+  const parsed = ApplyPackageDraftSchema.safeParse(draft);
+  if (!parsed.success) {
+    throw new Error(`apply_package_assemble_failed: ${parsed.error.message.slice(0, 200)}`);
+  }
+  return parsed.data;
+}

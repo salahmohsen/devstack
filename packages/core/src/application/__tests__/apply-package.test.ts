@@ -6,6 +6,7 @@ import {
   ApplyPackageExperienceRewriteChunkSchema,
   ApplyPackageProjectRewriteChunkSchema,
   ApplyPackageSummaryAndLettersSchema,
+  assembleApplyPackageDraft,
   chunkArray,
   isThinJobDescription,
   THIN_JD_DESCRIPTION_CHARS
@@ -157,5 +158,76 @@ describe("rewrite chunk schemas", () => {
 describe("APPLY_PACKAGE_REWRITE_CHUNK_SIZE", () => {
   it("is 3", () => {
     expect(APPLY_PACKAGE_REWRITE_CHUNK_SIZE).toBe(3);
+  });
+});
+
+describe("assembleApplyPackageDraft", () => {
+  const portfolio = {
+    profile: { name: "Sam" },
+    contacts: [],
+    experiences: [
+      { id: "e1", title: "Eng", organization: "Co", description: "Did work" },
+      { id: "e2", title: "Sr", organization: "Co2", description: "More" }
+    ],
+    projects: [{ id: "p1", title: "Hub", summary: "s", description: "d" }],
+    stacks: [{ id: "s1", name: "React" }]
+  };
+
+  const jobContext = {
+    title: "FE",
+    companyName: "Acme",
+    descriptionUsed: "Build things",
+    listingFetched: false as const,
+    listingUrl: null
+  };
+
+  it("fills names, include true, snapshot order", () => {
+    const draft = assembleApplyPackageDraft({
+      applicationId: "app1",
+      jobContext,
+      portfolio,
+      experienceRewrites: [
+        { experienceId: "e2", rewrittenBullets: ["B2"] },
+        { experienceId: "e1", rewrittenBullets: ["B1"] }
+      ],
+      projectRewrites: [
+        { projectId: "p1", rewrittenSummary: "Tailored hub", rewrittenBullets: ["X"] }
+      ],
+      letters: {
+        professionalSummary: "Sum",
+        coverLetterBody: "Cover",
+        outreachSubject: "Sub",
+        outreachBody: "Body",
+        proposedRecruiterEmail: null
+      }
+    });
+    expect(draft.experiences.map((e) => e.experienceId)).toEqual(["e1", "e2"]);
+    expect(draft.experiences[0]).toMatchObject({
+      companyName: "Co",
+      title: "Eng",
+      include: true,
+      rewrittenBullets: ["B1"]
+    });
+    expect(draft.stacks).toEqual([{ stackId: "s1", include: true, name: "React" }]);
+    expect(draft.jobContext.descriptionUsed).toBe("Build things");
+  });
+
+  it("throws if experience rewrite missing", () => {
+    expect(() =>
+      assembleApplyPackageDraft({
+        applicationId: "app1",
+        jobContext,
+        portfolio,
+        experienceRewrites: [{ experienceId: "e1", rewrittenBullets: ["B1"] }],
+        projectRewrites: [{ projectId: "p1", rewrittenSummary: "ok" }],
+        letters: {
+          professionalSummary: null,
+          coverLetterBody: "C",
+          outreachSubject: "S",
+          outreachBody: "B",
+          proposedRecruiterEmail: null
+        }
+      })
+    ).toThrow(/missing rewrite for experience e2/i);
   });
 });
