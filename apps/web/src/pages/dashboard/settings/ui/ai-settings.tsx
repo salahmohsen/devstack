@@ -779,7 +779,7 @@ export function AiSettings() {
                           <Trash2Icon className="size-3.5" />
                         </Button>
 
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-end">
                           <div className="space-y-1">
                             <Label className="text-xs">Provider</Label>
                             <Combobox
@@ -799,6 +799,17 @@ export function AiSettings() {
                                 });
                               }}
                               items={PROVIDER_OPTIONS}
+                              itemToStringLabel={(item) => {
+                                if (typeof item === "string") {
+                                  return (
+                                    PROVIDER_OPTIONS.find((o) => o.value === item)?.label ?? item
+                                  );
+                                }
+                                if (item && typeof item === "object" && "label" in item) {
+                                  return String((item as ProviderOption).label);
+                                }
+                                return String(item ?? "");
+                              }}
                             >
                               <ComboboxInput placeholder="Search providers…" showClear={false} />
                               <ComboboxContent>
@@ -868,7 +879,7 @@ export function AiSettings() {
                   <Label className="text-xs" htmlFor="ai-default-model">
                     Default model
                   </Label>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
                     <div className="min-w-0 flex-1">
                       <ModelCombobox
                         id="ai-default-model"
@@ -886,7 +897,7 @@ export function AiSettings() {
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="shrink-0"
+                      className="w-full shrink-0 lg:w-auto"
                       disabled={testingFeature !== null || !canTestFeature("reply")}
                       aria-label={`Test model ${defaultModel}`}
                       onClick={() => void handleTestModel("reply")}
@@ -921,13 +932,13 @@ export function AiSettings() {
                     />
                     Customize per feature
                   </CollapsibleTrigger>
-                  <CollapsiblePanel className="mt-3 space-y-6">
+                  <CollapsiblePanel className="mt-3 space-y-5">
                     {CUSTOMIZE_FEATURE_GROUPS.map((group) => (
-                      <div key={group.title} className="space-y-3">
-                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      <div key={group.title} className="space-y-2.5">
+                        <p className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
                           {group.title}
                         </p>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid gap-3 md:grid-cols-2">
                           {group.features.map((feature) => {
                             const onDefault = isFeatureOnDefault({
                               feature,
@@ -942,10 +953,17 @@ export function AiSettings() {
 
                             if (showDefaultLabel) {
                               return (
-                                <div key={feature} className="space-y-1">
-                                  <Label className="text-xs">{AI_FEATURE_LABELS[feature]}</Label>
-                                  <div className="flex min-h-9 items-center gap-2">
-                                    <span className="text-sm text-muted-foreground">Default</span>
+                                <div
+                                  key={feature}
+                                  className="flex min-h-18 flex-col justify-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5"
+                                >
+                                  <Label className="text-xs font-medium text-foreground">
+                                    {AI_FEATURE_LABELS[feature]}
+                                  </Label>
+                                  <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center rounded-md border border-border/70 bg-background/80 px-2 py-0.5 text-xs text-muted-foreground">
+                                      Default
+                                    </span>
                                     <Button
                                       type="button"
                                       size="sm"
@@ -965,9 +983,14 @@ export function AiSettings() {
                             }
 
                             return (
-                              <div key={feature} className="space-y-1">
-                                <Label className="text-xs">{AI_FEATURE_LABELS[feature]}</Label>
-                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                              <div
+                                key={feature}
+                                className="flex min-h-18 flex-col gap-2 rounded-lg border border-border/80 bg-background/40 px-3 py-2.5"
+                              >
+                                <Label className="text-xs font-medium text-foreground">
+                                  {AI_FEATURE_LABELS[feature]}
+                                </Label>
+                                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
                                   <div className="min-w-0 flex-1">
                                     <ModelCombobox
                                       modelId={featureModel}
@@ -992,7 +1015,7 @@ export function AiSettings() {
                                       type="button"
                                       size="sm"
                                       variant="outline"
-                                      className="shrink-0"
+                                      className="w-full shrink-0 lg:w-auto"
                                       disabled={testingFeature !== null || !canTestFeature(feature)}
                                       aria-label={`Test ${AI_FEATURE_LABELS[feature]} model`}
                                       onClick={() => void handleTestModel(feature)}

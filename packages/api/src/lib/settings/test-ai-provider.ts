@@ -29,9 +29,10 @@ function redactSecrets(text: string, apiKey: string): string {
   return out;
 }
 
-function summarizeProviderError(raw: string, apiKey: string): string {
+function summarizeProviderError(raw: string, apiKey: string, modelId?: string | null): string {
   const text = redactSecrets(raw, apiKey).replace(/\s+/g, " ").trim();
   const lower = text.toLowerCase();
+  const modelHint = modelId?.trim() ? ` (${modelId.trim()})` : "";
 
   if (
     /insufficient[_\s-]?balance|billing|payment required|quota|credit/i.test(lower) ||
@@ -42,12 +43,18 @@ function summarizeProviderError(raw: string, apiKey: string): string {
   if (
     /invalid[_\s-]?api[_\s-]?key|incorrect api key|unauthorized|authentication|forbidden|401|403/i.test(
       lower
-    )
+    ) &&
+    !/model/i.test(lower)
   ) {
     return "API key was rejected by the provider. Check the key and provider selection.";
   }
-  if (/model[_\s-]?not[_\s-]?found|does not exist|unknown model|404/i.test(lower)) {
-    return "Key may be valid, but the probe model is unavailable. Set a model for this provider and try again.";
+  // Avoid matching bare HTML "404 Not Found" from a wrong agent route as "model unavailable".
+  if (
+    /model[_\s-]?not[_\s-]?found|unknown model|does not exist.*model|invalid model|model_not_found/i.test(
+      lower
+    )
+  ) {
+    return `This model is unavailable${modelHint}. Pick another model or check the provider docs.`;
   }
   if (/rate[_\s-]?limit|429|too many requests/i.test(lower)) {
     return "Provider rate-limited the probe. Wait a moment and try again.";
@@ -55,9 +62,73 @@ function summarizeProviderError(raw: string, apiKey: string): string {
   if (/timeout|aborted|econnrefused|enotfound|network/i.test(lower)) {
     return "Could not reach the provider (network or timeout). Try again.";
   }
+  if (/agent worker|agent_worker|not configured|econnrefused/i.test(lower)) {
+    return "AI worker is unreachable. Ensure the agent is running and AGENT_WORKER_URL is set.";
+  }
 
   const clipped = text.slice(0, 220);
   return clipped.length > 0 ? clipped : "Provider request failed.";
+}
+
+/** Known OpenCode gateways that accept OpenAI chat completions with bare model ids. */
+const OPENCODE_CHAT_URL: Readonly<Record<string, string>> = {
+  "opencode-go": "https://opencode.ai/zen/go/v1/chat/completions",
+  opencode: "https://opencode.ai/zen/v1/chat/completions"
+};
+
+/**
+ * Direct gateway ping (bypasses Mastra agent). Used when agent probe fails so
+ * we still validate key+model against the real OpenCode endpoint.
+ */
+async function directOpenCodeChatProbe(args: {
+  kind: string;
+  modelId: string;
+  apiKey: string;
+  signal: AbortSignal;
+}): Promise<{ ok: true } | { ok: false; detail: string }> {
+  const url = OPENCODE_CHAT_URL[args.kind];
+  if (!url) return { ok: false, detail: "no direct probe url" };
+
+  // Gateway expects bare model segment (gpt-5.6-luna), not opencode-go/gpt-5.6-luna.
+  const slash = args.modelId.indexOf("/");
+  const bare =
+    slash > 0 && args.modelId.slice(0, slash) === args.kind
+      ? args.modelId.slice(slash + 1)
+      : args.modelId;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${args.apiKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "curl/8.7.1"
+      },
+      signal: args.signal,
+      body: JSON.stringify({
+        model: bare,
+        messages: [{ role: "user", content: "ping" }],
+        max_tokens: 16
+      })
+    });
+    const bodyText = await response.text().catch(() => "");
+    if (!response.ok) {
+      return {
+        ok: false,
+        detail: bodyText || `HTTP ${response.status}`
+      };
+    }
+    return { ok: true };
+  } catch (error) {
+    const msg =
+      error instanceof Error
+        ? error.name === "AbortError"
+          ? "timeout"
+          : error.message
+        : String(error);
+    return { ok: false, detail: msg };
+  }
 }
 
 async function resolveApiKey(
@@ -153,7 +224,8 @@ export async function testAiProviderConnection(
       body: JSON.stringify({
         messages: [{ role: "user", content: "ping" }],
         model: { id: modelId, apiKey },
-        modelSettings: { maxTokens: 16, temperature: 0 },
+        // Prefer maxOutputTokens (AI SDK / newer OpenAI-compatible models).
+        modelSettings: { maxOutputTokens: 32, temperature: 0 },
         requestContext: {
           userId,
           ...llmRequestContextFields(llm)
@@ -164,24 +236,50 @@ export async function testAiProviderConnection(
     const latencyMs = Date.now() - started;
     const bodyText = await response.text().catch(() => "");
 
-    if (!response.ok) {
+    if (response.ok) {
       return {
-        ok: false,
+        ok: true,
         modelId,
         latencyMs,
-        message: summarizeProviderError(
-          bodyText || `Provider returned HTTP ${response.status}`,
-          apiKey
-        )
+        message: `Connected with ${modelId} (${latencyMs}ms)`
       };
     }
 
-    // Success if HTTP ok — content is optional (some providers return empty on tiny caps).
+    // Agent/Mastra path failed — try direct OpenCode chat for known gateways so we still
+    // validate key+model (e.g. gpt-5.6-luna works on chat/completions even when agent routing fails).
+    if (OPENCODE_CHAT_URL[input.kind]) {
+      const direct = await directOpenCodeChatProbe({
+        kind: input.kind,
+        modelId,
+        apiKey,
+        signal: controller.signal
+      });
+      const directLatency = Date.now() - started;
+      if (direct.ok) {
+        return {
+          ok: true,
+          modelId,
+          latencyMs: directLatency,
+          message: `Connected with ${modelId} (${directLatency}ms)`
+        };
+      }
+      return {
+        ok: false,
+        modelId,
+        latencyMs: directLatency,
+        message: summarizeProviderError(direct.detail, apiKey, modelId)
+      };
+    }
+
     return {
-      ok: true,
+      ok: false,
       modelId,
       latencyMs,
-      message: `Connected with ${modelId} (${latencyMs}ms)`
+      message: summarizeProviderError(
+        bodyText || `Provider returned HTTP ${response.status}`,
+        apiKey,
+        modelId
+      )
     };
   } catch (error) {
     const latencyMs = Date.now() - started;
@@ -191,11 +289,42 @@ export async function testAiProviderConnection(
           ? "timeout"
           : error.message
         : String(error);
+
+    if (OPENCODE_CHAT_URL[input.kind] && raw !== "timeout") {
+      const fallbackController = new AbortController();
+      const fallbackTimer = setTimeout(() => fallbackController.abort(), PROBE_TIMEOUT_MS);
+      try {
+        const direct = await directOpenCodeChatProbe({
+          kind: input.kind,
+          modelId,
+          apiKey,
+          signal: fallbackController.signal
+        });
+        const directLatency = Date.now() - started;
+        if (direct.ok) {
+          return {
+            ok: true,
+            modelId,
+            latencyMs: directLatency,
+            message: `Connected with ${modelId} (${directLatency}ms)`
+          };
+        }
+        return {
+          ok: false,
+          modelId,
+          latencyMs: directLatency,
+          message: summarizeProviderError(direct.detail, apiKey, modelId)
+        };
+      } finally {
+        clearTimeout(fallbackTimer);
+      }
+    }
+
     return {
       ok: false,
       modelId,
       latencyMs,
-      message: summarizeProviderError(raw, apiKey)
+      message: summarizeProviderError(raw, apiKey, modelId)
     };
   } finally {
     clearTimeout(timer);
