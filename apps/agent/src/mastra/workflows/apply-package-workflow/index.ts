@@ -1,64 +1,36 @@
-import { RequestContext } from "@mastra/core/request-context";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 
 import {
   ApplyPackageDraftSchema,
   ApplyPackageWorkflowInputSchema,
-  LLM_REQUEST_CONTEXT_KEYS,
   type ApplyPackageDraft,
   type ApplyPackageWorkflowInput,
   type RuntimeLlmConfig
 } from "@tsu-stack/core";
 
 import { generateModelOption } from "#@/mastra/byo-model";
+import { applyPackageRequestContext } from "#@/mastra/workflows/apply-package-workflow/llm-shared";
+import {
+  descriptionUsed,
+  prepareContext
+} from "#@/mastra/workflows/apply-package-workflow/prepare.step";
+
+export { prepareContext };
+export {
+  applyPackageRequestContext,
+  raceGenerate,
+  REWRITE_CHUNK_TIMEOUT_MS,
+  LETTERS_TIMEOUT_MS,
+  REWRITE_MAX_OUTPUT_TOKENS,
+  LETTERS_MAX_OUTPUT_TOKENS
+} from "#@/mastra/workflows/apply-package-workflow/llm-shared";
+export {
+  ApplyPackageJobBriefSchema,
+  ApplyPackageWorkflowStateSchema,
+  type ApplyPackageWorkflowState
+} from "#@/mastra/workflows/apply-package-workflow/workflow-state";
 
 const GENERATE_TIMEOUT_MS = 150_000;
-
-/** BYO model agents still resolve via requestContext when model override is incomplete. */
-function applyPackageRequestContext(
-  llm: RuntimeLlmConfig | undefined,
-  applicationId: string
-): RequestContext {
-  const requestContext = new RequestContext();
-  requestContext.set("applicationId", applicationId);
-  if (llm?.modelId) {
-    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.modelId, llm.modelId);
-    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.providerKind, llm.providerKind);
-    if (llm.apiKey) requestContext.set(LLM_REQUEST_CONTEXT_KEYS.apiKey, llm.apiKey);
-  }
-  return requestContext;
-}
-
-function descriptionUsed(input: ApplyPackageWorkflowInput): {
-  descriptionUsed: string;
-  listingFetched: boolean;
-  listingUrl: string | null;
-} {
-  const listingText = input.listingPageText?.trim() ?? "";
-  const jobDesc = input.job.description?.trim() ?? "";
-  const fromListing = input.listingUrl?.trim();
-  const fromJobUrl = input.job.url?.trim();
-  const listingUrl =
-    fromListing && fromListing.length > 0
-      ? fromListing
-      : fromJobUrl && fromJobUrl.length > 0
-        ? fromJobUrl
-        : null;
-  if (listingText.length > 0) {
-    const combined =
-      jobDesc.length > 0 ? `${jobDesc}\n\n--- Listing page ---\n${listingText}` : listingText;
-    return {
-      descriptionUsed: combined.slice(0, 14_000),
-      listingFetched: true,
-      listingUrl
-    };
-  }
-  return {
-    descriptionUsed: jobDesc.slice(0, 14_000),
-    listingFetched: false,
-    listingUrl
-  };
-}
 
 /**
  * Keep only portfolio-known ids; drop hallucinated membership.
@@ -80,6 +52,7 @@ function sanitizeDraftIds(
   };
 }
 
+/** Single-shot draft step — replaced by multi-step chain in Task 6. */
 const analyzeAndDraft = createStep({
   id: "analyze-and-draft",
   description: "LLM selects portfolio evidence, rewrites bullets, drafts cover letter and outreach",
