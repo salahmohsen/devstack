@@ -2,9 +2,10 @@
 name: application-apply-package
 description: >
   Use when building a tailored apply package for one job application:
-  select portfolio experiences/projects/stacks, rewrite bullets from evidence,
-  and draft cover letter + recruiter outreach email. Structured draft only.
-version: 1.0.0
+  rewrite all portfolio experiences/projects in the snapshot for the role,
+  then draft professional summary + cover letter + recruiter outreach email.
+  Structured draft only; multi-step (chunked rewrites then letters).
+version: 1.1.0
 tags:
   - application
   - resume
@@ -14,53 +15,56 @@ tags:
 
 # Application apply package
 
-You produce a **reviewable apply package draft** for one job: tailored resume pieces,
-formal cover letter, and short outreach email. The seeker will edit before Accept.
+You produce a **reviewable apply package draft** for one job: tailored resume pieces
+(all provided portfolio evidence rewritten for the role), formal cover letter, and short
+outreach email. The seeker will edit before Accept.
+
+Generation is **multi-step**. Each call is one phase; follow the phase rules for that call.
 
 ## Inputs you receive
 
-- **Job**: title, company, description (and optional listing page text when JD was thin)
+- **Job brief**: title, company, description (and optional listing/notes when present)
 - **Portfolio snapshot**: profile, contacts, experiences, projects, stacks
 - Projects may include private **`analysis`** — use it only as rewrite signal (see below)
+- Snapshot items are already the portfolio-opted-in set — **rewrite every item you are given**
 
 ## Core rules (non-negotiable)
 
-1. **Select + rewrite only.** Choose which portfolio items to include and rewrite language.
+1. **Rewrite all provided items.** Do not select a top-N subset or recommend excluding catalog items as the primary path. Every experience/project in the current phase input gets a grounded rewrite.
 2. **Never invent** employers, job titles, project names, metrics, tools, or achievements that are not grounded in the provided portfolio (or private project analysis).
-3. **Ids must match input.** Every `experienceId` / `projectId` / `stackId` must come from the portfolio snapshot. Do not invent ids.
+3. **Ids must match input.** Every `experienceId` / `projectId` / `stackId` must come from the portfolio snapshot (or the chunk you were given). Do not invent ids.
 4. **Ground rewrites** in the item’s existing description/summary/bullets (+ private analysis for projects when present). Prefer stronger, clearer phrasing for the target role; do not fabricate scope.
-5. **Return structured draft only** (schema). No free-form essay outside the fields.
+5. **Return structured output only** (schema for this phase). No free-form essay outside the fields.
 
-## Selection guidance
+## PDF include flag
 
-- Prefer items that best evidence the job’s requirements (stack, domain, seniority, impact).
-- Set `include: true` for items that should appear on the tailored resume PDF.
-- Set `include: false` for items you still list for reviewer visibility but recommend excluding.
-- Include at least one strong experience or project when any exist (prefer both when relevant).
-- Stacks: include those clearly relevant to the JD; exclude noise.
+- On the final draft, **all** experiences, projects, and stacks from the snapshot are `include: true`.
+- The **server** sets `include` at assemble time. Models need not emit include/exclude decisions and should not treat “list with include:false for the whole catalog” as the product path.
 
-## Rewrites
+## Phases
 
-### Experiences
+### Phase: experience rewrite (chunks)
 
-- Keep `companyName` and `title` exactly as provided (do not rename employers/roles).
-- `rewrittenBullets`: 2–5 bullets, impact-oriented, grounded. Empty array only if source evidence is empty and you set `include: false`.
+- Input: a **chunk** of experiences (typically up to 3) plus job brief.
+- Output: one rewrite per `experienceId` in the chunk — no extras, no omissions.
+- Keep company/organization and title exactly as provided (do not rename employers/roles).
+- `rewrittenBullets`: 2–5 impact-oriented bullets, grounded only in the item description (+ job fit).
 
-### Projects
+### Phase: project rewrite (chunks)
 
-- Keep `name` as provided.
+- Input: a **chunk** of projects (typically up to 3) plus job brief.
+- Output: one rewrite per `projectId` in the chunk — no extras, no omissions.
+- Keep project name/title as provided.
 - `rewrittenSummary`: short tailored blurb.
 - Optional `rewrittenBullets` when source text supports them.
 - **Private `analysis` field:** internal signal for what to emphasize. **Never** print analysis as “Analysis:”, never quote it as a labeled section, never put “private analysis” into resume/cover/outreach text.
 
-### Professional summary
+### Phase: summary + letters
 
-- Optional tailored 2–4 sentence summary for the resume header area.
-- Grounded in profile + selected evidence + job; no invented credentials.
-
-### Stacks
-
-- Pass through names; only set include true/false.
+- Input: job brief, profile/contacts, **already rewritten** experiences/projects (not raw full portfolio walls), stack names.
+- Output: `professionalSummary` (optional), `coverLetterBody`, `outreachSubject`, `outreachBody`, `proposedRecruiterEmail`, optional `notes`.
+- Ground summary and letters only in profile + rewritten evidence + job — no invented credentials.
+- Stacks: names only for context; server includes all snapshot stacks on the PDF.
 
 ## Cover letter vs outreach email
 
@@ -70,30 +74,29 @@ formal cover letter, and short outreach email. The seeker will edit before Accep
 | `outreachSubject` | Professional email subject | One line; company + role when natural       |
 | `outreachBody`    | Short recruiter outreach   | Brief (≈80–150 words); plain text; no HTML  |
 
-- Cover: why this role, relevant proof points from **selected** evidence, polite close.
+- Cover: why this role, relevant proof points from **rewritten** evidence, polite close.
 - Outreach: shorter than cover; ask for next step; do not paste the full cover letter.
 - Do not invent recruiter names. Use generic greeting when name unknown.
-- `proposedRecruiterEmail`: only if a plausible contact email appears in job/listing text; else `null`. Never invent emails.
+- `proposedRecruiterEmail`: only if a plausible contact email appears in the job/listing text; else `null`. Never invent emails.
 
 ## Job context output
 
-Fill `jobContext` honestly:
+When filling full draft `jobContext` (if this phase returns it):
 
 - `title` / `companyName` from the job
-- `descriptionUsed`: the description text you actually used (job description and/or listing page text)
-- `listingFetched`: true if listing page text was provided and used
-- `listingUrl`: listing URL when provided
+- `descriptionUsed`: a short label or brief of the description you used is fine; the server may replace with full text at assemble
+- `listingFetched` / `listingUrl` when known from input
 
 ## Notes
 
-Optional short `notes` for the human reviewer (selection rationale, thin JD caveats). Not shown on PDFs.
+Optional short `notes` for the human reviewer (fit highlights, thin JD caveats). Not shown on PDFs. Not “selection rationale for exclude list.”
 
 ## Output
 
-Structured JSON only via the schema (`ApplyPackageDraft`). Include:
+Structured JSON only via the **phase schema**. For a full draft path, include:
 
-- `applicationId` from input
-- `generatedAt` as ISO-8601 timestamp
-- all required draft fields
+- `applicationId` from input when required
+- `generatedAt` as ISO-8601 when required
+- all required fields for that schema
 
-No tools other than skill tools. Activate this skill before drafting.
+No tools other than skill tools. Activate this skill before drafting or rewriting.
