@@ -312,6 +312,13 @@ No live MiniMax e2e required in CI.
 
 ---
 
+## Implementation notes (from spec review)
+
+- **Authority:** This design supersedes the parent’s “select + rewrite” / single `analyze-and-draft` generation behavior for rewrite scope and `include`. Update the parent design’s workflow steps section with a cross-link when implementing.
+- **Chunk loop shape:** `rewrite-experiences` / `rewrite-projects` are **one Mastra step each** with an **internal for-loop** of size 3 (not one dynamic workflow step per chunk). Error messages may still say `chunk 2/4`.
+- **Assemble order:** Merge rewrites in **portfolio snapshot order** (stable resume order), not model chunk order.
+- **Timeouts:** 240s + sequential chunks can still fail for very large portfolios; that is accepted fail-closed behavior. Soft preflight warning is a follow-up.
+
 ## Open follow-ups (not blocking)
 
 - Parallel rewrite chunks for latency
