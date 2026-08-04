@@ -84,7 +84,7 @@ Rules:
 - outreachSubject: one professional line (company + role when natural).
 - outreachBody: short recruiter outreach (~80–150 words); plain text; not a full cover letter paste.
 - proposedRecruiterEmail: only if a plausible contact email appears in the job brief description; else null. Never invent emails.
-- notes: optional short reviewer notes (selection rationale, thin JD caveats).
+- notes: optional short reviewer notes (fit highlights, thin JD caveats).
 - Do not invent employers, titles, metrics, tools, or achievements.
 - Do not rename companies/roles/projects.
 - Return structured output only (professionalSummary, coverLetterBody, outreachSubject, outreachBody, proposedRecruiterEmail, optional notes).`;

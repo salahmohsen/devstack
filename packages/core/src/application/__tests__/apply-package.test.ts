@@ -35,7 +35,7 @@ describe("ApplyPackageDraftSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
-  it("accepts a full draft with portfolio selections", () => {
+  it("accepts a full draft with experiences, projects, and stacks", () => {
     const parsed = ApplyPackageDraftSchema.safeParse({
       applicationId: "app1",
       generatedAt: "2026-08-04T12:00:00.000Z",

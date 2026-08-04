@@ -171,7 +171,7 @@ ApplyPackageDraft {
 
 ### Skill
 
-`apps/agent/skills/application-apply-package/SKILL.md` — selection, rewrite rules, no hallucination, cover vs email tone.
+`apps/agent/skills/application-apply-package/SKILL.md` — rewrite-all multi-step phases, no hallucination, cover vs email tone.
 
 ### Agent
 

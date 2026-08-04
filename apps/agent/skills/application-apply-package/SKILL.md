@@ -79,24 +79,12 @@ Generation is **multi-step**. Each call is one phase; follow the phase rules for
 - Do not invent recruiter names. Use generic greeting when name unknown.
 - `proposedRecruiterEmail`: only if a plausible contact email appears in the job/listing text; else `null`. Never invent emails.
 
-## Job context output
-
-When filling full draft `jobContext` (if this phase returns it):
-
-- `title` / `companyName` from the job
-- `descriptionUsed`: a short label or brief of the description you used is fine; the server may replace with full text at assemble
-- `listingFetched` / `listingUrl` when known from input
-
 ## Notes
 
 Optional short `notes` for the human reviewer (fit highlights, thin JD caveats). Not shown on PDFs. Not “selection rationale for exclude list.”
 
 ## Output
 
-Structured JSON only via the **phase schema**. For a full draft path, include:
-
-- `applicationId` from input when required
-- `generatedAt` as ISO-8601 when required
-- all required fields for that schema
+Structured JSON only via the **phase schema** for this call (chunk rewrite or summary+letters). The server grounds `jobContext`, sets `include: true`, and assembles the full draft.
 
 No tools other than skill tools. Activate this skill before drafting or rewriting.
