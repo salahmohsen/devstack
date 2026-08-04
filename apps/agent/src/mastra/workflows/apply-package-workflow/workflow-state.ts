@@ -15,6 +15,7 @@ export const ApplyPackageJobBriefSchema = z.object({
   salaryRange: z.string().nullable().optional(),
   notes: z.string().nullable().optional()
 });
+export type ApplyPackageJobBrief = z.infer<typeof ApplyPackageJobBriefSchema>;
 
 export const ApplyPackageWorkflowStateSchema = z.object({
   applicationId: z.string(),

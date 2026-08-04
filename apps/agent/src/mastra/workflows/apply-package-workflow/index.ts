@@ -14,8 +14,10 @@ import {
   descriptionUsed,
   prepareContext
 } from "#@/mastra/workflows/apply-package-workflow/prepare.step";
+import { rewriteExperiences } from "#@/mastra/workflows/apply-package-workflow/rewrite-experiences.step";
+import { rewriteProjects } from "#@/mastra/workflows/apply-package-workflow/rewrite-projects.step";
 
-export { prepareContext };
+export { prepareContext, rewriteExperiences, rewriteProjects };
 export {
   applyPackageRequestContext,
   raceGenerate,
@@ -27,6 +29,7 @@ export {
 export {
   ApplyPackageJobBriefSchema,
   ApplyPackageWorkflowStateSchema,
+  type ApplyPackageJobBrief,
   type ApplyPackageWorkflowState
 } from "#@/mastra/workflows/apply-package-workflow/workflow-state";
 
