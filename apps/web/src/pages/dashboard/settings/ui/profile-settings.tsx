@@ -134,6 +134,10 @@ export function ProfileSettings() {
   const serverValues = {
     name: profileQuery.data?.name ?? session?.user?.name ?? "",
     email: profileQuery.data?.email ?? session?.user?.email ?? "",
+    summary:
+      profileQuery.data?.summary ??
+      (session?.user as { summary?: string | null } | undefined)?.summary ??
+      "",
     contacts: (profileQuery.data?.contacts ?? []).map((c) => {
       return {
         id: c.id,
@@ -155,6 +159,7 @@ export function ProfileSettings() {
       form.reset({
         name: data.name,
         email: data.email,
+        summary: data.summary ?? "",
         contacts: (data.contacts ?? []).map((c) => {
           return {
             id: c.id,
@@ -179,6 +184,7 @@ export function ProfileSettings() {
         await updateMutation.mutateAsync({
           name: value.name.trim(),
           email: value.email.trim(),
+          summary: value.summary?.trim() ?? "",
           contacts: value.contacts
         });
         setIsEditing(false);
@@ -274,6 +280,10 @@ export function ProfileSettings() {
   const userImage = session?.user?.image ?? undefined;
   const displayName = profileQuery.data?.name ?? session?.user?.name ?? "";
   const displayEmail = profileQuery.data?.email ?? session?.user?.email ?? "";
+  const displaySummary =
+    profileQuery.data?.summary ??
+    (session?.user as { summary?: string | null } | undefined)?.summary ??
+    "";
   const contacts = profileQuery.data?.contacts ?? [];
   const emailVerified = !!session?.user?.emailVerified;
 
@@ -401,6 +411,12 @@ export function ProfileSettings() {
                     : new Date().getFullYear()}
                 </div>
 
+                {displaySummary.trim() ? (
+                  <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+                    {displaySummary.trim()}
+                  </p>
+                ) : null}
+
                 {contacts.length > 0 && (
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     {contacts.map((c, idx) => (
@@ -434,6 +450,18 @@ export function ProfileSettings() {
 
                     <form.AppField name="email">
                       {(field) => <field.InputField type="email" label="Email" />}
+                    </form.AppField>
+                  </FieldGroup>
+                  <FieldGroup>
+                    <form.AppField name="summary">
+                      {(field) => (
+                        <field.MarkdownField
+                          label="Public summary"
+                          description="Shown on your public portfolio under your name (not your GitHub bio)."
+                          placeholder="A short blurb about you…"
+                          classNames={{ textarea: "min-h-28" }}
+                        />
+                      )}
                     </form.AppField>
                   </FieldGroup>
                   <FieldGroup>

@@ -17,6 +17,7 @@ import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
 import { getGithubProfileReposQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
+import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 import { useGetGithubActivityQuery } from "@/pages/home-page/api/get-github-activity.query";
 import {
@@ -99,6 +100,11 @@ export function HomePage({ profileName }: { profileName: string }) {
 
   const profile = profileQuery.data;
   const showGithubHero = githubReady && profile && !profileQuery.isError;
+  // Public blurb from Better Auth user.summary (dashboard Profile settings) — not GitHub bio.
+  const portfolioQuery = useGetPortfolioListQuery(profileName);
+  const publicSummary = portfolioQuery.data?.summary?.trim()
+    ? portfolioQuery.data.summary.trim()
+    : null;
 
   return (
     <>
@@ -186,8 +192,10 @@ export function HomePage({ profileName }: { profileName: string }) {
                 </div>
               </div>
 
-              {profile.bio ? (
-                <p className="max-w-lg text-sm leading-relaxed text-primary/80">{profile.bio}</p>
+              {publicSummary ? (
+                <p className="max-w-lg text-sm leading-relaxed whitespace-pre-wrap text-primary/80">
+                  {publicSummary}
+                </p>
               ) : null}
 
               <ProfileMetadata profile={profile} />
@@ -211,6 +219,11 @@ export function HomePage({ profileName }: { profileName: string }) {
             <div className="-mt-8 space-y-2 sm:-mt-10">
               <h1 className="text-2xl font-semibold tracking-tight">@{profileName}</h1>
               <p className="text-sm text-muted-foreground">Portfolio</p>
+              {publicSummary ? (
+                <p className="max-w-lg text-sm leading-relaxed whitespace-pre-wrap text-primary/80">
+                  {publicSummary}
+                </p>
+              ) : null}
             </div>
           )}
 

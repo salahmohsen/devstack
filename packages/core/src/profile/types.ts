@@ -51,7 +51,8 @@ export const contactInputSchema = z.object({
 export const ProfileUpdateInputSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   email: z.email("Please enter a valid email address").trim().max(320),
-  summary: z.string().optional(),
+  /** Public portfolio blurb (Better Auth user.summary). Plain text or light markdown. */
+  summary: z.string().max(2000).nullish(),
   image: z.string().optional(),
   contacts: z.array(contactInputSchema).optional()
 }) satisfies z.ZodType<

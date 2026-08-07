@@ -13,7 +13,8 @@ import {
   experienceRepository,
   portfolioEntryRepository,
   projectRepository,
-  stackRepository
+  stackRepository,
+  userRepository
 } from "@tsu-stack/db/repositories";
 import { contact, experience, project, stack } from "@tsu-stack/db/schema";
 
@@ -158,7 +159,10 @@ export const PortfolioRouter = {
           throw errors.NOT_FOUND();
         }
         const all = await listAllOptedIn(resolved.userId, input.filter);
+        const owner = await userRepository.findById(resolved.userId);
+        const summary = owner?.summary?.trim() ? owner.summary.trim() : null;
         return {
+          summary,
           experiences: all.experiences,
           projects: all.projects,
           stacks: all.stacks,

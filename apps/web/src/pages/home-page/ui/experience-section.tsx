@@ -72,7 +72,8 @@ export const Experience = ({ profileName }: { profileName: string }) => {
 
 /**
  * Shared-edge timeline (better-layout):
- * fixed date column → centered rail → fluid content.
+ * - md+: fixed date column → centered rail → fluid content
+ * - <md: rail | content only (date under title); rail aligns with title start
  * Connector uses a real vertical segment that extends through row gap (pb-8).
  */
 export const ExperienceItem = ({
@@ -88,22 +89,25 @@ export const ExperienceItem = ({
 
   // Shared header band height = circle size (size-3.5 → 0.875rem) so date, dot, and title share one centerline.
   const headerBand = "h-3.5";
+  const dateClassName = cn(
+    "text-xs leading-none font-medium whitespace-nowrap text-muted-foreground tabular-nums"
+  );
 
   return (
     <li
       className={cn(
-        // Fixed date track: leading edge lines up with the "Experience" heading;
-        // fixed width keeps every circle on one vertical edge.
-        "grid w-full grid-cols-[9.5rem_1rem_minmax(0,1fr)] items-stretch gap-x-3 sm:gap-x-4",
+        // <md: rail + content only (no empty date track).
+        // md+: date | rail | content — fixed date width keeps every circle on one edge.
+        "grid w-full items-stretch gap-x-3",
+        "grid-cols-[1rem_minmax(0,1fr)]",
+        "md:grid-cols-[9.5rem_1rem_minmax(0,1fr)] md:gap-x-4",
         !isLast && "pb-8"
       )}
     >
+      {/* Date column — md+ only (left track). */}
       <time
         dateTime={dateTime}
-        className={cn(
-          headerBand,
-          "flex items-center text-start text-xs leading-none font-medium whitespace-nowrap text-muted-foreground tabular-nums"
-        )}
+        className={cn(headerBand, dateClassName, "hidden items-center text-start md:flex")}
       >
         {duration}
       </time>
@@ -130,6 +134,10 @@ export const ExperienceItem = ({
         >
           {title}
         </h3>
+        {/* Date under title — <md only. */}
+        <time dateTime={dateTime} className={cn(dateClassName, "mt-1.5 block md:hidden")}>
+          {duration}
+        </time>
         {experience.description?.trim() ? (
           <div
             className="mt-1.5 text-sm leading-relaxed text-muted-foreground [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4"
