@@ -33,8 +33,8 @@ scripts/cloudflared.tunnel.yml
 
 .worktrees
 
-# Local agent review dumps (ticket tracker under .scratch stays tracked)
-.scratch/**/reviews/
+# Local agent scratch (research, issue maps, corpora) — not product source
+.scratch/
 
 # Editor directories and files
 .vscode/*
@@ -51,9 +51,6 @@ scripts/cloudflared.tunnel.yml
 *.playwright-mcp
 
 docs/superpowers/*.dev.vars
-
-# Wayfinder Gmail analysis corpus (PII)
-.scratch/job-alert-mail-applications/corpus/
 
 # Brainstorm visual companion
 .superpowers/
