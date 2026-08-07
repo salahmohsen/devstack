@@ -64,7 +64,7 @@ function StickyStackCard({
       }}
     >
       {/* Occlusion plate matches Card surface so short slots fully cover taller backs. */}
-      <div className="absolute inset-0 bg-card" aria-hidden />
+      <div className="absolute inset-0 bg-background" aria-hidden />
       <motion.div
         style={{ scale }}
         className={cn(
