@@ -4,7 +4,7 @@ import { useState } from "react";
 import { sanitizeHtml, type ProjectPublicOutput, type StackOutput } from "@tsu-stack/core";
 import { AnimatedWash } from "@tsu-stack/ui/components/animated-wash";
 import { Card6 } from "@tsu-stack/ui/components/cardcn";
-import { VariableFontHoverByLetter } from "@tsu-stack/ui/components/fancy/text";
+import { CenterUnderline } from "@tsu-stack/ui/components/fancy/text";
 import {
   PreviewCard,
   PreviewCardPopup,
@@ -144,8 +144,7 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
   const [hovered, setHovered] = useState(false);
   const yearLabel = `${String(project.year)}${project.isPresent ? " — current" : ""}`;
 
-  // Fancy variable-font letter hover, driven by the whole card (not just the title).
-  // Geist Variable only exposes wght — no slnt axis.
+  // Center underline on the title, driven by whole-card hover (not title-only).
   const title = (
     <span className="inline-flex min-w-0 items-center gap-2">
       {project.logo ? (
@@ -155,14 +154,9 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
           className="size-7 shrink-0 rounded-md object-contain saturate-0"
         />
       ) : null}
-      <VariableFontHoverByLetter
-        label={project.title}
-        active={hovered}
-        staggerDuration={0.03}
-        fromFontVariationSettings="'wght' 600"
-        toFontVariationSettings="'wght' 900"
-        className="min-w-0"
-      />
+      <CenterUnderline active={hovered} className="min-w-0">
+        {project.title}
+      </CenterUnderline>
     </span>
   );
 
@@ -225,7 +219,7 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
 
   return (
     // data-wash-hover: AnimatedWash lifts when this host is hovered.
-    // pointer handlers also drive the title variable-font effect.
+    // pointer handlers also drive the title center-underline.
     <div
       className="w-full"
       data-wash-hover
@@ -235,8 +229,6 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
       <Card6
         // isolate keeps the wash canvas under content without leaking stacking contexts.
         className="isolate w-full transition-[border-color,box-shadow] duration-300"
-        // font-semibold fights wght variation; drive weight via VariableFontHoverByLetter.
-        titleClassName="font-normal"
         title={title}
         description={yearLabel}
         action={action}

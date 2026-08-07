@@ -10,6 +10,7 @@ import {
 import { type ComponentType, type ReactNode } from "react";
 
 import { type ContactOutput, type ExperiencePublicOutput } from "@tsu-stack/core";
+import { CenterUnderline } from "@tsu-stack/ui/components/fancy/text";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { type GithubProfileQueryResult } from "@/pages/home-page/api/get-github-profile.query";
@@ -67,13 +68,13 @@ export function ProfileOverview({
                   href={row.href}
                   target={row.href.startsWith("#") ? "_self" : "_blank"}
                   rel={row.href.startsWith("#") ? undefined : "noopener noreferrer"}
-                  className="underline-offset-4 transition-colors hover:underline"
+                  className="transition-colors"
                   aria-label={row.label}
                 >
-                  {row.label}
+                  <CenterUnderline className="cursor-pointer">{row.label}</CenterUnderline>
                 </a>
               ) : (
-                <span>{row.label}</span>
+                <CenterUnderline className="cursor-default">{row.label}</CenterUnderline>
               )}
             </IntroItemContent>
           </IntroItem>
@@ -98,15 +99,17 @@ export function ProfileOverview({
 }
 
 function IntroItem({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("flex items-center gap-4 font-mono text-sm", className)} {...props} />;
+  return (
+    <div className={cn("flex items-center gap-2.5 font-mono text-sm", className)} {...props} />
+  );
 }
 
 function IntroItemIcon({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "flex size-6 shrink-0 items-center justify-center rounded-md border border-muted-foreground/15 bg-muted ring-1 ring-border/50 ring-offset-1 ring-offset-background dark:ring-line",
-        "[&_svg]:pointer-events-none [&_svg]:text-muted-foreground [&_svg:not([class*='size-'])]:size-4",
+        "flex size-4 shrink-0 items-center justify-center text-muted-foreground",
+        "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
         className
       )}
       {...props}
@@ -114,8 +117,9 @@ function IntroItemIcon({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function IntroItemContent({ className, ...props }: React.ComponentProps<"p">) {
-  return <p className={cn("min-w-0 text-balance", className)} {...props} />;
+function IntroItemContent({ className, ...props }: React.ComponentProps<"div">) {
+  // div (not p): hosts anchors + animated underline without invalid nesting.
+  return <div className={cn("min-w-0 text-balance", className)} {...props} />;
 }
 
 function buildIntroRows({
