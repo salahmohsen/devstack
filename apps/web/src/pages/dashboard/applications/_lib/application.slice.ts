@@ -25,6 +25,7 @@ type ApplicationUIActions = {
   openCreate: () => void;
   openEdit: (item: ApplicationOutput) => void;
   closeSheet: () => void;
+  /** Toggle side panel: same item closes, different item switches. */
   openView: (item: ApplicationOutput) => void;
   /** Always open the info panel for this item (no toggle). */
   showView: (item: ApplicationOutput) => void;

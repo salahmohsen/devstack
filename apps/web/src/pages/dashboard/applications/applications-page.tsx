@@ -42,7 +42,7 @@ export function ApplicationsPage() {
     openCreate,
     closeSheet,
     closeView,
-    openView,
+    showView,
     listFilter,
     packageSheetAppId,
     closePackageSheet,
@@ -59,11 +59,11 @@ export function ApplicationsPage() {
     return applications;
   }, [applications, listFilter]);
 
-  // Keep side panel in sync with list refetches (package generate/accept/send).
+  // Prefer live list row so stage/outcome/edit/package changes refresh the side panel.
   const liveViewItem = useMemo(() => {
     if (!viewItem) return null;
     return applications.find((a) => a.id === viewItem.id) ?? viewItem;
-  }, [viewItem, applications]);
+  }, [applications, viewItem]);
 
   const packageApplication = useMemo(() => {
     if (!packageSheetAppId) return null;
@@ -82,12 +82,13 @@ export function ApplicationsPage() {
   );
   const isAnyOpen = isAnyOpened(isItemOpen);
 
+  // Keyboard/footer nav must not toggle-close when re-selecting the current id.
   const setOpenedItem = useCallback(
     (item: (typeof applications)[number] | null) => {
-      if (item) openView(item);
+      if (item) showView(item);
       else closeView();
     },
-    [openView, closeView]
+    [showView, closeView]
   );
 
   const setIsItemOpen = useCallback(
@@ -102,9 +103,9 @@ export function ApplicationsPage() {
         return;
       }
       const item = applications.find((a) => a.id === id);
-      if (item) openView(item);
+      if (item) showView(item);
     },
-    [applications, openView, closeView]
+    [applications, showView, closeView]
   );
 
   const containerRef = useRef<HTMLUListElement | null>(null);

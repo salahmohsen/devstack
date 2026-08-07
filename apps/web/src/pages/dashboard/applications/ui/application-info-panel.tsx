@@ -7,6 +7,7 @@ import { useState } from "react";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   APPLICATION_SOURCE_LABELS,
+  EMPLOYMENT_TYPE_LABELS,
   HIRING_URGENCY_LABELS,
   type ApplicationOutput
 } from "@tsu-stack/core";
@@ -45,15 +46,40 @@ function formatWhen(value: Date | string | null | undefined) {
   });
 }
 
+function displayText(value: string | null | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return "—";
+  return trimmed;
+}
+
+function postingHost(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 /** Label left, value right — values share one foreground color. */
 function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 text-sm">
-      <dt className="shrink-0 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+    <div className="flex items-start justify-between gap-3 text-sm">
+      <dt className="shrink-0 pt-0.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
         {label}
       </dt>
       <dd className="min-w-0 text-right text-foreground">{children}</dd>
     </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-2">
+      <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+        {title}
+      </h3>
+      {children}
+    </section>
   );
 }
 
@@ -76,6 +102,7 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
   const linkedResume = item.resumeId
     ? resumesQuery.data?.find((r) => r.id === item.resumeId)
     : undefined;
+  const resumeLabel = linkedResume?.filename ?? (item.resumeId ? "Linked resume" : null);
 
   const hasMaterials = Boolean(
     item.resumeId ?? item.coverLetterR2Key ?? item.coverLetterBody ?? item.outreachBody
@@ -86,184 +113,189 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
       <ItemInfoPanel
         title={item.title}
         description={
-          <FrameDescription className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground">
-              {item.companyName}
-              {sourceLabel ? ` · ${sourceLabel}` : ""}
-            </span>
+          <FrameDescription className="flex flex-col gap-2">
+            <span className="text-base font-medium text-foreground">{item.companyName}</span>
             <span className="flex flex-wrap items-center gap-1.5">
               <ApplicationStageBadge stage={item.stage} />
               <ApplicationStatusBadge outcome={item.outcome} />
+              {item.employmentType !== "unknown" ? (
+                <Badge variant="outline">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</Badge>
+              ) : null}
+              {item.hiringUrgency !== "unknown" ? (
+                <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
+              ) : null}
             </span>
           </FrameDescription>
         }
         updatedAt={item.updatedAt}
         createdAt={item.createdAt}
       >
-        {item.hiringUrgency !== "unknown" ? (
-          <div className="mb-4 flex flex-wrap gap-2">
-            <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
-          </div>
-        ) : null}
+        <div className="space-y-5">
+          <ApplyPackagePanelActions app={item} />
 
-        <ApplyPackagePanelActions app={item} className="mb-4" />
+          {hasMaterials ? (
+            <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+              <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                Materials
+              </p>
+              <dl className="space-y-2.5">
+                {item.resumeId ? (
+                  <MetaRow label="Resume">
+                    <span className="inline-flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
+                        onClick={() => setResumePreviewOpen(true)}
+                      >
+                        <FileTextIcon className="size-3.5" aria-hidden />
+                        Preview
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-foreground hover:text-foreground"
+                        render={
+                          <a
+                            href={resumeDownloadUrl(item.resumeId)}
+                            download
+                            aria-label="Download resume PDF"
+                          >
+                            Download
+                          </a>
+                        }
+                      >
+                        <DownloadIcon className="size-3.5" aria-hidden />
+                      </Button>
+                    </span>
+                  </MetaRow>
+                ) : null}
+                {item.coverLetterR2Key ? (
+                  <MetaRow label="Cover letter">
+                    <span className="inline-flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
+                        render={
+                          <a
+                            href={coverLetterDownloadUrl(item.id, true)}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label="Preview cover letter PDF"
+                          >
+                            Preview
+                          </a>
+                        }
+                      >
+                        <FileTextIcon className="size-3.5" aria-hidden />
+                        Preview
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-foreground hover:text-foreground"
+                        render={
+                          <a
+                            href={coverLetterDownloadUrl(item.id)}
+                            download
+                            aria-label="Download cover letter PDF"
+                          >
+                            Download
+                          </a>
+                        }
+                      >
+                        <DownloadIcon className="size-3.5" aria-hidden />
+                      </Button>
+                    </span>
+                  </MetaRow>
+                ) : null}
+                {item.recruiterEmail ? (
+                  <MetaRow label="Recruiter">{item.recruiterEmail}</MetaRow>
+                ) : null}
+                {item.outreachSentAt ? (
+                  <MetaRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</MetaRow>
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
 
-        {hasMaterials ? (
-          <div className="mb-4 space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
-            <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Materials
-            </p>
-            <dl className="space-y-2.5">
-              {item.resumeId ? (
-                <MetaRow label="Resume">
-                  <span className="inline-flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
-                      onClick={() => setResumePreviewOpen(true)}
-                    >
-                      <FileTextIcon className="size-3.5" aria-hidden />
-                      Preview
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-foreground hover:text-foreground"
-                      render={
-                        <a
-                          href={resumeDownloadUrl(item.resumeId)}
-                          download
-                          aria-label="Download resume PDF"
-                        >
-                          Download
-                        </a>
-                      }
-                    >
-                      <DownloadIcon className="size-3.5" aria-hidden />
-                    </Button>
-                  </span>
-                </MetaRow>
-              ) : null}
-              {item.coverLetterR2Key ? (
-                <MetaRow label="Cover letter">
-                  <span className="inline-flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
-                      render={
-                        <a
-                          href={coverLetterDownloadUrl(item.id, true)}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label="Preview cover letter PDF"
-                        >
-                          Preview
-                        </a>
-                      }
-                    >
-                      <FileTextIcon className="size-3.5" aria-hidden />
-                      Preview
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-foreground hover:text-foreground"
-                      render={
-                        <a
-                          href={coverLetterDownloadUrl(item.id)}
-                          download
-                          aria-label="Download cover letter PDF"
-                        >
-                          Download
-                        </a>
-                      }
-                    >
-                      <DownloadIcon className="size-3.5" aria-hidden />
-                    </Button>
-                  </span>
-                </MetaRow>
-              ) : null}
-              {item.recruiterEmail ? (
-                <MetaRow label="Recruiter">{item.recruiterEmail}</MetaRow>
-              ) : null}
-              {item.outreachSentAt ? (
-                <MetaRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</MetaRow>
-              ) : null}
-            </dl>
-          </div>
-        ) : null}
-
-        <dl className="mb-4 space-y-2.5">
-          {item.location ? <MetaRow label="Location">{item.location}</MetaRow> : null}
-          {item.salaryRange ? <MetaRow label="Salary">{item.salaryRange}</MetaRow> : null}
-          {item.url ? (
+          <dl className="space-y-2.5">
+            <MetaRow label="Employment type">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</MetaRow>
+            <MetaRow label="Location">{displayText(item.location)}</MetaRow>
+            <MetaRow label="Salary">{displayText(item.salaryRange)}</MetaRow>
+            <MetaRow label="Source">{sourceLabel ?? "—"}</MetaRow>
             <MetaRow label="Posting URL">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="text-foreground hover:text-foreground"
-                render={
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Open job posting"
-                  />
-                }
-              >
-                <ExternalLinkIcon className="size-4" aria-hidden />
-              </Button>
+              {item.url ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 max-w-full gap-1.5 px-2 text-foreground hover:text-foreground"
+                  render={
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Open job posting (${postingHost(item.url)})`}
+                    />
+                  }
+                >
+                  <ExternalLinkIcon className="size-3.5 shrink-0" aria-hidden />
+                  <span className="truncate">{postingHost(item.url)}</span>
+                </Button>
+              ) : (
+                "—"
+              )}
             </MetaRow>
-          ) : null}
-          {sourceLabel ? <MetaRow label="Source">{sourceLabel}</MetaRow> : null}
-          <MetaRow label="Stage changed">{formatWhen(item.stageChangedAt)}</MetaRow>
-          {item.outcomeAt ? <MetaRow label="Closed">{formatWhen(item.outcomeAt)}</MetaRow> : null}
-          {item.resumeId && !hasMaterials ? (
-            <MetaRow label="Resume">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
-                onClick={() => setResumePreviewOpen(true)}
-              >
-                <FileTextIcon className="size-3.5" aria-hidden />
-                Preview
-              </Button>
+            {!hasMaterials ? (
+              <MetaRow label="Resume">
+                {item.resumeId ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 max-w-full gap-1.5 px-2 text-foreground hover:text-foreground"
+                    onClick={() => setResumePreviewOpen(true)}
+                  >
+                    <FileTextIcon className="size-3.5 shrink-0" aria-hidden />
+                    <span className="truncate">{resumeLabel ?? "Preview"}</span>
+                  </Button>
+                ) : (
+                  "—"
+                )}
+              </MetaRow>
+            ) : null}
+            <MetaRow label="Stage changed">{formatWhen(item.stageChangedAt)}</MetaRow>
+            <MetaRow label="Closed">
+              {item.outcomeAt ? formatWhen(item.outcomeAt) : item.outcome ? "—" : "Open"}
             </MetaRow>
-          ) : null}
-        </dl>
+          </dl>
 
-        {item.description ? (
-          <>
-            <p className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Job description
-            </p>
-            <Markdown className="prose prose-sm mb-4 max-w-none text-foreground dark:prose-invert">
-              {item.description}
-            </Markdown>
-          </>
-        ) : null}
+          <Section title="Job description">
+            {item.description?.trim() ? (
+              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                {item.description}
+              </Markdown>
+            ) : (
+              <p className="text-sm text-muted-foreground">No job description.</p>
+            )}
+          </Section>
 
-        {item.notes ? (
-          <>
-            <p className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Notes
-            </p>
-            <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-              {item.notes}
-            </Markdown>
-          </>
-        ) : (
-          !item.description && <p className="text-muted-foreground">No description or notes.</p>
-        )}
+          <Section title="Notes">
+            {item.notes?.trim() ? (
+              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                {item.notes}
+              </Markdown>
+            ) : (
+              <p className="text-sm text-muted-foreground">No notes.</p>
+            )}
+          </Section>
+        </div>
       </ItemInfoPanel>
 
       {item.resumeId ? (

@@ -3,11 +3,13 @@ import {
   ApplicationOutcomeSchema,
   ApplicationSourceSchema,
   ApplicationStageSchema,
+  EmploymentTypeSchema,
   HiringUrgencySchema,
   type ApplicationApplyMethod,
   type ApplicationOutcome,
   type ApplicationSource,
   type ApplicationStage,
+  type EmploymentType,
   type HiringUrgency
 } from "#@/application/types";
 
@@ -21,6 +23,8 @@ export const HIRING_URGENCIES = HiringUrgencySchema.options;
 export const APPLICATION_SOURCES = ApplicationSourceSchema.options;
 
 export const APPLICATION_APPLY_METHODS = ApplicationApplyMethodSchema.options;
+
+export const EMPLOYMENT_TYPES = EmploymentTypeSchema.options;
 
 export const APPLICATION_STAGE_LABELS: Record<ApplicationStage, string> = {
   saved: "Saved",
@@ -58,6 +62,14 @@ export const APPLICATION_APPLY_METHOD_LABELS: Record<ApplicationApplyMethod, str
   external: "External",
   email: "Email",
   unknown: "Unknown"
+};
+
+export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
+  unknown: "Unknown",
+  full_time: "Full-time",
+  part_time: "Part-time",
+  contract: "Contract",
+  internship: "Internship"
 };
 
 export function applicationStageOptions() {
@@ -101,6 +113,15 @@ export function applicationApplyMethodOptions() {
     return {
       value,
       label: APPLICATION_APPLY_METHOD_LABELS[value]
+    };
+  });
+}
+
+export function employmentTypeOptions() {
+  return EMPLOYMENT_TYPES.map((value) => {
+    return {
+      value,
+      label: EMPLOYMENT_TYPE_LABELS[value]
     };
   });
 }

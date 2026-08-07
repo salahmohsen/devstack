@@ -9,10 +9,12 @@ import {
   CreateApplicationInputSchema,
   UpdateApplicationInputSchema,
   applicationSourceOptions,
+  employmentTypeOptions,
   hiringUrgencyOptions,
   type ApplicationOutcome,
   type ApplicationOutput,
-  type ApplicationSource
+  type ApplicationSource,
+  type EmploymentType
 } from "@tsu-stack/core";
 import {
   AlertDialog,
@@ -55,6 +57,7 @@ type FormValues = {
   source: ApplicationSource | "";
   location: string;
   salaryRange: string;
+  employmentType: EmploymentType;
   description: string;
   notes: string;
   hiringUrgency: "unknown" | "immediate" | "soon" | "flexible";
@@ -69,6 +72,7 @@ const emptyValues: FormValues = {
   source: "",
   location: "",
   salaryRange: "",
+  employmentType: "unknown",
   description: "",
   notes: "",
   hiringUrgency: "unknown",
@@ -84,6 +88,7 @@ function toFormValues(item: ApplicationOutput): FormValues {
     source: item.source ?? "",
     location: item.location ?? "",
     salaryRange: item.salaryRange ?? "",
+    employmentType: item.employmentType,
     description: item.description ?? "",
     notes: item.notes ?? "",
     hiringUrgency: item.hiringUrgency,
@@ -125,6 +130,7 @@ export function ApplicationFormSheet({
         source: value.source === "" ? null : value.source,
         location: value.location || null,
         salaryRange: value.salaryRange || null,
+        employmentType: value.employmentType,
         description: value.description || null,
         notes: value.notes || null,
         hiringUrgency: value.hiringUrgency,
@@ -269,11 +275,11 @@ export function ApplicationFormSheet({
               <form.AppField name="salaryRange">
                 {(field) => <field.InputField label="Salary range" placeholder="e.g. $150–180k" />}
               </form.AppField>
-              <form.AppField name="hiringUrgency">
+              <form.AppField name="employmentType">
                 {(field) => (
                   <field.DropdownField
-                    label="Hiring urgency"
-                    items={hiringUrgencyOptions().map((o) => {
+                    label="Employment type"
+                    items={employmentTypeOptions().map((o) => {
                       return {
                         value: o.value,
                         label: o.label
@@ -283,6 +289,19 @@ export function ApplicationFormSheet({
                 )}
               </form.AppField>
             </div>
+            <form.AppField name="hiringUrgency">
+              {(field) => (
+                <field.DropdownField
+                  label="Hiring urgency"
+                  items={hiringUrgencyOptions().map((o) => {
+                    return {
+                      value: o.value,
+                      label: o.label
+                    };
+                  })}
+                />
+              )}
+            </form.AppField>
             <form.AppField name="resumeId">
               {(field) => (
                 <field.DropdownField

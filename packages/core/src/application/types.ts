@@ -30,6 +30,15 @@ export type ApplicationSource = z.infer<typeof ApplicationSourceSchema>;
 export const ApplicationApplyMethodSchema = z.enum(["easy_apply", "external", "email", "unknown"]);
 export type ApplicationApplyMethod = z.infer<typeof ApplicationApplyMethodSchema>;
 
+export const EmploymentTypeSchema = z.enum([
+  "unknown",
+  "full_time",
+  "part_time",
+  "contract",
+  "internship"
+]);
+export type EmploymentType = z.infer<typeof EmploymentTypeSchema>;
+
 const optionalText = z
   .union([z.string(), z.literal(""), z.null()])
   .optional()
@@ -64,6 +73,7 @@ export const ApplicationOutputSchema = z.object({
   source: ApplicationSourceSchema.nullable(),
   location: z.string().nullable(),
   salaryRange: z.string().nullable(),
+  employmentType: EmploymentTypeSchema,
   description: z.string().nullable(),
   notes: z.string().nullable(),
   stage: ApplicationStageSchema,
@@ -100,6 +110,7 @@ export const CreateApplicationInputSchema = z.object({
   source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,
+  employmentType: EmploymentTypeSchema.optional(),
   description: optionalText,
   notes: optionalText,
   stage: ApplicationStageSchema.optional(),
@@ -128,6 +139,7 @@ export const UpdateApplicationInputSchema = z.object({
   source: optionalSource,
   location: optionalText,
   salaryRange: optionalText,
+  employmentType: EmploymentTypeSchema.optional(),
   description: optionalText,
   notes: optionalText,
   hiringUrgency: HiringUrgencySchema.optional(),
