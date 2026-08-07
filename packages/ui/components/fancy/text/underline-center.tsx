@@ -1,5 +1,3 @@
-"use client";
-
 import { motion, type ValueAnimationTransition, type HTMLMotionProps } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 

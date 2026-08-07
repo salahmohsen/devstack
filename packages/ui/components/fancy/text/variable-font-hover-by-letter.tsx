@@ -1,5 +1,3 @@
-"use client";
-
 import { motion, stagger, useAnimate, type AnimationOptions } from "motion/react";
 import { useCallback, useEffect, useRef, useState, type ComponentPropsWithoutRef } from "react";
 
