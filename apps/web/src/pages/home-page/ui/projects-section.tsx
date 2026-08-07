@@ -142,8 +142,6 @@ export const ProjectsSection = ({ profileName }: { profileName: string }) => {
 
 export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
   const [hovered, setHovered] = useState(false);
-  // Mount WebGL wash only after first hover (and keep mounted) — avoids N canvases on load.
-  const [washMounted, setWashMounted] = useState(false);
   const yearLabel = `${String(project.year)}${project.isPresent ? " — current" : ""}`;
 
   // Fancy variable-font letter hover, driven by the whole card (not just the title).
@@ -210,15 +208,20 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
   const safeSummary = summary ? sanitizeHtml(summary) : "";
   const safeDescription = description ? sanitizeHtml(description) : "";
 
-  // Neon AnimatedWash — mounted after first hover so idle pages don't spin WebGL ×N.
+  // Neon AnimatedWash — always mounted so the resting grain is visible;
+  // data-wash-hover lifts/warms on card hover (same as Neon demo).
   // currentColor = contribution-graph green.
   // @see https://ui.neon.com/brand/animated-wash
-  const washOverlay = washMounted ? (
+  const washOverlay = (
     <AnimatedWash
       className="pointer-events-none absolute inset-0 z-0 size-full"
       style={{ color: WASH_GREEN }}
+      // Slightly stronger resting field so the wash reads without hover;
+      // hover still lifts via data-wash-hover on the host.
+      intensity={0.1}
+      noise={0.4}
     />
-  ) : null;
+  );
 
   return (
     // data-wash-hover: AnimatedWash lifts when this host is hovered.
@@ -226,10 +229,7 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
     <div
       className="w-full"
       data-wash-hover
-      onPointerEnter={() => {
-        setHovered(true);
-        setWashMounted(true);
-      }}
+      onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
     >
       <Card6
