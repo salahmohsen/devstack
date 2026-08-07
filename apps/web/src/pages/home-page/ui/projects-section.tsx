@@ -1,15 +1,18 @@
 import { ExternalLink } from "lucide-react";
+import { useState } from "react";
 
 import { type ProjectPublicOutput, type StackOutput } from "@tsu-stack/core";
+import { AnimatedWash } from "@tsu-stack/ui/components/animated-wash/animated-wash";
 import { Card6 } from "@tsu-stack/ui/components/cardcn/card-6";
+import { VariableFontHoverByLetter } from "@tsu-stack/ui/components/fancy/text/variable-font-hover-by-letter";
 import {
   PreviewCard,
   PreviewCardPopup,
   PreviewCardTrigger
 } from "@tsu-stack/ui/components/preview-card";
+import { StickyCardStack } from "@tsu-stack/ui/components/skiper-ui/skiper16";
 import {
   NativeMarquee,
-  SideFadeGradients,
   type NativeMarqueeItem
 } from "@tsu-stack/ui/components/uitripled/native-marquee";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -20,12 +23,21 @@ import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 const chipClassName = cn(
   // Fixed h + items-center keeps icon glyph and uppercase label on one midline.
-  "inline-flex h-5 items-center gap-1 rounded-none border border-border bg-background px-2",
+  // better-layout: controls float above the content layer (wash) — solid surface, not
+  // transparent-on-texture. better-colors: semantic primary pair for readable contrast.
+  "inline-flex h-5 items-center gap-1 rounded-none border border-transparent bg-muted px-2",
   "text-[0.65rem] leading-none font-medium tracking-wide whitespace-nowrap uppercase",
-  "text-muted-foreground transition-colors hover:border-foreground/25 hover:bg-muted hover:text-foreground",
+  "text-primary transition-colors hover:bg-primary/20",
   // Kill button/link defaults from PreviewCardTrigger that skew flex centering.
   "font-[inherit] no-underline"
 );
+
+/**
+ * Wash tint matches the contribution graph's high-intensity green (dark theme
+ * level-4). Same hue/chroma family as THEMES.GREEN in contribution-graph.tsx.
+ * @see apps/web/src/pages/home-page/ui/contribution-graph.tsx
+ */
+const WASH_GREEN = "oklch(0.78 0.22 150)";
 
 function formatStackType(type: string | null | undefined): string | null {
   if (!type?.trim()) return null;
@@ -120,20 +132,23 @@ export const ProjectsSection = ({ profileName }: { profileName: string }) => {
 
   if (projects.length === 0) return null;
 
+  // Skiper 16 card stack scroll — sticky pile + scale-down on scroll.
+  // @see https://skiper-ui.com/v1/skiper16
   return (
-    <ul className="m-0 grid list-none grid-cols-1 gap-10 p-0">
+    <StickyCardStack>
       {projects.map((project) => (
-        <li key={project.id} className="min-w-0">
-          <ProjectsItem project={project} />
-        </li>
+        <ProjectsItem key={project.id} project={project} />
       ))}
-    </ul>
+    </StickyCardStack>
   );
 };
 
 export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
+  const [hovered, setHovered] = useState(false);
   const yearLabel = `${String(project.year)}${project.isPresent ? " — current" : ""}`;
 
+  // Fancy variable-font letter hover, driven by the whole card (not just the title).
+  // Geist Variable only exposes wght — no slnt axis.
   const title = (
     <span className="inline-flex min-w-0 items-center gap-2">
       {project.logo ? (
@@ -143,7 +158,14 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
           className="size-7 shrink-0 rounded-md object-contain saturate-0"
         />
       ) : null}
-      <span className="min-w-0 truncate">{project.title}</span>
+      <VariableFontHoverByLetter
+        label={project.title}
+        active={hovered}
+        staggerDuration={0.03}
+        fromFontVariationSettings="'wght' 600"
+        toFontVariationSettings="'wght' 900"
+        className="min-w-0"
+      />
     </span>
   );
 
@@ -174,8 +196,8 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
 
   const stacksFooter =
     marqueeItems.length > 0 ? (
-      <div className="relative w-full min-w-0 space-y-1.5">
-        <SideFadeGradients sizeClassName="w-6" fromClassName="from-card" />
+      // No side fades (from-card would paint solid and hide the wash under the stack).
+      <div className="relative z-10 w-full min-w-0 space-y-1.5 bg-transparent">
         <NativeMarquee items={row1} speed={4} gap={8} pauseOnHover />
         {row2.length > 0 ? (
           <NativeMarquee items={row2} speed={4} gap={8} reverse pauseOnHover />
@@ -187,39 +209,63 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
   const description = project.description?.trim();
   const hasBody = Boolean(summary || description);
 
+  // Neon AnimatedWash — WebGL grain-gradient from the bottom edge, lifts on hover.
+  // currentColor = contribution-graph green (more saturated than Neon #00e599).
+  // @see https://ui.neon.com/brand/animated-wash
+  const washOverlay = (
+    <AnimatedWash
+      className="pointer-events-none absolute inset-0 z-0 size-full"
+      style={{ color: WASH_GREEN }}
+    />
+  );
+
   return (
-    <Card6
-      className="h-full"
-      title={title}
-      description={yearLabel}
-      action={action}
-      footer={stacksFooter}
+    // data-wash-hover: AnimatedWash lifts when this host is hovered.
+    // pointer handlers still drive the title variable-font effect.
+    <div
+      className="w-full"
+      data-wash-hover
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
     >
-      {hasBody ? (
-        /*
-         * better-layout body: order by importance
-         * 1) summary — primary takeaway (tighter, stronger)
-         * 2) description — secondary detail (muted, more space after summary = 2× group gap)
-         * Shared leading edge via single column flex.
-         */
-        <div className="flex flex-col gap-3">
-          {summary ? (
-            <div
-              className="text-sm leading-snug font-medium text-pretty text-foreground/90 [&_li]:mb-1 [&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4"
-              dangerouslySetInnerHTML={{ __html: summary }}
-            />
-          ) : null}
-          {description ? (
-            <div
-              className={cn(
-                "text-sm leading-relaxed text-muted-foreground [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4",
-                summary && "border-t border-border/40 pt-3"
-              )}
-              dangerouslySetInnerHTML={{ __html: description }}
-            />
-          ) : null}
-        </div>
-      ) : null}
-    </Card6>
+      <Card6
+        // Content-sized — sticky slot min-height owns the scroll runway, not the card.
+        // isolate keeps the wash canvas under content without leaking stacking contexts.
+        className="isolate w-full transition-[border-color,box-shadow] duration-300"
+        // font-semibold fights wght variation; drive weight via VariableFontHoverByLetter.
+        titleClassName="font-normal"
+        title={title}
+        description={yearLabel}
+        action={action}
+        footer={stacksFooter}
+        overlay={washOverlay}
+      >
+        {hasBody ? (
+          /*
+           * better-layout body: order by importance
+           * 1) summary — primary takeaway (tighter, stronger)
+           * 2) description — secondary detail (muted, more space after summary = 2× group gap)
+           * Shared leading edge via single column flex.
+           */
+          <div className="flex flex-col gap-3">
+            {summary ? (
+              <div
+                className="text-sm leading-snug font-medium text-pretty text-foreground/90 [&_li]:mb-1 [&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4"
+                dangerouslySetInnerHTML={{ __html: summary }}
+              />
+            ) : null}
+            {description ? (
+              <div
+                className={cn(
+                  "text-sm leading-relaxed text-muted-foreground [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4",
+                  summary && "border-t border-border/40 pt-3"
+                )}
+                dangerouslySetInnerHTML={{ __html: description }}
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </Card6>
+    </div>
   );
 };

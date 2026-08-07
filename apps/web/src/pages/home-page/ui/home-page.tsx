@@ -102,7 +102,15 @@ export function HomePage({ profileName }: { profileName: string }) {
 
   return (
     <>
-      <div className="w-full overflow-hidden pb-16">
+      {/*
+        Clip horizontal bleed from the contribution graph (w-screen) WITHOUT creating
+        a scroll container. CSS: overflow-x:hidden makes overflow-y compute to auto,
+        which becomes the sticky containing block and kills position:sticky for the
+        project card stack. overflow-x:clip does not establish a scrollport, so sticky
+        still resolves against the layout ScrollArea viewport.
+        @see https://drafts.csswg.org/css-overflow-3/#overflow-properties
+      */}
+      <div className="w-full overflow-x-clip pb-16">
         <div className="relative h-48 w-screen overflow-hidden sm:h-56">
           {showGithubHero && contributionsQuery.data && hasMounted ? (
             <Suspense

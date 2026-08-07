@@ -26,7 +26,7 @@ function CornerPlus({ className }: { className?: string }) {
       height={24}
       strokeWidth="1"
       stroke="currentColor"
-      className={cn("absolute size-6 text-foreground", className)}
+      className={cn("absolute z-20 size-6 text-foreground", className)}
       aria-hidden
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
@@ -48,20 +48,40 @@ function CornerPluses() {
 export type Card6Props = {
   className?: string;
   title?: React.ReactNode;
+  titleClassName?: string;
   description?: React.ReactNode;
   action?: React.ReactNode;
   children?: React.ReactNode;
   footer?: React.ReactNode;
+  /** Decorative layer under content (e.g. hover gradient). Pointer-events none recommended. */
+  overlay?: React.ReactNode;
 };
 
-export function Card6({ className, title, description, action, children, footer }: Card6Props) {
+export function Card6({
+  className,
+  title,
+  titleClassName,
+  description,
+  action,
+  children,
+  footer,
+  overlay
+}: Card6Props) {
   return (
-    <Card className={cn("relative gap-0 rounded-none shadow-none before:rounded-none", className)}>
+    <Card
+      className={cn(
+        "relative gap-0 overflow-hidden rounded-none shadow-none before:rounded-none",
+        className
+      )}
+    >
+      {overlay}
       <CornerPluses />
       {(title != null || description != null || action != null) && (
-        <CardHeader className="gap-2 p-5 pb-3">
+        <CardHeader className="relative z-10 gap-2 p-5 pb-3">
           {title != null ? (
-            <CardTitle className="text-base leading-snug font-semibold">{title}</CardTitle>
+            <CardTitle className={cn("text-base leading-snug font-semibold", titleClassName)}>
+              {title}
+            </CardTitle>
           ) : null}
           {description != null ? (
             <CardDescription className="text-xs tracking-wide uppercase">
@@ -72,10 +92,12 @@ export function Card6({ className, title, description, action, children, footer 
         </CardHeader>
       )}
       {children != null ? (
-        <CardContent className="flex flex-col gap-0 p-5 pt-1">{children}</CardContent>
+        <CardContent className="relative z-10 flex flex-col gap-0 p-5 pt-1">{children}</CardContent>
       ) : null}
       {footer != null ? (
-        <div className="min-w-0 overflow-hidden border-t p-5 pt-3">{footer}</div>
+        <div className="relative z-10 min-w-0 overflow-hidden border-t border-border/50 bg-transparent p-5 pt-3">
+          {footer}
+        </div>
       ) : null}
     </Card>
   );
