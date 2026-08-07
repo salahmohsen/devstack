@@ -26,6 +26,8 @@
     "@animate-ui": "https://animate-ui.com/r/{name}.json",
     "@dotmatrix": "https://dotmatrix.zzzzshawn.cloud/r/{name}.json",
     "@hextaui": "https://hextaui.com/r/{name}.json",
-    "@unlumen-ui": "https://ui.unlumen.com/r/{name}.json"
+    "@unlumen-ui": "https://ui.unlumen.com/r/{name}.json",
+    "@reui": "https://reui.io/r/{style}/{name}.json",
+    "@cardcn": "https://cardcn.dev/r/{name}.json"
   }
 }

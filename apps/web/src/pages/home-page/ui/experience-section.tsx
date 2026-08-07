@@ -1,4 +1,5 @@
 import { type ExperiencePublicOutput } from "@tsu-stack/core";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useGetDefaultResumeQuery, useGetPortfolioListQuery } from "@/features/portfolio";
 
@@ -12,14 +13,22 @@ function formatDate(dateStr: string | null): string {
   });
 }
 
+/** Full range — single line on the leading edge. */
 function formatDuration(
   fromDate: string | null,
   toDate: string | null,
   isPresent: boolean
 ): string {
   const from = formatDate(fromDate);
-  const to = isPresent ? "current" : toDate ? formatDate(toDate) : "Present";
-  return from ? `${from} — ${to}` : to;
+  const to = isPresent ? "Present" : toDate ? formatDate(toDate) : "Present";
+  return from ? `${from} – ${to}` : to;
+}
+
+function experienceTitle(experience: ExperiencePublicOutput): string {
+  if (experience.title && experience.organization) {
+    return `${experience.title} · ${experience.organization}`;
+  }
+  return experience.title || experience.organization;
 }
 
 export const Experience = ({ profileName }: { profileName: string }) => {
@@ -30,12 +39,19 @@ export const Experience = ({ profileName }: { profileName: string }) => {
 
   return (
     <>
-      <ol className="group/list">
-        {experiences.map((exp) => (
-          <ExperienceItem key={exp.id} experience={exp} />
-        ))}
-      </ol>
-      {defaultResume && (
+      {experiences.length > 0 ? (
+        <ol className="m-0 flex w-full list-none flex-col p-0">
+          {experiences.map((experience, index) => (
+            <ExperienceItem
+              key={experience.id}
+              experience={experience}
+              isLast={index === experiences.length - 1}
+            />
+          ))}
+        </ol>
+      ) : null}
+
+      {defaultResume ? (
         <div className="mt-10 flex gap-1">
           <a
             href={`/api/resume/download/?id=${defaultResume.id}&profileName=${encodeURIComponent(profileName)}`}
@@ -49,33 +65,78 @@ export const Experience = ({ profileName }: { profileName: string }) => {
             </svg>
           </a>
         </div>
-      )}
+      ) : null}
     </>
   );
 };
 
-export const ExperienceItem = ({ experience }: { experience: ExperiencePublicOutput }) => {
+/**
+ * Shared-edge timeline (better-layout):
+ * fixed date column → centered rail → fluid content.
+ * Connector uses a real vertical segment that extends through row gap (pb-8).
+ */
+export const ExperienceItem = ({
+  experience,
+  isLast
+}: {
+  experience: ExperiencePublicOutput;
+  isLast: boolean;
+}) => {
   const duration = formatDuration(experience.fromDate, experience.toDate, experience.isPresent);
+  const title = experienceTitle(experience);
+  const dateTime = experience.fromDate ?? undefined;
+
+  // Shared header band height = circle size (size-3.5 → 0.875rem) so date, dot, and title share one centerline.
+  const headerBand = "h-3.5";
 
   return (
-    <li className="mb-12">
-      <article className="group relative grid scale-100 pb-1 transition-all duration-200 ease-in-out sm:grid-cols-8 sm:gap-8 md:gap-4 lg:group-hover:scale-75 lg:group-hover/list:opacity-50 hover:lg:scale-105! hover:lg:opacity-100!">
-        <div className="absolute -inset-4 -z-10 hidden rounded-lg lg:-inset-x-6 lg:block lg:group-hover:border lg:group-hover:bg-transparent lg:group-hover:drop-shadow-lg lg:dark:group-hover:border-border/50 lg:dark:group-hover:bg-surface-1" />
-        <header className="z-10 mt-1 text-xs font-semibold tracking-wide uppercase sm:col-span-2">
-          {duration}
-        </header>
-        <div className="z-10 sm:col-span-6">
-          <h3 className="mb-2 inline-flex items-baseline gap-2 leading-tight font-medium">
-            {experience.title && <span className="font-bold">{experience.title}</span>}
-            {experience.organization && experience.title && <span>•</span>}
-            <span className="font-bold">{experience.organization}</span>
-          </h3>
+    <li
+      className={cn(
+        // Fixed date track: leading edge lines up with the "Experience" heading;
+        // fixed width keeps every circle on one vertical edge.
+        "grid w-full grid-cols-[9.5rem_1rem_minmax(0,1fr)] items-stretch gap-x-3 sm:gap-x-4",
+        !isLast && "pb-8"
+      )}
+    >
+      <time
+        dateTime={dateTime}
+        className={cn(
+          headerBand,
+          "flex items-center text-start text-xs leading-none font-medium whitespace-nowrap text-muted-foreground tabular-nums"
+        )}
+      >
+        {duration}
+      </time>
+
+      {/*
+        Rail column stretches with the grid row (items-stretch).
+        Circle is in-flow at the top; line is abspos on THIS full-height box
+        (not the 14px circle box) so it runs through content + pb-8 gap.
+        left-1/2 -translate-x-1/2 keeps the 1px stroke on the circle center.
+      */}
+      <div className="relative flex w-full flex-col items-center" aria-hidden>
+        <span className="relative z-10 size-3.5 shrink-0 rounded-full border-2 border-foreground bg-background" />
+        {!isLast ? (
+          <span className="absolute top-3.5 -bottom-8 left-1/2 w-px -translate-x-1/2 bg-foreground" />
+        ) : null}
+      </div>
+
+      <div className="min-w-0">
+        <h3
+          className={cn(
+            headerBand,
+            "flex items-center text-sm leading-none font-medium text-foreground"
+          )}
+        >
+          {title}
+        </h3>
+        {experience.description?.trim() ? (
           <div
-            className="z-10 flex flex-col gap-2 text-sm leading-normal font-normal [&_li]:mb-1 [&_ul]:list-disc [&_ul]:pl-4"
+            className="mt-1.5 text-sm leading-relaxed text-muted-foreground [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4"
             dangerouslySetInnerHTML={{ __html: experience.description }}
           />
-        </div>
-      </article>
+        ) : null}
+      </div>
     </li>
   );
 };

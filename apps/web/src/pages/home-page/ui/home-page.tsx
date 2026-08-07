@@ -206,14 +206,14 @@ export function HomePage({ profileName }: { profileName: string }) {
             </div>
           )}
 
-          <div className="mx-auto max-w-3xl">
-            <section id="projects" className="flex flex-col gap-2 pt-16">
-              <h2 className="mb-10 text-sm font-medium text-muted-foreground">Projects</h2>
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-16">
+            <section id="projects" className="flex flex-col">
+              <h2 className="mb-8 text-sm font-medium text-muted-foreground">Projects</h2>
               <ProjectsSection profileName={profileName} />
             </section>
 
-            <section id="experience" className="flex flex-col gap-2 pt-16">
-              <h2 className="mb-10 text-sm font-medium text-muted-foreground">Experience</h2>
+            <section id="experience" className="flex flex-col">
+              <h2 className="mb-8 text-sm font-medium text-muted-foreground">Experience</h2>
               <Experience profileName={profileName} />
             </section>
           </div>
