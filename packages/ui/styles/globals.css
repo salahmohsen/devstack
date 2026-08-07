@@ -68,11 +68,18 @@
     /* Prevent "scroll bounce" overscroll chaining (e.g.,
        nested scroll containers triggering page scroll) */
     overscroll-behavior: none;
+
+    /*
+     * App shell owns scroll via the main Card ScrollArea — lock document so the
+     * browser window does not grow a second scrollbar beside the card.
+     */
+    height: 100%;
+    overflow: hidden;
   }
 
   body {
     /* Apply Tailwind background + text colors based on theme.css file */
-    @apply bg-background text-foreground;
+    @apply h-full overflow-hidden bg-background text-foreground;
   }
 
   a {

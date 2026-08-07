@@ -34,7 +34,9 @@ export function RootLayout({ children }: PropsWithChildren) {
   return (
     <div
       className={cn(
-        "relative isolate flex min-h-svh flex-col",
+        // Fixed viewport height + overflow-hidden: only the main Card ScrollArea scrolls
+        // (no second browser/document scrollbar beside the shell).
+        "relative isolate flex h-dvh max-h-dvh flex-col overflow-hidden",
         "bg-container text-primary selection:bg-[#C0E7C8] selection:text-primary!"
       )}
     >
@@ -48,15 +50,15 @@ export function RootLayout({ children }: PropsWithChildren) {
           toggle: sidePanel.toggle
         }}
       >
-        <div className="flex max-h-[calc(100dvh-var(--navbar-height))] min-h-0 flex-1 flex-row p-2 pt-0">
+        <div className="flex min-h-0 flex-1 flex-row overflow-hidden p-2 pt-0">
           <IntersectionProvider>
             {isDashboard ? (
               <div className="hidden shrink-0 xl:block">
                 <PublicSidebar />
               </div>
             ) : null}
-            <Card className="relative min-w-0 flex-1 overflow-y-hidden">
-              <main className="relative flex h-[calc(100dvh-var(--navbar-height)-10px)] w-full overflow-hidden rounded-2xl bg-background text-card-foreground shadow-xs/5 not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
+            <Card className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+              <main className="relative flex min-h-0 w-full flex-1 overflow-hidden rounded-2xl bg-background text-card-foreground shadow-xs/5 not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
                 <ScrollArea scrollFade fill clampContentMinWidth={true}>
                   {children}
                 </ScrollArea>
@@ -76,7 +78,7 @@ export function RootLayout({ children }: PropsWithChildren) {
             }}
             // Slightly softer spring so main content (and grids) can ease width without snapping
             transition={{ type: "spring", stiffness: 320, damping: 36, mass: 0.85 }}
-            className="hidden h-full max-h-[calc(100dvh-var(--navbar-height))] shrink-0 overflow-hidden xl:block"
+            className="hidden h-full min-h-0 shrink-0 overflow-hidden xl:block"
           >
             <SidePanelSlot
               slotRef={sidePanel.setNode}
