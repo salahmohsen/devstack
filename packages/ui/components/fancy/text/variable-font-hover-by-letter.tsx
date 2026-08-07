@@ -125,4 +125,3 @@ function VariableFontHoverByLetter({
 }
 
 export { VariableFontHoverByLetter };
-export default VariableFontHoverByLetter;

@@ -1,4 +1,4 @@
-import { type ExperiencePublicOutput } from "@tsu-stack/core";
+import { sanitizeHtml, type ExperiencePublicOutput } from "@tsu-stack/core";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useGetDefaultResumeQuery, useGetPortfolioListQuery } from "@/features/portfolio";
@@ -133,7 +133,7 @@ export const ExperienceItem = ({
         {experience.description?.trim() ? (
           <div
             className="mt-1.5 text-sm leading-relaxed text-muted-foreground [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4"
-            dangerouslySetInnerHTML={{ __html: experience.description }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(experience.description) }}
           />
         ) : null}
       </div>

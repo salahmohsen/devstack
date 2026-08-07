@@ -53,7 +53,10 @@ export type Card6Props = {
   action?: React.ReactNode;
   children?: React.ReactNode;
   footer?: React.ReactNode;
-  /** Decorative layer under content (e.g. hover gradient). Pointer-events none recommended. */
+  /**
+   * Decorative layer under content (e.g. AnimatedWash).
+   * Must be non-interactive (`pointer-events-none`) so it never steals clicks.
+   */
   overlay?: React.ReactNode;
 };
 

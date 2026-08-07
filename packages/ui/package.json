@@ -9,7 +9,12 @@
     "./*": "./*.ts",
     "./styles/*": "./styles/*",
     "./styles/globals.css": "./styles/globals.css",
-    "./components/*": "./components/*"
+    "./components/*": "./components/*",
+    "./components/skiper-ui": "./components/skiper-ui/index.ts",
+    "./components/cardcn": "./components/cardcn/index.ts",
+    "./components/animated-wash": "./components/animated-wash/index.ts",
+    "./components/fancy/text": "./components/fancy/text/index.ts",
+    "./components/uitripled": "./components/uitripled/index.ts"
   },
   "scripts": {
     "ui": "vpx shadcn@latest"
@@ -32,9 +37,7 @@
     "cmdk": "catalog:",
     "date-fns": "catalog:",
     "files-sdk": "catalog:",
-    "framer-motion": "catalog:",
     "geist": "catalog:",
-    "lenis": "catalog:",
     "lucide-react": "catalog:",
     "motion": "catalog:",
     "next-themes": "catalog:",

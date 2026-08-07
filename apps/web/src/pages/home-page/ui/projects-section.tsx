@@ -1,20 +1,17 @@
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 
-import { type ProjectPublicOutput, type StackOutput } from "@tsu-stack/core";
-import { AnimatedWash } from "@tsu-stack/ui/components/animated-wash/animated-wash";
-import { Card6 } from "@tsu-stack/ui/components/cardcn/card-6";
-import { VariableFontHoverByLetter } from "@tsu-stack/ui/components/fancy/text/variable-font-hover-by-letter";
+import { sanitizeHtml, type ProjectPublicOutput, type StackOutput } from "@tsu-stack/core";
+import { AnimatedWash } from "@tsu-stack/ui/components/animated-wash";
+import { Card6 } from "@tsu-stack/ui/components/cardcn";
+import { VariableFontHoverByLetter } from "@tsu-stack/ui/components/fancy/text";
 import {
   PreviewCard,
   PreviewCardPopup,
   PreviewCardTrigger
 } from "@tsu-stack/ui/components/preview-card";
-import { StickyCardStack } from "@tsu-stack/ui/components/skiper-ui/skiper16";
-import {
-  NativeMarquee,
-  type NativeMarqueeItem
-} from "@tsu-stack/ui/components/uitripled/native-marquee";
+import { StickyCardStack } from "@tsu-stack/ui/components/skiper-ui";
+import { NativeMarquee, type NativeMarqueeItem } from "@tsu-stack/ui/components/uitripled";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { Icon } from "@/shared/ui/icon";
@@ -145,6 +142,8 @@ export const ProjectsSection = ({ profileName }: { profileName: string }) => {
 
 export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
   const [hovered, setHovered] = useState(false);
+  // Mount WebGL wash only after first hover (and keep mounted) — avoids N canvases on load.
+  const [washMounted, setWashMounted] = useState(false);
   const yearLabel = `${String(project.year)}${project.isPresent ? " — current" : ""}`;
 
   // Fancy variable-font letter hover, driven by the whole card (not just the title).
@@ -208,28 +207,32 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
   const summary = project.summary?.trim();
   const description = project.description?.trim();
   const hasBody = Boolean(summary || description);
+  const safeSummary = summary ? sanitizeHtml(summary) : "";
+  const safeDescription = description ? sanitizeHtml(description) : "";
 
-  // Neon AnimatedWash — WebGL grain-gradient from the bottom edge, lifts on hover.
-  // currentColor = contribution-graph green (more saturated than Neon #00e599).
+  // Neon AnimatedWash — mounted after first hover so idle pages don't spin WebGL ×N.
+  // currentColor = contribution-graph green.
   // @see https://ui.neon.com/brand/animated-wash
-  const washOverlay = (
+  const washOverlay = washMounted ? (
     <AnimatedWash
       className="pointer-events-none absolute inset-0 z-0 size-full"
       style={{ color: WASH_GREEN }}
     />
-  );
+  ) : null;
 
   return (
     // data-wash-hover: AnimatedWash lifts when this host is hovered.
-    // pointer handlers still drive the title variable-font effect.
+    // pointer handlers also drive the title variable-font effect.
     <div
       className="w-full"
       data-wash-hover
-      onPointerEnter={() => setHovered(true)}
+      onPointerEnter={() => {
+        setHovered(true);
+        setWashMounted(true);
+      }}
       onPointerLeave={() => setHovered(false)}
     >
       <Card6
-        // Content-sized — sticky slot min-height owns the scroll runway, not the card.
         // isolate keeps the wash canvas under content without leaking stacking contexts.
         className="isolate w-full transition-[border-color,box-shadow] duration-300"
         // font-semibold fights wght variation; drive weight via VariableFontHoverByLetter.
@@ -246,21 +249,22 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
            * 1) summary — primary takeaway (tighter, stronger)
            * 2) description — secondary detail (muted, more space after summary = 2× group gap)
            * Shared leading edge via single column flex.
+           * HTML sanitized via @tsu-stack/core sanitizeHtml before inject.
            */
           <div className="flex flex-col gap-3">
-            {summary ? (
+            {safeSummary ? (
               <div
                 className="text-sm leading-snug font-medium text-pretty text-foreground/90 [&_li]:mb-1 [&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4"
-                dangerouslySetInnerHTML={{ __html: summary }}
+                dangerouslySetInnerHTML={{ __html: safeSummary }}
               />
             ) : null}
-            {description ? (
+            {safeDescription ? (
               <div
                 className={cn(
                   "text-sm leading-relaxed text-muted-foreground [&_li]:mb-1 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:pl-4",
-                  summary && "border-t border-border/40 pt-3"
+                  safeSummary && "border-t border-border/40 pt-3"
                 )}
-                dangerouslySetInnerHTML={{ __html: description }}
+                dangerouslySetInnerHTML={{ __html: safeDescription }}
               />
             ) : null}
           </div>

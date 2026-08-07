@@ -28,15 +28,13 @@ type StickyStackCardProps = {
   slotMinHeight: number;
   children: ReactNode;
   className?: string;
-  /** Sticky root (slot) — used for equal-height layout. */
-  slotRef?: (node: HTMLDivElement | null) => void;
   /** Content measure node — natural card height, ignoring slot min-height. */
   contentRef?: (node: HTMLDivElement | null) => void;
 };
 
 /**
  * Sticky deck card: equal slot heights + opaque fill so only the TOP edges peek
- * (no bottom leak of taller cards behind shorter ones; no mid-body collision window).
+ * (no bottom leak of taller cards behind shorter ones).
  *
  * @see https://skiper-ui.com/v1/skiper16
  */
@@ -48,7 +46,6 @@ function StickyStackCard({
   slotMinHeight,
   children,
   className,
-  slotRef,
   contentRef
 }: StickyStackCardProps) {
   const scale = useTransform(progress, range, [1, targetScale]);
@@ -59,7 +56,6 @@ function StickyStackCard({
     // top: inset + i * step → stick below chrome, later cards lower in the pile.
     // mb-6: list spacing between projects.
     <div
-      ref={slotRef}
       className="sticky mb-6 w-full shrink-0 self-start overflow-hidden last:mb-0"
       style={{
         top: STICK_INSET_PX + i * STACK_STEP_PX,
@@ -67,8 +63,8 @@ function StickyStackCard({
         minHeight: slotMinHeight > 0 ? slotMinHeight : undefined
       }}
     >
-      {/* Occlusion plate — same surface as Card so short slots still fully cover. */}
-      <div className="absolute inset-0 bg-background" aria-hidden />
+      {/* Occlusion plate matches Card surface so short slots fully cover taller backs. */}
+      <div className="absolute inset-0 bg-card" aria-hidden />
       <motion.div
         style={{ scale }}
         className={cn(
@@ -95,9 +91,10 @@ type StackBodyProps = {
   className?: string;
   /** When set, progress is tracked against this scrollport (ScrollArea viewport). */
   scrollContainer?: RefObject<HTMLElement | null>;
+  itemCount: number;
 };
 
-function StickyCardStackBody({ children, className, scrollContainer }: StackBodyProps) {
+function StickyCardStackBody({ children, className, scrollContainer, itemCount }: StackBodyProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRefs = useRef<Array<HTMLDivElement | null>>([]);
   /** Tallest natural card height — applied as min-height on every sticky slot. */
@@ -115,11 +112,12 @@ function StickyCardStackBody({ children, className, scrollContainer }: StackBody
   const count = items.length;
 
   // Measure natural content heights → equal slot min-height + scale ranges.
+  // Depend on itemCount (stable) not `children` identity, which re-creates every render.
   useLayoutEffect(() => {
     const measure = () => {
       const heights = contentRefs.current.slice(0, count).map((el) => el?.offsetHeight ?? 0);
       const maxH = Math.max(0, ...heights);
-      setSlotMinHeight(maxH);
+      setSlotMinHeight((prev) => (prev === maxH ? prev : maxH));
 
       const total = heights.reduce((sum, h) => sum + h, 0);
       if (total <= 0) {
@@ -147,7 +145,7 @@ function StickyCardStackBody({ children, className, scrollContainer }: StackBody
       if (el) ro.observe(el);
     }
     return () => ro.disconnect();
-  }, [count, children]);
+  }, [count, itemCount]);
 
   return (
     <div
@@ -181,60 +179,38 @@ function StickyCardStackBody({ children, className, scrollContainer }: StackBody
 
 /**
  * Scroll-linked sticky card stack (Skiper 16 / Card stack scroll).
+ * Always uses StickyCardStackBody; ScrollArea binding is optional after mount.
  *
  * @see https://skiper-ui.com/v1/skiper16
  */
 function StickyCardStack({ children, className }: StickyCardStackProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLElement | null>(null);
-  /** null = not probed yet; true/false = whether a ScrollArea viewport was found */
-  const [hasViewport, setHasViewport] = useState<boolean | null>(null);
+  /** True once we know whether a ScrollArea viewport exists (may still be false). */
+  const [hasScrollContainer, setHasScrollContainer] = useState(false);
+  const items = Children.toArray(children).filter(Boolean);
 
+  // Bind ScrollArea viewport once available (layout phase). Body still mounts
+  // immediately so there is no plain-list flash before sticky mode.
   useLayoutEffect(() => {
     const host = hostRef.current;
-    if (!host) {
-      setHasViewport(false);
-      return;
-    }
+    if (!host) return;
     const viewport = host.closest('[data-slot="scroll-area-viewport"]') as HTMLElement | null;
     scrollRef.current = viewport;
-    setHasViewport(Boolean(viewport));
+    setHasScrollContainer(Boolean(viewport));
   }, []);
 
   return (
     <div ref={hostRef} className="w-full">
-      {hasViewport === null ? (
-        <div className={cn("flex w-full flex-col gap-6", className)}>{children}</div>
-      ) : (
-        <StickyCardStackBody
-          className={className}
-          scrollContainer={hasViewport ? scrollRef : undefined}
-        >
-          {children}
-        </StickyCardStackBody>
-      )}
+      <StickyCardStackBody
+        className={className}
+        scrollContainer={hasScrollContainer ? scrollRef : undefined}
+        itemCount={items.length}
+      >
+        {children}
+      </StickyCardStackBody>
     </div>
   );
 }
 
-/** Demo export name from the original registry item. */
-function Skiper16() {
-  return null;
-}
-
-/** Alias matching the registry export name. */
-const StickyCard_001 = StickyStackCard;
-
-export { Skiper16, StickyCard_001, StickyCardStack, StickyStackCard };
-
-/**
- * Skiper 16 StickyCard — React + Motion
- * Inspired rebuild for this monorepo (motion/react, ScrollArea-aware).
- *
- * License & Usage (upstream):
- * - Free to use and modify in personal and commercial projects.
- * - Attribution to Skiper UI is required when using the free version.
- *
- * Author (upstream): @gurvinder-singh02 — https://gxuri.me
- * Demo: https://skiper-ui.com/v1/skiper16
- */
+export { StickyCardStack, StickyStackCard };
