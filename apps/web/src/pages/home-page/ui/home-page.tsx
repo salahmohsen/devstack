@@ -1,6 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
-import { Building, Edit, ExternalLink, MapPin } from "lucide-react";
-import { lazy, Suspense, useMemo, type ComponentType } from "react";
+import { lazy, Suspense, useMemo } from "react";
 
 const ContributionGraph = lazy(() =>
   import("@/pages/home-page/ui/contribution-graph").then((m) => {
@@ -11,7 +10,6 @@ const ContributionGraph = lazy(() =>
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
-import { Button } from "@tsu-stack/ui/components/button";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
@@ -24,17 +22,13 @@ import {
   getGithubContributionsQueryOptions,
   useGetGithubContributionsQuery
 } from "@/pages/home-page/api/get-github-contributions.query";
-import {
-  getGithubPinnedReposQueryOptions,
-  useGetGithubPinnedReposQuery
-} from "@/pages/home-page/api/get-github-pinned-repos.query";
+import { getGithubPinnedReposQueryOptions } from "@/pages/home-page/api/get-github-pinned-repos.query";
 import {
   getGithubProfileQueryOptions,
-  useGetGithubProfileQuery,
-  type GithubProfileQueryResult
+  useGetGithubProfileQuery
 } from "@/pages/home-page/api/get-github-profile.query";
 import { Experience } from "@/pages/home-page/ui/experience-section";
-import { PinnedRepoCard } from "@/pages/home-page/ui/pinned-repo-card";
+import { FlipSummary } from "@/pages/home-page/ui/flip-summary";
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
 /**
@@ -62,7 +56,6 @@ export function HomePage({ profileName }: { profileName: string }) {
 
   const profileQuery = useGetGithubProfileQuery(profileName, isPrivate, githubReady);
   const contributionsQuery = useGetGithubContributionsQuery(profileName, isPrivate, githubReady);
-  const pinnedReposQuery = useGetGithubPinnedReposQuery(profileName, isPrivate, githubReady);
   useGetGithubActivityQuery(profileName, 1, isPrivate, githubReady);
 
   const signalTargets = useMemo(
@@ -147,8 +140,8 @@ export function HomePage({ profileName }: { profileName: string }) {
         <div className="relative mx-auto max-w-3xl space-y-5 px-6">
           {showGithubHero ? (
             <>
-              <div className="-mt-16 flex items-end justify-between sm:-mt-20">
-                <Avatar className="size-28 border sm:size-32">
+              <div className="-mt-16 flex items-end gap-4 sm:-mt-10 sm:gap-5">
+                <Avatar className="size-28 shrink-0 border sm:size-32">
                   <AvatarImage
                     alt={profile.login}
                     src={profile.avatarUrl}
@@ -162,68 +155,21 @@ export function HomePage({ profileName }: { profileName: string }) {
                   </AvatarFallback>
                 </Avatar>
 
-                {isOwnProfile && !auth.isPending && (
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="mb-1 size-8 rounded-full hover:bg-white/5"
-                    render={
-                      <a
-                        href="https://github.com/settings/profile"
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label="Edit GitHub profile"
-                      />
-                    }
-                    aria-label="Edit GitHub profile"
-                  >
-                    <Edit className="size-3.5" />
-                  </Button>
-                )}
-              </div>
-              <div className="mx-auto flex max-w-3xl flex-col gap-3">
-                <div className="flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <div className="flex min-w-0 flex-1 items-end justify-between gap-3 pb-1">
+                  <div className="flex min-w-0 flex-col gap-1">
                     <h1 className="text-2xl font-semibold tracking-tight capitalize">
                       {profile.name ?? profile.login}
                     </h1>
-                    <p className="text-sm text-muted-foreground">@{profileName}</p>
+                    {publicSummary ? <FlipSummary summary={publicSummary} /> : null}
                   </div>
                 </div>
               </div>
-
-              {publicSummary ? (
-                <p className="max-w-lg text-sm leading-relaxed whitespace-pre-wrap text-primary/80">
-                  {publicSummary}
-                </p>
-              ) : null}
-
-              <ProfileMetadata profile={profile} />
-
-              {(pinnedReposQuery.data ?? []).length > 0 ? (
-                <section className="flex flex-col gap-2 pt-6">
-                  <h2 className="text-sm font-medium text-muted-foreground">Pinned</h2>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {(pinnedReposQuery.data ?? []).map((repo) => (
-                      <PinnedRepoCard
-                        key={`${repo.owner}/${repo.name}`}
-                        profileName={profileName}
-                        repo={repo}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
             </>
           ) : (
             <div className="-mt-8 space-y-2 sm:-mt-10">
               <h1 className="text-2xl font-semibold tracking-tight">@{profileName}</h1>
               <p className="text-sm text-muted-foreground">Portfolio</p>
-              {publicSummary ? (
-                <p className="max-w-lg text-sm leading-relaxed whitespace-pre-wrap text-primary/80">
-                  {publicSummary}
-                </p>
-              ) : null}
+              {publicSummary ? <FlipSummary summary={publicSummary} className="max-w-lg" /> : null}
             </div>
           )}
 
@@ -241,60 +187,5 @@ export function HomePage({ profileName }: { profileName: string }) {
         </div>
       </div>
     </>
-  );
-}
-
-function ProfileMetadata({ profile }: { profile: NonNullable<GithubProfileQueryResult> }) {
-  const items: Array<{
-    href?: string;
-    icon: ComponentType<{ className?: string }>;
-    label: string;
-  }> = [];
-
-  if (profile.company) {
-    items.push({ icon: Building, label: profile.company });
-  }
-  if (profile.location) {
-    items.push({ icon: MapPin, label: profile.location });
-  }
-  if (profile.twitterUsername) {
-    items.push({
-      icon: ExternalLink,
-      label: `@${profile.twitterUsername}`,
-      href: `https://x.com/${profile.twitterUsername}`
-    });
-  }
-
-  if (items.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-      {items.map((item) => {
-        const content = (
-          <span className="flex items-center gap-1.5">
-            <item.icon className="size-4" />
-            <span>{item.label}</span>
-          </span>
-        );
-
-        if (item.href) {
-          return (
-            <a
-              key={item.label}
-              href={item.href}
-              target="_blank"
-              rel="noreferrer"
-              className="transition-colors"
-            >
-              {content}
-            </a>
-          );
-        }
-
-        return <span key={item.label}>{content}</span>;
-      })}
-    </div>
   );
 }
