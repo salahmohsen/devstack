@@ -18,23 +18,39 @@ import { Icon } from "@/shared/ui/icon";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
-const chipClassName =
-  "inline-flex h-5 items-center gap-1 rounded-none border border-border bg-background px-2 text-[0.65rem] font-medium leading-none tracking-wide whitespace-nowrap text-muted-foreground uppercase transition-colors hover:border-foreground/25 hover:bg-muted hover:text-foreground";
+const chipClassName = cn(
+  // Fixed h + items-center keeps icon glyph and uppercase label on one midline.
+  "inline-flex h-5 items-center gap-1 rounded-none border border-border bg-background px-2",
+  "text-[0.65rem] leading-none font-medium tracking-wide whitespace-nowrap uppercase",
+  "text-muted-foreground transition-colors hover:border-foreground/25 hover:bg-muted hover:text-foreground",
+  // Kill button/link defaults from PreviewCardTrigger that skew flex centering.
+  "font-[inherit] no-underline"
+);
 
 function formatStackType(type: string | null | undefined): string | null {
   if (!type?.trim()) return null;
   return type.replace(/[_-]+/g, " ").trim();
 }
 
-/** Fixed size-3 slot so chips with/without icons share the same leading edge and height. */
+/**
+ * Icon slot matches font-size (1em) so the glyph is the same optical height as
+ * the uppercase label; empty slot reserved so chips without icons stay aligned.
+ */
 function StackChipIcon({ stack, className }: { stack: StackOutput; className?: string }) {
   return (
     <span
-      className={cn("inline-flex size-3 shrink-0 items-center justify-center", className)}
+      className={cn(
+        "inline-flex size-[1em] shrink-0 items-center justify-center overflow-hidden leading-none",
+        className
+      )}
       aria-hidden
     >
       {stack.icon ? (
-        <Icon icon={stack.icon} name={stack.name} className="size-3 saturate-0" />
+        <Icon
+          icon={stack.icon}
+          name={stack.name}
+          className="flex size-full items-center justify-center saturate-0 [&_svg]:block [&_svg]:size-full"
+        />
       ) : null}
     </span>
   );
@@ -47,7 +63,7 @@ function StackChip({ stack }: { stack: StackOutput }) {
   const label = (
     <>
       <StackChipIcon stack={stack} />
-      <span>{stack.name}</span>
+      <span className="leading-none">{stack.name}</span>
     </>
   );
 
