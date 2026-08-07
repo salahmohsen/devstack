@@ -10,6 +10,7 @@
 @import "./animations.css";
 @import "./shadcn.css";
 @import "./shimmer.css";
+@import "./screen-lines.css";
 @import "./base-theme.css";
 @import "./scrollbar.css";
 @import "./prose.css";

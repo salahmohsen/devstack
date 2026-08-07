@@ -29,6 +29,8 @@ import {
 } from "@/pages/home-page/api/get-github-profile.query";
 import { Experience } from "@/pages/home-page/ui/experience-section";
 import { FlipSummary } from "@/pages/home-page/ui/flip-summary";
+import { ProfileOverview } from "@/pages/home-page/ui/profile-overview";
+import { ProfileSocialLinks } from "@/pages/home-page/ui/profile-social-links";
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
 /**
@@ -98,19 +100,23 @@ export function HomePage({ profileName }: { profileName: string }) {
   const publicSummary = portfolioQuery.data?.summary?.trim()
     ? portfolioQuery.data.summary.trim()
     : null;
+  const portfolioExperiences = portfolioQuery.data?.experiences ?? [];
+  const portfolioContacts = portfolioQuery.data?.contacts ?? [];
 
   return (
     <>
       {/*
-        Clip horizontal bleed from the contribution graph (w-screen) WITHOUT creating
-        a scroll container. CSS: overflow-x:hidden makes overflow-y compute to auto,
-        which becomes the sticky containing block and kills position:sticky for the
-        project card stack. overflow-x:clip does not establish a scrollport, so sticky
-        still resolves against the layout ScrollArea viewport.
+        overflow-x:clip (not hidden):
+        - Clips screen-line/stripe-divider pseudos (left:-100vw; width:200vw) so they
+          don't expand the ScrollArea scroll width (x overflow / horizontal scrollbar).
+        - Unlike overflow-x:hidden, clip does not force overflow-y to auto, so it does
+          not become the sticky containing block for the project card stack.
+        Graph uses w-full (not w-screen/100vw): 100vw includes the scrollbar gutter and
+        is often wider than the main card, which alone causes a few px of x overflow.
         @see https://drafts.csswg.org/css-overflow-3/#overflow-properties
       */}
       <div className="w-full overflow-x-clip pb-16">
-        <div className="relative h-48 w-screen overflow-hidden sm:h-56">
+        <div className="relative h-48 w-full overflow-hidden sm:h-56">
           {showGithubHero && contributionsQuery.data && hasMounted ? (
             <Suspense
               fallback={
@@ -137,49 +143,59 @@ export function HomePage({ profileName }: { profileName: string }) {
           )}
         </div>
 
-        <div className="relative mx-auto max-w-3xl space-y-5 px-6">
+        {/*
+          One column: max-w-3xl + border-x so avatar, overview, social, projects,
+          and experience share the same left/right edges. Inner content always
+          uses px-4 (matches panel body) — never mix px-6 on some sections only.
+        */}
+        <div className="screen-rails mx-auto w-full max-w-3xl">
           {showGithubHero ? (
-            <>
-              <div className="-mt-16 flex items-end gap-4 sm:-mt-10 sm:gap-5">
-                <Avatar className="size-28 shrink-0 border sm:size-32">
-                  <AvatarImage
-                    alt={profile.login}
-                    src={profile.avatarUrl}
-                    fetchPriority="high"
-                    width={128}
-                    height={128}
-                    sizes="(min-width: 640px) 128px, 112px"
-                  />
-                  <AvatarFallback>
-                    {(profile.name ?? profile.login).charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+            <div className="screen-line-bottom -mt-16 flex items-end gap-4 px-4 pb-4 sm:-mt-5 sm:gap-5">
+              <Avatar className="size-28 shrink-0 border sm:size-32">
+                <AvatarImage
+                  alt={profile.login}
+                  src={profile.avatarUrl}
+                  fetchPriority="high"
+                  width={128}
+                  height={128}
+                  sizes="(min-width: 640px) 128px, 112px"
+                />
+                <AvatarFallback>
+                  {(profile.name ?? profile.login).charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
 
-                <div className="flex min-w-0 flex-1 items-end justify-between gap-3 pb-1">
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <h1 className="text-2xl font-semibold tracking-tight capitalize">
-                      {profile.name ?? profile.login}
-                    </h1>
-                    {publicSummary ? <FlipSummary summary={publicSummary} /> : null}
-                  </div>
+              <div className="flex min-w-0 flex-1 items-end justify-between gap-3 pb-1">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <h1 className="text-2xl font-semibold tracking-tight capitalize">
+                    {profile.name ?? profile.login}
+                  </h1>
+                  {publicSummary ? <FlipSummary summary={publicSummary} /> : null}
                 </div>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="-mt-8 space-y-2 sm:-mt-10">
+            <div className="screen-line-bottom -mt-8 space-y-2 px-4 pb-4 sm:-mt-10">
               <h1 className="text-2xl font-semibold tracking-tight">@{profileName}</h1>
               <p className="text-sm text-muted-foreground">Portfolio</p>
-              {publicSummary ? <FlipSummary summary={publicSummary} className="max-w-lg" /> : null}
+              {publicSummary ? <FlipSummary summary={publicSummary} /> : null}
             </div>
           )}
 
-          <div className="mx-auto flex w-full max-w-3xl flex-col gap-16">
-            <section id="projects" className="flex flex-col">
+          <ProfileOverview
+            profile={profile}
+            experiences={portfolioExperiences}
+            contacts={portfolioContacts}
+          />
+          <ProfileSocialLinks profile={profile} contacts={portfolioContacts} />
+
+          <div className="flex w-full flex-col gap-16 px-4 pt-16 pb-4">
+            <section id="projects" className="flex w-full flex-col">
               <h2 className="mb-8 text-sm font-medium text-muted-foreground">Projects</h2>
               <ProjectsSection profileName={profileName} />
             </section>
 
-            <section id="experience" className="flex flex-col">
+            <section id="experience" className="flex w-full flex-col">
               <h2 className="mb-8 text-sm font-medium text-muted-foreground">Experience</h2>
               <Experience profileName={profileName} />
             </section>

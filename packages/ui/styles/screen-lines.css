@@ -1,0 +1,125 @@
+/*
+ * Full-bleed horizontal lines, vertical rails, and stripe band (chanhdai-style).
+ *
+ * Horizontal: viewport-centered 100vw hairlines with a short tip fade only
+ * (not a long gutter fade into max-w-3xl).
+ *
+ * Vertical: left/right rails via pseudos with a short top/bottom fade
+ * (plain border-x cannot fade).
+ *
+ * @see https://github.com/ncdai/chanhdai.com
+ */
+
+/* ── Horizontal geometry ───────────────────────────────────────────── */
+
+@utility screen-line-bleed {
+  left: 50%;
+  width: 100vw;
+  translate: -50% 0;
+}
+
+/* Short tip fade at each end of a horizontal 100vw bar (~2–3rem). */
+@utility screen-line-fade-x {
+  background-color: transparent;
+  background-image: linear-gradient(
+    to right,
+    transparent 0,
+    var(--color-line) clamp(1.25rem, 3vw, 2.5rem),
+    var(--color-line) calc(100% - clamp(1.25rem, 3vw, 2.5rem)),
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+}
+
+/* Longer tip fade on vertical rails so ends soften more than horizontal lines. */
+@utility screen-line-fade-y {
+  background-color: transparent;
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    var(--color-line) clamp(6rem, 18vh, 12rem),
+    var(--color-line) calc(100% - clamp(6rem, 18vh, 12rem)),
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+}
+
+@utility screen-line-top {
+  @apply relative;
+  &:before {
+    content: "";
+    @apply absolute top-0 screen-line-bleed -z-1 h-px screen-line-fade-x;
+  }
+}
+
+@utility screen-line-bottom {
+  @apply relative;
+  &:after {
+    content: "";
+    @apply absolute bottom-0 screen-line-bleed -z-1 h-px screen-line-fade-x;
+  }
+}
+
+@utility screen-line-top-none {
+  @apply before:content-none;
+}
+
+@utility screen-line-bottom-none {
+  @apply after:content-none;
+}
+
+/**
+ * Left + right vertical rails (1px) with faded tips.
+ * Uses ::before / ::after — do not combine with other before/after utilities
+ * on the same element (e.g. screen-line-top/bottom belong on children).
+ */
+@utility screen-rails {
+  @apply relative;
+  &:before,
+  &:after {
+    content: "";
+    @apply pointer-events-none absolute top-0 bottom-0 z-0 w-px screen-line-fade-y;
+  }
+  &:before {
+    left: 0;
+  }
+  &:after {
+    right: 0;
+  }
+}
+
+@utility diagonal-stripes {
+  @apply [--pattern-foreground:var(--color-line)]/56;
+  @apply bg-[repeating-linear-gradient(315deg,var(--pattern-foreground)_0,var(--pattern-foreground)_1px,transparent_0,transparent_50%)] bg-size-[10px_10px];
+}
+
+@utility stripe-divider {
+  @apply relative h-8;
+  &:before {
+    content: "";
+    @apply absolute screen-line-bleed -z-1 h-full screen-line-fade-x;
+    /* Keep stripe pattern; fade via mask with the same short tip length */
+    background-image: repeating-linear-gradient(
+      315deg,
+      color-mix(in oklab, var(--color-line) 56%, transparent) 0,
+      color-mix(in oklab, var(--color-line) 56%, transparent) 1px,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 10px 10px;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 clamp(1.25rem, 3vw, 2.5rem),
+      #000 calc(100% - clamp(1.25rem, 3vw, 2.5rem)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 clamp(1.25rem, 3vw, 2.5rem),
+      #000 calc(100% - clamp(1.25rem, 3vw, 2.5rem)),
+      transparent 100%
+    );
+  }
+}
