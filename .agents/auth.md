@@ -72,3 +72,4 @@ The auto-generated auth relations and the hand-written app relations in `package
 - `SameSite=Strict` is usually too brittle for OAuth, email links, and other redirect-based auth flows
 - The auth query uses `refetchOnWindowFocus: "always"` for cross-tab session sync
 - Better Auth custom fields are not complete if you only add the DB column; the auth config and client inference must be updated too
+- **Custom domain browser → API:** Host routing alone is not enough. Verified custom domain Origins must pass API CORS and Better Auth `trustedOrigins` via `resolveAllowedBrowserOrigin` / `resolveTrustedOriginsForRequest` in `@tsu-stack/auth` (`allowed-browser-origin.ts`). Primary `VITE_WEB_URL` must match the real primary origin exactly. files-gateway / Mastra CORS stay primary-only.
