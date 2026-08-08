@@ -11,6 +11,9 @@
     "./react": "./src/react/index.ts",
     "./react/*": "./src/react/*.ts"
   },
+  "scripts": {
+    "test:unit": "vp test"
+  },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",
     "@better-auth/passkey": "catalog:",
@@ -24,7 +27,8 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "react": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "@tanstack/react-query": "catalog:",
