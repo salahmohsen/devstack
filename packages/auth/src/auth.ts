@@ -10,6 +10,7 @@ import { sendEmail, VerifyEmail } from "@tsu-stack/email";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { getApiBasePath, getSharedCookieDomain, joinApiPath } from "@tsu-stack/env/utils/url";
 
+import { resolveTrustedOriginsForRequest } from "./allowed-browser-origin";
 import {
   INVITE_COOKIE_NAME,
   readInviteCodeFromCookieHeader,
@@ -145,7 +146,7 @@ export const auth = betterAuth({
   // Root deploy (`https://api.example.com`) → `/auth`
   // Legacy path deploy (`…/server`) → `/server/auth`
   basePath: joinApiPath(getApiBasePath(ENV_SERVER.VITE_SERVER_URL), "auth"),
-  trustedOrigins: [webOrigin],
+  trustedOrigins: async (request) => resolveTrustedOriginsForRequest(request),
   secret: ENV_SERVER.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: "pg",
