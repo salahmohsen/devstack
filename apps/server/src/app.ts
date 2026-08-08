@@ -17,6 +17,7 @@ import { handleGmailPushNotification } from "@tsu-stack/api/lib/gmail/handle-gma
 import { verifyGmailPushAuth } from "@tsu-stack/api/lib/gmail/verify-gmail-push-auth";
 import { handleResendInboundWebhook } from "@tsu-stack/api/lib/mail/handle-resend-inbound";
 import { appRouter } from "@tsu-stack/api/routers/index";
+import { resolveAllowedBrowserOrigin } from "@tsu-stack/auth";
 import { auth } from "@tsu-stack/auth/index";
 import { createDb, runWithDb } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -38,33 +39,11 @@ const serverBaseUrl = new URL(ENV_SERVER.VITE_SERVER_URL);
 /** Empty when `VITE_SERVER_URL` has no path (e.g. `https://api.example.com`). */
 const apiBasePath = getApiBasePath(ENV_SERVER.VITE_SERVER_URL);
 
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
-
-function buildAllowedOrigins(): Set<string> {
-  const origins = new Set<string>();
-  try {
-    const web = new URL(ENV_SERVER.VITE_WEB_URL);
-    origins.add(web.origin);
-    // Local dev: allow localhost ↔ 127.0.0.1 so credentials work either way.
-    if (LOOPBACK_HOSTS.has(web.hostname)) {
-      for (const host of LOOPBACK_HOSTS) {
-        if (host.startsWith("[")) continue;
-        origins.add(`${web.protocol}//${host}${web.port ? `:${web.port}` : ""}`);
-      }
-    }
-  } catch {
-    // ignore invalid VITE_WEB_URL at boot; CORS will deny everything
-  }
-  return origins;
-}
-
-const allowedOrigins = buildAllowedOrigins();
-
 const corsOptions: NonNullable<Parameters<typeof cors>[0]> = {
   allowHeaders: ["Content-Type", "Authorization", "X-Request-Id", "x-evlog-source"],
   allowMethods: ["GET", "POST", "OPTIONS"],
   credentials: true,
-  origin: (origin: string) => (allowedOrigins.has(origin) ? origin : null)
+  origin: (origin: string) => resolveAllowedBrowserOrigin(origin)
 };
 
 type AppEnv = HonoLogVariables & {
