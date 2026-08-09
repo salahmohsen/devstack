@@ -27,6 +27,7 @@ _Avoid_: open registration, invite-as-role.
 **Custom domain** (`user_custom_domain`):
 Optional verified hostname that maps Host → that tenant’s portfolio at `/`.
 App stores hostname + verification state only; operator terminates TLS.
+Browser oRPC from that host requires API origin trust (verified hostname in CORS / Better Auth), not only Host → userId routing.
 _Avoid_: white-label SaaS domain product, automatic cert issuance.
 
 **Primary app host**:

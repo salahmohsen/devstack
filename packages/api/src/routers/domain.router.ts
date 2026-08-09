@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { promises as dns } from "node:dns";
 
+import { invalidateAllowedOriginCache } from "@tsu-stack/auth";
 import {
   customDomainVerificationRecordName,
   CustomDomainOutputSchema,
@@ -123,6 +124,7 @@ export const domainRouter = {
         throw errors.HOSTNAME_TAKEN();
       }
 
+      const previous = await userCustomDomainRepository.findByUserId(userId);
       const row = await userCustomDomainRepository.upsertForUser({
         id: randomUUID(),
         userId,
@@ -130,6 +132,10 @@ export const domainRouter = {
         verificationToken: generateVerificationToken()
       });
 
+      if (previous?.hostname) {
+        invalidateAllowedOriginCache(previous.hostname);
+      }
+      invalidateAllowedOriginCache(row.hostname);
       return toDomainOutput(row);
     }),
 
@@ -165,6 +171,7 @@ export const domainRouter = {
 
       if (!matched) {
         await userCustomDomainRepository.markFailed(userId);
+        invalidateAllowedOriginCache(current.hostname);
         throw errors.DNS_NOT_VERIFIED();
       }
 
@@ -172,6 +179,7 @@ export const domainRouter = {
       if (!verified) {
         throw errors.DOMAIN_NOT_SET();
       }
+      invalidateAllowedOriginCache(verified.hostname);
       return toDomainOutput(verified);
     }),
 
@@ -188,9 +196,14 @@ export const domainRouter = {
       }
     })
     .handler(async ({ context, errors }) => {
-      const removed = await userCustomDomainRepository.remove(context.session.user.id);
+      const userId = context.session.user.id;
+      const current = await userCustomDomainRepository.findByUserId(userId);
+      const removed = await userCustomDomainRepository.remove(userId);
       if (!removed) {
         throw errors.DOMAIN_NOT_SET();
+      }
+      if (current?.hostname) {
+        invalidateAllowedOriginCache(current.hostname);
       }
       return { success: true };
     }),
