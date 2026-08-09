@@ -17,8 +17,16 @@ This document is the authoritative testing policy for contributors and AI agents
 
 Canonical commands:
 
-- `vp run test:unit:run`
+- `vp run test:unit:run` — monorepo unit suite (`vp run -r --parallel test:unit`)
 - `vp run test:e2e:run`
+
+### Unit tests and the package graph
+
+`vp run -r test:unit` (without `--parallel`) schedules packages in **dependency order** from `package.json`. If a dependency package’s suite fails, later packages may never run — useful for **build**, wrong for **independent unit tests**.
+
+Use **`--parallel`** (already in `test:unit:run`) so every package with `test:unit` runs regardless of graph edges and one failure still surfaces the rest. See [Vite+ Run → Parallel mode](https://viteplus.dev/guide/run#parallel-mode).
+
+CI: one `test` job calling `vp run test:unit:run` is enough; do **not** add a per-package matrix for unit tests unless suites become large or need different runners/env.
 
 ## Test Locations
 

@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test:unit": "vp test"
+    "test:unit": "vp test run"
   },
   "devDependencies": {
     "@tsu-stack/core": "workspace:*",

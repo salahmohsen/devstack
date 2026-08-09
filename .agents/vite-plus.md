@@ -35,3 +35,15 @@ Contains the unified config for:
 ## Mental Model
 
 Think of `vp` as the **only CLI you need** for this project. It wraps pnpm for package management and Vite's ecosystem for build/lint/format/test. Never install or invoke pnpm/npm/yarn directly for standard development.
+
+## Vitest pin (do not re-alias)
+
+From Vite+ **0.2.x**, `vp test` runs **upstream Vitest** and looks up `vitest/package.json` → `bin.vitest`.
+
+- Catalog/overrides must pin **`vitest: 4.1.10`** (or the version bundled with the installed `vite-plus`; check `vp --version`).
+- **Never** set `vitest: npm:@voidzero-dev/vite-plus-test@…`. That 0.1.x wrapper was removed in [v0.2.1](https://github.com/voidzero-dev/vite-plus/releases/tag/v0.2.1); it has no `bin`, which surfaces as:
+
+  `Could not find 'vitest' bin entry in …/@voidzero-dev/vite-plus-test…/package.json`
+
+- Keep **`vite` → `npm:@voidzero-dev/vite-plus-core@…`** (still required).
+- This repo imports from `"vitest"` in unit tests (Case B in the 0.2.1 upgrade notes), so root keeps a direct `vitest` dep pinned via catalog.

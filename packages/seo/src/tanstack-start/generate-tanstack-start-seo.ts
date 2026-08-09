@@ -48,7 +48,9 @@ export function generateTanStackStartSeo({
       : undefined,
     includeDocumentMeta
       ? {
-          content: "width=device-width, initial-scale=1",
+          // viewport-fit=cover: enable env(safe-area-inset-*) on notched iPhones so
+          // bottom nav / sticky chrome can clear Safari + home indicator.
+          content: "width=device-width, initial-scale=1, viewport-fit=cover",
           name: "viewport"
         }
       : undefined,

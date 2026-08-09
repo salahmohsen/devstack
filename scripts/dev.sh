@@ -125,7 +125,23 @@ cd "$ROOT/packages/db"
 # Use migrate for idempotent schema management. On a fresh database,
 # drizzle-kit migrate creates the _drizzle_migrations table and applies
 # all pending migrations. Already-applied migrations are skipped.
-pnpm dotenvx run -f "$ENV_FILE" -- drizzle-kit migrate 2>&1 | tail -10
+#
+# IMPORTANT: do NOT run via `pnpm dotenvx …` / `pnpm exec …` here.
+# When the workspace install is out of sync, pnpm's pre-run deps check
+# may try to purge/reinstall node_modules and block on a TTY confirm
+# (or hang forever under `vp run` with no TTY) — looks like "schema push hung".
+# Call dotenvx + drizzle-kit binaries directly.
+DOTENVX_BIN="${ROOT}/node_modules/.bin/dotenvx"
+DRIZZLE_KIT_BIN="${ROOT}/packages/db/node_modules/.bin/drizzle-kit"
+if [ ! -x "$DOTENVX_BIN" ]; then
+  DOTENVX_BIN="${ROOT}/packages/db/node_modules/.bin/dotenvx"
+fi
+if [ ! -x "$DRIZZLE_KIT_BIN" ]; then
+  DRIZZLE_KIT_BIN="${ROOT}/node_modules/.bin/drizzle-kit"
+fi
+[ -x "$DOTENVX_BIN" ] || fail "dotenvx not found (run pnpm install from repo root)"
+[ -x "$DRIZZLE_KIT_BIN" ] || fail "drizzle-kit not found (run pnpm install from repo root)"
+"$DOTENVX_BIN" run -f "$ENV_FILE" -- "$DRIZZLE_KIT_BIN" migrate
 ok "Database schema pushed"
 cd "$ROOT"
 
@@ -413,6 +429,10 @@ esac
 # ─── Step 6: Start apps ──────────────────────────────────────────
 info "Starting all apps in dev mode..."
 print_dev_links_banner "$PUBLIC_SERVER_URL" "$DEV_WEB_URL" "$VITE_SERVER_URL"
+
+# pnpm --filter … may run a deps-status check that tries `pnpm install`.
+# Project-wide: confirmModulesPurge: false in pnpm-workspace.yaml (pnpm v11).
+# Do not export CI=true here — it changes behavior in many tools (tests, bundlers).
 
 APP_PIDS=()
 

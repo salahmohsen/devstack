@@ -18,6 +18,9 @@ import { ENV_WEB_SERVER } from "@tsu-stack/env/web/env.server";
 // oxlint-disable-next-line fsd/no-relative-imports
 import "./vite-emfile-guard";
 
+/** Vitest sets this when loading config for `vp test` — skip full app plugins. */
+const isVitest = Boolean(process.env.VITEST);
+
 // Stub out shiki in the Nitro SSR build to prevent bundling all
 // language grammars and the oniguruma WASM binary.
 // See similar fix in diffkit, apps/dashboard/vite.config.ts.
@@ -112,6 +115,14 @@ export default defineConfig({
   base: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
   // Restart the dev server when env files in this directory change
   envDir: resolve(import.meta.dirname, "../../packages/env"),
+  // Unit tests: co-located `*.test.ts` under src (pure helpers only; no full app bootstrap).
+  test: {
+    include: ["src/**/*.test.ts"],
+    environment: "node",
+    // Full TanStack Start / Nitro plugin graph leaves handles open after unit tests.
+    pool: "forks",
+    fileParallelism: false
+  },
   resolve: {
     alias: {
       "@": resolve(import.meta.dirname, "./src")
@@ -226,102 +237,106 @@ export default defineConfig({
   ssr: {
     external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
   },
-  plugins: [
-    shikiSSRStub(),
-    /**
-     * Tailwind CSS v4 Vite plugin — processes app.css (and its import chain
-     * into @tsu-stack/ui/styles/*) for utility generation + CSS bundling.
-     * Keep early so downstream plugins see final CSS. No tailwind.config.js;
-     * theme tokens live in CSS (@theme / @import chain).
-     * @see {@link https://tailwindcss.com/docs/installation/using-vite}
-     */
-    tailwindcss(),
-    /**
-     * TanStack Devtools Vite plugin.
-     *
-     * The event bus defaults to :4206. Two failure modes we hit on this monorepo:
-     * 1) Stale process holds 4206 → next start throws EADDRINUSE and never binds
-     *    :3000 (server/agent still start via `vp run dev`, so it "looks fine").
-     * 2) With the bus enabled, configureServer can stall before Vite listens on
-     *    :3000 (process idle with only :4206 open). Disable the bus for reliable
-     *    local boot; browser Devtools panels still work without server event bus.
-     * scripts/dev.sh frees 3000/4206 on start and stop as a belt-and-suspenders.
-     */
-    devtools({
-      eventBusConfig: {
-        enabled: false
-      },
-      consolePiping: { enabled: false },
-      injectSource: { enabled: false },
-      enhancedLogs: { enabled: false }
-    }),
-    mdx(),
-    tanstackStart({
-      // Prerender disabled — blocked by nitro@3 + TanStack Start race condition
-      // (TanStack/router#6275, #6322). Re-enable when nitro@4 ships.
-      prerender: {
-        enabled: false
-      },
-      server: {
-        build: {
-          // Don't allow changing of process.env.NODE_ENV at runtime
-          staticNodeEnv: true
-        }
-      }
-    }),
-    viteReact(),
-    /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
-    babel({
-      presets: [reactCompilerPreset()]
-    }),
-    /** @see {@link https://tanstack.com/start/latest/docs/framework/react/guide/hosting} */
-    nitro({
-      baseURL: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
-      /**
-       * Externalise the native DB driver packages in the main Nitro
-       * Rollup pass. The `tanstackStart` SSR service already externalises
-       * them in its own build (see `ssr.external` above); the chunks
-       * under `.output/server/_ssr/` carry bare `import "pg"` /
-       * `import "drizzle-orm/node-postgres"` statements. The main Nitro
-       * build then re-processes those chunks and would try to resolve
-       * the subpath `drizzle-orm/node-postgres` via Rolldown's module
-       * resolver, which fails on the subpath export map. Marking them
-       * external here leaves the imports as-is; the production image
-       * provides them via monorepo `node_modules` so Node ESM resolves
-       * them at runtime.
-       */
-      rollupConfig: {
-        external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
-      },
-      /**
-       * CJS interop fix for `pg` (and `pg-pool` via `pg`).
-       *
-       * `pg@8.22.0`'s `lib/index.js` does `class BoundPool extends Pool`
-       * where `Pool = require('pg-pool')`. When rolldown bundles CJS
-       * transitively (e.g. via Nitro's own Rollup pass that consumes the
-       * SSR service output), the CommonJS plugin wraps `pg-pool`'s
-       * `module.exports = PoolClass` as `{ default: PoolClass }` by
-       * default. The `extends` then sees an object and throws:
-       *   `TypeError: Class extends value #<Object> is not a constructor`
-       *   at poolFactory (...src-*.mjs)
-       *
-       * `requireReturnsDefault: "auto"` makes the CJS plugin unwrap a
-       * CJS module whose `module.exports` *is* a constructor and return
-       * it directly, restoring the `extends` chain.
-       *
-       * @see {@link https://nitro.build/config#build-commonjs}
-       */
-      commonJS: {
-        requireReturnsDefault: "auto"
-      }
-    }),
-    ohImage({
-      pl_show: true,
-      transforms: {
-        format: "webp",
-        quality: 80
-      }
-    })
-  ]
+  // App plugins (TanStack Start, Nitro, React, …) hang `vp test` on exit and are
+  // unnecessary for pure unit tests under `src/**/*.test.ts`.
+  plugins: isVitest
+    ? []
+    : [
+        shikiSSRStub(),
+        /**
+         * Tailwind CSS v4 Vite plugin — processes app.css (and its import chain
+         * into @tsu-stack/ui/styles/*) for utility generation + CSS bundling.
+         * Keep early so downstream plugins see final CSS. No tailwind.config.js;
+         * theme tokens live in CSS (@theme / @import chain).
+         * @see {@link https://tailwindcss.com/docs/installation/using-vite}
+         */
+        tailwindcss(),
+        /**
+         * TanStack Devtools Vite plugin.
+         *
+         * The event bus defaults to :4206. Two failure modes we hit on this monorepo:
+         * 1) Stale process holds 4206 → next start throws EADDRINUSE and never binds
+         *    :3000 (server/agent still start via `vp run dev`, so it "looks fine").
+         * 2) With the bus enabled, configureServer can stall before Vite listens on
+         *    :3000 (process idle with only :4206 open). Disable the bus for reliable
+         *    local boot; browser Devtools panels still work without server event bus.
+         * scripts/dev.sh frees 3000/4206 on start and stop as a belt-and-suspenders.
+         */
+        devtools({
+          eventBusConfig: {
+            enabled: false
+          },
+          consolePiping: { enabled: false },
+          injectSource: { enabled: false },
+          enhancedLogs: { enabled: false }
+        }),
+        mdx(),
+        tanstackStart({
+          // Prerender disabled — blocked by nitro@3 + TanStack Start race condition
+          // (TanStack/router#6275, #6322). Re-enable when nitro@4 ships.
+          prerender: {
+            enabled: false
+          },
+          server: {
+            build: {
+              // Don't allow changing of process.env.NODE_ENV at runtime
+              staticNodeEnv: true
+            }
+          }
+        }),
+        viteReact(),
+        /** @see {@link https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#react-compiler} */
+        babel({
+          presets: [reactCompilerPreset()]
+        }),
+        /** @see {@link https://tanstack.com/start/latest/docs/framework/react/guide/hosting} */
+        nitro({
+          baseURL: new URL(ENV_WEB_ISOMORPHIC.VITE_WEB_URL).pathname,
+          /**
+           * Externalise the native DB driver packages in the main Nitro
+           * Rollup pass. The `tanstackStart` SSR service already externalises
+           * them in its own build (see `ssr.external` above); the chunks
+           * under `.output/server/_ssr/` carry bare `import "pg"` /
+           * `import "drizzle-orm/node-postgres"` statements. The main Nitro
+           * build then re-processes those chunks and would try to resolve
+           * the subpath `drizzle-orm/node-postgres` via Rolldown's module
+           * resolver, which fails on the subpath export map. Marking them
+           * external here leaves the imports as-is; the production image
+           * provides them via monorepo `node_modules` so Node ESM resolves
+           * them at runtime.
+           */
+          rollupConfig: {
+            external: ["pg", "pg-native", "drizzle-orm/node-postgres"]
+          },
+          /**
+           * CJS interop fix for `pg` (and `pg-pool` via `pg`).
+           *
+           * `pg@8.22.0`'s `lib/index.js` does `class BoundPool extends Pool`
+           * where `Pool = require('pg-pool')`. When rolldown bundles CJS
+           * transitively (e.g. via Nitro's own Rollup pass that consumes the
+           * SSR service output), the CommonJS plugin wraps `pg-pool`'s
+           * `module.exports = PoolClass` as `{ default: PoolClass }` by
+           * default. The `extends` then sees an object and throws:
+           *   `TypeError: Class extends value #<Object> is not a constructor`
+           *   at poolFactory (...src-*.mjs)
+           *
+           * `requireReturnsDefault: "auto"` makes the CJS plugin unwrap a
+           * CJS module whose `module.exports` *is* a constructor and return
+           * it directly, restoring the `extends` chain.
+           *
+           * @see {@link https://nitro.build/config#build-commonjs}
+           */
+          commonJS: {
+            requireReturnsDefault: "auto"
+          }
+        }),
+        ohImage({
+          pl_show: true,
+          transforms: {
+            format: "webp",
+            quality: 80
+          }
+        })
+      ]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- vite-plus PluginOption skew
 } as any);

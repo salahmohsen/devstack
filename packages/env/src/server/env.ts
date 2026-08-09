@@ -73,7 +73,8 @@ export const ENV_SERVER = createEnv({
     // to import the package successfully.
     BETTER_AUTH_SECRET: z.string().min(32),
     PORT: z.coerce.number().default(5100),
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    // Vitest sets NODE_ENV=test when loading Vite configs under `vp test`.
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     /** Build / deploy SHA (Dokploy `SOURCE_COMMIT`, CI, or local default). */
     SOURCE_COMMIT: z.string().min(1).default("unknown"),
     ENABLE_OPEN_API_DOCS: z.stringbool().default(false),

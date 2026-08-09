@@ -12,7 +12,7 @@
     "./react/*": "./src/react/*.ts"
   },
   "scripts": {
-    "test:unit": "vp test"
+    "test:unit": "vp test run"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",

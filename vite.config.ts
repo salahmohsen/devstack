@@ -49,8 +49,16 @@ export default defineConfig({
   },
 
   // Vitest - https://vitest.dev/config
+  // Prefer package-local `test:unit` (`vp run -r test:unit`). Root config is a fallback.
   test: {
-    include: ["**/*.test.ts"]
+    include: ["packages/**/*.test.ts", "apps/**/*.test.ts"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.output/**",
+      "**/.worktrees/**",
+      "**/coverage/**"
+    ]
   },
 
   // Oxfmt - https://oxc.rs/docs/guide/usage/formatter/config.html

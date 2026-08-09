@@ -87,18 +87,31 @@ export function CommandDialogPopup({
   );
 }
 
+type CommandProps = Omit<React.ComponentProps<typeof Autocomplete>, "items" | "children"> & {
+  /**
+   * Base UI Autocomplete filterable collection. Kept loose: generic Autocomplete
+   * props fight React.ComponentProps once `items` is set (palette / branch pickers).
+   */
+  items?: readonly unknown[];
+  itemToStringValue?: (item: unknown) => string;
+  children?: React.ReactNode;
+  className?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+};
+
 export function Command({
   autoHighlight = "always",
   keepHighlight = true,
   ...props
-}: React.ComponentProps<typeof Autocomplete>): React.ReactElement {
+}: CommandProps): React.ReactElement {
   return (
     <Autocomplete
       autoHighlight={autoHighlight}
       inline
       keepHighlight={keepHighlight}
       open
-      {...props}
+      {...(props as React.ComponentProps<typeof Autocomplete>)}
     />
   );
 }

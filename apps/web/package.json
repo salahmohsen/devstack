@@ -8,6 +8,7 @@
     "dev": "bash ./scripts/web-dev.sh",
     "preview": "pnpm dotenvx run -f ../../packages/env/.env -- vp preview",
     "start": "pnpm dotenvx run -f ../../packages/env/.env -- node .output/server/index.mjs",
+    "test:unit": "vp test run",
     "ui": "vpx shadcn@latest"
   },
   "dependencies": {

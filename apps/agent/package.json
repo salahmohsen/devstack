@@ -14,8 +14,7 @@
     ".": "./src/index"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "PORT=4111 pnpm dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
+    "dev": "PORT=4111 dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
     "build": "IS_BUILD=true mastra build",
     "start": "node .mastra/output/index.mjs",
     "check": "vp check",

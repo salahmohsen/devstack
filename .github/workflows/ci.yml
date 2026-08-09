@@ -13,6 +13,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Shared env for jobs that need packages/env/.env (web tests + build).
+env:
+  VITE_SERVER_URL: ${{ vars.VITE_SERVER_URL }}
+  VITE_WEB_URL: ${{ vars.VITE_WEB_URL }}
+  VITE_IMGPROXY_URL: ${{ vars.VITE_IMGPROXY_URL }}
+  SOURCE_COMMIT: ${{ github.sha }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+  # GitHub Actions reserves the GITHUB_ prefix; map GH_* secrets to app names.
+  GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
+  GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
+  GITHUB_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -27,20 +40,12 @@ jobs:
       - run: vp install
       - run: vp check
 
-  build:
+  # Unit tests: one monorepo job (not a per-package matrix).
+  # `test:unit:run` uses `vp run -r --parallel test:unit` so package-graph
+  # ordering does not skip later packages when an earlier suite fails.
+  # @see https://viteplus.dev/guide/run#parallel-mode
+  test:
     runs-on: ubuntu-latest
-    env:
-      VITE_SERVER_URL: ${{ vars.VITE_SERVER_URL }}
-      VITE_WEB_URL: ${{ vars.VITE_WEB_URL }}
-      SOURCE_COMMIT: ${{ github.sha }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-      # GitHub Actions reserves the GITHUB_ prefix for its own tokens, so the
-      # OAuth credentials are stored under GH_ aliases in repo secrets and
-      # re-exposed under the names the app's env schema expects.
-      GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
-      GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
-      GITHUB_WEBHOOK_SECRET: ${{ secrets.GH_WEBHOOK_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -51,20 +56,25 @@ jobs:
 
       - run: vp install
 
-      # The web build invokes `dotenvx run -f ../../packages/env/.env`, so the
-      # file must exist in CI. Materialize it from the job env using `%q` so
-      # values with special characters are safely quoted.
+      - name: Write packages/env/.env for tests
+        run: bash scripts/ci-write-web-env.sh packages/env/.env
+
+      - run: vp run test:unit:run
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version: "24"
+          cache: true
+
+      - run: vp install
+
+      # Web build invokes dotenvx with packages/env/.env.
       - name: Write packages/env/.env for build
-        run: |
-          : > packages/env/.env
-          printf 'VITE_SERVER_URL=%q\n' "$VITE_SERVER_URL" >> packages/env/.env
-          printf 'VITE_WEB_URL=%q\n' "$VITE_WEB_URL" >> packages/env/.env
-          printf 'VITE_IMGPROXY_URL=%q\n' "$VITE_IMGPROXY_URL" >> packages/env/.env
-          printf 'SOURCE_COMMIT=%q\n' "$SOURCE_COMMIT" >> packages/env/.env
-          printf 'DATABASE_URL=%q\n' "$DATABASE_URL" >> packages/env/.env
-          printf 'BETTER_AUTH_SECRET=%q\n' "$BETTER_AUTH_SECRET" >> packages/env/.env
-          printf 'GITHUB_CLIENT_ID=%q\n' "$GITHUB_CLIENT_ID" >> packages/env/.env
-          printf 'GITHUB_CLIENT_SECRET=%q\n' "$GITHUB_CLIENT_SECRET" >> packages/env/.env
-          printf 'GITHUB_WEBHOOK_SECRET=%q\n' "$GITHUB_WEBHOOK_SECRET" >> packages/env/.env
+        run: bash scripts/ci-write-web-env.sh packages/env/.env
 
       - run: vp run build

@@ -14,7 +14,8 @@ export const ENV_WEB_SERVER = createEnv({
       "unknown"
   },
   server: {
-    NODE_ENV: z.enum(["development", "production"]).default("development"),
+    // Vitest sets NODE_ENV=test when loading apps/web vite.config via `vp test`.
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     SOURCE_COMMIT: z.string().min(1).default("unknown"),
     IS_BUILD: z.stringbool().default(false),
     FILES_API_SECRET: z.string().min(1).default("dev-only-secret-do-not-use-in-production"),

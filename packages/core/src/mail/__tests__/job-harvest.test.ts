@@ -120,10 +120,11 @@ const JACK_AND_JILL_DIGEST = {
 };
 
 describe("canonicalizeJobUrl", () => {
-  it("strips LinkedIn tracking to stable job id", () => {
+  it("strips tracking query params without rewriting host or path", () => {
+    // Dedup hygiene only — does not rewrite /comm/ or other listing paths.
     const raw =
       "https://www.linkedin.com/comm/jobs/view/4443683970/?trackingId=abc&refId=xyz&lipi=foo";
-    expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/jobs/view/4443683970");
+    expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/comm/jobs/view/4443683970");
   });
 });
 

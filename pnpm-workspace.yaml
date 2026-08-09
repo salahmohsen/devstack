@@ -3,6 +3,13 @@ packages:
   - packages/*
   - tools/*
 
+# pnpm v11: non-auth settings live here (not .npmrc). When a script runner's
+# deps-status check wants to reinstall, skip the interactive "purge node_modules?"
+# prompt so non-TTY pipelines (vp run, scripts/dev.sh pipes) don't abort with
+# ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY.
+# @see https://pnpm.io/settings — only auth/registry belong in .npmrc on v11+
+confirmModulesPurge: false
+
 allowBuilds:
   esbuild: true
   msgpackr-extract: true
@@ -83,9 +90,14 @@ catalog:
 
   tw-animate-css: ^1.4.0
   typescript: ^7.0.2
+  # vite → Vite+ core (required). vitest is upstream Vitest matching the version
+  # bundled by vite-plus (see `vp --version` / vite-plus deps). Do NOT alias vitest
+  # to @voidzero-dev/vite-plus-test — that 0.1.x wrapper was removed in vite-plus
+  # 0.2.x; it has no `bin`, so `vp test` fails with "Could not find 'vitest' bin entry".
+  # @see https://github.com/voidzero-dev/vite-plus/releases/tag/v0.2.1
   vite: npm:@voidzero-dev/vite-plus-core@0.2.7
   vite-plus: 0.2.7
-  vitest: npm:@voidzero-dev/vite-plus-test@^0.1.24
+  vitest: 4.1.10
   zod: ^4.4.3
   "@better-auth/passkey": ^1.6.23
   motion: ^12.42.2
@@ -191,10 +203,10 @@ overrides:
   kysely: 0.28.17
   yoga-layout: 2.0.1
 
+# vite-plus-core is published under a different package name than "vite"; allow
+# consumers that declare peer vite to resolve the aliased package.
 peerDependencyRules:
   allowAny:
     - vite
-    - vitest
   allowedVersions:
     vite: "*"
-    vitest: "*"
