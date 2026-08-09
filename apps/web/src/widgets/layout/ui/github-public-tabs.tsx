@@ -119,6 +119,9 @@ type TabsProps = {
 export function Tabs({ tabsReady, routerRef }: TabsProps) {
   const openTabs = useTabs();
   const dragTabRef = useRef<string | null>(null);
+  // Snapshot for right-click actions. Ref keeps the target stable when the menu
+  // item fires (Base UI uses onClick, not Radix onSelect). State drives disabled UI.
+  const contextTabRef = useRef<{ tab: Tab; index: number } | null>(null);
   const [contextTab, setContextTab] = useState<{
     tab: Tab;
     index: number;
@@ -182,36 +185,34 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
     [navigateToTabUrl, openTabs, routerRef]
   );
 
+  const openTabContextMenu = useCallback((tab: Tab, index: number) => {
+    const snapshot = { tab, index };
+    contextTabRef.current = snapshot;
+    setContextTab(snapshot);
+  }, []);
+
+  // Base UI ContextMenu.Item uses onClick (not Radix onSelect).
   const handleContextClose = useCallback(() => {
-    if (!contextTab) return;
-    handleCloseTab(contextTab.tab.id, contextTab.tab.url);
-  }, [contextTab, handleCloseTab]);
+    const target = contextTabRef.current;
+    if (!target) return;
+    handleCloseTab(target.tab.id, target.tab.url);
+  }, [handleCloseTab]);
 
   const handleContextCloseOthers = useCallback(() => {
-    if (!contextTab) return;
+    const target = contextTabRef.current;
+    if (!target) return;
     const currentPath = routerRef.current.state.location.pathname;
-    if (currentPath !== contextTab.tab.url) {
-      navigateToTabUrl(contextTab.tab.url);
+    if (currentPath !== target.tab.url) {
+      navigateToTabUrl(target.tab.url);
     }
-    removeOtherTabs(contextTab.tab.id);
-  }, [contextTab, navigateToTabUrl]);
+    removeOtherTabs(target.tab.id);
+  }, [navigateToTabUrl, routerRef]);
 
   const handleContextCloseRight = useCallback(() => {
-    if (!contextTab) return;
-    removeTabsToRight(contextTab.tab.id);
-  }, [contextTab]);
-
-  // const handleContextCloseMerged = useCallback(() => {
-  //   const currentPath = routerRef.current.state.location.pathname;
-  //   const activeTabWillClose = openTabs.find((t) => currentPath === t.url && isMergedTab(t));
-  //   removeMergedTabs();
-  //   if (activeTabWillClose) {
-  //     const remaining = openTabs.filter((t) => !isMergedTab(t));
-  //     void routerRef.current.navigate({
-  //       to: remaining[0]?.url ?? ("/" as never)
-  //     });
-  //   }
-  // }, [openTabs, routerRef]);
+    const target = contextTabRef.current;
+    if (!target) return;
+    removeTabsToRight(target.tab.id);
+  }, []);
 
   if (openTabs.length === 0) return null;
 
@@ -263,7 +264,7 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
                   onDragOver={handleDragOver}
                   onDragEnd={handleDragEnd}
                   onContextMenu={() => {
-                    setContextTab({ tab, index });
+                    openTabContextMenu(tab, index);
                   }}
                   routerRef={routerRef}
                 />
@@ -272,25 +273,21 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onSelect={handleContextClose}>
+          <ContextMenuItem onClick={handleContextClose}>
             <X size={14} strokeWidth={2} />
             Close
           </ContextMenuItem>
-          <ContextMenuItem onSelect={handleContextCloseOthers} disabled={openTabs.length <= 1}>
+          <ContextMenuItem onClick={handleContextCloseOthers} disabled={openTabs.length <= 1}>
             <X size={14} strokeWidth={2} />
             Close other tabs
           </ContextMenuItem>
           <ContextMenuItem
-            onSelect={handleContextCloseRight}
+            onClick={handleContextCloseRight}
             disabled={!contextTab || contextTab.index === openTabs.length - 1}
           >
             <ChevronRight size={14} strokeWidth={2} />
             Close tabs to the right
           </ContextMenuItem>
-          {/* <ContextMenuItem onSelect={handleContextCloseMerged} disabled={!hasMergedTabs}>
-            <GitPullRequest size={14} strokeWidth={2} />
-            Close merged
-          </ContextMenuItem> */}
         </ContextMenuContent>
       </ContextMenu>
     </div>
