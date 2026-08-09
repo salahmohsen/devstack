@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 
 import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-revalidation";
@@ -6,7 +7,11 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@tsu-stack/ui/
 
 import { parseRepoRouteSplat } from "@/shared/lib/parse-repo-route-splat";
 import { getGitHubCacheStatus, getGitHubDataSource } from "@/shared/lib/query-persistence";
-import { buildRepoTabUrl, repoOverviewPath, repoTreePath } from "@/shared/lib/repo-paths";
+import {
+  buildRepoTabUrl,
+  repoBranchNavLocation,
+  repoExplorerTabTitle
+} from "@/shared/lib/repo-paths";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
 // oxlint-disable-next-line fsd/no-public-api-sidestep
@@ -58,6 +63,7 @@ export function GithubRepoPage({
   routeSplat,
   view = "repo"
 }: GithubRepoPageProps) {
+  const navigate = useNavigate();
   const githubSetup = useGetGithubSetupQuery(profileName);
   const owner = githubSetup.data?.owner ?? "";
   const overviewQuery = useGetGithubRepoOverviewQuery(repo, profileName);
@@ -138,10 +144,10 @@ export function GithubRepoPage({
     ref: branchName,
     path: routePath
   });
-  const tabTitle =
-    view === "repo" || !routePath
-      ? (overviewQuery.data?.name ?? repo)
-      : (routePath.split("/").at(-1) ?? routePath);
+  const tabTitle = repoExplorerTabTitle(
+    overviewQuery.data?.name ?? repo,
+    view === "repo" ? "" : routePath
+  );
 
   useRegisterGithubPublicTab({
     avatarUrl: overviewQuery.data?.ownerAvatarUrl ?? undefined,
@@ -200,18 +206,14 @@ export function GithubRepoPage({
   const overview = overviewQuery.data;
   const isDefaultBranch = branchName === overview.defaultBranch;
 
+  // Overview surface only (blob/tree return earlier with RepoExplorerLayout).
   const handleBranchChange = (nextBranch: string) => {
-    if (routePath) {
-      window.location.assign(repoTreePath(pathProfileName, repo, nextBranch, routePath));
-      return;
-    }
-
-    if (nextBranch === overview.defaultBranch) {
-      window.location.assign(repoOverviewPath(pathProfileName, repo));
-      return;
-    }
-
-    window.location.assign(repoTreePath(pathProfileName, repo, nextBranch));
+    const loc = repoBranchNavLocation(pathProfileName ?? null, repo, nextBranch, {
+      path: routePath,
+      view: "tree",
+      defaultBranch: overview.defaultBranch
+    });
+    void navigate({ to: loc.to, params: loc.params } as never);
   };
 
   return (
@@ -223,6 +225,7 @@ export function GithubRepoPage({
           <CodeExplorerToolbar
             currentRef={routeTarget.ref}
             onBranchChange={handleBranchChange}
+            profileName={profileName}
             repo={overview}
           />
 

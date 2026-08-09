@@ -3,6 +3,8 @@ import {
   PlaySquare,
   Archive,
   ChevronRight,
+  File,
+  Folder,
   X,
   GitCommitHorizontal,
   GitPullRequest
@@ -25,7 +27,7 @@ import {
 } from "@tsu-stack/ui/components/context-menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
+import { parseRepoTabLocation, repoExplorerTabSurfaceFromUrl } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import {
   removeOtherTabs,
@@ -46,6 +48,19 @@ const tabIconMap = {
   commit: GitCommitHorizontal,
   actions: PlaySquare
 } as const;
+
+const REPO_EXPLORER_ICON = {
+  repo: Archive,
+  folder: Folder,
+  file: File
+} as const;
+
+function iconForTab(tab: Tab) {
+  if (tab.type === "repo") {
+    return REPO_EXPLORER_ICON[repoExplorerTabSurfaceFromUrl(tab.url)];
+  }
+  return tabIconMap[tab.type];
+}
 
 function useScrollShadows(tabCount: number) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -213,15 +228,17 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
         {/* Base UI trigger must grow in the topbar flex row (Diffkit used asChild).
             Without min-w-0 flex-1 the tab strip collapses to 0 width. */}
         <ContextMenuTrigger className="relative min-w-0 flex-1 overflow-hidden">
+          {/* Match shell chrome (`RootLayout` is bg-container), not page `background`
+              which reads as a light/white wash on the dark topbar. */}
           <div
             className={cn(
-              "pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-background to-transparent transition-opacity",
+              "pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-linear-to-r from-container to-transparent transition-opacity",
               canScrollLeft ? "opacity-100" : "opacity-0"
             )}
           />
           <div
             className={cn(
-              "pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-background to-transparent transition-opacity",
+              "pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-linear-to-l from-container to-transparent transition-opacity",
               canScrollRight ? "opacity-100" : "opacity-0"
             )}
           />
@@ -235,7 +252,7 @@ export function Tabs({ tabsReady, routerRef }: TabsProps) {
           >
             <ScrollActiveTabIntoView scrollRef={scrollRef} updateScrollState={updateScrollState} />
             {openTabs.map((tab, index) => {
-              const Icon = tabIconMap[tab.type];
+              const Icon = iconForTab(tab);
               return (
                 <DetailTab
                   key={tab.id}
@@ -344,12 +361,19 @@ const DetailTab = memo(function DetailTab({
 
   const children = (
     <>
-      {tab.avatarUrl ? (
+      {/* Repo explorer: always surface icon (repo/folder/file), not owner avatar. */}
+      {tab.type !== "repo" && tab.avatarUrl ? (
         <img src={tab.avatarUrl} alt="" className="size-3.5 shrink-0 rounded-sm" />
       ) : (
-        <Icon size={13} strokeWidth={2} className={cn("shrink-0", tab.iconColor)} />
+        <Icon
+          size={13}
+          strokeWidth={2}
+          className={cn("shrink-0", tab.type === "repo" ? "text-primary" : tab.iconColor)}
+        />
       )}
-      <span className="max-w-32 min-w-13 truncate">{tab.title}</span>
+      <span className="max-w-32 min-w-13 truncate" title={tab.title}>
+        {tab.title}
+      </span>
       {tab.type === "review" || tab.type === "commit" ? (
         <span className="flex items-center gap-1 font-mono text-[11px] font-medium tabular-nums">
           {tab.additions != null && <span>+{tab.additions}</span>}
@@ -370,6 +394,12 @@ const DetailTab = memo(function DetailTab({
       >
         <X size={12} strokeWidth={2} className="text-muted-foreground" />
       </button>
+      {/*
+        Overlay × on hover. `--muted` is only ~4% alpha in this theme, so
+        bg-muted alone cannot occlude the title. Opaque `background` covers the
+        text (same as the last good push); a muted wash on top matches hover/active
+        tab fill so light mode does not flash a pure white cap.
+      */}
       <button
         type="button"
         onClick={(e) => {
@@ -377,11 +407,19 @@ const DetailTab = memo(function DetailTab({
           e.stopPropagation();
           onClose(tab.id, tab.url);
         }}
-        className="absolute inset-y-0 right-0 hidden items-center rounded-r-sm bg-background pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
+        className="absolute inset-y-0 right-0 z-10 hidden items-center rounded-r-sm bg-background pr-1.5 pl-1.5 opacity-0 transition-opacity group-hover:opacity-100 md:flex"
         aria-label={`Close ${tab.title}`}
       >
-        <span className="absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent to-background" />
-        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-muted">
+        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-r-sm bg-muted" />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent to-background"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 -left-3 w-3 bg-linear-to-r from-transparent to-muted"
+        />
+        <span className="relative flex size-4 items-center justify-center rounded-sm hover:bg-muted-foreground/15">
           <X size={10} strokeWidth={2} />
         </span>
       </button>
@@ -407,8 +445,9 @@ const DetailTab = memo(function DetailTab({
     onContextMenu,
     activeOptions: { exact: true } as const,
     activeProps: { className: "active" },
+    // Content-sized tab; × is absolute overlay. Border (not ring) for active outline.
     className:
-      "group relative flex h-8 shrink-0 items-center gap-1.5 rounded-sm px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&.active]:bg-muted [&.active]:text-foreground [&.active]:ring-1 [&.active]:ring-border"
+      "group relative flex h-8 shrink-0 items-center gap-1.5 rounded-sm border border-transparent px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&.active]:border-border [&.active]:bg-muted [&.active]:text-foreground"
   };
 
   if (location) {

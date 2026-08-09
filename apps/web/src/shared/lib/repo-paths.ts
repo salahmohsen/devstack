@@ -58,6 +58,107 @@ type ProfileRepoSplatParams = { profileName: string; repo: string; _splat: strin
 type CustomRepoParams = { repo: string };
 type CustomRepoSplatParams = { repo: string; _splat: string };
 
+/** Typed navigate target when switching branches (client-side; no full reload). */
+export type RepoBranchNavLocation =
+  | { to: "/$profileName/repos/$repo"; params: ProfileRepoParams }
+  | { to: "/repos/$repo"; params: CustomRepoParams }
+  | { to: "/$profileName/repos/$repo/tree/$"; params: ProfileRepoSplatParams }
+  | { to: "/repos/$repo/tree/$"; params: CustomRepoSplatParams }
+  | { to: "/$profileName/repos/$repo/blob/$"; params: ProfileRepoSplatParams }
+  | { to: "/repos/$repo/blob/$"; params: CustomRepoSplatParams };
+
+/**
+ * Resolve in-app navigation for a branch switch.
+ * - With path: keep tree/blob and swap ref
+ * - No path + default branch: overview
+ * - No path + other branch: tree at branch root
+ */
+export function repoBranchNavLocation(
+  profileName: string | null,
+  repo: string,
+  branch: string,
+  options?: {
+    path?: string;
+    view?: "tree" | "blob";
+    defaultBranch?: string | null;
+  }
+): RepoBranchNavLocation {
+  const path = (options?.path ?? "").replace(/^\/+|\/+$/g, "");
+  const view = options?.view ?? "tree";
+  const defaultBranch = options?.defaultBranch ?? null;
+
+  if (path) {
+    const splat = `${branch}/${path}`;
+    if (view === "blob") {
+      return profileName
+        ? {
+            to: "/$profileName/repos/$repo/blob/$",
+            params: { profileName, repo, _splat: splat }
+          }
+        : { to: "/repos/$repo/blob/$", params: { repo, _splat: splat } };
+    }
+    return profileName
+      ? {
+          to: "/$profileName/repos/$repo/tree/$",
+          params: { profileName, repo, _splat: splat }
+        }
+      : { to: "/repos/$repo/tree/$", params: { repo, _splat: splat } };
+  }
+
+  if (defaultBranch && branch === defaultBranch) {
+    return profileName
+      ? { to: "/$profileName/repos/$repo", params: { profileName, repo } }
+      : { to: "/repos/$repo", params: { repo } };
+  }
+
+  return profileName
+    ? {
+        to: "/$profileName/repos/$repo/tree/$",
+        params: { profileName, repo, _splat: branch }
+      }
+    : { to: "/repos/$repo/tree/$", params: { repo, _splat: branch } };
+}
+
+/**
+ * Document-tab label for a repo explorer surface.
+ * Root → `repo`; nested folder/file → `repo/basename` (e.g. `Obsidian/2- Tags`).
+ */
+export function repoExplorerTabTitle(repo: string, path = ""): string {
+  const leaf = path
+    .replace(/^\/+|\/+$/g, "")
+    .split("/")
+    .filter(Boolean)
+    .at(-1);
+  if (!leaf) return repo;
+  return `${repo}/${leaf}`;
+}
+
+/** Icon surface for a repo document tab (overview / folder / file). */
+export type RepoExplorerTabSurface = "repo" | "folder" | "file";
+
+/**
+ * Derive explorer surface from a stored tab URL.
+ * - overview or tree at branch root → `repo`
+ * - tree with path under ref → `folder`
+ * - blob → `file`
+ */
+export function repoExplorerTabSurfaceFromUrl(url: string): RepoExplorerTabSurface {
+  const path = (url.split("?")[0] ?? url).replace(/\/+$/, "");
+
+  if (/\/blob\//.test(path)) return "file";
+
+  const treeMatch = path.match(/\/tree\/(.+)$/);
+  if (treeMatch?.[1]) {
+    // splat is `ref` or `ref/path/to/dir`
+    const afterRef = treeMatch[1].includes("/")
+      ? treeMatch[1].slice(treeMatch[1].indexOf("/") + 1)
+      : "";
+    return afterRef.length > 0 ? "folder" : "repo";
+  }
+
+  return "repo";
+}
+
 /**
  * Map a stored tab url back to a typed TanStack route `to` + `params`.
  */

@@ -15,7 +15,7 @@ const BATCH_DELAY_MS = 150;
  * between batches to avoid flooding the network.
  */
 export function usePrefetchTree(
-  input: { ref: string; repo: string },
+  input: { ref: string; repo: string; profileName?: string },
   rootEntries: GitHubRepoTreeEntry[] | undefined,
   isPrivate = false
 ) {
@@ -46,7 +46,13 @@ export function usePrefetchTree(
       const results = await Promise.all(
         // oxlint-disable-next-line typescript/await-thenable
         batch.map((path) => {
-          const options = getGithubRepoTreeQueryOptions(input.repo, input.ref, path, isPrivate);
+          const options = getGithubRepoTreeQueryOptions(
+            input.repo,
+            input.ref,
+            path,
+            isPrivate,
+            input.profileName
+          );
 
           // Skip if already cached
           if (queryClient.getQueryData(options.queryKey)) {

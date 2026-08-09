@@ -15,7 +15,11 @@ import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { getExplorerPath, setExplorerPath } from "@/shared/lib/explorer-path-store";
-import { buildRepoTabUrl } from "@/shared/lib/repo-paths";
+import {
+  buildRepoTabUrl,
+  repoBranchNavLocation,
+  repoExplorerTabTitle
+} from "@/shared/lib/repo-paths";
 
 import { useRegisterGithubPublicTab } from "@/widgets/layout";
 
@@ -78,10 +82,8 @@ export function RepoExplorerLayout({
 
   setExplorerPath(currentPath);
 
-  const explorerTabTitle =
-    currentPath && currentPath.length > 0
-      ? (currentPath.split("/").at(-1) ?? repoData?.name ?? repoName)
-      : (repoData?.name ?? repoName);
+  const displayRepoName = repoData?.name ?? repoName;
+  const explorerTabTitle = repoExplorerTabTitle(displayRepoName, currentPath);
 
   useRegisterGithubPublicTab(
     repoData
@@ -109,34 +111,26 @@ export function RepoExplorerLayout({
   });
 
   const prefetchInput = useMemo(() => {
-    return { ref: activeRef, repo: repoName };
-  }, [repoName, activeRef]);
+    return { ref: activeRef, repo: repoName, profileName };
+  }, [activeRef, profileName, repoName]);
   usePrefetchTree(prefetchInput, rootTreeQuery.data, isPrivate);
 
   const currentTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, activeRef, currentPath, isPrivate),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef, currentPath, isPrivate, profileName),
     enabled: hasMounted && !!repoData && viewMode === "tree" && currentPath !== ""
   });
 
   const handleBranchChange = useCallback(
     (branch: string) => {
       const path = getExplorerPath();
-      if (path) {
-        void navigate({
-          params: {
-            repo: repoName,
-            _splat: `${branch}/${path}`
-          },
-          to: viewMode === "blob" ? "/repos/$repo/blob/$" : "/repos/$repo/tree/$"
-        });
-      } else {
-        void navigate({
-          params: { repo: repoName },
-          to: profileName ? "/$profileName/repos/$repo" : "/repos/$repo"
-        });
-      }
+      const loc = repoBranchNavLocation(pathProfileName ?? null, repoName, branch, {
+        path,
+        view: viewMode,
+        defaultBranch: repoData?.defaultBranch
+      });
+      void navigate({ to: loc.to, params: loc.params } as never);
     },
-    [navigate, repoName, viewMode]
+    [navigate, pathProfileName, repoData?.defaultBranch, repoName, viewMode]
   );
 
   const handleOpenFileSheet = useCallback(() => setDrawerOpen(true), []);
@@ -185,6 +179,7 @@ export function RepoExplorerLayout({
         isDesktop={isDesktop}
         onBranchChange={handleBranchChange}
         onOpenFileSheet={handleOpenFileSheet}
+        profileName={profileName}
         repo={repoData}
         repoName={repoName}
       />
@@ -230,6 +225,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   isDesktop,
   onBranchChange,
   onOpenFileSheet,
+  profileName,
   repo,
   repoName
 }: {
@@ -237,11 +233,13 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   isDesktop: boolean;
   onBranchChange: (branch: string) => void;
   onOpenFileSheet: () => void;
+  /** Tenant slug for GitHub public data; path segment may be null on custom domain. */
+  profileName: string;
   repo: RepoOverview;
   repoName: string;
 }) {
   const params = useParams({ strict: false }) as { profileName?: string };
-  const profileName = params.profileName;
+  const pathProfileName = params.profileName;
   return (
     <div className="flex shrink-0 items-center gap-2 border-b bg-card px-3 py-2 md:gap-3 md:px-4">
       {!isDesktop && (
@@ -256,8 +254,11 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
       )}
 
       <Link
-        to={profileName ? "/$profileName/repos/$repo" : "/repos/$repo"}
-        params={profileName ? { profileName, repo: repoName } : { repo: repoName }}
+        // Custom-domain surface: path profile is null → `/repos/$repo` (no slug).
+        to={pathProfileName ? "/$profileName/repos/$repo" : "/repos/$repo"}
+        params={
+          pathProfileName ? { profileName: pathProfileName, repo: repoName } : { repo: repoName }
+        }
         className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft size={16} />
@@ -265,7 +266,12 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
       </Link>
 
       <div className="ml-auto">
-        <CodeExplorerToolbar currentRef={currentRef} onBranchChange={onBranchChange} repo={repo} />
+        <CodeExplorerToolbar
+          currentRef={currentRef}
+          onBranchChange={onBranchChange}
+          profileName={profileName}
+          repo={repo}
+        />
       </div>
     </div>
   );

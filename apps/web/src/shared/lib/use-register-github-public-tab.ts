@@ -3,7 +3,8 @@ import { useLayoutEffect } from "react";
 import { addTab, type Tab, type TabType } from "@/shared/lib/tab-store";
 
 const TAB_ICON_COLORS: Partial<Record<TabType, string>> = {
-  repo: "text-blue-500",
+  // Explorer icons (repo/folder/file) use theme primary, not a fixed blue.
+  repo: "text-primary",
   pull: "text-green-500",
   issue: "text-green-500"
 };
@@ -26,8 +27,10 @@ export function useRegisterGithubPublicTab(tab: RegisterableGithubTab | null) {
     }
 
     const id = tab.tabId ?? `${tab.type}:${tab.repo}`;
+    // Repo explorer tabs use path-derived icons (repo/folder/file), not owner avatars.
+    const avatarUrl = tab.type === "repo" ? undefined : tab.avatarUrl;
     addTab({
-      avatarUrl: tab.avatarUrl,
+      avatarUrl,
       id,
       iconColor: tab.iconColor ?? TAB_ICON_COLORS[tab.type] ?? "text-muted-foreground",
       repo: tab.repo,
