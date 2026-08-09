@@ -26,6 +26,11 @@ import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { setCommandPaletteOpen } from "@/shared/lib/command-palette/open-state";
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
+import {
+  createPublicSurface,
+  publicPortfolioHomeLocation,
+  publicReposListLocation
+} from "@/shared/lib/public-surface";
 import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
@@ -166,10 +171,15 @@ export function Topbar() {
       enabled: Boolean(sessionProfileName),
       onTrigger: () => {
         if (!sessionProfileName) return;
-        void navigateRef.current({
-          to: "/$profileName",
-          params: { profileName: sessionProfileName }
+        // Account menu targets the user's own path portfolio on the primary host.
+        const surface = createPublicSurface({
+          tenantProfileName: sessionProfileName,
+          mode: "path"
         });
+        const loc = publicPortfolioHomeLocation(surface);
+        void navigateRef.current(
+          "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
+        );
       }
     },
     {
@@ -177,10 +187,14 @@ export function Topbar() {
       enabled: Boolean(sessionProfileName),
       onTrigger: () => {
         if (!sessionProfileName) return;
-        void navigateRef.current({
-          to: "/$profileName/repos",
-          params: { profileName: sessionProfileName }
+        const surface = createPublicSurface({
+          tenantProfileName: sessionProfileName,
+          mode: "path"
         });
+        const loc = publicReposListLocation(surface);
+        void navigateRef.current(
+          "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
+        );
       }
     },
     {

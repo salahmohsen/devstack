@@ -1,19 +1,31 @@
+import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { FaGithub } from "react-icons/fa6";
 
+import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { sanitizeHtml, type ProjectPublicOutput, type StackOutput } from "@tsu-stack/core";
 import { AnimatedWash } from "@tsu-stack/ui/components/animated-wash";
+import { Button } from "@tsu-stack/ui/components/button";
 import { Card6 } from "@tsu-stack/ui/components/cardcn";
 import { CenterUnderline } from "@tsu-stack/ui/components/fancy/text";
+import { Group } from "@tsu-stack/ui/components/group";
 import {
   PreviewCard,
   PreviewCardPopup,
   PreviewCardTrigger
 } from "@tsu-stack/ui/components/preview-card";
 import { StickyCardStack } from "@tsu-stack/ui/components/skiper-ui";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { NativeMarquee, type NativeMarqueeItem } from "@tsu-stack/ui/components/uitripled";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import {
+  createPublicSurface,
+  publicRepoOverviewLocation,
+  resolvePublicSurface,
+  type PublicSurface
+} from "@/shared/lib/public-surface";
 import { Icon } from "@/shared/ui/icon";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
@@ -123,9 +135,33 @@ function StackChip({ stack }: { stack: StackOutput }) {
   );
 }
 
-export const ProjectsSection = ({ profileName }: { profileName: string }) => {
+export const ProjectsSection = ({
+  profileName,
+  surfaceMode
+}: {
+  profileName: string;
+  /** When known from the route loader (custom domain root vs path portfolio). */
+  surfaceMode?: "path" | "custom_domain";
+}) => {
   const portfolioQuery = useGetPortfolioListQuery(profileName);
   const projects = portfolioQuery.data?.projects ?? [];
+  const { user } = useAuth();
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  const isPortfolioOwner = Boolean(sessionProfileName && sessionProfileName === profileName);
+
+  const surface = useMemo(() => {
+    if (surfaceMode) {
+      return createPublicSurface({
+        tenantProfileName: profileName,
+        mode: surfaceMode
+      });
+    }
+    const hostname = typeof window !== "undefined" ? window.location.hostname : undefined;
+    return resolvePublicSurface({ tenantProfileName: profileName, hostname });
+  }, [profileName, surfaceMode]);
 
   if (projects.length === 0) return null;
 
@@ -134,17 +170,97 @@ export const ProjectsSection = ({ profileName }: { profileName: string }) => {
   return (
     <StickyCardStack>
       {projects.map((project) => (
-        <ProjectsItem key={project.id} project={project} />
+        <ProjectsItem
+          key={project.id}
+          project={project}
+          surface={surface}
+          isPortfolioOwner={isPortfolioOwner}
+        />
       ))}
     </StickyCardStack>
   );
 };
 
-export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
+function ProjectRepoButtons({
+  project,
+  surface,
+  isPortfolioOwner,
+  className
+}: {
+  project: ProjectPublicOutput;
+  surface: PublicSurface;
+  isPortfolioOwner: boolean;
+  className?: string;
+}) {
+  const visible = (project.githubRepos ?? []).filter((r) => !r.isPrivate || isPortfolioOwner);
+  if (visible.length === 0) return null;
+
+  const buttons = visible.map((repo) => {
+    const location = publicRepoOverviewLocation(surface, repo.name);
+    return (
+      <Tooltip key={repo.fullName}>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="outline"
+              size="icon-sm"
+              className="text-foreground/80 shadow-none"
+              render={<Link to={location.to} params={location.params as never} />}
+              aria-label={`Open repository ${repo.name}`}
+            />
+          }
+        >
+          <FaGithub className="size-3.5" />
+          <span className="sr-only">Open repository {repo.name}</span>
+        </TooltipTrigger>
+        <TooltipContent>{repo.fullName}</TooltipContent>
+      </Tooltip>
+    );
+  });
+
+  if (visible.length === 1) {
+    return <div className={cn("flex items-center", className)}>{buttons}</div>;
+  }
+
+  return (
+    <Group className={cn("shrink-0", className)} aria-label="Open repositories">
+      {buttons}
+    </Group>
+  );
+}
+
+export const ProjectsItem = ({
+  project,
+  surface,
+  isPortfolioOwner
+}: {
+  project: ProjectPublicOutput;
+  surface: PublicSurface;
+  isPortfolioOwner: boolean;
+}) => {
   const [hovered, setHovered] = useState(false);
   const yearLabel = `${String(project.year)}${project.isPresent ? " — current" : ""}`;
 
+  const repoButtonsDesktop = (
+    <ProjectRepoButtons
+      project={project}
+      surface={surface}
+      isPortfolioOwner={isPortfolioOwner}
+      className="hidden md:flex"
+    />
+  );
+
+  const repoButtonsMobile = (
+    <ProjectRepoButtons
+      project={project}
+      surface={surface}
+      isPortfolioOwner={isPortfolioOwner}
+      className="flex md:hidden"
+    />
+  );
+
   // Center underline on the title, driven by whole-card hover (not title-only).
+  // md+: Open repo controls sit next to the title.
   const title = (
     <span className="inline-flex min-w-0 items-center gap-2">
       {project.logo ? (
@@ -157,7 +273,16 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
       <CenterUnderline active={hovered} className="min-w-0">
         {project.title}
       </CenterUnderline>
+      {repoButtonsDesktop}
     </span>
+  );
+
+  // Mobile: repos under the date (description). Demo stays in CardAction.
+  const descriptionNode = (
+    <div className="flex flex-col items-start gap-2">
+      <span>{yearLabel}</span>
+      {repoButtonsMobile}
+    </div>
   );
 
   const action = project.demoUrl ? (
@@ -165,7 +290,7 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
       href={project.demoUrl}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`Open ${project.title}`}
+      aria-label={`Open ${project.title} demo`}
       className="text-muted-foreground transition-colors hover:text-foreground"
     >
       <ExternalLink className="size-3.5" strokeWidth={2.25} />
@@ -230,7 +355,7 @@ export const ProjectsItem = ({ project }: { project: ProjectPublicOutput }) => {
         // isolate keeps the wash canvas under content without leaking stacking contexts.
         className="isolate w-full transition-[border-color,box-shadow] duration-300"
         title={title}
-        description={yearLabel}
+        description={descriptionNode}
         action={action}
         footer={stacksFooter}
         overlay={washOverlay}

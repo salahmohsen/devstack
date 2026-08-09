@@ -34,7 +34,20 @@ export const ProjectOutputSchema = z.object({
   }
 >;
 
-export const ProjectPublicOutputSchema = ProjectOutputSchema.omit({ analysis: true });
+/** GitHub repo linked on a public portfolio project (enriched server-side). */
+export const ProjectGithubRepoPublicSchema = z.object({
+  name: z.string().describe("Repo name path segment for in-app public GitHub routes"),
+  fullName: z.string().describe("owner/name for display and a11y"),
+  isPrivate: z.boolean().describe("GitHub private flag; private buttons only for portfolio owner")
+});
+export type ProjectGithubRepoPublic = z.infer<typeof ProjectGithubRepoPublicSchema>;
+
+export const ProjectPublicOutputSchema = ProjectOutputSchema.omit({ analysis: true }).extend({
+  githubRepos: z
+    .array(ProjectGithubRepoPublicSchema)
+    .default([])
+    .describe("Resolvable GitHub repos for Open-repo controls (tenant-owned only)")
+});
 
 export const ProjectListOutputSchema = z.array(ProjectOutputSchema);
 

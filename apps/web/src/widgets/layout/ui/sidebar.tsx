@@ -11,6 +11,12 @@ import {
   Sidebar001Section
 } from "@tsu-stack/ui/components/unlumen-ui/sidebar-001";
 
+import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import {
+  createPublicSurface,
+  portfolioHomePath,
+  publicReposListPath
+} from "@/shared/lib/public-surface";
 import { ContactButton } from "@/shared/ui/contact-button";
 
 import { useGetOwnPortfolioListQuery, useGetPortfolioListQuery } from "@/features/portfolio";
@@ -111,6 +117,19 @@ export function PublicSidebar() {
 
   // Nav links: public page slug, else own slug for "Portfolio" / "Repositories".
   const profileName = (onPublicProfile ? pathProfileName : ownProfileName) ?? "";
+  const onCustomDomainPublic =
+    typeof window !== "undefined" &&
+    isCustomDomainHost(window.location.hostname) &&
+    (pathname === "/" || pathname.startsWith("/repos"));
+
+  const tenantForSurface = profileName.length > 0 ? profileName : (ownProfileName ?? "");
+  const publicSurface =
+    tenantForSurface.length > 0 || onCustomDomainPublic
+      ? createPublicSurface({
+          tenantProfileName: tenantForSurface.length > 0 ? tenantForSurface : "unknown",
+          mode: onCustomDomainPublic ? "custom_domain" : "path"
+        })
+      : null;
 
   // Contacts footer:
   // - Public profile pages: list by path slug (no session required).
@@ -126,11 +145,11 @@ export function PublicSidebar() {
 
   const publicItems: NavItem[] = [
     ...PublicItems,
-    ...(profileName
-      ? [
-          { href: `/${profileName}`, label: "Portfolio" },
-          { href: `/${profileName}/repos`, label: "Repositories" }
-        ]
+    ...(publicSurface && publicSurface.tenantProfileName !== "unknown"
+      ? ([
+          { href: portfolioHomePath(publicSurface), label: "Portfolio" },
+          { href: publicReposListPath(publicSurface), label: "Repositories" }
+        ] satisfies NavItem[])
       : [])
   ];
 

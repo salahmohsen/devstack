@@ -91,7 +91,7 @@ function RootIndexPage() {
   const data = Route.useLoaderData();
 
   if (data.mode === "custom_domain") {
-    return <HomePage profileName={data.profileName} />;
+    return <HomePage profileName={data.profileName} surfaceMode="custom_domain" />;
   }
 
   return <CommunityLandingPage />;

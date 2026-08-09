@@ -126,7 +126,7 @@ export function toProjectOutput(proj: ProjectRow): ProjectOutput {
 
 export function toProjectPublicOutput(proj: ProjectRow): ProjectPublicOutput {
   const { analysis: _analysis, ...publicFields } = toProjectOutput(proj);
-  return publicFields;
+  return { ...publicFields, githubRepos: [] };
 }
 
 export type ExperienceRow = {

@@ -38,7 +38,14 @@ import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
  * Portfolio evidence (projects, experience) always renders.
  * GitHub chrome is optional and only loads when **this profile** linked GitHub.
  */
-export function HomePage({ profileName }: { profileName: string }) {
+export function HomePage({
+  profileName,
+  surfaceMode = "path"
+}: {
+  profileName: string;
+  /** Public Host mode for path builders (custom domain omits profile segment). */
+  surfaceMode?: "path" | "custom_domain";
+}) {
   const hasMounted = useIsClient();
   const location = useRouterState({
     select: (state) => state.location
@@ -192,7 +199,7 @@ export function HomePage({ profileName }: { profileName: string }) {
           <div className="flex w-full flex-col gap-16 px-4 pt-16 pb-4">
             <section id="projects" className="flex w-full flex-col">
               <h2 className="mb-8 text-sm font-medium text-muted-foreground">Projects</h2>
-              <ProjectsSection profileName={profileName} />
+              <ProjectsSection profileName={profileName} surfaceMode={surfaceMode} />
             </section>
 
             <section id="experience" className="flex w-full flex-col">

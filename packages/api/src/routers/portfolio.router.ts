@@ -18,6 +18,7 @@ import {
 } from "@tsu-stack/db/repositories";
 import { contact, experience, project, stack } from "@tsu-stack/db/schema";
 
+import { enrichProjectsWithGithubRepos } from "#@/lib/portfolio/enrich-project-github-repos";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 import {
@@ -159,12 +160,27 @@ export const PortfolioRouter = {
           throw errors.NOT_FOUND();
         }
         const all = await listAllOptedIn(resolved.userId, input.filter);
+        // One GitHub list load: enrich top-level projects + nested experience projects together.
+        const nested = all.experiences.flatMap((e) => e.projects);
+        const enrichedAll = await enrichProjectsWithGithubRepos(
+          [...all.projects, ...nested],
+          resolved.userId,
+          context
+        );
+        const byId = new Map(enrichedAll.map((p) => [p.id, p]));
+        const projects = all.projects.map((p) => byId.get(p.id) ?? { ...p, githubRepos: [] });
+        const experiences = all.experiences.map((exp) => {
+          return {
+            ...exp,
+            projects: exp.projects.map((p) => byId.get(p.id) ?? { ...p, githubRepos: [] })
+          };
+        });
         const owner = await userRepository.findById(resolved.userId);
         const summary = owner?.summary?.trim() ? owner.summary.trim() : null;
         return {
           summary,
-          experiences: all.experiences,
-          projects: all.projects,
+          experiences,
+          projects,
           stacks: all.stacks,
           contacts: all.contacts,
           nextCursor: null
