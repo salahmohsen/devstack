@@ -1,7 +1,9 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
 import { parseProfileName } from "@tsu-stack/core";
 
+import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { getRequestHostname } from "@/shared/lib/request-host";
 import { generateAppSeo } from "@/shared/lib/seo";
 
 import { getDefaultResumeQueryOptions, getPortfolioListQueryOptions } from "@/features/portfolio";
@@ -9,7 +11,6 @@ import { getDefaultResumeQueryOptions, getPortfolioListQueryOptions } from "@/fe
 import {
   getGithubActivityQueryOptions,
   getGithubContributionsQueryOptions,
-  getGithubPinnedReposQueryOptions,
   getGithubProfileQueryOptions,
   getGithubSetupStatusQueryOptions,
   HomePage
@@ -22,6 +23,11 @@ export const Route = createFileRoute("/(root-layout)/$profileName/")({
     // before any portfolio RPC / SSR loader work.
     if (!parseProfileName(params.profileName).success) {
       throw notFound();
+    }
+    // Custom domain Host: portfolio is at `/`, not `/{profileName}`.
+    const host = getRequestHostname();
+    if (host && isCustomDomainHost(host)) {
+      throw redirect({ to: "/", replace: true });
     }
   },
   loader: async ({ context, params }) => {
@@ -44,7 +50,6 @@ export const Route = createFileRoute("/(root-layout)/$profileName/")({
     if (setupStatus?.isConfigured && setupStatus?.owner) {
       void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(profileName));
       void Promise.all([
-        context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions(profileName)),
         context.queryClient.prefetchQuery(getGithubContributionsQueryOptions(profileName)),
         context.queryClient.prefetchQuery(getGithubActivityQueryOptions(profileName))
       ]);

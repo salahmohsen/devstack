@@ -98,6 +98,12 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
     }),
   component: () => {
     const { filterStore, profileName } = Route.useLoaderData();
-    return <RepositoriesPage filterStore={filterStore} profileName={profileName} />;
+    return (
+      <RepositoriesPage
+        filterStore={filterStore}
+        profileName={profileName}
+        surfaceMode="custom_domain"
+      />
+    );
   }
 });

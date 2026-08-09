@@ -22,7 +22,6 @@ import {
   getGithubContributionsQueryOptions,
   useGetGithubContributionsQuery
 } from "@/pages/home-page/api/get-github-contributions.query";
-import { getGithubPinnedReposQueryOptions } from "@/pages/home-page/api/get-github-pinned-repos.query";
 import {
   getGithubProfileQueryOptions,
   useGetGithubProfileQuery
@@ -78,10 +77,6 @@ export function HomePage({
             {
               queryKey: getGithubContributionsQueryOptions(profileName, isPrivate).queryKey,
               signalKeys: [githubRevalidationSignalKeys.ownerContributions(owner)]
-            },
-            {
-              queryKey: getGithubPinnedReposQueryOptions(profileName, isPrivate).queryKey,
-              signalKeys: [githubRevalidationSignalKeys.ownerPinnedRepos(owner)]
             },
             {
               queryKey: getGithubProfileReposQueryOptions(profileName, isPrivate).queryKey,

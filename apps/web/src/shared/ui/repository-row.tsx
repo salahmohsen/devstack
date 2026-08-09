@@ -7,6 +7,7 @@ import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { Card } from "@tsu-stack/ui/components/card.js";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+import { publicRepoOverviewLocation, type PublicSurface } from "@/shared/lib/public-surface";
 import { LazyRepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline-lazy";
 
 const languageColors: Record<string, string> = {
@@ -50,12 +51,17 @@ export const RepositoryRow = memo(function RepositoryRow({
   repo,
   isAdmin,
   profileName,
+  surface,
   ...props
 }: React.ComponentProps<"div"> & {
   repo: GitHubUserRepoSummary;
   isAdmin: boolean;
+  /** Tenant slug (data loaders / sparkline). */
   profileName: string;
+  /** Path vs custom-domain — controls whether links omit the profile segment. */
+  surface: PublicSurface;
 }) {
+  const overview = publicRepoOverviewLocation(surface, repo.name);
   const metaEntries: { key: string; node: ReactNode }[] = [];
   if (repo.language) {
     metaEntries.push({
@@ -106,8 +112,8 @@ export const RepositoryRow = memo(function RepositoryRow({
     <Card
       render={
         <Link
-          to="/$profileName/repos/$repo"
-          params={{ profileName, repo: repo.name }}
+          to={overview.to}
+          params={overview.params as never}
           className="grid w-full grid-cols-1 items-center gap-x-4 gap-y-2 px-4 py-3 transition-all duration-200 hover:scale-99 hover:shadow-none md:grid-cols-[minmax(10rem,22%)_minmax(0,1fr)_minmax(10rem,auto)_11rem] md:gap-y-1"
         >
           <div className="flex min-w-0 flex-col gap-0.5">

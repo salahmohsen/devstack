@@ -1,7 +1,9 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
 import { parseProfileName } from "@tsu-stack/core";
 
+import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { getRequestHostname } from "@/shared/lib/request-host";
 import { generateAppSeo } from "@/shared/lib/seo";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
@@ -26,9 +28,18 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/")({
     return {};
   },
   ssr: false,
-  beforeLoad: ({ params }) => {
+  beforeLoad: ({ params, location }) => {
     if (!parseProfileName(params.profileName).success) {
       throw notFound();
+    }
+    // Custom domain Host must not use path portfolios: /{profile}/repos → /repos
+    const host = getRequestHostname();
+    if (host && isCustomDomainHost(host)) {
+      throw redirect({
+        to: "/repos",
+        search: location.search as { page?: number },
+        replace: true
+      });
     }
   },
   loader: async ({ context, location, params }) => {
@@ -64,6 +75,8 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/")({
     }),
   component: () => {
     const { filterStore, profileName } = Route.useLoaderData();
-    return <RepositoriesPage filterStore={filterStore} profileName={profileName} />;
+    return (
+      <RepositoriesPage filterStore={filterStore} profileName={profileName} surfaceMode="path" />
+    );
   }
 });

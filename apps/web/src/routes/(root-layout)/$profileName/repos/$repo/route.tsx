@@ -1,8 +1,10 @@
-import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
+import { createFileRoute, notFound, Outlet, redirect } from "@tanstack/react-router";
 
 import { parseProfileName } from "@tsu-stack/core";
 
 import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
+import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import { getRequestHostname } from "@/shared/lib/request-host";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
@@ -23,6 +25,16 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")(
       throw notFound();
     }
 
+    // Custom domain: /{profile}/repos/{repo} → /repos/{repo}
+    const host = getRequestHostname();
+    if (host && isCustomDomainHost(host)) {
+      throw redirect({
+        to: "/repos/$repo",
+        params: { repo: params.repo },
+        replace: true
+      });
+    }
+
     const setupStatus = await context.queryClient.ensureQueryData(
       getGithubSetupStatusQueryOptions(params.profileName)
     );
@@ -31,6 +43,7 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")(
       throw notFound();
     }
   },
+
   loader: async ({ context, params }) => {
     if (!isValidGithubRepoSlug(params.repo)) {
       return;

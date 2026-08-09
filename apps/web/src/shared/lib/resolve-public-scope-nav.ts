@@ -1,0 +1,154 @@
+import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
+import {
+  createPublicSurface,
+  resolvePublicSurface,
+  type PublicSurface
+} from "@/shared/lib/public-surface";
+
+export type PublicScopeNavActive = "profile" | "repos" | null;
+
+export type PublicScopeNavResult = {
+  show: boolean;
+  surface: PublicSurface | null;
+  active: PublicScopeNavActive;
+};
+
+/** Paths that never host public portfolio scope nav. */
+const HIDDEN_PREFIXES = [
+  "/dashboard",
+  "/sign-in",
+  "/playground",
+  "/privacy-policy",
+  "/terms-of-service"
+] as const;
+
+/** First path segment reserved (not a profileName). */
+const RESERVED_SEGMENTS = new Set([
+  "dashboard",
+  "sign-in",
+  "repos",
+  "playground",
+  "privacy-policy",
+  "terms-of-service",
+  "api",
+  "docs",
+  "media"
+]);
+
+export function isScopeNavHiddenPath(pathname: string): boolean {
+  const path = normalizePath(pathname);
+  if (path === "/") return false;
+  return HIDDEN_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
+function normalizePath(pathname: string): string {
+  if (!pathname) return "/";
+  const trimmed = pathname.split("?")[0] ?? pathname;
+  if (trimmed.length > 1 && trimmed.endsWith("/")) return trimmed.slice(0, -1);
+  return trimmed || "/";
+}
+
+/**
+ * Extract profileName from path routes: `/{profileName}` or `/{profileName}/repos…`.
+ * Returns null on custom-domain-style `/repos…` or reserved segments.
+ */
+export function pathProfileNameFromPathname(pathname: string): string | null {
+  const path = normalizePath(pathname);
+  if (path === "/" || path === "/repos" || path.startsWith("/repos/")) return null;
+  const m = path.match(/^\/([^/]+)(?:\/|$)/);
+  if (!m?.[1]) return null;
+  const seg = m[1];
+  if (RESERVED_SEGMENTS.has(seg)) return null;
+  return seg;
+}
+
+export function activeScopeFromPathname(
+  pathname: string,
+  surface: PublicSurface
+): PublicScopeNavActive {
+  const path = normalizePath(pathname);
+
+  if (surface.mode === "custom_domain") {
+    if (path === "/" || path === "") return "profile";
+    if (path === "/repos" || path.startsWith("/repos/")) return "repos";
+    return null;
+  }
+
+  const p = surface.tenantProfileName;
+  if (path === `/${p}`) return "profile";
+  if (path === `/${p}/repos` || path.startsWith(`/${p}/repos/`)) return "repos";
+  return null;
+}
+
+/**
+ * Pure resolver for Profile / Repositories topbar scope nav.
+ * @see docs/superpowers/specs/2026-08-09-public-profile-repos-topbar-tabs-design.md
+ */
+export function resolvePublicScopeNav(input: {
+  pathname: string;
+  hostname?: string | null;
+  /** Route params profileName when present */
+  pathProfileName?: string | null;
+  /** Host-resolved tenant slug when on verified custom domain */
+  customDomainProfileName?: string | null;
+  sessionProfileName?: string | null;
+  /** Override Host check (tests); default uses `isCustomDomainHost(hostname)`. */
+  isCustomDomain?: boolean;
+}): PublicScopeNavResult {
+  const pathname = normalizePath(input.pathname);
+  const hostname = input.hostname ?? null;
+  const customHost = input.isCustomDomain ?? isCustomDomainHost(hostname);
+
+  if (isScopeNavHiddenPath(pathname)) {
+    return { show: false, surface: null, active: null };
+  }
+
+  // Empty string after trim must fall through (?? alone would keep "").
+  const trimmedPathProfile = input.pathProfileName?.trim();
+  const fromPath =
+    trimmedPathProfile && trimmedPathProfile.length > 0
+      ? trimmedPathProfile
+      : pathProfileNameFromPathname(pathname);
+
+  // Page tenant: path slug, or custom-domain Host tenant
+  let pageTenant: string | null = fromPath;
+  if (!pageTenant && customHost) {
+    const cd = input.customDomainProfileName?.trim();
+    if (cd && cd.length > 0) pageTenant = cd;
+  }
+
+  if (pageTenant) {
+    // Prefer explicit Host mode so custom domains never emit `/{username}/…`.
+    const surfaceFinal = customHost
+      ? createPublicSurface({ tenantProfileName: pageTenant, mode: "custom_domain" })
+      : fromPath
+        ? createPublicSurface({ tenantProfileName: pageTenant, mode: "path" })
+        : resolvePublicSurface({ tenantProfileName: pageTenant, hostname });
+    return {
+      show: true,
+      surface: surfaceFinal,
+      active: activeScopeFromPathname(pathname, surfaceFinal)
+    };
+  }
+
+  // Custom Host without resolved tenant: never use session (wrong portfolio on someone else's domain).
+  // Hide while resolve is pending or if Host is not a verified portfolio.
+  if (customHost) {
+    return { show: false, surface: null, active: null };
+  }
+
+  // Primary community root: signed-in → own surface (neither tab active)
+  if (pathname === "/") {
+    const session = input.sessionProfileName?.trim();
+    if (session) {
+      const surface = createPublicSurface({
+        tenantProfileName: session,
+        mode: "path"
+      });
+      return { show: true, surface, active: null };
+    }
+    return { show: false, surface: null, active: null };
+  }
+
+  return { show: false, surface: null, active: null };
+}

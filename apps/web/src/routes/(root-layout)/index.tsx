@@ -11,7 +11,6 @@ import { CommunityLandingPage } from "@/pages/community-landing";
 import {
   getGithubActivityQueryOptions,
   getGithubContributionsQueryOptions,
-  getGithubPinnedReposQueryOptions,
   getGithubProfileQueryOptions,
   getGithubSetupStatusQueryOptions,
   HomePage
@@ -49,7 +48,6 @@ export const Route = createFileRoute("/(root-layout)/")({
           if (setupStatus?.isConfigured && setupStatus?.owner) {
             void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(profileName));
             void Promise.all([
-              context.queryClient.prefetchQuery(getGithubPinnedReposQueryOptions(profileName)),
               context.queryClient.prefetchQuery(getGithubContributionsQueryOptions(profileName)),
               context.queryClient.prefetchQuery(getGithubActivityQueryOptions(profileName))
             ]);

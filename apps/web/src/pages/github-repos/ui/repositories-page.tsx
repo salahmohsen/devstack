@@ -15,6 +15,7 @@ import {
 } from "@tsu-stack/ui/components/frame.js";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton.js";
 
+import { surfaceFromRouteMode, type PublicSurfaceMode } from "@/shared/lib/public-surface";
 import {
   REPO_LIST_PAGE_SIZE,
   repoListHasNextPage,
@@ -95,12 +96,16 @@ const EMPTY_REPO_ITEMS: RepositoryFilterItem[] = [];
 
 export function RepositoriesPage({
   filterStore,
-  profileName
+  profileName,
+  surfaceMode = "path"
 }: {
   filterStore: SerializedFilterStore;
   /** Portfolio profile that owns this public/private repos list */
   profileName: string;
+  /** custom_domain → row links use `/repos/$repo` (no profile segment). */
+  surfaceMode?: PublicSurfaceMode;
 }) {
+  const surface = surfaceFromRouteMode(profileName, surfaceMode);
   const [page, setPage] = useQueryState("page", repoListPageQueryParser);
 
   const filterState = useListFilters({
@@ -223,6 +228,7 @@ export function RepositoriesPage({
                 repo={repo}
                 isAdmin={isAdmin}
                 profileName={profileName}
+                surface={surface}
               />
             ))}
             {repoListHasNextPage(safePage, matchingCount) ? (

@@ -27,19 +27,22 @@ import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 import { setCommandPaletteOpen } from "@/shared/lib/command-palette/open-state";
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 import {
-  createPublicSurface,
   publicPortfolioHomeLocation,
-  publicReposListLocation
+  publicReposListLocation,
+  usePublicSurface
 } from "@/shared/lib/public-surface";
 import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
+import { sessionProfileNameFromUser } from "@/shared/lib/session-profile-name";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
 import { useGlobalShortcuts } from "@/shared/lib/use-global-shortcuts";
+import { PrimaryAppMenuLink } from "@/shared/ui/primary-app-menu-link";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
 import { NotificationsBell } from "@/widgets/layout/ui/notifications-bell";
+import { PublicScopeNav } from "@/widgets/layout/ui/public-scope-nav";
 
 const MAX_TAB_SHORTCUTS = 9;
 
@@ -68,10 +71,8 @@ export function Topbar() {
   const openTabs = useTabs();
 
   // Prefer session user's profile for GitHub chrome; never a global site owner.
-  const sessionProfileName =
-    typeof (admin as { profileName?: string } | null)?.profileName === "string"
-      ? (admin as { profileName: string }).profileName
-      : undefined;
+  const sessionProfileName = sessionProfileNameFromUser(admin) ?? undefined;
+  const ownSurface = usePublicSurface(sessionProfileName ?? "");
   const setupStatus = sessionProfileName
     ? queryClient.getQueryData(getGithubSetupStatusQueryOptions(sessionProfileName).queryKey)
     : undefined;
@@ -171,12 +172,8 @@ export function Topbar() {
       enabled: Boolean(sessionProfileName),
       onTrigger: () => {
         if (!sessionProfileName) return;
-        // Account menu targets the user's own path portfolio on the primary host.
-        const surface = createPublicSurface({
-          tenantProfileName: sessionProfileName,
-          mode: "path"
-        });
-        const loc = publicPortfolioHomeLocation(surface);
+        // Host-aware: custom domain → `/`; path primary → `/$profileName`.
+        const loc = publicPortfolioHomeLocation(ownSurface);
         void navigateRef.current(
           "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
         );
@@ -187,11 +184,7 @@ export function Topbar() {
       enabled: Boolean(sessionProfileName),
       onTrigger: () => {
         if (!sessionProfileName) return;
-        const surface = createPublicSurface({
-          tenantProfileName: sessionProfileName,
-          mode: "path"
-        });
-        const loc = publicReposListLocation(surface);
+        const loc = publicReposListLocation(ownSurface);
         void navigateRef.current(
           "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
         );
@@ -281,7 +274,14 @@ export function Topbar() {
         <MenuGroup>
           {sessionProfileName ? (
             <MenuLinkItem
-              render={<Link to="/$profileName" params={{ profileName: sessionProfileName }} />}
+              render={(() => {
+                const loc = publicPortfolioHomeLocation(ownSurface);
+                return "params" in loc ? (
+                  <Link to={loc.to} params={loc.params} />
+                ) : (
+                  <Link to={loc.to} />
+                );
+              })()}
             >
               <UserCircle size={16} strokeWidth={2} />
               Profile
@@ -296,9 +296,14 @@ export function Topbar() {
           )}
           {sessionProfileName ? (
             <MenuLinkItem
-              render={
-                <Link to="/$profileName/repos" params={{ profileName: sessionProfileName }} />
-              }
+              render={(() => {
+                const loc = publicReposListLocation(ownSurface);
+                return "params" in loc ? (
+                  <Link to={loc.to} params={loc.params} />
+                ) : (
+                  <Link to={loc.to} />
+                );
+              })()}
             >
               <Archive size={16} strokeWidth={2} />
               Repositories
@@ -311,11 +316,14 @@ export function Topbar() {
               <MenuShortcut>G O</MenuShortcut>
             </MenuItem>
           )}
-          <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
+          <PrimaryAppMenuLink
+            path="/dashboard"
+            label="Dashboard"
+            shortcut={<MenuShortcut>G D</MenuShortcut>}
+          >
             <LayoutDashboard size={16} strokeWidth={2} />
             Dashboard
-            <MenuShortcut>G D</MenuShortcut>
-          </MenuLinkItem>
+          </PrimaryAppMenuLink>
         </MenuGroup>
         <MenuSeparator />
         <MenuGroup>
@@ -351,12 +359,14 @@ export function Topbar() {
   );
 
   return (
-    <nav className="flex h-(--navbar-height) min-w-0 items-center gap-3 px-3 py-2">
+    <nav className="flex min-h-(--navbar-height) min-w-0 shrink-0 items-center gap-3 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top,0px))] md:h-(--navbar-height) md:pt-2">
       <Link to="/" className="shrink-0">
         <TextAnimate animation="slideLeft" by="character">
           DEV-STACK
         </TextAnimate>
       </Link>
+
+      <PublicScopeNav />
 
       <div className="min-w-0 flex-1 overflow-hidden">
         <Tabs tabsReady={isClient} routerRef={routerRef} />

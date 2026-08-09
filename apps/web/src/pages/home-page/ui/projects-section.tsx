@@ -241,26 +241,8 @@ export const ProjectsItem = ({
   const [hovered, setHovered] = useState(false);
   const yearLabel = `${String(project.year)}${project.isPresent ? " — current" : ""}`;
 
-  const repoButtonsDesktop = (
-    <ProjectRepoButtons
-      project={project}
-      surface={surface}
-      isPortfolioOwner={isPortfolioOwner}
-      className="hidden md:flex"
-    />
-  );
-
-  const repoButtonsMobile = (
-    <ProjectRepoButtons
-      project={project}
-      surface={surface}
-      isPortfolioOwner={isPortfolioOwner}
-      className="flex md:hidden"
-    />
-  );
-
   // Center underline on the title, driven by whole-card hover (not title-only).
-  // md+: Open repo controls sit next to the title.
+  // Open repo controls always sit next to the title (all breakpoints).
   const title = (
     <span className="inline-flex min-w-0 items-center gap-2">
       {project.logo ? (
@@ -273,16 +255,8 @@ export const ProjectsItem = ({
       <CenterUnderline active={hovered} className="min-w-0">
         {project.title}
       </CenterUnderline>
-      {repoButtonsDesktop}
+      <ProjectRepoButtons project={project} surface={surface} isPortfolioOwner={isPortfolioOwner} />
     </span>
-  );
-
-  // Mobile: repos under the date (description). Demo stays in CardAction.
-  const descriptionNode = (
-    <div className="flex flex-col items-start gap-2">
-      <span>{yearLabel}</span>
-      {repoButtonsMobile}
-    </div>
   );
 
   const action = project.demoUrl ? (
@@ -355,7 +329,7 @@ export const ProjectsItem = ({
         // isolate keeps the wash canvas under content without leaking stacking contexts.
         className="isolate w-full transition-[border-color,box-shadow] duration-300"
         title={title}
-        description={descriptionNode}
+        description={yearLabel}
         action={action}
         footer={stacksFooter}
         overlay={washOverlay}

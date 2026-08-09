@@ -1,7 +1,7 @@
 # Public Profile / Repositories Topbar Tabs
 
 **Date:** 2026-08-09  
-**Status:** Design (grill + brainstorm)  
+**Status:** Implemented  
 **Related:** [Public surface paths](./2026-08-09-project-open-repo-public-surface-design.md), `public-surface.ts`, `github-public-topbar.tsx`
 
 ## Problem
@@ -108,6 +108,22 @@ Notes:
 3. **Wire in `github-public-topbar.tsx`** left of document `Tabs`.
 4. **Supply page tenant** on custom domain from existing portfolio resolve (route context or props already used for Home/Repos).
 5. **Tests (unit):** visibility matrix (guest root, signed-in root, path profile, custom domain repos nested, dashboard hide).
+6. **Document explorer tab polish** (`github-public-tabs.tsx` `DetailTab`) — same topbar strip; fix light-mode close affordance and active outline (see below).
+
+## Document tab polish (same topbar)
+
+Fixes for the existing closeable repo/document tabs (not Profile/Repos product nav):
+
+| Issue                      | Light mode                                                                                 | Dark mode     | Fix                                                                                                                                 |
+| -------------------------- | ------------------------------------------------------------------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Close (×) strip background | Mismatch: `bg-background` / fade-to-background over `bg-muted` tab (white “cap” on hover)  | Looks matched | Use **`bg-muted`** and gradient **`to-muted`** so × track matches hover/active tab fill                                             |
+| Active tab outline         | Ring (`ring-1 ring-border`) often **clips** top/bottom inside `overflow-x-auto` scroll row | Same risk     | Prefer **`border border-transparent` + `[&.active]:border-border`** so top and bottom edges paint fully; drop overflow-clipped ring |
+
+Implementation notes:
+
+- Desktop hover close control: `absolute inset-y-0 right-0 … bg-muted` + left fade `from-transparent to-muted`.
+- Active tab classes: remove `[&.active]:ring-*`; add full border pair as above.
+- Keep rounded-sm; ensure close button uses `rounded-r-sm` so active border still reads on the right when × is hidden.
 
 ## Verification
 
@@ -123,8 +139,10 @@ Notes:
 
 ## Success criteria
 
-- [ ] Tabs appear only under the locked visibility rules.
-- [ ] Links use public-surface (no username segment on custom domain).
-- [ ] Active states match Profile home vs full Repos tree.
-- [ ] coss Tabs (or documented Button fallback) with responsive labels.
-- [ ] Document explorer tabs remain independent and scrollable.
+- [x] Tabs appear only under the locked visibility rules.
+- [x] Links use public-surface (no username segment on custom domain).
+- [x] Active states match Profile home vs full Repos tree.
+- [x] coss Tabs (or documented Button fallback) with responsive labels. _(muted pill Links fallback)_
+- [x] Document explorer tabs remain independent and scrollable.
+- [x] Document tab close (×) strip matches tab surface in **light and dark** (no white cap).
+- [x] Active document tab shows a full border (top + bottom + sides), not a clipped ring.
