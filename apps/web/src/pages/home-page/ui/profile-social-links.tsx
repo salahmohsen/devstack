@@ -46,8 +46,9 @@ export function ProfileSocialLinks({
     <section
       data-slot="panel"
       className={cn(
-        // Horizontal edges come from the shared max-w-3xl border-x column on home-page.
-        "screen-line-top screen-line-bottom",
+        // Only bottom: ProfileOverview already draws the shared top edge.
+        // Pairing top+bottom on adjacent panels stacks two 1px lines into a thicker seam.
+        "screen-line-bottom",
         className
       )}
     >

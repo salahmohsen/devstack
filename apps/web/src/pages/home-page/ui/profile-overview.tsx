@@ -33,7 +33,8 @@ type IntroRow = {
 
 /**
  * Chanhdai-style overview meta grid: 2-col intro rows with full-bleed
- * screen-lines, side borders, and a dashed vertical mid-line.
+ * screen-line-bottom (top edge comes from the header), side rails from
+ * the parent screen-rails column, and a dashed vertical mid-line.
  */
 export function ProfileOverview({
   profile,
@@ -51,8 +52,9 @@ export function ProfileOverview({
     <section
       data-slot="panel"
       className={cn(
-        // Horizontal edges come from the shared max-w-3xl border-x column on home-page.
-        "screen-line-top screen-line-bottom relative",
+        // Only bottom: header already draws the shared top edge via screen-line-bottom.
+        // Pairing top+bottom on adjacent panels stacks two 1px lines into a thicker seam.
+        "screen-line-bottom",
         className
       )}
     >

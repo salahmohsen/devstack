@@ -1,15 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
-import {
-  Archive,
-  Bug,
-  ExternalLink,
-  LayoutDashboard,
-  LogOut,
-  MoreHorizontal,
-  SearchIcon,
-  UserCircle
-} from "lucide-react";
+import { Archive, LayoutDashboard, LogOut, SearchIcon, UserCircle } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
@@ -172,11 +163,32 @@ export function Topbar() {
     }),
     {
       shortcut: [{ key: "g" }, { key: "u" }],
-      enabled: Boolean(owner),
+      enabled: Boolean(sessionProfileName),
       onTrigger: () => {
+        if (!sessionProfileName) return;
         void navigateRef.current({
-          to: "/" as never
+          to: "/$profileName",
+          params: { profileName: sessionProfileName }
         });
+      }
+    },
+    {
+      shortcut: [{ key: "g" }, { key: "o" }],
+      enabled: Boolean(sessionProfileName),
+      onTrigger: () => {
+        if (!sessionProfileName) return;
+        void navigateRef.current({
+          to: "/$profileName/repos",
+          params: { profileName: sessionProfileName }
+        });
+      }
+    },
+    {
+      shortcut: [{ key: "g" }, { key: "d" }],
+      enabled: Boolean(admin),
+      onTrigger: () => {
+        // Primary host only — dashboard is not served on custom portfolio domains.
+        window.location.assign(primaryAppUrl("/dashboard"));
       }
     },
     {
@@ -253,8 +265,10 @@ export function Topbar() {
         </MenuGroup>
         <MenuSeparator />
         <MenuGroup>
-          {owner ? (
-            <MenuLinkItem render={<Link to="/" />}>
+          {sessionProfileName ? (
+            <MenuLinkItem
+              render={<Link to="/$profileName" params={{ profileName: sessionProfileName }} />}
+            >
               <UserCircle size={16} strokeWidth={2} />
               Profile
               <MenuShortcut>G U</MenuShortcut>
@@ -266,13 +280,10 @@ export function Topbar() {
               <MenuShortcut>G U</MenuShortcut>
             </MenuItem>
           )}
-          {owner ? (
+          {sessionProfileName ? (
             <MenuLinkItem
               render={
-                <Link
-                  to={sessionProfileName ? "/$profileName/repos" : "/repos"}
-                  params={sessionProfileName ? { profileName: sessionProfileName } : undefined}
-                />
+                <Link to="/$profileName/repos" params={{ profileName: sessionProfileName }} />
               }
             >
               <Archive size={16} strokeWidth={2} />
@@ -329,7 +340,7 @@ export function Topbar() {
     <nav className="flex h-(--navbar-height) min-w-0 items-center gap-3 px-3 py-2">
       <Link to="/" className="shrink-0">
         <TextAnimate animation="slideLeft" by="character">
-          Salah Mohsen
+          DEV-STACK
         </TextAnimate>
       </Link>
 
@@ -352,50 +363,6 @@ export function Topbar() {
               <Kbd>K</Kbd>
             </KbdGroup>
           </Button>
-
-          <Menu>
-            <MenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-muted-foreground hover:bg-surface-1"
-                  aria-label="More actions"
-                />
-              }
-            >
-              <MoreHorizontal className="size-5" strokeWidth={2} />
-            </MenuTrigger>
-            <MenuPopup align="end" className="w-48">
-              <MenuLinkItem
-                href="https://github.com/salahmohsen"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink size={16} strokeWidth={2} />
-                View GitHub profile
-              </MenuLinkItem>
-              <MenuLinkItem
-                href="https://github.com/salahmohsen/portfolio-v2/issues/new"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Bug size={16} strokeWidth={2} />
-                Report an issue
-              </MenuLinkItem>
-              {admin ? (
-                <MenuLinkItem render={<a href={primaryAppUrl("/dashboard")} />}>
-                  <LayoutDashboard size={16} strokeWidth={2} />
-                  Dashboard
-                </MenuLinkItem>
-              ) : (
-                <MenuLinkItem render={<Link to="/sign-in" />}>
-                  <UserCircle size={16} strokeWidth={2} />
-                  Sign in
-                </MenuLinkItem>
-              )}
-            </MenuPopup>
-          </Menu>
         </div>
 
         {/* Always top-right: avatar when signed in, sign-in CTA otherwise (all routes). */}

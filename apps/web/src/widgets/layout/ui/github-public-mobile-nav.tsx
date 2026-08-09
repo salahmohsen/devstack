@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Archive, House, LogOut, Monitor, Moon, Settings, Sun } from "lucide-react";
+import { Archive, House, LogOut, Monitor, Moon, Settings, Sun, UserCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
@@ -22,7 +22,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
 
-import { getGithubSetupStatusQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
+import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
 const themeOptions = [
   { value: "light", icon: Sun, label: "Light" },
@@ -39,10 +39,7 @@ export function MobileNav() {
     typeof (user as { profileName?: string } | null)?.profileName === "string"
       ? (user as { profileName: string }).profileName
       : undefined;
-  const setupStatusQuery = useGetGithubSetupStatusQuery(sessionProfileName);
   const { theme, setTheme } = useTheme();
-
-  const owner = setupStatusQuery.data?.owner ?? null;
 
   const handleSignOut = async () => {
     try {
@@ -142,8 +139,25 @@ export function MobileNav() {
           </MenuGroup>
           <MenuSeparator />
           <MenuGroup>
-            {owner ? (
-              <MenuLinkItem render={<Link to="/repos" />}>
+            {sessionProfileName ? (
+              <MenuLinkItem
+                render={<Link to="/$profileName" params={{ profileName: sessionProfileName }} />}
+              >
+                <UserCircle className="size-4" />
+                Profile
+              </MenuLinkItem>
+            ) : (
+              <MenuItem disabled>
+                <UserCircle className="size-4" />
+                Profile
+              </MenuItem>
+            )}
+            {sessionProfileName ? (
+              <MenuLinkItem
+                render={
+                  <Link to="/$profileName/repos" params={{ profileName: sessionProfileName }} />
+                }
+              >
                 <Archive className="size-4" />
                 Repositories
               </MenuLinkItem>
