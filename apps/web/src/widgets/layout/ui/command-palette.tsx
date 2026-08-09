@@ -15,20 +15,29 @@ import {
   CommandItem,
   CommandList,
   CommandPanel,
-  CommandSeparator,
-  CommandShortcut
+  CommandSeparator
 } from "@tsu-stack/ui/components/command";
 import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd.js";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { type CommandItem as CommandItemType } from "@/shared/lib/command-palette/types";
-import { useCommandItems } from "@/shared/lib/command-palette/use-command-items";
 import { useCommandPalette } from "@/shared/lib/command-palette/use-command-palette";
 
+const GROUP_ORDER = [
+  "Pages",
+  "Dashboard",
+  "Settings",
+  "Playground",
+  "Actions",
+  "Repositories",
+  "Pull Requests",
+  "Issues"
+];
+
 export function CommandPalette() {
-  const { open, setOpen, close } = useCommandPalette();
+  const { open, setOpen, close, items } = useCommandPalette();
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const items = useCommandItems();
 
   const groupedItems = useMemo(() => {
     const groups = new Map<string, CommandItemType[]>();
@@ -37,15 +46,24 @@ export function CommandPalette() {
       list.push(item);
       groups.set(item.group, list);
     }
-    return Array.from(groups.entries()).map(([label, items]) => {
-      return { label, items };
-    });
+    return Array.from(groups.entries())
+      .toSorted(([a], [b]) => {
+        const ai = GROUP_ORDER.indexOf(a);
+        const bi = GROUP_ORDER.indexOf(b);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      })
+      .map(([label, groupItems]) => {
+        return { label, items: groupItems };
+      });
   }, [items]);
 
   const handleItemClick = useCallback(
     (item: CommandItemType) => {
       if (item.action.type === "navigate") {
-        void router.navigate({ to: item.action.to, params: item.action.params });
+        void router.navigate({
+          to: item.action.to as never,
+          params: item.action.params as never
+        });
       } else {
         void item.action.fn();
       }
@@ -87,13 +105,21 @@ export function CommandPalette() {
                     <CommandCollection>
                       {(item: CommandItemType) => (
                         <CommandItem value={item.id} onClick={() => handleItemClick(item)}>
-                          <div className="flex gap-2">
-                            {item.icon && <item.icon className={item.iconClassName} />}
-                            {item.label}
+                          <div className="flex min-w-0 flex-1 items-center gap-2">
+                            {item.icon ? (
+                              <item.icon
+                                className={cn("size-4 shrink-0 opacity-80", item.iconClassName)}
+                              />
+                            ) : null}
+                            <span className="truncate">{item.label}</span>
                           </div>
-                          {item.shortcut && (
-                            <CommandShortcut>{item.shortcut.join(" ")}</CommandShortcut>
-                          )}
+                          {item.shortcut ? (
+                            <KbdGroup className="ms-auto shrink-0">
+                              {item.shortcut.map((key) => (
+                                <Kbd key={key}>{key}</Kbd>
+                              ))}
+                            </KbdGroup>
+                          ) : null}
                         </CommandItem>
                       )}
                     </CommandCollection>

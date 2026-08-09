@@ -285,13 +285,13 @@ export function Topbar() {
             >
               <UserCircle size={16} strokeWidth={2} />
               Profile
-              <MenuShortcut>G U</MenuShortcut>
+              <MenuShortcut>D U</MenuShortcut>
             </MenuLinkItem>
           ) : (
             <MenuItem disabled>
               <UserCircle size={16} strokeWidth={2} />
               Profile
-              <MenuShortcut>G U</MenuShortcut>
+              <MenuShortcut>D U</MenuShortcut>
             </MenuItem>
           )}
           {sessionProfileName ? (
@@ -307,19 +307,19 @@ export function Topbar() {
             >
               <Archive size={16} strokeWidth={2} />
               Repositories
-              <MenuShortcut>G O</MenuShortcut>
+              <MenuShortcut>D O</MenuShortcut>
             </MenuLinkItem>
           ) : (
             <MenuItem disabled>
               <Archive size={16} strokeWidth={2} />
               Repositories
-              <MenuShortcut>G O</MenuShortcut>
+              <MenuShortcut>D O</MenuShortcut>
             </MenuItem>
           )}
           <PrimaryAppMenuLink
             path="/dashboard"
             label="Dashboard"
-            shortcut={<MenuShortcut>G D</MenuShortcut>}
+            shortcut={<MenuShortcut>D D</MenuShortcut>}
           >
             <LayoutDashboard size={16} strokeWidth={2} />
             Dashboard

@@ -1,6 +1,25 @@
-import { HomeIcon } from "lucide-react";
-
-import { ArchiveIcon, SettingsIcon } from "@/lib/command-palette-icons";
+import {
+  Bell,
+  Bot,
+  Briefcase,
+  Building2,
+  FileText,
+  Filter,
+  FlaskConical,
+  FolderKanban,
+  Home,
+  Inbox,
+  KeyRound,
+  Layers,
+  Link2,
+  ListChecks,
+  Mail,
+  Rocket,
+  Settings,
+  Sparkles,
+  UserPlus,
+  UserRound
+} from "lucide-react";
 
 import { type CommandItem } from "./types";
 
@@ -32,82 +51,236 @@ export function subscribeCommands(listener: () => void): () => void {
   };
 }
 
+/**
+ * Static palette destinations. Chord prefix is `D` (not GitHub’s `G`).
+ * Protected routes set `authRequired` and are filtered out when signed out.
+ */
 registerCommands([
+  // —— Public ——
   {
-    id: "nav:overview",
+    id: "nav:home",
     label: "Go to Home",
     group: "Pages",
-    icon: HomeIcon,
-    keywords: ["home", "dashboard"],
-    shortcut: ["G", "H"],
+    icon: Home,
+    keywords: ["home", "landing", "portfolio"],
+    shortcut: ["D", "H"],
     action: { type: "navigate", to: "/" }
   },
-  {
-    id: "nav:repos",
-    label: "Go to Repositories",
-    group: "Pages",
-    icon: ArchiveIcon,
-    keywords: ["repos", "code"],
-    shortcut: ["G", "O"],
-    action: { type: "navigate", to: "/$profileName/repos" }
-  },
-  {
-    id: "admin:projects",
-    label: "Edit projects",
-    group: "Pages",
-    icon: ArchiveIcon,
-    keywords: ["admin", "dashboard", "projects"],
-    shortcut: ["G", "P"],
-    action: { type: "navigate", to: "/dashboard/projects" }
-  },
-  // {
-  //   id: "nav:pulls",
-  //   label: "Go to Pull Requests",
-  //   group: "Pages",
-  //   icon: GitPullRequestIcon,
-  //   keywords: ["pr", "merge"],
-  //   shortcut: ["G", "P"],
-  //   action: { type: "navigate", to: "/pulls" }
-  // },
-  // {
-  //   id: "nav:issues",
-  //   label: "Go to Issues",
-  //   group: "Pages",
-  //   icon: IssuesIcon,
-  //   keywords: ["bug", "task"],
-  //   shortcut: ["G", "I"],
-  //   action: { type: "navigate", to: "/issues" }
-  // },
-  // {
-  //   id: "nav:reviews",
-  //   label: "Go to Reviews",
-  //   group: "Pages",
-  //   icon: ReviewsIcon,
-  //   keywords: ["review", "requested"],
-  //   shortcut: ["G", "R"],
-  //   action: { type: "navigate", to: "/reviews" }
-  // },
+
+  // —— Dashboard (auth) ——
   {
     id: "nav:dashboard",
     label: "Go to Dashboard",
-    group: "Pages",
-    icon: SettingsIcon,
-    keywords: ["settings", "preferences", "config"],
-    shortcut: ["G", "D"],
+    group: "Dashboard",
+    icon: Bot,
+    keywords: ["agent", "hub", "home", "dashboard"],
+    shortcut: ["D", "D"],
+    authRequired: true,
     action: { type: "navigate", to: "/dashboard" }
+  },
+  {
+    id: "nav:onboarding",
+    label: "Go to Onboarding",
+    group: "Dashboard",
+    icon: Rocket,
+    keywords: ["onboarding", "setup", "getting started"],
+    shortcut: ["D", "N"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/onboarding" }
+  },
+  {
+    id: "nav:experiences",
+    label: "Go to Experiences",
+    group: "Dashboard",
+    icon: Briefcase,
+    keywords: ["experience", "work", "jobs", "career"],
+    shortcut: ["D", "E"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/experiences" }
+  },
+  {
+    id: "nav:projects",
+    label: "Go to Projects",
+    group: "Dashboard",
+    icon: FolderKanban,
+    keywords: ["projects", "portfolio", "work"],
+    shortcut: ["D", "P"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/projects" }
+  },
+  {
+    id: "nav:stacks",
+    label: "Go to Stack",
+    group: "Dashboard",
+    icon: Layers,
+    keywords: ["stack", "tech", "skills", "tools"],
+    shortcut: ["D", "K"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/stacks" }
+  },
+  {
+    id: "nav:resumes",
+    label: "Go to Resumes",
+    group: "Dashboard",
+    icon: FileText,
+    keywords: ["resume", "cv", "document"],
+    shortcut: ["D", "R"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/resumes" }
+  },
+  {
+    id: "nav:applications",
+    label: "Go to Applications",
+    group: "Dashboard",
+    icon: ListChecks,
+    keywords: ["applications", "jobs", "pipeline", "crm", "seeker"],
+    shortcut: ["D", "A"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/applications" }
+  },
+  {
+    id: "nav:mail",
+    label: "Go to Mail",
+    group: "Dashboard",
+    icon: Mail,
+    keywords: ["mail", "inbox", "email", "career"],
+    shortcut: ["D", "M"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/mail/applications" }
+  },
+  {
+    id: "nav:review",
+    label: "Go to Review",
+    group: "Dashboard",
+    icon: Inbox,
+    keywords: ["review", "queue", "approvals"],
+    shortcut: ["D", "V"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/review" }
+  },
+  {
+    id: "nav:settings",
+    label: "Go to Settings",
+    group: "Dashboard",
+    icon: Settings,
+    keywords: ["settings", "preferences", "config"],
+    shortcut: ["D", "S"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/profile" }
+  },
+
+  // —— Settings subpages (auth) ——
+  {
+    id: "nav:settings-profile",
+    label: "Settings: Profile",
+    group: "Settings",
+    icon: UserRound,
+    keywords: ["profile", "identity", "contacts", "public"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/profile" }
+  },
+  {
+    id: "nav:settings-account",
+    label: "Settings: Account",
+    group: "Settings",
+    icon: KeyRound,
+    keywords: ["account", "sessions", "security", "sign-in"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/account" }
+  },
+  {
+    id: "nav:settings-domain",
+    label: "Settings: Domain",
+    group: "Settings",
+    icon: Building2,
+    keywords: ["domain", "custom", "hostname", "dns"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/domain" }
+  },
+  {
+    id: "nav:settings-mail",
+    label: "Settings: Mail",
+    group: "Settings",
+    icon: Inbox,
+    keywords: ["mail", "resend", "inbound", "byo"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/mail" }
+  },
+  {
+    id: "nav:settings-connections",
+    label: "Settings: Connections",
+    group: "Settings",
+    icon: Link2,
+    keywords: ["connections", "google", "gmail", "github", "oauth"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/connections" }
+  },
+  {
+    id: "nav:settings-rules",
+    label: "Settings: Rules",
+    group: "Settings",
+    icon: Filter,
+    keywords: ["rules", "categories", "keywords", "filters"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/rules" }
+  },
+  {
+    id: "nav:settings-jobs",
+    label: "Settings: Jobs",
+    group: "Settings",
+    icon: Briefcase,
+    keywords: ["jobs", "alerts", "preferences", "filter"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/jobs" }
+  },
+  {
+    id: "nav:settings-ai",
+    label: "Settings: AI",
+    group: "Settings",
+    icon: Sparkles,
+    keywords: ["ai", "models", "providers", "autonomy"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/ai" }
+  },
+  {
+    id: "nav:settings-notifications",
+    label: "Settings: Notifications",
+    group: "Settings",
+    icon: Bell,
+    keywords: ["notifications", "alerts", "channels"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/notifications" }
+  },
+  {
+    id: "nav:settings-invites",
+    label: "Settings: Invites",
+    group: "Settings",
+    icon: UserPlus,
+    keywords: ["invites", "signup", "codes", "access"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/settings/invites" }
+  },
+
+  // —— Playground (auth) ——
+  {
+    id: "nav:playground",
+    label: "Go to Playground",
+    group: "Playground",
+    icon: FlaskConical,
+    keywords: ["playground", "dev", "experiments"],
+    authRequired: true,
+    action: { type: "navigate", to: "/playground" }
+  },
+  {
+    id: "nav:playground-agent",
+    label: "Go to Agent Playground",
+    group: "Playground",
+    icon: Bot,
+    keywords: ["agent", "playground", "mastra", "chat"],
+    authRequired: true,
+    action: { type: "navigate", to: "/playground/agent" }
   }
-  // {
-  //   id: "action:open-current-page-on-github",
-  //   label: "Open Current Page on GitHub",
-  //   group: "Actions",
-  //   icon: ExternalLinkIcon,
-  //   keywords: ["github", "redirect", "current page", "open"],
-  //   shortcut: ["G", "G"],
-  //   action: {
-  //     type: "execute",
-  //     fn: () => {
-  //       window.location.href = `${window.location.origin}/api/github/redirect${window.location.pathname}${window.location.search}`;
-  //     }
-  //   }
-  // }
+
+  // Profile (D U) and Repositories (D O) are injected in use-command-items
+  // once a profileName is known so paths resolve correctly.
 ]);
