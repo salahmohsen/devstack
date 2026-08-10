@@ -96,7 +96,8 @@ export function useCommandItems(): CommandItem[] {
       group: "Pages",
       icon: UserCircle,
       keywords: ["user", "me", "profile", profileName],
-      shortcut: ["D", "U"],
+      // P taken by Projects → proFile
+      shortcut: ["D", "F"],
       action: {
         type: "navigate",
         to: `/${profileName}`
@@ -108,7 +109,7 @@ export function useCommandItems(): CommandItem[] {
       group: "Pages",
       icon: Archive,
       keywords: ["repos", "code", "github", "repositories", profileName],
-      shortcut: ["D", "O"],
+      shortcut: ["D", "R"],
       action: {
         type: "navigate",
         to: `/${profileName}/repos`
@@ -122,7 +123,7 @@ export function useCommandItems(): CommandItem[] {
       group: "Pages",
       icon: Archive,
       keywords: ["repos", "code", "github", "repositories"],
-      shortcut: ["D", "O"],
+      shortcut: ["D", "R"],
       action: {
         type: "navigate",
         to: "/repos"

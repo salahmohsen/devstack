@@ -52,8 +52,15 @@ export function subscribeCommands(listener: () => void): () => void {
 }
 
 /**
- * Static palette destinations. Chord prefix is `D` (not GitHub’s `G`).
+ * Static palette destinations.
+ *
+ * Shortcut convention: chord `D` + first letter of the destination noun
+ * (e.g. Home → D H, Repositories → D R, Projects → D P).
+ * When two destinations share a letter, use the next distinctive consonant
+ * from the noun (Resumes → C for CV, Review → V, Stack → T, Profile → F).
+ *
  * Protected routes set `authRequired` and are filtered out when signed out.
+ * Dynamic Profile / Repositories chords live in `use-command-items.ts`.
  */
 registerCommands([
   // —— Public ——
@@ -84,7 +91,7 @@ registerCommands([
     group: "Dashboard",
     icon: Rocket,
     keywords: ["onboarding", "setup", "getting started"],
-    shortcut: ["D", "N"],
+    shortcut: ["D", "O"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/onboarding" }
   },
@@ -114,7 +121,8 @@ registerCommands([
     group: "Dashboard",
     icon: Layers,
     keywords: ["stack", "tech", "skills", "tools"],
-    shortcut: ["D", "K"],
+    // S taken by Settings → sTack
+    shortcut: ["D", "T"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/stacks" }
   },
@@ -124,7 +132,8 @@ registerCommands([
     group: "Dashboard",
     icon: FileText,
     keywords: ["resume", "cv", "document"],
-    shortcut: ["D", "R"],
+    // R taken by Repositories → CV
+    shortcut: ["D", "C"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/resumes" }
   },
@@ -154,6 +163,7 @@ registerCommands([
     group: "Dashboard",
     icon: Inbox,
     keywords: ["review", "queue", "approvals"],
+    // R taken by Repositories → reView
     shortcut: ["D", "V"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/review" }

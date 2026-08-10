@@ -168,7 +168,8 @@ export function Topbar() {
       };
     }),
     {
-      shortcut: [{ key: "g" }, { key: "u" }],
+      // Match command palette: D F (proFile — P is Projects)
+      shortcut: [{ key: "d" }, { key: "f" }],
       enabled: Boolean(sessionProfileName),
       onTrigger: () => {
         if (!sessionProfileName) return;
@@ -180,7 +181,8 @@ export function Topbar() {
       }
     },
     {
-      shortcut: [{ key: "g" }, { key: "o" }],
+      // Match command palette: D R (Repositories)
+      shortcut: [{ key: "d" }, { key: "r" }],
       enabled: Boolean(sessionProfileName),
       onTrigger: () => {
         if (!sessionProfileName) return;
@@ -191,7 +193,8 @@ export function Topbar() {
       }
     },
     {
-      shortcut: [{ key: "g" }, { key: "d" }],
+      // Match command palette: D D (Dashboard)
+      shortcut: [{ key: "d" }, { key: "d" }],
       enabled: Boolean(admin),
       onTrigger: () => {
         // Primary host only — dashboard is not served on custom portfolio domains.
@@ -285,13 +288,13 @@ export function Topbar() {
             >
               <UserCircle size={16} strokeWidth={2} />
               Profile
-              <MenuShortcut>D U</MenuShortcut>
+              <MenuShortcut>D F</MenuShortcut>
             </MenuLinkItem>
           ) : (
             <MenuItem disabled>
               <UserCircle size={16} strokeWidth={2} />
               Profile
-              <MenuShortcut>D U</MenuShortcut>
+              <MenuShortcut>D F</MenuShortcut>
             </MenuItem>
           )}
           {sessionProfileName ? (
@@ -307,13 +310,13 @@ export function Topbar() {
             >
               <Archive size={16} strokeWidth={2} />
               Repositories
-              <MenuShortcut>D O</MenuShortcut>
+              <MenuShortcut>D R</MenuShortcut>
             </MenuLinkItem>
           ) : (
             <MenuItem disabled>
               <Archive size={16} strokeWidth={2} />
               Repositories
-              <MenuShortcut>D O</MenuShortcut>
+              <MenuShortcut>D R</MenuShortcut>
             </MenuItem>
           )}
           <PrimaryAppMenuLink
