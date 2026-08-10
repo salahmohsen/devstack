@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createRepoNotFoundError,
+  isGitHubAuthError,
   isPrivateOnPublicSurface,
   rejectPrivateEntityOnPublicSurface,
   repoCacheResource,
@@ -60,5 +61,14 @@ describe("resolveRepoOwnerName", () => {
       owner: "salahmohsen",
       name: "cilas"
     });
+  });
+});
+
+describe("isGitHubAuthError", () => {
+  it("detects HTTP 401/403 and credential messages", () => {
+    expect(isGitHubAuthError(Object.assign(new Error("x"), { status: 401 }))).toBe(true);
+    expect(isGitHubAuthError(Object.assign(new Error("x"), { status: 403 }))).toBe(true);
+    expect(isGitHubAuthError(new Error("Bad credentials"))).toBe(true);
+    expect(isGitHubAuthError(Object.assign(new Error("x"), { status: 500 }))).toBe(false);
   });
 });

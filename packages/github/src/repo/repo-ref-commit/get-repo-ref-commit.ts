@@ -19,7 +19,8 @@ import {
   type RepoAccessSurface,
   assertRepoVisibleOnPublicSurface,
   repoCacheResource,
-  resolveRepoOwnerName
+  resolveRepoOwnerName,
+  withPublicGithubClient
 } from "#@/shared/public-repo-access";
 import { type GitHubRepoLatestCommit } from "#@/types";
 
@@ -65,12 +66,14 @@ async function _fetchRepoRefCommit(
   try {
     const result = await getCachedGitHubRequest<GitHubRepoLatestCommit>({
       fetcher: async () => {
-        const response = await octokit.rest.repos.listCommits({
-          owner: source.owner,
-          per_page: 1,
-          repo: input.repo,
-          sha: input.ref
-        });
+        const response = await withPublicGithubClient(octokit, surface, (client) =>
+          client.rest.repos.listCommits({
+            owner: source.owner,
+            per_page: 1,
+            repo: input.repo,
+            sha: input.ref
+          })
+        );
 
         return {
           data: mapGitHubRepoLatestCommit(response.data[0] as GitHubRepoRefCommitItem | undefined),
@@ -96,6 +99,11 @@ async function _fetchRepoRefCommit(
     if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_ref_commit_read_not_found");
 
+      return null;
+    }
+
+    if (surface === "public") {
+      setRepoLoggerOutcome(context, "github_repo_ref_commit_read_failed_public");
       return null;
     }
 

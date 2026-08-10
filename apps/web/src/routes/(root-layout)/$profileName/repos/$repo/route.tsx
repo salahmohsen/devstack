@@ -50,14 +50,15 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")(
     }
 
     const { profileName, repo } = params;
-    // Public surface only (`isPrivate: false`) — never prefetch private overview into SSR.
+    // Public surface only. Never throw from SSR if GitHub/RPC is flaky — the page
+    // renders empty/error UI instead of a full-page 500.
     await Promise.all([
-      context.queryClient.ensureQueryData(
-        getGithubRepoOverviewQueryOptions(repo, false, profileName)
-      ),
-      context.queryClient.ensureQueryData(
-        getGithubRepoBranchesQueryOptions(repo, false, profileName)
-      )
+      context.queryClient
+        .ensureQueryData(getGithubRepoOverviewQueryOptions(repo, false, profileName))
+        .catch(() => undefined),
+      context.queryClient
+        .ensureQueryData(getGithubRepoBranchesQueryOptions(repo, false, profileName))
+        .catch(() => undefined)
     ]);
   }
 });

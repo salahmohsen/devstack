@@ -6,6 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
+  getErrorStatusCode,
   isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubRepoTreeItem } from "#@/repo/repo-tree/repo-tree.types";
@@ -20,7 +21,8 @@ import {
   type RepoAccessSurface,
   assertRepoVisibleOnPublicSurface,
   repoCacheResource,
-  resolveRepoOwnerName
+  resolveRepoOwnerName,
+  withPublicGithubClient
 } from "#@/shared/public-repo-access";
 import { type GitHubRepoTreeEntry } from "#@/types";
 
@@ -67,13 +69,15 @@ async function _fetchRepoTree(
   try {
     const result = await getCachedGitHubRequest<GitHubRepoTreeEntry[]>({
       fetcher: async (conditionals) => {
-        const response = await octokit.rest.repos.getContent({
-          headers: buildGitHubConditionalHeaders(conditionals),
-          owner: repoOwner,
-          path: input.path,
-          ref: input.ref,
-          repo: repoName
-        });
+        const response = await withPublicGithubClient(octokit, surface, (client) =>
+          client.rest.repos.getContent({
+            headers: buildGitHubConditionalHeaders(conditionals),
+            owner: repoOwner,
+            path: input.path,
+            ref: input.ref,
+            repo: repoName
+          })
+        );
 
         return {
           data: mapGitHubRepoTreeEntries(
@@ -99,7 +103,7 @@ async function _fetchRepoTree(
     return result.data;
   } catch (error) {
     setRepoLoggerOutcome(context, "github_repo_tree_read_not_found", {
-      statusCode: isGitHubNotFoundError(error) ? 404 : null
+      statusCode: getErrorStatusCode(error) ?? (isGitHubNotFoundError(error) ? 404 : null)
     });
 
     return [];

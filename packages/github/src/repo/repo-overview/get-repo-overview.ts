@@ -6,6 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   executeGitHubGraphQL,
+  getErrorStatusCode,
   isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoOverviewResponse } from "#@/repo/repo-overview/repo-overview.types";
@@ -22,7 +23,8 @@ import {
   type RepoAccessSurface,
   createRepoNotFoundError,
   rejectPrivateEntityOnPublicSurface,
-  repoCacheResource
+  repoCacheResource,
+  withPublicGithubClient
 } from "#@/shared/public-repo-access";
 
 async function _fetchRepoOverview(
@@ -57,10 +59,11 @@ async function _fetchRepoOverview(
   try {
     const result = await getCachedGitHubRequest<RepoOverview>({
       fetcher: async () => {
-        const response = await executeGitHubGraphQL<GitHubGraphQLRepoOverviewResponse>(
-          octokit,
-          "getRepoOverview.graphql",
-          `query($owner: String!, $repo: String!) {
+        const response = await withPublicGithubClient(octokit, surface, (client) =>
+          executeGitHubGraphQL<GitHubGraphQLRepoOverviewResponse>(
+            client,
+            "getRepoOverview.graphql",
+            `query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
               databaseId
               name
@@ -135,10 +138,11 @@ async function _fetchRepoOverview(
               resetAt
             }
           }`,
-          {
-            owner: source.owner,
-            repo: input.repo
-          }
+            {
+              owner: source.owner,
+              repo: input.repo
+            }
+          )
         );
 
         if (!response.repository) {
@@ -177,6 +181,15 @@ async function _fetchRepoOverview(
     if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_overview_read_not_found");
 
+      return null;
+    }
+
+    // Guests must never get a 500 from a flaky/expired owner token.
+    if (surface === "public") {
+      setRepoLoggerOutcome(context, "github_repo_overview_read_failed_public", {
+        statusCode: getErrorStatusCode(error),
+        message: error instanceof Error ? error.message : String(error)
+      });
       return null;
     }
 

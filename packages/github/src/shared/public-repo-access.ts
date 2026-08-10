@@ -1,5 +1,6 @@
 import {
   type GitHubClient,
+  createGitHubOctokit,
   getErrorStatusCode,
   isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
@@ -50,6 +51,46 @@ export function resolveRepoOwnerName(
   return { owner: sourceOwner, name: repoInput };
 }
 
+/** Owner OAuth token expired / revoked / insufficient — common production failure mode. */
+export function isGitHubAuthError(error: unknown): boolean {
+  const status = getErrorStatusCode(error);
+  if (status === 401 || status === 403) {
+    return true;
+  }
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const message =
+    typeof (error as { message?: unknown }).message === "string"
+      ? (error as { message: string }).message
+      : "";
+  return /bad credentials|requires authentication|not authorized|forbidden/i.test(message);
+}
+
+/** Unauthenticated Octokit — public repos only, works when the owner OAuth token is dead. */
+export function createAnonymousGitHubOctokit(): GitHubClient {
+  return createGitHubOctokit();
+}
+
+/**
+ * Prefer the tenant OAuth client (higher rate limits). On the public surface, if
+ * GitHub rejects the token, retry once without credentials so public repos still load.
+ */
+export async function withPublicGithubClient<T>(
+  octokit: GitHubClient,
+  surface: RepoAccessSurface,
+  run: (client: GitHubClient) => Promise<T>
+): Promise<T> {
+  try {
+    return await run(octokit);
+  } catch (error) {
+    if (surface !== "public" || !isGitHubAuthError(error)) {
+      throw error;
+    }
+    return await run(createAnonymousGitHubOctokit());
+  }
+}
+
 /**
  * For REST-based public fetchers that do not return `private` on the content response:
  * load repo metadata first and throw not-found when the repo is private or missing.
@@ -65,10 +106,12 @@ export async function assertRepoVisibleOnPublicSurface(
   }
 
   try {
-    const response = await octokit.rest.repos.get({ owner, repo });
-    if (response.data.private) {
-      throw createRepoNotFoundError(owner, repo);
-    }
+    await withPublicGithubClient(octokit, surface, async (client) => {
+      const response = await client.rest.repos.get({ owner, repo });
+      if (response.data.private) {
+        throw createRepoNotFoundError(owner, repo);
+      }
+    });
   } catch (error) {
     // Already our synthetic not-found (private reject).
     if (getErrorStatusCode(error) === 404) {

@@ -19,7 +19,8 @@ import {
   type RepoAccessSurface,
   assertRepoVisibleOnPublicSurface,
   repoCacheResource,
-  resolveRepoOwnerName
+  resolveRepoOwnerName,
+  withPublicGithubClient
 } from "#@/shared/public-repo-access";
 
 async function _fetchRepoFileContent(
@@ -64,13 +65,15 @@ async function _fetchRepoFileContent(
   try {
     const result = await getCachedGitHubRequest<string | null>({
       fetcher: async (conditionals) => {
-        const response = await octokit.rest.repos.getContent({
-          headers: buildGitHubConditionalHeaders(conditionals),
-          owner: repoOwner,
-          path: input.path,
-          ref: input.ref,
-          repo: repoName
-        });
+        const response = await withPublicGithubClient(octokit, surface, (client) =>
+          client.rest.repos.getContent({
+            headers: buildGitHubConditionalHeaders(conditionals),
+            owner: repoOwner,
+            path: input.path,
+            ref: input.ref,
+            repo: repoName
+          })
+        );
 
         return {
           data: mapGitHubRepoFileContent(response.data),

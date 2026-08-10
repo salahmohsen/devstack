@@ -62,14 +62,14 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo")({
       throw notFound();
     }
 
-    // Public surface only — never prefetch private overview into SSR.
+    // Public surface only. Swallow RPC failures so custom-domain SSR does not 500.
     await Promise.all([
-      context.queryClient.ensureQueryData(
-        getGithubRepoOverviewQueryOptions(params.repo, false, profileName)
-      ),
-      context.queryClient.ensureQueryData(
-        getGithubRepoBranchesQueryOptions(params.repo, false, profileName)
-      )
+      context.queryClient
+        .ensureQueryData(getGithubRepoOverviewQueryOptions(params.repo, false, profileName))
+        .catch(() => undefined),
+      context.queryClient
+        .ensureQueryData(getGithubRepoBranchesQueryOptions(params.repo, false, profileName))
+        .catch(() => undefined)
     ]);
 
     return { profileName, pathProfileName: null as string | null };

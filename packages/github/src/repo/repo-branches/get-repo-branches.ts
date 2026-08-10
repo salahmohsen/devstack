@@ -6,6 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   executeGitHubGraphQL,
+  getErrorStatusCode,
   isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoBranchesResponse } from "#@/repo/repo-branches/repo-branches.types";
@@ -20,7 +21,8 @@ import {
   type RepoAccessSurface,
   createRepoNotFoundError,
   rejectPrivateEntityOnPublicSurface,
-  repoCacheResource
+  repoCacheResource,
+  withPublicGithubClient
 } from "#@/shared/public-repo-access";
 import { type GitHubRepoBranch } from "#@/types";
 
@@ -52,18 +54,19 @@ async function _fetchRepoBranches(
   try {
     const result = await getCachedGitHubRequest<GitHubRepoBranch[]>({
       fetcher: async () => {
-        const response = await executeGitHubGraphQL<
-          GitHubGraphQLRepoBranchesResponse & {
-            repository:
-              | (GitHubGraphQLRepoBranchesResponse["repository"] & {
-                  isPrivate?: boolean;
-                })
-              | null;
-          }
-        >(
-          octokit,
-          "getRepoBranches.graphql",
-          `query($owner: String!, $repo: String!) {
+        const response = await withPublicGithubClient(octokit, surface, (client) =>
+          executeGitHubGraphQL<
+            GitHubGraphQLRepoBranchesResponse & {
+              repository:
+                | (GitHubGraphQLRepoBranchesResponse["repository"] & {
+                    isPrivate?: boolean;
+                  })
+                | null;
+            }
+          >(
+            client,
+            "getRepoBranches.graphql",
+            `query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
               isPrivate
               defaultBranchRef {
@@ -87,10 +90,11 @@ async function _fetchRepoBranches(
               resetAt
             }
           }`,
-          {
-            owner: source.owner,
-            repo: input.repo
-          }
+            {
+              owner: source.owner,
+              repo: input.repo
+            }
+          )
         );
 
         if (!response.repository) {
@@ -128,6 +132,14 @@ async function _fetchRepoBranches(
     if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_branches_read_not_found");
 
+      return [];
+    }
+
+    if (surface === "public") {
+      setRepoLoggerOutcome(context, "github_repo_branches_read_failed_public", {
+        statusCode: getErrorStatusCode(error),
+        message: error instanceof Error ? error.message : String(error)
+      });
       return [];
     }
 
