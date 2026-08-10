@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { mapGitHubRepoBranchComparison } from "#@/repo/repo-branch-comparison/repo-branch-comparison.utils";
 import {
@@ -15,12 +15,19 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 import { type GitHubRepoBranchComparison } from "#@/types";
 
 async function _fetchRepoBranchComparison(
   input: { base: string; head: string; repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubRepoBranchComparison | null> {
   setRepoLoggerContext(context, "getRepoBranchComparison", {
     base: input.base,
@@ -35,6 +42,20 @@ async function _fetchRepoBranchComparison(
     });
 
     return null;
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return null;
+    }
+    throw error;
   }
 
   const signalKey = githubRevalidationSignalKeys.repoCode({
@@ -63,7 +84,7 @@ async function _fetchRepoBranchComparison(
       namespaceKeys: [signalKey],
       owner: source.owner,
       params: input,
-      resource: "repo.branch-comparison.v1",
+      resource: repoCacheResource("repo.branch-comparison.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -80,7 +101,7 @@ async function _fetchRepoBranchComparison(
 
     return result.data;
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_branch_comparison_read_not_found");
 
       return null;
@@ -94,12 +115,12 @@ export function getRepoBranchComparison(
   input: { base: string; head: string; repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoBranchComparison | null> {
-  return _fetchRepoBranchComparison(input, context, context.github.publicOctokit);
+  return _fetchRepoBranchComparison(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoBranchComparison(
   input: { base: string; head: string; repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoBranchComparison | null> {
-  return _fetchRepoBranchComparison(input, context, context.github.privateOctokit);
+  return _fetchRepoBranchComparison(input, context, context.github.privateOctokit, "private");
 }

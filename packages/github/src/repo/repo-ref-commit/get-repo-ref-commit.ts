@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubRepoRefCommitItem } from "#@/repo/repo-ref-commit/repo-ref-commit.types";
 import { mapGitHubRepoLatestCommit } from "#@/repo/repo-ref-commit/repo-ref-commit.utils";
@@ -15,12 +15,19 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 import { type GitHubRepoLatestCommit } from "#@/types";
 
 async function _fetchRepoRefCommit(
   input: { ref: string; repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubRepoLatestCommit | null> {
   setRepoLoggerContext(context, "getRepoRefCommit", {
     ref: input.ref,
@@ -34,6 +41,20 @@ async function _fetchRepoRefCommit(
     });
 
     return null;
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return null;
+    }
+    throw error;
   }
 
   const signalKey = githubRevalidationSignalKeys.repoCode({
@@ -61,7 +82,7 @@ async function _fetchRepoRefCommit(
       namespaceKeys: [signalKey],
       owner: source.owner,
       params: input,
-      resource: "repo.refCommit.v1",
+      resource: repoCacheResource("repo.refCommit.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -72,7 +93,7 @@ async function _fetchRepoRefCommit(
 
     return result.data;
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_ref_commit_read_not_found");
 
       return null;
@@ -86,12 +107,12 @@ export function getRepoRefCommit(
   input: { ref: string; repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoLatestCommit | null> {
-  return _fetchRepoRefCommit(input, context, context.github.publicOctokit);
+  return _fetchRepoRefCommit(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoRefCommit(
   input: { ref: string; repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoLatestCommit | null> {
-  return _fetchRepoRefCommit(input, context, context.github.privateOctokit);
+  return _fetchRepoRefCommit(input, context, context.github.privateOctokit, "private");
 }

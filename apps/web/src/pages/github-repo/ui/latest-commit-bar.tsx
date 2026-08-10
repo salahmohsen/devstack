@@ -30,7 +30,15 @@ function normalizeCommit(
   }
 
   if ("committedAt" in commit) {
+    // Empty mapper payload (all nulls) is not a displayable tip.
+    if (!commit.sha && !commit.message) {
+      return null;
+    }
     return commit;
+  }
+
+  if (!commit.sha && !commit.message) {
+    return null;
   }
 
   return {
@@ -47,22 +55,36 @@ export function LatestCommitBar({
   repoName,
   branchRef,
   defaultBranch,
-  defaultBranchTip
+  defaultBranchTip,
+  profileName
 }: {
   repoName: string;
   branchRef: string;
   defaultBranch: string;
   defaultBranchTip: GitHubRepoLatestCommit | RepoOverviewLatestCommit | null;
+  /** Portfolio profile that owns this GitHub data (required for public RPCs). */
+  profileName: string;
 }) {
   const { user } = useAuth();
-  const isPrivate = !!user;
-  const placeholderData = normalizeCommit(defaultBranchTip) ?? undefined;
+  const sessionProfileName =
+    typeof (user as { profileName?: string } | null)?.profileName === "string"
+      ? (user as { profileName: string }).profileName
+      : null;
+  // Same rule as overview/tree: private path only when viewing own portfolio.
+  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const overviewTip = normalizeCommit(defaultBranchTip);
+  const onDefaultBranch = branchRef === defaultBranch;
+
   const tipQuery = useQuery({
-    ...getGithubRepoRefCommitQueryOptions(repoName, branchRef, isPrivate),
-    placeholderData: branchRef === defaultBranch ? placeholderData : undefined
+    ...getGithubRepoRefCommitQueryOptions(repoName, branchRef, isPrivate, profileName),
+    // Keep overview tip visible while the branch tip query loads / if it fails.
+    placeholderData: onDefaultBranch ? (overviewTip ?? undefined) : undefined
   });
 
-  const commit = tipQuery.data;
+  const fetchedTip = normalizeCommit(tipQuery.data);
+  // Prefer live ref tip; on the default branch keep the overview tip so a
+  // failed/null ref-commit fetch never blanks the bar after a good overview.
+  const commit = fetchedTip ?? (onDefaultBranch ? overviewTip : null);
 
   if (tipQuery.isPending && commit == null) {
     return (

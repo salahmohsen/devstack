@@ -6,7 +6,8 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  getErrorStatusCode,
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubWorkflowRunRaw } from "#@/repo/repo-workflow-runs/repo-workflow-runs.types";
 import { mapRepoWorkflowRun } from "#@/repo/repo-workflow-runs/repo-workflow-runs.utils";
@@ -17,6 +18,12 @@ import {
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
 import { type GitHubWorkflowRun } from "#@/schemas";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 
 const REPO_RUNS_PER_PAGE = 5;
 const REPO_RUNS_MAX_PER_PAGE = 100;
@@ -38,7 +45,8 @@ function clampPage(value: number | undefined): number {
 async function _fetchRepoWorkflowRuns(
   input: { repo: string; perPage?: number; page?: number },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubWorkflowRun[]> {
   setRepoLoggerContext(context, "getRepoWorkflowRuns", {
     repo: input.repo
@@ -50,6 +58,20 @@ async function _fetchRepoWorkflowRuns(
       reason: source.reason
     });
     return [];
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return [];
+    }
+    throw error;
   }
 
   const owner = source.owner;
@@ -81,7 +103,7 @@ async function _fetchRepoWorkflowRuns(
       namespaceKeys: [signalKey],
       owner,
       params: input,
-      resource: "repo.workflowRuns.list.v1",
+      resource: repoCacheResource("repo.workflowRuns.list.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -109,12 +131,12 @@ export function getRepoWorkflowRuns(
   input: { repo: string; perPage?: number; page?: number },
   context: OrpcContext
 ): Promise<GitHubWorkflowRun[]> {
-  return _fetchRepoWorkflowRuns(input, context, context.github.publicOctokit);
+  return _fetchRepoWorkflowRuns(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoWorkflowRuns(
   input: { repo: string; perPage?: number; page?: number },
   context: OrpcContext
 ): Promise<GitHubWorkflowRun[]> {
-  return _fetchRepoWorkflowRuns(input, context, context.github.privateOctokit);
+  return _fetchRepoWorkflowRuns(input, context, context.github.privateOctokit, "private");
 }

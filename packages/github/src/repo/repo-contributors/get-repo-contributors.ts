@@ -6,7 +6,8 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  getErrorStatusCode,
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import {
   mapOctokitContributor,
@@ -19,11 +20,18 @@ import {
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
 import { type RepoContributorsResult } from "#@/schemas";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 
 async function _fetchRepoContributors(
   input: { repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<RepoContributorsResult> {
   setRepoLoggerContext(context, "getRepoContributors", {
     repo: input.repo
@@ -36,6 +44,20 @@ async function _fetchRepoContributors(
     });
 
     return { contributors: [], totalCount: 0 };
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return { contributors: [], totalCount: 0 };
+    }
+    throw error;
   }
 
   const signalKey = githubRevalidationSignalKeys.repoCode({
@@ -73,7 +95,7 @@ async function _fetchRepoContributors(
       namespaceKeys: [signalKey],
       owner: source.owner,
       params: input,
-      resource: "repo.contributors.v1",
+      resource: repoCacheResource("repo.contributors.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -102,12 +124,12 @@ export function getRepoContributors(
   input: { repo: string },
   context: OrpcContext
 ): Promise<RepoContributorsResult> {
-  return _fetchRepoContributors(input, context, context.github.publicOctokit);
+  return _fetchRepoContributors(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoContributors(
   input: { repo: string },
   context: OrpcContext
 ): Promise<RepoContributorsResult> {
-  return _fetchRepoContributors(input, context, context.github.privateOctokit);
+  return _fetchRepoContributors(input, context, context.github.privateOctokit, "private");
 }

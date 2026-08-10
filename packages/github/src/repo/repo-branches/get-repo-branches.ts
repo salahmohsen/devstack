@@ -16,15 +16,23 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
+import {
+  type RepoAccessSurface,
+  createRepoNotFoundError,
+  rejectPrivateEntityOnPublicSurface,
+  repoCacheResource
+} from "#@/shared/public-repo-access";
 import { type GitHubRepoBranch } from "#@/types";
 
 async function _fetchRepoBranches(
   input: { repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubRepoBranch[]> {
   setRepoLoggerContext(context, "getRepoBranches", {
-    repo: input.repo
+    repo: input.repo,
+    surface
   });
 
   const source = context.github.source;
@@ -44,11 +52,20 @@ async function _fetchRepoBranches(
   try {
     const result = await getCachedGitHubRequest<GitHubRepoBranch[]>({
       fetcher: async () => {
-        const response = await executeGitHubGraphQL<GitHubGraphQLRepoBranchesResponse>(
+        const response = await executeGitHubGraphQL<
+          GitHubGraphQLRepoBranchesResponse & {
+            repository:
+              | (GitHubGraphQLRepoBranchesResponse["repository"] & {
+                  isPrivate?: boolean;
+                })
+              | null;
+          }
+        >(
           octokit,
           "getRepoBranches.graphql",
           `query($owner: String!, $repo: String!) {
             repository(owner: $owner, name: $repo) {
+              isPrivate
               defaultBranchRef {
                 name
               }
@@ -76,6 +93,17 @@ async function _fetchRepoBranches(
           }
         );
 
+        if (!response.repository) {
+          throw createRepoNotFoundError(source.owner, input.repo);
+        }
+
+        rejectPrivateEntityOnPublicSurface(
+          surface,
+          response.repository.isPrivate,
+          source.owner,
+          input.repo
+        );
+
         return {
           data: mapGraphQLRepoBranches(response.repository),
           kind: "success",
@@ -86,7 +114,7 @@ async function _fetchRepoBranches(
       namespaceKeys: [signalKey],
       owner: source.owner,
       params: input,
-      resource: "repo.branches.v1",
+      resource: repoCacheResource("repo.branches.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -111,12 +139,12 @@ export function getRepoBranches(
   input: { repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoBranch[]> {
-  return _fetchRepoBranches(input, context, context.github.publicOctokit);
+  return _fetchRepoBranches(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoBranches(
   input: { repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoBranch[]> {
-  return _fetchRepoBranches(input, context, context.github.privateOctokit);
+  return _fetchRepoBranches(input, context, context.github.privateOctokit, "private");
 }

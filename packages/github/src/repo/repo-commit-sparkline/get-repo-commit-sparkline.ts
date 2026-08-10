@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubRepoCommitListItem } from "#@/repo/repo-commit-sparkline/repo-commit-sparkline.types";
 import {
@@ -19,12 +19,19 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 import { type GitHubRepoCommitSparkline } from "#@/types";
 
 async function _fetchRepoCommitSparkline(
   input: { repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubRepoCommitSparkline> {
   setRepoLoggerContext(context, "getRepoCommitSparkline", {
     repo: input.repo
@@ -37,6 +44,20 @@ async function _fetchRepoCommitSparkline(
     });
 
     return emptyRepoCommitSparkline();
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return emptyRepoCommitSparkline();
+    }
+    throw error;
   }
 
   const signalKey = githubRevalidationSignalKeys.repoCode({
@@ -65,7 +86,7 @@ async function _fetchRepoCommitSparkline(
       namespaceKeys: [signalKey],
       owner: source.owner,
       params: input,
-      resource: "repo.commitSparkline.v1",
+      resource: repoCacheResource("repo.commitSparkline.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -81,7 +102,7 @@ async function _fetchRepoCommitSparkline(
 
     return result.data;
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_commit_sparkline_read_not_found");
 
       return emptyRepoCommitSparkline();
@@ -95,12 +116,12 @@ export function getRepoCommitSparkline(
   input: { repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoCommitSparkline> {
-  return _fetchRepoCommitSparkline(input, context, context.github.publicOctokit);
+  return _fetchRepoCommitSparkline(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoCommitSparkline(
   input: { repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoCommitSparkline> {
-  return _fetchRepoCommitSparkline(input, context, context.github.privateOctokit);
+  return _fetchRepoCommitSparkline(input, context, context.github.privateOctokit, "private");
 }

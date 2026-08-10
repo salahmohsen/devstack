@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   executeGitHubGraphQL,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import {
   createGraphQLResponseMetadata,
@@ -19,12 +19,19 @@ import {
   mapGraphQLTreeEntryCommits,
   normalizeTreeEntryCommitEntries
 } from "#@/repo/tree-entry-commits/tree-entry-commits.utils";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 import { type GitHubTreeEntryCommit } from "#@/types";
 
 async function _fetchTreeEntryCommits(
   input: { dirPath?: string; entries: string[]; ref: string; repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<Record<string, GitHubTreeEntryCommit | null>> {
   setRepoLoggerContext(context, "getTreeEntryCommits", {
     dirPath: input.dirPath ?? "",
@@ -40,6 +47,20 @@ async function _fetchTreeEntryCommits(
     });
 
     return {};
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return {};
+    }
+    throw error;
   }
 
   const signalKey = githubRevalidationSignalKeys.repoCode({
@@ -113,7 +134,7 @@ async function _fetchTreeEntryCommits(
         ...input,
         entries: normalizedEntries
       },
-      resource: "repo.treeEntryCommits.v1",
+      resource: repoCacheResource("repo.treeEntryCommits.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -130,7 +151,7 @@ async function _fetchTreeEntryCommits(
 
     return result.data;
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_tree_entry_commits_read_not_found");
 
       return {};
@@ -144,12 +165,12 @@ export function getTreeEntryCommits(
   input: { dirPath?: string; entries: string[]; ref: string; repo: string },
   context: OrpcContext
 ): Promise<Record<string, GitHubTreeEntryCommit | null>> {
-  return _fetchTreeEntryCommits(input, context, context.github.publicOctokit);
+  return _fetchTreeEntryCommits(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateTreeEntryCommits(
   input: { dirPath?: string; entries: string[]; ref: string; repo: string },
   context: OrpcContext
 ): Promise<Record<string, GitHubTreeEntryCommit | null>> {
-  return _fetchTreeEntryCommits(input, context, context.github.privateOctokit);
+  return _fetchTreeEntryCommits(input, context, context.github.privateOctokit, "private");
 }

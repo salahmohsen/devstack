@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubRepoTreeItem } from "#@/repo/repo-tree/repo-tree.types";
 import { mapGitHubRepoTreeEntries } from "#@/repo/repo-tree/repo-tree.utils";
@@ -16,17 +16,25 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 import { type GitHubRepoTreeEntry } from "#@/types";
 
 async function _fetchRepoTree(
   input: { path: string; ref: string; repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubRepoTreeEntry[]> {
   setRepoLoggerContext(context, "getRepoTree", {
     path: input.path,
     ref: input.ref,
-    repo: input.repo
+    repo: input.repo,
+    surface
   });
 
   const source = context.github.source;
@@ -38,6 +46,19 @@ async function _fetchRepoTree(
     return [];
   }
 
+  const { owner: repoOwner, name: repoName } = resolveRepoOwnerName(input.repo, source.owner);
+
+  try {
+    // Privacy gate before cache so `.public` never stores private tree entries.
+    await assertRepoVisibleOnPublicSurface(octokit, repoOwner, repoName, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_tree_read_not_found");
+      return [];
+    }
+    throw error;
+  }
+
   const repoCodeKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -46,10 +67,6 @@ async function _fetchRepoTree(
   try {
     const result = await getCachedGitHubRequest<GitHubRepoTreeEntry[]>({
       fetcher: async (conditionals) => {
-        const [repoOwner, repoName] = input.repo.includes("/")
-          ? input.repo.split("/")
-          : [source.owner, input.repo];
-
         const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
           owner: repoOwner,
@@ -70,7 +87,7 @@ async function _fetchRepoTree(
       namespaceKeys: [repoCodeKey],
       owner: source.owner,
       params: input,
-      resource: "repo.tree.v1",
+      resource: repoCacheResource("repo.tree.v2", surface),
       runtime: context.github.binding,
       signalKeys: [repoCodeKey]
     });
@@ -82,7 +99,7 @@ async function _fetchRepoTree(
     return result.data;
   } catch (error) {
     setRepoLoggerOutcome(context, "github_repo_tree_read_not_found", {
-      statusCode: getErrorStatusCode(error)
+      statusCode: isGitHubNotFoundError(error) ? 404 : null
     });
 
     return [];
@@ -93,12 +110,12 @@ export function getRepoTree(
   input: { path: string; ref: string; repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoTreeEntry[]> {
-  return _fetchRepoTree(input, context, context.github.publicOctokit);
+  return _fetchRepoTree(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoTree(
   input: { path: string; ref: string; repo: string },
   context: OrpcContext
 ): Promise<GitHubRepoTreeEntry[]> {
-  return _fetchRepoTree(input, context, context.github.privateOctokit);
+  return _fetchRepoTree(input, context, context.github.privateOctokit, "private");
 }

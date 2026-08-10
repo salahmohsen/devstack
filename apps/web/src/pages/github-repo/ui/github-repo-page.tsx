@@ -188,6 +188,22 @@ export function GithubRepoPage({
     return <RepoOverviewSkeleton />;
   }
 
+  if (overviewQuery.isError && !overviewQuery.data) {
+    return (
+      <Container className="py-16">
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>Could not load repository</EmptyTitle>
+            <EmptyDescription>
+              Something went wrong while loading this repository. Check your connection and try
+              again.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </Container>
+    );
+  }
+
   if (!overviewQuery.data) {
     return (
       <Container className="py-16">
@@ -243,6 +259,7 @@ export function GithubRepoPage({
               branchRef={branchName}
               defaultBranch={overview.defaultBranch ?? "main"}
               defaultBranchTip={overview.latestCommit}
+              profileName={profileName}
               repoName={repo}
             />
             {treeQuery.data ? (

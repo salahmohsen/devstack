@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import {
   buildRepoIssueRepositoryRef,
@@ -19,6 +19,12 @@ import {
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
 import { type GitHubIssueSummary } from "#@/schemas";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 
 const REPO_ISSUES_PER_PAGE = 5;
 const REPO_ISSUES_MAX_PER_PAGE = 100;
@@ -47,7 +53,8 @@ async function _fetchRepoIssues(
     direction?: "asc" | "desc";
   },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubIssueSummary[]> {
   setRepoLoggerContext(context, "getRepoIssues", {
     repo: input.repo
@@ -59,6 +66,20 @@ async function _fetchRepoIssues(
       reason: source.reason
     });
     return [];
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return [];
+    }
+    throw error;
   }
 
   const owner = source.owner;
@@ -96,7 +117,7 @@ async function _fetchRepoIssues(
       namespaceKeys: [signalKey],
       owner,
       params: input,
-      resource: "repo.issues.list.v1",
+      resource: repoCacheResource("repo.issues.list.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -107,7 +128,7 @@ async function _fetchRepoIssues(
 
     return result.data;
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_issues_read_not_found");
       return [];
     }
@@ -127,7 +148,7 @@ export function getRepoIssues(
   },
   context: OrpcContext
 ): Promise<GitHubIssueSummary[]> {
-  return _fetchRepoIssues(input, context, context.github.publicOctokit);
+  return _fetchRepoIssues(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoIssues(
@@ -141,5 +162,5 @@ export function getPrivateRepoIssues(
   },
   context: OrpcContext
 ): Promise<GitHubIssueSummary[]> {
-  return _fetchRepoIssues(input, context, context.github.privateOctokit);
+  return _fetchRepoIssues(input, context, context.github.privateOctokit, "private");
 }

@@ -47,6 +47,7 @@ export function FolderView({
           branchRef={currentRef}
           defaultBranch={repo.defaultBranch ?? "main"}
           defaultBranchTip={repo.latestCommit}
+          profileName={profileName}
           repoName={repoName}
         />
         <div className="overflow-hidden rounded-b-lg border">

@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   executeGitHubGraphQL,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoOverviewResponse } from "#@/repo/repo-overview/repo-overview.types";
 import { mapGraphQLRepoOverview } from "#@/repo/repo-overview/repo-overview.utils";
@@ -18,14 +18,22 @@ import {
   setRepoLoggerOutcome,
   withLocalFirstMeta
 } from "#@/repo/shared.utils";
+import {
+  type RepoAccessSurface,
+  createRepoNotFoundError,
+  rejectPrivateEntityOnPublicSurface,
+  repoCacheResource
+} from "#@/shared/public-repo-access";
 
 async function _fetchRepoOverview(
   input: { repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<RepoOverview | null> {
   setRepoLoggerContext(context, "getRepoOverview", {
-    repo: input.repo
+    repo: input.repo,
+    surface
   });
 
   const source = context.github.source;
@@ -134,11 +142,14 @@ async function _fetchRepoOverview(
         );
 
         if (!response.repository) {
-          throw new Error(`GitHub repository not found: ${source.owner}/${input.repo}`);
+          throw createRepoNotFoundError(source.owner, input.repo);
         }
 
         const overview = mapGraphQLRepoOverview(response.repository);
         overview.viewerHasStarred = false;
+
+        // Reject before caching so `.public` never stores private payloads.
+        rejectPrivateEntityOnPublicSurface(surface, overview.isPrivate, source.owner, input.repo);
 
         return {
           data: overview,
@@ -150,7 +161,7 @@ async function _fetchRepoOverview(
       namespaceKeys: [repoMetaKey, repoCodeKey],
       owner: source.owner,
       params: input,
-      resource: "repo.overview.v2",
+      resource: repoCacheResource("repo.overview.v3", surface),
       runtime: context.github.binding,
       signalKeys: [repoMetaKey, repoCodeKey]
     });
@@ -163,7 +174,7 @@ async function _fetchRepoOverview(
 
     return withLocalFirstMeta(result.data, result.meta);
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_overview_read_not_found");
 
       return null;
@@ -177,12 +188,12 @@ export function getRepoOverview(
   input: { repo: string },
   context: OrpcContext
 ): Promise<RepoOverview | null> {
-  return _fetchRepoOverview(input, context, context.github.publicOctokit);
+  return _fetchRepoOverview(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoOverview(
   input: { repo: string },
   context: OrpcContext
 ): Promise<RepoOverview | null> {
-  return _fetchRepoOverview(input, context, context.github.privateOctokit);
+  return _fetchRepoOverview(input, context, context.github.privateOctokit, "private");
 }

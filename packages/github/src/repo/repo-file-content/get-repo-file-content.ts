@@ -6,7 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
-  getErrorStatusCode
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { mapGitHubRepoFileContent } from "#@/repo/repo-file-content/repo-file-content.utils";
 import {
@@ -15,16 +15,24 @@ import {
   setRepoLoggerLocalFirstOutcome,
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 
 async function _fetchRepoFileContent(
   input: { path: string; ref: string; repo: string },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<string | null> {
   setRepoLoggerContext(context, "getRepoFileContent", {
     path: input.path,
     ref: input.ref,
-    repo: input.repo
+    repo: input.repo,
+    surface
   });
 
   const source = context.github.source;
@@ -36,6 +44,18 @@ async function _fetchRepoFileContent(
     return null;
   }
 
+  const { owner: repoOwner, name: repoName } = resolveRepoOwnerName(input.repo, source.owner);
+
+  try {
+    await assertRepoVisibleOnPublicSurface(octokit, repoOwner, repoName, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_file_content_read_not_found");
+      return null;
+    }
+    throw error;
+  }
+
   const repoCodeKey = githubRevalidationSignalKeys.repoCode({
     owner: source.owner,
     repo: input.repo
@@ -44,12 +64,6 @@ async function _fetchRepoFileContent(
   try {
     const result = await getCachedGitHubRequest<string | null>({
       fetcher: async (conditionals) => {
-        // Extract owner from repo slug (e.g. "salahmohsen/cilas" → owner: "salahmohsen")
-        // instead of using source.owner, which may differ from the repo's actual owner
-        const [repoOwner, repoName] = input.repo.includes("/")
-          ? input.repo.split("/")
-          : [source.owner, input.repo];
-
         const response = await octokit.rest.repos.getContent({
           headers: buildGitHubConditionalHeaders(conditionals),
           owner: repoOwner,
@@ -68,7 +82,7 @@ async function _fetchRepoFileContent(
       namespaceKeys: [repoCodeKey],
       owner: source.owner,
       params: input,
-      resource: "repo.fileContent.v1",
+      resource: repoCacheResource("repo.fileContent.v2", surface),
       runtime: context.github.binding,
       signalKeys: [repoCodeKey]
     });
@@ -86,7 +100,7 @@ async function _fetchRepoFileContent(
     return result.data;
   } catch (error) {
     setRepoLoggerOutcome(context, "github_repo_file_content_read_not_found", {
-      statusCode: getErrorStatusCode(error)
+      statusCode: isGitHubNotFoundError(error) ? 404 : null
     });
 
     return null;
@@ -97,12 +111,12 @@ export function getRepoFileContent(
   input: { path: string; ref: string; repo: string },
   context: OrpcContext
 ): Promise<string | null> {
-  return _fetchRepoFileContent(input, context, context.github.publicOctokit);
+  return _fetchRepoFileContent(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoFileContent(
   input: { path: string; ref: string; repo: string },
   context: OrpcContext
 ): Promise<string | null> {
-  return _fetchRepoFileContent(input, context, context.github.privateOctokit);
+  return _fetchRepoFileContent(input, context, context.github.privateOctokit, "private");
 }

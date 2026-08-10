@@ -50,12 +50,15 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")(
     }
 
     const { profileName, repo } = params;
-    void context.queryClient.prefetchQuery(
-      getGithubRepoOverviewQueryOptions(repo, false, profileName)
-    );
-    void context.queryClient.prefetchQuery(
-      getGithubRepoBranchesQueryOptions(repo, false, profileName)
-    );
+    // Public surface only (`isPrivate: false`) — never prefetch private overview into SSR.
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        getGithubRepoOverviewQueryOptions(repo, false, profileName)
+      ),
+      context.queryClient.ensureQueryData(
+        getGithubRepoBranchesQueryOptions(repo, false, profileName)
+      )
+    ]);
   }
 });
 

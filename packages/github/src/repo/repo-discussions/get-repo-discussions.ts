@@ -7,7 +7,8 @@ import {
   type GitHubClient,
   createGitHubResponseMetadata,
   executeGitHubGraphQL,
-  getErrorStatusCode
+  getErrorStatusCode,
+  isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { type GitHubGraphQLRepoDiscussionsResponse } from "#@/repo/repo-discussions/repo-discussions.types";
 import {
@@ -21,6 +22,12 @@ import {
   setRepoLoggerOutcome
 } from "#@/repo/shared.utils";
 import { type GitHubDiscussionsResult } from "#@/schemas";
+import {
+  type RepoAccessSurface,
+  assertRepoVisibleOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName
+} from "#@/shared/public-repo-access";
 
 const REPO_DISCUSSIONS_DEFAULT_FIRST = 5;
 const REPO_DISCUSSIONS_MAX_FIRST = 50;
@@ -38,7 +45,8 @@ function clampFirst(value: number | undefined): number {
 async function _fetchRepoDiscussions(
   input: { repo: string; first?: number },
   context: OrpcContext,
-  octokit: GitHubClient
+  octokit: GitHubClient,
+  surface: RepoAccessSurface
 ): Promise<GitHubDiscussionsResult> {
   setRepoLoggerContext(context, "getRepoDiscussions", {
     repo: input.repo
@@ -50,6 +58,20 @@ async function _fetchRepoDiscussions(
       reason: source.reason
     });
     return emptyDiscussionsResult();
+  }
+
+  try {
+    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
+      input.repo,
+      source.owner
+    );
+    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+  } catch (error) {
+    if (isGitHubNotFoundError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
+      return emptyDiscussionsResult();
+    }
+    throw error;
   }
 
   const owner = source.owner;
@@ -66,6 +88,7 @@ async function _fetchRepoDiscussions(
             "getRepoDiscussions.graphql",
             `query($owner: String!, $repo: String!, $first: Int!) {
               repository(owner: $owner, name: $repo) {
+                isPrivate
                 discussions(first: $first, orderBy: { field: UPDATED_AT, direction: DESC }) {
                   totalCount
                   nodes {
@@ -97,6 +120,7 @@ async function _fetchRepoDiscussions(
             };
           }
 
+          // Privacy already gated via assertRepoVisibleOnPublicSurface before cache.
           return {
             data: mapGraphQLRepoDiscussions(response.repository),
             kind: "success",
@@ -118,7 +142,7 @@ async function _fetchRepoDiscussions(
       namespaceKeys: [signalKey],
       owner,
       params: input,
-      resource: "repo.discussions.v1",
+      resource: repoCacheResource("repo.discussions.v2", surface),
       runtime: context.github.binding,
       signalKeys: [signalKey]
     });
@@ -130,7 +154,7 @@ async function _fetchRepoDiscussions(
 
     return result.data;
   } catch (error) {
-    if (getErrorStatusCode(error) === 404) {
+    if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_discussions_read_not_found");
       return emptyDiscussionsResult();
     }
@@ -143,12 +167,12 @@ export function getRepoDiscussions(
   input: { repo: string; first?: number },
   context: OrpcContext
 ): Promise<GitHubDiscussionsResult> {
-  return _fetchRepoDiscussions(input, context, context.github.publicOctokit);
+  return _fetchRepoDiscussions(input, context, context.github.publicOctokit, "public");
 }
 
 export function getPrivateRepoDiscussions(
   input: { repo: string; first?: number },
   context: OrpcContext
 ): Promise<GitHubDiscussionsResult> {
-  return _fetchRepoDiscussions(input, context, context.github.privateOctokit);
+  return _fetchRepoDiscussions(input, context, context.github.privateOctokit, "private");
 }
