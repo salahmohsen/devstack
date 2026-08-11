@@ -43,6 +43,7 @@ import { IconRotate, IconShake } from "@tsu-stack/ui/components/icon-motion";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { DefaultLoader } from "@/shared/ui/default-loader";
+import { Markdown } from "@/shared/ui/markdown";
 
 import {
   ApplicationActivitySection,
@@ -96,7 +97,10 @@ function NewJobCard({
   const busy = busyId === job.id;
   const takeBusy = takeBusyId === job.id;
   const [activityOpen, setActivityOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [takeExpanded, setTakeExpanded] = useState(false);
+  const hasDescription = Boolean(job.description?.trim());
+  const hasSalary = Boolean(job.salaryRange?.trim());
 
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-xs/5">
@@ -274,6 +278,42 @@ function NewJobCard({
           </>
         )}
       </div>
+
+      {hasDescription || hasSalary ? (
+        <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <CollapsibleTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-full justify-between px-2 text-muted-foreground"
+              />
+            }
+          >
+            <span className="text-xs font-medium tracking-wide uppercase">Details</span>
+            <ChevronDownIcon
+              className={cn("size-4 transition-transform", detailsOpen && "rotate-180")}
+              aria-hidden
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2 pt-2">
+            {hasSalary ? (
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground/80">Salary · </span>
+                {job.salaryRange}
+              </p>
+            ) : null}
+            {hasDescription ? (
+              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                {job.description!}
+              </Markdown>
+            ) : (
+              <p className="text-sm text-muted-foreground">No job description.</p>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+      ) : null}
 
       <Collapsible open={activityOpen} onOpenChange={setActivityOpen}>
         <CollapsibleTrigger

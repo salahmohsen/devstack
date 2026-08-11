@@ -116,7 +116,8 @@ export async function applyMailCrmEffectFromClassify(input: {
 
   if (!appId && systemLabelsParsed.length > 0) {
     const llm = await resolveRuntimeAiCredentials(input.userId, "classify");
-    const open = await applicationRepository.findOpenByUserId(input.userId);
+    // Open tracked ∪ inbox (not dismissed) so career mail can attach to New jobs discoveries.
+    const candidates = await applicationRepository.findCrmMatchCandidatesByUserId(input.userId);
     const matchCall = await callCrmApplicationMatcher({
       messageId: input.messageId,
       userId: input.userId,
@@ -126,7 +127,7 @@ export async function applyMailCrmEffectFromClassify(input: {
       preview: message.preview ?? "",
       bodyText: message.bodyText ?? "",
       systemLabels: systemLabelsParsed,
-      openApplications: open.map((a) => {
+      openApplications: candidates.map((a) => {
         return { id: a.id, companyName: a.companyName, title: a.title, stage: a.stage };
       }),
       llm
@@ -137,10 +138,36 @@ export async function applyMailCrmEffectFromClassify(input: {
       resolveReason = match.reason ?? match.kind;
 
       if (match.kind === "match_existing" && match.applicationId) {
-        const openIds = new Set(open.map((a) => a.id));
-        if (openIds.has(match.applicationId)) {
+        const candidateIds = new Set(candidates.map((a) => a.id));
+        if (candidateIds.has(match.applicationId)) {
           appId = match.applicationId;
-          const app = await applicationRepository.findByIdForUser(appId, input.userId);
+          let app = await applicationRepository.findByIdForUser(appId, input.userId);
+          // Design: non-tracked match → promote before stage/outcome effects.
+          if (app && app.trackingStatus !== "tracked") {
+            const from = app.trackingStatus;
+            const promoted = await applicationRepository.setTrackingStatus(
+              app.id,
+              input.userId,
+              "tracked"
+            );
+            if (promoted) {
+              app = promoted;
+              await applicationActivityRepository.append({
+                userId: input.userId,
+                applicationId: app.id,
+                kind: "promoted",
+                metadata: { from, via: "crm_match", messageId: input.messageId }
+              });
+              log.set({
+                event: "mail_crm_match_promoted",
+                messageId: input.messageId,
+                userId: input.userId,
+                applicationId: app.id,
+                from
+              });
+              log.emit();
+            }
+          }
           if (app) {
             currentStage = app.stage;
             currentOutcome = app.outcome;

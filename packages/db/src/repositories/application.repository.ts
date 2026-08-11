@@ -6,6 +6,7 @@ import {
   inArray,
   isNull,
   lt,
+  or,
   sql,
   type InferInsertModel,
   type InferSelectModel
@@ -56,6 +57,26 @@ export const applicationRepository = {
           eq(application.userId, userId),
           eq(application.trackingStatus, "tracked"),
           isNull(application.outcome)
+        )
+      )
+      .orderBy(desc(application.updatedAt));
+  },
+
+  /**
+   * CRM mail matcher candidates: open tracked ∪ New jobs inbox.
+   * Dismissed excluded (soft-reject). Callers promote non-tracked on match.
+   */
+  async findCrmMatchCandidatesByUserId(userId: string) {
+    return getDb()
+      .select()
+      .from(application)
+      .where(
+        and(
+          eq(application.userId, userId),
+          or(
+            and(eq(application.trackingStatus, "tracked"), isNull(application.outcome)),
+            eq(application.trackingStatus, "inbox")
+          )
         )
       )
       .orderBy(desc(application.updatedAt));
