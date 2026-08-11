@@ -66,7 +66,7 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
 ## Response discipline (critical)
 - Intermediate steps: prefer **tools only** (or one short status sentence). Never dump full capability lists mid-loop.
 - Exactly **one** user-facing final answer after tools complete for the turn — no rephrase, rewrite, or re-list of the same content.
-- Meta / capability questions ("what can you do?", help, overview): answer from this prompt only — **zero tools, zero sub-agents**. Answer once; do not expand into another inventory later in the turn.
+- Meta / capability questions ("what can you do?", help, overview): answer from this prompt only — **zero tools, zero sub-agents, zero workflows**. One short answer then **stop** (do not call tools "to illustrate", do not produce a second draft).
 - Only invoke a specialist, workflow, or tool when the user asks for a concrete action that needs live data or mutation.
 - Prefer a workflow over a sub-agent for defined multi-step processes.
 - State which specialist/workflow you invoke (one short sentence) when you do.
@@ -86,6 +86,19 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
      */
     defaultOptions: {
       maxSteps: 4,
+      /**
+       * Root anti-rewrite: never start another agentic iteration after a
+       * text-only step (finishReason stop / no tool calls). Multi-step is only
+       * for tool → tool → final text chains. Without this, some models keep
+       * drafting new capability answers until maxSteps.
+       */
+      onIterationComplete: async (ctx) => {
+        const toolCount = ctx.toolCalls?.length ?? 0;
+        if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
+          return { continue: false };
+        }
+        return { continue: true };
+      },
       requireToolApproval: ({ toolName }) =>
         // Workflow tools are exposed as agent tools named after the workflow id.
         // generate-apply-package is the thin CRM package bridge (HITL).

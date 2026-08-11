@@ -217,7 +217,7 @@ export async function testAiProviderConnection(
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
 
   try {
-    const response = await agentWorker.fetch(`/agents/${PROVIDER_PING_AGENT_ID}/generate`, {
+    const response = await agentWorker.fetch(`/api/agents/${PROVIDER_PING_AGENT_ID}/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,

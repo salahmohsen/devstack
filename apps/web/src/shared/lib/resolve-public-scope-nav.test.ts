@@ -58,7 +58,7 @@ describe("resolvePublicScopeNav", () => {
     ).toBe(false);
   });
 
-  it("shows signed-in community root with own surface, no active", () => {
+  it("shows signed-in community root with own surface, no active, dashboard chip", () => {
     const r = resolvePublicScopeNav({
       pathname: "/",
       hostname: "app.example.com",
@@ -69,16 +69,30 @@ describe("resolvePublicScopeNav", () => {
     expect(r.surface?.tenantUsername).toBe("me");
     expect(r.surface?.mode).toBe("path");
     expect(r.active).toBeNull();
+    expect(r.showDashboard).toBe(true);
   });
 
-  it("hides dashboard", () => {
+  it("shows dashboard when signed in with dashboard active", () => {
+    const r = resolvePublicScopeNav({
+      pathname: "/dashboard/settings",
+      hostname: "app.example.com",
+      isCustomDomain: false,
+      sessionUsername: "me",
+      pathUsername: null
+    });
+    expect(r.show).toBe(true);
+    expect(r.active).toBe("dashboard");
+    expect(r.showDashboard).toBe(true);
+    expect(r.surface?.tenantUsername).toBe("me");
+  });
+
+  it("hides dashboard chrome when not signed in", () => {
     expect(
       resolvePublicScopeNav({
-        pathname: "/dashboard/settings",
+        pathname: "/dashboard",
         hostname: "app.example.com",
         isCustomDomain: false,
-        sessionUsername: "me",
-        pathUsername: null
+        sessionUsername: null
       }).show
     ).toBe(false);
   });
@@ -93,6 +107,20 @@ describe("resolvePublicScopeNav", () => {
     expect(r.show).toBe(true);
     expect(r.active).toBe("profile");
     expect(r.surface?.username).toBe("salahmohsen");
+    expect(r.showDashboard).toBe(false);
+  });
+
+  it("shows dashboard chip on path portfolio when signed in", () => {
+    const r = resolvePublicScopeNav({
+      pathname: "/salahmohsen",
+      hostname: "app.example.com",
+      isCustomDomain: false,
+      pathUsername: "salahmohsen",
+      sessionUsername: "me"
+    });
+    expect(r.show).toBe(true);
+    expect(r.showDashboard).toBe(true);
+    expect(r.active).toBe("profile");
   });
 
   it("shows custom domain repos without path slug", () => {

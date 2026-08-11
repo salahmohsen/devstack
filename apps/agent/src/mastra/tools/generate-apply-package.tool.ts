@@ -1,12 +1,12 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
-import { generateApplyPackage } from "@tsu-stack/api/lib/application/generate-apply-package";
+import { generateApplyPackage } from "#@/mastra/lib/generate-apply-package";
 
 /**
- * Product path: same as Applications CRM — packages/api `generateApplyPackage`.
- * Approach A: import domain function via `@tsu-stack/api` workspace subpath
- * (api exports `./*` → `./src/*.ts`).
+ * Product path: same semantics as packages/api `generateApplyPackage`.
+ * Approach B: in-process parity (db + BYO + applyPackageWorkflow + persist).
+ * Does not import `@tsu-stack/api` — Mastra bundler cannot absorb that graph.
  *
  * Tenant scope: `userId` is ALWAYS taken from `requestContext` (set by the
  * chat handler). Never accept `userId` from tool input.
@@ -45,6 +45,6 @@ export const generateApplyPackageTool = createTool({
       };
     }
 
-    return { ok: true, applicationId: result.application.id };
+    return { ok: true, applicationId: result.applicationId };
   }
 });

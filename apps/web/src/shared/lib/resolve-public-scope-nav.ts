@@ -5,22 +5,31 @@ import {
   type PublicSurface
 } from "@/shared/lib/public-surface";
 
-export type PublicScopeNavActive = "profile" | "repos" | null;
+export type PublicScopeNavActive = "profile" | "repos" | "dashboard" | null;
 
 export type PublicScopeNavResult = {
   show: boolean;
   surface: PublicSurface | null;
   active: PublicScopeNavActive;
+  /**
+   * When true, render the Dashboard chip (signed-in only).
+   * Profile/Repos links still need `surface`.
+   */
+  showDashboard: boolean;
 };
 
-/** Paths that never host public portfolio scope nav. */
+/** Paths that never host public portfolio scope nav (except dashboard when signed in). */
 const HIDDEN_PREFIXES = [
-  "/dashboard",
   "/sign-in",
   "/playground",
   "/privacy-policy",
   "/terms-of-service"
 ] as const;
+
+function isDashboardPath(pathname: string): boolean {
+  const path = normalizePath(pathname);
+  return path === "/dashboard" || path.startsWith("/dashboard/");
+}
 
 /** First path segment reserved (not a username). */
 const RESERVED_SEGMENTS = new Set([
@@ -68,6 +77,8 @@ export function activeScopeFromPathname(
 ): PublicScopeNavActive {
   const path = normalizePath(pathname);
 
+  if (isDashboardPath(path)) return "dashboard";
+
   if (surface.mode === "custom_domain") {
     if (path === "/" || path === "") return "profile";
     if (path === "/repos" || path.startsWith("/repos/")) return "repos";
@@ -80,8 +91,15 @@ export function activeScopeFromPathname(
   return null;
 }
 
+function ownPathSurface(sessionUsername: string): PublicSurface {
+  return createPublicSurface({
+    tenantUsername: sessionUsername,
+    mode: "path"
+  });
+}
+
 /**
- * Pure resolver for Profile / Repositories topbar scope nav.
+ * Pure resolver for Profile / Repositories / Dashboard topbar scope nav.
  * @see docs/superpowers/specs/2026-08-09-public-profile-repos-topbar-tabs-design.md
  */
 export function resolvePublicScopeNav(input: {
@@ -98,9 +116,25 @@ export function resolvePublicScopeNav(input: {
   const pathname = normalizePath(input.pathname);
   const hostname = input.hostname ?? null;
   const customHost = input.isCustomDomain ?? isCustomDomainHost(hostname);
+  const trimmedSession = input.sessionUsername?.trim();
+  const session = trimmedSession && trimmedSession.length > 0 ? trimmedSession : null;
+  const showDashboard = Boolean(session);
+
+  // Signed-in dashboard: show scope nav with own portfolio links + Dashboard active.
+  if (isDashboardPath(pathname)) {
+    if (!session) {
+      return { show: false, surface: null, active: null, showDashboard: false };
+    }
+    return {
+      show: true,
+      surface: ownPathSurface(session),
+      active: "dashboard",
+      showDashboard: true
+    };
+  }
 
   if (isScopeNavHiddenPath(pathname)) {
-    return { show: false, surface: null, active: null };
+    return { show: false, surface: null, active: null, showDashboard: false };
   }
 
   // Empty string after trim must fall through (?? alone would keep "").
@@ -127,28 +161,29 @@ export function resolvePublicScopeNav(input: {
     return {
       show: true,
       surface: surfaceFinal,
-      active: activeScopeFromPathname(pathname, surfaceFinal)
+      active: activeScopeFromPathname(pathname, surfaceFinal),
+      showDashboard
     };
   }
 
   // Custom Host without resolved tenant: never use session (wrong portfolio on someone else's domain).
   // Hide while resolve is pending or if Host is not a verified portfolio.
   if (customHost) {
-    return { show: false, surface: null, active: null };
+    return { show: false, surface: null, active: null, showDashboard: false };
   }
 
-  // Primary community root: signed-in → own surface (neither tab active)
+  // Primary community root: signed-in → own surface (neither public tab active)
   if (pathname === "/") {
-    const session = input.sessionUsername?.trim();
     if (session) {
-      const surface = createPublicSurface({
-        tenantUsername: session,
-        mode: "path"
-      });
-      return { show: true, surface, active: null };
+      return {
+        show: true,
+        surface: ownPathSurface(session),
+        active: null,
+        showDashboard: true
+      };
     }
-    return { show: false, surface: null, active: null };
+    return { show: false, surface: null, active: null, showDashboard: false };
   }
 
-  return { show: false, surface: null, active: null };
+  return { show: false, surface: null, active: null, showDashboard: false };
 }

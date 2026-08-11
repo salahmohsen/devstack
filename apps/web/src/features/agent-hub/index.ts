@@ -22,6 +22,12 @@ export {
   filterTextWhileStreaming
 } from "./lib/collapse-consecutive-text-parts";
 export type { CollapseMessagePart } from "./lib/collapse-consecutive-text-parts";
+export {
+  HUB_CLIENT_RESUME_TOOL_NAMES,
+  lastAssistantMessageIsCompleteWithClientResumeTools,
+  shouldAutoResumeHubChat
+} from "./lib/should-auto-resume-hub-chat";
+export { messagesForMastraMemoryChat } from "./lib/messages-for-mastra-memory";
 export { parseAiError, parseHubChatError, presentAiError } from "@/shared/lib/parse-ai-error";
 export type {
   AiErrorFeature,

@@ -1,14 +1,13 @@
 import { Chat, type useChat, type UIMessage } from "@ai-sdk/react";
-import {
-  lastAssistantMessageIsCompleteWithApprovalResponses,
-  lastAssistantMessageIsCompleteWithToolCalls
-} from "ai";
 import { createContext, useContext } from "react";
 
 import {
   eventIteratorToUnproxiedDataStream,
   orpcClient
 } from "@tsu-stack/api/client/tanstack-start/orpc";
+
+import { messagesForMastraMemoryChat } from "@/features/agent-hub/lib/messages-for-mastra-memory";
+import { shouldAutoResumeHubChat } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
 /** Must match `HUB_CHAT_AGENT_ID` on the API (hub-supervisor). */
 export const HUB_AGENT_ID = "hub-supervisor";
@@ -41,9 +40,10 @@ export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
    */
   addToolApprovalResponse: (args: HubToolApprovalResponseArgs) => void | PromiseLike<void>;
   /**
-   * Client-tool output (e.g. propose-from-jd card). With
-   * `lastAssistantMessageIsCompleteWithToolCalls` in sendAutomaticallyWhen,
-   * this resumes the suspended stream.
+   * Client-tool output (e.g. propose-from-jd card). Hub auto-resume only for
+   * known client HITL tools + approval — not bare
+   * `lastAssistantMessageIsCompleteWithToolCalls` (that re-submits after every
+   * server multi-step tool chain).
    */
   addToolOutput: (args: HubToolOutputArgs) => void | PromiseLike<void>;
 };
@@ -55,23 +55,31 @@ export const HubChatContext = createContext<HubChatContextValue | null>(null);
  *
  * `sendAutomaticallyWhen` resumes after:
  * - `addToolApprovalResponse` (HITL requireToolApproval)
- * - `addToolOutput` (client tools)
+ * - `addToolOutput` on **client** tools only (propose-from-jd)
+ *
+ * Do not use bare `lastAssistantMessageIsCompleteWithToolCalls`: after Mastra
+ * finishes a server tool step (often without `providerExecuted`), that helper
+ * is true and AI SDK re-POSTs with the assistant message id — answer vanishes
+ * and regenerates in a loop.
  *
  * Transport proxies oRPC event iterators — do not re-decode SSE on the client.
  */
 export function createHubChat(): Chat<UIMessage> {
   return new Chat<UIMessage>({
     id: HUB_CHAT_ID,
-    sendAutomaticallyWhen: async (opts) =>
-      lastAssistantMessageIsCompleteWithApprovalResponses(opts) ||
-      lastAssistantMessageIsCompleteWithToolCalls(opts),
+    sendAutomaticallyWhen: shouldAutoResumeHubChat,
     transport: {
       async sendMessages(sendOptions) {
+        // Memory-backed hub: do NOT send full UI history (Mastra loads the thread).
+        // Full history + memory = duplicate turns → multi-step rewrite thrash.
+        const trigger = sendOptions.trigger ?? "submit-message";
+        const messages = messagesForMastraMemoryChat(sendOptions.messages as UIMessage[], trigger);
         return eventIteratorToUnproxiedDataStream(
           await orpcClient.agent.chatStream(
             {
               agentId: HUB_AGENT_ID,
-              messages: sendOptions.messages as never
+              messages: messages as never,
+              trigger
             },
             { signal: sendOptions.abortSignal }
           )

@@ -51,3 +51,34 @@ export function hubChatMemoryOptions(userId: string): {
 export function isChatAllowedAgentId(agentId: string): agentId is ChatAllowedAgentId {
   return (CHAT_ALLOWED_AGENT_IDS as readonly string[]).includes(agentId);
 }
+
+type ThinUiMessage = { role?: string; id?: string; parts?: unknown[] };
+
+/**
+ * Memory-backed hub chat: forward only the message Mastra needs for this turn.
+ * Full client history + Memory lastMessages duplicates context and causes
+ * multi-step rewrite thrash. Mirrors web `messagesForMastraMemoryChat`.
+ *
+ * @see https://mastra.ai/docs/memory/message-history
+ */
+export function slimMessagesForHubMemory(
+  messages: unknown[],
+  trigger: "submit-message" | "regenerate-message" = "submit-message"
+): unknown[] {
+  if (!Array.isArray(messages) || messages.length === 0) return messages;
+
+  const list = messages as ThinUiMessage[];
+
+  if (trigger === "regenerate-message") {
+    const withoutTrailing = list[list.length - 1]?.role === "assistant" ? list.slice(0, -1) : list;
+    for (let i = withoutTrailing.length - 1; i >= 0; i--) {
+      if (withoutTrailing[i]?.role === "user") return [withoutTrailing[i]];
+    }
+    return withoutTrailing.slice(-1);
+  }
+
+  const last = list[list.length - 1];
+  if (!last) return messages;
+  if (last.role === "assistant" || last.role === "user") return [last];
+  return [last];
+}
