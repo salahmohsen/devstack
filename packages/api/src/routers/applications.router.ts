@@ -7,6 +7,7 @@ import {
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
   buildApplicationSourceTags,
+  canonicalizeJobUrl,
   CountApplicationsInputSchema,
   CreateApplicationInputSchema,
   DeleteApplicationsInputSchema,
@@ -187,7 +188,8 @@ export const applicationsRouter = {
 
   create: protectedProcedure
     .route({
-      description: "Create a tracked job application",
+      description:
+        "Create a tracked job application. With URL: create-if-absent; inbox/dismissed promote to tracked; already tracked returned as-is.",
       method: "POST"
     })
     .input(CreateApplicationInputSchema)
@@ -205,11 +207,14 @@ export const applicationsRouter = {
       const sourceTags =
         input.sourceTags ??
         buildApplicationSourceTags({ channel: "manual", platform: input.source ?? null });
-      const created = await applicationRepository.create({
+      const trimmedUrl = input.url?.trim();
+      const rawUrl = trimmedUrl && trimmedUrl.length > 0 ? trimmedUrl : null;
+      const listingUrl = rawUrl ? (canonicalizeJobUrl(rawUrl) ?? rawUrl) : null;
+
+      const common = {
         userId,
         companyName: input.companyName,
         title: input.title,
-        url: input.url ?? null,
         applyUrl: input.applyUrl ?? null,
         applyMethod: input.applyMethod,
         matchScore: input.matchScore ?? null,
@@ -220,10 +225,48 @@ export const applicationsRouter = {
         employmentType: input.employmentType,
         description: input.description ?? null,
         notes: input.notes ?? null,
-        trackingStatus: "tracked",
+        trackingStatus: "tracked" as const,
         stage: input.stage,
         hiringUrgency: input.hiringUrgency,
         resumeId: input.resumeId ?? null
+      };
+
+      // URL present: race-safe dedup + conflict policy (hub parity).
+      if (listingUrl) {
+        const { row, created } = await applicationRepository.createIfAbsentByUrl({
+          ...common,
+          url: listingUrl
+        });
+        if (!created) {
+          // Already tracked (open or closed): return as-is — no field overwrite, no reopen.
+          if (row.trackingStatus === "tracked") {
+            return toApplicationOutput(row);
+          }
+          // inbox / dismissed → promote to tracked
+          const promoted = await applicationRepository.setTrackingStatus(row.id, userId, "tracked");
+          if (!promoted) throw errors.NOT_FOUND();
+          await applicationActivityRepository.append({
+            userId,
+            applicationId: promoted.id,
+            kind: "promoted",
+            actorUserId: userId,
+            metadata: { from: row.trackingStatus, via: "manual_create_conflict" }
+          });
+          return toApplicationOutput(promoted);
+        }
+        await applicationActivityRepository.append({
+          userId,
+          applicationId: row.id,
+          kind: "discovered",
+          actorUserId: userId,
+          metadata: { via: "manual_create", sourceTags }
+        });
+        return toApplicationOutput(row);
+      }
+
+      const created = await applicationRepository.create({
+        ...common,
+        url: null
       });
       await applicationActivityRepository.append({
         userId,

@@ -1,6 +1,7 @@
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
+  APPLICATION_OUTCOME_LABELS,
   APPLICATION_STAGE_LABELS,
   buildApplicationSourceTags,
   MailCrmAuditSnapshotSchema,
@@ -310,15 +311,19 @@ export async function applyMailCrmEffectFromClassify(input: {
     mailMessageApplicationId: message.applicationId ?? null
   });
 
-  // For creates, stage is already set; only advance when matching existing apps.
+  // For creates, stage/outcome already set on insert — only mutate existing apps.
+  // Activity: create → discovered only; real advances → stage_changed; real closes → outcome_set.
   let afterStage = currentStage;
   let afterStageChangedAt = stageChangedAt;
+  let afterOutcome = currentOutcome;
+  let afterOutcomeAt = outcomeAt;
 
   if (
     !createdApplication &&
     effectWithReason.kind === "advance_stage" &&
     effectWithReason.targetStage
   ) {
+    const fromStage = currentStage;
     const updated = await applicationRepository.updateStage(
       appId,
       input.userId,
@@ -340,6 +345,74 @@ export async function applyMailCrmEffectFromClassify(input: {
     }
     afterStage = updated.row.stage;
     afterStageChangedAt = updated.row.stageChangedAt;
+    await applicationActivityRepository.append({
+      userId: input.userId,
+      applicationId: appId,
+      kind: "stage_changed",
+      metadata: {
+        fromStage,
+        toStage: afterStage,
+        via: "crm_mail",
+        messageId: input.messageId
+      }
+    });
+  } else if (
+    !createdApplication &&
+    effectWithReason.kind === "set_outcome" &&
+    effectWithReason.targetOutcome
+  ) {
+    // Open match set is tracked-only; still guard so we never close non-tracked rows.
+    const owned = await applicationRepository.findByIdForUser(appId, input.userId);
+    if (!owned || owned.trackingStatus !== "tracked") {
+      log.set({
+        event: "mail_crm_apply_outcome_blocked",
+        messageId: input.messageId,
+        userId: input.userId,
+        applicationId: appId,
+        reason: owned ? "not_tracked" : "not_found"
+      });
+      log.emit();
+      return {
+        applied: false,
+        effect: {
+          ...effectWithReason,
+          reason: owned ? "outcome_not_tracked" : "outcome_not_found"
+        }
+      };
+    }
+    const updated = await applicationRepository.setOutcome(
+      appId,
+      input.userId,
+      effectWithReason.targetOutcome
+    );
+    if (!updated) {
+      log.set({
+        event: "mail_crm_apply_outcome_failed",
+        messageId: input.messageId,
+        userId: input.userId,
+        applicationId: appId
+      });
+      log.emit();
+      return {
+        applied: false,
+        effect: { ...effectWithReason, reason: "outcome_failed" }
+      };
+    }
+    afterOutcome = updated.outcome;
+    afterOutcomeAt = updated.outcomeAt;
+    afterStage = updated.stage;
+    afterStageChangedAt = updated.stageChangedAt;
+    await applicationActivityRepository.append({
+      userId: input.userId,
+      applicationId: appId,
+      kind: "outcome_set",
+      metadata: {
+        outcome: afterOutcome,
+        stage: afterStage,
+        via: "crm_mail",
+        messageId: input.messageId
+      }
+    });
   }
 
   await mailMessageRepository.setApplicationId(message.id, input.userId, appId);
@@ -349,8 +422,8 @@ export async function applyMailCrmEffectFromClassify(input: {
     applicationId: appId,
     stage: afterStage,
     stageChangedAt: afterStageChangedAt,
-    outcome: currentOutcome,
-    outcomeAt,
+    outcome: afterOutcome,
+    outcomeAt: afterOutcomeAt,
     mailMessageApplicationId: afterMailAppId
   });
 
@@ -371,23 +444,27 @@ export async function applyMailCrmEffectFromClassify(input: {
     applyId: applyRow.id,
     effectKind: effectWithReason.kind,
     targetStage: effectWithReason.targetStage ?? afterStage,
+    targetOutcome: effectWithReason.targetOutcome ?? afterOutcome,
     applicationId: appId,
     createdApplication
   });
   log.emit();
 
   const stageLabel = afterStage != null ? APPLICATION_STAGE_LABELS[afterStage] : null;
+  const outcomeLabel = afterOutcome != null ? APPLICATION_OUTCOME_LABELS[afterOutcome] : null;
   await emitAppNotification({
     userId: input.userId,
     kind: "application.stage_auto",
     title: createdApplication
       ? "Application created from mail"
-      : stageLabel
-        ? `Stage updated → ${stageLabel}`
-        : "Application updated from mail",
+      : effectWithReason.kind === "set_outcome" && outcomeLabel
+        ? `Closed → ${outcomeLabel}`
+        : stageLabel
+          ? `Stage updated → ${stageLabel}`
+          : "Application updated from mail",
     body: createdApplication
       ? "A pipeline row was auto-created and linked to this message."
-      : "Career Inbox classify updated your Applications board.",
+      : "Career Inbox classify updated your Tracked jobs board.",
     href: "/dashboard/tracked-jobs",
     messageId: input.messageId,
     applicationId: appId
