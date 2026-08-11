@@ -2,15 +2,13 @@ import {
   AlertCircleIcon,
   CheckIcon,
   ChevronDownIcon,
-  CircleIcon,
   CopyIcon,
   ExternalLinkIcon,
   GlobeIcon,
   Loader2Icon,
   PlusIcon,
   RefreshCwIcon,
-  Trash2Icon,
-  XIcon
+  Trash2Icon
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -125,34 +123,6 @@ function dnsRecordsClipboard(domain: CustomDomainOutput): string {
     `Name: ${domain.verificationRecordName}`,
     `Value: ${domain.verificationRecordValue}`
   ].join("\n");
-}
-
-function ChecklistItem({
-  state,
-  title,
-  description
-}: {
-  state: "pass" | "fail" | "info";
-  title: string;
-  description: string;
-}) {
-  return (
-    <li className="flex gap-3 text-sm">
-      <span className="mt-0.5 shrink-0" aria-hidden>
-        {state === "pass" ? (
-          <CheckIcon className="size-4 text-success" />
-        ) : state === "fail" ? (
-          <XIcon className="size-4 text-destructive" />
-        ) : (
-          <CircleIcon className="size-4 text-muted-foreground" />
-        )}
-      </span>
-      <div className="min-w-0 space-y-0.5">
-        <p className="font-medium text-foreground">{title}</p>
-        <p className="text-muted-foreground">{description}</p>
-      </div>
-    </li>
-  );
 }
 
 function CopyFieldButton({
@@ -373,6 +343,7 @@ export const DomainSettings = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showChangeForm, setShowChangeForm] = useState(false);
   const [dnsOpen, setDnsOpen] = useState(true);
+  const [edgeOpen, setEdgeOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [lastVerifyError, setLastVerifyError] = useState<string | null>(null);
@@ -454,9 +425,7 @@ export const DomainSettings = () => {
   }, [removeDomain]);
 
   const lastChecked = domain ? formatRelativeTime(domain.updatedAt) : null;
-
-  const ownershipState: "pass" | "fail" | "info" =
-    domain?.status === "verified" ? "pass" : domain?.status === "failed" ? "fail" : "info";
+  const isVerified = domain?.status === "verified";
 
   return (
     <Frame>
@@ -630,12 +599,16 @@ export const DomainSettings = () => {
               ) : null}
             </section>
 
-            {/* Configuration */}
+            {/* Status + DNS (product verifies TXT only) */}
             <section className="space-y-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">Configuration</p>
+                <p className="text-sm font-medium text-foreground">
+                  {isVerified ? "Status" : "Verify ownership"}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  Add the TXT record at your DNS provider, then refresh configuration.
+                  {isVerified
+                    ? "We only check the TXT ownership record. Re-check if you change DNS."
+                    : "Add the TXT record at your DNS provider, then refresh. We only verify ownership — not reachability or TLS."}
                 </p>
               </div>
 
@@ -650,7 +623,7 @@ export const DomainSettings = () => {
                 </Alert>
               ) : null}
 
-              {domain.status === "verified" ? (
+              {isVerified ? (
                 <Alert variant="success">
                   <CheckIcon />
                   <AlertTitle>Valid configuration</AlertTitle>
@@ -660,39 +633,6 @@ export const DomainSettings = () => {
                   </AlertDescription>
                 </Alert>
               ) : null}
-
-              <ul className="space-y-3 rounded-xl border px-4 py-3">
-                <ChecklistItem
-                  state={ownershipState}
-                  title="TXT ownership record"
-                  description={
-                    ownershipState === "pass"
-                      ? "TXT record matched."
-                      : ownershipState === "fail"
-                        ? "Expected TXT record not found yet."
-                        : "Create the TXT record below, then verify."
-                  }
-                />
-                <ChecklistItem
-                  state="info"
-                  title="Point DNS at your app"
-                  description="At your reverse proxy or Cloudflare, route this hostname to the app. We don’t check reachability."
-                />
-                <ChecklistItem
-                  state="info"
-                  title="Terminate HTTPS at the edge"
-                  description="TLS is handled by your reverse proxy or Cloudflare — not by this app."
-                />
-              </ul>
-
-              <Alert variant="info">
-                <AlertCircleIcon />
-                <AlertTitle>TLS is operator-managed</AlertTitle>
-                <AlertDescription>
-                  We only verify DNS ownership and route the Host. Certificates stay with
-                  Cloudflare, Caddy, Nginx, or your host.
-                </AlertDescription>
-              </Alert>
 
               <Collapsible open={dnsOpen} onOpenChange={setDnsOpen}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -723,7 +663,7 @@ export const DomainSettings = () => {
                     ) : (
                       <>
                         <RefreshCwIcon className="size-4" />
-                        Refresh configuration
+                        {isVerified ? "Re-check" : "Refresh configuration"}
                       </>
                     )}
                   </Button>
@@ -734,6 +674,29 @@ export const DomainSettings = () => {
                     copiedField={copiedField}
                     onCopy={(value, field) => void handleCopy(value, field)}
                   />
+                </CollapsiblePanel>
+              </Collapsible>
+
+              <Collapsible open={edgeOpen} onOpenChange={setEdgeOpen}>
+                <CollapsibleTrigger
+                  className={cn(
+                    "inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground hover:underline"
+                  )}
+                >
+                  <ChevronDownIcon
+                    className={cn(
+                      "size-4 transition-transform duration-200",
+                      edgeOpen ? "rotate-0" : "-rotate-90"
+                    )}
+                  />
+                  Edge setup (DNS & TLS)
+                </CollapsibleTrigger>
+                <CollapsiblePanel className="pt-2">
+                  <p className="max-w-prose text-sm text-muted-foreground">
+                    Point this hostname at the app (A/CNAME or proxy) and terminate HTTPS at
+                    Cloudflare, Caddy, Nginx, or your host. We only verify the TXT ownership record
+                    and route by Host — we do not check reachability or certificates.
+                  </p>
                 </CollapsiblePanel>
               </Collapsible>
             </section>
