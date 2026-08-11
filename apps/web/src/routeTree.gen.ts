@@ -20,6 +20,7 @@ import { Route as rootLayoutTermsOfServiceIndexRouteImport } from './routes/(roo
 import { Route as rootLayoutReposIndexRouteImport } from './routes/(root-layout)/repos/index'
 import { Route as rootLayoutPrivacyPolicyIndexRouteImport } from './routes/(root-layout)/privacy-policy/index'
 import { Route as rootLayoutProfileNameIndexRouteImport } from './routes/(root-layout)/$profileName/index'
+import { Route as ApiMediaSplatRouteImport } from './routes/api/media/$'
 import { Route as ApiHealthLiveRouteImport } from './routes/[_]api/health/live'
 import { Route as rootLayoutReposRepoRouteRouteImport } from './routes/(root-layout)/repos/$repo/route'
 import { Route as rootLayoutguestSignInRouteRouteImport } from './routes/(root-layout)/(guest)/sign-in/route'
@@ -119,6 +120,11 @@ const rootLayoutProfileNameIndexRoute =
     path: '/$profileName/',
     getParentRoute: () => rootLayoutRouteRoute,
   } as any)
+const ApiMediaSplatRoute = ApiMediaSplatRouteImport.update({
+  id: '/api/media/$',
+  path: '/api/media/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthLiveRoute = ApiHealthLiveRouteImport.update({
   id: '/_api/health/live',
   path: '/_api/health/live',
@@ -366,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
+  '/api/media/$': typeof ApiMediaSplatRoute
   '/$profileName/': typeof rootLayoutProfileNameIndexRoute
   '/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos/': typeof rootLayoutReposIndexRoute
@@ -415,6 +422,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof rootLayoutIndexRoute
   '/_api/health/live': typeof ApiHealthLiveRoute
+  '/api/media/$': typeof ApiMediaSplatRoute
   '/$profileName': typeof rootLayoutProfileNameIndexRoute
   '/privacy-policy': typeof rootLayoutPrivacyPolicyIndexRoute
   '/repos': typeof rootLayoutReposIndexRoute
@@ -466,6 +474,7 @@ export interface FileRoutesById {
   '/(root-layout)/(guest)/sign-in': typeof rootLayoutguestSignInRouteRouteWithChildren
   '/(root-layout)/repos/$repo': typeof rootLayoutReposRepoRouteRouteWithChildren
   '/_api/health/live': typeof ApiHealthLiveRoute
+  '/api/media/$': typeof ApiMediaSplatRoute
   '/(root-layout)/$profileName/': typeof rootLayoutProfileNameIndexRoute
   '/(root-layout)/privacy-policy/': typeof rootLayoutPrivacyPolicyIndexRoute
   '/(root-layout)/repos/': typeof rootLayoutReposIndexRoute
@@ -519,6 +528,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/repos/$repo'
     | '/_api/health/live'
+    | '/api/media/$'
     | '/$profileName/'
     | '/privacy-policy/'
     | '/repos/'
@@ -568,6 +578,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/'
     | '/_api/health/live'
+    | '/api/media/$'
     | '/$profileName'
     | '/privacy-policy'
     | '/repos'
@@ -618,6 +629,7 @@ export interface FileRouteTypes {
     | '/(root-layout)/(guest)/sign-in'
     | '/(root-layout)/repos/$repo'
     | '/_api/health/live'
+    | '/api/media/$'
     | '/(root-layout)/$profileName/'
     | '/(root-layout)/privacy-policy/'
     | '/(root-layout)/repos/'
@@ -668,6 +680,7 @@ export interface RootRouteChildren {
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiHealthLiveRoute: typeof ApiHealthLiveRoute
+  ApiMediaSplatRoute: typeof ApiMediaSplatRoute
   ApiFilesIndexRoute: typeof ApiFilesIndexRoute
   ApiCoverLetterDownloadIndexRoute: typeof ApiCoverLetterDownloadIndexRoute
   ApiResumeDownloadIndexRoute: typeof ApiResumeDownloadIndexRoute
@@ -751,6 +764,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$profileName/'
       preLoaderRoute: typeof rootLayoutProfileNameIndexRouteImport
       parentRoute: typeof rootLayoutRouteRoute
+    }
+    '/api/media/$': {
+      id: '/api/media/$'
+      path: '/api/media/$'
+      fullPath: '/api/media/$'
+      preLoaderRoute: typeof ApiMediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_api/health/live': {
       id: '/_api/health/live'
@@ -1251,6 +1271,7 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiHealthLiveRoute: ApiHealthLiveRoute,
+  ApiMediaSplatRoute: ApiMediaSplatRoute,
   ApiFilesIndexRoute: ApiFilesIndexRoute,
   ApiCoverLetterDownloadIndexRoute: ApiCoverLetterDownloadIndexRoute,
   ApiResumeDownloadIndexRoute: ApiResumeDownloadIndexRoute,
