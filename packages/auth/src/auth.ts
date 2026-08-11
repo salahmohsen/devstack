@@ -11,12 +11,13 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { getApiBasePath, getSharedCookieDomain, joinApiPath } from "@tsu-stack/env/utils/url";
 
 import { resolveTrustedOriginsForRequest } from "./allowed-browser-origin";
-import {
-  INVITE_COOKIE_NAME,
-  readInviteCodeFromCookieHeader,
-  serializeInviteClearCookie
-} from "./invite-cookie";
+import { extractInviteCodeFromSources, readStringField } from "./invite-code";
+import { INVITE_COOKIE_NAME, serializeInviteClearCookie } from "./invite-cookie";
 import { resolveUniqueProfileName } from "./profile-name";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 const webOrigin = new URL(ENV_SERVER.VITE_WEB_URL).origin;
 const serverOrigin = new URL(ENV_SERVER.VITE_SERVER_URL).origin;
@@ -75,16 +76,6 @@ type AuthEndpointContext = {
   };
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function readStringField(source: unknown, key: string): string | null {
-  if (!isRecord(source)) return null;
-  const value = source[key];
-  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
-}
-
 /**
  * Invite code sources (never a user column):
  * 1. Email sign-up body field `inviteCode` (not in additionalFields → not persisted)
@@ -94,26 +85,20 @@ function readStringField(source: unknown, key: string): string | null {
 async function extractInviteCode(ctx: AuthEndpointContext | null): Promise<string | null> {
   if (!ctx) return null;
 
-  const fromBody = readStringField(ctx.body, "inviteCode");
-  if (fromBody) return fromBody;
-
-  if (typeof ctx.getCookie === "function") {
-    const fromGetCookie = ctx.getCookie(INVITE_COOKIE_NAME);
-    if (fromGetCookie?.trim()) return fromGetCookie.trim();
-  }
-
-  const fromHeader = readInviteCodeFromCookieHeader(ctx.headers?.get?.("cookie") ?? null);
-  if (fromHeader) return fromHeader;
-
+  let oauthStateInviteCode: string | null = null;
   try {
     const oauthState = await getOAuthState();
-    const fromState = readStringField(oauthState, "inviteCode");
-    if (fromState) return fromState;
+    oauthStateInviteCode = readStringField(oauthState, "inviteCode");
   } catch {
     // Outside OAuth callback request — ignore.
   }
 
-  return null;
+  return extractInviteCodeFromSources({
+    body: ctx.body,
+    getCookie: ctx.getCookie,
+    cookieHeader: ctx.headers?.get?.("cookie") ?? null,
+    oauthStateInviteCode
+  });
 }
 
 function clearInviteCookie(ctx: AuthEndpointContext | null): void {

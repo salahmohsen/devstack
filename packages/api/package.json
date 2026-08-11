@@ -11,7 +11,8 @@
   },
   "scripts": {
     "check": "vp check",
-    "fix": "vp check --fix"
+    "fix": "vp check --fix",
+    "test:unit": "vp test run"
   },
   "dependencies": {
     "@orpc/client": "catalog:",
@@ -36,6 +37,7 @@
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "hono": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

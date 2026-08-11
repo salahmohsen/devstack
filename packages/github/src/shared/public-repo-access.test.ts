@@ -1,12 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
+  assertRepoVisibleOnPublicSurface,
   createRepoNotFoundError,
   isGitHubAuthError,
   isPrivateOnPublicSurface,
   rejectPrivateEntityOnPublicSurface,
   repoCacheResource,
-  resolveRepoOwnerName
+  resolveRepoOwnerName,
+  withPublicGithubClient
 } from "./public-repo-access";
 
 describe("repoCacheResource", () => {
@@ -70,5 +72,66 @@ describe("isGitHubAuthError", () => {
     expect(isGitHubAuthError(Object.assign(new Error("x"), { status: 403 }))).toBe(true);
     expect(isGitHubAuthError(new Error("Bad credentials"))).toBe(true);
     expect(isGitHubAuthError(Object.assign(new Error("x"), { status: 500 }))).toBe(false);
+  });
+});
+
+describe("withPublicGithubClient", () => {
+  it("returns the first successful run without retry", async () => {
+    const run = vi.fn(async () => "ok");
+    await expect(withPublicGithubClient({} as never, "public", run)).resolves.toBe("ok");
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry on private surface auth errors", async () => {
+    const authError = Object.assign(new Error("Bad credentials"), { status: 401 });
+    const run = vi.fn(async () => {
+      throw authError;
+    });
+    await expect(withPublicGithubClient({} as never, "private", run)).rejects.toBe(authError);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries once with anonymous client on public surface auth error", async () => {
+    const authError = Object.assign(new Error("Bad credentials"), { status: 401 });
+    let calls = 0;
+    const run = vi.fn(async () => {
+      calls += 1;
+      if (calls === 1) throw authError;
+      return "public-ok";
+    });
+    await expect(withPublicGithubClient({} as never, "public", run)).resolves.toBe("public-ok");
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("assertRepoVisibleOnPublicSurface", () => {
+  it("no-ops on the private surface (never calls repos.get)", async () => {
+    const get = vi.fn();
+    const octokit = { rest: { repos: { get } } } as never;
+    await expect(
+      assertRepoVisibleOnPublicSurface(octokit, "o", "r", "private")
+    ).resolves.toBeUndefined();
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it("allows public repos on the public surface", async () => {
+    const get = vi.fn(async () => {
+      return { data: { private: false } };
+    });
+    const octokit = { rest: { repos: { get } } } as never;
+    await expect(
+      assertRepoVisibleOnPublicSurface(octokit, "o", "r", "public")
+    ).resolves.toBeUndefined();
+    expect(get).toHaveBeenCalledWith({ owner: "o", repo: "r" });
+  });
+
+  it("throws 404-style error when the repo is private on the public surface", async () => {
+    const get = vi.fn(async () => {
+      return { data: { private: true } };
+    });
+    const octokit = { rest: { repos: { get } } } as never;
+    await expect(
+      assertRepoVisibleOnPublicSurface(octokit, "o", "secret", "public")
+    ).rejects.toMatchObject({ status: 404, message: expect.stringMatching(/secret/i) });
   });
 });
