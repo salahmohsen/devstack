@@ -1,11 +1,11 @@
-import { Check, ClipboardCopy } from "lucide-react";
-import { createContext, Suspense, use, useCallback, useContext, useRef, useState } from "react";
+import { createContext, Suspense, use, useContext } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { remarkAlert } from "remark-github-blockquote-alert";
+import { toast } from "sonner";
 
-import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { highlightCode } from "@/shared/lib/highlight-code";
@@ -43,35 +43,21 @@ function resolveAssetSrcSet(
     .join(", ");
 }
 
-function CopyButton({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const handleClick = useCallback(() => {
-    void navigator.clipboard.writeText(code);
-    setCopied(true);
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setCopied(false), 1500);
-  }, [code]);
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-muted hover:text-foreground"
-    >
-      <IconMorph active={copied} iconA={<ClipboardCopy size={14} />} iconB={<Check size={14} />} />
-    </button>
-  );
-}
-
 function ShikiCodeInner({ code, lang }: { code: string; lang: string }) {
   const html = use(highlightCode(code, lang));
 
   return (
     <div className="group/code relative mb-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:text-xs">
       <div dangerouslySetInnerHTML={{ __html: html }} />
-      <CopyButton code={code} />
+      <CopyButton
+        value={code}
+        label="Copy code"
+        variant="ghost"
+        size="icon"
+        iconSize={14}
+        className="absolute top-2 right-2 size-7 text-muted-foreground opacity-0 transition-all group-hover/code:opacity-100 hover:bg-muted hover:text-foreground"
+        onError={() => toast.error("Could not copy code")}
+      />
     </div>
   );
 }

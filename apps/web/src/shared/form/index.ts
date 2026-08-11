@@ -17,4 +17,5 @@ export { RichTextField } from "./rich-text-field";
 export { StackSelector } from "./stack-selector";
 export { SubmitButton } from "./submit-button";
 export { SwitchField } from "./switch-field";
+export { UsernameField } from "./username-field";
 export { YearField } from "./year-field";

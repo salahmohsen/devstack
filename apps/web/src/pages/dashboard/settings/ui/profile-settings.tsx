@@ -5,7 +5,6 @@ import {
   Calendar,
   Check,
   ChevronsUpDown,
-  Copy,
   Edit,
   ExternalLink,
   FileUp,
@@ -31,6 +30,7 @@ import {
   ComboboxPrimitive,
   ComboboxTrigger
 } from "@tsu-stack/ui/components/combobox";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import { FieldGroup, FieldSet } from "@tsu-stack/ui/components/field";
 import {
   Frame,
@@ -56,6 +56,7 @@ import { SortableList } from "@/shared/ui/sortable-list";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
+  checkUsernameAvailability,
   getProfileQueryOptions,
   getUpdateProfileMutationOptions,
   useGetProfileQuery,
@@ -257,8 +258,9 @@ export function ProfileSettings() {
 
   const renameForm = useAppForm({
     defaultValues: { username: currentUsername },
+    // Format is validated on the field; form-level keeps submit aligned with schema.
     validators: {
-      onChange: RenameUsernameFormSchema
+      onSubmit: RenameUsernameFormSchema
     },
     onSubmit: async ({ value }) => {
       try {
@@ -301,17 +303,6 @@ export function ProfileSettings() {
     () => (currentUsername ? publicProfileUrl(currentUsername) : ""),
     [currentUsername]
   );
-  const publicPath = currentUsername ? publicProfilePath(currentUsername) : "";
-
-  const handleCopyPublicUrl = async () => {
-    if (!publicUrl) return;
-    try {
-      await navigator.clipboard.writeText(publicUrl);
-      toast.success("Public profile URL copied");
-    } catch {
-      toast.error("Could not copy URL");
-    }
-  };
 
   const handleSendVerification = async () => {
     const email = session?.user?.email;
@@ -728,16 +719,19 @@ export function ProfileSettings() {
           >
             {currentUsername ? (
               <div className="flex flex-col gap-2 rounded-xl border border-border/80 p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
                   <p className="text-sm font-medium text-foreground">Public path</p>
-                  <p className="truncate font-mono text-sm text-muted-foreground">{publicPath}</p>
                   <p className="truncate text-xs text-muted-foreground">{publicUrl}</p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <Button onClick={() => void handleCopyPublicUrl()} size="sm" variant="outline">
-                    <Copy aria-hidden="true" />
-                    Copy URL
-                  </Button>
+                  <CopyButton
+                    value={publicUrl}
+                    label="Copy URL"
+                    showLabel
+                    size="sm"
+                    variant="outline"
+                    onError={() => toast.error("Could not copy URL")}
+                  />
                   <Button
                     size="sm"
                     variant="outline"
@@ -768,11 +762,42 @@ export function ProfileSettings() {
               className="flex flex-col gap-3 sm:flex-row sm:items-end"
             >
               <div className="min-w-0 flex-1">
-                <renameForm.AppField name="username">
+                <renameForm.AppField
+                  name="username"
+                  validators={{
+                    onChange: ({ value }) => {
+                      const parsed = UsernameSchema.safeParse(value);
+                      if (!parsed.success) {
+                        return parsed.error.issues[0]?.message ?? "Invalid username";
+                      }
+                      return undefined;
+                    },
+                    // Debounce network checks only (format stays instant via onChange).
+                    onChangeAsyncDebounceMs: 400,
+                    onChangeAsync: async ({ value, signal }) => {
+                      // Sync onChange already rejected invalid format; re-parse for normalized value.
+                      const parsed = UsernameSchema.safeParse(value);
+                      if (!parsed.success) return undefined;
+                      if (parsed.data === currentUsername) return undefined;
+                      try {
+                        const result = await checkUsernameAvailability(parsed.data, signal);
+                        if (!result.available) {
+                          return result.message ?? "That username is already taken.";
+                        }
+                        return undefined;
+                      } catch {
+                        if (signal.aborted) return undefined;
+                        return "Could not check username availability";
+                      }
+                    }
+                  }}
+                >
                   {(field) => (
-                    <field.InputField
+                    <field.UsernameField
+                      currentUsername={currentUsername}
                       label="Username"
-                      description="3–30 lowercase letters, numbers, and single hyphens"
+                      description="3–30 lowercase letters, numbers, and single hyphens. Availability is checked as you type."
+                      placeholder="your-name"
                     />
                   )}
                 </renameForm.AppField>
@@ -782,21 +807,24 @@ export function ProfileSettings() {
                   return {
                     canSubmit: state.canSubmit,
                     isSubmitting: state.isSubmitting,
+                    isValidating: state.isValidating,
                     username: state.values.username
                   };
                 }}
               >
-                {({ canSubmit, isSubmitting, username }) => (
+                {({ canSubmit, isSubmitting, isValidating, username }) => (
                   <Button
                     disabled={
                       !canSubmit ||
                       isSubmitting ||
+                      isValidating ||
                       renameMutation.isPending ||
-                      username === currentUsername
+                      username.trim().toLowerCase() === currentUsername
                     }
                     loading={isSubmitting || renameMutation.isPending}
                     size="sm"
                     type="submit"
+                    className="sm:mb-0.5"
                   >
                     Rename
                   </Button>

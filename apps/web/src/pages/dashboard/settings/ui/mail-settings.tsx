@@ -1,11 +1,12 @@
 "use client";
 
-import { CheckIcon, CopyIcon, InboxIcon, RefreshCwIcon } from "lucide-react";
+import { InboxIcon, RefreshCwIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Frame,
   FrameDescription,
@@ -56,7 +57,6 @@ export function MailSettings() {
   const query = useGetMailSettingsQuery();
   const update = useUpdateMailSettingsMutation();
   const [draft, setDraft] = useState<FormState | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Keep an open draft across refetches / focus changes. Only re-sync from the
   // server when there is no local draft (initial load or after save/discard).
@@ -112,18 +112,6 @@ export function MailSettings() {
       setDraft(null);
     } catch {
       toast.error("Could not save mail settings");
-    }
-  }
-
-  async function copyWebhookUrl() {
-    if (!query.data?.webhookUrl) return;
-    try {
-      await navigator.clipboard.writeText(query.data.webhookUrl);
-      setCopied(true);
-      toast.success("Webhook URL copied");
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error("Could not copy URL");
     }
   }
 
@@ -356,24 +344,15 @@ export function MailSettings() {
                 aria-label="Resend webhook URL"
               />
               <div className="flex shrink-0 gap-2">
-                <Button
-                  type="button"
+                <CopyButton
+                  value={query.data.webhookUrl ?? ""}
+                  label="Copy"
+                  showLabel
                   size="sm"
                   variant="outline"
-                  onClick={() => void copyWebhookUrl()}
-                >
-                  {copied ? (
-                    <>
-                      <CheckIcon className="size-3.5" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <CopyIcon className="size-3.5" />
-                      Copy
-                    </>
-                  )}
-                </Button>
+                  iconSize={14}
+                  onError={() => toast.error("Could not copy URL")}
+                />
                 <Button
                   type="button"
                   size="sm"

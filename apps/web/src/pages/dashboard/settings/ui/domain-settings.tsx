@@ -2,7 +2,6 @@ import {
   AlertCircleIcon,
   CheckIcon,
   ChevronDownIcon,
-  CopyIcon,
   ExternalLinkIcon,
   GlobeIcon,
   Loader2Icon,
@@ -33,6 +32,7 @@ import {
   CollapsiblePanel,
   CollapsibleTrigger
 } from "@tsu-stack/ui/components/collapsible";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Empty,
   EmptyContent,
@@ -123,34 +123,6 @@ function dnsRecordsClipboard(domain: CustomDomainOutput): string {
   ].join("\n");
 }
 
-function CopyFieldButton({
-  value,
-  fieldKey,
-  copiedField,
-  onCopy,
-  label
-}: {
-  value: string;
-  fieldKey: string;
-  copiedField: string | null;
-  onCopy: (value: string, field: string) => void;
-  label: string;
-}) {
-  const copied = copiedField === fieldKey;
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="size-8 shrink-0"
-      onClick={() => onCopy(value, fieldKey)}
-    >
-      {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-      <span className="sr-only">{label}</span>
-    </Button>
-  );
-}
-
 function DomainHostnameForm({
   initialHostname,
   submitLabel,
@@ -227,15 +199,7 @@ function DomainHostnameForm({
   );
 }
 
-function DomainDnsTable({
-  domain,
-  copiedField,
-  onCopy
-}: {
-  domain: CustomDomainOutput;
-  copiedField: string | null;
-  onCopy: (value: string, field: string) => void;
-}) {
+function DomainDnsTable({ domain }: { domain: CustomDomainOutput }) {
   return (
     <div className="space-y-3">
       <div className="overflow-hidden rounded-xl border">
@@ -265,19 +229,21 @@ function DomainDnsTable({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-0.5">
-                  <CopyFieldButton
+                  <CopyButton
                     value={domain.verificationRecordName}
-                    fieldKey="record-name"
-                    copiedField={copiedField}
-                    onCopy={onCopy}
                     label="Copy record name"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    onError={() => toast.error("Could not copy")}
                   />
-                  <CopyFieldButton
+                  <CopyButton
                     value={domain.verificationRecordValue}
-                    fieldKey="record-value"
-                    copiedField={copiedField}
-                    onCopy={onCopy}
                     label="Copy record value"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    onError={() => toast.error("Could not copy")}
                   />
                 </div>
               </TableCell>
@@ -285,24 +251,14 @@ function DomainDnsTable({
           </TableBody>
         </Table>
       </div>
-      <Button
-        type="button"
-        variant="outline"
+      <CopyButton
+        value={dnsRecordsClipboard(domain)}
+        label="Copy all records"
+        showLabel
         size="sm"
-        onClick={() => onCopy(dnsRecordsClipboard(domain), "copy-all")}
-      >
-        {copiedField === "copy-all" ? (
-          <>
-            <CheckIcon className="size-4" />
-            Copied
-          </>
-        ) : (
-          <>
-            <CopyIcon className="size-4" />
-            Copy all records
-          </>
-        )}
-      </Button>
+        variant="outline"
+        onError={() => toast.error("Could not copy")}
+      />
     </div>
   );
 }
@@ -343,7 +299,6 @@ export const DomainSettings = () => {
   const [dnsOpen, setDnsOpen] = useState(true);
   const [edgeOpen, setEdgeOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [lastVerifyError, setLastVerifyError] = useState<string | null>(null);
 
   const customUrl = useMemo(() => {
@@ -360,19 +315,6 @@ export const DomainSettings = () => {
       setLastVerifyError(null);
     }
   }, [domain?.id, domain?.status, domain?.hostname]);
-
-  const handleCopy = useCallback(async (value: string, field: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopiedField(field);
-      toast.success("Copied");
-      window.setTimeout(() => {
-        setCopiedField((current) => (current === field ? null : current));
-      }, 2000);
-    } catch {
-      toast.error("Could not copy");
-    }
-  }, []);
 
   const handleSaveHostname = useCallback(
     async (hostname: string) => {
@@ -667,11 +609,7 @@ export const DomainSettings = () => {
                   </Button>
                 </div>
                 <CollapsiblePanel className="pt-3">
-                  <DomainDnsTable
-                    domain={domain}
-                    copiedField={copiedField}
-                    onCopy={(value, field) => void handleCopy(value, field)}
-                  />
+                  <DomainDnsTable domain={domain} />
                 </CollapsiblePanel>
               </Collapsible>
 

@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, Code, Copy, Download, GitBranch } from "lucide-react";
+import { Check, ChevronDown, Code, Download, GitBranch } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type RepoOverview } from "@tsu-stack/github/repo/shared.types.js";
@@ -12,6 +13,7 @@ import {
   CommandItem,
   CommandList
 } from "@tsu-stack/ui/components/command";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Frame,
   FrameFooter,
@@ -19,7 +21,6 @@ import {
   FramePanel,
   FrameTitle
 } from "@tsu-stack/ui/components/frame.js";
-import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
 import { Kbd } from "@tsu-stack/ui/components/kbd.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
@@ -219,7 +220,6 @@ function BranchSelector({
 
 function CodePopover({ repo }: { repo: RepoOverview }) {
   const [selectedProtocol, setSelectedProtocol] = useRepoCloneProtocol();
-  const [copied, setCopied] = useState(false);
   const httpsUrl = `https://github.com/${repo.fullName}.git`;
   const sshUrl = `git@github.com:${repo.fullName}.git`;
   const cliCommand = `gh repo clone ${repo.fullName}`;
@@ -231,12 +231,6 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
     },
     [setSelectedProtocol]
   );
-
-  const handleCopy = useCallback((text: string) => {
-    void navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, []);
 
   return (
     <Popover>
@@ -267,21 +261,17 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
               </TabsList>
 
               <TabsContent value="https" className="w-full min-w-0 py-4">
-                <CloneInput copied={copied} onCopy={() => handleCopy(httpsUrl)} value={httpsUrl} />
+                <CloneInput value={httpsUrl} />
                 <p className="mt-1.5 text-xs text-muted-foreground">Clone using the web URL.</p>
               </TabsContent>
               <TabsContent value="ssh" className="w-full min-w-0 pt-4 pb-3">
-                <CloneInput copied={copied} onCopy={() => handleCopy(sshUrl)} value={sshUrl} />
+                <CloneInput value={sshUrl} />
                 <p className="mt-1.5 text-xs text-muted-foreground">
                   Use a password-protected SSH key.
                 </p>
               </TabsContent>
               <TabsContent value="cli" className="w-full min-w-0 pt-4 pb-3">
-                <CloneInput
-                  copied={copied}
-                  onCopy={() => handleCopy(cliCommand)}
-                  value={cliCommand}
-                />
+                <CloneInput value={cliCommand} />
                 <p className="mt-1.5 text-xs text-muted-foreground">
                   Work fast with the official CLI.
                 </p>
@@ -304,15 +294,7 @@ function CodePopover({ repo }: { repo: RepoOverview }) {
   );
 }
 
-function CloneInput({
-  copied,
-  onCopy,
-  value
-}: {
-  copied: boolean;
-  onCopy: () => void;
-  value: string;
-}) {
+function CloneInput({ value }: { value: string }) {
   return (
     <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5">
       <input
@@ -322,13 +304,15 @@ function CloneInput({
         onFocus={(e) => e.currentTarget.select()}
         className="w-full min-w-0 truncate rounded-md border border-border bg-surface-1 px-2.5 py-1.5 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
-      <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={onCopy}>
-        <IconMorph
-          active={copied}
-          iconA={<Copy size={14} />}
-          iconB={<Check size={14} className="text-success" />}
-        />
-      </Button>
+      <CopyButton
+        value={value}
+        label="Copy clone command"
+        variant="ghost"
+        size="icon"
+        iconSize={14}
+        className="size-7 shrink-0"
+        onError={() => toast.error("Could not copy clone command")}
+      />
     </div>
   );
 }

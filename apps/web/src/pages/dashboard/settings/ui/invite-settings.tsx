@@ -1,11 +1,12 @@
-import { Check, Copy, Link2, Plus, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Link2, Plus, Trash2 } from "lucide-react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { type InviteOutput } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Frame,
   FrameDescription,
@@ -68,7 +69,6 @@ export const InviteSettings = () => {
   const { data: invites = [], isLoading, isError } = useListInvitesQuery();
   const createInvite = useCreateInviteMutation();
   const revokeInvite = useRevokeInviteMutation();
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const handleCreate = useCallback(() => {
     createInvite.mutate(
@@ -83,19 +83,6 @@ export const InviteSettings = () => {
       }
     );
   }, [createInvite]);
-
-  const handleCopy = useCallback(async (code: string) => {
-    try {
-      await navigator.clipboard.writeText(inviteSignupUrl(code));
-      setCopiedCode(code);
-      toast.success("Invite link copied");
-      window.setTimeout(() => {
-        setCopiedCode((current) => (current === code ? null : current));
-      }, 2000);
-    } catch {
-      toast.error("Could not copy link");
-    }
-  }, []);
 
   const handleRevoke = useCallback(
     (id: string) => {
@@ -187,21 +174,14 @@ export const InviteSettings = () => {
                       <div className="inline-flex items-center justify-end gap-1">
                         {isUnused ? (
                           <>
-                            <Button
-                              type="button"
+                            <CopyButton
+                              value={inviteSignupUrl(invite.code)}
+                              label="Copy invite link"
                               variant="ghost"
                               size="icon"
                               className="size-8"
-                              title="Copy signup link"
-                              onClick={() => void handleCopy(invite.code)}
-                            >
-                              {copiedCode === invite.code ? (
-                                <Check className="size-4" />
-                              ) : (
-                                <Copy className="size-4" />
-                              )}
-                              <span className="sr-only">Copy invite link</span>
-                            </Button>
+                              onError={() => toast.error("Could not copy link")}
+                            />
                             <Button
                               type="button"
                               variant="ghost"

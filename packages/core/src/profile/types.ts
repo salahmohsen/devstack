@@ -119,6 +119,40 @@ export const RenameUsernameInputSchema = z.object({
 export type RenameUsernameInput = z.infer<typeof RenameUsernameInputSchema>;
 
 /**
+ * Live availability check input. Accepts any non-empty string so the API can
+ * return structured `invalid` / `reserved` instead of a 400 for partial typing.
+ */
+export const CheckUsernameInputSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1)
+    .max(USERNAME_MAX + 10)
+});
+
+export type CheckUsernameInput = z.infer<typeof CheckUsernameInputSchema>;
+
+export const UsernameAvailabilityStatusSchema = z.enum([
+  "available",
+  "current",
+  "taken",
+  "reserved",
+  "invalid"
+]);
+
+export type UsernameAvailabilityStatus = z.infer<typeof UsernameAvailabilityStatusSchema>;
+
+export const CheckUsernameOutputSchema = z.object({
+  username: z.string(),
+  available: z.boolean(),
+  status: UsernameAvailabilityStatusSchema,
+  message: z.string().optional()
+});
+
+export type CheckUsernameOutput = z.infer<typeof CheckUsernameOutputSchema>;
+
+/**
  * Public procedures that scope data to a path segment and/or verified Host.
  * When `username` is omitted, the request Host (verified custom domain) must resolve.
  */

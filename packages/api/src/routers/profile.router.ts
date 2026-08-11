@@ -1,11 +1,15 @@
 import { z } from "zod";
 
 import {
+  CheckUsernameInputSchema,
+  CheckUsernameOutputSchema,
   contactOutputSchema,
+  parseUsername,
   ProfileOutputSchema,
   ProfileUpdateInputSchema,
   PublicUsernameInputSchema,
-  RenameUsernameInputSchema
+  RenameUsernameInputSchema,
+  RESERVED_USERNAME_PATH_SET
 } from "@tsu-stack/core";
 import { contactRepository, usernameSlugAliasRepository, userRepository } from "@tsu-stack/db";
 import { type UserSchemaSelect } from "@tsu-stack/db/types";
@@ -119,6 +123,68 @@ export const profileRouter = {
           : await contactRepository.findByUserId(userId);
 
       return toProfileOutput(updatedUser, contacts);
+    }),
+  checkUsername: protectedProcedure
+    .route({
+      description: "Check whether a public username is available for the current user",
+      method: "GET"
+    })
+    .input(CheckUsernameInputSchema)
+    .output(CheckUsernameOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const username = input.username;
+
+      const parsed = parseUsername(username);
+      if (!parsed.success) {
+        const reserved = RESERVED_USERNAME_PATH_SET.has(username);
+        return {
+          username,
+          available: false,
+          status: reserved ? ("reserved" as const) : ("invalid" as const),
+          message: reserved
+            ? "This name is reserved"
+            : (parsed.error.issues[0]?.message ??
+              "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens.")
+        };
+      }
+
+      const normalized = parsed.data;
+
+      const current = await userRepository.findById(userId);
+      if (current?.username === normalized) {
+        return {
+          username: normalized,
+          available: true,
+          status: "current" as const
+        };
+      }
+
+      const nameOwner = await userRepository.findByUsername(normalized);
+      if (nameOwner && nameOwner.id !== userId) {
+        return {
+          username: normalized,
+          available: false,
+          status: "taken" as const,
+          message: "That username is already taken."
+        };
+      }
+
+      const aliasOwner = await usernameSlugAliasRepository.findBySlug(normalized);
+      if (aliasOwner && aliasOwner.userId !== userId) {
+        return {
+          username: normalized,
+          available: false,
+          status: "taken" as const,
+          message: "That username is already taken."
+        };
+      }
+
+      return {
+        username: normalized,
+        available: true,
+        status: "available" as const
+      };
     }),
   rename: protectedProcedure
     .route({

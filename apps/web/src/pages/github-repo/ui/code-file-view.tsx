@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Check, Code, Copy, Download, Eye, File, GitCommitHorizontal } from "lucide-react";
-import { Suspense, use, useCallback, useMemo, useRef, useState } from "react";
+import { Code, Download, Eye, File, GitCommitHorizontal } from "lucide-react";
+import { Suspense, use, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { type GitHubTreeEntryCommit } from "@tsu-stack/github/types";
-import { IconMorph } from "@tsu-stack/ui/components/icon-motion";
+import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -370,17 +371,6 @@ function FileViewHeader({
   repo?: string;
   size?: number | null;
 }) {
-  const [copied, setCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const handleCopy = useCallback(async () => {
-    if (!code) return;
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setCopied(false), 1500);
-  }, [code]);
-
   return (
     <div className="flex items-center gap-2 border-b bg-surface-1 px-4 py-2.5 text-sm">
       <File size={14} className="shrink-0 text-muted-foreground" />
@@ -396,20 +386,17 @@ function FileViewHeader({
       </div>
       <div className="ml-auto flex items-center gap-2">
         {children}
-        {code && (
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-1 hover:text-foreground"
-            title={copied ? "Copied!" : "Copy file content"}
-          >
-            <IconMorph
-              active={copied}
-              iconA={<Copy size={14} />}
-              iconB={<Check size={14} className="text-success" />}
-            />
-          </button>
-        )}
+        {code ? (
+          <CopyButton
+            value={code}
+            label="Copy file content"
+            variant="ghost"
+            size="icon"
+            iconSize={14}
+            className="size-7 text-muted-foreground hover:bg-surface-1 hover:text-foreground"
+            onError={() => toast.error("Could not copy file")}
+          />
+        ) : null}
         {repo && currentRef && path && (
           <a
             href={`https://raw.githubusercontent.com/${repo}/${currentRef}/${path}`}

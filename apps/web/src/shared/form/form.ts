@@ -21,6 +21,7 @@ import { PasswordInputField } from "./password-input-field";
 import { RichTextField } from "./rich-text-field";
 import { SecretInputField } from "./secret-input-field";
 import { SubmitButton } from "./submit-button";
+import { UsernameField } from "./username-field";
 import { YearField } from "./year-field";
 
 export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppFormContext } =
@@ -44,7 +45,8 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       SwitchField,
       ImageField,
       IconPickerField,
-      IconifyField
+      IconifyField,
+      UsernameField
     },
     fieldContext,
     formComponents: {
