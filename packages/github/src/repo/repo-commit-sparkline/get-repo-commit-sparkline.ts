@@ -23,7 +23,8 @@ import {
   type RepoAccessSurface,
   assertRepoVisibleOnPublicSurface,
   repoCacheResource,
-  resolveRepoOwnerName
+  resolveRepoOwnerName,
+  withPublicGithubClient
 } from "#@/shared/public-repo-access";
 import { type GitHubRepoCommitSparkline } from "#@/types";
 
@@ -46,12 +47,10 @@ async function _fetchRepoCommitSparkline(
     return emptyRepoCommitSparkline();
   }
 
+  const { owner: repoOwner, name: repoName } = resolveRepoOwnerName(input.repo, source.owner);
+
   try {
-    const { owner: privacyOwner, name: privacyRepo } = resolveRepoOwnerName(
-      input.repo,
-      source.owner
-    );
-    await assertRepoVisibleOnPublicSurface(octokit, privacyOwner, privacyRepo, surface);
+    await assertRepoVisibleOnPublicSurface(octokit, repoOwner, repoName, surface);
   } catch (error) {
     if (isGitHubNotFoundError(error)) {
       setRepoLoggerOutcome(context, "github_repo_public_access_denied_or_missing");
@@ -69,12 +68,15 @@ async function _fetchRepoCommitSparkline(
   try {
     const result = await getCachedGitHubRequest<GitHubRepoCommitSparkline>({
       fetcher: async () => {
-        const response = await octokit.rest.repos.listCommits({
-          owner: source.owner,
-          per_page: 100,
-          repo: input.repo,
-          since
-        });
+        // Prefer tenant OAuth; on public surface retry anonymous if the token is dead.
+        const response = await withPublicGithubClient(octokit, surface, (client) =>
+          client.rest.repos.listCommits({
+            owner: repoOwner,
+            per_page: 100,
+            repo: repoName,
+            since
+          })
+        );
 
         return {
           data: mapRepoCommitSparkline(response.data as GitHubRepoCommitListItem[]),

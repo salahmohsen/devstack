@@ -38,18 +38,20 @@ export function RepoCommitSparkline({ profileName, repo }: { profileName: string
   const strokeOpacity = hasActivity ? 1 : 0.5;
   const gradientStops = hasActivity ? ACTIVE_GRADIENT_STOPS : INACTIVE_GRADIENT_STOPS;
 
+  // Server buckets ~16 weeks (see mapRepoCommitSparkline WEEK_COUNT).
+  const weekCount = weekly.length > 0 ? weekly.length : 16;
   const chartData =
     weekly.length > 0
       ? weekly.map((commits, i) => {
           return { i, commits };
         })
-      : Array.from({ length: 52 }, (_, i) => {
+      : Array.from({ length: weekCount }, (_, i) => {
           return { i, commits: 0 };
         });
 
   const chartLabel = hasActivity
-    ? `Weekly commit activity for ${repo}, last 52 weeks`
-    : `No commits in the last 52 weeks for ${repo}`;
+    ? `Weekly commit activity for ${repo}, last ${weekCount} weeks`
+    : `No commits in the last ${weekCount} weeks for ${repo}`;
 
   return (
     <figure className="pointer-events-none shrink-0 select-none" aria-label={chartLabel}>
