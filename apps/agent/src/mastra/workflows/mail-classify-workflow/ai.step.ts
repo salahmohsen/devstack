@@ -17,7 +17,7 @@ import {
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { USER_SMART_FILTERS_CTX } from "#@/mastra/agents/mail-classifier-agent";
-import { generateModelOption } from "#@/mastra/byo-model";
+import { applyLlmToRequestContext, generateModelOption } from "#@/mastra/byo-model";
 
 const LlmLabelSchema = z.object({
   systemLabel: MailSystemLabelSchema.nullable(),
@@ -107,6 +107,9 @@ ${fewShot ? `\n${fewShot}` : ""}`;
 
     const requestContext = new RequestContext();
     requestContext.set(USER_SMART_FILTERS_CTX, smartRules);
+    // Agent default model is byoModelFromRequestContext — must stamp LLM keys
+    // even when passing `model` (skills/tool re-entry use the agent callback).
+    applyLlmToRequestContext(requestContext, inputData.llm);
 
     try {
       const result = await Promise.race([

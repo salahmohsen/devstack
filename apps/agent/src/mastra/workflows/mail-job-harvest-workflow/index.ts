@@ -1,4 +1,4 @@
-import { RequestContext } from "@mastra/core/request-context";
+import { type RequestContext } from "@mastra/core/di";
 import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 
@@ -9,7 +9,6 @@ import {
   HarvestJobPreferenceSchema,
   inferApplicationSource,
   isValidHarvestedJob,
-  LLM_REQUEST_CONTEXT_KEYS,
   MailJobHarvestWorkflowInputSchema,
   MailJobHarvestWorkflowOutputSchema,
   MailNotifierExtractSchema,
@@ -19,19 +18,12 @@ import {
   type ScoredHarvestedJob
 } from "@tsu-stack/core";
 
-import { generateModelOption } from "#@/mastra/byo-model";
+import { createByoRequestContext, generateModelOption } from "#@/mastra/byo-model";
 import { fetchJobPageContent } from "#@/mastra/tools/fetch-job-page.tool";
 
 /** BYO model agents still resolve via requestContext when model override is incomplete. */
 function harvestRequestContext(llm: RuntimeLlmConfig | undefined, userId: string): RequestContext {
-  const requestContext = new RequestContext();
-  requestContext.set("userId", userId);
-  if (llm?.modelId) {
-    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.modelId, llm.modelId);
-    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.providerKind, llm.providerKind);
-    if (llm.apiKey) requestContext.set(LLM_REQUEST_CONTEXT_KEYS.apiKey, llm.apiKey);
-  }
-  return requestContext;
+  return createByoRequestContext(llm, { userId });
 }
 
 const MAIL_EXTRACT_TIMEOUT_MS = 90_000;

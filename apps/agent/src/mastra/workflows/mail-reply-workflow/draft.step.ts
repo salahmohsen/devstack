@@ -9,7 +9,7 @@ import {
 } from "@tsu-stack/core";
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
-import { generateModelOption } from "#@/mastra/byo-model";
+import { applyLlmToRequestContext, generateModelOption } from "#@/mastra/byo-model";
 
 const LlmDraftSchema = z.object({
   title: z.string().min(1).max(200),
@@ -83,6 +83,8 @@ Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
 
     const requestContext = new RequestContext();
     requestContext.set("userId", inputData.userId);
+    // Agent default model is byoModelFromRequestContext (see harvest workflow).
+    applyLlmToRequestContext(requestContext, inputData.llm);
 
     try {
       const result = await Promise.race([

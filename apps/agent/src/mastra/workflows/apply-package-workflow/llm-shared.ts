@@ -1,9 +1,9 @@
-import { RequestContext } from "@mastra/core/request-context";
+import { type RequestContext } from "@mastra/core/di";
 import { type z } from "zod";
 
-import { LLM_REQUEST_CONTEXT_KEYS, type RuntimeLlmConfig } from "@tsu-stack/core";
+import { type RuntimeLlmConfig } from "@tsu-stack/core";
 
-import { type GenerateModelOverride } from "#@/mastra/runtime-llm";
+import { createByoRequestContext, type GenerateModelOverride } from "#@/mastra/runtime-llm";
 
 export const REWRITE_CHUNK_TIMEOUT_MS = 60_000;
 export const LETTERS_TIMEOUT_MS = 90_000;
@@ -15,13 +15,8 @@ export function applyPackageRequestContext(
   llm: RuntimeLlmConfig | undefined,
   applicationId: string
 ): RequestContext {
-  const requestContext = new RequestContext();
+  const requestContext = createByoRequestContext(llm);
   requestContext.set("applicationId", applicationId);
-  if (llm?.modelId) {
-    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.modelId, llm.modelId);
-    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.providerKind, llm.providerKind);
-    if (llm.apiKey) requestContext.set(LLM_REQUEST_CONTEXT_KEYS.apiKey, llm.apiKey);
-  }
   return requestContext;
 }
 

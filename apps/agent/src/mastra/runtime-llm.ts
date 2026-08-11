@@ -1,3 +1,5 @@
+import { RequestContext } from "@mastra/core/di";
+
 import {
   LLM_REQUEST_CONTEXT_KEYS,
   providerKindFromModelId,
@@ -12,6 +14,34 @@ export type GenerateModelOverride = {
   id: `${string}/${string}`;
   apiKey: string;
 };
+
+/**
+ * Agents use `model: byoModelFromRequestContext`. Per-call `generate({ model })`
+ * is not always enough — skills/tool steps re-enter the agent model callback.
+ * Always stamp BYO credentials onto requestContext before generate.
+ */
+export function applyLlmToRequestContext(
+  requestContext: RequestContext,
+  llm: RuntimeLlmConfig | undefined
+): void {
+  if (!llm?.modelId?.trim()) return;
+  requestContext.set(LLM_REQUEST_CONTEXT_KEYS.modelId, llm.modelId);
+  requestContext.set(LLM_REQUEST_CONTEXT_KEYS.providerKind, llm.providerKind);
+  if (llm.apiKey?.trim()) {
+    requestContext.set(LLM_REQUEST_CONTEXT_KEYS.apiKey, llm.apiKey);
+  }
+}
+
+/** Fresh RequestContext with optional userId + BYO LLM keys. */
+export function createByoRequestContext(
+  llm: RuntimeLlmConfig | undefined,
+  extras?: { userId?: string }
+): RequestContext {
+  const requestContext = new RequestContext();
+  if (extras?.userId) requestContext.set("userId", extras.userId);
+  applyLlmToRequestContext(requestContext, llm);
+  return requestContext;
+}
 
 export type ResolvedGenerateModel =
   | {
