@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
+import { FileTextIcon, LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
 
 import { type ApplicationOutput } from "@tsu-stack/core";
@@ -22,10 +22,12 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
 import { useApplicationsView } from "@/pages/dashboard/applications/_lib/use-applications-view";
+import { useInvalidateApplicationsOnHubCreate } from "@/pages/dashboard/applications/_lib/use-invalidate-applications-on-hub-create";
 import { ApplicationFormSheet } from "@/pages/dashboard/applications/application-form-sheet";
 import { ApplicationInfoPanel } from "@/pages/dashboard/applications/ui/application-info-panel";
 import { ApplyPackageSheet } from "@/pages/dashboard/applications/ui/apply-package-sheet";
 import { ApplicationsBoard } from "@/pages/dashboard/applications/ui/board";
+import { ImportJdSheet } from "@/pages/dashboard/applications/ui/import-jd-sheet";
 import { ApplicationsList } from "@/pages/dashboard/applications/ui/list";
 import { SendOutreachDialog } from "@/pages/dashboard/applications/ui/send-outreach-dialog";
 
@@ -34,6 +36,8 @@ const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 export function ApplicationsPage() {
   const { view, setView } = useApplicationsView();
   const listQuery = useListApplicationsQuery();
+  // Shared hub stream → invalidate board when create-application succeeds.
+  useInvalidateApplicationsOnHubCreate();
   const {
     sheetOpen,
     sheetMode,
@@ -47,7 +51,10 @@ export function ApplicationsPage() {
     packageSheetAppId,
     closePackageSheet,
     sendOutreachAppId,
-    closeSendOutreach
+    closeSendOutreach,
+    importJdSheetOpen,
+    openImportJdSheet,
+    closeImportJdSheet
   } = useApplicationStore();
 
   // Stable empty fallback so memo deps do not thrash every render.
@@ -147,6 +154,10 @@ export function ApplicationsPage() {
                   List
                 </Button>
               </Group>
+              <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
+                <FileTextIcon className="size-4" />
+                Import from JD
+              </Button>
               <Button type="button" size="sm" onClick={openCreate}>
                 <PlusIcon className="size-4" />
                 Add application
@@ -197,6 +208,14 @@ export function ApplicationsPage() {
           application={sendApplication}
           onOpenChange={(open) => {
             if (!open) closeSendOutreach();
+          }}
+        />
+
+        <ImportJdSheet
+          open={importJdSheetOpen}
+          onOpenChange={(open) => {
+            if (open) openImportJdSheet();
+            else closeImportJdSheet();
           }}
         />
       </PageLayout>
