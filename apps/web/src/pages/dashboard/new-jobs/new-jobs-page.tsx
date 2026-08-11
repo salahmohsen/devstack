@@ -60,7 +60,7 @@ import {
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
 
-import { ApplyPackageSheet } from "@/pages/dashboard/applications/ui/apply-package-sheet";
+import { ApplyPackageSheet } from "@/pages/dashboard/tracked-jobs/ui/apply-package-sheet";
 
 type InboxFilter = "inbox" | "dismissed";
 

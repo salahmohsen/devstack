@@ -38,7 +38,7 @@ import {
 
 import { ItemInfoPanel } from "@/widgets/items-page";
 
-import { ApplyPackagePanelActions } from "@/pages/dashboard/applications/ui/apply-package-entry-actions";
+import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";

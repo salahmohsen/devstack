@@ -506,5 +506,5 @@ Use existing timeline primitives under `packages/ui` where they fit coss/Base UI
 | Harvest persist    | `apps/server/src/queues/run-mail-job-harvest.ts`             |
 | Harvest workflow   | `apps/agent/src/mastra/workflows/mail-job-harvest-workflow/` |
 | Application schema | `packages/db/src/schema/application.schema.ts`               |
-| Applications UI    | `apps/web/src/pages/dashboard/applications/`                 |
+| Tracked jobs UI    | `apps/web/src/pages/dashboard/tracked-jobs/`                 |
 | Sidebar            | `apps/web/src/widgets/layout/ui/sidebar.tsx`                 |

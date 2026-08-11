@@ -20,19 +20,19 @@ import {
 } from "@/widgets/items-page";
 import { ItemsInfoPanel } from "@/widgets/layout";
 
-import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
-import { useApplicationsView } from "@/pages/dashboard/applications/_lib/use-applications-view";
-import { ApplicationFormSheet } from "@/pages/dashboard/applications/application-form-sheet";
-import { ApplicationInfoPanel } from "@/pages/dashboard/applications/ui/application-info-panel";
-import { ApplyPackageSheet } from "@/pages/dashboard/applications/ui/apply-package-sheet";
-import { ApplicationsBoard } from "@/pages/dashboard/applications/ui/board";
-import { ImportJdSheet } from "@/pages/dashboard/applications/ui/import-jd-sheet";
-import { ApplicationsList } from "@/pages/dashboard/applications/ui/list";
-import { SendOutreachDialog } from "@/pages/dashboard/applications/ui/send-outreach-dialog";
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useApplicationsView } from "@/pages/dashboard/tracked-jobs/_lib/use-applications-view";
+import { ApplicationFormSheet } from "@/pages/dashboard/tracked-jobs/application-form-sheet";
+import { ApplicationInfoPanel } from "@/pages/dashboard/tracked-jobs/ui/application-info-panel";
+import { ApplyPackageSheet } from "@/pages/dashboard/tracked-jobs/ui/apply-package-sheet";
+import { ApplicationsBoard } from "@/pages/dashboard/tracked-jobs/ui/board";
+import { ImportJdSheet } from "@/pages/dashboard/tracked-jobs/ui/import-jd-sheet";
+import { ApplicationsList } from "@/pages/dashboard/tracked-jobs/ui/list";
+import { SendOutreachDialog } from "@/pages/dashboard/tracked-jobs/ui/send-outreach-dialog";
 
 const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 
-export function ApplicationsPage() {
+export function TrackedJobsPage() {
   const { view, setView } = useApplicationsView();
   /** Tracked jobs only — pipeline CRM. */
   const listQuery = useListApplicationsQuery("tracked");

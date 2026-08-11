@@ -79,8 +79,8 @@ import {
 
 import { ItemsEmpty } from "@/widgets/items-page";
 
-import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
-import { ApplyPackageMenuItems } from "@/pages/dashboard/applications/ui/apply-package-entry-actions";
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { ApplyPackageMenuItems } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
 import { PromptSuggestion } from "@/components/prompt-kit";
 

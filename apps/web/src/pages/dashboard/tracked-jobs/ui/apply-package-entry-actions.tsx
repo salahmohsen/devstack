@@ -22,7 +22,7 @@ import {
   useGenerateApplyPackageMutation
 } from "@/features/applications";
 
-import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 
 type MenuSlots = {
   Item: ComponentType<{
