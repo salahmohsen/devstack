@@ -185,7 +185,6 @@ export function toContactOutput(c: ContactSchemaSelect) {
     id: c.id,
     type: c.type,
     value: c.value,
-    icon: c.icon,
     portfolioEntryId: c.portfolioEntryId ?? null,
     includedInPortfolio: !!c.portfolioEntryId,
     updatedAt: c.updatedAt,

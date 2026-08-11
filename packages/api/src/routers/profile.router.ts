@@ -13,6 +13,7 @@ import { type UserSchemaSelect } from "@tsu-stack/db/types";
 
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
+import { toContactOutput } from "#@/routers/portfolio.mappers";
 
 function toProfileOutput(
   userRow: UserSchemaSelect,
@@ -73,18 +74,7 @@ export const profileRouter = {
         throw errors.NOT_FOUND();
       }
       const contacts = await contactRepository.findOptedInByUserId(resolved.userId);
-      return (contacts ?? []).map((c) => {
-        return {
-          type: c.type,
-          value: c.value,
-          icon: c.icon,
-          portfolioEntryId: c.portfolioEntryId ?? null,
-          includedInPortfolio: !!c.portfolioEntryId,
-          updatedAt: c.updatedAt,
-          createdAt: c.createdAt,
-          id: c.id
-        };
-      });
+      return (contacts ?? []).map(toContactOutput);
     }),
   update: protectedProcedure
     .route({
