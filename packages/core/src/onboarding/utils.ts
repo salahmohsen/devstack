@@ -1,6 +1,4 @@
-import { CONTACT_TYPE_DEFAULT_ICONS, RESUME_SOURCE_KEY_PREFIX } from "#@/onboarding/constants";
-
-type ContactType = keyof typeof CONTACT_TYPE_DEFAULT_ICONS;
+import { RESUME_SOURCE_KEY_PREFIX } from "#@/onboarding/constants";
 
 /**
  * Normalize a client-supplied object key to the full S3 key
@@ -125,24 +123,4 @@ export function normalizeResumeYear(input: {
   }
 
   return new Date().getFullYear();
-}
-
-/**
- * Fill missing/empty contact icons from {@link CONTACT_TYPE_DEFAULT_ICONS}.
- * Existing non-empty icons are preserved.
- */
-export function withContactDefaultIcons<
-  T extends { type: string; value: string; icon?: string | null }
->(contacts: T[]): Array<T & { icon: string }> {
-  return contacts.map((contact) => {
-    const existing = contact.icon?.trim();
-    if (existing && existing.length > 0) {
-      return { ...contact, icon: existing };
-    }
-
-    const defaultIcon =
-      CONTACT_TYPE_DEFAULT_ICONS[contact.type as ContactType] ?? CONTACT_TYPE_DEFAULT_ICONS.website;
-
-    return { ...contact, icon: defaultIcon };
-  });
 }

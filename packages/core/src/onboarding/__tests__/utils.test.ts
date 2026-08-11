@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { CONTACT_TYPE_DEFAULT_ICONS } from "#@/onboarding/constants";
 import {
   assignClientIds,
   normalizeResumeYear,
-  resolveResumeSourceObjectKey,
-  withContactDefaultIcons
+  resolveResumeSourceObjectKey
 } from "#@/onboarding/utils";
 
 describe("resolveResumeSourceObjectKey", () => {
@@ -133,31 +131,5 @@ describe("assignClientIds", () => {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     );
     expect(result[0]?.clientId).not.toBe(result[1]?.clientId);
-  });
-});
-
-describe("withContactDefaultIcons", () => {
-  it("fills default icons and preserves custom ones", () => {
-    const result = withContactDefaultIcons([
-      { type: "github", value: "https://github.com/x" },
-      { type: "email", value: "a@b.com", icon: "FaEnvelopeOpen" },
-      { type: "x", value: "@handle", icon: "  " }
-    ]);
-
-    expect(result[0]).toEqual({
-      type: "github",
-      value: "https://github.com/x",
-      icon: CONTACT_TYPE_DEFAULT_ICONS.github
-    });
-    expect(result[1]?.icon).toBe("FaEnvelopeOpen");
-    expect(result[2]?.icon).toBe(CONTACT_TYPE_DEFAULT_ICONS.x);
-  });
-
-  it("falls back to website icon for unknown contact types", () => {
-    const result = withContactDefaultIcons([
-      { type: "unknown-social", value: "https://example.com/me" }
-    ]);
-
-    expect(result[0]?.icon).toBe(CONTACT_TYPE_DEFAULT_ICONS.website);
   });
 });

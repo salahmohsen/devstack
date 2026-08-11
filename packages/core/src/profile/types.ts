@@ -22,13 +22,17 @@ export const contactTypeSchema = z.enum([
   "linkedin",
   "github",
   "x",
-  "youtube"
+  "youtube",
+  "instagram",
+  "discord",
+  "bluesky",
+  "mastodon",
+  "telegram"
 ]);
 
 export const contactOutputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
-  icon: z.string(),
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
   updatedAt: z.date(),
@@ -41,7 +45,6 @@ export type ContactOutputSchema = z.infer<typeof contactOutputSchema>;
 export const contactInputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
-  icon: z.string(),
   includedInPortfolio: z.boolean().optional(),
   id: z.string().optional()
 }) satisfies z.ZodType<

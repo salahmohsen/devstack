@@ -1,12 +1,7 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import {
-  assignClientIds,
-  contactTypeSchema,
-  normalizeResumeYear,
-  withContactDefaultIcons
-} from "@tsu-stack/core";
+import { assignClientIds, contactTypeSchema, normalizeResumeYear } from "@tsu-stack/core";
 
 import { extract } from "#@/mastra/workflows/resume-import-workflow/extract.step";
 
@@ -64,7 +59,7 @@ function dedupeStackNames(names: string[]): string[] {
 
 /**
  * Normalize AI extract into draft-shaped data:
- * clientIds, years, stack trim/dedupe, contact icons, selected/included defaults.
+ * clientIds, years, stack trim/dedupe, contacts, selected/included defaults.
  */
 export const normalize = createStep({
   id: "normalize",
@@ -78,8 +73,7 @@ export const normalize = createStep({
       contacts: z.array(
         z.object({
           type: contactTypeSchema,
-          value: z.string().min(1),
-          icon: z.string().optional()
+          value: z.string().min(1)
         })
       )
     }),
@@ -252,23 +246,20 @@ export const normalize = createStep({
     }
 
     const rawContacts = raw.profile?.contacts ?? [];
-    const contacts = withContactDefaultIcons(
-      rawContacts
-        .map((c) => {
-          const value = coerceText(c.value);
-          if (!value) return null;
-          if (!CONTACT_TYPES.has(c.type)) {
-            warnings.push(`Dropped contact with unsupported type: ${String(c.type)}`);
-            return null;
-          }
-          return {
-            type: c.type,
-            value,
-            icon: c.icon?.trim() ? c.icon.trim() : undefined
-          };
-        })
-        .filter((c): c is NonNullable<typeof c> => c != null)
-    );
+    const contacts = rawContacts
+      .map((c) => {
+        const value = coerceText(c.value);
+        if (!value) return null;
+        if (!CONTACT_TYPES.has(c.type)) {
+          warnings.push(`Dropped contact with unsupported type: ${String(c.type)}`);
+          return null;
+        }
+        return {
+          type: c.type,
+          value
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => c != null);
 
     const email = normalizeEmail(raw.profile?.email ?? existingProfile.email, warnings);
     // fallbackProfileName always returns a name with length ≥ 2 (min for ResumeImportDraftSchema).

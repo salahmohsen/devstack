@@ -4,12 +4,11 @@ import { contactTypeSchema } from "@tsu-stack/core";
 
 /**
  * Relaxed AI structured-output schema for resume extract.
- * Normalize fills clientIds, years, defaults, and contact icons.
+ * Normalize fills clientIds, years, and selected/included defaults.
  */
 export const ResumeExtractContactSchema = z.object({
   type: contactTypeSchema,
-  value: z.string(),
-  icon: z.string().optional().nullable()
+  value: z.string()
 });
 
 export const ResumeExtractExperienceSchema = z.object({

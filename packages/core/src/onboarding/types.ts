@@ -5,9 +5,7 @@ import { contactTypeSchema } from "#@/profile/types";
 
 export const ResumeImportContactSchema = z.object({
   type: contactTypeSchema,
-  value: z.string().min(1),
-  /** Filled by `withContactDefaultIcons` when missing; never required from extract. */
-  icon: z.string().optional()
+  value: z.string().min(1)
 });
 
 export type ResumeImportContact = z.infer<typeof ResumeImportContactSchema>;
