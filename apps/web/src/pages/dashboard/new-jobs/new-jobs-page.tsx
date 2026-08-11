@@ -5,6 +5,7 @@ import {
   BanIcon,
   BookmarkPlusIcon,
   ChevronDownIcon,
+  ExternalLinkIcon,
   InboxIcon,
   MailSearchIcon,
   PackageIcon,
@@ -140,6 +141,25 @@ function NewJobCard({
               onClick={() => setTakeExpanded((v) => !v)}
             >
               {takeExpanded ? "Show less" : "Show more"}
+            </Button>
+          ) : null}
+          {job.url || job.applyUrl ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 px-2 text-xs"
+              render={
+                <a
+                  href={(job.url ?? job.applyUrl)!}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open job listing"
+                />
+              }
+            >
+              <ExternalLinkIcon className="size-3.5" aria-hidden />
+              Listing
             </Button>
           ) : null}
           <Button
@@ -284,7 +304,8 @@ function NewJobCard({
 
 export function NewJobsPage() {
   const [filter, setFilter] = useState<InboxFilter>("inbox");
-  const [packageAppId, setPackageAppId] = useState<string | null>(null);
+  /** Snapshot after promote+package — must not depend on inbox list (row leaves after promote). */
+  const [packageApplication, setPackageApplication] = useState<ApplicationOutput | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [takeBusyId, setTakeBusyId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -299,10 +320,6 @@ export function NewJobsPage() {
   const scanJobAlerts = useScanJobAlertsMutation();
 
   const jobs = listQuery.data ?? [];
-  const packageApplication = useMemo(() => {
-    if (!packageAppId) return null;
-    return jobs.find((j) => j.id === packageAppId) ?? null;
-  }, [jobs, packageAppId]);
 
   const deleteJob = useMemo(
     () => (deleteId ? (jobs.find((j) => j.id === deleteId) ?? null) : null),
@@ -435,8 +452,9 @@ export function NewJobsPage() {
                     id,
                     async () => {
                       await promote.mutateAsync({ id });
-                      await generatePackage.mutateAsync({ applicationId: id });
-                      setPackageAppId(id);
+                      // Use generate response as sheet source — job leaves inbox list after promote.
+                      const packed = await generatePackage.mutateAsync({ applicationId: id });
+                      setPackageApplication(packed);
                     },
                     "Tracked — package ready"
                   )
@@ -452,7 +470,7 @@ export function NewJobsPage() {
           open
           application={packageApplication}
           onOpenChange={(open) => {
-            if (!open) setPackageAppId(null);
+            if (!open) setPackageApplication(null);
           }}
         />
       ) : null}
