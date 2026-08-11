@@ -2,7 +2,7 @@
 
 import { useFiles } from "files-sdk/react";
 import { CircleAlertIcon, Loader2Icon, UserIcon, XIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
@@ -27,10 +27,15 @@ function extensionForFile(file: File): string {
   return "jpg";
 }
 
+function normalizeAvatarUrl(url: string | null | undefined): string | null {
+  const trimmed = url?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export type ProfileAvatarUploadProps = {
   maxSize?: number;
   className?: string;
-  /** Current saved avatar URL (session / profile). */
+  /** Current saved avatar URL (session / profile). Empty string treated as none. */
   defaultAvatar?: string | null;
   /** Called with the public URL after a successful upload, or null when cleared. */
   onAvatarUrlChange: (url: string | null) => void | Promise<void>;
@@ -51,12 +56,42 @@ export function ProfileAvatarUpload({
   const filesApi = useFiles({ endpoint: "/api/files" });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  /**
+   * After X, hide server `defaultAvatar` until parent re-renders with a cleared URL.
+   * Without this, clearing local files still falls back to the stale session image.
+   */
+  const [suppressDefault, setSuppressDefault] = useState(false);
+  const savedAvatar = normalizeAvatarUrl(defaultAvatar);
+  const skipNextEmptyFilesChange = useRef(false);
+
+  const persistAvatar = useCallback(
+    async (url: string | null) => {
+      setUploadError(null);
+      try {
+        await onAvatarUrlChange(url);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not update profile photo";
+        setUploadError(message);
+        toast.error(message);
+        // Roll back optimistic hide if server clear failed.
+        if (url === null) setSuppressDefault(false);
+        throw error;
+      }
+    },
+    [onAvatarUrlChange]
+  );
 
   const uploadSelected = useCallback(
     async (entry: FileWithPreview | null) => {
       setUploadError(null);
       if (!entry) {
-        await onAvatarUrlChange(null);
+        // removeFile / clearFiles also fire onFilesChange([]) — may already be handled by X.
+        if (skipNextEmptyFilesChange.current) {
+          skipNextEmptyFilesChange.current = false;
+          return;
+        }
+        setSuppressDefault(true);
+        await persistAvatar(null);
         return;
       }
       const raw = entry.file;
@@ -64,13 +99,14 @@ export function ProfileAvatarUpload({
         // Metadata-only entry (restored preview) — no re-upload.
         return;
       }
+      setSuppressDefault(false);
       setUploading(true);
       try {
         const ext = extensionForFile(raw);
         const key = `${AVATAR_KEY_PREFIX}${crypto.randomUUID()}.${ext}`;
         await filesApi.upload(key, raw, { contentType: raw.type || "image/jpeg" });
         const publicUrl = await filesApi.url(key);
-        await onAvatarUrlChange(publicUrl);
+        await persistAvatar(publicUrl);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not upload profile photo";
         setUploadError(message);
@@ -79,7 +115,7 @@ export function ProfileAvatarUpload({
         setUploading(false);
       }
     },
-    [filesApi, onAvatarUrlChange]
+    [filesApi, persistAvatar]
   );
 
   const [
@@ -104,17 +140,25 @@ export function ProfileAvatarUpload({
   });
 
   const currentFile = files[0];
-  const previewUrl = currentFile?.preview ?? defaultAvatar ?? undefined;
+  const busy = uploading || disabled;
+  const previewUrl =
+    currentFile?.preview ?? (suppressDefault ? undefined : (savedAvatar ?? undefined));
 
   const handleRemove = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
+    if (busy) return;
+
+    setSuppressDefault(true);
+    setUploadError(null);
+
     if (currentFile) {
+      // removeFile → onFilesChange([]) would call persistAvatar(null); do it once here.
+      skipNextEmptyFilesChange.current = true;
       removeFile(currentFile.id);
     }
-    void onAvatarUrlChange(null);
+    void persistAvatar(null);
   };
-
-  const busy = uploading || disabled;
 
   return (
     <div className={cn("flex flex-col items-center gap-3", className)}>
@@ -164,7 +208,7 @@ export function ProfileAvatarUpload({
             onClick={handleRemove}
             className="absolute inset-e-0.5 top-0.5 z-10 size-6 rounded-full"
             aria-label="Remove profile photo"
-            disabled={disabled}
+            disabled={busy}
           >
             <XIcon className="size-3.5" />
           </Button>
@@ -173,7 +217,7 @@ export function ProfileAvatarUpload({
 
       <div className="space-y-0.5 text-center">
         <p className="text-sm font-medium">
-          {uploading ? "Uploading…" : currentFile || previewUrl ? "Change photo" : "Upload photo"}
+          {uploading ? "Uploading…" : previewUrl ? "Change photo" : "Upload photo"}
         </p>
         <p className="text-xs text-muted-foreground">PNG, JPG, WebP up to {formatBytes(maxSize)}</p>
       </div>

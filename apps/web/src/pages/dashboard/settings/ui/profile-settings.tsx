@@ -217,11 +217,12 @@ export function ProfileSettings() {
         return;
       }
       // Avatar-only: do not send contacts (undefined = leave rows untouched on the server).
+      // Empty string clears image on the server (null is not in the string schema).
       await updateProfileAsync({
         name,
         email,
         summary: profileQuery.data?.summary ?? "",
-        image: url ?? ""
+        image: url?.trim() ? url.trim() : ""
       });
     },
     [profileQuery.data, session?.user?.email, session?.user?.name, updateProfileAsync]
@@ -332,7 +333,8 @@ export function ProfileSettings() {
     }
   };
 
-  const userImage = session?.user?.image ?? undefined;
+  // Prefer profile query (updated immediately on avatar mutation) over session lag.
+  const userImage = (profileQuery.data?.image ?? session?.user?.image ?? "").trim() || null;
   const displayName = profileQuery.data?.name ?? session?.user?.name ?? "";
   const displayEmail = profileQuery.data?.email ?? session?.user?.email ?? "";
   const displaySummary =

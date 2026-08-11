@@ -105,11 +105,16 @@ export const profileRouter = {
       }
 
       // Optional fields: omit so avatar-only / partial updates do not wipe image or contacts.
+      // Empty / whitespace image clears the stored avatar (Better Auth + UI treat null as none).
+      const imageUpdate =
+        input.image === undefined
+          ? {}
+          : { image: input.image.trim().length > 0 ? input.image.trim() : null };
       const updatedUser = await userRepository.update(userId, {
         name: input.name,
         email: input.email,
         summary: input.summary,
-        ...(input.image !== undefined ? { image: input.image } : {}),
+        ...imageUpdate,
         ...(emailChanged ? { emailVerified: false } : {})
       });
       if (!updatedUser) {
