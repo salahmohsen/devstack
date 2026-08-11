@@ -206,9 +206,9 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         to: r.user.id
       })
     },
-    profileSlugAlias: {
+    usernameSlugAlias: {
       user: r.one.user({
-        from: r.profileSlugAlias.userId,
+        from: r.usernameSlugAlias.userId,
         to: r.user.id
       })
     },

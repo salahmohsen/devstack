@@ -8,10 +8,10 @@ import {
 } from "@tsu-stack/db/types";
 
 import {
-  PROFILE_NAME_MAX,
-  PROFILE_NAME_MIN,
-  PROFILE_NAME_REGEX,
-  RESERVED_PROFILE_PATH_SET
+  RESERVED_USERNAME_PATH_SET,
+  USERNAME_MAX,
+  USERNAME_MIN,
+  USERNAME_REGEX
 } from "#@/profile/constants";
 
 export const contactTypeSchema = z.enum([
@@ -60,11 +60,17 @@ export const contactInputSchema = z.object({
   }
 >;
 
+/**
+ * Profile form fields owned by the app (contacts, summary).
+ * Display name/email may still go through this path; avatar image is preferred via
+ * Better Auth `updateUser({ image })` so the session cookie refreshes.
+ */
 export const ProfileUpdateInputSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   email: z.email("Please enter a valid email address").trim().max(320),
   /** Public portfolio blurb (Better Auth user.summary). Rich HTML from the profile editor. */
   summary: z.string().max(8000).nullish(),
+  /** Prefer authClient.updateUser({ image }) for avatars; optional for legacy callers. */
   image: z.string().optional(),
   contacts: z.array(contactInputSchema).optional()
 }) satisfies z.ZodType<
@@ -83,9 +89,10 @@ export const ProfileOutputSchema = z.object({
   contacts: z.array(contactOutputSchema),
   summary: z.string().nullable(),
   phone: z.string().nullable(),
-  profileName: z.string()
+  /** Public path handle (Better Auth username). */
+  username: z.string()
 }) satisfies z.ZodType<
-  Omit<UserSchemaSelect, "updatedAt" | "onboardingCompletedAt"> & {
+  Omit<UserSchemaSelect, "updatedAt" | "onboardingCompletedAt" | "displayUsername"> & {
     contacts: z.infer<typeof contactOutputSchema>[];
   }
 >;
@@ -95,36 +102,57 @@ export type ContactInput = z.infer<typeof contactInputSchema>;
 export type ProfileOutput = z.infer<typeof ProfileOutputSchema>;
 export type ProfileOutputContact = z.infer<typeof contactOutputSchema>[];
 
-export const ProfileNameSchema = z
+/** Public portfolio path key / Better Auth username (path-safe). */
+export const UsernameSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .min(PROFILE_NAME_MIN)
-  .max(PROFILE_NAME_MAX)
-  .regex(PROFILE_NAME_REGEX, "Use lowercase letters, numbers, and single hyphens")
-  .refine((s) => !RESERVED_PROFILE_PATH_SET.has(s), "This name is reserved");
+  .min(USERNAME_MIN)
+  .max(USERNAME_MAX)
+  .regex(USERNAME_REGEX, "Use lowercase letters, numbers, and single hyphens")
+  .refine((s) => !RESERVED_USERNAME_PATH_SET.has(s), "This name is reserved");
 
-export type ProfileName = z.infer<typeof ProfileNameSchema>;
+export type Username = z.infer<typeof UsernameSchema>;
 
-/** Input for renaming a user's public profile path key. */
+/** @deprecated Use UsernameSchema */
+export const ProfileNameSchema = UsernameSchema;
+/** @deprecated Use Username */
+export type ProfileName = Username;
+
+/** Input for renaming a user's public username (path key). */
+export const RenameUsernameInputSchema = z.object({
+  username: z.string()
+});
+
+export type RenameUsernameInput = z.infer<typeof RenameUsernameInputSchema>;
+
+/** @deprecated Use RenameUsernameInputSchema */
 export const RenameProfileInputSchema = z.object({
   profileName: z.string()
 });
-
+/** @deprecated Use RenameUsernameInput */
 export type RenameProfileInput = z.infer<typeof RenameProfileInputSchema>;
 
 /**
- * Public procedures that scope data to a profile path segment and/or verified Host.
- * When `profileName` is omitted, the request Host (verified custom domain) must resolve.
+ * Public procedures that scope data to a path segment and/or verified Host.
+ * When `username` is omitted, the request Host (verified custom domain) must resolve.
  */
-export const PublicProfileNameInputSchema = z.object({
-  profileName: z
+export const PublicUsernameInputSchema = z.object({
+  username: z
     .string()
     .min(1)
     .optional()
     .describe(
-      "Public profile path key (user.profileName or a slug alias). Optional when Host is a verified custom domain."
+      "Public username path key (user.username or a slug alias). Optional when Host is a verified custom domain."
     )
+});
+
+export type PublicUsernameInput = z.infer<typeof PublicUsernameInputSchema>;
+
+/** @deprecated Use PublicUsernameInputSchema — accepts legacy profileName key */
+export const PublicProfileNameInputSchema = z.object({
+  profileName: z.string().min(1).optional(),
+  username: z.string().min(1).optional()
 });
 
 export type PublicProfileNameInput = z.infer<typeof PublicProfileNameInputSchema>;

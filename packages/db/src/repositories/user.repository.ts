@@ -2,7 +2,7 @@ import { count, eq } from "drizzle-orm";
 
 import { getDb } from "../index.ts";
 import { user } from "../schema/auth.schema.ts";
-import { profileSlugAlias } from "../schema/profile-slug-alias.schema.ts";
+import { usernameSlugAlias } from "../schema/username-slug-alias.schema.ts";
 import { type UserSchemaInsert, type UserSchemaSelect } from "../types/auth.schema.ts";
 
 /**
@@ -13,8 +13,8 @@ import { type UserSchemaInsert, type UserSchemaSelect } from "../types/auth.sche
  * uses this repository for the *profile* surface — the bits the
  * Better Auth API does not own (name + email changes triggered
  * from the dashboard, plus the rows the profile endpoint reads
- * back to the client). Writes go through `update` here, not via
- * `authClient.updateUser` / `authClient.changeEmail`.
+ * back to the client). Avatar image is preferred via
+ * `authClient.updateUser`. Username renames go through updateUsername.
  */
 export const userRepository = {
   async findById(id: string): Promise<UserSchemaSelect | null> {
@@ -27,26 +27,32 @@ export const userRepository = {
     return row ?? null;
   },
 
-  async findByProfileName(profileName: string): Promise<UserSchemaSelect | null> {
-    const [row] = await getDb()
-      .select()
-      .from(user)
-      .where(eq(user.profileName, profileName))
-      .limit(1);
+  async findByUsername(username: string): Promise<UserSchemaSelect | null> {
+    const [row] = await getDb().select().from(user).where(eq(user.username, username)).limit(1);
     return row ?? null;
   },
 
-  /** True if profileName is taken by a user row or a profile_slug_alias.slug. */
-  async isProfileNameTaken(profileName: string): Promise<boolean> {
-    const existing = await userRepository.findByProfileName(profileName);
+  /** @deprecated Use findByUsername */
+  async findByProfileName(profileName: string): Promise<UserSchemaSelect | null> {
+    return userRepository.findByUsername(profileName);
+  },
+
+  /** True if username is taken by a user row or a username_slug_alias.slug. */
+  async isUsernameTaken(username: string): Promise<boolean> {
+    const existing = await userRepository.findByUsername(username);
     if (existing) return true;
 
     const [alias] = await getDb()
-      .select({ id: profileSlugAlias.id })
-      .from(profileSlugAlias)
-      .where(eq(profileSlugAlias.slug, profileName))
+      .select({ id: usernameSlugAlias.id })
+      .from(usernameSlugAlias)
+      .where(eq(usernameSlugAlias.slug, username))
       .limit(1);
     return Boolean(alias);
+  },
+
+  /** @deprecated Use isUsernameTaken */
+  async isProfileNameTaken(profileName: string): Promise<boolean> {
+    return userRepository.isUsernameTaken(profileName);
   },
 
   async countUsers(): Promise<number> {
@@ -81,7 +87,12 @@ export const userRepository = {
     return updated ?? null;
   },
 
+  async updateUsername(id: string, username: string): Promise<UserSchemaSelect | null> {
+    return userRepository.update(id, { username, displayUsername: username });
+  },
+
+  /** @deprecated Use updateUsername */
   async updateProfileName(id: string, profileName: string): Promise<UserSchemaSelect | null> {
-    return userRepository.update(id, { profileName });
+    return userRepository.updateUsername(id, profileName);
   }
 };

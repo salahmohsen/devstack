@@ -14,7 +14,7 @@ export * from "./mail-message.schema.ts";
 export * from "./mail-smart-rule.schema.ts";
 export * from "./review-item.schema.ts";
 export * from "./portfolio-entry.schema.ts";
-export * from "./profile-slug-alias.schema.ts";
+export * from "./username-slug-alias.schema.ts";
 export * from "./project.schema.ts";
 export * from "./project-stack-scan.schema.ts";
 export * from "./resume.schema.ts";

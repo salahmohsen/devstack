@@ -4,7 +4,7 @@ import { buildDocumentPDFBytes } from "pdfnative";
 import {
   DeleteInputSchema,
   DeleteResponseSchema,
-  PublicProfileNameInputSchema,
+  PublicUsernameInputSchema,
   ResumeListOutputSchema,
   ResumeOutputSchema,
   SetDefaultInputSchema
@@ -76,7 +76,7 @@ export const resumeRouter = {
       description: "Get the default resume for a public profile",
       method: "GET"
     })
-    .input(PublicProfileNameInputSchema)
+    .input(PublicUsernameInputSchema)
     .output(ResumeOutputSchema.optional())
     .errors({
       NOT_FOUND: {
@@ -87,7 +87,7 @@ export const resumeRouter = {
     .handler(async ({ input, context, errors }) => {
       const resolved = await resolvePublicPortfolioContext({
         host: context.host,
-        pathProfileName: input.profileName
+        pathUsername: input.username
       });
       if (!resolved) {
         throw errors.NOT_FOUND();

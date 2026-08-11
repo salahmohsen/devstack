@@ -1,30 +1,30 @@
 import { describe, expect, it } from "vitest";
 
-import { isReservedProfilePath, parseProfileName } from "#@/profile/utils";
+import { isReservedUsernamePath, parseUsername } from "#@/profile/utils";
 
-describe("parseProfileName", () => {
+describe("parseUsername", () => {
   it("accepts salah", () => {
-    expect(parseProfileName("Salah").success).toBe(true);
-    expect(parseProfileName("Salah").data).toBe("salah");
+    expect(parseUsername("Salah").success).toBe(true);
+    expect(parseUsername("Salah").data).toBe("salah");
   });
 
   it("rejects dashboard", () => {
-    expect(parseProfileName("dashboard").success).toBe(false);
+    expect(parseUsername("dashboard").success).toBe(false);
   });
 
   it("rejects bad chars", () => {
-    expect(parseProfileName("Hello World").success).toBe(false);
+    expect(parseUsername("Hello World").success).toBe(false);
   });
 
   it("rejects browser service-worker probes and file-like segments", () => {
-    expect(parseProfileName("firebase-messaging-sw.js").success).toBe(false);
-    expect(parseProfileName("favicon.ico").success).toBe(false);
-    expect(parseProfileName(".well-known").success).toBe(false);
+    expect(parseUsername("firebase-messaging-sw.js").success).toBe(false);
+    expect(parseUsername("favicon.ico").success).toBe(false);
+    expect(parseUsername(".well-known").success).toBe(false);
   });
 });
 
-describe("isReservedProfilePath", () => {
+describe("isReservedUsernamePath", () => {
   it("flags api", () => {
-    expect(isReservedProfilePath("api")).toBe(true);
+    expect(isReservedUsernamePath("api")).toBe(true);
   });
 });

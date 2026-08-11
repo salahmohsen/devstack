@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { GitHubUsernameSchema, PublicProfileNameInputSchema } from "@tsu-stack/core";
+import { GitHubUsernameSchema, PublicUsernameInputSchema } from "@tsu-stack/core";
 import { getDb } from "@tsu-stack/db";
 import {
   bumpGitHubCacheNamespaces,
@@ -158,10 +158,10 @@ const RevalidationResultSchema = z.object({
   ok: z.boolean()
 });
 
-/** Merge optional profileName (tenant) onto public GitHub inputs. */
-const withProfileName = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) =>
+/** Merge optional username (tenant path handle) onto public GitHub inputs. */
+const withUsername = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) =>
   schema.extend({
-    profileName: PublicProfileNameInputSchema.shape.profileName
+    username: PublicUsernameInputSchema.shape.username
   });
 
 export const githubRouter = {
@@ -175,10 +175,10 @@ export const githubRouter = {
       description: "Get GitHub setup status for a public profile (path or custom domain Host)",
       method: "GET"
     })
-    .input(PublicProfileNameInputSchema.optional())
+    .input(PublicUsernameInputSchema.optional())
     .output(PublicGitHubStatusOutputSchema)
     .handler(async ({ context, input }) =>
-      getPublicGitHubSetupStatus(context, { profileName: input?.profileName })
+      getPublicGitHubSetupStatus(context, { username: input?.username })
     ),
   refreshInstallationAccess: protectedProcedure
     .route({ description: "Refresh installation access cache", method: "POST" })
@@ -220,7 +220,7 @@ export const githubRouter = {
       description: "Get the public repository list for a portfolio profile's linked GitHub",
       method: "GET"
     })
-    .input(PublicProfileNameInputSchema)
+    .input(PublicUsernameInputSchema)
     .output(z.array(GitHubUserRepoSummarySchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getProfileRepos(scoped))
@@ -237,7 +237,7 @@ export const githubRouter = {
       description: "Get commit comparison between two branches for a public GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoBranchComparisonInputSchema))
+    .input(withUsername(RepoBranchComparisonInputSchema))
     .output(GitHubRepoBranchComparisonSchema.nullable())
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoBranchComparison(input, scoped))
@@ -255,7 +255,7 @@ export const githubRouter = {
       description: "Get the public pull requests for a GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoPullsInputSchema))
+    .input(withUsername(RepoPullsInputSchema))
     .output(z.array(GitHubPullSummarySchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoPulls(input, scoped))
@@ -273,7 +273,7 @@ export const githubRouter = {
       description: "Get the public issues for a GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoIssuesInputSchema))
+    .input(withUsername(RepoIssuesInputSchema))
     .output(z.array(GitHubIssueSummarySchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoIssues(input, scoped))
@@ -291,7 +291,7 @@ export const githubRouter = {
       description: "Get the public GitHub Actions workflow runs for a repository",
       method: "GET"
     })
-    .input(withProfileName(RepoWorkflowRunsInputSchema))
+    .input(withUsername(RepoWorkflowRunsInputSchema))
     .output(z.array(GitHubWorkflowRunSchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoWorkflowRuns(input, scoped))
@@ -309,7 +309,7 @@ export const githubRouter = {
       description: "Get the public discussions for a GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoDiscussionsInputSchema))
+    .input(withUsername(RepoDiscussionsInputSchema))
     .output(GitHubDiscussionsResultSchema)
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoDiscussions(input, scoped))
@@ -327,7 +327,7 @@ export const githubRouter = {
       description: "Get the public branches for a GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoInputSchema))
+    .input(withUsername(RepoInputSchema))
     .output(z.array(GitHubRepoBranchSchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoBranches(input, scoped))
@@ -345,7 +345,7 @@ export const githubRouter = {
       description: "Get the public contributors for a GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoInputSchema))
+    .input(withUsername(RepoInputSchema))
     .output(RepoContributorsResultSchema)
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoContributors(input, scoped))
@@ -363,7 +363,7 @@ export const githubRouter = {
       description: "Get public commit sparkline data for a GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoInputSchema))
+    .input(withUsername(RepoInputSchema))
     .output(GitHubRepoCommitSparklineSchema)
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoCommitSparkline(input, scoped))
@@ -381,7 +381,7 @@ export const githubRouter = {
       description: "Get public file content for a GitHub repository path",
       method: "GET"
     })
-    .input(withProfileName(RepoFileContentInputSchema))
+    .input(withUsername(RepoFileContentInputSchema))
     .output(z.string().nullable())
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoFileContent(input, scoped))
@@ -399,7 +399,7 @@ export const githubRouter = {
       description: "Get the latest commit for a specific ref in a public GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoRefCommitInputSchema))
+    .input(withUsername(RepoRefCommitInputSchema))
     .output(GitHubRepoLatestCommitSchema.nullable())
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoRefCommit(input, scoped))
@@ -417,7 +417,7 @@ export const githubRouter = {
       description: "Get the public overview for a GitHub repository",
       method: "GET"
     })
-    .input(withProfileName(RepoInputSchema))
+    .input(withUsername(RepoInputSchema))
     .output(RepoOverviewSchema.nullable())
     .handler(async ({ input, context }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoOverview(input, scoped))
@@ -435,7 +435,7 @@ export const githubRouter = {
       description: "Get public directory entries for a GitHub repository path",
       method: "GET"
     })
-    .input(withProfileName(RepoTreeInputSchema))
+    .input(withUsername(RepoTreeInputSchema))
     .output(z.array(GitHubRepoTreeEntrySchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getRepoTree(input, scoped))
@@ -453,7 +453,7 @@ export const githubRouter = {
       description: "Get latest commits for public repository tree entries",
       method: "GET"
     })
-    .input(withProfileName(RepoTreeEntryCommitsInputSchema))
+    .input(withUsername(RepoTreeEntryCommitsInputSchema))
     .output(z.record(z.string(), GitHubTreeEntryCommitSchema.nullable()))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getTreeEntryCommits(input, scoped))
@@ -471,7 +471,7 @@ export const githubRouter = {
       description: "Get public GitHub activity for a user",
       method: "GET"
     })
-    .input(withProfileName(UserActivityInputSchema))
+    .input(withUsername(UserActivityInputSchema))
     .output(z.array(GitHubUserActivityEventSchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getUserActivity(input, scoped))
@@ -489,7 +489,7 @@ export const githubRouter = {
       description: "Get the public GitHub contribution calendar for a user",
       method: "GET"
     })
-    .input(PublicProfileNameInputSchema)
+    .input(PublicUsernameInputSchema)
     .output(GitHubContributionCalendarSchema.nullable())
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getUserContributions(scoped))
@@ -507,7 +507,7 @@ export const githubRouter = {
       description: "Get the pinned public GitHub repositories for a user",
       method: "GET"
     })
-    .input(PublicProfileNameInputSchema)
+    .input(PublicUsernameInputSchema)
     .output(z.array(GitHubPinnedRepoSchema))
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getUserPinnedRepos(scoped))
@@ -524,7 +524,7 @@ export const githubRouter = {
       description: "Get the public GitHub profile for a user",
       method: "GET"
     })
-    .input(PublicProfileNameInputSchema)
+    .input(PublicUsernameInputSchema)
     .output(GitHubUserProfileSchema.nullable())
     .handler(async ({ context, input }) =>
       withPublicGitHubContext(context, input, (scoped) => getUserProfile(scoped))

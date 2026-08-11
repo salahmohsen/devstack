@@ -51,13 +51,13 @@ export type PublicPortfolioMode = z.infer<typeof PublicPortfolioModeSchema>;
 /** Resolved public portfolio identity for Host or path routing. */
 export const PublicPortfolioContextOutputSchema = z.object({
   userId: z.string(),
-  profileName: z.string(),
+  username: z.string(),
   mode: PublicPortfolioModeSchema
 });
 export type PublicPortfolioContextOutput = z.infer<typeof PublicPortfolioContextOutputSchema>;
 
 export const ResolvePublicPortfolioInputSchema = z.object({
   host: z.string().optional(),
-  profileName: z.string().optional()
+  username: z.string().optional()
 });
 export type ResolvePublicPortfolioInput = z.infer<typeof ResolvePublicPortfolioInputSchema>;

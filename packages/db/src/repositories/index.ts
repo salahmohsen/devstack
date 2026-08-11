@@ -61,10 +61,13 @@ export {
   type PortfolioEntryEntity
 } from "./portfolio-entry.repository.ts";
 export {
+  usernameSlugAliasRepository,
   profileSlugAliasRepository,
+  type CreateUsernameSlugAliasInput,
+  type UsernameSlugAliasEntity,
   type CreateProfileSlugAliasInput,
   type ProfileSlugAliasEntity
-} from "./profile-slug-alias.repository.ts";
+} from "./username-slug-alias.repository.ts";
 export {
   userCustomDomainRepository,
   type UpsertUserCustomDomainInput,

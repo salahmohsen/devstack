@@ -209,24 +209,24 @@ export const domainRouter = {
     }),
 
   /**
-   * Resolve public portfolio context from Host and/or path profileName.
+   * Resolve public portfolio context from Host and/or path username.
    * Used by the web root loader for custom-domain Host routing.
    */
   resolvePublic: publicProcedure
     .route({
       description:
-        "Resolve public portfolio identity from Host (verified custom domain) and/or profileName path",
+        "Resolve public portfolio identity from Host (verified custom domain) and/or username path",
       method: "GET"
     })
     .input(ResolvePublicPortfolioInputSchema.optional())
     .output(PublicPortfolioContextOutputSchema.nullable())
     .handler(async ({ input, context }) => {
       const host = input?.host ?? context.host ?? null;
-      const pathProfileName = input?.profileName ?? null;
+      const pathUsername = input?.username ?? null;
 
       const resolved = await resolvePublicPortfolioContext({
         host,
-        pathProfileName
+        pathUsername
       });
 
       // Ensure profile still exists (defensive — resolver already checks).

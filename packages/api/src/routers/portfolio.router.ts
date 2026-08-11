@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 
 import {
-  parseProfileName,
+  parseUsername,
   PortfolioListInputSchema,
   PortfolioListOutputSchema,
   PortfolioToggleInputSchema,
@@ -140,20 +140,19 @@ export const PortfolioRouter = {
         const sessionUserId = context.session?.user?.id ?? null;
         const resolved = await resolvePublicPortfolioContext({
           host: context.host,
-          pathProfileName: input.profileName,
-          // Dashboard chrome omits profileName; resolve as the signed-in user.
+          pathUsername: input.username,
+          // Dashboard chrome omits username; resolve as the signed-in user.
           sessionUserId
         });
         if (!resolved) {
           // Browser probes (e.g. firebase-messaging-sw.js) and other invalid
-          // segments used to match `/$profileName` and spam ERROR logs.
-          const pathLooksLikeProfile =
-            !input.profileName || parseProfileName(input.profileName).success;
+          // segments used to match `/$username` and spam ERROR logs.
+          const pathLooksLikeProfile = !input.username || parseUsername(input.username).success;
           if (pathLooksLikeProfile) {
             context.logger.set({
               event: "portfolio_list_unresolved",
               host: context.host ?? null,
-              pathProfileName: input.profileName ?? null,
+              pathUsername: input.username ?? null,
               hasSession: Boolean(sessionUserId)
             });
           }

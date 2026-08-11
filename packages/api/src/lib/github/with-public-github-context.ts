@@ -7,17 +7,17 @@ import { type OrpcContext } from "#@/lib/context/types";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 
 /**
- * Resolve the portfolio user (path profileName and/or Host custom domain),
+ * Resolve the portfolio user (path username and/or Host custom domain),
  * then inject that tenant's GitHub OAuth source into a request-local context.
  */
 export async function withPublicGitHubContext<T>(
   context: OrpcContext,
-  input: { profileName?: string | null },
+  input: { username?: string | null },
   run: (scoped: OrpcContext) => Promise<T>
 ): Promise<T> {
   const resolved = await resolvePublicPortfolioContext({
     host: context.host,
-    pathProfileName: input.profileName
+    pathUsername: input.username
   });
 
   if (!resolved) {
@@ -43,11 +43,11 @@ export async function withPublicGitHubContext<T>(
 
 export async function getPublicGitHubSetupStatus(
   context: OrpcContext,
-  input: { profileName?: string | null }
+  input: { username?: string | null }
 ): Promise<{ isConfigured: boolean; owner: string | null }> {
   const resolved = await resolvePublicPortfolioContext({
     host: context.host,
-    pathProfileName: input.profileName
+    pathUsername: input.username
   });
 
   if (!resolved) {
