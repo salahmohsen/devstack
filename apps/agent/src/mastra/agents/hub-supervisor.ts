@@ -12,7 +12,16 @@ import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
+import { getExperienceTool } from "#@/mastra/tools/get-experience.tool";
+import { getJobPreferencesTool } from "#@/mastra/tools/get-job-preferences.tool";
+import { getProjectTool } from "#@/mastra/tools/get-project.tool";
+import { getResumeTool } from "#@/mastra/tools/get-resume.tool";
+import { getStackTool } from "#@/mastra/tools/get-stack.tool";
+import { listExperiencesTool } from "#@/mastra/tools/list-experiences.tool";
 import { listOpenApplicationsTool } from "#@/mastra/tools/list-open-applications.tool";
+import { listProjectsTool } from "#@/mastra/tools/list-projects.tool";
+import { listResumesTool } from "#@/mastra/tools/list-resumes.tool";
+import { listStacksTool } from "#@/mastra/tools/list-stacks.tool";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
 import { mailJobHarvestWorkflow } from "#@/mastra/workflows/mail-job-harvest-workflow";
@@ -41,13 +50,14 @@ export function createHubSupervisor() {
 ## Tenant / identity
 - All work is scoped to the authenticated user. \`requestContext.userId\` is set by the server.
 - When invoking workflows that require a \`userId\` input, use ONLY the authenticated user's id from context. Never invent, guess, or substitute another userId.
-- CRM tools resolve tenant from requestContext only — do not pass userId as a tool argument.
+- CRM and evidence tools resolve tenant from requestContext only — do not pass userId as a tool argument.
 
 ## Capabilities (inventory — do not re-list after tools)
 Stacks: \`stackCategorizerAgent\`, \`detectStacksWorkflow\`, \`organizeStacksWorkflow\`, \`resumeImportWorkflow\`.
 Career mail (prefer workflows): \`mailProcessWorkflow\`, \`mailClassifyWorkflow\`, \`mailJobHarvestWorkflow\`, \`mailReplyWorkflow\`.
 Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifierMailExtractor\`, \`jobPageExtractor\`, \`jobPreferenceMatchScorer\`, \`crmApplicationMatcher\`, \`crmStageAdvisor\`, \`mailReplyAgent\`.
 CRM reads: \`listOpenApplications\`, \`getApplication\`.
+Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`.
 Apply package (HITL approval): \`generateApplyPackage\` — application must already exist; never invent package success.
 
 ## Response discipline (critical)
@@ -82,6 +92,15 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
     tools: {
       listOpenApplications: listOpenApplicationsTool,
       getApplication: getApplicationTool,
+      listExperiences: listExperiencesTool,
+      getExperience: getExperienceTool,
+      listProjects: listProjectsTool,
+      getProject: getProjectTool,
+      listStacks: listStacksTool,
+      getStack: getStackTool,
+      listResumes: listResumesTool,
+      getResume: getResumeTool,
+      getJobPreferences: getJobPreferencesTool,
       generateApplyPackage: generateApplyPackageTool
     },
     agents: {
