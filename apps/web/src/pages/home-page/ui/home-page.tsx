@@ -104,8 +104,15 @@ export function HomePage({
     () => normalizePublicSummary(portfolioQuery.data?.summary),
     [portfolioQuery.data?.summary]
   );
+  // Profile settings photo (user.image) — not GitHub avatarUrl.
+  const portfolioImage = (portfolioQuery.data?.image ?? "").trim() || null;
+  const portfolioName = (portfolioQuery.data?.name ?? "").trim() || null;
   const portfolioExperiences = portfolioQuery.data?.experiences ?? [];
   const portfolioContacts = portfolioQuery.data?.contacts ?? [];
+
+  const heroDisplayName =
+    portfolioName ?? (showGithubHero ? (profile?.name ?? profile?.login) : null) ?? profileName;
+  const heroInitial = heroDisplayName.charAt(0).toUpperCase();
 
   return (
     <>
@@ -153,26 +160,26 @@ export function HomePage({
           uses px-4 (matches panel body) — never mix px-6 on some sections only.
         */}
         <div className="screen-rails mx-auto w-full max-w-3xl">
-          {showGithubHero ? (
+          {showGithubHero || portfolioImage || portfolioName ? (
             <div className="screen-line-bottom -mt-16 flex items-end gap-4 px-4 pb-4 sm:-mt-5 sm:gap-5">
               <Avatar className="size-28 shrink-0 border sm:size-32">
-                <AvatarImage
-                  alt={profile.login}
-                  src={profile.avatarUrl}
-                  fetchPriority="high"
-                  width={128}
-                  height={128}
-                  sizes="(min-width: 640px) 128px, 112px"
-                />
-                <AvatarFallback>
-                  {(profile.name ?? profile.login).charAt(0).toUpperCase()}
-                </AvatarFallback>
+                {portfolioImage ? (
+                  <AvatarImage
+                    alt={heroDisplayName}
+                    src={portfolioImage}
+                    fetchPriority="high"
+                    width={128}
+                    height={128}
+                    sizes="(min-width: 640px) 128px, 112px"
+                  />
+                ) : null}
+                <AvatarFallback>{heroInitial}</AvatarFallback>
               </Avatar>
 
               <div className="flex min-w-0 flex-1 items-end justify-between gap-3 pb-1">
                 <div className="flex min-w-0 flex-col gap-1">
                   <h1 className="text-2xl font-semibold tracking-tight capitalize">
-                    {profile.name ?? profile.login}
+                    {heroDisplayName}
                   </h1>
                   {publicSummary ? <ProfileSummary summary={publicSummary} /> : null}
                 </div>

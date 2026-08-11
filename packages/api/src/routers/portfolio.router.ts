@@ -177,8 +177,12 @@ export const PortfolioRouter = {
         });
         const owner = await userRepository.findById(resolved.userId);
         const summary = owner?.summary?.trim() ? owner.summary.trim() : null;
+        const image = owner?.image?.trim() ? owner.image.trim() : null;
+        const name = owner?.name?.trim() ? owner.name.trim() : null;
         return {
           summary,
+          image,
+          name,
           experiences,
           projects,
           stacks: all.stacks,

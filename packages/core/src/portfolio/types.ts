@@ -65,6 +65,13 @@ export type PortfolioListInput = z.infer<typeof PortfolioListInputSchema>;
 export const PortfolioListOutputSchema = z.object({
   /** Owner public blurb from Better Auth `user.summary` (not GitHub bio). */
   summary: z.string().nullable().describe("Public profile summary from the app user record"),
+  /**
+   * Owner avatar from Better Auth `user.image` (profile settings upload).
+   * Not the GitHub avatar — public hero should prefer this when set.
+   */
+  image: z.string().nullable().describe("Public profile photo URL from the app user record"),
+  /** Display name from Better Auth `user.name` (profile settings). */
+  name: z.string().nullable().describe("Public display name from the app user record"),
   experiences: z
     .array(ExperiencePublicOutputSchema)
     .describe("Full experience objects with nested projects and stacks (public-safe)"),
