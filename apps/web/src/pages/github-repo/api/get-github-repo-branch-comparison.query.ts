@@ -11,7 +11,7 @@ export function getGithubRepoBranchComparisonQueryOptions(
   base: string,
   head: string,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoBranchComparison.queryOptions({
@@ -22,7 +22,7 @@ export function getGithubRepoBranchComparisonQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRepoBranchComparison.queryOptions({
-    input: { base, head, repo, profileName },
+    input: { base, head, repo, username },
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta
@@ -33,16 +33,16 @@ export function useGetGithubRepoBranchComparisonQuery(
   repo: string,
   base: string,
   head: string,
-  profileName: string
+  username: string
 ) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
   return useQuery({
-    ...getGithubRepoBranchComparisonQueryOptions(repo, base, head, isPrivate, profileName),
+    ...getGithubRepoBranchComparisonQueryOptions(repo, base, head, isPrivate, username),
     enabled: base !== head
   });
 }

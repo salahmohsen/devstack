@@ -11,23 +11,21 @@ export function useGetGithubTreeEntryCommitsQuery(
   ref: string,
   dirPath: string,
   entries: string[],
-  profileName: string
+  username: string
 ) {
   const { user, isPending } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && !isPending && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && !isPending && sessionUsername === username);
 
   const queryOptions = (
     isPrivate
       ? orpcQueryClient.github.privateGetTreeEntryCommits
       : orpcQueryClient.github.publicGetTreeEntryCommits
   ).queryOptions({
-    input: isPrivate
-      ? { dirPath, entries, ref, repo }
-      : { dirPath, entries, ref, repo, profileName },
+    input: isPrivate ? { dirPath, entries, ref, repo } : { dirPath, entries, ref, repo, username },
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs,
     retry: false,

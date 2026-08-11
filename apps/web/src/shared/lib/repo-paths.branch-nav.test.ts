@@ -5,16 +5,16 @@ import { repoBranchNavLocation } from "./repo-paths";
 describe("repoBranchNavLocation", () => {
   it("opens overview for default branch without path (path mode)", () => {
     expect(repoBranchNavLocation("salah", "dev-hub", "main", { defaultBranch: "main" })).toEqual({
-      to: "/$profileName/repos/$repo",
-      params: { profileName: "salah", repo: "dev-hub" }
+      to: "/$username/repos/$repo",
+      params: { username: "salah", repo: "dev-hub" }
     });
   });
 
   it("opens tree for non-default branch without path", () => {
     expect(repoBranchNavLocation("salah", "dev-hub", "rewrite", { defaultBranch: "main" })).toEqual(
       {
-        to: "/$profileName/repos/$repo/tree/$",
-        params: { profileName: "salah", repo: "dev-hub", _splat: "rewrite" }
+        to: "/$username/repos/$repo/tree/$",
+        params: { username: "salah", repo: "dev-hub", _splat: "rewrite" }
       }
     );
   });

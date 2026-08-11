@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 /**
  * Browsers / extensions often probe `/firebase-messaging-sw.js`.
- * Without this route the path matches `/$profileName` and triggers
- * portfolio RPC 404 noise (`pathProfileName: firebase-messaging-sw.js`).
+ * Without this route the path matches `/$username` and triggers
+ * portfolio RPC 404 noise (`pathUsername: firebase-messaging-sw.js`).
  * We do not use Firebase Cloud Messaging — return a quiet 404.
  */
 export const Route = createFileRoute("/firebase-messaging-sw.js")({

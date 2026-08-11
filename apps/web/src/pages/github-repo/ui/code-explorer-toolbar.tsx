@@ -27,7 +27,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 import { useRepoCloneProtocol } from "@/shared/lib/repo-clone-protocol-storage";
-import { sessionProfileNameFromUser } from "@/shared/lib/session-profile-name";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getGithubRepoBranchesQueryOptions } from "@/pages/github-repo/api/get-github-repo-branches.query";
 
@@ -39,12 +39,12 @@ type BranchListItem = {
 export function CodeExplorerToolbar({
   currentRef,
   onBranchChange,
-  profileName,
+  username,
   repo
 }: {
   currentRef: string;
   onBranchChange: (branch: string) => void;
-  profileName: string;
+  username: string;
   repo: RepoOverview;
 }) {
   return (
@@ -52,7 +52,7 @@ export function CodeExplorerToolbar({
       <BranchSelector
         currentRef={currentRef}
         onBranchChange={onBranchChange}
-        profileName={profileName}
+        username={username}
         repo={repo}
       />
       <CodePopover repo={repo} />
@@ -63,22 +63,22 @@ export function CodeExplorerToolbar({
 function BranchSelector({
   currentRef,
   onBranchChange,
-  profileName,
+  username,
   repo
 }: {
   currentRef: string;
   onBranchChange: (branch: string) => void;
-  profileName: string;
+  username: string;
   repo: RepoOverview;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const sessionProfileName = sessionProfileNameFromUser(user);
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const sessionUsername = sessionUsernameFromUser(user);
+  const isPrivate = Boolean(user && sessionUsername === username);
 
-  const branchesOptions = getGithubRepoBranchesQueryOptions(repo.name, isPrivate, profileName);
+  const branchesOptions = getGithubRepoBranchesQueryOptions(repo.name, isPrivate, username);
 
   const branchesQuery = useQuery({
     ...branchesOptions,

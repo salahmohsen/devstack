@@ -9,7 +9,7 @@ import { persistedMeta } from "@/shared/lib/query-persistence";
 export function getGithubRepoOverviewQueryOptions(
   repo: string,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoOverview.queryOptions({
@@ -20,22 +20,22 @@ export function getGithubRepoOverviewQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRepoOverview.queryOptions({
-    input: { repo, profileName },
+    input: { repo, username },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoOverviewQuery(repo: string, profileName: string) {
+export function useGetGithubRepoOverviewQuery(repo: string, username: string) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
   return useQuery({
-    ...getGithubRepoOverviewQueryOptions(repo, isPrivate, profileName),
+    ...getGithubRepoOverviewQueryOptions(repo, isPrivate, username),
     enabled: true
   });
 }

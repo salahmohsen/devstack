@@ -28,17 +28,17 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo")({
       return;
     }
 
-    // Primary host: redirect bare /repos/$repo → /{profileName}/repos/$repo
+    // Primary host: redirect bare /repos/$repo → /{username}/repos/$repo
     const user = await context.queryClient.ensureQueryData(getAuthUserQueryOptions());
-    const profileName =
-      typeof (user as { profileName?: string } | null)?.profileName === "string"
-        ? (user as { profileName: string }).profileName
+    const username =
+      typeof (user as { username?: string } | null)?.username === "string"
+        ? (user as { username: string }).username
         : null;
 
-    if (profileName) {
+    if (username) {
       throw redirect({
-        to: "/$profileName/repos/$repo",
-        params: { profileName, repo: params.repo },
+        to: "/$username/repos/$repo",
+        params: { username, repo: params.repo },
         search: location.search as Record<string, unknown>
       });
     }
@@ -50,13 +50,13 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo")({
     const resolved = await context.queryClient.ensureQueryData(
       getResolvePublicPortfolioQueryOptions({ host: host ?? undefined })
     );
-    if (!resolved?.profileName) {
+    if (!resolved?.username) {
       throw notFound();
     }
 
-    const { profileName } = resolved;
+    const { username } = resolved;
     const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions(profileName)
+      getGithubSetupStatusQueryOptions(username)
     );
     if (!setupStatus.isConfigured || !setupStatus.owner) {
       throw notFound();
@@ -65,14 +65,14 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo")({
     // Public surface only. Swallow RPC failures so custom-domain SSR does not 500.
     await Promise.all([
       context.queryClient
-        .ensureQueryData(getGithubRepoOverviewQueryOptions(params.repo, false, profileName))
+        .ensureQueryData(getGithubRepoOverviewQueryOptions(params.repo, false, username))
         .catch(() => undefined),
       context.queryClient
-        .ensureQueryData(getGithubRepoBranchesQueryOptions(params.repo, false, profileName))
+        .ensureQueryData(getGithubRepoBranchesQueryOptions(params.repo, false, username))
         .catch(() => undefined)
     ]);
 
-    return { profileName, pathProfileName: null as string | null };
+    return { username, pathUsername: null as string | null };
   }
 });
 

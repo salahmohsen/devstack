@@ -56,27 +56,27 @@ export function LatestCommitBar({
   branchRef,
   defaultBranch,
   defaultBranchTip,
-  profileName
+  username
 }: {
   repoName: string;
   branchRef: string;
   defaultBranch: string;
   defaultBranchTip: GitHubRepoLatestCommit | RepoOverviewLatestCommit | null;
   /** Portfolio profile that owns this GitHub data (required for public RPCs). */
-  profileName: string;
+  username: string;
 }) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
   // Same rule as overview/tree: private path only when viewing own portfolio.
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
   const overviewTip = normalizeCommit(defaultBranchTip);
   const onDefaultBranch = branchRef === defaultBranch;
 
   const tipQuery = useQuery({
-    ...getGithubRepoRefCommitQueryOptions(repoName, branchRef, isPrivate, profileName),
+    ...getGithubRepoRefCommitQueryOptions(repoName, branchRef, isPrivate, username),
     // Keep overview tip visible while the branch tip query loads / if it fails.
     placeholderData: onDefaultBranch ? (overviewTip ?? undefined) : undefined
   });

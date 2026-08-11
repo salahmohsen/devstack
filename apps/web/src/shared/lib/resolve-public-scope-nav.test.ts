@@ -3,32 +3,32 @@ import { describe, expect, it } from "vitest";
 import { createPublicSurface } from "./public-surface";
 import {
   activeScopeFromPathname,
-  pathProfileNameFromPathname,
+  pathUsernameFromPathname,
   resolvePublicScopeNav
 } from "./resolve-public-scope-nav";
 
-describe("pathProfileNameFromPathname", () => {
+describe("pathUsernameFromPathname", () => {
   it("reads path tenant", () => {
-    expect(pathProfileNameFromPathname("/salahmohsen")).toBe("salahmohsen");
-    expect(pathProfileNameFromPathname("/salahmohsen/repos")).toBe("salahmohsen");
-    expect(pathProfileNameFromPathname("/salahmohsen/repos/dev-hub")).toBe("salahmohsen");
+    expect(pathUsernameFromPathname("/salahmohsen")).toBe("salahmohsen");
+    expect(pathUsernameFromPathname("/salahmohsen/repos")).toBe("salahmohsen");
+    expect(pathUsernameFromPathname("/salahmohsen/repos/dev-hub")).toBe("salahmohsen");
   });
 
   it("ignores custom-domain style repos and reserved", () => {
-    expect(pathProfileNameFromPathname("/repos")).toBeNull();
-    expect(pathProfileNameFromPathname("/repos/dev-hub")).toBeNull();
-    expect(pathProfileNameFromPathname("/dashboard")).toBeNull();
-    expect(pathProfileNameFromPathname("/")).toBeNull();
+    expect(pathUsernameFromPathname("/repos")).toBeNull();
+    expect(pathUsernameFromPathname("/repos/dev-hub")).toBeNull();
+    expect(pathUsernameFromPathname("/dashboard")).toBeNull();
+    expect(pathUsernameFromPathname("/")).toBeNull();
   });
 });
 
 describe("activeScopeFromPathname", () => {
   const pathSurface = createPublicSurface({
-    tenantProfileName: "salahmohsen",
+    tenantUsername: "salahmohsen",
     mode: "path"
   });
   const customSurface = createPublicSurface({
-    tenantProfileName: "salahmohsen",
+    tenantUsername: "salahmohsen",
     mode: "custom_domain"
   });
 
@@ -53,7 +53,7 @@ describe("resolvePublicScopeNav", () => {
         hostname: "app.example.com",
         // Force primary-host mode so VITE_WEB_URL in the test env cannot mark Host custom.
         isCustomDomain: false,
-        sessionProfileName: null
+        sessionUsername: null
       }).show
     ).toBe(false);
   });
@@ -63,10 +63,10 @@ describe("resolvePublicScopeNav", () => {
       pathname: "/",
       hostname: "app.example.com",
       isCustomDomain: false,
-      sessionProfileName: "me"
+      sessionUsername: "me"
     });
     expect(r.show).toBe(true);
-    expect(r.surface?.tenantProfileName).toBe("me");
+    expect(r.surface?.tenantUsername).toBe("me");
     expect(r.surface?.mode).toBe("path");
     expect(r.active).toBeNull();
   });
@@ -77,8 +77,8 @@ describe("resolvePublicScopeNav", () => {
         pathname: "/dashboard/settings",
         hostname: "app.example.com",
         isCustomDomain: false,
-        sessionProfileName: "me",
-        pathProfileName: null
+        sessionUsername: "me",
+        pathUsername: null
       }).show
     ).toBe(false);
   });
@@ -88,37 +88,37 @@ describe("resolvePublicScopeNav", () => {
       pathname: "/salahmohsen",
       hostname: "app.example.com",
       isCustomDomain: false,
-      pathProfileName: "salahmohsen"
+      pathUsername: "salahmohsen"
     });
     expect(r.show).toBe(true);
     expect(r.active).toBe("profile");
-    expect(r.surface?.profileName).toBe("salahmohsen");
+    expect(r.surface?.username).toBe("salahmohsen");
   });
 
   it("shows custom domain repos without path slug", () => {
     const r = resolvePublicScopeNav({
       pathname: "/repos/dev-hub",
       hostname: "salahmohsen.com",
-      customDomainProfileName: "salahmohsen",
+      customDomainUsername: "salahmohsen",
       isCustomDomain: true
     });
     expect(r.show).toBe(true);
     expect(r.active).toBe("repos");
     expect(r.surface?.mode).toBe("custom_domain");
-    expect(r.surface?.profileName).toBeNull();
+    expect(r.surface?.username).toBeNull();
   });
 
   it("shows custom domain home with profile active", () => {
     const r = resolvePublicScopeNav({
       pathname: "/",
       hostname: "salahmohsen.com",
-      customDomainProfileName: "salahmohsen",
+      customDomainUsername: "salahmohsen",
       isCustomDomain: true,
-      sessionProfileName: "other-user"
+      sessionUsername: "other-user"
     });
     expect(r.show).toBe(true);
     expect(r.active).toBe("profile");
-    expect(r.surface?.tenantProfileName).toBe("salahmohsen");
+    expect(r.surface?.tenantUsername).toBe("salahmohsen");
     expect(r.surface?.mode).toBe("custom_domain");
   });
 
@@ -126,9 +126,9 @@ describe("resolvePublicScopeNav", () => {
     const r = resolvePublicScopeNav({
       pathname: "/",
       hostname: "salahmohsen.com",
-      customDomainProfileName: null,
+      customDomainUsername: null,
       isCustomDomain: true,
-      sessionProfileName: "me"
+      sessionUsername: "me"
     });
     expect(r.show).toBe(false);
     expect(r.surface).toBeNull();
@@ -140,7 +140,7 @@ describe("resolvePublicScopeNav", () => {
         pathname: "/sign-in",
         hostname: "app.example.com",
         isCustomDomain: false,
-        sessionProfileName: "me"
+        sessionUsername: "me"
       }).show
     ).toBe(false);
   });
@@ -150,7 +150,7 @@ describe("resolvePublicScopeNav", () => {
       pathname: "/salahmohsen/repos/dev-hub/tree/main",
       hostname: "app.example.com",
       isCustomDomain: false,
-      pathProfileName: "salahmohsen"
+      pathUsername: "salahmohsen"
     });
     expect(r.show).toBe(true);
     expect(r.active).toBe("repos");

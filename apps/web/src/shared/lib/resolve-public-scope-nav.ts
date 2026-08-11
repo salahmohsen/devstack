@@ -22,7 +22,7 @@ const HIDDEN_PREFIXES = [
   "/terms-of-service"
 ] as const;
 
-/** First path segment reserved (not a profileName). */
+/** First path segment reserved (not a username). */
 const RESERVED_SEGMENTS = new Set([
   "dashboard",
   "sign-in",
@@ -49,10 +49,10 @@ function normalizePath(pathname: string): string {
 }
 
 /**
- * Extract profileName from path routes: `/{profileName}` or `/{profileName}/repos…`.
+ * Extract username from path routes: `/{username}` or `/{username}/repos…`.
  * Returns null on custom-domain-style `/repos…` or reserved segments.
  */
-export function pathProfileNameFromPathname(pathname: string): string | null {
+export function pathUsernameFromPathname(pathname: string): string | null {
   const path = normalizePath(pathname);
   if (path === "/" || path === "/repos" || path.startsWith("/repos/")) return null;
   const m = path.match(/^\/([^/]+)(?:\/|$)/);
@@ -74,7 +74,7 @@ export function activeScopeFromPathname(
     return null;
   }
 
-  const p = surface.tenantProfileName;
+  const p = surface.tenantUsername;
   if (path === `/${p}`) return "profile";
   if (path === `/${p}/repos` || path.startsWith(`/${p}/repos/`)) return "repos";
   return null;
@@ -87,11 +87,11 @@ export function activeScopeFromPathname(
 export function resolvePublicScopeNav(input: {
   pathname: string;
   hostname?: string | null;
-  /** Route params profileName when present */
-  pathProfileName?: string | null;
+  /** Route params username when present */
+  pathUsername?: string | null;
   /** Host-resolved tenant slug when on verified custom domain */
-  customDomainProfileName?: string | null;
-  sessionProfileName?: string | null;
+  customDomainUsername?: string | null;
+  sessionUsername?: string | null;
   /** Override Host check (tests); default uses `isCustomDomainHost(hostname)`. */
   isCustomDomain?: boolean;
 }): PublicScopeNavResult {
@@ -104,26 +104,26 @@ export function resolvePublicScopeNav(input: {
   }
 
   // Empty string after trim must fall through (?? alone would keep "").
-  const trimmedPathProfile = input.pathProfileName?.trim();
+  const trimmedPathProfile = input.pathUsername?.trim();
   const fromPath =
     trimmedPathProfile && trimmedPathProfile.length > 0
       ? trimmedPathProfile
-      : pathProfileNameFromPathname(pathname);
+      : pathUsernameFromPathname(pathname);
 
   // Page tenant: path slug, or custom-domain Host tenant
   let pageTenant: string | null = fromPath;
   if (!pageTenant && customHost) {
-    const cd = input.customDomainProfileName?.trim();
+    const cd = input.customDomainUsername?.trim();
     if (cd && cd.length > 0) pageTenant = cd;
   }
 
   if (pageTenant) {
     // Prefer explicit Host mode so custom domains never emit `/{username}/…`.
     const surfaceFinal = customHost
-      ? createPublicSurface({ tenantProfileName: pageTenant, mode: "custom_domain" })
+      ? createPublicSurface({ tenantUsername: pageTenant, mode: "custom_domain" })
       : fromPath
-        ? createPublicSurface({ tenantProfileName: pageTenant, mode: "path" })
-        : resolvePublicSurface({ tenantProfileName: pageTenant, hostname });
+        ? createPublicSurface({ tenantUsername: pageTenant, mode: "path" })
+        : resolvePublicSurface({ tenantUsername: pageTenant, hostname });
     return {
       show: true,
       surface: surfaceFinal,
@@ -139,10 +139,10 @@ export function resolvePublicScopeNav(input: {
 
   // Primary community root: signed-in → own surface (neither tab active)
   if (pathname === "/") {
-    const session = input.sessionProfileName?.trim();
+    const session = input.sessionUsername?.trim();
     if (session) {
       const surface = createPublicSurface({
-        tenantProfileName: session,
+        tenantUsername: session,
         mode: "path"
       });
       return { show: true, surface, active: null };

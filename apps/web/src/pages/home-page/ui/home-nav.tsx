@@ -4,9 +4,9 @@ import { useGetDefaultResumeQuery, useGetPortfolioListQuery } from "@/features/p
 
 import { Contact } from "@/pages/home-page/ui/contact";
 
-export const HomeNav = ({ profileName }: { profileName: string }) => {
-  const portfolioQuery = useGetPortfolioListQuery(profileName);
-  const defaultResumeQuery = useGetDefaultResumeQuery(profileName);
+export const HomeNav = ({ username }: { username: string }) => {
+  const portfolioQuery = useGetPortfolioListQuery(username);
+  const defaultResumeQuery = useGetDefaultResumeQuery(username);
   const defaultResume = defaultResumeQuery.data;
 
   const navItems: (string | [string, string])[] = ["projects", "experience", "certificates"];
@@ -14,7 +14,7 @@ export const HomeNav = ({ profileName }: { profileName: string }) => {
   if (defaultResume) {
     navItems.push([
       "Resume",
-      `/api/resume/download?id=${defaultResume.id}&profileName=${encodeURIComponent(profileName)}`
+      `/api/resume/download?id=${defaultResume.id}&username=${encodeURIComponent(username)}`
     ]);
   }
 

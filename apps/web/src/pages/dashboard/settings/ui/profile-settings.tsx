@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
-import { contactTypeSchema, ProfileNameSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
+import { contactTypeSchema, UsernameSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -58,7 +58,7 @@ import {
   getProfileQueryOptions,
   getUpdateProfileMutationOptions,
   useGetProfileQuery,
-  useRenameProfileMutation,
+  useRenameUsernameMutation,
   type ProfileUpdateInput
 } from "@/features/profile";
 
@@ -67,8 +67,8 @@ import { appConfig } from "@/config/app.config";
 import { useSettingsDirtyGuard } from "./settings-dirty-guard";
 import { SettingsSection } from "./settings-section";
 
-const RenameProfileFormSchema = z.object({
-  profileName: ProfileNameSchema
+const RenameUsernameFormSchema = z.object({
+  username: UsernameSchema
 });
 
 const CONTACT_TYPES = contactTypeSchema.options;
@@ -135,13 +135,13 @@ function ContactLink({
   );
 }
 
-function publicProfilePath(profileName: string): string {
-  return `/${profileName}`;
+function publicProfilePath(username: string): string {
+  return `/${username}`;
 }
 
-function publicProfileUrl(profileName: string): string {
+function publicProfileUrl(username: string): string {
   const base = appConfig.site.baseUrl.replace(/\/$/, "");
-  return `${base}${publicProfilePath(profileName)}`;
+  return `${base}${publicProfilePath(username)}`;
 }
 
 export function ProfileSettings() {
@@ -150,11 +150,11 @@ export function ProfileSettings() {
   const profileQuery = useGetProfileQuery();
   const [isEditing, setIsEditing] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
-  const renameMutation = useRenameProfileMutation();
+  const renameMutation = useRenameUsernameMutation();
 
-  const currentProfileName =
-    profileQuery.data?.profileName ??
-    (session?.user as { profileName?: string } | undefined)?.profileName ??
+  const currentUsername =
+    profileQuery.data?.username ??
+    (session?.user as { username?: string } | undefined)?.username ??
     "";
 
   const serverValues = {
@@ -206,27 +206,6 @@ export function ProfileSettings() {
       toast.success("Profile updated successfully");
     }
   });
-  const { mutateAsync: updateProfileAsync, isPending: isProfileUpdating } = updateMutation;
-
-  const handleAvatarUrlChange = useCallback(
-    async (url: string | null) => {
-      const name = profileQuery.data?.name ?? session?.user?.name ?? "";
-      const email = profileQuery.data?.email ?? session?.user?.email ?? "";
-      if (name.length < 2 || !email) {
-        toast.error("Could not update photo — profile name or email is missing");
-        return;
-      }
-      // Avatar-only: do not send contacts (undefined = leave rows untouched on the server).
-      // Empty string clears image on the server (null is not in the string schema).
-      await updateProfileAsync({
-        name,
-        email,
-        summary: profileQuery.data?.summary ?? "",
-        image: url?.trim() ? url.trim() : ""
-      });
-    },
-    [profileQuery.data, session?.user?.email, session?.user?.name, updateProfileAsync]
-  );
 
   const form = useAppForm({
     defaultValues: serverValues,
@@ -239,7 +218,7 @@ export function ProfileSettings() {
           name: value.name.trim(),
           email: value.email.trim(),
           summary: value.summary?.trim() ?? "",
-          // Preserve image from form (avatar applies immediately via separate mutation).
+          // Preserve image from form (avatar applies immediately via updateUser).
           image: value.image,
           contacts: contactsPayloadForSave(value.contacts)
         });
@@ -250,16 +229,49 @@ export function ProfileSettings() {
     }
   });
 
+  const [isAvatarUpdating, setIsAvatarUpdating] = useState(false);
+  const handleAvatarUrlChange = useCallback(
+    async (url: string | null) => {
+      setIsAvatarUpdating(true);
+      try {
+        // Avatar-only: Better Auth updateUser refreshes the session cookie.
+        // Do not use profile.update for image-only — contacts/summary stay untouched.
+        const result = await authClient.updateUser({
+          image: url?.trim() ? url.trim() : null
+        });
+        if (result.error) {
+          toast.error(result.error.message ?? "Could not update photo");
+          return;
+        }
+        await authClient.getSession();
+        const nextImage = url?.trim() ? url.trim() : "";
+        form.setFieldValue("image", nextImage);
+        queryClient.setQueryData(getProfileQueryOptions().queryKey, (prev) => {
+          if (!prev) return prev;
+          return { ...prev, image: nextImage || null };
+        });
+        void queryClient.invalidateQueries({
+          queryKey: getPortfolioListQueryKey()
+        });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not update photo");
+      } finally {
+        setIsAvatarUpdating(false);
+      }
+    },
+    [form, queryClient]
+  );
+
   const renameForm = useAppForm({
-    defaultValues: { profileName: currentProfileName },
+    defaultValues: { username: currentUsername },
     validators: {
-      onChange: RenameProfileFormSchema
+      onChange: RenameUsernameFormSchema
     },
     onSubmit: async ({ value }) => {
       try {
-        await renameMutation.mutateAsync({ profileName: value.profileName });
+        await renameMutation.mutateAsync({ username: value.username });
       } catch {
-        // Typed toasts are handled in useRenameProfileMutation onError.
+        // Typed toasts are handled in useRenameUsernameMutation onError.
       }
     }
   });
@@ -267,11 +279,11 @@ export function ProfileSettings() {
   useEffect(() => {
     // Don't wipe an in-progress rename when profile query refetches.
     if (renameForm.store.state.isDirty) return;
-    if (currentProfileName) {
-      renameForm.reset({ profileName: currentProfileName });
+    if (currentUsername) {
+      renameForm.reset({ username: currentUsername });
     }
-    // oxlint-disable-next-line react-hooks/exhaustive-deps -- form API is stable; re-sync only when server profileName changes
-  }, [currentProfileName]);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- form API is stable; re-sync only when server username changes
+  }, [currentUsername]);
 
   const handleCancel = () => {
     form.reset(serverValues);
@@ -279,24 +291,24 @@ export function ProfileSettings() {
   };
 
   const handleLeaveDiscard = () => {
-    renameForm.reset({ profileName: currentProfileName });
+    renameForm.reset({ username: currentUsername });
     form.reset(serverValues);
     setIsEditing(false);
   };
 
   const isFormDirty = useStore(form.store, (state) => state.isDirty);
-  const renameProfileName = useStore(renameForm.store, (state) => state.values.profileName);
-  const isRenameDirty = Boolean(currentProfileName) && renameProfileName !== currentProfileName;
+  const renameUsernameValue = useStore(renameForm.store, (state) => state.values.username);
+  const isRenameDirty = Boolean(currentUsername) && renameUsernameValue !== currentUsername;
   const isDirty = (isEditing && isFormDirty) || isRenameDirty;
   const leaveGuard = useSettingsDirtyGuard(isDirty, {
     onDiscard: handleLeaveDiscard
   });
 
   const publicUrl = useMemo(
-    () => (currentProfileName ? publicProfileUrl(currentProfileName) : ""),
-    [currentProfileName]
+    () => (currentUsername ? publicProfileUrl(currentUsername) : ""),
+    [currentUsername]
   );
-  const publicPath = currentProfileName ? publicProfilePath(currentProfileName) : "";
+  const publicPath = currentUsername ? publicProfilePath(currentUsername) : "";
 
   const handleCopyPublicUrl = async () => {
     if (!publicUrl) return;
@@ -414,7 +426,7 @@ export function ProfileSettings() {
                 <ProfileAvatarUpload
                   defaultAvatar={userImage}
                   onAvatarUrlChange={handleAvatarUrlChange}
-                  disabled={isProfileUpdating}
+                  disabled={isAvatarUpdating}
                 />
               </div>
 
@@ -718,10 +730,10 @@ export function ProfileSettings() {
       <Frame>
         <FramePanel className="space-y-4">
           <SettingsSection
-            title="Public profile name"
+            title="Username"
             description="Your portfolio is available at this path. Renaming keeps the old name as a redirect alias."
           >
-            {currentProfileName ? (
+            {currentUsername ? (
               <div className="flex flex-col gap-2 rounded-xl border border-border/80 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">Public path</p>
@@ -751,7 +763,7 @@ export function ProfileSettings() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Loading profile name…</p>
+              <p className="text-sm text-muted-foreground">Loading username…</p>
             )}
 
             <form
@@ -763,10 +775,10 @@ export function ProfileSettings() {
               className="flex flex-col gap-3 sm:flex-row sm:items-end"
             >
               <div className="min-w-0 flex-1">
-                <renameForm.AppField name="profileName">
+                <renameForm.AppField name="username">
                   {(field) => (
                     <field.InputField
-                      label="Profile name"
+                      label="Username"
                       description="3–30 lowercase letters, numbers, and single hyphens"
                     />
                   )}
@@ -777,17 +789,17 @@ export function ProfileSettings() {
                   return {
                     canSubmit: state.canSubmit,
                     isSubmitting: state.isSubmitting,
-                    profileName: state.values.profileName
+                    username: state.values.username
                   };
                 }}
               >
-                {({ canSubmit, isSubmitting, profileName }) => (
+                {({ canSubmit, isSubmitting, username }) => (
                   <Button
                     disabled={
                       !canSubmit ||
                       isSubmitting ||
                       renameMutation.isPending ||
-                      profileName === currentProfileName
+                      username === currentUsername
                     }
                     loading={isSubmitting || renameMutation.isPending}
                     size="sm"

@@ -17,7 +17,7 @@ type GetGithubRepoWorkflowRunsInput = {
 export function getGithubRepoWorkflowRunsQueryOptions(
   input: GetGithubRepoWorkflowRunsInput,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoWorkflowRuns.queryOptions({
@@ -36,7 +36,7 @@ export function getGithubRepoWorkflowRunsQueryOptions(
       page: input.page ?? 1,
       perPage: input.perPage ?? REPO_ACTIVITY_CARDS_PER_PAGE,
       repo: input.repo,
-      profileName
+      username
     },
     staleTime: githubCachePolicy.list.staleTimeMs,
     gcTime: githubCachePolicy.list.gcTimeMs,
@@ -46,16 +46,16 @@ export function getGithubRepoWorkflowRunsQueryOptions(
 
 export function useGetGithubRepoWorkflowRunsQuery(
   input: GetGithubRepoWorkflowRunsInput,
-  profileName: string
+  username: string
 ) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
   return useQuery({
-    ...getGithubRepoWorkflowRunsQueryOptions(input, isPrivate, profileName),
+    ...getGithubRepoWorkflowRunsQueryOptions(input, isPrivate, username),
     enabled: true
   });
 }

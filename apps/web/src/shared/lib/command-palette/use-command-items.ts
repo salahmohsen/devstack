@@ -27,10 +27,10 @@ import { getRegisteredCommands, subscribeCommands } from "./registry";
 import { type CommandItem } from "./types";
 import { useRefreshGitHubData } from "./use-refresh-github-data";
 
-function sessionProfileName(user: unknown): string | undefined {
+function sessionUsername(user: unknown): string | undefined {
   if (typeof user !== "object" || user === null) return undefined;
-  if (!("profileName" in user)) return undefined;
-  const value = (user as { profileName?: unknown }).profileName;
+  if (!("username" in user)) return undefined;
+  const value = (user as { username?: unknown }).username;
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
@@ -80,7 +80,7 @@ export function useCommandItems(): CommandItem[] {
   const issues = queryClient.getQueryData<MyIssuesResult>(githubQueryKeys.issues.mine(scope));
   const viewer = queryClient.getQueryData<{ login: string } | null>(githubQueryKeys.viewer(scope));
 
-  const profileName = sessionProfileName(user) ?? viewer?.login;
+  const username = sessionUsername(user) ?? viewer?.login;
 
   const visibleStatic = staticCommands.filter((cmd) => {
     if (cmd.authRequired && !isSignedIn) return false;
@@ -89,18 +89,18 @@ export function useCommandItems(): CommandItem[] {
 
   const dynamicItems: CommandItem[] = [];
 
-  if (profileName) {
+  if (username) {
     dynamicItems.push({
       id: "nav:profile",
       label: "Go to Profile",
       group: "Pages",
       icon: UserCircle,
-      keywords: ["user", "me", "profile", profileName],
+      keywords: ["user", "me", "profile", username],
       // P taken by Projects → proFile
       shortcut: ["D", "F"],
       action: {
         type: "navigate",
-        to: `/${profileName}`
+        to: `/${username}`
       }
     });
     dynamicItems.push({
@@ -108,11 +108,11 @@ export function useCommandItems(): CommandItem[] {
       label: "Go to Repositories",
       group: "Pages",
       icon: Archive,
-      keywords: ["repos", "code", "github", "repositories", profileName],
+      keywords: ["repos", "code", "github", "repositories", username],
       shortcut: ["D", "R"],
       action: {
         type: "navigate",
-        to: `/${profileName}/repos`
+        to: `/${username}/repos`
       }
     });
   } else if (!isSignedIn) {

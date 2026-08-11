@@ -15,7 +15,7 @@ const BATCH_DELAY_MS = 150;
  * between batches to avoid flooding the network.
  */
 export function usePrefetchTree(
-  input: { ref: string; repo: string; profileName?: string },
+  input: { ref: string; repo: string; username?: string },
   rootEntries: GitHubRepoTreeEntry[] | undefined,
   isPrivate = false
 ) {
@@ -51,7 +51,7 @@ export function usePrefetchTree(
             input.ref,
             path,
             isPrivate,
-            input.profileName
+            input.username
           );
 
           // Skip if already cached

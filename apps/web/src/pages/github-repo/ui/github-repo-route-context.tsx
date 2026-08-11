@@ -2,13 +2,13 @@ import { createContext, useContext } from "react";
 
 export type GithubRepoRouteContextValue = {
   /** Portfolio identity for API scoping */
-  profileName: string;
+  username: string;
   /**
    * Path segment for Link targets:
-   * - string → `/{profileName}/repos/...` (primary host)
+   * - string → `/{username}/repos/...` (primary host)
    * - null → `/repos/...` (custom domain Host)
    */
-  pathProfileName: string | null;
+  pathUsername: string | null;
 };
 
 const GithubRepoRouteContext = createContext<GithubRepoRouteContextValue | null>(null);

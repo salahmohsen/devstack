@@ -36,11 +36,11 @@ function GitHubRepoMultiCombobox(props: GitHubRepoMultiComboboxProps) {
   const { user } = useAuthSuspense();
   const [open, setOpen] = useState(false);
 
-  const profileName =
-    typeof (user as { profileName?: string }).profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const username =
+    typeof (user as { username?: string }).username === "string"
+      ? (user as { username: string }).username
       : "me";
-  const reposQuery = useQuery(getGithubProfileReposQueryOptions(profileName, true));
+  const reposQuery = useQuery(getGithubProfileReposQueryOptions(username, true));
   const repos: GitHubUserRepoSummary[] = reposQuery.data ?? [];
   const isLoading = reposQuery.isLoading;
 

@@ -46,11 +46,11 @@ function GitHubRepoCombobox(props: GitHubRepoComboboxProps) {
   const [open, setOpen] = useState(false);
 
   // Dashboard combobox: always the signed-in user's private repos (multi-tenant).
-  const profileName =
-    typeof (user as { profileName?: string }).profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const username =
+    typeof (user as { username?: string }).username === "string"
+      ? (user as { username: string }).username
       : "me";
-  const reposQuery = useQuery(getGithubProfileReposQueryOptions(profileName, true));
+  const reposQuery = useQuery(getGithubProfileReposQueryOptions(username, true));
   const repos: GitHubUserRepoSummary[] = reposQuery.data ?? [];
   const isLoading = reposQuery.isLoading;
 

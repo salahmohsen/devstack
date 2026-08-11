@@ -43,12 +43,12 @@ import { REPO_ACTIVITY_CARDS_PER_PAGE } from "@/pages/github-repo/api/repo-activ
 
 export function RepoActivityCards({
   owner,
-  profileName,
+  username,
   repo,
   repoData
 }: {
   owner: string;
-  profileName: string;
+  username: string;
   repo: string;
   repoData: RepoOverview;
 }) {
@@ -59,7 +59,7 @@ export function RepoActivityCards({
       sort: "updated",
       state: "open"
     },
-    profileName
+    username
   );
 
   const issuesQuery = useGetGithubRepoIssuesQuery(
@@ -69,7 +69,7 @@ export function RepoActivityCards({
       sort: "updated",
       state: "open"
     },
-    profileName
+    username
   );
 
   const runsQuery = useGetGithubRepoWorkflowRunsQuery(
@@ -77,7 +77,7 @@ export function RepoActivityCards({
       repo,
       perPage: REPO_ACTIVITY_CARDS_PER_PAGE
     },
-    profileName
+    username
   );
 
   const discussionsQuery = useGetGithubRepoDiscussionsQuery(
@@ -85,7 +85,7 @@ export function RepoActivityCards({
       first: REPO_ACTIVITY_CARDS_PER_PAGE,
       repo
     },
-    profileName
+    username
   );
 
   const discussions = discussionsQuery.data?.discussions;

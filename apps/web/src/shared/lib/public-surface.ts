@@ -11,46 +11,46 @@ export type PublicSurfaceMode = "path" | "custom_domain";
 
 /**
  * Public portfolio Host/path mode for building in-app public URLs.
- * - path: primary host `/{tenantProfileName}/…`
+ * - path: primary host `/{tenantUsername}/…`
  * - custom_domain: portfolio at `/`, repos at `/repos/…` (no profile segment)
  *
- * **Rule:** never emit `/{profileName}/…` when Host is a verified custom domain.
+ * **Rule:** never emit `/{username}/…` when Host is a verified custom domain.
  */
 export type PublicSurface = {
   mode: PublicSurfaceMode;
   /** Path-builder slug; null on custom domain. */
-  profileName: string | null;
+  username: string | null;
   /** Always the tenant public slug (owner checks, data loaders). */
-  tenantProfileName: string;
+  tenantUsername: string;
 };
 
 export function createPublicSurface(input: {
-  tenantProfileName: string;
+  tenantUsername: string;
   mode: PublicSurfaceMode;
 }): PublicSurface {
-  const tenantProfileName = input.tenantProfileName.trim();
+  const tenantUsername = input.tenantUsername.trim();
   return {
     mode: input.mode,
-    tenantProfileName,
-    profileName: input.mode === "path" ? tenantProfileName : null
+    tenantUsername,
+    username: input.mode === "path" ? tenantUsername : null
   };
 }
 
 /** Infer surface from hostname + known tenant slug. */
 export function resolvePublicSurface(input: {
-  tenantProfileName: string;
+  tenantUsername: string;
   hostname?: string | null;
 }): PublicSurface {
   const mode: PublicSurfaceMode = isCustomDomainHost(input.hostname) ? "custom_domain" : "path";
-  return createPublicSurface({ tenantProfileName: input.tenantProfileName, mode });
+  return createPublicSurface({ tenantUsername: input.tenantUsername, mode });
 }
 
 /**
  * Client hook: surface for the current Host + tenant.
- * Prefer this over hard-coding `/$profileName/…` on public chrome.
+ * Prefer this over hard-coding `/$username/…` on public chrome.
  * Re-renders on navigation so Host-scoped mode stays correct after client route changes.
  */
-export function usePublicSurface(tenantProfileName: string): PublicSurface {
+export function usePublicSurface(tenantUsername: string): PublicSurface {
   // Subscribe to location so we recompute after hydration / client navigations.
   const href = useRouterState({ select: (s) => s.location.href });
   return useMemo(() => {
@@ -62,29 +62,29 @@ export function usePublicSurface(tenantProfileName: string): PublicSurface {
         hostname = window.location.hostname || null;
       }
     }
-    return resolvePublicSurface({ tenantProfileName, hostname });
-  }, [tenantProfileName, href]);
+    return resolvePublicSurface({ tenantUsername, hostname });
+  }, [tenantUsername, href]);
 }
 
-/** Explicit mode from route loaders (custom-domain `/repos` vs path `/$profileName/repos`). */
+/** Explicit mode from route loaders (custom-domain `/repos` vs path `/$username/repos`). */
 export function surfaceFromRouteMode(
-  tenantProfileName: string,
+  tenantUsername: string,
   mode: PublicSurfaceMode
 ): PublicSurface {
-  return createPublicSurface({ tenantProfileName, mode });
+  return createPublicSurface({ tenantUsername, mode });
 }
 
 export function portfolioHomePath(surface: PublicSurface): string {
-  if (surface.mode === "custom_domain" || !surface.profileName) return "/";
-  return `/${surface.profileName}`;
+  if (surface.mode === "custom_domain" || !surface.username) return "/";
+  return `/${surface.username}`;
 }
 
 export function publicReposListPath(surface: PublicSurface): string {
-  return reposListPathRaw(surface.profileName);
+  return reposListPathRaw(surface.username);
 }
 
 export function publicRepoOverviewPath(surface: PublicSurface, repo: string): string {
-  return repoOverviewPathRaw(surface.profileName, repo);
+  return repoOverviewPathRaw(surface.username, repo);
 }
 
 /**
@@ -94,12 +94,12 @@ export function publicRepoOverviewLocation(
   surface: PublicSurface,
   repo: string
 ):
-  | { to: "/$profileName/repos/$repo"; params: { profileName: string; repo: string } }
+  | { to: "/$username/repos/$repo"; params: { username: string; repo: string } }
   | { to: "/repos/$repo"; params: { repo: string } } {
-  if (surface.profileName) {
+  if (surface.username) {
     return {
-      to: "/$profileName/repos/$repo",
-      params: { profileName: surface.profileName, repo }
+      to: "/$username/repos/$repo",
+      params: { username: surface.username, repo }
     };
   }
   return { to: "/repos/$repo", params: { repo } };
@@ -107,18 +107,18 @@ export function publicRepoOverviewLocation(
 
 export function publicPortfolioHomeLocation(
   surface: PublicSurface
-): { to: "/$profileName"; params: { profileName: string } } | { to: "/" } {
-  if (surface.profileName) {
-    return { to: "/$profileName", params: { profileName: surface.profileName } };
+): { to: "/$username"; params: { username: string } } | { to: "/" } {
+  if (surface.username) {
+    return { to: "/$username", params: { username: surface.username } };
   }
   return { to: "/" };
 }
 
 export function publicReposListLocation(
   surface: PublicSurface
-): { to: "/$profileName/repos"; params: { profileName: string } } | { to: "/repos" } {
-  if (surface.profileName) {
-    return { to: "/$profileName/repos", params: { profileName: surface.profileName } };
+): { to: "/$username/repos"; params: { username: string } } | { to: "/repos" } {
+  if (surface.username) {
+    return { to: "/$username/repos", params: { username: surface.username } };
   }
   return { to: "/repos" };
 }

@@ -8,13 +8,13 @@ import { buildReposHubResult, type ReposHubInput } from "@/pages/github-repos/li
 
 /**
  * Profile-scoped repos hub.
- * - Public: requires `profileName` (or Host custom domain via empty profileName + API Host)
+ * - Public: requires `username` (or Host custom domain via empty username + API Host)
  * - Private: only when viewer is signed in as that same profile
  */
 export function githubReposHubQueryOptions(
   input: ReposHubInput,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return {
@@ -23,7 +23,7 @@ export function githubReposHubQueryOptions(
     };
   }
 
-  if (!profileName) {
+  if (!username) {
     return {
       queryKey: ["github", "repos-hub", "missing-profile"] as const,
       queryFn: async (): Promise<GitHubUserRepoSummary[]> => [],
@@ -34,19 +34,19 @@ export function githubReposHubQueryOptions(
 
   return {
     ...orpcQueryClient.github.publicGetProfileRepos.queryOptions({
-      input: { profileName },
+      input: { username },
       meta: persistedMeta
     }),
     select: (repos: GitHubUserRepoSummary[]) => buildReposHubResult(repos, input)
   };
 }
 
-export function useGithubReposHubQueryOptions(input: ReposHubInput, profileName: string) {
+export function useGithubReposHubQueryOptions(input: ReposHubInput, username: string) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
-  return githubReposHubQueryOptions(input, isPrivate, profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
+  return githubReposHubQueryOptions(input, isPrivate, username);
 }

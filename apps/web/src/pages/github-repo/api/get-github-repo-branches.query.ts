@@ -10,7 +10,7 @@ import { persistedMeta } from "@/shared/lib/query-persistence";
 export function getGithubRepoBranchesQueryOptions(
   repo: string,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoBranches.queryOptions({
@@ -22,7 +22,7 @@ export function getGithubRepoBranchesQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRepoBranches.queryOptions({
-    input: { repo, profileName },
+    input: { repo, username },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta,
@@ -30,12 +30,12 @@ export function getGithubRepoBranchesQueryOptions(
   });
 }
 
-export function useGetGithubRepoBranchesQuery(repo: string, profileName: string) {
+export function useGetGithubRepoBranchesQuery(repo: string, username: string) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
-  return useQuery(getGithubRepoBranchesQueryOptions(repo, isPrivate, profileName));
+  const isPrivate = Boolean(user && sessionUsername === username);
+  return useQuery(getGithubRepoBranchesQueryOptions(repo, isPrivate, username));
 }

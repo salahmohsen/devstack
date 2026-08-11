@@ -50,14 +50,14 @@ function VisibilityBadge({ visibility }: { visibility: GitHubUserRepoSummary["vi
 export const RepositoryRow = memo(function RepositoryRow({
   repo,
   isAdmin,
-  profileName,
+  username,
   surface,
   ...props
 }: React.ComponentProps<"div"> & {
   repo: GitHubUserRepoSummary;
   isAdmin: boolean;
   /** Tenant slug (data loaders / sparkline). */
-  profileName: string;
+  username: string;
   /** Path vs custom-domain — controls whether links omit the profile segment. */
   surface: PublicSurface;
 }) {
@@ -148,7 +148,7 @@ export const RepositoryRow = memo(function RepositoryRow({
               <span className="text-xs text-muted-foreground/40">-</span>
             </div>
           )}
-          <LazyRepoCommitSparkline profileName={profileName} repo={repo.name} />
+          <LazyRepoCommitSparkline username={username} repo={repo.name} />
         </Link>
       }
       {...props}

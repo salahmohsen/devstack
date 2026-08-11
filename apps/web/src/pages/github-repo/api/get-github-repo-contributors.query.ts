@@ -9,7 +9,7 @@ export type GitHubQueryScope = {
 
 export function githubRepoContributorsQueryOptions(
   _scope: GitHubQueryScope,
-  input: { owner: string; repo: string; profileName?: string },
+  input: { owner: string; repo: string; username?: string },
   isPrivate = false
 ) {
   if (isPrivate) {
@@ -21,7 +21,7 @@ export function githubRepoContributorsQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRepoContributors.queryOptions({
-    input: { repo: `${input.owner}/${input.repo}`, profileName: input.profileName },
+    input: { repo: `${input.owner}/${input.repo}`, username: input.username },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta

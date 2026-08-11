@@ -33,15 +33,15 @@ import { normalizePublicSummary, ProfileSummary } from "@/pages/home-page/ui/pro
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
 /**
- * Public portfolio home for a given profileName.
+ * Public portfolio home for a given username.
  * Portfolio evidence (projects, experience) always renders.
  * GitHub chrome is optional and only loads when **this profile** linked GitHub.
  */
 export function HomePage({
-  profileName,
+  username,
   surfaceMode = "path"
 }: {
-  profileName: string;
+  username: string;
   /** Public Host mode for path builders (custom domain omits profile segment). */
   surfaceMode?: "path" | "custom_domain";
 }) {
@@ -50,36 +50,36 @@ export function HomePage({
     select: (state) => state.location
   });
   const auth = useAuth();
-  const sessionProfileName =
-    typeof (auth.user as { profileName?: string } | null | undefined)?.profileName === "string"
-      ? (auth.user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (auth.user as { username?: string } | null | undefined)?.username === "string"
+      ? (auth.user as { username: string }).username
       : null;
   /** Private GitHub APIs only when viewing your own portfolio while signed in. */
-  const isOwnProfile = Boolean(auth.user && sessionProfileName === profileName);
+  const isOwnProfile = Boolean(auth.user && sessionUsername === username);
   const isPrivate = isOwnProfile;
 
-  const setupStatusQuery = useGetGithubSetupStatusQuery(profileName);
+  const setupStatusQuery = useGetGithubSetupStatusQuery(username);
   const githubReady = Boolean(setupStatusQuery.data?.isConfigured && setupStatusQuery.data?.owner);
   const owner = setupStatusQuery.data?.owner ?? "";
 
-  const profileQuery = useGetGithubProfileQuery(profileName, isPrivate, githubReady);
-  const contributionsQuery = useGetGithubContributionsQuery(profileName, isPrivate, githubReady);
-  useGetGithubActivityQuery(profileName, 1, isPrivate, githubReady);
+  const profileQuery = useGetGithubProfileQuery(username, isPrivate, githubReady);
+  const contributionsQuery = useGetGithubContributionsQuery(username, isPrivate, githubReady);
+  useGetGithubActivityQuery(username, 1, isPrivate, githubReady);
 
   const signalTargets = useMemo(
     () =>
       githubReady && owner
         ? ([
             {
-              queryKey: getGithubProfileQueryOptions(profileName, isPrivate).queryKey,
+              queryKey: getGithubProfileQueryOptions(username, isPrivate).queryKey,
               signalKeys: [githubRevalidationSignalKeys.ownerProfile(owner)]
             },
             {
-              queryKey: getGithubContributionsQueryOptions(profileName, isPrivate).queryKey,
+              queryKey: getGithubContributionsQueryOptions(username, isPrivate).queryKey,
               signalKeys: [githubRevalidationSignalKeys.ownerContributions(owner)]
             },
             {
-              queryKey: getGithubProfileReposQueryOptions(profileName, isPrivate).queryKey,
+              queryKey: getGithubProfileReposQueryOptions(username, isPrivate).queryKey,
               signalKeys: [
                 isPrivate
                   ? githubRevalidationSignalKeys.PrivateOwnerRepos(owner)
@@ -88,7 +88,7 @@ export function HomePage({
             }
           ] as const)
         : [],
-    [githubReady, owner, profileName, isPrivate]
+    [githubReady, owner, username, isPrivate]
   );
   useGitHubSignalStream(signalTargets);
 
@@ -99,7 +99,7 @@ export function HomePage({
   const showGithubHero = githubReady && profile && !profileQuery.isError;
   // Public blurb from Better Auth user.summary (dashboard Profile settings) — not GitHub bio.
   // Rich HTML from the profile editor; empty TipTap docs (`<p></p>`) count as no summary.
-  const portfolioQuery = useGetPortfolioListQuery(profileName);
+  const portfolioQuery = useGetPortfolioListQuery(username);
   const publicSummary = useMemo(
     () => normalizePublicSummary(portfolioQuery.data?.summary),
     [portfolioQuery.data?.summary]
@@ -111,7 +111,7 @@ export function HomePage({
   const portfolioContacts = portfolioQuery.data?.contacts ?? [];
 
   const heroDisplayName =
-    portfolioName ?? (showGithubHero ? (profile?.name ?? profile?.login) : null) ?? profileName;
+    portfolioName ?? (showGithubHero ? (profile?.name ?? profile?.login) : null) ?? username;
   const heroInitial = heroDisplayName.charAt(0).toUpperCase();
 
   return (
@@ -187,7 +187,7 @@ export function HomePage({
             </div>
           ) : (
             <div className="screen-line-bottom -mt-8 space-y-2 px-4 pb-4 sm:-mt-10">
-              <h1 className="text-2xl font-semibold tracking-tight">@{profileName}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">@{username}</h1>
               <p className="text-sm text-muted-foreground">Portfolio</p>
               {publicSummary ? <ProfileSummary summary={publicSummary} /> : null}
             </div>
@@ -203,12 +203,12 @@ export function HomePage({
           <div className="flex w-full flex-col gap-16 px-4 pt-16 pb-4">
             <section id="projects" className="flex w-full flex-col">
               <h2 className="mb-8 text-sm font-medium text-muted-foreground">Projects</h2>
-              <ProjectsSection profileName={profileName} surfaceMode={surfaceMode} />
+              <ProjectsSection username={username} surfaceMode={surfaceMode} />
             </section>
 
             <section id="experience" className="flex w-full flex-col">
               <h2 className="mb-8 text-sm font-medium text-muted-foreground">Experience</h2>
-              <Experience profileName={profileName} />
+              <Experience username={username} />
             </section>
           </div>
         </div>

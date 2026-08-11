@@ -1,6 +1,6 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
-import { parseProfileName } from "@tsu-stack/core";
+import { parseUsername } from "@tsu-stack/core";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
 import { getRequestHostname } from "@/shared/lib/request-host";
@@ -15,7 +15,7 @@ import {
   RepositoriesPage
 } from "@/pages/github-repos";
 
-export const Route = createFileRoute("/(root-layout)/$profileName/repos/")({
+export const Route = createFileRoute("/(root-layout)/$username/repos/")({
   validateSearch: (raw: Record<string, unknown>): { page?: number } => {
     const pageRaw = raw.page;
     if (typeof pageRaw === "number" && Number.isFinite(pageRaw) && pageRaw > 0) {
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/")({
   },
   ssr: false,
   beforeLoad: ({ params, location }) => {
-    if (!parseProfileName(params.profileName).success) {
+    if (!parseUsername(params.username).success) {
       throw notFound();
     }
     // Custom domain Host must not use path portfolios: /{profile}/repos → /repos
@@ -43,40 +43,38 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/")({
     }
   },
   loader: async ({ context, location, params }) => {
-    const { profileName } = params;
+    const { username } = params;
     const filterStore = await getFilterCookie();
     const search = location.search as { page?: number };
     const urlPage = typeof search.page === "number" && search.page > 0 ? search.page : 1;
     const hubPrefetchInput = buildReposHubPrefetchInput(filterStore, urlPage);
 
     const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions(profileName)
+      getGithubSetupStatusQueryOptions(username)
     );
 
     if (setupStatus?.isConfigured && setupStatus.owner) {
       void context.queryClient.prefetchQuery(
-        githubReposHubQueryOptions(hubPrefetchInput, false, profileName)
+        githubReposHubQueryOptions(hubPrefetchInput, false, username)
       );
     }
 
-    return { filterStore, profileName };
+    return { filterStore, username };
   },
   head: ({ params }) =>
     generateAppSeo({
       alternates: {
-        canonicalPath: `/${params.profileName}/repos`
+        canonicalPath: `/${params.username}/repos`
       },
-      title: `@${params.profileName} · Repositories`,
-      description: `GitHub repositories for @${params.profileName}`,
+      title: `@${params.username} · Repositories`,
+      description: `GitHub repositories for @${params.username}`,
       robots: {
         follow: true,
         index: true
       }
     }),
   component: () => {
-    const { filterStore, profileName } = Route.useLoaderData();
-    return (
-      <RepositoriesPage filterStore={filterStore} profileName={profileName} surfaceMode="path" />
-    );
+    const { filterStore, username } = Route.useLoaderData();
+    return <RepositoriesPage filterStore={filterStore} username={username} surfaceMode="path" />;
   }
 });

@@ -2,21 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 
 import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
-/** Base key — invalidates every default-resume query regardless of profileName. */
+/** Base key — invalidates every default-resume query regardless of username. */
 export function getDefaultResumeQueryKey() {
   return orpcQueryClient.resume.getDefault.key();
 }
 
-export function getDefaultResumeQueryOptions(profileName: string) {
+export function getDefaultResumeQueryOptions(username: string) {
   return orpcQueryClient.resume.getDefault.queryOptions({
-    input: { profileName }
+    input: { username }
   });
 }
 
-export function useGetDefaultResumeQuery(profileName: string, options?: { enabled?: boolean }) {
+export function useGetDefaultResumeQuery(username: string, options?: { enabled?: boolean }) {
   return useQuery({
-    ...getDefaultResumeQueryOptions(profileName),
-    enabled: (options?.enabled ?? true) && Boolean(profileName)
+    ...getDefaultResumeQueryOptions(username),
+    enabled: (options?.enabled ?? true) && Boolean(username)
   });
 }
 

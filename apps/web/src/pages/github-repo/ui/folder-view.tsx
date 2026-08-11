@@ -19,14 +19,14 @@ export function FolderView({
   currentPath,
   currentRef,
   entries,
-  profileName,
+  username,
   repo,
   repoName
 }: {
   currentPath: string;
   currentRef: string;
   entries: GitHubRepoTreeEntry[];
-  profileName: string;
+  username: string;
   repo: RepoOverview;
   repoName: string;
 }) {
@@ -37,7 +37,7 @@ export function FolderView({
     currentRef,
     currentPath,
     entryNames,
-    profileName
+    username
   );
 
   return (
@@ -47,7 +47,7 @@ export function FolderView({
           branchRef={currentRef}
           defaultBranch={repo.defaultBranch ?? "main"}
           defaultBranchTip={repo.latestCommit}
-          profileName={profileName}
+          username={username}
           repoName={repoName}
         />
         <div className="overflow-hidden rounded-b-lg border">

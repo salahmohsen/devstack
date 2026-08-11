@@ -5,7 +5,7 @@ import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
-export function getGithubContributionsQueryOptions(profileName: string, isPrivate = false) {
+export function getGithubContributionsQueryOptions(username: string, isPrivate = false) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetUserContributions.queryOptions({
       meta: persistedMeta,
@@ -14,7 +14,7 @@ export function getGithubContributionsQueryOptions(profileName: string, isPrivat
     });
   }
   return orpcQueryClient.github.publicGetUserContributions.queryOptions({
-    input: { profileName },
+    input: { username },
     meta: persistedMeta,
     staleTime: githubCachePolicy.contributions.staleTimeMs,
     gcTime: githubCachePolicy.contributions.gcTimeMs
@@ -22,12 +22,12 @@ export function getGithubContributionsQueryOptions(profileName: string, isPrivat
 }
 
 export function useGetGithubContributionsQuery(
-  profileName: string,
+  username: string,
   isPrivate = false,
   enabled = true
 ) {
   return useQuery({
-    ...getGithubContributionsQueryOptions(profileName, isPrivate),
+    ...getGithubContributionsQueryOptions(username, isPrivate),
     enabled
   });
 }

@@ -11,12 +11,12 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo/blob/$")({
 
 function GithubRepoBlobRoutePage() {
   const { _splat, repo } = Route.useParams();
-  const parentData = parentRoute.useLoaderData() as { profileName: string };
+  const parentData = parentRoute.useLoaderData() as { username: string };
 
   return (
     <GithubRepoPage
-      profileName={parentData.profileName}
-      pathProfileName={null}
+      username={parentData.username}
+      pathUsername={null}
       repo={repo}
       routeSplat={_splat}
       view="blob"

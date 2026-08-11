@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type RenameProfileInput } from "@tsu-stack/core";
+import { authClient } from "@tsu-stack/auth/react/auth-client";
+import { type RenameUsernameInput } from "@tsu-stack/core";
 
 function errorCode(error: unknown): string | undefined {
   if (typeof error !== "object" || error === null || !("code" in error)) {
@@ -23,38 +24,40 @@ function errorMessage(error: unknown): string | undefined {
   return undefined;
 }
 
-export function getRenameProfileMutationOptions() {
+export function getRenameUsernameMutationOptions() {
   return orpcQueryClient.profile.rename.mutationOptions();
 }
 
-export function useRenameProfileMutation() {
+export function useRenameUsernameMutation() {
   const queryClient = useQueryClient();
 
   return useMutation(
     orpcQueryClient.profile.rename.mutationOptions({
       onSuccess: (data) => {
         queryClient.setQueryData(orpcQueryClient.profile.get.queryOptions().queryKey, data);
-        toast.success("Profile name updated");
+        // Session user.username drives path builders and own-profile checks.
+        void authClient.getSession();
+        toast.success("Username updated");
       },
       onError: (error) => {
         const code = errorCode(error);
-        if (code === "PROFILE_NAME_TAKEN") {
-          toast.error(errorMessage(error) ?? "That profile name is already taken.");
+        if (code === "USERNAME_TAKEN" || code === "PROFILE_NAME_TAKEN") {
+          toast.error(errorMessage(error) ?? "That username is already taken.");
           return;
         }
-        if (code === "PROFILE_NAME_INVALID") {
+        if (code === "USERNAME_INVALID" || code === "PROFILE_NAME_INVALID") {
           toast.error(
             errorMessage(error) ??
-              "Invalid profile name. Use 3–30 lowercase letters, numbers, and single hyphens."
+              "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens."
           );
           return;
         }
-        toast.error(errorMessage(error) ?? "Failed to rename profile");
+        toast.error(errorMessage(error) ?? "Failed to rename username");
       }
     })
   );
 }
 
-export type RenameProfileMutationResult = Awaited<ReturnType<typeof orpcClient.profile.rename>>;
+export type RenameUsernameMutationResult = Awaited<ReturnType<typeof orpcClient.profile.rename>>;
 
-export type { RenameProfileInput };
+export type { RenameUsernameInput };

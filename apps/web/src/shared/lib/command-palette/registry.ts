@@ -292,5 +292,5 @@ registerCommands([
   }
 
   // Profile (D U) and Repositories (D O) are injected in use-command-items
-  // once a profileName is known so paths resolve correctly.
+  // once a username is known so paths resolve correctly.
 ]);

@@ -23,10 +23,10 @@ const INACTIVE_GRADIENT_STOPS = [
   { offset: "100%", opacity: 0 }
 ] as const;
 
-export function RepoCommitSparkline({ profileName, repo }: { profileName: string; repo: string }) {
+export function RepoCommitSparkline({ username, repo }: { username: string; repo: string }) {
   const fillGradientId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const hasMounted = useIsClient();
-  const query = useGetGithubRepoCommitSparklineQuery(repo, profileName);
+  const query = useGetGithubRepoCommitSparklineQuery(repo, username);
 
   if (!hasMounted || query.isLoading) {
     return <div className="h-13 w-42 shrink-0 rounded-sm bg-muted/15" aria-hidden />;

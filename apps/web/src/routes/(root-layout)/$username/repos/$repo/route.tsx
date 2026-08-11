@@ -1,6 +1,6 @@
 import { createFileRoute, notFound, Outlet, redirect } from "@tanstack/react-router";
 
-import { parseProfileName } from "@tsu-stack/core";
+import { parseUsername } from "@tsu-stack/core";
 
 import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
@@ -15,10 +15,10 @@ import {
 
 const RESERVED_NON_REPO_SEGMENTS = new Set([".well-known", "firebase-messaging-sw.js"]);
 
-export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")({
+export const Route = createFileRoute("/(root-layout)/$username/repos/$repo")({
   component: RouteComponent,
   beforeLoad: async ({ context, params }) => {
-    if (!parseProfileName(params.profileName).success) {
+    if (!parseUsername(params.username).success) {
       throw notFound();
     }
     if (RESERVED_NON_REPO_SEGMENTS.has(params.repo) || !isValidGithubRepoSlug(params.repo)) {
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")(
     }
 
     const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions(params.profileName)
+      getGithubSetupStatusQueryOptions(params.username)
     );
 
     if (!setupStatus.isConfigured || !setupStatus.owner) {
@@ -49,15 +49,15 @@ export const Route = createFileRoute("/(root-layout)/$profileName/repos/$repo")(
       return;
     }
 
-    const { profileName, repo } = params;
+    const { username, repo } = params;
     // Public surface only. Never throw from SSR if GitHub/RPC is flaky — the page
     // renders empty/error UI instead of a full-page 500.
     await Promise.all([
       context.queryClient
-        .ensureQueryData(getGithubRepoOverviewQueryOptions(repo, false, profileName))
+        .ensureQueryData(getGithubRepoOverviewQueryOptions(repo, false, username))
         .catch(() => undefined),
       context.queryClient
-        .ensureQueryData(getGithubRepoBranchesQueryOptions(repo, false, profileName))
+        .ensureQueryData(getGithubRepoBranchesQueryOptions(repo, false, username))
         .catch(() => undefined)
     ]);
   }

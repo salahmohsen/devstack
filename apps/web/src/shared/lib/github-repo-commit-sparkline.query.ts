@@ -12,7 +12,7 @@ import { persistedMeta } from "@/shared/lib/query-persistence";
  */
 export function getGithubRepoCommitSparklineQueryOptions(
   repo: string,
-  profileName: string,
+  username: string,
   isPrivate = false
 ) {
   if (isPrivate) {
@@ -24,21 +24,21 @@ export function getGithubRepoCommitSparklineQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRepoCommitSparkline.queryOptions({
-    input: { repo, profileName },
+    input: { repo, username },
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta
   });
 }
 
-export function useGetGithubRepoCommitSparklineQuery(repo: string, profileName: string) {
+export function useGetGithubRepoCommitSparklineQuery(repo: string, username: string) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
-  return useQuery(getGithubRepoCommitSparklineQueryOptions(repo, profileName, isPrivate));
+  const isPrivate = Boolean(user && sessionUsername === username);
+  return useQuery(getGithubRepoCommitSparklineQueryOptions(repo, username, isPrivate));
 }
 
 export type GithubRepoCommitSparklineQueryResult = Awaited<

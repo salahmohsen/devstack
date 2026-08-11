@@ -49,15 +49,15 @@ function useIsDesktop() {
 export function RepoExplorerLayout({
   currentPath,
   currentRef: currentRefProp,
-  profileName,
-  pathProfileName = profileName,
+  username,
+  pathUsername = username,
   repo: repoName,
   viewMode
 }: {
   currentPath: string;
   currentRef: string | null;
-  profileName: string;
-  pathProfileName?: string | null;
+  username: string;
+  pathUsername?: string | null;
   repo: string;
   viewMode: "blob" | "tree";
 }) {
@@ -66,14 +66,14 @@ export function RepoExplorerLayout({
   const isDesktop = useIsDesktop();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
 
   const overviewQuery = useQuery({
-    ...getGithubRepoOverviewQueryOptions(repoName, isPrivate, profileName),
+    ...getGithubRepoOverviewQueryOptions(repoName, isPrivate, username),
     enabled: hasMounted
   });
 
@@ -95,7 +95,7 @@ export function RepoExplorerLayout({
           title: explorerTabTitle,
           type: "repo",
           url: buildRepoTabUrl({
-            profileName: pathProfileName,
+            username: pathUsername,
             repo: repoName,
             view: viewMode,
             ref: activeRef,
@@ -106,31 +106,31 @@ export function RepoExplorerLayout({
   );
 
   const rootTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, activeRef, "", isPrivate, profileName),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef, "", isPrivate, username),
     enabled: hasMounted && !!repoData
   });
 
   const prefetchInput = useMemo(() => {
-    return { ref: activeRef, repo: repoName, profileName };
-  }, [activeRef, profileName, repoName]);
+    return { ref: activeRef, repo: repoName, username };
+  }, [activeRef, username, repoName]);
   usePrefetchTree(prefetchInput, rootTreeQuery.data, isPrivate);
 
   const currentTreeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(repoName, activeRef, currentPath, isPrivate, profileName),
+    ...getGithubRepoTreeQueryOptions(repoName, activeRef, currentPath, isPrivate, username),
     enabled: hasMounted && !!repoData && viewMode === "tree" && currentPath !== ""
   });
 
   const handleBranchChange = useCallback(
     (branch: string) => {
       const path = getExplorerPath();
-      const loc = repoBranchNavLocation(pathProfileName ?? null, repoName, branch, {
+      const loc = repoBranchNavLocation(pathUsername ?? null, repoName, branch, {
         path,
         view: viewMode,
         defaultBranch: repoData?.defaultBranch
       });
       void navigate({ to: loc.to, params: loc.params } as never);
     },
-    [navigate, pathProfileName, repoData?.defaultBranch, repoName, viewMode]
+    [navigate, pathUsername, repoData?.defaultBranch, repoName, viewMode]
   );
 
   const handleOpenFileSheet = useCallback(() => setDrawerOpen(true), []);
@@ -147,7 +147,7 @@ export function RepoExplorerLayout({
         <CodeFileView
           currentRef={activeRef}
           path={currentPath}
-          profileName={profileName}
+          username={username}
           repo={repoName}
         />
       </div>
@@ -157,7 +157,7 @@ export function RepoExplorerLayout({
           currentPath={currentPath}
           currentRef={activeRef}
           entries={treeEntries}
-          profileName={profileName}
+          username={username}
           repo={repoData}
           repoName={repoName}
         />
@@ -172,7 +172,7 @@ export function RepoExplorerLayout({
     <RepoFileTreeSidebar
       currentRef={activeRef}
       entries={rootTreeQuery.data}
-      profileName={profileName}
+      username={username}
       repoName={repoName}
     />
   ) : null;
@@ -184,7 +184,7 @@ export function RepoExplorerLayout({
         isDesktop={isDesktop}
         onBranchChange={handleBranchChange}
         onOpenFileSheet={handleOpenFileSheet}
-        profileName={profileName}
+        username={username}
         repo={repoData}
         repoName={repoName}
       />
@@ -194,7 +194,7 @@ export function RepoExplorerLayout({
           <BranchComparisonBanner
             currentBranch={activeRef}
             defaultBranch={repoData.defaultBranch ?? "main"}
-            profileName={profileName}
+            username={username}
             repo={repoName}
           />
         </div>
@@ -230,7 +230,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   isDesktop,
   onBranchChange,
   onOpenFileSheet,
-  profileName,
+  username,
   repo,
   repoName
 }: {
@@ -239,12 +239,12 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
   onBranchChange: (branch: string) => void;
   onOpenFileSheet: () => void;
   /** Tenant slug for GitHub public data; path segment may be null on custom domain. */
-  profileName: string;
+  username: string;
   repo: RepoOverview;
   repoName: string;
 }) {
-  const params = useParams({ strict: false }) as { profileName?: string };
-  const pathProfileName = params.profileName;
+  const params = useParams({ strict: false }) as { username?: string };
+  const pathUsername = params.username;
   return (
     <div className="flex shrink-0 items-center gap-2 border-b bg-card px-3 py-2 md:gap-3 md:px-4">
       {!isDesktop && (
@@ -260,10 +260,8 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
 
       <Link
         // Custom-domain surface: path profile is null → `/repos/$repo` (no slug).
-        to={pathProfileName ? "/$profileName/repos/$repo" : "/repos/$repo"}
-        params={
-          pathProfileName ? { profileName: pathProfileName, repo: repoName } : { repo: repoName }
-        }
+        to={pathUsername ? "/$username/repos/$repo" : "/repos/$repo"}
+        params={pathUsername ? { username: pathUsername, repo: repoName } : { repo: repoName }}
         className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronLeft size={16} />
@@ -274,7 +272,7 @@ const ExplorerToolbar = memo(function ExplorerToolbar({
         <CodeExplorerToolbar
           currentRef={currentRef}
           onBranchChange={onBranchChange}
-          profileName={profileName}
+          username={username}
           repo={repo}
         />
       </div>

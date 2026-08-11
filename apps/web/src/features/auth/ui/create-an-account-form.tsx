@@ -10,7 +10,7 @@ import { z } from "zod";
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { ProfileNameSchema } from "@tsu-stack/core";
+import { UsernameSchema } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { FieldGroup, FieldSeparator } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -25,9 +25,11 @@ import { appConfig } from "@/config/app.config";
 const SIGNUP_ERROR_MESSAGES: Record<string, string> = {
   INVITE_REQUIRED: "An invite code is required to create an account.",
   INVITE_INVALID: "This invite code is invalid or has already been used.",
-  PROFILE_NAME_TAKEN: "That profile name is already taken. Try another.",
-  PROFILE_NAME_INVALID:
-    "Invalid profile name. Use 3–30 lowercase letters, numbers, and single hyphens."
+  USERNAME_TAKEN: "That username is already taken. Try another.",
+  USERNAME_INVALID: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens.",
+  // Legacy codes during rollout
+  PROFILE_NAME_TAKEN: "That username is already taken. Try another.",
+  PROFILE_NAME_INVALID: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens."
 };
 
 function messageForSignUpError(error: { code?: string | null; message?: string | null }): string {
@@ -43,7 +45,7 @@ type SignUpEmailBody = {
   name: string;
   password: string;
   /** User additionalField (input: true) — persisted after auth hooks normalize. */
-  profileName: string;
+  username: string;
   /**
    * Non-persisted body field read by auth hooks (`extractInviteCode`).
    * Must not be treated as a user column.
@@ -68,7 +70,7 @@ export function CreateAnAccountForm({
   const signUpMutation = useMutation({
     mutationFn: async (values: SignUpEmailBody) => {
       // better-auth sign-up body is open-ended (`.and(z.record(...))`);
-      // profileName is additionalFields.input; inviteCode is body-only for hooks.
+      // username is additionalFields.input; inviteCode is body-only for hooks.
       const result = await authClient.signUp.email(values as never);
 
       if (!result.data) {
@@ -97,16 +99,16 @@ export function CreateAnAccountForm({
       email: "",
       name: "",
       password: "",
-      profileName: "",
+      username: "",
       inviteCode: inviteCodePrefill
     },
     onSubmit: async ({ value }) => {
-      const { email, name, password, profileName, inviteCode } = value;
+      const { email, name, password, username, inviteCode } = value;
       signUpMutation.mutate({
         email,
         name,
         password,
-        profileName,
+        username,
         inviteCode: inviteCode.trim()
       });
     },
@@ -117,7 +119,7 @@ export function CreateAnAccountForm({
           email: z.email("Invalid email address"),
           name: z.string().min(2, "Name must be at least 2 characters"),
           password: z.string().min(8, "Password must be at least 8 characters"),
-          profileName: ProfileNameSchema,
+          username: UsernameSchema,
           // Empty allowed for first-user bootstrap; server returns INVITE_REQUIRED otherwise.
           inviteCode: z.string().trim()
         })
@@ -169,12 +171,12 @@ export function CreateAnAccountForm({
             {(field) => <field.InputField label="Name" placeholder="John Doe" />}
           </form.AppField>
 
-          <form.AppField name="profileName">
+          <form.AppField name="username">
             {(field) => (
               <field.InputField
-                label="Profile name"
+                label="Username"
                 placeholder="johndoe"
-                description="Public URL: /your-profile-name (lowercase, hyphens ok)"
+                description="Public URL: /your-username (lowercase, hyphens ok)"
               />
             )}
           </form.AppField>

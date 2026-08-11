@@ -8,7 +8,7 @@ export function getGithubRepoFileContentQueryOptions(
   ref: string,
   path: string,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoFileContent.queryOptions({
@@ -19,7 +19,7 @@ export function getGithubRepoFileContentQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRepoFileContent.queryOptions({
-    input: { path, ref, repo, profileName },
+    input: { path, ref, repo, username },
     staleTime: githubCachePolicy.repoMeta.staleTimeMs,
     gcTime: githubCachePolicy.repoMeta.gcTimeMs,
     meta: persistedMeta

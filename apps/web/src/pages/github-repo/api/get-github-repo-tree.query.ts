@@ -19,7 +19,7 @@ export function getGithubRepoTreeQueryOptions(
   ref: string,
   path = "",
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoTree.queryOptions({
@@ -30,7 +30,7 @@ export function getGithubRepoTreeQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRepoTree.queryOptions({
-    input: { path, ref, repo, profileName },
+    input: { path, ref, repo, username },
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta
@@ -41,17 +41,17 @@ export function useGetGithubRepoTreeQuery(
   repo: string,
   ref: string,
   path = "",
-  profileName: string,
+  username: string,
   options?: { enabled?: boolean }
 ) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
   return useQuery({
-    ...getGithubRepoTreeQueryOptions(repo, ref, path, isPrivate, profileName),
+    ...getGithubRepoTreeQueryOptions(repo, ref, path, isPrivate, username),
     enabled: options?.enabled ?? true
   });
 }

@@ -23,9 +23,9 @@ import { useGetOwnPortfolioListQuery, useGetPortfolioListQuery } from "@/feature
 
 const PublicItems = [{ href: "/", label: "Home" }] as const;
 
-/** True when the URL is a public `/{profileName}` (or nested) portfolio surface. */
-function isPublicProfilePath(pathname: string, pathProfileName: string | undefined): boolean {
-  if (!pathProfileName?.trim()) return false;
+/** True when the URL is a public `/{username}` (or nested) portfolio surface. */
+function isPublicProfilePath(pathname: string, pathUsername: string | undefined): boolean {
+  if (!pathUsername?.trim()) return false;
   // Dashboard / auth / playground must never treat a param as a public slug.
   if (
     pathname.startsWith("/dashboard") ||
@@ -91,17 +91,17 @@ function groupBySection(items: readonly NavItem[]): Section[] {
   return sections;
 }
 
-function sessionProfileName(user: unknown): string | undefined {
+function sessionUsername(user: unknown): string | undefined {
   if (typeof user !== "object" || user === null) return undefined;
-  if (!("profileName" in user)) return undefined;
-  const value = (user as { profileName?: unknown }).profileName;
+  if (!("username" in user)) return undefined;
+  const value = (user as { username?: unknown }).username;
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 export function PublicSidebar() {
   const location = useLocation();
   const pathname = location.pathname;
-  const params = useParams({ strict: false }) as { profileName?: string };
+  const params = useParams({ strict: false }) as { username?: string };
   const { user } = useAuthSuspense();
   const isSignedIn = !!user;
 
@@ -111,31 +111,31 @@ export function PublicSidebar() {
     enabled: isSignedIn
   });
 
-  const pathProfileName = params.profileName;
-  const onPublicProfile = isPublicProfilePath(pathname, pathProfileName);
-  const ownProfileName = sessionProfileName(user) ?? ownProfileQuery.data?.profileName ?? undefined;
+  const pathUsername = params.username;
+  const onPublicProfile = isPublicProfilePath(pathname, pathUsername);
+  const ownUsername = sessionUsername(user) ?? ownProfileQuery.data?.username ?? undefined;
 
   // Nav links: public page slug, else own slug for "Portfolio" / "Repositories".
-  const profileName = (onPublicProfile ? pathProfileName : ownProfileName) ?? "";
+  const username = (onPublicProfile ? pathUsername : ownUsername) ?? "";
   const onCustomDomainPublic =
     typeof window !== "undefined" &&
     isCustomDomainHost(window.location.hostname) &&
     (pathname === "/" || pathname.startsWith("/repos"));
 
-  const tenantForSurface = profileName.length > 0 ? profileName : (ownProfileName ?? "");
+  const tenantForSurface = username.length > 0 ? username : (ownUsername ?? "");
   const publicSurface =
     tenantForSurface.length > 0 || onCustomDomainPublic
       ? createPublicSurface({
-          tenantProfileName: tenantForSurface.length > 0 ? tenantForSurface : "unknown",
+          tenantUsername: tenantForSurface.length > 0 ? tenantForSurface : "unknown",
           mode: onCustomDomainPublic ? "custom_domain" : "path"
         })
       : null;
 
   // Contacts footer:
   // - Public profile pages: list by path slug (no session required).
-  // - Dashboard: list via session only (omit profileName) so a missing/stale client
+  // - Dashboard: list via session only (omit username) so a missing/stale client
   //   slug cannot 404 "Profile not found" while the user is signed in.
-  const publicPortfolioQuery = useGetPortfolioListQuery(pathProfileName ?? "", {
+  const publicPortfolioQuery = useGetPortfolioListQuery(pathUsername ?? "", {
     enabled: onPublicProfile
   });
   const ownPortfolioQuery = useGetOwnPortfolioListQuery({
@@ -145,7 +145,7 @@ export function PublicSidebar() {
 
   const publicItems: NavItem[] = [
     ...PublicItems,
-    ...(publicSurface && publicSurface.tenantProfileName !== "unknown"
+    ...(publicSurface && publicSurface.tenantUsername !== "unknown"
       ? ([
           { href: portfolioHomePath(publicSurface), label: "Portfolio" },
           { href: publicReposListPath(publicSurface), label: "Repositories" }

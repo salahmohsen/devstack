@@ -19,19 +19,19 @@ export const Route = createFileRoute("/api/resume/download/")({
         try {
           const url = new URL(request.url);
           const resumeId = url.searchParams.get("id");
-          const profileName = url.searchParams.get("profileName");
+          const username = url.searchParams.get("username");
           const viewMode = url.searchParams.get("view") === "1";
 
           log.set({
             hasResumeId: Boolean(resumeId),
-            hasProfileName: Boolean(profileName),
+            hasUsername: Boolean(username),
             viewMode
           });
 
           const resumeRow = resumeId
             ? await orpcClient.resume.get({ id: resumeId })
-            : profileName
-              ? await orpcClient.resume.getDefault({ profileName })
+            : username
+              ? await orpcClient.resume.getDefault({ username })
               : null;
 
           if (!resumeRow) {

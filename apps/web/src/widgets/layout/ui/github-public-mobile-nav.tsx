@@ -25,7 +25,7 @@ import {
   publicReposListLocation,
   usePublicSurface
 } from "@/shared/lib/public-surface";
-import { sessionProfileNameFromUser } from "@/shared/lib/session-profile-name";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { PrimaryAppMenuLink } from "@/shared/ui/primary-app-menu-link";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
@@ -41,8 +41,8 @@ export function MobileNav() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const sessionProfileName = sessionProfileNameFromUser(user) ?? undefined;
-  const ownSurface = usePublicSurface(sessionProfileName ?? "");
+  const sessionUsername = sessionUsernameFromUser(user) ?? undefined;
+  const ownSurface = usePublicSurface(sessionUsername ?? "");
   const { theme, setTheme } = useTheme();
 
   const handleSignOut = async () => {
@@ -56,7 +56,7 @@ export function MobileNav() {
       // Drop cached session immediately (query staleTime is 5m).
       queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
       await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions(sessionProfileName).queryKey
+        queryKey: getGithubSetupStatusQueryOptions(sessionUsername).queryKey
       });
       await router.invalidate();
       await navigate({ to: "/" });
@@ -97,7 +97,7 @@ export function MobileNav() {
           <House size={22} strokeWidth={1.8} />
         </Link>
         {(() => {
-          const loc = sessionProfileName
+          const loc = sessionUsername
             ? publicReposListLocation(ownSurface)
             : ({ to: "/repos" as const } as const);
           return (
@@ -158,7 +158,7 @@ export function MobileNav() {
             </MenuGroup>
             <MenuSeparator />
             <MenuGroup>
-              {sessionProfileName ? (
+              {sessionUsername ? (
                 <MenuLinkItem
                   render={(() => {
                     const loc = publicPortfolioHomeLocation(ownSurface);
@@ -178,7 +178,7 @@ export function MobileNav() {
                   Profile
                 </MenuItem>
               )}
-              {sessionProfileName ? (
+              {sessionUsername ? (
                 <MenuLinkItem
                   render={(() => {
                     const loc = publicReposListLocation(ownSurface);

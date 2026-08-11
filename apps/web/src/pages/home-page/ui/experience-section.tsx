@@ -31,9 +31,9 @@ function experienceTitle(experience: ExperiencePublicOutput): string {
   return experience.title || experience.organization;
 }
 
-export const Experience = ({ profileName }: { profileName: string }) => {
-  const portfolioQuery = useGetPortfolioListQuery(profileName);
-  const defaultResumeQuery = useGetDefaultResumeQuery(profileName);
+export const Experience = ({ username }: { username: string }) => {
+  const portfolioQuery = useGetPortfolioListQuery(username);
+  const defaultResumeQuery = useGetDefaultResumeQuery(username);
   const experiences = portfolioQuery.data?.experiences ?? [];
   const defaultResume = defaultResumeQuery.data;
 
@@ -54,7 +54,7 @@ export const Experience = ({ profileName }: { profileName: string }) => {
       {defaultResume ? (
         <div className="mt-10 flex gap-1">
           <a
-            href={`/api/resume/download/?id=${defaultResume.id}&profileName=${encodeURIComponent(profileName)}`}
+            href={`/api/resume/download/?id=${defaultResume.id}&username=${encodeURIComponent(username)}`}
             target="_blank"
             rel="noreferrer noopener"
             className="inline-flex items-center gap-1 text-sm font-medium transition-colors hover:text-accent"

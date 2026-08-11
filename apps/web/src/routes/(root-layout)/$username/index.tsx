@@ -1,6 +1,6 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
-import { parseProfileName } from "@tsu-stack/core";
+import { parseUsername } from "@tsu-stack/core";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
 import { getRequestHostname } from "@/shared/lib/request-host";
@@ -16,59 +16,59 @@ import {
   HomePage
 } from "@/pages/home-page";
 
-export const Route = createFileRoute("/(root-layout)/$profileName/")({
+export const Route = createFileRoute("/(root-layout)/$username/")({
   ssr: true,
   beforeLoad: ({ params }) => {
     // Reject reserved segments and non-profile junk (e.g. firebase-messaging-sw.js)
     // before any portfolio RPC / SSR loader work.
-    if (!parseProfileName(params.profileName).success) {
+    if (!parseUsername(params.username).success) {
       throw notFound();
     }
-    // Custom domain Host: portfolio is at `/`, not `/{profileName}`.
+    // Custom domain Host: portfolio is at `/`, not `/{username}`.
     const host = getRequestHostname();
     if (host && isCustomDomainHost(host)) {
       throw redirect({ to: "/", replace: true });
     }
   },
   loader: async ({ context, params }) => {
-    const { profileName } = params;
+    const { username } = params;
 
     // Portfolio is required for this page — missing profile → 404.
     try {
-      await context.queryClient.ensureQueryData(getPortfolioListQueryOptions(profileName));
+      await context.queryClient.ensureQueryData(getPortfolioListQueryOptions(username));
     } catch {
       throw notFound();
     }
 
-    void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(profileName));
+    void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(username));
 
     // Optional GitHub for **this** profile only (not a global owner).
     const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions(profileName)
+      getGithubSetupStatusQueryOptions(username)
     );
 
     if (setupStatus?.isConfigured && setupStatus?.owner) {
-      void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(profileName));
+      void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(username));
       void Promise.all([
-        context.queryClient.prefetchQuery(getGithubContributionsQueryOptions(profileName)),
-        context.queryClient.prefetchQuery(getGithubActivityQueryOptions(profileName))
+        context.queryClient.prefetchQuery(getGithubContributionsQueryOptions(username)),
+        context.queryClient.prefetchQuery(getGithubActivityQueryOptions(username))
       ]);
     }
 
-    return { profileName };
+    return { username };
   },
   head: ({ params }) =>
     generateAppSeo({
       alternates: {
-        canonicalPath: `/${params.profileName}`
+        canonicalPath: `/${params.username}`
       },
-      description: `Public portfolio for @${params.profileName}`,
-      title: `@${params.profileName}`
+      description: `Public portfolio for @${params.username}`,
+      title: `@${params.username}`
     }),
   component: PublicProfilePage
 });
 
 function PublicProfilePage() {
-  const { profileName } = Route.useParams();
-  return <HomePage profileName={profileName} />;
+  const { username } = Route.useParams();
+  return <HomePage username={username} />;
 }

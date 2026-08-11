@@ -93,10 +93,10 @@ function statusMeta(status: CustomDomainOutput["status"]): StatusMeta {
   }
 }
 
-function sessionProfileName(user: unknown): string | undefined {
+function sessionUsername(user: unknown): string | undefined {
   if (!user || typeof user !== "object") return undefined;
-  if (!("profileName" in user)) return undefined;
-  const value = (user as { profileName?: unknown }).profileName;
+  if (!("username" in user)) return undefined;
+  const value = (user as { username?: unknown }).username;
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
@@ -311,9 +311,9 @@ function DomainDnsTable({
 
 export const DomainSettings = () => {
   const { user } = useAuth();
-  const profileName = sessionProfileName(user) ?? "";
+  const username = sessionUsername(user) ?? "";
   const primaryOrigin = getPrimaryAppOrigin();
-  const pathUrl = profileName ? `${primaryOrigin}/${profileName}` : primaryOrigin;
+  const pathUrl = username ? `${primaryOrigin}/${username}` : primaryOrigin;
   const dashboardUrl = `${primaryOrigin}/dashboard`;
 
   const {

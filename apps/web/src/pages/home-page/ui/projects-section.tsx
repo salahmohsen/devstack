@@ -136,32 +136,32 @@ function StackChip({ stack }: { stack: StackOutput }) {
 }
 
 export const ProjectsSection = ({
-  profileName,
+  username,
   surfaceMode
 }: {
-  profileName: string;
+  username: string;
   /** When known from the route loader (custom domain root vs path portfolio). */
   surfaceMode?: "path" | "custom_domain";
 }) => {
-  const portfolioQuery = useGetPortfolioListQuery(profileName);
+  const portfolioQuery = useGetPortfolioListQuery(username);
   const projects = portfolioQuery.data?.projects ?? [];
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPortfolioOwner = Boolean(sessionProfileName && sessionProfileName === profileName);
+  const isPortfolioOwner = Boolean(sessionUsername && sessionUsername === username);
 
   const surface = useMemo(() => {
     if (surfaceMode) {
       return createPublicSurface({
-        tenantProfileName: profileName,
+        tenantUsername: username,
         mode: surfaceMode
       });
     }
     const hostname = typeof window !== "undefined" ? window.location.hostname : undefined;
-    return resolvePublicSurface({ tenantProfileName: profileName, hostname });
-  }, [profileName, surfaceMode]);
+    return resolvePublicSurface({ tenantUsername: username, hostname });
+  }, [username, surfaceMode]);
 
   if (projects.length === 0) return null;
 

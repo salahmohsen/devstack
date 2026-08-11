@@ -12,7 +12,7 @@ import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
 import { publicPortfolioHomeLocation, publicReposListLocation } from "@/shared/lib/public-surface";
 import { getRequestHostname } from "@/shared/lib/request-host";
 import { resolvePublicScopeNav } from "@/shared/lib/resolve-public-scope-nav";
-import { sessionProfileNameFromUser } from "@/shared/lib/session-profile-name";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
 
@@ -22,9 +22,9 @@ import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
  */
 export function PublicScopeNav({ className }: { className?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const params = useParams({ strict: false }) as { profileName?: string };
+  const params = useParams({ strict: false }) as { username?: string };
   const { user } = useAuth();
-  const sessionProfileName = sessionProfileNameFromUser(user);
+  const sessionUsername = sessionUsernameFromUser(user);
 
   // Isomorphic host (SSR request Host + client window) so custom-domain resolve
   // can run on first paint, not only after hydration.
@@ -41,17 +41,11 @@ export function PublicScopeNav({ className }: { className?: string }) {
       resolvePublicScopeNav({
         pathname,
         hostname,
-        pathProfileName: params.profileName,
-        customDomainProfileName: customDomainQuery.data?.profileName ?? null,
-        sessionProfileName
+        pathUsername: params.username,
+        customDomainUsername: customDomainQuery.data?.username ?? null,
+        sessionUsername
       }),
-    [
-      pathname,
-      hostname,
-      params.profileName,
-      customDomainQuery.data?.profileName,
-      sessionProfileName
-    ]
+    [pathname, hostname, params.username, customDomainQuery.data?.username, sessionUsername]
   );
 
   if (!nav.show || !nav.surface) return null;

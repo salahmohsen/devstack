@@ -16,19 +16,19 @@ type FileTreeProps = {
     path: string;
     type: "dir" | "file" | "submodule";
   }>;
-  profileName: string;
+  username: string;
   refName: string;
   repo: string;
 };
 
-export function FileTree({ directoryPath, entries, profileName, refName, repo }: FileTreeProps) {
+export function FileTree({ directoryPath, entries, username, refName, repo }: FileTreeProps) {
   const entryNames = useMemo(() => entries.map((entry) => entry.name), [entries]);
   const commitsQuery = useGetGithubTreeEntryCommitsQuery(
     repo,
     refName,
     directoryPath ?? "",
     entryNames,
-    profileName
+    username
   );
 
   return (

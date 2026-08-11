@@ -33,7 +33,7 @@ import {
 } from "@/shared/lib/public-surface";
 import { parseRepoTabLocation } from "@/shared/lib/repo-paths";
 import { preloadRouteOnce } from "@/shared/lib/route-preload";
-import { sessionProfileNameFromUser } from "@/shared/lib/session-profile-name";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { removeTab, useTabs } from "@/shared/lib/tab-store";
 import { useGlobalShortcuts } from "@/shared/lib/use-global-shortcuts";
 import { PrimaryAppMenuLink } from "@/shared/ui/primary-app-menu-link";
@@ -71,10 +71,10 @@ export function Topbar() {
   const openTabs = useTabs();
 
   // Prefer session user's profile for GitHub chrome; never a global site owner.
-  const sessionProfileName = sessionProfileNameFromUser(admin) ?? undefined;
-  const ownSurface = usePublicSurface(sessionProfileName ?? "");
-  const setupStatus = sessionProfileName
-    ? queryClient.getQueryData(getGithubSetupStatusQueryOptions(sessionProfileName).queryKey)
+  const sessionUsername = sessionUsernameFromUser(admin) ?? undefined;
+  const ownSurface = usePublicSurface(sessionUsername ?? "");
+  const setupStatus = sessionUsername
+    ? queryClient.getQueryData(getGithubSetupStatusQueryOptions(sessionUsername).queryKey)
     : undefined;
   const owner = setupStatus?.owner ?? null;
 
@@ -89,7 +89,7 @@ export function Topbar() {
       // Drop cached session immediately (query staleTime is 5m; suspense keeps UI mounted).
       queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
       await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions(sessionProfileName).queryKey
+        queryKey: getGithubSetupStatusQueryOptions(sessionUsername).queryKey
       });
       await router.invalidate();
       await navigateRef.current({ to: "/" });
@@ -170,10 +170,10 @@ export function Topbar() {
     {
       // Match command palette: D F (proFile — P is Projects)
       shortcut: [{ key: "d" }, { key: "f" }],
-      enabled: Boolean(sessionProfileName),
+      enabled: Boolean(sessionUsername),
       onTrigger: () => {
-        if (!sessionProfileName) return;
-        // Host-aware: custom domain → `/`; path primary → `/$profileName`.
+        if (!sessionUsername) return;
+        // Host-aware: custom domain → `/`; path primary → `/$username`.
         const loc = publicPortfolioHomeLocation(ownSurface);
         void navigateRef.current(
           "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
@@ -183,9 +183,9 @@ export function Topbar() {
     {
       // Match command palette: D R (Repositories)
       shortcut: [{ key: "d" }, { key: "r" }],
-      enabled: Boolean(sessionProfileName),
+      enabled: Boolean(sessionUsername),
       onTrigger: () => {
-        if (!sessionProfileName) return;
+        if (!sessionUsername) return;
         const loc = publicReposListLocation(ownSurface);
         void navigateRef.current(
           "params" in loc ? { to: loc.to, params: loc.params } : { to: loc.to }
@@ -275,7 +275,7 @@ export function Topbar() {
         </MenuGroup>
         <MenuSeparator />
         <MenuGroup>
-          {sessionProfileName ? (
+          {sessionUsername ? (
             <MenuLinkItem
               render={(() => {
                 const loc = publicPortfolioHomeLocation(ownSurface);
@@ -297,7 +297,7 @@ export function Topbar() {
               <MenuShortcut>D F</MenuShortcut>
             </MenuItem>
           )}
-          {sessionProfileName ? (
+          {sessionUsername ? (
             <MenuLinkItem
               render={(() => {
                 const loc = publicReposListLocation(ownSurface);

@@ -1,70 +1,70 @@
 /**
  * Canonical in-app paths for profile-scoped GitHub repo routes.
  *
- * - Primary host: `/{profileName}/repos/...`
- * - Custom domain Host: `/repos/...` (profile comes from Host; pass profileName=null)
+ * - Primary host: `/{username}/repos/...`
+ * - Custom domain Host: `/repos/...` (profile comes from Host; pass username=null)
  */
 
 /** Base path for a user's repos list. */
-export function reposListPath(profileName: string | null): string {
-  return profileName ? `/${profileName}/repos` : `/repos`;
+export function reposListPath(username: string | null): string {
+  return username ? `/${username}/repos` : `/repos`;
 }
 
-export function repoOverviewPath(profileName: string | null, repo: string): string {
-  return `${reposListPath(profileName)}/${repo}`;
+export function repoOverviewPath(username: string | null, repo: string): string {
+  return `${reposListPath(username)}/${repo}`;
 }
 
 export function repoTreePath(
-  profileName: string | null,
+  username: string | null,
   repo: string,
   ref: string,
   path = ""
 ): string {
   const cleanPath = path.replace(/^\/+|\/+$/g, "");
-  const base = `${reposListPath(profileName)}/${repo}/tree/${ref}`;
+  const base = `${reposListPath(username)}/${repo}/tree/${ref}`;
   if (!cleanPath) return base;
   return `${base}/${cleanPath}`;
 }
 
 export function repoBlobPath(
-  profileName: string | null,
+  username: string | null,
   repo: string,
   ref: string,
   path: string
 ): string {
   const cleanPath = path.replace(/^\/+|\/+$/g, "");
-  return `${reposListPath(profileName)}/${repo}/blob/${ref}/${cleanPath}`;
+  return `${reposListPath(username)}/${repo}/blob/${ref}/${cleanPath}`;
 }
 
 export function buildRepoTabUrl(input: {
-  profileName: string | null;
+  username: string | null;
   repo: string;
   view: "repo" | "tree" | "blob";
   ref?: string;
   path?: string;
 }): string {
-  const { profileName, repo, view, ref = "main", path = "" } = input;
+  const { username, repo, view, ref = "main", path = "" } = input;
   if (view === "blob") {
-    return repoBlobPath(profileName, repo, ref, path);
+    return repoBlobPath(username, repo, ref, path);
   }
   if (view === "tree") {
-    return repoTreePath(profileName, repo, ref, path);
+    return repoTreePath(username, repo, ref, path);
   }
-  return repoOverviewPath(profileName, repo);
+  return repoOverviewPath(username, repo);
 }
 
-type ProfileRepoParams = { profileName: string; repo: string };
-type ProfileRepoSplatParams = { profileName: string; repo: string; _splat: string };
+type ProfileRepoParams = { username: string; repo: string };
+type ProfileRepoSplatParams = { username: string; repo: string; _splat: string };
 type CustomRepoParams = { repo: string };
 type CustomRepoSplatParams = { repo: string; _splat: string };
 
 /** Typed navigate target when switching branches (client-side; no full reload). */
 export type RepoBranchNavLocation =
-  | { to: "/$profileName/repos/$repo"; params: ProfileRepoParams }
+  | { to: "/$username/repos/$repo"; params: ProfileRepoParams }
   | { to: "/repos/$repo"; params: CustomRepoParams }
-  | { to: "/$profileName/repos/$repo/tree/$"; params: ProfileRepoSplatParams }
+  | { to: "/$username/repos/$repo/tree/$"; params: ProfileRepoSplatParams }
   | { to: "/repos/$repo/tree/$"; params: CustomRepoSplatParams }
-  | { to: "/$profileName/repos/$repo/blob/$"; params: ProfileRepoSplatParams }
+  | { to: "/$username/repos/$repo/blob/$"; params: ProfileRepoSplatParams }
   | { to: "/repos/$repo/blob/$"; params: CustomRepoSplatParams };
 
 /**
@@ -74,7 +74,7 @@ export type RepoBranchNavLocation =
  * - No path + other branch: tree at branch root
  */
 export function repoBranchNavLocation(
-  profileName: string | null,
+  username: string | null,
   repo: string,
   branch: string,
   options?: {
@@ -90,31 +90,31 @@ export function repoBranchNavLocation(
   if (path) {
     const splat = `${branch}/${path}`;
     if (view === "blob") {
-      return profileName
+      return username
         ? {
-            to: "/$profileName/repos/$repo/blob/$",
-            params: { profileName, repo, _splat: splat }
+            to: "/$username/repos/$repo/blob/$",
+            params: { username, repo, _splat: splat }
           }
         : { to: "/repos/$repo/blob/$", params: { repo, _splat: splat } };
     }
-    return profileName
+    return username
       ? {
-          to: "/$profileName/repos/$repo/tree/$",
-          params: { profileName, repo, _splat: splat }
+          to: "/$username/repos/$repo/tree/$",
+          params: { username, repo, _splat: splat }
         }
       : { to: "/repos/$repo/tree/$", params: { repo, _splat: splat } };
   }
 
   if (defaultBranch && branch === defaultBranch) {
-    return profileName
-      ? { to: "/$profileName/repos/$repo", params: { profileName, repo } }
+    return username
+      ? { to: "/$username/repos/$repo", params: { username, repo } }
       : { to: "/repos/$repo", params: { repo } };
   }
 
-  return profileName
+  return username
     ? {
-        to: "/$profileName/repos/$repo/tree/$",
-        params: { profileName, repo, _splat: branch }
+        to: "/$username/repos/$repo/tree/$",
+        params: { username, repo, _splat: branch }
       }
     : { to: "/repos/$repo/tree/$", params: { repo, _splat: branch } };
 }
@@ -165,37 +165,37 @@ export function repoExplorerTabSurfaceFromUrl(url: string): RepoExplorerTabSurfa
 export function parseRepoTabLocation(
   url: string
 ):
-  | { to: "/$profileName/repos/$repo"; params: ProfileRepoParams }
-  | { to: "/$profileName/repos/$repo/tree/$"; params: ProfileRepoSplatParams }
-  | { to: "/$profileName/repos/$repo/blob/$"; params: ProfileRepoSplatParams }
+  | { to: "/$username/repos/$repo"; params: ProfileRepoParams }
+  | { to: "/$username/repos/$repo/tree/$"; params: ProfileRepoSplatParams }
+  | { to: "/$username/repos/$repo/blob/$"; params: ProfileRepoSplatParams }
   | { to: "/repos/$repo"; params: CustomRepoParams }
   | { to: "/repos/$repo/tree/$"; params: CustomRepoSplatParams }
   | { to: "/repos/$repo/blob/$"; params: CustomRepoSplatParams }
   | null {
   const path = url.split("?")[0] ?? url;
 
-  // Profile-scoped: /{profileName}/repos/...
+  // Profile-scoped: /{username}/repos/...
   const profileBlob = path.match(/^\/([^/]+)\/repos\/([^/]+)\/blob\/(.+)$/);
   if (profileBlob && profileBlob[1] !== "repos") {
     return {
-      to: "/$profileName/repos/$repo/blob/$",
-      params: { profileName: profileBlob[1], repo: profileBlob[2], _splat: profileBlob[3] }
+      to: "/$username/repos/$repo/blob/$",
+      params: { username: profileBlob[1], repo: profileBlob[2], _splat: profileBlob[3] }
     };
   }
 
   const profileTree = path.match(/^\/([^/]+)\/repos\/([^/]+)\/tree\/(.+)$/);
   if (profileTree && profileTree[1] !== "repos") {
     return {
-      to: "/$profileName/repos/$repo/tree/$",
-      params: { profileName: profileTree[1], repo: profileTree[2], _splat: profileTree[3] }
+      to: "/$username/repos/$repo/tree/$",
+      params: { username: profileTree[1], repo: profileTree[2], _splat: profileTree[3] }
     };
   }
 
   const profileOverview = path.match(/^\/([^/]+)\/repos\/([^/]+)\/?$/);
   if (profileOverview && profileOverview[1] !== "repos") {
     return {
-      to: "/$profileName/repos/$repo",
-      params: { profileName: profileOverview[1], repo: profileOverview[2] }
+      to: "/$username/repos/$repo",
+      params: { username: profileOverview[1], repo: profileOverview[2] }
     };
   }
 

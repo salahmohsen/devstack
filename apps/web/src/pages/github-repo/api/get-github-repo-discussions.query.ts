@@ -16,7 +16,7 @@ type GetGithubRepoDiscussionsInput = {
 export function getGithubRepoDiscussionsQueryOptions(
   input: GetGithubRepoDiscussionsInput,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoDiscussions.queryOptions({
@@ -33,7 +33,7 @@ export function getGithubRepoDiscussionsQueryOptions(
     input: {
       first: input.first ?? REPO_ACTIVITY_CARDS_PER_PAGE,
       repo: input.repo,
-      profileName
+      username
     },
     staleTime: githubCachePolicy.list.staleTimeMs,
     gcTime: githubCachePolicy.list.gcTimeMs,
@@ -43,16 +43,16 @@ export function getGithubRepoDiscussionsQueryOptions(
 
 export function useGetGithubRepoDiscussionsQuery(
   input: GetGithubRepoDiscussionsInput,
-  profileName: string
+  username: string
 ) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
   return useQuery({
-    ...getGithubRepoDiscussionsQueryOptions(input, isPrivate, profileName),
+    ...getGithubRepoDiscussionsQueryOptions(input, isPrivate, username),
     enabled: true
   });
 }

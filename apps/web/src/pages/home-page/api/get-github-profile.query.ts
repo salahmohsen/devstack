@@ -6,10 +6,10 @@ import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 import { persistedMeta } from "@/shared/lib/query-persistence";
 
 /**
- * @param profileName Portfolio profile for public reads
+ * @param username Portfolio profile for public reads
  * @param isPrivate Only true when the viewer is signed in as **this** profile's user
  */
-export function getGithubProfileQueryOptions(profileName: string, isPrivate = false) {
+export function getGithubProfileQueryOptions(username: string, isPrivate = false) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetUserProfile.queryOptions({
       meta: persistedMeta,
@@ -18,16 +18,16 @@ export function getGithubProfileQueryOptions(profileName: string, isPrivate = fa
     });
   }
   return orpcQueryClient.github.publicGetUserProfile.queryOptions({
-    input: { profileName },
+    input: { username },
     meta: persistedMeta,
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs
   });
 }
 
-export function useGetGithubProfileQuery(profileName: string, isPrivate = false, enabled = true) {
+export function useGetGithubProfileQuery(username: string, isPrivate = false, enabled = true) {
   return useQuery({
-    ...getGithubProfileQueryOptions(profileName, isPrivate),
+    ...getGithubProfileQueryOptions(username, isPrivate),
     enabled
   });
 }

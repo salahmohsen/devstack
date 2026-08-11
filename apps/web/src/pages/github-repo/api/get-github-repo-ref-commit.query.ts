@@ -7,7 +7,7 @@ export function getGithubRepoRefCommitQueryOptions(
   repo: string,
   ref: string,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRefCommit.queryOptions({
@@ -18,7 +18,7 @@ export function getGithubRepoRefCommitQueryOptions(
     });
   }
   return orpcQueryClient.github.publicGetRefCommit.queryOptions({
-    input: { ref, repo, profileName },
+    input: { ref, repo, username },
     staleTime: githubCachePolicy.detail.staleTimeMs,
     gcTime: githubCachePolicy.detail.gcTimeMs,
     meta: persistedMeta

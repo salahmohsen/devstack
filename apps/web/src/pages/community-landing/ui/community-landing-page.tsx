@@ -7,7 +7,7 @@ import { appConfig } from "@/config/app.config";
 
 /**
  * Minimal community / OSS landing for `/`.
- * Portfolios live at `/{profileName}` — this page is not a SaaS pitch.
+ * Portfolios live at `/{username}` — this page is not a SaaS pitch.
  */
 export function CommunityLandingPage() {
   return (
@@ -23,7 +23,7 @@ export function CommunityLandingPage() {
           Run your own portfolio, resume, and project stack on infrastructure you control. Public
           pages live at{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 text-sm text-foreground">
-            /{"{profileName}"}
+            /{"{username}"}
           </code>
           .
         </p>
@@ -59,7 +59,7 @@ export function CommunityLandingPage() {
 
       <p className="text-sm text-muted-foreground">
         Already have a profile? Open{" "}
-        <span className="font-medium text-foreground">/{`{your-profile-name}`}</span> directly.
+        <span className="font-medium text-foreground">/{`{your-username}`}</span> directly.
       </p>
     </div>
   );

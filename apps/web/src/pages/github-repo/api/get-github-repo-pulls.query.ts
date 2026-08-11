@@ -20,7 +20,7 @@ type GetGithubRepoPullsInput = {
 export function getGithubRepoPullsQueryOptions(
   input: GetGithubRepoPullsInput,
   isPrivate = false,
-  profileName?: string
+  username?: string
 ) {
   if (isPrivate) {
     return orpcQueryClient.github.privateGetRepoPulls.queryOptions({
@@ -45,7 +45,7 @@ export function getGithubRepoPullsQueryOptions(
       repo: input.repo,
       sort: input.sort ?? "updated",
       state: input.state ?? "open",
-      profileName
+      username
     },
     staleTime: githubCachePolicy.list.staleTimeMs,
     gcTime: githubCachePolicy.list.gcTimeMs,
@@ -53,15 +53,15 @@ export function getGithubRepoPullsQueryOptions(
   });
 }
 
-export function useGetGithubRepoPullsQuery(input: GetGithubRepoPullsInput, profileName: string) {
+export function useGetGithubRepoPullsQuery(input: GetGithubRepoPullsInput, username: string) {
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isPrivate = Boolean(user && sessionProfileName === profileName);
+  const isPrivate = Boolean(user && sessionUsername === username);
   return useQuery({
-    ...getGithubRepoPullsQueryOptions(input, isPrivate, profileName),
+    ...getGithubRepoPullsQueryOptions(input, isPrivate, username),
     enabled: true
   });
 }

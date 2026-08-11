@@ -18,7 +18,7 @@ import {
 
 /**
  * Custom-domain only: `https://custom.example/repos`.
- * On the primary host, redirect to `/{profileName}/repos` (session user or 404).
+ * On the primary host, redirect to `/{username}/repos` (session user or 404).
  */
 export const Route = createFileRoute("/(root-layout)/repos/")({
   validateSearch: (raw: Record<string, unknown>): { page?: number } => {
@@ -39,17 +39,17 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
       return; // custom domain: stay on /repos
     }
 
-    // Primary host: force /{profileName}/repos
+    // Primary host: force /{username}/repos
     const user = await context.queryClient.ensureQueryData(getAuthUserQueryOptions());
-    const profileName =
-      typeof (user as { profileName?: string } | null)?.profileName === "string"
-        ? (user as { profileName: string }).profileName
+    const username =
+      typeof (user as { username?: string } | null)?.username === "string"
+        ? (user as { username: string }).username
         : null;
 
-    if (profileName) {
+    if (username) {
       throw redirect({
-        to: "/$profileName/repos",
-        params: { profileName },
+        to: "/$username/repos",
+        params: { username },
         search: location.search as { page?: number }
       });
     }
@@ -67,29 +67,29 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
       getResolvePublicPortfolioQueryOptions({ host: host ?? undefined })
     );
 
-    if (!resolved?.profileName) {
+    if (!resolved?.username) {
       throw notFound();
     }
 
-    const { profileName } = resolved;
+    const { username } = resolved;
     const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions(profileName)
+      getGithubSetupStatusQueryOptions(username)
     );
 
     if (setupStatus?.isConfigured && setupStatus.owner) {
       void context.queryClient.prefetchQuery(
-        githubReposHubQueryOptions(hubPrefetchInput, false, profileName)
+        githubReposHubQueryOptions(hubPrefetchInput, false, username)
       );
     }
 
-    return { filterStore, profileName, pathProfileName: null as string | null };
+    return { filterStore, username, pathUsername: null as string | null };
   },
   head: ({ loaderData }) =>
     generateAppSeo({
       alternates: {
         canonicalPath: "/repos"
       },
-      title: loaderData?.profileName ? `@${loaderData.profileName} · Repositories` : "Repositories",
+      title: loaderData?.username ? `@${loaderData.username} · Repositories` : "Repositories",
       description: "GitHub repositories for this portfolio",
       robots: {
         follow: true,
@@ -97,13 +97,9 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
       }
     }),
   component: () => {
-    const { filterStore, profileName } = Route.useLoaderData();
+    const { filterStore, username } = Route.useLoaderData();
     return (
-      <RepositoriesPage
-        filterStore={filterStore}
-        profileName={profileName}
-        surfaceMode="custom_domain"
-      />
+      <RepositoriesPage filterStore={filterStore} username={username} surfaceMode="custom_domain" />
     );
   }
 });

@@ -96,16 +96,16 @@ const EMPTY_REPO_ITEMS: RepositoryFilterItem[] = [];
 
 export function RepositoriesPage({
   filterStore,
-  profileName,
+  username,
   surfaceMode = "path"
 }: {
   filterStore: SerializedFilterStore;
   /** Portfolio profile that owns this public/private repos list */
-  profileName: string;
+  username: string;
   /** custom_domain → row links use `/repos/$repo` (no profile segment). */
   surfaceMode?: PublicSurfaceMode;
 }) {
-  const surface = surfaceFromRouteMode(profileName, surfaceMode);
+  const surface = surfaceFromRouteMode(username, surfaceMode);
   const [page, setPage] = useQueryState("page", repoListPageQueryParser);
 
   const filterState = useListFilters({
@@ -138,15 +138,15 @@ export function RepositoriesPage({
   }, [debouncedSearch, visibilityValues, filterState.sortId, limit]);
 
   const { user } = useAuth();
-  const sessionProfileName =
-    typeof (user as { profileName?: string } | null)?.profileName === "string"
-      ? (user as { profileName: string }).profileName
+  const sessionUsername =
+    typeof (user as { username?: string } | null)?.username === "string"
+      ? (user as { username: string }).username
       : null;
-  const isOwnProfile = Boolean(user && sessionProfileName === profileName);
+  const isOwnProfile = Boolean(user && sessionUsername === username);
   const isAdmin = isOwnProfile;
 
   const hubQuery = useQuery({
-    ...githubReposHubQueryOptions(hubInput, isOwnProfile, profileName),
+    ...githubReposHubQueryOptions(hubInput, isOwnProfile, username),
     placeholderData: keepPreviousData
   });
 
@@ -189,7 +189,7 @@ export function RepositoriesPage({
     <Frame className="mx-auto h-full w-full max-w-7xl gap-5 bg-background p-5 px-3 md:px-6">
       <FrameHeader className="m-0 max-h-fit p-0 pt-5 pb-0">
         <FrameTitle>Repositories</FrameTitle>
-        <FrameDescription>Repositories for @{profileName}.</FrameDescription>
+        <FrameDescription>Repositories for @{username}.</FrameDescription>
       </FrameHeader>
       <div className="flex flex-col gap-3">
         <FilterBar state={filterState} searchPlaceholder="Search by title..." />
@@ -227,7 +227,7 @@ export function RepositoriesPage({
                 }}
                 repo={repo}
                 isAdmin={isAdmin}
-                profileName={profileName}
+                username={username}
                 surface={surface}
               />
             ))}

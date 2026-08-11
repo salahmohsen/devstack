@@ -12,9 +12,9 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo/")({
 function GithubRepoRoutePage() {
   const { repo } = Route.useParams();
   const parentData = parentRoute.useLoaderData() as {
-    profileName: string;
-    pathProfileName: string | null;
+    username: string;
+    pathUsername: string | null;
   };
 
-  return <GithubRepoPage repo={repo} profileName={parentData.profileName} pathProfileName={null} />;
+  return <GithubRepoPage repo={repo} username={parentData.username} pathUsername={null} />;
 }

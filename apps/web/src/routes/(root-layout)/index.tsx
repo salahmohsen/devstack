@@ -23,37 +23,37 @@ export const Route = createFileRoute("/(root-layout)/")({
   loader: async ({ context }) => {
     const host = getRequestHostname();
 
-    // Custom domain Host → public portfolio at / (no profileName path segment).
+    // Custom domain Host → public portfolio at / (no username path segment).
     if (host && isCustomDomainHost(host)) {
       try {
         const resolved = await context.queryClient.ensureQueryData(
           getResolvePublicPortfolioQueryOptions({ host })
         );
 
-        if (resolved?.mode === "custom_domain" && resolved.profileName) {
-          const { profileName } = resolved;
+        if (resolved?.mode === "custom_domain" && resolved.username) {
+          const { username } = resolved;
 
           try {
-            await context.queryClient.ensureQueryData(getPortfolioListQueryOptions(profileName));
+            await context.queryClient.ensureQueryData(getPortfolioListQueryOptions(username));
           } catch {
             return { mode: "landing" as const };
           }
 
-          void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(profileName));
+          void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(username));
 
           const setupStatus = await context.queryClient.ensureQueryData(
-            getGithubSetupStatusQueryOptions(profileName)
+            getGithubSetupStatusQueryOptions(username)
           );
 
           if (setupStatus?.isConfigured && setupStatus?.owner) {
-            void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(profileName));
+            void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(username));
             void Promise.all([
-              context.queryClient.prefetchQuery(getGithubContributionsQueryOptions(profileName)),
-              context.queryClient.prefetchQuery(getGithubActivityQueryOptions(profileName))
+              context.queryClient.prefetchQuery(getGithubContributionsQueryOptions(username)),
+              context.queryClient.prefetchQuery(getGithubActivityQueryOptions(username))
             ]);
           }
 
-          return { mode: "custom_domain" as const, profileName };
+          return { mode: "custom_domain" as const, username };
         }
       } catch {
         // Fall through to community landing if resolve fails.
@@ -63,13 +63,13 @@ export const Route = createFileRoute("/(root-layout)/")({
     return { mode: "landing" as const };
   },
   head: ({ loaderData }) => {
-    if (loaderData?.mode === "custom_domain" && loaderData.profileName) {
+    if (loaderData?.mode === "custom_domain" && loaderData.username) {
       return generateAppSeo({
         alternates: {
           canonicalPath: "/"
         },
-        description: `Public portfolio for @${loaderData.profileName}`,
-        title: `@${loaderData.profileName}`
+        description: `Public portfolio for @${loaderData.username}`,
+        title: `@${loaderData.username}`
       });
     }
 
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/(root-layout)/")({
         canonicalPath: "/"
       },
       description:
-        "Open-source, self-hostable personal hub. Public portfolios live at /{profileName} or on a verified custom domain.",
+        "Open-source, self-hostable personal hub. Public portfolios live at /{username} or on a verified custom domain.",
       title: appConfig.site.shortName
     });
   },
@@ -89,7 +89,7 @@ function RootIndexPage() {
   const data = Route.useLoaderData();
 
   if (data.mode === "custom_domain") {
-    return <HomePage profileName={data.profileName} surfaceMode="custom_domain" />;
+    return <HomePage username={data.username} surfaceMode="custom_domain" />;
   }
 
   return <CommunityLandingPage />;
