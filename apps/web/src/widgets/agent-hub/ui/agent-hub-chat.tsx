@@ -12,11 +12,7 @@ import {
   MessageScrollerViewport
 } from "@tsu-stack/ui/components/message-scroller";
 
-import {
-  useHubChat,
-  useListHubMessagesQuery,
-  useListSuspendedRunsQuery
-} from "@/features/agent-hub";
+import { useHubChat, useListSuspendedRunsQuery } from "@/features/agent-hub";
 
 import { AgentHubEmptyState } from "./agent-hub-empty-state";
 import { AgentHubErrorCard } from "./agent-hub-error-card";
@@ -32,15 +28,6 @@ type PendingApproval = {
   toolName: string;
   args: Record<string, unknown>;
 };
-
-function isUiMessageArray(value: unknown): value is UIMessage[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (m) => m && typeof m === "object" && "role" in m && (m as { role: string }).role !== undefined
-    )
-  );
-}
 
 function findPendingApproval(messages: UIMessage[]): PendingApproval | null {
   for (const msg of [...messages].toReversed()) {
@@ -78,7 +65,7 @@ export function AgentHubChat() {
     error,
     stop,
     clearError,
-    setMessages,
+    historyReady,
     addToolApprovalResponse
   } = useHubChat();
 
@@ -86,52 +73,15 @@ export function AgentHubChat() {
   const [dismissedError, setDismissedError] = React.useState<string | null>(null);
   const [approvalPending, setApprovalPending] = React.useState(false);
   const [dismissedResumeBanner, setDismissedResumeBanner] = React.useState(false);
-  const [historyReady, setHistoryReady] = React.useState(false);
   const sendingRef = React.useRef(false);
-  const hydrateStartedRef = React.useRef(false);
 
   const isStreaming = status === "submitted" || status === "streaming";
   const errorMessage = error?.message ?? null;
   const showError = Boolean(errorMessage) && errorMessage !== dismissedError;
 
-  const historyQuery = useListHubMessagesQuery(!historyReady);
   const suspendedQuery = useListSuspendedRunsQuery(
     historyReady && messages.length === 0 && !isStreaming && !dismissedResumeBanner
   );
-
-  // Hydrate from Memory once history settles (async setState avoids sync-effect lint).
-  React.useEffect(() => {
-    if (historyReady || historyQuery.isLoading || hydrateStartedRef.current) return;
-    hydrateStartedRef.current = true;
-
-    let cancelled = false;
-    void Promise.resolve().then(() => {
-      if (cancelled) return;
-      if (historyQuery.isError) {
-        setHistoryReady(true);
-        return;
-      }
-      const data = historyQuery.data as
-        | { uiMessages?: unknown[] | null; messages?: unknown[] }
-        | undefined;
-      const ui = data?.uiMessages;
-      if (isUiMessageArray(ui) && ui.length > 0 && messages.length === 0) {
-        setMessages(ui);
-      }
-      setHistoryReady(true);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    historyQuery.data,
-    historyQuery.isError,
-    historyQuery.isLoading,
-    historyReady,
-    messages.length,
-    setMessages
-  ]);
 
   React.useEffect(() => {
     if (!isStreaming) {

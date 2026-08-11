@@ -1,6 +1,13 @@
 export { HUB_SUGGESTIONS } from "./api/hub-suggestions";
 export type { HubSuggestion } from "./api/hub-suggestions";
-export { HUB_AGENT_ID, useHubChat } from "./api/use-hub-chat";
+export {
+  HUB_AGENT_ID,
+  useHubChat,
+  type HubChatContextValue,
+  type HubToolApprovalResponseArgs,
+  type HubToolOutputArgs
+} from "./api/use-hub-chat";
+export { HubChatProvider } from "./ui/hub-chat-provider";
 export {
   useListSuspendedRunsQuery,
   listSuspendedRunsQueryOptions
