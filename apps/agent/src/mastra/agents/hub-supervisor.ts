@@ -40,48 +40,33 @@ export function createHubSupervisor() {
 - When invoking workflows that require a \`userId\` input, use ONLY the authenticated user's id from context. Never invent, guess, or substitute another userId.
 - CRM tools resolve tenant from requestContext only — do not pass userId as a tool argument.
 
-## Stacks & projects
-- \`stackCategorizerAgent\` — classify packages into stack types
-- \`detectStacksWorkflow\` — scan repos for tech stacks
-- \`organizeStacksWorkflow\` — merge/rename/cleanup stack library
-- \`resumeImportWorkflow\` — resume import extraction pipeline
-
-## Career Inbox & Applications (AI-first)
-Prefer workflows for multi-step mail work:
-- \`mailProcessWorkflow\` — classify a mail (+ smart filters) and return branch harvest|crm|noise|none
-- \`mailClassifyWorkflow\` — classify only
-- \`mailJobHarvestWorkflow\` — extract/score jobs from a job_notifier mail (needs full mail payload)
-- \`mailReplyWorkflow\` — draft a career reply
-
-Specialists (delegate when the user asks for a focused step):
-- \`mailClassifierAgent\` — system + smart-filter labels
-- \`jobNotifierMailExtractor\` — multi-source job extract from digests
-- \`jobPageExtractor\` — enrich one listing URL
-- \`jobPreferenceMatchScorer\` — score jobs vs prefs
-- \`crmApplicationMatcher\` — match/create application from mail
-- \`crmStageAdvisor\` — propose stage/outcome
-- \`mailReplyAgent\` — reply draft
+## Capabilities (inventory — do not re-list after tools)
+Stacks: \`stackCategorizerAgent\`, \`detectStacksWorkflow\`, \`organizeStacksWorkflow\`, \`resumeImportWorkflow\`.
+Career mail (prefer workflows): \`mailProcessWorkflow\`, \`mailClassifyWorkflow\`, \`mailJobHarvestWorkflow\`, \`mailReplyWorkflow\`.
+Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifierMailExtractor\`, \`jobPageExtractor\`, \`jobPreferenceMatchScorer\`, \`crmApplicationMatcher\`, \`crmStageAdvisor\`, \`mailReplyAgent\`.
 
 ## Response discipline (critical)
-- Answer once. Never rephrase, rewrite, or re-list the same answer.
-- Meta / capability questions ("what can you do?", help, overview): answer from this prompt only — **zero tools, zero sub-agents**.
-- Only invoke a specialist or workflow when the user asks for a concrete action that needs live data or mutation.
-- When you do call tools: call them in the **first** model turn (parallel ok). The next turn is final text only — no more tools.
-- After tool/workflow results, one short final answer — do not produce another full capability list.
-- State which specialist/workflow you invoke (one short sentence) when you do.
+- Intermediate steps: prefer **tools only** (or one short status sentence). Never dump full capability lists mid-loop.
+- Exactly **one** user-facing final answer after tools complete for the turn — no rephrase, rewrite, or re-list of the same content.
+- Meta / capability questions ("what can you do?", help, overview): answer from this prompt only — **zero tools, zero sub-agents**. Answer once; do not expand into another inventory later in the turn.
+- Only invoke a specialist, workflow, or tool when the user asks for a concrete action that needs live data or mutation.
 - Prefer a workflow over a sub-agent for defined multi-step processes.
+- State which specialist/workflow you invoke (one short sentence) when you do.
+- JD paste or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card). **Do not invent CRM rows** without that tool and user confirmation.
+- Apply package → only via \`generate-apply-package\` after the user chose the package path and an application already exists. Never invent package success.
 - Do not invent tools or pretend a send/apply succeeded without tool results.
 - Surface empty/error tool results plainly.
 - Keep responses concise and actionable.`,
     model: byoModelFromRequestContext,
     /**
-     * maxSteps: 1 (align with packages/api HUB_CHAT_MAX_STEPS).
-     * Multi-step loops were rewriting the same user-visible answer N times.
-     * One LLM turn only: answer and/or tool calls in a single step — no rewrite pass.
+     * maxSteps: 4 (align with packages/api HUB_CHAT_MAX_STEPS).
+     * Multi-step enables real tool chains (read → propose → package).
+     * Rewrite/bubble churn is fixed by Response discipline instructions + UI
+     * intermediate-text collapse — not by maxSteps=1.
      * HITL: require approval for mutating workflows.
      */
     defaultOptions: {
-      maxSteps: 1,
+      maxSteps: 4,
       requireToolApproval: ({ toolName }) =>
         // Workflow tools are exposed as agent tools named after the workflow id.
         /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify/i.test(

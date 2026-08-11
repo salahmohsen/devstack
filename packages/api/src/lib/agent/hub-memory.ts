@@ -25,12 +25,12 @@ export const CHAT_ALLOWED_AGENT_IDS = [
 export type ChatAllowedAgentId = (typeof CHAT_ALLOWED_AGENT_IDS)[number];
 
 /**
- * Multi-step bound for hub chat.
- * 1 = single LLM turn (tools + text in that turn only). Higher values let the
- * model rewrite the same answer on later steps (the "bubble keeps changing" UX).
- * Sequential multi-tool chains need a follow-up product path, not maxSteps churn.
+ * Multi-step bound for hub chat (align with hub-supervisor defaultOptions.maxSteps).
+ * Multi-step is required for real tool chains (read → propose → package).
+ * Answer-rewrite / bubble churn is fixed by anti-rewrite instructions + UI
+ * intermediate-text collapse — not by locking maxSteps to 1.
  */
-export const HUB_CHAT_MAX_STEPS = 1 as const;
+export const HUB_CHAT_MAX_STEPS = 4 as const;
 
 export function hubChatThreadId(userId: string): string {
   return `dashboard-home:${userId}`;
