@@ -55,6 +55,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@tsu-stack/ui/components/tab
 import { Textarea } from "@tsu-stack/ui/components/textarea";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { ContactIcon } from "@/shared/lib/contact-icon";
 import { AiErrorBanner } from "@/shared/ui/ai-error-banner";
 
 import { useApplyOnboardingMutation, useDiscardSourceMutation } from "@/features/onboarding";
@@ -530,8 +531,15 @@ export function ReviewStep({
                     {(draft.profile.contacts ?? []).map((contact, index) => (
                       <div
                         key={`${contact.type}-${index}`}
-                        className="grid gap-2 sm:grid-cols-[8.5rem_1fr_auto] sm:items-center"
+                        className="grid gap-2 sm:grid-cols-[auto_8.5rem_1fr_auto] sm:items-center"
                       >
+                        <span
+                          className="flex size-8 shrink-0 items-center justify-center rounded-md border border-input text-muted-foreground"
+                          aria-hidden
+                          title={contact.type}
+                        >
+                          <ContactIcon type={contact.type} className="size-3.5" />
+                        </span>
                         <Select
                           value={contact.type}
                           onValueChange={(val) => {

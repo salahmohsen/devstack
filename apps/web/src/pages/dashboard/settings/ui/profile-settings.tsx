@@ -46,9 +46,8 @@ import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
+import { ContactIcon } from "@/shared/lib/contact-icon";
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
-import { IconLetter } from "@/shared/ui/icon";
-import { IconPicker, PickerIconRenderer } from "@/shared/ui/icon-picker";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
@@ -141,7 +140,6 @@ export function ProfileSettings() {
     contacts: (profileQuery.data?.contacts ?? []).map((c) => {
       return {
         id: c.id,
-        icon: c.icon,
         type: c.type,
         value: c.value,
         includedInPortfolio: !!c.portfolioEntryId
@@ -163,7 +161,6 @@ export function ProfileSettings() {
         contacts: (data.contacts ?? []).map((c) => {
           return {
             id: c.id,
-            icon: c.icon,
             type: c.type,
             value: c.value,
             includedInPortfolio: !!c.portfolioEntryId
@@ -423,7 +420,7 @@ export function ProfileSettings() {
                       <ContactLink
                         key={idx}
                         href={c.type === "email" ? `mailto:${c.value}` : c.value}
-                        icon={<IconLetter letter={c.type} letterClassName="size-3.5" />}
+                        icon={<ContactIcon type={c.type} className="size-3.5" />}
                       >
                         {c.type === "linkedin" ? "LinkedIn" : c.value.replace(/^https?:\/\//, "")}
                       </ContactLink>
@@ -481,8 +478,7 @@ export function ProfileSettings() {
                                   CONTACT_TYPES.find((t) => !used.has(t)) ?? CONTACT_TYPES[0];
                                 field.pushValue({
                                   type: nextType,
-                                  value: "",
-                                  icon: ""
+                                  value: ""
                                 });
                               }}
                               size="sm"
@@ -498,26 +494,22 @@ export function ProfileSettings() {
                                 className="w-full rounded-lg"
                               >
                                 <Group aria-label="Contact fields" className="flex-1">
-                                  <form.AppField name={`contacts[${i}].icon`}>
-                                    {(subField) => (
-                                      <IconPicker
-                                        value={subField.state.value}
-                                        onValueChange={(icon) => subField.handleChange(icon)}
-                                        className="overflow-hidden rounded-lg border border-input"
+                                  <form.Subscribe
+                                    selector={(state) => state.values.contacts?.[i]?.type}
+                                  >
+                                    {(type) => (
+                                      <span
+                                        data-slot="input-control"
+                                        className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-input text-muted-foreground"
+                                        aria-hidden
+                                        title={type ?? "contact"}
                                       >
-                                        <Button
-                                          variant="ghost"
-                                          className="size-full justify-start rounded-none border-0 px-3"
-                                        >
-                                          {subField.state.value ? (
-                                            <PickerIconRenderer name={subField.state.value} />
-                                          ) : (
-                                            "Select icon"
-                                          )}
-                                        </Button>
-                                      </IconPicker>
+                                        {type ? (
+                                          <ContactIcon type={type} className="size-4" />
+                                        ) : null}
+                                      </span>
                                     )}
-                                  </form.AppField>
+                                  </form.Subscribe>
 
                                   <GroupSeparator />
                                   <form.AppField name={`contacts[${i}].type`}>

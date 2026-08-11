@@ -29,7 +29,12 @@ export type OnboardingApplyContactType =
   | "linkedin"
   | "github"
   | "x"
-  | "youtube";
+  | "youtube"
+  | "instagram"
+  | "discord"
+  | "bluesky"
+  | "mastodon"
+  | "telegram";
 
 /**
  * Local draft shape for Apply (matches core `OnboardingApplyInput` / draft
