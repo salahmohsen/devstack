@@ -109,14 +109,47 @@ MINIO_ENDPOINT="http://127.0.0.1:9002"
 MINIO_USER="${MINIO_ROOT_USER:-minioadmin}"
 MINIO_PASS="${MINIO_ROOT_PASSWORD:-minioadmin}"
 
-# Check if mc is available, otherwise use curl
+# Ensure bucket exists + public GetObject for profile avatars only.
+# (Resume sources / PDFs stay private — AccessDenied without credentials.)
+apply_minio_avatars_policy() {
+  local bucket="${S3_BUCKET:-personal-hub}"
+  local policy_file
+  policy_file="$(mktemp)"
+  cat >"$policy_file" <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {"AWS": ["*"]},
+      "Action": ["s3:GetObject"],
+      "Resource": ["arn:aws:s3:::${bucket}/*/avatars/*"]
+    }
+  ]
+}
+EOF
+  if command -v mc >/dev/null 2>&1; then
+    mc anonymous set-json "$policy_file" "local/${bucket}" >/dev/null 2>&1 || true
+  else
+    docker run --rm --network tsu-stack-infra_default \
+      -v "$policy_file:/tmp/avatars-read.json:ro" \
+      --entrypoint /bin/sh minio/mc:latest -c "
+        mc alias set local http://tsu-stack-infra-minio-1:9000 \"$MINIO_USER\" \"$MINIO_PASS\" >/dev/null
+        mc mb --ignore-existing local/${bucket} >/dev/null
+        mc anonymous set-json /tmp/avatars-read.json local/${bucket} >/dev/null
+      " >/dev/null 2>&1 || true
+  fi
+  rm -f "$policy_file"
+}
+
 if command -v mc >/dev/null 2>&1; then
   mc alias set local "$MINIO_ENDPOINT" "$MINIO_USER" "$MINIO_PASS" >/dev/null 2>&1
-  mc mb --ignore-existing local/personal-hub >/dev/null 2>&1
-  ok "Bucket 'personal-hub' ready"
+  mc mb --ignore-existing "local/${S3_BUCKET:-personal-hub}" >/dev/null 2>&1
+  apply_minio_avatars_policy
+  ok "Bucket '${S3_BUCKET:-personal-hub}' ready (public GetObject for */avatars/*)"
 else
-  # Use curl to check — bucket creation happens on first upload anyway
-  warn "mc (MinIO Client) not installed — bucket will be created on first upload"
+  apply_minio_avatars_policy
+  ok "Bucket '${S3_BUCKET:-personal-hub}' ready via docker mc (public GetObject for */avatars/*)"
 fi
 
 # ─── Step 4: Push DB schema ───────────────────────────────────────

@@ -113,7 +113,21 @@ services:
         done
         bucket="$${S3_BUCKET:-personal-hub}"
         mc mb --ignore-existing "local/$$bucket"
-        echo "MinIO bucket ready: $$bucket"
+        # Profile avatars are public portfolio media (user.image → MEDIA_PUBLIC_URL).
+        # Other prefixes (resume-sources, resumes, cover-letters) stay private.
+        printf '%s\n' "{
+          \"Version\": \"2012-10-17\",
+          \"Statement\": [
+            {
+              \"Effect\": \"Allow\",
+              \"Principal\": {\"AWS\": [\"*\"]},
+              \"Action\": [\"s3:GetObject\"],
+              \"Resource\": [\"arn:aws:s3:::$$bucket/*/avatars/*\"]
+            }
+          ]
+        }" > /tmp/avatars-read.json
+        mc anonymous set-json /tmp/avatars-read.json "local/$$bucket"
+        echo "MinIO bucket ready: $$bucket (public GetObject for */avatars/*)"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -186,7 +200,9 @@ services:
       S3_BUCKET: ${S3_BUCKET:-personal-hub}
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_FORCE_PATH_STYLE: "true"
-      MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-${VITE_WEB_URL}/media}
+      # App proxy serves only */avatars/* (see /api/media/$). Direct MinIO works
+      # when minio-init applied the avatars GetObject policy.
+      MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-${VITE_WEB_URL}/api/media}
       PORT: "5100"
       NODE_ENV: production
     healthcheck:
@@ -294,7 +310,9 @@ services:
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_FORCE_PATH_STYLE: "true"
       # Full URL — Dokploy does not expand nested ${VITE_WEB_URL} in all cases
-      MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-${VITE_WEB_URL}/media}
+      # App proxy serves only */avatars/* (see /api/media/$). Direct MinIO works
+      # when minio-init applied the avatars GetObject policy.
+      MEDIA_PUBLIC_URL: ${MEDIA_PUBLIC_URL:-${VITE_WEB_URL}/api/media}
       AGENT_WORKER_URL: http://agent:4111
       FILES_API_SECRET: ${FILES_API_SECRET}
       # Optional Axiom wide-event drain (web SSR / request logs)

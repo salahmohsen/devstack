@@ -55,16 +55,22 @@ Prefer adapter-provided URL resolution such as `await files.url(key)` over hand-
 
 Storage env is validated on **`ENV_WEB_SERVER`** in `packages/env` (not a separate MinIO\_\* naming scheme):
 
-| Variable              | Role                                                                                         |
-| --------------------- | -------------------------------------------------------------------------------------------- |
-| `S3_ENDPOINT`         | S3-compatible endpoint (local MinIO: `http://127.0.0.1:9002` — host map, not container 9000) |
-| `S3_ACCESS_KEY`       | Access key (local default `minioadmin`, must match MinIO `MINIO_ROOT_USER`)                  |
-| `S3_SECRET_KEY`       | Secret key (local default `minioadmin`, must match MinIO `MINIO_ROOT_PASSWORD`)              |
-| `S3_BUCKET`           | Bucket name (default `personal-hub`)                                                         |
-| `S3_REGION`           | Region (default `us-east-1`)                                                                 |
-| `S3_FORCE_PATH_STYLE` | Path-style URLs; required for MinIO (default `true`)                                         |
-| `MEDIA_PUBLIC_URL`    | Public/CDN base URL (local: `http://127.0.0.1:9002/personal-hub`)                            |
-| `FILES_API_SECRET`    | HMAC secret for the files-sdk gateway                                                        |
+| Variable              | Role                                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `S3_ENDPOINT`         | S3-compatible endpoint (local MinIO: `http://127.0.0.1:9002` — host map, not container 9000)                                   |
+| `S3_ACCESS_KEY`       | Access key (local default `minioadmin`, must match MinIO `MINIO_ROOT_USER`)                                                    |
+| `S3_SECRET_KEY`       | Secret key (local default `minioadmin`, must match MinIO `MINIO_ROOT_PASSWORD`)                                                |
+| `S3_BUCKET`           | Bucket name (default `personal-hub`)                                                                                           |
+| `S3_REGION`           | Region (default `us-east-1`)                                                                                                   |
+| `S3_FORCE_PATH_STYLE` | Path-style URLs; required for MinIO (default `true`)                                                                           |
+| `MEDIA_PUBLIC_URL`    | Public base for `files.url(key)` (local MinIO: `http://127.0.0.1:9002/personal-hub`, or app proxy: `{VITE_WEB_URL}/api/media`) |
+| `FILES_API_SECRET`    | HMAC secret for the files-sdk gateway                                                                                          |
+
+### Public avatars vs private objects
+
+- **Profile avatars** (`{userId}/avatars/*`) are **public portfolio media**. MinIO gets a scoped anonymous `GetObject` policy for that prefix only (`minio-init` / `scripts/dev.sh`).
+- **App proxy:** `GET /api/media/{userId}/avatars/{file}` streams the same keys with server credentials when `MEDIA_PUBLIC_URL` points at the web app (docker default `${VITE_WEB_URL}/api/media`). Non-avatar keys return 404.
+- **Resume sources, generated resumes, cover letters** stay private (no anonymous access; download via auth-gated routes).
 
 See `packages/env/.env.example` for local placeholders. For propagation checklists, follow [Environment variables](./environment-variables.md).
 
@@ -112,7 +118,7 @@ await files.upload(key, file, { contentType: "application/pdf" });
 | Generated resume PDF                          | Server `mediaBucket.put` | n/a (server-only)           | `resumes/{filename}` or `{userId}/resumes/…`        |
 | Apply package cover letter PDF                | Server `mediaBucket.put` | n/a (server-only)           | `{userId}/cover-letters/{applicationId}-{uuid}.pdf` |
 | Ad hoc image field                            | Browser via `/api/files` | filename or relative path   | `{userId}/…`                                        |
-| Profile avatar                                | Browser via `/api/files` | `avatars/{uuid}.{ext}`      | `{userId}/avatars/{uuid}.{ext}`                     |
+| Profile avatar                                | Browser via `/api/files` | `avatars/{uuid}.{ext}`      | `{userId}/avatars/{uuid}.{ext}` (public read)       |
 
 ### Resume sources (`resume-sources/…`)
 

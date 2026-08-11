@@ -5,6 +5,7 @@ import { CircleAlertIcon, Loader2Icon, UserIcon, XIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { AVATAR_KEY_PREFIX } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -14,8 +15,6 @@ import {
 } from "@tsu-stack/ui/hooks/use-file-upload";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-/** Client-relative key under `{userId}/` gateway prefix. */
-const AVATAR_KEY_PREFIX = "avatars/";
 const DEFAULT_MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
 function extensionForFile(file: File): string {
@@ -104,7 +103,9 @@ export function ProfileAvatarUpload({
       try {
         const ext = extensionForFile(raw);
         const key = `${AVATAR_KEY_PREFIX}${crypto.randomUUID()}.${ext}`;
+        // Public portfolio photo; delivery is public MinIO */avatars/* or /api/media proxy.
         await filesApi.upload(key, raw, { contentType: raw.type || "image/jpeg" });
+        // Uses MEDIA_PUBLIC_URL on the server (MinIO path-style or app /api/media).
         const publicUrl = await filesApi.url(key);
         await persistAvatar(publicUrl);
       } catch (error) {
