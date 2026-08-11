@@ -169,7 +169,12 @@ export function RepoExplorerLayout({
     );
 
   const sidebarContent = rootTreeQuery.data ? (
-    <RepoFileTreeSidebar currentRef={activeRef} entries={rootTreeQuery.data} repoName={repoName} />
+    <RepoFileTreeSidebar
+      currentRef={activeRef}
+      entries={rootTreeQuery.data}
+      profileName={profileName}
+      repoName={repoName}
+    />
   ) : null;
 
   return (

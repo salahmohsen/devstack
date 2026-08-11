@@ -56,10 +56,13 @@ function useAllCachedFiles(repo: string, ref: string): FileSearchEntry[] {
 export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
   currentRef,
   entries,
+  /** Tenant profile for GitHub API queries (Host-resolved on custom domain; not the URL segment). */
+  profileName,
   repoName
 }: {
   currentRef: string;
   entries: GitHubRepoTreeEntry[];
+  profileName: string;
   repoName: string;
 }) {
   const navigate = useNavigate();
@@ -102,6 +105,7 @@ export const RepoFileTreeSidebar = memo(function RepoFileTreeSidebar({
             depth={0}
             entry={entry}
             parentPath=""
+            profileName={profileName}
             repoName={repoName}
           />
         ))}
@@ -115,12 +119,14 @@ const TreeNode = memo(function TreeNode({
   depth,
   entry,
   parentPath,
+  profileName,
   repoName
 }: {
   currentRef: string;
   depth: number;
   entry: GitHubRepoTreeEntry;
   parentPath: string;
+  profileName: string;
   repoName: string;
 }) {
   const entryPath = parentPath ? `${parentPath}/${entry.name}` : entry.name;
@@ -133,6 +139,7 @@ const TreeNode = memo(function TreeNode({
         depth={depth}
         entry={entry}
         entryPath={entryPath}
+        profileName={profileName}
         repoName={repoName}
       />
     );
@@ -176,12 +183,15 @@ const DirectoryNode = memo(function DirectoryNode({
   depth,
   entry,
   entryPath,
+  profileName,
   repoName
 }: {
   currentRef: string;
   depth: number;
   entry: GitHubRepoTreeEntry;
   entryPath: string;
+  /** Tenant profile for API (from layout), not URL path segment. */
+  profileName: string;
   repoName: string;
 }) {
   const isActive = useIsActivePath(entryPath);
@@ -189,22 +199,17 @@ const DirectoryNode = memo(function DirectoryNode({
   const [isOpen, setIsOpen] = useState(isAncestor || isActive);
   const hasMounted = useIsClient();
   const { user } = useAuth();
+  // URL links only — custom domain has no /$profileName segment.
   const links = useRepoRouteLinks();
-  const profileName = links.profileName ?? "";
   const sessionProfileName =
     typeof (user as { profileName?: string } | null)?.profileName === "string"
       ? (user as { profileName: string }).profileName
       : null;
+  // Must use tenant profileName prop (Host-resolved on custom domain), not URL params.
   const isPrivate = Boolean(user && sessionProfileName === profileName);
 
   const treeQuery = useQuery({
-    ...getGithubRepoTreeQueryOptions(
-      repoName,
-      currentRef,
-      entryPath,
-      isPrivate,
-      profileName || undefined
-    ),
+    ...getGithubRepoTreeQueryOptions(repoName, currentRef, entryPath, isPrivate, profileName),
     enabled: hasMounted && isOpen
   });
 
@@ -268,6 +273,7 @@ const DirectoryNode = memo(function DirectoryNode({
               depth={depth + 1}
               entry={child}
               parentPath={entryPath}
+              profileName={profileName}
               repoName={repoName}
             />
           ))}
