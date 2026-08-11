@@ -3,18 +3,25 @@ import { Agent } from "@mastra/core/agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 
 /**
- * Writes a short narrative fit blurb (agent take) for a harvested/tracked job.
- * Used by regenerate-agent-take and (later) harvest soft-take step.
+ * Writes short narrative fit blurbs (agent takes) for harvested/tracked jobs.
+ * Used by harvest soft-take step (batch) and regenerate-agent-take (single).
  */
 export function createJobAgentTakeAgent() {
   return new Agent({
     id: "job-agent-take",
     name: "Job Agent Take",
-    description: "Writes a 1–3 sentence product-tone narrative on why a role may fit the seeker.",
-    instructions: `You write the seeker's "agent take" for ONE job listing.
+    description:
+      "Writes 1–3 sentence product-tone narratives on why roles may fit the seeker (single or batch).",
+    instructions: `You write the seeker's "agent take" for job listing(s).
 
-Rules:
+When the user asks for ONE job:
 - Output ONLY the take prose — no title, bullets, JSON, or preamble.
+
+When the user asks for MULTIPLE jobs (batch):
+- Return structured takes[] matching the schema (listingUrl + agentTake).
+- One take per listingUrl provided; do not invent listingUrls.
+
+Take rules (always):
 - 1–3 short sentences, product tone (plain, confident, specific).
 - Ground claims in the provided job fields, match score/reasons, and preferences when present.
 - Do not invent employers, tech, or years of experience not in the input.

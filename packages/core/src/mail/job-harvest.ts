@@ -93,7 +93,9 @@ export type JobMatchScoreResult = z.infer<typeof JobMatchScoreResultSchema>;
 export const ScoredHarvestedJobSchema = HarvestedJobSchema.extend({
   matchScore: z.number().int().min(0).max(100),
   matchPassed: z.boolean(),
-  matchReasons: z.array(z.string()).default([])
+  matchReasons: z.array(z.string()).default([]),
+  /** 1–3 sentence narrative fit; null/omit when take step soft-failed. */
+  agentTake: z.string().max(1200).nullable().optional()
 });
 export type ScoredHarvestedJob = z.infer<typeof ScoredHarvestedJobSchema>;
 
@@ -112,6 +114,19 @@ export const AiJobMatchBatchSchema = z.object({
 });
 export type AiJobMatchBatch = z.infer<typeof AiJobMatchBatchSchema>;
 
+/** Batch agent-take response for match-passed harvest jobs. */
+export const AiJobAgentTakeBatchSchema = z.object({
+  takes: z
+    .array(
+      z.object({
+        listingUrl: z.string(),
+        agentTake: z.string().min(1).max(1200)
+      })
+    )
+    .default([])
+});
+export type AiJobAgentTakeBatch = z.infer<typeof AiJobAgentTakeBatchSchema>;
+
 export const MailJobHarvestWorkflowOutputSchema = z.object({
   messageId: z.string(),
   userId: z.string(),
@@ -120,6 +135,16 @@ export const MailJobHarvestWorkflowOutputSchema = z.object({
   notes: z.string().optional()
 });
 export type MailJobHarvestWorkflowOutput = z.infer<typeof MailJobHarvestWorkflowOutputSchema>;
+
+/**
+ * Intermediate after match scoring — carries preference/llm for the take step.
+ * Not the public workflow output.
+ */
+export const MailJobHarvestAfterScoreSchema = MailJobHarvestWorkflowOutputSchema.extend({
+  preference: HarvestJobPreferenceSchema.optional(),
+  llm: z.unknown().optional()
+});
+export type MailJobHarvestAfterScore = z.infer<typeof MailJobHarvestAfterScoreSchema>;
 
 export const MailJobHarvestResultSchema = z.object({
   messageId: z.string(),

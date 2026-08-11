@@ -39,7 +39,8 @@ async function loadPreference(userId: string): Promise<JobPreference> {
  * 1. Workflow: AI reads mail → extract job cards/URLs
  * 2. Workflow: fetch each listing URL (tool) → AI structured job fields
  * 3. Workflow: AI scores each job against JobPreference (semantic)
- * 4. Create Applications for matchPassed jobs
+ * 4. Workflow: AI agent take for matchPassed jobs (soft-fail)
+ * 5. Create Applications for matchPassed jobs (inbox)
  */
 export async function runMailJobHarvest(input: {
   messageId: string;
@@ -161,7 +162,7 @@ export async function runMailJobHarvest(input: {
         salaryRange: job.salaryRange ?? null,
         description: job.description ?? null,
         notes: null,
-        agentTake: null, // take step soft-fail until workflow generates narrative
+        agentTake: job.agentTake?.trim() ? job.agentTake.trim().slice(0, 1200) : null,
         sourceMessageId: row.id,
         trackingStatus: "inbox",
         stage: "saved",
