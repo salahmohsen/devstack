@@ -294,12 +294,12 @@ export const ProjectsItem = ({
 
   // Neon AnimatedWash — always mounted so the resting grain is visible;
   // data-wash-hover lifts/warms on card hover (same as Neon demo).
-  // currentColor via text-wash token (contrib dark level-4 green).
+  // currentColor via text-brand token (contrib dark level-4 green).
   // @see https://ui.neon.com/brand/animated-wash
-  // @see packages/ui/styles/shadcn.css --wash / --color-wash
+  // @see packages/ui/styles/shadcn.css --brand / --color-brand
   const washOverlay = (
     <AnimatedWash
-      className="pointer-events-none absolute inset-0 z-0 size-full text-wash"
+      className="pointer-events-none absolute inset-0 z-0 size-full text-brand"
       // Slightly stronger resting field so the wash reads without hover;
       // hover still lifts via data-wash-hover on the host.
       intensity={0.1}

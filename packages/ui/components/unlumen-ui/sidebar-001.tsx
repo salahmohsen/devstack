@@ -201,7 +201,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
       {isActive && (
         <motion.span
           layoutId="sb001-active-bar"
-          className="pointer-events-none absolute top-1/2 left-1 z-10 h-[1.8px] -translate-y-1/2 rounded-full bg-wash"
+          className="pointer-events-none absolute top-1/2 left-1 z-10 h-[1.8px] -translate-y-1/2 rounded-full bg-brand"
           animate={{ width: 23 }}
           transition={{ type: "spring", stiffness: 800, damping: 40 }}
         />
@@ -250,7 +250,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
           )}
         >
           <span className="relative z-1 truncate">{label}</span>
-          {isNew && <span className="size-1.5 shrink-0 rounded-full bg-wash" />}
+          {isNew && <span className="size-1.5 shrink-0 rounded-full bg-brand" />}
         </Link>
       </motion.div>
     </div>
