@@ -2,6 +2,7 @@ import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-no
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
   APPLICATION_STAGE_LABELS,
+  buildApplicationSourceTags,
   MailCrmAuditSnapshotSchema,
   MailSystemLabelSchema,
   proposeMailCrmEffect,
@@ -14,6 +15,7 @@ import {
   type MailSystemLabel
 } from "@tsu-stack/core";
 import {
+  applicationActivityRepository,
   applicationRepository,
   mailCrmApplyRepository,
   mailMessageRepository
@@ -161,14 +163,18 @@ export async function applyMailCrmEffectFromClassify(input: {
             systemLabels: input.systemLabels,
             mailApplicationId: null
           }).targetStage ?? "applied";
+        const platform = sourceFromLabels(input.systemLabels);
         const created = await applicationRepository.create({
           userId: input.userId,
           companyName: companyName.slice(0, 300),
           title: title.slice(0, 300),
-          source: sourceFromLabels(input.systemLabels),
-          notes: `Auto-created from Career Inbox (${message.id.slice(0, 8)}…) · AI match`,
+          source: platform,
+          sourceTags: buildApplicationSourceTags({ channel: "mail", platform }),
+          notes: null,
+          trackingStatus: "tracked",
           stage,
-          description: message.preview?.slice(0, 2000) || null
+          description: message.preview?.slice(0, 2000) || null,
+          sourceMessageId: message.id
         });
         appId = created.id;
         currentStage = created.stage;
@@ -176,6 +182,12 @@ export async function applyMailCrmEffectFromClassify(input: {
         stageChangedAt = created.stageChangedAt;
         outcomeAt = created.outcomeAt;
         createdApplication = true;
+        await applicationActivityRepository.append({
+          userId: input.userId,
+          applicationId: appId,
+          kind: "discovered",
+          metadata: { via: "crm_create", messageId: input.messageId, stage }
+        });
         log.set({
           event: "mail_crm_create_application",
           messageId: input.messageId,
@@ -376,7 +388,7 @@ export async function applyMailCrmEffectFromClassify(input: {
     body: createdApplication
       ? "A pipeline row was auto-created and linked to this message."
       : "Career Inbox classify updated your Applications board.",
-    href: "/dashboard/applications",
+    href: "/dashboard/tracked-jobs",
     messageId: input.messageId,
     applicationId: appId
   });

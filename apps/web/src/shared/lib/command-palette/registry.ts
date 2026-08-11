@@ -138,14 +138,24 @@ registerCommands([
     action: { type: "navigate", to: "/dashboard/resumes" }
   },
   {
-    id: "nav:applications",
-    label: "Go to Applications",
+    id: "nav:new-jobs",
+    label: "Go to New jobs",
+    group: "Dashboard",
+    icon: Sparkles,
+    keywords: ["new jobs", "discoveries", "inbox", "harvest", "job alerts"],
+    shortcut: ["D", "N"],
+    authRequired: true,
+    action: { type: "navigate", to: "/dashboard/new-jobs" }
+  },
+  {
+    id: "nav:tracked-jobs",
+    label: "Go to Tracked jobs",
     group: "Dashboard",
     icon: ListChecks,
-    keywords: ["applications", "jobs", "pipeline", "crm", "seeker"],
+    keywords: ["tracked", "applications", "jobs", "pipeline", "crm", "seeker"],
     shortcut: ["D", "A"],
     authRequired: true,
-    action: { type: "navigate", to: "/dashboard/applications" }
+    action: { type: "navigate", to: "/dashboard/tracked-jobs" }
   },
   {
     id: "nav:mail",

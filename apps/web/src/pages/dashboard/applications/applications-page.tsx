@@ -35,7 +35,8 @@ const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 
 export function ApplicationsPage() {
   const { view, setView } = useApplicationsView();
-  const listQuery = useListApplicationsQuery();
+  /** Tracked jobs only — pipeline CRM. */
+  const listQuery = useListApplicationsQuery("tracked");
   // Shared hub stream → invalidate board when create-application succeeds.
   useInvalidateApplicationsOnHubCreate();
   const {
@@ -129,8 +130,8 @@ export function ApplicationsPage() {
     <ItemsNavProvider value={{ handleNext, handlePrev, containerRef }}>
       <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
         <PageHeader
-          title="Applications"
-          description="Track open roles on a board or list. Closed applications stay in the list only."
+          title="Tracked jobs"
+          description="Pipeline board and list for roles you are actively tracking."
           actions={
             <div className="flex items-center gap-2">
               <Group>
@@ -160,7 +161,7 @@ export function ApplicationsPage() {
               </Button>
               <Button type="button" size="sm" onClick={openCreate}>
                 <PlusIcon className="size-4" />
-                Add application
+                Add job
               </Button>
             </div>
           }

@@ -2,13 +2,17 @@ import {
   ApplicationApplyMethodSchema,
   ApplicationOutcomeSchema,
   ApplicationSourceSchema,
+  ApplicationSourceTagSchema,
   ApplicationStageSchema,
+  ApplicationTrackingStatusSchema,
   EmploymentTypeSchema,
   HiringUrgencySchema,
   type ApplicationApplyMethod,
   type ApplicationOutcome,
   type ApplicationSource,
+  type ApplicationSourceTag,
   type ApplicationStage,
+  type ApplicationTrackingStatus,
   type EmploymentType,
   type HiringUrgency
 } from "#@/application/types";
@@ -21,6 +25,45 @@ export const APPLICATION_OUTCOMES = ApplicationOutcomeSchema.options;
 export const HIRING_URGENCIES = HiringUrgencySchema.options;
 
 export const APPLICATION_SOURCES = ApplicationSourceSchema.options;
+
+export const APPLICATION_SOURCE_TAGS = ApplicationSourceTagSchema.options;
+
+export const APPLICATION_TRACKING_STATUSES = ApplicationTrackingStatusSchema.options;
+
+const PLATFORM_TAGS = new Set<string>(ApplicationSourceSchema.options);
+
+/**
+ * Build multi source tags for discovery writes.
+ * Channel: mail | hub | manual (+ future). Platform: linkedin | indeed | …
+ */
+export function buildApplicationSourceTags(input: {
+  channel: "mail" | "hub" | "manual";
+  platform?: ApplicationSource | null;
+}): ApplicationSourceTag[] {
+  const tags = new Set<ApplicationSourceTag>([input.channel]);
+  if (input.platform && PLATFORM_TAGS.has(input.platform)) {
+    tags.add(input.platform as ApplicationSourceTag);
+  }
+  return [...tags];
+}
+
+export const APPLICATION_SOURCE_TAG_LABELS: Record<ApplicationSourceTag, string> = {
+  mail: "Mail",
+  hub: "Hub",
+  manual: "Manual",
+  linkedin: "LinkedIn",
+  indeed: "Indeed",
+  company_website: "Company site",
+  referral: "Referral",
+  recruiter: "Recruiter",
+  other: "Other"
+};
+
+export const APPLICATION_TRACKING_STATUS_LABELS: Record<ApplicationTrackingStatus, string> = {
+  inbox: "New",
+  tracked: "Tracked",
+  dismissed: "Dismissed"
+};
 
 export const APPLICATION_APPLY_METHODS = ApplicationApplyMethodSchema.options;
 

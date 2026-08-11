@@ -11,6 +11,9 @@ export { useDeleteApplicationsMutation } from "@/features/applications/api/delet
 export { useGenerateApplyPackageMutation } from "@/features/applications/api/generate-apply-package.mutation";
 export { useAcceptApplyPackageMutation } from "@/features/applications/api/accept-apply-package.mutation";
 export { useSendOutreachMutation } from "@/features/applications/api/send-outreach.mutation";
+export { usePromoteApplicationMutation } from "@/features/applications/api/promote-application.mutation";
+export { useDismissApplicationMutation } from "@/features/applications/api/dismiss-application.mutation";
+export { useRestoreApplicationMutation } from "@/features/applications/api/restore-application.mutation";
 export {
   canSendOutreach,
   coverLetterDownloadUrl,

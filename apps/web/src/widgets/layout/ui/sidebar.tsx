@@ -42,7 +42,8 @@ const DashboardItems = [
   { href: "/dashboard/projects", label: "Projects", group: "Dashboard" },
   { href: "/dashboard/stacks", label: "Stack", group: "Dashboard" },
   { href: "/dashboard/resumes", label: "Resumes", group: "Dashboard" },
-  { href: "/dashboard/applications", label: "Applications", group: "Dashboard" },
+  { href: "/dashboard/new-jobs", label: "New jobs", group: "Dashboard" },
+  { href: "/dashboard/tracked-jobs", label: "Tracked jobs", group: "Dashboard" },
   {
     href: "/dashboard/mail/applications",
     label: "Mail",

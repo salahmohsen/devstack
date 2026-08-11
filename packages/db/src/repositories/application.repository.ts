@@ -13,7 +13,8 @@ import { getDb } from "../index.ts";
 import {
   application,
   type ApplicationOutcome,
-  type ApplicationStage
+  type ApplicationStage,
+  type ApplicationTrackingStatus
 } from "../schema/application.schema.ts";
 
 export type ApplicationEntity = InferSelectModel<typeof application>;
@@ -25,9 +26,13 @@ export type CreateApplicationData = Omit<
   stageChangedAt?: Date;
   outcome?: ApplicationOutcome | null;
   outcomeAt?: Date | null;
+  trackingStatus?: ApplicationTrackingStatus;
 };
 export type UpdateApplicationData = Partial<
-  Omit<CreateApplicationData, "userId" | "stage" | "stageChangedAt" | "outcome" | "outcomeAt">
+  Omit<
+    CreateApplicationData,
+    "userId" | "stage" | "stageChangedAt" | "outcome" | "outcomeAt" | "trackingStatus"
+  >
 >;
 
 export const applicationRepository = {
@@ -39,11 +44,26 @@ export const applicationRepository = {
       .orderBy(desc(application.updatedAt));
   },
 
+  /** Open pipeline set: tracked + no terminal outcome. */
   async findOpenByUserId(userId: string) {
     return getDb()
       .select()
       .from(application)
-      .where(and(eq(application.userId, userId), isNull(application.outcome)))
+      .where(
+        and(
+          eq(application.userId, userId),
+          eq(application.trackingStatus, "tracked"),
+          isNull(application.outcome)
+        )
+      )
+      .orderBy(desc(application.updatedAt));
+  },
+
+  async findByUserIdAndTrackingStatus(userId: string, trackingStatus: ApplicationTrackingStatus) {
+    return getDb()
+      .select()
+      .from(application)
+      .where(and(eq(application.userId, userId), eq(application.trackingStatus, trackingStatus)))
       .orderBy(desc(application.updatedAt));
   },
 
@@ -81,11 +101,15 @@ export const applicationRepository = {
         applyMethod: input.applyMethod ?? "unknown",
         matchScore: input.matchScore ?? null,
         source: input.source ?? null,
+        sourceTags: input.sourceTags ?? [],
         location: input.location ?? null,
         salaryRange: input.salaryRange ?? null,
         employmentType: input.employmentType ?? "unknown",
         description: input.description ?? null,
         notes: input.notes ?? null,
+        agentTake: input.agentTake ?? null,
+        sourceMessageId: input.sourceMessageId ?? null,
+        trackingStatus: input.trackingStatus ?? "tracked",
         stage: input.stage ?? "saved",
         stageChangedAt: input.stageChangedAt ?? now,
         outcome: null,
@@ -118,11 +142,15 @@ export const applicationRepository = {
         applyMethod: input.applyMethod ?? "unknown",
         matchScore: input.matchScore ?? null,
         source: input.source ?? null,
+        sourceTags: input.sourceTags ?? [],
         location: input.location ?? null,
         salaryRange: input.salaryRange ?? null,
         employmentType: input.employmentType ?? "unknown",
         description: input.description ?? null,
         notes: input.notes ?? null,
+        agentTake: input.agentTake ?? null,
+        sourceMessageId: input.sourceMessageId ?? null,
+        trackingStatus: input.trackingStatus ?? "tracked",
         stage: input.stage ?? "saved",
         stageChangedAt: input.stageChangedAt ?? now,
         outcome: null,
@@ -163,11 +191,14 @@ export const applicationRepository = {
         ...(patch.applyMethod !== undefined ? { applyMethod: patch.applyMethod } : {}),
         ...(patch.matchScore !== undefined ? { matchScore: patch.matchScore } : {}),
         ...(patch.source !== undefined ? { source: patch.source } : {}),
+        ...(patch.sourceTags !== undefined ? { sourceTags: patch.sourceTags } : {}),
         ...(patch.location !== undefined ? { location: patch.location } : {}),
         ...(patch.salaryRange !== undefined ? { salaryRange: patch.salaryRange } : {}),
         ...(patch.employmentType !== undefined ? { employmentType: patch.employmentType } : {}),
         ...(patch.description !== undefined ? { description: patch.description } : {}),
         ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+        ...(patch.agentTake !== undefined ? { agentTake: patch.agentTake } : {}),
+        ...(patch.sourceMessageId !== undefined ? { sourceMessageId: patch.sourceMessageId } : {}),
         ...(patch.hiringUrgency !== undefined ? { hiringUrgency: patch.hiringUrgency } : {}),
         ...(patch.resumeId !== undefined ? { resumeId: patch.resumeId } : {}),
         ...(patch.recruiterEmail !== undefined ? { recruiterEmail: patch.recruiterEmail } : {}),
@@ -197,16 +228,40 @@ export const applicationRepository = {
   },
 
   /**
-   * Stage change for open applications only.
-   * Returns `{ ok: false, reason: "not_found" | "closed" }` when blocked.
+   * Tracking status transition (inbox / tracked / dismissed).
+   * Does not change stage.
+   */
+  async setTrackingStatus(
+    id: string,
+    userId: string,
+    trackingStatus: ApplicationTrackingStatus
+  ): Promise<ApplicationEntity | null> {
+    const owned = await applicationRepository.findByIdForUser(id, userId);
+    if (!owned) return null;
+
+    const [updated] = await getDb()
+      .update(application)
+      .set({ trackingStatus })
+      .where(and(eq(application.id, id), eq(application.userId, userId)))
+      .returning();
+    return updated ?? null;
+  },
+
+  /**
+   * Stage change for open **tracked** applications only.
+   * Returns `{ ok: false, reason: "not_found" | "closed" | "not_tracked" }` when blocked.
    */
   async updateStage(
     id: string,
     userId: string,
     stage: ApplicationStage
-  ): Promise<{ ok: true; row: ApplicationEntity } | { ok: false; reason: "not_found" | "closed" }> {
+  ): Promise<
+    | { ok: true; row: ApplicationEntity }
+    | { ok: false; reason: "not_found" | "closed" | "not_tracked" }
+  > {
     const owned = await applicationRepository.findByIdForUser(id, userId);
     if (!owned) return { ok: false, reason: "not_found" };
+    if (owned.trackingStatus !== "tracked") return { ok: false, reason: "not_tracked" };
     if (owned.outcome !== null) return { ok: false, reason: "closed" };
 
     const [updated] = await getDb()
@@ -216,7 +271,12 @@ export const applicationRepository = {
         stageChangedAt: new Date()
       })
       .where(
-        and(eq(application.id, id), eq(application.userId, userId), isNull(application.outcome))
+        and(
+          eq(application.id, id),
+          eq(application.userId, userId),
+          eq(application.trackingStatus, "tracked"),
+          isNull(application.outcome)
+        )
       )
       .returning();
 

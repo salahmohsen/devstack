@@ -59,6 +59,13 @@ export const employmentTypeEnum = pgEnum("employment_type", [
   "internship"
 ]);
 
+/** New jobs inbox vs tracked CRM pipeline vs soft-dismissed discoveries. */
+export const applicationTrackingStatusEnum = pgEnum("application_tracking_status", [
+  "inbox",
+  "tracked",
+  "dismissed"
+]);
+
 export const application = pgTable(
   "application",
   {
@@ -76,11 +83,24 @@ export const application = pgTable(
     /** 0–100 match score; null when unscored. */
     matchScore: integer("match_score"),
     source: applicationSourceEnum("source"),
+    /**
+     * Multi-source chips: channel (mail|hub|manual) + platform (linkedin|…).
+     * Prefer this over single `source` for new UI.
+     */
+    sourceTags: text("source_tags").array().notNull().default([]),
     location: text("location"),
     salaryRange: text("salary_range"),
     employmentType: employmentTypeEnum("employment_type").notNull().default("unknown"),
     description: text("description"),
     notes: text("notes"),
+    /** AI narrative fit blurb (harvest agent take). */
+    agentTake: text("agent_take"),
+    /**
+     * Harvest provenance — Career Inbox message id.
+     * FK enforced in migration (avoids circular import with mail_message).
+     */
+    sourceMessageId: text("source_message_id"),
+    trackingStatus: applicationTrackingStatusEnum("tracking_status").notNull().default("tracked"),
     stage: applicationStageEnum("stage").notNull().default("saved"),
     stageChangedAt: timestamp("stage_changed_at", { withTimezone: true }).notNull().defaultNow(),
     outcome: applicationOutcomeEnum("outcome"),
@@ -108,6 +128,7 @@ export const application = pgTable(
   (table) => [
     index("application_user_id_idx").on(table.userId),
     index("application_user_id_stage_idx").on(table.userId, table.stage),
+    index("application_user_id_tracking_status_idx").on(table.userId, table.trackingStatus),
     // Partial unique: manual apps may omit url (multiple nulls allowed).
     uniqueIndex("application_user_id_url_uidx")
       .on(table.userId, table.url)
@@ -121,3 +142,4 @@ export type HiringUrgency = (typeof hiringUrgencyEnum.enumValues)[number];
 export type ApplicationSource = (typeof applicationSourceEnum.enumValues)[number];
 export type ApplicationApplyMethod = (typeof applicationApplyMethodEnum.enumValues)[number];
 export type EmploymentType = (typeof employmentTypeEnum.enumValues)[number];
+export type ApplicationTrackingStatus = (typeof applicationTrackingStatusEnum.enumValues)[number];

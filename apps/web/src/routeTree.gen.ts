@@ -37,14 +37,15 @@ import { Route as rootLayout_protectedDashboardResumesRouteRouteImport } from '.
 import { Route as rootLayout_protectedDashboardExperiencesRouteRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/route'
 import { Route as rootLayoutUsernameReposRepoRouteRouteImport } from './routes/(root-layout)/$username/repos/$repo/route'
 import { Route as rootLayout_protectedPlaygroundAgentIndexRouteImport } from './routes/(root-layout)/__protected/playground/agent/index'
+import { Route as rootLayout_protectedDashboardTrackedJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/tracked-jobs/index'
 import { Route as rootLayout_protectedDashboardStacksIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/stacks/index'
 import { Route as rootLayout_protectedDashboardReviewIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/review/index'
 import { Route as rootLayout_protectedDashboardResumesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/resumes/index'
 import { Route as rootLayout_protectedDashboardProjectsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/projects/index'
 import { Route as rootLayout_protectedDashboardOnboardingIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/onboarding/index'
+import { Route as rootLayout_protectedDashboardNewJobsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/new-jobs/index'
 import { Route as rootLayout_protectedDashboardMailIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/mail/index'
 import { Route as rootLayout_protectedDashboardExperiencesIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/experiences/index'
-import { Route as rootLayout_protectedDashboardApplicationsIndexRouteImport } from './routes/(root-layout)/__protected/dashboard/applications/index'
 import { Route as rootLayoutguestSignInCreateAnAccountIndexRouteImport } from './routes/(root-layout)/(guest)/sign-in/create-an-account/index'
 import { Route as rootLayoutUsernameReposRepoIndexRouteImport } from './routes/(root-layout)/$username/repos/$repo/index'
 import { Route as rootLayoutReposRepoTreeSplatRouteImport } from './routes/(root-layout)/repos/$repo/tree/$'
@@ -219,6 +220,12 @@ const rootLayout_protectedPlaygroundAgentIndexRoute =
     path: '/playground/agent/',
     getParentRoute: () => rootLayout_protectedRouteRoute,
   } as any)
+const rootLayout_protectedDashboardTrackedJobsIndexRoute =
+  rootLayout_protectedDashboardTrackedJobsIndexRouteImport.update({
+    id: '/tracked-jobs/',
+    path: '/tracked-jobs/',
+    getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardStacksIndexRoute =
   rootLayout_protectedDashboardStacksIndexRouteImport.update({
     id: '/stacks/',
@@ -249,6 +256,12 @@ const rootLayout_protectedDashboardOnboardingIndexRoute =
     path: '/onboarding/',
     getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
   } as any)
+const rootLayout_protectedDashboardNewJobsIndexRoute =
+  rootLayout_protectedDashboardNewJobsIndexRouteImport.update({
+    id: '/new-jobs/',
+    path: '/new-jobs/',
+    getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
+  } as any)
 const rootLayout_protectedDashboardMailIndexRoute =
   rootLayout_protectedDashboardMailIndexRouteImport.update({
     id: '/mail/',
@@ -260,12 +273,6 @@ const rootLayout_protectedDashboardExperiencesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => rootLayout_protectedDashboardExperiencesRouteRoute,
-  } as any)
-const rootLayout_protectedDashboardApplicationsIndexRoute =
-  rootLayout_protectedDashboardApplicationsIndexRouteImport.update({
-    id: '/applications/',
-    path: '/applications/',
-    getParentRoute: () => rootLayout_protectedDashboardRouteRoute,
   } as any)
 const rootLayoutguestSignInCreateAnAccountIndexRoute =
   rootLayoutguestSignInCreateAnAccountIndexRouteImport.update({
@@ -401,14 +408,15 @@ export interface FileRoutesByFullPath {
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$username/repos/$repo/': typeof rootLayoutUsernameReposRepoIndexRoute
   '/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
-  '/dashboard/applications/': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/mail/': typeof rootLayout_protectedDashboardMailIndexRoute
+  '/dashboard/new-jobs/': typeof rootLayout_protectedDashboardNewJobsIndexRoute
   '/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/dashboard/review/': typeof rootLayout_protectedDashboardReviewIndexRoute
   '/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
+  '/dashboard/tracked-jobs/': typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
   '/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/$username/repos/$repo/blob/$': typeof rootLayoutUsernameReposRepoBlobSplatRoute
   '/$username/repos/$repo/tree/$': typeof rootLayoutUsernameReposRepoTreeSplatRoute
@@ -448,14 +456,15 @@ export interface FileRoutesByTo {
   '/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/$username/repos/$repo': typeof rootLayoutUsernameReposRepoIndexRoute
   '/sign-in/create-an-account': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
-  '/dashboard/applications': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/dashboard/experiences': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/dashboard/mail': typeof rootLayout_protectedDashboardMailIndexRoute
+  '/dashboard/new-jobs': typeof rootLayout_protectedDashboardNewJobsIndexRoute
   '/dashboard/onboarding': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/dashboard/projects': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/dashboard/resumes': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/dashboard/review': typeof rootLayout_protectedDashboardReviewIndexRoute
   '/dashboard/stacks': typeof rootLayout_protectedDashboardStacksIndexRoute
+  '/dashboard/tracked-jobs': typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
   '/playground/agent': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/$username/repos/$repo/blob/$': typeof rootLayoutUsernameReposRepoBlobSplatRoute
   '/$username/repos/$repo/tree/$': typeof rootLayoutUsernameReposRepoTreeSplatRoute
@@ -504,14 +513,15 @@ export interface FileRoutesById {
   '/(root-layout)/repos/$repo/tree/$': typeof rootLayoutReposRepoTreeSplatRoute
   '/(root-layout)/$username/repos/$repo/': typeof rootLayoutUsernameReposRepoIndexRoute
   '/(root-layout)/(guest)/sign-in/create-an-account/': typeof rootLayoutguestSignInCreateAnAccountIndexRoute
-  '/(root-layout)/__protected/dashboard/applications/': typeof rootLayout_protectedDashboardApplicationsIndexRoute
   '/(root-layout)/__protected/dashboard/experiences/': typeof rootLayout_protectedDashboardExperiencesIndexRoute
   '/(root-layout)/__protected/dashboard/mail/': typeof rootLayout_protectedDashboardMailIndexRoute
+  '/(root-layout)/__protected/dashboard/new-jobs/': typeof rootLayout_protectedDashboardNewJobsIndexRoute
   '/(root-layout)/__protected/dashboard/onboarding/': typeof rootLayout_protectedDashboardOnboardingIndexRoute
   '/(root-layout)/__protected/dashboard/projects/': typeof rootLayout_protectedDashboardProjectsIndexRoute
   '/(root-layout)/__protected/dashboard/resumes/': typeof rootLayout_protectedDashboardResumesIndexRoute
   '/(root-layout)/__protected/dashboard/review/': typeof rootLayout_protectedDashboardReviewIndexRoute
   '/(root-layout)/__protected/dashboard/stacks/': typeof rootLayout_protectedDashboardStacksIndexRoute
+  '/(root-layout)/__protected/dashboard/tracked-jobs/': typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
   '/(root-layout)/__protected/playground/agent/': typeof rootLayout_protectedPlaygroundAgentIndexRoute
   '/(root-layout)/$username/repos/$repo/blob/$': typeof rootLayoutUsernameReposRepoBlobSplatRoute
   '/(root-layout)/$username/repos/$repo/tree/$': typeof rootLayoutUsernameReposRepoTreeSplatRoute
@@ -559,14 +569,15 @@ export interface FileRouteTypes {
     | '/repos/$repo/tree/$'
     | '/$username/repos/$repo/'
     | '/sign-in/create-an-account/'
-    | '/dashboard/applications/'
     | '/dashboard/experiences/'
     | '/dashboard/mail/'
+    | '/dashboard/new-jobs/'
     | '/dashboard/onboarding/'
     | '/dashboard/projects/'
     | '/dashboard/resumes/'
     | '/dashboard/review/'
     | '/dashboard/stacks/'
+    | '/dashboard/tracked-jobs/'
     | '/playground/agent/'
     | '/$username/repos/$repo/blob/$'
     | '/$username/repos/$repo/tree/$'
@@ -606,14 +617,15 @@ export interface FileRouteTypes {
     | '/repos/$repo/tree/$'
     | '/$username/repos/$repo'
     | '/sign-in/create-an-account'
-    | '/dashboard/applications'
     | '/dashboard/experiences'
     | '/dashboard/mail'
+    | '/dashboard/new-jobs'
     | '/dashboard/onboarding'
     | '/dashboard/projects'
     | '/dashboard/resumes'
     | '/dashboard/review'
     | '/dashboard/stacks'
+    | '/dashboard/tracked-jobs'
     | '/playground/agent'
     | '/$username/repos/$repo/blob/$'
     | '/$username/repos/$repo/tree/$'
@@ -661,14 +673,15 @@ export interface FileRouteTypes {
     | '/(root-layout)/repos/$repo/tree/$'
     | '/(root-layout)/$username/repos/$repo/'
     | '/(root-layout)/(guest)/sign-in/create-an-account/'
-    | '/(root-layout)/__protected/dashboard/applications/'
     | '/(root-layout)/__protected/dashboard/experiences/'
     | '/(root-layout)/__protected/dashboard/mail/'
+    | '/(root-layout)/__protected/dashboard/new-jobs/'
     | '/(root-layout)/__protected/dashboard/onboarding/'
     | '/(root-layout)/__protected/dashboard/projects/'
     | '/(root-layout)/__protected/dashboard/resumes/'
     | '/(root-layout)/__protected/dashboard/review/'
     | '/(root-layout)/__protected/dashboard/stacks/'
+    | '/(root-layout)/__protected/dashboard/tracked-jobs/'
     | '/(root-layout)/__protected/playground/agent/'
     | '/(root-layout)/$username/repos/$repo/blob/$'
     | '/(root-layout)/$username/repos/$repo/tree/$'
@@ -894,6 +907,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedPlaygroundAgentIndexRouteImport
       parentRoute: typeof rootLayout_protectedRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/tracked-jobs/': {
+      id: '/(root-layout)/__protected/dashboard/tracked-jobs/'
+      path: '/tracked-jobs'
+      fullPath: '/dashboard/tracked-jobs/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardTrackedJobsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/stacks/': {
       id: '/(root-layout)/__protected/dashboard/stacks/'
       path: '/stacks'
@@ -929,6 +949,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof rootLayout_protectedDashboardOnboardingIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardRouteRoute
     }
+    '/(root-layout)/__protected/dashboard/new-jobs/': {
+      id: '/(root-layout)/__protected/dashboard/new-jobs/'
+      path: '/new-jobs'
+      fullPath: '/dashboard/new-jobs/'
+      preLoaderRoute: typeof rootLayout_protectedDashboardNewJobsIndexRouteImport
+      parentRoute: typeof rootLayout_protectedDashboardRouteRoute
+    }
     '/(root-layout)/__protected/dashboard/mail/': {
       id: '/(root-layout)/__protected/dashboard/mail/'
       path: '/mail'
@@ -942,13 +969,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/experiences/'
       preLoaderRoute: typeof rootLayout_protectedDashboardExperiencesIndexRouteImport
       parentRoute: typeof rootLayout_protectedDashboardExperiencesRouteRoute
-    }
-    '/(root-layout)/__protected/dashboard/applications/': {
-      id: '/(root-layout)/__protected/dashboard/applications/'
-      path: '/applications'
-      fullPath: '/dashboard/applications/'
-      preLoaderRoute: typeof rootLayout_protectedDashboardApplicationsIndexRouteImport
-      parentRoute: typeof rootLayout_protectedDashboardRouteRoute
     }
     '/(root-layout)/(guest)/sign-in/create-an-account/': {
       id: '/(root-layout)/(guest)/sign-in/create-an-account/'
@@ -1150,12 +1170,13 @@ interface rootLayout_protectedDashboardRouteRouteChildren {
   rootLayout_protectedDashboardSettingsRouteRoute: typeof rootLayout_protectedDashboardSettingsRouteRouteWithChildren
   rootLayout_protectedDashboardIndexRoute: typeof rootLayout_protectedDashboardIndexRoute
   rootLayout_protectedDashboardMailCategoryRoute: typeof rootLayout_protectedDashboardMailCategoryRoute
-  rootLayout_protectedDashboardApplicationsIndexRoute: typeof rootLayout_protectedDashboardApplicationsIndexRoute
   rootLayout_protectedDashboardMailIndexRoute: typeof rootLayout_protectedDashboardMailIndexRoute
+  rootLayout_protectedDashboardNewJobsIndexRoute: typeof rootLayout_protectedDashboardNewJobsIndexRoute
   rootLayout_protectedDashboardOnboardingIndexRoute: typeof rootLayout_protectedDashboardOnboardingIndexRoute
   rootLayout_protectedDashboardProjectsIndexRoute: typeof rootLayout_protectedDashboardProjectsIndexRoute
   rootLayout_protectedDashboardReviewIndexRoute: typeof rootLayout_protectedDashboardReviewIndexRoute
   rootLayout_protectedDashboardStacksIndexRoute: typeof rootLayout_protectedDashboardStacksIndexRoute
+  rootLayout_protectedDashboardTrackedJobsIndexRoute: typeof rootLayout_protectedDashboardTrackedJobsIndexRoute
 }
 
 const rootLayout_protectedDashboardRouteRouteChildren: rootLayout_protectedDashboardRouteRouteChildren =
@@ -1170,10 +1191,10 @@ const rootLayout_protectedDashboardRouteRouteChildren: rootLayout_protectedDashb
       rootLayout_protectedDashboardIndexRoute,
     rootLayout_protectedDashboardMailCategoryRoute:
       rootLayout_protectedDashboardMailCategoryRoute,
-    rootLayout_protectedDashboardApplicationsIndexRoute:
-      rootLayout_protectedDashboardApplicationsIndexRoute,
     rootLayout_protectedDashboardMailIndexRoute:
       rootLayout_protectedDashboardMailIndexRoute,
+    rootLayout_protectedDashboardNewJobsIndexRoute:
+      rootLayout_protectedDashboardNewJobsIndexRoute,
     rootLayout_protectedDashboardOnboardingIndexRoute:
       rootLayout_protectedDashboardOnboardingIndexRoute,
     rootLayout_protectedDashboardProjectsIndexRoute:
@@ -1182,6 +1203,8 @@ const rootLayout_protectedDashboardRouteRouteChildren: rootLayout_protectedDashb
       rootLayout_protectedDashboardReviewIndexRoute,
     rootLayout_protectedDashboardStacksIndexRoute:
       rootLayout_protectedDashboardStacksIndexRoute,
+    rootLayout_protectedDashboardTrackedJobsIndexRoute:
+      rootLayout_protectedDashboardTrackedJobsIndexRoute,
   }
 
 const rootLayout_protectedDashboardRouteRouteWithChildren =
