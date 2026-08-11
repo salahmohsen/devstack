@@ -66,7 +66,8 @@ export function AgentHubChat() {
     stop,
     clearError,
     historyReady,
-    addToolApprovalResponse
+    addToolApprovalResponse,
+    addToolOutput
   } = useHubChat();
 
   const [input, setInput] = React.useState("");
@@ -220,6 +221,7 @@ export function AgentHubChat() {
                           parts={msg.parts ?? []}
                           role={role}
                           isStreaming={messageStreaming}
+                          addToolOutput={addToolOutput}
                         />
                       </AgentHubMessageRow>
                     </MessageScrollerItem>

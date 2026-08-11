@@ -6,3 +6,12 @@ export { AgentHubTypingIndicator } from "./ui/agent-hub-typing-indicator";
 export { AgentHubPromptComposer } from "./ui/agent-hub-prompt-composer";
 export { AgentHubMessageRow } from "./ui/agent-hub-message-row";
 export { AgentHubErrorCard } from "./ui/agent-hub-error-card";
+export {
+  ApplicationFromJdCard,
+  PROPOSE_FROM_JD_CHOICE_LABELS
+} from "./ui/application-from-jd-card";
+export type {
+  ApplicationFromJdCardAction,
+  ApplicationFromJdCardInput,
+  ApplicationFromJdCardProps
+} from "./ui/application-from-jd-card";
