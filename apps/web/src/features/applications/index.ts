@@ -25,6 +25,7 @@ export {
   useCountApplicationsQuery
 } from "@/features/applications/api/count-applications.query";
 export { useRegenerateAgentTakeMutation } from "@/features/applications/api/regenerate-agent-take.mutation";
+export { useScanJobAlertsMutation } from "@/features/applications/api/scan-job-alerts.mutation";
 export { ApplicationActivitySection } from "@/features/applications/ui/application-activity-section";
 export {
   canSendOutreach,

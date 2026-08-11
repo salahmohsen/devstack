@@ -196,6 +196,21 @@ export const RegenerateAgentTakeInputSchema = z.object({
   id: z.string().min(1)
 });
 
+/** Manual “Scan job alerts” — re-harvest recent job_notifier digests. */
+export const ScanJobAlertsInputSchema = z
+  .object({
+    /** Max digests to enqueue (default 20). */
+    limit: z.number().int().min(1).max(40).optional()
+  })
+  .optional();
+
+export const ScanJobAlertsOutputSchema = z.object({
+  digestsFound: z.number().int().nonnegative(),
+  enqueued: z.number().int().nonnegative(),
+  /** True when REDIS/BullMQ harvest queue is not registered. */
+  queueUnavailable: z.boolean()
+});
+
 /** Body-field patch only — never stage/outcome (use dedicated procedures). */
 export const UpdateApplicationInputSchema = z.object({
   companyName: z.string().min(1).optional(),
@@ -248,3 +263,5 @@ export type AddApplicationNoteInput = z.infer<typeof AddApplicationNoteInputSche
 export type ListApplicationsInput = z.infer<typeof ListApplicationsInputSchema>;
 export type CountApplicationsInput = z.infer<typeof CountApplicationsInputSchema>;
 export type RegenerateAgentTakeInput = z.infer<typeof RegenerateAgentTakeInputSchema>;
+export type ScanJobAlertsInput = z.infer<typeof ScanJobAlertsInputSchema>;
+export type ScanJobAlertsOutput = z.infer<typeof ScanJobAlertsOutputSchema>;

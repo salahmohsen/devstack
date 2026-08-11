@@ -18,6 +18,8 @@ import {
   PromoteApplicationInputSchema,
   RegenerateAgentTakeInputSchema,
   RestoreApplicationInputSchema,
+  ScanJobAlertsInputSchema,
+  ScanJobAlertsOutputSchema,
   SendOutreachInputSchema,
   SetOutcomeInputSchema,
   UpdateApplicationInputSchema,
@@ -26,6 +28,7 @@ import {
 import {
   applicationActivityRepository,
   applicationRepository,
+  mailMessageRepository,
   resumeRepository
 } from "@tsu-stack/db/repositories";
 
@@ -33,6 +36,7 @@ import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
 import { generateAgentTake } from "#@/lib/application/generate-agent-take";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
+import { requestMailJobHarvest } from "#@/lib/mail/harvest-enqueue-hook";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toApplicationOutput(
@@ -128,6 +132,44 @@ export const applicationsRouter = {
         input.trackingStatus
       );
       return { count };
+    }),
+
+  scanJobAlerts: protectedProcedure
+    .route({
+      description:
+        "Enqueue harvest for recent job_notifier digests (manual Scan job alerts). Dedupes by listing URL.",
+      method: "POST"
+    })
+    .input(ScanJobAlertsInputSchema)
+    .output(ScanJobAlertsOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const limit = input?.limit ?? 20;
+      const digests = await mailMessageRepository.findByUserId({
+        userId,
+        category: "job_notifier",
+        includeSystem: false,
+        limit
+      });
+
+      let enqueued = 0;
+      for (const msg of digests) {
+        const ok = await requestMailJobHarvest({
+          messageId: msg.id,
+          userId,
+          force: true
+        });
+        if (ok) enqueued += 1;
+      }
+
+      // force:true uses unique jobIds; enqueued===0 with digests almost always means hook/queue down.
+      const queueUnavailable = digests.length > 0 && enqueued === 0;
+
+      return {
+        digestsFound: digests.length,
+        enqueued,
+        queueUnavailable
+      };
     }),
 
   get: protectedProcedure

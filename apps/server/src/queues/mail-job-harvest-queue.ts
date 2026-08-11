@@ -83,11 +83,15 @@ export function startMailJobHarvestQueue(redisUrl: string): void {
 }
 
 /**
- * Enqueue job harvest after classify labels `job_notifier`.
+ * Enqueue job harvest after classify labels `job_notifier` (or manual scan).
  * No-op when queue was never started (no REDIS_URL).
+ *
+ * @param options.force - Manual re-scan: unique jobId so completed harvests can run again.
+ *   Create path still dedupes via `createIfAbsentByUrl` (no duplicate applications).
  */
 export async function enqueueMailJobHarvest(
-  payload: MailJobHarvestJobPayload
+  payload: MailJobHarvestJobPayload,
+  options?: { force?: boolean }
 ): Promise<{ enqueued: boolean; jobId?: string }> {
   if (!queue) {
     return { enqueued: false };
@@ -98,15 +102,23 @@ export async function enqueueMailJobHarvest(
     enqueuedAt: payload.enqueuedAt ?? new Date().toISOString()
   };
 
-  const job = await queue.add(MAIL_JOB_HARVEST_JOB_NAME, data, {
-    jobId: `harvest:${data.userId}:${data.messageId}`,
-    removeOnComplete: 1000,
-    removeOnFail: 5000,
-    attempts: 3,
-    backoff: { type: "exponential", delay: 2000 }
-  });
+  const jobId = options?.force
+    ? `harvest:${data.userId}:${data.messageId}:${Date.now()}`
+    : `harvest:${data.userId}:${data.messageId}`;
 
-  return { enqueued: true, jobId: job.id };
+  try {
+    const job = await queue.add(MAIL_JOB_HARVEST_JOB_NAME, data, {
+      jobId,
+      removeOnComplete: 1000,
+      removeOnFail: 5000,
+      attempts: 3,
+      backoff: { type: "exponential", delay: 2000 }
+    });
+    return { enqueued: true, jobId: job.id };
+  } catch {
+    // Same jobId still active/completed in Redis — treat as not newly enqueued.
+    return { enqueued: false };
+  }
 }
 
 export async function stopMailJobHarvestQueue(): Promise<void> {

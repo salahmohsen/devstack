@@ -6,6 +6,7 @@ import {
   BookmarkPlusIcon,
   ChevronDownIcon,
   InboxIcon,
+  MailSearchIcon,
   PackageIcon,
   RefreshCwIcon,
   RotateCcwIcon,
@@ -51,7 +52,8 @@ import {
   useListApplicationsQuery,
   usePromoteApplicationMutation,
   useRegenerateAgentTakeMutation,
-  useRestoreApplicationMutation
+  useRestoreApplicationMutation,
+  useScanJobAlertsMutation
 } from "@/features/applications";
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
@@ -294,6 +296,7 @@ export function NewJobsPage() {
   const generatePackage = useGenerateApplyPackageMutation();
   const regenerateTake = useRegenerateAgentTakeMutation();
   const deleteApps = useDeleteApplicationsMutation();
+  const scanJobAlerts = useScanJobAlertsMutation();
 
   const jobs = listQuery.data ?? [];
   const packageApplication = useMemo(() => {
@@ -324,28 +327,40 @@ export function NewJobsPage() {
         title="New jobs"
         description="AI discoveries from job alerts. Track to add to your pipeline, or dismiss."
         actions={
-          <Group>
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               size="sm"
-              variant={filter === "inbox" ? "default" : "outline"}
-              onClick={() => setFilter("inbox")}
+              variant="outline"
+              loading={scanJobAlerts.isPending}
+              onClick={() => void scanJobAlerts.mutateAsync({})}
             >
-              New{listQuery.isSuccess && filter === "inbox" ? ` (${jobs.length})` : ""}
+              <MailSearchIcon className="size-4" aria-hidden />
+              Scan job alerts
             </Button>
-            <GroupSeparator />
-            <Button
-              type="button"
-              size="sm"
-              variant={filter === "dismissed" ? "default" : "outline"}
-              onClick={() => setFilter("dismissed")}
-            >
-              Dismissed
-              {listQuery.isSuccess && filter === "dismissed" && jobs.length > 0
-                ? ` (${jobs.length})`
-                : ""}
-            </Button>
-          </Group>
+            <Group>
+              <Button
+                type="button"
+                size="sm"
+                variant={filter === "inbox" ? "default" : "outline"}
+                onClick={() => setFilter("inbox")}
+              >
+                New{listQuery.isSuccess && filter === "inbox" ? ` (${jobs.length})` : ""}
+              </Button>
+              <GroupSeparator />
+              <Button
+                type="button"
+                size="sm"
+                variant={filter === "dismissed" ? "default" : "outline"}
+                onClick={() => setFilter("dismissed")}
+              >
+                Dismissed
+                {listQuery.isSuccess && filter === "dismissed" && jobs.length > 0
+                  ? ` (${jobs.length})`
+                  : ""}
+              </Button>
+            </Group>
+          </div>
         }
       />
 
@@ -359,16 +374,27 @@ export function NewJobsPage() {
             <ItemsEmpty
               icon={<SparklesIcon aria-hidden />}
               title="No new matches"
-              description="Job alert digests that pass your preferences will show up here. Connect mail and set job preferences under Settings."
+              description="Job alert digests that pass your preferences will show up here. Scan recent digests, or set preferences under Settings."
               action={
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  render={<Link to="/dashboard/settings/jobs" />}
-                >
-                  Job preferences
-                </Button>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    loading={scanJobAlerts.isPending}
+                    onClick={() => void scanJobAlerts.mutateAsync({})}
+                  >
+                    <MailSearchIcon className="size-4" aria-hidden />
+                    Scan job alerts
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    render={<Link to="/dashboard/settings/jobs" />}
+                  >
+                    Job preferences
+                  </Button>
+                </div>
               }
             />
           ) : (

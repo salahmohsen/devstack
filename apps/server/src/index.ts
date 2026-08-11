@@ -3,13 +3,14 @@ import { type Server as HTTPServer } from "node:http";
 import { serve } from "@hono/node-server";
 
 import { registerMailClassifyEnqueue } from "@tsu-stack/api/lib/mail/classify-enqueue-hook";
+import { registerMailJobHarvestEnqueue } from "@tsu-stack/api/lib/mail/harvest-enqueue-hook";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { app } from "#@/app";
 import { createGithubGateway, broadcastSignals } from "#@/github-gateway";
 import { enqueueMailClassify, startMailClassifyQueue } from "#@/queues/mail-classify-queue";
-import { startMailJobHarvestQueue } from "#@/queues/mail-job-harvest-queue";
+import { enqueueMailJobHarvest, startMailJobHarvestQueue } from "#@/queues/mail-job-harvest-queue";
 import { initRuntime, setBroadcastSignals } from "#@/runtime-context";
 import "#@/shared/lib/logger";
 
@@ -86,6 +87,10 @@ async function start(): Promise<void> {
     // Job harvest after job_notifier classify (extract → score → Applications).
     try {
       startMailJobHarvestQueue(ENV_SERVER.REDIS_URL);
+      registerMailJobHarvestEnqueue(async ({ messageId, userId, force }) => {
+        const result = await enqueueMailJobHarvest({ messageId, userId }, { force });
+        return result.enqueued;
+      });
     } catch (error) {
       const log = createLogger({ operation: "server__mail_job_harvest_queue" });
       log.error(error instanceof Error ? error : new Error(String(error)), {
