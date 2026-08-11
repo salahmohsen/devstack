@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { authClient } from "@tsu-stack/auth/react/auth-client";
+import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { type RenameUsernameInput } from "@tsu-stack/core";
 
 export function getRenameUsernameMutationOptions() {
@@ -15,10 +16,15 @@ export function useRenameUsernameMutation() {
 
   return useMutation(
     orpcQueryClient.profile.rename.mutationOptions({
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         queryClient.setQueryData(orpcQueryClient.profile.get.queryOptions().queryKey, data);
-        // Session user.username drives path builders and own-profile checks.
-        void authClient.getSession();
+        // Bypass BA 5m session cookie cache so path builders see the new username.
+        await authClient.getSession({
+          fetchOptions: {
+            query: { disableCookieCache: true }
+          }
+        });
+        await queryClient.invalidateQueries({ queryKey: getAuthUserQueryOptions().queryKey });
         toast.success("Username updated");
       },
       onError: (error) => {

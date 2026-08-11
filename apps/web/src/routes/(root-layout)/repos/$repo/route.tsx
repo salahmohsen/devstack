@@ -5,6 +5,7 @@ import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/qu
 import { isValidGithubRepoSlug } from "@/shared/lib/github-repo-slug";
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
 import { getRequestHostname } from "@/shared/lib/request-host";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
@@ -30,10 +31,7 @@ export const Route = createFileRoute("/(root-layout)/repos/$repo")({
 
     // Primary host: redirect bare /repos/$repo → /{username}/repos/$repo
     const user = await context.queryClient.ensureQueryData(getAuthUserQueryOptions());
-    const username =
-      typeof (user as { username?: string } | null)?.username === "string"
-        ? (user as { username: string }).username
-        : null;
+    const username = sessionUsernameFromUser(user);
 
     if (username) {
       throw redirect({

@@ -22,6 +22,7 @@ import {
   repoListPageQueryParser,
   safeRepoListPage
 } from "@/shared/lib/repo-list-utils";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { RepositoryRow } from "@/shared/ui/repository-row";
@@ -138,10 +139,7 @@ export function RepositoriesPage({
   }, [debouncedSearch, visibilityValues, filterState.sortId, limit]);
 
   const { user } = useAuth();
-  const sessionUsername =
-    typeof (user as { username?: string } | null)?.username === "string"
-      ? (user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(user);
   const isOwnProfile = Boolean(user && sessionUsername === username);
   const isAdmin = isOwnProfile;
 

@@ -22,6 +22,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { FieldLabelWithTooltip } from "@/shared/form/field-label-with-tooltip";
 import { useFieldContext } from "@/shared/form/form-contexts";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getGithubProfileReposQueryOptions } from "@/features/github/api/get-github-profile-repos.query";
 
@@ -36,10 +37,7 @@ function GitHubRepoMultiCombobox(props: GitHubRepoMultiComboboxProps) {
   const { user } = useAuthSuspense();
   const [open, setOpen] = useState(false);
 
-  const username =
-    typeof (user as { username?: string }).username === "string"
-      ? (user as { username: string }).username
-      : "me";
+  const username = sessionUsernameFromUser(user) ?? "me";
   const reposQuery = useQuery(getGithubProfileReposQueryOptions(username, true));
   const repos: GitHubUserRepoSummary[] = reposQuery.data ?? [];
   const isLoading = reposQuery.isLoading;

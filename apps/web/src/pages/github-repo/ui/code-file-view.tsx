@@ -11,6 +11,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
 import { highlightCode } from "@/shared/lib/highlight-code";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getGithubRepoFileContentQueryOptions } from "@/pages/github-repo/api/get-github-repo-file-content.query";
 import { getGithubRepoTreeQueryOptions } from "@/pages/github-repo/api/get-github-repo-tree.query";
@@ -159,10 +160,7 @@ export function CodeFileView({
   repo: string;
 }) {
   const { user } = useAuth();
-  const sessionUsername =
-    typeof (user as { username?: string } | null)?.username === "string"
-      ? (user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(user);
   const isPrivate = Boolean(user && sessionUsername === username);
 
   const contentQuery = useQuery(

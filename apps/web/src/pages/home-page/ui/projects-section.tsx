@@ -26,6 +26,7 @@ import {
   resolvePublicSurface,
   type PublicSurface
 } from "@/shared/lib/public-surface";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { Icon } from "@/shared/ui/icon";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
@@ -146,10 +147,7 @@ export const ProjectsSection = ({
   const portfolioQuery = useGetPortfolioListQuery(username);
   const projects = portfolioQuery.data?.projects ?? [];
   const { user } = useAuth();
-  const sessionUsername =
-    typeof (user as { username?: string } | null)?.username === "string"
-      ? (user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(user);
   const isPortfolioOwner = Boolean(sessionUsername && sessionUsername === username);
 
   const surface = useMemo(() => {

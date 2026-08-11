@@ -20,6 +20,7 @@ import {
   repoBranchNavLocation,
   repoExplorerTabTitle
 } from "@/shared/lib/repo-paths";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { useRegisterGithubPublicTab } from "@/widgets/layout";
 
@@ -66,10 +67,7 @@ export function RepoExplorerLayout({
   const isDesktop = useIsDesktop();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user } = useAuth();
-  const sessionUsername =
-    typeof (user as { username?: string } | null)?.username === "string"
-      ? (user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(user);
   const isPrivate = Boolean(user && sessionUsername === username);
 
   const overviewQuery = useQuery({

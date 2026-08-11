@@ -5,6 +5,7 @@ import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { githubCachePolicy } from "@tsu-stack/github/cache/github-cache-policy";
 
 import { persistedMeta } from "@/shared/lib/query-persistence";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { REPO_ACTIVITY_CARDS_PER_PAGE } from "@/pages/github-repo/api/repo-activity-cards.constants";
 
@@ -49,10 +50,7 @@ export function useGetGithubRepoWorkflowRunsQuery(
   username: string
 ) {
   const { user } = useAuth();
-  const sessionUsername =
-    typeof (user as { username?: string } | null)?.username === "string"
-      ? (user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(user);
   const isPrivate = Boolean(user && sessionUsername === username);
   return useQuery({
     ...getGithubRepoWorkflowRunsQueryOptions(input, isPrivate, username),

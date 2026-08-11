@@ -15,6 +15,7 @@ import {
   useIsAncestorPath
 } from "@/shared/lib/explorer-path-store";
 import { type FileSearchEntry, type FileSearchResult } from "@/shared/lib/fuzzy-file-search";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { useRepoRouteLinks } from "@/shared/lib/use-repo-route-links";
 import { FileSearchCard } from "@/shared/ui/file-search-card";
 
@@ -201,10 +202,7 @@ const DirectoryNode = memo(function DirectoryNode({
   const { user } = useAuth();
   // URL links only — custom domain has no /$username segment.
   const links = useRepoRouteLinks();
-  const sessionUsername =
-    typeof (user as { username?: string } | null)?.username === "string"
-      ? (user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(user);
   // Must use tenant username prop (Host-resolved on custom domain), not URL params.
   const isPrivate = Boolean(user && sessionUsername === username);
 

@@ -12,6 +12,7 @@ import { githubRevalidationSignalKeys } from "@tsu-stack/github/cache/github-rev
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
 
 import { getGithubProfileReposQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
@@ -50,10 +51,7 @@ export function HomePage({
     select: (state) => state.location
   });
   const auth = useAuth();
-  const sessionUsername =
-    typeof (auth.user as { username?: string } | null | undefined)?.username === "string"
-      ? (auth.user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(auth.user);
   /** Private GitHub APIs only when viewing your own portfolio while signed in. */
   const isOwnProfile = Boolean(auth.user && sessionUsername === username);
   const isPrivate = isOwnProfile;

@@ -7,6 +7,7 @@ import { Skeleton } from "@tsu-stack/ui/components/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 
 import { formatRelativeTime } from "@/shared/lib/format-relative-time";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getGithubRepoRefCommitQueryOptions } from "@/pages/github-repo/api/get-github-repo-ref-commit.query";
 
@@ -66,10 +67,7 @@ export function LatestCommitBar({
   username: string;
 }) {
   const { user } = useAuth();
-  const sessionUsername =
-    typeof (user as { username?: string } | null)?.username === "string"
-      ? (user as { username: string }).username
-      : null;
+  const sessionUsername = sessionUsernameFromUser(user);
   // Same rule as overview/tree: private path only when viewing own portfolio.
   const isPrivate = Boolean(user && sessionUsername === username);
   const overviewTip = normalizeCommit(defaultBranchTip);

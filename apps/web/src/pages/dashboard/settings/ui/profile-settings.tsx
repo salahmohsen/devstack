@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
-import { contactTypeSchema, UsernameSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
+import { contactTypeSchema, ProfileUpdateInputSchema, UsernameSchema } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -48,9 +48,10 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { useAppForm } from "@/shared/form";
 import { ContactIcon } from "@/shared/lib/contact-icon";
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { sortContactsByOrder } from "@/shared/lib/sort-contacts";
 import { ProfileAvatarUpload } from "@/shared/ui/profile-avatar-upload";
-import { RichHtml, isEmptyRichHtml } from "@/shared/ui/rich-html";
+import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
@@ -153,9 +154,7 @@ export function ProfileSettings() {
   const renameMutation = useRenameUsernameMutation();
 
   const currentUsername =
-    profileQuery.data?.username ??
-    (session?.user as { username?: string } | undefined)?.username ??
-    "";
+    profileQuery.data?.username ?? sessionUsernameFromUser(session?.user) ?? "";
 
   const serverValues = {
     name: profileQuery.data?.name ?? session?.user?.name ?? "",

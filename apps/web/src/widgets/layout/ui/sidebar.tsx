@@ -17,6 +17,7 @@ import {
   portfolioHomePath,
   publicReposListPath
 } from "@/shared/lib/public-surface";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { ContactButton } from "@/shared/ui/contact-button";
 
 import { useGetOwnPortfolioListQuery, useGetPortfolioListQuery } from "@/features/portfolio";
@@ -91,13 +92,6 @@ function groupBySection(items: readonly NavItem[]): Section[] {
   return sections;
 }
 
-function sessionUsername(user: unknown): string | undefined {
-  if (typeof user !== "object" || user === null) return undefined;
-  if (!("username" in user)) return undefined;
-  const value = (user as { username?: unknown }).username;
-  return typeof value === "string" && value.length > 0 ? value : undefined;
-}
-
 export function PublicSidebar() {
   const location = useLocation();
   const pathname = location.pathname;
@@ -113,7 +107,7 @@ export function PublicSidebar() {
 
   const pathUsername = params.username;
   const onPublicProfile = isPublicProfilePath(pathname, pathUsername);
-  const ownUsername = sessionUsername(user) ?? ownProfileQuery.data?.username ?? undefined;
+  const ownUsername = sessionUsernameFromUser(user) ?? ownProfileQuery.data?.username ?? undefined;
 
   // Nav links: public page slug, else own slug for "Portfolio" / "Repositories".
   const username = (onPublicProfile ? pathUsername : ownUsername) ?? "";

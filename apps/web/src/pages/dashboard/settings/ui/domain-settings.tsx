@@ -63,6 +63,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useAppForm } from "@/shared/form";
 import { getPrimaryAppOrigin } from "@/shared/lib/primary-app-url";
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 
 import {
@@ -94,10 +95,7 @@ function statusMeta(status: CustomDomainOutput["status"]): StatusMeta {
 }
 
 function sessionUsername(user: unknown): string | undefined {
-  if (!user || typeof user !== "object") return undefined;
-  if (!("username" in user)) return undefined;
-  const value = (user as { username?: unknown }).username;
-  return typeof value === "string" && value.length > 0 ? value : undefined;
+  return sessionUsernameFromUser(user) ?? undefined;
 }
 
 function formatRelativeTime(value: Date | string | null | undefined): string | null {

@@ -21,6 +21,8 @@ import {
 } from "@tsu-stack/github";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 
+import { sessionUsernameFromUser } from "@/shared/lib/session-username";
+
 import { githubQueryKeys } from "@/lib/github.query";
 
 import { getRegisteredCommands, subscribeCommands } from "./registry";
@@ -28,10 +30,7 @@ import { type CommandItem } from "./types";
 import { useRefreshGitHubData } from "./use-refresh-github-data";
 
 function sessionUsername(user: unknown): string | undefined {
-  if (typeof user !== "object" || user === null) return undefined;
-  if (!("username" in user)) return undefined;
-  const value = (user as { username?: unknown }).username;
-  return typeof value === "string" && value.length > 0 ? value : undefined;
+  return sessionUsernameFromUser(user) ?? undefined;
 }
 
 function getPrIcon(pr: PullSummary) {
