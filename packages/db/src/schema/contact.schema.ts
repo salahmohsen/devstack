@@ -11,7 +11,12 @@ export const contactTypeEnum = pgEnum("contact_type_enum", [
   "linkedin",
   "github",
   "x",
-  "youtube"
+  "youtube",
+  "instagram",
+  "discord",
+  "bluesky",
+  "mastodon",
+  "telegram"
 ]);
 
 export const contact = pgTable(
@@ -23,7 +28,6 @@ export const contact = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     type: contactTypeEnum("type").notNull(),
     value: text("value").notNull(),
-    icon: text("icon").notNull(),
     portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
       onDelete: "set null"
     }),
