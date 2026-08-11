@@ -56,10 +56,3 @@ export const usernameSlugAliasRepository = {
     return deleted.length > 0;
   }
 };
-
-/** @deprecated Use usernameSlugAliasRepository */
-export const profileSlugAliasRepository = usernameSlugAliasRepository;
-/** @deprecated */
-export type ProfileSlugAliasEntity = UsernameSlugAliasEntity;
-/** @deprecated */
-export type CreateProfileSlugAliasInput = CreateUsernameSlugAliasInput;

@@ -41,11 +41,11 @@ export function useRenameUsernameMutation() {
       },
       onError: (error) => {
         const code = errorCode(error);
-        if (code === "USERNAME_TAKEN" || code === "PROFILE_NAME_TAKEN") {
+        if (code === "USERNAME_TAKEN") {
           toast.error(errorMessage(error) ?? "That username is already taken.");
           return;
         }
-        if (code === "USERNAME_INVALID" || code === "PROFILE_NAME_INVALID") {
+        if (code === "USERNAME_INVALID") {
           toast.error(
             errorMessage(error) ??
               "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens."

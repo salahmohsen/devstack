@@ -114,24 +114,12 @@ export const UsernameSchema = z
 
 export type Username = z.infer<typeof UsernameSchema>;
 
-/** @deprecated Use UsernameSchema */
-export const ProfileNameSchema = UsernameSchema;
-/** @deprecated Use Username */
-export type ProfileName = Username;
-
 /** Input for renaming a user's public username (path key). */
 export const RenameUsernameInputSchema = z.object({
   username: z.string()
 });
 
 export type RenameUsernameInput = z.infer<typeof RenameUsernameInputSchema>;
-
-/** @deprecated Use RenameUsernameInputSchema */
-export const RenameProfileInputSchema = z.object({
-  profileName: z.string()
-});
-/** @deprecated Use RenameUsernameInput */
-export type RenameProfileInput = z.infer<typeof RenameProfileInputSchema>;
 
 /**
  * Public procedures that scope data to a path segment and/or verified Host.
@@ -148,11 +136,3 @@ export const PublicUsernameInputSchema = z.object({
 });
 
 export type PublicUsernameInput = z.infer<typeof PublicUsernameInputSchema>;
-
-/** @deprecated Use PublicUsernameInputSchema — accepts legacy profileName key */
-export const PublicProfileNameInputSchema = z.object({
-  profileName: z.string().min(1).optional(),
-  username: z.string().min(1).optional()
-});
-
-export type PublicProfileNameInput = z.infer<typeof PublicProfileNameInputSchema>;

@@ -142,15 +142,6 @@ export const profileRouter = {
       USERNAME_INVALID: {
         message: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens.",
         status: 400
-      },
-      // Legacy codes for older clients during rollout
-      PROFILE_NAME_TAKEN: {
-        message: "That username is already taken.",
-        status: 409
-      },
-      PROFILE_NAME_INVALID: {
-        message: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens.",
-        status: 400
       }
     })
     .handler(async ({ input, context, errors }) => {

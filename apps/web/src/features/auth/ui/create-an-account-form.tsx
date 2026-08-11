@@ -26,10 +26,7 @@ const SIGNUP_ERROR_MESSAGES: Record<string, string> = {
   INVITE_REQUIRED: "An invite code is required to create an account.",
   INVITE_INVALID: "This invite code is invalid or has already been used.",
   USERNAME_TAKEN: "That username is already taken. Try another.",
-  USERNAME_INVALID: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens.",
-  // Legacy codes during rollout
-  PROFILE_NAME_TAKEN: "That username is already taken. Try another.",
-  PROFILE_NAME_INVALID: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens."
+  USERNAME_INVALID: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens."
 };
 
 function messageForSignUpError(error: { code?: string | null; message?: string | null }): string {

@@ -20,9 +20,6 @@ export function slugifyToUsernameCandidate(input: string): string {
   return slug;
 }
 
-/** @deprecated Use slugifyToUsernameCandidate */
-export const slugifyToProfileCandidate = slugifyToUsernameCandidate;
-
 function throwUsernameTaken(message = "This username is already taken"): never {
   const err = new Error(message);
   (err as Error & { code?: string }).code = "USERNAME_TAKEN";
@@ -109,20 +106,4 @@ export async function resolveUniqueUsername(input: {
   }
 
   return candidate;
-}
-
-/** @deprecated Use resolveUniqueUsername */
-export async function resolveUniqueProfileName(input: {
-  profileName?: string | null;
-  username?: string | null;
-  githubLogin?: string | null;
-  name?: string | null;
-  email?: string | null;
-}): Promise<string> {
-  return resolveUniqueUsername({
-    username: input.username ?? input.profileName,
-    githubLogin: input.githubLogin,
-    name: input.name,
-    email: input.email
-  });
 }

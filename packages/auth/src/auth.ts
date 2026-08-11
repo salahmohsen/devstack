@@ -163,14 +163,11 @@ export const auth = betterAuth({
             }
           }
 
-          // Explicit claim: BA username field, body.username, or legacy body.profileName
-          // (web form still sends profileName until Task 5 renames it).
+          // Explicit claim: BA username field or body.username.
           const endpointCtx = ctx as AuthEndpointContext | null;
           const bodyRecord = isRecord(endpointCtx?.body) ? endpointCtx.body : null;
           const explicitUsername =
-            readStringField(userData, "username") ??
-            readStringField(bodyRecord, "username") ??
-            readStringField(bodyRecord, "profileName");
+            readStringField(userData, "username") ?? readStringField(bodyRecord, "username");
 
           // OAuth auto preference: GitHub getUserInfo seeds displayUsername with login
           // when username is unset (plugin uniqueness would reject a pre-set taken login
@@ -192,7 +189,7 @@ export const auth = betterAuth({
             const code =
               isRecord(error) && typeof error.code === "string" ? error.code : "USERNAME_INVALID";
             const message = error instanceof Error ? error.message : "Invalid username";
-            if (code === "USERNAME_TAKEN" || code === "PROFILE_NAME_TAKEN") {
+            if (code === "USERNAME_TAKEN") {
               throw new APIError("CONFLICT", {
                 code: "USERNAME_TAKEN",
                 message: message.includes("taken") ? message : "This username is already taken"
@@ -211,14 +208,9 @@ export const auth = betterAuth({
             });
           }
 
-          // Drop any accidental inviteCode / legacy profileName if a client put it on user payload.
-          const {
-            inviteCode: _dropInvite,
-            profileName: _dropProfileName,
-            ...rest
-          } = userData as typeof userData & {
+          // Drop accidental inviteCode if a client put it on the user payload.
+          const { inviteCode: _dropInvite, ...rest } = userData as typeof userData & {
             inviteCode?: unknown;
-            profileName?: unknown;
           };
 
           return {

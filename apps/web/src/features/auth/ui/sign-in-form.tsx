@@ -69,8 +69,6 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   invite_required: "Registration requires a valid invite. Ask an existing user for an invite code.",
   USERNAME_TAKEN: "That username is already taken. Choose another.",
   username_taken: "That username is already taken. Choose another.",
-  PROFILE_NAME_TAKEN: "That username is already taken. Choose another.",
-  profile_name_taken: "That username is already taken. Choose another.",
   email_not_found:
     "The provider did not return an email address. Make sure your email is public or verified.",
   unable_to_create_user: "Could not create a session for this account.",

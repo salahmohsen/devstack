@@ -32,11 +32,6 @@ export const userRepository = {
     return row ?? null;
   },
 
-  /** @deprecated Use findByUsername */
-  async findByProfileName(profileName: string): Promise<UserSchemaSelect | null> {
-    return userRepository.findByUsername(profileName);
-  },
-
   /** True if username is taken by a user row or a username_slug_alias.slug. */
   async isUsernameTaken(username: string): Promise<boolean> {
     const existing = await userRepository.findByUsername(username);
@@ -48,11 +43,6 @@ export const userRepository = {
       .where(eq(usernameSlugAlias.slug, username))
       .limit(1);
     return Boolean(alias);
-  },
-
-  /** @deprecated Use isUsernameTaken */
-  async isProfileNameTaken(profileName: string): Promise<boolean> {
-    return userRepository.isUsernameTaken(profileName);
   },
 
   async countUsers(): Promise<number> {
@@ -89,10 +79,5 @@ export const userRepository = {
 
   async updateUsername(id: string, username: string): Promise<UserSchemaSelect | null> {
     return userRepository.update(id, { username, displayUsername: username });
-  },
-
-  /** @deprecated Use updateUsername */
-  async updateProfileName(id: string, profileName: string): Promise<UserSchemaSelect | null> {
-    return userRepository.updateUsername(id, profileName);
   }
 };

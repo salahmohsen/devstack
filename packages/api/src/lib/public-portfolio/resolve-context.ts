@@ -32,18 +32,11 @@ export async function resolveUserIdByUsername(username: string): Promise<string 
   return alias?.userId ?? null;
 }
 
-/** @deprecated Use resolveUserIdByUsername */
-export const resolveUserIdByProfileName = resolveUserIdByUsername;
-
 export type ResolvePublicPortfolioContextInput = {
   /** Request Host (may include port); normalized before lookup. */
   host?: string | null;
   /** Path segment `/:username` when present. */
   pathUsername?: string | null;
-  /**
-   * @deprecated Use pathUsername
-   */
-  pathProfileName?: string | null;
   /**
    * Authenticated user id. Used only when Host/path do not resolve a public
    * identity (dashboard chrome calling portfolio.list without a public slug).
@@ -80,7 +73,7 @@ export async function resolvePublicPortfolioContext(
     }
   }
 
-  const pathUsername = (input.pathUsername ?? input.pathProfileName)?.trim();
+  const pathUsername = input.pathUsername?.trim();
   if (pathUsername) {
     const userId = await resolveUserIdByUsername(pathUsername);
     if (userId) {

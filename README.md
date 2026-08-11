@@ -148,7 +148,7 @@ Never invent API strings in the web app: use typed oRPC clients.
 
 ### Web (TanStack Start)
 
-- Routes under `apps/web/src/routes/` with route groups (`__protected`, guest, `$profileName`)
+- Routes under `apps/web/src/routes/` with route groups (`__protected`, guest, `$username`)
 - **Features** (`src/features/*`): slice-local query/mutation files
 - **Pages** (`src/pages/*`): compose features into screens
 - TanStack Query + oRPC wrappers (`.agents/api-fetching-patterns.md`)
