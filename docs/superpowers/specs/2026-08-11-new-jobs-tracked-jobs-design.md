@@ -492,10 +492,10 @@ Use existing timeline primitives under `packages/ui` where they fit coss/Base UI
 
 ## Open follow-ups (not blocking)
 
-- Badge count of **inbox only** on sidebar (not dismissed)
-- Soft-save low matches as dismissed/inbox variant
-- Agent take regenerate mutation
-- Auto-purge dismissed older than N days (optional)
+- Soft-save low matches as dismissed/inbox variant (still hard-skip below `minMatchScore`)
+- ~~Badge count of **inbox only** on sidebar~~ — done
+- ~~Agent take regenerate mutation~~ — done
+- ~~Auto-purge dismissed older than N days~~ — **30 days**, daily BullMQ tick (`dismissed-application-purge`)
 
 ---
 

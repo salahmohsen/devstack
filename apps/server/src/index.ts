@@ -117,6 +117,19 @@ async function start(): Promise<void> {
       });
       log.emit({ _forceKeep: true });
     }
+
+    // Daily hard-delete of dismissed discoveries past retention (URL free to re-harvest).
+    try {
+      const { startDismissedApplicationPurgeQueue } =
+        await import("#@/queues/dismissed-application-purge-queue");
+      startDismissedApplicationPurgeQueue(ENV_SERVER.REDIS_URL);
+    } catch (error) {
+      const log = createLogger({ operation: "server__dismissed_application_purge_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "dismissed_application_purge_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
   }
 }
 

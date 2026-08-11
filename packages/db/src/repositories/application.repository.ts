@@ -1,9 +1,11 @@
 import {
   and,
+  asc,
   desc,
   eq,
   inArray,
   isNull,
+  lt,
   sql,
   type InferInsertModel,
   type InferSelectModel
@@ -353,5 +355,31 @@ export const applicationRepository = {
       .delete(application)
       .where(and(eq(application.userId, userId), inArray(application.id, ids)))
       .returning({ id: application.id });
+  },
+
+  /**
+   * Hard-delete dismissed applications last updated before `cutoff` (auto-purge).
+   * Returns cover keys for best-effort object cleanup. Activity cascades via FK.
+   */
+  async deleteDismissedOlderThan(
+    cutoff: Date,
+    limit = 500
+  ): Promise<{ id: string; userId: string; coverLetterR2Key: string | null }[]> {
+    const candidates = await getDb()
+      .select({
+        id: application.id,
+        userId: application.userId,
+        coverLetterR2Key: application.coverLetterR2Key
+      })
+      .from(application)
+      .where(and(eq(application.trackingStatus, "dismissed"), lt(application.updatedAt, cutoff)))
+      .orderBy(asc(application.updatedAt))
+      .limit(limit);
+
+    if (candidates.length === 0) return [];
+
+    const ids = candidates.map((c) => c.id);
+    await getDb().delete(application).where(inArray(application.id, ids));
+    return candidates;
   }
 };
