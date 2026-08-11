@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { ExperiencePublicOutputSchema } from "#@/experience/types";
-import { contactOutputSchema } from "#@/profile/index";
+import { contactOutputSchema, PublicUsernameInputSchema } from "#@/profile/types";
 import { ProjectPublicOutputSchema } from "#@/project/index";
 import { StackOutputSchema } from "#@/stack/types";
 
@@ -40,14 +40,7 @@ export const PortfolioToggleOutputSchema = z.object({
 });
 export type PortfolioToggleOutput = z.infer<typeof PortfolioToggleOutputSchema>;
 
-export const PortfolioListInputSchema = z.object({
-  username: z
-    .string()
-    .min(1)
-    .optional()
-    .describe(
-      "Public username path key (user.username or a slug alias). Optional when Host is a verified custom domain."
-    ),
+export const PortfolioListInputSchema = PublicUsernameInputSchema.extend({
   filter: z.string().optional().describe("RSQL filter string, e.g. `type==experience;year>=2024`"),
   paginated: z.boolean().optional().default(false).describe("Enable cursor-based pagination"),
   cursor: z.string().optional().describe("Cursor from previous response (opaque)"),

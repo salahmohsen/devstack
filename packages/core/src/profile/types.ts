@@ -76,29 +76,6 @@ export const ProfileUpdateInputSchema = z.object({
 
 export type ProfileUpdateInput = z.infer<typeof ProfileUpdateInputSchema>;
 
-export const ProfileOutputSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  emailVerified: z.boolean(),
-  image: z.string().nullable(),
-  createdAt: z.coerce.date(),
-  contacts: z.array(contactOutputSchema),
-  summary: z.string().nullable(),
-  phone: z.string().nullable(),
-  /** Public path handle (Better Auth username). */
-  username: z.string()
-}) satisfies z.ZodType<
-  Omit<UserSchemaSelect, "updatedAt" | "onboardingCompletedAt" | "displayUsername"> & {
-    contacts: z.infer<typeof contactOutputSchema>[];
-  }
->;
-
-export type ContactOutput = z.infer<typeof contactOutputSchema>;
-export type ContactInput = z.infer<typeof contactInputSchema>;
-export type ProfileOutput = z.infer<typeof ProfileOutputSchema>;
-export type ProfileOutputContact = z.infer<typeof contactOutputSchema>[];
-
 /** Public portfolio path key / Better Auth username (path-safe). */
 export const UsernameSchema = z
   .string()
@@ -110,6 +87,29 @@ export const UsernameSchema = z
   .refine((s) => !RESERVED_USERNAME_PATH_SET.has(s), "This name is reserved");
 
 export type Username = z.infer<typeof UsernameSchema>;
+
+export const ProfileOutputSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  emailVerified: z.boolean(),
+  image: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  contacts: z.array(contactOutputSchema),
+  summary: z.string().nullable(),
+  phone: z.string().nullable(),
+  /** Public path handle (Better Auth username). */
+  username: UsernameSchema
+}) satisfies z.ZodType<
+  Omit<UserSchemaSelect, "updatedAt" | "onboardingCompletedAt" | "displayUsername"> & {
+    contacts: z.infer<typeof contactOutputSchema>[];
+  }
+>;
+
+export type ContactOutput = z.infer<typeof contactOutputSchema>;
+export type ContactInput = z.infer<typeof contactInputSchema>;
+export type ProfileOutput = z.infer<typeof ProfileOutputSchema>;
+export type ProfileOutputContact = z.infer<typeof contactOutputSchema>[];
 
 /** Input for renaming a user's public username (path key). */
 export const RenameUsernameInputSchema = z.object({

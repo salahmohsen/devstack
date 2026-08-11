@@ -7,19 +7,19 @@ Older “public-owner only” / `portfolio-v2` / `{-$locale}` notes are obsolete
 
 ## Surfaces
 
-| URL shape                                    | When                                 |
-| -------------------------------------------- | ------------------------------------ |
-| `/{profileName}/repos`, `…/$repo`, tree/blob | Primary app host path portfolio      |
-| `/repos`, `…/$repo`, tree/blob               | Verified **custom domain** Host only |
+| URL shape                                 | When                                 |
+| ----------------------------------------- | ------------------------------------ |
+| `/{username}/repos`, `…/$repo`, tree/blob | Primary app host path portfolio      |
+| `/repos`, `…/$repo`, tree/blob            | Verified **custom domain** Host only |
 
 On the primary app host, bare `/repos` must not act as a global site-owner hub (redirect or empty). Use `useRepoRouteLinks` / `repo-paths` helpers so tree/blob links stay profile-aware.
 
 ## What Exists Now
 
-- Routes under `apps/web/src/routes/(root-layout)/$profileName/repos/` and `(root-layout)/repos/`.
+- Routes under `apps/web/src/routes/(root-layout)/$username/repos/` and `(root-layout)/repos/`.
 - Public GitHub chrome: `apps/web/src/widgets/layout/` (`github-public-topbar`, mobile nav).
 - Pages: `apps/web/src/pages/github-repo/`, `github-repos/`.
-- API: public procedures take `profileName` (and Host from context) → `withPublicGitHubContext` / `resolvePublicGitHubSourceForUser(userId)`.
+- API: public procedures take `username` (and Host from context) → `withPublicGitHubContext` / `resolvePublicGitHubSourceForUser(userId)`.
 - Branch comparison: read-only banner; external compare still goes to GitHub.com.
 
 ## Constraints

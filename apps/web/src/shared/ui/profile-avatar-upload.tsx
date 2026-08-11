@@ -5,7 +5,7 @@ import { CircleAlertIcon, Loader2Icon, UserIcon, XIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AVATAR_KEY_PREFIX } from "@tsu-stack/core";
+import { AVATAR_KEY_PREFIX, extractAvatarClientKey } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -80,6 +80,20 @@ export function ProfileAvatarUpload({
     [onAvatarUrlChange]
   );
 
+  /** Best-effort remove prior S3 object after a successful replace/clear (ignore failures). */
+  const deletePreviousObject = useCallback(
+    async (previousUrl: string | null | undefined) => {
+      const clientKey = extractAvatarClientKey(previousUrl);
+      if (!clientKey) return;
+      try {
+        await filesApi.delete(clientKey);
+      } catch {
+        // Orphans are acceptable; do not block the new avatar.
+      }
+    },
+    [filesApi]
+  );
+
   const uploadSelected = useCallback(
     async (entry: FileWithPreview | null) => {
       setUploadError(null);
@@ -90,7 +104,9 @@ export function ProfileAvatarUpload({
           return;
         }
         setSuppressDefault(true);
+        const previous = savedAvatar;
         await persistAvatar(null);
+        void deletePreviousObject(previous);
         return;
       }
       const raw = entry.file;
@@ -100,6 +116,7 @@ export function ProfileAvatarUpload({
       }
       setSuppressDefault(false);
       setUploading(true);
+      const previous = savedAvatar;
       try {
         const ext = extensionForFile(raw);
         const key = `${AVATAR_KEY_PREFIX}${crypto.randomUUID()}.${ext}`;
@@ -108,6 +125,9 @@ export function ProfileAvatarUpload({
         // Uses MEDIA_PUBLIC_URL on the server (MinIO path-style or app /api/media).
         const publicUrl = await filesApi.url(key);
         await persistAvatar(publicUrl);
+        if (previous && previous !== publicUrl) {
+          void deletePreviousObject(previous);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not upload profile photo";
         setUploadError(message);
@@ -116,7 +136,7 @@ export function ProfileAvatarUpload({
         setUploading(false);
       }
     },
-    [filesApi, persistAvatar]
+    [deletePreviousObject, filesApi, persistAvatar, savedAvatar]
   );
 
   const [
@@ -152,13 +172,16 @@ export function ProfileAvatarUpload({
 
     setSuppressDefault(true);
     setUploadError(null);
+    const previous = savedAvatar;
 
     if (currentFile) {
       // removeFile → onFilesChange([]) would call persistAvatar(null); do it once here.
       skipNextEmptyFilesChange.current = true;
       removeFile(currentFile.id);
     }
-    void persistAvatar(null);
+    void persistAvatar(null).then(() => {
+      void deletePreviousObject(previous);
+    });
   };
 
   return (

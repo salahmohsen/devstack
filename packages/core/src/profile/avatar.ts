@@ -37,3 +37,18 @@ export function extractAvatarObjectKey(image: string | null | undefined): string
   }
   return null;
 }
+
+/**
+ * Client-relative key for files-sdk gateway (`avatars/…` under `{userId}/` prefix).
+ * Use for `files.delete` after replace/clear — not the full S3 object key.
+ */
+export function extractAvatarClientKey(image: string | null | undefined): string | null {
+  const full = extractAvatarObjectKey(image);
+  if (!full) return null;
+  const marker = `/${AVATAR_KEY_PREFIX}`;
+  const idx = full.indexOf(marker);
+  if (idx === -1) {
+    return full.startsWith(AVATAR_KEY_PREFIX) ? full : null;
+  }
+  return full.slice(idx + 1);
+}
