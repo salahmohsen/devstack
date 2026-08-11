@@ -532,6 +532,8 @@ export function StacksPage() {
       <SortableList
         items={displayItems}
         onReorder={handleReorder}
+        sortable
+        axis="both"
         disabled={reorderMutation.isPending}
         strategy={rectSortingStrategy}
         containerClassName={gridClassName}

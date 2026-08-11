@@ -9,18 +9,17 @@ import {
   Edit,
   ExternalLink,
   FileUp,
+  GripVertical,
   Mail,
-  UserRoundPen,
   X
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { contactTypeSchema, ProfileNameSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -44,10 +43,15 @@ import { ButtonGroup, Group, GroupSeparator } from "@tsu-stack/ui/components/gro
 import { Input } from "@tsu-stack/ui/components/input";
 import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useAppForm } from "@/shared/form";
 import { ContactIcon } from "@/shared/lib/contact-icon";
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
+import { sortContactsByOrder } from "@/shared/lib/sort-contacts";
+import { ProfileAvatarUpload } from "@/shared/ui/profile-avatar-upload";
+import { RichHtml, isEmptyRichHtml } from "@/shared/ui/rich-html";
+import { SortableList } from "@/shared/ui/sortable-list";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
@@ -69,13 +73,36 @@ const RenameProfileFormSchema = z.object({
 
 const CONTACT_TYPES = contactTypeSchema.options;
 
-function getInitials(name: string | null | undefined): string {
-  return (
-    name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("") ?? ""
-  );
+/** Client-only id for new contacts so SortableList has a stable key before save. */
+const TMP_CONTACT_ID_PREFIX = "tmp-";
+
+function isTempContactId(id: string | undefined): boolean {
+  return !id || id.startsWith(TMP_CONTACT_ID_PREFIX);
+}
+
+type ContactFormRow = NonNullable<ProfileUpdateInput["contacts"]>[number] & { id: string };
+
+function toContactFormRows(contacts: ProfileUpdateInput["contacts"] | undefined): ContactFormRow[] {
+  return (contacts ?? []).map((c, index) => {
+    return {
+      ...c,
+      // Preserve server id or prior client tmp id; only mint when missing.
+      id: c.id ?? `${TMP_CONTACT_ID_PREFIX}${crypto.randomUUID()}`,
+      sortOrder: c.sortOrder ?? index
+    };
+  });
+}
+
+function contactsPayloadForSave(contacts: ProfileUpdateInput["contacts"] | undefined) {
+  return (contacts ?? []).map((c, index) => {
+    return {
+      type: c.type,
+      value: c.value,
+      includedInPortfolio: c.includedInPortfolio,
+      sortOrder: index,
+      id: isTempContactId(c.id) ? undefined : c.id
+    };
+  });
 }
 
 function ContactLink({
@@ -137,14 +164,18 @@ export function ProfileSettings() {
       profileQuery.data?.summary ??
       (session?.user as { summary?: string | null } | undefined)?.summary ??
       "",
-    contacts: (profileQuery.data?.contacts ?? []).map((c) => {
-      return {
-        id: c.id,
-        type: c.type,
-        value: c.value,
-        includedInPortfolio: !!c.portfolioEntryId
-      };
-    })
+    image: profileQuery.data?.image ?? session?.user?.image ?? "",
+    contacts: toContactFormRows(
+      (profileQuery.data?.contacts ?? []).map((c) => {
+        return {
+          id: c.id,
+          type: c.type,
+          value: c.value,
+          sortOrder: c.sortOrder,
+          includedInPortfolio: !!c.portfolioEntryId
+        };
+      })
+    )
   } as ProfileUpdateInput;
 
   const updateMutation = useMutation({
@@ -154,22 +185,47 @@ export function ProfileSettings() {
       void queryClient.invalidateQueries({
         queryKey: getPortfolioListQueryKey()
       });
+      void authClient.getSession();
       form.reset({
         name: data.name,
         email: data.email,
         summary: data.summary ?? "",
-        contacts: (data.contacts ?? []).map((c) => {
-          return {
-            id: c.id,
-            type: c.type,
-            value: c.value,
-            includedInPortfolio: !!c.portfolioEntryId
-          };
-        })
+        image: data.image ?? "",
+        contacts: toContactFormRows(
+          (data.contacts ?? []).map((c) => {
+            return {
+              id: c.id,
+              type: c.type,
+              value: c.value,
+              sortOrder: c.sortOrder,
+              includedInPortfolio: !!c.portfolioEntryId
+            };
+          })
+        )
       });
       toast.success("Profile updated successfully");
     }
   });
+  const { mutateAsync: updateProfileAsync, isPending: isProfileUpdating } = updateMutation;
+
+  const handleAvatarUrlChange = useCallback(
+    async (url: string | null) => {
+      const name = profileQuery.data?.name ?? session?.user?.name ?? "";
+      const email = profileQuery.data?.email ?? session?.user?.email ?? "";
+      if (name.length < 2 || !email) {
+        toast.error("Could not update photo — profile name or email is missing");
+        return;
+      }
+      // Avatar-only: do not send contacts (undefined = leave rows untouched on the server).
+      await updateProfileAsync({
+        name,
+        email,
+        summary: profileQuery.data?.summary ?? "",
+        image: url ?? ""
+      });
+    },
+    [profileQuery.data, session?.user?.email, session?.user?.name, updateProfileAsync]
+  );
 
   const form = useAppForm({
     defaultValues: serverValues,
@@ -182,7 +238,9 @@ export function ProfileSettings() {
           name: value.name.trim(),
           email: value.email.trim(),
           summary: value.summary?.trim() ?? "",
-          contacts: value.contacts
+          // Preserve image from form (avatar applies immediately via separate mutation).
+          image: value.image,
+          contacts: contactsPayloadForSave(value.contacts)
         });
         setIsEditing(false);
       } catch (error) {
@@ -350,22 +408,12 @@ export function ProfileSettings() {
             </FrameHeader>
 
             <FramePanel className="flex items-start gap-6">
-              <div className="relative shrink-0">
-                <Avatar className="size-24">
-                  <AvatarImage alt={displayName} src={userImage} />
-                  <AvatarFallback className="text-lg">{getInitials(displayName)}</AvatarFallback>
-                </Avatar>
-                <Button
-                  type="button"
-                  className="absolute -right-2 -bottom-2 rounded-full"
-                  size="icon-sm"
-                  variant="outline"
-                  disabled
-                  aria-label="Change photo coming soon"
-                  title="Change photo coming soon"
-                >
-                  <UserRoundPen aria-hidden="true" />
-                </Button>
+              <div className="shrink-0">
+                <ProfileAvatarUpload
+                  defaultAvatar={userImage}
+                  onAvatarUrlChange={handleAvatarUrlChange}
+                  disabled={isProfileUpdating}
+                />
               </div>
 
               <div className="flex min-w-0 flex-col gap-2">
@@ -408,17 +456,15 @@ export function ProfileSettings() {
                     : new Date().getFullYear()}
                 </div>
 
-                {displaySummary.trim() ? (
-                  <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-                    {displaySummary.trim()}
-                  </p>
+                {!isEmptyRichHtml(displaySummary) ? (
+                  <RichHtml html={displaySummary} className="mt-1" />
                 ) : null}
 
                 {contacts.length > 0 && (
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    {contacts.map((c, idx) => (
+                    {sortContactsByOrder(contacts).map((c) => (
                       <ContactLink
-                        key={idx}
+                        key={c.id}
                         href={c.type === "email" ? `mailto:${c.value}` : c.value}
                         icon={<ContactIcon type={c.type} className="size-3.5" />}
                       >
@@ -452,167 +498,212 @@ export function ProfileSettings() {
                   <FieldGroup>
                     <form.AppField name="summary">
                       {(field) => (
-                        <field.MarkdownField
+                        <field.RichTextField
                           label="Public summary"
-                          description="Shown on your public portfolio under your name (not your GitHub bio)."
+                          description="Shown under your profile name on the public profile (not your GitHub bio). Use line breaks so each line can flip one at a time."
                           placeholder="A short blurb about you…"
-                          classNames={{ textarea: "min-h-28" }}
                         />
                       )}
                     </form.AppField>
                   </FieldGroup>
                   <FieldGroup>
                     <form.AppField name="contacts" mode="array">
-                      {(field) => (
-                        <div className="mt-5 flex flex-col gap-4">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-foreground">Contacts</p>
-                            <Button
-                              onClick={() => {
-                                const used = new Set(
-                                  (field.state.value ?? [])
-                                    .map((c) => c?.type)
-                                    .filter((t): t is (typeof CONTACT_TYPES)[number] => !!t)
-                                );
-                                const nextType =
-                                  CONTACT_TYPES.find((t) => !used.has(t)) ?? CONTACT_TYPES[0];
-                                field.pushValue({
-                                  type: nextType,
-                                  value: ""
-                                });
-                              }}
-                              size="sm"
-                            >
-                              Add contact
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-1 gap-3">
-                            {field.state.value?.map((_, i) => (
-                              <Group
-                                key={i}
-                                aria-label="Contact entry"
-                                className="w-full rounded-lg"
+                      {(field) => {
+                        const rows = toContactFormRows(field.state.value);
+                        return (
+                          <div className="mt-5 flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-foreground">Contacts</p>
+                              <Button
+                                type="button"
+                                onClick={() => {
+                                  const used = new Set(
+                                    (field.state.value ?? [])
+                                      .map((c) => c?.type)
+                                      .filter((t): t is (typeof CONTACT_TYPES)[number] => !!t)
+                                  );
+                                  const nextType =
+                                    CONTACT_TYPES.find((t) => !used.has(t)) ?? CONTACT_TYPES[0];
+                                  field.pushValue({
+                                    id: `${TMP_CONTACT_ID_PREFIX}${crypto.randomUUID()}`,
+                                    type: nextType,
+                                    value: "",
+                                    sortOrder: field.state.value?.length ?? 0
+                                  });
+                                }}
+                                size="sm"
                               >
-                                <Group aria-label="Contact fields" className="flex-1">
-                                  <form.Subscribe
-                                    selector={(state) => state.values.contacts?.[i]?.type}
+                                Add contact
+                              </Button>
+                            </div>
+                            <SortableList
+                              items={rows}
+                              sortable={isEditing}
+                              disabled={!isEditing}
+                              containerClassName="grid grid-cols-1 gap-3"
+                              onReorder={(next) => {
+                                field.handleChange(
+                                  next.map((c, index) => {
+                                    return { ...c, sortOrder: index };
+                                  })
+                                );
+                              }}
+                            >
+                              {(item, dragHandleProps) => {
+                                const i = rows.findIndex((r) => r.id === item.id);
+                                if (i < 0) return null;
+                                return (
+                                  // Single Group: drag → icon → type → value → portfolio → remove
+                                  // Nested Groups break seam/radius joining (groupVariants gap for child groups).
+                                  <Group
+                                    aria-label="Contact entry"
+                                    className="w-full min-w-0 items-stretch"
                                   >
-                                    {(type) => (
-                                      <span
-                                        data-slot="input-control"
-                                        className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-input text-muted-foreground"
-                                        aria-hidden
-                                        title={type ?? "contact"}
-                                      >
-                                        {type ? (
-                                          <ContactIcon type={type} className="size-4" />
-                                        ) : null}
-                                      </span>
-                                    )}
-                                  </form.Subscribe>
-
-                                  <GroupSeparator />
-                                  <form.AppField name={`contacts[${i}].type`}>
-                                    {(subField) => {
-                                      const items = CONTACT_TYPES.map((t) => {
-                                        return {
-                                          label: t,
-                                          value: t
-                                        };
-                                      });
-                                      return (
-                                        <Combobox
-                                          value={subField.state.value ?? null}
-                                          onValueChange={(val) => {
-                                            if (val != null) {
-                                              subField.handleChange(val as never);
-                                            }
-                                          }}
-                                          items={items}
+                                    {dragHandleProps ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          data-slot="input-control"
+                                          aria-label="Drag to reorder contact"
+                                          className={cn(
+                                            "flex min-h-9 shrink-0 items-center justify-center self-stretch rounded-lg border border-input bg-transparent px-2",
+                                            dragHandleProps.className
+                                          )}
+                                          {...dragHandleProps.attributes}
+                                          {...dragHandleProps.listeners}
                                         >
-                                          <ComboboxPrimitive.InputGroup
-                                            className="relative max-w-30 rounded-lg border border-input has-disabled:opacity-64"
-                                            data-slot="input-control"
+                                          <GripVertical className="size-4" aria-hidden />
+                                        </button>
+                                        <GroupSeparator />
+                                      </>
+                                    ) : null}
+
+                                    <form.Subscribe
+                                      selector={(state) => state.values.contacts?.[i]?.type}
+                                    >
+                                      {(type) => (
+                                        <span
+                                          data-slot="input-control"
+                                          className="flex min-h-9 shrink-0 items-center justify-center self-stretch rounded-lg border border-input px-2 text-muted-foreground"
+                                          aria-hidden
+                                          title={type ?? "contact"}
+                                        >
+                                          {type ? (
+                                            <ContactIcon type={type} className="size-4" />
+                                          ) : null}
+                                        </span>
+                                      )}
+                                    </form.Subscribe>
+
+                                    <GroupSeparator />
+                                    <form.AppField name={`contacts[${i}].type`}>
+                                      {(subField) => {
+                                        const items = CONTACT_TYPES.map((t) => {
+                                          return {
+                                            label: t,
+                                            value: t
+                                          };
+                                        });
+                                        return (
+                                          <Combobox
+                                            value={subField.state.value ?? null}
+                                            onValueChange={(val) => {
+                                              if (val != null) {
+                                                subField.handleChange(val as never);
+                                              }
+                                            }}
+                                            items={items}
                                           >
-                                            <ComboboxPrimitive.Input
-                                              data-slot="combobox-input"
-                                              render={
-                                                <Input
-                                                  unstyled
-                                                  nativeInput
-                                                  size="default"
-                                                  placeholder="type"
-                                                />
+                                            <ComboboxPrimitive.InputGroup
+                                              className="relative max-w-30 rounded-lg border border-input has-disabled:opacity-64"
+                                              data-slot="input-control"
+                                            >
+                                              <ComboboxPrimitive.Input
+                                                data-slot="combobox-input"
+                                                render={
+                                                  <Input
+                                                    unstyled
+                                                    nativeInput
+                                                    size="default"
+                                                    placeholder="type"
+                                                  />
+                                                }
+                                              />
+                                              <ComboboxTrigger className="absolute inset-e-0.5 top-1/2 inline-flex size-8 max-w-fit shrink -translate-y-1/2 cursor-pointer items-center justify-center rounded-md opacity-80 transition-opacity outline-none hover:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4">
+                                                <ComboboxPrimitive.Icon data-slot="combobox-icon">
+                                                  <ChevronsUpDown />
+                                                </ComboboxPrimitive.Icon>
+                                              </ComboboxTrigger>
+                                            </ComboboxPrimitive.InputGroup>
+                                            <ComboboxContent>
+                                              <ComboboxEmpty>No results found.</ComboboxEmpty>
+                                              <ComboboxList>
+                                                {(comboItem: (typeof items)[number]) => (
+                                                  <ComboboxItem
+                                                    key={comboItem.value}
+                                                    value={comboItem.value}
+                                                  >
+                                                    {comboItem.label}
+                                                  </ComboboxItem>
+                                                )}
+                                              </ComboboxList>
+                                            </ComboboxContent>
+                                          </Combobox>
+                                        );
+                                      }}
+                                    </form.AppField>
+
+                                    <GroupSeparator />
+                                    <form.AppField name={`contacts[${i}].value`}>
+                                      {(subField) => (
+                                        <Input
+                                          value={subField.state.value ?? ""}
+                                          className="min-w-0 flex-1"
+                                          data-slot="input-control"
+                                          onChange={(e) => subField.handleChange(e.target.value)}
+                                          placeholder="https://github.com/salahmohsen/"
+                                        />
+                                      )}
+                                    </form.AppField>
+
+                                    <GroupSeparator />
+                                    <form.AppField name={`contacts[${i}].includedInPortfolio`}>
+                                      {(subField) => (
+                                        <span
+                                          data-slot="input-control"
+                                          className="flex min-h-9 shrink-0 items-center justify-center self-stretch rounded-lg border border-input px-3"
+                                        >
+                                          <Label className="flex items-center gap-2">
+                                            Portfolio
+                                            <Switch
+                                              checked={subField.state.value as boolean}
+                                              onCheckedChange={(checked) =>
+                                                subField.handleChange(checked)
                                               }
                                             />
-                                            <ComboboxTrigger className="absolute inset-e-0.5 top-1/2 inline-flex size-8 max-w-fit shrink -translate-y-1/2 cursor-pointer items-center justify-center rounded-md opacity-80 transition-opacity outline-none hover:opacity-100 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4">
-                                              <ComboboxPrimitive.Icon data-slot="combobox-icon">
-                                                <ChevronsUpDown />
-                                              </ComboboxPrimitive.Icon>
-                                            </ComboboxTrigger>
-                                          </ComboboxPrimitive.InputGroup>
-                                          <ComboboxContent>
-                                            <ComboboxEmpty>No results found.</ComboboxEmpty>
-                                            <ComboboxList>
-                                              {(item: (typeof items)[number]) => (
-                                                <ComboboxItem key={item.value} value={item.value}>
-                                                  {item.label}
-                                                </ComboboxItem>
-                                              )}
-                                            </ComboboxList>
-                                          </ComboboxContent>
-                                        </Combobox>
-                                      );
-                                    }}
-                                  </form.AppField>
+                                          </Label>
+                                        </span>
+                                      )}
+                                    </form.AppField>
 
-                                  <GroupSeparator />
-                                  <form.AppField name={`contacts[${i}].value`}>
-                                    {(subField) => (
-                                      <Input
-                                        value={subField.state.value ?? ""}
-                                        className="flex-1"
-                                        onChange={(e) => subField.handleChange(e.target.value)}
-                                        placeholder="https://github.com/salahmohsen/"
-                                      />
-                                    )}
-                                  </form.AppField>
-
-                                  <GroupSeparator />
-                                  <form.AppField name={`contacts[${i}].includedInPortfolio`}>
-                                    {(subField) => (
-                                      <span
-                                        data-slot="input-control"
-                                        className="flex items-center justify-center rounded-lg border border-input px-3"
-                                      >
-                                        <Label>
-                                          Portfolio
-                                          <Switch
-                                            checked={subField.state.value as boolean}
-                                            onCheckedChange={(checked) =>
-                                              subField.handleChange(checked)
-                                            }
-                                          />
-                                        </Label>
-                                      </span>
-                                    )}
-                                  </form.AppField>
-                                </Group>
-                                <Group aria-label="Remove contact">
-                                  <Button
-                                    aria-label="Remove contact"
-                                    onClick={() => field.removeValue(i)}
-                                    size="icon-sm"
-                                    variant="outline"
-                                  >
-                                    <X aria-hidden="true" />
-                                  </Button>
-                                </Group>
-                              </Group>
-                            ))}
+                                    <GroupSeparator />
+                                    <Button
+                                      type="button"
+                                      aria-label="Remove contact"
+                                      onClick={() => field.removeValue(i)}
+                                      size="icon"
+                                      variant="outline"
+                                      className="min-h-9 shrink-0 self-stretch rounded-lg"
+                                    >
+                                      <X aria-hidden="true" />
+                                    </Button>
+                                  </Group>
+                                );
+                              }}
+                            </SortableList>
                           </div>
-                        </div>
-                      )}
+                        );
+                      }}
                     </form.AppField>
                   </FieldGroup>
                 </FieldSet>

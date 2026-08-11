@@ -195,10 +195,12 @@ export async function applyOnboardingDraft(
         byType.set(item.type, item);
       }
 
+      const existingContacts = await tx.select().from(contact).where(eq(contact.userId, userId));
+      let nextSortOrder =
+        existingContacts.length > 0 ? Math.max(...existingContacts.map((c) => c.sortOrder)) + 1 : 0;
+
       for (const item of byType.values()) {
-        const existing = await tx.query.contact.findFirst({
-          where: { userId, type: item.type }
-        });
+        const existing = existingContacts.find((c) => c.type === item.type);
 
         if (existing) {
           await tx
@@ -210,8 +212,10 @@ export async function applyOnboardingDraft(
             id: crypto.randomUUID(),
             userId,
             type: item.type,
-            value: item.value
+            value: item.value,
+            sortOrder: nextSortOrder
           });
+          nextSortOrder += 1;
         }
       }
     }

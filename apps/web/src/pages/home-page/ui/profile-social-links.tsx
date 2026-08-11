@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/component
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { ContactIcon } from "@/shared/lib/contact-icon";
+import { sortContactsByOrder } from "@/shared/lib/sort-contacts";
 
 import { type GithubProfileQueryResult } from "@/pages/home-page/api/get-github-profile.query";
 
@@ -113,7 +114,7 @@ function buildSocialItems({
     items.push(item);
   };
 
-  for (const c of contacts) {
+  for (const c of sortContactsByOrder(contacts)) {
     if (!SOCIAL_CONTACT_TYPES.has(c.type)) continue;
     const href = normalizeHref(c.type, c.value);
     if (!href) continue;

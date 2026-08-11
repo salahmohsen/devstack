@@ -321,6 +321,7 @@ export function ExperiencesPage() {
       <SortableList
         items={pendingOrder ?? visibleExperiences}
         onReorder={handleReorder}
+        sortable
         disabled={reorderMutation.isPending || !isSort}
         siblingsDimOnHover
         containerClassName="space-y-2"

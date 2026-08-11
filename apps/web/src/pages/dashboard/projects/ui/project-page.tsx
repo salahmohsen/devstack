@@ -311,6 +311,7 @@ export function ProjectsPage() {
       <SortableList
         items={pendingOrder ?? projects}
         onReorder={handleReorder}
+        sortable
         disabled={reorderMutation.isPending || !isSort}
         siblingsDimOnHover
         containerClassName="space-y-2"

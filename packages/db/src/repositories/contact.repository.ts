@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   eq,
   isNotNull,
   type InferInsertModel,
@@ -17,13 +18,16 @@ export type UpsertContactItem = {
   id?: string;
   type: InferInsertModel<typeof contact>["type"];
   value: string;
+  /** Display order (0-based). Defaults to array index when omitted by callers. */
+  sortOrder?: number;
   includedInPortfolio?: boolean;
 };
 
 export const contactRepository = {
   async findByUserId(userId: string): Promise<ContactEntity[]> {
     return await getDb().query.contact.findMany({
-      where: { userId }
+      where: { userId },
+      orderBy: (c, { asc: a }) => [a(c.sortOrder), a(c.type)]
     });
   },
 
@@ -35,7 +39,8 @@ export const contactRepository = {
         extraWhere
           ? and(eq(contact.userId, userId), isNotNull(contact.portfolioEntryId), extraWhere)
           : and(eq(contact.userId, userId), isNotNull(contact.portfolioEntryId))
-      );
+      )
+      .orderBy(asc(contact.sortOrder), asc(contact.type));
   },
 
   /**
@@ -59,10 +64,14 @@ export const contactRepository = {
       return [];
     }
 
-    const byType = new Map<UpsertContactItem["type"], UpsertContactItem>();
-    for (const item of input) {
-      byType.set(item.type, item);
-    }
+    // Last wins on type collision; preserve first-seen index as default sortOrder.
+    const byType = new Map<UpsertContactItem["type"], UpsertContactItem & { sortOrder: number }>();
+    input.forEach((item, index) => {
+      byType.set(item.type, {
+        ...item,
+        sortOrder: item.sortOrder ?? index
+      });
+    });
     const deduped = [...byType.values()];
 
     await getDb().transaction(async (tx) => {
@@ -70,14 +79,15 @@ export const contactRepository = {
         if (item.id) {
           await tx
             .update(contact)
-            .set({ value: item.value })
+            .set({ value: item.value, type: item.type, sortOrder: item.sortOrder })
             .where(and(eq(contact.userId, userId), eq(contact.id, item.id)));
         } else {
           await tx.insert(contact).values({
             id: crypto.randomUUID(),
             userId,
             type: item.type,
-            value: item.value
+            value: item.value,
+            sortOrder: item.sortOrder
           });
         }
       }

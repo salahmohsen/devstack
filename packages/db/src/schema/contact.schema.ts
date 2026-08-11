@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { index, integer, pgEnum, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
 import { portfolioEntry } from "./portfolio-entry.schema.ts";
@@ -28,6 +28,7 @@ export const contact = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     type: contactTypeEnum("type").notNull(),
     value: text("value").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
     portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
       onDelete: "set null"
     }),
@@ -37,5 +38,8 @@ export const contact = pgTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull()
   },
-  (table) => [primaryKey({ columns: [table.userId, table.type] })]
+  (table) => [
+    primaryKey({ columns: [table.userId, table.type] }),
+    index("contact_user_id_sort_order_idx").on(table.userId, table.sortOrder)
+  ]
 );

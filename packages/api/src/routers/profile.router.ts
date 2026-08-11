@@ -89,7 +89,6 @@ export const profileRouter = {
     })
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
-      const contactItems = input.contacts ?? [];
 
       const current = await userRepository.findById(userId);
       if (!current) {
@@ -105,18 +104,22 @@ export const profileRouter = {
         }
       }
 
+      // Optional fields: omit so avatar-only / partial updates do not wipe image or contacts.
       const updatedUser = await userRepository.update(userId, {
         name: input.name,
         email: input.email,
         summary: input.summary,
-        image: input.image,
+        ...(input.image !== undefined ? { image: input.image } : {}),
         ...(emailChanged ? { emailVerified: false } : {})
       });
       if (!updatedUser) {
         throw new Error("Profile update did not affect any row");
       }
 
-      const contacts = await contactRepository.upsert(userId, contactItems);
+      const contacts =
+        input.contacts !== undefined
+          ? await contactRepository.upsert(userId, input.contacts)
+          : await contactRepository.findByUserId(userId);
 
       return toProfileOutput(updatedUser, contacts);
     }),

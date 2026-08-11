@@ -1,25 +1,46 @@
 import { useInView, useReducedMotion } from "motion/react";
 import { useMemo, useRef } from "react";
 
+import { htmlToText } from "@tsu-stack/core";
 import { TextFlip } from "@tsu-stack/ui/components/fancy/text";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 /**
- * Split a multi-line profile summary into sentences that flip one-by-one
- * with a one-shot shimmer (chanhdai.com under-name effect).
+ * Turn a profile summary (plain multi-line text or rich HTML from TipTap)
+ * into flip lines. Prefer block boundaries (`</p>`, `<br>`, etc.) so each
+ * paragraph/sentence the author entered is one flip item.
+ */
+export function summaryToFlipLines(summary: string): string[] {
+  const trimmed = summary.trim();
+  if (!trimmed) return [];
+
+  if (/<\/?[a-z][\s\S]*>/i.test(trimmed)) {
+    // Split on block ends / hard breaks, then strip tags per chunk.
+    const chunks = trimmed
+      .split(/<\/(?:p|div|h[1-6]|li|blockquote)>|<br\s*\/?>/i)
+      .map((chunk) => htmlToText(chunk))
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (chunks.length > 0) return chunks;
+    // Fallback: whole document as one line of plain text
+    const plain = htmlToText(trimmed);
+    return plain ? [plain] : [];
+  }
+
+  return trimmed
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Split a multi-line (or multi-paragraph rich) profile summary into sentences
+ * that flip one-by-one with a one-shot shimmer (chanhdai.com under-name effect).
  *
- * Each non-empty line of `summary` is one flip item. Shimmer runs once per
- * sentence, then the next line transitions in.
+ * Each non-empty line / paragraph is one flip item.
  */
 export function FlipSummary({ summary, className }: { summary: string; className?: string }) {
-  const lines = useMemo(
-    () =>
-      summary
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter(Boolean),
-    [summary]
-  );
+  const lines = useMemo(() => summaryToFlipLines(summary), [summary]);
 
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { amount: 0.2 });
@@ -50,7 +71,7 @@ export function FlipSummary({ summary, className }: { summary: string; className
       </span>
       <div className="absolute inset-0">
         <TextFlip
-          key={summary}
+          key={lines.join("\n")}
           className={cn(shimmerClass, "block w-full")}
           interval={3}
           play={isInView}

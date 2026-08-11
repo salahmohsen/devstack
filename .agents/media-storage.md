@@ -112,6 +112,7 @@ await files.upload(key, file, { contentType: "application/pdf" });
 | Generated resume PDF                          | Server `mediaBucket.put` | n/a (server-only)           | `resumes/{filename}` or `{userId}/resumes/…`        |
 | Apply package cover letter PDF                | Server `mediaBucket.put` | n/a (server-only)           | `{userId}/cover-letters/{applicationId}-{uuid}.pdf` |
 | Ad hoc image field                            | Browser via `/api/files` | filename or relative path   | `{userId}/…`                                        |
+| Profile avatar                                | Browser via `/api/files` | `avatars/{uuid}.{ext}`      | `{userId}/avatars/{uuid}.{ext}`                     |
 
 ### Resume sources (`resume-sources/…`)
 

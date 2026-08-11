@@ -33,6 +33,7 @@ export const contactTypeSchema = z.enum([
 export const contactOutputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
+  sortOrder: z.number().int(),
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
   updatedAt: z.date(),
@@ -45,17 +46,25 @@ export type ContactOutputSchema = z.infer<typeof contactOutputSchema>;
 export const contactInputSchema = z.object({
   type: contactTypeSchema,
   value: z.string(),
+  sortOrder: z.number().int().optional(),
   includedInPortfolio: z.boolean().optional(),
   id: z.string().optional()
 }) satisfies z.ZodType<
-  Omit<ContactSchemaInsert, "userId" | "createdAt" | "updatedAt" | "portfolioEntryId" | "id">
+  Omit<
+    ContactSchemaInsert,
+    "userId" | "createdAt" | "updatedAt" | "portfolioEntryId" | "id" | "sortOrder"
+  > & {
+    sortOrder?: number;
+    id?: string;
+    includedInPortfolio?: boolean;
+  }
 >;
 
 export const ProfileUpdateInputSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   email: z.email("Please enter a valid email address").trim().max(320),
-  /** Public portfolio blurb (Better Auth user.summary). Plain text or light markdown. */
-  summary: z.string().max(2000).nullish(),
+  /** Public portfolio blurb (Better Auth user.summary). Rich HTML from the profile editor. */
+  summary: z.string().max(8000).nullish(),
   image: z.string().optional(),
   contacts: z.array(contactInputSchema).optional()
 }) satisfies z.ZodType<

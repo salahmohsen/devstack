@@ -13,6 +13,8 @@ import { type ContactOutput, type ExperiencePublicOutput } from "@tsu-stack/core
 import { CenterUnderline } from "@tsu-stack/ui/components/fancy/text";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { sortContactsByOrder } from "@/shared/lib/sort-contacts";
+
 import { type GithubProfileQueryResult } from "@/pages/home-page/api/get-github-profile.query";
 
 type ProfileOverviewProps = {
@@ -134,7 +136,7 @@ function buildIntroRows({
   contacts: ContactOutput[];
 }): IntroRow[] {
   const rows: IntroRow[] = [];
-  const byType = indexContacts(contacts);
+  const orderedContacts = sortContactsByOrder(contacts);
 
   // Jobs: present experiences first, else github company, else first experience.
   const presentJobs = experiences.filter((e) => e.isPresent);
@@ -162,8 +164,57 @@ function buildIntroRows({
     });
   }
 
-  const location = byType.location?.value?.trim() ?? profile?.location?.trim() ?? null;
-  if (location) {
+  // Contact-derived rows follow dashboard sortOrder (not a fixed type sequence).
+  const emittedContactKeys = new Set<string>();
+  for (const c of orderedContacts) {
+    if (c.type === "location") {
+      const location = c.value?.trim();
+      if (!location) continue;
+      rows.push({
+        key: "location",
+        icon: <MapPin />,
+        label: location,
+        href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+      });
+      emittedContactKeys.add("location");
+    } else if (c.type === "phone") {
+      const phone = c.value?.trim();
+      if (!phone) continue;
+      const tel = phone.replace(/[^\d+]/g, "") || phone;
+      rows.push({
+        key: "phone",
+        icon: <Phone />,
+        label: phone,
+        href: `tel:${tel}`
+      });
+      emittedContactKeys.add("phone");
+    } else if (c.type === "email") {
+      const email = c.value?.trim();
+      if (!email) continue;
+      rows.push({
+        key: "email",
+        icon: <Mail />,
+        label: email,
+        href: `mailto:${email}`
+      });
+      emittedContactKeys.add("email");
+    } else if (c.type === "website") {
+      const websiteRaw = c.value?.trim();
+      if (!websiteRaw) continue;
+      const href = ensureHttp(websiteRaw);
+      rows.push({
+        key: "website",
+        icon: <LinkIcon />,
+        label: displayUrl(href),
+        href
+      });
+      emittedContactKeys.add("website");
+    }
+  }
+
+  // GitHub profile fallbacks when the user has no matching contact row.
+  if (!emittedContactKeys.has("location") && profile?.location?.trim()) {
+    const location = profile.location.trim();
     rows.push({
       key: "location",
       icon: <MapPin />,
@@ -171,31 +222,8 @@ function buildIntroRows({
       href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
     });
   }
-
-  const phone = byType.phone?.value?.trim();
-  if (phone) {
-    const tel = phone.replace(/[^\d+]/g, "") || phone;
-    rows.push({
-      key: "phone",
-      icon: <Phone />,
-      label: phone,
-      href: `tel:${tel}`
-    });
-  }
-
-  const email = byType.email?.value?.trim();
-  if (email) {
-    rows.push({
-      key: "email",
-      icon: <Mail />,
-      label: email,
-      href: `mailto:${email}`
-    });
-  }
-
-  const websiteRaw = byType.website?.value?.trim() ?? profile?.blog?.trim() ?? null;
-  if (websiteRaw) {
-    const href = ensureHttp(websiteRaw);
+  if (!emittedContactKeys.has("website") && profile?.blog?.trim()) {
+    const href = ensureHttp(profile.blog.trim());
     rows.push({
       key: "website",
       icon: <LinkIcon />,
@@ -205,14 +233,6 @@ function buildIntroRows({
   }
 
   return rows;
-}
-
-function indexContacts(contacts: ContactOutput[]) {
-  const map: Partial<Record<ContactOutput["type"], ContactOutput>> = {};
-  for (const c of contacts) {
-    map[c.type] ??= c;
-  }
-  return map;
 }
 
 function JobIcon({ title }: { title: string }) {

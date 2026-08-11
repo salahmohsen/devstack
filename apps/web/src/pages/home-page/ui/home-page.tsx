@@ -27,9 +27,9 @@ import {
   useGetGithubProfileQuery
 } from "@/pages/home-page/api/get-github-profile.query";
 import { Experience } from "@/pages/home-page/ui/experience-section";
-import { FlipSummary } from "@/pages/home-page/ui/flip-summary";
 import { ProfileOverview } from "@/pages/home-page/ui/profile-overview";
 import { ProfileSocialLinks } from "@/pages/home-page/ui/profile-social-links";
+import { normalizePublicSummary, ProfileSummary } from "@/pages/home-page/ui/profile-summary";
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
 /**
@@ -98,10 +98,12 @@ export function HomePage({
   const profile = profileQuery.data;
   const showGithubHero = githubReady && profile && !profileQuery.isError;
   // Public blurb from Better Auth user.summary (dashboard Profile settings) — not GitHub bio.
+  // Rich HTML from the profile editor; empty TipTap docs (`<p></p>`) count as no summary.
   const portfolioQuery = useGetPortfolioListQuery(profileName);
-  const publicSummary = portfolioQuery.data?.summary?.trim()
-    ? portfolioQuery.data.summary.trim()
-    : null;
+  const publicSummary = useMemo(
+    () => normalizePublicSummary(portfolioQuery.data?.summary),
+    [portfolioQuery.data?.summary]
+  );
   const portfolioExperiences = portfolioQuery.data?.experiences ?? [];
   const portfolioContacts = portfolioQuery.data?.contacts ?? [];
 
@@ -172,7 +174,7 @@ export function HomePage({
                   <h1 className="text-2xl font-semibold tracking-tight capitalize">
                     {profile.name ?? profile.login}
                   </h1>
-                  {publicSummary ? <FlipSummary summary={publicSummary} /> : null}
+                  {publicSummary ? <ProfileSummary summary={publicSummary} /> : null}
                 </div>
               </div>
             </div>
@@ -180,7 +182,7 @@ export function HomePage({
             <div className="screen-line-bottom -mt-8 space-y-2 px-4 pb-4 sm:-mt-10">
               <h1 className="text-2xl font-semibold tracking-tight">@{profileName}</h1>
               <p className="text-sm text-muted-foreground">Portfolio</p>
-              {publicSummary ? <FlipSummary summary={publicSummary} /> : null}
+              {publicSummary ? <ProfileSummary summary={publicSummary} /> : null}
             </div>
           )}
 

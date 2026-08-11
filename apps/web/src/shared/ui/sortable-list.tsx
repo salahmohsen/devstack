@@ -4,6 +4,7 @@ import {
   closestCenter,
   DndContext,
   type DragEndEvent,
+  type Modifier,
   PointerSensor,
   useSensor,
   useSensors
@@ -19,9 +20,58 @@ import { type ReactNode } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+export type SortableAxis = "vertical" | "horizontal" | "both";
+
+/** Keep list drags on the Y axis only (no horizontal wobble). */
+const restrictToVerticalAxis: Modifier = ({ transform }) => {
+  return {
+    ...transform,
+    x: 0
+  };
+};
+
+/** Keep list drags on the X axis only (no vertical wobble). */
+const restrictToHorizontalAxis: Modifier = ({ transform }) => {
+  return {
+    ...transform,
+    y: 0
+  };
+};
+
+function axisModifiers(axis: SortableAxis): Modifier[] | undefined {
+  if (axis === "vertical") return [restrictToVerticalAxis];
+  if (axis === "horizontal") return [restrictToHorizontalAxis];
+  return undefined;
+}
+
+function axisTranslate(axis: SortableAxis, transform: { x: number; y: number } | null) {
+  if (!transform) return undefined;
+  const x = axis === "vertical" ? 0 : transform.x;
+  const y = axis === "horizontal" ? 0 : transform.y;
+  return `translate3d(${x}px, ${y}px, 0)`;
+}
+
+export type DragHandleProps = {
+  attributes: Record<string, unknown>;
+  listeners: Record<string, unknown> | undefined;
+  className: string;
+};
+
 type SortableItemProps<T extends { id: string }> = {
   items: T[];
   onReorder: (items: T[]) => void;
+  /**
+   * When false (default), renders a plain list with no DnD — `dragHandleProps` is undefined.
+   * Opt in for reorderable UIs (e.g. profile contacts while editing).
+   */
+  sortable?: boolean;
+  /**
+   * Drag movement axes.
+   * - `vertical` (default) — lists
+   * - `horizontal` — rows / carousels
+   * - `both` — grids
+   */
+  axis?: SortableAxis;
   disabled?: boolean;
   strategy?: SortingStrategy;
   containerClassName?: string;
@@ -32,18 +82,18 @@ type SortableItemProps<T extends { id: string }> = {
    * default so existing usages aren't affected.
    */
   siblingsDimOnHover?: boolean;
-  children: (item: T, dragHandleProps: DragHandleProps, isDragging: boolean) => ReactNode;
-};
-
-type DragHandleProps = {
-  attributes: Record<string, unknown>;
-  listeners: Record<string, unknown> | undefined;
-  className: string;
+  children: (
+    item: T,
+    dragHandleProps: DragHandleProps | undefined,
+    isDragging: boolean
+  ) => ReactNode;
 };
 
 function SortableList<T extends { id: string }>({
   items,
   onReorder,
+  sortable = false,
+  axis = "vertical",
   disabled = false,
   strategy = verticalListSortingStrategy,
   containerClassName,
@@ -67,12 +117,31 @@ function SortableList<T extends { id: string }>({
     onReorder(arrayMove(items, oldIndex, newIndex));
   }
 
+  const listClassName = cn(containerClassName, siblingsDimOnHover && "group");
+
+  if (!sortable) {
+    return (
+      <div className={listClassName}>
+        {items.map((item) => (
+          <div key={item.id} className="min-w-0">
+            {children(item, undefined, false)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+      modifiers={axisModifiers(axis)}
+    >
       <SortableContext items={items.map((item) => item.id)} strategy={strategy}>
-        <div className={cn(containerClassName, siblingsDimOnHover && "group")}>
+        <div className={listClassName}>
           {items.map((item) => (
-            <SortableRow key={item.id} id={item.id} disabled={disabled}>
+            <SortableRow key={item.id} id={item.id} disabled={disabled} axis={axis}>
               {(dragHandleProps, isDragging) => children(item, dragHandleProps, isDragging)}
             </SortableRow>
           ))}
@@ -85,10 +154,12 @@ function SortableList<T extends { id: string }>({
 function SortableRow({
   id,
   disabled,
+  axis,
   children
 }: {
   id: string;
   disabled: boolean;
+  axis: SortableAxis;
   children: (dragHandleProps: DragHandleProps, isDragging: boolean) => ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -97,7 +168,7 @@ function SortableRow({
   });
 
   const style: React.CSSProperties = {
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transform: axisTranslate(axis, transform),
     transition,
     opacity: isDragging ? 0.6 : 1
   };
