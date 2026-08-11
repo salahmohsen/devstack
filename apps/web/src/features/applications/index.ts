@@ -19,6 +19,12 @@ export {
   useListApplicationActivityQuery
 } from "@/features/applications/api/list-application-activity.query";
 export { useAddApplicationNoteMutation } from "@/features/applications/api/add-application-note.mutation";
+export {
+  applicationCountQueryKeys,
+  getCountApplicationsQueryOptions,
+  useCountApplicationsQuery
+} from "@/features/applications/api/count-applications.query";
+export { useRegenerateAgentTakeMutation } from "@/features/applications/api/regenerate-agent-take.mutation";
 export { ApplicationActivitySection } from "@/features/applications/ui/application-activity-section";
 export {
   canSendOutreach,

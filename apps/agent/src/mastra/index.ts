@@ -20,6 +20,7 @@ import { createApplyPackageAgent } from "#@/mastra/agents/apply-package-agent";
 import { createCrmApplicationMatcherAgent } from "#@/mastra/agents/crm-application-matcher-agent";
 import { createCrmStageAdvisorAgent } from "#@/mastra/agents/crm-stage-advisor-agent";
 import { createHubSupervisor } from "#@/mastra/agents/hub-supervisor";
+import { createJobAgentTakeAgent } from "#@/mastra/agents/job-agent-take-agent";
 import { createJobNotifierMailExtractorAgent } from "#@/mastra/agents/job-notifier-mail-extractor-agent";
 import { createJobPageExtractorAgent } from "#@/mastra/agents/job-page-extractor-agent";
 import { createJobPreferenceMatchScorerAgent } from "#@/mastra/agents/job-preference-match-scorer-agent";
@@ -144,6 +145,7 @@ export const mastra = new Mastra({
     jobNotifierMailExtractor: createJobNotifierMailExtractorAgent(),
     jobPageExtractor: createJobPageExtractorAgent(),
     jobPreferenceMatchScorer: createJobPreferenceMatchScorerAgent(),
+    jobAgentTake: createJobAgentTakeAgent(),
     crmApplicationMatcher: createCrmApplicationMatcherAgent(),
     crmStageAdvisor: createCrmStageAdvisorAgent(),
     providerPingAgent: createProviderPingAgent(),

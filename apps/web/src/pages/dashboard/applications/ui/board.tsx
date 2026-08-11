@@ -382,14 +382,14 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
     return (
       <ItemsEmpty
         icon={<BriefcaseIcon aria-hidden />}
-        title="No applications yet"
-        description="Add a job to track stages on the board, or paste a description for the hub agent."
+        title="No tracked jobs yet"
+        description="Track a discovery from New jobs, add a role manually, or paste a job description for the hub agent."
         action={
           <div className="flex flex-col items-center gap-3">
             <div className="flex flex-wrap justify-center gap-2">
               <Button type="button" onClick={openCreate}>
                 <PlusIcon aria-hidden />
-                Add application
+                Add job
               </Button>
               <Button type="button" variant="outline" onClick={openImportJdSheet}>
                 <FileTextIcon aria-hidden />

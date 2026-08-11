@@ -188,6 +188,14 @@ export const ListApplicationsInputSchema = z.object({
   trackingStatus: ApplicationTrackingStatusSchema.optional()
 });
 
+export const CountApplicationsInputSchema = z.object({
+  trackingStatus: ApplicationTrackingStatusSchema
+});
+
+export const RegenerateAgentTakeInputSchema = z.object({
+  id: z.string().min(1)
+});
+
 /** Body-field patch only — never stage/outcome (use dedicated procedures). */
 export const UpdateApplicationInputSchema = z.object({
   companyName: z.string().min(1).optional(),
@@ -238,3 +246,5 @@ export type RestoreApplicationInput = z.infer<typeof RestoreApplicationInputSche
 export type ListApplicationActivityInput = z.infer<typeof ListApplicationActivityInputSchema>;
 export type AddApplicationNoteInput = z.infer<typeof AddApplicationNoteInputSchema>;
 export type ListApplicationsInput = z.infer<typeof ListApplicationsInputSchema>;
+export type CountApplicationsInput = z.infer<typeof CountApplicationsInputSchema>;
+export type RegenerateAgentTakeInput = z.infer<typeof RegenerateAgentTakeInputSchema>;

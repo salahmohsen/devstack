@@ -67,6 +67,17 @@ export const applicationRepository = {
       .orderBy(desc(application.updatedAt));
   },
 
+  async countByUserIdAndTrackingStatus(
+    userId: string,
+    trackingStatus: ApplicationTrackingStatus
+  ): Promise<number> {
+    const [row] = await getDb()
+      .select({ n: sql<number>`count(*)::int` })
+      .from(application)
+      .where(and(eq(application.userId, userId), eq(application.trackingStatus, trackingStatus)));
+    return row?.n ?? 0;
+  },
+
   async findByIdForUser(id: string, userId: string) {
     const rows = await getDb()
       .select()

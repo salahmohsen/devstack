@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { DownloadIcon, ExternalLinkIcon, FileTextIcon } from "lucide-react";
+import { DownloadIcon, ExternalLinkIcon, FileTextIcon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -32,7 +32,8 @@ import {
   ApplicationStageBadge,
   ApplicationStatusBadge,
   coverLetterDownloadUrl,
-  resumeDownloadUrl
+  resumeDownloadUrl,
+  useRegenerateAgentTakeMutation
 } from "@/features/applications";
 
 import { ItemInfoPanel } from "@/widgets/items-page";
@@ -93,6 +94,7 @@ type ApplicationInfoPanelProps = {
 
 export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
+  const regenerateTake = useRegenerateAgentTakeMutation();
 
   const sourceLabel =
     item.source && item.source in APPLICATION_SOURCE_LABELS
@@ -147,11 +149,26 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
         <div className="space-y-5">
           <ApplyPackagePanelActions app={item} />
 
-          {item.agentTake?.trim() ? (
-            <Section title="Agent's take">
+          <Section title="Agent's take">
+            {item.agentTake?.trim() ? (
               <p className="text-sm leading-relaxed text-muted-foreground">{item.agentTake}</p>
-            </Section>
-          ) : null}
+            ) : (
+              <p className="text-sm text-muted-foreground italic">No agent take yet.</p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              loading={regenerateTake.isPending}
+              onClick={() => {
+                void regenerateTake.mutateAsync({ id: item.id });
+              }}
+            >
+              <RefreshCwIcon className="size-3.5" aria-hidden />
+              {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
+            </Button>
+          </Section>
 
           {hasMaterials ? (
             <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">

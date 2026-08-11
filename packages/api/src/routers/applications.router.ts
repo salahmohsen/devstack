@@ -7,6 +7,7 @@ import {
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
   buildApplicationSourceTags,
+  CountApplicationsInputSchema,
   CreateApplicationInputSchema,
   DeleteApplicationsInputSchema,
   DeleteResponseSchema,
@@ -15,6 +16,7 @@ import {
   ListApplicationActivityInputSchema,
   ListApplicationsInputSchema,
   PromoteApplicationInputSchema,
+  RegenerateAgentTakeInputSchema,
   RestoreApplicationInputSchema,
   SendOutreachInputSchema,
   SetOutcomeInputSchema,
@@ -28,6 +30,7 @@ import {
 } from "@tsu-stack/db/repositories";
 
 import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
+import { generateAgentTake } from "#@/lib/application/generate-agent-take";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
 import { protectedProcedure } from "#@/lib/procedures/factory";
@@ -109,6 +112,22 @@ export const applicationsRouter = {
       const status = input?.trackingStatus ?? "tracked";
       const rows = await applicationRepository.findByUserIdAndTrackingStatus(userId, status);
       return rows.map(toApplicationOutput);
+    }),
+
+  count: protectedProcedure
+    .route({
+      description: "Count applications for the current user by trackingStatus",
+      method: "GET"
+    })
+    .input(CountApplicationsInputSchema)
+    .output(z.object({ count: z.number().int().nonnegative() }))
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const count = await applicationRepository.countByUserIdAndTrackingStatus(
+        userId,
+        input.trackingStatus
+      );
+      return { count };
     }),
 
   get: protectedProcedure
@@ -445,6 +464,38 @@ export const applicationsRouter = {
       );
 
       return { success: deleted.length > 0 };
+    }),
+
+  regenerateAgentTake: protectedProcedure
+    .route({
+      description: "Generate or regenerate the AI agent take narrative for a job application",
+      method: "POST"
+    })
+    .input(RegenerateAgentTakeInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Application not found" },
+      AI_NOT_CONFIGURED: {
+        message: "Configure a BYO API key under Settings → AI"
+      },
+      AGENT_FAILED: {
+        message: "Agent take generation failed — check Settings → AI and try again"
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const result = await generateAgentTake({
+        applicationId: input.id,
+        userId
+      });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "AI_NOT_CONFIGURED") {
+          throw errors.AI_NOT_CONFIGURED({ message: result.message });
+        }
+        throw errors.AGENT_FAILED({ message: result.message });
+      }
+      return toApplicationOutput(result.application);
     }),
 
   generateApplyPackage: protectedProcedure
