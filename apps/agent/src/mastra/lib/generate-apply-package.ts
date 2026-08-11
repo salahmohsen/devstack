@@ -9,6 +9,7 @@ import {
   type ApplyPackageWorkflowInput
 } from "@tsu-stack/core";
 import {
+  applicationActivityRepository,
   applicationRepository,
   contactRepository,
   createDb,
@@ -272,13 +273,22 @@ export async function generateApplyPackage(input: {
   const emailOk = proposedEmail ? emailSchema.safeParse(proposedEmail).success : false;
   const setRecruiter = app.recruiterEmail == null && emailOk && proposedEmail != null;
 
-  const updated = await runWithDb(db, () =>
-    applicationRepository.update(app.id, input.userId, {
+  const updated = await runWithDb(db, async () => {
+    const row = await applicationRepository.update(app.id, input.userId, {
       applyPackageDraft: sanitized,
       applyPackageDraftedAt: new Date(),
       ...(setRecruiter ? { recruiterEmail: proposedEmail } : {})
-    })
-  );
+    });
+    if (!row) return null;
+    await applicationActivityRepository.append({
+      userId: input.userId,
+      applicationId: row.id,
+      kind: "package_generated",
+      actorUserId: input.userId,
+      metadata: { via: "hub" }
+    });
+    return row;
+  });
 
   if (!updated) return { ok: false, code: "NOT_FOUND" };
 

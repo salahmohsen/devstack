@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 import { type OrpcContextMediaBucket } from "@tsu-stack/core";
-import { applicationRepository, resumeRepository, type ApplicationEntity } from "@tsu-stack/db";
+import {
+  applicationActivityRepository,
+  applicationRepository,
+  resumeRepository,
+  type ApplicationEntity
+} from "@tsu-stack/db";
 
 import { sendCareerReply } from "#@/lib/mail/send-career-reply";
 
@@ -125,8 +130,20 @@ export async function sendApplicationOutreach(input: {
 
   // Stage advance only via updateStage (not body update patch).
   if (updated.stage === "saved") {
+    const fromStage = updated.stage;
     const staged = await applicationRepository.updateStage(updated.id, input.userId, "applied");
     if (staged.ok) {
+      await applicationActivityRepository.append({
+        userId: input.userId,
+        applicationId: staged.row.id,
+        kind: "stage_changed",
+        actorUserId: input.userId,
+        metadata: {
+          fromStage,
+          toStage: staged.row.stage,
+          via: "outreach"
+        }
+      });
       return { ok: true, application: staged.row };
     }
     // Send already succeeded; return row with send metadata even if stage update races.

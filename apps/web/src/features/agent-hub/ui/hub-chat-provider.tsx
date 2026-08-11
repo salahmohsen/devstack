@@ -21,7 +21,7 @@ function isUiMessageArray(value: unknown): value is UIMessage[] {
 
 /**
  * Owns the single dashboard hub `Chat` instance and hydrates Mastra memory once.
- * Mount on the dashboard layout so Hub home and Applications share the same thread.
+ * Mount on the dashboard layout so Hub home and job surfaces share the same thread.
  */
 export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const chat = React.useMemo(() => createHubChat(), []);

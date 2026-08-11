@@ -22,7 +22,6 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
 import { useApplicationsView } from "@/pages/dashboard/applications/_lib/use-applications-view";
-import { useInvalidateApplicationsOnHubCreate } from "@/pages/dashboard/applications/_lib/use-invalidate-applications-on-hub-create";
 import { ApplicationFormSheet } from "@/pages/dashboard/applications/application-form-sheet";
 import { ApplicationInfoPanel } from "@/pages/dashboard/applications/ui/application-info-panel";
 import { ApplyPackageSheet } from "@/pages/dashboard/applications/ui/apply-package-sheet";
@@ -37,8 +36,7 @@ export function ApplicationsPage() {
   const { view, setView } = useApplicationsView();
   /** Tracked jobs only — pipeline CRM. */
   const listQuery = useListApplicationsQuery("tracked");
-  // Shared hub stream → invalidate board when create-application succeeds.
-  useInvalidateApplicationsOnHubCreate();
+  // Hub tool invalidation lives on HubChatProvider (dashboard layout).
   const {
     sheetOpen,
     sheetMode,
