@@ -17,7 +17,6 @@ export type UpsertContactItem = {
   id?: string;
   type: InferInsertModel<typeof contact>["type"];
   value: string;
-  icon: string;
   includedInPortfolio?: boolean;
 };
 
@@ -71,15 +70,14 @@ export const contactRepository = {
         if (item.id) {
           await tx
             .update(contact)
-            .set({ value: item.value, icon: item.icon })
+            .set({ value: item.value })
             .where(and(eq(contact.userId, userId), eq(contact.id, item.id)));
         } else {
           await tx.insert(contact).values({
             id: crypto.randomUUID(),
             userId,
             type: item.type,
-            value: item.value,
-            icon: item.icon
+            value: item.value
           });
         }
       }

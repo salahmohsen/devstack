@@ -8,23 +8,6 @@ import { portfolioEntry } from "../schema/portfolio-entry.schema.ts";
 import { project, projectStack } from "../schema/project.schema.ts";
 import { stack } from "../schema/stack.schema.ts";
 
-/**
- * Default IconPicker icon ids per contact type.
- * Kept local so `packages/db` does not depend on `@tsu-stack/core`
- * (core already type-imports from `@tsu-stack/db/types`).
- * Must stay in sync with `CONTACT_TYPE_DEFAULT_ICONS` in core onboarding.
- */
-const CONTACT_TYPE_DEFAULT_ICONS: Record<string, string> = {
-  website: "FaGlobe",
-  email: "FaEnvelope",
-  phone: "FaPhone",
-  location: "FaMapMarkerAlt",
-  linkedin: "FaLinkedin",
-  github: "FaGithub",
-  x: "FaTwitter",
-  youtube: "FaYoutube"
-};
-
 export type OnboardingApplyErrorCode = "EMPTY_DRAFT" | "EMAIL_TAKEN";
 
 export class OnboardingApplyError extends Error {
@@ -61,7 +44,6 @@ export type OnboardingApplyInput = {
     contacts?: Array<{
       type: OnboardingApplyContactType;
       value: string;
-      icon?: string | null;
     }>;
   };
   experiences?: Array<{
@@ -117,12 +99,6 @@ function normalizeSummary(summary: string | null | undefined): string | null {
   if (summary == null) return null;
   const trimmed = summary.trim();
   return trimmed.length === 0 ? null : trimmed;
-}
-
-function withContactDefaultIcon(type: string, icon?: string | null): string {
-  const existing = icon?.trim();
-  if (existing && existing.length > 0) return existing;
-  return CONTACT_TYPE_DEFAULT_ICONS[type] ?? CONTACT_TYPE_DEFAULT_ICONS.website ?? "FaGlobe";
 }
 
 function isSelected(row: { selected?: boolean }): boolean {
@@ -215,7 +191,6 @@ export async function applyOnboardingDraft(
       }
 
       for (const item of byType.values()) {
-        const icon = withContactDefaultIcon(item.type, item.icon);
         const existing = await tx.query.contact.findFirst({
           where: { userId, type: item.type }
         });
@@ -223,15 +198,14 @@ export async function applyOnboardingDraft(
         if (existing) {
           await tx
             .update(contact)
-            .set({ value: item.value, icon })
+            .set({ value: item.value })
             .where(and(eq(contact.userId, userId), eq(contact.type, item.type)));
         } else {
           await tx.insert(contact).values({
             id: crypto.randomUUID(),
             userId,
             type: item.type,
-            value: item.value,
-            icon
+            value: item.value
           });
         }
       }
