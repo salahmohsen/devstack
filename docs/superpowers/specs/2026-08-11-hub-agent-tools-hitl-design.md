@@ -1,7 +1,8 @@
 # Hub agent tools + HITL apply-from-JD — design
 
 **Date:** 2026-08-11  
-**Status:** Draft for implementation planning  
+**Status:** Accepted  
+**Plan:** `docs/superpowers/plans/2026-08-11-hub-agent-tools-hitl.md`  
 **Surfaces:** Agent Hub chat + Applications CRM  
 **Related:** Career mail / apply package workflows, existing AI SDK v6 hub HITL
 
