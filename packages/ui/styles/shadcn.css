@@ -159,6 +159,12 @@
   --color-background: var(--background);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  /**
+   * Brand wash / selection signal — contribution graph dark level-4 green.
+   * Use for AnimatedWash (text-wash → currentColor), sidebar active dash, etc.
+   * Do not reuse --accent (that stays a low-alpha surface tint).
+   */
+  --color-wash: var(--wash);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -255,6 +261,8 @@
   --success-foreground: var(--color-emerald-700);
   --warning: var(--color-amber-500);
   --warning-foreground: var(--color-amber-700);
+  /* Portfolio wash + nav selection dash (matches contrib dark level-4). */
+  --wash: oklch(0.78 0.22 150);
   --accent: --alpha(var(--color-black) / 4%);
   --accent-foreground: var(--color-neutral-800);
   --background: var(--color-white);
@@ -302,6 +310,7 @@
   --success-foreground: var(--color-emerald-400);
   --warning: var(--color-amber-500);
   --warning-foreground: var(--color-amber-400);
+  --wash: oklch(0.78 0.22 150);
   --accent: --alpha(var(--color-white) / 4%);
   --accent-foreground: var(--color-neutral-100);
   --background: color-mix(in srgb, var(--color-neutral-950) 95%, var(--color-white));
