@@ -6,17 +6,19 @@ etc.) do not belong here even if the project uses them heavily.
 
 ## Multi-user tenancy
 
-**Profile name** (`profileName`):
-Public URL slug on the primary app host (`/{profileName}/…`). Required at
-signup, unique, renamable. Validated in `@tsu-stack/core` (length, charset,
-reserved path segments such as `dashboard`, `api`, `sign-in`).
-_Avoid_: username alone when you mean the public path key; handle (ambiguous).
+**Username** (`username`, Better Auth username plugin):
+Public URL slug on the primary app host (`/{username}/…`). Required at
+signup (or auto-assigned from GitHub login / email with unique suffix), unique,
+renamable. Validated in `@tsu-stack/core` (length, charset, reserved path
+segments such as `dashboard`, `api`, `sign-in`). Same field as Better Auth
+`user.username` — path key and auth plugin identity, not GitHub `login`.
+_Avoid_: profileName (deprecated), conflating with GitHub username.
 
-**Slug alias** (`profile_slug_alias`):
-Row mapping a former `profileName` to the same `userId` so old path URLs
-redirect after rename. New names must not collide with live profile names or
+**Slug alias** (`username_slug_alias`):
+Row mapping a former `username` to the same `userId` so old path URLs
+redirect after rename. New names must not collide with live usernames or
 existing aliases.
-_Avoid_: redirect table (generic), vanity URL.
+_Avoid_: redirect table (generic), vanity URL. Historical table name: `profile_slug_alias`.
 
 **Invite**:
 Single-use (or revocable) registration code. Empty database bootstraps the
@@ -32,14 +34,14 @@ _Avoid_: white-label SaaS domain product, automatic cert issuance.
 
 **Primary app host**:
 Canonical community origin from the host of `VITE_WEB_URL`. Dashboard, auth, and
-path portfolios (`/{profileName}`) live here. Custom domains may not claim this
+path portfolios (`/{username}`) live here. Custom domains may not claim this
 hostname.
 _Avoid_: “main domain” without distinguishing path vs Host routing.
 
 **Tenant `userId`**:
 Every private domain row (experience, project, stack, resume, portfolio entry,
 etc.) is scoped by the Better Auth user id. Public RPCs resolve Host and/or
-`profileName` → `userId` then load only that tenant’s opted-in evidence.
+`username` → `userId` then load only that tenant’s opted-in evidence.
 _Avoid_: `ownerId`, “admin user” as the sole portfolio owner, unscoped `findAll()`.
 
 **BYO AI**:
@@ -61,9 +63,9 @@ _Avoid_: ACME in-app, Let’s Encrypt automation as a product feature.
 
 **Public GitHub surface**:
 Per-tenant public GitHub pages and APIs. Path form:
-`/{profileName}/repos` (and tree/blob under that). On a **verified custom
-domain**, Host-scoped `/repos` (no profileName segment). Public RPCs take
-`profileName` and/or resolve Host → `userId`, then use that tenant’s OAuth
+`/{username}/repos` (and tree/blob under that). On a **verified custom
+domain**, Host-scoped `/repos` (no username path segment). Public RPCs take
+`username` and/or resolve Host → `userId`, then use that tenant’s OAuth
 token server-side (`resolvePublicGitHubSourceForUser`). Never a global
 “first GitHub account”.
 _Avoid_: bare `/repos` on the primary app host as a global owner hub;

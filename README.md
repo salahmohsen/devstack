@@ -21,7 +21,7 @@ Glossary: [CONTEXT.md](./CONTEXT.md). Agent/contributor map: [AGENTS.md](./AGENT
 
 | Layer                     | Purpose                                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Public portfolio**      | Path `/{profileName}` or verified custom domain; evidence opted into `portfolio_entry`         |
+| **Public portfolio**      | Path `/{username}` or verified custom domain; evidence opted into `portfolio_entry`            |
 | **Evidence graph**        | Experiences, projects, stacks, contact — tenant-scoped by `userId`                             |
 | **Resumes**               | Import + generate PDF; link to applications                                                    |
 | **Applications CRM**      | Private job pipeline (saved → applied → screening → interview → offer; outcomes close the row) |
@@ -35,9 +35,9 @@ Glossary: [CONTEXT.md](./CONTEXT.md). Agent/contributor map: [AGENTS.md](./AGENT
 | Surface                       | Behavior                                                         |
 | ----------------------------- | ---------------------------------------------------------------- |
 | **Registration**              | First user bootstraps empty DB; later signups need an **invite** |
-| **Public portfolio (path)**   | `/{profileName}/…` on primary app host                           |
+| **Public portfolio (path)**   | `/{username}/…` on primary app host                              |
 | **Public portfolio (domain)** | Verified **custom domain** → that user’s portfolio at `/`        |
-| **Public GitHub**             | `/{profileName}/repos` (path) or `/repos` on custom domain       |
+| **Public GitHub**             | `/{username}/repos` (path) or `/repos` on custom domain          |
 | **Dashboard / auth**          | Always on primary host (`VITE_WEB_URL`)                          |
 | **Tenancy**                   | Private rows scoped by Better Auth **`userId`**                  |
 
@@ -87,8 +87,8 @@ Specs:
 | `/dashboard/resumes` | Resume library |
 | `/dashboard/onboarding` | Owner onboarding / resume import |
 | `/dashboard/settings/*` | Profile, account, domain, invites, connections, mail, AI, jobs prefs, rules, notifications |
-| `/{profileName}` | Public portfolio |
-| `/{profileName}/repos` | Public GitHub surface |
+| `/{username}` | Public portfolio |
+| `/{username}/repos` | Public GitHub surface |
 
 ---
 
@@ -159,7 +159,7 @@ Never invent API strings in the web app: use typed oRPC clients.
 ### API & server
 
 - oRPC procedures with request-scoped logging
-- Tenant: resolve session `userId` for private RPCs; public RPCs resolve `profileName` / Host → `userId`
+- Tenant: resolve session `userId` for private RPCs; public RPCs resolve `username` / Host → `userId`
 - Mail pipeline jobs: `mail-classify-queue`, `gmail-sync-queue`, `mail-job-harvest-queue`, CRM apply effects
 - GitHub cache: signal rows + namespace versions; Socket.IO relay + poll fallback
 

@@ -63,7 +63,7 @@ export async function createContext<TEnv extends { Bindings: HonoBindings }>({
 
   /**
    * Per-tenant GitHub: only resolve credentials for the **session user**.
-   * Public portfolio GitHub is scoped per profileName in github.router
+   * Public portfolio GitHub is scoped per username in github.router
    * via `resolvePublicGitHubSourceForUser` — never a global "first owner".
    */
   let sessionOAuthToken: string | null = null;

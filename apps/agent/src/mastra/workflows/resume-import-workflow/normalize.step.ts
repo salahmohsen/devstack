@@ -12,7 +12,7 @@ function coerceText(value: string | null | undefined): string {
   return value.trim();
 }
 
-function fallbackProfileName(existingName: string, extractedName?: string | null): string {
+function fallbackDisplayName(existingName: string, extractedName?: string | null): string {
   const fromExtract = extractedName?.trim() ?? "";
   if (fromExtract.length >= 2) {
     return fromExtract.slice(0, 120);
@@ -262,8 +262,8 @@ export const normalize = createStep({
       .filter((c): c is NonNullable<typeof c> => c != null);
 
     const email = normalizeEmail(raw.profile?.email ?? existingProfile.email, warnings);
-    // fallbackProfileName always returns a name with length ≥ 2 (min for ResumeImportDraftSchema).
-    const name = fallbackProfileName(existingProfile.name, raw.profile?.name);
+    // fallbackDisplayName always returns a name with length ≥ 2 (min for ResumeImportDraftSchema).
+    const name = fallbackDisplayName(existingProfile.name, raw.profile?.name);
 
     return {
       profile: {

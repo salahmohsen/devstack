@@ -68,6 +68,14 @@ Storage env is validated on **`ENV_WEB_SERVER`** in `packages/env` (not a separa
 
 ### Public avatars vs private objects
 
+**Persist avatar URL via Better Auth** after files-sdk upload:
+
+```ts
+await authClient.updateUser({ image: publicUrl }); // or null to clear
+```
+
+Do not rely solely on `profile.update` for image-only changes — `updateUser` refreshes the session cookie. Seed OAuth (GitHub) `image` only when empty; never overwrite a custom upload.
+
 - **Profile avatars** (`{userId}/avatars/*`) are **public portfolio media**. MinIO gets a scoped anonymous `GetObject` policy for that prefix only (`minio-init` / `scripts/dev.sh`).
 - **App proxy:** `GET /api/media/{userId}/avatars/{file}` streams the same keys with server credentials when `MEDIA_PUBLIC_URL` points at the web app (docker default `${VITE_WEB_URL}/api/media`). Non-avatar keys return 404.
 - **Resume sources, generated resumes, cover letters** stay private (no anonymous access; download via auth-gated routes).
