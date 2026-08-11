@@ -1,10 +1,11 @@
 import { type ReactNode } from "react";
-import { FaGithub, FaGlobe, FaLinkedin, FaXTwitter, FaYoutube } from "react-icons/fa6";
 
 import { type ContactOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { ContactIcon } from "@/shared/lib/contact-icon";
 
 import { type GithubProfileQueryResult } from "@/pages/home-page/api/get-github-profile.query";
 
@@ -21,7 +22,12 @@ const SOCIAL_CONTACT_TYPES = new Set<ContactOutput["type"]>([
   "linkedin",
   "x",
   "youtube",
-  "website"
+  "website",
+  "instagram",
+  "discord",
+  "bluesky",
+  "mastodon",
+  "telegram"
 ]);
 
 /**
@@ -116,7 +122,7 @@ function buildSocialItems({
       title: socialTitle(c.type),
       handle: socialHandle(c.type, c.value),
       href,
-      icon: socialIcon(c.type)
+      icon: <ContactIcon type={c.type} />
     });
   }
 
@@ -126,7 +132,7 @@ function buildSocialItems({
       title: "GitHub",
       handle: `@${profile.login}`,
       href: profile.url || `https://github.com/${profile.login}`,
-      icon: <FaGithub />
+      icon: <ContactIcon type="github" />
     });
   }
 
@@ -137,7 +143,7 @@ function buildSocialItems({
       title: "X",
       handle: `@${handle}`,
       href: `https://x.com/${handle}`,
-      icon: <FaXTwitter />
+      icon: <ContactIcon type="x" />
     });
   }
 
@@ -148,7 +154,7 @@ function buildSocialItems({
       title: "Website",
       handle: displayHost(href),
       href,
-      icon: <FaGlobe />
+      icon: <ContactIcon type="website" />
     });
   }
 
@@ -171,6 +177,36 @@ function normalizeHref(type: ContactOutput["type"], value: string) {
       ? ensureHttp(v)
       : `https://linkedin.com/in/${v.replace(/^@/, "")}`;
   }
+  if (type === "instagram" && !/^https?:\/\//i.test(v) && !v.includes(".")) {
+    return `https://instagram.com/${v.replace(/^@/, "")}`;
+  }
+  if (type === "telegram" && !/^https?:\/\//i.test(v)) {
+    if (v.startsWith("t.me/")) return ensureHttp(v);
+    return `https://t.me/${v.replace(/^@/, "")}`;
+  }
+  if (type === "bluesky" && !/^https?:\/\//i.test(v)) {
+    if (v.includes("bsky.app") || v.includes("bsky.social")) return ensureHttp(v);
+    // Handle or DID → profile URL
+    const handle = v.replace(/^@/, "");
+    return `https://bsky.app/profile/${handle}`;
+  }
+  if (type === "mastodon" && !/^https?:\/\//i.test(v)) {
+    // @user@instance → https://instance/@user
+    const atHandle = v.match(/^@?([^@]+)@([^@]+)$/);
+    if (atHandle) {
+      return `https://${atHandle[2]}/@${atHandle[1]}`;
+    }
+    return ensureHttp(v);
+  }
+  if (type === "discord") {
+    // Prefer invite / full URLs; bare IDs stay as-is via ensureHttp only when URL-like
+    if (/^https?:\/\//i.test(v) || v.includes("discord.gg") || v.includes("discord.com")) {
+      return ensureHttp(v);
+    }
+    if (v.startsWith("discord.gg/")) return ensureHttp(v);
+    // Username or snowflake — not linkable without more context
+    return ensureHttp(v.includes(".") ? v : `https://discord.com/users/${v}`);
+  }
   return ensureHttp(v);
 }
 
@@ -186,6 +222,16 @@ function socialTitle(type: string) {
       return "YouTube";
     case "website":
       return "Website";
+    case "instagram":
+      return "Instagram";
+    case "discord":
+      return "Discord";
+    case "bluesky":
+      return "Bluesky";
+    case "mastodon":
+      return "Mastodon";
+    case "telegram":
+      return "Telegram";
     default:
       return type;
   }
@@ -193,15 +239,41 @@ function socialTitle(type: string) {
 
 function socialHandle(type: string, value: string) {
   const v = value.trim();
-  if (type === "x" || type === "github") {
-    if (!/^https?:\/\//i.test(v)) return `@${v.replace(/^@/, "")}`;
+  if (
+    type === "x" ||
+    type === "github" ||
+    type === "instagram" ||
+    type === "telegram" ||
+    type === "bluesky"
+  ) {
+    if (!/^https?:\/\//i.test(v)) {
+      const bare = v.replace(/^@/, "").replace(/^t\.me\//i, "");
+      return bare.startsWith("@") ? bare : `@${bare}`;
+    }
     try {
       const path = new URL(ensureHttp(v)).pathname.replace(/\/$/, "");
       const last = path.split("/").filter(Boolean).pop();
-      return last ? `@${last}` : undefined;
+      return last ? `@${last.replace(/^@/, "")}` : undefined;
     } catch {
       return undefined;
     }
+  }
+  if (type === "mastodon") {
+    if (!/^https?:\/\//i.test(v)) {
+      const bare = v.startsWith("@") ? v : `@${v}`;
+      return bare;
+    }
+    try {
+      const url = new URL(ensureHttp(v));
+      const user = url.pathname.replace(/\/$/, "").split("/").filter(Boolean).pop();
+      return user ? `${user}@${url.hostname}` : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  if (type === "discord") {
+    if (!/^https?:\/\//i.test(v) && !v.includes(".")) return v;
+    return undefined;
   }
   if (type === "website") {
     try {
@@ -211,21 +283,6 @@ function socialHandle(type: string, value: string) {
     }
   }
   return undefined;
-}
-
-function socialIcon(type: string) {
-  switch (type) {
-    case "github":
-      return <FaGithub />;
-    case "linkedin":
-      return <FaLinkedin />;
-    case "youtube":
-      return <FaYoutube />;
-    case "x":
-      return <FaXTwitter />;
-    default:
-      return <FaGlobe />;
-  }
 }
 
 function ensureHttp(value: string) {
