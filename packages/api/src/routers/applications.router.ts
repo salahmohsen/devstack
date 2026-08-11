@@ -483,6 +483,13 @@ export const applicationsRouter = {
         }
         throw errors.AGENT_FAILED({ message: result.message });
       }
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: input.applicationId,
+        kind: "package_generated",
+        actorUserId: userId,
+        metadata: { via: "generate_apply_package" }
+      });
       return toApplicationOutput(result.application);
     }),
 

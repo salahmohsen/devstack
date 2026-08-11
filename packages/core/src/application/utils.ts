@@ -1,4 +1,5 @@
 import {
+  ApplicationActivityKindSchema,
   ApplicationApplyMethodSchema,
   ApplicationOutcomeSchema,
   ApplicationSourceSchema,
@@ -7,6 +8,7 @@ import {
   ApplicationTrackingStatusSchema,
   EmploymentTypeSchema,
   HiringUrgencySchema,
+  type ApplicationActivityKind,
   type ApplicationApplyMethod,
   type ApplicationOutcome,
   type ApplicationSource,
@@ -64,6 +66,84 @@ export const APPLICATION_TRACKING_STATUS_LABELS: Record<ApplicationTrackingStatu
   tracked: "Tracked",
   dismissed: "Dismissed"
 };
+
+export const APPLICATION_ACTIVITY_KINDS = ApplicationActivityKindSchema.options;
+
+export const APPLICATION_ACTIVITY_KIND_LABELS: Record<ApplicationActivityKind, string> = {
+  discovered: "Discovered",
+  promoted: "Tracked",
+  dismissed: "Dismissed",
+  restored: "Restored",
+  note: "Note",
+  stage_changed: "Stage changed",
+  outcome_set: "Outcome set",
+  package_generated: "Package generated"
+};
+
+/**
+ * Human-readable one-line summary for an activity row (system + notes).
+ */
+export function formatApplicationActivitySummary(input: {
+  kind: ApplicationActivityKind;
+  body?: string | null;
+  metadata?: Record<string, unknown> | null;
+}): string {
+  const meta = input.metadata ?? {};
+  switch (input.kind) {
+    case "discovered": {
+      const via = typeof meta.via === "string" ? meta.via : null;
+      if (via === "manual_create") return "Added manually";
+      if (via === "hub_create") return "Created from hub";
+      if (via === "crm_create") return "Created from mail";
+      return "Discovered from job alert";
+    }
+    case "promoted": {
+      const from = typeof meta.from === "string" ? meta.from : null;
+      if (from === "dismissed") return "Tracked from dismissed";
+      if (from === "inbox") return "Moved to Tracked jobs";
+      return "Moved to Tracked jobs";
+    }
+    case "dismissed":
+      return "Dismissed from New jobs";
+    case "restored":
+      return "Restored to New jobs";
+    case "note": {
+      const body = input.body?.trim();
+      return body && body.length > 0 ? body : "Note";
+    }
+    case "stage_changed": {
+      const to =
+        typeof meta.toStage === "string"
+          ? (APPLICATION_STAGE_LABELS[meta.toStage as ApplicationStage] ?? meta.toStage)
+          : null;
+      const from =
+        typeof meta.fromStage === "string"
+          ? (APPLICATION_STAGE_LABELS[meta.fromStage as ApplicationStage] ?? meta.fromStage)
+          : null;
+      if (to && from) return `Moved from ${from} to ${to}`;
+      if (to) return `Moved to ${to}`;
+      return "Stage updated";
+    }
+    case "outcome_set": {
+      const outcome =
+        typeof meta.outcome === "string"
+          ? (APPLICATION_OUTCOME_LABELS[meta.outcome as ApplicationOutcome] ?? meta.outcome)
+          : null;
+      return outcome ? `Closed as ${outcome}` : "Outcome set";
+    }
+    case "package_generated":
+      return "Apply package generated";
+    default: {
+      const _exhaustive: never = input.kind;
+      return _exhaustive;
+    }
+  }
+}
+
+/** True when the event is a user-authored note (vs system). */
+export function isUserApplicationActivity(kind: ApplicationActivityKind): boolean {
+  return kind === "note";
+}
 
 export const APPLICATION_APPLY_METHODS = ApplicationApplyMethodSchema.options;
 

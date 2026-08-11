@@ -8,10 +8,13 @@ export function useDismissApplicationMutation() {
   const queryClient = useQueryClient();
   return useMutation(
     orpcQueryClient.applications.dismiss.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (_data, variables) => {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("inbox") }),
-          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("dismissed") })
+          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("dismissed") }),
+          queryClient.invalidateQueries({
+            queryKey: applicationsQueryKeys.activity(variables.id)
+          })
         ]);
       }
     })

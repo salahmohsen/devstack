@@ -1,6 +1,12 @@
 "use client";
 
-import { BookmarkPlusIcon, PackageIcon, RotateCcwIcon, BanIcon } from "lucide-react";
+import {
+  BanIcon,
+  BookmarkPlusIcon,
+  ChevronDownIcon,
+  PackageIcon,
+  RotateCcwIcon
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,12 +17,19 @@ import {
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from "@tsu-stack/ui/components/collapsible";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { IconRotate, IconShake } from "@tsu-stack/ui/components/icon-motion";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import {
+  ApplicationActivitySection,
   ApplicationMatchScoreBadge,
   useDismissApplicationMutation,
   useGenerateApplyPackageMutation,
@@ -56,6 +69,7 @@ function NewJobCard({
   busyId: string | null;
 }) {
   const busy = busyId === job.id;
+  const [activityOpen, setActivityOpen] = useState(false);
 
   return (
     <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-xs/5">
@@ -172,6 +186,30 @@ function NewJobCard({
           </>
         )}
       </div>
+
+      <Collapsible open={activityOpen} onOpenChange={setActivityOpen}>
+        <CollapsibleTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-full justify-between px-2 text-muted-foreground"
+            />
+          }
+        >
+          <span className="text-xs font-medium tracking-wide uppercase">Activity & notes</span>
+          <ChevronDownIcon
+            className={cn("size-4 transition-transform", activityOpen && "rotate-180")}
+            aria-hidden
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          {activityOpen ? (
+            <ApplicationActivitySection applicationId={job.id} enabled={activityOpen} />
+          ) : null}
+        </CollapsibleContent>
+      </Collapsible>
     </article>
   );
 }

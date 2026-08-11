@@ -8,11 +8,14 @@ export function usePromoteApplicationMutation() {
   const queryClient = useQueryClient();
   return useMutation(
     orpcQueryClient.applications.promote.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (_data, variables) => {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("inbox") }),
           queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("tracked") }),
-          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("dismissed") })
+          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("dismissed") }),
+          queryClient.invalidateQueries({
+            queryKey: applicationsQueryKeys.activity(variables.id)
+          })
         ]);
       }
     })

@@ -12,10 +12,15 @@ export function useSetOutcomeMutation() {
   return useMutation(
     orpcQueryClient.applications.setOutcome.mutationOptions({
       onSuccess: async (data, variables) => {
-        await queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() });
-        await queryClient.invalidateQueries({
-          queryKey: applicationsQueryKeys.get(variables.id)
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() }),
+          queryClient.invalidateQueries({
+            queryKey: applicationsQueryKeys.get(variables.id)
+          }),
+          queryClient.invalidateQueries({
+            queryKey: applicationsQueryKeys.activity(variables.id)
+          })
+        ]);
         toast.success(`Closed · ${APPLICATION_OUTCOME_LABELS[data.outcome!]}`);
       },
       onError: (error) => {

@@ -9,6 +9,11 @@ export const applicationsQueryKeys = {
   },
   get(id: string) {
     return orpcQueryClient.applications.get.queryKey({ input: { id } });
+  },
+  activity(applicationId: string) {
+    return orpcQueryClient.applications.listActivity.queryKey({
+      input: { applicationId }
+    });
   }
 };
 

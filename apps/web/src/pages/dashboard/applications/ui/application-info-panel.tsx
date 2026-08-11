@@ -7,9 +7,11 @@ import { useState } from "react";
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   APPLICATION_SOURCE_LABELS,
+  APPLICATION_SOURCE_TAG_LABELS,
   EMPLOYMENT_TYPE_LABELS,
   HIRING_URGENCY_LABELS,
-  type ApplicationOutput
+  type ApplicationOutput,
+  type ApplicationSourceTag
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -25,6 +27,8 @@ import { FrameDescription } from "@tsu-stack/ui/components/frame";
 import { Markdown } from "@/shared/ui/markdown";
 
 import {
+  ApplicationActivitySection,
+  ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
   coverLetterDownloadUrl,
@@ -118,12 +122,22 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
             <span className="flex flex-wrap items-center gap-1.5">
               <ApplicationStageBadge stage={item.stage} />
               <ApplicationStatusBadge outcome={item.outcome} />
+              {item.matchScore != null ? (
+                <ApplicationMatchScoreBadge matchScore={item.matchScore} />
+              ) : null}
               {item.employmentType !== "unknown" ? (
                 <Badge variant="outline">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</Badge>
               ) : null}
               {item.hiringUrgency !== "unknown" ? (
                 <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
               ) : null}
+              {(item.sourceTags ?? []).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-[10px] font-medium">
+                  {tag in APPLICATION_SOURCE_TAG_LABELS
+                    ? APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag]
+                    : tag}
+                </Badge>
+              ))}
             </span>
           </FrameDescription>
         }
@@ -132,6 +146,12 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
       >
         <div className="space-y-5">
           <ApplyPackagePanelActions app={item} />
+
+          {item.agentTake?.trim() ? (
+            <Section title="Agent's take">
+              <p className="text-sm leading-relaxed text-muted-foreground">{item.agentTake}</p>
+            </Section>
+          ) : null}
 
           {hasMaterials ? (
             <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
@@ -286,15 +306,15 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
             )}
           </Section>
 
-          <Section title="Notes">
-            {item.notes?.trim() ? (
+          {item.notes?.trim() ? (
+            <Section title="Legacy notes">
               <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
                 {item.notes}
               </Markdown>
-            ) : (
-              <p className="text-sm text-muted-foreground">No notes.</p>
-            )}
-          </Section>
+            </Section>
+          ) : null}
+
+          <ApplicationActivitySection applicationId={item.id} />
         </div>
       </ItemInfoPanel>
 

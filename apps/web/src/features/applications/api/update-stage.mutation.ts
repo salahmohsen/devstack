@@ -42,8 +42,13 @@ export function useUpdateStageMutation() {
       onSuccess: (data) => {
         toast.success(`Moved to ${APPLICATION_STAGE_LABELS[data.stage]}.`);
       },
-      onSettled: async () => {
-        await queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() });
+      onSettled: async (_data, _err, variables) => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() }),
+          queryClient.invalidateQueries({
+            queryKey: applicationsQueryKeys.activity(variables.id)
+          })
+        ]);
       }
     })
   );

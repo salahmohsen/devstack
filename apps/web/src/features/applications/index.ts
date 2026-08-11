@@ -15,6 +15,12 @@ export { usePromoteApplicationMutation } from "@/features/applications/api/promo
 export { useDismissApplicationMutation } from "@/features/applications/api/dismiss-application.mutation";
 export { useRestoreApplicationMutation } from "@/features/applications/api/restore-application.mutation";
 export {
+  getListApplicationActivityQueryOptions,
+  useListApplicationActivityQuery
+} from "@/features/applications/api/list-application-activity.query";
+export { useAddApplicationNoteMutation } from "@/features/applications/api/add-application-note.mutation";
+export { ApplicationActivitySection } from "@/features/applications/ui/application-activity-section";
+export {
   canSendOutreach,
   coverLetterDownloadUrl,
   getApplyPackageEntryState,
