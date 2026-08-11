@@ -10,6 +10,9 @@ import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agen
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
+import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
+import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
+import { listOpenApplicationsTool } from "#@/mastra/tools/list-open-applications.tool";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
 import { mailJobHarvestWorkflow } from "#@/mastra/workflows/mail-job-harvest-workflow";
@@ -44,6 +47,8 @@ export function createHubSupervisor() {
 Stacks: \`stackCategorizerAgent\`, \`detectStacksWorkflow\`, \`organizeStacksWorkflow\`, \`resumeImportWorkflow\`.
 Career mail (prefer workflows): \`mailProcessWorkflow\`, \`mailClassifyWorkflow\`, \`mailJobHarvestWorkflow\`, \`mailReplyWorkflow\`.
 Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifierMailExtractor\`, \`jobPageExtractor\`, \`jobPreferenceMatchScorer\`, \`crmApplicationMatcher\`, \`crmStageAdvisor\`, \`mailReplyAgent\`.
+CRM reads: \`listOpenApplications\`, \`getApplication\`.
+Apply package (HITL approval): \`generateApplyPackage\` — application must already exist; never invent package success.
 
 ## Response discipline (critical)
 - Intermediate steps: prefer **tools only** (or one short status sentence). Never dump full capability lists mid-loop.
@@ -63,15 +68,21 @@ Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifie
      * Multi-step enables real tool chains (read → propose → package).
      * Rewrite/bubble churn is fixed by Response discipline instructions + UI
      * intermediate-text collapse — not by maxSteps=1.
-     * HITL: require approval for mutating workflows.
+     * HITL: require approval for mutating workflows + expensive apply package.
      */
     defaultOptions: {
       maxSteps: 4,
       requireToolApproval: ({ toolName }) =>
         // Workflow tools are exposed as agent tools named after the workflow id.
-        /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify/i.test(
+        // generate-apply-package is the thin CRM package bridge (HITL).
+        /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify|generate-apply-package|generateApplyPackage/i.test(
           toolName
         )
+    },
+    tools: {
+      listOpenApplications: listOpenApplicationsTool,
+      getApplication: getApplicationTool,
+      generateApplyPackage: generateApplyPackageTool
     },
     agents: {
       stackCategorizerAgent: createStackCategorizerAgent(),

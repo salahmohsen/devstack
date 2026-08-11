@@ -31,6 +31,7 @@
     "@mastra/memory": "catalog:",
     "@mastra/observability": "catalog:",
     "@mastra/pg": "catalog:",
+    "@tsu-stack/api": "workspace:*",
     "@tsu-stack/core": "workspace:*",
     "@tsu-stack/db": "workspace:*",
     "@tsu-stack/env": "workspace:*",
