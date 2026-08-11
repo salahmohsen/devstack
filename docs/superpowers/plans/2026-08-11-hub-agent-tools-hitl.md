@@ -14,17 +14,17 @@
 
 ## File map
 
-| Area                 | Create / modify                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Core contracts       | Create `packages/core/src/application/propose-from-jd.ts` (or under `agent/` if preferred); export from application/index + core index                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| Hub maxSteps         | Modify `packages/api/src/lib/agent/hub-memory.ts`; `apps/agent/src/mastra/agents/hub-supervisor.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Tools                | Create under `apps/agent/src/mastra/tools/`: evidence list/get, `create-application`, `generate-apply-package`, `propose-application-from-jd` (client/no-op execute); register on hub-supervisor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Apply package bridge | Create tool that calls server-side domain (pattern: existing tools use `createDb`/`runWithDb`; for package, call shared `generateApplyPackage` from `@tsu-stack/api` **only if agent bundle already can import it** — otherwise thin oRPC/internal HTTP or extract pure domain to packages/api callable from agent; **prefer** same path as API router: if agent cannot import api, put execute in a small `packages/api` helper already used by router and import from agent carefully, or implement generate via existing `callApplyPackageAgent` mirror. **Decision for implementer:** inspect `list-open-applications` / mail tools; if agent only has db, create `packages/api` is wrong — use `callApplyPackageAgent` + persist like `generate-apply-package.ts` or duplicate minimal invoke. **Locked product path:** end state must equal Applications `generateApplyPackage`. |
-| Shared Chat          | Create `apps/web/src/features/agent-hub/ui/hub-chat-provider.tsx` (or `api/hub-chat-context.tsx`); modify dashboard layout route + `useHubChat`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Tool output resume   | Modify `use-hub-chat.ts` `sendAutomaticallyWhen`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| JD card              | Create `apps/web/src/widgets/agent-hub/ui/application-from-jd-card.tsx`; modify `agent-hub-message-parts.tsx`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| Applications import  | Create import sheet/section under applications page; use shared hub chat context                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Spec status          | Update design doc status to Accepted after P0 ships                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Area                 | Create / modify                                                                                                                                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core contracts       | Create `packages/core/src/application/propose-from-jd.ts` (or under `agent/` if preferred); export from application/index + core index                                                                                                              |
+| Hub maxSteps         | Modify `packages/api/src/lib/agent/hub-memory.ts`; `apps/agent/src/mastra/agents/hub-supervisor.ts`                                                                                                                                                 |
+| Tools                | Create under `apps/agent/src/mastra/tools/`: evidence list/get, `create-application`, `generate-apply-package`, `propose-application-from-jd` (client/no-op execute); register on hub-supervisor                                                    |
+| Apply package bridge | **Locked:** agent tool must end in same semantics as API `generateApplyPackage({ applicationId, userId })`. Prefer export + agent dep on `@tsu-stack/api` subpath (A); fallback agent parity wrapper (B) with same error codes. No second pipeline. |
+| Shared Chat          | Dashboard layout route + `HubChatProvider` owns Chat **and** history hydration once; `useHubChat` is context consumer only                                                                                                                          |
+| Tool output resume   | `use-hub-chat.ts` `sendAutomaticallyWhen` = approval **or** tool-output complete                                                                                                                                                                    |
+| JD card              | `application-from-jd-card.tsx` + message-parts                                                                                                                                                                                                      |
+| Applications import  | Import sheet + shared card + **invalidate applications list** on create success                                                                                                                                                                     |
+| Spec status          | Already Accepted; keep plan link                                                                                                                                                                                                                    |
 
 ---
 
@@ -57,67 +57,61 @@ git commit -m "fix(agent): allow hub multi-step with anti-rewrite discipline"
 
 ---
 
-### Task 2: Shared hub Chat provider + tool-output resume
+### Task 2: Shared hub Chat provider + hydration + tool-output resume
 
 **Files:**
 
 - Modify: `apps/web/src/features/agent-hub/api/use-hub-chat.ts`
-- Create: `apps/web/src/features/agent-hub/ui/hub-chat-provider.tsx` (export context + provider)
-- Modify: dashboard layout that wraps hub + applications (find `routes/(root-layout)/__protected/dashboard/route.tsx` or parent layout) — mount `HubChatProvider` once
-- Modify: `apps/web/src/widgets/agent-hub/ui/agent-hub-chat.tsx` — consume context instead of calling `useHubChat()` factory per mount
+- Create: `apps/web/src/features/agent-hub/ui/hub-chat-provider.tsx`
+- Create if missing: `apps/web/src/routes/(root-layout)/__protected/dashboard/route.tsx` — `<HubChatProvider><Outlet /></HubChatProvider>` (**not** on `__protected/route.tsx` — playground)
+- Modify: `apps/web/src/widgets/agent-hub/ui/agent-hub-chat.tsx` — consume context; **move** `useListHubMessagesQuery` + `setMessages` hydration into the provider
 - Export from `apps/web/src/features/agent-hub/index.ts`
 
-- [ ] **Step 1:** Research AI SDK export for tool-output auto-send (e.g. `lastAssistantMessageIsCompleteWithToolCalls` / docs sibling of `lastAssistantMessageIsCompleteWithApprovalResponses`). Compose:
+- [ ] **Step 1:** Research AI SDK tool-output auto-send predicate; compose with approval:
 
 ```ts
-sendAutomaticallyWhen: async ({ messages }) => {
-  // true if either approval responses complete OR client tool outputs complete
+sendAutomaticallyWhen: async (opts) => {
+  // true if approval responses complete OR client tool outputs complete
 };
 ```
 
-- [ ] **Step 2:** Refactor `useHubChat` so `Chat` instance is created **once** in provider (`useMemo` / module singleton keyed by user session). Context value: `{ ...useChat helpers, chat, addToolApprovalResponse, addToolOutput }`.
+- [ ] **Step 2:** Provider owns single `Chat`, `useChat`, **history hydrate once** (`historyReady`). Context: helpers + `addToolApprovalResponse` + `addToolOutput` + `historyReady`.
 
-- [ ] **Step 3:** Wire provider into dashboard protected layout (must wrap Applications + Hub).
+- [ ] **Step 3:** Mount on **dashboard** layout only.
 
-- [ ] **Step 4:** Manual smoke: open Hub, refresh, history still hydrates; approve flow still resumes.
+- [ ] **Step 4:** Smoke: open Hub first (hydrate); open Applications first (Import still sees messages); approval + tool-output resume both work.
 
 - [ ] **Step 5:** Commit
 
 ```bash
-git commit -m "feat(web): shared hub Chat provider and tool-output resume"
+git commit -m "feat(web): shared hub Chat provider, hydrate once, tool-output resume"
 ```
 
 ---
 
-### Task 3: Attach existing CRM tools + generate-apply-package tool
+### Task 3: Shared generateApplyPackage + hub tool + CRM reads
 
 **Files:**
 
-- Modify: `apps/agent/src/mastra/agents/hub-supervisor.ts` — `tools: { ... }`
+- Modify: `packages/api/src/lib/application/generate-apply-package.ts` — ensure single exported `generateApplyPackage({ applicationId, userId })`
+- Extract if needed: move shared generate into a module importable by agent **without** circular deps (preferred: add agent dependency on the package that owns the function after a thin split, **or** put a `generateApplyPackageForUser` in a path agent can import). **Concrete default:** implement `apps/agent/src/mastra/tools/generate-apply-package.tool.ts` that imports from `@tsu-stack/api/...` only after adding the dependency **or** duplicates by calling the **same** extracted function from e.g. `packages/api` → re-home extract under `packages/core` is wrong for DB side-effects; **best:** extract to `packages/api/src/lib/application/generate-apply-package.ts` and add `@tsu-stack/api` as agent dependency **if** tree allows, else copy-call via agent-local file that **imports the same source file** through workspace protocol after export from api package.json.
 - Create: `apps/agent/src/mastra/tools/generate-apply-package.tool.ts`
-- Possibly: `apps/agent/src/mastra/tools/create-application.tool.ts` (can land in Task 6 if preferred; if package needs create first, create in Task 6)
-- Register tools in agent index if required by codebase pattern
-- Modify: `requireToolApproval` to match `generate-apply-package` / workflow names
+- Modify: `hub-supervisor.ts` tools + `requireToolApproval`
 
-- [ ] **Step 1:** Add existing `listOpenApplicationsTool`, `getApplicationTool` to hub-supervisor `tools`.
+- [ ] **Step 1:** Verify agent `package.json` deps. Choose **one**:
+  - **(A preferred)** Export `generateApplyPackage` from `@tsu-stack/api` public subpath and add dependency in `apps/agent`; tool execute calls it with `userId` from requestContext.
+  - **(B fallback)** Agent-local execute that is a line-by-line parity wrapper of the API function (same error codes). Document parity checklist in tool file comment.
 
-- [ ] **Step 2:** Implement `generate-apply-package` tool:
+- [ ] **Step 2:** Tool input: `{ applicationId: string }` only. Output: `{ ok, code?, message?, applicationId }`.
 
-```ts
-// inputSchema: z.object({ applicationId: z.string().min(1) })
-// userId from requestContext only
-// execute → generateApplyPackage({ applicationId, userId }) or equivalent
-// output: { ok, applicationId, code?, message? }
-```
+- [ ] **Step 3:** Attach `listOpenApplicationsTool`, `getApplicationTool` to hub-supervisor.
 
-If agent package cannot import `@tsu-stack/api` lib, extract a shared callable from the existing generate path into a package the agent already depends on, or call Mastra apply-package agent the same way `callApplyPackageAgent` does from a thin agent-local wrapper that still **persists draft** like the API. Do not accept portfolio/job LLM config from the model.
+- [ ] **Step 4:** `requireToolApproval` true for `generate-apply-package`.
 
-- [ ] **Step 3:** `requireToolApproval`: return true for `generate-apply-package` (and keep existing workflow regexes).
-
-- [ ] **Step 4:** Commit
+- [ ] **Step 5:** Commit
 
 ```bash
-git commit -m "feat(agent): hub CRM tools and generate-apply-package with approval"
+git commit -m "feat(agent): hub CRM reads and generate-apply-package approval tool"
 ```
 
 ---
@@ -199,11 +193,12 @@ git commit -m "feat(core): propose-application-from-jd schemas"
   - **No server execute** / or execute returns input unchanged (client-side tool). Confirm Mastra/AI SDK pattern used in project for client tools (may be tool without execute or execute deferred). Align with AI SDK “tools that require user interaction”.
 
 - [ ] **Step 2:** `create-application` execute:
-  - Inputs: title, companyName, description, url?, applyUrl?, location?, …
+  - Inputs: title, companyName, **description** (full), url?, applyUrl?, location?, …
+  - Apply optional proposal `edits` before write (title/company/url)
   - userId from context
-  - If url present: `applicationRepository.createIfAbsentByUrl`
-  - Else: `applicationRepository.create` (no url)
-  - Always set `description` full text
+  - If url present: `createIfAbsentByUrl` (**v1:** conflict returns existing row **without** overwriting description)
+  - Else: `create` without url
+  - Always pass full `description` on create
   - Return `{ applicationId, created: boolean }`
 
 - [ ] **Step 3:** Instructions: after proposal output `save`/`package`, call `create-application` then if package call `generate-apply-package`.
@@ -245,20 +240,21 @@ git commit -m "feat(web): ApplicationFromJdCard GenUI for hub HITL"
 
 ---
 
-### Task 8: Applications Import dual UI
+### Task 8: Applications Import dual UI + board invalidation
 
 **Files:**
 
 - Create or modify Applications page UI for Import JD (sheet/island)
-- Consume `useHubChat` from shared provider
-- Reuse `ApplicationFromJdCard` when pending propose part exists in messages
-- Empty-state / CTA: prompt-kit `PromptSuggestion` “Paste a job description…”
+- Consume hub chat context from shared provider
+- Reuse `ApplicationFromJdCard` when pending propose part exists
+- Empty-state / CTA: prompt-kit `PromptSuggestion`
+- Invalidate applications list on successful create (see Step 3)
 
 - [ ] **Step 1:** Import UI: textarea + submit → `sendMessage({ text: jd })` on shared chat (optional prefix: “Import this job description:\n\n”).
 
-- [ ] **Step 2:** If messages contain pending propose tool, render card in sheet (same handlers).
+- [ ] **Step 2:** If messages contain pending propose tool, render card in sheet (same `addToolOutput` handlers).
 
-- [ ] **Step 3:** Fallback: if provider not ready, navigate to `/dashboard` with search/hash is acceptable temporary — prefer shared provider.
+- [ ] **Step 3:** When assistant tool part `create-application` (or generate path) reaches `output-available` with ok/created, **invalidate** applications TanStack Query (`useListApplicationsQuery` key / `orpcQueryClient.applications.list`) so the CRM board updates without full page reload. Same invalidation if watching hub stream on Applications page.
 
 - [ ] **Step 4:** Commit
 
@@ -270,17 +266,13 @@ git commit -m "feat(web): Applications import JD via shared hub chat"
 
 ### Task 9: Verification + docs
 
-- [ ] **Step 1:** Manual checklist from spec §12 (all success criteria).
+- [ ] **Step 1:** Manual checklist from spec §12 (all success criteria), including **board shows app after Save without hard refresh**.
 
-- [ ] **Step 2:** Confirm multi-step does not rewrite full capability lists (regression for maxSteps fix).
+- [ ] **Step 2:** Confirm multi-step does not rewrite full capability lists (existing `collapse-consecutive-text-parts` / filter helpers).
 
-- [ ] **Step 3:** Update design doc status to **Accepted**; link this plan.
+- [ ] **Step 3:** Confirm design doc remains **Accepted** and links this plan (already set; fix link only if drift).
 
-- [ ] **Step 4:** Commit
-
-```bash
-git commit -m "docs: mark hub tools HITL design accepted; plan verification notes"
-```
+- [ ] **Step 4:** Commit only if docs/notes changed.
 
 ---
 
