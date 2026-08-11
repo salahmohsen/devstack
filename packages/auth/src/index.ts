@@ -18,4 +18,9 @@ export {
   serializeInviteClearCookie,
   serializeInviteSetCookie
 } from "./invite-cookie";
-export { resolveUniqueProfileName, slugifyToProfileCandidate } from "./profile-name";
+export {
+  resolveUniqueProfileName,
+  resolveUniqueUsername,
+  slugifyToProfileCandidate,
+  slugifyToUsernameCandidate
+} from "./username";

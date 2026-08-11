@@ -1,4 +1,5 @@
 import { passkeyClient } from "@better-auth/passkey/client";
+import { usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
@@ -11,7 +12,7 @@ export const API_AUTH_URL = `${ENV_WEB_ISOMORPHIC.VITE_SERVER_URL}/auth`;
  */
 export const authClient = createAuthClient({
   baseURL: API_AUTH_URL,
-  plugins: [passkeyClient()]
+  plugins: [usernameClient(), passkeyClient()]
 });
 
 export type AuthSession = typeof authClient.$Infer.Session;

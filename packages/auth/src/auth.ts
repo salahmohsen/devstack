@@ -2,8 +2,9 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { APIError, betterAuth } from "better-auth";
 import { getOAuthState } from "better-auth/api";
-import { openAPI } from "better-auth/plugins";
+import { openAPI, username } from "better-auth/plugins";
 
+import { USERNAME_MAX, USERNAME_MIN, normalizeUsername, parseUsername } from "@tsu-stack/core";
 import { db, inviteRepository, userRepository } from "@tsu-stack/db";
 import * as schema from "@tsu-stack/db/schema";
 import { sendEmail, VerifyEmail } from "@tsu-stack/email";
@@ -13,7 +14,7 @@ import { getApiBasePath, getSharedCookieDomain, joinApiPath } from "@tsu-stack/e
 import { resolveTrustedOriginsForRequest } from "./allowed-browser-origin";
 import { extractInviteCodeFromSources, readStringField } from "./invite-code";
 import { INVITE_COOKIE_NAME, serializeInviteClearCookie } from "./invite-cookie";
-import { resolveUniqueProfileName } from "./profile-name";
+import { resolveUniqueUsername } from "./username";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -162,44 +163,69 @@ export const auth = betterAuth({
             }
           }
 
-          let profileName: string;
+          // Explicit claim: BA username field, body.username, or legacy body.profileName
+          // (web form still sends profileName until Task 5 renames it).
+          const endpointCtx = ctx as AuthEndpointContext | null;
+          const bodyRecord = isRecord(endpointCtx?.body) ? endpointCtx.body : null;
+          const explicitUsername =
+            readStringField(userData, "username") ??
+            readStringField(bodyRecord, "username") ??
+            readStringField(bodyRecord, "profileName");
+
+          // OAuth auto preference: GitHub getUserInfo seeds displayUsername with login
+          // when username is unset (plugin uniqueness would reject a pre-set taken login
+          // before this hook can suffix — so we never set username from OAuth, only
+          // displayUsername as the githubLogin candidate).
+          const githubLogin = !explicitUsername
+            ? readStringField(userData, "displayUsername")
+            : null;
+
+          let resolvedUsername: string;
           try {
-            profileName = await resolveUniqueProfileName({
-              profileName: readStringField(userData, "profileName"),
+            resolvedUsername = await resolveUniqueUsername({
+              username: explicitUsername,
+              githubLogin,
               name: typeof userData.name === "string" ? userData.name : null,
               email: typeof userData.email === "string" ? userData.email : null
             });
           } catch (error) {
             const code =
-              isRecord(error) && typeof error.code === "string"
-                ? error.code
-                : "PROFILE_NAME_INVALID";
-            const message = error instanceof Error ? error.message : "Invalid profile name";
-            if (code === "PROFILE_NAME_TAKEN") {
-              throw new APIError("CONFLICT", { code, message });
+              isRecord(error) && typeof error.code === "string" ? error.code : "USERNAME_INVALID";
+            const message = error instanceof Error ? error.message : "Invalid username";
+            if (code === "USERNAME_TAKEN" || code === "PROFILE_NAME_TAKEN") {
+              throw new APIError("CONFLICT", {
+                code: "USERNAME_TAKEN",
+                message: message.includes("taken") ? message : "This username is already taken"
+              });
             }
-            // Zod issues from parseProfileName
+            // Zod issues from parseUsername
             if (isRecord(error) && Array.isArray(error.issues)) {
               throw new APIError("BAD_REQUEST", {
-                code: "PROFILE_NAME_INVALID",
-                message: "Invalid profile name. Use 3–30 lowercase letters, numbers, and hyphens."
+                code: "USERNAME_INVALID",
+                message: "Invalid username. Use 3–30 lowercase letters, numbers, and hyphens."
               });
             }
             throw new APIError("BAD_REQUEST", {
-              code: "PROFILE_NAME_INVALID",
+              code: "USERNAME_INVALID",
               message
             });
           }
 
-          // Drop any accidental inviteCode if a client put it on user payload.
-          const { inviteCode: _drop, ...rest } = userData as typeof userData & {
+          // Drop any accidental inviteCode / legacy profileName if a client put it on user payload.
+          const {
+            inviteCode: _dropInvite,
+            profileName: _dropProfileName,
+            ...rest
+          } = userData as typeof userData & {
             inviteCode?: unknown;
+            profileName?: unknown;
           };
 
           return {
             data: {
               ...rest,
-              profileName
+              username: resolvedUsername,
+              displayUsername: resolvedUsername
             }
           };
         },
@@ -272,16 +298,12 @@ export const auth = betterAuth({
       },
       // Hand-owned field historically; keep it in additionalFields so auth:generate
       // does not wipe the column on regenerate. Not user-input at sign-up.
+      // username + displayUsername come from the Better Auth username plugin (not
+      // additionalFields). Public path handle is always set in user.create.before.
       onboardingCompletedAt: {
         type: "date",
         required: false,
         input: false
-      },
-      profileName: {
-        type: "string",
-        required: false,
-        unique: true,
-        input: true
       }
     },
     changeEmail: {
@@ -353,6 +375,16 @@ export const auth = betterAuth({
   plugins: [
     openAPI({
       theme: "deepSpace"
+    }),
+    // Path-safe usernames (hyphens), not BA default dots/underscores.
+    username({
+      minUsernameLength: USERNAME_MIN,
+      maxUsernameLength: USERNAME_MAX,
+      usernameNormalization: (value) => normalizeUsername(value),
+      usernameValidator: async (value) => parseUsername(value).success,
+      validationOrder: {
+        username: "post-normalization"
+      }
     }),
     passkey({
       // WebAuthn rpID must match the browser host (no port). Local 127.0.0.1 → localhost.
@@ -467,13 +499,23 @@ export const auth = betterAuth({
             emailVerified = true;
           }
 
+          // Image: BA only applies getUserInfo fields on *new* user create
+          // (overrideUserInfoOnSignIn defaults false; updateUserInfoOnLink is off).
+          // Re-auth / account link will not overwrite a custom (or cleared) avatar.
+          //
+          // displayUsername: carrier for GitHub login as auto-username preference.
+          // Do NOT set `username` here — plugin create.before runs before our hook
+          // and would throw USERNAME_IS_ALREADY_TAKEN before OAuth auto-suffix.
           return {
             user: {
               id: String(profile.id),
               name: profile.name ?? profile.login ?? "",
               email,
               emailVerified,
-              image: profile.avatar_url
+              image: profile.avatar_url,
+              ...(typeof profile.login === "string" && profile.login.length > 0
+                ? { displayUsername: profile.login }
+                : {})
             },
             data: profile
           };
