@@ -61,17 +61,14 @@ export const contactInputSchema = z.object({
 >;
 
 /**
- * Profile form fields owned by the app (contacts, summary).
- * Display name/email may still go through this path; avatar image is preferred via
- * Better Auth `updateUser({ image })` so the session cookie refreshes.
+ * Profile form fields owned by the app (contacts, summary, display name/email).
+ * Avatar: use Better Auth `authClient.updateUser({ image })` only — not this schema.
  */
 export const ProfileUpdateInputSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   email: z.email("Please enter a valid email address").trim().max(320),
   /** Public portfolio blurb (Better Auth user.summary). Rich HTML from the profile editor. */
   summary: z.string().max(8000).nullish(),
-  /** Prefer authClient.updateUser({ image }) for avatars; optional for legacy callers. */
-  image: z.string().optional(),
   contacts: z.array(contactInputSchema).optional()
 }) satisfies z.ZodType<
   Partial<Omit<UserSchemaInsert, "emailVerified" | "image" | "createdAt" | "updatedAt">>
@@ -116,7 +113,7 @@ export type Username = z.infer<typeof UsernameSchema>;
 
 /** Input for renaming a user's public username (path key). */
 export const RenameUsernameInputSchema = z.object({
-  username: z.string()
+  username: UsernameSchema
 });
 
 export type RenameUsernameInput = z.infer<typeof RenameUsernameInputSchema>;

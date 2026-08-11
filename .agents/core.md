@@ -26,7 +26,7 @@ Typical examples:
 - Pure formatters and normalizers.
 - Schema-derived option arrays and defaults used by filters, tabs, selects, or validators.
 - Shared constants such as MIME types, upload limits, reserved values, or other package-agnostic constraints.
-- Multi-user contracts: `profileName` validation / reserved path segments, invite and custom-domain shapes, tenant-agnostic transport types (not DB access).
+- Multi-user contracts: `username` validation / reserved path segments, invite and custom-domain shapes, tenant-agnostic transport types (not DB access).
 
 ## What Does Not Belong In `packages/core`
 

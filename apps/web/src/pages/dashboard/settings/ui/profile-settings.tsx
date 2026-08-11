@@ -164,7 +164,6 @@ export function ProfileSettings() {
       profileQuery.data?.summary ??
       (session?.user as { summary?: string | null } | undefined)?.summary ??
       "",
-    image: profileQuery.data?.image ?? session?.user?.image ?? "",
     contacts: toContactFormRows(
       (profileQuery.data?.contacts ?? []).map((c) => {
         return {
@@ -190,7 +189,6 @@ export function ProfileSettings() {
         name: data.name,
         email: data.email,
         summary: data.summary ?? "",
-        image: data.image ?? "",
         contacts: toContactFormRows(
           (data.contacts ?? []).map((c) => {
             return {
@@ -218,8 +216,6 @@ export function ProfileSettings() {
           name: value.name.trim(),
           email: value.email.trim(),
           summary: value.summary?.trim() ?? "",
-          // Preserve image from form (avatar applies immediately via updateUser).
-          image: value.image,
           contacts: contactsPayloadForSave(value.contacts)
         });
         setIsEditing(false);
@@ -235,7 +231,6 @@ export function ProfileSettings() {
       setIsAvatarUpdating(true);
       try {
         // Avatar-only: Better Auth updateUser refreshes the session cookie.
-        // Do not use profile.update for image-only — contacts/summary stay untouched.
         const result = await authClient.updateUser({
           image: url?.trim() ? url.trim() : null
         });
@@ -244,11 +239,10 @@ export function ProfileSettings() {
           return;
         }
         await authClient.getSession();
-        const nextImage = url?.trim() ? url.trim() : "";
-        form.setFieldValue("image", nextImage);
+        const nextImage = url?.trim() ? url.trim() : null;
         queryClient.setQueryData(getProfileQueryOptions().queryKey, (prev) => {
           if (!prev) return prev;
-          return { ...prev, image: nextImage || null };
+          return { ...prev, image: nextImage };
         });
         void queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
@@ -259,7 +253,7 @@ export function ProfileSettings() {
         setIsAvatarUpdating(false);
       }
     },
-    [form, queryClient]
+    [queryClient]
   );
 
   const renameForm = useAppForm({

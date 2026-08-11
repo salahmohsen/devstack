@@ -52,7 +52,7 @@ When a feature introduces shared contracts that should drive both API and fronte
 - Follow [TanStack patterns](./tanstack-patterns.md) for route placement, thin `beforeLoad`, and page composition.
 - Follow [UI guidelines](./ui.md) for app-level component composition.
 - Add [Auth patterns](./auth.md) or [SEO patterns](./seo.md) when the feature touches those surfaces.
-- Domain data is multi-tenant: every private write/read uses session `userId`; public surfaces resolve `profileName` and/or Host → `userId` first. See [CONTEXT.md](../CONTEXT.md).
+- Domain data is multi-tenant: every private write/read uses session `userId`; public surfaces resolve `username` and/or Host → `userId` first. See [CONTEXT.md](../CONTEXT.md).
 
 ## Validation
 

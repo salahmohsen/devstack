@@ -112,9 +112,9 @@ export type CreateProfileMutationResult = Awaited<ReturnType<typeof client.profi
 Route files should import query option factories from the slice barrel and preload them in `beforeLoad`.
 
 ```ts
-export const Route = createFileRoute("/(root-layout)/$profileName/")({
+export const Route = createFileRoute("/(root-layout)/$username/")({
   beforeLoad: ({ context, params }) => {
-    void context.queryClient.ensureQueryData(getProfileQueryOptions(params.profileName));
+    void context.queryClient.ensureQueryData(getProfileQueryOptions(params.username));
   },
   component: ProfilePage
 });

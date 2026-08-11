@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import {
   contactOutputSchema,
-  parseUsername,
   ProfileOutputSchema,
   ProfileUpdateInputSchema,
   PublicUsernameInputSchema,
@@ -78,8 +77,7 @@ export const profileRouter = {
     }),
   update: protectedProcedure
     .route({
-      description:
-        "Update the current owner's profile (name, email) and contact info. Prefer authClient.updateUser for image.",
+      description: "Update the current owner's profile (name, email) and contact info",
       method: "POST"
     })
     .input(ProfileUpdateInputSchema)
@@ -104,16 +102,11 @@ export const profileRouter = {
         }
       }
 
-      // Prefer Better Auth updateUser for avatars (session refresh). Still accept image here for legacy.
-      const imageUpdate =
-        input.image === undefined
-          ? {}
-          : { image: input.image.trim().length > 0 ? input.image.trim() : null };
+      // Avatar image is owned by Better Auth (authClient.updateUser) — not this procedure.
       const updatedUser = await userRepository.update(userId, {
         name: input.name,
         email: input.email,
         summary: input.summary,
-        ...imageUpdate,
         ...(emailChanged ? { emailVerified: false } : {})
       });
       if (!updatedUser) {
@@ -147,11 +140,8 @@ export const profileRouter = {
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
 
-      const parsed = parseUsername(input.username);
-      if (!parsed.success) {
-        throw errors.USERNAME_INVALID();
-      }
-      const newName = parsed.data;
+      // RenameUsernameInputSchema already applies UsernameSchema.
+      const newName = input.username;
 
       const current = await userRepository.findById(userId);
       if (!current) {

@@ -207,9 +207,9 @@ export type EditProfileMutationResult = Awaited<ReturnType<typeof client.profile
 ## Multi-tenant scoping
 
 - **Protected procedures** act for `context.session.user.id` only. Repositories must filter by that `userId` — never unscoped `findAll()` for tenant data.
-- **Public portfolio/GitHub procedures** resolve the tenant first (`profileName` path and/or Host custom domain via `resolvePublicPortfolioContext` / `withPublicGitHubContext`), then load that user’s opted-in data. Do not use `userRepository.findFirst()` or “first GitHub account” as the site owner.
+- **Public portfolio/GitHub procedures** resolve the tenant first (`username` path and/or Host custom domain via `resolvePublicPortfolioContext` / `withPublicGitHubContext`), then load that user’s opted-in data. Do not use `userRepository.findFirst()` or “first GitHub account” as the site owner.
 - **`ownerProcedure`** means “signed-in user has linked their own GitHub” for private GitHub RPCs — not a global site-admin role.
-- Prefer shared contracts from `packages/core` for `profileName`, domain verify, and invite shapes.
+- Prefer shared contracts from `packages/core` for `username`, domain verify, and invite shapes.
 
 ## Practical Rules
 
