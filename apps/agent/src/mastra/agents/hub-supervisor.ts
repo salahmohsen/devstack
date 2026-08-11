@@ -10,6 +10,7 @@ import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agen
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
+import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
 import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
 import { getExperienceTool } from "#@/mastra/tools/get-experience.tool";
@@ -22,6 +23,7 @@ import { listOpenApplicationsTool } from "#@/mastra/tools/list-open-applications
 import { listProjectsTool } from "#@/mastra/tools/list-projects.tool";
 import { listResumesTool } from "#@/mastra/tools/list-resumes.tool";
 import { listStacksTool } from "#@/mastra/tools/list-stacks.tool";
+import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-application-from-jd.tool";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
 import { mailJobHarvestWorkflow } from "#@/mastra/workflows/mail-job-harvest-workflow";
@@ -57,6 +59,7 @@ Stacks: \`stackCategorizerAgent\`, \`detectStacksWorkflow\`, \`organizeStacksWor
 Career mail (prefer workflows): \`mailProcessWorkflow\`, \`mailClassifyWorkflow\`, \`mailJobHarvestWorkflow\`, \`mailReplyWorkflow\`.
 Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifierMailExtractor\`, \`jobPageExtractor\`, \`jobPreferenceMatchScorer\`, \`crmApplicationMatcher\`, \`crmStageAdvisor\`, \`mailReplyAgent\`.
 CRM reads: \`listOpenApplications\`, \`getApplication\`.
+CRM write / HITL: \`propose-application-from-jd\` (client confirm card), \`create-application\` (after save|package).
 Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`.
 Apply package (HITL approval): \`generateApplyPackage\` — application must already exist; never invent package success.
 
@@ -67,7 +70,8 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
 - Only invoke a specialist, workflow, or tool when the user asks for a concrete action that needs live data or mutation.
 - Prefer a workflow over a sub-agent for defined multi-step processes.
 - State which specialist/workflow you invoke (one short sentence) when you do.
-- JD paste or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card). **Do not invent CRM rows** without that tool and user confirmation.
+- JD paste or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; full description required). **Do not invent CRM rows** without that tool and user confirmation.
+- After proposal tool output: \`dismiss\` → short ack, no create. \`save\` → \`create-application\` (merge any \`edits\` into fields). \`package\` → \`create-application\` then \`generate-apply-package\` with the returned applicationId.
 - Apply package → only via \`generate-apply-package\` after the user chose the package path and an application already exists. Never invent package success.
 - Do not invent tools or pretend a send/apply succeeded without tool results.
 - Surface empty/error tool results plainly.
@@ -101,6 +105,8 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
       listResumes: listResumesTool,
       getResume: getResumeTool,
       getJobPreferences: getJobPreferencesTool,
+      proposeApplicationFromJd: proposeApplicationFromJdTool,
+      createApplication: createApplicationTool,
       generateApplyPackage: generateApplyPackageTool
     },
     agents: {
