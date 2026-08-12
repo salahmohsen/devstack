@@ -92,7 +92,7 @@ export function EntityFormSheet({
             <SheetTitle>{title}</SheetTitle>
             {description ? <SheetDescription>{description}</SheetDescription> : null}
           </SheetHeader>
-          <SheetPanel className="min-h-0 flex-1">{children}</SheetPanel>
+          <SheetPanel className="min-h-0 min-w-0 flex-1 overflow-x-hidden">{children}</SheetPanel>
           <SheetFooter>
             {typeof footer === "function" ? footer({ requestClose }) : footer}
           </SheetFooter>

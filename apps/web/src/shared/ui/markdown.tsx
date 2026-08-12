@@ -119,7 +119,7 @@ const components: Record<string, React.FC<any>> = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-sm font-medium text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
+      className="text-sm font-medium break-all text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary"
       {...props}
     >
       {children}
@@ -156,7 +156,7 @@ const components: Record<string, React.FC<any>> = {
     }
     return (
       <code
-        className="rounded-md border border-border/60 bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground"
+        className="rounded-md border border-border/60 bg-muted px-1.5 py-0.5 font-mono text-xs wrap-break-word break-all text-foreground"
         {...props}
       >
         {children}
@@ -208,8 +208,8 @@ const components: Record<string, React.FC<any>> = {
     return <source src={useResolvedAssetUrl(src)} srcSet={resolvedSrcSet} {...props} />;
   },
   table: ({ node: _node, children, ...props }) => (
-    <div className="mb-2 flex flex-col overflow-hidden rounded-lg border border-border">
-      <table className="w-full border-collapse text-sm text-foreground" {...props}>
+    <div className="mb-2 max-w-full overflow-x-auto rounded-lg border border-border">
+      <table className="w-full min-w-0 border-collapse text-sm text-foreground" {...props}>
         {children}
       </table>
     </div>
@@ -308,7 +308,13 @@ export function Markdown({
 }) {
   return (
     <MarkdownAssetUrlResolverContext.Provider value={resolveAssetUrl ?? null}>
-      <div className={cn("wrap-break-word", className)}>
+      <div
+        className={cn(
+          // Contain wide tokens (URLs, long words, fenced code) so parent sheets don't scroll sideways.
+          "max-w-full min-w-0 wrap-anywhere",
+          className
+        )}
+      >
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkAlert]}
           rehypePlugins={allowRawHtml ? [rehypeRaw] : []}
