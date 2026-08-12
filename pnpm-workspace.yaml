@@ -58,7 +58,6 @@ catalog:
   "@types/node": ^25.9.4
   "@types/react": ^19.2.17
   "@types/react-dom": ^19.2.3
-  "@typescript/native-preview": 7.0.0-dev.20260701.1
   "@vitejs/plugin-react": ^6.0.3
   babel-plugin-react-compiler: ^1.0.0
   better-auth: ^1.6.23
@@ -75,7 +74,8 @@ catalog:
   lucide-react: ^1.22.0
   next-themes: ^0.4.6
 
-  oxlint-tsgolint: ^0.23.0
+  # Align with vite-plus 0.2.7 (depends on oxlint-tsgolint@=7.0.2001 / TS7-native tsgolint)
+  oxlint-tsgolint: 7.0.2001
   radix-ui: ^1.6.1
   react: ^19.2.7
   react-dom: ^19.2.7
@@ -129,7 +129,7 @@ catalog:
   "@tiptap/extension-typography": ^3.27.1
   "@react-email/ui": 6.6.5
   react-email: 6.6.5
-  oxlint: ^1.72.0
+  oxlint: ^1.75.0
   "ollama-ai-provider-v2": ^3.6.0
   "files-sdk": ^2.0.0
   "@aws-sdk/client-s3": ^3.1077.0
@@ -211,3 +211,6 @@ peerDependencyRules:
     - vite
   allowedVersions:
     vite: "*"
+    # Oxlint/TanStack plugins still declare TS 5–6 peers; monorepo tsc is Go-native 7.
+    # typescript-paths (via mastra) still needs the JS TS6 API — agent pins typescript@6.
+    typescript: ">=5.4.0"

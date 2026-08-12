@@ -47,6 +47,6 @@
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
     "mastra": "catalog:",
-    "typescript": "^6.0.3"
+    "typescript": "~6.0.3"
   }
 }
