@@ -248,12 +248,20 @@ Do NOT invent descriptions — they are filled from the official npm registry la
           }
         }
       } catch (error) {
+        // Cancel must not invent low-confidence rows — stop the categorize phase.
+        if (
+          (error instanceof DOMException && error.name === "AbortError") ||
+          (error instanceof Error && error.name === "AbortError") ||
+          abortSignal?.aborted
+        ) {
+          break;
+        }
         log.error(error instanceof Error ? error : new Error(String(error)), {
           event: "detect_stacks_ai_categorize_chunk_failed",
           chunkStart: i,
           chunkSize: chunk.length
         });
-        // Fallback: all packages in this chunk get low-confidence entries
+        // Timeout / LLM failure: soft-fail this chunk only
         for (const dep of chunk) {
           categorized.push(...lowConfidenceFallback([dep]));
           usedNames.add(dep.name);

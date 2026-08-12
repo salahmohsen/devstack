@@ -62,13 +62,15 @@ export async function withTimeoutSignal<T>(
   message = `LLM timeout after ${ms / 1000}s`,
   outerSignal?: AbortSignal
 ): Promise<T> {
+  // Do not start work if already cancelled — avoids orphan promises when
+  // withTimeout short-circuits on an aborted outer signal.
+  if (outerSignal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
   const local = new AbortController();
   const onOuterAbort = () => local.abort();
-  if (outerSignal?.aborted) {
-    local.abort();
-  } else {
-    outerSignal?.addEventListener("abort", onOuterAbort, { once: true });
-  }
+  outerSignal?.addEventListener("abort", onOuterAbort, { once: true });
   try {
     return await withTimeout(run(local.signal), ms, message, outerSignal, () => local.abort());
   } finally {
