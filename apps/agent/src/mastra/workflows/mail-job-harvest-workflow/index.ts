@@ -3,12 +3,14 @@ import { createStep, createWorkflow } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import {
+  AiJobAgentTakeBatchSchema,
   AiJobMatchBatchSchema,
   canonicalizeJobUrl,
   HarvestedJobSchema,
   HarvestJobPreferenceSchema,
   inferApplicationSource,
   isValidHarvestedJob,
+  MailJobHarvestAfterScoreSchema,
   MailJobHarvestWorkflowInputSchema,
   MailJobHarvestWorkflowOutputSchema,
   MailNotifierExtractSchema,
@@ -29,7 +31,10 @@ function harvestRequestContext(llm: RuntimeLlmConfig | undefined, userId: string
 const MAIL_EXTRACT_TIMEOUT_MS = 90_000;
 const PAGE_EXTRACT_TIMEOUT_MS = 45_000;
 const SCORE_TIMEOUT_MS = 60_000;
+const TAKE_TIMEOUT_MS = 60_000;
 const MAX_JOBS_TO_ENRICH = 8;
+/** Cap take generation to match enrich budget. */
+const MAX_JOBS_TO_TAKE = 8;
 
 const afterMailExtractSchema = z.object({
   messageId: z.string(),
@@ -242,15 +247,19 @@ Use mail-card hints only; do not invent employers.`;
 listingUrl: ${seed.listingUrl}
 Mail-card hints (may be incomplete / Unknown):
 - title: ${seed.title}
-- company: ${seed.companyName}
+- companyName: ${seed.companyName}
 - location: ${seed.location ?? "null"}
 - applyMethod hint: ${seed.applyMethod}
 
 ${pageBlock}
 
-Return structured job fields. Prefer page facts over mail hints when they conflict.
+Return structured job fields using EXACT keys:
+title, companyName (not "company"), location, salaryRange, description, listingUrl, applyUrl, applyMethod, workMode, source.
+applyMethod must be one of: easy_apply | external | email | unknown (lowercase, not "Unknown").
+workMode must be one of: remote | hybrid | onsite | null.
+Prefer page facts over mail hints when they conflict.
 listingUrl must stay a real http(s) job URL (prefer the jobs/view id).
-If page is a login wall / empty, keep title/company from mail hints when they are real role/company names — never leave Unknown if the page title has the role.`;
+If page is a login wall / empty, keep title/companyName from mail hints when they are real role/company names — never leave Unknown if the page title has the role.`;
 
         const result = await Promise.race([
           agent.generate([{ role: "user", content: prompt }], {
@@ -313,7 +322,7 @@ const scoreJobsAgainstPreferenceAi = createStep({
   id: "ai-score-jobs-against-preference",
   description: "LLM scores each job against seeker JobPreference (semantic, not keyword plumbing)",
   inputSchema: afterPageEnrichSchema,
-  outputSchema: MailJobHarvestWorkflowOutputSchema,
+  outputSchema: MailJobHarvestAfterScoreSchema,
   execute: async ({ inputData, mastra }) => {
     if (!inputData.isJobNotifier || inputData.jobs.length === 0) {
       return {
@@ -321,7 +330,9 @@ const scoreJobsAgainstPreferenceAi = createStep({
         userId: inputData.userId,
         isJobNotifier: inputData.isJobNotifier,
         jobs: [],
-        notes: inputData.notes ?? "not_notifier_or_empty"
+        notes: inputData.notes ?? "not_notifier_or_empty",
+        preference: inputData.preference,
+        llm: inputData.llm
       };
     }
 
@@ -346,7 +357,9 @@ const scoreJobsAgainstPreferenceAi = createStep({
         userId: inputData.userId,
         isJobNotifier: true,
         jobs: [],
-        notes: [inputData.notes, skipNote ?? "match_scorer_unavailable"].filter(Boolean).join(";")
+        notes: [inputData.notes, skipNote ?? "match_scorer_unavailable"].filter(Boolean).join(";"),
+        preference: inputData.preference,
+        llm: inputData.llm
       };
     }
 
@@ -401,7 +414,9 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
           userId: inputData.userId,
           isJobNotifier: true,
           jobs: [],
-          notes: [inputData.notes, "match_score_schema_failed"].filter(Boolean).join(";")
+          notes: [inputData.notes, "match_score_schema_failed"].filter(Boolean).join(";"),
+          preference: inputData.preference,
+          llm: inputData.llm
         };
       }
 
@@ -417,7 +432,8 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
           ...job,
           matchScore: score,
           matchPassed: passed,
-          matchReasons: hit.reasons?.length ? hit.reasons : ["ai_match"]
+          matchReasons: hit.reasons?.length ? hit.reasons : ["ai_match"],
+          agentTake: null
         });
       }
 
@@ -426,7 +442,9 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
         userId: inputData.userId,
         isJobNotifier: true,
         jobs: scored,
-        notes: [inputData.notes, `ai_match_scored_${scored.length}`].filter(Boolean).join(";")
+        notes: [inputData.notes, `ai_match_scored_${scored.length}`].filter(Boolean).join(";"),
+        preference: inputData.preference,
+        llm: inputData.llm
       };
     } catch (err) {
       return {
@@ -435,6 +453,161 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
         isJobNotifier: true,
         jobs: [],
         notes: [inputData.notes, err instanceof Error ? err.message : "match_score_error"]
+          .filter(Boolean)
+          .join(";"),
+        preference: inputData.preference,
+        llm: inputData.llm
+      };
+    }
+  }
+});
+
+/**
+ * Soft-fail narrative take for matchPassed jobs only.
+ * Never drops scored jobs — create path still runs if take fails.
+ */
+const generateAgentTakesAi = createStep({
+  id: "ai-generate-agent-takes",
+  description: "LLM writes 1–3 sentence agent takes for match-passed harvest jobs (soft-fail)",
+  inputSchema: MailJobHarvestAfterScoreSchema,
+  outputSchema: MailJobHarvestWorkflowOutputSchema,
+  execute: async ({ inputData, mastra }) => {
+    const base = {
+      messageId: inputData.messageId,
+      userId: inputData.userId,
+      isJobNotifier: inputData.isJobNotifier,
+      jobs: inputData.jobs,
+      notes: inputData.notes
+    };
+
+    if (!inputData.isJobNotifier || inputData.jobs.length === 0) {
+      return base;
+    }
+
+    const passed = inputData.jobs.filter((j) => j.matchPassed).slice(0, MAX_JOBS_TO_TAKE);
+    if (passed.length === 0) {
+      return {
+        ...base,
+        notes: [inputData.notes, "agent_take_skip_no_passed"].filter(Boolean).join(";")
+      };
+    }
+
+    const agent = mastra?.getAgent("jobAgentTake");
+    const { model, skipNote } = generateModelOption(inputData.llm as RuntimeLlmConfig | undefined);
+    if (!agent || !model) {
+      return {
+        ...base,
+        notes: [inputData.notes, skipNote ?? "agent_take_unavailable"].filter(Boolean).join(";")
+      };
+    }
+
+    const prefs: HarvestJobPreference = inputData.preference ?? {
+      workModes: [],
+      locations: [],
+      roleKeywords: [],
+      excludeKeywords: [],
+      salaryMin: null,
+      salaryCurrency: null,
+      minMatchScore: 60
+    };
+
+    const jobsJson = passed.map((j) => {
+      return {
+        listingUrl: j.listingUrl,
+        title: j.title,
+        companyName: j.companyName,
+        location: j.location ?? null,
+        salaryRange: j.salaryRange ?? null,
+        matchScore: j.matchScore,
+        matchReasons: j.matchReasons ?? [],
+        description: (j.description ?? "").slice(0, 800) || null
+      };
+    });
+
+    const prompt = `Write a short agent take for EACH match-passed job.
+
+Seeker preferences (JSON):
+${JSON.stringify(
+  {
+    workModes: prefs.workModes,
+    locations: prefs.locations,
+    roleKeywords: prefs.roleKeywords,
+    excludeKeywords: prefs.excludeKeywords,
+    salaryMin: prefs.salaryMin,
+    salaryCurrency: prefs.salaryCurrency
+  },
+  null,
+  2
+)}
+
+Jobs (JSON array):
+${JSON.stringify(jobsJson, null, 2)}
+
+Return takes[] with listingUrl + agentTake (1–3 sentences each, product tone).
+Ground takes in job fields and match reasons. Do not invent employers or tech not in the input.
+Use the exact listingUrl from each job.`;
+
+    const requestContext = harvestRequestContext(
+      inputData.llm as RuntimeLlmConfig | undefined,
+      inputData.userId
+    );
+
+    try {
+      const result = await Promise.race([
+        agent.generate([{ role: "user", content: prompt }], {
+          structuredOutput: { schema: AiJobAgentTakeBatchSchema },
+          model,
+          requestContext
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`agent take timeout ${TAKE_TIMEOUT_MS}ms`)),
+            TAKE_TIMEOUT_MS
+          )
+        )
+      ]);
+
+      const parsed = AiJobAgentTakeBatchSchema.safeParse(result.object);
+      if (!parsed.success) {
+        return {
+          ...base,
+          notes: [inputData.notes, "agent_take_schema_failed"].filter(Boolean).join(";")
+        };
+      }
+
+      const takeByUrl = new Map(
+        parsed.data.takes.map((t) => {
+          const take = t.agentTake.replace(/\s+/g, " ").trim().slice(0, 1200);
+          return [urlKey(t.listingUrl), take] as const;
+        })
+      );
+
+      let filled = 0;
+      const jobs: ScoredHarvestedJob[] = inputData.jobs.map((job) => {
+        if (!job.matchPassed) return { ...job, agentTake: job.agentTake ?? null };
+        const take = takeByUrl.get(urlKey(job.listingUrl));
+        if (!take) return { ...job, agentTake: null };
+        filled += 1;
+        return { ...job, agentTake: take };
+      });
+
+      return {
+        messageId: inputData.messageId,
+        userId: inputData.userId,
+        isJobNotifier: true,
+        jobs,
+        notes: [inputData.notes, `agent_take_filled_${filled}_of_${passed.length}`]
+          .filter(Boolean)
+          .join(";")
+      };
+    } catch (err) {
+      // Soft-fail: still return scored jobs without takes
+      return {
+        ...base,
+        notes: [
+          inputData.notes,
+          err instanceof Error ? `agent_take_error:${err.message}` : "agent_take_error"
+        ]
           .filter(Boolean)
           .join(";")
       };
@@ -449,6 +622,7 @@ export const mailJobHarvestWorkflow = createWorkflow({
 })
   .then(extractFromMailAi)
   .then(enrichJobsFromPages)
-  .then(scoreJobsAgainstPreferenceAi);
+  .then(scoreJobsAgainstPreferenceAi)
+  .then(generateAgentTakesAi);
 
 mailJobHarvestWorkflow.commit();

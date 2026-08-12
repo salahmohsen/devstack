@@ -26,6 +26,7 @@
     "@tsu-stack/env": "workspace:*",
     "@tsu-stack/github": "workspace:*",
     "@tsu-stack/logger": "workspace:*",
+    "bullmq": "catalog:",
     "drizzle-orm": "catalog:",
     "files-sdk": "catalog:",
     "jose": "catalog:",

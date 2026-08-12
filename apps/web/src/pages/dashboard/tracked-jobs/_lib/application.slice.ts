@@ -19,6 +19,8 @@ type ApplicationUIState = {
   packageSheetAppId: string | null;
   /** Send outreach confirm dialog (application id). */
   sendOutreachAppId: string | null;
+  /** Import JD via shared hub chat sheet. */
+  importJdSheetOpen: boolean;
 };
 
 type ApplicationUIActions = {
@@ -39,6 +41,8 @@ type ApplicationUIActions = {
   closePackageSheet: () => void;
   openSendOutreach: (applicationId: string) => void;
   closeSendOutreach: () => void;
+  openImportJdSheet: () => void;
+  closeImportJdSheet: () => void;
 };
 
 let state: ApplicationUIState = {
@@ -50,7 +54,8 @@ let state: ApplicationUIState = {
   listFilter: "open",
   stageInFlightIds: {},
   packageSheetAppId: null,
-  sendOutreachAppId: null
+  sendOutreachAppId: null,
+  importJdSheetOpen: false
 };
 
 const listeners = new Set<() => void>();
@@ -93,7 +98,9 @@ const actions: ApplicationUIActions = {
   openPackageSheet: (applicationId) => setState({ packageSheetAppId: applicationId }),
   closePackageSheet: () => setState({ packageSheetAppId: null }),
   openSendOutreach: (applicationId) => setState({ sendOutreachAppId: applicationId }),
-  closeSendOutreach: () => setState({ sendOutreachAppId: null })
+  closeSendOutreach: () => setState({ sendOutreachAppId: null }),
+  openImportJdSheet: () => setState({ importJdSheetOpen: true }),
+  closeImportJdSheet: () => setState({ importJdSheetOpen: false })
 };
 
 function subscribe(listener: () => void) {

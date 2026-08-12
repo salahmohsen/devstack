@@ -40,7 +40,7 @@ async function generateAgentObject<T>(input: {
   }
 
   try {
-    const res = await agentFetch(`/agents/${encodeURIComponent(input.agentId)}/generate`, {
+    const res = await agentFetch(`/api/agents/${encodeURIComponent(input.agentId)}/generate`, {
       method: "POST",
       body: JSON.stringify({
         messages: [{ role: "user", content: input.prompt }],

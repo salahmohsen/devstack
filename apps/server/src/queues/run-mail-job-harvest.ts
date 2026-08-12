@@ -1,14 +1,17 @@
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
+  buildApplicationSourceTags,
   canonicalizeJobUrl,
   defaultJobPreference,
+  inferApplicationSource,
   isValidHarvestedJob,
   type JobPreference,
   type MailJobHarvestResult,
   type ScoredHarvestedJob
 } from "@tsu-stack/core";
 import {
+  applicationActivityRepository,
   applicationRepository,
   jobPreferenceRepository,
   mailMessageRepository
@@ -36,7 +39,8 @@ async function loadPreference(userId: string): Promise<JobPreference> {
  * 1. Workflow: AI reads mail → extract job cards/URLs
  * 2. Workflow: fetch each listing URL (tool) → AI structured job fields
  * 3. Workflow: AI scores each job against JobPreference (semantic)
- * 4. Create Applications for matchPassed jobs
+ * 4. Workflow: AI agent take for matchPassed jobs (soft-fail)
+ * 5. Create Applications for matchPassed jobs (inbox)
  */
 export async function runMailJobHarvest(input: {
   messageId: string;
@@ -140,6 +144,9 @@ export async function runMailJobHarvest(input: {
         continue;
       }
 
+      const platform = job.source ?? inferApplicationSource(listingUrl, row.fromEmail ?? undefined);
+      const sourceTags = buildApplicationSourceTags({ channel: "mail", platform });
+
       // Race-safe: unique (userId, url) + onConflictDoNothing
       const { row: app, created: wasCreated } = await applicationRepository.createIfAbsentByUrl({
         userId: row.userId,
@@ -149,11 +156,15 @@ export async function runMailJobHarvest(input: {
         applyUrl: job.applyUrl ?? null,
         applyMethod: job.applyMethod ?? "unknown",
         matchScore: job.matchScore,
-        source: job.source ?? null,
+        source: platform,
+        sourceTags,
         location: job.location ?? null,
         salaryRange: job.salaryRange ?? null,
         description: job.description ?? null,
-        notes: `AI harvest from mail ${row.id}. AI match: ${(job.matchReasons ?? []).join("; ") || "ok"}`,
+        notes: null,
+        agentTake: job.agentTake?.trim() ? job.agentTake.trim().slice(0, 1200) : null,
+        sourceMessageId: row.id,
+        trackingStatus: "inbox",
         stage: "saved",
         hiringUrgency: "unknown",
         resumeId: null
@@ -166,17 +177,28 @@ export async function runMailJobHarvest(input: {
 
       created += 1;
       applicationIds.push(app.id);
+      await applicationActivityRepository.append({
+        userId: row.userId,
+        applicationId: app.id,
+        kind: "discovered",
+        metadata: {
+          matchScore: job.matchScore,
+          matchReasons: job.matchReasons ?? [],
+          messageId: row.id,
+          sourceTags
+        }
+      });
       if (created === 1 && !row.applicationId) {
         await mailMessageRepository.setApplicationId(row.id, row.userId, app.id);
       }
     } catch (err) {
       skippedFailed += 1;
+      // One logger lifetime for the whole run — only set mid-loop; emit once at end.
       log.error(err instanceof Error ? err : new Error(String(err)), {
         event: "mail_job_harvest_job_create_failed",
         messageId: row.id,
         listingUrl: job.listingUrl
       });
-      log.emit({ _forceKeep: true });
     }
   }
 
@@ -192,7 +214,7 @@ export async function runMailJobHarvest(input: {
         skippedLowMatch > 0
           ? `AI harvest · skipped ${skippedLowMatch} low match`
           : "AI harvest from job alert email",
-      href: "/dashboard/applications",
+      href: "/dashboard/new-jobs",
       messageId: row.id,
       applicationId: applicationIds[0] ?? null
     });

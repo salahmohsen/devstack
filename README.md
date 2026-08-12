@@ -82,7 +82,8 @@ Specs:
 | `/dashboard` | Hub home |
 | `/dashboard/mail/*` | Career Inbox by category |
 | `/dashboard/review` | Confirm AI drafts / review items |
-| `/dashboard/applications` | Job pipeline board/list |
+| `/dashboard/new-jobs` | AI job discoveries (inbox / dismissed) |
+| `/dashboard/tracked-jobs` | Job pipeline board/list |
 | `/dashboard/experiences   | projects                                                                                   | stacks` | Evidence CRUD (Sheet forms) |
 | `/dashboard/resumes` | Resume library |
 | `/dashboard/onboarding` | Owner onboarding / resume import |

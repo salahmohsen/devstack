@@ -1,15 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { DownloadIcon, ExternalLinkIcon, FileTextIcon } from "lucide-react";
+import { DownloadIcon, ExternalLinkIcon, FileTextIcon, RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   APPLICATION_SOURCE_LABELS,
+  APPLICATION_SOURCE_TAG_LABELS,
   EMPLOYMENT_TYPE_LABELS,
   HIRING_URGENCY_LABELS,
-  type ApplicationOutput
+  type ApplicationOutput,
+  type ApplicationSourceTag
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -25,15 +27,18 @@ import { FrameDescription } from "@tsu-stack/ui/components/frame";
 import { Markdown } from "@/shared/ui/markdown";
 
 import {
+  ApplicationActivitySection,
+  ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
   coverLetterDownloadUrl,
-  resumeDownloadUrl
+  resumeDownloadUrl,
+  useRegenerateAgentTakeMutation
 } from "@/features/applications";
 
 import { ItemInfoPanel } from "@/widgets/items-page";
 
-import { ApplyPackagePanelActions } from "@/pages/dashboard/applications/ui/apply-package-entry-actions";
+import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";
@@ -89,6 +94,7 @@ type ApplicationInfoPanelProps = {
 
 export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
+  const regenerateTake = useRegenerateAgentTakeMutation();
 
   const sourceLabel =
     item.source && item.source in APPLICATION_SOURCE_LABELS
@@ -118,12 +124,22 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
             <span className="flex flex-wrap items-center gap-1.5">
               <ApplicationStageBadge stage={item.stage} />
               <ApplicationStatusBadge outcome={item.outcome} />
+              {item.matchScore != null ? (
+                <ApplicationMatchScoreBadge matchScore={item.matchScore} />
+              ) : null}
               {item.employmentType !== "unknown" ? (
                 <Badge variant="outline">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</Badge>
               ) : null}
               {item.hiringUrgency !== "unknown" ? (
                 <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
               ) : null}
+              {(item.sourceTags ?? []).map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-[10px] font-medium">
+                  {tag in APPLICATION_SOURCE_TAG_LABELS
+                    ? APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag]
+                    : tag}
+                </Badge>
+              ))}
             </span>
           </FrameDescription>
         }
@@ -132,6 +148,27 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
       >
         <div className="space-y-5">
           <ApplyPackagePanelActions app={item} />
+
+          <Section title="Agent's take">
+            {item.agentTake?.trim() ? (
+              <p className="text-sm leading-relaxed text-muted-foreground">{item.agentTake}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">No agent take yet.</p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              loading={regenerateTake.isPending}
+              onClick={() => {
+                void regenerateTake.mutateAsync({ id: item.id });
+              }}
+            >
+              <RefreshCwIcon className="size-3.5" aria-hidden />
+              {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
+            </Button>
+          </Section>
 
           {hasMaterials ? (
             <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
@@ -278,7 +315,10 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
 
           <Section title="Job description">
             {item.description?.trim() ? (
-              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+              <Markdown
+                allowRawHtml={false}
+                className="prose prose-sm max-w-none text-foreground dark:prose-invert"
+              >
                 {item.description}
               </Markdown>
             ) : (
@@ -286,15 +326,18 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
             )}
           </Section>
 
-          <Section title="Notes">
-            {item.notes?.trim() ? (
-              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+          {item.notes?.trim() ? (
+            <Section title="Legacy notes">
+              <Markdown
+                allowRawHtml={false}
+                className="prose prose-sm max-w-none text-foreground dark:prose-invert"
+              >
                 {item.notes}
               </Markdown>
-            ) : (
-              <p className="text-sm text-muted-foreground">No notes.</p>
-            )}
-          </Section>
+            </Section>
+          ) : null}
+
+          <ApplicationActivitySection applicationId={item.id} />
         </div>
       </ItemInfoPanel>
 

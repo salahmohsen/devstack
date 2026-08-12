@@ -42,13 +42,6 @@ const chipClassName = cn(
   "font-[inherit] no-underline"
 );
 
-/**
- * Wash tint matches the contribution graph's high-intensity green (dark theme
- * level-4). Same hue/chroma family as THEMES.GREEN in contribution-graph.tsx.
- * @see apps/web/src/pages/home-page/ui/contribution-graph.tsx
- */
-const WASH_GREEN = "oklch(0.78 0.22 150)";
-
 function formatStackType(type: string | null | undefined): string | null {
   if (!type?.trim()) return null;
   return type.replace(/[_-]+/g, " ").trim();
@@ -301,12 +294,12 @@ export const ProjectsItem = ({
 
   // Neon AnimatedWash — always mounted so the resting grain is visible;
   // data-wash-hover lifts/warms on card hover (same as Neon demo).
-  // currentColor = contribution-graph green.
+  // currentColor via text-brand token (contrib dark level-4 green).
   // @see https://ui.neon.com/brand/animated-wash
+  // @see packages/ui/styles/shadcn.css --brand / --color-brand
   const washOverlay = (
     <AnimatedWash
-      className="pointer-events-none absolute inset-0 z-0 size-full"
-      style={{ color: WASH_GREEN }}
+      className="pointer-events-none absolute inset-0 z-0 size-full text-brand"
       // Slightly stronger resting field so the wash reads without hover;
       // hover still lifts via data-wash-hover on the host.
       intensity={0.1}

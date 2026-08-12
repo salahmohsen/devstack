@@ -23,6 +23,7 @@ import {
   CircleDotIcon,
   CircleIcon,
   EyeIcon,
+  FileTextIcon,
   GhostIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -78,8 +79,10 @@ import {
 
 import { ItemsEmpty } from "@/widgets/items-page";
 
-import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
-import { ApplyPackageMenuItems } from "@/pages/dashboard/applications/ui/apply-package-entry-actions";
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { ApplyPackageMenuItems } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
+
+import { PromptSuggestion } from "@/components/prompt-kit";
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
@@ -366,7 +369,7 @@ function StageColumn({
 
 export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
   const updateStage = useUpdateStageMutation();
-  const { markStageInFlight: markInFlight, openCreate } = useApplicationStore();
+  const { markStageInFlight: markInFlight, openCreate, openImportJdSheet } = useApplicationStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overColumn, setOverColumn] = useState<string | null>(null);
 
@@ -379,13 +382,30 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
     return (
       <ItemsEmpty
         icon={<BriefcaseIcon aria-hidden />}
-        title="No applications yet"
-        description="Add a job to track stages on the board."
+        title="No tracked jobs yet"
+        description="Track a discovery from New jobs, add a role manually, or paste a job description for the hub agent."
         action={
-          <Button type="button" onClick={openCreate}>
-            <PlusIcon aria-hidden />
-            Add application
-          </Button>
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button type="button" onClick={openCreate}>
+                <PlusIcon aria-hidden />
+                Add job
+              </Button>
+              <Button type="button" variant="outline" onClick={openImportJdSheet}>
+                <FileTextIcon aria-hidden />
+                Import from JD
+              </Button>
+            </div>
+            <PromptSuggestion
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-auto rounded-full px-3 py-1.5 text-sm"
+              onClick={openImportJdSheet}
+            >
+              Paste a job description…
+            </PromptSuggestion>
+          </div>
         }
       />
     );

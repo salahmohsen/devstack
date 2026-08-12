@@ -36,19 +36,19 @@
 - Modify: `apps/agent/src/mastra/agents/hub-supervisor.ts`
 - Modify: `packages/api/src/routers/agent.router.ts` (if it hardcodes steps beyond constant)
 
-- [ ] **Step 1:** Set `HUB_CHAT_MAX_STEPS = 4` and update comment: multi-step allowed; rewrite fixed by instructions + UI, not maxSteps=1.
+- [x] **Step 1:** Set `HUB_CHAT_MAX_STEPS = 4` and update comment: multi-step allowed; rewrite fixed by instructions + UI, not maxSteps=1.
 
-- [ ] **Step 2:** Hub supervisor `defaultOptions.maxSteps: 4`.
+- [x] **Step 2:** Hub supervisor `defaultOptions.maxSteps: 4`.
 
-- [ ] **Step 3:** Rewrite instructions section **Response discipline**:
+- [x] **Step 3:** Rewrite instructions section **Response discipline**:
   - Intermediate steps: prefer tools only; no full capability lists.
   - Exactly one user-facing final answer after tools complete for the turn.
   - JD paste → call `propose-application-from-jd` (do not invent CRM rows without that tool).
   - Package → only via `generate-apply-package` after user chose package and app exists.
 
-- [ ] **Step 4:** `vp check` on touched agent/api files.
+- [x] **Step 4:** `vp check` on touched agent/api files.
 
-- [ ] **Step 5:** Commit
+- [x] **Step 5:** Commit
 
 ```bash
 git add packages/api/src/lib/agent/hub-memory.ts apps/agent/src/mastra/agents/hub-supervisor.ts

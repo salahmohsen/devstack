@@ -1,10 +1,15 @@
+import {
+  type ProposeApplicationFromJdInput,
+  type ProposeApplicationFromJdOutput
+} from "@tsu-stack/core";
 import { Bubble, BubbleContent } from "@tsu-stack/ui/components/bubble";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
   collapseConsecutiveTextParts,
   filterTextWhileStreaming,
-  type CollapseMessagePart
+  type CollapseMessagePart,
+  type HubToolOutputArgs
 } from "@/features/agent-hub";
 
 import {
@@ -16,6 +21,12 @@ import {
   type ToolPart
 } from "@/components/prompt-kit";
 
+import {
+  ApplicationFromJdCard,
+  PROPOSE_FROM_JD_CHOICE_LABELS,
+  type ApplicationFromJdCardInput
+} from "./application-from-jd-card";
+
 type MessagePart = CollapseMessagePart;
 
 type AgentHubMessagePartsProps = {
@@ -23,7 +34,59 @@ type AgentHubMessagePartsProps = {
   role: "user" | "assistant" | "system";
   /** When true, suppress completed intermediate text drafts between agent steps. */
   isStreaming?: boolean;
+  /** Client-tool resume (e.g. propose-application-from-jd card). */
+  addToolOutput?: (args: HubToolOutputArgs) => void | PromiseLike<void>;
 };
+
+/** Tool id and registration key variants from Mastra / AI SDK UI parts. */
+const PROPOSE_FROM_JD_TOOL_NAMES = new Set([
+  "propose-application-from-jd",
+  "proposeApplicationFromJd"
+]);
+
+function getToolName(part: MessagePart): string {
+  if (part.toolName && part.toolName.length > 0) {
+    return part.toolName;
+  }
+  if (part.type === "dynamic-tool") {
+    return "tool";
+  }
+  if (part.type.startsWith("tool-")) {
+    return part.type.slice("tool-".length);
+  }
+  return part.type;
+}
+
+function isProposeApplicationFromJdTool(part: MessagePart): boolean {
+  const name = getToolName(part);
+  return PROPOSE_FROM_JD_TOOL_NAMES.has(name);
+}
+
+function parseProposeInput(input: unknown): ApplicationFromJdCardInput {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return { title: "", companyName: "", description: "" };
+  }
+  const o = input as Partial<ProposeApplicationFromJdInput>;
+  return {
+    title: typeof o.title === "string" ? o.title : "",
+    companyName: typeof o.companyName === "string" ? o.companyName : "",
+    description: typeof o.description === "string" ? o.description : "",
+    url: o.url ?? null,
+    applyUrl: o.applyUrl ?? null,
+    location: o.location ?? null,
+    matchScore: typeof o.matchScore === "number" ? o.matchScore : null,
+    notes: o.notes ?? null
+  };
+}
+
+function parseProposeOutputAction(
+  output: unknown
+): ProposeApplicationFromJdOutput["action"] | null {
+  if (!output || typeof output !== "object" || Array.isArray(output)) return null;
+  const action = (output as { action?: unknown }).action;
+  if (action === "package" || action === "save" || action === "dismiss") return action;
+  return null;
+}
 
 function TextPart({ text, isUser }: { text: string; isUser: boolean }) {
   return (
@@ -66,6 +129,15 @@ function ReasoningPart({ text, isStreaming }: { text: string; isStreaming?: bool
   );
 }
 
+function ProposeFromJdChoiceLine({ action }: { action: ProposeApplicationFromJdOutput["action"] }) {
+  return (
+    <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+      You chose:{" "}
+      <span className="font-medium text-foreground">{PROPOSE_FROM_JD_CHOICE_LABELS[action]}</span>
+    </p>
+  );
+}
+
 function toToolPart(part: MessagePart): ToolPart {
   const state = (part.state ?? "input-available") as ToolPart["state"];
   return {
@@ -95,7 +167,8 @@ function toToolPart(part: MessagePart): ToolPart {
 export function AgentHubMessageParts({
   parts,
   role,
-  isStreaming = false
+  isStreaming = false,
+  addToolOutput
 }: AgentHubMessagePartsProps) {
   const visibleParts = filterTextWhileStreaming(
     collapseConsecutiveTextParts(parts),
@@ -131,6 +204,40 @@ export function AgentHubMessageParts({
         // banner owns that UX. Still show other tool states via Tool.
         if (part.type.startsWith("tool-") || part.type === "dynamic-tool") {
           if (part.state === "approval-requested") return null;
+
+          // GenUI: propose-application-from-jd client tool
+          if (isProposeApplicationFromJdTool(part)) {
+            const toolName = getToolName(part);
+            const toolCallId = part.toolCallId ?? "";
+
+            if (part.state === "input-available" || part.state === "input-streaming") {
+              return (
+                <ApplicationFromJdCard
+                  key={key}
+                  toolCallId={toolCallId}
+                  input={parseProposeInput(part.input)}
+                  disabled={!addToolOutput || !toolCallId}
+                  onSubmit={({ action }) => {
+                    if (!addToolOutput || !toolCallId) return;
+                    void addToolOutput({
+                      tool: toolName || "propose-application-from-jd",
+                      toolCallId,
+                      output: { action }
+                    });
+                  }}
+                />
+              );
+            }
+
+            if (part.state === "output-available") {
+              const action = parseProposeOutputAction(part.output);
+              if (action) {
+                return <ProposeFromJdChoiceLine key={key} action={action} />;
+              }
+              // Fall through to generic Tool if output shape is unexpected.
+            }
+          }
+
           return (
             <div key={key} className="w-full max-w-[min(72ch,100%)]">
               <Tool toolPart={toToolPart(part)} defaultOpen={part.state === "output-error"} />

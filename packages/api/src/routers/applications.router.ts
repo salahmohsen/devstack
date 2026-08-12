@@ -2,22 +2,42 @@ import { z } from "zod";
 
 import {
   AcceptApplyPackageInputSchema,
+  AddApplicationNoteInputSchema,
+  ApplicationActivityOutputSchema,
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
+  buildApplicationSourceTags,
+  canonicalizeJobUrl,
+  CountApplicationsInputSchema,
   CreateApplicationInputSchema,
   DeleteApplicationsInputSchema,
   DeleteResponseSchema,
+  DismissApplicationInputSchema,
   GenerateApplyPackageInputSchema,
+  ListApplicationActivityInputSchema,
+  ListApplicationsInputSchema,
+  PromoteApplicationInputSchema,
+  RegenerateAgentTakeInputSchema,
+  RestoreApplicationInputSchema,
+  ScanJobAlertsInputSchema,
+  ScanJobAlertsOutputSchema,
   SendOutreachInputSchema,
   SetOutcomeInputSchema,
   UpdateApplicationInputSchema,
   UpdateStageInputSchema
 } from "@tsu-stack/core";
-import { applicationRepository, resumeRepository } from "@tsu-stack/db/repositories";
+import {
+  applicationActivityRepository,
+  applicationRepository,
+  mailMessageRepository,
+  resumeRepository
+} from "@tsu-stack/db/repositories";
 
 import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
+import { generateAgentTake } from "#@/lib/application/generate-agent-take";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
+import { requestMailJobHarvest } from "#@/lib/mail/harvest-enqueue-hook";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toApplicationOutput(
@@ -32,11 +52,15 @@ function toApplicationOutput(
     applyMethod: row.applyMethod,
     matchScore: row.matchScore,
     source: row.source,
+    sourceTags: row.sourceTags ?? [],
     location: row.location,
     salaryRange: row.salaryRange,
     employmentType: row.employmentType,
     description: row.description,
     notes: row.notes,
+    agentTake: row.agentTake ?? null,
+    sourceMessageId: row.sourceMessageId ?? null,
+    trackingStatus: row.trackingStatus,
     stage: row.stage,
     stageChangedAt: row.stageChangedAt,
     outcome: row.outcome,
@@ -58,6 +82,22 @@ function toApplicationOutput(
   };
 }
 
+function toActivityOutput(
+  row: NonNullable<
+    Awaited<ReturnType<typeof applicationActivityRepository.listByApplicationId>>
+  >[number]
+) {
+  return {
+    id: row.id,
+    applicationId: row.applicationId,
+    kind: row.kind,
+    body: row.body,
+    metadata: (row.metadata ?? {}) as Record<string, unknown>,
+    actorUserId: row.actorUserId,
+    createdAt: row.createdAt
+  };
+}
+
 async function isResumeOwned(resumeId: string | null | undefined, userId: string) {
   if (resumeId == null) return true;
   const owned = await resumeRepository.findByIdForUser(resumeId, userId);
@@ -67,14 +107,70 @@ async function isResumeOwned(resumeId: string | null | undefined, userId: string
 export const applicationsRouter = {
   list: protectedProcedure
     .route({
-      description: "List all job applications for the current user",
+      description: "List job applications for the current user (optional trackingStatus filter)",
       method: "GET"
     })
+    .input(ListApplicationsInputSchema.optional())
     .output(ApplicationListOutputSchema)
-    .handler(async ({ context }) => {
+    .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
-      const rows = await applicationRepository.findAllByUserId(userId);
+      const status = input?.trackingStatus ?? "tracked";
+      const rows = await applicationRepository.findByUserIdAndTrackingStatus(userId, status);
       return rows.map(toApplicationOutput);
+    }),
+
+  count: protectedProcedure
+    .route({
+      description: "Count applications for the current user by trackingStatus",
+      method: "GET"
+    })
+    .input(CountApplicationsInputSchema)
+    .output(z.object({ count: z.number().int().nonnegative() }))
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const count = await applicationRepository.countByUserIdAndTrackingStatus(
+        userId,
+        input.trackingStatus
+      );
+      return { count };
+    }),
+
+  scanJobAlerts: protectedProcedure
+    .route({
+      description:
+        "Enqueue harvest for recent job_notifier digests (manual Scan job alerts). Dedupes by listing URL.",
+      method: "POST"
+    })
+    .input(ScanJobAlertsInputSchema)
+    .output(ScanJobAlertsOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const limit = input?.limit ?? 20;
+      const digests = await mailMessageRepository.findByUserId({
+        userId,
+        category: "job_notifier",
+        includeSystem: false,
+        limit
+      });
+
+      let enqueued = 0;
+      for (const msg of digests) {
+        const ok = await requestMailJobHarvest({
+          messageId: msg.id,
+          userId,
+          force: true
+        });
+        if (ok) enqueued += 1;
+      }
+
+      // force:true uses unique jobIds; enqueued===0 with digests almost always means hook/queue down.
+      const queueUnavailable = digests.length > 0 && enqueued === 0;
+
+      return {
+        digestsFound: digests.length,
+        enqueued,
+        queueUnavailable
+      };
     }),
 
   get: protectedProcedure
@@ -92,7 +188,8 @@ export const applicationsRouter = {
 
   create: protectedProcedure
     .route({
-      description: "Create a job application",
+      description:
+        "Create a tracked job application. With URL: create-if-absent; inbox/dismissed promote to tracked; already tracked returned as-is.",
       method: "POST"
     })
     .input(CreateApplicationInputSchema)
@@ -107,25 +204,218 @@ export const applicationsRouter = {
       if (!(await isResumeOwned(input.resumeId, userId))) {
         throw errors.NOT_FOUND();
       }
-      const created = await applicationRepository.create({
+      const sourceTags =
+        input.sourceTags ??
+        buildApplicationSourceTags({ channel: "manual", platform: input.source ?? null });
+      const trimmedUrl = input.url?.trim();
+      const rawUrl = trimmedUrl && trimmedUrl.length > 0 ? trimmedUrl : null;
+      const listingUrl = rawUrl ? (canonicalizeJobUrl(rawUrl) ?? rawUrl) : null;
+
+      const common = {
         userId,
         companyName: input.companyName,
         title: input.title,
-        url: input.url ?? null,
         applyUrl: input.applyUrl ?? null,
         applyMethod: input.applyMethod,
         matchScore: input.matchScore ?? null,
         source: input.source ?? null,
+        sourceTags,
         location: input.location ?? null,
         salaryRange: input.salaryRange ?? null,
         employmentType: input.employmentType,
         description: input.description ?? null,
         notes: input.notes ?? null,
+        trackingStatus: "tracked" as const,
         stage: input.stage,
         hiringUrgency: input.hiringUrgency,
         resumeId: input.resumeId ?? null
+      };
+
+      // URL present: race-safe dedup + conflict policy (hub parity).
+      if (listingUrl) {
+        const { row, created } = await applicationRepository.createIfAbsentByUrl({
+          ...common,
+          url: listingUrl
+        });
+        if (!created) {
+          // Already tracked (open or closed): return as-is — no field overwrite, no reopen.
+          if (row.trackingStatus === "tracked") {
+            return toApplicationOutput(row);
+          }
+          // inbox / dismissed → promote to tracked
+          const promoted = await applicationRepository.setTrackingStatus(row.id, userId, "tracked");
+          if (!promoted) throw errors.NOT_FOUND();
+          await applicationActivityRepository.append({
+            userId,
+            applicationId: promoted.id,
+            kind: "promoted",
+            actorUserId: userId,
+            metadata: { from: row.trackingStatus, via: "manual_create_conflict" }
+          });
+          return toApplicationOutput(promoted);
+        }
+        await applicationActivityRepository.append({
+          userId,
+          applicationId: row.id,
+          kind: "discovered",
+          actorUserId: userId,
+          metadata: { via: "manual_create", sourceTags }
+        });
+        return toApplicationOutput(row);
+      }
+
+      const created = await applicationRepository.create({
+        ...common,
+        url: null
+      });
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: created.id,
+        kind: "discovered",
+        actorUserId: userId,
+        metadata: { via: "manual_create", sourceTags }
       });
       return toApplicationOutput(created);
+    }),
+
+  promote: protectedProcedure
+    .route({
+      description: "Promote inbox/dismissed job to tracked",
+      method: "POST"
+    })
+    .input(PromoteApplicationInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Application not found" },
+      INVALID_STATE: { message: "Application cannot be promoted from current status" }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const owned = await applicationRepository.findByIdForUser(input.id, userId);
+      if (!owned) throw errors.NOT_FOUND();
+      if (owned.trackingStatus === "tracked") {
+        return toApplicationOutput(owned);
+      }
+      if (owned.trackingStatus !== "inbox" && owned.trackingStatus !== "dismissed") {
+        throw errors.INVALID_STATE();
+      }
+      const from = owned.trackingStatus;
+      const updated = await applicationRepository.setTrackingStatus(input.id, userId, "tracked");
+      if (!updated) throw errors.NOT_FOUND();
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: input.id,
+        kind: "promoted",
+        actorUserId: userId,
+        metadata: { from }
+      });
+      return toApplicationOutput(updated);
+    }),
+
+  dismiss: protectedProcedure
+    .route({
+      description: "Soft-dismiss an inbox job discovery",
+      method: "POST"
+    })
+    .input(DismissApplicationInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Application not found" },
+      INVALID_STATE: { message: "Only inbox jobs can be dismissed" }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const owned = await applicationRepository.findByIdForUser(input.id, userId);
+      if (!owned) throw errors.NOT_FOUND();
+      if (owned.trackingStatus === "dismissed") {
+        return toApplicationOutput(owned);
+      }
+      if (owned.trackingStatus !== "inbox") throw errors.INVALID_STATE();
+      const updated = await applicationRepository.setTrackingStatus(input.id, userId, "dismissed");
+      if (!updated) throw errors.NOT_FOUND();
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: input.id,
+        kind: "dismissed",
+        actorUserId: userId
+      });
+      return toApplicationOutput(updated);
+    }),
+
+  restore: protectedProcedure
+    .route({
+      description: "Restore a dismissed job back to New jobs inbox",
+      method: "POST"
+    })
+    .input(RestoreApplicationInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Application not found" },
+      INVALID_STATE: { message: "Only dismissed jobs can be restored" }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const owned = await applicationRepository.findByIdForUser(input.id, userId);
+      if (!owned) throw errors.NOT_FOUND();
+      if (owned.trackingStatus === "inbox") {
+        return toApplicationOutput(owned);
+      }
+      if (owned.trackingStatus !== "dismissed") throw errors.INVALID_STATE();
+      const updated = await applicationRepository.setTrackingStatus(input.id, userId, "inbox");
+      if (!updated) throw errors.NOT_FOUND();
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: input.id,
+        kind: "restored",
+        actorUserId: userId
+      });
+      return toApplicationOutput(updated);
+    }),
+
+  listActivity: protectedProcedure
+    .route({
+      description: "List activity timeline for an application",
+      method: "GET"
+    })
+    .input(ListApplicationActivityInputSchema)
+    .output(z.array(ApplicationActivityOutputSchema))
+    .errors({
+      NOT_FOUND: { message: "Application not found" }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const owned = await applicationRepository.findByIdForUser(input.applicationId, userId);
+      if (!owned) throw errors.NOT_FOUND();
+      const rows = await applicationActivityRepository.listByApplicationId(
+        input.applicationId,
+        userId,
+        { limit: input.limit ?? 100, order: "asc" }
+      );
+      return rows.map(toActivityOutput);
+    }),
+
+  addNote: protectedProcedure
+    .route({
+      description: "Add a user note to an application timeline",
+      method: "POST"
+    })
+    .input(AddApplicationNoteInputSchema)
+    .output(ApplicationActivityOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Application not found" }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const owned = await applicationRepository.findByIdForUser(input.applicationId, userId);
+      if (!owned) throw errors.NOT_FOUND();
+      const row = await applicationActivityRepository.append({
+        userId,
+        applicationId: input.applicationId,
+        kind: "note",
+        body: input.body.trim(),
+        actorUserId: userId
+      });
+      return toActivityOutput(row);
     }),
 
   update: protectedProcedure
@@ -158,7 +448,7 @@ export const applicationsRouter = {
 
   updateStage: protectedProcedure
     .route({
-      description: "Move an open application to a new pipeline stage",
+      description: "Move an open tracked application to a new pipeline stage",
       method: "POST"
     })
     .input(UpdateStageInputSchema)
@@ -168,22 +458,32 @@ export const applicationsRouter = {
         message: "Application not found"
       },
       INVALID_STATE: {
-        message: "Cannot change stage on a closed application"
+        message: "Cannot change stage on a closed or non-tracked application"
       }
     })
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
+      const before = await applicationRepository.findByIdForUser(input.id, userId);
       const result = await applicationRepository.updateStage(input.id, userId, input.stage);
       if (!result.ok) {
-        if (result.reason === "closed") throw errors.INVALID_STATE();
+        if (result.reason === "closed" || result.reason === "not_tracked") {
+          throw errors.INVALID_STATE();
+        }
         throw errors.NOT_FOUND();
       }
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: input.id,
+        kind: "stage_changed",
+        actorUserId: userId,
+        metadata: { fromStage: before?.stage ?? null, toStage: input.stage }
+      });
       return toApplicationOutput(result.row);
     }),
 
   setOutcome: protectedProcedure
     .route({
-      description: "Close an application with a terminal outcome (freezes stage)",
+      description: "Close a tracked application with a terminal outcome (freezes stage)",
       method: "POST"
     })
     .input(SetOutcomeInputSchema)
@@ -191,12 +491,25 @@ export const applicationsRouter = {
     .errors({
       NOT_FOUND: {
         message: "Application not found"
+      },
+      INVALID_STATE: {
+        message: "Cannot set outcome on a non-tracked application"
       }
     })
     .handler(async ({ input, context, errors }) => {
       const userId = context.session.user.id;
+      const owned = await applicationRepository.findByIdForUser(input.id, userId);
+      if (!owned) throw errors.NOT_FOUND();
+      if (owned.trackingStatus !== "tracked") throw errors.INVALID_STATE();
       const updated = await applicationRepository.setOutcome(input.id, userId, input.outcome);
       if (!updated) throw errors.NOT_FOUND();
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: input.id,
+        kind: "outcome_set",
+        actorUserId: userId,
+        metadata: { outcome: input.outcome, stage: owned.stage }
+      });
       return toApplicationOutput(updated);
     }),
 
@@ -238,6 +551,38 @@ export const applicationsRouter = {
       return { success: deleted.length > 0 };
     }),
 
+  regenerateAgentTake: protectedProcedure
+    .route({
+      description: "Generate or regenerate the AI agent take narrative for a job application",
+      method: "POST"
+    })
+    .input(RegenerateAgentTakeInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Application not found" },
+      AI_NOT_CONFIGURED: {
+        message: "Configure a BYO API key under Settings → AI"
+      },
+      AGENT_FAILED: {
+        message: "Agent take generation failed — check Settings → AI and try again"
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const result = await generateAgentTake({
+        applicationId: input.id,
+        userId
+      });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "AI_NOT_CONFIGURED") {
+          throw errors.AI_NOT_CONFIGURED({ message: result.message });
+        }
+        throw errors.AGENT_FAILED({ message: result.message });
+      }
+      return toApplicationOutput(result.application);
+    }),
+
   generateApplyPackage: protectedProcedure
     .route({
       description:
@@ -274,6 +619,13 @@ export const applicationsRouter = {
         }
         throw errors.AGENT_FAILED({ message: result.message });
       }
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: input.applicationId,
+        kind: "package_generated",
+        actorUserId: userId,
+        metadata: { via: "generate_apply_package" }
+      });
       return toApplicationOutput(result.application);
     }),
 

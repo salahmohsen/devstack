@@ -25,7 +25,8 @@ import {
   HUB_CHAT_MAX_STEPS,
   hubChatMemoryOptions,
   hubChatThreadId,
-  isChatAllowedAgentId
+  isChatAllowedAgentId,
+  slimMessagesForHubMemory
 } from "#@/lib/agent/hub-memory";
 import { parseConcatenatedJsonStream } from "#@/lib/agent/parse-workflow-json-stream";
 import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
@@ -42,6 +43,24 @@ import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai"
 function parseGitHubRepo(url: string): string {
   const match = url.match(/github\.com\/([^/]+\/[^/]+?)(?:\/|$)/);
   return match ? match[1] : url;
+}
+
+/**
+ * Parse Mastra worker JSON without throwing on Studio HTML SPA fallbacks.
+ * Wrong paths (missing `/api` prefix) return `<!doctype html>...` with status 200.
+ */
+function parseAgentJsonBody(bodyText: string, label: string): unknown {
+  const trimmed = bodyText.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.startsWith("<") || trimmed.startsWith("<!")) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    console.debug(`[agent.router] ${label}: invalid JSON body`, trimmed.slice(0, 120));
+    return undefined;
+  }
 }
 
 /**
@@ -215,7 +234,8 @@ export const agentRouter = {
       const threadId = hubChatThreadId(userId);
       let response: Response;
       try {
-        response = await context.agentWorker.fetch(`/agents/${input.agentId}/generate`, {
+        // Built-in Mastra routes mount under default apiPrefix `/api`.
+        response = await context.agentWorker.fetch(`/api/agents/${input.agentId}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -299,7 +319,9 @@ export const agentRouter = {
     .input(
       z.object({
         agentId: agentIdSchema,
-        messages: uiMessagesSchema
+        messages: uiMessagesSchema,
+        /** AI SDK Chat transport trigger — used to slim messages for Memory. */
+        trigger: z.enum(["submit-message", "regenerate-message"]).optional()
       })
     )
     .handler(async ({ input, context, signal }) => {
@@ -324,6 +346,9 @@ export const agentRouter = {
 
       const userId = context.session.user.id;
       const threadId = hubChatThreadId(userId);
+      const trigger = input.trigger ?? "submit-message";
+      // Defense-in-depth: Memory owns history — never forward full UI transcript.
+      const messages = slimMessagesForHubMemory(input.messages as unknown[], trigger);
       let upstream: Response;
       try {
         upstream = await context.agentWorker.fetch(`/chat/${input.agentId}`, {
@@ -334,7 +359,8 @@ export const agentRouter = {
             "X-Thread-Id": threadId
           },
           body: JSON.stringify({
-            messages: input.messages,
+            messages,
+            trigger,
             ...hubChatMemoryOptions(userId),
             maxSteps: HUB_CHAT_MAX_STEPS,
             model: { id: llm.modelId, apiKey: llm.apiKey },
@@ -445,19 +471,32 @@ export const agentRouter = {
       const threadId = hubChatThreadId(userId);
       const resourceId = userId;
 
+      // Built-in Mastra route (apiPrefix `/api`). Without it, Studio SPA returns HTML 200.
       const upstream = await context.agentWorker.fetch(
-        `/agents/${agentId}/suspended-runs?threadId=${encodeURIComponent(threadId)}&resourceId=${encodeURIComponent(resourceId)}`
+        `/api/agents/${encodeURIComponent(agentId)}/suspended-runs?threadId=${encodeURIComponent(threadId)}&resourceId=${encodeURIComponent(resourceId)}`
       );
+      const bodyText = await upstream.text();
       if (!upstream.ok) {
-        const body = await upstream.text();
         context.logger.set({
           event: "agent_hub_list_suspended_upstream_error",
           status: upstream.status,
-          bodyPreview: body.slice(0, 200)
+          bodyPreview: bodyText.slice(0, 200)
         });
-        throw new Error(`List suspended returned ${upstream.status}: ${body.slice(0, 200)}`);
+        // Soft-fail: empty approvals so hub still loads if agent is down/misrouted.
+        if (upstream.status === 404 || upstream.status === 401 || upstream.status === 403) {
+          return [];
+        }
+        throw new Error(`List suspended returned ${upstream.status}: ${bodyText.slice(0, 200)}`);
       }
-      return (await upstream.json()) as Array<{
+      const data = parseAgentJsonBody(bodyText, "listSuspendedRuns");
+      if (data === undefined) {
+        context.logger.set({
+          event: "agent_hub_list_suspended_non_json",
+          bodyPreview: bodyText.slice(0, 200)
+        });
+        return [];
+      }
+      return (Array.isArray(data) ? data : []) as Array<{
         runId: string;
         toolCalls: Array<{
           toolCallId: string;
@@ -506,24 +545,33 @@ export const agentRouter = {
         perPage: String(input.limit ?? 40)
       });
 
+      // Built-in Mastra route (apiPrefix `/api`). Path without `/api` hits Studio HTML.
       const upstream = await context.agentWorker.fetch(
-        `/memory/threads/${encodeURIComponent(threadId)}/messages?${qs.toString()}`
+        `/api/memory/threads/${encodeURIComponent(threadId)}/messages?${qs.toString()}`
       );
+      const bodyText = await upstream.text();
       if (!upstream.ok) {
         // Empty / missing thread is fine — return empty history.
-        if (upstream.status === 404) {
+        if (upstream.status === 404 || upstream.status === 401 || upstream.status === 403) {
           return { messages: [], uiMessages: [] };
         }
-        const body = await upstream.text();
         context.logger.set({
           event: "agent_hub_list_messages_upstream_error",
           status: upstream.status,
-          bodyPreview: body.slice(0, 200)
+          bodyPreview: bodyText.slice(0, 200)
         });
-        throw new Error(`List hub messages returned ${upstream.status}: ${body.slice(0, 200)}`);
+        throw new Error(`List hub messages returned ${upstream.status}: ${bodyText.slice(0, 200)}`);
       }
 
-      const data = (await upstream.json()) as {
+      const parsed = parseAgentJsonBody(bodyText, "listHubMessages");
+      if (parsed === undefined || typeof parsed !== "object" || parsed === null) {
+        context.logger.set({
+          event: "agent_hub_list_messages_non_json",
+          bodyPreview: bodyText.slice(0, 200)
+        });
+        return { messages: [], uiMessages: [] };
+      }
+      const data = parsed as {
         messages?: unknown[];
         uiMessages?: unknown[] | null;
       };

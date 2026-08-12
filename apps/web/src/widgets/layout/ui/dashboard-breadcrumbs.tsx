@@ -14,7 +14,8 @@ const KNOWN_SEGMENTS = new Set([
   "dashboard",
   "resume",
   "resumes",
-  "applications",
+  "new-jobs",
+  "tracked-jobs",
   "mail",
   "onboarding",
   "experiences",
@@ -24,6 +25,7 @@ const KNOWN_SEGMENTS = new Set([
   "profile",
   "account",
   "github",
+  "review",
   "new"
 ]);
 
@@ -31,7 +33,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   resume: "Resume",
   resumes: "Resumes",
-  applications: "Applications",
+  "new-jobs": "New jobs",
+  "tracked-jobs": "Tracked jobs",
   mail: "Mail",
   onboarding: "Onboarding",
   experiences: "Experience",
@@ -41,6 +44,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   profile: "Profile",
   account: "Account",
   github: "GitHub",
+  review: "Review",
   new: "New"
 };
 

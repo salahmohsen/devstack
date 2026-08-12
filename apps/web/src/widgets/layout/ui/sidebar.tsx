@@ -6,7 +6,6 @@ import { useAuthSuspense } from "@tsu-stack/auth/react";
 import {
   Sidebar001,
   Sidebar001Content,
-  Sidebar001Footer,
   Sidebar001Item,
   Sidebar001Section
 } from "@tsu-stack/ui/components/unlumen-ui/sidebar-001";
@@ -18,9 +17,8 @@ import {
   publicReposListPath
 } from "@/shared/lib/public-surface";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
-import { ContactButton } from "@/shared/ui/contact-button";
 
-import { useGetOwnPortfolioListQuery, useGetPortfolioListQuery } from "@/features/portfolio";
+import { useCountApplicationsQuery } from "@/features/applications";
 
 const PublicItems = [{ href: "/", label: "Home" }] as const;
 
@@ -46,7 +44,8 @@ const DashboardItems = [
   { href: "/dashboard/projects", label: "Projects", group: "Dashboard" },
   { href: "/dashboard/stacks", label: "Stack", group: "Dashboard" },
   { href: "/dashboard/resumes", label: "Resumes", group: "Dashboard" },
-  { href: "/dashboard/applications", label: "Applications", group: "Dashboard" },
+  { href: "/dashboard/new-jobs", label: "New jobs", group: "Dashboard" },
+  { href: "/dashboard/tracked-jobs", label: "Tracked jobs", group: "Dashboard" },
   {
     href: "/dashboard/mail/applications",
     label: "Mail",
@@ -125,18 +124,6 @@ export function PublicSidebar() {
         })
       : null;
 
-  // Contacts footer:
-  // - Public profile pages: list by path slug (no session required).
-  // - Dashboard: list via session only (omit username) so a missing/stale client
-  //   slug cannot 404 "Profile not found" while the user is signed in.
-  const publicPortfolioQuery = useGetPortfolioListQuery(pathUsername ?? "", {
-    enabled: onPublicProfile
-  });
-  const ownPortfolioQuery = useGetOwnPortfolioListQuery({
-    enabled: isSignedIn && !onPublicProfile
-  });
-  const portfolioQuery = onPublicProfile ? publicPortfolioQuery : ownPortfolioQuery;
-
   const publicItems: NavItem[] = [
     ...PublicItems,
     ...(publicSurface && publicSurface.tenantUsername !== "unknown"
@@ -152,33 +139,41 @@ export function PublicSidebar() {
     ...(isSignedIn ? groupBySection(DashboardItems) : [])
   ];
 
+  // Inbox-only badge for New jobs (not dismissed).
+  const inboxCountQuery = useCountApplicationsQuery("inbox", {
+    enabled: isSignedIn,
+    refetchInterval: 60_000
+  });
+  const inboxCount = inboxCountQuery.data?.count ?? 0;
+
   return (
-    <Sidebar001>
+    <Sidebar001 defaultWidth={150}>
       <Sidebar001Content>
         {sections.map((section, index) => (
           <Sidebar001Section key={section.label ?? `ungrouped-${index}`} label={section.label}>
-            {section.items.map((item) => (
-              <Sidebar001Item
-                key={item.href}
-                href={item.href}
-                label={item.label}
-                isActive={
-                  item.matchPrefix
-                    ? pathname === item.matchPrefix || pathname.startsWith(`${item.matchPrefix}/`)
-                    : pathname === item.href || pathname === `${item.href}/`
-                }
-              />
-            ))}
+            {section.items.map((item) => {
+              const isNewJobs = item.href === "/dashboard/new-jobs";
+              const label =
+                isNewJobs && inboxCount > 0
+                  ? `New jobs (${inboxCount > 99 ? "99+" : inboxCount})`
+                  : item.label;
+              return (
+                <Sidebar001Item
+                  key={item.href}
+                  href={item.href}
+                  label={label}
+                  isNew={isNewJobs && inboxCount > 0}
+                  isActive={
+                    item.matchPrefix
+                      ? pathname === item.matchPrefix || pathname.startsWith(`${item.matchPrefix}/`)
+                      : pathname === item.href || pathname === `${item.href}/`
+                  }
+                />
+              );
+            })}
           </Sidebar001Section>
         ))}
       </Sidebar001Content>
-      <Sidebar001Footer>
-        <div className="flex justify-center gap-2">
-          {(portfolioQuery.data?.contacts ?? []).map((contact) => (
-            <ContactButton key={contact.id} contact={contact} />
-          ))}
-        </div>
-      </Sidebar001Footer>
     </Sidebar001>
   );
 }

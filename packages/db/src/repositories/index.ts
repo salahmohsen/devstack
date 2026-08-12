@@ -14,6 +14,11 @@ export {
   type CreateApplicationData,
   type UpdateApplicationData
 } from "./application.repository.ts";
+export {
+  applicationActivityRepository,
+  type ApplicationActivityEntity,
+  type CreateApplicationActivityData
+} from "./application-activity.repository.ts";
 export { betterAuthAccountRepository } from "./better-auth-account.repository.ts";
 export { contactRepository } from "./contact.repository.ts";
 export { experienceRepository } from "./experience.repository.ts";

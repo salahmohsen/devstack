@@ -6,6 +6,7 @@
     "#@/*": "./src/*.ts"
   },
   "exports": {
+    ".": "./src/server/index.ts",
     "./client": "./src/client/index.ts",
     "./server": "./src/server/index.ts",
     "./server/tanstack-start/middleware": "./src/server/tanstack-start/middleware.ts",

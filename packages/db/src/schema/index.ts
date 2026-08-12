@@ -1,6 +1,7 @@
 export * from "./ai-correction.schema.ts";
 export * from "./app-notification.schema.ts";
 export * from "./application.schema.ts";
+export * from "./application-activity.schema.ts";
 export * from "./auth.schema.ts";
 export * from "./contact.schema.ts";
 export * from "./experience.schema.ts";

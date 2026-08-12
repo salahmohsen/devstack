@@ -297,18 +297,21 @@ const components: Record<string, React.FC<any>> = {
 export function Markdown({
   children,
   className,
-  resolveAssetUrl
+  resolveAssetUrl,
+  /** When false, skip rehypeRaw so untrusted job/LLM text cannot inject HTML. */
+  allowRawHtml = true
 }: {
   children: string;
   className?: string;
   resolveAssetUrl?: MarkdownAssetUrlResolver;
+  allowRawHtml?: boolean;
 }) {
   return (
     <MarkdownAssetUrlResolverContext.Provider value={resolveAssetUrl ?? null}>
       <div className={cn("wrap-break-word", className)}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkAlert]}
-          rehypePlugins={[rehypeRaw]}
+          rehypePlugins={allowRawHtml ? [rehypeRaw] : []}
           components={components as Partial<Components>}
         >
           {children}

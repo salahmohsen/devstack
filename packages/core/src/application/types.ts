@@ -27,6 +27,35 @@ export const ApplicationSourceSchema = z.enum([
 ]);
 export type ApplicationSource = z.infer<typeof ApplicationSourceSchema>;
 
+/** Discovery channel + listing platform chips (multi). */
+export const ApplicationSourceTagSchema = z.enum([
+  "mail",
+  "hub",
+  "manual",
+  "linkedin",
+  "indeed",
+  "company_website",
+  "referral",
+  "recruiter",
+  "other"
+]);
+export type ApplicationSourceTag = z.infer<typeof ApplicationSourceTagSchema>;
+
+export const ApplicationTrackingStatusSchema = z.enum(["inbox", "tracked", "dismissed"]);
+export type ApplicationTrackingStatus = z.infer<typeof ApplicationTrackingStatusSchema>;
+
+export const ApplicationActivityKindSchema = z.enum([
+  "discovered",
+  "promoted",
+  "dismissed",
+  "restored",
+  "note",
+  "stage_changed",
+  "outcome_set",
+  "package_generated"
+]);
+export type ApplicationActivityKind = z.infer<typeof ApplicationActivityKindSchema>;
+
 export const ApplicationApplyMethodSchema = z.enum(["easy_apply", "external", "email", "unknown"]);
 export type ApplicationApplyMethod = z.infer<typeof ApplicationApplyMethodSchema>;
 
@@ -71,11 +100,15 @@ export const ApplicationOutputSchema = z.object({
   applyMethod: ApplicationApplyMethodSchema,
   matchScore: z.number().int().min(0).max(100).nullable(),
   source: ApplicationSourceSchema.nullable(),
+  sourceTags: z.array(z.string()),
   location: z.string().nullable(),
   salaryRange: z.string().nullable(),
   employmentType: EmploymentTypeSchema,
   description: z.string().nullable(),
   notes: z.string().nullable(),
+  agentTake: z.string().nullable(),
+  sourceMessageId: z.string().nullable(),
+  trackingStatus: ApplicationTrackingStatusSchema,
   stage: ApplicationStageSchema,
   // coerce: JSON transport may string-serialize timestamps
   stageChangedAt: z.coerce.date(),
@@ -100,6 +133,17 @@ export const ApplicationOutputSchema = z.object({
 
 export const ApplicationListOutputSchema = z.array(ApplicationOutputSchema);
 
+export const ApplicationActivityOutputSchema = z.object({
+  id: z.string(),
+  applicationId: z.string(),
+  kind: ApplicationActivityKindSchema,
+  body: z.string().nullable(),
+  metadata: z.record(z.string(), z.unknown()),
+  actorUserId: z.string().nullable(),
+  createdAt: z.coerce.date()
+});
+export type ApplicationActivityOutput = z.infer<typeof ApplicationActivityOutputSchema>;
+
 export const CreateApplicationInputSchema = z.object({
   companyName: z.string().min(1),
   title: z.string().min(1),
@@ -108,6 +152,7 @@ export const CreateApplicationInputSchema = z.object({
   applyMethod: ApplicationApplyMethodSchema.optional(),
   matchScore: optionalMatchScore,
   source: optionalSource,
+  sourceTags: z.array(ApplicationSourceTagSchema).optional(),
   location: optionalText,
   salaryRange: optionalText,
   employmentType: EmploymentTypeSchema.optional(),
@@ -127,6 +172,44 @@ export const CreateApplicationInputSchema = z.object({
     title: string;
   }
 >;
+
+export const PromoteApplicationInputSchema = z.object({ id: z.string().min(1) });
+export const DismissApplicationInputSchema = z.object({ id: z.string().min(1) });
+export const RestoreApplicationInputSchema = z.object({ id: z.string().min(1) });
+export const ListApplicationActivityInputSchema = z.object({
+  applicationId: z.string().min(1),
+  limit: z.number().int().min(1).max(200).optional()
+});
+export const AddApplicationNoteInputSchema = z.object({
+  applicationId: z.string().min(1),
+  body: z.string().min(1).max(10_000)
+});
+export const ListApplicationsInputSchema = z.object({
+  trackingStatus: ApplicationTrackingStatusSchema.optional()
+});
+
+export const CountApplicationsInputSchema = z.object({
+  trackingStatus: ApplicationTrackingStatusSchema
+});
+
+export const RegenerateAgentTakeInputSchema = z.object({
+  id: z.string().min(1)
+});
+
+/** Manual “Scan job alerts” — re-harvest recent job_notifier digests. */
+export const ScanJobAlertsInputSchema = z
+  .object({
+    /** Max digests to enqueue (default 20). */
+    limit: z.number().int().min(1).max(40).optional()
+  })
+  .optional();
+
+export const ScanJobAlertsOutputSchema = z.object({
+  digestsFound: z.number().int().nonnegative(),
+  enqueued: z.number().int().nonnegative(),
+  /** True when REDIS/BullMQ harvest queue is not registered. */
+  queueUnavailable: z.boolean()
+});
 
 /** Body-field patch only — never stage/outcome (use dedicated procedures). */
 export const UpdateApplicationInputSchema = z.object({
@@ -172,3 +255,13 @@ export type UpdateApplicationInput = z.infer<typeof UpdateApplicationInputSchema
 export type UpdateStageInput = z.infer<typeof UpdateStageInputSchema>;
 export type SetOutcomeInput = z.infer<typeof SetOutcomeInputSchema>;
 export type DeleteApplicationsInput = z.infer<typeof DeleteApplicationsInputSchema>;
+export type PromoteApplicationInput = z.infer<typeof PromoteApplicationInputSchema>;
+export type DismissApplicationInput = z.infer<typeof DismissApplicationInputSchema>;
+export type RestoreApplicationInput = z.infer<typeof RestoreApplicationInputSchema>;
+export type ListApplicationActivityInput = z.infer<typeof ListApplicationActivityInputSchema>;
+export type AddApplicationNoteInput = z.infer<typeof AddApplicationNoteInputSchema>;
+export type ListApplicationsInput = z.infer<typeof ListApplicationsInputSchema>;
+export type CountApplicationsInput = z.infer<typeof CountApplicationsInputSchema>;
+export type RegenerateAgentTakeInput = z.infer<typeof RegenerateAgentTakeInputSchema>;
+export type ScanJobAlertsInput = z.infer<typeof ScanJobAlertsInputSchema>;
+export type ScanJobAlertsOutput = z.infer<typeof ScanJobAlertsOutputSchema>;

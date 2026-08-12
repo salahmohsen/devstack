@@ -10,8 +10,73 @@ import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
 import { WorkModeSchema, type JobPreference, type WorkMode } from "#@/job-preference/types";
 import { defaultJobPreference } from "#@/job-preference/utils";
 
-/** Structured job extracted from a mail card and/or job page. */
-export const HarvestedJobSchema = z.object({
+/**
+ * LLMs often emit display labels (`Unknown`, `Easy Apply`) or aliases (`company`
+ * instead of `companyName`). Coerce before strict enum/object parse so Mastra
+ * structuredOutput does not fail the whole agent turn.
+ */
+export function normalizeHarvestApplyMethod(value: unknown): ApplicationApplyMethod {
+  if (typeof value !== "string") return "unknown";
+  const n = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (n === "easy_apply" || n === "easyapply") return "easy_apply";
+  if (n === "external" || n === "company_website" || n === "ats") {
+    return "external";
+  }
+  if (n === "email" || n === "mailto") return "email";
+  if (n === "unknown" || n === "" || n === "n_a" || n === "na" || n === "null") {
+    return "unknown";
+  }
+  return "unknown";
+}
+
+export function normalizeHarvestWorkMode(value: unknown): WorkMode | null {
+  if (value == null) return null;
+  if (typeof value !== "string") return null;
+  const n = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  if (n === "remote" || n === "hybrid" || n === "onsite") return n;
+  if (n === "on_site" || n === "in_office" || n === "office") return "onsite";
+  if (n === "unknown" || n === "" || n === "n_a" || n === "na") return null;
+  return null;
+}
+
+/** Map common LLM field aliases / casing onto HarvestedJob shape. */
+export function coerceHarvestedJobInput(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const o = { ...(raw as Record<string, unknown>) };
+
+  if (
+    (o.companyName == null || o.companyName === "") &&
+    typeof o.company === "string" &&
+    o.company.trim()
+  ) {
+    o.companyName = o.company.trim();
+  }
+  delete o.company;
+  // Models sometimes invent diagnostic keys (pageAccess, notes, …).
+  delete o.pageAccess;
+  delete o.notes;
+  delete o.reason;
+
+  if ("applyMethod" in o) {
+    o.applyMethod = normalizeHarvestApplyMethod(o.applyMethod);
+  }
+  if ("workMode" in o) {
+    o.workMode = normalizeHarvestWorkMode(o.workMode);
+  }
+  if (typeof o.applyUrl === "string" && o.applyUrl.trim() === "") {
+    o.applyUrl = null;
+  }
+
+  return o;
+}
+
+const HarvestedJobObjectSchema = z.object({
   title: z.string().min(1).max(300),
   companyName: z.string().min(1).max(300),
   location: z.string().max(300).nullable().optional(),
@@ -23,7 +88,19 @@ export const HarvestedJobSchema = z.object({
   workMode: WorkModeSchema.nullable().optional(),
   source: ApplicationSourceSchema.nullable().optional()
 });
-export type HarvestedJob = z.infer<typeof HarvestedJobSchema>;
+
+/** Structured job extracted from a mail card and/or job page. */
+export const HarvestedJobSchema = z.preprocess(coerceHarvestedJobInput, HarvestedJobObjectSchema);
+export type HarvestedJob = z.infer<typeof HarvestedJobObjectSchema>;
+
+const MailNotifierJobObjectSchema = z.object({
+  listingUrl: z.string().url(),
+  title: z.string().max(300).optional().nullable(),
+  companyName: z.string().max(300).optional().nullable(),
+  location: z.string().max(300).optional().nullable(),
+  applyMethod: ApplicationApplyMethodSchema.optional().nullable(),
+  workMode: WorkModeSchema.optional().nullable()
+});
 
 /**
  * AI output from reading a job-notifier email (before page fetch).
@@ -33,16 +110,7 @@ export const MailNotifierExtractSchema = z.object({
   isJobNotifier: z.boolean(),
   reason: z.string().max(500).optional(),
   jobs: z
-    .array(
-      z.object({
-        listingUrl: z.string().url(),
-        title: z.string().max(300).optional().nullable(),
-        companyName: z.string().max(300).optional().nullable(),
-        location: z.string().max(300).optional().nullable(),
-        applyMethod: ApplicationApplyMethodSchema.optional().nullable(),
-        workMode: WorkModeSchema.optional().nullable()
-      })
-    )
+    .array(z.preprocess(coerceHarvestedJobInput, MailNotifierJobObjectSchema))
     .max(25)
     .default([])
 });
@@ -90,10 +158,12 @@ export const JobMatchScoreResultSchema = z.object({
 export type JobMatchScoreResult = z.infer<typeof JobMatchScoreResultSchema>;
 
 /** Harvested job + AI preference match (workflow output). */
-export const ScoredHarvestedJobSchema = HarvestedJobSchema.extend({
+export const ScoredHarvestedJobSchema = HarvestedJobObjectSchema.extend({
   matchScore: z.number().int().min(0).max(100),
   matchPassed: z.boolean(),
-  matchReasons: z.array(z.string()).default([])
+  matchReasons: z.array(z.string()).default([]),
+  /** 1–3 sentence narrative fit; null/omit when take step soft-failed. */
+  agentTake: z.string().max(1200).nullable().optional()
 });
 export type ScoredHarvestedJob = z.infer<typeof ScoredHarvestedJobSchema>;
 
@@ -112,6 +182,19 @@ export const AiJobMatchBatchSchema = z.object({
 });
 export type AiJobMatchBatch = z.infer<typeof AiJobMatchBatchSchema>;
 
+/** Batch agent-take response for match-passed harvest jobs. */
+export const AiJobAgentTakeBatchSchema = z.object({
+  takes: z
+    .array(
+      z.object({
+        listingUrl: z.string(),
+        agentTake: z.string().min(1).max(1200)
+      })
+    )
+    .default([])
+});
+export type AiJobAgentTakeBatch = z.infer<typeof AiJobAgentTakeBatchSchema>;
+
 export const MailJobHarvestWorkflowOutputSchema = z.object({
   messageId: z.string(),
   userId: z.string(),
@@ -120,6 +203,16 @@ export const MailJobHarvestWorkflowOutputSchema = z.object({
   notes: z.string().optional()
 });
 export type MailJobHarvestWorkflowOutput = z.infer<typeof MailJobHarvestWorkflowOutputSchema>;
+
+/**
+ * Intermediate after match scoring — carries preference/llm for the take step.
+ * Not the public workflow output.
+ */
+export const MailJobHarvestAfterScoreSchema = MailJobHarvestWorkflowOutputSchema.extend({
+  preference: HarvestJobPreferenceSchema.optional(),
+  llm: z.unknown().optional()
+});
+export type MailJobHarvestAfterScore = z.infer<typeof MailJobHarvestAfterScoreSchema>;
 
 export const MailJobHarvestResultSchema = z.object({
   messageId: z.string(),
@@ -160,7 +253,7 @@ export function canonicalizeJobUrl(raw: string): string | null {
   try {
     const u = new URL(raw.trim());
     if (!/^https?:$/i.test(u.protocol)) return null;
-    for (const key of [...u.searchParams.keys()]) {
+    for (const key of Array.from(u.searchParams.keys())) {
       if (TRACKING_QUERY_KEYS.has(key.toLowerCase())) {
         u.searchParams.delete(key);
       }

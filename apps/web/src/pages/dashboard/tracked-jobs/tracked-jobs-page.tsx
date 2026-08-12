@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
+import { FileTextIcon, LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
 
 import { type ApplicationOutput } from "@tsu-stack/core";
@@ -20,20 +20,23 @@ import {
 } from "@/widgets/items-page";
 import { ItemsInfoPanel } from "@/widgets/layout";
 
-import { useApplicationStore } from "@/pages/dashboard/applications/_lib/application.slice";
-import { useApplicationsView } from "@/pages/dashboard/applications/_lib/use-applications-view";
-import { ApplicationFormSheet } from "@/pages/dashboard/applications/application-form-sheet";
-import { ApplicationInfoPanel } from "@/pages/dashboard/applications/ui/application-info-panel";
-import { ApplyPackageSheet } from "@/pages/dashboard/applications/ui/apply-package-sheet";
-import { ApplicationsBoard } from "@/pages/dashboard/applications/ui/board";
-import { ApplicationsList } from "@/pages/dashboard/applications/ui/list";
-import { SendOutreachDialog } from "@/pages/dashboard/applications/ui/send-outreach-dialog";
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useApplicationsView } from "@/pages/dashboard/tracked-jobs/_lib/use-applications-view";
+import { ApplicationFormSheet } from "@/pages/dashboard/tracked-jobs/application-form-sheet";
+import { ApplicationInfoPanel } from "@/pages/dashboard/tracked-jobs/ui/application-info-panel";
+import { ApplyPackageSheet } from "@/pages/dashboard/tracked-jobs/ui/apply-package-sheet";
+import { ApplicationsBoard } from "@/pages/dashboard/tracked-jobs/ui/board";
+import { ImportJdSheet } from "@/pages/dashboard/tracked-jobs/ui/import-jd-sheet";
+import { ApplicationsList } from "@/pages/dashboard/tracked-jobs/ui/list";
+import { SendOutreachDialog } from "@/pages/dashboard/tracked-jobs/ui/send-outreach-dialog";
 
 const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 
-export function ApplicationsPage() {
+export function TrackedJobsPage() {
   const { view, setView } = useApplicationsView();
-  const listQuery = useListApplicationsQuery();
+  /** Tracked jobs only — pipeline CRM. */
+  const listQuery = useListApplicationsQuery("tracked");
+  // Hub tool invalidation lives on HubChatProvider (dashboard layout).
   const {
     sheetOpen,
     sheetMode,
@@ -47,7 +50,10 @@ export function ApplicationsPage() {
     packageSheetAppId,
     closePackageSheet,
     sendOutreachAppId,
-    closeSendOutreach
+    closeSendOutreach,
+    importJdSheetOpen,
+    openImportJdSheet,
+    closeImportJdSheet
   } = useApplicationStore();
 
   // Stable empty fallback so memo deps do not thrash every render.
@@ -122,8 +128,8 @@ export function ApplicationsPage() {
     <ItemsNavProvider value={{ handleNext, handlePrev, containerRef }}>
       <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
         <PageHeader
-          title="Applications"
-          description="Track open roles on a board or list. Closed applications stay in the list only."
+          title="Tracked jobs"
+          description="Pipeline board and list for roles you are actively tracking."
           actions={
             <div className="flex items-center gap-2">
               <Group>
@@ -147,9 +153,13 @@ export function ApplicationsPage() {
                   List
                 </Button>
               </Group>
+              <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
+                <FileTextIcon className="size-4" />
+                Import from JD
+              </Button>
               <Button type="button" size="sm" onClick={openCreate}>
                 <PlusIcon className="size-4" />
-                Add application
+                Add job
               </Button>
             </div>
           }
@@ -197,6 +207,14 @@ export function ApplicationsPage() {
           application={sendApplication}
           onOpenChange={(open) => {
             if (!open) closeSendOutreach();
+          }}
+        />
+
+        <ImportJdSheet
+          open={importJdSheetOpen}
+          onOpenChange={(open) => {
+            if (open) openImportJdSheet();
+            else closeImportJdSheet();
           }}
         />
       </PageLayout>

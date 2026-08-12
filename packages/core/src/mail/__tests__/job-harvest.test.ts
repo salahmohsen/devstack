@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   canonicalizeJobUrl,
+  HarvestedJobSchema,
   harvestJobsFromHtmlAnchors,
   harvestJobsFromMail,
   harvestJobsFromMailBody,
   isValidHarvestedJob,
+  normalizeHarvestApplyMethod,
   rankJobUrl,
   scoreJobAgainstPreference
 } from "#@/mail/job-harvest";
@@ -187,6 +189,30 @@ describe("harvestJobsFromMailBody — multi-line LinkedIn cards", () => {
     const yassir = jobs.find((j) => j.listingUrl.includes("4440801290"));
     expect(yassir?.title).toBe("Senior Frontend Engineer");
     expect(yassir?.companyName).toBe("Yassir");
+  });
+});
+
+describe("HarvestedJobSchema LLM coercion", () => {
+  it("accepts company alias and Unknown applyMethod casing", () => {
+    const parsed = HarvestedJobSchema.safeParse({
+      listingUrl: "https://app.jackandjill.ai/jobs/26e1df7c-bf89-48ed-9802-686b545b8a97/post",
+      title: "Senior Front-End Engineer (React)",
+      company: "Symbiotic",
+      location: "Unknown",
+      applyMethod: "Unknown",
+      description: "Unknown",
+      pageAccess: "Login wall"
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.companyName).toBe("Symbiotic");
+    expect(parsed.data.applyMethod).toBe("unknown");
+    expect(parsed.data.title).toBe("Senior Front-End Engineer (React)");
+  });
+
+  it("normalizes Easy Apply labels", () => {
+    expect(normalizeHarvestApplyMethod("Easy Apply")).toBe("easy_apply");
+    expect(normalizeHarvestApplyMethod("EXTERNAL")).toBe("external");
   });
 });
 

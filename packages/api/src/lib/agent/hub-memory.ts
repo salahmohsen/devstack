@@ -25,12 +25,12 @@ export const CHAT_ALLOWED_AGENT_IDS = [
 export type ChatAllowedAgentId = (typeof CHAT_ALLOWED_AGENT_IDS)[number];
 
 /**
- * Multi-step bound for hub chat.
- * 1 = single LLM turn (tools + text in that turn only). Higher values let the
- * model rewrite the same answer on later steps (the "bubble keeps changing" UX).
- * Sequential multi-tool chains need a follow-up product path, not maxSteps churn.
+ * Multi-step bound for hub chat (align with hub-supervisor defaultOptions.maxSteps).
+ * Multi-step is required for real tool chains (read → propose → package).
+ * Answer-rewrite / bubble churn is fixed by anti-rewrite instructions + UI
+ * intermediate-text collapse — not by locking maxSteps to 1.
  */
-export const HUB_CHAT_MAX_STEPS = 1 as const;
+export const HUB_CHAT_MAX_STEPS = 4 as const;
 
 export function hubChatThreadId(userId: string): string {
   return `dashboard-home:${userId}`;
@@ -50,4 +50,35 @@ export function hubChatMemoryOptions(userId: string): {
 
 export function isChatAllowedAgentId(agentId: string): agentId is ChatAllowedAgentId {
   return (CHAT_ALLOWED_AGENT_IDS as readonly string[]).includes(agentId);
+}
+
+type ThinUiMessage = { role?: string; id?: string; parts?: unknown[] };
+
+/**
+ * Memory-backed hub chat: forward only the message Mastra needs for this turn.
+ * Full client history + Memory lastMessages duplicates context and causes
+ * multi-step rewrite thrash. Mirrors web `messagesForMastraMemoryChat`.
+ *
+ * @see https://mastra.ai/docs/memory/message-history
+ */
+export function slimMessagesForHubMemory(
+  messages: unknown[],
+  trigger: "submit-message" | "regenerate-message" = "submit-message"
+): unknown[] {
+  if (!Array.isArray(messages) || messages.length === 0) return messages;
+
+  const list = messages as ThinUiMessage[];
+
+  if (trigger === "regenerate-message") {
+    const withoutTrailing = list[list.length - 1]?.role === "assistant" ? list.slice(0, -1) : list;
+    for (let i = withoutTrailing.length - 1; i >= 0; i--) {
+      if (withoutTrailing[i]?.role === "user") return [withoutTrailing[i]];
+    }
+    return withoutTrailing.slice(-1);
+  }
+
+  const last = list[list.length - 1];
+  if (!last) return messages;
+  if (last.role === "assistant" || last.role === "user") return [last];
+  return [last];
 }

@@ -484,7 +484,7 @@ function MessageReaderBody({
             <MessageTags labels={message.labels} application={message.application} />
             {message.application ? (
               <Link
-                to="/dashboard/applications"
+                to="/dashboard/tracked-jobs"
                 className="text-[10px] font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
                 {message.application.title}

@@ -6,7 +6,7 @@ import { useHasMounted } from "@/shared/lib/use-has-mounted";
 
 export type ApplicationsView = "board" | "list";
 
-const STORAGE_KEY = "applications:view";
+const STORAGE_KEY = "tracked-jobs:view";
 
 function readStoredView(): ApplicationsView | null {
   try {

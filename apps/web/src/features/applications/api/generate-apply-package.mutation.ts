@@ -21,10 +21,15 @@ export function useGenerateApplyPackageMutation() {
           return prev.map((row) => (row.id === data.id ? data : row));
         });
         queryClient.setQueryData(applicationsQueryKeys.get(data.id), data);
-        await queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() });
-        await queryClient.invalidateQueries({
-          queryKey: applicationsQueryKeys.get(data.id)
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list() }),
+          queryClient.invalidateQueries({
+            queryKey: applicationsQueryKeys.get(data.id)
+          }),
+          queryClient.invalidateQueries({
+            queryKey: applicationsQueryKeys.activity(data.id)
+          })
+        ]);
         toast.success("Apply package draft ready to review.");
       },
       onError: (error) => {
