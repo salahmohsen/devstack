@@ -26,16 +26,22 @@ export const DetectStacksWorkflowInputSchema = z.object({
         workspaceYamlContent: z
           .string()
           .nullable()
-          .describe("Raw content of pnpm-workspace.yaml, null if not monorepo"),
-        workspacePkgContents: z.array(
-          z.object({
-            workspace: z.string().describe("Workspace name if monorepo"),
-            content: z.string().describe("Raw JSON content of workspace package.json")
-          })
-        )
+          .describe("Raw content of pnpm-workspace.yaml when present (diagnostic only)"),
+        workspacePkgContents: z
+          .array(
+            z.object({
+              workspace: z
+                .string()
+                .describe("Package directory path relative to repo root (e.g. apps/web)"),
+              content: z.string().describe("Raw JSON content of that package.json")
+            })
+          )
+          .describe(
+            "Every nested package.json in the repo (monorepo packages, nested apps). Root is rootPkgContent."
+          )
       })
     )
-    .describe("Pre-fetched package.json content from each repository"),
+    .describe("Pre-fetched package.json content from each selected repository"),
   existingStacks: z
     .array(
       z.object({

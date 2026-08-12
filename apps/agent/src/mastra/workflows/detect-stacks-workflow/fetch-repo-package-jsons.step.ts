@@ -7,7 +7,8 @@ import { parsePackageJson } from "#@/mastra/workflows/detect-stacks-workflow/uti
 
 export const fetchRepoPackageJsons = createStep({
   id: "fetch-repo-package-jsons",
-  description: "Parses pre-fetched package.json content into structured data",
+  description:
+    "Parses pre-fetched root + nested package.json content from all selected repos into structured data",
   inputSchema: DetectStacksWorkflowInputSchema,
   outputSchema: z.object({
     repoPackages: z.array(

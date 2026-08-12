@@ -419,7 +419,16 @@ export const stacksRouter = {
             iconSvg: z.string().nullable().optional(),
             relatedPackages: z.array(z.string()).optional(),
             /** Prefer linking an already-known stack over re-creating by name. */
-            existingStackId: z.string().nullable().optional()
+            existingStackId: z.string().nullable().optional(),
+            /** npm registry health from detect-stacks enrich-npm step */
+            health: z
+              .object({
+                deprecated: z.boolean().optional(),
+                downloads: z.number().optional(),
+                lastPublished: z.string().optional()
+              })
+              .nullable()
+              .optional()
           })
         )
       })
@@ -469,6 +478,7 @@ export const stacksRouter = {
                 description: s.description ?? null,
                 icon: s.iconSvg ? sanitizeSvg(s.iconSvg) : null,
                 type: s.type ?? null,
+                healthStatus: s.health ?? null,
                 confidence: s.confidence ?? null,
                 sortOrder: nextSortOrder
               },
@@ -479,6 +489,25 @@ export const stacksRouter = {
             stack =
               (await stackRepository.findByNpmPackageAliasForUser(userId, s.npmPackage)) ??
               (await stackRepository.findByNameForUser(userId, s.name));
+          }
+        } else {
+          // Fill missing metadata on existing stacks without overwriting user edits.
+          const patch: {
+            description?: string | null;
+            icon?: string | null;
+            type?: string | null;
+            healthStatus?: typeof s.health;
+            confidence?: string | null;
+          } = {};
+          if (!stack.description && s.description) patch.description = s.description;
+          if (!stack.icon && s.iconSvg) patch.icon = sanitizeSvg(s.iconSvg);
+          if ((!stack.type || stack.type === "other") && s.type && s.type !== "other") {
+            patch.type = s.type;
+          }
+          if (!stack.healthStatus && s.health) patch.healthStatus = s.health;
+          if (!stack.confidence && s.confidence) patch.confidence = s.confidence;
+          if (Object.keys(patch).length > 0) {
+            stack = (await stackRepository.update(stack.id, userId, patch)) ?? stack;
           }
         }
 

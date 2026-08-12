@@ -21,6 +21,9 @@ const STEP_LABELS: Record<string, string> = {
   "programmatic-match": "Matching known stacks",
   "ai-categorize": "Categorizing unknown packages",
   "deduplicate-groups": "Deduplicating stacks",
+  "merge-families": "Merging related packages",
+  "canonicalize-names": "Standardizing names",
+  "enrich-npm": "Loading npm descriptions",
   "resolve-icons": "Resolving icons",
   format: "Processing results"
 };

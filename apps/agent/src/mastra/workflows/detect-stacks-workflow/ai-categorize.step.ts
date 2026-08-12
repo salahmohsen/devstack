@@ -1,10 +1,17 @@
 import { createStep } from "@mastra/core/workflows";
-import { z } from "zod";
+import { type z } from "zod";
 
-import { type DetectStacksWorkflowInputSchema } from "@tsu-stack/core";
+import {
+  buildCanonicalDisplayNamesHint,
+  type DetectStacksWorkflowInputSchema
+} from "@tsu-stack/core";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
-import { batchOutputSchema } from "#@/mastra/workflows/detect-stacks-workflow/detect-stacks-workflow.schema";
+import {
+  batchOutputSchema,
+  matchCategorizeSchema
+} from "#@/mastra/workflows/detect-stacks-workflow/detect-stacks-workflow.schema";
 import { programmaticMatch } from "#@/mastra/workflows/detect-stacks-workflow/programmatic-match.step";
 import {
   BATCH_CHUNK_SIZE,
@@ -24,49 +31,45 @@ function lowConfidenceFallback(deps: Array<{ name: string; repo: string }>): Cat
       relatedPackages: [] as string[],
       iconSvg: null,
       stackId: null,
-      existingStackId: null
+      existingStackId: null,
+      health: null
     };
   });
 }
 
 export const aiCategorize = createStep({
   id: "ai-categorize",
-  description: "Uses AI to categorize unknown packages in batches",
+  description:
+    "Uses AI to categorize unknown packages in batches (type + display name; descriptions come from npm later)",
   inputSchema: programmaticMatch.outputSchema,
-  outputSchema: z.object({
-    matched: z.array(
-      z.object({
-        npmPackage: z.string(),
-        stackId: z.string(),
-        name: z.string(),
-        repo: z.string(),
-        relatedPackages: z.array(z.string())
-      })
-    ),
-    categorized: z.array(
-      z.object({
-        npmPackage: z.string(),
-        name: z.string(),
-        type: z.string(),
-        description: z.string().nullable(),
-        confidence: z.enum(["high", "medium", "low"]),
-        repo: z.string(),
-        relatedPackages: z.array(z.string()),
-        iconSvg: z.string().nullable(),
-        stackId: z.string().nullable(),
-        existingStackId: z.string().nullable()
-      })
-    )
-  }),
+  outputSchema: matchCategorizeSchema,
   execute: async (params) => {
+    const started = Date.now();
+    const log = createLogger({ operation: "agent__detect_stacks_ai_categorize" });
     const { matched, unknown } = params.inputData;
     const abortSignal = params.abortSignal;
 
     if (abortSignal?.aborted) {
+      log.set({
+        event: "detect_stacks_ai_categorize_completed",
+        unknownCount: unknown.length,
+        categorizedCount: 0,
+        durationMs: Date.now() - started,
+        reason: "aborted"
+      });
+      log.emit();
       return { matched, categorized: [] };
     }
 
     if (unknown.length === 0) {
+      log.set({
+        event: "detect_stacks_ai_categorize_completed",
+        unknownCount: 0,
+        categorizedCount: 0,
+        durationMs: Date.now() - started,
+        reason: "no_unknowns"
+      });
+      log.emit();
       return {
         matched,
         categorized: []
@@ -75,6 +78,15 @@ export const aiCategorize = createStep({
 
     const agent = params.mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
+      log.set({
+        event: "detect_stacks_ai_categorize_completed",
+        unknownCount: unknown.length,
+        categorizedCount: unknown.length,
+        durationMs: Date.now() - started,
+        reason: "missing_agent",
+        softFailed: true
+      });
+      log.emit({ _forceKeep: true });
       return {
         matched,
         categorized: lowConfidenceFallback(unknown)
@@ -86,6 +98,15 @@ export const aiCategorize = createStep({
     const { model } = generateModelOption(initCtx.llm);
     // Missing BYO: programmatic matches still apply; unknowns stay low-confidence.
     if (!model) {
+      log.set({
+        event: "detect_stacks_ai_categorize_completed",
+        unknownCount: unknown.length,
+        categorizedCount: unknown.length,
+        durationMs: Date.now() - started,
+        reason: "missing_byo",
+        softFailed: true
+      });
+      log.emit({ _forceKeep: true });
       return {
         matched,
         categorized: lowConfidenceFallback(unknown)
@@ -143,14 +164,16 @@ ${
 Packages to categorize (${chunk.length} total):
 ${packageList}
 
+${buildCanonicalDisplayNamesHint()}
+
 You MUST return exactly ${chunk.length} results, one per package, in the same order.
 For each package:
 1. Does it belong to an existing stack? (yes/no)
 2. If yes: which stack name? (must match existing stack name exactly)
-3. If no: what type? (framework/language/database/ui/auth/deployment/testing/ai/tooling/storage/other)
-4. Display name: REUSE an existing name if this belongs to the same library/family. Only invent a NEW name for genuinely distinct libraries.
+3. If no: what type? (framework/language/database/ui/auth/deployment/testing/ai/tooling/storage/state management/other)
+4. Display name: REUSE an existing or already-categorized name if this belongs to the same library/family. Only invent a NEW name for genuinely distinct libraries. Prefer canonical product names above.
 5. Confidence: high/medium/low
-6. A one-sentence description`;
+Do NOT invent descriptions — they are filled from the official npm registry later.`;
 
       try {
         const result = await Promise.race([
@@ -193,7 +216,8 @@ For each package:
                 relatedPackages: [],
                 iconSvg: null,
                 stackId: null,
-                existingStackId: match.id
+                existingStackId: match.id,
+                health: null
               });
               usedNames.add(match.name);
               continue;
@@ -204,13 +228,14 @@ For each package:
             npmPackage: dep.name,
             name: ai.displayName,
             type: ai.type ?? "other",
-            description: ai.description,
+            description: null,
             confidence: ai.confidence,
             repo: dep.repo,
             relatedPackages: [],
             iconSvg: null,
             stackId: null,
-            existingStackId: null
+            existingStackId: null,
+            health: null
           });
           usedNames.add(ai.displayName);
         }
@@ -223,8 +248,11 @@ For each package:
           }
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.debug(`[detect-stacks] AI categorize chunk failed, using fallback: ${message}`);
+        log.error(error instanceof Error ? error : new Error(String(error)), {
+          event: "detect_stacks_ai_categorize_chunk_failed",
+          chunkStart: i,
+          chunkSize: chunk.length
+        });
         // Fallback: all packages in this chunk get low-confidence entries
         for (const dep of chunk) {
           categorized.push(...lowConfidenceFallback([dep]));
@@ -269,6 +297,14 @@ For each package:
         finalCategorized.push({ ...e, name: canonicalName });
       }
     }
+
+    log.set({
+      event: "detect_stacks_ai_categorize_completed",
+      unknownCount: unknown.length,
+      categorizedCount: finalCategorized.length,
+      durationMs: Date.now() - started
+    });
+    log.emit();
 
     return { matched, categorized: finalCategorized };
   }

@@ -1,10 +1,14 @@
-import { betterAuthAccountRepository, githubConfigRepository } from "@tsu-stack/db/repositories";
+import {
+  betterAuthAccountRepository,
+  githubConfigRepository,
+  type GitHubAccountTokens
+} from "@tsu-stack/db/repositories";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 export type PublicGitHubSource =
   | {
       isConfigured: false;
-      reason: "missing_github_configuration";
+      reason: "missing_github_configuration" | "github_token_invalid";
     }
   | {
       isConfigured: true;
@@ -22,17 +26,23 @@ const GITHUB_HTTP_TIMEOUT_MS = 5_000;
  * tokens and hit api.github.com/user, which piled up and timed out undici.
  */
 const SOURCE_CACHE_TTL_MS = 30_000;
+/** Don't cache hard auth failures for long — user may re-link immediately. */
+const SOURCE_CACHE_FAIL_TTL_MS = 5_000;
 
 const cachedByUserId = new Map<string, { value: PublicGitHubSource; expiresAt: number }>();
 const inflightByUserId = new Map<string, Promise<PublicGitHubSource>>();
-/** Serialize token refresh so concurrent requests don't stampede GitHub. */
-let inflightRefresh: Promise<string | null> | null = null;
+/**
+ * Per-account refresh mutex. A single process-global promise would cross-wire
+ * concurrent users refreshing different GitHub accounts.
+ */
+const inflightRefreshByAccountId = new Map<string, Promise<string | null>>();
 
 /**
  * Resolve GitHub credentials for a **specific app user** (tenant).
  *
  * Tokens come from Better Auth's GitHub `account` row (OAuth), with refresh
- * when expired. Never uses a global "first configured" owner.
+ * when expired **or** when GitHub rejects the access token (revoked / Bad credentials).
+ * Never uses a global "first configured" owner.
  *
  * The token never leaves the server — public HTTP handlers only return
  * already-fetched public data shapes.
@@ -53,7 +63,8 @@ export async function resolvePublicGitHubSourceForUser(
 
   const promise = resolvePublicGitHubSourceForUserUncached(userId)
     .then((value) => {
-      cachedByUserId.set(userId, { value, expiresAt: Date.now() + SOURCE_CACHE_TTL_MS });
+      const ttl = value.isConfigured ? SOURCE_CACHE_TTL_MS : SOURCE_CACHE_FAIL_TTL_MS;
+      cachedByUserId.set(userId, { value, expiresAt: Date.now() + ttl });
       return value;
     })
     .finally(() => {
@@ -64,13 +75,21 @@ export async function resolvePublicGitHubSourceForUser(
   return promise;
 }
 
-/** Drop cache (e.g. after sign-in / config change). */
+/** Drop cache (e.g. after sign-in / config change / Bad credentials). */
 export function invalidatePublicGitHubSourceCache(userId?: string): void {
   if (userId) {
     cachedByUserId.delete(userId);
     return;
   }
   cachedByUserId.clear();
+}
+
+/**
+ * Lightweight probe: returns GitHub login if the token works, else null.
+ * Used by context live-OAuth fallback so we never trust an unvalidated token.
+ */
+export async function validateGitHubAccessToken(token: string): Promise<string | null> {
+  return fetchGitHubLogin(token);
 }
 
 async function resolvePublicGitHubSourceForUserUncached(
@@ -86,25 +105,28 @@ async function resolvePublicGitHubSourceForUserUncached(
     };
   }
 
-  const token = await getValidAccessToken(githubAccount);
-  if (!token) {
+  const resolved = await resolveWorkingGitHubAccessToken(githubAccount);
+  if (resolved.token === null) {
     return {
       isConfigured: false,
-      reason: "missing_github_configuration"
+      reason:
+        resolved.reason === "invalid" ? "github_token_invalid" : "missing_github_configuration"
     };
   }
 
+  const { token, login: loginFromValidation } = resolved;
+
   const ownerFromConfig = settings?.githubUsername?.trim();
-  // Prefer stored username — avoid a GitHub /user round-trip on every request.
+  // Prefer stored username when present; validation already proved the token works.
   const owner =
     (ownerFromConfig && ownerFromConfig.length > 0 ? ownerFromConfig : null) ??
-    (await fetchGitHubLogin(token)) ??
+    loginFromValidation ??
     null;
 
   if (!owner) {
     return {
       isConfigured: false,
-      reason: "missing_github_configuration"
+      reason: "github_token_invalid"
     };
   }
 
@@ -121,60 +143,131 @@ async function resolvePublicGitHubSourceForUserUncached(
   };
 }
 
-async function getValidAccessToken(
-  row: NonNullable<Awaited<ReturnType<typeof betterAuthAccountRepository.findGitHubAccountForUser>>>
-): Promise<string | null> {
-  const accessTokenRaw = row.accessToken?.trim();
-  const refreshTokenRaw = row.refreshToken?.trim();
-  const accessToken = accessTokenRaw && accessTokenRaw.length > 0 ? accessTokenRaw : null;
-  const refreshToken = refreshTokenRaw && refreshTokenRaw.length > 0 ? refreshTokenRaw : null;
+export type WorkingTokenResolve =
+  | { token: string; login: string }
+  | { token: null; reason: "missing" | "invalid" };
 
-  const expiresAt = row.accessTokenExpiresAt ? new Date(row.accessTokenExpiresAt).getTime() : null;
+export type WorkingTokenDeps = {
+  fetchUserLogin: (token: string) => Promise<string | null>;
+  refreshAccessToken: (args: RefreshAccessTokenArgs) => Promise<string | null>;
+  getClientCredentials: () => {
+    clientId: string | undefined;
+    clientSecret: string | undefined;
+  };
+};
 
-  // Only refresh when we know the token is expired/near-expiry, or we have no access token.
-  const knownExpired = expiresAt != null && expiresAt - Date.now() < ACCESS_TOKEN_SKEW_MS;
-  const needsRefresh = Boolean(refreshToken) && (!accessToken || knownExpired);
-
-  if (!needsRefresh) {
-    return accessToken;
-  }
-
-  if (!refreshToken) {
-    return accessToken;
-  }
-
-  const clientId = ENV_SERVER.GITHUB_CLIENT_ID;
-  const clientSecret = ENV_SERVER.GITHUB_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    return accessToken;
-  }
-
-  if (inflightRefresh) {
-    return inflightRefresh;
-  }
-
-  inflightRefresh = refreshAccessToken({
-    accountId: row.id,
-    accessToken,
-    refreshToken,
-    scope: row.scope,
-    clientId,
-    clientSecret
-  }).finally(() => {
-    inflightRefresh = null;
-  });
-
-  return inflightRefresh;
-}
-
-async function refreshAccessToken(args: {
+export type RefreshAccessTokenArgs = {
   accountId: string;
   accessToken: string | null;
   refreshToken: string;
   scope: string | null | undefined;
   clientId: string;
   clientSecret: string;
-}): Promise<string | null> {
+};
+
+const defaultWorkingTokenDeps: WorkingTokenDeps = {
+  fetchUserLogin: fetchGitHubLogin,
+  refreshAccessToken: refreshAccessTokenHttp,
+  getClientCredentials: () => {
+    return {
+      clientId: ENV_SERVER.GITHUB_CLIENT_ID,
+      clientSecret: ENV_SERVER.GITHUB_CLIENT_SECRET
+    };
+  }
+};
+
+/**
+ * Return a **working** access token (exported for unit tests with injectable deps).
+ * - Refresh when near expiry or missing access token
+ * - Always validate with GET /user
+ * - On validation failure (revoked / Bad credentials), force-refresh once if possible
+ */
+export async function resolveWorkingGitHubAccessToken(
+  row: GitHubAccountTokens,
+  deps: WorkingTokenDeps = defaultWorkingTokenDeps
+): Promise<WorkingTokenResolve> {
+  const accessTokenRaw = row.accessToken?.trim();
+  const refreshTokenRaw = row.refreshToken?.trim();
+  let accessToken = accessTokenRaw && accessTokenRaw.length > 0 ? accessTokenRaw : null;
+  const refreshToken = refreshTokenRaw && refreshTokenRaw.length > 0 ? refreshTokenRaw : null;
+
+  const expiresAt = row.accessTokenExpiresAt ? new Date(row.accessTokenExpiresAt).getTime() : null;
+  const knownExpired = expiresAt != null && expiresAt - Date.now() < ACCESS_TOKEN_SKEW_MS;
+
+  const { clientId, clientSecret } = deps.getClientCredentials();
+  const canRefresh = Boolean(refreshToken && clientId && clientSecret);
+
+  // Proactive refresh when we know the token is expired/near-expiry.
+  if (canRefresh && (!accessToken || knownExpired)) {
+    accessToken = await runRefresh(
+      {
+        accountId: row.id,
+        accessToken,
+        refreshToken: refreshToken!,
+        scope: row.scope,
+        clientId: clientId!,
+        clientSecret: clientSecret!
+      },
+      deps
+    );
+  }
+
+  if (!accessToken) {
+    return { token: null, reason: "missing" };
+  }
+
+  // Prove the token works (catches revoked tokens that still look "unexpired").
+  let login = await deps.fetchUserLogin(accessToken);
+  if (login) {
+    return { token: accessToken, login };
+  }
+
+  // Force refresh once on Bad credentials / 401 even when expiresAt says still valid.
+  if (!canRefresh) {
+    return { token: null, reason: "invalid" };
+  }
+
+  const refreshed = await runRefresh(
+    {
+      accountId: row.id,
+      accessToken,
+      refreshToken: refreshToken!,
+      scope: row.scope,
+      clientId: clientId!,
+      clientSecret: clientSecret!
+    },
+    deps
+  );
+
+  if (!refreshed) {
+    return { token: null, reason: "invalid" };
+  }
+
+  login = await deps.fetchUserLogin(refreshed);
+  if (login) {
+    return { token: refreshed, login };
+  }
+
+  return { token: null, reason: "invalid" };
+}
+
+async function runRefresh(
+  args: RefreshAccessTokenArgs,
+  deps: WorkingTokenDeps
+): Promise<string | null> {
+  const existing = inflightRefreshByAccountId.get(args.accountId);
+  if (existing) {
+    return existing;
+  }
+
+  const promise = deps.refreshAccessToken(args).finally(() => {
+    inflightRefreshByAccountId.delete(args.accountId);
+  });
+  inflightRefreshByAccountId.set(args.accountId, promise);
+  return promise;
+}
+
+async function refreshAccessTokenHttp(args: RefreshAccessTokenArgs): Promise<string | null> {
   try {
     const body = new URLSearchParams({
       client_id: args.clientId,
@@ -205,7 +298,8 @@ async function refreshAccessToken(args: {
 
     if (!res.ok || !data.access_token || data.error) {
       console.debug("[github] OAuth refresh failed:", data.error ?? res.status);
-      return args.accessToken;
+      // Do not keep returning a known-bad access token after a failed refresh.
+      return null;
     }
 
     const accessTokenExpiresAt =
@@ -226,7 +320,7 @@ async function refreshAccessToken(args: {
     return data.access_token;
   } catch (error) {
     console.debug("[github] OAuth refresh threw:", error);
-    return args.accessToken;
+    return null;
   }
 }
 

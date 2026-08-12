@@ -1,18 +1,13 @@
 import { ORPCError, streamToEventIterator } from "@orpc/server";
 import { z } from "zod";
 
-import { DetectStacksClientInputSchema, llmLogFields, type OrpcContext } from "@tsu-stack/core";
+import { DetectStacksClientInputSchema, llmLogFields } from "@tsu-stack/core";
 import {
   projectStackScanRepository,
   stackDependencyRepository,
   stackRepository
 } from "@tsu-stack/db/repositories";
-import {
-  getPrivateRepoFileContent,
-  getPrivateRepoTree,
-  getRepoFileContent,
-  getRepoTree
-} from "@tsu-stack/github";
+import { invalidatePublicGitHubSourceCache } from "@tsu-stack/github/shared/public-github-source";
 
 import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
 import {
@@ -32,14 +27,13 @@ import {
   cancelMastraWorkflowRun,
   streamMastraWorkflow
 } from "#@/lib/agent/workflow-stream";
-import { protectedProcedure } from "#@/lib/procedures/factory";
+import {
+  GITHUB_PRIVATE_AUTH_MESSAGE,
+  isPrivateAuthFailure,
+  prefetchRepoPackageJsons
+} from "#@/lib/github/detect-stacks-prefetch";
+import { ownerProcedure, protectedProcedure } from "#@/lib/procedures/factory";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
-
-// Parse GitHub URL to owner/repo format
-function parseGitHubRepo(url: string): string {
-  const match = url.match(/github\.com\/([^/]+\/[^/]+?)(?:\/|$)/);
-  return match ? match[1] : url;
-}
 
 /**
  * Parse Mastra worker JSON without throwing on Studio HTML SPA fallbacks.
@@ -57,281 +51,6 @@ function parseAgentJsonBody(bodyText: string, label: string): unknown {
     console.debug(`[agent.router] ${label}: invalid JSON body`, trimmed.slice(0, 120));
     return undefined;
   }
-}
-
-/**
- * Detect the default branch for a repo via GitHub API.
- * Tries private token first, falls back to public.
- * Returns "main" as ultimate fallback.
- */
-async function getDefaultBranch(repoSlug: string, context: OrpcContext): Promise<string> {
-  const tryOctokit = async (octokit: OrpcContext["github"]["privateOctokit"]) => {
-    try {
-      const [owner, repo] = repoSlug.split("/");
-      const { data } = await octokit.rest.repos.get({ owner, repo });
-      return data.default_branch as string;
-    } catch {
-      return null;
-    }
-  };
-
-  const branch = await tryOctokit(context.github.privateOctokit);
-  if (branch) return branch;
-  const publicBranch = await tryOctokit(context.github.publicOctokit);
-  return publicBranch ?? "main";
-}
-
-/**
- * Parse pnpm-workspace.yaml content and extract workspace glob patterns.
- * Handles standard format: `packages:\n  - "pattern"\n  - pattern`
- */
-function parsePnpmWorkspaceYaml(content: string): string[] {
-  const patterns: string[] = [];
-  const lines = content.split("\n");
-  let inPackages = false;
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("#") || trimmed === "") continue;
-
-    if (/^packages\s*:/.test(trimmed)) {
-      inPackages = true;
-      continue;
-    }
-
-    if (inPackages && /^[a-zA-Z]/.test(trimmed) && !trimmed.startsWith("-")) {
-      inPackages = false;
-    }
-
-    if (inPackages && trimmed.startsWith("-")) {
-      const pattern = trimmed
-        .slice(1)
-        .trim()
-        .replace(/^["']|["']$/g, "");
-      // Skip negated globs for now (pnpm `!foo`)
-      if (pattern && !pattern.startsWith("!")) patterns.push(pattern);
-    }
-  }
-
-  return patterns;
-}
-
-/** package.json `workspaces` field (npm/yarn) → same style patterns as pnpm. */
-function parseNpmWorkspacesField(rootPkgContent: string | null): string[] {
-  if (!rootPkgContent) return [];
-  try {
-    const pkg = JSON.parse(rootPkgContent) as {
-      workspaces?: string[] | { packages?: string[] };
-    };
-    if (Array.isArray(pkg.workspaces)) return pkg.workspaces.filter(Boolean);
-    if (pkg.workspaces && Array.isArray(pkg.workspaces.packages)) {
-      return pkg.workspaces.packages.filter(Boolean);
-    }
-  } catch {
-    // ignore
-  }
-  return [];
-}
-
-/**
- * Match a package directory (e.g. packages/core) against a workspace glob.
- * Supports foo, foo/*, foo/**, and simple multi-segment globs.
- */
-function matchWorkspaceDir(dirPath: string, pattern: string): boolean {
-  const dir = dirPath.replace(/\/$/, "");
-  const pat = pattern.replace(/\/$/, "");
-
-  if (!pat.includes("*")) {
-    return dir === pat;
-  }
-
-  // `packages/**` → packages and any depth under it
-  if (pat.endsWith("/**")) {
-    const base = pat.slice(0, -3);
-    return dir === base || dir.startsWith(`${base}/`);
-  }
-
-  // `packages/*` → exactly one segment under packages
-  if (pat.endsWith("/*")) {
-    const base = pat.slice(0, -2);
-    if (base === "") {
-      // `/*` at root → one top-level segment
-      return dir.length > 0 && !dir.includes("/");
-    }
-    if (!dir.startsWith(`${base}/`)) return false;
-    const rest = dir.slice(base.length + 1);
-    return rest.length > 0 && !rest.includes("/");
-  }
-
-  // Generic: * = one path segment
-  const re = new RegExp(
-    `^${pat
-      .split("/")
-      .map((seg) => {
-        if (seg === "**") return ".*";
-        if (seg === "*") return "[^/]+";
-        return seg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      })
-      .join("/")}$`
-  );
-  return re.test(dir);
-}
-
-async function mapPool<T, R>(
-  items: T[],
-  concurrency: number,
-  fn: (item: T) => Promise<R>
-): Promise<R[]> {
-  if (items.length === 0) return [];
-  const results: R[] = Array.from({ length: items.length });
-  let next = 0;
-  async function worker() {
-    while (next < items.length) {
-      const i = next++;
-      results[i] = await fn(items[i]!);
-    }
-  }
-  const n = Math.max(1, Math.min(concurrency, items.length));
-  await Promise.all(Array.from({ length: n }, () => worker()));
-  return results;
-}
-
-/**
- * List every `package.json` path in the repo via recursive git tree (1–2 API calls).
- * Falls back to shallow directory listing when recursive tree is unavailable.
- */
-async function listPackageJsonPaths(
-  repoSlug: string,
-  defaultBranch: string,
-  context: OrpcContext
-): Promise<string[]> {
-  const [owner, repo] = repoSlug.split("/");
-  if (!owner || !repo) return [];
-
-  const tryRecursive = async (octokit: OrpcContext["github"]["privateOctokit"]) => {
-    try {
-      const { data: refData } = await octokit.rest.git.getRef({
-        owner,
-        repo,
-        ref: `heads/${defaultBranch}`
-      });
-      const commitSha = refData.object.sha;
-      const { data: commit } = await octokit.rest.git.getCommit({
-        owner,
-        repo,
-        commit_sha: commitSha
-      });
-      const { data: tree } = await octokit.rest.git.getTree({
-        owner,
-        repo,
-        tree_sha: commit.tree.sha,
-        recursive: "true"
-      });
-      if (tree.truncated) {
-        // Tree too large — fall back to shallow listing
-        return null;
-      }
-      return (tree.tree ?? [])
-        .filter(
-          (t) =>
-            t.type === "blob" &&
-            typeof t.path === "string" &&
-            (t.path === "package.json" || t.path.endsWith("/package.json"))
-        )
-        .map((t) => t.path as string);
-    } catch {
-      return null;
-    }
-  };
-
-  const privatePaths = await tryRecursive(context.github.privateOctokit);
-  if (privatePaths) return privatePaths;
-  const publicPaths = await tryRecursive(context.github.publicOctokit);
-  if (publicPaths) return publicPaths;
-
-  // Shallow fallback: one listing level under common monorepo roots
-  const fetchTree = async (path: string) => {
-    const privateResult = await getPrivateRepoTree(
-      { path, ref: defaultBranch, repo: repoSlug },
-      context
-    );
-    if (privateResult.length > 0) return privateResult;
-    return getRepoTree({ path, ref: defaultBranch, repo: repoSlug }, context);
-  };
-
-  const paths: string[] = [];
-  for (const base of ["apps", "packages", "tools", "libs", "services", "modules"]) {
-    const entries = await fetchTree(base);
-    for (const entry of entries) {
-      if (entry.type === "dir") {
-        paths.push(`${entry.path}/package.json`);
-      } else if (entry.type === "file" && entry.name === "package.json") {
-        paths.push(entry.path);
-      }
-    }
-  }
-  return paths;
-}
-
-/**
- * Resolve workspace package.json files from pnpm-workspace.yaml and/or
- * package.json `workspaces`. Prefers a single recursive git tree listing.
- */
-async function resolveWorkspacePackageJsons(
-  workspaceYamlContent: string | null,
-  rootPkgContent: string | null,
-  repoSlug: string,
-  defaultBranch: string,
-  context: OrpcContext
-): Promise<Array<{ workspace: string; content: string }>> {
-  const patterns = [
-    ...parsePnpmWorkspaceYaml(workspaceYamlContent ?? ""),
-    ...parseNpmWorkspacesField(rootPkgContent)
-  ];
-  // Deduplicate patterns
-  const uniquePatterns = [...new Set(patterns)];
-  if (uniquePatterns.length === 0) return [];
-
-  const allPkgPaths = await listPackageJsonPaths(repoSlug, defaultBranch, context);
-
-  // Paths whose parent directory matches a workspace pattern (exclude root package.json)
-  const matchedPaths = allPkgPaths.filter((pkgPath) => {
-    if (pkgPath === "package.json") return false;
-    const dir = pkgPath.replace(/\/package\.json$/, "");
-    return uniquePatterns.some((p) => matchWorkspaceDir(dir, p));
-  });
-
-  const fetchFile = async (path: string) => {
-    const privateResult = await getPrivateRepoFileContent(
-      { path, ref: defaultBranch, repo: repoSlug },
-      context
-    );
-    if (privateResult !== null) return privateResult;
-    return getRepoFileContent({ path, ref: defaultBranch, repo: repoSlug }, context);
-  };
-
-  // Cap to avoid pathological monorepos / rate limits (real monorepos are well under this)
-  const capped = matchedPaths.slice(0, 80);
-  const fetched = await mapPool(capped, 6, async (pkgPath) => {
-    const content = await fetchFile(pkgPath);
-    if (!content?.trim()) return null;
-    const dir = pkgPath.replace(/\/package\.json$/, "");
-    const workspace = dir.includes("/") ? dir.slice(dir.lastIndexOf("/") + 1) : dir;
-    return { workspace, content, path: pkgPath };
-  });
-
-  // Prefer path as workspace label when names collide (apps/web vs packages/web)
-  const results: Array<{ workspace: string; content: string }> = [];
-  const seen = new Set<string>();
-  for (const row of fetched) {
-    if (!row) continue;
-    const label = row.path.replace(/\/package\.json$/, "");
-    if (seen.has(label)) continue;
-    seen.add(label);
-    results.push({ workspace: label, content: row.content });
-  }
-
-  return results;
 }
 
 const agentIdSchema = z.enum(CHAT_ALLOWED_AGENT_IDS).default(HUB_CHAT_AGENT_ID);
@@ -787,15 +506,27 @@ export const agentRouter = {
    * Streams workflow events for progress tracking.
    * Scoped to the session user's stacks (tenant userId).
    */
-  detectStacks: protectedProcedure
+  detectStacks: ownerProcedure
     .route({
-      description: "Detect stacks from project repos via Mastra workflow",
+      description:
+        "Detect stacks from project repos via Mastra workflow (session user's private GitHub OAuth)",
       method: "POST"
     })
     .input(DetectStacksClientInputSchema)
     .handler(async function* ({ input, context, signal }) {
       try {
         if (signal?.aborted) return;
+
+        // Private repo reads require a working OAuth source on the session.
+        if (!context.github.source.isConfigured) {
+          const reason = context.github.source.reason;
+          throw new ORPCError("FORBIDDEN", {
+            message:
+              reason === "github_token_invalid"
+                ? "Your GitHub OAuth token is invalid or revoked. " + GITHUB_PRIVATE_AUTH_MESSAGE
+                : GITHUB_PRIVATE_AUTH_MESSAGE
+          });
+        }
 
         // Yield immediately so the oRPC event stream is live and client cancel
         // can close the generator (otherwise cancel waits on GitHub prefetch).
@@ -810,72 +541,35 @@ export const agentRouter = {
 
         if (signal?.aborted) return;
 
-        // 1. Pre-fetch package.json from each repo (abortable)
-        const repoPackages = await Promise.race([
+        // 1. Pre-fetch package.json from each repo (abortable) via private OAuth first
+        const prefetched = await Promise.race([
           Promise.all(
-            input.repos.map(async (repoUrl: string) => {
-              if (signal?.aborted) {
-                throw new DOMException("Aborted", "AbortError");
-              }
-              const repoSlug = parseGitHubRepo(repoUrl);
-
-              // Detect default branch (private first, then public)
-              const defaultBranch = await getDefaultBranch(repoSlug, context);
-
-              if (signal?.aborted) {
-                throw new DOMException("Aborted", "AbortError");
-              }
-
-              const fetchFile = async (path: string) => {
-                const privateResult = await getPrivateRepoFileContent(
-                  { path, ref: defaultBranch, repo: repoSlug },
-                  context
-                );
-                if (privateResult !== null) return privateResult;
-                const publicResult = await getRepoFileContent(
-                  { path, ref: defaultBranch, repo: repoSlug },
-                  context
-                );
-                return publicResult;
-              };
-
-              const rootPkgContent = await fetchFile("package.json");
-
-              // Workspace packages hold almost all monorepo deps (root is often private + catalog only).
-              let workspaceYamlContent: string | null = null;
-              let workspacePkgContents: Array<{ workspace: string; content: string }> = [];
-              if (rootPkgContent) {
-                workspaceYamlContent = await fetchFile("pnpm-workspace.yaml");
-                // Also try npm/yarn-style workspaces when no pnpm file (or as supplement).
-                workspacePkgContents = await resolveWorkspacePackageJsons(
-                  workspaceYamlContent,
-                  rootPkgContent,
-                  repoSlug,
-                  defaultBranch,
-                  context
-                );
-              }
-
-              return {
-                repo: repoUrl,
-                rootPkgContent,
-                workspaceYamlContent,
-                workspacePkgContents
-              };
-            })
+            input.repos.map((repoUrl) => prefetchRepoPackageJsons(repoUrl, context, signal))
           ),
           abortPromise(signal)
         ]);
 
         if (signal?.aborted) return;
 
-        const reposWithPackageJson = repoPackages.filter((r) => r.rootPkgContent != null);
+        const repoPackages = prefetched.map((r) => {
+          return {
+            repo: r.repo,
+            rootPkgContent: r.rootPkgContent,
+            workspaceYamlContent: r.workspaceYamlContent,
+            workspacePkgContents: r.workspacePkgContents
+          };
+        });
+
+        const reposWithPackageJson = repoPackages.filter(
+          (r) => r.rootPkgContent != null || (r.workspacePkgContents?.length ?? 0) > 0
+        );
         if (reposWithPackageJson.length === 0) {
           throw new ORPCError("BAD_REQUEST", {
             message:
-              "Could not read package.json from any selected repository (GitHub 401/404). " +
-              "Sign out and sign back in with GitHub so the server can refresh your OAuth token " +
-              "(private repos need a valid owner OAuth session; tokens never leave the server)."
+              "Could not read package.json from any selected repository. " +
+              "Confirm each repo has a package.json on its default branch, and that your " +
+              "GitHub OAuth session can read private repos (Settings → reconnect GitHub with `repo` scope, " +
+              "then sign out and back in). Tokens never leave the server."
           });
         }
 
@@ -883,17 +577,7 @@ export const agentRouter = {
           (n, r) => n + (r.workspacePkgContents?.length ?? 0),
           0
         );
-        const monorepoWithoutWorkspaces = repoPackages.some(
-          (r) => r.workspaceYamlContent && (r.workspacePkgContents?.length ?? 0) === 0
-        );
-        if (monorepoWithoutWorkspaces) {
-          throw new ORPCError("BAD_REQUEST", {
-            message:
-              "Found pnpm-workspace.yaml but could not load any workspace package.json files from GitHub. " +
-              "Check that the default branch contains apps/*/package.json or packages/*/package.json, " +
-              "and that your GitHub OAuth session can read this private repo."
-          });
-        }
+        const nestedTruncatedRepos = prefetched.filter((r) => r.nestedTruncated);
 
         // 2. Look up existing stacks, dependencies, and last scan
         const userId = context.session.user.id;
@@ -952,8 +636,14 @@ export const agentRouter = {
           repoCount: input.repos.length,
           /** Repos that have a root package.json */
           packageJsonCount: reposWithPackageJson.length,
-          /** Workspace package.json files loaded (monorepo signal) */
+          /** Nested package.json files loaded (monorepo signal) */
           workspacePkgCount,
+          nestedTruncatedRepoCount: nestedTruncatedRepos.length,
+          nestedTruncatedSamples: nestedTruncatedRepos
+            .map((r) => {
+              return { repo: r.repo, totalPaths: r.nestedTotalPaths };
+            })
+            .slice(0, 6),
           workspaceSamples: repoPackages
             .flatMap((r) => r.workspacePkgContents.map((w) => w.workspace))
             .slice(0, 12),
@@ -993,6 +683,21 @@ export const agentRouter = {
         if (signal?.aborted) return;
         if (error instanceof DOMException && error.name === "AbortError") return;
         if (error instanceof ORPCError) throw error;
+        if (isPrivateAuthFailure(error)) {
+          // Drop cached dead token so the next request re-validates / re-refreshes.
+          invalidatePublicGitHubSourceCache(context.session.user.id);
+          context.logger.set({
+            event: "agent_detect_stacks_github_auth_failed",
+            route: "agent.detectStacks",
+            githubError:
+              error instanceof Error ? error.message.slice(0, 160) : String(error).slice(0, 160)
+          });
+          context.logger.error(error instanceof Error ? error : String(error));
+          // Never surface raw Octokit "Bad credentials" to the client.
+          throw new ORPCError("FORBIDDEN", {
+            message: GITHUB_PRIVATE_AUTH_MESSAGE
+          });
+        }
         const message = error instanceof Error ? error.message : String(error);
         const cause =
           error instanceof Error && error.cause instanceof Error

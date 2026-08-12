@@ -1,7 +1,11 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { normalizeOrganizeName, type OrganizeStacksInput } from "@tsu-stack/core";
+import {
+  buildCanonicalRenameRulesBlock,
+  normalizeOrganizeName,
+  type OrganizeStacksInput
+} from "@tsu-stack/core";
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
@@ -121,22 +125,7 @@ export const findRenames = createStep({
 Stacks:
 ${stackList}
 
-CANONICAL NAMES (use these exact spellings):
-React, Vue, Angular, Svelte, Next.js, Nuxt, Remix, Astro, Solid, Preact
-Tailwind CSS, Styled Components, Emotion, Framer Motion
-Prisma, Drizzle, Mongoose, TypeORM, Sequelize, Knex
-Vite, Webpack, esbuild, Rollup, Turbopack
-TanStack Query, TanStack Router, TanStack Table
-Better Auth, NextAuth, Lucia
-Vitest, Jest, Playwright, Cypress
-
-RENAME RULES:
-- Title case: "reactjs" → "React", "tailwindcss" → "Tailwind CSS"
-- Proper spacing: "framer motion" → "Framer Motion"
-- Official names: "drizzle-orm" → "Drizzle", "prisma client" → "Prisma"
-- Keep existing canonical names unchanged
-- NEVER rename a stack to a name that another stack in the list already has — those are merges, not renames
-- Do not suggest a rename when the current name is already correct (same spelling/casing)
+${buildCanonicalRenameRulesBlock()}
 
 Output JSON:
 {

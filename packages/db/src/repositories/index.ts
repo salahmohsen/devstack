@@ -19,7 +19,10 @@ export {
   type ApplicationActivityEntity,
   type CreateApplicationActivityData
 } from "./application-activity.repository.ts";
-export { betterAuthAccountRepository } from "./better-auth-account.repository.ts";
+export {
+  betterAuthAccountRepository,
+  type GitHubAccountTokens
+} from "./better-auth-account.repository.ts";
 export { contactRepository } from "./contact.repository.ts";
 export { experienceRepository } from "./experience.repository.ts";
 export { githubCacheRepository, type DbExecutor } from "./github-cache.repository.ts";

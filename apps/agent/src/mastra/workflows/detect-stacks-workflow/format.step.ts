@@ -43,7 +43,7 @@ export const format = createStep({
       }
     );
 
-    // Build enriched stacks from categorized entries
+    // Build enriched stacks from categorized entries (description/icon/health already polished)
     const categorizedStacks = categorized.map(
       (c: {
         npmPackage: string;
@@ -56,6 +56,11 @@ export const format = createStep({
         iconSvg: string | null;
         stackId: string | null;
         existingStackId: string | null;
+        health?: {
+          deprecated?: boolean;
+          downloads?: number;
+          lastPublished?: string;
+        } | null;
       }) => {
         return {
           npmPackage: c.npmPackage,
@@ -68,11 +73,7 @@ export const format = createStep({
           existingStackId: c.existingStackId,
           repo: c.repo,
           relatedPackages: c.relatedPackages,
-          health: null as {
-            deprecated?: boolean;
-            downloads?: number;
-            lastPublished?: string;
-          } | null
+          health: c.health ?? null
         };
       }
     );
@@ -112,10 +113,18 @@ export const format = createStep({
       // Merge all packages under this displayName
       // Collect ALL npm packages as relatedPackages so other projects can recognize them
       const allRelatedPackages = Array.from(new Set(stacks.map((s) => s.npmPackage)));
+      // Prefer entry with description/icon/health when merging siblings
+      const preferred =
+        stacks.find((s) => s.description != null || s.iconSvg != null || s.health != null) ??
+        stacks[0]!;
       const merged = {
-        ...stacks[0],
+        ...preferred,
         name: displayName,
-        relatedPackages: allRelatedPackages
+        relatedPackages: allRelatedPackages,
+        // First non-null wins across the group
+        description: stacks.find((s) => s.description)?.description ?? preferred.description,
+        iconSvg: stacks.find((s) => s.iconSvg)?.iconSvg ?? preferred.iconSvg,
+        health: stacks.find((s) => s.health)?.health ?? preferred.health
       };
       return merged;
     });

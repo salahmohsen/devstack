@@ -6,6 +6,7 @@ import { githubRevalidationSignalKeys } from "#@/infrastructure/cache/github-rev
 import {
   type GitHubClient,
   createGitHubResponseMetadata,
+  getErrorStatusCode,
   isGitHubNotFoundError
 } from "#@/infrastructure/octokit/client";
 import { mapGitHubRepoFileContent } from "#@/repo/repo-file-content/repo-file-content.utils";
@@ -18,10 +19,19 @@ import {
 import {
   type RepoAccessSurface,
   assertRepoVisibleOnPublicSurface,
+  isGitHubAuthError,
   repoCacheResource,
   resolveRepoOwnerName,
   withPublicGithubClient
 } from "#@/shared/public-repo-access";
+
+/** Private-surface auth/config failure — callers must not treat as "file missing". */
+export function createGitHubPrivateAuthError(message: string): Error & { status: number } {
+  const error = new Error(message) as Error & { status: number };
+  error.status = 401;
+  error.name = "GitHubPrivateAuthError";
+  return error;
+}
 
 async function _fetchRepoFileContent(
   input: { path: string; ref: string; repo: string },
@@ -39,9 +49,16 @@ async function _fetchRepoFileContent(
   const source = context.github.source;
   if (!source.isConfigured) {
     setRepoLoggerOutcome(context, "github_repo_file_content_read_skipped", {
-      reason: source.reason
+      reason: source.reason,
+      surface
     });
-
+    // Private path must not silently look like "file not found" — detect-stacks
+    // and dashboard private reads need a real OAuth session with `repo` scope.
+    if (surface === "private") {
+      throw createGitHubPrivateAuthError(
+        "GitHub OAuth is not configured for this session. Link GitHub (with repo access) and sign in again."
+      );
+    }
     return null;
   }
 
@@ -102,10 +119,25 @@ async function _fetchRepoFileContent(
 
     return result.data;
   } catch (error) {
-    setRepoLoggerOutcome(context, "github_repo_file_content_read_not_found", {
-      statusCode: isGitHubNotFoundError(error) ? 404 : null
-    });
+    // Private surface: surface auth failures so callers can prompt re-login.
+    // Public surface: keep soft-null for guests (private repos look like not-found).
+    if (surface === "private" && isGitHubAuthError(error)) {
+      setRepoLoggerOutcome(context, "github_repo_file_content_read_auth_failed", {
+        statusCode: getErrorStatusCode(error)
+      });
+      throw createGitHubPrivateAuthError(
+        "GitHub rejected your OAuth token for a private repository read. " +
+          "Link GitHub under Settings with the `repo` scope, then sign out and sign back in " +
+          "so the server can refresh your token (tokens never leave the server)."
+      );
+    }
 
+    // 404 / not-found and all non-auth failures soft-null for both surfaces.
+    // Only auth failures rethrow on private (above) so callers can prompt re-login
+    // without turning rate limits / 5xx into hard dashboard errors.
+    setRepoLoggerOutcome(context, "github_repo_file_content_read_not_found", {
+      statusCode: getErrorStatusCode(error) ?? (isGitHubNotFoundError(error) ? 404 : null)
+    });
     return null;
   }
 }

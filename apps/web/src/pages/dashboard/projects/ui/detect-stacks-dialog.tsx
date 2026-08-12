@@ -311,7 +311,8 @@ export function DetectStacksDialog({
             confidence: s.confidence,
             iconSvg: s.iconSvg,
             relatedPackages: s.relatedPackages,
-            existingStackId: s.existingStackId
+            existingStackId: s.existingStackId,
+            health: s.health ?? null
           };
         })
       });

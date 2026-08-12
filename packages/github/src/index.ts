@@ -18,6 +18,13 @@ export * from "#@/repo/repo-workflow-runs/get-repo-workflow-runs";
 export * from "#@/repo/tree-entry-commits/get-tree-entry-commits";
 export * from "#@/runtime/bindings";
 export * from "#@/shared/public-github-source";
+export {
+  isGitHubAuthError,
+  isPrivateOnPublicSurface,
+  repoCacheResource,
+  resolveRepoOwnerName,
+  type RepoAccessSurface
+} from "#@/shared/public-repo-access";
 export * from "#@/types";
 export type {
   CommandPaletteSearchResult,

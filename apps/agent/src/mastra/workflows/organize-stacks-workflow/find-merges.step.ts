@@ -1,7 +1,11 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
-import { OrganizeStacksInputSchema } from "@tsu-stack/core";
+import {
+  OrganizeStacksInputSchema,
+  SAME_PROJECT_PACKAGE_FAMILIES,
+  SCOPE_MERGE_ALLOWLIST
+} from "@tsu-stack/core";
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import {
@@ -43,81 +47,6 @@ export const findMerges = createStep({
       Array<{ id: string; name: string; projectCount: number; pkg: string }>
     >();
 
-    // Known same-project package families (non-scoped packages from the same library)
-    const sameProjectGroups = [
-      ["react", "react-dom", "@types/react", "@types/react-dom"],
-      ["next", "@types/next"],
-      [
-        "vue",
-        "@vue/compiler-sfc",
-        "@vue/runtime-dom",
-        "@vue/runtime-core",
-        "@vue/shared",
-        "@types/vue"
-      ],
-      ["svelte", "@sveltejs/kit", "@sveltejs/vite-plugin-svelte"],
-      [
-        "@angular/core",
-        "@angular/common",
-        "@angular/compiler",
-        "@angular/platform-browser",
-        "@angular/platform-browser-dynamic",
-        "@angular/router",
-        "@angular/forms",
-        "@angular/animations",
-        "@angular/cdk"
-      ],
-      ["prisma", "@prisma/client"],
-      ["drizzle-orm", "drizzle-kit", "drizzle-zod", "drizzle-valibot"],
-      ["vite", "@vitejs/plugin-react", "@vitejs/plugin-vue", "@vitejs/plugin-svelte"],
-      ["eslint", "@typescript-eslint/parser", "@typescript-eslint/eslint-plugin"],
-      ["vitest", "@vitest/ui", "@vitest/coverage-v8"],
-      ["jest", "@jest/globals", "ts-jest", "babel-jest"],
-      ["@testing-library/react", "@testing-library/jest-dom", "@testing-library/user-event"],
-      ["@storybook/react", "@storybook/react-vite"],
-      [
-        "embla-carousel",
-        "embla-carousel-react",
-        "embla-carousel-autoplay",
-        "embla-carousel-wheel-gestures"
-      ],
-      ["redux", "react-redux", "@reduxjs/toolkit"],
-      ["react-router", "react-router-dom"],
-      ["react-hook-form", "@hookform/resolvers"],
-      ["zod", "zod-to-json-schema", "zod-validation-error"],
-      ["next-auth", "@auth/core", "@auth/prisma-adapter"],
-      ["better-auth", "@better-auth/core"],
-      ["@trpc/server", "@trpc/client", "@trpc/react-query", "@trpc/next"],
-      ["@tanstack/react-query", "@tanstack/react-query-devtools"],
-      ["@tanstack/react-router", "@tanstack/router-devtools"],
-      ["ai", "@ai-sdk/react", "@ai-sdk/openai", "@ai-sdk/anthropic", "@ai-sdk/google"],
-      ["@supabase/supabase-js", "@supabase/auth-helpers-nextjs", "@supabase/ssr"],
-      ["firebase", "firebase-admin"],
-      ["lucide-react", "lucide-vue-next", "lucide-svelte"],
-      ["@dnd-kit/core", "@dnd-kit/sortable", "@dnd-kit/modifiers", "@dnd-kit/utilities"],
-      ["@t3-oss/env-nextjs", "@t3-oss/env-core"],
-      ["@inlang/cli", "@inlang/paraglide-js", "@inlang/plugin-m-function-calls"],
-      ["@lottiefiles/dotlottie-react", "@lottiefiles/lottie-player"],
-      ["date-fns", "date-fns-tz"],
-      ["axios", "axios-retry"],
-      ["react-leaflet", "leaflet", "@types/leaflet"],
-      ["styled-components", "@types/styled-components"],
-      ["@emotion/react", "@emotion/styled"],
-      ["lodash", "@types/lodash"],
-      ["tailwind-merge", "tailwind-variants"],
-      ["webpack", "webpack-cli", "webpack-dev-server"],
-      [
-        "rollup",
-        "@rollup/plugin-commonjs",
-        "@rollup/plugin-node-resolve",
-        "@rollup/plugin-typescript"
-      ],
-      ["playwright", "@playwright/test"],
-      ["@grpc/grpc-js", "@grpc/proto-loader"],
-      ["socket.io", "socket.io-client"],
-      ["ws", "@types/ws"]
-    ];
-
     // Case/spacing-insensitive exact-name duplicates (e.g. "React" + "react")
     const exactNameGroups = new Map<
       string,
@@ -134,7 +63,6 @@ export const findMerges = createStep({
       });
 
       // Mono-product scopes only — never blanket-merge @tanstack/*, @types/*, @radix-ui/*
-      const SCOPE_MERGE_ALLOWLIST = new Set(["@heroui", "@chakra-ui", "@mantine", "@headlessui"]);
       const pkg = stack.name.toLowerCase().replace(/\s+/g, "");
       if (pkg.startsWith("@")) {
         const scope = pkg.split("/")[0];
@@ -149,7 +77,7 @@ export const findMerges = createStep({
       }
 
       // Group by known family
-      for (const family of sameProjectGroups) {
+      for (const family of SAME_PROJECT_PACKAGE_FAMILIES) {
         if (
           family.some(
             (f) => f.toLowerCase() === pkg || f.toLowerCase() === stack.name.toLowerCase()

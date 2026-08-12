@@ -37,7 +37,10 @@ import { type Octokit } from "octokit";
 
 /** `owner` is the GitHub login, not an app role. `userId` is the app tenant. */
 export type OrpcContextGithubSource =
-  | { isConfigured: false; reason: "missing_github_configuration" }
+  | {
+      isConfigured: false;
+      reason: "missing_github_configuration" | "github_token_invalid";
+    }
   | { isConfigured: true; owner: string; token: string; userId?: string };
 
 export type OrpcContextGithubBinding = {

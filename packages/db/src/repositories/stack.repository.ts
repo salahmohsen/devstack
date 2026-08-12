@@ -210,6 +210,7 @@ export const stackRepository = {
         description: input.description ?? null,
         icon: input.icon ?? null,
         type: input.type ?? null,
+        healthStatus: input.healthStatus ?? null,
         confidence: input.confidence ?? null,
         sortOrder: input.sortOrder ?? 0,
         portfolioEntryId: pid

@@ -147,9 +147,17 @@ export function getErrorStatusCode(error: unknown) {
     return null;
   }
 
-  return typeof (error as { status?: unknown }).status === "number"
-    ? (error as { status: number }).status
-    : null;
+  if (typeof (error as { status?: unknown }).status === "number") {
+    return (error as { status: number }).status;
+  }
+
+  // Octokit RequestError sometimes nests status on response
+  const response = (error as { response?: { status?: unknown } }).response;
+  if (response && typeof response.status === "number") {
+    return response.status;
+  }
+
+  return null;
 }
 
 /**

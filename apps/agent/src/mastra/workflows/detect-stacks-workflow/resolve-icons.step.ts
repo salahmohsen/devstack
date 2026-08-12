@@ -1,74 +1,79 @@
 import { createStep } from "@mastra/core/workflows";
-import { z } from "zod";
 
-import { resolveIconForPackage } from "@tsu-stack/core";
-
-import { deduplicateGroups } from "#@/mastra/workflows/detect-stacks-workflow/deduplicate-groups.step";
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
+import { matchCategorizeSchema } from "#@/mastra/workflows/detect-stacks-workflow/detect-stacks-workflow.schema";
+import { enrichNpm } from "#@/mastra/workflows/detect-stacks-workflow/enrich-npm.step";
+import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 
 export const resolveIcons = createStep({
   id: "resolve-icons",
-  description: "Fetches SVG icons from Iconify API for each categorized stack",
-  inputSchema: deduplicateGroups.outputSchema,
-  outputSchema: z.object({
-    matched: z.array(
-      z.object({
-        npmPackage: z.string(),
-        stackId: z.string(),
-        name: z.string(),
-        repo: z.string(),
-        relatedPackages: z.array(z.string())
-      })
-    ),
-    categorized: z.array(
-      z.object({
-        npmPackage: z.string(),
-        name: z.string(),
-        type: z.string(),
-        description: z.string().nullable(),
-        confidence: z.enum(["high", "medium", "low"]),
-        repo: z.string(),
-        relatedPackages: z.array(z.string()),
-        iconSvg: z.string().nullable(),
-        stackId: z.string().nullable(),
-        existingStackId: z.string().nullable()
-      })
-    )
-  }),
+  description: "Fetches SVG icons from Iconify using canonical display names",
+  inputSchema: enrichNpm.outputSchema,
+  outputSchema: matchCategorizeSchema,
   execute: async ({ inputData, abortSignal }) => {
+    const started = Date.now();
+    const log = createLogger({ operation: "agent__detect_stacks_icons" });
     const { matched, categorized } = inputData;
 
     if (abortSignal?.aborted) {
+      log.set({
+        event: "detect_stacks_icons_completed",
+        missingCount: 0,
+        resolvedCount: 0,
+        durationMs: Date.now() - started,
+        reason: "aborted"
+      });
+      log.emit();
       return { matched, categorized };
     }
 
-    // Only resolve icons for new stacks (not existing ones)
-    const toResolve = categorized.filter(
-      (c) => c.existingStackId === null && c.confidence !== "low"
-    );
+    // One Iconify lookup per unique display name for new non-low-confidence stacks
+    const names = [
+      ...new Set(
+        categorized
+          .filter((c) => c.existingStackId === null && c.confidence !== "low")
+          .map((c) => c.name)
+      )
+    ];
 
-    const resolved = await Promise.allSettled(
-      toResolve.map(async (stack) => {
-        if (abortSignal?.aborted) {
-          return { npmPackage: stack.npmPackage, iconSvg: null };
-        }
-        const svg = await resolveIconForPackage(stack.name);
-        return { npmPackage: stack.npmPackage, iconSvg: svg };
-      })
-    );
-
-    const iconMap = new Map<string, string | null>();
-    for (const result of resolved) {
-      if (result.status === "fulfilled") {
-        iconMap.set(result.value.npmPackage, result.value.iconSvg);
-      }
+    if (names.length === 0) {
+      log.set({
+        event: "detect_stacks_icons_completed",
+        missingCount: 0,
+        resolvedCount: 0,
+        durationMs: Date.now() - started,
+        reason: "no_candidates"
+      });
+      log.emit();
+      return { matched, categorized };
     }
+
+    // Reuse organize batch helper (concurrency 3)
+    const results = await batchResolveIcons(
+      names.map((name) => {
+        return { stackId: name, stackName: name };
+      }),
+      3
+    );
+
+    const iconByName = new Map(results.map((r) => [r.stackId, r.svg]));
+    const resolvedCount = results.filter((r) => !!r.svg).length;
 
     const categorizedWithIcons = categorized.map((stack) => {
       return {
         ...stack,
-        iconSvg: iconMap.get(stack.npmPackage) ?? stack.iconSvg
+        iconSvg: iconByName.get(stack.name) ?? stack.iconSvg,
+        health: stack.health ?? null
       };
     });
+
+    log.set({
+      event: "detect_stacks_icons_completed",
+      missingCount: names.length,
+      resolvedCount,
+      durationMs: Date.now() - started
+    });
+    log.emit();
 
     return { matched, categorized: categorizedWithIcons };
   }

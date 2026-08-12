@@ -1,39 +1,16 @@
 import { createStep } from "@mastra/core/workflows";
-import { z } from "zod";
+import { type z } from "zod";
 
 import { type DetectStacksWorkflowInputSchema } from "@tsu-stack/core";
 
 import { aiCategorize } from "#@/mastra/workflows/detect-stacks-workflow/ai-categorize.step";
+import { matchCategorizeSchema } from "#@/mastra/workflows/detect-stacks-workflow/detect-stacks-workflow.schema";
 
 export const deduplicateGroups = createStep({
   id: "deduplicate-groups",
   description: "Ensures no two stacks share a package; absorbs groups into existing stacks",
   inputSchema: aiCategorize.outputSchema,
-  outputSchema: z.object({
-    matched: z.array(
-      z.object({
-        npmPackage: z.string(),
-        stackId: z.string(),
-        name: z.string(),
-        repo: z.string(),
-        relatedPackages: z.array(z.string())
-      })
-    ),
-    categorized: z.array(
-      z.object({
-        npmPackage: z.string(),
-        name: z.string(),
-        type: z.string(),
-        description: z.string().nullable(),
-        confidence: z.enum(["high", "medium", "low"]),
-        repo: z.string(),
-        relatedPackages: z.array(z.string()),
-        iconSvg: z.string().nullable(),
-        stackId: z.string().nullable(),
-        existingStackId: z.string().nullable()
-      })
-    )
-  }),
+  outputSchema: matchCategorizeSchema,
   execute: async (params) => {
     const { matched, categorized } = params.inputData;
     const initData = params.getInitData() as z.infer<typeof DetectStacksWorkflowInputSchema>;
