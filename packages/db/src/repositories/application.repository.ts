@@ -13,6 +13,10 @@ import {
 
 import { getDb } from "../index.ts";
 import {
+  applicationActivity,
+  type ApplicationActivityKind
+} from "../schema/application-activity.schema.ts";
+import {
   application,
   type ApplicationOutcome,
   type ApplicationStage,
@@ -123,6 +127,7 @@ export const applicationRepository = {
         applyMethod: input.applyMethod ?? "unknown",
         matchScore: input.matchScore ?? null,
         source: input.source ?? null,
+        sourceLabel: input.sourceLabel ?? null,
         sourceTags: input.sourceTags ?? [],
         location: input.location ?? null,
         salaryRange: input.salaryRange ?? null,
@@ -164,6 +169,7 @@ export const applicationRepository = {
         applyMethod: input.applyMethod ?? "unknown",
         matchScore: input.matchScore ?? null,
         source: input.source ?? null,
+        sourceLabel: input.sourceLabel ?? null,
         sourceTags: input.sourceTags ?? [],
         location: input.location ?? null,
         salaryRange: input.salaryRange ?? null,
@@ -213,6 +219,7 @@ export const applicationRepository = {
         ...(patch.applyMethod !== undefined ? { applyMethod: patch.applyMethod } : {}),
         ...(patch.matchScore !== undefined ? { matchScore: patch.matchScore } : {}),
         ...(patch.source !== undefined ? { source: patch.source } : {}),
+        ...(patch.sourceLabel !== undefined ? { sourceLabel: patch.sourceLabel } : {}),
         ...(patch.sourceTags !== undefined ? { sourceTags: patch.sourceTags } : {}),
         ...(patch.location !== undefined ? { location: patch.location } : {}),
         ...(patch.salaryRange !== undefined ? { salaryRange: patch.salaryRange } : {}),
@@ -267,6 +274,65 @@ export const applicationRepository = {
       .where(and(eq(application.id, id), eq(application.userId, userId)))
       .returning();
     return updated ?? null;
+  },
+
+  /**
+   * Atomically transition tracking status and append matching activity rows.
+   * Used by batch dismiss / restore so status + timeline never diverge.
+   */
+  async transitionTrackingStatusWithActivity(input: {
+    ids: string[];
+    userId: string;
+    fromStatus: ApplicationTrackingStatus;
+    toStatus: ApplicationTrackingStatus;
+    activityKind: ApplicationActivityKind;
+    actorUserId: string;
+  }): Promise<ApplicationEntity[]> {
+    const { ids, userId, fromStatus, toStatus, activityKind, actorUserId } = input;
+    if (ids.length === 0) return [];
+    const unique = [...new Set(ids)];
+
+    return getDb().transaction(async (tx) => {
+      const owned = await tx
+        .select()
+        .from(application)
+        .where(and(eq(application.userId, userId), inArray(application.id, unique)));
+
+      const toUpdate = owned
+        .filter((row) => row.trackingStatus === fromStatus)
+        .map((row) => row.id);
+      if (toUpdate.length === 0) return [];
+
+      const updated = await tx
+        .update(application)
+        .set({ trackingStatus: toStatus })
+        .where(
+          and(
+            eq(application.userId, userId),
+            eq(application.trackingStatus, fromStatus),
+            inArray(application.id, toUpdate)
+          )
+        )
+        .returning();
+
+      if (updated.length > 0) {
+        await tx.insert(applicationActivity).values(
+          updated.map((row) => {
+            return {
+              id: crypto.randomUUID(),
+              userId,
+              applicationId: row.id,
+              kind: activityKind,
+              body: null,
+              metadata: {},
+              actorUserId
+            };
+          })
+        );
+      }
+
+      return updated;
+    });
   },
 
   /**

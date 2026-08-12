@@ -75,6 +75,8 @@ const NEEDS_ACTION_LABELS = ["recruiter", "interview", "offer", "application_sta
 const CATEGORY_TO_LABEL: Record<string, (typeof SYSTEM_LABELS)[number]> = {
   applications: "application",
   application: "application",
+  /** Hub card id + raw system label (job-alert digests). */
+  job_notifier: "job_notifier",
   recruiters: "recruiter",
   recruiter: "recruiter",
   interviews: "interview",
@@ -82,7 +84,6 @@ const CATEGORY_TO_LABEL: Record<string, (typeof SYSTEM_LABELS)[number]> = {
   offers: "offer",
   offer: "offer",
   noise: "noise",
-  job_notifier: "job_notifier",
   application_status: "application_status"
 };
 

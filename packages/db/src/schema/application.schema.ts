@@ -84,6 +84,11 @@ export const application = pgTable(
     matchScore: integer("match_score"),
     source: applicationSourceEnum("source"),
     /**
+     * Free-text platform label when `source` is `other` (e.g. "Jack & Jill").
+     * Not an enum member — allowlist stays closed.
+     */
+    sourceLabel: text("source_label"),
+    /**
      * Multi-source chips: channel (mail|hub|manual) + platform (linkedin|…).
      * Prefer this over single `source` for new UI.
      */
