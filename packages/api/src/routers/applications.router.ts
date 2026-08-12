@@ -6,6 +6,8 @@ import {
   ApplicationActivityOutputSchema,
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
+  BatchDismissApplicationsInputSchema,
+  BatchRestoreApplicationsInputSchema,
   buildApplicationSourceTags,
   canonicalizeJobUrl,
   CountApplicationsInputSchema,
@@ -18,6 +20,7 @@ import {
   ListApplicationsInputSchema,
   PromoteApplicationInputSchema,
   RegenerateAgentTakeInputSchema,
+  RefreshApplicationFromUrlInputSchema,
   RestoreApplicationInputSchema,
   ScanJobAlertsInputSchema,
   ScanJobAlertsOutputSchema,
@@ -36,6 +39,7 @@ import {
 import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
 import { generateAgentTake } from "#@/lib/application/generate-agent-take";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
+import { refreshApplicationFromListingUrl } from "#@/lib/application/refresh-from-listing-url";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
 import { requestMailJobHarvest } from "#@/lib/mail/harvest-enqueue-hook";
 import { protectedProcedure } from "#@/lib/procedures/factory";
@@ -52,6 +56,7 @@ function toApplicationOutput(
     applyMethod: row.applyMethod,
     matchScore: row.matchScore,
     source: row.source,
+    sourceLabel: row.sourceLabel ?? null,
     sourceTags: row.sourceTags ?? [],
     location: row.location,
     salaryRange: row.salaryRange,
@@ -390,6 +395,46 @@ export const applicationsRouter = {
       return toApplicationOutput(updated);
     }),
 
+  batchDismiss: protectedProcedure
+    .route({
+      description: "Soft-dismiss many inbox job discoveries in one request",
+      method: "POST"
+    })
+    .input(BatchDismissApplicationsInputSchema)
+    .output(ApplicationListOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const rows = await applicationRepository.transitionTrackingStatusWithActivity({
+        ids: input.ids,
+        userId,
+        fromStatus: "inbox",
+        toStatus: "dismissed",
+        activityKind: "dismissed",
+        actorUserId: userId
+      });
+      return rows.map(toApplicationOutput);
+    }),
+
+  batchRestore: protectedProcedure
+    .route({
+      description: "Restore many dismissed jobs to New jobs inbox in one request",
+      method: "POST"
+    })
+    .input(BatchRestoreApplicationsInputSchema)
+    .output(ApplicationListOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const rows = await applicationRepository.transitionTrackingStatusWithActivity({
+        ids: input.ids,
+        userId,
+        fromStatus: "dismissed",
+        toStatus: "inbox",
+        activityKind: "restored",
+        actorUserId: userId
+      });
+      return rows.map(toApplicationOutput);
+    }),
+
   listActivity: protectedProcedure
     .route({
       description: "List activity timeline for an application",
@@ -593,6 +638,52 @@ export const applicationsRouter = {
       });
       if (!result.ok) {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "AI_NOT_CONFIGURED") {
+          throw errors.AI_NOT_CONFIGURED({ message: result.message });
+        }
+        throw errors.AGENT_FAILED({ message: result.message });
+      }
+      return toApplicationOutput(result.application);
+    }),
+
+  refreshFromListingUrl: protectedProcedure
+    .route({
+      description:
+        "Update posting URL and re-run page fetch + AI extract (fix broken harvest URLs on New jobs)",
+      method: "POST"
+    })
+    .input(RefreshApplicationFromUrlInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Application not found" },
+      INVALID_URL: { message: "Enter a valid job posting URL" },
+      URL_CONFLICT: { message: "Another job already uses this posting URL" },
+      FETCH_FAILED: { message: "Could not fetch the listing page" },
+      AI_NOT_CONFIGURED: {
+        message: "Configure a BYO API key under Settings → AI"
+      },
+      AGENT_FAILED: {
+        message: "Could not extract job details — check the URL and AI settings"
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const result = await refreshApplicationFromListingUrl({
+        applicationId: input.id,
+        userId,
+        url: input.url
+      });
+      if (!result.ok) {
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "INVALID_URL") {
+          throw errors.INVALID_URL({ message: result.message });
+        }
+        if (result.code === "URL_CONFLICT") {
+          throw errors.URL_CONFLICT({ message: result.message });
+        }
+        if (result.code === "FETCH_FAILED") {
+          throw errors.FETCH_FAILED({ message: result.message });
+        }
         if (result.code === "AI_NOT_CONFIGURED") {
           throw errors.AI_NOT_CONFIGURED({ message: result.message });
         }

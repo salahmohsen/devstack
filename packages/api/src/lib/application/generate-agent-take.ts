@@ -1,4 +1,4 @@
-import { llmLogFields, llmRequestContextFields } from "@tsu-stack/core";
+import { llmLogFields } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
@@ -9,6 +9,8 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { agentFetch } from "#@/lib/agent/agent-fetch";
+import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
+import { extractTextFromAgentBody } from "#@/lib/agent/parse-agent-generate";
 import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
@@ -20,23 +22,6 @@ export type GenerateAgentTakeErrorCode = "NOT_FOUND" | "AI_NOT_CONFIGURED" | "AG
 export type GenerateAgentTakeResult =
   | { ok: true; application: ApplicationEntity }
   | { ok: false; code: GenerateAgentTakeErrorCode; message?: string };
-
-function extractTextFromAgentBody(body: unknown): string | null {
-  if (!body || typeof body !== "object") return null;
-  const rec = body as Record<string, unknown>;
-  if (typeof rec.text === "string" && rec.text.trim()) return rec.text.trim();
-  if (typeof rec.content === "string" && rec.content.trim()) return rec.content.trim();
-  // UI message / multi-part shapes
-  if (Array.isArray(rec.messages)) {
-    for (const m of rec.messages) {
-      if (!m || typeof m !== "object") continue;
-      const msg = m as Record<string, unknown>;
-      if (typeof msg.content === "string" && msg.content.trim()) return msg.content.trim();
-      if (typeof msg.text === "string" && msg.text.trim()) return msg.text.trim();
-    }
-  }
-  return null;
-}
 
 function buildPrompt(
   app: ApplicationEntity,
@@ -124,15 +109,14 @@ export async function generateAgentTake(input: {
     const sessionToken = await ensureSessionTokenForUser(input.userId);
     const response = await agentFetch(`/api/agents/${encodeURIComponent(AGENT_ID)}/generate`, {
       method: "POST",
-      body: JSON.stringify({
-        messages: [{ role: "user", content: prompt }],
-        model: { id: llm.modelId, apiKey: llm.apiKey },
-        modelSettings: { maxOutputTokens: 220, temperature: 0.4 },
-        requestContext: {
-          userId: input.userId,
-          ...llmRequestContextFields(llm)
-        }
-      }),
+      body: JSON.stringify(
+        agentGenerateBody({
+          messages: [{ role: "user", content: prompt }],
+          llm,
+          modelSettings: { maxOutputTokens: 220, temperature: 0.4 },
+          requestContext: { userId: input.userId }
+        })
+      ),
       timeoutMs: TIMEOUT_MS,
       sessionToken,
       retry: true

@@ -1,11 +1,11 @@
 import {
-  llmRequestContextFields,
   pickProbeModelId,
   type TestAiProviderInput,
   type TestAiProviderOutput
 } from "@tsu-stack/core";
 import { userAiSettingsRepository } from "@tsu-stack/db";
 
+import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
 import { type OrpcContextAgentWorker } from "#@/lib/context/types";
 import { openSecret } from "#@/lib/settings/seal-secret";
 
@@ -221,16 +221,15 @@ export async function testAiProviderConnection(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,
-      body: JSON.stringify({
-        messages: [{ role: "user", content: "ping" }],
-        model: { id: modelId, apiKey },
-        // Prefer maxOutputTokens (AI SDK / newer OpenAI-compatible models).
-        modelSettings: { maxOutputTokens: 32, temperature: 0 },
-        requestContext: {
-          userId,
-          ...llmRequestContextFields(llm)
-        }
-      })
+      body: JSON.stringify(
+        agentGenerateBody({
+          messages: [{ role: "user", content: "ping" }],
+          llm,
+          // Prefer maxOutputTokens (AI SDK / newer OpenAI-compatible models).
+          modelSettings: { maxOutputTokens: 32, temperature: 0 },
+          requestContext: { userId }
+        })
+      )
     });
 
     const latencyMs = Date.now() - started;

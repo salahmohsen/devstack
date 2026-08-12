@@ -1,4 +1,9 @@
-import { fetchPublicHtmlAsText } from "@tsu-stack/core";
+import {
+  extractPublicJobListingFromHtmlAsync,
+  fetchPublicHtmlAsText,
+  formatJobPageTextForLlm,
+  type PublicJobListingExtract
+} from "@tsu-stack/core";
 
 /** Cap listing text injected into apply-package workflow input (~12k). */
 const MAX_CHARS = 12_000;
@@ -8,20 +13,40 @@ export type FetchListingPageResult = {
   text: string;
   finalUrl?: string;
   status?: number;
+  title?: string | null;
+  extract?: PublicJobListingExtract | null;
   error?: string;
 };
 
 /**
- * Thin HTTP fetch of a job listing / apply URL for apply-package preflight.
- * Lives in packages/api so the API layer never imports from apps/agent.
+ * Thin HTTP fetch of a job listing / apply URL for apply-package preflight
+ * and Fix posting URL refresh. Lives in packages/api so the API layer never
+ * imports from apps/agent.
+ *
+ * Uses site-agnostic extract: JSON-LD → embedded SPA JSON → Readability → meta.
  */
 export async function fetchListingPageText(url: string): Promise<FetchListingPageResult> {
-  const result = await fetchPublicHtmlAsText(url, { maxChars: MAX_CHARS });
+  const result = await fetchPublicHtmlAsText(url, {
+    maxChars: MAX_CHARS,
+    includeHtml: true
+  });
+  const extract =
+    result.html && result.html.length > 200
+      ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? url)
+      : null;
+  const text = formatJobPageTextForLlm({
+    pageText: result.text,
+    extract,
+    pageTitle: result.title,
+    maxChars: MAX_CHARS
+  });
   return {
     ok: result.ok,
-    text: result.text,
+    text,
     finalUrl: result.finalUrl,
     status: result.status,
+    title: result.title ?? extract?.title ?? null,
+    extract,
     error: result.error
   };
 }

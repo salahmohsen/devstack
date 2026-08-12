@@ -158,6 +158,7 @@ export async function acceptApplyPackage(input: {
     )
   ).filter((row): row is NonNullable<typeof row> => row != null);
   const stackNameById = new Map(stackRows.map((row) => [row.id, row.name]));
+  const stackTypeById = new Map(stackRows.map((row) => [row.id, row.type ?? null]));
 
   const resumeExperiences: ResumeBuilderData["portfolio"]["experiences"] = [];
   for (const draftExp of includedExperiences) {
@@ -185,9 +186,28 @@ export async function acceptApplyPackage(input: {
     resumeProjects.push({
       title: live.title,
       summary: draftProj.rewrittenSummary || live.summary,
+      description: live.description ?? null,
       stacks: (live.stacks ?? [])
-        .map((join) => (join.stack ? { name: join.stack.name } : null))
-        .filter((s): s is { name: string } => s != null),
+        .map((join) =>
+          join.stack
+            ? {
+                name: join.stack.name,
+                type: join.stack.type ?? null,
+                includedInPortfolio: !!join.stack.portfolioEntryId,
+                sortOrder: join.stack.sortOrder
+              }
+            : null
+        )
+        .filter(
+          (
+            s
+          ): s is {
+            name: string;
+            type: string | null;
+            includedInPortfolio: boolean;
+            sortOrder: number;
+          } => s != null
+        ),
       includedInPortfolio: true,
       isArchived: live.isArchived ?? false,
       bullets: draftProj.rewrittenBullets
@@ -195,9 +215,12 @@ export async function acceptApplyPackage(input: {
   }
 
   const resumeStacks: ResumeBuilderData["portfolio"]["stacks"] = includedStacks.map((s) => {
+    const row = stackRows.find((r) => r.id === s.stackId);
     return {
       name: stackNameById.get(s.stackId) ?? s.name,
-      includedInPortfolio: true
+      type: stackTypeById.get(s.stackId) ?? null,
+      includedInPortfolio: true,
+      sortOrder: row?.sortOrder
     };
   });
 
@@ -206,7 +229,7 @@ export async function acceptApplyPackage(input: {
     projects: resumeProjects.filter((p) => !p.isArchived),
     stacks: resumeStacks,
     contacts: contactsRaw.map((c) => {
-      return { type: c.type, value: c.value };
+      return { type: c.type, value: c.value, sortOrder: c.sortOrder };
     })
   };
 

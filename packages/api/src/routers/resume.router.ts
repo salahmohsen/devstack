@@ -41,12 +41,23 @@ async function fetchPortfolioData(userId: string) {
   };
 }
 
-function formatFilename(): string {
+function slugifyName(name: string): string {
+  const slug = name
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/[\s_-]+/g, "")
+    .slice(0, 40);
+  return slug || "Resume";
+}
+
+function formatFilename(profileName: string): string {
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
-  return `SalahMohsen_Resume_${y}-${m}-${d}.pdf`;
+  const stamp = `${now.getTime().toString(36)}`;
+  return `${slugifyName(profileName)}_Resume_${y}-${m}-${d}_${stamp}.pdf`;
 }
 
 export const resumeRouter = {
@@ -111,6 +122,7 @@ export const resumeRouter = {
       description: "Generate a new resume PDF from portfolio data",
       method: "POST"
     })
+    .output(ResumeOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
       const portfolio = await fetchPortfolioData(userId);
@@ -120,12 +132,12 @@ export const resumeRouter = {
       }
 
       const profile = {
-        name: userRow.name ?? "Salah Mohsen",
+        name: userRow.name?.trim() || "Resume",
         email: userRow.email
       };
 
-      const filename = formatFilename();
-      const r2Key = `resumes/${filename}`;
+      const filename = formatFilename(profile.name);
+      const r2Key = `${userId}/resumes/${filename}`;
 
       const { params, layout } = buildResumeDocument({ portfolio, profile });
       const bytes = buildDocumentPDFBytes(params, layout);

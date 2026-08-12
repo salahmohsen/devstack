@@ -1,0 +1,246 @@
+import {
+  AiJobMatchBatchSchema,
+  defaultJobPreference,
+  isOpenJobPreference,
+  scoreJobAgainstPreference,
+  type ApplicationApplyMethod,
+  type HarvestedJob,
+  type JobPreference,
+  type RuntimeLlmConfig,
+  type WorkMode
+} from "@tsu-stack/core";
+import { jobPreferenceRepository } from "@tsu-stack/db";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
+
+import { agentFetch } from "#@/lib/agent/agent-fetch";
+import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
+import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
+
+const SCORER_AGENT_ID = "job-preference-match-scorer";
+const TIMEOUT_MS = 60_000;
+
+export type ApplicationMatchScoreResult = {
+  score: number;
+  passed: boolean;
+  reasons: string[];
+  source: "ai" | "heuristic";
+};
+
+async function loadPreference(userId: string): Promise<JobPreference> {
+  const row = await jobPreferenceRepository.findByUserId(userId);
+  if (!row) return defaultJobPreference();
+  return {
+    workModes: row.workModes ?? [],
+    locations: row.locations ?? [],
+    roleKeywords: row.roleKeywords ?? [],
+    excludeKeywords: row.excludeKeywords ?? [],
+    salaryMin: row.salaryMin,
+    salaryCurrency: row.salaryCurrency,
+    minMatchScore: row.minMatchScore ?? 60
+  };
+}
+
+function toHarvestedJob(job: {
+  listingUrl: string;
+  title: string;
+  companyName: string;
+  location: string | null;
+  salaryRange: string | null;
+  description: string | null;
+  applyMethod?: string | null;
+  workMode?: WorkMode | null;
+}): HarvestedJob {
+  return {
+    title: job.title,
+    companyName: job.companyName,
+    location: job.location,
+    salaryRange: job.salaryRange,
+    description: job.description,
+    listingUrl: job.listingUrl,
+    applyUrl: null,
+    applyMethod: (job.applyMethod as ApplicationApplyMethod | null | undefined) ?? "unknown",
+    workMode: job.workMode ?? null,
+    source: null
+  };
+}
+
+function extractMatchObject(body: unknown): unknown {
+  if (!body || typeof body !== "object") return body;
+  const rec = body as Record<string, unknown>;
+  if (rec.object != null) return rec.object;
+  if (rec.result && typeof rec.result === "object") {
+    const r = rec.result as Record<string, unknown>;
+    if (r.object != null) return r.object;
+  }
+  if ("matches" in rec) return rec;
+  if (typeof rec.text === "string" && rec.text.trim()) {
+    try {
+      return JSON.parse(rec.text.trim());
+    } catch {
+      const fence = rec.text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      if (fence?.[1]) {
+        try {
+          return JSON.parse(fence[1].trim());
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+  return rec;
+}
+
+/**
+ * Score one job against the seeker's JobPreference.
+ * Prefers AI scorer (same agent as harvest); falls back to rules-only scoring.
+ */
+export async function scoreApplicationMatch(input: {
+  userId: string;
+  llm: RuntimeLlmConfig;
+  job: {
+    listingUrl: string;
+    title: string;
+    companyName: string;
+    location: string | null;
+    salaryRange: string | null;
+    description: string | null;
+    applyMethod?: string | null;
+    workMode?: WorkMode | null;
+  };
+}): Promise<ApplicationMatchScoreResult> {
+  const prefs = await loadPreference(input.userId);
+  const harvested = toHarvestedJob(input.job);
+  const minScore = prefs.minMatchScore ?? 60;
+  const openPrefs = isOpenJobPreference(prefs);
+
+  const heuristic = scoreJobAgainstPreference(harvested, prefs);
+
+  if (!ENV_SERVER.AGENT_WORKER_URL?.trim() || !input.llm.apiKey?.trim()) {
+    return {
+      score: heuristic.score,
+      passed: openPrefs ? true : heuristic.passed,
+      reasons: [...heuristic.reasons, "heuristic_only"],
+      source: "heuristic"
+    };
+  }
+
+  const jobsJson = [
+    {
+      listingUrl: input.job.listingUrl,
+      title: input.job.title,
+      companyName: input.job.companyName,
+      location: input.job.location,
+      workMode: input.job.workMode ?? null,
+      applyMethod: input.job.applyMethod ?? "unknown",
+      salaryRange: input.job.salaryRange,
+      description: (input.job.description ?? "").slice(0, 800) || null
+    }
+  ];
+
+  const prompt = `Score these jobs for the seeker.
+
+JobPreference (JSON):
+${JSON.stringify(prefs, null, 2)}
+
+Jobs (JSON array):
+${JSON.stringify(jobsJson, null, 2)}
+
+Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${minScore} and not excluded), and reasons.
+Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.`;
+
+  try {
+    const sessionToken = await ensureSessionTokenForUser(input.userId);
+    const response = await agentFetch(
+      `/api/agents/${encodeURIComponent(SCORER_AGENT_ID)}/generate`,
+      {
+        method: "POST",
+        body: JSON.stringify(
+          agentGenerateBody({
+            messages: [{ role: "user", content: prompt }],
+            llm: input.llm,
+            requestContext: { userId: input.userId },
+            modelSettings: { maxOutputTokens: 800, temperature: 0.2 },
+            extras: {
+              structuredOutput: {
+                schema: {
+                  type: "object",
+                  properties: {
+                    matches: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          listingUrl: { type: "string" },
+                          score: { type: "number" },
+                          passed: { type: "boolean" },
+                          reasons: { type: "array", items: { type: "string" } }
+                        },
+                        required: ["listingUrl", "score", "passed"]
+                      }
+                    }
+                  },
+                  required: ["matches"]
+                }
+              }
+            }
+          })
+        ),
+        timeoutMs: TIMEOUT_MS,
+        sessionToken,
+        retry: true
+      }
+    );
+
+    if (!response?.ok) {
+      return {
+        score: heuristic.score,
+        passed: openPrefs ? true : heuristic.passed,
+        reasons: [...heuristic.reasons, "ai_scorer_http_fallback"],
+        source: "heuristic"
+      };
+    }
+
+    const bodyText = await response.text().catch(() => "");
+    let parsedJson: unknown = null;
+    try {
+      parsedJson = bodyText ? JSON.parse(bodyText) : null;
+    } catch {
+      parsedJson = { text: bodyText };
+    }
+
+    const batch = AiJobMatchBatchSchema.safeParse(extractMatchObject(parsedJson));
+    if (!batch.success || batch.data.matches.length === 0) {
+      return {
+        score: heuristic.score,
+        passed: openPrefs ? true : heuristic.passed,
+        reasons: [...heuristic.reasons, "ai_scorer_parse_fallback"],
+        source: "heuristic"
+      };
+    }
+
+    const hit =
+      batch.data.matches.find(
+        (m) => m.listingUrl.toLowerCase() === input.job.listingUrl.toLowerCase()
+      ) ?? batch.data.matches[0]!;
+
+    const score = Math.max(0, Math.min(100, Math.round(hit.score)));
+    const passed = openPrefs ? true : hit.passed && score >= minScore;
+
+    return {
+      score,
+      passed,
+      reasons: [
+        ...(hit.reasons?.length ? hit.reasons : ["ai_match"]),
+        ...(openPrefs ? ["open_preference_profile"] : [])
+      ],
+      source: "ai"
+    };
+  } catch {
+    return {
+      score: heuristic.score,
+      passed: openPrefs ? true : heuristic.passed,
+      reasons: [...heuristic.reasons, "ai_scorer_error_fallback"],
+      source: "heuristic"
+    };
+  }
+}
