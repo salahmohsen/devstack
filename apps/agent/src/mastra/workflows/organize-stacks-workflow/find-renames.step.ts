@@ -9,6 +9,7 @@ import {
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
+import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
 import {
   organizeLlmFailedNote,
   organizeMissingAgentNote,
@@ -19,7 +20,6 @@ import {
   RenameActionSchema,
   StackSchema
 } from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
-import { withTimeoutSignal } from "#@/mastra/workflows/organize-stacks-workflow/with-timeout";
 
 export const findRenames = createStep({
   id: "find-renames",

@@ -5,6 +5,7 @@ import { type OrganizeStacksInput } from "@tsu-stack/core";
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
+import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
 import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 import {
   organizeLlmFailedNote,
@@ -17,7 +18,6 @@ import {
   RenameActionSchema,
   StackSchema
 } from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
-import { withTimeoutSignal } from "#@/mastra/workflows/organize-stacks-workflow/with-timeout";
 
 export const findEnrichments = createStep({
   id: "find-enrichments",

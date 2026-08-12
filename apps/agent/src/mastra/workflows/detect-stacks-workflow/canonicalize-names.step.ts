@@ -9,9 +9,9 @@ import {
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
+import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
 import { matchCategorizeSchema } from "#@/mastra/workflows/detect-stacks-workflow/detect-stacks-workflow.schema";
 import { mergeFamilies } from "#@/mastra/workflows/detect-stacks-workflow/merge-families.step";
-import { withTimeoutSignal } from "#@/mastra/workflows/organize-stacks-workflow/with-timeout";
 
 const RenameSchema = z.object({
   currentName: z.string(),

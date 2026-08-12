@@ -12,6 +12,7 @@ import {
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
+import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
 import {
   organizeLlmFailedNote,
   organizeMissingAgentNote,
@@ -24,7 +25,6 @@ import {
   RenameActionSchema,
   StackSchema
 } from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
-import { withTimeoutSignal } from "#@/mastra/workflows/organize-stacks-workflow/with-timeout";
 
 const OrderedIndicesSchema = z.object({
   /** 0-based indices into the chunk list (not UUIDs — keeps tokens tiny). */
