@@ -1,6 +1,8 @@
 # Dashboard detect, lists, multi-select, Review removal — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Logging:** This plan explicitly requires durable logging when you find a gap. Read **Logging mandate** below; follow [`.agents/logging.md`](../../../.agents/logging.md). Add/fix loggers when needed, then continue the main task.
 
 **Goal:** Ship detached detect stacks (organize-like UX), fix detect/organize LLM scale hangs with Mastra-native patterns, floating multi-select, infinite dashboard lists, and remove Review queue in favor of on-the-fly mail reply with tools.
 
@@ -20,6 +22,82 @@
 6. UI tasks: impeccable, coss, coss-particles, better-ui, transitions-dev.
 7. Narrow validation per `.agents/workflow.md`; commit atomically on `main` when asked.
 8. After non-trivial changes: code review subagent loop until solid.
+9. **Logging is in scope for this plan** — if you touch or discover a path that should have durable logs and doesn’t (or logs poorly), **add/fix loggers using the rules below, then continue the main task**. Do not open a separate ticket and skip logging. Full policy: [`.agents/logging.md`](../../../.agents/logging.md).
+
+---
+
+## Logging mandate (every implementing agent)
+
+**Rule:** While implementing any task in this plan, if you find workflow steps, RPCs, queues, job runners, or other server/agent outcomes that lack useful durable logs (or only have `console.*` / silent catches), **add proper loggers before or as part of finishing that task**, then continue. Do not strip temporary debug noise into production; replace with structured wide events.
+
+### Source of truth
+
+- Monorepo: [`.agents/logging.md`](../../../.agents/logging.md)
+- Agent: `createAgentLogger` from `apps/agent/src/mastra/agent-logger.ts` (wraps `@tsu-stack/logger/server`)
+- Never import `evlog` directly from features; use `@tsu-stack/logger` / `@tsu-stack/logger/server` (or agent helper).
+
+### When you MUST add or fix logs (this program)
+
+| Situation                                                                                           | Action                                                                                  |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| LLM step / workflow step with soft-fail or timeout (detect categorize, organize sort/rename/enrich) | Wide event: start context + **one** completed/failed emit with counts, duration, reason |
+| Stream/job hang or cancel path                                                                      | Log cancel, abort, soft wall-clock completion with `reason`                             |
+| New mail `generateReply` / `sendReply`                                                              | Outcome logs: success/fail, messageId (id only), no bodies/secrets                      |
+| Migration / destructive Review removal                                                              | Lifecycle log on migration if pattern exists; otherwise skip client noise               |
+| Silent `catch` that swallows errors                                                                 | At least `ERROR`/`WARN` with stable `event` + safe fields, or rethrow to global handler |
+| Existing `createAgentLogger` / `createLogger` patterns nearby                                       | **Match them** (same `operation` naming, field style)                                   |
+
+### When NOT to log
+
+- Routine successful HTTP/query noise, React renders, hover, navigation.
+- “Reached line X” breadcrumbs that aren’t outcomes.
+- Client-side spam; client logs are rare (errors / failed important workflows only; never in render).
+
+### Best practices (do this every time)
+
+1. **Facade only:** `@tsu-stack/logger/server` or `createAgentLogger({ operation: "agent__…" })`. No direct `evlog` in app code.
+2. **Wide events, emit once:** Create logger at operation start → `set({ … })` as you go → **one** `emit()` on success; on failure `error(...)` then `emit({ _forceKeep: true })` if needed. Never `set`/`emit` after emit (sealed instance).
+3. **Log outcomes, not intentions:** Prefer `detect_stacks_ai_categorize_completed` over “starting categorize”. Include `durationMs`, counts, `reason` for soft-fails.
+4. **Stable `event` names** + structured fields — not interpolated message strings as the only data.
+5. **Levels:** `INFO` sparse business outcomes; `WARN` degraded but expected (soft-fail chunk); `ERROR` failed op; avoid permanent `DEBUG` in product paths.
+6. **Request handlers:** Use middleware/request-scoped logger when available; don’t double-wrap request loggers.
+7. **Sensitive data:** Never log API keys, tokens, cookies, raw mail bodies, full LLM prompts with secrets. For BYO use `llmLogFields()` / `modelId` + `hasByoApiKey` only.
+8. **Agent operations:** Prefer `operation: "agent__<domain>_<action>"` and events like `organize_stacks_sort_completed` (see existing detect/organize steps).
+9. **API server:** Prefer existing request logger + outcome fields; don’t duplicate middleware errors.
+10. **If unsure:** Read `.agents/logging.md` and copy the nearest sibling workflow step’s logger shape rather than inventing a new style.
+
+### Minimal agent-step pattern (copy shape)
+
+```ts
+const started = Date.now();
+const log = createAgentLogger({ operation: "agent__detect_stacks_ai_categorize" });
+try {
+  // ... work; log.set({ chunkIndex, unknownCount }) as needed
+  log.set({
+    event: "detect_stacks_ai_categorize_completed",
+    unknownCount,
+    categorizedCount,
+    durationMs: Date.now() - started,
+    reason: "ok" // or soft-fail reason
+  });
+  log.emit();
+} catch (error) {
+  log.error(error instanceof Error ? error : new Error(String(error)), {
+    event: "detect_stacks_ai_categorize_failed"
+  });
+  log.emit({ _forceKeep: true });
+  throw error; // or soft-fail per product rules
+}
+```
+
+### Task handoff checklist (implementers)
+
+Before marking a task done, ask:
+
+- [ ] Did I touch a long-running / AI / mail / migration path? If yes, does it emit a searchable Axiom-friendly outcome?
+- [ ] Are soft-fails visible (`reason`, counts) without logging secrets?
+- [ ] No `console.log` left for production diagnosis?
+- [ ] Main task still complete — logging was additive, not a distraction rewrite?
 
 ---
 
@@ -345,6 +423,7 @@
 
 - Work on **`main`** as requested; small atomic commits.
 - Prefer **subagent-driven-development** per phase with review between tasks.
+- **Every subagent/task prompt must include:** logging mandate (add loggers when gaps found; follow `.agents/logging.md` + plan section); do not finish a task that soft-fails silently in AI/mail/workflow code.
 - If plan is too large for one session: stop after a completed phase boundary (P0–P6). Hang fix (P0–P1) ships value even if later phases wait.
 - Infinite scroll page size default: start **24–40** items (tune per list density).
 - Detect job dialog host: must live outside ProjectForm unmount tree (projects page or dashboard shell).
