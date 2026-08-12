@@ -37,8 +37,9 @@ export type CreateMailAttachmentData = Omit<
 export type MailListFilter = {
   userId: string;
   /**
-   * Hub category: needs_action|applications|recruiters|interviews|offers|noise|unsorted|all
-   * or smart-rule id `rule:{slug}`.
+   * Hub category: needs_action|applications|recruiters|interviews|offers|noise|
+   * job_notifier|application_status|unsorted|all — or smart-rule id `rule:{slug}`.
+   * Also accepts raw system labels (`application`, `recruiter`, …).
    */
   category?: string;
   /** Default false — hide system_notification purpose. */
@@ -66,13 +67,23 @@ const SYSTEM_LABELS = [
  */
 const NEEDS_ACTION_LABELS = ["recruiter", "interview", "offer", "application_status"] as const;
 
-/** Hub category id → primary system label for simple arrayContains filters. */
+/**
+ * Hub category id → primary system label for simple arrayContains filters.
+ * Includes raw system labels so callers like Scan job alerts (`job_notifier`)
+ * filter correctly — unknown categories must not fall through to "all mail".
+ */
 const CATEGORY_TO_LABEL: Record<string, (typeof SYSTEM_LABELS)[number]> = {
   applications: "application",
+  application: "application",
   recruiters: "recruiter",
+  recruiter: "recruiter",
   interviews: "interview",
+  interview: "interview",
   offers: "offer",
-  noise: "noise"
+  offer: "offer",
+  noise: "noise",
+  job_notifier: "job_notifier",
+  application_status: "application_status"
 };
 
 /** Safe: constants only (quoted literals), not user input. */
@@ -110,12 +121,17 @@ function categoryClause(category: string | undefined) {
     return arrayContains(mailMessage.labels, [category]);
   }
 
-  const systemLabel = CATEGORY_TO_LABEL[category];
+  const systemLabel =
+    CATEGORY_TO_LABEL[category] ??
+    ((SYSTEM_LABELS as readonly string[]).includes(category)
+      ? (category as (typeof SYSTEM_LABELS)[number])
+      : undefined);
   if (systemLabel) {
     return arrayContains(mailMessage.labels, [systemLabel]);
   }
 
-  return undefined;
+  // Unknown category: do not match everything (that made Scan enqueue noise).
+  return sql`false`;
 }
 
 export type MailMessageWithApplication = MailMessageEntity & {

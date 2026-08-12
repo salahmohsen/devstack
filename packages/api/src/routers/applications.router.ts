@@ -146,12 +146,15 @@ export const applicationsRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const limit = input?.limit ?? 20;
-      const digests = await mailMessageRepository.findByUserId({
-        userId,
-        category: "job_notifier",
-        includeSystem: false,
-        limit
-      });
+      // Must filter labels to job_notifier only (repo category map + belt-and-suspenders).
+      const digests = (
+        await mailMessageRepository.findByUserId({
+          userId,
+          category: "job_notifier",
+          includeSystem: false,
+          limit
+        })
+      ).filter((msg) => (msg.labels ?? []).includes("job_notifier"));
 
       let enqueued = 0;
       for (const msg of digests) {

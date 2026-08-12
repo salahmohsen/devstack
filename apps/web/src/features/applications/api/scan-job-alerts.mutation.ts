@@ -29,10 +29,10 @@ export function useScanJobAlertsMutation() {
             : `Scanning ${data.enqueued} job-alert digests…`,
           {
             description:
-              "New matches appear under New jobs. Existing listings are skipped (no duplicates)."
+              "Only listings that pass your Job preferences (min match score) appear under New jobs. Duplicates are skipped. This can take a minute."
           }
         );
-        // Workers finish async — refresh a few times so new inbox rows show up.
+        // Workers run Mastra harvest async — poll longer so inbox rows show up.
         const invalidate = () =>
           Promise.all([
             queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("inbox") }),
@@ -41,9 +41,9 @@ export function useScanJobAlertsMutation() {
             })
           ]);
         await invalidate();
-        window.setTimeout(() => void invalidate(), 3_000);
-        window.setTimeout(() => void invalidate(), 8_000);
-        window.setTimeout(() => void invalidate(), 15_000);
+        for (const ms of [5_000, 15_000, 30_000, 60_000, 90_000]) {
+          window.setTimeout(() => void invalidate(), ms);
+        }
       },
       onError: (error) => {
         toast.error(error.message || "Could not scan job alerts.");
