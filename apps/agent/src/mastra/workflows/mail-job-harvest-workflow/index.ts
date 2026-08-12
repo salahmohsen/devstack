@@ -247,15 +247,19 @@ Use mail-card hints only; do not invent employers.`;
 listingUrl: ${seed.listingUrl}
 Mail-card hints (may be incomplete / Unknown):
 - title: ${seed.title}
-- company: ${seed.companyName}
+- companyName: ${seed.companyName}
 - location: ${seed.location ?? "null"}
 - applyMethod hint: ${seed.applyMethod}
 
 ${pageBlock}
 
-Return structured job fields. Prefer page facts over mail hints when they conflict.
+Return structured job fields using EXACT keys:
+title, companyName (not "company"), location, salaryRange, description, listingUrl, applyUrl, applyMethod, workMode, source.
+applyMethod must be one of: easy_apply | external | email | unknown (lowercase, not "Unknown").
+workMode must be one of: remote | hybrid | onsite | null.
+Prefer page facts over mail hints when they conflict.
 listingUrl must stay a real http(s) job URL (prefer the jobs/view id).
-If page is a login wall / empty, keep title/company from mail hints when they are real role/company names — never leave Unknown if the page title has the role.`;
+If page is a login wall / empty, keep title/companyName from mail hints when they are real role/company names — never leave Unknown if the page title has the role.`;
 
         const result = await Promise.race([
           agent.generate([{ role: "user", content: prompt }], {

@@ -17,22 +17,35 @@ import { runMailJobHarvest } from "#@/queues/run-mail-job-harvest";
  * - Worker: extract jobs from mail → score prefs → create Applications
  *
  * Run: started from `apps/server` when `REDIS_URL` is set (`src/index.ts`).
+ * API Scan can also produce via packages/api direct Redis producer (separate Queue client).
  */
 
-let queue: Queue<MailJobHarvestJobPayload> | null = null;
-let worker: Worker<MailJobHarvestJobPayload> | null = null;
+/** Survive Vite dual-module copies of this file (same process, one Redis worker). */
+const STORE_KEY = "__tsu_stack_mail_job_harvest_server_store__";
+
+type QueueStore = {
+  queue: Queue<MailJobHarvestJobPayload> | null;
+  worker: Worker<MailJobHarvestJobPayload> | null;
+};
+
+function store(): QueueStore {
+  const g = globalThis as typeof globalThis & Record<string, QueueStore | undefined>;
+  g[STORE_KEY] ??= { queue: null, worker: null };
+  return g[STORE_KEY]!;
+}
 
 function bullConnection(redisUrl: string): ConnectionOptions {
   return { url: redisUrl, maxRetriesPerRequest: null };
 }
 
 export function startMailJobHarvestQueue(redisUrl: string): void {
-  if (queue) return;
+  const s = store();
+  if (s.queue) return;
 
   const connection = bullConnection(redisUrl);
-  queue = new Queue<MailJobHarvestJobPayload>(MAIL_JOB_HARVEST_QUEUE_NAME, { connection });
+  s.queue = new Queue<MailJobHarvestJobPayload>(MAIL_JOB_HARVEST_QUEUE_NAME, { connection });
 
-  worker = new Worker<MailJobHarvestJobPayload>(
+  s.worker = new Worker<MailJobHarvestJobPayload>(
     MAIL_JOB_HARVEST_QUEUE_NAME,
     async (job: Job<MailJobHarvestJobPayload>) => {
       const log = createLogger({ operation: "server__mail_job_harvest_job" });
@@ -68,7 +81,7 @@ export function startMailJobHarvestQueue(redisUrl: string): void {
     { connection }
   );
 
-  worker.on("failed", (job, err) => {
+  s.worker.on("failed", (job, err) => {
     const log = createLogger({ operation: "server__mail_job_harvest_job" });
     log.error(err instanceof Error ? err : new Error(String(err)), {
       event: "mail_job_harvest_job_failed",
@@ -93,7 +106,8 @@ export async function enqueueMailJobHarvest(
   payload: MailJobHarvestJobPayload,
   options?: { force?: boolean }
 ): Promise<{ enqueued: boolean; jobId?: string }> {
-  if (!queue) {
+  const s = store();
+  if (!s.queue) {
     return { enqueued: false };
   }
 
@@ -102,12 +116,13 @@ export async function enqueueMailJobHarvest(
     enqueuedAt: payload.enqueuedAt ?? new Date().toISOString()
   };
 
+  // BullMQ custom job ids cannot contain `:` (used as Redis key separators).
   const jobId = options?.force
-    ? `harvest:${data.userId}:${data.messageId}:${Date.now()}`
-    : `harvest:${data.userId}:${data.messageId}`;
+    ? `harvest_${data.userId}_${data.messageId}_${Date.now()}`
+    : `harvest_${data.userId}_${data.messageId}`;
 
   try {
-    const job = await queue.add(MAIL_JOB_HARVEST_JOB_NAME, data, {
+    const job = await s.queue.add(MAIL_JOB_HARVEST_JOB_NAME, data, {
       jobId,
       removeOnComplete: 1000,
       removeOnFail: 5000,
@@ -115,15 +130,26 @@ export async function enqueueMailJobHarvest(
       backoff: { type: "exponential", delay: 2000 }
     });
     return { enqueued: true, jobId: job.id };
-  } catch {
-    // Same jobId still active/completed in Redis — treat as not newly enqueued.
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!options?.force && /already exists|JobId/i.test(message)) {
+      return { enqueued: false };
+    }
+    const log = createLogger({ operation: "server__mail_job_harvest_queue" });
+    log.error(error instanceof Error ? error : new Error(message), {
+      event: "mail_job_harvest_enqueue_failed",
+      jobId,
+      force: Boolean(options?.force)
+    });
+    log.emit({ _forceKeep: true });
     return { enqueued: false };
   }
 }
 
 export async function stopMailJobHarvestQueue(): Promise<void> {
-  await worker?.close();
-  await queue?.close();
-  worker = null;
-  queue = null;
+  const s = store();
+  await s.worker?.close();
+  await s.queue?.close();
+  s.worker = null;
+  s.queue = null;
 }
