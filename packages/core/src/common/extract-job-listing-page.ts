@@ -580,7 +580,9 @@ function extractMetaListing(html: string): ListingPageExtract {
     }
   }
   if (ogSite && !out.companyName) out.companyName = ogSite.slice(0, 200);
-  if (ogDesc && ogDesc.length > 40) {
+  // Keep short meta teasers too — callers use isThinJobDescription on the string.
+  // (Previously length > 40 dropped one-liners and left description undefined.)
+  if (ogDesc?.trim()) {
     out.description = ogDesc
       .replace(/^Posted\s+[^.]+\.\s*/i, "")
       .replace(/\s*See this and similar jobs on LinkedIn\.?\s*$/i, "")
