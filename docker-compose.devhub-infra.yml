@@ -2,11 +2,22 @@
 # DevHub — infrastructure only (Dokploy compose "devhub-infra")
 # =============================================================================
 # App runtimes (web / server / agent) are separate Dokploy Applications.
-# Keep network aliases hub-* so apps can resolve DB/Redis/MinIO on dokploy-network.
+#
+# Critical: join external `dokploy-network` with hub-* aliases. Applications
+# only live on dokploy-network; without this alias they get ENOTFOUND for
+# hub-postgres / hub-redis / hub-minio.
 #
 # Volumes (pg_data, redis_data, minio_data) keep the same names as the old
 # full-stack compose so existing Dokploy project volumes are reused.
 # =============================================================================
+
+networks:
+  # Compose project network (internal)
+  default:
+  # Shared Dokploy network — Applications attach here
+  dokploy-network:
+    external: true
+    name: dokploy-network
 
 services:
   postgres:
@@ -20,6 +31,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-personal_hub}
     networks:
       default:
+        aliases:
+          - hub-postgres
+      dokploy-network:
         aliases:
           - hub-postgres
     healthcheck:
@@ -36,6 +50,9 @@ services:
       - redis_data:/data
     networks:
       default:
+        aliases:
+          - hub-redis
+      dokploy-network:
         aliases:
           - hub-redis
     healthcheck:
@@ -55,6 +72,9 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     networks:
       default:
+        aliases:
+          - hub-minio
+      dokploy-network:
         aliases:
           - hub-minio
 
@@ -98,6 +118,7 @@ services:
       S3_BUCKET: ${S3_BUCKET:-personal-hub}
     networks:
       - default
+      - dokploy-network
 
 volumes:
   pg_data:
