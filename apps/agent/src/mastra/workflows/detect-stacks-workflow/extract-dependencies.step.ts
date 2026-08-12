@@ -28,8 +28,9 @@ export const extractDependencies = createStep({
       { name: string; version: string; repo: string; workspace: string | null }
     >();
 
+    let workspacePkgCount = 0;
     for (const repoPkg of inputData.repoPackages) {
-      // Root package.json
+      // Root package.json (often only tooling + workspace: links in monorepos)
       const rootDeps = extractDepsFromPackageJson(repoPkg.rootPkg);
       for (const [name, version] of Object.entries(rootDeps)) {
         if (isNoisePackage(name) || isWorkspaceProtocol(version)) continue;
@@ -38,8 +39,9 @@ export const extractDependencies = createStep({
         }
       }
 
-      // Workspace package.json files
+      // Workspace package.json files — primary source of product stacks
       for (const wp of repoPkg.workspacePkgs) {
+        workspacePkgCount += 1;
         const wpDeps = extractDepsFromPackageJson(wp.pkg);
         for (const [name, version] of Object.entries(wpDeps)) {
           if (isNoisePackage(name) || isWorkspaceProtocol(version)) continue;
@@ -53,6 +55,14 @@ export const extractDependencies = createStep({
           }
         }
       }
+    }
+
+    // Soft diagnostic for agent logs when monorepo scan yields nothing useful
+    if (allDeps.size === 0) {
+      console.debug(
+        `[detect-stacks] extract-dependencies: 0 deps after filters ` +
+          `(repos=${inputData.repoPackages.length}, workspacePkgs=${workspacePkgCount})`
+      );
     }
 
     return { dependencies: Array.from(allDeps.values()) };

@@ -37,7 +37,13 @@ export function isNoisePackage(name: string): boolean {
 }
 
 export function isWorkspaceProtocol(version: string): boolean {
+  // workspace: = internal monorepo link (skip as stack). catalog: / catalogs: = real npm package.
   return version.startsWith("workspace:");
+}
+
+/** True when the version is only a monorepo catalog alias (still a real external package name). */
+export function isCatalogProtocol(version: string): boolean {
+  return version.startsWith("catalog:") || version.startsWith("catalogs:");
 }
 
 export function parsePackageJson(content: string | null): Record<string, unknown> | null {

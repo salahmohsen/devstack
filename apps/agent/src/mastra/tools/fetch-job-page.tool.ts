@@ -1,7 +1,12 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
-import { fetchPublicHtmlAsText } from "@tsu-stack/core";
+import {
+  extractPublicJobListingFromHtmlAsync,
+  fetchPublicHtmlAsText,
+  formatJobPageTextForLlm,
+  type PublicJobListingExtract
+} from "@tsu-stack/core";
 
 const MAX_CHARS = 14_000;
 
@@ -12,28 +17,52 @@ export type FetchJobPageResult = {
   title?: string | null;
   text: string;
   error?: string;
+  /** Deterministic listing fields (JSON-LD / embedded JSON / Readability / meta). */
+  extract?: PublicJobListingExtract | null;
 };
 
 /**
  * Shared HTTP fetch used by the Mastra tool and the harvest workflow step.
  * Not a search tool — URL must already be known from the mail.
+ *
+ * Site-agnostic extract: schema.org JobPosting → embedded SPA JSON →
+ * Readability main content → meta tags.
  */
 export async function fetchJobPageContent(url: string): Promise<FetchJobPageResult> {
-  const result = await fetchPublicHtmlAsText(url, { maxChars: MAX_CHARS });
+  const result = await fetchPublicHtmlAsText(url, {
+    maxChars: MAX_CHARS,
+    includeHtml: true
+  });
   // Placeholder only after a real HTML response (incl. non-2xx). SSRF / network keep "".
   const emptyPlaceholder =
     result.status != null && (!result.error || result.error.startsWith("HTTP "));
+
+  const extract =
+    result.html && result.html.length > 200
+      ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? url)
+      : null;
+
+  const rawText =
+    result.text.length > 0
+      ? result.text
+      : emptyPlaceholder
+        ? "(empty page body — may be JS-only or blocked)"
+        : "";
+
+  const text = formatJobPageTextForLlm({
+    pageText: rawText,
+    extract,
+    pageTitle: result.title ?? extract?.title,
+    maxChars: MAX_CHARS
+  });
+
   return {
     ok: result.ok,
     finalUrl: result.finalUrl,
     status: result.status,
-    title: result.title,
-    text:
-      result.text.length > 0
-        ? result.text
-        : emptyPlaceholder
-          ? "(empty page body — may be JS-only or blocked)"
-          : "",
+    title: result.title ?? extract?.title ?? null,
+    text,
+    extract,
     error: result.error
   };
 }
@@ -56,5 +85,16 @@ export const fetchJobPageTool = createTool({
     text: z.string(),
     error: z.string().optional()
   }),
-  execute: async ({ url }) => fetchJobPageContent(url)
+  execute: async ({ url }) => {
+    const page = await fetchJobPageContent(url);
+    // Tool output stays lean (no extract object) for agent tool schema stability.
+    return {
+      ok: page.ok,
+      finalUrl: page.finalUrl,
+      status: page.status,
+      title: page.title,
+      text: page.text,
+      error: page.error
+    };
+  }
 });

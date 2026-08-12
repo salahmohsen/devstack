@@ -17,6 +17,7 @@ import {
   RenameActionSchema,
   StackSchema
 } from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
+import { withTimeoutSignal } from "#@/mastra/workflows/organize-stacks-workflow/with-timeout";
 
 export const findEnrichments = createStep({
   id: "find-enrichments",
@@ -35,8 +36,17 @@ export const findEnrichments = createStep({
     notes: z.array(z.string()).default([])
   }),
   execute: async (params) => {
+    const started = Date.now();
+    const log = createLogger({ operation: "agent__organize_stacks_enrich" });
     const { inputData, mastra, abortSignal } = params;
     if (abortSignal?.aborted) {
+      log.set({
+        event: "organize_stacks_enrich_completed",
+        enrichCount: 0,
+        durationMs: Date.now() - started,
+        reason: "aborted"
+      });
+      log.emit();
       return {
         stacks: inputData.stacks,
         mergeActions: inputData.mergeActions,
@@ -57,11 +67,25 @@ export const findEnrichments = createStep({
     );
 
     if (candidates.length === 0) {
+      log.set({
+        event: "organize_stacks_enrich_completed",
+        enrichCount: 0,
+        durationMs: Date.now() - started,
+        reason: "no_candidates"
+      });
+      log.emit();
       return { stacks, mergeActions, renameActions, enrichActions: [], notes: priorNotes };
     }
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
+      log.set({
+        event: "organize_stacks_enrich_completed",
+        enrichCount: 0,
+        durationMs: Date.now() - started,
+        reason: "missing_agent"
+      });
+      log.emit();
       return {
         stacks,
         mergeActions,
@@ -75,6 +99,13 @@ export const findEnrichments = createStep({
     const { model } = generateModelOption(init.llm);
     // Missing BYO: skip enrichments (merge/rename heuristics still apply).
     if (!model) {
+      log.set({
+        event: "organize_stacks_enrich_completed",
+        enrichCount: 0,
+        durationMs: Date.now() - started,
+        reason: "missing_byo"
+      });
+      log.emit();
       return {
         stacks,
         mergeActions,
@@ -89,6 +120,7 @@ export const findEnrichments = createStep({
     const notes = [...priorNotes];
 
     for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
+      if (abortSignal?.aborted) break;
       const chunk = candidates.slice(i, i + CHUNK_SIZE);
       const stackList = chunk
         .map((s) => {
@@ -135,19 +167,21 @@ Only suggest changes when metadata is clearly missing or wrong. Skip stacks with
 Do not invent icons for stacks that already have one.`;
 
       try {
-        const result = await Promise.race([
-          agent.generate([{ role: "user", content: prompt }], {
-            structuredOutput: {
-              schema: z.object({
-                enrichments: z.array(EnrichActionSchema).default([])
-              })
-            },
-            model
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("LLM timeout after 60s")), 60_000)
-          )
-        ]);
+        const result = await withTimeoutSignal(
+          (signal) =>
+            agent.generate([{ role: "user", content: prompt }], {
+              structuredOutput: {
+                schema: z.object({
+                  enrichments: z.array(EnrichActionSchema).default([])
+                })
+              },
+              model,
+              abortSignal: signal
+            }),
+          60_000,
+          "LLM timeout after 60s",
+          abortSignal
+        );
 
         const iconCandidates: Array<{
           stackId: string;
@@ -213,16 +247,22 @@ Do not invent icons for stacks that already have one.`;
           });
         }
       } catch (error) {
-        const log = createLogger({ operation: "agent__organize_stacks_enrich" });
         log.error(error instanceof Error ? error : new Error(String(error)), {
           event: "organize_stacks_enrich_chunk_failed"
         });
-        log.emit({ _forceKeep: true });
         if (!notes.some((n) => n.startsWith("AI enrichments failed"))) {
           notes.push(organizeLlmFailedNote("enrich", error));
         }
       }
     }
+
+    log.set({
+      event: "organize_stacks_enrich_completed",
+      enrichCount: enrichActions.length,
+      durationMs: Date.now() - started,
+      softFailed: notes.length > priorNotes.length
+    });
+    log.emit(notes.length > priorNotes.length ? { _forceKeep: true } : undefined);
 
     return { stacks, mergeActions, renameActions, enrichActions, notes };
   }

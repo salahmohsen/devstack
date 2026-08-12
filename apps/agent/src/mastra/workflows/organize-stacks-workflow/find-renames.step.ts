@@ -15,6 +15,7 @@ import {
   RenameActionSchema,
   StackSchema
 } from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
+import { withTimeoutSignal } from "#@/mastra/workflows/organize-stacks-workflow/with-timeout";
 
 export const findRenames = createStep({
   id: "find-renames",
@@ -30,8 +31,17 @@ export const findRenames = createStep({
     notes: z.array(z.string()).default([])
   }),
   execute: async (params) => {
+    const started = Date.now();
+    const log = createLogger({ operation: "agent__organize_stacks_rename" });
     const { inputData, mastra, abortSignal } = params;
     if (abortSignal?.aborted) {
+      log.set({
+        event: "organize_stacks_rename_completed",
+        renameCount: 0,
+        durationMs: Date.now() - started,
+        reason: "aborted"
+      });
+      log.emit();
       return {
         stacks: inputData.stacks,
         mergeActions: inputData.mergeActions,
@@ -45,11 +55,25 @@ export const findRenames = createStep({
     const candidates = stacks.filter((s) => !victimIds.has(s.id));
 
     if (candidates.length === 0) {
+      log.set({
+        event: "organize_stacks_rename_completed",
+        renameCount: 0,
+        durationMs: Date.now() - started,
+        reason: "no_candidates"
+      });
+      log.emit();
       return { stacks, mergeActions, renameActions: [], notes: [] };
     }
 
     const agent = mastra?.getAgent("stackCategorizerAgent");
     if (!agent) {
+      log.set({
+        event: "organize_stacks_rename_completed",
+        renameCount: 0,
+        durationMs: Date.now() - started,
+        reason: "missing_agent"
+      });
+      log.emit();
       return {
         stacks,
         mergeActions,
@@ -61,6 +85,13 @@ export const findRenames = createStep({
     const init = params.getInitData() as OrganizeStacksInput;
     const { model } = generateModelOption(init.llm);
     if (!model) {
+      log.set({
+        event: "organize_stacks_rename_completed",
+        renameCount: 0,
+        durationMs: Date.now() - started,
+        reason: "missing_byo"
+      });
+      log.emit();
       return {
         stacks,
         mergeActions,
@@ -81,6 +112,7 @@ export const findRenames = createStep({
     }
 
     for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
+      if (abortSignal?.aborted) break;
       const chunk = candidates.slice(i, i + CHUNK_SIZE);
       const stackList = chunk.map((s) => `- id: ${s.id} | name: "${s.name}"`).join("\n");
 
@@ -121,19 +153,21 @@ Output JSON:
 Only suggest renames when the current name is clearly non-canonical. Skip stacks that already have correct names.`;
 
       try {
-        const result = await Promise.race([
-          agent.generate([{ role: "user", content: prompt }], {
-            model,
-            structuredOutput: {
-              schema: z.object({
-                renames: z.array(RenameActionSchema).default([])
-              })
-            }
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error("LLM timeout after 60s")), 60_000)
-          )
-        ]);
+        const result = await withTimeoutSignal(
+          (signal) =>
+            agent.generate([{ role: "user", content: prompt }], {
+              model,
+              structuredOutput: {
+                schema: z.object({
+                  renames: z.array(RenameActionSchema).default([])
+                })
+              },
+              abortSignal: signal
+            }),
+          60_000,
+          "LLM timeout after 60s",
+          abortSignal
+        );
 
         for (const rename of result.object.renames ?? []) {
           const stack = chunk.find((s) => s.id === rename.stackId);
@@ -183,17 +217,27 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
           });
         }
       } catch (error) {
-        const log = createLogger({ operation: "agent__organize_stacks_rename" });
         log.error(error instanceof Error ? error : new Error(String(error)), {
-          event: "organize_stacks_rename_chunk_failed"
+          event: "organize_stacks_rename_chunk_failed",
+          chunkStart: i,
+          chunkSize: chunk.length
         });
-        log.emit({ _forceKeep: true });
         // One note per step — avoid spamming N chunk failures in the dialog
         if (notes.length === 0) {
           notes.push(organizeLlmFailedNote("rename", error));
         }
       }
     }
+
+    log.set({
+      event: "organize_stacks_rename_completed",
+      renameCount: renameActions.length,
+      autoMergeCount: extraMerges.length,
+      candidateCount: candidates.length,
+      durationMs: Date.now() - started,
+      softFailed: notes.length > 0
+    });
+    log.emit(notes.length > 0 ? { _forceKeep: true } : undefined);
 
     return {
       stacks,

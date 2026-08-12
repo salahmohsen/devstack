@@ -1,6 +1,7 @@
 import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 import {
   EnrichActionSchema,
@@ -27,6 +28,8 @@ export const fetchMissingIcons = createStep({
     notes: z.array(z.string()).default([])
   }),
   execute: async ({ inputData }) => {
+    const started = Date.now();
+    const log = createLogger({ operation: "agent__organize_stacks_icons" });
     const { stacks, mergeActions, renameActions, enrichActions } = inputData;
     const notes = inputData.notes ?? [];
 
@@ -40,6 +43,13 @@ export const fetchMissingIcons = createStep({
     );
 
     if (missing.length === 0) {
+      log.set({
+        event: "organize_stacks_icons_completed",
+        missingCount: 0,
+        resolvedCount: 0,
+        durationMs: Date.now() - started
+      });
+      log.emit();
       return { stacks, mergeActions, renameActions, enrichActions, notes };
     }
 
@@ -77,6 +87,15 @@ export const fetchMissingIcons = createStep({
         });
       }
     }
+
+    const resolvedCount = results.filter((r) => !!r.svg).length;
+    log.set({
+      event: "organize_stacks_icons_completed",
+      missingCount: missing.length,
+      resolvedCount,
+      durationMs: Date.now() - started
+    });
+    log.emit();
 
     return { stacks, mergeActions, renameActions, enrichActions: newEnrichActions, notes };
   }

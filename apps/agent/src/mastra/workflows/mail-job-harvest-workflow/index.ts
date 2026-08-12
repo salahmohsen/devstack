@@ -15,6 +15,7 @@ import {
   MailJobHarvestWorkflowInputSchema,
   MailJobHarvestWorkflowOutputSchema,
   MailNotifierExtractSchema,
+  mergeJobListingExtract,
   type HarvestedJob,
   type HarvestJobPreference,
   type RuntimeLlmConfig,
@@ -185,7 +186,8 @@ Return isJobNotifier and jobs[] with a real listingUrl for every role card. Neve
 
 const enrichJobsFromPages = createStep({
   id: "ai-enrich-jobs-from-pages",
-  description: "For each listing URL: fetch-job-page tool content, then LLM structured job fields",
+  description:
+    "For each listing URL: fetch page, drop closed/expired postings, then LLM structured job fields",
   inputSchema: afterMailExtractSchema,
   outputSchema: afterPageEnrichSchema,
   execute: async ({ inputData, mastra }) => {
@@ -203,25 +205,13 @@ const enrichJobsFromPages = createStep({
 
     const agent = mastra?.getAgent("jobPageExtractor");
     const { model, skipNote } = generateModelOption(inputData.llm as RuntimeLlmConfig | undefined);
-    if (!agent || !model) {
-      const kept = inputData.jobs.filter((j) => isValidHarvestedJob(j));
-      return {
-        messageId: inputData.messageId,
-        userId: inputData.userId,
-        isJobNotifier: true,
-        jobs: kept,
-        notes: [inputData.notes, skipNote ?? "page_agent_skipped_mail_only"]
-          .filter(Boolean)
-          .join(";"),
-        preference: inputData.preference,
-        llm: inputData.llm
-      };
-    }
+    const canAiEnrich = Boolean(agent && model);
 
     const enriched: HarvestedJob[] = [];
     const slice = inputData.jobs.slice(0, MAX_JOBS_TO_ENRICH);
     let pagesOk = 0;
     let pagesFailed = 0;
+    let pagesClosed = 0;
     const requestContext = harvestRequestContext(
       inputData.llm as RuntimeLlmConfig | undefined,
       inputData.userId
@@ -233,6 +223,23 @@ const enrichJobsFromPages = createStep({
         if (page.ok) pagesOk += 1;
         else pagesFailed += 1;
 
+        // Drop closed / expired public postings (LinkedIn "No longer accepting applications").
+        if (page.extract?.listingClosed) {
+          pagesClosed += 1;
+          continue;
+        }
+
+        // Always merge deterministic guest-page extract (LinkedIn etc.) so empty
+        // description / "hiring for a Remote role" seeds recover even if AI fails.
+        const seedWithExtract = page.extract ? mergeJobListingExtract(seed, page.extract) : seed;
+
+        // No page AI — still use fetch + extract (closed filter above already applied).
+        if (!canAiEnrich || !agent || !model) {
+          if (isValidHarvestedJob(seedWithExtract)) enriched.push(seedWithExtract);
+          else if (isValidHarvestedJob(seed)) enriched.push(seed);
+          continue;
+        }
+
         const pageBlock = page.ok
           ? `Page fetch OK (status ${page.status ?? "?"})
 finalUrl: ${page.finalUrl ?? seed.listingUrl}
@@ -241,26 +248,32 @@ pageTitle: ${page.title ?? "(none)"}
 ${page.text.slice(0, 10_000)}
 --- END PAGE ---`
           : `Page fetch FAILED: ${page.error ?? "unknown"}
-Use mail-card hints only; do not invent employers.`;
+Use mail-card hints + any deterministic extract only; do not invent employers.`;
 
         const prompt = `Enrich this job listing from fetched page text + mail-card hints.
 
 listingUrl: ${seed.listingUrl}
-Mail-card hints (may be incomplete / Unknown):
-- title: ${seed.title}
-- companyName: ${seed.companyName}
-- location: ${seed.location ?? "null"}
-- applyMethod hint: ${seed.applyMethod}
+Mail-card / seed hints (may be incomplete / wrong marketing title):
+- title: ${seedWithExtract.title}
+- companyName: ${seedWithExtract.companyName}
+- location: ${seedWithExtract.location ?? "null"}
+- applyMethod hint: ${seedWithExtract.applyMethod}
+${seedWithExtract.description?.trim() ? `- description already extracted (${seedWithExtract.description.length} chars) — refine, do not drop` : "- description: missing — fill from PAGE TEXT / DETERMINISTIC EXTRACT"}
 
 ${pageBlock}
 
 Return structured job fields using EXACT keys:
-title, companyName (not "company"), location, salaryRange, description, listingUrl, applyUrl, applyMethod, workMode, source.
+title, companyName (not "company"), location, salaryRange, description, listingUrl, applyUrl, applyMethod, workMode, source, sourceLabel.
 applyMethod must be one of: easy_apply | external | email | unknown (lowercase, not "Unknown").
 workMode must be one of: remote | hybrid | onsite | null.
-Prefer page facts over mail hints when they conflict.
+source (platform enum only) must be one of: linkedin | indeed | company_website | referral | recruiter | other — NEVER a brand name.
+If the listing host is not LinkedIn/Indeed/company ATS, use source "other" and set sourceLabel to a short brand (e.g. "Jack & Jill"). Do not put brands in source.
+Prefer DETERMINISTIC PAGE EXTRACT and page facts over mail hints when they conflict.
+title must be the real role (e.g. "Junior Web Developer"), never "Company is hiring for a Remote role".
 listingUrl must stay a real http(s) job URL (prefer the jobs/view id).
-If page is a login wall / empty, keep title/companyName from mail hints when they are real role/company names — never leave Unknown if the page title has the role.`;
+description: full posting body when available (not only the meta one-liner).
+If page is a login wall / empty, keep title/companyName from seed when they are real role/company names — never leave Unknown if the page title has the role.
+If the page says the job is closed / no longer accepting applications, still return fields but harvest will drop closed listings.`;
 
         const result = await Promise.race([
           agent.generate([{ role: "user", content: prompt }], {
@@ -279,13 +292,24 @@ If page is a login wall / empty, keep title/companyName from mail hints when the
 
         const parsed = HarvestedJobSchema.safeParse(result.object);
         if (parsed.success) {
-          const job = {
+          const listingUrl = canonicalizeJobUrl(parsed.data.listingUrl) ?? seed.listingUrl;
+          let job: HarvestedJob = {
             ...parsed.data,
-            listingUrl: canonicalizeJobUrl(parsed.data.listingUrl) ?? seed.listingUrl,
-            source: parsed.data.source ?? seed.source ?? inferApplicationSource(seed.listingUrl)
+            listingUrl,
+            // Server re-infers platform on persist; keep seed/inferred enum only.
+            source: parsed.data.source ?? seed.source ?? inferApplicationSource(listingUrl),
+            sourceLabel: parsed.data.sourceLabel ?? null
           };
+          // AI sometimes omits description even when extract has it — never drop.
+          if (!job.description?.trim() && seedWithExtract.description?.trim()) {
+            job = { ...job, description: seedWithExtract.description };
+          }
+          if (page.extract) job = mergeJobListingExtract(job, page.extract);
           if (isValidHarvestedJob(job)) enriched.push(job);
+          else if (isValidHarvestedJob(seedWithExtract)) enriched.push(seedWithExtract);
           else if (isValidHarvestedJob(seed)) enriched.push(seed);
+        } else if (isValidHarvestedJob(seedWithExtract)) {
+          enriched.push(seedWithExtract);
         } else if (isValidHarvestedJob(seed)) {
           enriched.push(seed);
         }
@@ -309,7 +333,9 @@ If page is a login wall / empty, keep title/companyName from mail hints when the
         inputData.notes,
         `page_enriched_${byUrl.size}`,
         `fetch_ok_${pagesOk}`,
-        `fetch_fail_${pagesFailed}`
+        `fetch_fail_${pagesFailed}`,
+        pagesClosed > 0 ? `skipped_closed_${pagesClosed}` : null,
+        !canAiEnrich ? (skipNote ?? "page_agent_skipped_mail_only") : null
       ]
         .filter(Boolean)
         .join(";"),

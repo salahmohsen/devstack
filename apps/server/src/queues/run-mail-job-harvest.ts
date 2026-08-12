@@ -4,8 +4,8 @@ import {
   buildApplicationSourceTags,
   canonicalizeJobUrl,
   defaultJobPreference,
-  inferApplicationSource,
   isValidHarvestedJob,
+  resolveApplicationSourceFields,
   type JobPreference,
   type MailJobHarvestResult,
   type ScoredHarvestedJob
@@ -167,7 +167,12 @@ export async function runMailJobHarvest(input: {
         continue;
       }
 
-      const platform = job.source ?? inferApplicationSource(listingUrl, row.fromEmail ?? undefined);
+      const { source: platform, sourceLabel } = resolveApplicationSourceFields({
+        listingUrl,
+        fromEmail: row.fromEmail,
+        modelSource: job.source,
+        modelSourceLabel: job.sourceLabel ?? null
+      });
       const sourceTags = buildApplicationSourceTags({ channel: "mail", platform });
 
       // Race-safe: unique (userId, url) + onConflictDoNothing
@@ -180,6 +185,7 @@ export async function runMailJobHarvest(input: {
         applyMethod: job.applyMethod ?? "unknown",
         matchScore: job.matchScore,
         source: platform,
+        sourceLabel,
         sourceTags,
         location: job.location ?? null,
         salaryRange: job.salaryRange ?? null,

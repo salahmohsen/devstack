@@ -7,8 +7,9 @@ import {
 } from "@tsu-stack/core";
 
 /**
- * Mastra OpenAI-compatible model config for per-call override.
- * @see https://mastra.ai — model: { id: "provider/model", apiKey }
+ * Mastra OpenAI-compatible model config for in-process `agent.generate({ model })`.
+ * HTTP `/api/agents/:id/generate` body must NOT use this shape — that schema expects
+ * `model` as an optional string id; BYO keys go on requestContext only.
  */
 export type GenerateModelOverride = {
   id: `${string}/${string}`;

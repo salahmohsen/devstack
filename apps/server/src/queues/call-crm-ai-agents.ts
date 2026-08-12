@@ -1,16 +1,17 @@
 import { type AgentCallResult } from "@tsu-stack/api/lib/agent/agent-call-result";
 import { agentFetch } from "@tsu-stack/api/lib/agent/agent-fetch";
+import { agentGenerateBody } from "@tsu-stack/api/lib/agent/agent-generate-body";
 import { ensureSessionTokenForUser } from "@tsu-stack/api/lib/agent/resolve-session-token";
 import {
   CrmApplicationMatchInputSchema,
   CrmApplicationMatchOutputSchema,
   CrmStageAdviseInputSchema,
   CrmStageAdviseOutputSchema,
-  llmLogFields,
   type CrmApplicationMatchInput,
   type CrmApplicationMatchOutput,
   type CrmStageAdviseInput,
-  type CrmStageAdviseOutput
+  type CrmStageAdviseOutput,
+  type RuntimeLlmConfig
 } from "@tsu-stack/core";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
@@ -39,17 +40,22 @@ async function generateAgentObject<T>(input: {
     return { ok: false, failure: { reason: "not_configured", message: "BYO llm missing" } };
   }
 
+  const runtimeLlm: RuntimeLlmConfig = {
+    modelId,
+    providerKind: llm?.providerKind ?? modelId.split("/")[0] ?? "unknown",
+    apiKey
+  };
+
   try {
     const res = await agentFetch(`/api/agents/${encodeURIComponent(input.agentId)}/generate`, {
       method: "POST",
-      body: JSON.stringify({
-        messages: [{ role: "user", content: input.prompt }],
-        model: { id: modelId, apiKey },
-        requestContext: {
-          userId: input.userId,
-          ...llmLogFields(llm)
-        }
-      }),
+      body: JSON.stringify(
+        agentGenerateBody({
+          messages: [{ role: "user", content: input.prompt }],
+          llm: runtimeLlm,
+          requestContext: { userId: input.userId }
+        })
+      ),
       timeoutMs: TIMEOUT_MS,
       sessionToken,
       retry: true

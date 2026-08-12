@@ -31,8 +31,16 @@ export function organizeLlmFailedNote(step: OrganizeLlmStep, error: unknown): st
     case "enrich":
       return `AI enrichments failed for some stacks — results may be incomplete${detailSuffix}.`;
     case "sort":
-      return `AI importance order failed — stack order was left unchanged${detailSuffix}.`;
+      return `AI importance order failed — used a default type + project ranking instead${detailSuffix}.`;
   }
+}
+
+/** Sort used the deterministic heuristic (LLM soft-fail). */
+export function organizeSortHeuristicNote(reason: "llm_failed" | "default" = "default"): string {
+  if (reason === "llm_failed") {
+    return "Importance order fell back to type + project ranking where AI did not finish.";
+  }
+  return "Importance order used type + project ranking.";
 }
 
 /** Dedupe while preserving first-seen order. */

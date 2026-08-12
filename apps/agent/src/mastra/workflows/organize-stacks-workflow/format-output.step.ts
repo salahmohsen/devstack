@@ -7,6 +7,7 @@ import {
   normalizeOrganizeActions
 } from "@tsu-stack/core";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { uniqueNotes } from "#@/mastra/workflows/organize-stacks-workflow/organize-note";
 import {
   EnrichActionSchema,
@@ -28,6 +29,8 @@ export const formatOutput = createStep({
   }),
   outputSchema: OrganizeStacksOutputSchema,
   execute: async ({ inputData }) => {
+    const started = Date.now();
+    const log = createLogger({ operation: "agent__organize_stacks_format" });
     const { stacks, mergeActions, renameActions, enrichActions, sortOrder } = inputData;
     const notes = uniqueNotes(inputData.notes);
     const raw: OrganizeAction[] = [];
@@ -75,15 +78,31 @@ export const formatOutput = createStep({
       sortOrder
     );
 
+    const summary = {
+      merges: actions.filter((a) => a.type === "merge").length,
+      renames: actions.filter((a) => a.type === "rename").length,
+      enrichments: actions.filter((a) => a.type === "enrich").length,
+      sorted: normalizedSortOrder.length > 0
+    };
+
+    log.set({
+      event: "organize_stacks_completed",
+      stackCount: stacks.length,
+      actionCount: actions.length,
+      mergeCount: summary.merges,
+      renameCount: summary.renames,
+      enrichCount: summary.enrichments,
+      sorted: summary.sorted,
+      sortCount: normalizedSortOrder.length,
+      noteCount: notes.length,
+      durationMs: Date.now() - started
+    });
+    log.emit(notes.length > 0 ? { _forceKeep: true } : undefined);
+
     return {
       actions,
       sortOrder: normalizedSortOrder,
-      summary: {
-        merges: actions.filter((a) => a.type === "merge").length,
-        renames: actions.filter((a) => a.type === "rename").length,
-        enrichments: actions.filter((a) => a.type === "enrich").length,
-        sorted: normalizedSortOrder.length > 0
-      },
+      summary,
       notes
     };
   }

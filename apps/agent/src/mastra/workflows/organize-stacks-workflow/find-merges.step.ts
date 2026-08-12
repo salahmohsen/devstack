@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { OrganizeStacksInputSchema } from "@tsu-stack/core";
 
+import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import {
   MergeActionSchema,
   StackSchema
@@ -17,9 +18,18 @@ export const findMerges = createStep({
     mergeActions: z.array(MergeActionSchema)
   }),
   execute: async ({ inputData }) => {
+    const started = Date.now();
+    const log = createLogger({ operation: "agent__organize_stacks_merges" });
     const { stacks } = inputData;
 
     if (stacks.length === 0) {
+      log.set({
+        event: "organize_stacks_merges_completed",
+        stackCount: 0,
+        mergeCount: 0,
+        durationMs: Date.now() - started
+      });
+      log.emit();
       return { stacks, mergeActions: [] };
     }
 
@@ -60,9 +70,7 @@ export const findMerges = createStep({
       ["prisma", "@prisma/client"],
       ["drizzle-orm", "drizzle-kit", "drizzle-zod", "drizzle-valibot"],
       ["vite", "@vitejs/plugin-react", "@vitejs/plugin-vue", "@vitejs/plugin-svelte"],
-      ["typescript", "@types/node"],
       ["eslint", "@typescript-eslint/parser", "@typescript-eslint/eslint-plugin"],
-      ["tailwindcss", "postcss", "autoprefixer"],
       ["vitest", "@vitest/ui", "@vitest/coverage-v8"],
       ["jest", "@jest/globals", "ts-jest", "babel-jest"],
       ["@testing-library/react", "@testing-library/jest-dom", "@testing-library/user-event"],
@@ -96,7 +104,6 @@ export const findMerges = createStep({
       ["styled-components", "@types/styled-components"],
       ["@emotion/react", "@emotion/styled"],
       ["lodash", "@types/lodash"],
-      ["clsx", "tailwind-merge", "class-variance-authority"],
       ["tailwind-merge", "tailwind-variants"],
       ["webpack", "webpack-cli", "webpack-dev-server"],
       [
@@ -126,11 +133,12 @@ export const findMerges = createStep({
         projectCount: stack.projectCount
       });
 
-      // Group by npm scope (derive from stack name as a heuristic)
+      // Mono-product scopes only — never blanket-merge @tanstack/*, @types/*, @radix-ui/*
+      const SCOPE_MERGE_ALLOWLIST = new Set(["@heroui", "@chakra-ui", "@mantine", "@headlessui"]);
       const pkg = stack.name.toLowerCase().replace(/\s+/g, "");
       if (pkg.startsWith("@")) {
         const scope = pkg.split("/")[0];
-        if (scope) {
+        if (scope && SCOPE_MERGE_ALLOWLIST.has(scope)) {
           if (!scopeGroups.has(scope)) scopeGroups.set(scope, []);
           scopeGroups.get(scope)!.push({
             id: stack.id,
@@ -216,6 +224,13 @@ export const findMerges = createStep({
       addMerges(group, `Same project: ${family}`);
     }
 
+    log.set({
+      event: "organize_stacks_merges_completed",
+      stackCount: stacks.length,
+      mergeCount: mergeActions.length,
+      durationMs: Date.now() - started
+    });
+    log.emit();
     return { stacks, mergeActions };
   }
 });
