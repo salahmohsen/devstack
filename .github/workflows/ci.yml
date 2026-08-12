@@ -78,3 +78,83 @@ jobs:
         run: bash scripts/ci-write-web-env.sh packages/env/.env
 
       - run: vp run build
+
+  # Trigger Dokploy deploys only after CI is green on main.
+  # Docs: https://docs.dokploy.com/docs/core/applications/going-production
+  #       https://docs.dokploy.com/docs/core/auto-deploy
+  #
+  # Disable Auto Deploy on each Dokploy Application so pushes do not deploy
+  # twice (webhook + this job). Keep devhub-infra autoDeploy off unless you
+  # intentionally redeploy infra from CI (set DOKPLOY_COMPOSE_ID).
+  #
+  # Required GitHub secrets:
+  #   DOKPLOY_URL          e.g. https://dokploy.example.com  (no trailing slash)
+  #   DOKPLOY_API_KEY      Dokploy profile → API key
+  #   DOKPLOY_APP_SERVER_ID
+  #   DOKPLOY_APP_AGENT_ID
+  #   DOKPLOY_APP_WEB_ID
+  # Optional:
+  #   DOKPLOY_COMPOSE_ID   if set, also triggers compose.deploy (infra)
+  deploy:
+    name: deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [check, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Dokploy application deploys
+        env:
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          DOKPLOY_APP_SERVER_ID: ${{ secrets.DOKPLOY_APP_SERVER_ID }}
+          DOKPLOY_APP_AGENT_ID: ${{ secrets.DOKPLOY_APP_AGENT_ID }}
+          DOKPLOY_APP_WEB_ID: ${{ secrets.DOKPLOY_APP_WEB_ID }}
+          DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          : "${DOKPLOY_URL:?missing secret DOKPLOY_URL}"
+          : "${DOKPLOY_API_KEY:?missing secret DOKPLOY_API_KEY}"
+          : "${DOKPLOY_APP_SERVER_ID:?missing secret DOKPLOY_APP_SERVER_ID}"
+          : "${DOKPLOY_APP_AGENT_ID:?missing secret DOKPLOY_APP_AGENT_ID}"
+          : "${DOKPLOY_APP_WEB_ID:?missing secret DOKPLOY_APP_WEB_ID}"
+
+          base="${DOKPLOY_URL%/}"
+          title="CI deploy ${SOURCE_COMMIT:0:7}"
+          desc="Triggered after check/test/build on main (${SOURCE_COMMIT})"
+
+          deploy_app() {
+            local id="$1"
+            local name="$2"
+            echo "→ application.deploy ${name} (${id})"
+            curl -fsS -X POST "${base}/api/application.deploy" \
+              -H "accept: application/json" \
+              -H "Content-Type: application/json" \
+              -H "x-api-key: ${DOKPLOY_API_KEY}" \
+              -d "$(jq -nc \
+                --arg applicationId "$id" \
+                --arg title "$title ($name)" \
+                --arg description "$desc" \
+                '{applicationId:$applicationId,title:$title,description:$description}')"
+            echo
+          }
+
+          # Agent first (server calls AGENT_WORKER_URL), then server, then web.
+          deploy_app "${DOKPLOY_APP_AGENT_ID}" "agent"
+          deploy_app "${DOKPLOY_APP_SERVER_ID}" "server"
+          deploy_app "${DOKPLOY_APP_WEB_ID}" "web"
+
+          if [ -n "${DOKPLOY_COMPOSE_ID:-}" ]; then
+            echo "→ compose.deploy (${DOKPLOY_COMPOSE_ID})"
+            curl -fsS -X POST "${base}/api/compose.deploy" \
+              -H "accept: application/json" \
+              -H "Content-Type: application/json" \
+              -H "x-api-key: ${DOKPLOY_API_KEY}" \
+              -d "$(jq -nc \
+                --arg composeId "$DOKPLOY_COMPOSE_ID" \
+                --arg title "$title (infra)" \
+                --arg description "$desc" \
+                '{composeId:$composeId,title:$title,description:$description}')"
+            echo
+          else
+            echo "skip compose.deploy (DOKPLOY_COMPOSE_ID unset)"
+          fi
