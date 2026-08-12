@@ -111,6 +111,15 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
         setOrganizeJobState({ stepLabel });
       }
 
+      // Live chunk progress from agent writer.custom (Task 3).
+      // Full detect-style mapping can expand later; label is already UI-ready.
+      if (eventType === "data-organize-progress") {
+        const data = (event.data ?? payload) as { label?: string } | undefined;
+        if (typeof data?.label === "string" && data.label.trim()) {
+          setOrganizeJobState({ stepLabel: data.label });
+        }
+      }
+
       if (eventType === "workflow-step-result" && payload?.status === "success") {
         const output = payload.output as Record<string, unknown> | undefined;
         if (output && "actions" in output) {

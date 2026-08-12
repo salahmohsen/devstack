@@ -6,6 +6,7 @@ import { type OrganizeStacksInput } from "@tsu-stack/core";
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
 import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
+import { buildOrganizeChunkLabel, writeOrganizeProgress } from "#@/mastra/lib/workflow-progress";
 import { batchResolveIcons } from "#@/mastra/workflows/organize-stacks-workflow/batch-icon-fetch";
 import {
   organizeLlmFailedNote,
@@ -18,6 +19,14 @@ import {
   RenameActionSchema,
   StackSchema
 } from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
+
+/**
+ * Enrich chunk tuning (Task 3):
+ * - 40 stacks/chunk (was 50) — enrich schema is wider (desc/icon/type).
+ * - 45s timeout + sequential loop; soft-fail continues remaining chunks.
+ */
+const ENRICH_CHUNK_SIZE = 40;
+const ENRICH_CHUNK_TIMEOUT_MS = 45_000;
 
 export const findEnrichments = createStep({
   id: "find-enrichments",
@@ -38,7 +47,7 @@ export const findEnrichments = createStep({
   execute: async (params) => {
     const started = Date.now();
     const log = createLogger({ operation: "agent__organize_stacks_enrich" });
-    const { inputData, mastra, abortSignal } = params;
+    const { inputData, mastra, abortSignal, writer } = params;
     if (abortSignal?.aborted) {
       log.set({
         event: "organize_stacks_enrich_completed",
@@ -46,7 +55,7 @@ export const findEnrichments = createStep({
         durationMs: Date.now() - started,
         reason: "aborted"
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
       return {
         stacks: inputData.stacks,
         mergeActions: inputData.mergeActions,
@@ -83,9 +92,10 @@ export const findEnrichments = createStep({
         event: "organize_stacks_enrich_completed",
         enrichCount: 0,
         durationMs: Date.now() - started,
-        reason: "missing_agent"
+        reason: "missing_agent",
+        softFailed: true
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
       return {
         stacks,
         mergeActions,
@@ -103,9 +113,10 @@ export const findEnrichments = createStep({
         event: "organize_stacks_enrich_completed",
         enrichCount: 0,
         durationMs: Date.now() - started,
-        reason: "missing_byo"
+        reason: "missing_byo",
+        softFailed: true
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
       return {
         stacks,
         mergeActions,
@@ -115,13 +126,33 @@ export const findEnrichments = createStep({
       };
     }
 
-    const CHUNK_SIZE = 50;
     const enrichActions: z.infer<typeof EnrichActionSchema>[] = [];
     const notes = [...priorNotes];
+    const chunkTotal = Math.ceil(candidates.length / ENRICH_CHUNK_SIZE);
+    let chunksFailed = 0;
 
-    for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
+    for (let i = 0; i < candidates.length; i += ENRICH_CHUNK_SIZE) {
       if (abortSignal?.aborted) break;
-      const chunk = candidates.slice(i, i + CHUNK_SIZE);
+      const chunkIndex = Math.floor(i / ENRICH_CHUNK_SIZE);
+      const chunk = candidates.slice(i, i + ENRICH_CHUNK_SIZE);
+      const label = buildOrganizeChunkLabel("enrich", chunkIndex + 1, chunkTotal);
+
+      log.set({
+        candidateCount: candidates.length,
+        chunkIndex,
+        chunkTotal,
+        chunkSize: chunk.length,
+        progressLabel: label,
+        durationMs: Date.now() - started
+      });
+      await writeOrganizeProgress(writer, {
+        chunkIndex,
+        chunkTotal,
+        itemTotal: candidates.length,
+        phase: "enrich",
+        label
+      });
+
       const stackList = chunk
         .map((s) => {
           const displayName = renameMap.get(s.id) ?? s.name;
@@ -166,6 +197,7 @@ Output JSON:
 Only suggest changes when metadata is clearly missing or wrong. Skip stacks with complete metadata.
 Do not invent icons for stacks that already have one.`;
 
+      const chunkStarted = Date.now();
       try {
         const result = await withTimeoutSignal(
           (signal) =>
@@ -178,8 +210,8 @@ Do not invent icons for stacks that already have one.`;
               model,
               abortSignal: signal
             }),
-          60_000,
-          "LLM timeout after 60s",
+          ENRICH_CHUNK_TIMEOUT_MS,
+          `LLM timeout after ${ENRICH_CHUNK_TIMEOUT_MS / 1000}s`,
           abortSignal
         );
 
@@ -247,22 +279,36 @@ Do not invent icons for stacks that already have one.`;
           });
         }
       } catch (error) {
-        log.error(error instanceof Error ? error : new Error(String(error)), {
-          event: "organize_stacks_enrich_chunk_failed"
+        if (abortSignal?.aborted) break;
+        chunksFailed += 1;
+        // Separate short logger so chunk failures stay searchable without sealing the parent event.
+        const chunkLog = createLogger({ operation: "agent__organize_stacks_enrich_chunk" });
+        chunkLog.error(error instanceof Error ? error : new Error(String(error)), {
+          event: "organize_stacks_enrich_chunk_failed",
+          chunkIndex,
+          chunkTotal,
+          chunkStart: i,
+          chunkSize: chunk.length,
+          durationMs: Date.now() - chunkStarted
         });
+        chunkLog.emit({ _forceKeep: true });
         if (!notes.some((n) => n.startsWith("AI enrichments failed"))) {
           notes.push(organizeLlmFailedNote("enrich", error));
         }
       }
     }
 
+    const softFailed = notes.length > priorNotes.length || chunksFailed > 0;
     log.set({
       event: "organize_stacks_enrich_completed",
       enrichCount: enrichActions.length,
+      candidateCount: candidates.length,
+      chunkCount: chunkTotal,
+      chunkFailures: chunksFailed,
       durationMs: Date.now() - started,
-      softFailed: notes.length > priorNotes.length
+      softFailed
     });
-    log.emit(notes.length > priorNotes.length ? { _forceKeep: true } : undefined);
+    log.emit(softFailed ? { _forceKeep: true } : undefined);
 
     return { stacks, mergeActions, renameActions, enrichActions, notes };
   }

@@ -10,6 +10,7 @@ import {
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
 import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
+import { buildOrganizeChunkLabel, writeOrganizeProgress } from "#@/mastra/lib/workflow-progress";
 import {
   organizeLlmFailedNote,
   organizeMissingAgentNote,
@@ -20,6 +21,14 @@ import {
   RenameActionSchema,
   StackSchema
 } from "#@/mastra/workflows/organize-stacks-workflow/organize-stacks-workflow.schema";
+
+/**
+ * Rename chunk tuning (Task 3):
+ * - 40 stacks/chunk keeps the rename schema small for BYO models.
+ * - 45s timeout fails soft before multi-chunk walls pile up (sequential).
+ */
+const RENAME_CHUNK_SIZE = 40;
+const RENAME_CHUNK_TIMEOUT_MS = 45_000;
 
 export const findRenames = createStep({
   id: "find-renames",
@@ -37,7 +46,7 @@ export const findRenames = createStep({
   execute: async (params) => {
     const started = Date.now();
     const log = createLogger({ operation: "agent__organize_stacks_rename" });
-    const { inputData, mastra, abortSignal } = params;
+    const { inputData, mastra, abortSignal, writer } = params;
     if (abortSignal?.aborted) {
       log.set({
         event: "organize_stacks_rename_completed",
@@ -45,7 +54,7 @@ export const findRenames = createStep({
         durationMs: Date.now() - started,
         reason: "aborted"
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
       return {
         stacks: inputData.stacks,
         mergeActions: inputData.mergeActions,
@@ -75,9 +84,10 @@ export const findRenames = createStep({
         event: "organize_stacks_rename_completed",
         renameCount: 0,
         durationMs: Date.now() - started,
-        reason: "missing_agent"
+        reason: "missing_agent",
+        softFailed: true
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
       return {
         stacks,
         mergeActions,
@@ -93,9 +103,10 @@ export const findRenames = createStep({
         event: "organize_stacks_rename_completed",
         renameCount: 0,
         durationMs: Date.now() - started,
-        reason: "missing_byo"
+        reason: "missing_byo",
+        softFailed: true
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
       return {
         stacks,
         mergeActions,
@@ -104,7 +115,6 @@ export const findRenames = createStep({
       };
     }
 
-    const CHUNK_SIZE = 50;
     const renameActions: z.infer<typeof RenameActionSchema>[] = [];
     const extraMerges: z.infer<typeof MergeActionSchema>[] = [];
     const notes: string[] = [];
@@ -115,9 +125,31 @@ export const findRenames = createStep({
       nameOwner.set(normalizeOrganizeName(s.name), { id: s.id, name: s.name });
     }
 
-    for (let i = 0; i < candidates.length; i += CHUNK_SIZE) {
+    const chunkTotal = Math.ceil(candidates.length / RENAME_CHUNK_SIZE);
+    let chunksFailed = 0;
+
+    for (let i = 0; i < candidates.length; i += RENAME_CHUNK_SIZE) {
       if (abortSignal?.aborted) break;
-      const chunk = candidates.slice(i, i + CHUNK_SIZE);
+      const chunkIndex = Math.floor(i / RENAME_CHUNK_SIZE);
+      const chunk = candidates.slice(i, i + RENAME_CHUNK_SIZE);
+      const label = buildOrganizeChunkLabel("rename", chunkIndex + 1, chunkTotal);
+
+      log.set({
+        candidateCount: candidates.length,
+        chunkIndex,
+        chunkTotal,
+        chunkSize: chunk.length,
+        progressLabel: label,
+        durationMs: Date.now() - started
+      });
+      await writeOrganizeProgress(writer, {
+        chunkIndex,
+        chunkTotal,
+        itemTotal: candidates.length,
+        phase: "rename",
+        label
+      });
+
       const stackList = chunk.map((s) => `- id: ${s.id} | name: "${s.name}"`).join("\n");
 
       const prompt = `Identify stacks with inconsistent or non-canonical names.
@@ -141,6 +173,7 @@ Output JSON:
 
 Only suggest renames when the current name is clearly non-canonical. Skip stacks that already have correct names.`;
 
+      const chunkStarted = Date.now();
       try {
         const result = await withTimeoutSignal(
           (signal) =>
@@ -153,8 +186,8 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
               },
               abortSignal: signal
             }),
-          60_000,
-          "LLM timeout after 60s",
+          RENAME_CHUNK_TIMEOUT_MS,
+          `LLM timeout after ${RENAME_CHUNK_TIMEOUT_MS / 1000}s`,
           abortSignal
         );
 
@@ -206,11 +239,19 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
           });
         }
       } catch (error) {
-        log.error(error instanceof Error ? error : new Error(String(error)), {
+        if (abortSignal?.aborted) break;
+        chunksFailed += 1;
+        // Separate short logger so chunk failures stay searchable without sealing the parent event.
+        const chunkLog = createLogger({ operation: "agent__organize_stacks_rename_chunk" });
+        chunkLog.error(error instanceof Error ? error : new Error(String(error)), {
           event: "organize_stacks_rename_chunk_failed",
+          chunkIndex,
+          chunkTotal,
           chunkStart: i,
-          chunkSize: chunk.length
+          chunkSize: chunk.length,
+          durationMs: Date.now() - chunkStarted
         });
+        chunkLog.emit({ _forceKeep: true });
         // One note per step — avoid spamming N chunk failures in the dialog
         if (notes.length === 0) {
           notes.push(organizeLlmFailedNote("rename", error));
@@ -218,15 +259,18 @@ Only suggest renames when the current name is clearly non-canonical. Skip stacks
       }
     }
 
+    const softFailed = notes.length > 0 || chunksFailed > 0;
     log.set({
       event: "organize_stacks_rename_completed",
       renameCount: renameActions.length,
       autoMergeCount: extraMerges.length,
       candidateCount: candidates.length,
+      chunkCount: chunkTotal,
+      chunkFailures: chunksFailed,
       durationMs: Date.now() - started,
-      softFailed: notes.length > 0
+      softFailed
     });
-    log.emit(notes.length > 0 ? { _forceKeep: true } : undefined);
+    log.emit(softFailed ? { _forceKeep: true } : undefined);
 
     return {
       stacks,

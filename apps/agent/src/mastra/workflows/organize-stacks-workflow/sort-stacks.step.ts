@@ -13,6 +13,7 @@ import {
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
 import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
+import { buildOrganizeChunkLabel, writeOrganizeProgress } from "#@/mastra/lib/workflow-progress";
 import {
   organizeLlmFailedNote,
   organizeMissingAgentNote,
@@ -62,6 +63,10 @@ export function applyOrdinalOrder(chunk: SortableStack[], indices: number[]): st
 
 type GenerateFn = (args: { prompt: string; signal?: AbortSignal }) => Promise<{ order: number[] }>;
 
+type ProgressWriter = {
+  custom: (chunk: { type: `data-${string}`; data: unknown; transient?: boolean }) => Promise<void>;
+};
+
 /**
  * One compact LLM sort: ordinals instead of UUIDs (big win on large catalogs).
  */
@@ -92,7 +97,10 @@ Return JSON only: {"order":[0,2,1,...]} — every index 0..${chunk.length - 1} e
   return applyOrdinalOrder(chunk, order);
 }
 
-/** Bound concurrent sort LLM calls so large catalogs finish without rate-limit storms. */
+/**
+ * Bound concurrent sort LLM calls so large catalogs finish without rate-limit storms.
+ * Abort-safe: workers check signal between items; withTimeoutSignal aborts in-flight generate.
+ */
 const SORT_LLM_CONCURRENCY = 3;
 
 async function mapPool<T, R>(
@@ -100,7 +108,7 @@ async function mapPool<T, R>(
   concurrency: number,
   fn: (item: T, index: number) => Promise<R>
 ): Promise<R[]> {
-  const results = new Array<R>(items.length);
+  const results: R[] = Array.from({ length: items.length });
   let next = 0;
   async function worker() {
     while (next < items.length) {
@@ -118,15 +126,30 @@ async function mapPool<T, R>(
  * 1. Fixed type-band order (language → framework → … → tooling)
  * 2. Within each band, LLM reorders compact ordinal chunks (no UUIDs in output)
  * 3. Chunks run with limited concurrency; failures fall back per-chunk only
+ * 4. Progress via writer.custom (`data-organize-progress`) when available
  */
 export async function aiImportanceOrder(
   remaining: SortableStack[],
   generate: GenerateFn,
-  options?: { chunkSize?: number; signal?: AbortSignal; concurrency?: number }
+  options?: {
+    chunkSize?: number;
+    signal?: AbortSignal;
+    concurrency?: number;
+    writer?: ProgressWriter | null;
+    onChunkFailure?: (info: {
+      error: unknown;
+      workIndex: number;
+      bandIndex: number;
+      partIndex: number;
+      chunkSize: number;
+      durationMs: number;
+    }) => void;
+  }
 ): Promise<{ order: string[]; chunks: number; chunkFailures: number }> {
   const chunkSize = options?.chunkSize ?? SORT_LLM_CHUNK_SIZE;
   const concurrency = options?.concurrency ?? SORT_LLM_CONCURRENCY;
   const signal = options?.signal;
+  const writer = options?.writer;
   const bands = groupStacksByTypeBand(remaining);
 
   // Flatten into work items that preserve band + chunk order for reassembly
@@ -139,14 +162,50 @@ export async function aiImportanceOrder(
     }
   }
 
-  const refinedParts = await mapPool(work, concurrency, async (item) => {
+  const chunkTotal = work.length;
+  let completed = 0;
+
+  const emitProgress = async (chunkIndex: number) => {
+    // 1-based completed count for toast: "Sorting stacks 4/12…"
+    const chunkNumber = Math.min(chunkIndex + 1, chunkTotal);
+    const label = buildOrganizeChunkLabel("sort", chunkNumber, chunkTotal);
+    await writeOrganizeProgress(writer, {
+      chunkIndex,
+      chunkTotal,
+      itemTotal: remaining.length,
+      phase: "sort",
+      label
+    });
+  };
+
+  // Initial progress before any LLM call (helps UI when first chunk is slow)
+  if (chunkTotal > 0) {
+    await emitProgress(0);
+  }
+
+  const refinedParts = await mapPool(work, concurrency, async (item, workIndex) => {
     if (signal?.aborted) {
       return { ...item, ids: item.part.map((s) => s.id), failed: false as boolean };
     }
+    const chunkStarted = Date.now();
     try {
       const ids = await llmSortChunk(item.part, generate, signal);
+      completed += 1;
+      // Report highest completed count (concurrent-safe enough for toast UX)
+      await emitProgress(Math.max(0, completed - 1));
       return { ...item, ids, failed: false };
-    } catch {
+    } catch (error) {
+      completed += 1;
+      options?.onChunkFailure?.({
+        error,
+        workIndex,
+        bandIndex: item.bandIndex,
+        partIndex: item.partIndex,
+        chunkSize: item.part.length,
+        durationMs: Date.now() - chunkStarted
+      });
+      await emitProgress(Math.max(0, completed - 1));
+      // Heuristic order within the failed chunk (already project-count sorted seed)
       return { ...item, ids: item.part.map((s) => s.id), failed: true };
     }
   });
@@ -189,7 +248,7 @@ export const sortStacks = createStep({
   execute: async (params) => {
     const started = Date.now();
     const log = createLogger({ operation: "agent__organize_stacks_sort" });
-    const { inputData, mastra, abortSignal } = params;
+    const { inputData, mastra, abortSignal, writer } = params;
     const priorNotes = inputData.notes ?? [];
     const { stacks, mergeActions, renameActions, enrichActions } = inputData;
 
@@ -204,6 +263,10 @@ export const sortStacks = createStep({
       chunks?: number;
       chunkFailures?: number;
     }) => {
+      const softFailed =
+        payload.source === "heuristic_fallback" ||
+        payload.source === "llm_partial" ||
+        (payload.chunkFailures ?? 0) > 0;
       log.set({
         event: "organize_stacks_sort_completed",
         sortSource: payload.source,
@@ -212,9 +275,10 @@ export const sortStacks = createStep({
         durationMs: Date.now() - started,
         reason: payload.reason,
         chunkCount: payload.chunks ?? 0,
-        chunkFailures: payload.chunkFailures ?? 0
+        chunkFailures: payload.chunkFailures ?? 0,
+        softFailed
       });
-      log.emit();
+      log.emit(softFailed || payload.source === "empty" ? { _forceKeep: true } : undefined);
       return {
         stacks,
         mergeActions,
@@ -266,11 +330,11 @@ export const sortStacks = createStep({
         throw new DOMException("Sort cancelled.", "AbortError");
       }
       const result = await withTimeoutSignal(
-        (abortSignal) =>
+        (abortSig) =>
           agent.generate([{ role: "user", content: prompt }], {
             structuredOutput: { schema: OrderedIndicesSchema },
             model,
-            abortSignal
+            abortSignal: abortSig
           }),
         SORT_LLM_TIMEOUT_MS,
         `LLM timeout after ${SORT_LLM_TIMEOUT_MS / 1000}s`,
@@ -282,7 +346,22 @@ export const sortStacks = createStep({
     try {
       const { order, chunks, chunkFailures } = await aiImportanceOrder(remaining, generate, {
         chunkSize: SORT_LLM_CHUNK_SIZE,
-        signal: abortSignal
+        signal: abortSignal,
+        writer,
+        onChunkFailure: ({ error, workIndex, bandIndex, partIndex, chunkSize, durationMs }) => {
+          // Separate short logger so soft-fails are searchable without sealing the parent event.
+          const chunkLog = createLogger({ operation: "agent__organize_stacks_sort_chunk" });
+          chunkLog.error(error instanceof Error ? error : new Error(String(error)), {
+            event: "organize_stacks_sort_chunk_failed",
+            workIndex,
+            bandIndex,
+            partIndex,
+            chunkSize,
+            remainingCount: remaining.length,
+            durationMs
+          });
+          chunkLog.emit({ _forceKeep: true });
+        }
       });
 
       if (chunkFailures > 0 && chunkFailures >= chunks) {

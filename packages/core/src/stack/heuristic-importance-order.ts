@@ -81,8 +81,16 @@ export function groupStacksByTypeBand(stacks: SortableStack[]): Array<{
 /**
  * Chunk size for one LLM sort call. Small enough for reliable structured
  * output; catalogs larger than this are sorted band-by-band / multi-chunk.
+ *
+ * Tuned for large catalogs (Task 3): 20 keeps ordinal JSON short and stable
+ * under BYO model variance; raise only if latency is more important than
+ * soft-fail rate.
  */
-export const SORT_LLM_CHUNK_SIZE = 24;
+export const SORT_LLM_CHUNK_SIZE = 20;
 
-/** Per-chunk LLM race timeout (ms). */
-export const SORT_LLM_TIMEOUT_MS = 40_000;
+/**
+ * Per-chunk LLM race timeout (ms).
+ * Slightly under 40s so a stuck provider fails soft before reverse-proxy
+ * idle kills the whole organize stream when many chunks run (concurrency 3).
+ */
+export const SORT_LLM_TIMEOUT_MS = 35_000;
