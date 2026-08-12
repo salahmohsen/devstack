@@ -44,6 +44,11 @@ type ListItemProps = {
   onEdit?: () => void;
   /** When set, replaces default view/edit/delete action strip. */
   actions?: React.ReactNode;
+  /**
+   * Extra overflow-menu items for the default action strip
+   * (e.g. project “Detect stacks”). Ignored when `actions` is set.
+   */
+  extraMenuItems?: React.ReactNode;
   onDelete?: () => void;
   isDeleting?: boolean;
   onTogglePortfolio?: () => void;
@@ -83,6 +88,7 @@ export function ListItem({
   viewLabel,
   onEdit,
   actions,
+  extraMenuItems,
   onDelete,
   isDeleting = false,
   onTogglePortfolio,
@@ -225,6 +231,7 @@ export function ListItem({
                   : undefined
               }
               edit={onEdit ? { onAction: onEdit, isLoading: false } : undefined}
+              extraMenuItems={extraMenuItems}
               togglePortfolio={
                 onTogglePortfolio
                   ? {

@@ -40,6 +40,11 @@ type ListItemActionButtonsProps = {
   edit?: ActionButtonConfig;
   togglePortfolio?: TogglePortfolioConfig;
   delete?: ActionButtonConfig;
+  /**
+   * Extra items rendered at the top of the overflow menu (e.g. “Detect stacks”).
+   * Callers own MenuItem markup and should stopPropagation on click.
+   */
+  extraMenuItems?: React.ReactNode;
   classNames?: classNames;
 };
 
@@ -48,9 +53,10 @@ export function ListItemActionButtons({
   edit,
   togglePortfolio,
   delete: deleteConfig,
+  extraMenuItems,
   classNames
 }: ListItemActionButtonsProps) {
-  const hasMenu = !!togglePortfolio || !!deleteConfig;
+  const hasMenu = !!togglePortfolio || !!deleteConfig || !!extraMenuItems;
   const menuLoading = togglePortfolio?.isLoading ?? deleteConfig?.isLoading;
 
   if (!view && !edit && !hasMenu) {
@@ -79,6 +85,7 @@ export function ListItemActionButtons({
         />
       </MenuTrigger>
       <MenuPopup align="end">
+        {extraMenuItems}
         {togglePortfolio ? (
           <MenuItem
             onClick={(event: React.MouseEvent) => {

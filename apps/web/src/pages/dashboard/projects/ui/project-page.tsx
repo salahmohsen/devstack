@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, type NavigateOptions } from "@tanstack/react-router";
-import { ExternalLink, FolderKanbanIcon } from "lucide-react";
+import { ExternalLink, FolderKanbanIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,6 +21,7 @@ import {
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { FrameDescription, FrameTitle } from "@tsu-stack/ui/components/frame";
+import { MenuItem } from "@tsu-stack/ui/components/menu";
 import {
   PreviewCard,
   PreviewCardPopup,
@@ -41,6 +42,7 @@ import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
+import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
 import {
   ItemInfoPanel,
@@ -56,6 +58,7 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useProjectStore } from "@/pages/dashboard/projects/_lib/project.slice";
 import { DetectStacksResultsHost } from "@/pages/dashboard/projects/ui/detect-stacks-dialog";
+import { DetectStacksReposDialog } from "@/pages/dashboard/projects/ui/detect-stacks-repos-dialog";
 import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
 export function ProjectsPage() {
@@ -299,10 +302,35 @@ export function ProjectsPage() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+  const [detectReposProjectId, setDetectReposProjectId] = useState<string | null>(null);
+  const [detectReposDialogOpen, setDetectReposDialogOpen] = useState(false);
+  /** Bumps on each menu open so the dialog remounts with fresh repo prefill. */
+  const [detectReposSession, setDetectReposSession] = useState(0);
+  const detectReposProject = detectReposProjectId
+    ? (projects.find((p) => p.id === detectReposProjectId) ?? null)
+    : null;
 
   function openDialog(id: string | null) {
     setEditingProjectId(id);
     setDialogOpen(true);
+  }
+
+  /**
+   * Existing list rows only. If a job is already running → toast;
+   * if ready with results → reopen review; otherwise open repos dialog.
+   */
+  function handleDetectStacksFromMenu(project: ProjectOutput) {
+    const job = getDetectJobState();
+    if (job.status === "running" || job.status === "ready") {
+      startDetectStacksJob({
+        projectId: project.id,
+        repos: project.repos ?? []
+      });
+      return;
+    }
+    setDetectReposProjectId(project.id);
+    setDetectReposSession((n) => n + 1);
+    setDetectReposDialogOpen(true);
   }
 
   const emptyState = (
@@ -347,6 +375,17 @@ export function ProjectsPage() {
             onTogglePortfolio={() => handleTogglePortfolio(project.id, !project.portfolioEntryId)}
             isTogglingPortfolio={togglingId === project.id}
             inPortfolio={!!project.portfolioEntryId}
+            extraMenuItems={
+              <MenuItem
+                onClick={(event: React.MouseEvent) => {
+                  event.stopPropagation();
+                  handleDetectStacksFromMenu(project);
+                }}
+              >
+                <SparklesIcon className="size-4" aria-hidden />
+                Detect stacks
+              </MenuItem>
+            }
             deleteTitle="Delete this project?"
             deleteDescription="This will permanently delete this project and all its associated data."
             title={project.title}
@@ -563,6 +602,15 @@ export function ProjectsPage() {
 
         {/* Detached detect results — always mounted so closing the form sheet keeps review available */}
         <DetectStacksResultsHost />
+
+        {detectReposProject ? (
+          <DetectStacksReposDialog
+            key={`${detectReposProject.id}-${detectReposSession}`}
+            project={detectReposProject}
+            open={detectReposDialogOpen}
+            onOpenChange={setDetectReposDialogOpen}
+          />
+        ) : null}
 
         <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
           <AlertDialogPopup>
