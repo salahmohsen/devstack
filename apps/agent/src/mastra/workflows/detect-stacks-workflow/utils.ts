@@ -64,8 +64,15 @@ export function extractDepsFromPackageJson(
   return { ...deps, ...devDeps };
 }
 
-export const BATCH_CHUNK_SIZE = 25;
-export const BATCH_TIMEOUT_MS = 180_000;
+/** Packages per LLM categorize call (smaller = faster progress ticks). */
+export const BATCH_CHUNK_SIZE = 20;
+/** Per-chunk generate timeout (abort in-flight via withTimeoutSignal). */
+export const BATCH_TIMEOUT_MS = 60_000;
+/**
+ * Soft wall-clock for the whole categorize phase. Stay under reverse-proxy
+ * ~310s silent-stream kills so remaining unknowns can soft-fallback and finish.
+ */
+export const CATEGORIZE_WALL_CLOCK_MS = 260_000;
 
 export type ExtractedDep = {
   name: string;

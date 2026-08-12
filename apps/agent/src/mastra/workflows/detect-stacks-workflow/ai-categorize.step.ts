@@ -9,6 +9,7 @@ import {
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
 import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
+import { buildDetectCategorizeLabel, writeDetectProgress } from "#@/mastra/lib/workflow-progress";
 import {
   batchOutputSchema,
   matchCategorizeSchema
@@ -17,6 +18,7 @@ import { programmaticMatch } from "#@/mastra/workflows/detect-stacks-workflow/pr
 import {
   BATCH_CHUNK_SIZE,
   BATCH_TIMEOUT_MS,
+  CATEGORIZE_WALL_CLOCK_MS,
   type CategorizedEntry
 } from "#@/mastra/workflows/detect-stacks-workflow/utils";
 
@@ -38,17 +40,27 @@ function lowConfidenceFallback(deps: Array<{ name: string; repo: string }>): Cat
   });
 }
 
+function isAbortError(error: unknown, abortSignal?: AbortSignal): boolean {
+  if (abortSignal?.aborted) return true;
+  if (error instanceof DOMException && error.name === "AbortError") return true;
+  if (error instanceof Error && error.name === "AbortError") return true;
+  return false;
+}
+
 export const aiCategorize = createStep({
   id: "ai-categorize",
   description:
     "Uses AI to categorize unknown packages in batches (type + display name; descriptions come from npm later)",
   inputSchema: programmaticMatch.outputSchema,
   outputSchema: matchCategorizeSchema,
+  // Soft-fail per chunk handles transient LLM errors; do not retry the whole step
+  // (would re-run successful chunks and blow wall-clock).
   execute: async (params) => {
     const started = Date.now();
     const log = createLogger({ operation: "agent__detect_stacks_ai_categorize" });
     const { matched, unknown } = params.inputData;
     const abortSignal = params.abortSignal;
+    const writer = params.writer;
 
     if (abortSignal?.aborted) {
       log.set({
@@ -133,15 +145,49 @@ export const aiCategorize = createStep({
 
     const categorized: CategorizedEntry[] = [];
     const usedNames = new Set<string>();
+    const chunkTotal = Math.ceil(unknown.length / BATCH_CHUNK_SIZE);
+    let chunksFailed = 0;
+    let stopReason: "completed" | "aborted" | "wall_clock" = "completed";
 
-    // Chunk unknowns and process sequentially
+    // Sequential chunks keep usedNames accurate across batches (name reuse).
     for (let i = 0; i < unknown.length; i += BATCH_CHUNK_SIZE) {
       // Mastra cancel triggers abortSignal — stop between chunks (docs: steps must check it)
       if (abortSignal?.aborted) {
+        stopReason = "aborted";
         break;
       }
 
+      // Soft wall-clock: leave remaining unknowns as low-confidence so the stream can finish
+      // under reverse-proxy kill (~310s) instead of hanging mid-categorize.
+      const elapsedMs = Date.now() - started;
+      if (elapsedMs >= CATEGORIZE_WALL_CLOCK_MS) {
+        stopReason = "wall_clock";
+        break;
+      }
+
+      const chunkIndex = Math.floor(i / BATCH_CHUNK_SIZE);
       const chunk = unknown.slice(i, i + BATCH_CHUNK_SIZE);
+      const rangeStart = i + 1;
+      const rangeEnd = i + chunk.length;
+      const label = buildDetectCategorizeLabel(rangeStart, rangeEnd, unknown.length);
+
+      // Intermediate fields on the same wide-event logger (emitted once at end).
+      // Live UI progress is via writer.custom data-detect-progress (Task 4 maps stepLabel).
+      log.set({
+        unknownCount: unknown.length,
+        chunkIndex,
+        chunkTotal,
+        chunkSize: chunk.length,
+        durationMs: elapsedMs,
+        progressLabel: label
+      });
+
+      await writeDetectProgress(writer, {
+        chunkIndex,
+        chunkTotal,
+        unknownTotal: unknown.length,
+        label
+      });
 
       const packageList = chunk
         .map(
@@ -176,22 +222,31 @@ For each package:
 5. Confidence: high/medium/low
 Do NOT invent descriptions — they are filled from the official npm registry later.`;
 
+      const chunkStarted = Date.now();
       try {
+        // Cap this chunk's budget by remaining wall-clock so we don't start a full timeout
+        // when the soft deadline is near.
+        const remainingWall = CATEGORIZE_WALL_CLOCK_MS - (Date.now() - started);
+        const chunkTimeoutMs = Math.max(5_000, Math.min(BATCH_TIMEOUT_MS, remainingWall));
+
         const result = await withTimeoutSignal(
           (signal) =>
             agent.generate([{ role: "user", content: prompt }], {
               structuredOutput: {
-                schema: batchOutputSchema
+                schema: batchOutputSchema,
+                // Schema failures → empty array; missing packages soft-fallback below.
+                errorStrategy: "fallback",
+                fallbackValue: []
               },
               model,
               abortSignal: signal
             }),
-          BATCH_TIMEOUT_MS,
-          `LLM timeout after ${BATCH_TIMEOUT_MS / 1000}s`,
+          chunkTimeoutMs,
+          `LLM timeout after ${chunkTimeoutMs / 1000}s`,
           abortSignal
         );
 
-        const aiResults = result.object;
+        const aiResults = Array.isArray(result.object) ? result.object : [];
 
         // Validate: build lookup of returned packages
         const returnedPackages = new Set(aiResults.map((r) => r.npmPackage));
@@ -240,32 +295,71 @@ Do NOT invent descriptions — they are filled from the official npm registry la
           usedNames.add(ai.displayName);
         }
 
-        // Fallback for missing packages (LLM didn't return them)
+        // Fallback for missing packages (LLM didn't return them / schema fallback)
         for (const dep of chunk) {
           if (!returnedPackages.has(dep.name)) {
             categorized.push(...lowConfidenceFallback([dep]));
             usedNames.add(dep.name);
           }
         }
+
+        log.set({
+          unknownCount: unknown.length,
+          chunkIndex,
+          chunkTotal,
+          chunkSize: chunk.length,
+          returnedCount: aiResults.length,
+          lastChunkDurationMs: Date.now() - chunkStarted
+        });
       } catch (error) {
         // Cancel must not invent low-confidence rows — stop the categorize phase.
-        if (
-          (error instanceof DOMException && error.name === "AbortError") ||
-          (error instanceof Error && error.name === "AbortError") ||
-          abortSignal?.aborted
-        ) {
+        if (isAbortError(error, abortSignal)) {
+          stopReason = "aborted";
+          log.set({
+            unknownCount: unknown.length,
+            chunkIndex,
+            chunkTotal,
+            chunkSize: chunk.length,
+            lastChunkDurationMs: Date.now() - chunkStarted,
+            abortAtChunk: true
+          });
           break;
         }
-        log.error(error instanceof Error ? error : new Error(String(error)), {
+        chunksFailed += 1;
+        // Separate short logger so chunk failures are searchable in Axiom without
+        // sealing the parent wide-event early.
+        const chunkLog = createLogger({ operation: "agent__detect_stacks_ai_categorize_chunk" });
+        chunkLog.error(error instanceof Error ? error : new Error(String(error)), {
           event: "detect_stacks_ai_categorize_chunk_failed",
+          unknownCount: unknown.length,
+          chunkIndex,
+          chunkTotal,
           chunkStart: i,
-          chunkSize: chunk.length
+          chunkSize: chunk.length,
+          durationMs: Date.now() - chunkStarted,
+          reason: "chunk_error"
         });
+        chunkLog.emit({ _forceKeep: true });
         // Timeout / LLM failure: soft-fail this chunk only
         for (const dep of chunk) {
           categorized.push(...lowConfidenceFallback([dep]));
           usedNames.add(dep.name);
         }
+      }
+    }
+
+    // Wall-clock soft-complete: remaining unknowns not yet categorized.
+    // Abort must NOT invent rows for unprocessed packages.
+    if (stopReason === "wall_clock") {
+      const done = new Set(categorized.map((c) => c.npmPackage));
+      const remaining = unknown.filter((d) => !done.has(d.name));
+      if (remaining.length > 0) {
+        categorized.push(...lowConfidenceFallback(remaining));
+        log.set({
+          unknownCount: unknown.length,
+          remainingCount: remaining.length,
+          wallClockSoftFilled: remaining.length
+        });
       }
     }
 
@@ -306,13 +400,18 @@ Do NOT invent descriptions — they are filled from the official npm registry la
       }
     }
 
+    const softFailed = chunksFailed > 0 || stopReason === "wall_clock";
     log.set({
       event: "detect_stacks_ai_categorize_completed",
       unknownCount: unknown.length,
       categorizedCount: finalCategorized.length,
-      durationMs: Date.now() - started
+      chunkTotal,
+      chunksFailed,
+      durationMs: Date.now() - started,
+      reason: stopReason,
+      softFailed
     });
-    log.emit();
+    log.emit(softFailed || stopReason !== "completed" ? { _forceKeep: true } : undefined);
 
     return { matched, categorized: finalCategorized };
   }
