@@ -8,6 +8,7 @@ import {
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { generateModelOption } from "#@/mastra/byo-model";
+import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
 import {
   batchOutputSchema,
   matchCategorizeSchema
@@ -176,20 +177,19 @@ For each package:
 Do NOT invent descriptions — they are filled from the official npm registry later.`;
 
       try {
-        const result = await Promise.race([
-          agent.generate([{ role: "user", content: prompt }], {
-            structuredOutput: {
-              schema: batchOutputSchema
-            },
-            model
-          }),
-          new Promise<never>((_, reject) =>
-            setTimeout(
-              () => reject(new Error(`LLM timeout after ${BATCH_TIMEOUT_MS / 1000}s`)),
-              BATCH_TIMEOUT_MS
-            )
-          )
-        ]);
+        const result = await withTimeoutSignal(
+          (signal) =>
+            agent.generate([{ role: "user", content: prompt }], {
+              structuredOutput: {
+                schema: batchOutputSchema
+              },
+              model,
+              abortSignal: signal
+            }),
+          BATCH_TIMEOUT_MS,
+          `LLM timeout after ${BATCH_TIMEOUT_MS / 1000}s`,
+          abortSignal
+        );
 
         const aiResults = result.object;
 
