@@ -4,7 +4,7 @@ import { memo, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type StackOutput } from "@tsu-stack/core";
+import { formatStackTypeLabel, type StackOutput } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
@@ -23,20 +23,6 @@ import { Icon } from "@/shared/ui/icon";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
-
-const TYPE_LABELS: Record<string, string> = {
-  framework: "Framework",
-  language: "Language",
-  database: "Database",
-  ui: "UI",
-  auth: "Auth",
-  deployment: "Deploy",
-  testing: "Testing",
-  ai: "AI",
-  tooling: "Tooling",
-  storage: "Storage",
-  other: "Other"
-};
 
 const TYPE_VARIANTS: Record<
   string,
@@ -59,6 +45,8 @@ export type StackItemProps = {
   stack: StackOutput;
   /** Multi-select checkbox state — pass from parent so memo can skip siblings. */
   isChecked: boolean;
+  /** When true, always show checkboxes (any card selected). */
+  batchSelectActive?: boolean;
   /** Side-panel open for this card. */
   isOpen: boolean;
   isSort?: boolean;
@@ -80,6 +68,7 @@ export type StackItemProps = {
 export const StackItem = memo(function StackItem({
   stack,
   isChecked,
+  batchSelectActive = false,
   isOpen,
   isSort = false,
   onEdit,
@@ -145,14 +134,28 @@ export const StackItem = memo(function StackItem({
 
   return (
     <>
+      {/* Card is the interactive surface (sort mode disables activation). */}
+      {/* oxlint-disable jsx-a11y/prefer-tag-over-role */}
       <Card
-        /* oxlint-disable-next-line jsx-a11y/prefer-tag-over-role, jsx-a11y/interactive-supports-focus */
         role="button"
+        tabIndex={isSort ? -1 : 0}
         aria-pressed={isOpen}
         aria-label={`View details for ${stack.name}`}
         data-item-id={stack.id}
         data-selected={isOpen}
-        onClick={isSort ? undefined : () => onOpen(stack.id, stack)}
+        onClick={
+          isSort
+            ? undefined
+            : (event) => {
+                if (
+                  event.target instanceof Element &&
+                  event.target.closest("[data-slot=checkbox], [data-batch-select]")
+                ) {
+                  return;
+                }
+                onOpen(stack.id, stack);
+              }
+        }
         onMouseEnter={
           isSort || !onPrefetch
             ? undefined
@@ -164,10 +167,15 @@ export const StackItem = memo(function StackItem({
           isSort
             ? undefined
             : (event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onOpen(stack.id, stack);
+                if (event.key !== "Enter" && event.key !== " ") return;
+                if (
+                  event.target instanceof Element &&
+                  event.target.closest("[data-slot=checkbox], [data-batch-select]")
+                ) {
+                  return;
                 }
+                event.preventDefault();
+                onOpen(stack.id, stack);
               }
         }
         className={cn(
@@ -191,9 +199,12 @@ export const StackItem = memo(function StackItem({
           </div>
         ) : null}
         <div
+          data-batch-select
           role="presentation"
           className="absolute top-2 left-3 z-10"
           onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
           {!isSort ? (
@@ -202,7 +213,9 @@ export const StackItem = memo(function StackItem({
               onCheckedChange={() => onToggleSelect(stack.id)}
               className={cn(
                 "transition-opacity duration-150",
-                isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                isChecked || batchSelectActive
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
               )}
             />
           ) : null}
@@ -220,7 +233,7 @@ export const StackItem = memo(function StackItem({
               size="sm"
               className="absolute top-2 right-2 z-10"
             >
-              {TYPE_LABELS[stack.type] ?? stack.type}
+              {formatStackTypeLabel(stack.type)}
             </Badge>
           ) : null}
           <Icon
@@ -265,6 +278,7 @@ export const StackItem = memo(function StackItem({
           </div>
         ) : null}
       </Card>
+      {/* oxlint-enable jsx-a11y/prefer-tag-over-role */}
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>

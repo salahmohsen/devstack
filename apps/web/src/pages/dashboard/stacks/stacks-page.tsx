@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type OrganizeAction, type StackOutput, normalizeOrganizeActions } from "@tsu-stack/core";
+import { type StackOutput, normalizeOrganizeActions } from "@tsu-stack/core";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -21,6 +21,12 @@ import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { FrameTitle } from "@tsu-stack/ui/components/frame";
 
+import {
+  areAllVisibleSelected,
+  isBatchSelectActive,
+  selectedIdsFromState
+} from "@/shared/lib/batch-selection";
+import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
 import { Markdown } from "@/shared/ui/markdown";
@@ -49,7 +55,10 @@ import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 import { MergeDialog } from "@/pages/dashboard/stacks/ui/merge-dialog";
-import { OrganizeDialog } from "@/pages/dashboard/stacks/ui/organize-dialog";
+import {
+  OrganizeDialog,
+  type OrganizeConfirmPayload
+} from "@/pages/dashboard/stacks/ui/organize-dialog";
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 
@@ -178,10 +187,10 @@ export function StacksPage() {
     cancelOrganizeStacksJob();
   }
 
-  async function handleConfirmOrganize(selectedActions: OrganizeAction[]) {
+  async function handleConfirmOrganize(payload: OrganizeConfirmPayload) {
     // Re-normalize selected subset against current stacks (auto-merge collisions)
     const { actions: plan, sortOrder: planSortOrder } = normalizeOrganizeActions(
-      selectedActions,
+      payload.actions,
       stacks.map((s) => {
         return { id: s.id, name: s.name, projectCount: s.projectCount };
       }),
@@ -207,14 +216,14 @@ export function StacksPage() {
           try {
             await orpcClient.stacks.batchMerge({ items: mergeItems });
           } catch (error) {
-            console.error("[stacks] Batch merge failed:", error);
+            console.debug("[stacks] Batch merge failed:", error);
             toast.error("Failed to merge some stacks.");
             return;
           }
         }
       }
 
-      // Batch update renames + enrichments in a single transaction
+      // Batch update renames + enrichments + portfolio flags in one map
       const batchItemMap = new Map<string, { id: string; data: Record<string, unknown> }>();
 
       for (const action of renameActions) {
@@ -246,13 +255,44 @@ export function StacksPage() {
         }
       }
 
+      // Portfolio inclusion (step 2): only write stacks whose flag actually changes
+      const currentById = new Map(stacks.map((s) => [s.id, s]));
+      for (const item of payload.portfolio) {
+        const current = currentById.get(item.id);
+        if (!current) continue;
+        if (!!current.includedInPortfolio === item.includedInPortfolio) continue;
+        const existing = batchItemMap.get(item.id);
+        if (existing) {
+          batchItemMap.set(item.id, {
+            id: item.id,
+            data: { ...existing.data, includedInPortfolio: item.includedInPortfolio }
+          });
+        } else {
+          batchItemMap.set(item.id, {
+            id: item.id,
+            data: { includedInPortfolio: item.includedInPortfolio }
+          });
+        }
+      }
+
       const batchItems = Array.from(batchItemMap.values());
 
       if (batchItems.length > 0) {
         try {
-          await orpcClient.stacks.batchUpdate({ items: batchItems });
+          await orpcClient.stacks.batchUpdate({
+            items: batchItems as Array<{
+              id: string;
+              data: {
+                name?: string;
+                description?: string | null;
+                icon?: string | null;
+                type?: string | null;
+                includedInPortfolio?: boolean;
+              };
+            }>
+          });
         } catch (error) {
-          console.error("[stacks] Batch update failed:", error);
+          console.debug("[stacks] Batch update failed:", error);
           toast.error("Failed to apply some changes.");
           return;
         }
@@ -266,7 +306,7 @@ export function StacksPage() {
           });
           await orpcClient.stacks.reorder({ items: reorderItems });
         } catch (error) {
-          console.error("[stacks] Reorder failed:", error);
+          console.debug("[stacks] Reorder failed:", error);
         }
       }
 
@@ -274,11 +314,18 @@ export function StacksPage() {
       await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
       const totalActions = mergeActions.length + renameActions.length + enrichActions.length;
-      const totalChanges = totalActions + (planSortOrder.length > 0 ? 1 : 0);
-      toast.success(`Organized ${totalChanges} change(s).`);
+      const portfolioChanges = payload.portfolio.filter((p) => {
+        const cur = currentById.get(p.id);
+        return cur && !!cur.includedInPortfolio !== p.includedInPortfolio;
+      }).length;
+      const totalChanges =
+        totalActions + (planSortOrder.length > 0 ? 1 : 0) + (portfolioChanges > 0 ? 1 : 0);
+      toast.success(
+        `Organized ${totalChanges} change(s)${portfolioChanges ? ` · ${portfolioChanges} portfolio` : ""}.`
+      );
       dismissOrganizeStacksJob();
     } catch (error) {
-      console.error("[stacks] Organize failed:", error);
+      console.debug("[stacks] Organize failed:", error);
       toast.error("Failed to apply changes.");
     } finally {
       setIsApplyingOrganize(false);
@@ -355,11 +402,11 @@ export function StacksPage() {
   // ── Batch state ───────────────────────────────────────────────────
   const [batchAction, setBatchAction] = useState<"delete" | "portfolio" | null>(null);
 
-  const selectedIdsEntries = useMemo(
-    () => Object.entries(selectedIds ?? {}).filter(([, v]) => v),
-    [selectedIds]
-  );
-  const selectedCount = selectedIdsEntries.length;
+  const selectedIdList = selectedIdsFromState(selectedIds);
+  const selectedCount = selectedIdList.length;
+  const stackIds = useMemo(() => stacks.map((s) => s.id), [stacks]);
+  const allVisibleSelected = areAllVisibleSelected(selectedIds, stackIds);
+  const batchSelectActive = isBatchSelectActive(selectedIds);
   const isBatchLoading = batchAction !== null;
   const isDeleting = batchAction === "delete";
   const isAddingToPortfolio = batchAction === "portfolio";
@@ -437,7 +484,7 @@ export function StacksPage() {
   async function handleBatchDelete() {
     setBatchAction("delete");
     setBatchDeleteDialogOpen(false);
-    const ids = selectedIdsEntries.map(([id]) => id);
+    const ids = selectedIdList;
     const results = await Promise.allSettled(ids.map((id) => orpcClient.stacks.delete({ id })));
 
     await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
@@ -516,6 +563,7 @@ export function StacksPage() {
               <StackItem
                 stack={stack}
                 isChecked={Boolean(selectedIds?.[stack.id])}
+                batchSelectActive={batchSelectActive}
                 isOpen={Boolean(isItemOpen?.[stack.id])}
                 onEdit={openDialog}
                 onOpen={openItem}
@@ -543,6 +591,7 @@ export function StacksPage() {
             <StackItem
               stack={stack}
               isChecked={Boolean(selectedIds?.[stack.id])}
+              batchSelectActive={batchSelectActive}
               isOpen={Boolean(isItemOpen?.[stack.id])}
               onEdit={openDialog}
               onOpen={openItem}
@@ -579,21 +628,27 @@ export function StacksPage() {
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
               }}
-              batch={{
-                selectedCount,
-                totalCount: stacks.length,
-                isBatchLoading,
-                isDeleting,
-                isAddingToPortfolio,
-                onDeleteSelected: () => setBatchDeleteDialogOpen(true),
-                onAddSelectedToPortfolio: handleBatchAddToPortfolio,
-                onMerge: isMergeEligible ? () => setMergeDialogOpen(true) : undefined,
-                onSelectAll: () => selectAll(stacks.map((s) => s.id)),
-                onClearSelection: clearSelection
-              }}
             />
           }
         />
+
+        {batchSelectActive && !isSort ? (
+          <div className="flex justify-end">
+            <BatchSelectionBar
+              selectedCount={selectedCount}
+              totalCount={stackIds.length}
+              allVisibleSelected={allVisibleSelected}
+              isDeleting={isDeleting}
+              isLoading={isBatchLoading}
+              isAddingToPortfolio={isAddingToPortfolio}
+              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+              onAddSelectedToPortfolio={handleBatchAddToPortfolio}
+              onMerge={isMergeEligible ? () => setMergeDialogOpen(true) : undefined}
+              onSelectAll={() => selectAll(stackIds)}
+              onClearSelection={clearSelection}
+            />
+          </div>
+        ) : null}
 
         {renderGrid()}
 

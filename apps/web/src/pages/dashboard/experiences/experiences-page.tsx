@@ -18,6 +18,13 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
 
+import {
+  areAllVisibleSelected,
+  isBatchSelectActive,
+  isIdSelected,
+  selectedIdsFromState
+} from "@/shared/lib/batch-selection";
+import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
 import { Markdown } from "@/shared/ui/markdown";
@@ -201,7 +208,7 @@ export function ExperiencesPage() {
   async function handleBatchDelete() {
     setBatchAction("delete");
     setBatchDeleteDialogOpen(false);
-    const ids = selectedIdsEntries.map(([id]) => id);
+    const ids = selectedIdList;
     const results = await Promise.allSettled(
       ids.map((id) => orpcClient.experiences.delete({ id }))
     );
@@ -270,8 +277,11 @@ export function ExperiencesPage() {
   const [batchAction, setBatchAction] = useState<"delete" | "portfolio" | null>(null);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 
-  const selectedIdsEntries = Object.entries(selectedIds ?? {}).filter(([, v]) => v);
-  const selectedCount = selectedIdsEntries.length;
+  const selectedIdList = selectedIdsFromState(selectedIds);
+  const selectedCount = selectedIdList.length;
+  const visibleIds = visibleExperiences.map((e) => e.id);
+  const allVisibleSelected = areAllVisibleSelected(selectedIds, visibleIds);
+  const batchSelectActive = isBatchSelectActive(selectedIds);
   const isBatchLoading = batchAction !== null;
   const isDeleting = batchAction === "delete";
   const isAddingToPortfolio = batchAction === "portfolio";
@@ -332,7 +342,8 @@ export function ExperiencesPage() {
             onSelect={() => openItem(experience.id, experience)}
             dragHandleProps={dragHandleProps}
             isSort={isSort}
-            isBatchSelected={selectedIds?.[experience.id] ?? false}
+            isBatchSelected={isIdSelected(selectedIds, experience.id)}
+            batchSelectActive={batchSelectActive}
             onToggleSelect={() => toggleSelect(experience.id)}
             onMouseEnter={() => {
               void queryClient.prefetchQuery(
@@ -387,20 +398,26 @@ export function ExperiencesPage() {
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
               }}
-              batch={{
-                selectedCount,
-                totalCount: visibleExperiences.length,
-                isBatchLoading,
-                isDeleting,
-                isAddingToPortfolio,
-                onDeleteSelected: () => setBatchDeleteDialogOpen(true),
-                onAddSelectedToPortfolio: handleBatchAddToPortfolio,
-                onSelectAll: () => selectAll(visibleExperiences.map((e) => e.id)),
-                onClearSelection: clearSelection
-              }}
             />
           }
         />
+
+        {batchSelectActive && !isSort ? (
+          <div className="flex justify-end">
+            <BatchSelectionBar
+              selectedCount={selectedCount}
+              totalCount={visibleIds.length}
+              allVisibleSelected={allVisibleSelected}
+              isDeleting={isDeleting}
+              isLoading={isBatchLoading}
+              isAddingToPortfolio={isAddingToPortfolio}
+              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+              onAddSelectedToPortfolio={handleBatchAddToPortfolio}
+              onSelectAll={() => selectAll(visibleIds)}
+              onClearSelection={clearSelection}
+            />
+          </div>
+        ) : null}
 
         {renderList()}
 

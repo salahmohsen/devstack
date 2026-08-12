@@ -7,14 +7,13 @@ import * as React from "react";
 import { type ProposeApplicationFromJdInput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
-  Sheet,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetPanel,
-  SheetPopup,
-  SheetTitle
-} from "@tsu-stack/ui/components/sheet";
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle
+} from "@tsu-stack/ui/components/dialog";
 import { Textarea } from "@tsu-stack/ui/components/textarea";
 
 import { useHubChat } from "@/features/agent-hub";
@@ -100,8 +99,8 @@ function buildImportMessage(jd: string): string {
 }
 
 /**
- * Applications dual surface: paste a JD into the shared hub thread and
- * render the same GenUI propose card while the client tool is pending.
+ * Paste a job description into the shared hub thread and render the GenUI
+ * propose card while the client tool is pending. Dialog (not sheet).
  */
 export function ImportJdSheet({ open, onOpenChange }: ImportJdSheetProps) {
   const { sendMessage, messages, historyReady, addToolOutput, status } = useHubChat();
@@ -130,17 +129,21 @@ export function ImportJdSheet({ open, onOpenChange }: ImportJdSheetProps) {
   }, [historyReady, isStreaming, jd, pendingPropose, sendMessage]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetPopup className="w-full max-w-lg sm:max-w-lg" side="right" showCloseButton>
-        <SheetHeader>
-          <SheetTitle>Import from job description</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogPopup
+        className="flex max-h-[min(90dvh,40rem)] w-full max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
+        bottomStickOnMobile={false}
+        showCloseButton
+      >
+        <DialogHeader className="shrink-0 border-b px-5 py-4">
+          <DialogTitle>Import from job description</DialogTitle>
+          <DialogDescription>
             Paste a posting or notes. The hub agent proposes an application you can save or package
             without leaving this page.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <SheetPanel className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {pendingPropose ? (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
@@ -194,22 +197,20 @@ export function ImportJdSheet({ open, onOpenChange }: ImportJdSheetProps) {
               ) : null}
             </>
           )}
-        </SheetPanel>
+        </div>
 
-        <SheetFooter>
-          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Close
+        <DialogFooter className="shrink-0 border-t px-5 py-3">
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+          {!pendingPropose ? (
+            <Button type="button" disabled={!canSend} onClick={handleSend}>
+              <FileTextIcon className="size-4" aria-hidden />
+              Send to hub
             </Button>
-            {!pendingPropose ? (
-              <Button type="button" disabled={!canSend} onClick={handleSend}>
-                <FileTextIcon className="size-4" aria-hidden />
-                Send to hub
-              </Button>
-            ) : null}
-          </div>
-        </SheetFooter>
-      </SheetPopup>
-    </Sheet>
+          ) : null}
+        </DialogFooter>
+      </DialogPopup>
+    </Dialog>
   );
 }

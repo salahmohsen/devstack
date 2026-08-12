@@ -19,10 +19,12 @@ export const badgeVariants = cva(
         default:
           "h-5.5 min-w-5.5 px-[calc(--spacing(1)-1px)] text-sm sm:h-4.5 sm:min-w-4.5 sm:text-xs",
         lg: "h-6.5 min-w-6.5 px-[calc(--spacing(1.5)-1px)] text-base sm:h-5.5 sm:min-w-5.5 sm:text-sm",
-        sm: "h-5 min-w-5 rounded-lg px-[calc(--spacing(1)-1px)] text-xs sm:h-4 sm:min-w-4 sm:text-[.625rem]"
+        sm: "h-5 min-w-5 rounded-lg px-[calc(--spacing(1)-1px)] text-xs leading-none sm:h-4 sm:min-w-4 sm:text-[.625rem]"
       },
       variant: {
         default: "bg-primary text-primary-foreground [button&,a&]:hover:bg-primary/90",
+        /** Soft brand chip — count/attention without solid fill. */
+        brand: "bg-brand/12 text-brand dark:bg-brand/16",
         destructive: "bg-destructive text-white [button&,a&]:hover:bg-destructive/90",
         error: "bg-destructive/8 text-destructive-foreground dark:bg-destructive/16",
         info: "bg-info/8 text-info-foreground dark:bg-info/16",

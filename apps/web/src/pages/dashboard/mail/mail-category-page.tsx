@@ -2,7 +2,16 @@
 
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
-import { BriefcaseBusiness, CalendarDays, Gift, Inbox, Mail, Sparkles, Users } from "lucide-react";
+import {
+  Bell,
+  BriefcaseBusiness,
+  CalendarDays,
+  Gift,
+  Inbox,
+  Mail,
+  Sparkles,
+  Users
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -49,7 +58,8 @@ const ICONS = {
   gift: Gift,
   inbox: Inbox,
   mail: Mail,
-  sparkles: Sparkles
+  sparkles: Sparkles,
+  bell: Bell
 } as const;
 
 /**

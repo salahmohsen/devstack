@@ -176,7 +176,13 @@ export type Sidebar001ItemProps = {
   href: string;
   label: React.ReactNode;
   isActive: boolean;
+  /** Brand dot for “has unread / new activity” (independent of badge). */
   isNew?: boolean;
+  /**
+   * Optional trailing badge (count, status chip, etc.).
+   * Pass a compact `Badge` (or any node) from the app so items stay reusable.
+   */
+  badge?: React.ReactNode;
   className?: string;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 };
@@ -186,6 +192,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
   label,
   isActive,
   isNew,
+  badge,
   className,
   onClick
 }: Sidebar001ItemProps) {
@@ -245,12 +252,17 @@ export const Sidebar001Item = memo(function Sidebar001Item({
           }}
           onMouseLeave={() => setHovered(null)}
           className={cn(
-            "relative ml-2 flex items-center gap-2 py-1.5 pl-4 text-sm select-none",
+            "relative ml-2 flex items-center gap-1.5 py-1.5 pl-4 text-sm leading-none select-none",
             className
           )}
         >
-          <span className="relative z-1 truncate">{label}</span>
-          {isNew && <span className="size-1.5 shrink-0 rounded-full bg-brand" />}
+          <span className="relative z-1 min-w-0 truncate leading-none">{label}</span>
+          {badge != null ? (
+            <span className="relative z-1 inline-flex shrink-0 items-center justify-center self-center leading-none [&_[data-slot=badge]]:leading-none">
+              {badge}
+            </span>
+          ) : null}
+          {isNew ? <span className="size-1.5 shrink-0 self-center rounded-full bg-brand" /> : null}
         </Link>
       </motion.div>
     </div>

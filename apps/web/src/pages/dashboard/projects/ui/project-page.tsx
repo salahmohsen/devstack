@@ -27,6 +27,13 @@ import {
   PreviewCardTrigger
 } from "@tsu-stack/ui/components/preview-card";
 
+import {
+  areAllVisibleSelected,
+  isBatchSelectActive,
+  isIdSelected,
+  selectedIdsFromState
+} from "@/shared/lib/batch-selection";
+import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
@@ -195,7 +202,7 @@ export function ProjectsPage() {
   async function handleBatchDelete() {
     setBatchAction("delete");
     setBatchDeleteDialogOpen(false);
-    const ids = selectedIdsEntries.map(([id]) => id);
+    const ids = selectedIdList;
     const results = await Promise.allSettled(ids.map((id) => orpcClient.projects.delete({ id })));
 
     await queryClient.invalidateQueries({ queryKey: orpcQueryClient.projects.list.queryKey() });
@@ -261,8 +268,11 @@ export function ProjectsPage() {
 
   const [batchAction, setBatchAction] = useState<"delete" | "portfolio" | null>(null);
 
-  const selectedIdsEntries = Object.entries(selectedIds ?? {}).filter(([, v]) => v);
-  const selectedCount = selectedIdsEntries.length;
+  const selectedIdList = selectedIdsFromState(selectedIds);
+  const selectedCount = selectedIdList.length;
+  const projectIds = projects.map((p) => p.id);
+  const allVisibleSelected = areAllVisibleSelected(selectedIds, projectIds);
+  const batchSelectActive = isBatchSelectActive(selectedIds);
   const isBatchLoading = batchAction !== null;
   const isDeleting = batchAction === "delete";
   const isAddingToPortfolio = batchAction === "portfolio";
@@ -322,7 +332,8 @@ export function ProjectsPage() {
             onSelect={() => openItem(project.id, project)}
             dragHandleProps={dragHandleProps}
             isSort={isSort}
-            isBatchSelected={selectedIds?.[project.id] ?? false}
+            isBatchSelected={isIdSelected(selectedIds, project.id)}
+            batchSelectActive={batchSelectActive}
             onToggleSelect={() => toggleSelect(project.id)}
             onMouseEnter={() => {
               void queryClient.ensureQueryData(
@@ -388,20 +399,26 @@ export function ProjectsPage() {
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
               }}
-              batch={{
-                selectedCount,
-                totalCount: projects.length,
-                isBatchLoading,
-                isDeleting,
-                isAddingToPortfolio,
-                onDeleteSelected: () => setBatchDeleteDialogOpen(true),
-                onAddSelectedToPortfolio: handleBatchAddToPortfolio,
-                onSelectAll: () => selectAll(projects.map((p) => p.id)),
-                onClearSelection: clearSelection
-              }}
             />
           }
         />
+
+        {batchSelectActive && !isSort ? (
+          <div className="flex justify-end">
+            <BatchSelectionBar
+              selectedCount={selectedCount}
+              totalCount={projectIds.length}
+              allVisibleSelected={allVisibleSelected}
+              isDeleting={isDeleting}
+              isLoading={isBatchLoading}
+              isAddingToPortfolio={isAddingToPortfolio}
+              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+              onAddSelectedToPortfolio={handleBatchAddToPortfolio}
+              onSelectAll={() => selectAll(projectIds)}
+              onClearSelection={clearSelection}
+            />
+          </div>
+        ) : null}
 
         {renderList()}
 

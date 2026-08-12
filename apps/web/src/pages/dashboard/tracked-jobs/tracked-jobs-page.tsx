@@ -47,6 +47,7 @@ export function TrackedJobsPage() {
     closeView,
     showView,
     listFilter,
+    clearSelection,
     packageSheetAppId,
     closePackageSheet,
     sendOutreachAppId,
@@ -137,7 +138,10 @@ export function TrackedJobsPage() {
                   type="button"
                   size="sm"
                   variant={view === "board" ? "default" : "outline"}
-                  onClick={() => setView("board")}
+                  onClick={() => {
+                    clearSelection();
+                    setView("board");
+                  }}
                 >
                   <LayoutGridIcon className="size-4" />
                   Board
@@ -153,14 +157,17 @@ export function TrackedJobsPage() {
                   List
                 </Button>
               </Group>
-              <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
-                <FileTextIcon className="size-4" />
-                Import from JD
-              </Button>
-              <Button type="button" size="sm" onClick={openCreate}>
-                <PlusIcon className="size-4" />
-                Add job
-              </Button>
+              <Group>
+                <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
+                  <FileTextIcon className="size-4" />
+                  Import from JD
+                </Button>
+                <GroupSeparator />
+                <Button type="button" size="sm" onClick={openCreate}>
+                  <PlusIcon className="size-4" />
+                  Add job
+                </Button>
+              </Group>
             </div>
           }
         />

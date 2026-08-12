@@ -90,16 +90,26 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 type ApplicationInfoPanelProps = {
   item: ApplicationOutput;
+  /**
+   * `tracked` (default): full CRM panel with package actions and stage.
+   * `discovery`: New jobs inbox/dismissed — hide package/stage chrome; keep
+   * description, take, meta, activity + notes.
+   */
+  variant?: "tracked" | "discovery";
 };
 
-export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
+export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationInfoPanelProps) {
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const regenerateTake = useRegenerateAgentTakeMutation();
+  const isDiscovery = variant === "discovery";
 
-  const sourceLabel =
-    item.source && item.source in APPLICATION_SOURCE_LABELS
+  const customSourceLabel = item.sourceLabel?.trim();
+  const enumSourceLabel =
+    item.source != null && item.source in APPLICATION_SOURCE_LABELS
       ? APPLICATION_SOURCE_LABELS[item.source as keyof typeof APPLICATION_SOURCE_LABELS]
       : null;
+  const sourceDisplay =
+    customSourceLabel && customSourceLabel.length > 0 ? customSourceLabel : enumSourceLabel;
 
   const resumesQuery = useQuery({
     ...orpcQueryClient.resume.list.queryOptions(),
@@ -122,15 +132,19 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
           <FrameDescription className="flex flex-col gap-2">
             <span className="text-base font-medium text-foreground">{item.companyName}</span>
             <span className="flex flex-wrap items-center gap-1.5">
-              <ApplicationStageBadge stage={item.stage} />
-              <ApplicationStatusBadge outcome={item.outcome} />
+              {!isDiscovery ? (
+                <>
+                  <ApplicationStageBadge stage={item.stage} />
+                  <ApplicationStatusBadge outcome={item.outcome} />
+                </>
+              ) : null}
               {item.matchScore != null ? (
                 <ApplicationMatchScoreBadge matchScore={item.matchScore} />
               ) : null}
-              {item.employmentType !== "unknown" ? (
+              {!isDiscovery && item.employmentType !== "unknown" ? (
                 <Badge variant="outline">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</Badge>
               ) : null}
-              {item.hiringUrgency !== "unknown" ? (
+              {!isDiscovery && item.hiringUrgency !== "unknown" ? (
                 <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
               ) : null}
               {(item.sourceTags ?? []).map((tag) => (
@@ -147,7 +161,7 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
         createdAt={item.createdAt}
       >
         <div className="space-y-5">
-          <ApplyPackagePanelActions app={item} />
+          {!isDiscovery ? <ApplyPackagePanelActions app={item} /> : null}
 
           <Section title="Agent's take">
             {item.agentTake?.trim() ? (
@@ -162,7 +176,12 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
               className="mt-2"
               loading={regenerateTake.isPending}
               onClick={() => {
-                void regenerateTake.mutateAsync({ id: item.id });
+                void regenerateTake.mutateAsync({
+                  id: item.id,
+                  title: item.title,
+                  companyName: item.companyName,
+                  trackingStatus: item.trackingStatus
+                });
               }}
             >
               <RefreshCwIcon className="size-3.5" aria-hidden />
@@ -170,7 +189,7 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
             </Button>
           </Section>
 
-          {hasMaterials ? (
+          {!isDiscovery && hasMaterials ? (
             <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
               <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Materials
@@ -265,7 +284,7 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
             <MetaRow label="Employment type">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</MetaRow>
             <MetaRow label="Location">{displayText(item.location)}</MetaRow>
             <MetaRow label="Salary">{displayText(item.salaryRange)}</MetaRow>
-            <MetaRow label="Source">{sourceLabel ?? "—"}</MetaRow>
+            <MetaRow label="Source">{sourceDisplay ?? "—"}</MetaRow>
             <MetaRow label="Posting URL">
               {item.url ? (
                 <Button
@@ -307,10 +326,14 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
                 )}
               </MetaRow>
             ) : null}
-            <MetaRow label="Stage changed">{formatWhen(item.stageChangedAt)}</MetaRow>
-            <MetaRow label="Closed">
-              {item.outcomeAt ? formatWhen(item.outcomeAt) : item.outcome ? "—" : "Open"}
-            </MetaRow>
+            {!isDiscovery ? (
+              <>
+                <MetaRow label="Stage changed">{formatWhen(item.stageChangedAt)}</MetaRow>
+                <MetaRow label="Closed">
+                  {item.outcomeAt ? formatWhen(item.outcomeAt) : item.outcome ? "—" : "Open"}
+                </MetaRow>
+              </>
+            ) : null}
           </dl>
 
           <Section title="Job description">

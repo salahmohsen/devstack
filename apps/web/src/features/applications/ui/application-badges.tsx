@@ -133,6 +133,8 @@ type ApplyLinksProps = {
   url: string | null | undefined;
   /** Used when only the listing `url` is present (e.g. Easy Apply without a separate apply link). */
   applyMethod?: ApplicationApplyMethod | null;
+  /** When true, omit the secondary “View listing” text (row action button already covers it). */
+  hideListingLink?: boolean;
   className?: string;
 };
 
@@ -144,8 +146,17 @@ function stopCardActivation(event: React.SyntheticEvent) {
  * External apply destination + listing URL.
  * Prefer `applyUrl` for Apply; when it is missing, fall back to `url` (Easy Apply / View listing).
  */
-export function ApplicationApplyLinks({ applyUrl, url, applyMethod, className }: ApplyLinksProps) {
+export function ApplicationApplyLinks({
+  applyUrl,
+  url,
+  applyMethod,
+  hideListingLink = false,
+  className
+}: ApplyLinksProps) {
   if (!applyUrl && !url) return null;
+
+  // When listing is only shown via the action button, skip pure “View listing” primary text.
+  if (hideListingLink && !applyUrl) return null;
 
   const primaryHref = applyUrl ?? url!;
   const primaryLabel = applyUrl
@@ -153,7 +164,7 @@ export function ApplicationApplyLinks({ applyUrl, url, applyMethod, className }:
     : applyMethod === "easy_apply"
       ? "Easy Apply"
       : "View listing";
-  const showListing = Boolean(url && applyUrl && url !== applyUrl);
+  const showListing = Boolean(!hideListingLink && url && applyUrl && url !== applyUrl);
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2 text-xs", className)}>

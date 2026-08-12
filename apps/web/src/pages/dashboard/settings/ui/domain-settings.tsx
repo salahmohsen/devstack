@@ -210,6 +210,32 @@ function DomainHostnameForm({
   );
 }
 
+function DnsCopyField({
+  value,
+  label,
+  codeClassName
+}: {
+  value: string;
+  label: string;
+  codeClassName?: string;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-1">
+      <code className={codeClassName ?? "min-w-0 flex-1 truncate font-mono text-xs sm:max-w-xs"}>
+        {value}
+      </code>
+      <CopyButton
+        value={value}
+        label={label}
+        variant="ghost"
+        size="icon"
+        className="size-8 shrink-0"
+        onError={() => toast.error("Could not copy")}
+      />
+    </div>
+  );
+}
+
 function DomainDnsTable({ domain }: { domain: CustomDomainOutput }) {
   const cnameTarget = cnameTargetHostname();
   return (
@@ -225,76 +251,41 @@ function DomainDnsTable({ domain }: { domain: CustomDomainOutput }) {
               <TableHead className="w-16">Type</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Value</TableHead>
-              <TableHead className="w-12 text-right">
-                <span className="sr-only">Copy</span>
-              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
               <TableCell className="font-medium">TXT</TableCell>
               <TableCell>
-                <code className="block max-w-56 truncate font-mono text-xs sm:max-w-xs">
-                  {domain.verificationRecordName}
-                </code>
+                <DnsCopyField
+                  value={domain.verificationRecordName}
+                  label="Copy record name"
+                  codeClassName="min-w-0 max-w-56 flex-1 truncate font-mono text-xs sm:max-w-xs"
+                />
               </TableCell>
               <TableCell>
-                <code className="block max-w-48 truncate font-mono text-xs sm:max-w-sm">
-                  {domain.verificationRecordValue}
-                </code>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-0.5">
-                  <CopyButton
-                    value={domain.verificationRecordName}
-                    label="Copy record name"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onError={() => toast.error("Could not copy")}
-                  />
-                  <CopyButton
-                    value={domain.verificationRecordValue}
-                    label="Copy record value"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onError={() => toast.error("Could not copy")}
-                  />
-                </div>
+                <DnsCopyField
+                  value={domain.verificationRecordValue}
+                  label="Copy record value"
+                  codeClassName="min-w-0 max-w-48 flex-1 truncate font-mono text-xs sm:max-w-sm"
+                />
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">CNAME</TableCell>
               <TableCell>
-                <code className="block max-w-56 truncate font-mono text-xs sm:max-w-xs">
-                  {domain.hostname}
-                </code>
+                <DnsCopyField
+                  value={domain.hostname}
+                  label="Copy CNAME name"
+                  codeClassName="min-w-0 max-w-56 flex-1 truncate font-mono text-xs sm:max-w-xs"
+                />
               </TableCell>
               <TableCell>
-                <code className="block max-w-48 truncate font-mono text-xs sm:max-w-sm">
-                  {cnameTarget}
-                </code>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-0.5">
-                  <CopyButton
-                    value={domain.hostname}
-                    label="Copy CNAME name"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onError={() => toast.error("Could not copy")}
-                  />
-                  <CopyButton
-                    value={cnameTarget}
-                    label="Copy CNAME target"
-                    variant="ghost"
-                    size="icon"
-                    className="size-8 shrink-0"
-                    onError={() => toast.error("Could not copy")}
-                  />
-                </div>
+                <DnsCopyField
+                  value={cnameTarget}
+                  label="Copy CNAME target"
+                  codeClassName="min-w-0 max-w-48 flex-1 truncate font-mono text-xs sm:max-w-sm"
+                />
               </TableCell>
             </TableRow>
           </TableBody>
@@ -358,12 +349,13 @@ export const DomainSettings = () => {
   // Expand DNS for pending/failed; collapse when verified (user choice 3A).
   useEffect(() => {
     if (!domain) return;
+    // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- expand DNS panel from domain status
     setDnsOpen(domain.status !== "verified");
     setShowChangeForm(false);
     if (domain.status === "verified") {
       setLastVerifyError(null);
     }
-  }, [domain?.id, domain?.status, domain?.hostname]);
+  }, [domain]);
 
   const handleSaveHostname = useCallback(
     async (hostname: string) => {
@@ -455,7 +447,14 @@ export const DomainSettings = () => {
                   <Button
                     type="button"
                     size="sm"
-                    render={<a href="/sign-in?redirect=/dashboard/settings/domain" />}
+                    render={
+                      <a
+                        href="/sign-in?redirect=/dashboard/settings/domain"
+                        aria-label="Sign in to manage custom domains"
+                      >
+                        Sign in
+                      </a>
+                    }
                   >
                     Sign in
                   </Button>
@@ -556,7 +555,16 @@ export const DomainSettings = () => {
                       type="button"
                       variant="outline"
                       size="sm"
-                      render={<a href={customUrl} target="_blank" rel="noreferrer" />}
+                      render={
+                        <a
+                          href={customUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Open ${domain.hostname}`}
+                        >
+                          Open
+                        </a>
+                      }
                     >
                       <ExternalLinkIcon className="size-4" />
                       Open

@@ -4,23 +4,29 @@ import { Link } from "@tanstack/react-router";
 import {
   BanIcon,
   BookmarkPlusIcon,
+  Building2Icon,
   ChevronDownIcon,
   ExternalLinkIcon,
+  FileTextIcon,
   InboxIcon,
+  LinkIcon,
   MailSearchIcon,
+  MapPinIcon,
   PackageIcon,
+  PencilIcon,
   RefreshCwIcon,
   RotateCcwIcon,
   SparklesIcon,
   Trash2Icon
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
   APPLICATION_SOURCE_TAG_LABELS,
   type ApplicationOutput,
-  type ApplicationSourceTag
+  type ApplicationSourceTag,
+  isThinJobDescription
 } from "@tsu-stack/core";
 import {
   AlertDialog,
@@ -33,36 +39,65 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from "@tsu-stack/ui/components/collapsible";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
-import { IconRotate, IconShake } from "@tsu-stack/ui/components/icon-motion";
-import { cn } from "@tsu-stack/ui/lib/utils";
-
-import { DefaultLoader } from "@/shared/ui/default-loader";
-import { Markdown } from "@/shared/ui/markdown";
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger
+} from "@tsu-stack/ui/components/menu";
+import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import {
-  ApplicationActivitySection,
+  areAllVisibleSelected,
+  isBatchSelectActive,
+  selectedIdsFromState
+} from "@/shared/lib/batch-selection";
+import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
+import { ListItem } from "@/shared/ui/list-item";
+
+import {
   ApplicationMatchScoreBadge,
+  clearPendingOpenApplicationId,
+  useAgentTakeJob,
+  useBatchDismissApplicationsMutation,
+  useBatchRestoreApplicationsMutation,
+  useCountApplicationsQuery,
   useDeleteApplicationsMutation,
   useDismissApplicationMutation,
   useGenerateApplyPackageMutation,
   useListApplicationsQuery,
   usePromoteApplicationMutation,
+  useRefreshFromListingJob,
   useRegenerateAgentTakeMutation,
   useRestoreApplicationMutation,
   useScanJobAlertsMutation
 } from "@/features/applications";
 
-import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
+import {
+  ItemsEmpty,
+  ItemsNavProvider,
+  ListSkeleton,
+  PageHeader,
+  PageLayout,
+  isAnyOpened,
+  useItemsNavigation
+} from "@/widgets/items-page";
+import { ItemsInfoPanel } from "@/widgets/layout";
 
+import { FixPostingUrlDialog } from "@/pages/dashboard/new-jobs/ui/fix-posting-url-dialog";
+import { UpdateDescriptionDialog } from "@/pages/dashboard/new-jobs/ui/update-description-dialog";
+import { ApplicationFormSheet } from "@/pages/dashboard/tracked-jobs/application-form-sheet";
+import { ApplicationInfoPanel } from "@/pages/dashboard/tracked-jobs/ui/application-info-panel";
 import { ApplyPackageSheet } from "@/pages/dashboard/tracked-jobs/ui/apply-package-sheet";
 
 type InboxFilter = "inbox" | "dismissed";
+
+const INBOX_TABS = [
+  { value: "inbox" as const, label: "New" },
+  { value: "dismissed" as const, label: "Dismissed" }
+];
 
 function sourceTagLabel(tag: string): string {
   if (tag in APPLICATION_SOURCE_TAG_LABELS) {
@@ -71,311 +106,246 @@ function sourceTagLabel(tag: string): string {
   return tag;
 }
 
-function NewJobCard({
+/** Usable JD for Track & package — rejects empty and harvest/paywall stubs. */
+function hasUsableJobDescription(job: ApplicationOutput): boolean {
+  return !isThinJobDescription(job.description);
+}
+
+function NewJobRowActions({
   job,
   filter,
-  onPromote,
+  busy,
+  takeBusy,
   onDismiss,
   onRestore,
   onTrackAndPackage,
+  onPromote,
   onRegenerateTake,
+  onUpdateDescription,
+  onFixPostingUrl,
+  onEdit,
   onRequestDelete,
-  busyId,
-  takeBusyId
+  onViewListing
 }: {
   job: ApplicationOutput;
   filter: InboxFilter;
-  onPromote: (id: string) => void;
-  onDismiss: (id: string) => void;
-  onRestore: (id: string) => void;
-  onTrackAndPackage: (id: string) => void;
-  onRegenerateTake: (id: string) => void;
-  onRequestDelete: (id: string) => void;
-  busyId: string | null;
-  takeBusyId: string | null;
+  busy: boolean;
+  takeBusy: boolean;
+  onDismiss: () => void;
+  onRestore: () => void;
+  onTrackAndPackage: () => void;
+  onPromote: () => void;
+  onRegenerateTake: () => void;
+  onUpdateDescription: () => void;
+  onFixPostingUrl: () => void;
+  onEdit: () => void;
+  onRequestDelete: () => void;
+  onViewListing?: () => void;
 }) {
-  const busy = busyId === job.id;
-  const takeBusy = takeBusyId === job.id;
-  const [activityOpen, setActivityOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [takeExpanded, setTakeExpanded] = useState(false);
-  const hasDescription = Boolean(job.description?.trim());
-  const hasSalary = Boolean(job.salaryRange?.trim());
+  if (filter === "dismissed") {
+    return (
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        <Button type="button" size="sm" variant="outline" loading={busy} onClick={onRestore}>
+          <RotateCcwIcon className="size-3.5" aria-hidden />
+          Restore
+        </Button>
+        <Button type="button" size="sm" variant="outline" loading={busy} onClick={onPromote}>
+          <BookmarkPlusIcon className="size-3.5" aria-hidden />
+          Track
+        </Button>
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          className="text-destructive"
+          disabled={busy}
+          aria-label="Delete permanently"
+          onClick={onRequestDelete}
+        >
+          <Trash2Icon className="size-3.5" aria-hidden />
+        </Button>
+      </div>
+    );
+  }
+
+  const hasUsableDescription = hasUsableJobDescription(job);
+  const hasAnyDescription = Boolean(job.description?.trim());
 
   return (
-    <article className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-xs/5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 space-y-1">
-          <h2 className="truncate text-sm font-semibold text-foreground">{job.title}</h2>
-          <p className="truncate text-sm text-muted-foreground">{job.companyName}</p>
-          {job.location ? <p className="text-xs text-muted-foreground">{job.location}</p> : null}
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-          {job.matchScore != null ? (
-            <ApplicationMatchScoreBadge matchScore={job.matchScore} />
-          ) : null}
-          {(job.sourceTags ?? []).map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-[10px] font-medium">
-              {sourceTagLabel(tag)}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        {job.agentTake?.trim() ? (
-          <p
-            className={cn(
-              "text-sm leading-relaxed text-muted-foreground",
-              !takeExpanded && "line-clamp-3"
-            )}
-          >
-            {job.agentTake}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground/80 italic">No agent take yet.</p>
-        )}
-        <div className="flex flex-wrap items-center gap-2">
-          {job.agentTake && job.agentTake.length > 160 ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setTakeExpanded((v) => !v)}
-            >
-              {takeExpanded ? "Show less" : "Show more"}
-            </Button>
-          ) : null}
-          {(() => {
-            const listing = job.url ?? job.applyUrl;
-            const safe =
-              listing &&
-              (() => {
-                try {
-                  const u = new URL(listing);
-                  return u.protocol === "http:" || u.protocol === "https:" ? listing : null;
-                } catch {
-                  return null;
-                }
-              })();
-            return safe ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1.5 px-2 text-xs"
-                render={
-                  <a href={safe} target="_blank" rel="noreferrer" aria-label="Open job listing" />
-                }
-              >
-                <ExternalLinkIcon className="size-3.5" aria-hidden />
-                Listing
-              </Button>
-            ) : null;
-          })()}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 px-2 text-xs"
-            disabled={busy || takeBusy}
-            loading={takeBusy}
-            onClick={() => onRegenerateTake(job.id)}
-          >
-            <RefreshCwIcon className="size-3.5" aria-hidden />
-            {job.agentTake?.trim() ? "Regenerate take" : "Generate take"}
+    <Group aria-label="Job actions">
+      {hasUsableDescription ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          loading={busy}
+          onClick={onTrackAndPackage}
+        >
+          <PackageIcon className="size-3.5" aria-hidden />
+          Track &amp; package
+        </Button>
+      ) : (
+        <Button type="button" variant="outline" size="sm" loading={busy} onClick={onFixPostingUrl}>
+          <LinkIcon className="size-3.5" aria-hidden />
+          Fix posting URL
+        </Button>
+      )}
+      {onViewListing ? (
+        <>
+          <GroupSeparator />
+          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={onViewListing}>
+            <ExternalLinkIcon className="size-3.5" aria-hidden />
+            View listing
           </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        {filter === "inbox" ? (
-          <>
-            <Group>
-              <Button
-                type="button"
-                size="sm"
-                disabled={busy}
-                loading={busy}
-                onClick={() => onPromote(job.id)}
-              >
-                <IconRotate mode="hover">
-                  <BookmarkPlusIcon />
-                </IconRotate>
-                Track
-              </Button>
-              <GroupSeparator />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                disabled={busy}
-                onClick={() => onTrackAndPackage(job.id)}
-              >
-                <IconRotate mode="hover">
-                  <PackageIcon />
-                </IconRotate>
-                Track & package
-              </Button>
-            </Group>
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              disabled={busy}
-              onClick={() => onDismiss(job.id)}
-            >
-              <IconShake mode="hover">
-                <BanIcon />
-              </IconShake>
-              Dismiss
-            </Button>
-          </>
-        ) : (
-          <>
-            <Group>
-              <Button
-                type="button"
-                size="sm"
-                disabled={busy}
-                loading={busy}
-                onClick={() => onPromote(job.id)}
-              >
-                <IconRotate mode="hover">
-                  <BookmarkPlusIcon />
-                </IconRotate>
-                Track
-              </Button>
-              <GroupSeparator />
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                disabled={busy}
-                onClick={() => onTrackAndPackage(job.id)}
-              >
-                <IconRotate mode="hover">
-                  <PackageIcon />
-                </IconRotate>
-                Track & package
-              </Button>
-            </Group>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => onRestore(job.id)}
-            >
-              <IconRotate mode="hover">
-                <RotateCcwIcon />
-              </IconRotate>
-              Restore
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              disabled={busy}
-              onClick={() => onRequestDelete(job.id)}
-            >
-              <Trash2Icon className="size-3.5" aria-hidden />
-              Delete
-            </Button>
-          </>
-        )}
-      </div>
-
-      {hasDescription || hasSalary ? (
-        <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
-          <CollapsibleTrigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 w-full justify-between px-2 text-muted-foreground"
-              />
-            }
-          >
-            <span className="text-xs font-medium tracking-wide uppercase">Details</span>
-            <ChevronDownIcon
-              className={cn("size-4 transition-transform", detailsOpen && "rotate-180")}
-              aria-hidden
-            />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-2 pt-2">
-            {hasSalary ? (
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground/80">Salary · </span>
-                {job.salaryRange}
-              </p>
-            ) : null}
-            {hasDescription ? (
-              <Markdown
-                allowRawHtml={false}
-                className="prose prose-sm max-w-none text-foreground dark:prose-invert"
-              >
-                {job.description!}
-              </Markdown>
-            ) : (
-              <p className="text-sm text-muted-foreground">No job description.</p>
-            )}
-          </CollapsibleContent>
-        </Collapsible>
+        </>
       ) : null}
-
-      <Collapsible open={activityOpen} onOpenChange={setActivityOpen}>
-        <CollapsibleTrigger
+      <GroupSeparator />
+      <Menu>
+        <MenuTrigger
           render={
             <Button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 w-full justify-between px-2 text-muted-foreground"
+              size="icon-sm"
+              variant="outline"
+              disabled={busy || takeBusy}
+              aria-label="More job actions"
             />
           }
         >
-          <span className="text-xs font-medium tracking-wide uppercase">Activity & notes</span>
-          <ChevronDownIcon
-            className={cn("size-4 transition-transform", activityOpen && "rotate-180")}
-            aria-hidden
-          />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2">
-          {activityOpen ? (
-            <ApplicationActivitySection applicationId={job.id} enabled={activityOpen} />
+          <ChevronDownIcon className="size-3.5" aria-hidden />
+        </MenuTrigger>
+        <MenuPopup align="end" className="min-w-48">
+          <MenuItem closeOnClick disabled={busy} onClick={onEdit}>
+            <PencilIcon aria-hidden />
+            Edit
+          </MenuItem>
+          <MenuItem closeOnClick disabled={busy} onClick={onPromote}>
+            <BookmarkPlusIcon aria-hidden />
+            Track only
+          </MenuItem>
+          {!hasUsableDescription ? (
+            <MenuItem closeOnClick disabled title="Add a real job description first">
+              <PackageIcon aria-hidden />
+              Track &amp; package
+            </MenuItem>
           ) : null}
-        </CollapsibleContent>
-      </Collapsible>
-    </article>
+          <MenuItem closeOnClick disabled={takeBusy || busy} onClick={onRegenerateTake}>
+            <RefreshCwIcon aria-hidden />
+            {job.agentTake?.trim() ? "Regenerate take" : "Generate take"}
+          </MenuItem>
+          {hasUsableDescription ? (
+            <MenuItem closeOnClick disabled={busy} onClick={onFixPostingUrl}>
+              <LinkIcon aria-hidden />
+              Fix posting URL
+            </MenuItem>
+          ) : null}
+          <MenuItem closeOnClick disabled={busy} onClick={onUpdateDescription}>
+            <FileTextIcon aria-hidden />
+            {hasAnyDescription ? "Update description" : "Add description"}
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem closeOnClick disabled={busy} variant="destructive" onClick={onDismiss}>
+            <BanIcon aria-hidden />
+            Dismiss
+          </MenuItem>
+        </MenuPopup>
+      </Menu>
+    </Group>
   );
 }
 
 export function NewJobsPage() {
   const [filter, setFilter] = useState<InboxFilter>("inbox");
-  /** Snapshot after promote+package — must not depend on inbox list (row leaves after promote). */
+  const [viewItem, setViewItem] = useState<ApplicationOutput | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [packageApplication, setPackageApplication] = useState<ApplicationOutput | null>(null);
+  const [descriptionApp, setDescriptionApp] = useState<ApplicationOutput | null>(null);
+  const [fixUrlApp, setFixUrlApp] = useState<ApplicationOutput | null>(null);
+  const [editApp, setEditApp] = useState<ApplicationOutput | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [takeBusyId, setTakeBusyId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const listRef = useRef<HTMLUListElement | null>(null);
 
   const listQuery = useListApplicationsQuery(filter);
+  const inboxCountQuery = useCountApplicationsQuery("inbox");
+  const dismissedCountQuery = useCountApplicationsQuery("dismissed");
   const promote = usePromoteApplicationMutation();
   const dismiss = useDismissApplicationMutation();
   const restore = useRestoreApplicationMutation();
+  const batchDismiss = useBatchDismissApplicationsMutation();
+  const batchRestore = useBatchRestoreApplicationsMutation();
   const generatePackage = useGenerateApplyPackageMutation();
   const regenerateTake = useRegenerateAgentTakeMutation();
+  const agentTakeJob = useAgentTakeJob();
   const deleteApps = useDeleteApplicationsMutation();
   const scanJobAlerts = useScanJobAlertsMutation();
 
-  const jobs = listQuery.data ?? [];
+  const jobs = useMemo(() => listQuery.data ?? [], [listQuery.data]);
+  const tabCounts: Record<InboxFilter, number> = {
+    inbox: inboxCountQuery.data?.count ?? (filter === "inbox" ? jobs.length : 0),
+    dismissed: dismissedCountQuery.data?.count ?? (filter === "dismissed" ? jobs.length : 0)
+  };
+
+  const { pendingOpenApplicationId } = useRefreshFromListingJob();
+
+  // Fix posting URL success toast can request open from any route.
+  useEffect(() => {
+    if (!pendingOpenApplicationId) return;
+    const job = jobs.find((j) => j.id === pendingOpenApplicationId);
+    if (!job) return;
+    // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from external job toast
+    setFilter("inbox");
+    setViewItem(job);
+    clearPendingOpenApplicationId();
+  }, [pendingOpenApplicationId, jobs]);
+
+  const liveViewItem = useMemo(() => {
+    if (!viewItem) return null;
+    return jobs.find((j) => j.id === viewItem.id) ?? viewItem;
+  }, [jobs, viewItem]);
 
   const deleteJob = useMemo(
     () => (deleteId ? (jobs.find((j) => j.id === deleteId) ?? null) : null),
     [deleteId, jobs]
   );
+
+  // Match Tracked jobs: isItemOpen is a Record; hook only returns next/prev.
+  const isItemOpen = useMemo(
+    () => (liveViewItem ? { [liveViewItem.id]: true } : null),
+    [liveViewItem]
+  );
+  const isAnyOpen = isAnyOpened(isItemOpen);
+
+  const setOpenedItem = useCallback((item: ApplicationOutput | null) => {
+    setViewItem(item);
+  }, []);
+
+  const setIsItemOpen = useCallback(
+    (open: Record<string, boolean> | null) => {
+      if (!open) {
+        setViewItem(null);
+        return;
+      }
+      const id = Object.keys(open).find((k) => open[k]);
+      if (!id) {
+        setViewItem(null);
+        return;
+      }
+      const item = jobs.find((j) => j.id === id);
+      if (item) setViewItem(item);
+    },
+    [jobs]
+  );
+
+  const { handleNext, handlePrev } = useItemsNavigation({
+    items: jobs,
+    openedItem: liveViewItem,
+    isItemOpen,
+    setOpenedItem,
+    setIsItemOpen,
+    containerRef: listRef
+  });
 
   const run = async (id: string, fn: () => Promise<unknown>, okMessage: string) => {
     setBusyId(id);
@@ -389,174 +359,448 @@ export function NewJobsPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+  const selectAllVisible = () => setSelectedIds(jobs.map((j) => j.id));
+  const selectedCount = selectedIdsFromState(selectedIds).length;
+  const allVisibleSelected = areAllVisibleSelected(
+    selectedIds,
+    jobs.map((j) => j.id)
+  );
+
+  const bulkDismiss = async () => {
+    if (selectedIds.length === 0 || filter !== "inbox") return;
+    setBusyId("__bulk__");
+    try {
+      await batchDismiss.mutateAsync({ ids: [...selectedIds] });
+      clearSelection();
+      if (viewItem && selectedIds.includes(viewItem.id)) setViewItem(null);
+    } catch {
+      /* toast in mutation */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const bulkRestore = async () => {
+    if (selectedIds.length === 0 || filter !== "dismissed") return;
+    setBusyId("__bulk_restore__");
+    try {
+      await batchRestore.mutateAsync({ ids: [...selectedIds] });
+      clearSelection();
+      if (viewItem && selectedIds.includes(viewItem.id)) setViewItem(null);
+    } catch {
+      /* toast in mutation */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const bulkDeletePermanent = async () => {
+    if (selectedIds.length === 0 || filter !== "dismissed") return;
+    setBusyId("__bulk_delete__");
+    try {
+      await deleteApps.mutateAsync({ ids: [...selectedIds] });
+      clearSelection();
+      if (viewItem && selectedIds.includes(viewItem.id)) setViewItem(null);
+      setBulkDeleteConfirmOpen(false);
+    } catch {
+      /* toast in mutation */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
-    <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
-      <PageHeader
-        title="New jobs"
-        description="AI discoveries from job alerts. Track to add to your pipeline, or dismiss."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
+    <ItemsNavProvider value={{ handleNext, handlePrev, containerRef: listRef }}>
+      <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
+        <PageHeader
+          title="New jobs"
+          description="AI discoveries from job alerts. Track to add to your pipeline, or dismiss."
+          actions={
             <Button
               type="button"
               size="sm"
-              variant="outline"
               loading={scanJobAlerts.isPending}
               onClick={() => void scanJobAlerts.mutateAsync({})}
             >
               <MailSearchIcon className="size-4" aria-hidden />
               Scan job alerts
             </Button>
-            <Group>
-              <Button
-                type="button"
-                size="sm"
-                variant={filter === "inbox" ? "default" : "outline"}
-                onClick={() => setFilter("inbox")}
-              >
-                New{listQuery.isSuccess && filter === "inbox" ? ` (${jobs.length})` : ""}
-              </Button>
-              <GroupSeparator />
-              <Button
-                type="button"
-                size="sm"
-                variant={filter === "dismissed" ? "default" : "outline"}
-                onClick={() => setFilter("dismissed")}
-              >
-                Dismissed
-                {listQuery.isSuccess && filter === "dismissed" && jobs.length > 0
-                  ? ` (${jobs.length})`
-                  : ""}
-              </Button>
-            </Group>
-          </div>
-        }
-      />
+          }
+        />
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {listQuery.isLoading ? (
-          <div className="flex justify-center py-16">
-            <DefaultLoader />
-          </div>
-        ) : jobs.length === 0 ? (
-          filter === "inbox" ? (
-            <ItemsEmpty
-              icon={<SparklesIcon aria-hidden />}
-              title="No new matches"
-              description="Job alert digests that pass your preferences will show up here. Scan recent digests, or set preferences under Settings."
-              action={
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    loading={scanJobAlerts.isPending}
-                    onClick={() => void scanJobAlerts.mutateAsync({})}
-                  >
-                    <MailSearchIcon className="size-4" aria-hidden />
-                    Scan job alerts
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    render={<Link to="/dashboard/settings/jobs" />}
-                  >
-                    Job preferences
-                  </Button>
-                </div>
-              }
-            />
-          ) : (
-            <ItemsEmpty
-              icon={<InboxIcon aria-hidden />}
-              title="No dismissed jobs"
-              description="Jobs you dismiss from New stay here until you restore them, track them, or delete permanently."
-            />
-          )
-        ) : (
-          <div className="mx-auto flex max-w-3xl flex-col gap-3 pb-8">
-            {jobs.map((job) => (
-              <NewJobCard
-                key={job.id}
-                job={job}
-                filter={filter}
-                busyId={busyId}
-                takeBusyId={takeBusyId}
-                onPromote={(id) =>
-                  void run(id, () => promote.mutateAsync({ id }), "Moved to Tracked jobs")
-                }
-                onDismiss={(id) => void run(id, () => dismiss.mutateAsync({ id }), "Dismissed")}
-                onRestore={(id) =>
-                  void run(id, () => restore.mutateAsync({ id }), "Restored to New jobs")
-                }
-                onRequestDelete={(id) => setDeleteId(id)}
-                onRegenerateTake={(id) => {
-                  setTakeBusyId(id);
-                  void regenerateTake
-                    .mutateAsync({ id })
-                    .catch(() => {
-                      /* toast in mutation */
-                    })
-                    .finally(() => setTakeBusyId(null));
-                }}
-                onTrackAndPackage={(id) =>
-                  void run(
-                    id,
-                    async () => {
-                      await promote.mutateAsync({ id });
-                      // Use generate response as sheet source — job leaves inbox list after promote.
-                      const packed = await generatePackage.mutateAsync({ applicationId: id });
-                      setPackageApplication(packed);
-                    },
-                    "Tracked — package ready"
-                  )
-                }
+        <Tabs
+          value={filter}
+          onValueChange={(value) => {
+            if (value === "inbox" || value === "dismissed") {
+              setFilter(value);
+              clearSelection();
+              setViewItem(null);
+            }
+          }}
+          className="flex min-h-0 flex-1 flex-col gap-3"
+        >
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+            <TabsList className="shrink-0">
+              {INBOX_TABS.map((tab) => {
+                const count = tabCounts[tab.value];
+                return (
+                  <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
+                    {tab.label}
+                    {count > 0 ? (
+                      <Badge size="sm" variant="brand" className="tabular-nums">
+                        {count > 99 ? "99+" : count}
+                      </Badge>
+                    ) : null}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+
+            {filter === "inbox" ? (
+              <BatchSelectionBar
+                className="ms-auto"
+                selectedCount={selectedCount}
+                totalCount={jobs.length}
+                allVisibleSelected={allVisibleSelected}
+                isDeleting={busyId === "__bulk__"}
+                deleteLabel="Dismiss"
+                deleteVariant="destructive"
+                deleteUsesBanIcon
+                onDeleteSelected={() => void bulkDismiss()}
+                onSelectAll={selectAllVisible}
+                onClearSelection={clearSelection}
               />
-            ))}
+            ) : (
+              <BatchSelectionBar
+                className="ms-auto"
+                selectedCount={selectedCount}
+                totalCount={jobs.length}
+                allVisibleSelected={allVisibleSelected}
+                isDeleting={busyId === "__bulk_delete__"}
+                isRestoring={busyId === "__bulk_restore__"}
+                deleteLabel="Delete"
+                deleteVariant="destructive"
+                onDeleteSelected={() => setBulkDeleteConfirmOpen(true)}
+                onRestoreSelected={() => void bulkRestore()}
+                restoreLabel="Restore"
+                onSelectAll={selectAllVisible}
+                onClearSelection={clearSelection}
+              />
+            )}
           </div>
-        )}
-      </div>
 
-      {packageApplication ? (
-        <ApplyPackageSheet
-          open
-          application={packageApplication}
+          <div className="flex min-h-0 flex-1 flex-col">
+            {listQuery.isLoading ? (
+              <ListSkeleton />
+            ) : jobs.length === 0 ? (
+              filter === "inbox" ? (
+                <ItemsEmpty
+                  icon={<SparklesIcon aria-hidden />}
+                  title="No new matches"
+                  description="Job alert digests that pass your preferences will show up here. Scan recent digests, or set preferences under Settings."
+                  action={
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        loading={scanJobAlerts.isPending}
+                        onClick={() => void scanJobAlerts.mutateAsync({})}
+                      >
+                        <MailSearchIcon className="size-4" aria-hidden />
+                        Scan job alerts
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        render={<Link to="/dashboard/settings/jobs" />}
+                      >
+                        Job preferences
+                      </Button>
+                    </div>
+                  }
+                />
+              ) : (
+                <ItemsEmpty
+                  icon={<InboxIcon aria-hidden />}
+                  title="No dismissed jobs"
+                  description="Jobs you dismiss from New stay here until you restore them, track them, or delete permanently."
+                />
+              )
+            ) : (
+              <ul
+                ref={listRef}
+                className="min-h-0 flex-1 space-y-2 overflow-x-clip overflow-y-auto py-1"
+              >
+                {jobs.map((job) => {
+                  const selected = viewItem?.id === job.id;
+                  const batchSelected = selectedIds.includes(job.id);
+                  const busy =
+                    busyId === job.id ||
+                    busyId === "__bulk__" ||
+                    busyId === "__bulk_delete__" ||
+                    busyId === "__bulk_restore__";
+                  const takeBusy =
+                    agentTakeJob.status === "running" && agentTakeJob.applicationId === job.id;
+                  const listingUrl = job.url ?? job.applyUrl ?? null;
+                  return (
+                    <li key={job.id} data-item-id={job.id}>
+                      <ListItem
+                        selected={selected}
+                        onSelect={() =>
+                          setViewItem((current) => (current?.id === job.id ? null : job))
+                        }
+                        isBatchSelected={batchSelected}
+                        batchSelectActive={isBatchSelectActive(selectedIds)}
+                        onToggleSelect={() => toggleSelect(job.id)}
+                        title={job.title}
+                        titleEnd={
+                          <>
+                            {job.matchScore != null ? (
+                              <ApplicationMatchScoreBadge matchScore={job.matchScore} />
+                            ) : null}
+                            {(job.sourceTags ?? []).slice(0, 2).map((tag) => (
+                              <Badge
+                                key={tag}
+                                variant="secondary"
+                                size="sm"
+                                className="font-normal"
+                              >
+                                {sourceTagLabel(tag)}
+                              </Badge>
+                            ))}
+                          </>
+                        }
+                        meta={
+                          <>
+                            <p className="flex items-center gap-1">
+                              <Building2Icon size={14} aria-hidden />
+                              <span>{job.companyName}</span>
+                            </p>
+                            {job.location ? (
+                              <p className="flex items-center gap-1">
+                                <MapPinIcon size={14} aria-hidden />
+                                <span>{job.location}</span>
+                              </p>
+                            ) : null}
+                          </>
+                        }
+                        actions={
+                          <NewJobRowActions
+                            job={job}
+                            filter={filter}
+                            busy={busy}
+                            takeBusy={takeBusy}
+                            onDismiss={() =>
+                              void run(
+                                job.id,
+                                () => dismiss.mutateAsync({ id: job.id }),
+                                "Dismissed"
+                              )
+                            }
+                            onRestore={() =>
+                              void run(
+                                job.id,
+                                () => restore.mutateAsync({ id: job.id }),
+                                "Restored to New jobs"
+                              )
+                            }
+                            onPromote={() =>
+                              void run(
+                                job.id,
+                                () => promote.mutateAsync({ id: job.id }),
+                                "Moved to Tracked jobs"
+                              )
+                            }
+                            onTrackAndPackage={() => {
+                              if (!hasUsableJobDescription(job)) {
+                                setFixUrlApp(job);
+                                return;
+                              }
+                              void run(
+                                job.id,
+                                async () => {
+                                  await promote.mutateAsync({ id: job.id });
+                                  const packed = await generatePackage.mutateAsync({
+                                    applicationId: job.id
+                                  });
+                                  setPackageApplication(packed);
+                                },
+                                "Tracked — package ready"
+                              );
+                            }}
+                            onRegenerateTake={() => {
+                              void regenerateTake.mutateAsync({
+                                id: job.id,
+                                title: job.title,
+                                companyName: job.companyName,
+                                trackingStatus: filter === "dismissed" ? "dismissed" : "inbox"
+                              });
+                            }}
+                            onUpdateDescription={() => setDescriptionApp(job)}
+                            onFixPostingUrl={() => setFixUrlApp(job)}
+                            onEdit={() => setEditApp(job)}
+                            onRequestDelete={() => setDeleteId(job.id)}
+                            onViewListing={
+                              listingUrl
+                                ? () => {
+                                    window.open(listingUrl, "_blank", "noopener,noreferrer");
+                                  }
+                                : undefined
+                            }
+                          />
+                        }
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </Tabs>
+
+        <ItemsInfoPanel open={isAnyOpen} item={liveViewItem}>
+          {(item) => <ApplicationInfoPanel item={item} variant="discovery" />}
+        </ItemsInfoPanel>
+
+        {packageApplication ? (
+          <ApplyPackageSheet
+            open
+            application={packageApplication}
+            onOpenChange={(open) => {
+              if (!open) setPackageApplication(null);
+            }}
+          />
+        ) : null}
+
+        <FixPostingUrlDialog
+          open={fixUrlApp != null}
+          application={fixUrlApp}
           onOpenChange={(open) => {
-            if (!open) setPackageApplication(null);
+            if (!open) setFixUrlApp(null);
           }}
         />
-      ) : null}
 
-      <AlertDialog
-        open={deleteId != null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteId(null);
-        }}
-      >
-        <AlertDialogPopup>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteJob
-                ? `Remove “${deleteJob.title}” at ${deleteJob.companyName} forever. This cannot be undone.`
-                : "This cannot be undone."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-            <Button
-              type="button"
-              variant="destructive"
-              loading={deleteApps.isPending}
-              onClick={() => {
-                if (!deleteId) return;
-                void deleteApps.mutateAsync({ ids: [deleteId] }).then(() => setDeleteId(null));
-              }}
-            >
-              Delete forever
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogPopup>
-      </AlertDialog>
-    </PageLayout>
+        <UpdateDescriptionDialog
+          open={descriptionApp != null}
+          application={descriptionApp}
+          onOpenChange={(open) => {
+            if (!open) setDescriptionApp(null);
+          }}
+          onSaved={(app) => {
+            if (hasUsableJobDescription(app)) {
+              toast.success("Description saved", {
+                description: "Ready to track and prepare a package.",
+                action: {
+                  label: "Track & package",
+                  onClick: () => {
+                    void run(
+                      app.id,
+                      async () => {
+                        await promote.mutateAsync({ id: app.id });
+                        const packed = await generatePackage.mutateAsync({
+                          applicationId: app.id
+                        });
+                        setPackageApplication(packed);
+                      },
+                      "Tracked — package ready"
+                    );
+                  }
+                },
+                duration: 12_000
+              });
+            } else {
+              toast.message("Description saved", {
+                description:
+                  "Still looks too thin for packaging. Paste more of the posting or fix the URL."
+              });
+            }
+          }}
+        />
+
+        <ApplicationFormSheet
+          key={editApp?.id ?? "new-jobs-edit"}
+          open={editApp != null}
+          onOpenChange={(open) => {
+            if (!open) setEditApp(null);
+          }}
+          mode="edit"
+          initialData={editApp}
+        />
+
+        <AlertDialog
+          open={deleteId != null}
+          onOpenChange={(open) => {
+            if (!open) setDeleteId(null);
+          }}
+        >
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteJob
+                  ? `Remove “${deleteJob.title}” at ${deleteJob.companyName} forever. This cannot be undone.`
+                  : "This cannot be undone."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+              <Button
+                type="button"
+                variant="destructive"
+                loading={deleteApps.isPending}
+                onClick={() => {
+                  if (!deleteId) return;
+                  void deleteApps
+                    .mutateAsync({ ids: [deleteId] })
+                    .then(() => {
+                      if (viewItem?.id === deleteId) setViewItem(null);
+                      setDeleteId(null);
+                      toast.success("Deleted");
+                    })
+                    .catch((e) => {
+                      toast.error(e instanceof Error ? e.message : "Delete failed");
+                    });
+                }}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
+
+        <AlertDialog
+          open={bulkDeleteConfirmOpen}
+          onOpenChange={(open) => {
+            if (!open) setBulkDeleteConfirmOpen(false);
+          }}
+        >
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedCount} jobs permanently?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This removes the selected dismissed jobs forever. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
+              <Button
+                type="button"
+                variant="destructive"
+                loading={busyId === "__bulk_delete__"}
+                onClick={() => void bulkDeletePermanent()}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
+      </PageLayout>
+    </ItemsNavProvider>
   );
 }

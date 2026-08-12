@@ -18,6 +18,9 @@ export function useRestoreApplicationMutation() {
           }),
           queryClient.invalidateQueries({
             queryKey: applicationCountQueryKeys.byStatus("inbox")
+          }),
+          queryClient.invalidateQueries({
+            queryKey: applicationCountQueryKeys.byStatus("dismissed")
           })
         ]);
       }

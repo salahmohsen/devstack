@@ -3,6 +3,7 @@ import { useLocation, useParams } from "@tanstack/react-router";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react";
+import { Badge } from "@tsu-stack/ui/components/badge";
 import {
   Sidebar001,
   Sidebar001Content,
@@ -145,6 +146,7 @@ export function PublicSidebar() {
     refetchInterval: 60_000
   });
   const inboxCount = inboxCountQuery.data?.count ?? 0;
+  const inboxBadgeLabel = inboxCount > 99 ? "99+" : String(inboxCount);
 
   return (
     <Sidebar001 defaultWidth={150}>
@@ -153,16 +155,20 @@ export function PublicSidebar() {
           <Sidebar001Section key={section.label ?? `ungrouped-${index}`} label={section.label}>
             {section.items.map((item) => {
               const isNewJobs = item.href === "/dashboard/new-jobs";
-              const label =
-                isNewJobs && inboxCount > 0
-                  ? `New jobs (${inboxCount > 99 ? "99+" : inboxCount})`
-                  : item.label;
+              const showInboxBadge = isNewJobs && inboxCount > 0;
               return (
                 <Sidebar001Item
                   key={item.href}
                   href={item.href}
-                  label={label}
-                  isNew={isNewJobs && inboxCount > 0}
+                  label={item.label}
+                  // Count badge already signals attention — no green "isNew" dot.
+                  badge={
+                    showInboxBadge ? (
+                      <Badge size="sm" variant="brand" className="tabular-nums">
+                        {inboxBadgeLabel}
+                      </Badge>
+                    ) : undefined
+                  }
                   isActive={
                     item.matchPrefix
                       ? pathname === item.matchPrefix || pathname.startsWith(`${item.matchPrefix}/`)

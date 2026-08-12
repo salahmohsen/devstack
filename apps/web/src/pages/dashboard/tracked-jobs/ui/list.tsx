@@ -3,6 +3,7 @@
 import {
   Building2Icon,
   BriefcaseIcon,
+  ExternalLinkIcon,
   FileTextIcon,
   MapPinIcon,
   PencilIcon,
@@ -19,8 +20,11 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
+import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
+import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { ListItem } from "@/shared/ui/list-item";
 
 import {
@@ -71,19 +75,36 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
     setListFilter,
     selectedIds,
     toggleSelect,
+    selectAll,
+    clearSelection,
     openView,
     openEdit,
     openCreate,
     openImportJdSheet,
-    viewItem
+    viewItem,
+    closeView
   } = useApplicationStore();
   const deleteMutation = useDeleteApplicationsMutation();
+  const batchSelectActive = isBatchSelectActive(selectedIds);
+  const selectedCount = selectedIds.length;
 
   const filtered = useMemo(() => {
     if (listFilter === "open") return applications.filter((a) => isApplicationOpen(a.outcome));
     if (listFilter === "closed") return applications.filter((a) => !isApplicationOpen(a.outcome));
     return applications;
   }, [applications, listFilter]);
+
+  const filteredIds = useMemo(() => filtered.map((a) => a.id), [filtered]);
+  const allFilteredSelected = areAllVisibleSelected(selectedIds, filteredIds);
+
+  const deleteSelected = () => {
+    if (selectedCount === 0) return;
+    const ids = [...selectedIds];
+    void deleteMutation.mutateAsync({ ids }).then(() => {
+      clearSelection();
+      if (viewItem && ids.includes(viewItem.id)) closeView();
+    });
+  };
 
   if (isLoading) return <ListSkeleton />;
 
@@ -94,16 +115,17 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
         title="No tracked jobs yet"
         description="Track a discovery from New jobs, add a role manually, or import a job description."
         action={
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button type="button" onClick={openCreate}>
-              <PlusIcon aria-hidden />
-              Add job
-            </Button>
+          <Group>
             <Button type="button" variant="outline" onClick={openImportJdSheet}>
               <FileTextIcon aria-hidden />
               Import from JD
             </Button>
-          </div>
+            <GroupSeparator />
+            <Button type="button" onClick={openCreate}>
+              <PlusIcon aria-hidden />
+              Add job
+            </Button>
+          </Group>
         }
       />
     );
@@ -115,17 +137,31 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
       onValueChange={(value) => {
         if (value === "open" || value === "closed" || value === "all") {
           setListFilter(value);
+          clearSelection();
         }
       }}
       className="flex min-h-0 flex-1 flex-col gap-3"
     >
-      <TabsList>
-        {LIST_FILTERS.map((filter) => (
-          <TabsTrigger key={filter.value} value={filter.value}>
-            {filter.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <TabsList className="shrink-0">
+          {LIST_FILTERS.map((filter) => (
+            <TabsTrigger key={filter.value} value={filter.value}>
+              {filter.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <BatchSelectionBar
+          className="ms-auto"
+          selectedCount={selectedCount}
+          totalCount={filteredIds.length}
+          allVisibleSelected={allFilteredSelected}
+          isDeleting={deleteMutation.isPending}
+          onDeleteSelected={deleteSelected}
+          onSelectAll={() => selectAll(filteredIds)}
+          onClearSelection={clearSelection}
+        />
+      </div>
 
       {filtered.length === 0 ? (
         <ItemsEmpty
@@ -165,6 +201,12 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
           {filtered.map((app) => {
             const selected = viewItem?.id === app.id;
             const batchSelected = selectedIds.includes(app.id);
+            const listingUrl = app.url ?? app.applyUrl ?? null;
+            const openListing = listingUrl
+              ? () => {
+                  window.open(listingUrl, "_blank", "noopener,noreferrer");
+                }
+              : undefined;
             return (
               <li key={app.id}>
                 <ContextMenu>
@@ -173,7 +215,10 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       selected={selected}
                       onSelect={() => openView(app)}
                       isBatchSelected={batchSelected}
+                      batchSelectActive={batchSelectActive}
                       onToggleSelect={() => toggleSelect(app.id)}
+                      onView={openListing}
+                      viewLabel="View listing"
                       onEdit={() => openEdit(app)}
                       onDelete={() => deleteMutation.mutate({ ids: [app.id] })}
                       isDeleting={deleteMutation.isPending}
@@ -181,12 +226,12 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       deleteDescription="This permanently removes the application from your pipeline."
                       title={app.title}
                       titleEnd={
-                        <span className="flex shrink-0 flex-wrap items-center gap-1.5">
+                        <>
                           <ApplicationMatchScoreBadge matchScore={app.matchScore} />
                           <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
                           <ApplicationStageBadge stage={app.stage} />
                           {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
-                        </span>
+                        </>
                       }
                       meta={
                         <>
@@ -204,6 +249,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                             applyUrl={app.applyUrl}
                             url={app.url}
                             applyMethod={app.applyMethod}
+                            hideListingLink={Boolean(listingUrl)}
                             className="mt-1"
                           />
                         </>
@@ -211,6 +257,12 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                     />
                   </ContextMenuTrigger>
                   <ContextMenuPopup className="min-w-44">
+                    {openListing ? (
+                      <ContextMenuItem onClick={openListing}>
+                        <ExternalLinkIcon aria-hidden="true" />
+                        View listing
+                      </ContextMenuItem>
+                    ) : null}
                     <ContextMenuItem onClick={() => openEdit(app)}>
                       <PencilIcon aria-hidden="true" />
                       Edit

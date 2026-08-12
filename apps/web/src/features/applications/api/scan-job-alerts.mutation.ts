@@ -1,53 +1,32 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { type ScanJobAlertsInput } from "@tsu-stack/core";
 
-import { applicationCountQueryKeys } from "@/features/applications/api/count-applications.query";
-import { applicationsQueryKeys } from "@/features/applications/api/list-applications.query";
+import { startScanJobAlerts } from "@/features/applications/api/scan-job-alerts-job";
+import { useScanJobAlertsJob } from "@/features/applications/lib/scan-job-alerts-store";
 
+/**
+ * Manual “Scan job alerts” — enqueues harvest and shows a sticky progress toast
+ * that survives navigation while digests process in the background.
+ */
 export function useScanJobAlertsMutation() {
   const queryClient = useQueryClient();
-  return useMutation(
-    orpcQueryClient.applications.scanJobAlerts.mutationOptions({
-      onSuccess: async (data) => {
-        if (data.digestsFound === 0) {
-          toast.message("No job-alert digests yet", {
-            description: "Sync mail or wait for the next job-alert email, then try again."
-          });
-          return;
-        }
-        if (data.queueUnavailable) {
-          toast.error("Harvest queue is unavailable", {
-            description: "Start the server with Redis so job alerts can be processed."
-          });
-          return;
-        }
-        toast.success(
-          data.enqueued === 1
-            ? "Scanning 1 job-alert digest…"
-            : `Scanning ${data.enqueued} job-alert digests…`,
-          {
-            description:
-              "Only listings that pass your Job preferences (min match score) appear under New jobs. Duplicates are skipped. This can take a minute."
-          }
-        );
-        // Workers run Mastra harvest async — poll longer so inbox rows show up.
-        const invalidate = () =>
-          Promise.all([
-            queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.list("inbox") }),
-            queryClient.invalidateQueries({
-              queryKey: applicationCountQueryKeys.byStatus("inbox")
-            })
-          ]);
-        await invalidate();
-        for (const ms of [5_000, 15_000, 30_000, 60_000, 90_000]) {
-          window.setTimeout(() => void invalidate(), ms);
-        }
-      },
-      onError: (error) => {
-        toast.error(error.message || "Could not scan job alerts.");
-      }
-    })
+  const { status } = useScanJobAlertsJob();
+
+  const mutateAsync = useCallback(
+    async (input?: ScanJobAlertsInput) => {
+      await startScanJobAlerts(queryClient, input);
+    },
+    [queryClient]
   );
+
+  return {
+    mutateAsync,
+    mutate: (input?: ScanJobAlertsInput) => {
+      void mutateAsync(input);
+    },
+    /** True while enqueue + background poll tracking is active. */
+    isPending: status === "running"
+  };
 }

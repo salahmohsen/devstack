@@ -18,6 +18,10 @@ import { Switch } from "@tsu-stack/ui/components/switch";
 type ActionButtonConfig = {
   onAction: () => void;
   isLoading?: boolean;
+  /** Visible label (default: View / Edit). */
+  label?: string;
+  /** Accessible name when it differs from the label. */
+  ariaLabel?: string;
 };
 
 type TogglePortfolioConfig = {
@@ -120,12 +124,13 @@ export function ListItemActionButtons({
             }}
             loading={view.isLoading}
             variant="outline"
-            aria-label="View"
+            aria-label={view.ariaLabel ?? view.label ?? "View"}
           >
             <ExternalLink />
-            View
+            {view.label ?? "View"}
           </Button>
         ) : null}
+        {view && edit ? <GroupSeparator /> : null}
         {edit ? (
           <Button
             onClick={(event: React.MouseEvent) => {
@@ -134,10 +139,10 @@ export function ListItemActionButtons({
             }}
             loading={edit.isLoading}
             variant="outline"
-            aria-label="Edit"
+            aria-label={edit.ariaLabel ?? edit.label ?? "Edit"}
           >
             <IconMorph mode="hover" iconA={<Edit />} iconB={<Check className="text-success" />} />
-            Edit
+            {edit.label ?? "Edit"}
           </Button>
         ) : null}
         {view || edit ? <GroupSeparator /> : null}
@@ -156,7 +161,7 @@ export function ListItemActionButtons({
           view.onAction();
         }}
         loading={view.isLoading}
-        aria-label="View"
+        aria-label={view.ariaLabel ?? view.label ?? "View"}
       >
         <ExternalLink />
       </Button>
@@ -173,7 +178,7 @@ export function ListItemActionButtons({
           edit.onAction();
         }}
         loading={edit.isLoading}
-        aria-label="Edit"
+        aria-label={edit.ariaLabel ?? edit.label ?? "Edit"}
       >
         <IconMorph mode="hover" iconA={<Edit />} iconB={<Check className="text-success" />} />
       </Button>

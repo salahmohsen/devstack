@@ -56,6 +56,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import {
   Menu,
   MenuItem,
@@ -383,16 +384,17 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
         title="No tracked jobs yet"
         description="Track a discovery from New jobs, add a role manually, or import a job description."
         action={
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button type="button" onClick={openCreate}>
-              <PlusIcon aria-hidden />
-              Add job
-            </Button>
+          <Group>
             <Button type="button" variant="outline" onClick={openImportJdSheet}>
               <FileTextIcon aria-hidden />
               Import from JD
             </Button>
-          </div>
+            <GroupSeparator />
+            <Button type="button" onClick={openCreate}>
+              <PlusIcon aria-hidden />
+              Add job
+            </Button>
+          </Group>
         }
       />
     );

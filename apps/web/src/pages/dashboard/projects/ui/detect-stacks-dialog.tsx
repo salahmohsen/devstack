@@ -1,13 +1,12 @@
 "use client";
-import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useEffect, useMemo, useState } from "react";
+
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type DetectStacksResult, type DetectedStack } from "@tsu-stack/core";
+import { formatStackTypeLabel, type DetectStacksResult, type DetectedStack } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import { CardFrame } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
   Dialog,
@@ -19,20 +18,8 @@ import {
   DialogPopup,
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
-import {
-  PreviewCard,
-  PreviewCardPopup,
-  PreviewCardTrigger
-} from "@tsu-stack/ui/components/preview-card.js";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@tsu-stack/ui/components/table";
 
+import { AiChangeList, type AiChangeItem, type AiChangeKindMeta } from "@/shared/ui/ai-change-list";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { Icon } from "@/shared/ui/icon";
 
@@ -42,21 +29,46 @@ const confidenceVariant = (confidence: string) => {
   return "error";
 };
 
-const typeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    framework: "Framework",
-    language: "Language",
-    database: "Database",
-    ui: "UI",
-    auth: "Auth",
-    deployment: "Deployment",
-    testing: "Testing",
-    ai: "AI",
-    tooling: "Tooling",
-    storage: "Storage",
-    other: "Other"
-  };
-  return labels[type] ?? type;
+function DetectRowCheckbox({
+  id,
+  title,
+  checked,
+  onToggle
+}: {
+  id: string;
+  title: string;
+  checked: boolean;
+  onToggle: (id: string, next: boolean) => void;
+}) {
+  return (
+    <Checkbox
+      aria-label={`Select ${title}`}
+      checked={checked}
+      onCheckedChange={(v) => onToggle(id, !!v)}
+    />
+  );
+}
+
+/** Detect-scan labels: new / already in library / gone since last scan. */
+const DETECT_KIND_META: Record<"added" | "modified" | "removed", AiChangeKindMeta> = {
+  added: {
+    symbol: "+",
+    label: "New",
+    className: "text-emerald-600 dark:text-emerald-400",
+    surface: "bg-emerald-500/10"
+  },
+  modified: {
+    symbol: "~",
+    label: "In library",
+    className: "text-amber-600 dark:text-amber-400",
+    surface: "bg-amber-500/10"
+  },
+  removed: {
+    symbol: "−",
+    label: "Removed",
+    className: "text-destructive",
+    surface: "bg-destructive/8"
+  }
 };
 
 export type UpsertedDetectedStack = {
@@ -94,13 +106,21 @@ export function DetectStacksDialog({
     return results.detectedStacks;
   }, [results]);
 
+  const stackByPackage = useMemo(
+    () => new Map(allStacks.map((s) => [s.npmPackage, s])),
+    [allStacks]
+  );
+
   // New stacks checked by default; existing stacks left unchecked (ADR 0017).
+  // Reset selection when dialog opens or detect results change (external → UI state).
   useEffect(() => {
     if (!open) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- sync selection to open/results
       setRowSelection({});
       return;
     }
     if (allStacks.length === 0) {
+      // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- sync selection to open/results
       setRowSelection({});
       return;
     }
@@ -110,160 +130,170 @@ export function DetectStacksDialog({
         next[stack.npmPackage] = true;
       }
     }
+    // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- sync selection to open/results
     setRowSelection(next);
   }, [open, allStacks]);
 
-  const columns = useMemo<ColumnDef<DetectedStack>[]>(
-    () => [
-      {
-        cell: ({ row }) => (
-          <Checkbox
-            aria-label="Select row"
-            checked={row.getIsSelected()}
-            disabled={!row.getCanSelect()}
-            onCheckedChange={(value) => {
-              const syntheticEvent = {
-                target: { checked: !!value }
-              } as unknown as React.ChangeEvent<HTMLInputElement>;
-              row.getToggleSelectedHandler()(syntheticEvent);
-            }}
-          />
-        ),
-        enableSorting: false,
-        header: ({ table }) => {
-          const isAllSelected = table.getIsAllPageRowsSelected();
-          const isSomeSelected = table.getIsSomePageRowsSelected();
-          return (
-            <Checkbox
-              aria-label="Select all"
-              checked={isAllSelected}
-              indeterminate={isSomeSelected && !isAllSelected}
-              onCheckedChange={(value) => {
-                const syntheticEvent = {
-                  target: { checked: !!value }
-                } as unknown as React.ChangeEvent<HTMLInputElement>;
-                table.getToggleAllPageRowsSelectedHandler()(syntheticEvent);
-              }}
+  const selectableIds = useMemo(() => allStacks.map((s) => s.npmPackage), [allStacks]);
+
+  const selectedCount = useMemo(
+    () => selectableIds.filter((id) => rowSelection[id]).length,
+    [selectableIds, rowSelection]
+  );
+
+  const baseDetectItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      kind: "added" | "modified" | "removed";
+      title: string;
+      summary?: string;
+      reason?: string;
+      leading?: ReactNode;
+      badges?: ReactNode;
+      details?: ReactNode;
+      searchText?: string;
+      selectable: boolean;
+      stack?: DetectedStack;
+    }> = [];
+
+    for (const stack of allStacks) {
+      const related = stack.relatedPackages ?? [];
+      const firstRelated = related.slice(0, 6);
+      const moreRelated = related.length - firstRelated.length;
+
+      items.push({
+        id: stack.npmPackage,
+        kind: stack.exists ? "modified" : "added",
+        title: stack.name,
+        summary: stack.npmPackage,
+        // Description only in details (AiChangeList also prints reason under details).
+        leading: (
+          <div className="flex size-7 items-center justify-center rounded-md bg-muted">
+            <Icon
+              icon={stack.iconSvg}
+              className="size-3.5"
+              fallbackToLetter
+              letterClassName="size-7 text-[10px]"
             />
-          );
-        },
-        id: "select"
-      },
-      {
-        accessorKey: "name",
-        cell: ({ row }) => {
-          const stack = row.original;
-          return (
-            <div className="flex items-center gap-3">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                <Icon
-                  icon={stack.iconSvg}
-                  className="size-4"
-                  fallbackToLetter
-                  letterClassName="size-8 text-xs"
-                />
-              </div>
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-sm font-medium">{stack.name}</span>
-                {stack.description && (
-                  <p className="truncate text-xs text-muted-foreground">{stack.description}</p>
-                )}
-              </div>
-            </div>
-          );
-        },
-        header: "Stack"
-      },
-      {
-        accessorKey: "relatedPackages",
-        cell: ({ row }) => {
-          const stack = row.original;
-          const firstThree = stack.relatedPackages?.slice(0, 3);
-          const remainingPackages = stack.relatedPackages?.slice(3);
-          return (
-            <div className="flex max-w-sm flex-wrap gap-1">
-              {firstThree?.map((pkg) => (
-                <Badge variant="secondary" size="sm" key={pkg}>
-                  {pkg}
-                </Badge>
-              ))}
-              {!!remainingPackages?.length && (
-                <PreviewCard>
-                  <PreviewCardTrigger render={<Badge variant="secondary" size="sm" />}>
-                    +{remainingPackages.length}
-                  </PreviewCardTrigger>
-                  <PreviewCardPopup className="flex w-md flex-wrap gap-1 p-1">
-                    {remainingPackages.map((pkg) => (
-                      <Badge variant="secondary" size="sm" key={pkg}>
-                        {pkg}
-                      </Badge>
-                    ))}
-                  </PreviewCardPopup>
-                </PreviewCard>
-              )}
-            </div>
-          );
-        },
-        header: "Related Packages"
-      },
-      {
-        accessorKey: "confidence",
-        cell: ({ row }) => (
-          <Badge variant={confidenceVariant(row.original.confidence)} size="sm">
-            {row.original.confidence}
-          </Badge>
+          </div>
         ),
-        header: "Confidence"
-      },
-      {
-        accessorKey: "type",
-        cell: ({ row }) => (
-          <Badge variant="outline" size="sm">
-            {typeLabel(row.original.type)}
-          </Badge>
+        badges: (
+          <>
+            <Badge variant={confidenceVariant(stack.confidence)} size="sm">
+              {stack.confidence}
+            </Badge>
+            {stack.type ? (
+              <Badge variant="outline" size="sm">
+                {formatStackTypeLabel(stack.type)}
+              </Badge>
+            ) : null}
+            {stack.health?.deprecated ? (
+              <Badge variant="error" size="sm">
+                Deprecated
+              </Badge>
+            ) : null}
+            {stack.exists ? (
+              <Badge variant="secondary" size="sm">
+                In library
+              </Badge>
+            ) : null}
+          </>
         ),
-        header: "Type"
-      },
-      {
-        id: "status",
-        cell: ({ row }) => {
-          const stack = row.original;
-          return (
-            <div className="flex gap-1">
-              {stack.health?.deprecated && (
-                <Badge variant="error" size="sm">
-                  Deprecated
-                </Badge>
-              )}
-              {stack.exists && (
-                <Badge variant="secondary" size="sm">
-                  Existing
-                </Badge>
-              )}
-            </div>
-          );
-        },
-        header: "Status"
-      }
-    ],
+        details: (
+          <div className="space-y-2 text-xs text-muted-foreground">
+            {stack.description ? <p className="text-foreground/90">{stack.description}</p> : null}
+            {related.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                <span className="me-1 font-medium text-muted-foreground">Related:</span>
+                {firstRelated.map((pkg) => (
+                  <Badge variant="secondary" size="sm" key={pkg}>
+                    {pkg}
+                  </Badge>
+                ))}
+                {moreRelated > 0 ? (
+                  <Badge variant="secondary" size="sm">
+                    +{moreRelated}
+                  </Badge>
+                ) : null}
+              </div>
+            ) : null}
+            {stack.health?.downloads != null ? (
+              <p>npm downloads: {stack.health.downloads.toLocaleString()}</p>
+            ) : null}
+          </div>
+        ),
+        searchText: [
+          stack.npmPackage,
+          stack.type,
+          stack.confidence,
+          ...(stack.relatedPackages ?? [])
+        ]
+          .filter(Boolean)
+          .join(" "),
+        selectable: true,
+        stack
+      });
+    }
+
+    // Packages seen last scan but not this one — review-only (not selectable for add).
+    for (const pkg of results?.diff?.removed ?? []) {
+      // Skip if already shown as a detected stack row
+      if (stackByPackage.has(pkg)) continue;
+      items.push({
+        id: `removed-${pkg}`,
+        kind: "removed",
+        title: pkg,
+        summary: "Present in last scan, not found this time",
+        reason: "Won’t be added — not detected in repositories now.",
+        selectable: false
+      });
+    }
+
+    return items;
+  }, [allStacks, results?.diff?.removed, stackByPackage]);
+
+  const onToggleSelect = useMemo(
+    () => (id: string, next: boolean) => {
+      setRowSelection((prev) => {
+        return { ...prev, [id]: next };
+      });
+    },
     []
   );
 
-  /* eslint-disable react-hooks-js/incompatible-library */
-  const table = useReactTable({
-    columns,
-    data: allStacks,
-    enableRowSelection: true,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => row.npmPackage,
-    onRowSelectionChange: setRowSelection,
-    state: { rowSelection }
-  });
-  /* eslint-enable react-hooks-js/incompatible-library */
+  const detectItems: AiChangeItem[] = useMemo(
+    () =>
+      baseDetectItems.map((item) => {
+        const base: AiChangeItem = {
+          id: item.id,
+          kind: item.kind,
+          title: item.title,
+          summary: item.summary,
+          reason: item.reason,
+          leading: item.leading,
+          badges: item.badges,
+          details: item.details,
+          searchText: item.searchText
+        };
+        if (!item.selectable) return base;
+        return {
+          ...base,
+          selectControl: (
+            <DetectRowCheckbox
+              id={item.id}
+              title={item.title}
+              checked={!!rowSelection[item.id]}
+              onToggle={onToggleSelect}
+            />
+          )
+        };
+      }),
+    [baseDetectItems, rowSelection, onToggleSelect]
+  );
 
   const handleAddSelected = async () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    if (selectedRows.length === 0 || !results) {
+    const selectedDetected = allStacks.filter((s) => rowSelection[s.npmPackage]);
+    if (selectedDetected.length === 0 || !results) {
       toast.error("Select at least one stack to add.");
       return;
     }
@@ -271,8 +301,6 @@ export function DetectStacksDialog({
     setIsSubmitting(true);
 
     try {
-      const selectedDetected = selectedRows.map((row) => row.original);
-
       const upserted = await orpcClient.stacks.upsertFromDetection({
         stacks: selectedDetected.map((s) => {
           return {
@@ -315,12 +343,22 @@ export function DetectStacksDialog({
     setOpen(next);
   };
 
+  const toggleAllSelectable = (next: boolean) => {
+    setRowSelection((prev) => {
+      const copy = { ...prev };
+      for (const id of selectableIds) {
+        copy[id] = next;
+      }
+      return copy;
+    });
+  };
+
   const hasResults = allStacks.length > 0;
-  const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+  const repoCount = results?.groupedByRepo?.length ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="sm:max-w-2xl lg:max-w-fit" showCloseButton>
+      <DialogPopup className="sm:max-w-2xl lg:max-w-3xl" showCloseButton>
         <DialogHeader>
           <DialogTitle>Detect Stacks from Repositories</DialogTitle>
           <DialogDescription>
@@ -354,79 +392,70 @@ export function DetectStacksDialog({
         ) : hasResults ? (
           <DialogPanel className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              {allStacks.length} stack{allStacks.length === 1 ? "" : "s"} found across{" "}
-              {results!.groupedByRepo?.length ?? 0} repositor
-              {(results!.groupedByRepo?.length ?? 0) === 1 ? "y" : "ies"}. New stacks are selected
-              by default.
+              {allStacks.length} stack{allStacks.length === 1 ? "" : "s"} found across {repoCount}{" "}
+              repositor{repoCount === 1 ? "y" : "ies"}. New stacks are selected by default; stacks
+              already in your library are unchecked.
             </p>
 
-            <CardFrame className="w-full">
-              <Table variant="card">
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow data-state={row.getIsSelected() && "selected"} key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell className="h-24 text-center" colSpan={columns.length}>
-                        No results.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardFrame>
+            <AiChangeList
+              title="Detected stacks"
+              fromLabel="Repositories"
+              toLabel="Project stack list"
+              items={detectItems}
+              kindMeta={DETECT_KIND_META}
+              filterKinds={["added", "modified", "removed"]}
+              emptyMessage="No stacks detected."
+              maxHeightClassName="max-h-[min(28rem,50vh)]"
+              toolbar={
+                <>
+                  <span>
+                    {selectedCount} of {selectableIds.length} selected
+                    {results?.hasChanges
+                      ? " · includes scan diff (removed packages are not selectable)"
+                      : null}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="font-medium hover:text-foreground"
+                      onClick={() => toggleAllSelectable(true)}
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      className="font-medium hover:text-foreground"
+                      onClick={() => toggleAllSelectable(false)}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </>
+              }
+            />
 
-            {results!.groupedByRepo?.length > 0 && (
+            {results!.groupedByRepo?.length > 0 ? (
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer select-none">View by repository</summary>
                 <div className="mt-2 flex flex-col gap-2">
-                  {results!.groupedByRepo.map(
-                    ({
-                      repo,
-                      stacks
-                    }: {
-                      repo: string;
-                      stacks: DetectStacksResult["detectedStacks"];
-                    }) => (
-                      <div
-                        key={repo}
-                        className="flex flex-col gap-1 rounded-lg border border-border bg-muted/50 p-3"
-                      >
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {repo.replace("https://github.com/", "")}
-                        </p>
-                        {stacks.map((s) => (
-                          <span key={s.npmPackage} className="text-xs">
-                            {s.name}
-                          </span>
-                        ))}
-                      </div>
-                    )
-                  )}
+                  {results!.groupedByRepo.map(({ repo, stacks }) => (
+                    <div
+                      key={repo}
+                      className="flex flex-col gap-1 rounded-lg border border-border bg-muted/50 p-3"
+                    >
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {repo.replace("https://github.com/", "")}
+                      </p>
+                      {stacks.map((s) => (
+                        <span key={s.npmPackage} className="text-xs">
+                          {s.name}
+                        </span>
+                      ))}
+                    </div>
+                  ))}
                 </div>
               </details>
-            )}
+            ) : null}
           </DialogPanel>
         ) : (
           <DialogPanel>
@@ -446,7 +475,7 @@ export function DetectStacksDialog({
           ) : (
             <>
               <DialogClose render={<Button variant="ghost" type="button" />}>Close</DialogClose>
-              {hasResults && (
+              {hasResults ? (
                 <Button
                   type="button"
                   onClick={() => void handleAddSelected()}
@@ -454,7 +483,7 @@ export function DetectStacksDialog({
                 >
                   {isSubmitting ? "Adding…" : `Add Selected (${selectedCount})`}
                 </Button>
-              )}
+              ) : null}
             </>
           )}
         </DialogFooter>

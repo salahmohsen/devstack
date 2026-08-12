@@ -43,14 +43,19 @@ type ApplyPackageMenuItemsProps = {
  * Board / context menu items for apply package entry actions.
  * Regenerate always confirms (cost + overwrite).
  */
+function hasJobDescription(app: ApplicationOutput): boolean {
+  return Boolean(app.description?.trim());
+}
+
 export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps) {
   const { Item, Separator } = slots;
-  const { openPackageSheet, openSendOutreach, showView } = useApplicationStore();
+  const { openPackageSheet, openSendOutreach, showView, openEdit } = useApplicationStore();
   const generateMutation = useGenerateApplyPackageMutation();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app);
   const open = isApplicationOpen(app.outcome);
   const generating = generateMutation.isPending;
+  const hasDescription = hasJobDescription(app);
 
   function runGenerate() {
     generateMutation.mutate(
@@ -68,10 +73,17 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
     <>
       <Separator />
       {entryState === "none" ? (
-        <Item disabled={!open || generating} onClick={() => open && runGenerate()}>
-          <SparklesIcon aria-hidden="true" />
-          {generating ? "Preparing…" : "Prepare application"}
-        </Item>
+        hasDescription ? (
+          <Item disabled={!open || generating} onClick={() => open && runGenerate()}>
+            <SparklesIcon aria-hidden="true" />
+            {generating ? "Preparing…" : "Prepare application"}
+          </Item>
+        ) : (
+          <Item disabled={!open} onClick={() => openEdit(app)}>
+            <FileTextIcon aria-hidden="true" />
+            Add job description
+          </Item>
+        )
       ) : null}
       {entryState === "draft" ? (
         <>
@@ -147,12 +159,13 @@ type ApplyPackagePanelActionsProps = {
  * Primary CTAs for the application info panel (Prepare / Review / Send).
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
-  const { openPackageSheet, openSendOutreach } = useApplicationStore();
+  const { openPackageSheet, openSendOutreach, openEdit } = useApplicationStore();
   const generateMutation = useGenerateApplyPackageMutation();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app);
   const open = isApplicationOpen(app.outcome);
   const generating = generateMutation.isPending;
+  const hasDescription = hasJobDescription(app);
 
   function runGenerate() {
     generateMutation.mutate(
@@ -173,16 +186,23 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
       </p>
       <div className="flex flex-wrap gap-2">
         {entryState === "none" ? (
-          <Button
-            type="button"
-            size="sm"
-            disabled={!open || generating}
-            loading={generating}
-            onClick={() => runGenerate()}
-          >
-            <SparklesIcon className="size-3.5" aria-hidden />
-            Prepare application
-          </Button>
+          hasDescription ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={!open || generating}
+              loading={generating}
+              onClick={() => runGenerate()}
+            >
+              <SparklesIcon className="size-3.5" aria-hidden />
+              Prepare application
+            </Button>
+          ) : (
+            <Button type="button" size="sm" disabled={!open} onClick={() => openEdit(app)}>
+              <FileTextIcon className="size-3.5" aria-hidden />
+              Add job description
+            </Button>
+          )
         ) : null}
 
         {entryState === "draft" ? (

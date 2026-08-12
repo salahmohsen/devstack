@@ -14,6 +14,8 @@ export { useSendOutreachMutation } from "@/features/applications/api/send-outrea
 export { usePromoteApplicationMutation } from "@/features/applications/api/promote-application.mutation";
 export { useDismissApplicationMutation } from "@/features/applications/api/dismiss-application.mutation";
 export { useRestoreApplicationMutation } from "@/features/applications/api/restore-application.mutation";
+export { useBatchDismissApplicationsMutation } from "@/features/applications/api/batch-dismiss-applications.mutation";
+export { useBatchRestoreApplicationsMutation } from "@/features/applications/api/batch-restore-applications.mutation";
 export {
   getListApplicationActivityQueryOptions,
   useListApplicationActivityQuery
@@ -25,7 +27,38 @@ export {
   useCountApplicationsQuery
 } from "@/features/applications/api/count-applications.query";
 export { useRegenerateAgentTakeMutation } from "@/features/applications/api/regenerate-agent-take.mutation";
+export {
+  dismissAgentTakeTracking,
+  startRegenerateAgentTake
+} from "@/features/applications/api/regenerate-agent-take-job";
+export {
+  clearAgentTakePendingOpen,
+  getAgentTakeJobState,
+  useAgentTakeJob,
+  type AgentTakeJobState
+} from "@/features/applications/lib/agent-take-store";
 export { useScanJobAlertsMutation } from "@/features/applications/api/scan-job-alerts.mutation";
+export { useRefreshFromListingUrlMutation } from "@/features/applications/api/refresh-from-listing-url.mutation";
+export {
+  dismissRefreshFromListingTracking,
+  startRefreshFromListingUrl
+} from "@/features/applications/api/refresh-from-listing-job";
+export {
+  clearPendingOpenApplicationId,
+  getRefreshFromListingState,
+  requestOpenApplicationPanel,
+  useRefreshFromListingJob,
+  type RefreshFromListingState
+} from "@/features/applications/lib/refresh-from-listing-store";
+export {
+  dismissScanJobAlertsTracking,
+  startScanJobAlerts
+} from "@/features/applications/api/scan-job-alerts-job";
+export {
+  getScanJobAlertsState,
+  useScanJobAlertsJob,
+  type ScanJobAlertsState
+} from "@/features/applications/lib/scan-job-alerts-store";
 export { ApplicationActivitySection } from "@/features/applications/ui/application-activity-section";
 export {
   canSendOutreach,

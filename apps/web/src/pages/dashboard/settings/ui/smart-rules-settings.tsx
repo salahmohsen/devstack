@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   BriefcaseBusiness,
   CalendarDays,
   FilterIcon,
@@ -55,7 +56,8 @@ const ICONS: Record<MailCategoryIcon, typeof Sparkles> = {
   gift: Gift,
   inbox: Inbox,
   mail: Mail,
-  sparkles: Sparkles
+  sparkles: Sparkles,
+  bell: Bell
 };
 
 const RULE_ICON_CHOICES: MailCategoryIcon[] = [

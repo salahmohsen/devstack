@@ -19,6 +19,9 @@ export function useDeleteApplicationsMutation() {
           queryClient.invalidateQueries({
             queryKey: applicationCountQueryKeys.byStatus("inbox")
           }),
+          queryClient.invalidateQueries({
+            queryKey: applicationCountQueryKeys.byStatus("dismissed")
+          }),
           ...variables.ids.map((id) =>
             queryClient.invalidateQueries({ queryKey: applicationsQueryKeys.activity(id) })
           )

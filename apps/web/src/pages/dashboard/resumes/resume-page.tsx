@@ -18,7 +18,14 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
 
+import {
+  areAllVisibleSelected,
+  isBatchSelectActive,
+  isIdSelected,
+  selectedIdsFromState
+} from "@/shared/lib/batch-selection";
 import { toastAiError } from "@/shared/lib/toast-ai-error";
+import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
 
@@ -123,11 +130,11 @@ export function ResumesPage() {
   const isAnyOpen = isAnyOpened(isItemOpen);
 
   const [batchAction, setBatchAction] = useState<"delete" | null>(null);
-  const selectedIdsEntries = useMemo(
-    () => Object.entries(selectedIds ?? {}).filter(([, v]) => v),
-    [selectedIds]
-  );
-  const selectedCount = selectedIdsEntries.length;
+  const selectedIdList = selectedIdsFromState(selectedIds);
+  const selectedCount = selectedIdList.length;
+  const resumeIds = useMemo(() => visibleResumes.map((r) => r.id), [visibleResumes]);
+  const allVisibleSelected = areAllVisibleSelected(selectedIds, resumeIds);
+  const batchSelectActive = isBatchSelectActive(selectedIds);
   const isDeleting = batchAction === "delete";
 
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
@@ -135,7 +142,7 @@ export function ResumesPage() {
   async function handleBatchDelete() {
     setBatchAction("delete");
     setBatchDeleteDialogOpen(false);
-    const ids = selectedIdsEntries.map(([id]) => id);
+    const ids = selectedIdList;
 
     try {
       await deleteMutation.mutateAsync({ ids });
@@ -190,7 +197,8 @@ export function ResumesPage() {
             key={resume.id}
             selected={isItemOpen?.[resume.id] ?? false}
             onSelect={() => openItem(resume.id, resume)}
-            isBatchSelected={selectedIds?.[resume.id] ?? false}
+            isBatchSelected={isIdSelected(selectedIds, resume.id)}
+            batchSelectActive={batchSelectActive}
             onToggleSelect={() => toggleSelect(resume.id)}
             onView={() => window.open(`/api/resume/download/?id=${resume.id}&view=1`, "_blank")}
             onDelete={() => {
@@ -234,18 +242,23 @@ export function ResumesPage() {
                 label: "Generate New Resume",
                 isLoading: isGenerating
               }}
-              batch={{
-                selectedCount,
-                totalCount: visibleResumes.length,
-                isBatchLoading: isDeleting,
-                isDeleting,
-                onDeleteSelected: () => setBatchDeleteDialogOpen(true),
-                onSelectAll: () => selectAll(visibleResumes.map((r) => r.id)),
-                onClearSelection: clearSelection
-              }}
             />
           }
         />
+
+        {batchSelectActive ? (
+          <div className="flex justify-end">
+            <BatchSelectionBar
+              selectedCount={selectedCount}
+              totalCount={resumeIds.length}
+              allVisibleSelected={allVisibleSelected}
+              isDeleting={isDeleting}
+              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+              onSelectAll={() => selectAll(resumeIds)}
+              onClearSelection={clearSelection}
+            />
+          </div>
+        ) : null}
 
         {renderList()}
 
