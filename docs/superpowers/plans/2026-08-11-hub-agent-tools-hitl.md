@@ -240,26 +240,28 @@ git commit -m "feat(web): ApplicationFromJdCard GenUI for hub HITL"
 
 ---
 
-### Task 8: Applications Import dual UI + board invalidation
+### Task 8: Tracked jobs Import dual UI + board invalidation
 
 **Files:**
 
-- Create or modify Applications page UI for Import JD (sheet/island)
+- Create or modify Tracked jobs page UI for **Import from job description** as a **Dialog** (not Sheet / not island)
+  - Prefer `import-jd-dialog.tsx` (rename from `import-jd-sheet.tsx` if still sheet-named)
+  - Use coss `Dialog` / `DialogPopup` + header/footer; keep propose card inside the dialog body
 - Consume hub chat context from shared provider
 - Reuse `ApplicationFromJdCard` when pending propose part exists
-- Empty-state / CTA: prompt-kit `PromptSuggestion`
+- Empty-state / CTA: prompt-kit `PromptSuggestion`; button copy **Import from job description**
 - Invalidate applications list on successful create (see Step 3)
 
-- [ ] **Step 1:** Import UI: textarea + submit → `sendMessage({ text: jd })` on shared chat (optional prefix: “Import this job description:\n\n”).
+- [ ] **Step 1:** Import UI (**Dialog**): textarea + submit → `sendMessage({ text: jd })` on shared chat (optional prefix: “Import this job description:\n\n”).
 
-- [ ] **Step 2:** If messages contain pending propose tool, render card in sheet (same `addToolOutput` handlers).
+- [ ] **Step 2:** If messages contain pending propose tool, render card **in the dialog** (same `addToolOutput` handlers). Do not use Sheet.
 
-- [ ] **Step 3:** When assistant tool part `create-application` (or generate path) reaches `output-available` with ok/created, **invalidate** applications TanStack Query (`useListApplicationsQuery` key / `orpcQueryClient.applications.list`) so the CRM board updates without full page reload. Same invalidation if watching hub stream on Applications page.
+- [ ] **Step 3:** When assistant tool part `create-application` (or generate path) reaches `output-available` with ok/created, **invalidate** applications TanStack Query (`useListApplicationsQuery` key / `orpcQueryClient.applications.list`) so the CRM board updates without full page reload. Same invalidation if watching hub stream on Tracked jobs page.
 
 - [ ] **Step 4:** Commit
 
 ```bash
-git commit -m "feat(web): Applications import JD via shared hub chat"
+git commit -m "feat(web): Tracked jobs import job description via dialog + shared hub chat"
 ```
 
 ---

@@ -416,6 +416,7 @@ Supersedes CRM design nav item “`/dashboard/applications` after Resumes” —
 - Existing board + list; copy rename Applications → Tracked jobs.
 - Query only `trackingStatus=tracked`.
 - Detail: same Activity timeline + composer; show agent take if present (read-only).
+- **Import from job description:** opens a **Dialog** (coss `Dialog` / `DialogPopup`), **not** a Sheet or bottom sheet. Paste job description / URL → hub propose flow; HITL card stays inside the dialog. CTA label: **Import from job description** (spell out; avoid “JD” in UI). See [Hub agent tools HITL](./2026-08-11-hub-agent-tools-hitl-design.md) § Dual surface UX.
 
 ### Activity UI (both)
 

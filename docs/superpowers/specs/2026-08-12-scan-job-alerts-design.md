@@ -48,5 +48,10 @@ Manual re-enqueue uses a **distinct BullMQ jobId** so completed harvests can run
 
 - New jobs `PageHeader` outline button **Scan job alerts**
 - Empty inbox secondary action same control
-- Loading on button; toast: “Scanning N digests…” / “No job-alert digests yet” / queue-down message
-- Invalidate applications list (`inbox`) + inbox count after success
+- Loading on button while scan tracking is active
+- **Sticky running toast** (survives route changes; same pattern as organize-stacks / resume extract):
+  - Title: “Scanning job alerts…”
+  - Live step labels: looking up digests → queued N → harvesting / scoring → “X new matches so far…”
+  - Dismiss stops **client tracking only** (enqueued harvest jobs keep running)
+- Terminal toasts: no digests / queue down / finished with new count + link to New jobs
+- Invalidate applications list (`inbox`) + inbox count after enqueue and on a poll schedule while tracking

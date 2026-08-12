@@ -45,7 +45,7 @@
 
 - [x] Mutation invalidates inbox list + count
 - [x] Header + empty-state button
-- [x] Toast copy
+- [x] Sticky running toast (survives navigation) with live step labels + terminal summary
 
 ### Task 4: Verify + commit
 

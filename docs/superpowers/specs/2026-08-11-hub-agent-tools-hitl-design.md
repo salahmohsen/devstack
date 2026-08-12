@@ -183,20 +183,22 @@ Never create a CRM row without button confirmation.
 - Sticky approval for package (and other approved workflows).
 - Intermediate multi-step text collapsed where possible (extend existing stream text filters).
 
-### Applications
+### Tracked jobs (was Applications)
 
-- **Import from job description** (sheet or island): paste JD / URL → `sendMessage` into **same hub thread**.
-- While `propose-application-from-jd` is `input-available`, render **the same** `ApplicationFromJdCard` bound to that tool part (second view, not second agent).
+- **Import from job description** — **Dialog only** (not Sheet, not island): paste job description / URL → `sendMessage` into **same hub thread**.
+- Chrome: coss/Base UI `Dialog` (`DialogPopup` + header/footer). Do **not** use `Sheet` / bottom sheet for this flow.
+- While `propose-application-from-jd` is `input-available`, render **the same** `ApplicationFromJdCard` bound to that tool part **inside the dialog** (second view, not second agent).
 - Board/list continues to show real applications after create.
+- Copy: label the CTA **Import from job description** (not “Import from JD”).
 
 ### Shared chat state model (locked)
 
 Today `useHubChat` builds a local AI SDK `Chat` per mount (`id: "hub-home"`). Dual surface requires:
 
-1. **Lift a single hub `Chat` (or React context provider)** to a layout level that both Hub home and Applications import can consume — same `Chat` instance, same `messages` / `addToolOutput` / `addToolApprovalResponse`.
-2. **Hydration:** existing hub history load (`useListHubMessagesQuery` / Mastra memory) stays the source of truth on first mount; Applications must not create a second unhydrated `Chat`.
-3. **Import UX:** Applications Import **does not** open a parallel agent. It either:
-   - sends into the shared chat and shows the shared card inline in the sheet, **or**
+1. **Lift a single hub `Chat` (or React context provider)** to a layout level that both Hub home and Tracked jobs import can consume — same `Chat` instance, same `messages` / `addToolOutput` / `addToolApprovalResponse`.
+2. **Hydration:** existing hub history load (`useListHubMessagesQuery` / Mastra memory) stays the source of truth on first mount; Tracked jobs must not create a second unhydrated `Chat`.
+3. **Import UX:** Tracked jobs Import **does not** open a parallel agent. It either:
+   - sends into the shared chat and shows the shared card **inline in the dialog**, **or**
    - navigates to Hub with prefilled send (acceptable fallback if provider wiring is incomplete in a PR).
 4. **Do not** invent a second thread id for CRM import.
 
