@@ -6,6 +6,7 @@ import { ApplicationStageSchema } from "#@/application/types";
 export const MailCategoryIdSchema = z.enum([
   "needs_action",
   "applications",
+  "job_notifier",
   "recruiters",
   "interviews",
   "offers",
@@ -19,7 +20,7 @@ export type MailCategoryId = z.infer<typeof MailCategoryIdSchema>;
  * System career labels stored on `mail_message.labels`.
  * Smart-rule labels use the `rule:` prefix (e.g. `rule:newsletter-noise`).
  *
- * - `job_notifier` — board/job-alert digests (harvest path; no dedicated hub card)
+ * - `job_notifier` — board/job-alert digests (harvest → New jobs; also a hub filter)
  * - `noise` — product / marketing non-career mail (hub Noise card)
  * - `application_status` — “application sent/update” CRM path (not job harvest)
  */
@@ -53,7 +54,8 @@ export const MailCategoryIconSchema = z.enum([
   "gift",
   "inbox",
   "mail",
-  "sparkles"
+  "sparkles",
+  "bell"
 ]);
 export type MailCategoryIcon = z.infer<typeof MailCategoryIconSchema>;
 

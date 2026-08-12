@@ -6,6 +6,14 @@ import {
   type ApplicationApplyMethod,
   type ApplicationSource
 } from "#@/application/types";
+import {
+  extractJobListingFromHtml,
+  extractJobListingStructured,
+  pickBetterListingDescription,
+  stripListingChromeFromHtml,
+  stripListingChromeFromText,
+  type ListingPageExtract
+} from "#@/common/extract-job-listing-page";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
 import { WorkModeSchema, type JobPreference, type WorkMode } from "#@/job-preference/types";
 import { defaultJobPreference } from "#@/job-preference/utils";
@@ -73,7 +81,34 @@ export function coerceHarvestedJobInput(raw: unknown): unknown {
     o.applyUrl = null;
   }
 
+  // Never invent enum values: free-text brands (e.g. "Jack & Jill AI") → sourceLabel.
+  if ("source" in o) {
+    const normalized = normalizeHarvestSource(o.source);
+    if (normalized === null && typeof o.source === "string" && o.source.trim()) {
+      if (o.sourceLabel == null || o.sourceLabel === "") {
+        o.sourceLabel = o.source.trim().slice(0, 80);
+      }
+    }
+    o.source = normalized;
+  }
+  if (typeof o.sourceLabel === "string") {
+    const t = o.sourceLabel.trim().slice(0, 80);
+    o.sourceLabel = t.length > 0 ? t : null;
+  }
+
   return o;
+}
+
+/** Closed platform enum only — invalid strings become null (and may fill sourceLabel). */
+export function normalizeHarvestSource(value: unknown): ApplicationSource | null {
+  if (value == null) return null;
+  if (typeof value !== "string") return null;
+  const n = value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  const parsed = ApplicationSourceSchema.safeParse(n);
+  return parsed.success ? parsed.data : null;
 }
 
 const HarvestedJobObjectSchema = z.object({
@@ -86,7 +121,10 @@ const HarvestedJobObjectSchema = z.object({
   applyUrl: z.string().url().nullable().optional().default(null),
   applyMethod: ApplicationApplyMethodSchema.default("unknown"),
   workMode: WorkModeSchema.nullable().optional(),
-  source: ApplicationSourceSchema.nullable().optional()
+  /** Prefer omit — server re-infers from URL. Free-text brands must not go here. */
+  source: ApplicationSourceSchema.nullable().optional(),
+  /** Short brand when platform is unknown/other (e.g. "Jack & Jill"). */
+  sourceLabel: z.string().max(80).nullable().optional()
 });
 
 /** Structured job extracted from a mail card and/or job page. */
@@ -275,6 +313,65 @@ export function inferApplicationSource(url: string, fromEmail?: string): Applica
     return "company_website";
   }
   return "other";
+}
+
+/**
+ * Known hosts → display label when platform is `other`.
+ * Code first; model only fills when this returns null.
+ */
+const SOURCE_LABEL_BY_HOST_FRAGMENT: ReadonlyArray<{ match: string; label: string }> = [
+  { match: "jackandjill", label: "Jack & Jill" },
+  { match: "wellfound.", label: "Wellfound" },
+  { match: "angel.co", label: "Wellfound" },
+  { match: "otta.com", label: "Otta" },
+  { match: "hired.com", label: "Hired" },
+  { match: "dice.com", label: "Dice" },
+  { match: "glassdoor.", label: "Glassdoor" },
+  { match: "ziprecruiter.", label: "ZipRecruiter" },
+  { match: "monster.", label: "Monster" },
+  { match: "workable.com", label: "Workable" },
+  { match: "smartrecruiters.", label: "SmartRecruiters" },
+  { match: "jobvite.", label: "Jobvite" },
+  { match: "bamboohr.", label: "BambooHR" },
+  { match: "myworkdayjobs.", label: "Workday" },
+  { match: "workday.", label: "Workday" }
+];
+
+/** Resolve display label for unknown platforms from listing URL host. */
+export function inferSourceLabelFromUrl(url: string): string | null {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+    for (const { match, label } of SOURCE_LABEL_BY_HOST_FRAGMENT) {
+      if (host.includes(match)) return label;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Final platform + optional free-text label for harvest/hub create.
+ * Server owns enum; label only when platform is `other`.
+ */
+export function resolveApplicationSourceFields(input: {
+  listingUrl: string;
+  fromEmail?: string | null;
+  /** Optional model hint — never trusted as enum. */
+  modelSource?: ApplicationSource | null;
+  modelSourceLabel?: string | null;
+}): { source: ApplicationSource; sourceLabel: string | null } {
+  const source = inferApplicationSource(input.listingUrl, input.fromEmail ?? undefined);
+  // Known platforms never store free-text brand labels.
+  if (source !== "other") {
+    return { source, sourceLabel: null };
+  }
+  const fromHost = inferSourceLabelFromUrl(input.listingUrl);
+  if (fromHost) return { source, sourceLabel: fromHost };
+  const fromModel = input.modelSourceLabel?.trim().slice(0, 80);
+  if (fromModel) return { source, sourceLabel: fromModel };
+  // Model sometimes put the brand in `source` before coerce moved it to sourceLabel.
+  return { source, sourceLabel: null };
 }
 
 /** Collect http(s) URLs from text + HTML hrefs. */
@@ -753,45 +850,289 @@ export function harvestJobsFromMailBody(input: ExtractJobLinksInput): HarvestedJ
   return jobs.slice(0, 25);
 }
 
-/**
- * Heuristic extract from fetched HTML (secondary enrichment).
- */
-export function enrichJobFromHtml(job: HarvestedJob, html: string): HarvestedJob {
-  const text = html
+function stripTagsToText(html: string): string {
+  return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 12_000);
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
 
-  const next = { ...job };
-  const ogTitle = html.match(
-    /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i
+function metaContentFromHtml(html: string, propertyOrName: string): string | null {
+  const prop = propertyOrName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const a = html.match(
+    new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`, "i")
   )?.[1];
-  if (ogTitle && (job.title === "Unknown role" || job.title.length < 4)) {
-    next.title = ogTitle.slice(0, 300);
+  if (a?.trim()) return a.trim();
+  const b = html.match(
+    new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${prop}["']`, "i")
+  )?.[1];
+  const s = b?.trim();
+  if (!s) return null;
+  return s;
+}
+
+/**
+ * Parse "Storyteller hiring Junior Web Developer in Egypt | LinkedIn" style titles.
+ */
+export function parseLinkedInHiringTitle(pageTitle: string): {
+  title: string | null;
+  companyName: string | null;
+  location: string | null;
+} {
+  const cleaned = pageTitle.replace(/\s*\|\s*LinkedIn\s*$/i, "").trim();
+  const m = cleaned.match(/^(.+?)\s+hiring\s+(.+?)(?:\s+in\s+(.+))?$/i);
+  if (!m) return { title: null, companyName: null, location: null };
+  return {
+    companyName: m[1]?.trim() || null,
+    title: m[2]?.trim() || null,
+    location: m[3]?.trim() || null
+  };
+}
+
+/**
+ * Public listing fields used by harvest / refresh.
+ * Aliases {@link ListingPageExtract} so site-agnostic extract and harvest share one shape.
+ */
+export type PublicJobListingExtract = ListingPageExtract;
+
+/**
+ * Phrases / class markers for closed or expired public job postings.
+ * Prefer multi-word markers over bare "closed" to avoid false positives.
+ */
+const CLOSED_LISTING_MARKERS = [
+  "closed-job",
+  "closed-job__flavor--closed",
+  "no longer accepting applications",
+  "this job is no longer available",
+  "job is no longer available",
+  "this position has been filled",
+  "this job has expired",
+  "job has expired",
+  "job posting is no longer available",
+  "applications have closed",
+  "no longer accepting applicants"
+] as const;
+
+/**
+ * True when HTML (LinkedIn guest, etc.) marks the listing as closed/expired.
+ */
+export function isClosedJobListingHtml(html: string): boolean {
+  if (!html || html.length < 20) return false;
+  const lower = html.toLowerCase();
+  return CLOSED_LISTING_MARKERS.some((m) => lower.includes(m));
+}
+
+/**
+ * True when plain page text (or description) marks the listing as closed.
+ * Excludes CSS-only class names that never appear in stripped text.
+ */
+export function isClosedJobListingText(text: string): boolean {
+  if (!text || text.length < 10) return false;
+  const lower = text.toLowerCase();
+  return CLOSED_LISTING_MARKERS.some((m) => !m.startsWith("closed-job") && lower.includes(m));
+}
+
+/**
+ * Deterministic extract from public listing HTML.
+ * Site-agnostic layers (JSON-LD, embedded SPA JSON, meta) plus LinkedIn guest
+ * DOM fallbacks. Prefer {@link extractPublicJobListingFromHtmlAsync} when async
+ * is available (adds Readability main-content extract).
+ */
+export function extractPublicJobListingFromHtml(
+  html: string,
+  listingUrl?: string
+): PublicJobListingExtract {
+  // Shared structured pipeline (JSON-LD → embedded JSON → meta).
+  const structured = extractJobListingStructured(html, listingUrl);
+  const out: PublicJobListingExtract = { ...structured };
+  delete (out as { descriptionSource?: string }).descriptionSource;
+
+  const host = listingUrl ? listingUrl.toLowerCase() : "";
+  if (host.includes("linkedin.") || /linkedin\.com/i.test(html) || /d_jobs_guest/i.test(html)) {
+    out.source = "linkedin";
+  }
+
+  if (isClosedJobListingHtml(html)) {
+    out.listingClosed = true;
+  }
+
+  // LinkedIn public guest job card (SSR markup — still the richest LI guest signal)
+  const liTitle =
+    html.match(/top-card-layout__title[^>]*>([^<]+)/i)?.[1]?.trim() ??
+    html.match(/class="[^"]*topcard__title[^"]*"[^>]*>([^<]+)/i)?.[1]?.trim() ??
+    html.match(/<h1[^>]*class="[^"]*top-card-layout__title[^"]*"[^>]*>([^<]+)/i)?.[1]?.trim();
+  if (liTitle) out.title = liTitle.slice(0, 300);
+
+  const liCompany =
+    html.match(/topcard__org-name-link[^>]*>([^<]+)/i)?.[1]?.trim() ??
+    html.match(/topcard__flavor--black-link[^>]*>([^<]+)/i)?.[1]?.trim() ??
+    html
+      .match(/data-tracking-control-name="public_jobs_topcard-org-name"[^>]*>([^<]+)/i)?.[1]
+      ?.trim();
+  if (liCompany) out.companyName = liCompany.slice(0, 300);
+
+  // Location often in flavor bullet next to company
+  const liLocation =
+    html.match(/topcard__flavor--bullet[^>]*>\s*([^<]+)/i)?.[1]?.trim() ??
+    html.match(/class="[^"]*topcard__flavor[^"]*"[^>]*>\s*([^<]{2,80})/i)?.[1]?.trim();
+  if (liLocation && !/ago|applicants|connections/i.test(liLocation)) {
+    out.location = liLocation.slice(0, 300);
+  }
+
+  // Prefer the dedicated posting markup — never the whole page (Similar jobs lives outside).
+  const descBlock =
+    html.match(
+      /show-more-less-html__markup[^>]*>([\s\S]*?)<\/div>\s*(?:<button|<\/section|<\/div)/i
+    )?.[1] ??
+    html.match(/show-more-less-html__markup[^>]*>([\s\S]*?)<\/div>/i)?.[1] ??
+    html.match(
+      /class="description__text description__text--rich"[^>]*>\s*<section[\s\S]*?show-more-less-html__markup[^>]*>([\s\S]*?)<\/div>/i
+    )?.[1];
+  if (descBlock) {
+    const desc = stripListingChromeFromText(stripTagsToText(descBlock)).slice(0, 12_000);
+    const picked = pickBetterListingDescription(out.description, desc);
+    if (picked) out.description = picked;
+  }
+
+  // Fallback: og / meta (+ parse "Company hiring Role in Location")
+  const ogTitle = metaContentFromHtml(html, "og:title");
+  if (ogTitle) {
+    const parsed = parseLinkedInHiringTitle(ogTitle);
+    if (!out.title && parsed.title) out.title = parsed.title;
+    if (!out.companyName && parsed.companyName) out.companyName = parsed.companyName;
+    if (!out.location && parsed.location) out.location = parsed.location;
+    out.title ??= ogTitle.replace(/\s*\|\s*LinkedIn\s*$/i, "").slice(0, 300);
+  }
+
+  if (!out.description?.trim()) {
+    const metaDesc =
+      metaContentFromHtml(html, "og:description") ?? metaContentFromHtml(html, "description");
+    if (metaDesc && metaDesc.length > 40) {
+      out.description = stripListingChromeFromText(
+        metaDesc
+          .replace(/^Posted\s+[^.]+\.\s*/i, "")
+          .replace(/\s*See this and similar jobs on LinkedIn\.?\s*$/i, "")
+          .trim()
+      ).slice(0, 2_000);
+    }
+  } else {
+    out.description = stripListingChromeFromText(out.description).slice(0, 12_000);
   }
 
   const lower = html.toLowerCase();
   if (lower.includes("easy apply") || lower.includes("easyapply")) {
-    next.applyMethod = "easy_apply";
+    out.applyMethod = "easy_apply";
   }
 
-  // External apply anchors
   const applyHref = html.match(
     /href=["'](https?:\/\/[^"']+)["'][^>]*>[\s\S]{0,40}apply (on|to|at) (company|website)/i
   )?.[1];
   if (applyHref) {
-    next.applyUrl = applyHref.replace(/&amp;/g, "&");
-    next.applyMethod = "external";
+    out.applyUrl = applyHref.replace(/&amp;/g, "&");
+    out.applyMethod = "external";
   }
 
   const mailto = html.match(/href=["']mailto:([^"'?]+)/i)?.[1];
   if (mailto) {
-    next.applyMethod = "email";
-    next.applyUrl = `mailto:${mailto}`;
+    out.applyMethod = "email";
+    out.applyUrl = `mailto:${mailto}`;
   }
+
+  const textBlob = `${out.description ?? ""} ${out.location ?? ""} ${out.title ?? ""}`;
+  if (!out.workMode) {
+    if (/\bremote\b/i.test(textBlob)) out.workMode = "remote";
+    else if (/\bhybrid\b/i.test(textBlob)) out.workMode = "hybrid";
+    else if (/\bon-?site\b/i.test(textBlob)) out.workMode = "onsite";
+  }
+
+  return out;
+}
+
+/**
+ * Full extract for async fetch paths: structured layers + Readability main content
+ * when the description is still thin (classic SSR career pages).
+ */
+export async function extractPublicJobListingFromHtmlAsync(
+  html: string,
+  listingUrl?: string
+): Promise<PublicJobListingExtract> {
+  // Start with sync extract (includes LinkedIn DOM guest markup), then structured + Readability.
+  // Description merge uses quality scoring so "Similar jobs" chrome never wins on length alone.
+  const base = extractPublicJobListingFromHtml(html, listingUrl);
+  const full = await extractJobListingFromHtml(html, listingUrl);
+  const out: PublicJobListingExtract = { ...base };
+  if (full.title && (!out.title || full.title.length > out.title.length)) {
+    out.title = full.title;
+  }
+  if (full.companyName && !out.companyName) out.companyName = full.companyName;
+  if (full.location && !out.location) out.location = full.location;
+  if (full.workMode && !out.workMode) out.workMode = full.workMode;
+  if (full.applyMethod && !out.applyMethod) out.applyMethod = full.applyMethod;
+  if (full.listingClosed) out.listingClosed = true;
+  const picked = pickBetterListingDescription(out.description, full.description);
+  if (picked) out.description = picked;
+  return out;
+}
+
+/** Prefer non-empty extracted fields over weak seed (Unknown / empty description). */
+export function mergeJobListingExtract(
+  seed: HarvestedJob,
+  extract: PublicJobListingExtract
+): HarvestedJob {
+  const weakTitle =
+    !seed.title?.trim() ||
+    seed.title.length < 4 ||
+    /^unknown/i.test(seed.title) ||
+    isGarbageJobTitle(seed.title);
+  const weakCompany =
+    !seed.companyName?.trim() ||
+    /^unknown/i.test(seed.companyName) ||
+    isGarbageCompany(seed.companyName);
+
+  const seedDesc = seed.description?.trim() ?? "";
+  const extractDesc = extract.description?.trim() ?? "";
+  // Prefer higher-quality posting body (not merely longer — chrome can be huge).
+  const description =
+    pickBetterListingDescription(seedDesc, extractDesc) ??
+    (seedDesc || extractDesc || seed.description);
+
+  return {
+    ...seed,
+    title: !weakTitle ? seed.title : (extract.title ?? seed.title),
+    companyName: !weakCompany ? seed.companyName : (extract.companyName ?? seed.companyName),
+    location: seed.location?.trim() ? seed.location : (extract.location ?? seed.location),
+    description,
+    applyMethod:
+      seed.applyMethod !== "unknown" ? seed.applyMethod : (extract.applyMethod ?? seed.applyMethod),
+    applyUrl: seed.applyUrl ?? extract.applyUrl ?? null,
+    workMode: seed.workMode ?? extract.workMode ?? null,
+    source: seed.source ?? extract.source ?? null
+  };
+}
+
+/**
+ * Heuristic extract from fetched HTML (secondary enrichment).
+ */
+export function enrichJobFromHtml(job: HarvestedJob, html: string): HarvestedJob {
+  const extracted = extractPublicJobListingFromHtml(html, job.listingUrl);
+  let next = mergeJobListingExtract(job, extracted);
+
+  const text = stripListingChromeFromText(stripTagsToText(stripListingChromeFromHtml(html))).slice(
+    0,
+    12_000
+  );
 
   if (!next.workMode) {
     if (/\bremote\b/i.test(text)) next.workMode = "remote";
@@ -799,11 +1140,52 @@ export function enrichJobFromHtml(job: HarvestedJob, html: string): HarvestedJob
     else if (/\bon-?site\b/i.test(text)) next.workMode = "onsite";
   }
 
-  if (!next.description && text.length > 80) {
-    next.description = text.slice(0, 4000);
+  // Last resort: plain body text (chrome already stripped) only if still empty.
+  if (!next.description?.trim() && text.length > 120) {
+    next = { ...next, description: text.slice(0, 4_000) };
+  }
+  if (next.description) {
+    next = { ...next, description: stripListingChromeFromText(next.description) };
   }
 
   return next;
+}
+
+/** Build LLM prompt text with deterministic listing fields first. */
+export function formatJobPageTextForLlm(input: {
+  pageText: string;
+  extract?: PublicJobListingExtract | null;
+  pageTitle?: string | null;
+  maxChars?: number;
+}): string {
+  const max = input.maxChars ?? 12_000;
+  const parts: string[] = [];
+  const e = input.extract;
+  if (e?.listingClosed) {
+    parts.push(
+      "=== LISTING STATUS: CLOSED ===\nThis posting is no longer accepting applications. Do not treat as an open role."
+    );
+  }
+  if (e && (e.title || e.companyName || e.description || e.listingClosed)) {
+    parts.push("=== DETERMINISTIC PAGE EXTRACT (prefer these facts) ===");
+    if (e.listingClosed) parts.push("listingClosed: true");
+    if (e.title) parts.push(`title: ${e.title}`);
+    if (e.companyName) parts.push(`companyName: ${e.companyName}`);
+    if (e.location) parts.push(`location: ${e.location}`);
+    if (e.applyMethod) parts.push(`applyMethod: ${e.applyMethod}`);
+    if (e.workMode) parts.push(`workMode: ${e.workMode}`);
+    if (e.description) {
+      const desc = stripListingChromeFromText(e.description).slice(0, 8_000);
+      parts.push(`description:\n${desc}`);
+    }
+    parts.push("=== END EXTRACT ===");
+  } else if (input.pageTitle) {
+    parts.push(`Page title: ${input.pageTitle}`);
+  }
+  // Strip similar-jobs chrome from raw page text so the model is not primed with other roles.
+  const pageText = stripListingChromeFromText(input.pageText);
+  parts.push(pageText);
+  return parts.join("\n\n").slice(0, max);
 }
 
 function includesAny(haystack: string, needles: string[]): boolean {

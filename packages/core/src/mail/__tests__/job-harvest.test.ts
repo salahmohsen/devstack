@@ -1,14 +1,31 @@
 import { describe, expect, it } from "vitest";
 
+import { isThinJobDescription } from "#@/application/apply-package";
+import {
+  decodeJsStringLiteral,
+  extractEmbeddedJobJson,
+  extractJobListingStructured,
+  pickBetterListingDescription,
+  scoreListingDescription,
+  stripListingChromeFromText
+} from "#@/common/extract-job-listing-page";
 import {
   canonicalizeJobUrl,
+  extractPublicJobListingFromHtml,
+  extractPublicJobListingFromHtmlAsync,
   HarvestedJobSchema,
   harvestJobsFromHtmlAnchors,
   harvestJobsFromMail,
   harvestJobsFromMailBody,
+  inferSourceLabelFromUrl,
+  isClosedJobListingHtml,
+  isClosedJobListingText,
   isValidHarvestedJob,
+  mergeJobListingExtract,
   normalizeHarvestApplyMethod,
+  parseLinkedInHiringTitle,
   rankJobUrl,
+  resolveApplicationSourceFields,
   scoreJobAgainstPreference
 } from "#@/mail/job-harvest";
 
@@ -275,5 +292,324 @@ describe("scoreJobAgainstPreference", () => {
       { ...prefs, workModes: ["remote"] }
     );
     expect(r.passed).toBe(false);
+  });
+});
+
+describe("HarvestedJobSchema source coerce", () => {
+  it("accepts free-text source as sourceLabel and nulls enum", () => {
+    const parsed = HarvestedJobSchema.safeParse({
+      title: "Fullstack Developer",
+      companyName: "EY",
+      listingUrl:
+        "https://app.jackandjill.ai/jobs/e98c1955-b37c-40d1-b341-a135a70042c7/post?source=email",
+      applyMethod: "unknown",
+      source: "Jack & Jill AI"
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.source).toBeNull();
+    expect(parsed.data.sourceLabel).toBe("Jack & Jill AI");
+  });
+
+  it("keeps valid enum source", () => {
+    const parsed = HarvestedJobSchema.safeParse({
+      title: "Engineer",
+      companyName: "Acme",
+      listingUrl: "https://www.linkedin.com/jobs/view/1",
+      source: "linkedin"
+    });
+    expect(parsed.success).toBe(true);
+    if (!parsed.success) return;
+    expect(parsed.data.source).toBe("linkedin");
+  });
+});
+
+describe("resolveApplicationSourceFields", () => {
+  it("maps jackandjill host to other + label", () => {
+    const r = resolveApplicationSourceFields({
+      listingUrl: "https://app.jackandjill.ai/jobs/1",
+      modelSourceLabel: "Should not win"
+    });
+    expect(r.source).toBe("other");
+    expect(r.sourceLabel).toBe("Jack & Jill");
+    expect(inferSourceLabelFromUrl("https://app.jackandjill.ai/jobs/1")).toBe("Jack & Jill");
+  });
+
+  it("uses model label only when host unknown", () => {
+    const r = resolveApplicationSourceFields({
+      listingUrl: "https://careers.example-unknown-ats.xyz/jobs/1",
+      modelSourceLabel: "Custom ATS"
+    });
+    expect(r.source).toBe("other");
+    expect(r.sourceLabel).toBe("Custom ATS");
+  });
+});
+
+describe("LinkedIn guest page extract", () => {
+  it("parses hiring title meta", () => {
+    const r = parseLinkedInHiringTitle(
+      "Storyteller hiring Junior Web Developer in Egypt | LinkedIn"
+    );
+    expect(r.companyName).toBe("Storyteller");
+    expect(r.title).toBe("Junior Web Developer");
+    expect(r.location).toBe("Egypt");
+  });
+
+  it("extracts role, company, and description from guest HTML", () => {
+    const html = `
+      <html><head>
+        <title>Storyteller hiring Junior Web Developer in Egypt | LinkedIn</title>
+        <meta property="og:title" content="Storyteller hiring Junior Web Developer in Egypt | LinkedIn">
+        <meta property="og:description" content="Posted 10:26:05 PM. Up to EUR 15,000 salary. See this and similar jobs on LinkedIn.">
+      </head><body>
+        <h1 class="top-card-layout__title font-sans">Junior Web Developer</h1>
+        <a class="topcard__org-name-link topcard__flavor--black-link" href="/company/x">Storyteller</a>
+        <span class="topcard__flavor--bullet">Egypt</span>
+        <div class="show-more-less-html__markup">
+          <p>Up to EUR 15,000 salary on a full time, permanent employment contract</p>
+          <p>Fully remote working anywhere in Egypt!</p>
+          <p>ABOUT US Storyteller is a high growth product company.</p>
+        </div>
+      </body></html>`;
+    const e = extractPublicJobListingFromHtml(
+      html,
+      "https://www.linkedin.com/jobs/view/4446392638/"
+    );
+    expect(e.title).toBe("Junior Web Developer");
+    expect(e.companyName).toBe("Storyteller");
+    expect(e.location).toBe("Egypt");
+    expect(e.description).toMatch(/EUR 15,000/);
+    expect(e.description).toMatch(/ABOUT US/);
+    expect(e.source).toBe("linkedin");
+    expect(e.workMode).toBe("remote");
+  });
+
+  it("does not keep Similar jobs carousel text in the description", () => {
+    const realJd = `
+      At BairesDev®, we've been leading the way in technology projects for over 15 years.
+      We deliver cutting-edge solutions to giants like Google and the most innovative startups.
+      Semi Senior React Developer at BairesDev
+      Join our development team as a Semi Senior React Developer to build complex web applications.
+      What You'll Do: Devise practical React-based solutions, debug complex issues, code reviews.
+      Here's What We Are Looking For: 3+ years of React, TypeScript, and modern frontend tooling.
+    `.repeat(2);
+    const html = `
+      <html><body>
+        <h1 class="top-card-layout__title">Semi Senior React Developer - Remote Work | REF#296501</h1>
+        <a class="topcard__org-name-link">BairesDev</a>
+        <span class="topcard__flavor--bullet">Cairo, Cairo, Egypt</span>
+        <div class="description__text description__text--rich">
+          <section class="show-more-less-html">
+            <div class="show-more-less-html__markup show-more-less-html__markup--clamp-after-5">
+              ${realJd}
+            </div>
+          </section>
+        </div>
+        <p>Referrals increase your chances of interviewing at BairesDev by 2x</p>
+        <section class="similar-jobs">
+          <h2>Similar jobs</h2>
+          <ul>
+            <li>Semi Senior React Developer - Remote Work | REF#296505 BairesDev Egypt</li>
+            <li>Senior Frontend Engineer Zeal New Cairo</li>
+            <li>Frontend Engineer Bayzat Cairo</li>
+            <li>Senior Front-End Engineer exequt MENA Cairo</li>
+            <li>Senior Front-End Engineer exequt Cairo</li>
+            <li>Front End Engineer NoGood Egypt</li>
+          </ul>
+        </section>
+        <section><h2>People also viewed</h2><p>Explore top content on LinkedIn</p></section>
+      </body></html>`;
+
+    const e = extractPublicJobListingFromHtml(
+      html,
+      "https://www.linkedin.com/jobs/view/4435341357/"
+    );
+    expect(e.title).toMatch(/Semi Senior React/);
+    expect(e.companyName).toBe("BairesDev");
+    expect(e.description).toMatch(/BairesDev®/);
+    expect(e.description).toMatch(/What You'll Do/);
+    expect(e.description).not.toMatch(/Similar jobs/i);
+    expect(e.description).not.toMatch(/People also viewed/i);
+    expect(e.description).not.toMatch(/Referrals increase your chances/i);
+    expect(e.description).not.toMatch(/exequt MENA/);
+    expect(e.description).not.toMatch(/Bayzat/);
+
+    // Quality scoring prefers clean body over longer chrome-filled text
+    const chromeHeavy =
+      `${realJd}\n\nSimilar jobs\nSenior Frontend Engineer Zeal\nFrontend Engineer Bayzat\n`.repeat(
+        3
+      );
+    expect(scoreListingDescription(realJd)).toBeGreaterThan(scoreListingDescription(chromeHeavy));
+    expect(pickBetterListingDescription(chromeHeavy, realJd)).toMatch(/What You'll Do/);
+    expect(stripListingChromeFromText(chromeHeavy)).not.toMatch(/Similar jobs/i);
+  });
+
+  it("async extract does not let Readability chrome beat guest markup", async () => {
+    const realJd =
+      "At BairesDev we build complex React applications for enterprise clients. ".repeat(20) +
+      "Requirements include TypeScript, testing, and mentoring junior developers.";
+    const html = `
+      <html><head><title>BairesDev hiring Semi Senior React Developer | LinkedIn</title>
+      <meta property="og:description" content="Posted yesterday. Short teaser. See this and similar jobs on LinkedIn.">
+      </head><body>
+        <h1 class="top-card-layout__title">Semi Senior React Developer</h1>
+        <a class="topcard__org-name-link">BairesDev</a>
+        <div class="show-more-less-html__markup">${realJd}</div>
+        <section class="similar-jobs"><h2>Similar jobs</h2>
+          ${"Senior Frontend Engineer at OtherCo Egypt. ".repeat(40)}
+        </section>
+      </body></html>`;
+    const e = await extractPublicJobListingFromHtmlAsync(
+      html,
+      "https://www.linkedin.com/jobs/view/4435341357/"
+    );
+    expect(e.description).toMatch(/BairesDev we build/);
+    expect(e.description).not.toMatch(/Similar jobs/i);
+    expect(e.description).not.toMatch(/OtherCo/);
+  });
+
+  it("fills empty seed description from extract", () => {
+    const seed = {
+      title: "Junior Web Developer",
+      companyName: "Storyteller",
+      location: "Egypt",
+      listingUrl: "https://www.linkedin.com/jobs/view/4446392638/",
+      applyUrl: null,
+      applyMethod: "unknown" as const,
+      description: null,
+      source: "linkedin" as const
+    };
+    const merged = mergeJobListingExtract(seed, {
+      description: "Full posting body with requirements and benefits."
+    });
+    expect(merged.description).toMatch(/Full posting body/);
+  });
+
+  it("marks LinkedIn closed-job guest card as listingClosed", () => {
+    // Mirrors https://www.linkedin.com/jobs/view/4446737057/ closed banner
+    const html = `
+      <html><head>
+        <title>Hire Feed hiring React Native Developer (Remote) in Egypt | LinkedIn</title>
+        <meta property="og:title" content="Hire Feed hiring React Native Developer (Remote) in Egypt | LinkedIn">
+      </head><body>
+        <h1 class="top-card-layout__title">React Native Developer (Remote)</h1>
+        <a class="topcard__org-name-link">Hire Feed</a>
+        <figure class="closed-job closed-job__flavor topcard__flavor-row">
+          <span class="closed-job__icon closed-job__icon--error-pebble lazy-load"></span>
+          <figcaption class="closed-job__flavor--closed">No longer accepting applications</figcaption>
+        </figure>
+        <div class="show-more-less-html__markup">
+          <p>Role: React Native Developer (Remote). Location: Remote.</p>
+        </div>
+      </body></html>`;
+    expect(isClosedJobListingHtml(html)).toBe(true);
+    const e = extractPublicJobListingFromHtml(
+      html,
+      "https://www.linkedin.com/jobs/view/4446737057/"
+    );
+    expect(e.listingClosed).toBe(true);
+    expect(e.title).toBe("React Native Developer (Remote)");
+    expect(e.companyName).toBe("Hire Feed");
+  });
+
+  it("does not mark open guest postings as closed", () => {
+    const html = `
+      <html><body>
+        <h1 class="top-card-layout__title">Open Role</h1>
+        <a class="topcard__org-name-link">Acme</a>
+        <figcaption class="num-applicants__caption">Be among the first 25 applicants</figcaption>
+        <div class="show-more-less-html__markup"><p>We are hiring a full stack engineer with React.</p></div>
+      </body></html>`;
+    expect(isClosedJobListingHtml(html)).toBe(false);
+    expect(
+      extractPublicJobListingFromHtml(html, "https://www.linkedin.com/jobs/view/1/").listingClosed
+    ).toBeUndefined();
+  });
+
+  it("detects closed phrases in plain text", () => {
+    expect(isClosedJobListingText("No longer accepting applications")).toBe(true);
+    expect(isClosedJobListingText("This job has expired on Indeed")).toBe(true);
+    expect(isClosedJobListingText("Great team, remote role, apply today")).toBe(false);
+  });
+});
+
+describe("site-agnostic listing extract (JSON-LD + embedded SPA JSON)", () => {
+  it("decodes \\xHH JS string escapes", () => {
+    expect(decodeJsStringLiteral("\\x22hello\\x22")).toBe('"hello"');
+    expect(decodeJsStringLiteral("a\\/b")).toBe("a/b");
+  });
+
+  it("extracts JobPosting from JSON-LD", () => {
+    const html = `<html><head>
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org/",
+        "@type": "JobPosting",
+        "title": "Senior Frontend Engineer",
+        "description": "<p>We need a senior frontend engineer with React, TypeScript, and system design experience across large product surfaces.</p><p>Remote-friendly team with strong design partnership.</p><p>You will own complex UI systems, mentor other engineers, partner with product, and ship high-quality experiences used by thousands of customers every day.</p><p>Requirements include 5+ years building web apps, deep React knowledge, accessibility awareness, and excellent communication skills.</p>",
+        "hiringOrganization": { "@type": "Organization", "name": "Acme Labs" },
+        "jobLocationType": "TELECOMMUTE"
+      }
+      </script>
+    </head><body></body></html>`;
+    const e = extractJobListingStructured(html);
+    expect(e.title).toBe("Senior Frontend Engineer");
+    expect(e.companyName).toBe("Acme Labs");
+    expect(e.workMode).toBe("remote");
+    expect(e.description).toMatch(/React, TypeScript/);
+    expect(e.descriptionSource).toBe("jsonld");
+    expect(isThinJobDescription(e.description)).toBe(false);
+  });
+
+  it("mines full JD from JSON.parse embedded SPA payloads (any ATS)", () => {
+    // Mirrors career SPAs that put the posting only inside script (visible body ~empty).
+    const jobJson = JSON.stringify([
+      {
+        Salary: null,
+        Remote_Job: true,
+        Posting_Title: "Senior Frontend and UI/UX Engineer (Egypt)",
+        Job_Description:
+          "<html><body><p>This is a remote position.</p><ul><li>8+ years of hands-on experience in building complex and scalable frontend products using TypeScript, React, Vue.js, and Next.js.</li><li>Architect and implement robust, reusable, and maintainable frontend components and libraries.</li><li>Experience with RESTful and GraphQL APIs, state management (Tanstack Query, Redux, Zustand), and CI/CD.</li><li>Proficient understanding of Agile/Scrum methodologies and experience working in an Agile environment.</li></ul></body></html>",
+        Job_Opening_Name: "Senior Frontend and UI/UX Engineer (Egypt)",
+        company_name: "GamaLearn",
+        Publish: true,
+        id: "605103000011550001"
+      }
+    ]);
+    const escaped = jobJson.replace(/\\/g, "\\\\").replace(/"/g, "\\x22");
+    const html = `<!DOCTYPE html><html><head>
+      <title>GamaLearn - Senior Frontend and UI/UX Engineer (Egypt) - Remote Job</title>
+      <meta name="description" content="GamaLearn This is a remote position. 8+ years of hands-on experience truncated…" />
+      <meta property="og:site_name" content="GamaLearn" />
+    </head><body>
+      <script>var jobs = JSON.parse('${escaped}');</script>
+    </body></html>`;
+
+    const embedded = extractEmbeddedJobJson(html);
+    expect(embedded).not.toBeNull();
+    expect(embedded!.title).toBe("Senior Frontend and UI/UX Engineer (Egypt)");
+    expect(embedded!.companyName).toBe("GamaLearn");
+    expect(embedded!.workMode).toBe("remote");
+    expect(embedded!.description).toMatch(/TypeScript, React, Vue\.js/);
+    expect(isThinJobDescription(embedded!.description)).toBe(false);
+
+    const e = extractPublicJobListingFromHtml(
+      html,
+      "https://example.com/jobs/Careers/605103000011550001/Senior-Frontend-and-UI-UX-Engineer"
+    );
+    expect(e.title).toBe("Senior Frontend and UI/UX Engineer (Egypt)");
+    expect(e.companyName).toBe("GamaLearn");
+    expect(e.description).toMatch(/Tanstack Query/);
+    expect(isThinJobDescription(e.description)).toBe(false);
+  });
+
+  it("keeps meta-only pages thin when no structured body exists", () => {
+    const html = `<html><head>
+      <meta name="description" content="Short teaser only." />
+      <title>Some Role</title>
+    </head><body>Chrome only</body></html>`;
+    const e = extractJobListingStructured(html);
+    expect(e.description).toBeTruthy();
+    expect(isThinJobDescription(e.description ?? "")).toBe(true);
   });
 });

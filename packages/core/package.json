@@ -12,6 +12,7 @@
     "test:unit": "vp test run"
   },
   "dependencies": {
+    "@extractus/article-extractor": "catalog:",
     "octokit": "catalog:",
     "zod": "catalog:"
   },

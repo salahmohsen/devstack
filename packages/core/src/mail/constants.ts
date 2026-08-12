@@ -9,6 +9,7 @@ import {
 export const MAIL_CATEGORY_IDS = [
   "needs_action",
   "applications",
+  "job_notifier",
   "recruiters",
   "interviews",
   "offers",
@@ -45,6 +46,7 @@ export const MAIL_NEEDS_ACTION_LABELS = [
  */
 export const MAIL_CATEGORY_TO_SYSTEM_LABEL = {
   applications: "application",
+  job_notifier: "job_notifier",
   recruiters: "recruiter",
   interviews: "interview",
   offers: "offer",
@@ -56,11 +58,12 @@ export const MAIL_CATEGORY_TO_SYSTEM_LABEL = {
 
 /**
  * System label → hub card category.
- * `job_notifier` has no dedicated card (harvest → Applications CRM).
+ * Job-alert digests map to the Job notifier hub filter (harvest still feeds New jobs).
  */
 export const MAIL_SYSTEM_LABEL_TO_CATEGORY = {
   application: "applications",
   application_status: "applications",
+  job_notifier: "job_notifier",
   recruiter: "recruiters",
   interview: "interviews",
   offer: "offers",
@@ -82,6 +85,7 @@ export const MAIL_SMART_RULE_LABEL_PREFIX = "rule:" as const;
 export const MAIL_CATEGORY_LABELS: Record<MailCategoryId, string> = {
   needs_action: "Needs action",
   applications: "Applications",
+  job_notifier: "Job notifier",
   recruiters: "Recruiters",
   interviews: "Interviews",
   offers: "Offers",
@@ -93,6 +97,7 @@ export const MAIL_CATEGORY_LABELS: Record<MailCategoryId, string> = {
 export const MAIL_CATEGORY_DESCRIPTIONS: Record<MailCategoryId, string> = {
   needs_action: "Replies, interviews, and status that need you",
   applications: "Linked to roles in your pipeline",
+  job_notifier: "Job-alert digests (LinkedIn, Indeed, …) — harvest source for New jobs",
   recruiters: "People and agencies reaching out",
   interviews: "Scheduling and interview loops",
   offers: "Offer letters and compensation",
@@ -104,6 +109,7 @@ export const MAIL_CATEGORY_DESCRIPTIONS: Record<MailCategoryId, string> = {
 export const MAIL_CATEGORY_ICONS: Record<MailCategoryId, MailCategoryIcon> = {
   needs_action: "sparkles",
   applications: "briefcase",
+  job_notifier: "bell",
   recruiters: "users",
   interviews: "calendar",
   offers: "gift",

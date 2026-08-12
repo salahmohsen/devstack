@@ -178,6 +178,7 @@ catalog:
   unpdf: ^1.8.0
   vite-node: ^6.0.0
   jose: ^6.2.4
+  "@extractus/article-extractor": ^9.0.0
 
 catalogMode: prefer
 

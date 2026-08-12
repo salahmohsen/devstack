@@ -7,12 +7,37 @@ import { ApplicationApplyMethodSchema, ApplicationSourceSchema } from "#@/applic
 export const THIN_JD_DESCRIPTION_CHARS = 400;
 
 /**
- * True when description is missing or shorter than {@link THIN_JD_DESCRIPTION_CHARS}.
+ * Phrases that mark a harvest stub / paywall placeholder rather than a real JD.
+ * Matched case-insensitively even when length is above {@link THIN_JD_DESCRIPTION_CHARS}.
+ */
+export const THIN_JD_STUB_MARKERS = [
+  "sign-in wall",
+  "signin wall",
+  "sign in wall",
+  "full posting details were unavailable",
+  "posting details were unavailable",
+  "speak to jack and jill",
+  "get matched with roles or candidates",
+  "jack & jill ai",
+  "jack and jill ai",
+  "log in to view the full",
+  "login to view the full",
+  "sign in to view the full",
+  "sign in to continue"
+] as const;
+
+/**
+ * True when description is missing, shorter than {@link THIN_JD_DESCRIPTION_CHARS},
+ * or matches a known harvest/paywall stub marker.
  * Callers also require a fetchable listing/apply URL before fetching.
  */
 export function isThinJobDescription(description: string | null | undefined): boolean {
   if (description == null) return true;
-  return description.trim().length < THIN_JD_DESCRIPTION_CHARS;
+  const trimmed = description.trim();
+  if (trimmed.length === 0) return true;
+  if (trimmed.length < THIN_JD_DESCRIPTION_CHARS) return true;
+  const lower = trimmed.toLowerCase();
+  return THIN_JD_STUB_MARKERS.some((marker) => lower.includes(marker));
 }
 
 const optionalNullableEmail = z

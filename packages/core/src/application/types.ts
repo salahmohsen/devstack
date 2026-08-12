@@ -100,6 +100,8 @@ export const ApplicationOutputSchema = z.object({
   applyMethod: ApplicationApplyMethodSchema,
   matchScore: z.number().int().min(0).max(100).nullable(),
   source: ApplicationSourceSchema.nullable(),
+  /** Free-text when platform is `other` (e.g. "Jack & Jill"). */
+  sourceLabel: z.string().nullable(),
   sourceTags: z.array(z.string()),
   location: z.string().nullable(),
   salaryRange: z.string().nullable(),
@@ -152,6 +154,7 @@ export const CreateApplicationInputSchema = z.object({
   applyMethod: ApplicationApplyMethodSchema.optional(),
   matchScore: optionalMatchScore,
   source: optionalSource,
+  sourceLabel: optionalText,
   sourceTags: z.array(ApplicationSourceTagSchema).optional(),
   location: optionalText,
   salaryRange: optionalText,
@@ -176,6 +179,14 @@ export const CreateApplicationInputSchema = z.object({
 export const PromoteApplicationInputSchema = z.object({ id: z.string().min(1) });
 export const DismissApplicationInputSchema = z.object({ id: z.string().min(1) });
 export const RestoreApplicationInputSchema = z.object({ id: z.string().min(1) });
+/** Bulk soft-dismiss inbox jobs (New jobs multi-select). */
+export const BatchDismissApplicationsInputSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(100)
+});
+/** Bulk restore dismissed jobs to New jobs inbox. */
+export const BatchRestoreApplicationsInputSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(100)
+});
 export const ListApplicationActivityInputSchema = z.object({
   applicationId: z.string().min(1),
   limit: z.number().int().min(1).max(200).optional()
@@ -194,6 +205,12 @@ export const CountApplicationsInputSchema = z.object({
 
 export const RegenerateAgentTakeInputSchema = z.object({
   id: z.string().min(1)
+});
+
+/** Fix posting URL + re-fetch/extract job details (New jobs). */
+export const RefreshApplicationFromUrlInputSchema = z.object({
+  id: z.string().min(1),
+  url: z.string().url().max(2_000)
 });
 
 /** Manual “Scan job alerts” — re-harvest recent job_notifier digests. */
@@ -220,6 +237,7 @@ export const UpdateApplicationInputSchema = z.object({
   applyMethod: ApplicationApplyMethodSchema.optional(),
   matchScore: optionalMatchScore,
   source: optionalSource,
+  sourceLabel: optionalText,
   location: optionalText,
   salaryRange: optionalText,
   employmentType: EmploymentTypeSchema.optional(),
@@ -258,10 +276,13 @@ export type DeleteApplicationsInput = z.infer<typeof DeleteApplicationsInputSche
 export type PromoteApplicationInput = z.infer<typeof PromoteApplicationInputSchema>;
 export type DismissApplicationInput = z.infer<typeof DismissApplicationInputSchema>;
 export type RestoreApplicationInput = z.infer<typeof RestoreApplicationInputSchema>;
+export type BatchDismissApplicationsInput = z.infer<typeof BatchDismissApplicationsInputSchema>;
+export type BatchRestoreApplicationsInput = z.infer<typeof BatchRestoreApplicationsInputSchema>;
 export type ListApplicationActivityInput = z.infer<typeof ListApplicationActivityInputSchema>;
 export type AddApplicationNoteInput = z.infer<typeof AddApplicationNoteInputSchema>;
 export type ListApplicationsInput = z.infer<typeof ListApplicationsInputSchema>;
 export type CountApplicationsInput = z.infer<typeof CountApplicationsInputSchema>;
 export type RegenerateAgentTakeInput = z.infer<typeof RegenerateAgentTakeInputSchema>;
+export type RefreshApplicationFromUrlInput = z.infer<typeof RefreshApplicationFromUrlInputSchema>;
 export type ScanJobAlertsInput = z.infer<typeof ScanJobAlertsInputSchema>;
 export type ScanJobAlertsOutput = z.infer<typeof ScanJobAlertsOutputSchema>;

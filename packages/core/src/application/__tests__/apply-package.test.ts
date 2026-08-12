@@ -112,9 +112,30 @@ describe("isThinJobDescription", () => {
     expect(isThinJobDescription(`  ${"x".repeat(THIN_JD_DESCRIPTION_CHARS - 1)}  `)).toBe(true);
   });
 
-  it("is not thin at or above threshold", () => {
+  it("is not thin at or above threshold without stub markers", () => {
     expect(isThinJobDescription("x".repeat(THIN_JD_DESCRIPTION_CHARS))).toBe(false);
     expect(isThinJobDescription("x".repeat(THIN_JD_DESCRIPTION_CHARS + 50))).toBe(false);
+  });
+
+  it("treats Jack & Jill / sign-in wall harvest stubs as thin", () => {
+    expect(
+      isThinJobDescription(
+        "Senior Front-End Engineer role at Exequt. Remote position with US Eastern Time overlap. The full posting details were unavailable behind the Jack & Jill AI sign-in wall."
+      )
+    ).toBe(true);
+    expect(
+      isThinJobDescription(
+        "Speak to Jack and Jill and get matched with roles or candidates in a deeply personalised way."
+      )
+    ).toBe(true);
+  });
+
+  it("treats long descriptions that contain stub markers as thin", () => {
+    const padded =
+      "Senior role overview. ".repeat(30) +
+      "The full posting details were unavailable behind the Jack & Jill AI sign-in wall.";
+    expect(padded.trim().length).toBeGreaterThanOrEqual(THIN_JD_DESCRIPTION_CHARS);
+    expect(isThinJobDescription(padded)).toBe(true);
   });
 });
 
@@ -143,10 +164,8 @@ describe("rewrite chunk schemas", () => {
       { experienceId: "e2", rewrittenBullets: ["Did Y"] }
     ]);
     expect(p.success).toBe(true);
-    if (p.success) {
-      expect(p.data.items).toHaveLength(2);
-      expect(p.data.items[0]?.experienceId).toBe("e1");
-    }
+    expect(p.data?.items).toHaveLength(2);
+    expect(p.data?.items[0]?.experienceId).toBe("e1");
   });
   it("accepts project rewrite chunk", () => {
     const p = ApplyPackageProjectRewriteChunkSchema.safeParse({
@@ -159,9 +178,7 @@ describe("rewrite chunk schemas", () => {
       { projectId: "p1", rewrittenSummary: "App" }
     ]);
     expect(p.success).toBe(true);
-    if (p.success) {
-      expect(p.data.items[0]?.projectId).toBe("p1");
-    }
+    expect(p.data?.items[0]?.projectId).toBe("p1");
   });
   it("accepts summary and letters", () => {
     const p = ApplyPackageSummaryAndLettersSchema.safeParse({
