@@ -1,10 +1,16 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { formatStackTypeLabel, type DetectStacksResult, type DetectedStack } from "@tsu-stack/core";
+import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  formatStackTypeLabel,
+  type DetectStacksResult,
+  type DetectedStack,
+  type StackOutput
+} from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
@@ -20,8 +26,15 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 
 import { AiChangeList, type AiChangeItem, type AiChangeKindMeta } from "@/shared/ui/ai-change-list";
-import { DefaultLoader } from "@/shared/ui/default-loader";
 import { Icon } from "@/shared/ui/icon";
+
+import {
+  dismissDetectStacksJob,
+  setDetectReviewOpen,
+  useDetectStacksJobSelector
+} from "@/features/stacks";
+
+import { notifyDetectStacksApplied } from "@/pages/dashboard/projects/_lib/detect-stacks-form-bridge";
 
 const confidenceVariant = (confidence: string) => {
   if (confidence === "high") return "success";
@@ -79,24 +92,20 @@ export type UpsertedDetectedStack = {
   description: string | null;
 };
 
+/**
+ * Results-only dialog. Progress lives in the sticky toast + form button;
+ * this dialog opens only when the detached job is `ready` with reviewable stacks.
+ */
 export function DetectStacksDialog({
   open,
   setOpen,
   onStacksSelected,
-  isDetecting,
-  currentStep,
-  results,
-  error,
-  onCancel
+  results
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
   onStacksSelected: (stacks: UpsertedDetectedStack[]) => Promise<void>;
-  isDetecting: boolean;
-  currentStep: string | null;
   results: DetectStacksResult | null;
-  error: string | null;
-  onCancel?: () => void;
 }) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -335,15 +344,6 @@ export function DetectStacksDialog({
     }
   };
 
-  const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      // Always notify parent on dismiss so an in-flight detect is aborted
-      // (Cancel, Escape, overlay, or X). Parent no-ops if nothing is running.
-      onCancel?.();
-    }
-    setOpen(next);
-  };
-
   const toggleAllSelectable = (next: boolean) => {
     setRowSelection((prev) => {
       const copy = { ...prev };
@@ -358,39 +358,16 @@ export function DetectStacksDialog({
   const repoCount = results?.groupedByRepo?.length ?? 0;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogPopup className="sm:max-w-2xl lg:max-w-3xl" showCloseButton>
         <DialogHeader>
           <DialogTitle>Detect Stacks from Repositories</DialogTitle>
           <DialogDescription>
-            {isDetecting
-              ? "Scanning linked repositories for technologies."
-              : "Review detected technologies and choose which to associate with this project."}
+            Review detected technologies and choose which to associate with this project.
           </DialogDescription>
         </DialogHeader>
 
-        {isDetecting ? (
-          <DialogPanel>
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <div className="flex items-center gap-3">
-                <DefaultLoader />
-                <p className="shimmer text-sm font-medium text-foreground">
-                  {currentStep ?? "Detecting stacks…"}
-                </p>
-              </div>
-              <p className="max-w-sm text-xs text-muted-foreground">
-                This can take a minute for monorepos. You can cancel anytime.
-              </p>
-            </div>
-          </DialogPanel>
-        ) : error ? (
-          <DialogPanel>
-            <div className="flex flex-col items-center gap-2 py-10 text-center">
-              <p className="text-sm font-medium text-destructive">Detection failed</p>
-              <p className="max-w-md text-sm text-muted-foreground">{error}</p>
-            </div>
-          </DialogPanel>
-        ) : hasResults ? (
+        {hasResults ? (
           <DialogPanel className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
               {allStacks.length} stack{allStacks.length === 1 ? "" : "s"} found across {repoCount}{" "}
@@ -469,26 +446,79 @@ export function DetectStacksDialog({
         )}
 
         <DialogFooter>
-          {isDetecting ? (
-            <Button variant="outline" type="button" onClick={() => handleOpenChange(false)}>
-              Cancel
+          <DialogClose render={<Button variant="ghost" type="button" />}>Close</DialogClose>
+          {hasResults ? (
+            <Button
+              type="button"
+              onClick={() => void handleAddSelected()}
+              disabled={isSubmitting || selectedCount === 0}
+            >
+              {isSubmitting ? "Adding…" : `Add Selected (${selectedCount})`}
             </Button>
-          ) : (
-            <>
-              <DialogClose render={<Button variant="ghost" type="button" />}>Close</DialogClose>
-              {hasResults ? (
-                <Button
-                  type="button"
-                  onClick={() => void handleAddSelected()}
-                  disabled={isSubmitting || selectedCount === 0}
-                >
-                  {isSubmitting ? "Adding…" : `Add Selected (${selectedCount})`}
-                </Button>
-              ) : null}
-            </>
-          )}
+          ) : null}
         </DialogFooter>
       </DialogPopup>
     </Dialog>
+  );
+}
+
+/**
+ * Always-mounted host for detect results. Survives project form sheet unmount
+ * so ready review stays available after navigation / closing the form.
+ */
+export function DetectStacksResultsHost() {
+  const queryClient = useQueryClient();
+  const dialogOpen = useDetectStacksJobSelector((s) => s.dialogOpen);
+  const results = useDetectStacksJobSelector((s) => s.results);
+  const projectId = useDetectStacksJobSelector((s) => s.projectId);
+
+  return (
+    <DetectStacksDialog
+      open={dialogOpen}
+      setOpen={(open) => {
+        setDetectReviewOpen(open);
+        // Closing without apply keeps ready results so Detect can reopen them.
+      }}
+      results={results}
+      onStacksSelected={async (upserted) => {
+        if (projectId) {
+          notifyDetectStacksApplied(projectId, upserted);
+        }
+
+        const listKey = orpcQueryClient.stacks.list.queryKey();
+        queryClient.setQueryData<StackOutput[]>(listKey, (prev) => {
+          const existing = prev ?? [];
+          const byId = new Map(existing.map((s) => [s.id, s]));
+          for (const s of upserted) {
+            if (byId.has(s.id)) continue;
+            byId.set(s.id, {
+              id: s.id,
+              name: s.name,
+              description: s.description,
+              icon: s.icon,
+              type: s.type,
+              healthStatus: null,
+              confidence: null,
+              projectCount: 0,
+              sortOrder: existing.length,
+              portfolioEntryId: null,
+              includedInPortfolio: false,
+              dependencies: [],
+              projects: [],
+              updatedAt: new Date(),
+              createdAt: new Date()
+            });
+          }
+          return Array.from(byId.values());
+        });
+
+        void queryClient.invalidateQueries({ queryKey: listKey });
+        void queryClient.invalidateQueries({
+          queryKey: orpcQueryClient.projects.list.queryKey()
+        });
+
+        dismissDetectStacksJob();
+      }}
+    />
   );
 }

@@ -55,6 +55,7 @@ import {
 import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useProjectStore } from "@/pages/dashboard/projects/_lib/project.slice";
+import { DetectStacksResultsHost } from "@/pages/dashboard/projects/ui/detect-stacks-dialog";
 import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
 export function ProjectsPage() {
@@ -559,6 +560,10 @@ export function ProjectsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
         />
+
+        {/* Detached detect results — always mounted so closing the form sheet keeps review available */}
+        <DetectStacksResultsHost />
+
         <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
           <AlertDialogPopup>
             <AlertDialogHeader>
