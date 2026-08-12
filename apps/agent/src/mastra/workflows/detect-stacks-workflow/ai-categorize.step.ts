@@ -40,11 +40,9 @@ function lowConfidenceFallback(deps: Array<{ name: string; repo: string }>): Cat
   });
 }
 
-function isAbortError(error: unknown, abortSignal?: AbortSignal): boolean {
-  if (abortSignal?.aborted) return true;
-  if (error instanceof DOMException && error.name === "AbortError") return true;
-  if (error instanceof Error && error.name === "AbortError") return true;
-  return false;
+/** True only when the workflow run was cancelled — not orphan provider AbortErrors. */
+function isWorkflowAborted(abortSignal?: AbortSignal): boolean {
+  return Boolean(abortSignal?.aborted);
 }
 
 export const aiCategorize = createStep({
@@ -62,7 +60,7 @@ export const aiCategorize = createStep({
     const abortSignal = params.abortSignal;
     const writer = params.writer;
 
-    if (abortSignal?.aborted) {
+    if (isWorkflowAborted(abortSignal)) {
       log.set({
         event: "detect_stacks_ai_categorize_completed",
         unknownCount: unknown.length,
@@ -70,7 +68,7 @@ export const aiCategorize = createStep({
         durationMs: Date.now() - started,
         reason: "aborted"
       });
-      log.emit();
+      log.emit({ _forceKeep: true });
       return { matched, categorized: [] };
     }
 
@@ -312,8 +310,9 @@ Do NOT invent descriptions — they are filled from the official npm registry la
           lastChunkDurationMs: Date.now() - chunkStarted
         });
       } catch (error) {
-        // Cancel must not invent low-confidence rows — stop the categorize phase.
-        if (isAbortError(error, abortSignal)) {
+        // Workflow cancel only: stop without inventing rows for unprocessed packages.
+        // Orphan provider AbortError (without abortSignal.aborted) soft-fails the chunk.
+        if (isWorkflowAborted(abortSignal)) {
           stopReason = "aborted";
           log.set({
             unknownCount: unknown.length,
