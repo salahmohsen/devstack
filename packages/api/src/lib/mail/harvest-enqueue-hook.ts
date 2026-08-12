@@ -68,7 +68,7 @@ async function enqueueDirect(input: {
 
   // BullMQ custom job ids cannot contain `:` (used as Redis key separators).
   const jobId = input.force
-    ? `harvest_${data.userId}_${data.messageId}_${Date.now()}`
+    ? `harvest_${data.userId}_${data.messageId}_${crypto.randomUUID()}`
     : `harvest_${data.userId}_${data.messageId}`;
 
   try {

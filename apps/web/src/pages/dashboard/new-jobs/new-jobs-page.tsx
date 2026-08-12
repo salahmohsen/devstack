@@ -147,25 +147,33 @@ function NewJobCard({
               {takeExpanded ? "Show less" : "Show more"}
             </Button>
           ) : null}
-          {job.url || job.applyUrl ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1.5 px-2 text-xs"
-              render={
-                <a
-                  href={(job.url ?? job.applyUrl)!}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Open job listing"
-                />
-              }
-            >
-              <ExternalLinkIcon className="size-3.5" aria-hidden />
-              Listing
-            </Button>
-          ) : null}
+          {(() => {
+            const listing = job.url ?? job.applyUrl;
+            const safe =
+              listing &&
+              (() => {
+                try {
+                  const u = new URL(listing);
+                  return u.protocol === "http:" || u.protocol === "https:" ? listing : null;
+                } catch {
+                  return null;
+                }
+              })();
+            return safe ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2 text-xs"
+                render={
+                  <a href={safe} target="_blank" rel="noreferrer" aria-label="Open job listing" />
+                }
+              >
+                <ExternalLinkIcon className="size-3.5" aria-hidden />
+                Listing
+              </Button>
+            ) : null;
+          })()}
           <Button
             type="button"
             variant="ghost"
@@ -305,7 +313,10 @@ function NewJobCard({
               </p>
             ) : null}
             {hasDescription ? (
-              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+              <Markdown
+                allowRawHtml={false}
+                className="prose prose-sm max-w-none text-foreground dark:prose-invert"
+              >
                 {job.description!}
               </Markdown>
             ) : (

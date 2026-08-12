@@ -116,7 +116,7 @@ export async function applyMailCrmEffectFromClassify(input: {
 
   if (!appId && systemLabelsParsed.length > 0) {
     const llm = await resolveRuntimeAiCredentials(input.userId, "classify");
-    // Open tracked ∪ inbox (not dismissed) so career mail can attach to New jobs discoveries.
+    // Open tracked only (design lock — New jobs inbox is not CRM match set).
     const candidates = await applicationRepository.findCrmMatchCandidatesByUserId(input.userId);
     const matchCall = await callCrmApplicationMatcher({
       messageId: input.messageId,
@@ -165,7 +165,6 @@ export async function applyMailCrmEffectFromClassify(input: {
                 applicationId: app.id,
                 from
               });
-              log.emit();
             }
           }
           if (app) {
@@ -181,7 +180,6 @@ export async function applyMailCrmEffectFromClassify(input: {
             applicationId: appId,
             reason: match.reason ?? "ai_match"
           });
-          log.emit();
         }
       } else if (match.kind === "create_new") {
         const companyName = (match.companyName ?? "").trim() || "Unknown company";
@@ -225,7 +223,6 @@ export async function applyMailCrmEffectFromClassify(input: {
           title,
           stage
         });
-        log.emit();
       } else {
         log.set({
           event: "mail_crm_match_skip",
@@ -234,7 +231,6 @@ export async function applyMailCrmEffectFromClassify(input: {
           reason: match.reason ?? "ai_skip",
           kind: match.kind
         });
-        log.emit();
       }
     } else {
       log.set({
@@ -243,7 +239,6 @@ export async function applyMailCrmEffectFromClassify(input: {
         userId: input.userId,
         reason: matchCall.failure.reason
       });
-      log.emit({ _forceKeep: true });
     }
   }
 

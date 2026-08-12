@@ -39,6 +39,7 @@ function isSuccessfulMutatingToolOutput(toolName: string, output: unknown): bool
   const o = output as { applicationId?: unknown; created?: unknown; ok?: unknown };
 
   if (toolName === "create-application" || toolName === "createApplication") {
+    if (o.ok === false) return false;
     const id = typeof o.applicationId === "string" ? o.applicationId.trim() : "";
     return id.length > 0;
   }

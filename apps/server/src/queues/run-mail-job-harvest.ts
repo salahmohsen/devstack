@@ -193,12 +193,12 @@ export async function runMailJobHarvest(input: {
       }
     } catch (err) {
       skippedFailed += 1;
+      // One logger lifetime for the whole run — only set mid-loop; emit once at end.
       log.error(err instanceof Error ? err : new Error(String(err)), {
         event: "mail_job_harvest_job_create_failed",
         messageId: row.id,
         listingUrl: job.listingUrl
       });
-      log.emit({ _forceKeep: true });
     }
   }
 

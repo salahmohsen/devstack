@@ -102,7 +102,8 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
       requireToolApproval: ({ toolName }) =>
         // Workflow tools are exposed as agent tools named after the workflow id.
         // generate-apply-package is the thin CRM package bridge (HITL).
-        /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify|generate-apply-package|generateApplyPackage/i.test(
+        // create-application must not silently insert tracked rows without HITL.
+        /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify|generate-apply-package|generateApplyPackage|create-application|createApplication/i.test(
           toolName
         )
     },

@@ -6,7 +6,6 @@ import {
   inArray,
   isNull,
   lt,
-  or,
   sql,
   type InferInsertModel,
   type InferSelectModel
@@ -63,23 +62,12 @@ export const applicationRepository = {
   },
 
   /**
-   * CRM mail matcher candidates: open tracked ∪ New jobs inbox.
-   * Dismissed excluded (soft-reject). Callers promote non-tracked on match.
+   * CRM mail matcher candidates: **open tracked only** (design lock).
+   * New jobs inbox is discovery surface — not CRM stage-match candidates.
+   * Dismissed excluded. Same set as {@link findOpenByUserId}.
    */
   async findCrmMatchCandidatesByUserId(userId: string) {
-    return getDb()
-      .select()
-      .from(application)
-      .where(
-        and(
-          eq(application.userId, userId),
-          or(
-            and(eq(application.trackingStatus, "tracked"), isNull(application.outcome)),
-            eq(application.trackingStatus, "inbox")
-          )
-        )
-      )
-      .orderBy(desc(application.updatedAt));
+    return this.findOpenByUserId(userId);
   },
 
   async findByUserIdAndTrackingStatus(userId: string, trackingStatus: ApplicationTrackingStatus) {
@@ -381,6 +369,9 @@ export const applicationRepository = {
   /**
    * Hard-delete dismissed applications last updated before `cutoff` (auto-purge).
    * Returns cover keys for best-effort object cleanup. Activity cascades via FK.
+   *
+   * Delete re-checks `tracking_status = dismissed` so a concurrent restore/promote
+   * cannot lose a row that left dismissed between select and delete (TOCTOU).
    */
   async deleteDismissedOlderThan(
     cutoff: Date,
@@ -400,7 +391,15 @@ export const applicationRepository = {
     if (candidates.length === 0) return [];
 
     const ids = candidates.map((c) => c.id);
-    await getDb().delete(application).where(inArray(application.id, ids));
-    return candidates;
+    // Status guard on delete: skip any id that was restored/promoted mid-flight.
+    const deleted = await getDb()
+      .delete(application)
+      .where(and(inArray(application.id, ids), eq(application.trackingStatus, "dismissed")))
+      .returning({
+        id: application.id,
+        userId: application.userId,
+        coverLetterR2Key: application.coverLetterR2Key
+      });
+    return deleted;
   }
 };

@@ -315,7 +315,10 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
 
           <Section title="Job description">
             {item.description?.trim() ? (
-              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+              <Markdown
+                allowRawHtml={false}
+                className="prose prose-sm max-w-none text-foreground dark:prose-invert"
+              >
                 {item.description}
               </Markdown>
             ) : (
@@ -325,7 +328,10 @@ export function ApplicationInfoPanel({ item }: ApplicationInfoPanelProps) {
 
           {item.notes?.trim() ? (
             <Section title="Legacy notes">
-              <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+              <Markdown
+                allowRawHtml={false}
+                className="prose prose-sm max-w-none text-foreground dark:prose-invert"
+              >
                 {item.notes}
               </Markdown>
             </Section>

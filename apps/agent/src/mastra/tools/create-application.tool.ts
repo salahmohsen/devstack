@@ -1,7 +1,11 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
-import { buildApplicationSourceTags, inferApplicationSource } from "@tsu-stack/core";
+import {
+  buildApplicationSourceTags,
+  canonicalizeJobUrl,
+  inferApplicationSource
+} from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
@@ -9,21 +13,29 @@ import {
   runWithDb
 } from "@tsu-stack/db";
 
+function isHttpUrl(value: string): boolean {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Create (or find by listing URL) a CRM application for the current tenant.
  *
  * Tenant scope: `userId` is ALWAYS taken from `requestContext` (set by the
  * chat handler). Never accept `userId` from tool input.
  *
- * - With `url`: race-safe `createIfAbsentByUrl` (v1 conflict returns existing
- *   without overwriting description).
+ * - With `url`: canonicalize → race-safe `createIfAbsentByUrl`.
  * - Without `url`: plain `create`.
  * Always stores full `description` on create.
  */
 export const createApplicationTool = createTool({
   id: "create-application",
   description:
-    "Create a job application in CRM (stage saved). Prefer after propose-application-from-jd save|package. Pass full description. With url uses create-if-absent; without url always inserts.",
+    "Create a job application in CRM (stage saved). Prefer after propose-application-from-jd save|package. Pass full description. With url uses create-if-absent; without url always inserts. Requires HITL approval.",
   inputSchema: z.object({
     title: z.string().min(1).max(300),
     companyName: z.string().min(1).max(200),
@@ -36,25 +48,56 @@ export const createApplicationTool = createTool({
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
-    applicationId: z.string(),
-    created: z.boolean()
+    ok: z.boolean(),
+    applicationId: z.string().optional(),
+    created: z.boolean().optional(),
+    code: z.string().optional(),
+    message: z.string().optional()
   }),
   execute: async (input, context) => {
     // Force tenant from requestContext — ignore any model-supplied identity.
     const userId = context.requestContext?.get?.("userId") as string | undefined;
     if (!userId) {
-      return { applicationId: "", created: false };
+      return {
+        ok: false,
+        code: "UNAUTHORIZED",
+        message: "Missing session user for create-application"
+      };
     }
 
-    const trimmedUrl = input.url?.trim() ?? "";
-    const listingUrl = trimmedUrl.length > 0 ? trimmedUrl : null;
+    const rawUrl = input.url?.trim() ?? "";
+    let listingUrl: string | null = null;
+    if (rawUrl.length > 0) {
+      if (!isHttpUrl(rawUrl)) {
+        return {
+          ok: false,
+          code: "INVALID_URL",
+          message: "Listing url must be http(s)"
+        };
+      }
+      listingUrl = canonicalizeJobUrl(rawUrl) ?? rawUrl;
+    }
+
+    const rawApply = input.applyUrl?.trim() ?? "";
+    let applyUrl: string | null = null;
+    if (rawApply.length > 0) {
+      if (!isHttpUrl(rawApply)) {
+        return {
+          ok: false,
+          code: "INVALID_URL",
+          message: "applyUrl must be http(s)"
+        };
+      }
+      applyUrl = rawApply;
+    }
+
     const platform = listingUrl ? inferApplicationSource(listingUrl) : null;
     const sourceTags = buildApplicationSourceTags({ channel: "hub", platform });
     const common = {
       userId,
       companyName: input.companyName,
       title: input.title,
-      applyUrl: input.applyUrl ?? null,
+      applyUrl,
       location: input.location ?? null,
       matchScore: input.matchScore ?? null,
       description: input.description,
@@ -74,21 +117,34 @@ export const createApplicationTool = createTool({
           ...common,
           url: listingUrl
         });
-        // URL conflict with inbox/dismissed → promote to tracked (design policy).
+        // URL conflict with inbox/dismissed → promote + merge non-empty hub fields.
         if (!created && result.row.trackingStatus !== "tracked") {
+          const from = result.row.trackingStatus;
           const promoted = await applicationRepository.setTrackingStatus(
             result.row.id,
             userId,
             "tracked"
           );
           if (promoted) {
+            const merged = await applicationRepository.update(promoted.id, userId, {
+              title: input.title,
+              companyName: input.companyName,
+              description: input.description,
+              applyUrl,
+              location: input.location ?? null,
+              matchScore: input.matchScore ?? null,
+              notes: input.notes ?? null,
+              source: platform ?? promoted.source,
+              sourceTags
+            });
             await applicationActivityRepository.append({
               userId,
               applicationId: promoted.id,
               kind: "promoted",
-              metadata: { from: result.row.trackingStatus, via: "hub_create_conflict" }
+              actorUserId: userId,
+              metadata: { from, via: "hub_create_conflict" }
             });
-            return { row: promoted, created: false };
+            return { row: merged ?? promoted, created: false };
           }
         }
         if (created) {
@@ -96,12 +152,13 @@ export const createApplicationTool = createTool({
             userId,
             applicationId: result.row.id,
             kind: "discovered",
+            actorUserId: userId,
             metadata: { via: "hub_create", sourceTags }
           });
         }
         return result;
       });
-      return { applicationId: row.id, created };
+      return { ok: true, applicationId: row.id, created };
     }
 
     const row = await runWithDb(db, async () => {
@@ -113,10 +170,11 @@ export const createApplicationTool = createTool({
         userId,
         applicationId: created.id,
         kind: "discovered",
+        actorUserId: userId,
         metadata: { via: "hub_create", sourceTags }
       });
       return created;
     });
-    return { applicationId: row.id, created: true };
+    return { ok: true, applicationId: row.id, created: true };
   }
 });

@@ -12,7 +12,7 @@ import { applicationRepository, createDb, runWithDb } from "@tsu-stack/db";
 export const listOpenApplicationsTool = createTool({
   id: "list-open-applications",
   description:
-    "List the seeker's open (no outcome) job applications: company, title, stage. Use to ground a reply in real CRM rows.",
+    "List open **tracked** pipeline applications (trackingStatus=tracked, no outcome): company, title, stage. Does not include New jobs inbox discoveries. Use to ground a reply in the CRM pipeline.",
   inputSchema: z.object({
     limit: z.number().int().min(1).max(20).optional().default(8)
     // Intentionally no userId — tenant is requestContext only.
@@ -25,13 +25,14 @@ export const listOpenApplicationsTool = createTool({
         title: z.string(),
         stage: z.string()
       })
-    )
+    ),
+    code: z.string().optional()
   }),
   execute: async ({ limit }, context) => {
     // Force tenant from requestContext — ignore any model-supplied identity.
     const userId = context.requestContext?.get?.("userId") as string | undefined;
     if (!userId) {
-      return { applications: [] };
+      return { applications: [], code: "UNAUTHORIZED" };
     }
     const db = createDb();
     const rows = await runWithDb(db, () => applicationRepository.findOpenByUserId(userId));

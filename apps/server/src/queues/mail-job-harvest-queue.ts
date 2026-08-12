@@ -56,8 +56,11 @@ export function startMailJobHarvestQueue(redisUrl: string): void {
           jobId: job.id ?? null,
           issues: parsed.error.issues.map((issue) => issue.message)
         });
-        log.emit();
-        return;
+        log.emit({ _forceKeep: true });
+        // Fail the BullMQ job so it can retry / land in failed (not silent success).
+        throw new Error(
+          `Invalid mail-job-harvest payload: ${parsed.error.issues.map((i) => i.message).join("; ")}`
+        );
       }
 
       const result = await runMailJobHarvest({
@@ -118,7 +121,7 @@ export async function enqueueMailJobHarvest(
 
   // BullMQ custom job ids cannot contain `:` (used as Redis key separators).
   const jobId = options?.force
-    ? `harvest_${data.userId}_${data.messageId}_${Date.now()}`
+    ? `harvest_${data.userId}_${data.messageId}_${crypto.randomUUID()}`
     : `harvest_${data.userId}_${data.messageId}`;
 
   try {
