@@ -92,7 +92,7 @@
 
 - [ ] **Step 1:** Move `withTimeout` + `withTimeoutSignal` from organize to `lib/with-timeout.ts` unchanged.
 - [ ] **Step 2:** Re-export from old path or update all imports (`rg with-timeout` under agent).
-- [ ] **Step 3:** Run agent package check if available: `pnpm --filter @tsu-stack/agent check` (or project equivalent).
+- [ ] **Step 3:** From `apps/agent`: `vp check` (package-local; see `.agents/workflow.md`).
 - [ ] **Step 4:** Commit: `refactor(agent): share withTimeoutSignal for workflow LLM steps`
 
 ### Task 2: Detect `ai-categorize` Mastra foreach + abort + progress
@@ -100,17 +100,22 @@
 **Files:**
 
 - Modify: `detect-stacks-workflow/ai-categorize.step.ts`, `utils.ts`, `index.ts`, schema as needed
+- Create if useful: `apps/agent/src/mastra/lib/workflow-progress.ts` (or keep progress emit inline)
 - **Skills:** mastra skill; Context7 `/mastra-ai/mastra` foreach + abortSignal + writer
+
+**Progress event contract (agent → web):** Prefer Mastra `workflow-step-progress` when using foreach (`completedCount` / `totalCount`). Additionally or alternatively emit custom writer chunks `{ type: "data-detect-progress", chunkIndex, chunkTotal, unknownTotal, label }` mapped client-side to `stepLabel` e.g. `Categorizing packages 26–50 of 120…`. Task 4 must handle these (organize only maps `workflow-step-start` today).
 
 - [ ] **Step 1:** Read current `ai-categorize.step.ts` and installed docs for `.foreach`, `writer`, `agent.generate` options.
 - [ ] **Step 2:** Lower `BATCH_TIMEOUT_MS` (e.g. 60_000); keep or slightly lower `BATCH_CHUNK_SIZE`.
 - [ ] **Step 3:** Refactor to emit batch array then `.foreach(categorizeBatchStep, { concurrency: 2 })` **or** keep single step but use concurrent pool **plus** `withTimeoutSignal` + abort into generate + progress writer — prefer foreach if name-merge can be post-pass.
 - [ ] **Step 4:** Pass `abortSignal` into `agent.generate`; on timeout abort local controller.
-- [ ] **Step 5:** Emit progress (foreach progress or `writer.custom`) with chunk index/total.
-- [ ] **Step 6:** Soft wall-clock for whole categorize; fallback remaining unknowns.
-- [ ] **Step 7:** Ensure logs include event names searchable in Axiom.
-- [ ] **Step 8:** Manual or unit: soft-fail path for empty unknown / missing model still works.
-- [ ] **Step 9:** Commit: `fix(agent): make detect ai-categorize cancelable, chunked, and progressive`
+- [ ] **Step 5:** Emit progress per contract above.
+- [ ] **Step 6:** Soft wall-clock for whole categorize (**under ~310s proxy kill**, target ~240–280s total); fallback remaining unknowns so stream can finish cleanly.
+- [ ] **Step 7:** Step **`retries`** (1–2) on LLM batch step if supported; **`structuredOutput` errorStrategy fallback** (or equivalent soft schema fail) — verify on installed Mastra and apply.
+- [ ] **Step 8:** Name-critical path: **post-merge display-name reuse after foreach**, or run categorize concurrency **1** if concurrent `usedNames` is unsafe.
+- [ ] **Step 9:** Ensure logs include event names searchable in Axiom.
+- [ ] **Step 10:** Manual or unit: soft-fail path for empty unknown / missing model still works.
+- [ ] **Step 11:** Commit: `fix(agent): make detect ai-categorize cancelable, chunked, and progressive`
 
 ---
 
@@ -143,8 +148,9 @@
 - Reference: `organize-stacks-job.tsx`, `organize-stacks-job-store.ts`
 
 - [ ] **Step 1:** Copy organize store shape; fields: status, stepLabel, runId, results, error, dialogOpen, projectId, startedAt, notes if any.
-- [ ] **Step 2:** Implement `startDetectStacksJob({ projectId, repos })` with single-flight, detached controller, sticky toast, stream loop (from mutation).
-- [ ] **Step 3:** Map progress events → stepLabel; on success set ready + dialogOpen; on empty success toast without dialog.
+- [ ] **Step 2:** Implement `startDetectStacksJob({ projectId, repos })` with single-flight, detached controller, sticky toast, stream loop (from mutation). While `running`, second start → toast only (no second job).
+- [ ] **Step 3:** Map `workflow-step-start` **and** progress contract from Task 2 (`workflow-step-progress` / `data-detect-progress`) → `stepLabel`; on success with reviewable stacks set ready + dialogOpen; on empty/no-changes success toast without dialog.
+
 - [ ] **Step 4:** `cancelDetectStacksJob` only on explicit cancel.
 - [ ] **Step 5:** Commit: `feat(web): detached detect-stacks job with toast progress`
 
@@ -181,11 +187,17 @@
 **Files:**
 
 - `shared/ui/batch-selection-bar.tsx`
-- stacks, projects, experiences, resumes, new-jobs, tracked-jobs list pages
+- Multi-select pages (all six):
+  - `apps/web/src/pages/dashboard/stacks/stacks-page.tsx`
+  - `apps/web/src/pages/dashboard/projects/ui/project-page.tsx`
+  - `apps/web/src/pages/dashboard/experiences/experiences-page.tsx`
+  - `apps/web/src/pages/dashboard/resumes/resume-page.tsx`
+  - `apps/web/src/pages/dashboard/new-jobs/new-jobs-page.tsx`
+  - `apps/web/src/pages/dashboard/tracked-jobs/ui/list.tsx`
 - **Skills:** coss, better-ui, transitions-dev, impeccable
 
 - [ ] **Step 1:** Add floating layout: `fixed bottom-6 left-1/2 -translate-x-1/2 z-50` card chrome (border, shadow, rounded, padding).
-- [ ] **Step 2:** Replace inline bars on all multi-select pages; hide when sort mode.
+- [ ] **Step 2:** Replace inline bars on all six pages; hide when sort mode; Select all = loaded only when infinite.
 - [ ] **Step 3:** Motion enter/exit; a11y `aria-label`; keyboard focus order OK.
 - [ ] **Step 4:** Commit: `feat(web): floating bottom multi-select action card`
 
@@ -211,12 +223,14 @@
 - `packages/db` stacks repo list method
 - `packages/api` `stacks.list`
 - `stacks-page.tsx`, route loader
+- Consumers: `stack-selector`, project form, optimistic `setQueryData` — inventory first
 
-- [ ] **Step 1:** Add `limit` + `cursor` input; return `{ items, nextCursor, totalCount? }`.
-- [ ] **Step 2:** Wire `useInfiniteQuery`; flatten pages for grid; sentinel at bottom.
-- [ ] **Step 3:** Keep batch selection across pages.
-- [ ] **Step 4:** Prefetch first page only in route.
-- [ ] **Step 5:** Commit: `feat: infinite scroll stacks list`
+- [ ] **Step 1:** Grep all `stacks.list` consumers including **`organize-stacks-job.tsx`**, `stack-selector`, project form, optimistic `setQueryData`; choose paginated list vs `listAll` for pickers; document in commit.
+- [ ] **Step 2:** Add `limit` + `cursor` input; return `{ items, nextCursor, totalCount? }` for dashboard; keep full list for pickers if needed.
+- [ ] **Step 3:** Wire `useInfiniteQuery`; flatten pages for grid; sentinel at bottom.
+- [ ] **Step 4:** Keep batch selection across pages; Select all = loaded only.
+- [ ] **Step 5:** Prefetch first page only in route; fix optimistic cache for new shape.
+- [ ] **Step 6:** Commit: `feat: infinite scroll stacks list`
 
 ### Task 10: Roll infinite pattern to other dashboard lists
 
@@ -241,34 +255,47 @@
 - [ ] **Step 2:** abortSignal + structuredOutput resilience per Mastra docs.
 - [ ] **Step 3:** Commit: `feat(agent): mail-reply agent tools for full career context`
 
-### Task 12: Mail UI generate + send (no Review)
+### Task 12: Mail generate + send APIs and UI (no Review)
 
 **Files:**
 
-- `mail-category-page.tsx` (and composer)
-- API: generate ephemeral draft + send reply RPC
-- Relocate `call-mail-reply-agent.ts` under `lib/mail/`
+- Relocate: `packages/api/src/lib/review/call-mail-reply-agent.ts` → `packages/api/src/lib/mail/call-mail-reply-agent.ts`
+- Create: core Zod I/O for ephemeral draft + send under `packages/core/src/mail/`
+- Create/Modify: `mail.router` — **generateReply** (subject/body only, no `review_item`) and **sendReply** (`sendCareerReply`)
+- Create: web hooks under `features/mail/` (not `features/review/`)
+- Modify: `mail-category-page.tsx` composer
 
-- [ ] **Step 1:** Generate fills local composer only.
-- [ ] **Step 2:** Send uses `sendCareerReply` without `review_item`.
-- [ ] **Step 3:** Remove “Queue for review” / navigate to Review.
-- [ ] **Step 4:** Commit: `feat(mail): on-the-fly generate and send reply`
+- [ ] **Step 1:** Relocate `callMailReplyAgent` to `lib/mail/`; no review_item writes.
+- [ ] **Step 2:** **generateReply** RPC: input `messageId` only (owner-scoped). Server loads message, rejects non-career / `system_notification` like create-reply-draft (`NOT_CAREER`), builds `jobContext` (non-persist half of create-draft), `resolveRuntimeAiCredentials(userId, "reply")`, calls mail-reply agent/workflow. Output `{ subject, bodyText }` only. Fail closed if BYO missing.
+- [ ] **Step 3:** **sendReply** RPC: input `messageId` + `subject` + `bodyText` (plain text). Server loads message, derives **`to` from `message.fromEmail`** (never trust client `to`), ownership check, then `sendCareerReply({ bodyText })`. Never touches review_item.
+- [ ] **Step 4:** **Composer body shape (locked):** Prefer **plain subject + plain body** fields for generate/send (match Review’s send path). If mail UI keeps `RichTextEditor`, strip HTML to `bodyText` the same way `queueComposerForReview` does before generate/send — never pass HTML as `bodyText` into `sendCareerReply` (escapes markup for recipients). Store agent `subject` in local state.
+- [ ] **Step 5:** Web: Generate fills **local composer** only — no Review navigation.
+- [ ] **Step 6:** Web: **Human confirm before send** (AlertDialog “Send reply?”); disable Send while mutation pending (no double Resend); not one-click from Generate.
+- [ ] **Step 7:** Remove “Queue for review” / `/dashboard/review` links from mail UI.
+- [ ] **Step 8:** Commit: `feat(mail): on-the-fly generate and confirmed send reply`
 
 ### Task 13: Remove Review surface + classify auto-draft
 
-**Files:**
+**Cascade touchpoints (all required):**
 
-- Delete review web/api/core queue types as scoped
-- `run-mail-classify.ts` remove auto draft/send
-- Sidebar, command palette, notifications, AI settings autonomy
-- DB migration drop FK + `review_item`
+- Delete web review route/page/`features/review/**`
+- Delete `review.router.ts`; unmount from `routers/index.ts`
+- Delete queue libs after Task 12 APIs exist (`create-reply-draft-from-mail`, `confirm-reply-draft`)
+- Core queue types out; keep/move reply draft schemas for agent
+- DB: schema/repo/relations; migration drop `app_notification.review_item_id` then `review_item`
+- Notifications: `reviewItemId`, kind `mail.reply.draft_ready` + settings UI
+- AI settings: `mailReplyAutonomy` UI/router/core
+- `run-mail-classify.ts` auto draft/send block
+- Sidebar, command palette, breadcrumbs, email template samples, `parse-ai-error` `"review"`
 
-- [ ] **Step 1:** Remove routes/UI/nav.
-- [ ] **Step 2:** Remove router + queue create/confirm paths.
-- [ ] **Step 3:** Migration: drop `app_notification.review_item_id` FK/column if unused, drop `review_item`.
-- [ ] **Step 4:** Keep job/career notifications → mail deep link.
-- [ ] **Step 5:** Update CONTEXT.md / README only if required by repo norms (prefer minimal).
-- [ ] **Step 6:** Commit: `feat!: remove career Review queue; notify opens mail`
+- [ ] **Step 1:** Remove routes/UI/nav/command palette.
+- [ ] **Step 2:** Remove review router + queue RPCs after mail RPCs ship.
+- [ ] **Step 3:** Data fix **before/with** schema drop: for rows with `kind = mail.reply.draft_ready` and/or `href` containing `/dashboard/review` — **rewrite `href` to `/dashboard/mail/all`** (parity with `mail.classified.important`; mail selection is local state today, not URL `messageId`). Optional later: `?messageId=` + open-in-reader is **out of this plan** unless implemented as a small explicit add-on. Do **not** invent `/dashboard/mail/<uuid>` paths.
+- [ ] **Step 4:** Migration: drop notification FK/column, drop `review_item` (+ enums as safe). Decide leave vs drop `mail_reply_autonomy` column in same migration (document choice).
+- [ ] **Step 5:** Strip `mailReplyAutonomy` + `mail.reply.draft_ready` settings from product surface.
+- [ ] **Step 6:** New job/career notifications continue to use **`/dashboard/mail/all`** (or valid category slug) only.
+- [ ] **Step 7:** Grep zero hits for `review_item`, `/dashboard/review`, `createReplyDraftFromMail` outside historical docs.
+- [ ] **Step 8:** Commit: `feat!: remove career Review queue; notify opens mail`
 
 ---
 
