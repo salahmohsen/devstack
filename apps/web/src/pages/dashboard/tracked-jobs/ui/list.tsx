@@ -142,26 +142,23 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
       }}
       className="flex min-h-0 flex-1 flex-col gap-3"
     >
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-        <TabsList className="shrink-0">
-          {LIST_FILTERS.map((filter) => (
-            <TabsTrigger key={filter.value} value={filter.value}>
-              {filter.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <TabsList className="w-fit shrink-0">
+        {LIST_FILTERS.map((filter) => (
+          <TabsTrigger key={filter.value} value={filter.value}>
+            {filter.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
 
-        <BatchSelectionBar
-          className="ms-auto"
-          selectedCount={selectedCount}
-          totalCount={filteredIds.length}
-          allVisibleSelected={allFilteredSelected}
-          isDeleting={deleteMutation.isPending}
-          onDeleteSelected={deleteSelected}
-          onSelectAll={() => selectAll(filteredIds)}
-          onClearSelection={clearSelection}
-        />
-      </div>
+      <BatchSelectionBar
+        selectedCount={selectedCount}
+        totalCount={filteredIds.length}
+        allVisibleSelected={allFilteredSelected}
+        isDeleting={deleteMutation.isPending}
+        onDeleteSelected={deleteSelected}
+        onSelectAll={() => selectAll(filteredIds)}
+        onClearSelection={clearSelection}
+      />
 
       {filtered.length === 0 ? (
         <ItemsEmpty

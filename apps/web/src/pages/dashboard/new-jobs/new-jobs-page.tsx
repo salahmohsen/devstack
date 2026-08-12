@@ -444,55 +444,51 @@ export function NewJobsPage() {
           }}
           className="flex min-h-0 flex-1 flex-col gap-3"
         >
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-            <TabsList className="shrink-0">
-              {INBOX_TABS.map((tab) => {
-                const count = tabCounts[tab.value];
-                return (
-                  <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
-                    {tab.label}
-                    {count > 0 ? (
-                      <Badge size="sm" variant="brand" className="tabular-nums">
-                        {count > 99 ? "99+" : count}
-                      </Badge>
-                    ) : null}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+          <TabsList className="w-fit shrink-0">
+            {INBOX_TABS.map((tab) => {
+              const count = tabCounts[tab.value];
+              return (
+                <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
+                  {tab.label}
+                  {count > 0 ? (
+                    <Badge size="sm" variant="brand" className="tabular-nums">
+                      {count > 99 ? "99+" : count}
+                    </Badge>
+                  ) : null}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-            {filter === "inbox" ? (
-              <BatchSelectionBar
-                className="ms-auto"
-                selectedCount={selectedCount}
-                totalCount={jobs.length}
-                allVisibleSelected={allVisibleSelected}
-                isDeleting={busyId === "__bulk__"}
-                deleteLabel="Dismiss"
-                deleteVariant="destructive"
-                deleteUsesBanIcon
-                onDeleteSelected={() => void bulkDismiss()}
-                onSelectAll={selectAllVisible}
-                onClearSelection={clearSelection}
-              />
-            ) : (
-              <BatchSelectionBar
-                className="ms-auto"
-                selectedCount={selectedCount}
-                totalCount={jobs.length}
-                allVisibleSelected={allVisibleSelected}
-                isDeleting={busyId === "__bulk_delete__"}
-                isRestoring={busyId === "__bulk_restore__"}
-                deleteLabel="Delete"
-                deleteVariant="destructive"
-                onDeleteSelected={() => setBulkDeleteConfirmOpen(true)}
-                onRestoreSelected={() => void bulkRestore()}
-                restoreLabel="Restore"
-                onSelectAll={selectAllVisible}
-                onClearSelection={clearSelection}
-              />
-            )}
-          </div>
+          {filter === "inbox" ? (
+            <BatchSelectionBar
+              selectedCount={selectedCount}
+              totalCount={jobs.length}
+              allVisibleSelected={allVisibleSelected}
+              isDeleting={busyId === "__bulk__"}
+              deleteLabel="Dismiss"
+              deleteVariant="destructive"
+              deleteUsesBanIcon
+              onDeleteSelected={() => void bulkDismiss()}
+              onSelectAll={selectAllVisible}
+              onClearSelection={clearSelection}
+            />
+          ) : (
+            <BatchSelectionBar
+              selectedCount={selectedCount}
+              totalCount={jobs.length}
+              allVisibleSelected={allVisibleSelected}
+              isDeleting={busyId === "__bulk_delete__"}
+              isRestoring={busyId === "__bulk_restore__"}
+              deleteLabel="Delete"
+              deleteVariant="destructive"
+              onDeleteSelected={() => setBulkDeleteConfirmOpen(true)}
+              onRestoreSelected={() => void bulkRestore()}
+              restoreLabel="Restore"
+              onSelectAll={selectAllVisible}
+              onClearSelection={clearSelection}
+            />
+          )}
 
           <div className="flex min-h-0 flex-1 flex-col">
             {listQuery.isLoading ? (

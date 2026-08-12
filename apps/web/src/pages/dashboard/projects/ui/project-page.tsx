@@ -443,21 +443,19 @@ export function ProjectsPage() {
           }
         />
 
-        {batchSelectActive && !isSort ? (
-          <div className="flex justify-end">
-            <BatchSelectionBar
-              selectedCount={selectedCount}
-              totalCount={projectIds.length}
-              allVisibleSelected={allVisibleSelected}
-              isDeleting={isDeleting}
-              isLoading={isBatchLoading}
-              isAddingToPortfolio={isAddingToPortfolio}
-              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
-              onAddSelectedToPortfolio={handleBatchAddToPortfolio}
-              onSelectAll={() => selectAll(projectIds)}
-              onClearSelection={clearSelection}
-            />
-          </div>
+        {!isSort ? (
+          <BatchSelectionBar
+            selectedCount={selectedCount}
+            totalCount={projectIds.length}
+            allVisibleSelected={allVisibleSelected}
+            isDeleting={isDeleting}
+            isLoading={isBatchLoading}
+            isAddingToPortfolio={isAddingToPortfolio}
+            onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+            onAddSelectedToPortfolio={handleBatchAddToPortfolio}
+            onSelectAll={() => selectAll(projectIds)}
+            onClearSelection={clearSelection}
+          />
         ) : null}
 
         {renderList()}

@@ -246,19 +246,15 @@ export function ResumesPage() {
           }
         />
 
-        {batchSelectActive ? (
-          <div className="flex justify-end">
-            <BatchSelectionBar
-              selectedCount={selectedCount}
-              totalCount={resumeIds.length}
-              allVisibleSelected={allVisibleSelected}
-              isDeleting={isDeleting}
-              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
-              onSelectAll={() => selectAll(resumeIds)}
-              onClearSelection={clearSelection}
-            />
-          </div>
-        ) : null}
+        <BatchSelectionBar
+          selectedCount={selectedCount}
+          totalCount={resumeIds.length}
+          allVisibleSelected={allVisibleSelected}
+          isDeleting={isDeleting}
+          onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+          onSelectAll={() => selectAll(resumeIds)}
+          onClearSelection={clearSelection}
+        />
 
         {renderList()}
 

@@ -402,21 +402,19 @@ export function ExperiencesPage() {
           }
         />
 
-        {batchSelectActive && !isSort ? (
-          <div className="flex justify-end">
-            <BatchSelectionBar
-              selectedCount={selectedCount}
-              totalCount={visibleIds.length}
-              allVisibleSelected={allVisibleSelected}
-              isDeleting={isDeleting}
-              isLoading={isBatchLoading}
-              isAddingToPortfolio={isAddingToPortfolio}
-              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
-              onAddSelectedToPortfolio={handleBatchAddToPortfolio}
-              onSelectAll={() => selectAll(visibleIds)}
-              onClearSelection={clearSelection}
-            />
-          </div>
+        {!isSort ? (
+          <BatchSelectionBar
+            selectedCount={selectedCount}
+            totalCount={visibleIds.length}
+            allVisibleSelected={allVisibleSelected}
+            isDeleting={isDeleting}
+            isLoading={isBatchLoading}
+            isAddingToPortfolio={isAddingToPortfolio}
+            onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+            onAddSelectedToPortfolio={handleBatchAddToPortfolio}
+            onSelectAll={() => selectAll(visibleIds)}
+            onClearSelection={clearSelection}
+          />
         ) : null}
 
         {renderList()}

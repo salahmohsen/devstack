@@ -632,22 +632,20 @@ export function StacksPage() {
           }
         />
 
-        {batchSelectActive && !isSort ? (
-          <div className="flex justify-end">
-            <BatchSelectionBar
-              selectedCount={selectedCount}
-              totalCount={stackIds.length}
-              allVisibleSelected={allVisibleSelected}
-              isDeleting={isDeleting}
-              isLoading={isBatchLoading}
-              isAddingToPortfolio={isAddingToPortfolio}
-              onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
-              onAddSelectedToPortfolio={handleBatchAddToPortfolio}
-              onMerge={isMergeEligible ? () => setMergeDialogOpen(true) : undefined}
-              onSelectAll={() => selectAll(stackIds)}
-              onClearSelection={clearSelection}
-            />
-          </div>
+        {!isSort ? (
+          <BatchSelectionBar
+            selectedCount={selectedCount}
+            totalCount={stackIds.length}
+            allVisibleSelected={allVisibleSelected}
+            isDeleting={isDeleting}
+            isLoading={isBatchLoading}
+            isAddingToPortfolio={isAddingToPortfolio}
+            onDeleteSelected={() => setBatchDeleteDialogOpen(true)}
+            onAddSelectedToPortfolio={handleBatchAddToPortfolio}
+            onMerge={isMergeEligible ? () => setMergeDialogOpen(true) : undefined}
+            onSelectAll={() => selectAll(stackIds)}
+            onClearSelection={clearSelection}
+          />
         ) : null}
 
         {renderGrid()}
