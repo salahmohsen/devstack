@@ -84,8 +84,9 @@ jobs:
   #       https://docs.dokploy.com/docs/core/auto-deploy
   #
   # Disable Auto Deploy on each Dokploy Application so pushes do not deploy
-  # twice (webhook + this job). Keep devhub-infra autoDeploy off unless you
-  # intentionally redeploy infra from CI (set DOKPLOY_COMPOSE_ID).
+  # twice (webhook + this job). Dokploy watchPaths only apply to its own
+  # webhooks — this job reimplements path filters via dorny/paths-filter so
+  # unrelated apps are not rebuilt.
   #
   # Required GitHub secrets:
   #   DOKPLOY_URL          e.g. https://dokploy.example.com  (no trailing slash)
@@ -94,13 +95,65 @@ jobs:
   #   DOKPLOY_APP_AGENT_ID
   #   DOKPLOY_APP_WEB_ID
   # Optional:
-  #   DOKPLOY_COMPOSE_ID   if set, also triggers compose.deploy (infra)
+  #   DOKPLOY_COMPOSE_ID   if set, also triggers compose.deploy when infra paths change
   deploy:
     name: deploy
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [check, test, build]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need parent commit so paths-filter can diff push before..after.
+          fetch-depth: 2
+
+      # Mirrors prior Dokploy watch paths: app tree + workspace packages it
+      # actually depends on. Root lockfile / workspace / docker helpers force
+      # all apps (shared Docker build inputs).
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.npmrc'
+              - '.node-version'
+              - 'docker/**'
+            agent:
+              - 'apps/agent/**'
+              - 'packages/core/**'
+              - 'packages/db/**'
+              - 'packages/env/**'
+              - 'packages/logger/**'
+            server:
+              - 'apps/server/**'
+              - 'packages/api/**'
+              - 'packages/auth/**'
+              - 'packages/core/**'
+              - 'packages/db/**'
+              - 'packages/email/**'
+              - 'packages/env/**'
+              - 'packages/github/**'
+              - 'packages/logger/**'
+            web:
+              - 'apps/web/**'
+              - 'packages/api/**'
+              - 'packages/auth/**'
+              - 'packages/core/**'
+              - 'packages/db/**'
+              - 'packages/env/**'
+              - 'packages/github/**'
+              - 'packages/logger/**'
+              - 'packages/seo/**'
+              - 'packages/ui/**'
+            infra:
+              - 'docker-compose.devhub-infra.yml'
+              - 'docker-compose.yml'
+              - 'docker-compose.prod.yml'
+              - 'docker/**'
+
       - name: Trigger Dokploy application deploys
         env:
           DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
@@ -110,13 +163,39 @@ jobs:
           DOKPLOY_APP_WEB_ID: ${{ secrets.DOKPLOY_APP_WEB_ID }}
           DOKPLOY_COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
           SOURCE_COMMIT: ${{ github.sha }}
+          DEPLOY_SHARED: ${{ steps.filter.outputs.shared }}
+          DEPLOY_AGENT: ${{ steps.filter.outputs.agent }}
+          DEPLOY_SERVER: ${{ steps.filter.outputs.server }}
+          DEPLOY_WEB: ${{ steps.filter.outputs.web }}
+          DEPLOY_INFRA: ${{ steps.filter.outputs.infra }}
         run: |
           set -euo pipefail
+
+          # shared (lockfile/docker/root) forces every app image rebuild.
+          want_agent=false
+          want_server=false
+          want_web=false
+          want_infra=false
+          if [ "${DEPLOY_SHARED}" = "true" ]; then
+            want_agent=true
+            want_server=true
+            want_web=true
+          fi
+          [ "${DEPLOY_AGENT}" = "true" ] && want_agent=true
+          [ "${DEPLOY_SERVER}" = "true" ] && want_server=true
+          [ "${DEPLOY_WEB}" = "true" ] && want_web=true
+          [ "${DEPLOY_INFRA}" = "true" ] && want_infra=true
+
+          echo "path filters: shared=${DEPLOY_SHARED} agent=${DEPLOY_AGENT} server=${DEPLOY_SERVER} web=${DEPLOY_WEB} infra=${DEPLOY_INFRA}"
+          echo "will deploy: agent=${want_agent} server=${want_server} web=${want_web} infra=${want_infra}"
+
+          if [ "${want_agent}" != "true" ] && [ "${want_server}" != "true" ] && [ "${want_web}" != "true" ] && [ "${want_infra}" != "true" ]; then
+            echo "No deploy-relevant paths changed; skipping Dokploy deploys."
+            exit 0
+          fi
+
           : "${DOKPLOY_URL:?missing secret DOKPLOY_URL}"
           : "${DOKPLOY_API_KEY:?missing secret DOKPLOY_API_KEY}"
-          : "${DOKPLOY_APP_SERVER_ID:?missing secret DOKPLOY_APP_SERVER_ID}"
-          : "${DOKPLOY_APP_AGENT_ID:?missing secret DOKPLOY_APP_AGENT_ID}"
-          : "${DOKPLOY_APP_WEB_ID:?missing secret DOKPLOY_APP_WEB_ID}"
 
           base="${DOKPLOY_URL%/}"
           title="CI deploy ${SOURCE_COMMIT:0:7}"
@@ -139,22 +218,41 @@ jobs:
           }
 
           # Agent first (server calls AGENT_WORKER_URL), then server, then web.
-          deploy_app "${DOKPLOY_APP_AGENT_ID}" "agent"
-          deploy_app "${DOKPLOY_APP_SERVER_ID}" "server"
-          deploy_app "${DOKPLOY_APP_WEB_ID}" "web"
-
-          if [ -n "${DOKPLOY_COMPOSE_ID:-}" ]; then
-            echo "→ compose.deploy (${DOKPLOY_COMPOSE_ID})"
-            curl -fsS -X POST "${base}/api/compose.deploy" \
-              -H "accept: application/json" \
-              -H "Content-Type: application/json" \
-              -H "x-api-key: ${DOKPLOY_API_KEY}" \
-              -d "$(jq -nc \
-                --arg composeId "$DOKPLOY_COMPOSE_ID" \
-                --arg title "$title (infra)" \
-                --arg description "$desc" \
-                '{composeId:$composeId,title:$title,description:$description}')"
-            echo
+          if [ "${want_agent}" = "true" ]; then
+            : "${DOKPLOY_APP_AGENT_ID:?missing secret DOKPLOY_APP_AGENT_ID}"
+            deploy_app "${DOKPLOY_APP_AGENT_ID}" "agent"
           else
-            echo "skip compose.deploy (DOKPLOY_COMPOSE_ID unset)"
+            echo "skip agent (paths unchanged)"
+          fi
+          if [ "${want_server}" = "true" ]; then
+            : "${DOKPLOY_APP_SERVER_ID:?missing secret DOKPLOY_APP_SERVER_ID}"
+            deploy_app "${DOKPLOY_APP_SERVER_ID}" "server"
+          else
+            echo "skip server (paths unchanged)"
+          fi
+          if [ "${want_web}" = "true" ]; then
+            : "${DOKPLOY_APP_WEB_ID:?missing secret DOKPLOY_APP_WEB_ID}"
+            deploy_app "${DOKPLOY_APP_WEB_ID}" "web"
+          else
+            echo "skip web (paths unchanged)"
+          fi
+
+          if [ "${want_infra}" = "true" ]; then
+            if [ -n "${DOKPLOY_COMPOSE_ID:-}" ]; then
+              echo "→ compose.deploy (${DOKPLOY_COMPOSE_ID})"
+              curl -fsS -X POST "${base}/api/compose.deploy" \
+                -H "accept: application/json" \
+                -H "Content-Type: application/json" \
+                -H "x-api-key: ${DOKPLOY_API_KEY}" \
+                -d "$(jq -nc \
+                  --arg composeId "$DOKPLOY_COMPOSE_ID" \
+                  --arg title "$title (infra)" \
+                  --arg description "$desc" \
+                  '{composeId:$composeId,title:$title,description:$description}')"
+              echo
+            else
+              echo "infra paths changed but DOKPLOY_COMPOSE_ID unset; skip compose.deploy"
+            fi
+          else
+            echo "skip compose.deploy (infra paths unchanged)"
           fi
