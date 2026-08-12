@@ -329,10 +329,14 @@ services:
     labels:
       - "traefik.enable=true"
       # Catch-all last — server/agent PathPrefix routers must win first.
+      # Dokploy separate apps: restore the same rule on the web application
+      # (Advanced → Traefik) so tenant custom domains need only CNAME+TXT.
+      # See docs/ops/custom-domains-edge.md
       - "traefik.http.routers.web.rule=PathPrefix(`/`)"
       - "traefik.http.routers.web.priority=1"
       - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.services.web.loadbalancer.server.port=3000"
+      - "traefik.http.services.web.loadbalancer.passhostheader=true"
 
 volumes:
   pg_data:

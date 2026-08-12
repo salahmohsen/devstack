@@ -62,7 +62,7 @@ import {
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useAppForm } from "@/shared/form";
-import { getPrimaryAppOrigin } from "@/shared/lib/primary-app-url";
+import { getPrimaryAppHostname, getPrimaryAppOrigin } from "@/shared/lib/primary-app-url";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 
@@ -115,11 +115,22 @@ function formatRelativeTime(value: Date | string | null | undefined): string | n
   return date.toLocaleDateString(undefined, { dateStyle: "medium" });
 }
 
-function dnsRecordsClipboard(domain: CustomDomainOutput): string {
+function cnameTargetHostname(): string {
+  return getPrimaryAppHostname();
+}
+
+function dnsRecordsClipboard(domain: CustomDomainOutput, cnameTarget: string): string {
   return [
     "Type: TXT",
     `Name: ${domain.verificationRecordName}`,
-    `Value: ${domain.verificationRecordValue}`
+    `Value: ${domain.verificationRecordValue}`,
+    "",
+    "Type: CNAME",
+    `Name: ${domain.hostname}`,
+    `Value: ${cnameTarget}`,
+    "",
+    "# Apex (root domain): use CNAME flattening / ALIAS / ANAME to the same target,",
+    "# or your DNS host's apex CNAME equivalent — not a CNAME to another proxied alias."
   ].join("\n");
 }
 
@@ -200,8 +211,13 @@ function DomainHostnameForm({
 }
 
 function DomainDnsTable({ domain }: { domain: CustomDomainOutput }) {
+  const cnameTarget = cnameTargetHostname();
   return (
     <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Tenants only need DNS at their provider — no tunnel or server access. TXT proves ownership;
+        CNAME sends traffic to this app (HTTPS is terminated at your DNS/CDN).
+      </p>
       <div className="overflow-hidden rounded-xl border">
         <Table>
           <TableHeader>
@@ -248,11 +264,44 @@ function DomainDnsTable({ domain }: { domain: CustomDomainOutput }) {
                 </div>
               </TableCell>
             </TableRow>
+            <TableRow>
+              <TableCell className="font-medium">CNAME</TableCell>
+              <TableCell>
+                <code className="block max-w-56 truncate font-mono text-xs sm:max-w-xs">
+                  {domain.hostname}
+                </code>
+              </TableCell>
+              <TableCell>
+                <code className="block max-w-48 truncate font-mono text-xs sm:max-w-sm">
+                  {cnameTarget}
+                </code>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-0.5">
+                  <CopyButton
+                    value={domain.hostname}
+                    label="Copy CNAME name"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    onError={() => toast.error("Could not copy")}
+                  />
+                  <CopyButton
+                    value={cnameTarget}
+                    label="Copy CNAME target"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    onError={() => toast.error("Could not copy")}
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </div>
       <CopyButton
-        value={dnsRecordsClipboard(domain)}
+        value={dnsRecordsClipboard(domain, cnameTarget)}
         label="Copy all records"
         showLabel
         size="sm"
@@ -547,8 +596,8 @@ export const DomainSettings = () => {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {isVerified
-                    ? "We only check the TXT ownership record. Re-check if you change DNS."
-                    : "Add the TXT record at your DNS provider, then refresh. We only verify ownership — not reachability or TLS."}
+                    ? "Ownership verified (TXT). Keep the CNAME pointed at this app so visitors reach your portfolio."
+                    : "Add TXT (ownership) and CNAME (traffic) at your DNS provider, then refresh. We only check TXT — not reachability or TLS."}
                 </p>
               </div>
 
@@ -628,11 +677,27 @@ export const DomainSettings = () => {
                   Edge setup (DNS & TLS)
                 </CollapsibleTrigger>
                 <CollapsiblePanel className="pt-2">
-                  <p className="max-w-prose text-sm text-muted-foreground">
-                    Point this hostname at the app (A/CNAME or proxy) and terminate HTTPS at
-                    Cloudflare, Caddy, Nginx, or your host. We only verify the TXT ownership record
-                    and route by Host — we do not check reachability or certificates.
-                  </p>
+                  <div className="max-w-prose space-y-2 text-sm text-muted-foreground">
+                    <p>
+                      <span className="font-medium text-foreground">You (tenant):</span> only the
+                      TXT + CNAME records above at your DNS host. You never need tunnel or server
+                      access.
+                    </p>
+                    <p>
+                      <span className="font-medium text-foreground">Instance operator:</span> must
+                      terminate HTTPS and forward{" "}
+                      <span className="font-medium text-foreground">any Host</span> to the web app
+                      (Traefik catch-all + tunnel fallback). See{" "}
+                      <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+                        docs/ops/custom-domains-edge.md
+                      </code>
+                      .
+                    </p>
+                    <p>
+                      Apex roots often need CNAME flattening (Cloudflare) or ALIAS — do not chain a
+                      proxied apex CNAME through another proxied hostname in the same zone.
+                    </p>
+                  </div>
                 </CollapsiblePanel>
               </Collapsible>
             </section>
