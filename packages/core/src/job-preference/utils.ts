@@ -18,6 +18,27 @@ export function defaultJobPreference(): JobPreference {
   };
 }
 
+/**
+ * True when the seeker has not constrained harvest (empty filters).
+ * Open profiles should not lose listings solely to minMatchScore=60 defaults —
+ * AI still attaches a score for ranking in New jobs.
+ */
+export function isOpenJobPreference(prefs: {
+  workModes?: readonly string[] | null;
+  locations?: readonly string[] | null;
+  roleKeywords?: readonly string[] | null;
+  excludeKeywords?: readonly string[] | null;
+  salaryMin?: number | null;
+}): boolean {
+  return (
+    (prefs.roleKeywords?.length ?? 0) === 0 &&
+    (prefs.excludeKeywords?.length ?? 0) === 0 &&
+    (prefs.workModes?.length ?? 0) === 0 &&
+    (prefs.locations?.length ?? 0) === 0 &&
+    (prefs.salaryMin == null || prefs.salaryMin === undefined)
+  );
+}
+
 export function defaultJobPreferenceOutput(): JobPreferenceOutput {
   return {
     workModes: [],

@@ -85,16 +85,37 @@ async function enqueueDirect(input: {
         setTimeout(() => reject(new Error("mail-job-harvest enqueue timed out (3s)")), 3_000);
       })
     ]);
+    const log = createLogger({ operation: "api__mail_job_harvest_enqueue" });
+    log.set({
+      event: "mail_job_harvest_enqueued",
+      messageId: data.messageId,
+      userId: data.userId,
+      jobId,
+      force: Boolean(input.force)
+    });
+    log.emit();
     return true;
   } catch (error) {
     // Duplicate jobId (non-force path) is expected; anything else is real failure.
     const message = error instanceof Error ? error.message : String(error);
     if (/already exists|JobId/i.test(message) && !input.force) {
+      const log = createLogger({ operation: "api__mail_job_harvest_enqueue" });
+      log.set({
+        event: "mail_job_harvest_enqueue_duplicate",
+        messageId: data.messageId,
+        userId: data.userId,
+        jobId,
+        force: false
+      });
+      log.emit();
       return false;
     }
     const log = createLogger({ operation: "api__mail_job_harvest_enqueue" });
     log.error(error instanceof Error ? error : new Error(message), {
       event: "mail_job_harvest_enqueue_failed",
+      messageId: data.messageId,
+      userId: data.userId,
+      jobId,
       force: Boolean(input.force)
     });
     log.emit({ _forceKeep: true });

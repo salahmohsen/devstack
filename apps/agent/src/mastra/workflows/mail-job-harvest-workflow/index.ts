@@ -9,6 +9,7 @@ import {
   HarvestedJobSchema,
   HarvestJobPreferenceSchema,
   inferApplicationSource,
+  isOpenJobPreference,
   isValidHarvestedJob,
   MailJobHarvestAfterScoreSchema,
   MailJobHarvestWorkflowInputSchema,
@@ -421,18 +422,38 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
       }
 
       const byUrl = new Map(parsed.data.matches.map((m) => [urlKey(m.listingUrl), m] as const));
+      // No role/location/salary filters → surface all harvested listings; minMatchScore alone
+      // was dropping every card when the seeker never configured preferences.
+      const openPrefs = isOpenJobPreference(prefs);
 
       const scored: ScoredHarvestedJob[] = [];
+      let unmatchedScoreRows = 0;
       for (const job of inputData.jobs) {
         const hit = byUrl.get(urlKey(job.listingUrl));
-        if (!hit) continue;
+        if (!hit) {
+          unmatchedScoreRows += 1;
+          // Keep the job — do not silently drop when the scorer omits a URL.
+          scored.push({
+            ...job,
+            matchScore: openPrefs ? Math.max(minScore, 50) : 0,
+            matchPassed: openPrefs,
+            matchReasons: openPrefs
+              ? ["open_preference_profile", "score_row_missing"]
+              : ["score_row_missing"],
+            agentTake: null
+          });
+          continue;
+        }
         const score = Math.max(0, Math.min(100, Math.round(hit.score)));
-        const passed = hit.passed && score >= minScore;
+        const passed = openPrefs ? true : hit.passed && score >= minScore;
         scored.push({
           ...job,
           matchScore: score,
           matchPassed: passed,
-          matchReasons: hit.reasons?.length ? hit.reasons : ["ai_match"],
+          matchReasons: [
+            ...(hit.reasons?.length ? hit.reasons : ["ai_match"]),
+            ...(openPrefs ? ["open_preference_profile"] : [])
+          ],
           agentTake: null
         });
       }
@@ -442,7 +463,14 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
         userId: inputData.userId,
         isJobNotifier: true,
         jobs: scored,
-        notes: [inputData.notes, `ai_match_scored_${scored.length}`].filter(Boolean).join(";"),
+        notes: [
+          inputData.notes,
+          `ai_match_scored_${scored.length}`,
+          openPrefs ? "open_preference_pass_all" : null,
+          unmatchedScoreRows > 0 ? `score_url_miss_${unmatchedScoreRows}` : null
+        ]
+          .filter(Boolean)
+          .join(";"),
         preference: inputData.preference,
         llm: inputData.llm
       };

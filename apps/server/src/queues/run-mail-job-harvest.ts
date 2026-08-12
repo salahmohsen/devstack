@@ -70,24 +70,40 @@ export async function runMailJobHarvest(input: {
       messageId: input.messageId,
       userId: input.userId
     });
-    log.emit();
+    log.emit({ _forceKeep: true });
     return empty({ skippedFailed: 1 });
   }
 
   const labels = row.labels ?? [];
   if (!labels.includes("job_notifier")) {
+    // Scan used to enqueue any recent mail when category filter was broken —
+    // keep this outcome force-kept so Axiom shows mis-enqueued ids clearly.
     log.set({
       event: "mail_job_harvest_skip_not_notifier",
       messageId: row.id,
       userId: row.userId,
-      labels
+      labels,
+      subject: (row.subject ?? "").slice(0, 120)
     });
-    log.emit();
+    log.emit({ _forceKeep: true });
     return empty();
   }
 
   const prefs = await loadPreference(row.userId);
   const llm = await resolveRuntimeAiCredentials(row.userId, "classify");
+  // Shared diagnostic fields — emitted once on terminal outcome.
+  const harvestContext = {
+    messageId: row.id,
+    userId: row.userId,
+    subject: (row.subject ?? "").slice(0, 120),
+    labels: row.labels ?? [],
+    minMatchScore: prefs.minMatchScore,
+    roleKeywordCount: prefs.roleKeywords?.length ?? 0,
+    excludeKeywordCount: prefs.excludeKeywords?.length ?? 0,
+    hasByoApiKey: Boolean(llm.apiKey?.trim()),
+    modelId: llm.modelId ?? null
+  };
+
   const agentResult = await callMailJobHarvestAgent({
     messageId: row.id,
     userId: row.userId,
@@ -103,8 +119,7 @@ export async function runMailJobHarvest(input: {
   if (!agentResult.ok) {
     log.set({
       event: "mail_job_harvest_ai_failed",
-      messageId: row.id,
-      userId: row.userId,
+      ...harvestContext,
       reason: agentResult.failure.reason,
       message: agentResult.failure.message ?? null
     });
@@ -118,15 +133,23 @@ export async function runMailJobHarvest(input: {
   if (!output.isJobNotifier) {
     log.set({
       event: "mail_job_harvest_ai_not_notifier",
-      messageId: row.id,
+      ...harvestContext,
       notes: output.notes ?? null
     });
-    log.emit();
+    log.emit({ _forceKeep: true });
     return empty();
   }
 
   // AI already extracted + scored; only structural http(s)/title gate remains local
   const jobs: ScoredHarvestedJob[] = output.jobs.filter((j) => isValidHarvestedJob(j));
+  const scoreSample = jobs.slice(0, 12).map((j) => {
+    return {
+      title: j.title.slice(0, 80),
+      score: j.matchScore,
+      passed: j.matchPassed,
+      reasons: (j.matchReasons ?? []).slice(0, 3)
+    };
+  });
 
   let created = 0;
   let skippedLowMatch = 0;
@@ -218,6 +241,20 @@ export async function runMailJobHarvest(input: {
       messageId: row.id,
       applicationId: applicationIds[0] ?? null
     });
+  } else if (jobs.length > 0 && skippedLowMatch > 0) {
+    // Success toast after Scan only means enqueue — surface why New jobs stayed empty.
+    await emitAppNotification({
+      userId: row.userId,
+      kind: "mail.job_alerts_ready",
+      title:
+        skippedLowMatch === 1
+          ? "1 listing below your match threshold"
+          : `${skippedLowMatch} listings below your match threshold`,
+      body: `Min score ${prefs.minMatchScore}. Lower it in Settings → Jobs, or broaden role keywords. Duplicates skipped: ${skippedDuplicate}.`,
+      href: "/dashboard/settings/jobs",
+      messageId: row.id,
+      applicationId: null
+    });
   }
 
   const result: MailJobHarvestResult = {
@@ -235,9 +272,11 @@ export async function runMailJobHarvest(input: {
     event: "mail_job_harvest_done",
     via: "mastra_ai",
     notes: output.notes ?? null,
+    scoreSample,
+    ...harvestContext,
     ...result
   });
-  log.emit();
+  log.emit({ _forceKeep: true });
 
   return result;
 }

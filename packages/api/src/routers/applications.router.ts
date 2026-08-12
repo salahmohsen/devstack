@@ -157,6 +157,7 @@ export const applicationsRouter = {
       ).filter((msg) => (msg.labels ?? []).includes("job_notifier"));
 
       let enqueued = 0;
+      let enqueueFailed = 0;
       for (const msg of digests) {
         const ok = await requestMailJobHarvest({
           messageId: msg.id,
@@ -164,10 +165,24 @@ export const applicationsRouter = {
           force: true
         });
         if (ok) enqueued += 1;
+        else enqueueFailed += 1;
       }
 
       // force:true uses unique jobIds; enqueued===0 with digests almost always means hook/queue down.
       const queueUnavailable = digests.length > 0 && enqueued === 0;
+
+      // Outcome log: Scan success toast only means enqueue — harvest is async.
+      context.logger.set({
+        event: "scan_job_alerts_done",
+        userId,
+        limit,
+        digestsFound: digests.length,
+        enqueued,
+        enqueueFailed,
+        queueUnavailable,
+        messageIds: digests.map((m) => m.id).slice(0, 25),
+        subjects: digests.map((m) => (m.subject ?? "").slice(0, 80)).slice(0, 10)
+      });
 
       return {
         digestsFound: digests.length,
