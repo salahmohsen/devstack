@@ -118,14 +118,23 @@ export function SidePanelSlot({
     };
   }, [onHasContent]);
 
-  const show = hasChildren && !collapsed;
+  // Stay fully opaque while the shell collapses (`collapsed`). The root layout
+  // clips via overflow + width layout animation; fading out here made content
+  // vanish before that spring finished. Only fade when portal children are gone.
+  const painted = hasChildren;
 
   return (
     <div className="hidden overflow-hidden xl:block xl:h-full">
       <motion.div
-        animate={{ opacity: show ? 1 : 0 }}
-        transition={{ duration: show ? 0.2 : 0.1, delay: show ? 0.1 : 0 }}
+        animate={{ opacity: painted ? 1 : 0 }}
+        transition={{
+          duration: painted ? 0.2 : 0.15,
+          // Slight delay on enter so the width spring has started expanding.
+          delay: painted ? 0.08 : 0
+        }}
         className="h-full overflow-hidden ps-5 pb-2"
+        // Avoid pointer events on content while the shell is closed/closing.
+        style={{ pointerEvents: collapsed || !painted ? "none" : "auto" }}
       >
         <div ref={refCallback} />
         <div ref={ghostRef} className="pointer-events-none" aria-hidden />
