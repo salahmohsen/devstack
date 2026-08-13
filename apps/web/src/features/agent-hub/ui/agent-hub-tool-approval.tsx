@@ -12,8 +12,8 @@ type AgentHubToolApprovalProps = {
 };
 
 /**
- * Sticky HITL approval banner. Warning Alert + actions — progressive,
- * not a modal (product register: exhaust inline alternatives first).
+ * HITL approval card for requireToolApproval tools (generate-apply-package).
+ * Progressive warning Alert + actions — not a modal.
  */
 export function AgentHubToolApproval({
   toolName,

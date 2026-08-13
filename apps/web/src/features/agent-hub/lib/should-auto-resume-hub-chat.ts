@@ -1,15 +1,14 @@
 import { lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
 
+import { HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES } from "./hub-tool-names";
+
 /**
  * Tools that intentionally wait for the client (`addToolOutput`) before the
  * agent loop may continue. Server-executed CRM tools must NOT be listed here.
  *
  * Mastra / AI SDK names vary (kebab vs camel registration keys).
  */
-export const HUB_CLIENT_RESUME_TOOL_NAMES = new Set([
-  "propose-application-from-jd",
-  "proposeApplicationFromJd"
-]);
+export const HUB_CLIENT_RESUME_TOOL_NAMES = HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES;
 
 type ToolLikePart = {
   type: string;

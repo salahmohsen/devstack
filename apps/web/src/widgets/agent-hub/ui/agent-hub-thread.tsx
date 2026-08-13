@@ -36,47 +36,12 @@ import {
 import { useLoadOlderOnScrollTop } from "@/widgets/agent-hub/lib/use-load-older-on-scroll-top";
 
 import { AgentHubErrorCard } from "./agent-hub-error-card";
-import { AgentHubToolApproval } from "./agent-hub-tool-approval";
 
 const HUB_MESSAGE_COMPONENTS = {
   UserMessage,
   AssistantMessage,
   EditComposer
 };
-
-type PendingApproval = {
-  approvalId: string;
-  toolCallId: string;
-  toolName: string;
-  args: Record<string, unknown>;
-};
-
-function findPendingApproval(messages: UIMessage[]): PendingApproval | null {
-  for (const msg of [...messages].toReversed()) {
-    if (msg.role !== "assistant") continue;
-    for (const part of msg.parts ?? []) {
-      const p = part as {
-        state?: string;
-        approval?: { id: string };
-        toolCallId?: string;
-        type?: string;
-        input?: unknown;
-      };
-      const isToolPart = p.type?.startsWith("tool-") === true || p.type === "dynamic-tool";
-      if (isToolPart && p.state === "approval-requested" && p.approval?.id) {
-        const toolName =
-          p.type === "dynamic-tool" ? "tool" : (p.type ?? "tool").replace(/^tool-/, "");
-        return {
-          approvalId: p.approval.id,
-          toolCallId: p.toolCallId ?? "",
-          toolName,
-          args: (p.input ?? {}) as Record<string, unknown>
-        };
-      }
-    }
-  }
-  return null;
-}
 
 function createdAtForHubThreadMessage(
   id: string,
@@ -165,13 +130,16 @@ function AgentHubThreadBody() {
     loadOlderMessages,
     error,
     clearError,
-    regenerate,
-    addToolApprovalResponse
+    regenerate
   } = useHubChat();
 
   const viewport = useThreadViewport((s) => s.element.viewport);
   const threadMessageCount = useAuiState((s) => s.thread.messages.length);
   const isRunning = useAuiState((s) => s.thread.isRunning);
+  const lastMessageStatus = useAuiState((s) => s.thread.messages.at(-1)?.status);
+  const hitlPending = lastMessageStatus?.type === "requires-action";
+  const waitingApproval =
+    lastMessageStatus?.type === "requires-action" && lastMessageStatus.reason === "interrupt";
   const dayRows = useHubDayRows(messages);
   const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
     enabled: historyReady && threadMessageCount > 0,
@@ -183,40 +151,11 @@ function AgentHubThreadBody() {
   });
 
   const [dismissedError, setDismissedError] = React.useState<string | null>(null);
-  const [approvalPending, setApprovalPending] = React.useState(false);
 
   const errorMessage = error?.message ?? null;
   const showError = Boolean(errorMessage) && errorMessage !== dismissedError;
-  const pendingApproval = findPendingApproval(messages);
-  const approvalActionPending = approvalPending && pendingApproval != null;
   const isEmpty = historyReady && threadMessageCount === 0 && !isRunning;
-  const composerDisabled = !historyReady || pendingApproval != null;
-
-  const handleApprove = React.useCallback(() => {
-    if (!pendingApproval || approvalActionPending) return;
-    setApprovalPending(true);
-    void Promise.resolve(
-      addToolApprovalResponse({
-        id: pendingApproval.approvalId,
-        approved: true
-      })
-    ).finally(() => {
-      setApprovalPending(false);
-    });
-  }, [addToolApprovalResponse, approvalActionPending, pendingApproval]);
-
-  const handleDecline = React.useCallback(() => {
-    if (!pendingApproval || approvalActionPending) return;
-    setApprovalPending(true);
-    void Promise.resolve(
-      addToolApprovalResponse({
-        id: pendingApproval.approvalId,
-        approved: false
-      })
-    ).finally(() => {
-      setApprovalPending(false);
-    });
-  }, [addToolApprovalResponse, approvalActionPending, pendingApproval]);
+  const composerDisabled = !historyReady || hitlPending;
 
   const handleRetryError = React.useCallback(() => {
     setDismissedError(null);
@@ -294,24 +233,17 @@ function AgentHubThreadBody() {
             }}
           />
         ) : null}
-        {pendingApproval ? (
-          <AgentHubToolApproval
-            toolName={pendingApproval.toolName}
-            args={pendingApproval.args}
-            onApprove={handleApprove}
-            onDecline={handleDecline}
-            isPending={approvalActionPending || isRunning}
-          />
-        ) : null}
         <Composer
           attachments={false}
           disabled={composerDisabled}
           placeholder={
-            pendingApproval
+            waitingApproval
               ? "Waiting for approval…"
-              : isRunning
-                ? "Generating a response…"
-                : "Ask the hub anything…"
+              : hitlPending
+                ? "Waiting for your choice…"
+                : isRunning
+                  ? "Generating a response…"
+                  : "Ask the hub anything…"
           }
         />
         {isEmpty ? <HubSuggestions /> : null}

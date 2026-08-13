@@ -16,6 +16,8 @@ import {
   prependUniqueHubMessages
 } from "@/features/agent-hub/lib/hub-thread-history-adapter";
 
+import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
+
 /**
  * Owns the single dashboard hub `Chat` instance and hydrates Mastra memory once.
  * Mount on the dashboard layout so Hub home and job surfaces share the same thread.
@@ -125,6 +127,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
       runtime={
         runtime as unknown as React.ComponentProps<typeof AssistantRuntimeProvider>["runtime"]
       }
+      config={hubAssistantAuiConfig}
     >
       <HubChatContext value={value}>{children}</HubChatContext>
     </AssistantRuntimeProvider>

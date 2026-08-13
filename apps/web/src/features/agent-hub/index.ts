@@ -8,6 +8,34 @@ export {
   type HubToolOutputArgs
 } from "./api/use-hub-chat";
 export { HubChatProvider } from "./ui/hub-chat-provider";
+export { hubAssistantAuiConfig, hubAssistantToolkit } from "./ui/hub-assistant-toolkit";
+export {
+  ApplicationFromJdCard,
+  PROPOSE_FROM_JD_CHOICE_LABELS
+} from "./ui/application-from-jd-card";
+export type {
+  ApplicationFromJdCardAction,
+  ApplicationFromJdCardInput,
+  ApplicationFromJdCardProps
+} from "./ui/application-from-jd-card";
+export { AgentHubToolApproval } from "./ui/agent-hub-tool-approval";
+export {
+  findPendingProposeApplicationFromJd,
+  hubToolNameFromPart,
+  HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES,
+  HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
+  isGenerateApplyPackageToolName,
+  isHubToolUiPart,
+  isProposeApplicationFromJdToolName,
+  parseProposeApplicationFromJdInput,
+  parseProposeApplicationFromJdOutputAction
+} from "./lib/hub-tool-names";
+export type {
+  HubToolNamePart,
+  PendingProposeApplicationFromJd,
+  ProposeApplicationFromJdAction,
+  ProposeApplicationFromJdCardInput
+} from "./lib/hub-tool-names";
 export {
   useListSuspendedRunsQuery,
   listSuspendedRunsQueryOptions
