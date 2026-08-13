@@ -46,9 +46,12 @@ export default defineConfig({
   // Commit hooks - https://viteplus.dev/guide/commit-hooks
   // Format everything first (incl. markdown tables). Lint --fix only on code so
   // docs-only commits are not rejected with "No files found to lint".
+  // File-scoped type-check misses program-level TS errors (e.g. TS2352);
+  // typecheck-staged-packages runs oxlint --type-check on the owning package.
   staged: {
     "*": "vp fmt --write",
-    "*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}": "vp check --fix --no-fmt"
+    "*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}": "vp check --fix --no-fmt",
+    "*.{ts,tsx,mts,cts}": "node scripts/typecheck-staged-packages.mjs"
   },
 
   // Vitest - https://vitest.dev/config
