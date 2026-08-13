@@ -1,8 +1,8 @@
 # Hub agent superpowers tools — design
 
 **Date:** 2026-08-13  
-**Status:** Accepted (grill-locked; pending user review of written file)  
-**Plan:** _(to be written via writing-plans after user approves this file)_  
+**Status:** Accepted  
+**Plan:** `docs/superpowers/plans/2026-08-13-hub-agent-superpowers-tools.md`  
 **Surfaces:** Dashboard hub chat (`/dashboard` home + floating chat on other dashboard routes)  
 **Related:**
 
