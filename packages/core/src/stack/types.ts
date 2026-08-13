@@ -46,6 +46,34 @@ export const StackOutputSchema = z.object({
 
 export const StackListOutputSchema = z.array(StackOutputSchema);
 
+/** Default page size for dashboard stacks infinite scroll. */
+export const STACKS_LIST_PAGE_SIZE = 24;
+
+/**
+ * Cursor page for dashboard stacks grid.
+ * Keep `stacks.list` (full array) for pickers / organize normalize.
+ */
+export const StackListPageInputSchema = z.object({
+  cursor: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Opaque cursor from previous page; omit/null for first page"),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe(`Page size (default ${STACKS_LIST_PAGE_SIZE})`)
+});
+
+export const StackListPageOutputSchema = z.object({
+  items: z.array(StackOutputSchema),
+  nextCursor: z.string().nullable().describe("Cursor for next page, null if last page"),
+  totalCount: z.number().int().nonnegative().describe("Total stacks for the user")
+});
+
 export const StackCreateInputSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
@@ -70,3 +98,5 @@ export type StackUpdateInput = z.infer<typeof StackUpdateInputSchema>;
 export type StackOutput = z.infer<typeof StackOutputSchema>;
 export type StackCreateInput = z.infer<typeof StackCreateInputSchema>;
 export type StackListOutput = z.infer<typeof StackListOutputSchema>;
+export type StackListPageInput = z.infer<typeof StackListPageInputSchema>;
+export type StackListPageOutput = z.infer<typeof StackListPageOutputSchema>;

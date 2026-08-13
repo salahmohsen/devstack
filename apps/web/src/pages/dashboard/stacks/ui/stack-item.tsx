@@ -19,6 +19,7 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { Icon } from "@/shared/ui/icon";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 
@@ -85,9 +86,7 @@ export const StackItem = memo(function StackItem({
   const deleteMutation = useMutation(
     orpcQueryClient.stacks.delete.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.stacks.list.queryKey()
-        });
+        await invalidateStacksListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.projects.list.queryKey()
         });
@@ -109,9 +108,7 @@ export const StackItem = memo(function StackItem({
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.stacks.list.queryKey()
-        });
+        await invalidateStacksListQueries(queryClient);
         toast.success(variables.included ? "Added to portfolio." : "Removed from portfolio.");
       },
       onError: () => {

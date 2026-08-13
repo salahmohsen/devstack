@@ -25,6 +25,7 @@ import {
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
 
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { AiChangeList, type AiChangeItem, type AiChangeKindMeta } from "@/shared/ui/ai-change-list";
 import { Icon } from "@/shared/ui/icon";
 
@@ -485,6 +486,7 @@ export function DetectStacksResultsHost() {
           notifyDetectStacksApplied(projectId, upserted);
         }
 
+        // Optimistic full-catalog cache (pickers); listPage invalidates for dashboard grid.
         const listKey = orpcQueryClient.stacks.list.queryKey();
         queryClient.setQueryData<StackOutput[]>(listKey, (prev) => {
           const existing = prev ?? [];
@@ -512,7 +514,7 @@ export function DetectStacksResultsHost() {
           return Array.from(byId.values());
         });
 
-        void queryClient.invalidateQueries({ queryKey: listKey });
+        void invalidateStacksListQueries(queryClient);
         void queryClient.invalidateQueries({
           queryKey: orpcQueryClient.projects.list.queryKey()
         });

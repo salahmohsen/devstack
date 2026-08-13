@@ -1,9 +1,12 @@
 import {
   and,
+  asc,
   eq,
+  gt,
   inArray,
   isNotNull,
   ne,
+  or,
   sql,
   type InferInsertModel,
   type InferSelectModel,
@@ -25,16 +28,72 @@ export type CreateStackData = Omit<
 export type UpdateStackData = Partial<Omit<CreateStackData, "userId">>;
 export type ReorderStackItem = { id: string; sortOrder: number };
 
+/** Opaque cursor for stacks ordered by (sortOrder, name, id). */
+export type StackListCursor = {
+  sortOrder: number;
+  name: string;
+  id: string;
+};
+
+export type StackListRow = {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  type: string | null;
+  healthStatus: StackEntity["healthStatus"];
+  confidence: string | null;
+  sortOrder: number;
+  portfolioEntryId: string | null;
+  updatedAt: Date;
+  createdAt: Date;
+  projectCount: number;
+};
+
+function projectCountSubquery() {
+  return getDb()
+    .select({
+      stackId: projectStack.stackId,
+      count: sql<number>`count(*)::int`.as("count")
+    })
+    .from(projectStack)
+    .groupBy(projectStack.stackId)
+    .as("project_counts");
+}
+
+function encodeStackListCursor(row: Pick<StackListRow, "sortOrder" | "name" | "id">): string {
+  return Buffer.from(
+    JSON.stringify({
+      sortOrder: row.sortOrder,
+      name: row.name,
+      id: row.id
+    } satisfies StackListCursor),
+    "utf8"
+  ).toString("base64url");
+}
+
+function decodeStackListCursor(cursor: string): StackListCursor | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      typeof (parsed as StackListCursor).sortOrder !== "number" ||
+      typeof (parsed as StackListCursor).name !== "string" ||
+      typeof (parsed as StackListCursor).id !== "string"
+    ) {
+      return null;
+    }
+    return parsed as StackListCursor;
+  } catch {
+    return null;
+  }
+}
+
 export const stackRepository = {
-  async findAllByUserId(userId: string) {
-    const counts = getDb()
-      .select({
-        stackId: projectStack.stackId,
-        count: sql<number>`count(*)::int`.as("count")
-      })
-      .from(projectStack)
-      .groupBy(projectStack.stackId)
-      .as("project_counts");
+  async findAllByUserId(userId: string): Promise<StackListRow[]> {
+    const counts = projectCountSubquery();
 
     return getDb()
       .select({
@@ -55,7 +114,76 @@ export const stackRepository = {
       .from(stack)
       .leftJoin(counts, eq(stack.id, counts.stackId))
       .where(eq(stack.userId, userId))
-      .orderBy(stack.sortOrder, stack.name);
+      .orderBy(asc(stack.sortOrder), asc(stack.name), asc(stack.id));
+  },
+
+  /**
+   * Cursor page for dashboard infinite scroll.
+   * Order: sortOrder ASC, name ASC, id ASC (stable).
+   */
+  async findPageByUserId(
+    userId: string,
+    options: { cursor?: string | null; limit: number }
+  ): Promise<{ items: StackListRow[]; nextCursor: string | null; totalCount: number }> {
+    const counts = projectCountSubquery();
+    const limit = options.limit;
+
+    const cursor =
+      options.cursor != null && options.cursor !== ""
+        ? decodeStackListCursor(options.cursor)
+        : null;
+
+    const cursorWhere =
+      cursor == null
+        ? undefined
+        : or(
+            gt(stack.sortOrder, cursor.sortOrder),
+            and(eq(stack.sortOrder, cursor.sortOrder), gt(stack.name, cursor.name)),
+            and(
+              eq(stack.sortOrder, cursor.sortOrder),
+              eq(stack.name, cursor.name),
+              gt(stack.id, cursor.id)
+            )
+          );
+
+    const whereClause =
+      cursorWhere == null ? eq(stack.userId, userId) : and(eq(stack.userId, userId), cursorWhere);
+
+    const [rows, countRow] = await Promise.all([
+      getDb()
+        .select({
+          id: stack.id,
+          userId: stack.userId,
+          name: stack.name,
+          description: stack.description,
+          icon: stack.icon,
+          type: stack.type,
+          healthStatus: stack.healthStatus,
+          confidence: stack.confidence,
+          sortOrder: stack.sortOrder,
+          portfolioEntryId: stack.portfolioEntryId,
+          updatedAt: stack.updatedAt,
+          createdAt: stack.createdAt,
+          projectCount: sql<number>`coalesce(${counts.count}, 0)`.as("project_count")
+        })
+        .from(stack)
+        .leftJoin(counts, eq(stack.id, counts.stackId))
+        .where(whereClause)
+        .orderBy(asc(stack.sortOrder), asc(stack.name), asc(stack.id))
+        .limit(limit + 1),
+      getDb()
+        .select({ count: sql<number>`count(*)::int` })
+        .from(stack)
+        .where(eq(stack.userId, userId))
+        .then((r) => r[0]?.count ?? 0)
+    ]);
+
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const last = items[items.length - 1];
+    const nextCursor = hasMore && last != null ? encodeStackListCursor(last) : null;
+
+    return { items, nextCursor, totalCount: countRow };
   },
 
   async findAllWithDependenciesByUserId(userId: string) {

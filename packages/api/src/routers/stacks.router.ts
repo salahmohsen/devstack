@@ -5,8 +5,11 @@ import {
   DeleteResponseSchema,
   ReorderInputSchema,
   ReorderResponseSchema,
+  STACKS_LIST_PAGE_SIZE,
   StackCreateInputSchema,
   StackListOutputSchema,
+  StackListPageInputSchema,
+  StackListPageOutputSchema,
   StackOutputSchema,
   StackUpdateInputSchema,
   sanitizeSvg
@@ -41,10 +44,14 @@ const NpmSearchOutputSchema = z.object({
 });
 
 export const stacksRouter = {
+  /**
+   * Full catalog for pickers (stack-selector, project form) and organize normalize.
+   * Dashboard grid uses `listPage` + infinite scroll instead.
+   */
   list: protectedProcedure
     .route({
       description:
-        "List all tech stacks (grid payload: counts only — use get for deps/projects detail)",
+        "List all tech stacks (full catalog for pickers; grid uses listPage). Counts only — use get for deps/projects detail",
       method: "GET"
     })
     .output(StackListOutputSchema)
@@ -61,6 +68,37 @@ export const stacksRouter = {
         })
       );
     }),
+
+  /** Cursor page for dashboard infinite scroll. */
+  listPage: protectedProcedure
+    .route({
+      description:
+        "Paginated tech stacks for dashboard infinite scroll (counts only — use get for detail)",
+      method: "GET"
+    })
+    .input(StackListPageInputSchema.optional())
+    .output(StackListPageOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const limit = input?.limit ?? STACKS_LIST_PAGE_SIZE;
+      const page = await stackRepository.findPageByUserId(userId, {
+        cursor: input?.cursor ?? null,
+        limit
+      });
+
+      return {
+        items: page.items.map((s) =>
+          toStackOutput({
+            ...s,
+            dependencies: [],
+            projects: []
+          })
+        ),
+        nextCursor: page.nextCursor,
+        totalCount: page.totalCount
+      };
+    }),
+
   get: protectedProcedure
     .route({
       description: "Get a single stack by ID",

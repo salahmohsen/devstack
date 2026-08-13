@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type OnboardingApplyInput } from "@tsu-stack/core";
 
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
+
 import { onboardingQueryKeys } from "@/features/onboarding/api/get-onboarding-status.query";
 
 export function getApplyOnboardingMutationOptions() {
@@ -28,9 +30,7 @@ export function useApplyOnboardingMutation() {
           queryClient.invalidateQueries({
             queryKey: orpcQueryClient.projects.list.queryKey()
           }),
-          queryClient.invalidateQueries({
-            queryKey: orpcQueryClient.stacks.list.queryKey()
-          }),
+          invalidateStacksListQueries(queryClient),
           queryClient.invalidateQueries({
             queryKey: orpcQueryClient.portfolio.list.key()
           }),

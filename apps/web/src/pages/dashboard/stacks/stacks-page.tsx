@@ -1,13 +1,17 @@
 "use client";
 
 import { rectSortingStrategy } from "@dnd-kit/sortable";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Package } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type StackOutput, normalizeOrganizeActions } from "@tsu-stack/core";
+import {
+  type StackListPageOutput,
+  type StackOutput,
+  normalizeOrganizeActions
+} from "@tsu-stack/core";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -20,12 +24,15 @@ import {
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { FrameTitle } from "@tsu-stack/ui/components/frame";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
   areAllVisibleSelected,
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -54,6 +61,12 @@ import {
 import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
+import {
+  STACKS_LIST_STALE_TIME_MS,
+  flattenStacksPages,
+  getListStacksPageInfiniteQueryKey,
+  useListStacksPageInfiniteQuery
+} from "@/pages/dashboard/stacks/api/list-stacks-page.query";
 import { MergeDialog } from "@/pages/dashboard/stacks/ui/merge-dialog";
 import {
   OrganizeDialog,
@@ -61,9 +74,6 @@ import {
 } from "@/pages/dashboard/stacks/ui/organize-dialog";
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
-
-/** List data changes infrequently — avoid refetch-on-focus re-render storms. */
-const STACKS_LIST_STALE_TIME_MS = 30_000;
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
 function StackDetailPanel({ stack }: { stack: StackOutput }) {
@@ -140,10 +150,7 @@ function StackDetailPanel({ stack }: { stack: StackOutput }) {
 
 export function StacksPage() {
   const queryClient = useQueryClient();
-  const stacksQuery = useQuery({
-    ...orpcQueryClient.stacks.list.queryOptions(),
-    staleTime: STACKS_LIST_STALE_TIME_MS
-  });
+  const stacksQuery = useListStacksPageInfiniteQuery();
 
   const {
     openedItem,
@@ -157,7 +164,13 @@ export function StacksPage() {
     toggleSelect
   } = useStackStore();
 
-  const stacks = useMemo(() => stacksQuery.data ?? [], [stacksQuery.data]);
+  const stacks = useMemo(() => flattenStacksPages(stacksQuery.data), [stacksQuery.data]);
+  const totalCount = stacksQuery.data?.pages[0]?.totalCount;
+
+  // ── Sort state (declared early so infinite scroll can disable during sort)
+  const [isSort, setIsSort] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<StackOutput[] | null>(null);
+  const [isLoadingFullListForSort, setIsLoadingFullListForSort] = useState(false);
 
   const { handleNext, handlePrev } = useItemsNavigation({
     items: stacks,
@@ -168,6 +181,16 @@ export function StacksPage() {
   });
 
   const isAnyOpen = isAnyOpened(isItemOpen);
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage: stacksQuery.hasNextPage,
+    isFetchingNextPage: stacksQuery.isFetchingNextPage,
+    fetchNextPage: () => {
+      void stacksQuery.fetchNextPage();
+    },
+    enabled: !isSort,
+    rootMargin: "200px"
+  });
 
   // ── Organize job: field selectors so stepLabel ticks don't re-render the grid
   const organizeStatus = useOrganizeStacksJobSelector((s) => s.status);
@@ -310,7 +333,7 @@ export function StacksPage() {
         }
       }
 
-      await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
+      await invalidateStacksListQueries(queryClient);
       await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
       const totalActions = mergeActions.length + renameActions.length + enrichActions.length;
@@ -332,31 +355,40 @@ export function StacksPage() {
     }
   }
 
-  // ── Sort state ────────────────────────────────────────────────────
-  const [isSort, setIsSort] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState<StackOutput[] | null>(null);
+  const listPageKey = getListStacksPageInfiniteQueryKey();
 
   const reorderMutation = useMutation(
     orpcQueryClient.stacks.reorder.mutationOptions({
       onMutate: async (input) => {
-        const listKey = orpcQueryClient.stacks.list.queryKey();
-        await queryClient.cancelQueries({ queryKey: listKey });
-        const previous = queryClient.getQueryData(listKey);
+        await queryClient.cancelQueries({ queryKey: listPageKey });
+        const previous =
+          queryClient.getQueryData<InfiniteData<StackListPageOutput, string | null>>(listPageKey);
         const nextSort = new Map(input.items.map((it) => [it.id, it.sortOrder]));
-        queryClient.setQueryData(listKey, (old) => {
-          if (!old) return old;
-          return old
-            .map((s) => {
-              const sortOrder = nextSort.get(s.id);
-              return sortOrder === undefined ? s : { ...s, sortOrder };
-            })
-            .toSorted((a, b) => a.sortOrder - b.sortOrder);
-        });
+        queryClient.setQueryData<InfiniteData<StackListPageOutput, string | null>>(
+          listPageKey,
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => {
+                return {
+                  ...page,
+                  items: page.items
+                    .map((s) => {
+                      const sortOrder = nextSort.get(s.id);
+                      return sortOrder === undefined ? s : { ...s, sortOrder };
+                    })
+                    .toSorted((a, b) => a.sortOrder - b.sortOrder)
+                };
+              })
+            };
+          }
+        );
         return { previous };
       },
       onError: (_error, _input, context) => {
         if (context?.previous !== undefined) {
-          queryClient.setQueryData(orpcQueryClient.stacks.list.queryKey(), context.previous);
+          queryClient.setQueryData(listPageKey, context.previous);
         }
         toast.error("Failed to update order.");
       },
@@ -365,7 +397,7 @@ export function StacksPage() {
         setIsSort(false);
       },
       onSettled: () => {
-        void queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
+        void invalidateStacksListQueries(queryClient);
         void queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
       }
     })
@@ -384,9 +416,21 @@ export function StacksPage() {
     });
   }
 
-  function handleStartSort() {
-    setPendingOrder(stacks);
-    setIsSort(true);
+  async function handleStartSort() {
+    // Reorder needs the full catalog so indices stay correct vs unloaded pages.
+    setIsLoadingFullListForSort(true);
+    try {
+      const full = await queryClient.ensureQueryData({
+        ...orpcQueryClient.stacks.list.queryOptions(),
+        staleTime: STACKS_LIST_STALE_TIME_MS
+      });
+      setPendingOrder(full);
+      setIsSort(true);
+    } catch {
+      toast.error("Failed to load stacks for sorting.");
+    } finally {
+      setIsLoadingFullListForSort(false);
+    }
   }
 
   function handleRestoreDefault() {
@@ -423,7 +467,7 @@ export function StacksPage() {
   const mergeMutation = useMutation(
     orpcQueryClient.stacks.merge.mutationOptions({
       onSuccess: async (data) => {
-        await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
+        await invalidateStacksListQueries(queryClient);
         await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
         toast.success(`Merged into "${data.merged.name}".`);
         clearSelection();
@@ -487,7 +531,7 @@ export function StacksPage() {
     const ids = selectedIdList;
     const results = await Promise.allSettled(ids.map((id) => orpcClient.stacks.delete({ id })));
 
-    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
+    await invalidateStacksListQueries(queryClient);
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
@@ -519,7 +563,7 @@ export function StacksPage() {
       )
     );
 
-    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.stacks.list.queryKey() });
+    await invalidateStacksListQueries(queryClient);
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
@@ -557,22 +601,40 @@ export function StacksPage() {
 
     if (!isSort) {
       return (
-        <div className={gridClassName}>
-          {displayItems.map((stack) => (
-            <div key={stack.id} className="animate-grid-item min-w-0">
-              <StackItem
-                stack={stack}
-                isChecked={Boolean(selectedIds?.[stack.id])}
-                batchSelectActive={batchSelectActive}
-                isOpen={Boolean(isItemOpen?.[stack.id])}
-                onEdit={openDialog}
-                onOpen={openItem}
-                onToggleSelect={toggleSelect}
-                onPrefetch={prefetchStack}
-              />
-            </div>
-          ))}
-        </div>
+        <>
+          <div className={gridClassName}>
+            {displayItems.map((stack) => (
+              <div key={stack.id} className="animate-grid-item min-w-0">
+                <StackItem
+                  stack={stack}
+                  isChecked={Boolean(selectedIds?.[stack.id])}
+                  batchSelectActive={batchSelectActive}
+                  isOpen={Boolean(isItemOpen?.[stack.id])}
+                  onEdit={openDialog}
+                  onOpen={openItem}
+                  onToggleSelect={toggleSelect}
+                  onPrefetch={prefetchStack}
+                />
+              </div>
+            ))}
+          </div>
+          <div
+            ref={sentinelRef}
+            className="flex h-10 w-full items-center justify-center"
+            aria-hidden={!stacksQuery.hasNextPage}
+          >
+            {stacksQuery.isFetchingNextPage ? (
+              <Spinner className="size-4 text-muted-foreground" />
+            ) : null}
+          </div>
+          {totalCount != null && stacks.length > 0 ? (
+            <p className="pb-2 text-center text-xs text-muted-foreground">
+              Showing {stacks.length}
+              {totalCount > stacks.length ? ` of ${totalCount}` : ""} stack
+              {totalCount === 1 ? "" : "s"}
+            </p>
+          ) : null}
+        </>
       );
     }
 
@@ -622,8 +684,10 @@ export function StacksPage() {
               }}
               sort={{
                 isSort,
-                isSortPending: reorderMutation.isPending,
-                onSortStart: handleStartSort,
+                isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
+                onSortStart: () => {
+                  void handleStartSort();
+                },
                 onSortSave: handleSaveSort,
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
@@ -637,6 +701,7 @@ export function StacksPage() {
             selectedCount={selectedCount}
             totalCount={stackIds.length}
             allVisibleSelected={allVisibleSelected}
+            selectAllLabel={`Select all loaded (${stackIds.length})`}
             isDeleting={isDeleting}
             isLoading={isBatchLoading}
             isAddingToPortfolio={isAddingToPortfolio}

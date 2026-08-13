@@ -26,6 +26,11 @@ export type BatchSelectionBarProps = {
   isDeleting?: boolean;
   isLoading?: boolean;
   onDeleteSelected: () => void;
+  /**
+   * Label for the select-all control. Defaults to `Select all (N)`.
+   * Infinite lists should pass e.g. `Select all loaded (N)`.
+   */
+  selectAllLabel?: string;
   /** Defaults to “Delete”. Use “Dismiss” for soft-archive bulk actions. */
   deleteLabel?: string;
   deleteVariant?: "destructive" | "outline" | "secondary";
@@ -66,6 +71,7 @@ export function BatchSelectionBar({
   isDeleting = false,
   isLoading = false,
   onDeleteSelected,
+  selectAllLabel,
   deleteLabel = "Delete",
   deleteVariant = "destructive",
   deleteUsesBanIcon = false,
@@ -86,6 +92,7 @@ export function BatchSelectionBar({
 
   const busy = isLoading || isDeleting || isAddingToPortfolio || isRestoring;
   const DeleteIcon = deleteUsesBanIcon ? BanIcon : Trash2Icon;
+  const resolvedSelectAllLabel = selectAllLabel ?? `Select all (${totalCount})`;
 
   const actions = (
     <Group aria-label={ariaLabel} className={cn("shrink-0", variant === "inline" && className)}>
@@ -153,7 +160,7 @@ export function BatchSelectionBar({
           onClick={onSelectAll}
         >
           <CheckIcon className="size-4" aria-hidden />
-          Select all ({totalCount})
+          {resolvedSelectAllLabel}
         </Button>
       ) : null}
       {!allVisibleSelected ? <GroupSeparator /> : null}

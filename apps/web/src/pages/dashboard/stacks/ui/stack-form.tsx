@@ -16,6 +16,7 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
@@ -50,9 +51,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
   const createMutation = useMutation(
     orpcQueryClient.stacks.create.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.stacks.list.queryKey()
-        });
+        await invalidateStacksListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.projects.list.queryKey()
         });
@@ -71,9 +70,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
   const updateMutation = useMutation(
     orpcQueryClient.stacks.update.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.stacks.list.queryKey()
-        });
+        await invalidateStacksListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.stacks.get.queryKey({
             input: { id: id! }

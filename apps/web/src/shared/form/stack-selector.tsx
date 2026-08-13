@@ -28,6 +28,8 @@ import { Input } from "@tsu-stack/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
+
 import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
 
@@ -54,9 +56,7 @@ function StackSelector(props: StackSelectorProps) {
   const createMutation = useMutation(
     orpcQueryClient.stacks.create.mutationOptions({
       onSuccess: async (created) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.stacks.list.queryKey()
-        });
+        await invalidateStacksListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.portfolio.list.key()
         });

@@ -14,15 +14,15 @@ export type UseInfiniteScrollOptions = {
  * visible and more pages are available. Re-triggers while the sentinel stays
  * in view after a fetch settles (IntersectionObserver only fires on change).
  */
-export function useInfiniteScroll({
+export function useInfiniteScroll<T extends HTMLElement = HTMLDivElement>({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
   enabled = true,
   rootMargin,
   root = null
-}: UseInfiniteScrollOptions): { sentinelRef: RefObject<HTMLElement | null> } {
-  const sentinelRef = useRef<HTMLElement | null>(null);
+}: UseInfiniteScrollOptions): { sentinelRef: RefObject<T | null> } {
+  const sentinelRef = useRef<T | null>(null);
   const [isIntersecting, setIsIntersecting] = useState(false);
   const fetchNextPageRef = useRef(fetchNextPage);
 
