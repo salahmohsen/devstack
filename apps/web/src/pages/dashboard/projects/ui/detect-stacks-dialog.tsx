@@ -25,6 +25,7 @@ import {
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
 
+import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { AiChangeList, type AiChangeItem, type AiChangeKindMeta } from "@/shared/ui/ai-change-list";
 import { Icon } from "@/shared/ui/icon";
@@ -515,9 +516,7 @@ export function DetectStacksResultsHost() {
         });
 
         void invalidateStacksListQueries(queryClient);
-        void queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.projects.list.queryKey()
-        });
+        void invalidateProjectsListQueries(queryClient);
 
         dismissDetectStacksJob();
       }}

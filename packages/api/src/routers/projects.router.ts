@@ -4,7 +4,10 @@ import { z } from "zod";
 import {
   CreateProjectInputSchema,
   DeleteResponseSchema,
+  PROJECTS_LIST_PAGE_SIZE,
   ProjectListOutputSchema,
+  ProjectListPageInputSchema,
+  ProjectListPageOutputSchema,
   ProjectOutputSchema,
   ReorderInputSchema,
   ReorderResponseSchema,
@@ -17,9 +20,14 @@ import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toProjectOutput } from "#@/routers/portfolio.mappers";
 
 export const projectsRouter = {
+  /**
+   * Full catalog for pickers (stack form, experience link) and sort normalize.
+   * Dashboard list uses `listPage` + infinite scroll instead.
+   */
   list: protectedProcedure
     .route({
-      description: "List all projects with their tech stacks",
+      description:
+        "List all projects with their tech stacks (full catalog for pickers; grid uses listPage)",
       method: "GET"
     })
     .output(ProjectListOutputSchema)
@@ -28,6 +36,30 @@ export const projectsRouter = {
       const projects = await projectRepository.findAllByUserId(userId);
       return projects.map(toProjectOutput);
     }),
+
+  /** Cursor page for dashboard infinite scroll. */
+  listPage: protectedProcedure
+    .route({
+      description: "Paginated projects for dashboard infinite scroll (includes stacks)",
+      method: "GET"
+    })
+    .input(ProjectListPageInputSchema.optional())
+    .output(ProjectListPageOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const limit = input?.limit ?? PROJECTS_LIST_PAGE_SIZE;
+      const page = await projectRepository.findPageByUserId(userId, {
+        cursor: input?.cursor ?? null,
+        limit
+      });
+
+      return {
+        items: page.items.map(toProjectOutput),
+        nextCursor: page.nextCursor,
+        totalCount: page.totalCount
+      };
+    }),
+
   get: protectedProcedure
     .route({
       description: "Get a single project by ID",

@@ -19,6 +19,7 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { Icon } from "@/shared/ui/icon";
 import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
@@ -87,9 +88,7 @@ export const StackItem = memo(function StackItem({
     orpcQueryClient.stacks.delete.mutationOptions({
       onSuccess: async () => {
         await invalidateStacksListQueries(queryClient);
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.projects.list.queryKey()
-        });
+        await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });

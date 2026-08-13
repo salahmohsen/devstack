@@ -1,0 +1,50 @@
+import { type InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  PROJECTS_LIST_PAGE_SIZE,
+  type ProjectListPageOutput,
+  type ProjectOutput
+} from "@tsu-stack/core";
+
+/** List data changes infrequently — avoid refetch-on-focus re-render storms. */
+export const PROJECTS_LIST_STALE_TIME_MS = 30_000;
+
+export type ProjectsListPageParam = string | null;
+
+export function getListProjectsPageInfiniteOptions() {
+  return orpcQueryClient.projects.listPage.infiniteOptions({
+    input: (pageParam: ProjectsListPageParam) => {
+      return {
+        cursor: pageParam,
+        limit: PROJECTS_LIST_PAGE_SIZE
+      };
+    },
+    initialPageParam: null as ProjectsListPageParam,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    staleTime: PROJECTS_LIST_STALE_TIME_MS
+  });
+}
+
+export function useListProjectsPageInfiniteQuery() {
+  return useInfiniteQuery(getListProjectsPageInfiniteOptions());
+}
+
+export function flattenProjectsPages(
+  data: InfiniteData<ProjectListPageOutput, ProjectsListPageParam> | undefined
+): ProjectOutput[] {
+  if (!data) return [];
+  return data.pages.flatMap((page) => page.items);
+}
+
+export function getListProjectsPageInfiniteQueryKey() {
+  return orpcQueryClient.projects.listPage.infiniteKey({
+    input: (pageParam: ProjectsListPageParam) => {
+      return {
+        cursor: pageParam,
+        limit: PROJECTS_LIST_PAGE_SIZE
+      };
+    },
+    initialPageParam: null as ProjectsListPageParam
+  });
+}

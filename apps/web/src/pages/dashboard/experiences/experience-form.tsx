@@ -15,6 +15,7 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
 import { useAppForm } from "@/shared/form";
+import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
@@ -44,9 +45,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
   const createMutation = useMutation(
     orpcQueryClient.experiences.create.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.experiences.list.queryKey()
-        });
+        await invalidateExperiencesListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -62,9 +61,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
   const updateMutation = useMutation(
     orpcQueryClient.experiences.update.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.experiences.list.queryKey()
-        });
+        await invalidateExperiencesListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.experiences.get.queryKey({
             input: { id: id! }

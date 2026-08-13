@@ -1,13 +1,17 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, type NavigateOptions } from "@tanstack/react-router";
 import { ExternalLink, FolderKanbanIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { type ProjectOutput, stripTrailingSlashes } from "@tsu-stack/core";
+import {
+  type ProjectListPageOutput,
+  type ProjectOutput,
+  stripTrailingSlashes
+} from "@tsu-stack/core";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import {
   AlertDialog,
@@ -27,13 +31,16 @@ import {
   PreviewCardPopup,
   PreviewCardTrigger
 } from "@tsu-stack/ui/components/preview-card";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
   areAllVisibleSelected,
   isBatchSelectActive,
   isIdSelected,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
@@ -57,12 +64,18 @@ import {
 import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useProjectStore } from "@/pages/dashboard/projects/_lib/project.slice";
+import {
+  PROJECTS_LIST_STALE_TIME_MS,
+  flattenProjectsPages,
+  getListProjectsPageInfiniteQueryKey,
+  useListProjectsPageInfiniteQuery
+} from "@/pages/dashboard/projects/api/list-projects-page.query";
 import { DetectStacksResultsHost } from "@/pages/dashboard/projects/ui/detect-stacks-dialog";
 import { DetectStacksReposDialog } from "@/pages/dashboard/projects/ui/detect-stacks-repos-dialog";
 import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
 export function ProjectsPage() {
-  const projectsQuery = useQuery(orpcQueryClient.projects.list.queryOptions());
+  const projectsQuery = useListProjectsPageInfiniteQuery();
   const queryClient = useQueryClient();
 
   const {
@@ -77,17 +90,27 @@ export function ProjectsPage() {
     clearSelection
   } = useProjectStore();
 
-  const projects = useMemo<ProjectOutput[]>(() => projectsQuery.data ?? [], [projectsQuery.data]);
+  const projects = useMemo(() => flattenProjectsPages(projectsQuery.data), [projectsQuery.data]);
+  const totalCount = projectsQuery.data?.pages[0]?.totalCount;
 
   const [isSort, setIsSort] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<ProjectOutput[] | null>(null);
+  const [isLoadingFullListForSort, setIsLoadingFullListForSort] = useState(false);
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage: projectsQuery.hasNextPage,
+    isFetchingNextPage: projectsQuery.isFetchingNextPage,
+    fetchNextPage: () => {
+      void projectsQuery.fetchNextPage();
+    },
+    enabled: !isSort,
+    rootMargin: "200px"
+  });
 
   const deleteMutation = useMutation(
     orpcQueryClient.projects.delete.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.projects.list.queryKey()
-        });
+        await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -102,9 +125,7 @@ export function ProjectsPage() {
   const togglePortfolioMutation = useMutation(
     orpcQueryClient.portfolio.toggle.mutationOptions({
       onSuccess: async (_data, variables) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.projects.list.queryKey()
-        });
+        await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -116,32 +137,40 @@ export function ProjectsPage() {
     })
   );
 
+  const listPageKey = getListProjectsPageInfiniteQueryKey();
+
   const reorderMutation = useMutation(
     orpcQueryClient.projects.reorder.mutationOptions({
       onMutate: async (input) => {
-        const listKey = orpcQueryClient.projects.list.queryKey();
-        await queryClient.cancelQueries({ queryKey: listKey });
-
-        const previous = queryClient.getQueryData(listKey);
-
+        await queryClient.cancelQueries({ queryKey: listPageKey });
+        const previous =
+          queryClient.getQueryData<InfiniteData<ProjectListPageOutput, string | null>>(listPageKey);
         const nextSort = new Map(input.items.map((it) => [it.id, it.sortOrder]));
-
-        queryClient.setQueryData(listKey, (old) => {
-          if (!old) return old;
-          const reordered = old
-            .map((proj) => {
-              const sortOrder = nextSort.get(proj.id);
-              return sortOrder === undefined ? proj : { ...proj, sortOrder };
-            })
-            .toSorted((a, b) => a.sortOrder - b.sortOrder);
-          return reordered;
-        });
-
+        queryClient.setQueryData<InfiniteData<ProjectListPageOutput, string | null>>(
+          listPageKey,
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => {
+                return {
+                  ...page,
+                  items: page.items
+                    .map((proj) => {
+                      const sortOrder = nextSort.get(proj.id);
+                      return sortOrder === undefined ? proj : { ...proj, sortOrder };
+                    })
+                    .toSorted((a, b) => a.sortOrder - b.sortOrder)
+                };
+              })
+            };
+          }
+        );
         return { previous };
       },
       onError: (_error, _input, context) => {
         if (context?.previous !== undefined) {
-          queryClient.setQueryData(orpcQueryClient.projects.list.queryKey(), context.previous);
+          queryClient.setQueryData(listPageKey, context.previous);
         }
         toast.error("Failed to update order.");
       },
@@ -150,9 +179,7 @@ export function ProjectsPage() {
         setIsSort(false);
       },
       onSettled: () => {
-        void queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.projects.list.queryKey()
-        });
+        void invalidateProjectsListQueries(queryClient);
         void queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -175,9 +202,21 @@ export function ProjectsPage() {
     });
   }
 
-  function handleStartSort() {
-    setPendingOrder(projects);
-    setIsSort(true);
+  async function handleStartSort() {
+    // Reorder needs the full catalog so indices stay correct vs unloaded pages.
+    setIsLoadingFullListForSort(true);
+    try {
+      const full = await queryClient.ensureQueryData({
+        ...orpcQueryClient.projects.list.queryOptions(),
+        staleTime: PROJECTS_LIST_STALE_TIME_MS
+      });
+      setPendingOrder(full);
+      setIsSort(true);
+    } catch {
+      toast.error("Failed to load projects for sorting.");
+    } finally {
+      setIsLoadingFullListForSort(false);
+    }
   }
 
   function handleRestoreDefault() {
@@ -209,7 +248,7 @@ export function ProjectsPage() {
     const ids = selectedIdList;
     const results = await Promise.allSettled(ids.map((id) => orpcClient.projects.delete({ id })));
 
-    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.projects.list.queryKey() });
+    await invalidateProjectsListQueries(queryClient);
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
@@ -241,7 +280,7 @@ export function ProjectsPage() {
       )
     );
 
-    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.projects.list.queryKey() });
+    await invalidateProjectsListQueries(queryClient);
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
@@ -346,7 +385,7 @@ export function ProjectsPage() {
     if (projectsQuery.isLoading) return <ListSkeleton />;
     if (projects.length === 0) return emptyState;
 
-    return (
+    const list = (
       <SortableList
         items={pendingOrder ?? projects}
         onReorder={handleReorder}
@@ -420,6 +459,30 @@ export function ProjectsPage() {
         )}
       </SortableList>
     );
+
+    if (isSort) return list;
+
+    return (
+      <>
+        {list}
+        <div
+          ref={sentinelRef}
+          className="flex h-10 w-full items-center justify-center"
+          aria-hidden={!projectsQuery.hasNextPage}
+        >
+          {projectsQuery.isFetchingNextPage ? (
+            <Spinner className="size-4 text-muted-foreground" />
+          ) : null}
+        </div>
+        {totalCount != null && projects.length > 0 ? (
+          <p className="pb-2 text-center text-xs text-muted-foreground">
+            Showing {projects.length}
+            {totalCount > projects.length ? ` of ${totalCount}` : ""} project
+            {totalCount === 1 ? "" : "s"}
+          </p>
+        ) : null}
+      </>
+    );
   }
 
   return (
@@ -433,8 +496,10 @@ export function ProjectsPage() {
               add={{ onAdd: () => openDialog(null), label: "Add Project" }}
               sort={{
                 isSort,
-                isSortPending: reorderMutation.isPending,
-                onSortStart: handleStartSort,
+                isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
+                onSortStart: () => {
+                  void handleStartSort();
+                },
                 onSortSave: handleSaveSort,
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
@@ -448,6 +513,7 @@ export function ProjectsPage() {
             selectedCount={selectedCount}
             totalCount={projectIds.length}
             allVisibleSelected={allVisibleSelected}
+            selectAllLabel={`Select all loaded (${projectIds.length})`}
             isDeleting={isDeleting}
             isLoading={isBatchLoading}
             isAddingToPortfolio={isAddingToPortfolio}

@@ -3,7 +3,10 @@ import { z } from "zod";
 import {
   CreateExperienceInputSchema,
   DeleteResponseSchema,
+  EXPERIENCES_LIST_PAGE_SIZE,
   ExperienceListOutputSchema,
+  ExperienceListPageInputSchema,
+  ExperienceListPageOutputSchema,
   ExperienceOutputSchema,
   ReorderInputSchema,
   ReorderResponseSchema,
@@ -15,9 +18,14 @@ import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toExperienceOutput } from "#@/routers/portfolio.mappers";
 
 export const experiencesRouter = {
+  /**
+   * Full catalog for pickers (project form experience link) and sort normalize.
+   * Dashboard list uses `listPage` + infinite scroll instead.
+   */
   list: protectedProcedure
     .route({
-      description: "List all experiences with their projects",
+      description:
+        "List all experiences with their projects (full catalog for pickers; grid uses listPage)",
       method: "GET"
     })
     .output(ExperienceListOutputSchema)
@@ -26,6 +34,30 @@ export const experiencesRouter = {
       const experiences = await experienceRepository.findAllByUserId(userId);
       return experiences.map(toExperienceOutput);
     }),
+
+  /** Cursor page for dashboard infinite scroll. */
+  listPage: protectedProcedure
+    .route({
+      description: "Paginated experiences for dashboard infinite scroll (includes projects)",
+      method: "GET"
+    })
+    .input(ExperienceListPageInputSchema.optional())
+    .output(ExperienceListPageOutputSchema)
+    .handler(async ({ input, context }) => {
+      const userId = context.session.user.id;
+      const limit = input?.limit ?? EXPERIENCES_LIST_PAGE_SIZE;
+      const page = await experienceRepository.findPageByUserId(userId, {
+        cursor: input?.cursor ?? null,
+        limit
+      });
+
+      return {
+        items: page.items.map(toExperienceOutput),
+        nextCursor: page.nextCursor,
+        totalCount: page.totalCount
+      };
+    }),
+
   get: protectedProcedure
     .route({
       description: "Get a single experience by ID",

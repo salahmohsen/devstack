@@ -23,6 +23,7 @@ import {
 } from "@tsu-stack/ui/components/tooltip";
 
 import { useAppForm } from "@/shared/form";
+import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
@@ -68,9 +69,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
   const createMutation = useMutation(
     orpcQueryClient.projects.create.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.projects.list.queryKey()
-        });
+        await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -86,9 +85,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
   const updateMutation = useMutation(
     orpcQueryClient.projects.update.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.projects.list.queryKey()
-        });
+        await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.projects.get.queryKey({
             input: { id: id! }

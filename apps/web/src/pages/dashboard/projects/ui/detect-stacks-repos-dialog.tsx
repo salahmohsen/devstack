@@ -32,9 +32,10 @@ import {
 import { Field } from "@tsu-stack/ui/components/field";
 import { Label } from "@tsu-stack/ui/components/label";
 
+import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
+
 import { useGetGithubProfileReposQuery } from "@/features/github";
 import { startDetectStacksJob } from "@/features/stacks";
-
 type RepoItem = {
   value: string;
   label: string;
@@ -112,9 +113,7 @@ export function DetectStacksReposDialog({
         }
       });
 
-      await queryClient.invalidateQueries({
-        queryKey: orpcQueryClient.projects.list.queryKey()
-      });
+      await invalidateProjectsListQueries(queryClient);
       await queryClient.invalidateQueries({
         queryKey: orpcQueryClient.projects.get.queryKey({
           input: { id: project.id }

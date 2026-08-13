@@ -1,8 +1,12 @@
 import {
   and,
+  asc,
   eq,
+  gt,
   inArray,
   isNotNull,
+  or,
+  sql,
   type InferInsertModel,
   type InferSelectModel,
   type SQL
@@ -20,6 +24,44 @@ export type CreateExperienceData = Omit<
 export type UpdateExperienceData = Partial<Omit<CreateExperienceData, "userId">>;
 export type ReorderExperienceItem = { id: string; sortOrder: number };
 
+/** Opaque cursor for experiences ordered by (sortOrder, title, id). */
+export type ExperienceListCursor = {
+  sortOrder: number;
+  title: string;
+  id: string;
+};
+
+function encodeExperienceListCursor(
+  row: Pick<ExperienceListCursor, "sortOrder" | "title" | "id">
+): string {
+  return Buffer.from(
+    JSON.stringify({
+      sortOrder: row.sortOrder,
+      title: row.title,
+      id: row.id
+    } satisfies ExperienceListCursor),
+    "utf8"
+  ).toString("base64url");
+}
+
+function decodeExperienceListCursor(cursor: string): ExperienceListCursor | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      typeof (parsed as ExperienceListCursor).sortOrder !== "number" ||
+      typeof (parsed as ExperienceListCursor).title !== "string" ||
+      typeof (parsed as ExperienceListCursor).id !== "string"
+    ) {
+      return null;
+    }
+    return parsed as ExperienceListCursor;
+  } catch {
+    return null;
+  }
+}
+
 export const experienceRepository = {
   async findAllByUserId(userId: string) {
     return getDb().query.experience.findMany({
@@ -36,6 +78,87 @@ export const experienceRepository = {
         }
       }
     });
+  },
+
+  /**
+   * Cursor page for dashboard infinite scroll.
+   * Order: sortOrder ASC, title ASC, id ASC (stable).
+   * Full row + projects/stacks (same shape as findAllByUserId).
+   */
+  async findPageByUserId(userId: string, options: { cursor?: string | null; limit: number }) {
+    const limit = options.limit;
+    const cursor =
+      options.cursor != null && options.cursor !== ""
+        ? decodeExperienceListCursor(options.cursor)
+        : null;
+
+    const cursorWhere =
+      cursor == null
+        ? undefined
+        : or(
+            gt(experience.sortOrder, cursor.sortOrder),
+            and(eq(experience.sortOrder, cursor.sortOrder), gt(experience.title, cursor.title)),
+            and(
+              eq(experience.sortOrder, cursor.sortOrder),
+              eq(experience.title, cursor.title),
+              gt(experience.id, cursor.id)
+            )
+          );
+
+    const whereClause =
+      cursorWhere == null
+        ? eq(experience.userId, userId)
+        : and(eq(experience.userId, userId), cursorWhere);
+
+    const [rows, countRow] = await Promise.all([
+      getDb()
+        .select({
+          id: experience.id,
+          sortOrder: experience.sortOrder,
+          title: experience.title
+        })
+        .from(experience)
+        .where(whereClause)
+        .orderBy(asc(experience.sortOrder), asc(experience.title), asc(experience.id))
+        .limit(limit + 1),
+      getDb()
+        .select({ count: sql<number>`count(*)::int` })
+        .from(experience)
+        .where(eq(experience.userId, userId))
+        .then((r) => r[0]?.count ?? 0)
+    ]);
+
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const ids = pageRows.map((r) => r.id);
+
+    if (ids.length === 0) {
+      return { items: [], nextCursor: null, totalCount: countRow };
+    }
+
+    const full = await getDb().query.experience.findMany({
+      where: { userId, id: { in: ids } },
+      with: {
+        projects: {
+          orderBy: (proj, { asc: orderAsc }) => [orderAsc(proj.sortOrder), orderAsc(proj.title)],
+          with: {
+            stacks: {
+              with: { stack: true }
+            }
+          }
+        }
+      }
+    });
+
+    const byId = new Map(full.map((e) => [e.id, e] as const));
+    const items = ids
+      .map((id) => byId.get(id))
+      .filter((e): e is NonNullable<typeof e> => e != null);
+
+    const last = pageRows[pageRows.length - 1];
+    const nextCursor = hasMore && last != null ? encodeExperienceListCursor(last) : null;
+
+    return { items, nextCursor, totalCount: countRow };
   },
 
   async findOptedInByUserId(userId: string, extraWhere?: SQL) {

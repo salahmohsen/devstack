@@ -1,12 +1,13 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { type ExperienceListPageOutput, type ExperienceOutput } from "@tsu-stack/core";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -17,13 +18,16 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Button } from "@tsu-stack/ui/components/button";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import {
   areAllVisibleSelected,
   isBatchSelectActive,
   isIdSelected,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
@@ -45,6 +49,12 @@ import {
 import { ItemsInfoPanel } from "@/widgets/layout";
 
 import { useExperienceStore } from "./_lib/experience.slice";
+import {
+  EXPERIENCES_LIST_STALE_TIME_MS,
+  flattenExperiencesPages,
+  getListExperiencesPageInfiniteQueryKey,
+  useListExperiencesPageInfiniteQuery
+} from "./api/list-experiences-page.query";
 import { ExperienceForm } from "./experience-form";
 
 function formatRange(fromDate: string | null, toDate: string | null): string {
@@ -81,18 +91,31 @@ export function ExperiencesPage() {
     clearSelection
   } = useExperienceStore();
   const [isSort, setIsSort] = useState(false);
-  const [pendingOrder, setPendingOrder] = useState<typeof visibleExperiences | null>(null);
+  const [pendingOrder, setPendingOrder] = useState<ExperienceOutput[] | null>(null);
+  const [isLoadingFullListForSort, setIsLoadingFullListForSort] = useState(false);
   const queryClient = useQueryClient();
 
-  const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
-  const visibleExperiences = useMemo(() => experiencesQuery.data ?? [], [experiencesQuery.data]);
+  const experiencesQuery = useListExperiencesPageInfiniteQuery();
+  const visibleExperiences = useMemo(
+    () => flattenExperiencesPages(experiencesQuery.data),
+    [experiencesQuery.data]
+  );
+  const totalCount = experiencesQuery.data?.pages[0]?.totalCount;
+
+  const { sentinelRef } = useInfiniteScroll({
+    hasNextPage: experiencesQuery.hasNextPage,
+    isFetchingNextPage: experiencesQuery.isFetchingNextPage,
+    fetchNextPage: () => {
+      void experiencesQuery.fetchNextPage();
+    },
+    enabled: !isSort,
+    rootMargin: "200px"
+  });
 
   const deleteMutation = useMutation(
     orpcQueryClient.experiences.delete.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.experiences.list.queryKey()
-        });
+        await invalidateExperiencesListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -104,9 +127,7 @@ export function ExperiencesPage() {
   const togglePortfolioMutation = useMutation(
     orpcQueryClient.portfolio.toggle.mutationOptions({
       onSuccess: async (_data, variables) => {
-        await queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.experiences.list.queryKey()
-        });
+        await invalidateExperiencesListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -118,32 +139,42 @@ export function ExperiencesPage() {
     })
   );
 
+  const listPageKey = getListExperiencesPageInfiniteQueryKey();
+
   const reorderMutation = useMutation(
     orpcQueryClient.experiences.reorder.mutationOptions({
       onMutate: async (input) => {
-        const listKey = orpcQueryClient.experiences.list.queryKey();
-        await queryClient.cancelQueries({ queryKey: listKey });
-
-        const previous = queryClient.getQueryData(listKey);
-
+        await queryClient.cancelQueries({ queryKey: listPageKey });
+        const previous =
+          queryClient.getQueryData<InfiniteData<ExperienceListPageOutput, string | null>>(
+            listPageKey
+          );
         const nextSort = new Map(input.items.map((it) => [it.id, it.sortOrder]));
-
-        queryClient.setQueryData(listKey, (old) => {
-          if (!old) return old;
-          const reordered = old
-            .map((exp) => {
-              const sortOrder = nextSort.get(exp.id);
-              return sortOrder === undefined ? exp : { ...exp, sortOrder };
-            })
-            .toSorted((a, b) => a.sortOrder - b.sortOrder);
-          return reordered;
-        });
-
+        queryClient.setQueryData<InfiniteData<ExperienceListPageOutput, string | null>>(
+          listPageKey,
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => {
+                return {
+                  ...page,
+                  items: page.items
+                    .map((exp) => {
+                      const sortOrder = nextSort.get(exp.id);
+                      return sortOrder === undefined ? exp : { ...exp, sortOrder };
+                    })
+                    .toSorted((a, b) => a.sortOrder - b.sortOrder)
+                };
+              })
+            };
+          }
+        );
         return { previous };
       },
       onError: (_error, _input, context) => {
         if (context?.previous !== undefined) {
-          queryClient.setQueryData(orpcQueryClient.experiences.list.queryKey(), context.previous);
+          queryClient.setQueryData(listPageKey, context.previous);
         }
         toast.error("Failed to update order.");
       },
@@ -152,9 +183,7 @@ export function ExperiencesPage() {
         setIsSort(false);
       },
       onSettled: () => {
-        void queryClient.invalidateQueries({
-          queryKey: orpcQueryClient.experiences.list.queryKey()
-        });
+        void invalidateExperiencesListQueries(queryClient);
         void queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
@@ -164,7 +193,7 @@ export function ExperiencesPage() {
 
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  function handleReorder(newOrder: typeof visibleExperiences) {
+  function handleReorder(newOrder: ExperienceOutput[]) {
     setPendingOrder(newOrder);
   }
 
@@ -177,9 +206,21 @@ export function ExperiencesPage() {
     });
   }
 
-  function handleStartSort() {
-    setPendingOrder(visibleExperiences);
-    setIsSort(true);
+  async function handleStartSort() {
+    // Reorder needs the full catalog so indices stay correct vs unloaded pages.
+    setIsLoadingFullListForSort(true);
+    try {
+      const full = await queryClient.ensureQueryData({
+        ...orpcQueryClient.experiences.list.queryOptions(),
+        staleTime: EXPERIENCES_LIST_STALE_TIME_MS
+      });
+      setPendingOrder(full);
+      setIsSort(true);
+    } catch {
+      toast.error("Failed to load experiences for sorting.");
+    } finally {
+      setIsLoadingFullListForSort(false);
+    }
   }
 
   function handleRestoreDefault() {
@@ -213,7 +254,7 @@ export function ExperiencesPage() {
       ids.map((id) => orpcClient.experiences.delete({ id }))
     );
 
-    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.experiences.list.queryKey() });
+    await invalidateExperiencesListQueries(queryClient);
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
@@ -247,7 +288,7 @@ export function ExperiencesPage() {
       )
     );
 
-    await queryClient.invalidateQueries({ queryKey: orpcQueryClient.experiences.list.queryKey() });
+    await invalidateExperiencesListQueries(queryClient);
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
@@ -327,7 +368,7 @@ export function ExperiencesPage() {
     if (experiencesQuery.isLoading) return <ListSkeleton />;
     if (visibleExperiences.length === 0) return emptyState;
 
-    return (
+    const list = (
       <SortableList
         items={pendingOrder ?? visibleExperiences}
         onReorder={handleReorder}
@@ -379,6 +420,30 @@ export function ExperiencesPage() {
         )}
       </SortableList>
     );
+
+    if (isSort) return list;
+
+    return (
+      <>
+        {list}
+        <div
+          ref={sentinelRef}
+          className="flex h-10 w-full items-center justify-center"
+          aria-hidden={!experiencesQuery.hasNextPage}
+        >
+          {experiencesQuery.isFetchingNextPage ? (
+            <Spinner className="size-4 text-muted-foreground" />
+          ) : null}
+        </div>
+        {totalCount != null && visibleExperiences.length > 0 ? (
+          <p className="pb-2 text-center text-xs text-muted-foreground">
+            Showing {visibleExperiences.length}
+            {totalCount > visibleExperiences.length ? ` of ${totalCount}` : ""} experience
+            {totalCount === 1 ? "" : "s"}
+          </p>
+        ) : null}
+      </>
+    );
   }
 
   return (
@@ -392,8 +457,10 @@ export function ExperiencesPage() {
               add={{ onAdd: () => openDialog(null), label: "Add Experience" }}
               sort={{
                 isSort: isSort,
-                isSortPending: reorderMutation.isPending,
-                onSortStart: handleStartSort,
+                isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
+                onSortStart: () => {
+                  void handleStartSort();
+                },
                 onSortSave: handleSaveSort,
                 onSortRestore: handleRestoreDefault,
                 onSortCancel: handleCancelSort
@@ -407,6 +474,7 @@ export function ExperiencesPage() {
             selectedCount={selectedCount}
             totalCount={visibleIds.length}
             allVisibleSelected={allVisibleSelected}
+            selectAllLabel={`Select all loaded (${visibleIds.length})`}
             isDeleting={isDeleting}
             isLoading={isBatchLoading}
             isAddingToPortfolio={isAddingToPortfolio}

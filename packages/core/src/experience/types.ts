@@ -71,8 +71,38 @@ export const UpdateExperienceInputSchema = z.object({
 
 export const ExperienceListOutputSchema = z.array(ExperienceOutputSchema);
 
+/** Default page size for dashboard experiences infinite scroll. */
+export const EXPERIENCES_LIST_PAGE_SIZE = 24;
+
+/**
+ * Cursor page for dashboard experiences list.
+ * Keep `experiences.list` (full array) for pickers / sort full catalog.
+ */
+export const ExperienceListPageInputSchema = z.object({
+  cursor: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Opaque cursor from previous page; omit/null for first page"),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe(`Page size (default ${EXPERIENCES_LIST_PAGE_SIZE})`)
+});
+
+export const ExperienceListPageOutputSchema = z.object({
+  items: z.array(ExperienceOutputSchema),
+  nextCursor: z.string().nullable().describe("Cursor for next page, null if last page"),
+  totalCount: z.number().int().nonnegative().describe("Total experiences for the user")
+});
+
 export type ExperienceOutput = z.infer<typeof ExperienceOutputSchema>;
 export type ExperiencePublicOutput = z.infer<typeof ExperiencePublicOutputSchema>;
 export type CreateExperienceInput = z.infer<typeof CreateExperienceInputSchema>;
 export type UpdateExperienceInput = z.infer<typeof UpdateExperienceInputSchema>;
 export type ExperienceListOutput = z.infer<typeof ExperienceListOutputSchema>;
+export type ExperienceListPageInput = z.infer<typeof ExperienceListPageInputSchema>;
+export type ExperienceListPageOutput = z.infer<typeof ExperienceListPageOutputSchema>;

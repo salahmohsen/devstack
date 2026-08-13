@@ -51,6 +51,34 @@ export const ProjectPublicOutputSchema = ProjectOutputSchema.omit({ analysis: tr
 
 export const ProjectListOutputSchema = z.array(ProjectOutputSchema);
 
+/** Default page size for dashboard projects infinite scroll. */
+export const PROJECTS_LIST_PAGE_SIZE = 24;
+
+/**
+ * Cursor page for dashboard projects list.
+ * Keep `projects.list` (full array) for pickers / sort full catalog.
+ */
+export const ProjectListPageInputSchema = z.object({
+  cursor: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Opaque cursor from previous page; omit/null for first page"),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe(`Page size (default ${PROJECTS_LIST_PAGE_SIZE})`)
+});
+
+export const ProjectListPageOutputSchema = z.object({
+  items: z.array(ProjectOutputSchema),
+  nextCursor: z.string().nullable().describe("Cursor for next page, null if last page"),
+  totalCount: z.number().int().nonnegative().describe("Total projects for the user")
+});
+
 export const CreateProjectInputSchema = z.object({
   logo: z.string().nullable().optional(),
   repos: z.array(z.url()).optional().default([]),
@@ -103,3 +131,5 @@ export type ProjectOutput = z.infer<typeof ProjectOutputSchema>;
 export type ProjectPublicOutput = z.infer<typeof ProjectPublicOutputSchema>;
 export type ToggleProjectArchivedResponse = z.infer<typeof ToggleProjectArchivedResponseSchema>;
 export type ProjectListOutput = z.infer<typeof ProjectListOutputSchema>;
+export type ProjectListPageInput = z.infer<typeof ProjectListPageInputSchema>;
+export type ProjectListPageOutput = z.infer<typeof ProjectListPageOutputSchema>;

@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-
 import { ExperiencesPage } from "@/pages/dashboard/experiences";
+import { getListExperiencesPageInfiniteOptions } from "@/pages/dashboard/experiences/api/list-experiences-page.query";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/experiences/")({
   component: ExperiencesPage,
-  loader: async ({ context: { queryClient } }) => {
-    void queryClient.prefetchQuery(orpcQueryClient.experiences.list.queryOptions());
+  loader: ({ context }) => {
+    // Prefetch first page only — further pages load via infinite scroll.
+    void context.queryClient.ensureInfiniteQueryData(getListExperiencesPageInfiniteOptions());
   }
 });

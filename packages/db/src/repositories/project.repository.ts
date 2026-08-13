@@ -1,8 +1,12 @@
 import {
   and,
+  asc,
   eq,
+  gt,
   inArray,
   isNotNull,
+  or,
+  sql,
   type InferInsertModel,
   type InferSelectModel,
   type SQL
@@ -30,6 +34,44 @@ export type UpdateProjectData = Partial<
 
 export type ReorderProjectItem = { id: string; sortOrder: number };
 
+/** Opaque cursor for projects ordered by (sortOrder, title, id). */
+export type ProjectListCursor = {
+  sortOrder: number;
+  title: string;
+  id: string;
+};
+
+function encodeProjectListCursor(
+  row: Pick<ProjectListCursor, "sortOrder" | "title" | "id">
+): string {
+  return Buffer.from(
+    JSON.stringify({
+      sortOrder: row.sortOrder,
+      title: row.title,
+      id: row.id
+    } satisfies ProjectListCursor),
+    "utf8"
+  ).toString("base64url");
+}
+
+function decodeProjectListCursor(cursor: string): ProjectListCursor | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as unknown;
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      typeof (parsed as ProjectListCursor).sortOrder !== "number" ||
+      typeof (parsed as ProjectListCursor).title !== "string" ||
+      typeof (parsed as ProjectListCursor).id !== "string"
+    ) {
+      return null;
+    }
+    return parsed as ProjectListCursor;
+  } catch {
+    return null;
+  }
+}
+
 export const projectRepository = {
   async findAllByUserId(userId: string) {
     return getDb().query.project.findMany({
@@ -41,6 +83,82 @@ export const projectRepository = {
         }
       }
     });
+  },
+
+  /**
+   * Cursor page for dashboard infinite scroll.
+   * Order: sortOrder ASC, title ASC, id ASC (stable).
+   * Full row + stacks (same shape as findAllByUserId).
+   */
+  async findPageByUserId(userId: string, options: { cursor?: string | null; limit: number }) {
+    const limit = options.limit;
+    const cursor =
+      options.cursor != null && options.cursor !== ""
+        ? decodeProjectListCursor(options.cursor)
+        : null;
+
+    const cursorWhere =
+      cursor == null
+        ? undefined
+        : or(
+            gt(project.sortOrder, cursor.sortOrder),
+            and(eq(project.sortOrder, cursor.sortOrder), gt(project.title, cursor.title)),
+            and(
+              eq(project.sortOrder, cursor.sortOrder),
+              eq(project.title, cursor.title),
+              gt(project.id, cursor.id)
+            )
+          );
+
+    const whereClause =
+      cursorWhere == null
+        ? eq(project.userId, userId)
+        : and(eq(project.userId, userId), cursorWhere);
+
+    const [rows, countRow] = await Promise.all([
+      getDb()
+        .select({
+          id: project.id,
+          sortOrder: project.sortOrder,
+          title: project.title
+        })
+        .from(project)
+        .where(whereClause)
+        .orderBy(asc(project.sortOrder), asc(project.title), asc(project.id))
+        .limit(limit + 1),
+      getDb()
+        .select({ count: sql<number>`count(*)::int` })
+        .from(project)
+        .where(eq(project.userId, userId))
+        .then((r) => r[0]?.count ?? 0)
+    ]);
+
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const ids = pageRows.map((r) => r.id);
+
+    if (ids.length === 0) {
+      return { items: [], nextCursor: null, totalCount: countRow };
+    }
+
+    const full = await getDb().query.project.findMany({
+      where: { userId, id: { in: ids } },
+      with: {
+        stacks: {
+          with: { stack: true }
+        }
+      }
+    });
+
+    const byId = new Map(full.map((p) => [p.id, p] as const));
+    const items = ids
+      .map((id) => byId.get(id))
+      .filter((p): p is NonNullable<typeof p> => p != null);
+
+    const last = pageRows[pageRows.length - 1];
+    const nextCursor = hasMore && last != null ? encodeProjectListCursor(last) : null;
+
+    return { items, nextCursor, totalCount: countRow };
   },
 
   async findOptedInByUserId(userId: string, extraWhere?: SQL) {
