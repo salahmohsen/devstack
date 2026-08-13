@@ -46,7 +46,12 @@ export const DetectStacksWorkflowInputSchema = z.object({
     .array(
       z.object({
         id: z.string().describe("Existing stack ID in database"),
-        name: z.string().describe("Display name of existing stack")
+        name: z.string().describe("Display name of existing stack"),
+        icon: z
+          .string()
+          .nullable()
+          .optional()
+          .describe("SVG icon already stored on the stack (library hits)")
       })
     )
     .describe("Stacks already in the database (for deduplication)"),

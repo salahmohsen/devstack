@@ -276,11 +276,24 @@ export const projectRepository = {
         updateData.analysis = projectFields.analysis;
       }
 
-      const [updated] = await tx
-        .update(project)
-        .set(updateData)
-        .where(and(eq(project.id, id), eq(project.userId, userId)))
-        .returning();
+      // stackIds-only updates leave projectFields empty — skip SET so Drizzle
+      // does not reject an empty update (detect-stacks attach path).
+      let updated: typeof project.$inferSelect | undefined;
+      if (Object.keys(updateData).length > 0) {
+        const [row] = await tx
+          .update(project)
+          .set(updateData)
+          .where(and(eq(project.id, id), eq(project.userId, userId)))
+          .returning();
+        updated = row;
+      } else {
+        const [row] = await tx
+          .select()
+          .from(project)
+          .where(and(eq(project.id, id), eq(project.userId, userId)))
+          .limit(1);
+        updated = row;
+      }
 
       if (!updated) {
         notFound = true;

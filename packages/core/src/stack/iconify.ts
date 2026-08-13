@@ -169,11 +169,49 @@ export function pickBestIconId(iconIds: string[], query: string): string | null 
 }
 
 /**
+ * Direct Iconify IDs for brands that search misses (empty results or poor ranking).
+ * Keys are lowercase sanitized labels (spaces stripped of punctuation).
+ */
+const KNOWN_ICON_IDS: Readonly<Record<string, string>> = {
+  // Editors / RPC brands often missing from Iconify search
+  tiptap: "lucide:text-select",
+  orpc: "simple-icons:trpc",
+  // Product labels that search under-ranks
+  tanstackquery: "simple-icons:reactquery",
+  tanstackrouter: "simple-icons:reactrouter",
+  tanstackform: "simple-icons:react",
+  tanstackstart: "simple-icons:react",
+  tanstacktable: "simple-icons:react",
+  betterauth: "simple-icons:betterauth",
+  radixui: "simple-icons:radixui",
+  nextjs: "simple-icons:nextdotjs",
+  "next.js": "simple-icons:nextdotjs"
+};
+
+function knownIconKey(name: string): string {
+  return name.toLowerCase().replace(/[\W_]+/g, "");
+}
+
+/**
  * Resolve an icon for a stack or npm package name.
- * Tries multiple query variants and prefers brand icon sets (simple-icons, logos, …).
+ * Tries known aliases, then multiple query variants, preferring brand icon sets.
  */
 export async function resolveIconForPackage(npmPackage: string): Promise<string | null> {
-  const queries = buildSearchQueries(npmPackage);
+  const knownId = KNOWN_ICON_IDS[knownIconKey(npmPackage)];
+  if (knownId) {
+    const knownSvg = await fetchIconSvg(knownId);
+    if (knownSvg) return knownSvg;
+  }
+
+  // For scoped packages, also try product segment + full scope path as queries.
+  const extraQueries: string[] = [];
+  if (npmPackage.includes("/")) {
+    const bare = npmPackage.split("/").pop();
+    if (bare) extraQueries.push(bare.replace(/-/g, " "));
+    extraQueries.push(npmPackage.replace("@", "").replace("/", " "));
+  }
+
+  const queries = [...buildSearchQueries(npmPackage), ...extraQueries];
 
   for (const query of queries) {
     const icons = await searchIcon(query, 32);
@@ -199,5 +237,21 @@ export async function resolveIconForPackage(npmPackage: string): Promise<string 
     }
   }
 
+  return null;
+}
+
+/**
+ * Resolve an icon trying several candidate labels (display name, npm package, family primary).
+ * First successful SVG wins.
+ */
+export async function resolveIconForCandidates(candidates: string[]): Promise<string | null> {
+  const seen = new Set<string>();
+  for (const raw of candidates) {
+    const key = raw.trim();
+    if (!key || seen.has(key.toLowerCase())) continue;
+    seen.add(key.toLowerCase());
+    const svg = await resolveIconForPackage(key);
+    if (svg) return svg;
+  }
   return null;
 }

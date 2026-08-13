@@ -19,18 +19,23 @@ export const deduplicateGroups = createStep({
       initData.existingDependencies.map((d) => [d.npmPackage, d.stackId])
     );
 
+    // Preserve programmatic matches. An earlier version rebuilt `matched` only from
+    // categorized groups and dropped library hits (TipTap / Query / Form vanished).
+    const resolvedMatched: typeof matched = [...matched];
+    const alreadyMatched = new Set(matched.map((m) => m.npmPackage));
+
     for (const m of matched) {
       dependencyOwnerMap.set(m.npmPackage, m.stackId);
     }
 
     const groupsByName = new Map<string, typeof categorized>();
     for (const cat of categorized) {
+      if (alreadyMatched.has(cat.npmPackage)) continue;
       const list = groupsByName.get(cat.name) ?? [];
       list.push(cat);
       groupsByName.set(cat.name, list);
     }
 
-    const resolvedMatched: typeof matched = [];
     const resolvedCategorized: typeof categorized = [];
 
     for (const [groupName, group] of groupsByName) {
@@ -45,6 +50,7 @@ export const deduplicateGroups = createStep({
 
       if (ownerStackId) {
         for (const cat of group) {
+          if (alreadyMatched.has(cat.npmPackage)) continue;
           resolvedMatched.push({
             npmPackage: cat.npmPackage,
             stackId: ownerStackId,
@@ -52,6 +58,8 @@ export const deduplicateGroups = createStep({
             repo: cat.repo,
             relatedPackages: []
           });
+          alreadyMatched.add(cat.npmPackage);
+          dependencyOwnerMap.set(cat.npmPackage, ownerStackId);
         }
       } else {
         resolvedCategorized.push(...group);

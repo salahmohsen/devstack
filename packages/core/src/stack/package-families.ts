@@ -14,14 +14,11 @@
 export const SAME_PROJECT_PACKAGE_FAMILIES: readonly (readonly string[])[] = [
   // ── Core UI runtimes ──
   ["react", "react-dom", "@types/react", "@types/react-dom", "babel-plugin-react-compiler"],
-  [
-    "next",
-    "eslint-config-next",
-    "@next/eslint-plugin-next",
-    "next-themes",
-    "next-intl",
-    "@types/next"
-  ],
+  // Keep next-themes / next-intl OUT of this family — they appear without Next.js
+  // (e.g. TanStack Start + next-themes) and must not become a "Next.js" stack.
+  ["next", "eslint-config-next", "@next/eslint-plugin-next", "@types/next"],
+  ["next-themes"],
+  ["next-intl"],
   [
     "vue",
     "@vue/compiler-sfc",
@@ -162,8 +159,16 @@ export const SAME_PROJECT_PACKAGE_FAMILIES: readonly (readonly string[])[] = [
     "@tanstack/lit-form",
     "@tanstack/preact-form"
   ],
-  ["@tanstack/react-table", "@tanstack/match-sorter-utils"],
-  ["@tanstack/react-start", "@tanstack/nitro-v2-vite-plugin"],
+  ["@tanstack/react-table", "@tanstack/match-sorter-utils", "@tanstack/table-core"],
+  [
+    "@tanstack/react-start",
+    "@tanstack/start-client",
+    "@tanstack/start-server",
+    "@tanstack/start-plugin-core",
+    "@tanstack/react-start-server",
+    "@tanstack/react-start-client",
+    "@tanstack/nitro-v2-vite-plugin"
+  ],
   [
     "@tanstack/react-store",
     "@tanstack/store",
@@ -404,7 +409,7 @@ export const SAME_PROJECT_PACKAGE_FAMILIES: readonly (readonly string[])[] = [
   ["ws", "@types/ws"],
   ["@grpc/grpc-js", "@grpc/proto-loader"],
   ["ioredis", "redis", "@upstash/redis", "@upstash/ratelimit"],
-  ["firebase", "firebase-admin"],
+  ["firebase", "firebase-admin", "@firebase/app", "@firebase/auth", "@firebase/firestore"],
   ["@supabase/supabase-js", "@supabase/auth-helpers-nextjs", "@supabase/ssr"],
   [
     "@aws-sdk/client-s3",
@@ -450,7 +455,20 @@ export const SAME_PROJECT_PACKAGE_FAMILIES: readonly (readonly string[])[] = [
   ["bcrypt", "bcryptjs", "@types/bcrypt"],
   ["jose", "jsonwebtoken", "@types/jsonwebtoken"],
   ["i18next", "react-i18next"],
-  ["@inlang/cli", "@inlang/paraglide-js", "@inlang/plugin-m-function-calls"]
+  ["@inlang/cli", "@inlang/paraglide-js", "@inlang/plugin-m-function-calls"],
+  // ── Common app libraries (often left as low-confidence noise) ──
+  ["zustand"],
+  ["recharts"],
+  ["sonner", "react-hot-toast"],
+  ["cmdk"],
+  ["nuqs"],
+  ["husky", "lint-staged"],
+  ["sass", "sass-embedded"],
+  ["resend"],
+  ["bullmq", "bull"],
+  ["octokit", "@octokit/rest", "@octokit/core", "@octokit/graphql"],
+  ["sharp"],
+  ["nitro", "nitropack"]
 ] as const;
 
 /**
@@ -501,4 +519,310 @@ export function findPackageFamily(npmPackage: string): readonly string[] | null 
     if (family.some((f) => f.toLowerCase() === pkg)) return family;
   }
   return null;
+}
+
+/**
+ * Canonical portfolio display names keyed by family primary package (lowercase).
+ * Used by detect fallbacks / merge so TanStack products stay separate with correct labels
+ * even when the LLM soft-fails.
+ */
+const FAMILY_PRIMARY_DISPLAY_NAMES: Readonly<Record<string, string>> = {
+  react: "React",
+  next: "Next.js",
+  "next-themes": "next-themes",
+  "next-intl": "next-intl",
+  vue: "Vue",
+  svelte: "Svelte",
+  "solid-js": "Solid",
+  preact: "Preact",
+  lit: "Lit",
+  "@angular/core": "Angular",
+  prisma: "Prisma",
+  "drizzle-orm": "Drizzle",
+  pg: "PostgreSQL",
+  vite: "Vite",
+  webpack: "Webpack",
+  rollup: "Rollup",
+  wrangler: "Cloudflare Workers",
+  eslint: "ESLint",
+  prettier: "Prettier",
+  oxlint: "Oxlint",
+  vitest: "Vitest",
+  jest: "Jest",
+  "@testing-library/react": "Testing Library",
+  playwright: "Playwright",
+  storybook: "Storybook",
+  "@tanstack/react-query": "TanStack Query",
+  "@tanstack/react-router": "TanStack Router",
+  "@tanstack/react-form": "TanStack Form",
+  "@tanstack/react-table": "TanStack Table",
+  "@tanstack/react-start": "TanStack Start",
+  "@tanstack/react-store": "TanStack Store",
+  "@tanstack/db": "TanStack DB",
+  "@tanstack/react-devtools": "TanStack Devtools",
+  "better-auth": "Better Auth",
+  "next-auth": "NextAuth",
+  "@orpc/server": "oRPC",
+  "@trpc/server": "tRPC",
+  hono: "Hono",
+  express: "Express",
+  ai: "AI SDK",
+  mastra: "Mastra",
+  tailwindcss: "Tailwind CSS",
+  postcss: "PostCSS",
+  motion: "Motion",
+  "styled-components": "Styled Components",
+  "@emotion/react": "Emotion",
+  "radix-ui": "Radix UI",
+  "@base-ui/react": "Base UI",
+  shadcn: "shadcn/ui",
+  "class-variance-authority": "CVA",
+  "react-aria-components": "React Aria",
+  "@floating-ui/dom": "Floating UI",
+  "@dnd-kit/core": "dnd kit",
+  "lucide-react": "Lucide",
+  "react-hook-form": "React Hook Form",
+  zod: "Zod",
+  redux: "Redux",
+  "react-router": "React Router",
+  "@tiptap/react": "TipTap",
+  yjs: "Yjs",
+  shiki: "Shiki",
+  payload: "Payload CMS",
+  axios: "Axios",
+  "socket.io": "Socket.IO",
+  ioredis: "Redis",
+  firebase: "Firebase",
+  "@supabase/supabase-js": "Supabase",
+  "@aws-sdk/client-s3": "AWS S3",
+  "react-email": "React Email",
+  "@sentry/react": "Sentry",
+  "@opentelemetry/api": "OpenTelemetry",
+  "date-fns": "date-fns",
+  lodash: "Lodash",
+  uuid: "uuid",
+  jose: "Jose",
+  i18next: "i18next",
+  zustand: "Zustand",
+  recharts: "Recharts",
+  sonner: "Sonner",
+  cmdk: "cmdk",
+  nuqs: "nuqs",
+  husky: "Husky",
+  sass: "Sass",
+  resend: "Resend",
+  bullmq: "BullMQ",
+  octokit: "Octokit",
+  sharp: "Sharp",
+  nitro: "Nitro"
+};
+
+/** Default stack type for a family primary (lowercase key). */
+const FAMILY_PRIMARY_TYPES: Readonly<Record<string, string>> = {
+  react: "framework",
+  next: "framework",
+  "next-themes": "ui",
+  "next-intl": "tooling",
+  vue: "framework",
+  svelte: "framework",
+  "solid-js": "framework",
+  preact: "framework",
+  lit: "framework",
+  "@angular/core": "framework",
+  prisma: "database",
+  "drizzle-orm": "database",
+  pg: "database",
+  vite: "tooling",
+  webpack: "tooling",
+  rollup: "tooling",
+  wrangler: "deployment",
+  eslint: "tooling",
+  prettier: "tooling",
+  oxlint: "tooling",
+  vitest: "testing",
+  jest: "testing",
+  "@testing-library/react": "testing",
+  playwright: "testing",
+  storybook: "testing",
+  "@tanstack/react-query": "framework",
+  "@tanstack/react-router": "framework",
+  "@tanstack/react-form": "framework",
+  "@tanstack/react-table": "ui",
+  "@tanstack/react-start": "framework",
+  "@tanstack/react-store": "state management",
+  "@tanstack/db": "database",
+  "@tanstack/react-devtools": "tooling",
+  "better-auth": "auth",
+  "next-auth": "auth",
+  "@orpc/server": "framework",
+  "@trpc/server": "framework",
+  hono: "framework",
+  express: "framework",
+  ai: "ai",
+  mastra: "ai",
+  tailwindcss: "ui",
+  postcss: "tooling",
+  motion: "ui",
+  "styled-components": "ui",
+  "@emotion/react": "ui",
+  "radix-ui": "ui",
+  "@base-ui/react": "ui",
+  shadcn: "ui",
+  "class-variance-authority": "ui",
+  "react-aria-components": "ui",
+  "@floating-ui/dom": "ui",
+  "@dnd-kit/core": "ui",
+  "lucide-react": "ui",
+  "react-hook-form": "ui",
+  zod: "tooling",
+  redux: "state management",
+  "react-router": "framework",
+  "@tiptap/react": "ui",
+  yjs: "storage",
+  shiki: "ui",
+  payload: "framework",
+  axios: "tooling",
+  "socket.io": "framework",
+  ioredis: "database",
+  firebase: "storage",
+  "@supabase/supabase-js": "database",
+  "@aws-sdk/client-s3": "storage",
+  "react-email": "ui",
+  "@sentry/react": "tooling",
+  "@opentelemetry/api": "tooling",
+  "date-fns": "tooling",
+  lodash: "tooling",
+  uuid: "tooling",
+  jose: "auth",
+  i18next: "tooling",
+  zustand: "state management",
+  recharts: "ui",
+  sonner: "ui",
+  cmdk: "ui",
+  nuqs: "tooling",
+  husky: "tooling",
+  sass: "ui",
+  resend: "tooling",
+  bullmq: "tooling",
+  octokit: "tooling",
+  sharp: "tooling",
+  nitro: "deployment"
+};
+
+/**
+ * Canonical display name for a known family package, or null if not in a family
+ * with a curated label.
+ */
+export function getPackageFamilyDisplayName(npmPackage: string): string | null {
+  const family = findPackageFamily(npmPackage);
+  if (!family?.[0]) return null;
+  return FAMILY_PRIMARY_DISPLAY_NAMES[family[0].toLowerCase()] ?? null;
+}
+
+/**
+ * Default stack type for a known family package, or null when unknown.
+ */
+export function getPackageFamilyType(npmPackage: string): string | null {
+  const family = findPackageFamily(npmPackage);
+  if (!family?.[0]) return null;
+  return FAMILY_PRIMARY_TYPES[family[0].toLowerCase()] ?? null;
+}
+
+/**
+ * Preferred primary package for icon search (family head when known).
+ */
+export function getPackageFamilyPrimary(npmPackage: string): string | null {
+  const family = findPackageFamily(npmPackage);
+  return family?.[0] ?? null;
+}
+
+/**
+ * Canonical names that must only be used when the npm package is in that product family.
+ * Prevents `@zappicon/react` → "React" and similar false brand collisions.
+ */
+const RESERVED_DISPLAY_NAMES: Readonly<Record<string, string>> = (() => {
+  const map: Record<string, string> = {};
+  for (const [primary, name] of Object.entries(FAMILY_PRIMARY_DISPLAY_NAMES)) {
+    map[name.trim().toLowerCase()] = primary;
+  }
+  // Extra short forms that models invent
+  map.react = "react";
+  map.next = "next";
+  map.nextjs = "next";
+  map.vue = "vue";
+  map.vite = "vite";
+  map.drizzle = "drizzle-orm";
+  map.prisma = "prisma";
+  map.tiptap = "@tiptap/react";
+  map.mastra = "mastra";
+  map.orpc = "@orpc/server";
+  map.trpc = "@trpc/server";
+  map.hono = "hono";
+  return map;
+})();
+
+/** Title-case a package segment: "react-query" → "React Query". */
+function titleCaseSegment(segment: string): string {
+  return segment
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((w) => (w.length > 0 ? w[0]!.toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+/**
+ * Humanize an npm package name for portfolio display when no curated label exists.
+ * Scoped packages keep the product brand, not only the last segment (`@zappicon/react`
+ * → "Zappicon", not "React").
+ */
+export function humanizeNpmPackageName(npmPackage: string): string {
+  const curated = getPackageFamilyDisplayName(npmPackage);
+  if (curated) return curated;
+
+  const raw = npmPackage.trim();
+  if (!raw) return raw;
+
+  if (raw.startsWith("@")) {
+    const [scopePart, namePart] = raw.slice(1).split("/");
+    const scope = (scopePart ?? "").trim();
+    const name = (namePart ?? "").trim();
+    // Mono-product scopes that are the product brand
+    if (scope && (!name || name === "core" || name === "react" || name === "js" || name === "ts")) {
+      return titleCaseSegment(scope);
+    }
+    if (scope && name) {
+      // Prefer "Scope Name" when last segment is a framework adapter (react/vue/next/…)
+      if (/^(react|vue|svelte|angular|solid|next|nuxt|node|web|cli|core|js|ts)$/i.test(name)) {
+        return titleCaseSegment(scope);
+      }
+      return `${titleCaseSegment(scope)} ${titleCaseSegment(name)}`.trim();
+    }
+    return titleCaseSegment(scope || raw);
+  }
+
+  return titleCaseSegment(raw);
+}
+
+/**
+ * Ensure a proposed display name is safe for this package.
+ * - Curated family packages always get the curated label.
+ * - Reserved brand names (React, Next.js, …) only apply to their family packages.
+ */
+export function resolveSafeDisplayName(npmPackage: string, proposedName?: string | null): string {
+  const curated = getPackageFamilyDisplayName(npmPackage);
+  if (curated) return curated;
+
+  const proposed = (proposedName ?? "").trim();
+  if (!proposed) return humanizeNpmPackageName(npmPackage);
+
+  const reservedPrimary = RESERVED_DISPLAY_NAMES[proposed.toLowerCase()];
+  if (reservedPrimary) {
+    const family = findPackageFamily(npmPackage);
+    const primary = family?.[0]?.toLowerCase();
+    if (primary !== reservedPrimary.toLowerCase()) {
+      return humanizeNpmPackageName(npmPackage);
+    }
+  }
+
+  return proposed;
 }

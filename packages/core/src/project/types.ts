@@ -95,7 +95,7 @@ export const CreateProjectInputSchema = z.object({
   includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
-    Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt" | "portfolioEntryId">
+    Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt" | "createdAt" | "portfolioEntryId">
   >
 >;
 
@@ -109,8 +109,9 @@ export const UpdateProjectInputSchema = z.object({
     .transform((value) => (value === "" ? null : value)),
   year: z.coerce.number().int().optional(),
   title: z.string().min(1).optional(),
-  summary: z.string(),
-  description: z.string(),
+  // Partial update: omit to leave unchanged (e.g. detect-stacks attach stackIds only).
+  summary: z.string().optional(),
+  description: z.string().optional(),
   experienceId: z.string().nullable().optional(),
   isArchived: z.boolean().optional(),
   isPresent: z.boolean().optional(),
@@ -119,7 +120,7 @@ export const UpdateProjectInputSchema = z.object({
   includedInPortfolio: z.boolean().optional()
 }) satisfies z.ZodType<
   Partial<
-    Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt | createdAt" | "portfolioEntryId">
+    Omit<ProjectSchemaInsert, "id" | "sortOrder" | "updatedAt" | "createdAt" | "portfolioEntryId">
   >
 >;
 

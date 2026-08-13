@@ -70,7 +70,6 @@ import {
   getListProjectsPageInfiniteQueryKey,
   useListProjectsPageInfiniteQuery
 } from "@/pages/dashboard/projects/api/list-projects-page.query";
-import { DetectStacksResultsHost } from "@/pages/dashboard/projects/ui/detect-stacks-dialog";
 import { DetectStacksReposDialog } from "@/pages/dashboard/projects/ui/detect-stacks-repos-dialog";
 import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
@@ -663,9 +662,6 @@ export function ProjectsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
         />
-
-        {/* Detached detect results — always mounted so closing the form sheet keeps review available */}
-        <DetectStacksResultsHost />
 
         {detectReposProject ? (
           <DetectStacksReposDialog

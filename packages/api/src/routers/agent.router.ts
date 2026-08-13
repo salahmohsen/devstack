@@ -617,7 +617,8 @@ export const agentRouter = {
           existingStacks: existingStacks.map((stack) => {
             return {
               id: stack.id,
-              name: stack.name
+              name: stack.name,
+              icon: stack.icon ?? null
             };
           }),
           existingDependencies: existingDependencies.map((dep) => {
@@ -745,11 +746,11 @@ export const agentRouter = {
     })
     .input(z.object({}))
     .handler(async function* ({ context, signal }) {
-      // 1. Fetch all existing stacks for the session user
+      // 1. Fetch all existing stacks + npm deps for the session user
       const userId = context.session.user.id;
-      const allStacks = await stackRepository.findAllByUserId(userId);
+      const allStacks = await stackRepository.findAllWithDependenciesByUserId(userId);
 
-      // 2. Build workflow input
+      // 2. Build workflow input (npmPackages drive family/scope merges)
       const llm = await resolveRuntimeAiCredentials(userId, "stacks");
       const byo = llmLogFields(llm);
       const workflowInput = {
@@ -760,7 +761,8 @@ export const agentRouter = {
             type: stack.type,
             description: stack.description,
             icon: stack.icon,
-            projectCount: stack.projectCount ?? 0
+            projectCount: stack.projectCount ?? 0,
+            npmPackages: (stack.dependencies ?? []).map((d) => d.npmPackage)
           };
         }),
         llm

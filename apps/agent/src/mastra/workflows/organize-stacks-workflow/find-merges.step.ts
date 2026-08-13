@@ -2,8 +2,8 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import {
+  findPackageFamily,
   OrganizeStacksInputSchema,
-  SAME_PROJECT_PACKAGE_FAMILIES,
   SCOPE_MERGE_ALLOWLIST
 } from "@tsu-stack/core";
 
@@ -15,7 +15,8 @@ import {
 
 export const findMerges = createStep({
   id: "find-merges",
-  description: "Deterministically finds stacks to merge by npm scope and known package families",
+  description:
+    "Deterministically finds stacks to merge by npm deps (families/scopes) and exact display names",
   inputSchema: OrganizeStacksInputSchema,
   outputSchema: z.object({
     stacks: StackSchema,
@@ -37,11 +38,12 @@ export const findMerges = createStep({
       return { stacks, mergeActions: [] };
     }
 
-    // Group stacks by npm scope (e.g., all @heroui/* together)
+    // Group stacks by mono-product npm scope (e.g. all @tiptap/* together)
     const scopeGroups = new Map<
       string,
       Array<{ id: string; name: string; projectCount: number }>
     >();
+    // Group by curated same-product family primary (TanStack Query ≠ Form ≠ Start)
     const familyGroups = new Map<
       string,
       Array<{ id: string; name: string; projectCount: number; pkg: string }>
@@ -62,37 +64,46 @@ export const findMerges = createStep({
         projectCount: stack.projectCount
       });
 
-      // Mono-product scopes only — never blanket-merge @tanstack/*, @types/*, @radix-ui/*
-      const pkg = stack.name.toLowerCase().replace(/\s+/g, "");
-      if (pkg.startsWith("@")) {
-        const scope = pkg.split("/")[0];
-        if (scope && SCOPE_MERGE_ALLOWLIST.has(scope)) {
-          if (!scopeGroups.has(scope)) scopeGroups.set(scope, []);
-          scopeGroups.get(scope)!.push({
-            id: stack.id,
-            name: stack.name,
-            projectCount: stack.projectCount
-          });
-        }
-      }
+      const npmPackages = stack.npmPackages ?? [];
+      // Prefer linked npm packages; fall back to display name only when it looks like a package.
+      const candidates =
+        npmPackages.length > 0
+          ? npmPackages
+          : stack.name.includes("/") || stack.name.includes("-")
+            ? [stack.name]
+            : [];
 
-      // Group by known family
-      for (const family of SAME_PROJECT_PACKAGE_FAMILIES) {
-        if (
-          family.some(
-            (f) => f.toLowerCase() === pkg || f.toLowerCase() === stack.name.toLowerCase()
-          )
-        ) {
-          if (!familyGroups.has(family.join(","))) {
-            familyGroups.set(family.join(","), []);
+      for (const rawPkg of candidates) {
+        const pkg = rawPkg.toLowerCase().trim();
+        if (!pkg) continue;
+
+        if (pkg.startsWith("@")) {
+          const scope = pkg.split("/")[0];
+          if (scope && SCOPE_MERGE_ALLOWLIST.has(scope)) {
+            if (!scopeGroups.has(scope)) scopeGroups.set(scope, []);
+            const list = scopeGroups.get(scope)!;
+            if (!list.some((s) => s.id === stack.id)) {
+              list.push({
+                id: stack.id,
+                name: stack.name,
+                projectCount: stack.projectCount
+              });
+            }
           }
-          familyGroups.get(family.join(","))!.push({
+        }
+
+        const family = findPackageFamily(pkg);
+        if (!family?.[0]) continue;
+        const familyKey = family[0].toLowerCase();
+        if (!familyGroups.has(familyKey)) familyGroups.set(familyKey, []);
+        const list = familyGroups.get(familyKey)!;
+        if (!list.some((s) => s.id === stack.id)) {
+          list.push({
             id: stack.id,
             name: stack.name,
             projectCount: stack.projectCount,
             pkg
           });
-          break;
         }
       }
     }
@@ -148,8 +159,8 @@ export const findMerges = createStep({
       addMerges(group, `All ${scope}/* packages are the same library`);
     }
 
-    for (const [family, group] of familyGroups) {
-      addMerges(group, `Same project: ${family}`);
+    for (const [familyPrimary, group] of familyGroups) {
+      addMerges(group, `Same product family: ${familyPrimary}`);
     }
 
     log.set({
