@@ -33,6 +33,7 @@ import {
   createContext,
   useContext,
   type ComponentType,
+  type CSSProperties,
   type FC,
   type PropsWithChildren
 } from "react";
@@ -79,6 +80,14 @@ export type ThreadComponents = {
   ReasoningGroup?: ComponentType<PropsWithChildren<{ group: ThreadGroupPart }>> | undefined;
 };
 
+export const threadRootStyle = {
+  ["--thread-max-width" as string]: "44rem",
+  ["--composer-bg" as string]:
+    "color-mix(in oklab, var(--color-muted) 30%, var(--color-background))",
+  ["--composer-radius" as string]: "1.5rem",
+  ["--composer-padding" as string]: "8px"
+} as CSSProperties;
+
 export type ThreadProps = {
   components?: ThreadComponents | undefined;
 };
@@ -108,13 +117,7 @@ const ThreadRoot: FC<{ isEmpty: boolean }> = ({ isEmpty }) => {
   return (
     <ThreadPrimitive.Root
       className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
-      style={{
-        ["--thread-max-width" as string]: "44rem",
-        ["--composer-bg" as string]:
-          "color-mix(in oklab, var(--color-muted) 30%, var(--color-background))",
-        ["--composer-radius" as string]: "1.5rem",
-        ["--composer-padding" as string]: "8px"
-      }}
+      style={threadRootStyle}
     >
       <ThreadPrimitive.Viewport
         turnAnchor="top"
@@ -165,7 +168,7 @@ const ThreadMessage: FC = () => {
   return <AssistantMessageComponent />;
 };
 
-const ThreadScrollToBottom: FC = () => (
+export const ThreadScrollToBottom: FC = () => (
   <ThreadPrimitive.ScrollToBottom
     render={
       <TooltipIconButton
@@ -210,33 +213,64 @@ const ThreadSuggestionItem: FC = () => (
   </div>
 );
 
-const Composer: FC = () => (
-  <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
-    <ComposerPrimitive.AttachmentDropzone
-      render={
-        <div
-          data-slot="aui_composer-shell"
-          className="flex w-full flex-col gap-2 rounded-(--composer-radius) border border-border/60 bg-(--composer-bg) p-(--composer-padding) shadow-[0_4px_16px_-8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow] focus-within:border-border focus-within:shadow-[0_6px_24px_-8px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.05)] data-[dragging=true]:border-dashed data-[dragging=true]:border-ring data-[dragging=true]:bg-[color-mix(in_oklab,var(--color-accent)_50%,var(--color-background))] dark:border-muted-foreground/15 dark:shadow-none focus-within:dark:border-muted-foreground/30"
-        />
-      }
-    >
-      <ComposerAttachments />
+const composerShellClassName =
+  "flex w-full flex-col gap-2 rounded-(--composer-radius) border border-border/60 bg-(--composer-bg) p-(--composer-padding) shadow-[0_4px_16px_-8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow] focus-within:border-border focus-within:shadow-[0_6px_24px_-8px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.05)] data-[dragging=true]:border-dashed data-[dragging=true]:border-ring data-[dragging=true]:bg-[color-mix(in_oklab,var(--color-accent)_50%,var(--color-background))] dark:border-muted-foreground/15 dark:shadow-none focus-within:dark:border-muted-foreground/30";
+
+export type ThreadComposerProps = {
+  /** Paperclip + dropzone. Hub hides these until attachments are productized. */
+  attachments?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+};
+
+export const Composer: FC<ThreadComposerProps> = ({
+  attachments = true,
+  placeholder = "Send a message...",
+  disabled = false
+}) => {
+  const input = (
+    <>
+      {attachments ? <ComposerAttachments /> : null}
       <ComposerPrimitive.Input
-        placeholder="Send a message..."
+        placeholder={placeholder}
         className="aui-composer-input max-h-32 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base caret-primary outline-none placeholder:text-muted-foreground/80"
         rows={1}
+        // oxlint-disable-next-line jsx-a11y/no-autofocus -- stock composer focuses the input
         autoFocus
         enterKeyHint="send"
         aria-label="Message input"
+        disabled={disabled}
+        addAttachmentOnPaste={attachments}
       />
-      <ComposerAction />
-    </ComposerPrimitive.AttachmentDropzone>
-  </ComposerPrimitive.Root>
-);
+      <ComposerAction attachments={attachments} />
+    </>
+  );
 
-const ComposerAction: FC = () => (
-  <div className="aui-composer-action-wrapper relative flex items-center justify-between">
-    <ComposerAddAttachment />
+  return (
+    <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
+      {attachments ? (
+        <ComposerPrimitive.AttachmentDropzone
+          render={<div data-slot="aui_composer-shell" className={composerShellClassName} />}
+        >
+          {input}
+        </ComposerPrimitive.AttachmentDropzone>
+      ) : (
+        <div data-slot="aui_composer-shell" className={composerShellClassName}>
+          {input}
+        </div>
+      )}
+    </ComposerPrimitive.Root>
+  );
+};
+
+const ComposerAction: FC<{ attachments?: boolean }> = ({ attachments = true }) => (
+  <div
+    className={cn(
+      "aui-composer-action-wrapper relative flex items-center",
+      attachments ? "justify-between" : "justify-end"
+    )}
+  >
+    {attachments ? <ComposerAddAttachment /> : null}
     <div className="flex items-center gap-1.5">
       <AuiIf condition={(s) => s.thread.capabilities.dictation}>
         <AuiIf condition={(s) => s.composer.dictation == null}>
@@ -318,7 +352,7 @@ const MessageError: FC = () => (
   </MessagePrimitive.Error>
 );
 
-const AssistantMessage: FC = () => {
+export const AssistantMessage: FC = () => {
   const {
     ToolFallback: ToolFallbackComponent = ToolFallback,
     ToolGroup,
@@ -462,7 +496,7 @@ const AssistantActionBar: FC = () => (
   </ActionBarPrimitive.Root>
 );
 
-const UserMessage: FC = () => (
+export const UserMessage: FC = () => (
   <MessagePrimitive.Root
     data-slot="aui_user-message-root"
     className="grid animate-in auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] content-start gap-y-2 px-2 duration-150 [contain-intrinsic-size:auto_200px] [content-visibility:auto] fade-in slide-in-from-bottom-1 [&:where(>*)]:col-start-2"
@@ -500,7 +534,7 @@ const UserActionBar: FC = () => (
   </ActionBarPrimitive.Root>
 );
 
-const EditComposer: FC = () => (
+export const EditComposer: FC = () => (
   <MessagePrimitive.Root
     data-slot="aui_edit-composer-wrapper"
     className="flex flex-col px-2 [contain-intrinsic-size:auto_200px] [content-visibility:auto]"
@@ -508,6 +542,7 @@ const EditComposer: FC = () => (
     <ComposerPrimitive.Root className="aui-edit-composer-root ms-auto flex w-full max-w-[85%] flex-col rounded-(--composer-radius) border border-border/60 bg-(--composer-bg) shadow-[0_4px_16px_-8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] dark:border-muted-foreground/15 dark:shadow-none">
       <ComposerPrimitive.Input
         className="aui-edit-composer-input min-h-14 w-full resize-none bg-transparent px-4 pt-3 pb-1 text-base text-foreground outline-none"
+        // oxlint-disable-next-line jsx-a11y/no-autofocus -- edit composer focuses the rewrite field
         autoFocus
       />
       <div className="aui-edit-composer-footer mx-2.5 mb-2.5 flex items-center gap-1.5 self-end">

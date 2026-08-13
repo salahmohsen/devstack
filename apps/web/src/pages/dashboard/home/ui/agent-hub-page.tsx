@@ -53,7 +53,7 @@ function OnboardingSoftCta() {
 export function AgentHubPage() {
   return (
     // size-full + overflow-hidden: fill the dashboard ScrollArea content
-    // box and keep a single scroll owner (the chat MessageScroller).
+    // box and keep a single scroll owner (the Thread viewport).
     <div className="flex size-full min-h-0 flex-1 flex-col overflow-hidden">
       <ClientOnly fallback={null}>
         <OnboardingSoftCta />

@@ -83,8 +83,6 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
       setMessages((current) => prependUniqueHubMessages(data.uiMessages, current));
       nextHistoryPageRef.current = page + 1;
       setHasMoreHistory(data.hasMore);
-    } catch {
-      // Fail soft: keep the current transcript. Task 4 owns retry chrome.
     } finally {
       loadingOlderRef.current = false;
       setIsLoadingOlder(false);

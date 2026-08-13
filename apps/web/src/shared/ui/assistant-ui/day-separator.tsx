@@ -5,7 +5,7 @@ import { type ComponentProps } from "react";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 /** Assistant-ui surface mono token (from registry surfaces kit). */
-const mono = "font-mono text-[11px] tracking-tight";
+export const daySeparatorMono = "font-mono text-[11px] tracking-tight";
 
 export type DatedMessage = {
   id: string;
@@ -14,6 +14,43 @@ export type DatedMessage = {
   role: "user" | "assistant";
   text: string;
 };
+
+/** Rule + day label chrome. Use this in rich lists — not DaySeparator as the renderer. */
+export function DaySeparatorRule({
+  label,
+  className,
+  ...props
+}: Omit<ComponentProps<"div">, "children"> & {
+  label: string;
+}) {
+  return (
+    <div
+      data-slot="day-separator-rule"
+      aria-label={label}
+      className={cn("flex w-full items-center gap-2.5 py-1", className)}
+      {...props}
+    >
+      <span className="h-px flex-1 bg-foreground/8" />
+      <span className={cn(daySeparatorMono, "text-foreground/30")}>{label}</span>
+      <span className="h-px flex-1 bg-foreground/8" />
+    </div>
+  );
+}
+
+/** Hover-revealed HH:mm next to a message. Parent must be `group`. */
+export function DaySeparatorTime({ className, ...props }: ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="day-separator-time"
+      className={cn(
+        daySeparatorMono,
+        "shrink-0 text-foreground/0 tabular-nums transition-colors group-hover:text-foreground/30",
+        className
+      )}
+      {...props}
+    />
+  );
+}
 
 export function DaySeparator({
   messages,
@@ -26,7 +63,6 @@ export function DaySeparator({
     <div
       data-slot="day-separator"
       className={cn("flex w-full max-w-sm flex-col gap-2", className)}
-
       {...props}
     >
       {messages.map((message, index) => {
@@ -35,13 +71,7 @@ export function DaySeparator({
 
         return (
           <div key={message.id} className="flex flex-col gap-2">
-            {newDay && (
-              <div className="flex items-center gap-2.5 py-1">
-                <span className="h-px flex-1 bg-foreground/8" />
-                <span className={cn(mono, "text-foreground/30")}>{message.day}</span>
-                <span className="h-px flex-1 bg-foreground/8" />
-              </div>
-            )}
+            {newDay ? <DaySeparatorRule label={message.day} /> : null}
             <div
               className={cn(
                 "group flex items-baseline gap-2",
@@ -58,14 +88,7 @@ export function DaySeparator({
               >
                 {message.text}
               </span>
-              <span
-                className={cn(
-                  mono,
-                  "shrink-0 text-foreground/0 tabular-nums transition-colors group-hover:text-foreground/30"
-                )}
-              >
-                {message.time}
-              </span>
+              <DaySeparatorTime>{message.time}</DaySeparatorTime>
             </div>
           </div>
         );
