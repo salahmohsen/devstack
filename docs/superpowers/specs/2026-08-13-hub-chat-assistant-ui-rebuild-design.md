@@ -42,24 +42,24 @@ Rebuild the dashboard **agent hub chat** to **Grok-class** quality using **free 
 
 ## 3. Decisions (locked in grilling)
 
-| Topic | Decision |
-| --- | --- |
-| Free vs paid | **Free only** — `@assistant-ui/react`, `@assistant-ui/react-ai-sdk`, registry Thread/elements; **no** `assistant-cloud` |
-| Adoption depth | Full free **architecture** (runtime + UI + history load façade + toolkit + P0/P1 polish) |
-| Message truth | **Mastra Memory sole store**; history adapter **`load` only**; **`append` no-op** |
-| Client stream body | **Last message only** (+ HITL assistant tail) + server Memory — existing slim path |
-| Runtime hook | **`useAISDKRuntime`** on existing shared Hub `Chat` / `useChat` |
-| Hydrate | History adapter `withFormat.load` → Mastra via `listHubMessages` (or equivalent) |
-| UI transcript | **Paginated**; infinite scroll **at top** loads older pages |
-| Viewport | **`turnAnchor="bottom"`** (Grok-like; compatible with top load-older) |
-| Day separators | Custom list composition + official **`@assistant-ui/elements-day-separator`** chrome |
-| Edit / reload / branch | Free UI on; **session** BranchPicker; durable history stays **linear** |
-| Tool UI | **Tool UI toolkit** (`defineToolkit`); not `present` generative |
-| HITL | Keep hybrid: client `addToolOutput` + server `requireToolApproval`; keep **`shouldAutoResumeHubChat`** |
-| Ship cut | **P0 + P1** free elements (not entire Elements catalog) |
-| Agent memory | **Observational Memory on** + **`lastMessages: 20`** unchanged |
-| `joinStrategy` | **`concat-content`** (default) |
-| User avatars | **Do not implement** photo avatars (stock components unsupported) |
+| Topic                  | Decision                                                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Free vs paid           | **Free only** — `@assistant-ui/react`, `@assistant-ui/react-ai-sdk`, registry Thread/elements; **no** `assistant-cloud` |
+| Adoption depth         | Full free **architecture** (runtime + UI + history load façade + toolkit + P0/P1 polish)                                |
+| Message truth          | **Mastra Memory sole store**; history adapter **`load` only**; **`append` no-op**                                       |
+| Client stream body     | **Last message only** (+ HITL assistant tail) + server Memory — existing slim path                                      |
+| Runtime hook           | **`useAISDKRuntime`** on existing shared Hub `Chat` / `useChat`                                                         |
+| Hydrate                | History adapter `withFormat.load` → Mastra via `listHubMessages` (or equivalent)                                        |
+| UI transcript          | **Paginated**; infinite scroll **at top** loads older pages                                                             |
+| Viewport               | **`turnAnchor="bottom"`** (Grok-like; compatible with top load-older)                                                   |
+| Day separators         | Custom list composition + official **`@assistant-ui/elements-day-separator`** chrome                                    |
+| Edit / reload / branch | Free UI on; **session** BranchPicker; durable history stays **linear**                                                  |
+| Tool UI                | **Tool UI toolkit** (`defineToolkit`); not `present` generative                                                         |
+| HITL                   | Keep hybrid: client `addToolOutput` + server `requireToolApproval`; keep **`shouldAutoResumeHubChat`**                  |
+| Ship cut               | **P0 + P1** free elements (not entire Elements catalog)                                                                 |
+| Agent memory           | **Observational Memory on** + **`lastMessages: 20`** unchanged                                                          |
+| `joinStrategy`         | **`concat-content`** (default)                                                                                          |
+| User avatars           | **Do not implement** photo avatars (stock components unsupported)                                                       |
 
 ---
 
@@ -90,13 +90,13 @@ Rebuild the dashboard **agent hub chat** to **Grok-class** quality using **free 
 
 ### Layer ownership
 
-| Layer | Owns |
-| --- | --- |
-| **Mastra Memory** | Durable messages, model context (`lastMessages` + OM), tool/approval persistence on stream |
-| **oRPC** | Auth-scoped stream + list/paginate messages; convert Mastra → UIMessage |
-| **AI SDK Chat** | In-browser messages, regenerate/edit, HITL resume |
-| **assistant-ui runtime** | Thread state, BranchPicker (session), tool render resolution |
-| **Web Thread UI** | Day separators, infinite-scroll older, P0/P1 chrome |
+| Layer                    | Owns                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| **Mastra Memory**        | Durable messages, model context (`lastMessages` + OM), tool/approval persistence on stream |
+| **oRPC**                 | Auth-scoped stream + list/paginate messages; convert Mastra → UIMessage                    |
+| **AI SDK Chat**          | In-browser messages, regenerate/edit, HITL resume                                          |
+| **assistant-ui runtime** | Thread state, BranchPicker (session), tool render resolution                               |
+| **Web Thread UI**        | Day separators, infinite-scroll older, P0/P1 chrome                                        |
 
 ### Why not dual-write
 
@@ -238,11 +238,11 @@ Exact tool name keys must match what the stream emits (verify against hub-superv
 
 ## 8. Elements / free polish inventory (this program)
 
-| Priority | Include |
-| --- | --- |
-| **P0** | Thread kit, day-separator chrome, message actions, edit, branches (session), error, typing/thinking, tool-call/group/fallback, approval card chrome if useful, empty state shell, composer send/cancel |
-| **P1** | suggestions, message-timing (if data), scroll-anchor, draft-restore (if free path), stopped-run, feedback UI, message-queue (if enabled) |
-| **P2 / later** | attachments, voice, model picker product, connection/resumable streams, cost-meter, thread-list, generative demos |
+| Priority       | Include                                                                                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **P0**         | Thread kit, day-separator chrome, message actions, edit, branches (session), error, typing/thinking, tool-call/group/fallback, approval card chrome if useful, empty state shell, composer send/cancel |
+| **P1**         | suggestions, message-timing (if data), scroll-anchor, draft-restore (if free path), stopped-run, feedback UI, message-queue (if enabled)                                                               |
+| **P2 / later** | attachments, voice, model picker product, connection/resumable streams, cost-meter, thread-list, generative demos                                                                                      |
 
 ---
 
@@ -254,7 +254,7 @@ memory: new Memory({
     lastMessages: 20,
     observationalMemory: true // or { model, scope: "thread" } per Mastra defaults
   }
-})
+});
 ```
 
 - **Scope:** thread (single `dashboard-home:{userId}`).
@@ -266,12 +266,12 @@ memory: new Memory({
 
 ## 10. Edit / regenerate / branching semantics
 
-| Action | UI | Durable Memory |
-| --- | --- | --- |
-| Copy | Action bar | n/a |
-| Reload | ActionBar Reload → AI SDK `regenerate` / `regenerate-message` slim body | New linear assistant content via stream; old branch siblings **not** guaranteed after full page reload |
-| Edit user | Edit composer → resubmit | Linear rewrite; may need server `deleteMessages` for tail honesty if Mastra retains orphans — verify in implementation; prefer Mastra-native delete if required |
-| BranchPicker | Session navigation among siblings | Lost on full reload after linear hydrate |
+| Action       | UI                                                                      | Durable Memory                                                                                                                                                  |
+| ------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Copy         | Action bar                                                              | n/a                                                                                                                                                             |
+| Reload       | ActionBar Reload → AI SDK `regenerate` / `regenerate-message` slim body | New linear assistant content via stream; old branch siblings **not** guaranteed after full page reload                                                          |
+| Edit user    | Edit composer → resubmit                                                | Linear rewrite; may need server `deleteMessages` for tail honesty if Mastra retains orphans — verify in implementation; prefer Mastra-native delete if required |
+| BranchPicker | Session navigation among siblings                                       | Lost on full reload after linear hydrate                                                                                                                        |
 
 Document in UX: regenerating creates an alternate **in-session**; reload page shows Memory’s linear transcript.
 
@@ -279,14 +279,14 @@ Document in UX: regenerating creates an alternate **in-session**; reload page sh
 
 ## 11. Error handling and edge cases
 
-| Case | Behavior |
-| --- | --- |
-| Empty / missing thread | Empty welcome + suggestions; no error |
-| listHubMessages failure | historyReady true; empty or partial; non-blocking error presentation |
-| Load-older failure | Keep current messages; show retry at top |
-| Stream error | Message error primitive + existing parseAiError presentation |
-| HITL mid-refresh | Best-effort: pending approval may require re-open; optional `update` later |
-| Concurrent send while loading older | Prefer disable send only if required; default allow |
+| Case                                | Behavior                                                                   |
+| ----------------------------------- | -------------------------------------------------------------------------- |
+| Empty / missing thread              | Empty welcome + suggestions; no error                                      |
+| listHubMessages failure             | historyReady true; empty or partial; non-blocking error presentation       |
+| Load-older failure                  | Keep current messages; show retry at top                                   |
+| Stream error                        | Message error primitive + existing parseAiError presentation               |
+| HITL mid-refresh                    | Best-effort: pending approval may require re-open; optional `update` later |
+| Concurrent send while loading older | Prefer disable send only if required; default allow                        |
 
 ---
 
@@ -303,18 +303,18 @@ Follow [`.agents/logging.md`](../../../.agents/logging.md) for durable logs:
 
 ## 13. Testing / acceptance
 
-| Check | Pass criteria |
-| --- | --- |
-| Reload | Prior user + assistant turns visible after hard refresh |
-| Day separators | Correct labels when messages span calendar days (with timestamps) |
-| Load older | Scroll top loads previous page; scroll position stable; hasMore ends cleanly |
-| Send | Slim body only; no full-history thrash / rewrite loop |
-| Regenerate | New answer streams; session BranchPicker if multiple |
-| Propose JD | Card renders; addToolOutput resumes once |
-| Package approval | Approve/deny works; no silent execute |
-| Shared chat | Import JD and Hub see same thread instance |
-| OM | Config present; agent still answers with Memory thread |
-| No Cloud | No assistant-cloud dependency or env |
+| Check            | Pass criteria                                                                |
+| ---------------- | ---------------------------------------------------------------------------- |
+| Reload           | Prior user + assistant turns visible after hard refresh                      |
+| Day separators   | Correct labels when messages span calendar days (with timestamps)            |
+| Load older       | Scroll top loads previous page; scroll position stable; hasMore ends cleanly |
+| Send             | Slim body only; no full-history thrash / rewrite loop                        |
+| Regenerate       | New answer streams; session BranchPicker if multiple                         |
+| Propose JD       | Card renders; addToolOutput resumes once                                     |
+| Package approval | Approve/deny works; no silent execute                                        |
+| Shared chat      | Import JD and Hub see same thread instance                                   |
+| OM               | Config present; agent still answers with Memory thread                       |
+| No Cloud         | No assistant-cloud dependency or env                                         |
 
 ---
 
@@ -334,15 +334,15 @@ Feature flag optional; preferred path is main-line dashboard once smoke-tested.
 
 ## 15. File touch map (indicative)
 
-| Area | Likely touch |
-| --- | --- |
-| Web provider | `apps/web/src/features/agent-hub/**` |
-| Hub UI | `apps/web/src/widgets/agent-hub/**` |
-| Dashboard layout | hub provider already on dashboard route |
-| API | `packages/api` `listHubMessages` pagination |
-| Agent | `apps/agent/.../hub-supervisor.ts` Memory options |
-| UI kit | new `components/assistant-ui/*` or apps/web equivalent per monorepo conventions |
-| Elements | day-separator + P1 copies under web |
+| Area             | Likely touch                                                                    |
+| ---------------- | ------------------------------------------------------------------------------- |
+| Web provider     | `apps/web/src/features/agent-hub/**`                                            |
+| Hub UI           | `apps/web/src/widgets/agent-hub/**`                                             |
+| Dashboard layout | hub provider already on dashboard route                                         |
+| API              | `packages/api` `listHubMessages` pagination                                     |
+| Agent            | `apps/agent/.../hub-supervisor.ts` Memory options                               |
+| UI kit           | new `components/assistant-ui/*` or apps/web equivalent per monorepo conventions |
+| Elements         | day-separator + P1 copies under web                                             |
 
 Exact paths follow [TanStack / UI agents docs](../../../Agents.md) during planning.
 

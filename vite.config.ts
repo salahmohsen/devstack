@@ -44,8 +44,11 @@ const fsdEslintPluginOptions = {
  */
 export default defineConfig({
   // Commit hooks - https://viteplus.dev/guide/commit-hooks
+  // Format everything first (incl. markdown tables). Lint --fix only on code so
+  // docs-only commits are not rejected with "No files found to lint".
   staged: {
-    "*": "vp run fix"
+    "*": "vp fmt --write",
+    "*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}": "vp check --fix --no-fmt"
   },
 
   // Vitest - https://vitest.dev/config
