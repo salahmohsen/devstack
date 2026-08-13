@@ -4,16 +4,22 @@ import {
   MailCrmApplySummarySchema,
   MailCrmAuditSnapshotSchema,
   MailCrmEffectKindSchema,
+  MailGenerateReplyInputSchema,
+  MailGenerateReplyOutputSchema,
   MailGetInputSchema,
   MailListInputSchema,
   MailMessageDetailSchema,
   MailMessageListOutputSchema,
+  MailSendReplyInputSchema,
+  MailSendReplyOutputSchema,
   UndoMailCrmApplyInputSchema,
   UndoMailCrmApplyOutputSchema
 } from "@tsu-stack/core";
 import { mailCrmApplyRepository, mailMessageRepository } from "@tsu-stack/db/repositories";
 
 import { createAiCorrectionFromMail } from "#@/lib/mail/create-ai-correction";
+import { generateMailReply } from "#@/lib/mail/generate-mail-reply";
+import { sendCareerReply } from "#@/lib/mail/send-career-reply";
 import { undoMailCrmApply } from "#@/lib/mail/undo-mail-crm-apply";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
@@ -171,5 +177,152 @@ export const mailRouter = {
       });
       if (!result.ok) throw errors.NOT_FOUND();
       return result.result;
+    }),
+
+  generateReply: protectedProcedure
+    .route({
+      description:
+        "Generate an ephemeral AI reply draft for a Career Inbox message (subject + body only; no review queue)",
+      method: "POST"
+    })
+    .input(MailGenerateReplyInputSchema)
+    .output(MailGenerateReplyOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Mail message not found", status: 404 },
+      NOT_CAREER: {
+        message: "System notification mail cannot generate replies",
+        status: 400
+      },
+      AI_NOT_CONFIGURED: {
+        message: "Configure a BYO API key under Settings → AI",
+        status: 400
+      },
+      AGENT_FAILED: {
+        message: "AI reply draft failed — check Settings → AI and try again",
+        status: 502
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const logger = context.logger;
+
+      const result = await generateMailReply({
+        messageId: input.messageId,
+        userId
+      });
+
+      if (!result.ok) {
+        logger.set({
+          event: "mail_generate_reply_failed",
+          procedure: "mail.generateReply",
+          messageId: input.messageId,
+          code: result.code
+        });
+        if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
+        if (result.code === "NOT_CAREER") throw errors.NOT_CAREER();
+        if (result.code === "AI_NOT_CONFIGURED") {
+          throw errors.AI_NOT_CONFIGURED({ message: result.message });
+        }
+        throw errors.AGENT_FAILED({ message: result.message });
+      }
+
+      logger.set({
+        event: "mail_generate_reply_ok",
+        procedure: "mail.generateReply",
+        messageId: input.messageId
+      });
+      return result.draft;
+    }),
+
+  sendReply: protectedProcedure
+    .route({
+      description:
+        "Send a Career Inbox reply via Resend. Recipient is always the message's fromEmail.",
+      method: "POST"
+    })
+    .input(MailSendReplyInputSchema)
+    .output(MailSendReplyOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Mail message not found", status: 404 },
+      NOT_CAREER: {
+        message: "System notification mail cannot send replies",
+        status: 400
+      },
+      INVALID_TO: {
+        message: "Message has no valid sender address to reply to",
+        status: 400
+      },
+      MAIL_NOT_CONFIGURED: {
+        message: "Configure Resend under Settings → Mail before sending",
+        status: 400
+      },
+      SEND_FAILED: {
+        message: "Could not send the reply",
+        status: 502
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const logger = context.logger;
+
+      const message = await mailMessageRepository.findByIdForUser(input.messageId, userId, {
+        includeSystem: true
+      });
+      if (!message) {
+        logger.set({
+          event: "mail_send_reply_failed",
+          procedure: "mail.sendReply",
+          messageId: input.messageId,
+          code: "NOT_FOUND"
+        });
+        throw errors.NOT_FOUND();
+      }
+      if (message.purpose === "system_notification") {
+        logger.set({
+          event: "mail_send_reply_failed",
+          procedure: "mail.sendReply",
+          messageId: input.messageId,
+          code: "NOT_CAREER"
+        });
+        throw errors.NOT_CAREER();
+      }
+
+      // Never trust a client-supplied `to` — always derive from the inbound message.
+      const to = message.fromEmail;
+      const sent = await sendCareerReply({
+        userId,
+        to,
+        subject: input.subject,
+        bodyText: input.bodyText
+      });
+
+      if (!sent.ok) {
+        logger.set({
+          event: "mail_send_reply_failed",
+          procedure: "mail.sendReply",
+          messageId: input.messageId,
+          code: sent.code
+        });
+        if (sent.code === "INVALID_TO") {
+          throw errors.INVALID_TO({ message: sent.message });
+        }
+        if (sent.code === "MISSING_API_KEY" || sent.code === "MISSING_FROM") {
+          throw errors.MAIL_NOT_CONFIGURED({ message: sent.message });
+        }
+        throw errors.SEND_FAILED({ message: sent.message });
+      }
+
+      logger.set({
+        event: "mail_send_reply_ok",
+        procedure: "mail.sendReply",
+        messageId: input.messageId
+      });
+      return {
+        sent: true as const,
+        providerMessageId: sent.providerMessageId,
+        note: sent.usedByoKey
+          ? `Sent via your Resend key from ${sent.from}.`
+          : `Sent via platform Resend from ${sent.from}.`
+      };
     })
 };

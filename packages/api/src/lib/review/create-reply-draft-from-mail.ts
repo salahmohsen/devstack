@@ -7,8 +7,8 @@ import {
 } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
+import { callMailReplyAgent } from "#@/lib/mail/call-mail-reply-agent";
 import { emitAppNotification } from "#@/lib/notification/emit-app-notification";
-import { callMailReplyAgent } from "#@/lib/review/call-mail-reply-agent";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type CreateReplyDraftResult =

@@ -1,6 +1,6 @@
 "use client";
 
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import {
   Bell,
@@ -13,7 +13,6 @@ import {
   Users
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import {
   APPLICATION_STAGE_LABELS,
@@ -29,9 +28,19 @@ import {
   type MailMessageListItem,
   type MailSystemLabel
 } from "@tsu-stack/core";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import { RichTextEditor } from "@tsu-stack/ui/components/rich-text-editor";
+import { Textarea } from "@tsu-stack/ui/components/textarea";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
@@ -40,12 +49,13 @@ import { DefaultLoader } from "@/shared/ui/default-loader";
 import {
   MailBody,
   useCorrectMailClassificationMutation,
+  useGenerateMailReplyMutation,
   useGetMailQuery,
   useListMailQuery,
+  useSendMailReplyMutation,
   useUndoMailCrmApplyMutation
 } from "@/features/mail";
 import { useListMailSmartRulesQuery } from "@/features/mail-smart-rules";
-import { useCreateReplyDraftMutation, useUpdateReviewMutation } from "@/features/review";
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
 
@@ -371,6 +381,12 @@ function MessageReader({
   );
 }
 
+function defaultReplySubject(subject: string): string {
+  const trimmed = subject.trim();
+  if (!trimmed) return "Re:";
+  return /^re:\s/i.test(trimmed) ? trimmed : `Re: ${trimmed}`;
+}
+
 function MessageReaderBody({
   listItem,
   detail,
@@ -381,14 +397,14 @@ function MessageReaderBody({
   isLoadingDetail: boolean;
 }) {
   const [composerOpen, setComposerOpen] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [replySubject, setReplySubject] = useState("");
+  const [replyBody, setReplyBody] = useState("");
   const [agentBanner, setAgentBanner] = useState(false);
-  const [queueing, setQueueing] = useState(false);
+  const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
   const undoCrm = useUndoMailCrmApplyMutation();
   const correct = useCorrectMailClassificationMutation();
-  const createDraft = useCreateReplyDraftMutation();
-  const updateReview = useUpdateReviewMutation();
-  const navigate = useNavigate();
+  const generateReply = useGenerateMailReplyMutation();
+  const sendReply = useSendMailReplyMutation();
   const [correctOpen, setCorrectOpen] = useState(false);
 
   const message = detail ?? listItem;
@@ -407,6 +423,9 @@ function MessageReaderBody({
   const currentSystem = labels[0] as MailSystemLabel | undefined;
   const canCorrect = Boolean(detail?.id && detail.classifiedAt);
 
+  const busy = generateReply.isPending || sendReply.isPending;
+  const canSend = Boolean(detail?.id && replySubject.trim() && replyBody.trim());
+
   function submitCorrection(correctedSystemLabels: MailSystemLabel[]) {
     if (!detail?.id) return;
     correct.mutate(
@@ -421,61 +440,55 @@ function MessageReaderBody({
     );
   }
 
+  function resetComposer() {
+    setComposerOpen(false);
+    setAgentBanner(false);
+    setReplySubject("");
+    setReplyBody("");
+    setSendConfirmOpen(false);
+  }
+
   function openManualReply() {
     setAgentBanner(false);
+    setReplySubject(defaultReplySubject(message.subject));
+    setReplyBody("");
     setComposerOpen(true);
   }
 
-  function openAgentDraft() {
-    // Durable Review queue draft only — wait for message detail before calling the API.
+  function runGenerateReply() {
     if (!detail?.id) return;
-    createDraft.mutate(
+    if (!composerOpen) {
+      setReplySubject(defaultReplySubject(message.subject));
+      setReplyBody("");
+      setComposerOpen(true);
+    }
+    generateReply.mutate(
       { messageId: detail.id },
       {
-        onSuccess: () => {
-          void navigate({ to: "/dashboard/review" });
-        },
-        onError: (err) => {
-          const msg = err instanceof Error ? err.message : "Could not create draft";
-          // Surface agent misconfig (503 agent_auth_not_configured) clearly.
-          if (/agent|503|auth_not_configured|WORKER/i.test(msg)) {
-            toast.error(
-              "Agent is unavailable. Ensure you are signed in (Better Auth session) and AGENT_WORKER_URL is set."
-            );
-            return;
-          }
-          toast.error(msg);
+        onSuccess: (draft) => {
+          setReplySubject(draft.subject);
+          setReplyBody(draft.bodyText);
+          setAgentBanner(true);
+          setComposerOpen(true);
         }
       }
     );
   }
 
-  /** Queue the composer text as a Review item (Assist send path). */
-  async function queueComposerForReview() {
-    if (!detail?.id) return;
-    const plain = draft
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    if (!plain) return;
-    setQueueing(true);
-    try {
-      const item = await createDraft.mutateAsync({ messageId: detail.id });
-      // Full autonomy may have already sent on create — only overwrite while still pending.
-      if (item.status === "pending") {
-        await updateReview.mutateAsync({
-          id: item.id,
-          bodyText: plain,
-          subject: item.subject ?? `Re: ${message.subject}`
-        });
+  function confirmSend() {
+    if (!detail?.id || !canSend || sendReply.isPending) return;
+    sendReply.mutate(
+      {
+        messageId: detail.id,
+        subject: replySubject.trim(),
+        bodyText: replyBody.trim()
+      },
+      {
+        onSuccess: () => {
+          resetComposer();
+        }
       }
-      setComposerOpen(false);
-      setAgentBanner(false);
-      setDraft("");
-      void navigate({ to: "/dashboard/review" });
-    } finally {
-      setQueueing(false);
-    }
+    );
   }
 
   return (
@@ -593,57 +606,69 @@ function MessageReaderBody({
           <div className="space-y-2">
             {agentBanner ? (
               <p className="rounded-md bg-muted/60 px-2.5 py-1.5 text-xs text-muted-foreground">
-                Agent-style starter — edit freely, then queue for Review to send (Assist mode).
+                AI draft loaded — edit freely, then confirm before send.
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Replies send from the Review queue so you can confirm first (Assist mode).
+                Write a reply, or generate one with AI. You&apos;ll confirm before it sends.
               </p>
             )}
-            <RichTextEditor
-              value={draft}
-              onChange={setDraft}
-              placeholder="Write your reply…"
-              className="bg-background"
-            />
+            <div className="space-y-1.5">
+              <label
+                className="text-xs font-medium text-muted-foreground"
+                htmlFor="mail-reply-subject"
+              >
+                Subject
+              </label>
+              <input
+                id="mail-reply-subject"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={replySubject}
+                disabled={busy}
+                onChange={(e) => setReplySubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label
+                className="text-xs font-medium text-muted-foreground"
+                htmlFor="mail-reply-body"
+              >
+                Reply
+              </label>
+              <Textarea
+                id="mail-reply-body"
+                value={replyBody}
+                rows={8}
+                className="min-h-32 font-mono text-sm"
+                placeholder="Write your reply…"
+                disabled={busy}
+                onChange={(e) => setReplyBody(e.target.value)}
+              />
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 size="sm"
-                disabled={
-                  queueing ||
-                  createDraft.isPending ||
-                  updateReview.isPending ||
-                  !detail?.id ||
-                  !draft.replace(/<[^>]+>/g, "").trim()
-                }
-                onClick={() => {
-                  void queueComposerForReview();
-                }}
+                disabled={!canSend || busy}
+                onClick={() => setSendConfirmOpen(true)}
               >
-                {queueing || createDraft.isPending || updateReview.isPending
-                  ? "Queueing…"
-                  : "Queue for review"}
+                {sendReply.isPending ? "Sending…" : "Send reply"}
               </Button>
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                disabled={createDraft.isPending || queueing || !detail?.id || isLoadingDetail}
-                onClick={openAgentDraft}
+                disabled={busy || !detail?.id || isLoadingDetail}
+                onClick={runGenerateReply}
               >
-                {createDraft.isPending && !queueing ? "Creating draft…" : "Draft with agent"}
+                {generateReply.isPending ? "Generating…" : "Generate reply"}
               </Button>
               <Button
                 type="button"
                 size="sm"
                 variant="ghost"
-                disabled={queueing}
-                onClick={() => {
-                  setComposerOpen(false);
-                  setAgentBanner(false);
-                  setDraft("");
-                }}
+                disabled={busy}
+                onClick={resetComposer}
               >
                 Cancel
               </Button>
@@ -658,18 +683,62 @@ function MessageReaderBody({
               type="button"
               size="sm"
               variant="outline"
-              disabled={createDraft.isPending || !detail?.id || isLoadingDetail}
-              onClick={openAgentDraft}
+              disabled={generateReply.isPending || !detail?.id || isLoadingDetail}
+              onClick={runGenerateReply}
             >
-              {createDraft.isPending
-                ? "Creating draft…"
+              {generateReply.isPending
+                ? "Generating…"
                 : isLoadingDetail || !detail?.id
                   ? "Loading message…"
-                  : "Draft with agent"}
+                  : "Generate reply"}
             </Button>
           </div>
         )}
       </footer>
+
+      <AlertDialog
+        open={sendConfirmOpen}
+        onOpenChange={(next) => {
+          if (sendReply.isPending) return;
+          setSendConfirmOpen(next);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send reply?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This sends the reply now to {message.fromEmail || "the sender"}. You can still edit
+              before confirming.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 px-6 pb-2 text-sm">
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <span className="shrink-0 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                To
+              </span>
+              <span className="min-w-0 break-all text-foreground">{message.fromEmail || "—"}</span>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <span className="shrink-0 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                Subject
+              </span>
+              <span className="min-w-0 text-foreground">{replySubject.trim() || "—"}</span>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sendReply.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={sendReply.isPending || !canSend}
+              onClick={(e) => {
+                e.preventDefault();
+                confirmSend();
+              }}
+            >
+              {sendReply.isPending ? "Sending…" : "Send reply"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
   );
 }

@@ -145,3 +145,37 @@ export const MailCategoryCardSchema = z.object({
   kind: z.enum(["system", "rule"])
 });
 export type MailCategoryCard = z.infer<typeof MailCategoryCardSchema>;
+
+// ── On-the-fly reply (no review_item) ──────────────────────────────────────
+
+/** Generate an ephemeral AI reply draft for a Career Inbox message. */
+export const MailGenerateReplyInputSchema = z.object({
+  messageId: z.string().min(1)
+});
+export type MailGenerateReplyInput = z.infer<typeof MailGenerateReplyInputSchema>;
+
+/** Agent subject + plain body only — never persists a review_item. */
+export const MailGenerateReplyOutputSchema = z.object({
+  subject: z.string().min(1).max(500),
+  bodyText: z.string().min(1).max(20_000)
+});
+export type MailGenerateReplyOutput = z.infer<typeof MailGenerateReplyOutputSchema>;
+
+/**
+ * Send a reply for a Career Inbox message.
+ * Server derives `to` from the message's `fromEmail` — never trust a client `to`.
+ */
+export const MailSendReplyInputSchema = z.object({
+  messageId: z.string().min(1),
+  subject: z.string().min(1).max(500),
+  /** Plain text only. Callers must strip HTML before send. */
+  bodyText: z.string().min(1).max(50_000)
+});
+export type MailSendReplyInput = z.infer<typeof MailSendReplyInputSchema>;
+
+export const MailSendReplyOutputSchema = z.object({
+  sent: z.literal(true),
+  providerMessageId: z.string().nullable(),
+  note: z.string().optional()
+});
+export type MailSendReplyOutput = z.infer<typeof MailSendReplyOutputSchema>;
