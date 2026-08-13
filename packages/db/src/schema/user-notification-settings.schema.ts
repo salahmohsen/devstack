@@ -8,7 +8,6 @@ export type StoredNotificationChannelToggle = {
 };
 
 export type StoredNotificationChannels = {
-  "mail.reply.draft_ready": StoredNotificationChannelToggle;
   "mail.classified.important": StoredNotificationChannelToggle;
   "mail.needs_action": StoredNotificationChannelToggle;
   "mail.apply_nudge": StoredNotificationChannelToggle;
@@ -20,7 +19,6 @@ export type StoredNotificationChannels = {
 
 /**
  * Per-user notification preferences + destination email for system mail.
- * Reply auto-send is NOT stored here (AI settings only).
  */
 export const userNotificationSettings = pgTable(
   "user_notification_settings",

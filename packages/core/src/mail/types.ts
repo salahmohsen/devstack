@@ -146,7 +146,7 @@ export const MailCategoryCardSchema = z.object({
 });
 export type MailCategoryCard = z.infer<typeof MailCategoryCardSchema>;
 
-// ── On-the-fly reply (no review_item) ──────────────────────────────────────
+// ── On-the-fly reply (ephemeral; local composer only) ─────────────────────
 
 /** Generate an ephemeral AI reply draft for a Career Inbox message. */
 export const MailGenerateReplyInputSchema = z.object({
@@ -154,7 +154,7 @@ export const MailGenerateReplyInputSchema = z.object({
 });
 export type MailGenerateReplyInput = z.infer<typeof MailGenerateReplyInputSchema>;
 
-/** Agent subject + plain body only — never persists a review_item. */
+/** Agent subject + plain body only — never persisted server-side. */
 export const MailGenerateReplyOutputSchema = z.object({
   subject: z.string().min(1).max(500),
   bodyText: z.string().min(1).max(20_000)

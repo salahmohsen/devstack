@@ -22,7 +22,6 @@ export type EmitAppNotificationInput = {
   href?: string | null;
   messageId?: string | null;
   applicationId?: string | null;
-  reviewItemId?: string | null;
 };
 
 function absoluteActionUrl(href: string | null | undefined): string | null {
@@ -80,7 +79,6 @@ async function emitAppNotificationInner(
       href,
       messageId: input.messageId ?? null,
       applicationId: input.applicationId ?? null,
-      reviewItemId: input.reviewItemId ?? null,
       emailDigestPending: queueDigest,
       // Only stamp emailedAt after a successful immediate send below.
       emailedAt: null,
@@ -129,7 +127,7 @@ export async function sendNotificationEmail(input: {
         title: input.title,
         body: input.body,
         actionUrl,
-        actionLabel: actionUrl?.includes("/review") ? "Open Review" : "Open dashboard"
+        actionLabel: actionUrl?.includes("/dashboard/mail") ? "Open mail" : "Open dashboard"
       })
     });
     return true;

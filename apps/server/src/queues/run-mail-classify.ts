@@ -1,7 +1,5 @@
 import { embedTextForCorrections } from "@tsu-stack/api/lib/mail/embed-text";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
-import { sendPendingReplyDraft } from "@tsu-stack/api/lib/review/confirm-reply-draft";
-import { createReplyDraftFromMail } from "@tsu-stack/api/lib/review/create-reply-draft-from-mail";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
   AI_CORRECTION_CANDIDATE_POOL,
@@ -17,8 +15,7 @@ import {
 import {
   aiCorrectionRepository,
   mailMessageRepository,
-  mailSmartRuleRepository,
-  userAiSettingsRepository
+  mailSmartRuleRepository
 } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
@@ -251,10 +248,7 @@ export async function runMailClassify(input: {
     harvestEnqueued = harvest.enqueued;
   }
 
-  // Career-labeled mail → notify + ensure review draft; Full autonomy auto-sends.
-  let reviewDraftCreated: boolean | null = null;
-  let reviewAutoSent: boolean | null = null;
-  let reviewAutoSendCode: string | null = null;
+  // Career-labeled mail → notify (replies are on-demand from the mail composer).
   if (result.systemLabels.length > 0 && !skipCareerNotify) {
     await emitAppNotification({
       userId: row.userId,
@@ -264,34 +258,6 @@ export async function runMailClassify(input: {
       href: "/dashboard/mail/all",
       messageId: row.id
     });
-
-    const draft = await createReplyDraftFromMail({
-      messageId: row.id,
-      userId: row.userId
-    });
-    if (draft.ok) {
-      reviewDraftCreated = draft.created;
-      if (draft.created) {
-        const ai = await userAiSettingsRepository.findByUserId(row.userId);
-        if ((ai?.mailReplyAutonomy ?? "assist") === "full") {
-          const sent = await sendPendingReplyDraft({ item: draft.item, userId: row.userId });
-          reviewAutoSent = sent.ok && sent.result.sent;
-          if (!sent.ok) {
-            reviewAutoSendCode = sent.code ?? "auto_send_failed";
-            // Separate logger — main classify logger emits once below.
-            const autoSendLog = createLogger({ operation: "server__mail_reply_auto_send" });
-            autoSendLog.set({
-              event: "mail_reply_auto_send_failed",
-              messageId: row.id,
-              userId: row.userId,
-              code: sent.code,
-              message: sent.message ?? null
-            });
-            autoSendLog.emit({ _forceKeep: true });
-          }
-        }
-      }
-    }
   }
 
   // One wide event for the classify run (never emit intermediate outcomes on this logger).
@@ -311,9 +277,6 @@ export async function runMailClassify(input: {
     crmKind: crm.effect.kind,
     crmReason: crm.effect.reason,
     harvestEnqueued,
-    reviewDraftCreated,
-    reviewAutoSent,
-    reviewAutoSendCode,
     hasJobNotifier,
     hasNoise,
     ...byo

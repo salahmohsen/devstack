@@ -1,5 +1,5 @@
 import { getMastraProvider, MASTRA_PROVIDER_CATALOG } from "./mastra-provider-catalog";
-import { type AiFeature, type AiProviderKind, type MailReplyAutonomy } from "./types";
+import { type AiFeature, type AiProviderKind } from "./types";
 
 /** Product AI features that may bind a model id. */
 export const AI_FEATURES = [
@@ -71,16 +71,6 @@ export const AI_PROVIDER_LABELS: Record<string, string> = Object.fromEntries(
   AI_PROVIDER_OPTIONS.map((id) => [id, aiProviderLabel(id)])
 );
 
-export const MAIL_REPLY_AUTONOMY = [
-  "assist",
-  "full"
-] as const satisfies readonly MailReplyAutonomy[];
-
-export const MAIL_REPLY_AUTONOMY_LABELS: Record<MailReplyAutonomy, string> = {
-  assist: "Assist — draft + confirm in Review",
-  full: "Full — auto-send after draft"
-};
-
 /**
  * Default models — match apps/agent model-config (Mastra `provider/model` format).
  */
@@ -93,7 +83,5 @@ export const DEFAULT_AI_MODELS: Record<AiFeature, string> = {
   scorer: "deepseek/deepseek-v4-flash",
   applyPackage: "deepseek/deepseek-v4-flash"
 };
-
-export const DEFAULT_MAIL_REPLY_AUTONOMY: MailReplyAutonomy = "assist";
 
 export const DEFAULT_PROVIDER_KIND: AiProviderKind = "deepseek";

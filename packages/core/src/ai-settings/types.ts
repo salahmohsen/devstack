@@ -31,10 +31,6 @@ export const AiProviderKindSchema = z
   });
 export type AiProviderKind = string;
 
-/** Mail reply: Assist = confirm in Review; Full = auto-send (AI settings only). */
-export const MailReplyAutonomySchema = z.enum(["assist", "full"]);
-export type MailReplyAutonomy = z.infer<typeof MailReplyAutonomySchema>;
-
 /** Public view of a provider — secret never returned. */
 export const AiProviderPublicSchema = z.object({
   id: z.string().min(1),
@@ -75,7 +71,6 @@ export const AiSettingsOutputSchema = z.object({
   providers: z.array(AiProviderPublicSchema),
   models: AiModelsMapSchema,
   modelProviderIds: AiModelProviderIdsMapSchema.default({}),
-  mailReplyAutonomy: MailReplyAutonomySchema,
   updatedAt: z.coerce.date().nullable()
 });
 export type AiSettingsOutput = z.infer<typeof AiSettingsOutputSchema>;
@@ -95,8 +90,7 @@ export const UpdateAiSettingsInputSchema = z.object({
   /** When true with providers[], replace full provider list (including deletions). */
   replaceProviders: z.boolean().optional(),
   models: AiModelsMapSchema.partial().optional(),
-  modelProviderIds: AiModelProviderIdsMapSchema.optional(),
-  mailReplyAutonomy: MailReplyAutonomySchema.optional()
+  modelProviderIds: AiModelProviderIdsMapSchema.optional()
 });
 export type UpdateAiSettingsInput = z.infer<typeof UpdateAiSettingsInputSchema>;
 

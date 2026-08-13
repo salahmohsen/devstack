@@ -1,8 +1,6 @@
-import { jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
-
-export const mailReplyAutonomyEnum = pgEnum("mail_reply_autonomy_enum", ["assist", "full"]);
 
 /**
  * Stored provider secret material — never expose ciphertext via API.
@@ -44,8 +42,9 @@ export type StoredAiModelProviderIds = {
 };
 
 /**
- * Per-user AI platform settings: providers (BYO keys), models per feature,
- * mail reply Assist|Full. One row per user.
+ * Per-user AI platform settings: providers (BYO keys), models per feature.
+ * One row per user. Reply is always human-confirmed in the mail composer
+ * (Assist/Full autonomy removed with the Review queue).
  */
 export const userAiSettings = pgTable(
   "user_ai_settings",
@@ -61,7 +60,6 @@ export const userAiSettings = pgTable(
       .$type<StoredAiModelProviderIds>()
       .notNull()
       .default({}),
-    mailReplyAutonomy: mailReplyAutonomyEnum("mail_reply_autonomy").notNull().default("assist"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
@@ -70,5 +68,3 @@ export const userAiSettings = pgTable(
   },
   (t) => [uniqueIndex("user_ai_settings_user_id_unique_idx").on(t.userId)]
 );
-
-export type MailReplyAutonomyDb = (typeof mailReplyAutonomyEnum.enumValues)[number];

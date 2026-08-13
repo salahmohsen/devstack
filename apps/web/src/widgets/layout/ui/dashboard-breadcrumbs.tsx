@@ -25,7 +25,6 @@ const KNOWN_SEGMENTS = new Set([
   "profile",
   "account",
   "github",
-  "review",
   "new"
 ]);
 
@@ -44,7 +43,6 @@ const SEGMENT_LABELS: Record<string, string> = {
   profile: "Profile",
   account: "Account",
   github: "GitHub",
-  review: "Review",
   new: "New"
 };
 

@@ -27,13 +27,6 @@ async function main() {
   );
   try {
     await pool.query(
-      `UPDATE review_item SET application_id = NULL WHERE application_id IS NOT NULL`
-    );
-  } catch (e) {
-    console.log("review_item unlink skip:", String(e).slice(0, 100));
-  }
-  try {
-    await pool.query(
       `UPDATE mail_crm_apply SET undone_at = COALESCE(undone_at, NOW()) WHERE application_id IS NOT NULL AND undone_at IS NULL`
     );
   } catch (e) {

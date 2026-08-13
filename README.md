@@ -27,7 +27,7 @@ Glossary: [CONTEXT.md](./CONTEXT.md). Agent/contributor map: [AGENTS.md](./AGENT
 | **Applications CRM**      | Private job pipeline (saved → applied → screening → interview → offer; outcomes close the row) |
 | **Career Inbox**          | In-app mail hub for hiring signal (not a personal Gmail clone)                                 |
 | **Career Mail Assistant** | Classify → act: noise demote, CRM effects, job digests → applications, reply assist            |
-| **Review queue**          | Human confirm for AI drafts / sensitive actions                                                |
+| **Mail reply**            | On-the-fly generate + human confirm send in Career Inbox                                       |
 | **Connections**           | Gmail sync, GitHub OAuth/public repo surface, AI provider keys                                 |
 
 ### Multi-user tenancy
@@ -80,8 +80,7 @@ Specs:
 | Route area | Business purpose |
 | ------------------------- | ------------------------------------------------------------------------------------------ | ------- | --------------------------- |
 | `/dashboard` | Hub home |
-| `/dashboard/mail/*` | Career Inbox by category |
-| `/dashboard/review` | Confirm AI drafts / review items |
+| `/dashboard/mail/*` | Career Inbox by category (generate + confirm send reply) |
 | `/dashboard/new-jobs` | AI job discoveries (inbox / dismissed) |
 | `/dashboard/tracked-jobs` | Job pipeline board/list |
 | `/dashboard/experiences   | projects                                                                                   | stacks` | Evidence CRUD (Sheet forms) |

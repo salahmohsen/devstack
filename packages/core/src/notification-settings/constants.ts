@@ -7,7 +7,6 @@ import { type NotificationChannelPrefs, type NotificationKind } from "./types";
  * Emit wiring for the three assistant kinds may wait for P1 harvest/classify paths.
  */
 export const NOTIFICATION_KINDS = [
-  "mail.reply.draft_ready",
   "mail.classified.important",
   "mail.needs_action",
   "mail.apply_nudge",
@@ -18,7 +17,6 @@ export const NOTIFICATION_KINDS = [
 ] as const satisfies readonly NotificationKind[];
 
 export const NOTIFICATION_KIND_LABELS: Record<NotificationKind, string> = {
-  "mail.reply.draft_ready": "Reply draft ready",
   "mail.classified.important": "Important mail classified",
   "mail.needs_action": "Mail needs action",
   "mail.apply_nudge": "Apply nudge",
@@ -29,7 +27,6 @@ export const NOTIFICATION_KIND_LABELS: Record<NotificationKind, string> = {
 };
 
 export const NOTIFICATION_KIND_DESCRIPTIONS: Record<NotificationKind, string> = {
-  "mail.reply.draft_ready": "When a mail reply draft is waiting in Review (Assist mode).",
   "mail.classified.important": "When classify marks a message as high-signal career mail.",
   "mail.needs_action":
     "When mail is marked as recruiter, interview, offer, or another explicit action item.",
@@ -41,10 +38,9 @@ export const NOTIFICATION_KIND_DESCRIPTIONS: Record<NotificationKind, string> = 
   "security.new_device_otp": "One-time codes for new device trust (recommended on email)."
 };
 
-/** Product defaults: app on for most; email on for security + draft ready. */
+/** Product defaults: app on for most; email on for security. */
 export function defaultNotificationChannelPrefs(): NotificationChannelPrefs {
   return {
-    "mail.reply.draft_ready": { app: true, email: true },
     "mail.classified.important": { app: true, email: false },
     "mail.needs_action": { app: true, email: false },
     "mail.apply_nudge": { app: true, email: false },

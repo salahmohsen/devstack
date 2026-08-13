@@ -130,16 +130,11 @@ User-defined mail category (icon, title, description) that extends the
 classify allowlist and prompt; may appear as a hub card when count > 0.
 _Avoid_: Gmail label sync as the source of truth.
 
-**Review item**:
-Durable unit on `/dashboard/review` awaiting human confirmation (e.g. a
-reply draft in Assist mode). List + confirm CTA + edit drawer + view panel.
-_Avoid_: burying confirm-only state only inside the mail reader.
-
-**AI autonomy**:
-Per-user policy for how far agents may act without confirm. Mail replies:
-Assist (always generate draft, wait for confirm) or Full (auto-send).
-Controlled only in AI settings — never in notification settings.
-_Avoid_: tying send policy to notification toggles.
+**Mail reply (on-the-fly)**:
+Generate an ephemeral subject + body in the Career Inbox composer, then
+human-confirm send. No durable Review queue; notifications for career mail
+open `/dashboard/mail/all`.
+_Avoid_: auto-send without explicit user confirm.
 
 **Notification email**:
 User-chosen destination for system emails (draft ready, security OTP, etc.).

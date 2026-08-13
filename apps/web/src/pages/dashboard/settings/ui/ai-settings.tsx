@@ -1,6 +1,5 @@
 "use client";
 
-import { Link } from "@tanstack/react-router";
 import {
   CheckCircle2Icon,
   ChevronDownIcon,
@@ -21,8 +20,6 @@ import {
   defaultAiModels,
   getMastraProvider,
   isFeatureOnDefault,
-  MAIL_REPLY_AUTONOMY,
-  MAIL_REPLY_AUTONOMY_LABELS,
   MASTRA_PROVIDER_CATALOG,
   providerKindFromModelId,
   resolveProviderRowForModel,
@@ -31,8 +28,7 @@ import {
   type AiModelProviderIdsMap,
   type AiModelsMap,
   type AiProviderKind,
-  type AiProviderPublic,
-  type MailReplyAutonomy
+  type AiProviderPublic
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -70,14 +66,6 @@ import {
 import { Input } from "@tsu-stack/ui/components/input";
 import { Label } from "@tsu-stack/ui/components/label";
 import { SecretInput } from "@tsu-stack/ui/components/secret-input";
-import {
-  Select,
-  SelectItem,
-  SelectList,
-  SelectPopup,
-  SelectTrigger,
-  SelectValue
-} from "@tsu-stack/ui/components/select";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -107,7 +95,6 @@ type FormState = {
   providers: DraftProvider[];
   models: AiModelsMap;
   modelProviderIds: AiModelProviderIdsMap;
-  autonomy: MailReplyAutonomy;
 };
 
 /** Combobox option for a model under a specific provider row (multipes-safe). */
@@ -178,13 +165,11 @@ function formFromQuery(data: {
   providers: AiProviderPublic[];
   models: AiModelsMap;
   modelProviderIds?: AiModelProviderIdsMap;
-  mailReplyAutonomy: MailReplyAutonomy;
 }): FormState {
   return {
     providers: toDraftProviders(data.providers),
     models: data.models,
-    modelProviderIds: { ...data.modelProviderIds },
-    autonomy: data.mailReplyAutonomy
+    modelProviderIds: { ...data.modelProviderIds }
   };
 }
 
@@ -358,7 +343,6 @@ export function AiSettings() {
 
   const dirty = useMemo(() => {
     if (!form || !serverSnapshot || !query.data) return false;
-    if (form.autonomy !== serverSnapshot.autonomy) return true;
     if (!modelsEqual(form.models, serverSnapshot.models)) return true;
     if (!bindingsEqual(form.modelProviderIds, serverSnapshot.modelProviderIds)) return true;
     return providersDirty(form.providers, query.data.providers);
@@ -512,8 +496,7 @@ export function AiSettings() {
           };
         }),
         models: current.models,
-        modelProviderIds: current.modelProviderIds,
-        mailReplyAutonomy: current.autonomy
+        modelProviderIds: current.modelProviderIds
       });
       toast.success("AI settings saved");
       setDraft(null);
@@ -1044,51 +1027,6 @@ export function AiSettings() {
                       ))}
                     </CollapsiblePanel>
                   </Collapsible>
-                </div>
-              </SettingsSection>
-
-              <SettingsSection
-                title="Mail reply autonomy"
-                description="Assist always generates a draft and waits for confirm in Review. Full auto-sends after generation when job context is present."
-              >
-                <div className="space-y-2">
-                  <Select
-                    value={form.autonomy}
-                    onValueChange={(value) => {
-                      if (!value) return;
-                      patch((current) => {
-                        return {
-                          ...current,
-                          autonomy: value as MailReplyAutonomy
-                        };
-                      });
-                    }}
-                    itemToStringLabel={(value) =>
-                      MAIL_REPLY_AUTONOMY_LABELS[value as MailReplyAutonomy] ?? String(value)
-                    }
-                  >
-                    <SelectTrigger className="max-w-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectPopup>
-                      <SelectList>
-                        {MAIL_REPLY_AUTONOMY.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {MAIL_REPLY_AUTONOMY_LABELS[value]}
-                          </SelectItem>
-                        ))}
-                      </SelectList>
-                    </SelectPopup>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Where alerts go:{" "}
-                    <Link
-                      to="/dashboard/settings/notifications"
-                      className="font-medium text-foreground underline-offset-2 hover:underline"
-                    >
-                      Notifications
-                    </Link>
-                  </p>
                 </div>
               </SettingsSection>
 

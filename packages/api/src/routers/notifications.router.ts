@@ -23,8 +23,7 @@ function toItem(
     readAt: row.readAt,
     createdAt: row.createdAt,
     messageId: row.messageId,
-    applicationId: row.applicationId,
-    reviewItemId: row.reviewItemId
+    applicationId: row.applicationId
   });
 }
 

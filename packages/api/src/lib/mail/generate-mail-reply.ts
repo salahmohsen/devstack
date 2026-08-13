@@ -21,7 +21,7 @@ export type GenerateMailReplyResult =
   | { ok: false; code: GenerateMailReplyErrorCode; message?: string };
 
 /**
- * Build an ephemeral AI reply draft for a career mail message (no review_item).
+ * Build an ephemeral AI reply draft for a career mail message (local composer only).
  * Fail closed when BYO credentials or the agent worker are missing.
  */
 export async function generateMailReply(input: {

@@ -13,19 +13,19 @@ export function useGenerateMailReplyMutation() {
           switch (error.code) {
             case "NOT_FOUND":
               toastAiError(error.message || "Mail message not found.", {
-                feature: "review",
+                feature: "mail",
                 severity: "hard"
               });
               return;
             case "NOT_CAREER":
               toastAiError(error.message || "System notification mail cannot generate replies.", {
-                feature: "review",
+                feature: "mail",
                 severity: "hard"
               });
               return;
             case "AI_NOT_CONFIGURED":
               toastAiError(error.message || "Configure a BYO API key under Settings → AI", {
-                feature: "review",
+                feature: "mail",
                 severity: "hard",
                 action: {
                   label: "AI settings",
@@ -37,7 +37,7 @@ export function useGenerateMailReplyMutation() {
               toastAiError(
                 error.message || "AI reply draft failed — check Settings → AI and try again",
                 {
-                  feature: "review",
+                  feature: "mail",
                   severity: "hard",
                   action: {
                     label: "AI settings",
@@ -50,7 +50,7 @@ export function useGenerateMailReplyMutation() {
         }
 
         toastAiError(error.message || "Could not generate reply", {
-          feature: "review",
+          feature: "mail",
           severity: "hard"
         });
       }

@@ -47,7 +47,6 @@ const KIND_GROUPS: { title: string; kinds: NotificationKind[] }[] = [
   {
     title: "Mail & career",
     kinds: [
-      "mail.reply.draft_ready",
       "mail.classified.important",
       "mail.needs_action",
       "mail.apply_nudge",

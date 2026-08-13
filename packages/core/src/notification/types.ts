@@ -18,8 +18,7 @@ export const AppNotificationItemSchema = z.object({
   createdAt: z.coerce.date(),
   /** Optional entity links for deep navigation. */
   messageId: z.string().nullable(),
-  applicationId: z.string().nullable(),
-  reviewItemId: z.string().nullable()
+  applicationId: z.string().nullable()
 });
 export type AppNotificationItem = z.infer<typeof AppNotificationItemSchema>;
 

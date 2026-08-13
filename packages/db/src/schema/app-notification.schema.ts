@@ -3,7 +3,6 @@ import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { application } from "./application.schema.ts";
 import { user } from "./auth.schema.ts";
 import { mailMessage } from "./mail-message.schema.ts";
-import { reviewItem } from "./review-item.schema.ts";
 
 /**
  * In-app notification row (bell). Email channel may be immediate or digest-batched.
@@ -24,9 +23,6 @@ export const appNotification = pgTable(
       onDelete: "set null"
     }),
     applicationId: text("application_id").references(() => application.id, {
-      onDelete: "set null"
-    }),
-    reviewItemId: text("review_item_id").references(() => reviewItem.id, {
       onDelete: "set null"
     }),
     readAt: timestamp("read_at", { withTimezone: true }),

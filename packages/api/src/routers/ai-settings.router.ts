@@ -51,7 +51,6 @@ function toOutput(
     providers: toPublicProviders(row.providers),
     models,
     modelProviderIds: row.modelProviderIds ?? {},
-    mailReplyAutonomy: row.mailReplyAutonomy,
     updatedAt: row.updatedAt
   });
 }
@@ -71,7 +70,7 @@ export const aiSettingsRouter = {
 
   update: protectedProcedure
     .route({
-      description: "Update AI providers, models, and mail reply autonomy",
+      description: "Update AI providers and models",
       method: "POST"
     })
     .input(UpdateAiSettingsInputSchema)
@@ -90,7 +89,6 @@ export const aiSettingsRouter = {
         ...existing?.models
       };
       const models = mergeAiModels(baseModels, input.models) as StoredAiModels;
-      const mailReplyAutonomy = input.mailReplyAutonomy ?? existing?.mailReplyAutonomy ?? "assist";
 
       let providers: StoredAiProvider[] = existing?.providers ?? [];
 
@@ -146,8 +144,7 @@ export const aiSettingsRouter = {
         userId,
         providers,
         models,
-        modelProviderIds,
-        mailReplyAutonomy
+        modelProviderIds
       });
 
       return toOutput(row);

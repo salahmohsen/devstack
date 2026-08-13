@@ -16,7 +16,7 @@ export type AiErrorKind =
   | "unknown";
 
 /** Surface that produced the error — only changes generic titles/copy. */
-export type AiErrorFeature = "hub" | "organize" | "resume" | "review" | "generic";
+export type AiErrorFeature = "hub" | "organize" | "resume" | "mail" | "generic";
 
 /**
  * hard — the task could not complete (block next step)
@@ -133,7 +133,7 @@ function hardUnknownTitle(feature: AiErrorFeature): string {
       return "Organize failed";
     case "resume":
       return "Resume analysis failed";
-    case "review":
+    case "mail":
       return "Reply draft failed";
     case "generic":
       return "Request failed";
@@ -148,8 +148,8 @@ function hardUnknownDescription(feature: AiErrorFeature): string {
       return "Unable to organize stacks. Try again in a moment.";
     case "resume":
       return "Unable to analyze this resume. Try again in a moment.";
-    case "review":
-      return "Unable to create a reply draft. Try again in a moment.";
+    case "mail":
+      return "Unable to generate a reply. Try again in a moment.";
     case "generic":
       return "Unable to complete the request. Try again in a moment.";
   }
@@ -161,7 +161,7 @@ function partialUnknownTitle(feature: AiErrorFeature): string {
       return "Suggestions incomplete";
     case "resume":
       return "Analysis incomplete";
-    case "review":
+    case "mail":
       return "Draft incomplete";
     case "hub":
     case "generic":
@@ -175,7 +175,7 @@ function partialUnknownDescription(feature: AiErrorFeature): string {
       return "Some AI steps did not finish. You can apply what is ready below, or fix AI settings and run organize again.";
     case "resume":
       return "Some analysis steps did not finish. Review what is ready, or fix AI settings and try again.";
-    case "review":
+    case "mail":
       return "The draft may be incomplete. Fix AI settings if needed, then try again.";
     case "hub":
     case "generic":

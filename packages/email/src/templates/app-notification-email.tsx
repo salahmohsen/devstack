@@ -3,7 +3,7 @@ import { Button, Text } from "react-email";
 import { EmailLayout } from "#@/templates/layout-email";
 
 /**
- * System notification for career events (draft ready, important mail, stage auto-update).
+ * System notification for career events (important mail, stage auto-update, etc.).
  * Distinct from auth templates; CTA links into the dashboard when `actionUrl` is set.
  */
 const AppNotificationEmail = ({
@@ -38,8 +38,8 @@ const AppNotificationEmail = ({
 export default AppNotificationEmail;
 
 AppNotificationEmail.PreviewProps = {
-  title: "Reply draft ready",
-  body: "Acme Corp — thanks for your application",
-  actionUrl: "https://example.com/dashboard/review",
-  actionLabel: "Open Review"
+  title: "Career mail classified",
+  body: "recruiter · Acme Corp — thanks for your application",
+  actionUrl: "https://example.com/dashboard/mail/all",
+  actionLabel: "Open mail"
 };

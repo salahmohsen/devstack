@@ -57,7 +57,7 @@ export function subscribeCommands(listener: () => void): () => void {
  * Shortcut convention: chord `D` + first letter of the destination noun
  * (e.g. Home → D H, Repositories → D R, Projects → D P).
  * When two destinations share a letter, use the next distinctive consonant
- * from the noun (Resumes → C for CV, Review → V, Stack → T, Profile → F).
+ * from the noun (Resumes → C for CV, Stack → T, Profile → F).
  *
  * Protected routes set `authRequired` and are filtered out when signed out.
  * Dynamic Profile / Repositories chords live in `use-command-items.ts`.
@@ -166,17 +166,6 @@ registerCommands([
     shortcut: ["D", "M"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/mail/applications" }
-  },
-  {
-    id: "nav:review",
-    label: "Go to Review",
-    group: "Dashboard",
-    icon: Inbox,
-    keywords: ["review", "queue", "approvals"],
-    // R taken by Repositories → reView
-    shortcut: ["D", "V"],
-    authRequired: true,
-    action: { type: "navigate", to: "/dashboard/review" }
   },
   {
     id: "nav:settings",

@@ -2,8 +2,6 @@ import { z } from "zod";
 
 import { RuntimeLlmConfigSchema } from "#@/ai-settings/runtime-llm";
 
-import { buildHeuristicReplyDraft } from "./utils";
-
 /** Optional CRM/job context for a more grounded reply. */
 export const MailReplyJobContextSchema = z.object({
   companyName: z.string().default(""),
@@ -36,6 +34,41 @@ export const MailReplyDraftOutputSchema = z.object({
   notes: z.string().optional()
 });
 export type MailReplyDraftOutput = z.infer<typeof MailReplyDraftOutputSchema>;
+
+/**
+ * Deterministic first-pass reply body (no LLM). Tests/fixtures only.
+ */
+export function buildHeuristicReplyDraft(input: {
+  fromName: string;
+  subject: string;
+  preview: string;
+}): { title: string; subject: string; bodyText: string } {
+  const name = input.fromName.trim() || "there";
+  const first = name.split(/\s+/)[0] ?? "there";
+  const subject = input.subject.trim() || "(no subject)";
+  const replySubject = subject.match(/^re:\s*/i) ? subject : `Re: ${subject}`;
+  const previewLine = input.preview.trim().slice(0, 280);
+
+  const bodyText = [
+    `Hi ${first},`,
+    "",
+    `Thanks for your note${subject ? ` about “${subject}”` : ""}.`,
+    previewLine ? "" : "",
+    previewLine
+      ? `I read your message and will follow up with a more detailed reply shortly.`
+      : `I will follow up with a more detailed reply shortly.`,
+    "",
+    "Best regards"
+  ]
+    .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
+    .join("\n");
+
+  return {
+    title: `Reply · ${subject.slice(0, 80)}`,
+    subject: replySubject.slice(0, 500),
+    bodyText
+  };
+}
 
 /**
  * @deprecated Product path is AI-only. Kept for unit tests/fixtures.

@@ -13,7 +13,6 @@ export * from "./mail-crm-apply.schema.ts";
 
 export * from "./mail-message.schema.ts";
 export * from "./mail-smart-rule.schema.ts";
-export * from "./review-item.schema.ts";
 export * from "./portfolio-entry.schema.ts";
 export * from "./username-slug-alias.schema.ts";
 export * from "./project.schema.ts";

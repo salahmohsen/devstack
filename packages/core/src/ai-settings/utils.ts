@@ -1,12 +1,7 @@
-import { AI_FEATURES, DEFAULT_AI_MODELS, DEFAULT_MAIL_REPLY_AUTONOMY } from "./constants";
+import { AI_FEATURES, DEFAULT_AI_MODELS } from "./constants";
 import { getMastraProvider, toMastraModelId } from "./mastra-provider-catalog";
 import { providerKindFromModelId } from "./runtime-llm";
-import {
-  type AiFeature,
-  type AiModelsMap,
-  type AiSettingsOutput,
-  type MailReplyAutonomy
-} from "./types";
+import { type AiFeature, type AiModelsMap, type AiSettingsOutput } from "./types";
 
 export type FeatureBindings = Partial<Record<AiFeature, string | undefined>>;
 
@@ -49,7 +44,6 @@ export function defaultAiSettingsOutput(): AiSettingsOutput {
     providers: [],
     models: defaultAiModels(),
     modelProviderIds: {},
-    mailReplyAutonomy: DEFAULT_MAIL_REPLY_AUTONOMY,
     updatedAt: null
   };
 }
@@ -171,10 +165,6 @@ export function resolveProviderRowForModel<T extends { id: string; kind: string 
   }
 
   return args.providers.find((p) => p.kind === kind);
-}
-
-export function isMailReplyAutonomy(value: string): value is MailReplyAutonomy {
-  return value === "assist" || value === "full";
 }
 
 export function maskApiKeyLast4(apiKey: string): string {

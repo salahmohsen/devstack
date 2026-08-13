@@ -96,20 +96,6 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         to: r.application.id
       })
     },
-    reviewItem: {
-      user: r.one.user({
-        from: r.reviewItem.userId,
-        to: r.user.id
-      }),
-      message: r.one.mailMessage({
-        from: r.reviewItem.messageId,
-        to: r.mailMessage.id
-      }),
-      application: r.one.application({
-        from: r.reviewItem.applicationId,
-        to: r.application.id
-      })
-    },
     appNotification: {
       user: r.one.user({
         from: r.appNotification.userId,
@@ -122,10 +108,6 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
       application: r.one.application({
         from: r.appNotification.applicationId,
         to: r.application.id
-      }),
-      reviewItem: r.one.reviewItem({
-        from: r.appNotification.reviewItemId,
-        to: r.reviewItem.id
       })
     },
     mailAttachment: {

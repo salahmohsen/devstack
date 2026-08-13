@@ -17,7 +17,6 @@ export type UpsertUserAiSettingsInput = {
   models: StoredAiModels;
   /** Omit to keep existing bindings (update) or default `{}` (insert). */
   modelProviderIds?: StoredAiModelProviderIds;
-  mailReplyAutonomy: "assist" | "full";
 };
 
 export const userAiSettingsRepository = {
@@ -43,7 +42,6 @@ export const userAiSettingsRepository = {
           providers: input.providers,
           models: input.models,
           modelProviderIds,
-          mailReplyAutonomy: input.mailReplyAutonomy,
           updatedAt: new Date()
         })
         .where(eq(userAiSettings.userId, input.userId))
@@ -59,8 +57,7 @@ export const userAiSettingsRepository = {
         userId: input.userId,
         providers: input.providers,
         models: input.models,
-        modelProviderIds,
-        mailReplyAutonomy: input.mailReplyAutonomy
+        modelProviderIds
       })
       .returning();
     if (!row) throw new Error("Failed to insert user_ai_settings");

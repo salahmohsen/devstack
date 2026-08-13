@@ -14,7 +14,6 @@ export type CreateAppNotificationData = {
   href?: string | null;
   messageId?: string | null;
   applicationId?: string | null;
-  reviewItemId?: string | null;
   emailDigestPending?: boolean;
   emailedAt?: Date | null;
   readAt?: Date | null;
@@ -68,7 +67,6 @@ export const appNotificationRepository = {
         href: input.href ?? null,
         messageId: input.messageId ?? null,
         applicationId: input.applicationId ?? null,
-        reviewItemId: input.reviewItemId ?? null,
         emailDigestPending: input.emailDigestPending ?? false,
         emailedAt: input.emailedAt ?? null,
         readAt: input.readAt ?? null

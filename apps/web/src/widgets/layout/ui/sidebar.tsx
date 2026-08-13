@@ -54,12 +54,6 @@ const DashboardItems = [
     matchPrefix: "/dashboard/mail"
   },
   {
-    href: "/dashboard/review",
-    label: "Review",
-    group: "Dashboard",
-    matchPrefix: "/dashboard/review"
-  },
-  {
     href: "/dashboard/settings/profile",
     label: "Settings",
     group: "Dashboard",
