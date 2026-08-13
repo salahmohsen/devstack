@@ -1,7 +1,9 @@
-import { useChat, type UIMessage } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
+import { AssistantRuntimeProvider } from "@assistant-ui/react";
+import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
 import * as React from "react";
 
-import { useListHubMessagesQuery } from "@/features/agent-hub/api/list-hub-messages.query";
+import { fetchHubMessagesPage } from "@/features/agent-hub/api/list-hub-messages.query";
 import {
   createHubChat,
   HubChatContext,
@@ -9,15 +11,10 @@ import {
   type HubToolApprovalResponseArgs,
   type HubToolOutputArgs
 } from "@/features/agent-hub/api/use-hub-chat";
-
-function isUiMessageArray(value: unknown): value is UIMessage[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (m) => m && typeof m === "object" && "role" in m && (m as { role: string }).role !== undefined
-    )
-  );
-}
+import {
+  createHubThreadHistoryAdapter,
+  prependUniqueHubMessages
+} from "@/features/agent-hub/lib/hub-thread-history-adapter";
 
 /**
  * Owns the single dashboard hub `Chat` instance and hydrates Mastra memory once.
@@ -26,46 +23,73 @@ function isUiMessageArray(value: unknown): value is UIMessage[] {
 export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const chat = React.useMemo(() => createHubChat(), []);
   const helpers = useChat({ chat });
-  const { setMessages, messages } = helpers;
+  const { setMessages } = helpers;
 
   const [historyReady, setHistoryReady] = React.useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
+  const nextHistoryPageRef = React.useRef(1);
   const hydrateStartedRef = React.useRef(false);
+  const loadingOlderRef = React.useRef(false);
 
-  const historyQuery = useListHubMessagesQuery(!historyReady);
+  const history = React.useMemo(
+    () => createHubThreadHistoryAdapter({ loadPage: fetchHubMessagesPage }),
+    []
+  );
 
-  // Hydrate from Memory once history settles (async setState avoids sync-effect lint).
+  // 1.3 `useExternalHistory` only invokes `history.withFormat().load()` when a
+  // Cloud `threadListItem.remoteId` exists. Without Cloud we inject page 0
+  // once via `setMessages` — never dual-load with the adapter.
+  //
+  // Casts: `@assistant-ui/react-ai-sdk@1.3` types against nested `@ai-sdk/react@3`
+  // + `@assistant-ui/core@0.2`; the app uses catalog `@ai-sdk/react@2` and
+  // `@assistant-ui/react` (core 0.3). Runtime shapes match.
+  const runtime = useAISDKRuntime(helpers as unknown as Parameters<typeof useAISDKRuntime>[0], {
+    joinStrategy: "concat-content",
+    adapters: { history }
+  });
+
   React.useEffect(() => {
-    if (historyReady || historyQuery.isLoading || hydrateStartedRef.current) return;
+    if (hydrateStartedRef.current) return;
     hydrateStartedRef.current = true;
 
     let cancelled = false;
-    void Promise.resolve().then(() => {
-      if (cancelled) return;
-      if (historyQuery.isError) {
+    void fetchHubMessagesPage(0)
+      .then((page) => {
+        if (cancelled) return;
+        if (page.uiMessages.length > 0) {
+          setMessages((current) => (current.length === 0 ? page.uiMessages : current));
+        }
+        setHasMoreHistory(page.hasMore);
+        nextHistoryPageRef.current = 1;
         setHistoryReady(true);
-        return;
-      }
-      const data = historyQuery.data as
-        | { uiMessages?: unknown[] | null; messages?: unknown[] }
-        | undefined;
-      const ui = data?.uiMessages;
-      if (isUiMessageArray(ui) && ui.length > 0 && messages.length === 0) {
-        setMessages(ui);
-      }
-      setHistoryReady(true);
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setHistoryReady(true);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [
-    historyQuery.data,
-    historyQuery.isError,
-    historyQuery.isLoading,
-    historyReady,
-    messages.length,
-    setMessages
-  ]);
+  }, [setMessages]);
+
+  const loadOlderMessages = React.useCallback(async () => {
+    if (!historyReady || !hasMoreHistory || loadingOlderRef.current) return;
+    loadingOlderRef.current = true;
+    setIsLoadingOlder(true);
+    try {
+      const page = nextHistoryPageRef.current;
+      const data = await fetchHubMessagesPage(page);
+      setMessages((current) => prependUniqueHubMessages(data.uiMessages, current));
+      nextHistoryPageRef.current = page + 1;
+      setHasMoreHistory(data.hasMore);
+    } catch {
+      // Fail soft: keep the current transcript. Task 4 owns retry chrome.
+    } finally {
+      loadingOlderRef.current = false;
+      setIsLoadingOlder(false);
+    }
+  }, [hasMoreHistory, historyReady, setMessages]);
 
   const addToolApprovalResponse = React.useCallback(
     (args: HubToolApprovalResponseArgs): void | PromiseLike<void> => {
@@ -91,9 +115,20 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     ...helpers,
     chat,
     historyReady,
+    hasMoreHistory,
+    isLoadingOlder,
+    loadOlderMessages,
     addToolApprovalResponse,
     addToolOutput
   };
 
-  return <HubChatContext value={value}>{children}</HubChatContext>;
+  return (
+    <AssistantRuntimeProvider
+      runtime={
+        runtime as unknown as React.ComponentProps<typeof AssistantRuntimeProvider>["runtime"]
+      }
+    >
+      <HubChatContext value={value}>{children}</HubChatContext>
+    </AssistantRuntimeProvider>
+  );
 }
