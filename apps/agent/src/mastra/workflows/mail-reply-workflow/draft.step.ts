@@ -10,6 +10,7 @@ import {
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
 import { applyLlmToRequestContext, generateModelOption } from "#@/mastra/byo-model";
+import { withTimeoutSignal } from "#@/mastra/lib/with-timeout";
 
 const LlmDraftSchema = z.object({
   title: z.string().min(1).max(200),
@@ -17,7 +18,18 @@ const LlmDraftSchema = z.object({
   bodyText: z.string().min(1).max(20_000)
 });
 
-const LLM_TIMEOUT_MS = 45_000;
+/** Invalid structured output sentinel — safeParse fails so we stay fail-closed. */
+const STRUCTURED_FALLBACK = {
+  title: "",
+  subject: "",
+  bodyText: ""
+} as const;
+
+/** Tool chains (list → get → draft) need more wall clock than classify. */
+const LLM_TIMEOUT_MS = 90_000;
+
+/** Enough steps for a few CRM/profile tool calls then structured draft. */
+const MAX_STEPS = 8;
 
 /** Fail-closed draft when AI is unavailable (no heuristic success path). */
 function failDraft(notes: string): z.infer<typeof MailReplyDraftOutputSchema> {
@@ -29,6 +41,16 @@ function failDraft(notes: string): z.infer<typeof MailReplyDraftOutputSchema> {
     source: "llm",
     notes
   };
+}
+
+function isAbortError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return error.name === "AbortError" || /abort/i.test(error.message);
+  }
+  if (typeof error === "string") {
+    return /abort/i.test(error);
+  }
+  return false;
 }
 
 export const draftStep = createStep({
@@ -64,7 +86,7 @@ export const draftStep = createStep({
       ? `Job context: ${[job.title, job.companyName].filter(Boolean).join(" @ ")}${
           job.stage ? ` (stage: ${job.stage})` : ""
         }`
-      : "Job context: (none linked — you may use list-open-applications if the company is clear)";
+      : "Job context: (none linked — use list-open-applications / get-application if the company is clear; profile tools only when useful)";
 
     const bodySnippet = inputData.bodyText.slice(0, 6_000);
     const prompt = `Draft a reply for this career email.
@@ -79,6 +101,7 @@ Preview: ${inputData.preview}
 Body:
 ${bodySnippet}
 
+Use CRM/profile tools only when needed for accurate job or career context. Never send email.
 Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
 
     const requestContext = new RequestContext();
@@ -87,20 +110,26 @@ Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
     applyLlmToRequestContext(requestContext, inputData.llm);
 
     try {
-      const result = await Promise.race([
-        agent.generate([{ role: "user", content: prompt }], {
-          structuredOutput: { schema: LlmDraftSchema },
-          requestContext,
-          maxSteps: 4,
-          model
-        }),
-        new Promise<never>((_, reject) => {
-          setTimeout(
-            () => reject(new Error(`LLM timeout after ${LLM_TIMEOUT_MS / 1000}s`)),
-            LLM_TIMEOUT_MS
-          );
-        })
-      ]);
+      const result = await withTimeoutSignal(
+        (signal) =>
+          agent.generate([{ role: "user", content: prompt }], {
+            structuredOutput: {
+              schema: LlmDraftSchema,
+              // Schema parse failure → empty sentinel; we fail-closed via safeParse below.
+              errorStrategy: "fallback",
+              fallbackValue: STRUCTURED_FALLBACK
+            },
+            requestContext,
+            maxSteps: MAX_STEPS,
+            model,
+            abortSignal: signal
+          }),
+        LLM_TIMEOUT_MS,
+        `LLM timeout after ${LLM_TIMEOUT_MS / 1000}s`,
+        abortSignal
+      );
+
+      if (abortSignal?.aborted) return failDraft("llm:aborted");
 
       const parsed = LlmDraftSchema.safeParse(result.object);
       if (!parsed.success) {
@@ -133,16 +162,29 @@ Return title, subject (with Re: when appropriate), and bodyText (plain text).`;
         notes: "llm:ok"
       };
     } catch (error) {
+      if (abortSignal?.aborted || isAbortError(error)) {
+        const log = createLogger({ operation: "agent__mail_reply_llm" });
+        log.set({
+          event: "mail_reply_llm_aborted",
+          messageId: inputData.messageId,
+          userId: inputData.userId,
+          ...byo
+        });
+        log.emit({ _forceKeep: true });
+        return failDraft("llm:aborted");
+      }
+
       const msg = error instanceof Error ? error.message : String(error);
+      const isTimeout = /timeout/i.test(msg);
       const log = createLogger({ operation: "agent__mail_reply_llm" });
       log.error(error instanceof Error ? error : new Error(msg), {
-        event: "mail_reply_llm_error",
+        event: isTimeout ? "mail_reply_llm_timeout" : "mail_reply_llm_error",
         messageId: inputData.messageId,
         userId: inputData.userId,
         ...byo
       });
       log.emit({ _forceKeep: true });
-      return failDraft(`llm:error:${msg.slice(0, 120)}`);
+      return failDraft(isTimeout ? "llm:timeout" : `llm:error:${msg.slice(0, 120)}`);
     }
   }
 });
