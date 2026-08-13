@@ -184,7 +184,10 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
       mailReplyWorkflow
     },
     memory: new Memory({
-      options: { lastMessages: 20 }
+      options: {
+        lastMessages: 20,
+        observationalMemory: true
+      }
     })
   });
 }
