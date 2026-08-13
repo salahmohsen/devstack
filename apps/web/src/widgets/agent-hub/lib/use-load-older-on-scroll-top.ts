@@ -56,9 +56,8 @@ export function useLoadOlderOnScrollTop({
       } catch {
         pendingRestoreRef.current = null;
         setLoadError(true);
-      } finally {
-        loadingRef.current = false;
       }
+      loadingRef.current = false;
     },
     [hasMore, isLoading, loadError, viewport]
   );

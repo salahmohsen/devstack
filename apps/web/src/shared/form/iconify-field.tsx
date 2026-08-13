@@ -91,14 +91,11 @@ function IconifyField({
       setIsOpen(false);
       setQuery("");
 
-      try {
-        const svg = await fetchIconSvg(iconId);
-        if (svg) {
-          field.handleChange(svg);
-        }
-      } finally {
-        setIsResolving(false);
+      const svg = await fetchIconSvg(iconId);
+      if (svg) {
+        field.handleChange(svg);
       }
+      setIsResolving(false);
     },
     [field]
   );

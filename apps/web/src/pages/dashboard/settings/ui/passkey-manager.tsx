@@ -103,12 +103,18 @@ export function PasskeyManager({ className }: { className?: string }) {
         name: name.length > 0 ? name : undefined
       });
       if (result.error) {
-        throw new Error(result.error.message ?? "Could not add passkey");
+        const message = result.error.message ?? "Could not add passkey";
+        if (/cancel|abort|not allowed|timed out/i.test(message)) {
+          toast.message("Passkey registration canceled");
+        } else {
+          toast.error(message);
+        }
+      } else {
+        toast.success("Passkey added");
+        setNameDialogOpen(false);
+        setNewName("");
+        await queryClient.invalidateQueries({ queryKey: passkeysQueryOptions.queryKey });
       }
-      toast.success("Passkey added");
-      setNameDialogOpen(false);
-      setNewName("");
-      await queryClient.invalidateQueries({ queryKey: passkeysQueryOptions.queryKey });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not add passkey";
       if (/cancel|abort|not allowed|timed out/i.test(message)) {
@@ -116,9 +122,8 @@ export function PasskeyManager({ className }: { className?: string }) {
       } else {
         toast.error(message);
       }
-    } finally {
-      setAdding(false);
     }
+    setAdding(false);
   }
 
   async function handleDelete(passkey: PasskeyRow) {
@@ -126,16 +131,16 @@ export function PasskeyManager({ className }: { className?: string }) {
     try {
       const result = await authClient.passkey.deletePasskey({ id: passkey.id });
       if (result.error) {
-        throw new Error(result.error.message ?? "Could not remove passkey");
+        toast.error(result.error.message ?? "Could not remove passkey");
+      } else {
+        toast.success("Passkey removed");
+        setDeleteTarget(null);
+        await queryClient.invalidateQueries({ queryKey: passkeysQueryOptions.queryKey });
       }
-      toast.success("Passkey removed");
-      setDeleteTarget(null);
-      await queryClient.invalidateQueries({ queryKey: passkeysQueryOptions.queryKey });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not remove passkey");
-    } finally {
-      setBusyId(null);
     }
+    setBusyId(null);
   }
 
   function openAddDialog() {

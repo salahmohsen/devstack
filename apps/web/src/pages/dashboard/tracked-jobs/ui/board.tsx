@@ -377,6 +377,20 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
     [applications]
   );
 
+  const byStage = useMemo(() => {
+    const map = Object.fromEntries(
+      APPLICATION_STAGES.map((s) => [s, [] as ApplicationOutput[]])
+    ) as Record<ApplicationStage, ApplicationOutput[]>;
+    for (const app of openApps) {
+      map[app.stage]?.push(app);
+    }
+    return map;
+  }, [openApps]);
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const activeApp = activeId ? openApps.find((a) => a.id === activeId) : null;
+
   if (applications.length === 0) {
     return (
       <ItemsEmpty
@@ -399,20 +413,6 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
       />
     );
   }
-
-  const byStage = useMemo(() => {
-    const map = Object.fromEntries(
-      APPLICATION_STAGES.map((s) => [s, [] as ApplicationOutput[]])
-    ) as Record<ApplicationStage, ApplicationOutput[]>;
-    for (const app of openApps) {
-      map[app.stage]?.push(app);
-    }
-    return map;
-  }, [openApps]);
-
-  const activeApp = activeId ? openApps.find((a) => a.id === activeId) : null;
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   function findStage(id: string): ApplicationStage | null {
     if ((APPLICATION_STAGES as readonly string[]).includes(id)) {

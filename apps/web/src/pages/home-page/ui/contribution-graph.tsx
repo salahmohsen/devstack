@@ -202,7 +202,7 @@ export function ContributionGraph({ calendar, className, svgProps }: Contributio
   );
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
+    (e: React.MouseEvent<HTMLDivElement>) => {
       const svg = svgRef.current;
       if (!svg) return;
 
@@ -240,7 +240,11 @@ export function ContributionGraph({ calendar, className, svgProps }: Contributio
   }, []);
 
   return (
-    <div className={cn("relative flex items-center justify-center overflow-hidden", className)}>
+    <div
+      className={cn("relative flex items-center justify-center overflow-hidden", className)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       <svg
         ref={svgRef}
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -249,8 +253,6 @@ export function ContributionGraph({ calendar, className, svgProps }: Contributio
         // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
         role="img"
         aria-label="Contribution graph"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
       >
         {cellElements}
         <AnimatePresence>
@@ -274,50 +276,52 @@ export function ContributionGraph({ calendar, className, svgProps }: Contributio
         </AnimatePresence>
       </svg>
 
-      {createPortal(
-        <AnimatePresence>
-          {activeCell && dateParts && (
-            <motion.div
-              ref={tooltipRef}
-              layout
-              key="tooltip"
-              className="pointer-events-none fixed z-50 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs whitespace-nowrap text-popover-foreground shadow-md"
-              style={{ left: mouseX, top: mouseY, x: tooltipX }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-            >
-              <span className="font-semibold">
-                <ClientOnly>
-                  <NumberFlow value={activeCell.count} className="tabular-nums" /> contribution
-                  {activeCell.count !== 1 ? "s" : ""}
-                </ClientOnly>
-              </span>{" "}
-              on{" "}
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={dateParts.month}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+      {typeof document !== "undefined"
+        ? createPortal(
+            <AnimatePresence>
+              {activeCell && dateParts && (
+                <motion.div
+                  ref={tooltipRef}
+                  layout
+                  key="tooltip"
+                  className="pointer-events-none fixed z-50 rounded-md border border-border bg-popover px-2.5 py-1.5 text-xs whitespace-nowrap text-popover-foreground shadow-md"
+                  style={{ left: mouseX, top: mouseY, x: tooltipX }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="inline-block"
                 >
-                  {dateParts.month}
-                </motion.span>
-              </AnimatePresence>{" "}
-              <NumberFlow
-                value={dateParts.day}
-                suffix={ordinalSuffix(dateParts.day)}
-                className="tabular-nums"
-              />
-              , {dateParts.year}
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
+                  <span className="font-semibold">
+                    <ClientOnly>
+                      <NumberFlow value={activeCell.count} className="tabular-nums" /> contribution
+                      {activeCell.count !== 1 ? "s" : ""}
+                    </ClientOnly>
+                  </span>{" "}
+                  on{" "}
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={dateParts.month}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="inline-block"
+                    >
+                      {dateParts.month}
+                    </motion.span>
+                  </AnimatePresence>{" "}
+                  <NumberFlow
+                    value={dateParts.day}
+                    suffix={ordinalSuffix(dateParts.day)}
+                    className="tabular-nums"
+                  />
+                  , {dateParts.year}
+                </motion.div>
+              )}
+            </AnimatePresence>,
+            document.body
+          )
+        : null}
 
       <style>{CONTRIB_STYLES}</style>
     </div>

@@ -433,10 +433,11 @@ export function AiSettings() {
           loadedListKeyRef.current = fingerprint;
         }
       }
-    } finally {
-      modelsLoadInFlightRef.current = false;
-      setModelsLoading(false);
+    } catch {
+      // Model list load is best-effort; leave prior models until next open.
     }
+    modelsLoadInFlightRef.current = false;
+    setModelsLoading(false);
   }, [form, listableProvidersKey, listProviderModels]);
 
   const modelOptions = useMemo((): ModelOption[] => {
@@ -650,9 +651,8 @@ export function AiSettings() {
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not test model");
-    } finally {
-      setTestingFeature(null);
     }
+    setTestingFeature(null);
   }
 
   function canTestFeature(feature: AiFeature): boolean {

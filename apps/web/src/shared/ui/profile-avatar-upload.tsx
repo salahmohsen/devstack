@@ -132,9 +132,8 @@ export function ProfileAvatarUpload({
         const message = error instanceof Error ? error.message : "Could not upload profile photo";
         setUploadError(message);
         toast.error(message);
-      } finally {
-        setUploading(false);
       }
+      setUploading(false);
     },
     [deletePreviousObject, filesApi, persistAvatar, savedAvatar]
   );

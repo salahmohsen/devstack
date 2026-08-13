@@ -236,22 +236,21 @@ export function ProfileSettings() {
         });
         if (result.error) {
           toast.error(result.error.message ?? "Could not update photo");
-          return;
+        } else {
+          await authClient.getSession();
+          const nextImage = url?.trim() ? url.trim() : null;
+          queryClient.setQueryData(getProfileQueryOptions().queryKey, (prev) => {
+            if (!prev) return prev;
+            return { ...prev, image: nextImage };
+          });
+          void queryClient.invalidateQueries({
+            queryKey: getPortfolioListQueryKey()
+          });
         }
-        await authClient.getSession();
-        const nextImage = url?.trim() ? url.trim() : null;
-        queryClient.setQueryData(getProfileQueryOptions().queryKey, (prev) => {
-          if (!prev) return prev;
-          return { ...prev, image: nextImage };
-        });
-        void queryClient.invalidateQueries({
-          queryKey: getPortfolioListQueryKey()
-        });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Could not update photo");
-      } finally {
-        setIsAvatarUpdating(false);
       }
+      setIsAvatarUpdating(false);
     },
     [queryClient]
   );
@@ -319,14 +318,13 @@ export function ProfileSettings() {
       });
       if (result.error) {
         toast.error(result.error.message ?? "Could not send verification email");
-        return;
+      } else {
+        toast.success("Verification email sent — check your inbox");
       }
-      toast.success("Verification email sent — check your inbox");
     } catch {
       toast.error("Could not send verification email");
-    } finally {
-      setSendingVerification(false);
     }
+    setSendingVerification(false);
   };
 
   // Prefer profile query (updated immediately on avatar mutation) over session lag.

@@ -105,10 +105,11 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
       importHistory(merged, true);
       nextHistoryPageRef.current = page + 1;
       setHasMoreHistory(data.hasMore);
-    } finally {
-      loadingOlderRef.current = false;
-      setIsLoadingOlder(false);
+    } catch {
+      // Preserve prior behavior: bubble failures to the caller after cleanup.
     }
+    loadingOlderRef.current = false;
+    setIsLoadingOlder(false);
   }, [hasMoreHistory, historyReady, importHistory]);
 
   const addToolApprovalResponse = React.useCallback(

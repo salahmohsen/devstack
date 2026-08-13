@@ -111,9 +111,8 @@ export function ResumesPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to generate resume.";
       toastAiError(message, { feature: "resume", severity: "hard" });
-    } finally {
-      setIsGenerating(false);
     }
+    setIsGenerating(false);
   }
 
   const containerRef = useRef<HTMLUListElement | null>(null);
@@ -150,9 +149,8 @@ export function ResumesPage() {
       clearSelection();
     } catch {
       toast.error("Deletion failed.");
-    } finally {
-      setBatchAction(null);
     }
+    setBatchAction(null);
   }
 
   useEffect(() => {

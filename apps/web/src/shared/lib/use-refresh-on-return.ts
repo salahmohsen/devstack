@@ -23,14 +23,11 @@ export function useRefreshOnReturn({
   const wasHiddenRef = useRef(false);
 
   const refresh = useCallback(async () => {
-    try {
-      await orpcClient.github.refreshInstallationAccess();
-    } finally {
-      void queryClient.invalidateQueries({
-        queryKey: githubQueryKeys.all
-      });
-      void router.invalidate();
-    }
+    await orpcClient.github.refreshInstallationAccess();
+    void queryClient.invalidateQueries({
+      queryKey: githubQueryKeys.all
+    });
+    void router.invalidate();
   }, [queryClient, router]);
 
   useEffect(() => {

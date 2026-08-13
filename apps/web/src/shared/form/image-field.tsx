@@ -37,14 +37,13 @@ function ImageField(props: ImageFieldProps) {
       field.handleChange(publicUrl);
     } catch {
       // files.error is rendered below
-    } finally {
-      const elapsed = Date.now() - started;
-      if (elapsed < MIN_LOADER_MS) {
-        await new Promise((r) => setTimeout(r, MIN_LOADER_MS - elapsed));
-      }
-      setUploading(false);
-      if (inputRef.current) inputRef.current.value = "";
     }
+    const elapsed = Date.now() - started;
+    if (elapsed < MIN_LOADER_MS) {
+      await new Promise((r) => setTimeout(r, MIN_LOADER_MS - elapsed));
+    }
+    setUploading(false);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   function handleClear() {

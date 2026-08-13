@@ -94,10 +94,12 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
         index: true
       }
     }),
-  component: () => {
-    const { filterStore, username } = Route.useLoaderData();
-    return (
-      <RepositoriesPage filterStore={filterStore} username={username} surfaceMode="custom_domain" />
-    );
-  }
+  component: ReposIndexPage
 });
+
+function ReposIndexPage() {
+  const { filterStore, username } = Route.useLoaderData();
+  return (
+    <RepositoriesPage filterStore={filterStore} username={username} surfaceMode="custom_domain" />
+  );
+}

@@ -73,8 +73,10 @@ export const Route = createFileRoute("/(root-layout)/$username/repos/")({
         index: true
       }
     }),
-  component: () => {
-    const { filterStore, username } = Route.useLoaderData();
-    return <RepositoriesPage filterStore={filterStore} username={username} surfaceMode="path" />;
-  }
+  component: UsernameReposIndexPage
 });
+
+function UsernameReposIndexPage() {
+  const { filterStore, username } = Route.useLoaderData();
+  return <RepositoriesPage filterStore={filterStore} username={username} surfaceMode="path" />;
+}

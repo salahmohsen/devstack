@@ -354,9 +354,8 @@ export function NewJobsPage() {
       toast.success(okMessage);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
-    } finally {
-      setBusyId(null);
     }
+    setBusyId(null);
   };
 
   const toggleSelect = (id: string) => {
@@ -380,9 +379,8 @@ export function NewJobsPage() {
       if (viewItem && selectedIds.includes(viewItem.id)) setViewItem(null);
     } catch {
       /* toast in mutation */
-    } finally {
-      setBusyId(null);
     }
+    setBusyId(null);
   };
 
   const bulkRestore = async () => {
@@ -394,9 +392,8 @@ export function NewJobsPage() {
       if (viewItem && selectedIds.includes(viewItem.id)) setViewItem(null);
     } catch {
       /* toast in mutation */
-    } finally {
-      setBusyId(null);
     }
+    setBusyId(null);
   };
 
   const bulkDeletePermanent = async () => {
@@ -409,9 +406,8 @@ export function NewJobsPage() {
       setBulkDeleteConfirmOpen(false);
     } catch {
       /* toast in mutation */
-    } finally {
-      setBusyId(null);
     }
+    setBusyId(null);
   };
 
   return (

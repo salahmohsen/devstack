@@ -1,7 +1,7 @@
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import Fuse from "fuse.js";
 import * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Input } from "@tsu-stack/ui/components/input";
@@ -18,7 +18,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 
-import { type iconsData } from "./icons-data";
+import { iconsData } from "./icons-data";
 
 export type IconData = (typeof iconsData)[number];
 
@@ -119,30 +119,8 @@ const IconsColumnSkeleton = () => (
 );
 
 const useIconsData = () => {
-  const [icons, setIcons] = useState<IconData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadIcons = async () => {
-      setIsLoading(true);
-
-      const { iconsData } = await import("./icons-data");
-      if (isMounted) {
-        setIcons(iconsData);
-        setIsLoading(false);
-      }
-    };
-
-    void loadIcons();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  return { icons, isLoading };
+  // Static module data — avoid dynamic `import()` (React Compiler bailout).
+  return { icons: iconsData as IconData[], isLoading: false };
 };
 
 const IconPicker = React.forwardRef<React.ComponentRef<typeof PopoverTrigger>, IconPickerProps>(

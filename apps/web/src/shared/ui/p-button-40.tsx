@@ -81,12 +81,11 @@ export default function Particle() {
           type: "error"
         });
       }
-    } finally {
-      setIsDownloading(false);
-      setProgress(0);
-      abortControllerRef.current = null;
-      infoToastIdRef.current = null;
     }
+    setIsDownloading(false);
+    setProgress(0);
+    abortControllerRef.current = null;
+    infoToastIdRef.current = null;
   }
 
   function handleCancel() {

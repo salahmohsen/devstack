@@ -337,27 +337,27 @@ function useGitHubSignalStreamWebSocket(
       reconnectionDelay: RECONNECT_DELAY_MS
     });
 
-    socket.on("connect", () => {
+    const onConnect = () => {
       // oxlint-disable-next-line react-hooks-js/set-state-in-effect
       setStatus("connected");
       debug("github-signal-stream", "connected");
       sendSubscription();
       void syncSignalsFromServer("github-signal-ws-catchup");
-    });
+    };
 
-    socket.on("disconnect", (reason) => {
+    const onDisconnect = (reason: string) => {
       debug("github-signal-stream", "disconnected", { reason });
       if (!disposed) {
         // oxlint-disable-next-line react-hooks-js/set-state-in-effect
         setStatus("disconnected");
       }
-    });
+    };
 
-    socket.on("connect_error", (error) => {
+    const onConnectError = (error: Error) => {
       debug("github-signal-stream", "connection error", { message: error.message });
-    });
+    };
 
-    socket.on("github-signals", (data: unknown) => {
+    const onGithubSignals = (data: unknown) => {
       if (!isSignalMessage(data)) {
         debug("github-signal-stream", "received unknown message type", {
           data
@@ -365,7 +365,12 @@ function useGitHubSignalStreamWebSocket(
         return;
       }
       handleSignalBroadcast(data);
-    });
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
+    socket.on("github-signals", onGithubSignals);
 
     function handleVisibilityChange() {
       if (document.visibilityState === "visible") {
@@ -391,7 +396,10 @@ function useGitHubSignalStreamWebSocket(
       window.removeEventListener("focus", handleWindowFocus);
       window.removeEventListener("online", handleOnline);
       if (socket) {
-        socket.removeAllListeners();
+        socket.off("connect", onConnect);
+        socket.off("disconnect", onDisconnect);
+        socket.off("connect_error", onConnectError);
+        socket.off("github-signals", onGithubSignals);
         socket.disconnect();
         socket = null;
       }

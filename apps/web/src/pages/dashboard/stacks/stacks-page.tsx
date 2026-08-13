@@ -224,6 +224,7 @@ export function StacksPage() {
     const renameActions = plan.filter((a) => a.type === "rename");
     const enrichActions = plan.filter((a) => a.type === "enrich");
     setIsApplyingOrganize(true);
+    let applyFailedEarly = false;
 
     try {
       if (mergeActions.length > 0) {
@@ -241,118 +242,121 @@ export function StacksPage() {
           } catch (error) {
             console.debug("[stacks] Batch merge failed:", error);
             toast.error("Failed to merge some stacks.");
-            return;
+            applyFailedEarly = true;
           }
         }
       }
 
-      // Batch update renames + enrichments + portfolio flags in one map
-      const batchItemMap = new Map<string, { id: string; data: Record<string, unknown> }>();
+      if (!applyFailedEarly) {
+        // Batch update renames + enrichments + portfolio flags in one map
+        const batchItemMap = new Map<string, { id: string; data: Record<string, unknown> }>();
 
-      for (const action of renameActions) {
-        const newName = action.details.newName;
-        if (!newName) continue;
-        batchItemMap.set(action.stackId, { id: action.stackId, data: { name: newName } });
-      }
-
-      for (const action of enrichActions) {
-        const existing = batchItemMap.get(action.stackId);
-        const enrichData: Record<string, unknown> = {
-          description: action.details.newDescription,
-          icon: action.details.newIcon,
-          type: action.details.newType
-        };
-        // Drop undefined so we don't wipe fields
-        for (const key of Object.keys(enrichData)) {
-          if (enrichData[key] === undefined) delete enrichData[key];
+        for (const action of renameActions) {
+          const newName = action.details.newName;
+          if (!newName) continue;
+          batchItemMap.set(action.stackId, { id: action.stackId, data: { name: newName } });
         }
-        if (Object.keys(enrichData).length === 0) continue;
 
-        if (existing) {
-          batchItemMap.set(action.stackId, {
-            id: action.stackId,
-            data: { ...existing.data, ...enrichData }
-          });
-        } else {
-          batchItemMap.set(action.stackId, { id: action.stackId, data: enrichData });
+        for (const action of enrichActions) {
+          const existing = batchItemMap.get(action.stackId);
+          const enrichData: Record<string, unknown> = {
+            description: action.details.newDescription,
+            icon: action.details.newIcon,
+            type: action.details.newType
+          };
+          // Drop undefined so we don't wipe fields
+          for (const key of Object.keys(enrichData)) {
+            if (enrichData[key] === undefined) delete enrichData[key];
+          }
+          if (Object.keys(enrichData).length === 0) continue;
+
+          if (existing) {
+            batchItemMap.set(action.stackId, {
+              id: action.stackId,
+              data: { ...existing.data, ...enrichData }
+            });
+          } else {
+            batchItemMap.set(action.stackId, { id: action.stackId, data: enrichData });
+          }
+        }
+
+        // Portfolio inclusion (step 2): only write stacks whose flag actually changes
+        const currentById = new Map(stacks.map((s) => [s.id, s]));
+        for (const item of payload.portfolio) {
+          const current = currentById.get(item.id);
+          if (!current) continue;
+          if (!!current.includedInPortfolio === item.includedInPortfolio) continue;
+          const existing = batchItemMap.get(item.id);
+          if (existing) {
+            batchItemMap.set(item.id, {
+              id: item.id,
+              data: { ...existing.data, includedInPortfolio: item.includedInPortfolio }
+            });
+          } else {
+            batchItemMap.set(item.id, {
+              id: item.id,
+              data: { includedInPortfolio: item.includedInPortfolio }
+            });
+          }
+        }
+
+        const batchItems = Array.from(batchItemMap.values());
+
+        if (batchItems.length > 0) {
+          try {
+            await orpcClient.stacks.batchUpdate({
+              items: batchItems as Array<{
+                id: string;
+                data: {
+                  name?: string;
+                  description?: string | null;
+                  icon?: string | null;
+                  type?: string | null;
+                  includedInPortfolio?: boolean;
+                };
+              }>
+            });
+          } catch (error) {
+            console.debug("[stacks] Batch update failed:", error);
+            toast.error("Failed to apply some changes.");
+            applyFailedEarly = true;
+          }
+        }
+
+        if (!applyFailedEarly) {
+          // Apply sort order if provided (already remapped through survivors)
+          if (planSortOrder.length > 0) {
+            try {
+              const reorderItems = planSortOrder.map((id, index) => {
+                return { id, sortOrder: index };
+              });
+              await orpcClient.stacks.reorder({ items: reorderItems });
+            } catch (error) {
+              console.debug("[stacks] Reorder failed:", error);
+            }
+          }
+
+          await invalidateStacksListQueries(queryClient);
+          await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
+
+          const totalActions = mergeActions.length + renameActions.length + enrichActions.length;
+          const portfolioChanges = payload.portfolio.filter((p) => {
+            const cur = currentById.get(p.id);
+            return cur && !!cur.includedInPortfolio !== p.includedInPortfolio;
+          }).length;
+          const totalChanges =
+            totalActions + (planSortOrder.length > 0 ? 1 : 0) + (portfolioChanges > 0 ? 1 : 0);
+          toast.success(
+            `Organized ${totalChanges} change(s)${portfolioChanges ? ` · ${portfolioChanges} portfolio` : ""}.`
+          );
+          dismissOrganizeStacksJob();
         }
       }
-
-      // Portfolio inclusion (step 2): only write stacks whose flag actually changes
-      const currentById = new Map(stacks.map((s) => [s.id, s]));
-      for (const item of payload.portfolio) {
-        const current = currentById.get(item.id);
-        if (!current) continue;
-        if (!!current.includedInPortfolio === item.includedInPortfolio) continue;
-        const existing = batchItemMap.get(item.id);
-        if (existing) {
-          batchItemMap.set(item.id, {
-            id: item.id,
-            data: { ...existing.data, includedInPortfolio: item.includedInPortfolio }
-          });
-        } else {
-          batchItemMap.set(item.id, {
-            id: item.id,
-            data: { includedInPortfolio: item.includedInPortfolio }
-          });
-        }
-      }
-
-      const batchItems = Array.from(batchItemMap.values());
-
-      if (batchItems.length > 0) {
-        try {
-          await orpcClient.stacks.batchUpdate({
-            items: batchItems as Array<{
-              id: string;
-              data: {
-                name?: string;
-                description?: string | null;
-                icon?: string | null;
-                type?: string | null;
-                includedInPortfolio?: boolean;
-              };
-            }>
-          });
-        } catch (error) {
-          console.debug("[stacks] Batch update failed:", error);
-          toast.error("Failed to apply some changes.");
-          return;
-        }
-      }
-
-      // Apply sort order if provided (already remapped through survivors)
-      if (planSortOrder.length > 0) {
-        try {
-          const reorderItems = planSortOrder.map((id, index) => {
-            return { id, sortOrder: index };
-          });
-          await orpcClient.stacks.reorder({ items: reorderItems });
-        } catch (error) {
-          console.debug("[stacks] Reorder failed:", error);
-        }
-      }
-
-      await invalidateStacksListQueries(queryClient);
-      await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
-
-      const totalActions = mergeActions.length + renameActions.length + enrichActions.length;
-      const portfolioChanges = payload.portfolio.filter((p) => {
-        const cur = currentById.get(p.id);
-        return cur && !!cur.includedInPortfolio !== p.includedInPortfolio;
-      }).length;
-      const totalChanges =
-        totalActions + (planSortOrder.length > 0 ? 1 : 0) + (portfolioChanges > 0 ? 1 : 0);
-      toast.success(
-        `Organized ${totalChanges} change(s)${portfolioChanges ? ` · ${portfolioChanges} portfolio` : ""}.`
-      );
-      dismissOrganizeStacksJob();
     } catch (error) {
       console.debug("[stacks] Organize failed:", error);
       toast.error("Failed to apply changes.");
-    } finally {
-      setIsApplyingOrganize(false);
     }
+    setIsApplyingOrganize(false);
   }
 
   const listPageKey = getListStacksPageInfiniteQueryKey();
@@ -428,9 +432,8 @@ export function StacksPage() {
       setIsSort(true);
     } catch {
       toast.error("Failed to load stacks for sorting.");
-    } finally {
-      setIsLoadingFullListForSort(false);
     }
+    setIsLoadingFullListForSort(false);
   }
 
   function handleRestoreDefault() {

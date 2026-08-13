@@ -218,9 +218,8 @@ export function ExperiencesPage() {
       setIsSort(true);
     } catch {
       toast.error("Failed to load experiences for sorting.");
-    } finally {
-      setIsLoadingFullListForSort(false);
     }
+    setIsLoadingFullListForSort(false);
   }
 
   function handleRestoreDefault() {

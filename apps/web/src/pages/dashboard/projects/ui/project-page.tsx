@@ -213,9 +213,8 @@ export function ProjectsPage() {
       setIsSort(true);
     } catch {
       toast.error("Failed to load projects for sorting.");
-    } finally {
-      setIsLoadingFullListForSort(false);
     }
+    setIsLoadingFullListForSort(false);
   }
 
   function handleRestoreDefault() {

@@ -63,14 +63,24 @@ export function useDetectStacksMutation() {
 
       onStepChange?.("Initializing");
 
+      let streamError: unknown;
       try {
         if (signal?.aborted) {
           throw new DOMException("Stack detection cancelled.", "AbortError");
         }
 
         const iterator = await orpcClient.agent.detectStacks(rpcInput, { signal });
+        // Avoid for-await (React Compiler bailout); walk the async iterator explicitly.
+        const asyncIterator =
+          typeof (iterator as AsyncIterable<unknown>)[Symbol.asyncIterator] === "function"
+            ? (iterator as AsyncIterable<unknown>)[Symbol.asyncIterator]()
+            : (iterator as AsyncIterator<unknown>);
 
-        for await (const raw of iterator) {
+        for (;;) {
+          const step = await asyncIterator.next();
+          if (step.done) break;
+          const raw = step.value;
+
           if (signal?.aborted) {
             cancelDetectRun(runId);
             throw new DOMException("Stack detection cancelled.", "AbortError");
@@ -119,13 +129,16 @@ export function useDetectStacksMutation() {
           }
         }
       } catch (error) {
-        if (isAbortError(error) || signal?.aborted) {
+        streamError = error;
+      }
+      signal?.removeEventListener("abort", onAbort);
+
+      if (streamError !== undefined) {
+        if (isAbortError(streamError) || signal?.aborted) {
           cancelDetectRun(runId);
           throw new DOMException("Stack detection cancelled.", "AbortError");
         }
-        throw new Error(getWorkflowErrorMessage(error, "Stack detection failed."));
-      } finally {
-        signal?.removeEventListener("abort", onAbort);
+        throw new Error(getWorkflowErrorMessage(streamError, "Stack detection failed."));
       }
 
       if (signal?.aborted) {

@@ -46,21 +46,18 @@ export function MobileNav() {
   const { theme, setTheme } = useTheme();
 
   const handleSignOut = async () => {
-    try {
-      await authClient.signOut({
-        fetchOptions: {
-          credentials: "include"
-        }
-      });
-    } finally {
-      // Drop cached session immediately (query staleTime is 5m).
-      queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
-      await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions(sessionUsername).queryKey
-      });
-      await router.invalidate();
-      await navigate({ to: "/" });
-    }
+    await authClient.signOut({
+      fetchOptions: {
+        credentials: "include"
+      }
+    });
+    // Drop cached session immediately (query staleTime is 5m).
+    queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
+    await queryClient.invalidateQueries({
+      queryKey: getGithubSetupStatusQueryOptions(sessionUsername).queryKey
+    });
+    await router.invalidate();
+    await navigate({ to: "/" });
   };
 
   const displayName = user?.name ?? user?.email ?? "GitHub";

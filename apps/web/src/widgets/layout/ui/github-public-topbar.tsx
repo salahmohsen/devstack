@@ -79,21 +79,18 @@ export function Topbar() {
   const owner = setupStatus?.owner ?? null;
 
   const handleSignOut = async () => {
-    try {
-      await authClient.signOut({
-        fetchOptions: {
-          credentials: "include"
-        }
-      });
-    } finally {
-      // Drop cached session immediately (query staleTime is 5m; suspense keeps UI mounted).
-      queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
-      await queryClient.invalidateQueries({
-        queryKey: getGithubSetupStatusQueryOptions(sessionUsername).queryKey
-      });
-      await router.invalidate();
-      await navigateRef.current({ to: "/" });
-    }
+    await authClient.signOut({
+      fetchOptions: {
+        credentials: "include"
+      }
+    });
+    // Drop cached session immediately (query staleTime is 5m; suspense keeps UI mounted).
+    queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
+    await queryClient.invalidateQueries({
+      queryKey: getGithubSetupStatusQueryOptions(sessionUsername).queryKey
+    });
+    await router.invalidate();
+    await navigateRef.current({ to: "/" });
   };
 
   const displayName = admin?.name ?? admin?.email ?? "Guest";

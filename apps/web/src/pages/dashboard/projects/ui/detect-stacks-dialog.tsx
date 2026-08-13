@@ -342,20 +342,18 @@ export function DetectStacksDialog({
 
       if (upserted.length === 0) {
         toast.error("No stacks were saved. Please try again.");
-        return;
+      } else {
+        await onStacksSelected(upserted);
+        toast.success(
+          `Added ${upserted.length} stack${upserted.length === 1 ? "" : "s"} to this project.`
+        );
+        setOpen(false);
       }
-
-      await onStacksSelected(upserted);
-      toast.success(
-        `Added ${upserted.length} stack${upserted.length === 1 ? "" : "s"} to this project.`
-      );
-      setOpen(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to add stacks.";
       toast.error(message);
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   const toggleAllSelectable = (next: boolean) => {

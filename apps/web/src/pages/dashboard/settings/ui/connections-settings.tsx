@@ -146,16 +146,16 @@ export function ConnectionsSettings() {
     try {
       const result = await authClient.unlinkAccount({ providerId: "google" });
       if (result.error) {
-        throw new Error(result.error.message ?? "Unlink failed");
+        toast.error(result.error.message ?? "Unlink failed");
+      } else {
+        toast.success("Google disconnected");
+        setDisconnectOpen(false);
+        await queryClient.invalidateQueries({ queryKey: connectionsQueryKeys.status() });
       }
-      toast.success("Google disconnected");
-      setDisconnectOpen(false);
-      await queryClient.invalidateQueries({ queryKey: connectionsQueryKeys.status() });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not disconnect Google");
-    } finally {
-      setBusy(null);
     }
+    setBusy(null);
   }
 
   if (query.isLoading) {

@@ -1,4 +1,4 @@
-import { createContext, Suspense, use, useContext } from "react";
+import { createContext, Suspense, use, useContext, type ComponentPropsWithoutRef } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
@@ -18,6 +18,62 @@ function useResolvedAssetUrl(url: string | undefined) {
   const resolveAssetUrl = useContext(MarkdownAssetUrlResolverContext);
   if (!url || !resolveAssetUrl) return url;
   return resolveAssetUrl(url);
+}
+
+function MarkdownImg({
+  node: _node,
+  alt,
+  src,
+  ...props
+}: ComponentPropsWithoutRef<"img"> & { node?: unknown }) {
+  return (
+    <img
+      className="my-2 inline-block max-w-full rounded-lg"
+      alt={alt}
+      src={useResolvedAssetUrl(typeof src === "string" ? src : undefined)}
+      {...props}
+    />
+  );
+}
+
+function MarkdownVideo({
+  node: _node,
+  src,
+  className,
+  ...props
+}: ComponentPropsWithoutRef<"video"> & { node?: unknown }) {
+  return (
+    // oxlint-disable-next-line jsx-a11y/media-has-caption
+    <video
+      className={cn("my-2 max-w-full rounded-lg", className)}
+      controls
+      preload="metadata"
+      src={useResolvedAssetUrl(typeof src === "string" ? src : undefined)}
+      {...props}
+    />
+  );
+}
+
+function MarkdownSource({
+  node: _node,
+  src,
+  srcSet,
+  srcset,
+  ...props
+}: ComponentPropsWithoutRef<"source"> & { node?: unknown; srcset?: string }) {
+  const resolveAssetUrl = useContext(MarkdownAssetUrlResolverContext);
+  const resolvedSrcSet = resolveAssetSrcSet(
+    (srcSet ?? srcset) as string | undefined,
+    resolveAssetUrl
+  );
+
+  return (
+    <source
+      src={useResolvedAssetUrl(typeof src === "string" ? src : undefined)}
+      srcSet={resolvedSrcSet}
+      {...props}
+    />
+  );
 }
 
 function resolveAssetSrcSet(
@@ -183,30 +239,9 @@ const components: Record<string, React.FC<any>> = {
     );
   },
   hr: ({ node: _node, ...props }) => <hr className="my-4 border-border" {...props} />,
-  img: ({ node: _node, alt, src, ...props }) => (
-    <img
-      className="my-2 inline-block max-w-full rounded-lg"
-      alt={alt}
-      src={useResolvedAssetUrl(src)}
-      {...props}
-    />
-  ),
-  video: ({ node: _node, src, className, ...props }) => (
-    // oxlint-disable-next-line jsx-a11y/media-has-caption
-    <video
-      className={cn("my-2 max-w-full rounded-lg", className)}
-      controls
-      preload="metadata"
-      src={useResolvedAssetUrl(src)}
-      {...props}
-    />
-  ),
-  source: ({ node: _node, src, srcSet, srcset, ...props }) => {
-    const resolveAssetUrl = useContext(MarkdownAssetUrlResolverContext);
-    const resolvedSrcSet = resolveAssetSrcSet(srcSet ?? srcset, resolveAssetUrl);
-
-    return <source src={useResolvedAssetUrl(src)} srcSet={resolvedSrcSet} {...props} />;
-  },
+  img: MarkdownImg,
+  video: MarkdownVideo,
+  source: MarkdownSource,
   table: ({ node: _node, children, ...props }) => (
     <div className="mb-2 max-w-full overflow-x-auto rounded-lg border border-border">
       <table className="w-full min-w-0 border-collapse text-sm text-foreground" {...props}>

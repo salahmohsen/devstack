@@ -238,9 +238,10 @@ export const FileSearchCard = memo(function FileSearchCard({
           {isExpanded && (
             <motion.div
               key="search-results"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={spring}
               className="overflow-hidden border-t"
             >

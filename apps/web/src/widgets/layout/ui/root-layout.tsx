@@ -68,15 +68,15 @@ export function RootLayout({ children }: PropsWithChildren) {
           </IntersectionProvider>
 
           <motion.div
-            initial={false}
-            animate={{
+            layout
+            // Width via style + layout projection (not animating width keyframes each frame)
+            style={{
               width: showPanel
                 ? isDashboard
                   ? DASHBOARD_SIDE_PANEL_WIDTH
                   : PUBLIC_SIDE_PANEL_WIDTH
                 : 0
             }}
-            // Slightly softer spring so main content (and grids) can ease width without snapping
             transition={{ type: "spring", stiffness: 320, damping: 36, mass: 0.85 }}
             className="hidden h-full min-h-0 shrink-0 overflow-hidden xl:block"
           >
