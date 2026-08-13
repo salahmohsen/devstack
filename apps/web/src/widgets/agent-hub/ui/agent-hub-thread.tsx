@@ -2,7 +2,9 @@
 
 import { type UIMessage } from "@ai-sdk/react";
 import {
+  AuiIf,
   getExternalStoreMessages,
+  SuggestionPrimitive,
   ThreadPrimitive,
   unstable_useThreadMessageIds,
   useAuiState,
@@ -28,7 +30,6 @@ import {
 import {
   formatHubDayLabel,
   formatHubTimeLabel,
-  HUB_SUGGESTIONS,
   messageCreatedAt,
   useHubChat
 } from "@/features/agent-hub";
@@ -218,7 +219,7 @@ function AgentHubThreadBody() {
 
       <ThreadPrimitive.ViewportFooter
         className={cn(
-          "aui-thread-viewport-footer flex flex-col gap-4 overflow-visible bg-background pb-4 md:pb-6",
+          "aui-thread-viewport-footer relative flex flex-col gap-4 overflow-visible bg-background pb-4 md:pb-6",
           !isEmpty && "sticky bottom-0 mt-auto rounded-t-(--composer-radius)"
         )}
       >
@@ -246,7 +247,17 @@ function AgentHubThreadBody() {
                   : "Ask the hub anything…"
           }
         />
-        {isEmpty ? <HubSuggestions /> : null}
+        {/* Draft restore skipped: no trivial composer persist (SSR + restore/persist race). */}
+        <AuiIf
+          condition={(s) =>
+            historyReady &&
+            s.thread.messages.length === 0 &&
+            !s.thread.isRunning &&
+            s.composer.isEmpty
+          }
+        >
+          <HubSuggestions />
+        </AuiIf>
       </ThreadPrimitive.ViewportFooter>
     </div>
   );
@@ -309,16 +320,26 @@ function HubSuggestions() {
       className="aui-thread-welcome-suggestions flex w-full flex-wrap items-center justify-center gap-2 px-1"
       aria-label="Suggestions"
     >
-      {HUB_SUGGESTIONS.map((suggestion) => (
-        <ThreadPrimitive.Suggestion
-          key={suggestion.id}
-          prompt={suggestion.prompt}
-          send
-          className="aui-thread-welcome-suggestion h-auto rounded-full border border-border/60 px-3.5 py-1.5 text-sm font-normal whitespace-nowrap text-foreground transition-colors hover:bg-muted"
-        >
-          {suggestion.label}
-        </ThreadPrimitive.Suggestion>
-      ))}
+      <ThreadPrimitive.Suggestions>{() => <HubSuggestionItem />}</ThreadPrimitive.Suggestions>
+    </div>
+  );
+}
+
+function HubSuggestionItem() {
+  return (
+    <div className="aui-thread-welcome-suggestion-display animate-in duration-200 fill-mode-both fade-in slide-in-from-bottom-2">
+      <SuggestionPrimitive.Trigger
+        send
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            className="aui-thread-welcome-suggestion h-auto gap-1.5 rounded-full border border-border/60 px-3.5 py-1.5 text-sm font-normal whitespace-nowrap text-foreground transition-colors hover:bg-muted"
+          />
+        }
+      >
+        <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1" />
+      </SuggestionPrimitive.Trigger>
     </div>
   );
 }

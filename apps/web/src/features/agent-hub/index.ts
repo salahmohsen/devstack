@@ -1,4 +1,4 @@
-export { HUB_SUGGESTIONS } from "./api/hub-suggestions";
+export { HUB_AUI_SUGGESTIONS, HUB_SUGGESTIONS } from "./api/hub-suggestions";
 export type { HubSuggestion } from "./api/hub-suggestions";
 export {
   HUB_AGENT_ID,

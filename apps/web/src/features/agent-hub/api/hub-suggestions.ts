@@ -24,3 +24,12 @@ export const HUB_SUGGESTIONS: HubSuggestion[] = [
     prompt: "Give me a summary of all my projects and their tech stacks"
   }
 ];
+
+/** `AuiConfig` / `Suggestions()` entries — title is the chip, prompt is sent. */
+export const HUB_AUI_SUGGESTIONS = HUB_SUGGESTIONS.map((suggestion) => {
+  return {
+    title: suggestion.label,
+    label: "",
+    prompt: suggestion.prompt
+  };
+});

@@ -48,6 +48,7 @@ import {
 } from "@/shared/ui/assistant-ui/attachment";
 import { ThreadFollowupSuggestions } from "@/shared/ui/assistant-ui/follow-up-suggestions";
 import { MarkdownText } from "@/shared/ui/assistant-ui/markdown-text";
+import { MessageStreamDuration } from "@/shared/ui/assistant-ui/message-timing";
 import {
   Reasoning,
   ReasoningContent,
@@ -140,7 +141,7 @@ const ThreadRoot: FC<{ isEmpty: boolean }> = ({ isEmpty }) => {
 
           <ThreadPrimitive.ViewportFooter
             className={cn(
-              "aui-thread-viewport-footer flex flex-col gap-4 overflow-visible bg-background pb-4 md:pb-6",
+              "aui-thread-viewport-footer relative flex flex-col gap-4 overflow-visible bg-background pb-4 md:pb-6",
               !isEmpty && "sticky bottom-0 mt-auto rounded-t-(--composer-radius)"
             )}
           >
@@ -174,7 +175,7 @@ export const ThreadScrollToBottom: FC = () => (
       <TooltipIconButton
         tooltip="Scroll to bottom"
         variant="outline"
-        className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible dark:border-border dark:bg-background hover:dark:bg-accent"
+        className="aui-thread-scroll-to-bottom absolute inset-x-0 -top-12 z-10 mx-auto w-fit rounded-full p-4 disabled:invisible dark:border-border dark:bg-background hover:dark:bg-accent"
       />
     }
   >
@@ -328,7 +329,9 @@ const ComposerAction: FC<{ attachments?: boolean }> = ({ attachments = true }) =
       <AuiIf condition={(s) => s.thread.isRunning}>
         <ComposerPrimitive.Cancel
           render={
-            <Button
+            <TooltipIconButton
+              tooltip="Stop generating"
+              side="bottom"
               type="button"
               variant="default"
               size="icon"
@@ -471,6 +474,7 @@ const AssistantActionBar: FC = () => (
     <ActionBarPrimitive.Reload render={<TooltipIconButton tooltip="Refresh" />}>
       <RefreshCwIcon />
     </ActionBarPrimitive.Reload>
+    <MessageStreamDuration />
     <ActionBarMorePrimitive.Root>
       <ActionBarMorePrimitive.Trigger
         render={<TooltipIconButton tooltip="More" className="data-[state=open]:bg-accent" />}

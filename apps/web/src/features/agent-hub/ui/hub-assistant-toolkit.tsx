@@ -1,6 +1,7 @@
 import {
   AuiConfig,
   defineToolkit,
+  Suggestions,
   Tools,
   type ToolCallMessagePartProps
 } from "@assistant-ui/react";
@@ -13,6 +14,7 @@ import {
 
 import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 
+import { HUB_AUI_SUGGESTIONS } from "@/features/agent-hub/api/hub-suggestions";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import {
   isProposeApplicationFromJdToolName,
@@ -164,5 +166,6 @@ export const hubAssistantToolkit = defineToolkit({
 });
 
 export const hubAssistantAuiConfig = AuiConfig({
-  tools: Tools({ toolkit: hubAssistantToolkit })
+  tools: Tools({ toolkit: hubAssistantToolkit }),
+  suggestions: Suggestions(HUB_AUI_SUGGESTIONS)
 });
