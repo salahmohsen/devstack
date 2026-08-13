@@ -21,6 +21,7 @@ export type {
 export { AgentHubToolApproval } from "./ui/agent-hub-tool-approval";
 export {
   findPendingProposeApplicationFromJd,
+  lastHubHitlKind,
   hubToolNameFromPart,
   HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
@@ -53,6 +54,8 @@ export type {
   ListHubMessagesQueryResult
 } from "./api/list-hub-messages.query";
 export { messageCreatedAt, formatHubDayLabel, formatHubTimeLabel } from "./lib/hub-ui-message-time";
+export { buildHubDayRows } from "./lib/hub-day-rows";
+export type { HubDayRow } from "./lib/hub-day-rows";
 export {
   createHubThreadHistoryAdapter,
   mapUiMessagesToHistoryItems,

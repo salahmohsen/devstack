@@ -1,14 +1,6 @@
 "use client";
 
-import { type UIMessage } from "@ai-sdk/react";
-import {
-  AuiIf,
-  getExternalStoreMessages,
-  SuggestionPrimitive,
-  ThreadPrimitive,
-  unstable_useThreadMessageIds,
-  useAuiState
-} from "@assistant-ui/react";
+import { AuiIf, SuggestionPrimitive, ThreadPrimitive } from "@assistant-ui/react";
 import { Sparkles } from "lucide-react";
 import * as React from "react";
 
@@ -26,12 +18,7 @@ import {
   UserMessage
 } from "@/shared/ui/assistant-ui/thread";
 
-import {
-  formatHubDayLabel,
-  formatHubTimeLabel,
-  messageCreatedAt,
-  useHubChat
-} from "@/features/agent-hub";
+import { buildHubDayRows, lastHubHitlKind, useHubChat } from "@/features/agent-hub";
 
 import { useLoadOlderOnScrollTop } from "@/widgets/agent-hub/lib/use-load-older-on-scroll-top";
 
@@ -43,69 +30,22 @@ const HUB_MESSAGE_COMPONENTS = {
   EditComposer
 };
 
-function createdAtForHubThreadMessage(
-  id: string,
-  hubById: Map<string, UIMessage>,
-  threadMessage: { metadata?: unknown; createdAt?: unknown } | undefined
-): Date | null {
-  const fromHub = hubById.get(id);
-  if (fromHub) {
-    const at = messageCreatedAt(fromHub);
-    if (at) return at;
-  }
-  if (!threadMessage) return null;
-  for (const original of getExternalStoreMessages(threadMessage as never)) {
-    const at = messageCreatedAt(original as { metadata?: unknown; createdAt?: unknown });
-    if (at) return at;
-  }
-  return messageCreatedAt(threadMessage);
-}
-
-type HubDayRow = {
-  id: string;
-  showDay: boolean;
-  dayLabel: string | null;
-  timeLabel: string | null;
-  role: string;
-};
-
-function useHubDayRows(hubMessages: UIMessage[]): HubDayRow[] {
-  const ids = unstable_useThreadMessageIds();
-  const threadMessages = useAuiState((s) => s.thread.messages);
-
-  return React.useMemo(() => {
-    const hubById = new Map(hubMessages.map((message) => [message.id, message]));
-    const now = new Date();
-    const dayLabels = ids.map((id) => {
-      const threadMessage = threadMessages.find((message) => message.id === id);
-      const createdAt = createdAtForHubThreadMessage(id, hubById, threadMessage);
-      return {
-        id,
-        createdAt,
-        dayLabel: createdAt ? formatHubDayLabel(createdAt, now) : null,
-        role: threadMessage?.role ?? "assistant"
-      };
-    });
-
-    return dayLabels.map((row, index) => {
-      const previousDay = dayLabels
-        .slice(0, index)
-        .toReversed()
-        .find((previous) => previous.dayLabel != null)?.dayLabel;
-      return {
-        id: row.id,
-        showDay: row.dayLabel != null && row.dayLabel !== previousDay,
-        dayLabel: row.dayLabel,
-        timeLabel: row.createdAt ? formatHubTimeLabel(row.createdAt) : null,
-        role: row.role
-      };
-    });
-  }, [hubMessages, ids, threadMessages]);
-}
-
+/**
+ * React hooks stay on this component (outside Viewport children).
+ * Viewport children must not mix TAP `useAuiState` with React `useState`.
+ */
 export function AgentHubThread() {
-  const { messages, historyReady, hasMoreHistory, isLoadingOlder, loadOlderMessages } =
-    useHubChat();
+  const {
+    messages,
+    historyReady,
+    hasMoreHistory,
+    isLoadingOlder,
+    loadOlderMessages,
+    error,
+    clearError,
+    regenerate,
+    status
+  } = useHubChat();
   const [viewportEl, setViewportEl] = React.useState<HTMLDivElement | null>(null);
   const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
     enabled: historyReady && messages.length > 0,
@@ -115,6 +55,11 @@ export function AgentHubThread() {
     viewport: viewportEl,
     messageCount: messages.length
   });
+
+  const isRunning = status === "submitted" || status === "streaming";
+  const hitl = lastHubHitlKind(messages);
+  const isEmpty = historyReady && messages.length === 0 && !isRunning;
+  const dayRows = React.useMemo(() => buildHubDayRows(messages), [messages]);
 
   return (
     <ThreadPrimitive.Root
@@ -128,130 +73,98 @@ export function AgentHubThread() {
         data-slot="aui_thread-viewport"
         className="relative flex min-h-0 flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
       >
-        <AgentHubThreadBody
-          sentinelRef={sentinelRef}
-          loadError={loadError}
-          onRetryLoadOlder={retry}
-        />
+        <div
+          className={cn(
+            "mx-auto flex w-full max-w-(--thread-max-width) flex-1 flex-col px-4 pt-4",
+            isEmpty && "justify-center"
+          )}
+        >
+          {!historyReady ? (
+            <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Spinner className="size-4" aria-hidden />
+              Loading conversation…
+            </div>
+          ) : null}
+
+          {historyReady && !isEmpty ? (
+            <HubLoadOlderHeader
+              sentinelRef={sentinelRef}
+              isLoading={isLoadingOlder}
+              loadError={loadError}
+              onRetry={retry}
+            />
+          ) : null}
+
+          {isEmpty ? <HubWelcome /> : null}
+
+          {historyReady && dayRows.length > 0 ? (
+            <div data-slot="aui_message-group" className="mb-14 flex flex-col gap-y-6">
+              {dayRows.map((row) => (
+                <div key={row.id} className="group relative flex flex-col gap-2">
+                  {row.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
+                  <div className="relative">
+                    {row.timeLabel ? (
+                      <DaySeparatorTime
+                        className={cn(
+                          "pointer-events-none absolute top-3 z-10",
+                          row.role === "user" ? "inset-s-0" : "inset-e-0"
+                        )}
+                      >
+                        {row.timeLabel}
+                      </DaySeparatorTime>
+                    ) : null}
+                    <ThreadPrimitive.Unstable_MessageById
+                      messageId={row.id}
+                      components={HUB_MESSAGE_COMPONENTS}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <ThreadPrimitive.ViewportFooter
+            className={cn(
+              "aui-thread-viewport-footer relative flex flex-col gap-4 overflow-visible bg-background pb-4 md:pb-6",
+              !isEmpty && "sticky bottom-0 mt-auto rounded-t-(--composer-radius)"
+            )}
+          >
+            <ThreadScrollToBottom />
+            <HubStreamErrorCard
+              errorMessage={error?.message ?? null}
+              hasUserMessage={messages.some((message) => message.role === "user")}
+              onClearError={clearError}
+              onRegenerate={() => {
+                void regenerate();
+              }}
+            />
+            <Composer
+              attachments={false}
+              disabled={!historyReady || hitl !== null}
+              placeholder={
+                hitl === "approval"
+                  ? "Waiting for approval…"
+                  : hitl === "client"
+                    ? "Waiting for your choice…"
+                    : isRunning
+                      ? "Generating a response…"
+                      : "Ask the hub anything…"
+              }
+            />
+            <AuiIf
+              condition={(s) =>
+                historyReady &&
+                s.thread.messages.length === 0 &&
+                !s.thread.isRunning &&
+                s.composer.isEmpty
+              }
+            >
+              <HubSuggestions />
+            </AuiIf>
+          </ThreadPrimitive.ViewportFooter>
+        </div>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
-  );
-}
-
-function AgentHubThreadBody({
-  sentinelRef,
-  loadError,
-  onRetryLoadOlder
-}: {
-  sentinelRef: (node: HTMLElement | null) => void;
-  loadError: boolean;
-  onRetryLoadOlder: () => void;
-}) {
-  const { messages, historyReady, isLoadingOlder, error, clearError, regenerate } = useHubChat();
-
-  const threadMessageCount = useAuiState((s) => s.thread.messages.length);
-  const isRunning = useAuiState((s) => s.thread.isRunning);
-  const lastMessageStatus = useAuiState((s) => s.thread.messages.at(-1)?.status);
-  const hitlPending = lastMessageStatus?.type === "requires-action";
-  const waitingApproval =
-    lastMessageStatus?.type === "requires-action" && lastMessageStatus.reason === "interrupt";
-  const dayRows = useHubDayRows(messages);
-
-  const isEmpty = historyReady && threadMessageCount === 0 && !isRunning;
-  const composerDisabled = !historyReady || hitlPending;
-
-  return (
-    <div
-      className={cn(
-        "mx-auto flex w-full max-w-(--thread-max-width) flex-1 flex-col px-4 pt-4",
-        isEmpty && "justify-center"
-      )}
-    >
-      {!historyReady ? (
-        <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Spinner className="size-4" aria-hidden />
-          Loading conversation…
-        </div>
-      ) : null}
-
-      {historyReady && !isEmpty ? (
-        <HubLoadOlderHeader
-          sentinelRef={sentinelRef}
-          isLoading={isLoadingOlder}
-          loadError={loadError}
-          onRetry={onRetryLoadOlder}
-        />
-      ) : null}
-
-      {isEmpty ? <HubWelcome /> : null}
-
-      {historyReady && threadMessageCount > 0 ? (
-        <div data-slot="aui_message-group" className="mb-14 flex flex-col gap-y-6">
-          {dayRows.map((row) => (
-            <div key={row.id} className="group relative flex flex-col gap-2">
-              {row.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
-              <div className="relative">
-                {row.timeLabel ? (
-                  <DaySeparatorTime
-                    className={cn(
-                      "pointer-events-none absolute top-3 z-10",
-                      row.role === "user" ? "inset-s-0" : "inset-e-0"
-                    )}
-                  >
-                    {row.timeLabel}
-                  </DaySeparatorTime>
-                ) : null}
-                <ThreadPrimitive.Unstable_MessageById
-                  messageId={row.id}
-                  components={HUB_MESSAGE_COMPONENTS}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      <ThreadPrimitive.ViewportFooter
-        className={cn(
-          "aui-thread-viewport-footer relative flex flex-col gap-4 overflow-visible bg-background pb-4 md:pb-6",
-          !isEmpty && "sticky bottom-0 mt-auto rounded-t-(--composer-radius)"
-        )}
-      >
-        <ThreadScrollToBottom />
-        <HubStreamErrorCard
-          errorMessage={error?.message ?? null}
-          hasUserMessage={messages.some((message) => message.role === "user")}
-          onClearError={clearError}
-          onRegenerate={() => {
-            void regenerate();
-          }}
-        />
-        <Composer
-          attachments={false}
-          disabled={composerDisabled}
-          placeholder={
-            waitingApproval
-              ? "Waiting for approval…"
-              : hitlPending
-                ? "Waiting for your choice…"
-                : isRunning
-                  ? "Generating a response…"
-                  : "Ask the hub anything…"
-          }
-        />
-        {/* Draft restore skipped: no trivial composer persist (SSR + restore/persist race). */}
-        <AuiIf
-          condition={(s) =>
-            historyReady &&
-            s.thread.messages.length === 0 &&
-            !s.thread.isRunning &&
-            s.composer.isEmpty
-          }
-        >
-          <HubSuggestions />
-        </AuiIf>
-      </ThreadPrimitive.ViewportFooter>
-    </div>
   );
 }
 

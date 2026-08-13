@@ -98,6 +98,33 @@ export function parseProposeApplicationFromJdOutputAction(
   return null;
 }
 
+export type HubHitlKind = "approval" | "client";
+
+/**
+ * HITL wait on the last assistant message, from AI SDK part states only
+ * (no TAP / assistant-ui thread status).
+ */
+export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
+  const last = messages.at(-1);
+  if (!last || last.role !== "assistant") return null;
+
+  for (const raw of last.parts ?? []) {
+    const part = raw as HubToolNamePart;
+    if (!isHubToolUiPart(part)) continue;
+    if (part.state === "approval-requested") return "approval";
+    const name = hubToolNameFromPart(part);
+    const waiting =
+      part.state === "input-available" ||
+      part.state === "input-streaming" ||
+      part.state === "call" ||
+      part.state === "partial-call";
+    if (!waiting) continue;
+    if (isGenerateApplyPackageToolName(name)) return "approval";
+    if (isProposeApplicationFromJdToolName(name)) return "client";
+  }
+  return null;
+}
+
 /** Latest assistant propose-from-jd tool still waiting for a client `addToolOutput`. */
 export function findPendingProposeApplicationFromJd(
   messages: UIMessage[]
