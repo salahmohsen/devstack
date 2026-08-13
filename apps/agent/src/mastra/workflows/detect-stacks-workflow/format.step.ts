@@ -1,6 +1,11 @@
 import { createStep } from "@mastra/core/workflows";
 
-import { DetectStacksOutputSchema } from "@tsu-stack/core";
+import {
+  DetectStacksOutputSchema,
+  findPackageFamily,
+  getPackageFamilyDisplayName,
+  getPackageFamilyType
+} from "@tsu-stack/core";
 
 import { resolveIcons } from "#@/mastra/workflows/detect-stacks-workflow/resolve-icons.step";
 import { type InitData } from "#@/mastra/workflows/detect-stacks-workflow/utils";
@@ -13,6 +18,7 @@ export const format = createStep({
   execute: async (params) => {
     const initData = params.getInitData() as InitData;
     const { matched, categorized } = params.inputData;
+    const existingById = new Map(initData.existingStacks.map((s) => [s.id, s] as const));
 
     // Build enriched stacks from matched entries
     const matchedStacks = matched.map(
@@ -23,13 +29,17 @@ export const format = createStep({
         repo: string;
         relatedPackages: string[];
       }) => {
+        const known = Boolean(findPackageFamily(m.npmPackage));
+        const existing = existingById.get(m.stackId);
         return {
           npmPackage: m.npmPackage,
-          name: m.name,
-          type: "other",
+          // Prefer the library display name already stored for this stack.
+          name: existing?.name ?? getPackageFamilyDisplayName(m.npmPackage) ?? m.name,
+          type: getPackageFamilyType(m.npmPackage) ?? "other",
           description: null,
-          confidence: "medium" as const,
-          iconSvg: null,
+          // Existing library hits are solid; curated families are high confidence.
+          confidence: (known ? "high" : "medium") as "high" | "medium",
+          iconSvg: existing?.icon ?? null,
           exists: true,
           existingStackId: m.stackId,
           repo: m.repo,
@@ -108,6 +118,8 @@ export const format = createStep({
         existing.stacks.push(stack);
       }
     }
+    const confidenceRank = { high: 3, medium: 2, low: 1 } as const;
+
     const groupedByName = Array.from(groupedByNameMap.entries()).map(([_, value]) => {
       const { displayName, stacks } = value;
       // Merge all packages under this displayName
@@ -117,9 +129,15 @@ export const format = createStep({
       const preferred =
         stacks.find((s) => s.description != null || s.iconSvg != null || s.health != null) ??
         stacks[0]!;
+      // Best confidence in the group wins (family members should not stay "low" if one is high)
+      const bestConfidence = stacks.reduce<"high" | "medium" | "low">(
+        (best, s) => (confidenceRank[s.confidence] > confidenceRank[best] ? s.confidence : best),
+        preferred.confidence
+      );
       const merged = {
         ...preferred,
         name: displayName,
+        confidence: bestConfidence,
         relatedPackages: allRelatedPackages,
         // First non-null wins across the group
         description: stacks.find((s) => s.description)?.description ?? preferred.description,

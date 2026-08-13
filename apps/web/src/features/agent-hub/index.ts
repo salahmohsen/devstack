@@ -1,4 +1,4 @@
-export { HUB_SUGGESTIONS } from "./api/hub-suggestions";
+export { HUB_AUI_SUGGESTIONS, HUB_SUGGESTIONS } from "./api/hub-suggestions";
 export type { HubSuggestion } from "./api/hub-suggestions";
 export {
   HUB_AGENT_ID,
@@ -8,6 +8,35 @@ export {
   type HubToolOutputArgs
 } from "./api/use-hub-chat";
 export { HubChatProvider } from "./ui/hub-chat-provider";
+export { hubAssistantAuiConfig, hubAssistantToolkit } from "./ui/hub-assistant-toolkit";
+export {
+  ApplicationFromJdCard,
+  PROPOSE_FROM_JD_CHOICE_LABELS
+} from "./ui/application-from-jd-card";
+export type {
+  ApplicationFromJdCardAction,
+  ApplicationFromJdCardInput,
+  ApplicationFromJdCardProps
+} from "./ui/application-from-jd-card";
+export { AgentHubToolApproval } from "./ui/agent-hub-tool-approval";
+export {
+  findPendingProposeApplicationFromJd,
+  lastHubHitlKind,
+  hubToolNameFromPart,
+  HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES,
+  HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
+  isGenerateApplyPackageToolName,
+  isHubToolUiPart,
+  isProposeApplicationFromJdToolName,
+  parseProposeApplicationFromJdInput,
+  parseProposeApplicationFromJdOutputAction
+} from "./lib/hub-tool-names";
+export type {
+  HubToolNamePart,
+  PendingProposeApplicationFromJd,
+  ProposeApplicationFromJdAction,
+  ProposeApplicationFromJdCardInput
+} from "./lib/hub-tool-names";
 export {
   useListSuspendedRunsQuery,
   listSuspendedRunsQueryOptions
@@ -15,13 +44,30 @@ export {
 export type { SuspendedRun } from "./api/list-suspended-runs.query";
 export {
   useListHubMessagesQuery,
-  listHubMessagesQueryOptions
+  listHubMessagesQueryOptions,
+  listHubMessagesQueryKeys,
+  fetchHubMessagesPage,
+  HUB_MESSAGES_PAGE_SIZE
 } from "./api/list-hub-messages.query";
+export type {
+  HubMessagesPageResult,
+  ListHubMessagesQueryResult
+} from "./api/list-hub-messages.query";
+export { messageCreatedAt, formatHubDayLabel, formatHubTimeLabel } from "./lib/hub-ui-message-time";
+export { buildHubDayRows } from "./lib/hub-day-rows";
+export type { HubDayRow } from "./lib/hub-day-rows";
 export {
-  collapseConsecutiveTextParts,
-  filterTextWhileStreaming
-} from "./lib/collapse-consecutive-text-parts";
-export type { CollapseMessagePart } from "./lib/collapse-consecutive-text-parts";
+  createHubThreadHistoryAdapter,
+  hubHistoryExportedRepository,
+  hubHistoryHasBranches,
+  hubHistoryHeadPath,
+  isPureTextHubAssistantReply,
+  isToolBearingHubAssistant,
+  mapUiMessagesToHistoryItems,
+  prependUniqueHubMessages,
+  unionHubMessages
+} from "./lib/hub-thread-history-adapter";
+export type { HubHistoryPage, HubHistoryItem } from "./lib/hub-thread-history-adapter";
 export {
   HUB_CLIENT_RESUME_TOOL_NAMES,
   lastAssistantMessageIsCompleteWithClientResumeTools,

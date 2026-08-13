@@ -13,6 +13,9 @@
   },
   "dependencies": {
     "@ai-sdk/react": "catalog:",
+    "@assistant-ui/react": "catalog:",
+    "@assistant-ui/react-ai-sdk": "catalog:",
+    "@assistant-ui/react-markdown": "catalog:",
     "@base-ui/react": "catalog:",
     "@bprogress/react": "catalog:",
     "@dnd-kit/core": "catalog:",
@@ -50,7 +53,6 @@
     "files-sdk": "catalog:",
     "fuse.js": "catalog:",
     "lucide-react": "catalog:",
-    "marked": "catalog:",
     "motion": "catalog:",
     "next-themes": "catalog:",
     "nuqs": "catalog:",
@@ -68,7 +70,8 @@
     "sharp": "catalog:",
     "socket.io-client": "catalog:",
     "sonner": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "catalog:",

@@ -11,12 +11,21 @@ import {
   type DetectedStack,
   type StackOutput
 } from "@tsu-stack/core";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
   Dialog,
-  DialogClose,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -111,6 +120,8 @@ export function DetectStacksDialog({
 }) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  /** coss AlertDialog — same discard pattern as entity forms / settings. */
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   const allStacks = useMemo(() => {
     if (!results?.detectedStacks) return [];
@@ -128,6 +139,7 @@ export function DetectStacksDialog({
     if (!open) {
       // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- sync selection to open/results
       setRowSelection({});
+      setDiscardOpen(false);
       return;
     }
     if (allStacks.length === 0) {
@@ -359,108 +371,150 @@ export function DetectStacksDialog({
   const hasResults = allStacks.length > 0;
   const repoCount = results?.groupedByRepo?.length ?? 0;
 
+  const hasUnsavedSelection = selectedCount > 0 || isSubmitting;
+
+  const requestClose = () => {
+    if (hasUnsavedSelection && hasResults) {
+      setDiscardOpen(true);
+      return;
+    }
+    setOpen(false);
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      setOpen(true);
+      return;
+    }
+    requestClose();
+  };
+
+  const confirmDiscard = () => {
+    setDiscardOpen(false);
+    setOpen(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogPopup className="sm:max-w-2xl lg:max-w-3xl" showCloseButton>
-        <DialogHeader>
-          <DialogTitle>Detect Stacks from Repositories</DialogTitle>
-          <DialogDescription>
-            Review detected technologies and choose which to associate with this project.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogPopup className="sm:max-w-2xl lg:max-w-3xl" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Detect Stacks from Repositories</DialogTitle>
+            <DialogDescription>
+              Review detected technologies and choose which to associate with this project.
+            </DialogDescription>
+          </DialogHeader>
 
-        {hasResults ? (
-          <DialogPanel className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">
-              {allStacks.length} stack{allStacks.length === 1 ? "" : "s"} found across {repoCount}{" "}
-              repositor{repoCount === 1 ? "y" : "ies"}. New stacks are selected by default; stacks
-              already in your library are unchecked.
-            </p>
-
-            <AiChangeList
-              title="Detected stacks"
-              fromLabel="Repositories"
-              toLabel="Project stack list"
-              items={detectItems}
-              kindMeta={DETECT_KIND_META}
-              filterKinds={["added", "modified", "removed"]}
-              emptyMessage="No stacks detected."
-              maxHeightClassName="max-h-[min(28rem,50vh)]"
-              toolbar={
-                <>
-                  <span>
-                    {selectedCount} of {selectableIds.length} selected
-                    {results?.hasChanges
-                      ? " · includes scan diff (removed packages are not selectable)"
-                      : null}
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="font-medium hover:text-foreground"
-                      onClick={() => toggleAllSelectable(true)}
-                    >
-                      Select all
-                    </button>
-                    <button
-                      type="button"
-                      className="font-medium hover:text-foreground"
-                      onClick={() => toggleAllSelectable(false)}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </>
-              }
-            />
-
-            {results!.groupedByRepo?.length > 0 ? (
-              <details className="text-xs text-muted-foreground">
-                <summary className="cursor-pointer select-none">View by repository</summary>
-                <div className="mt-2 flex flex-col gap-2">
-                  {results!.groupedByRepo.map(({ repo, stacks }) => (
-                    <div
-                      key={repo}
-                      className="flex flex-col gap-1 rounded-lg border border-border bg-muted/50 p-3"
-                    >
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {repo.replace("https://github.com/", "")}
-                      </p>
-                      {stacks.map((s) => (
-                        <span key={s.npmPackage} className="text-xs">
-                          {s.name}
-                        </span>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </details>
-            ) : null}
-          </DialogPanel>
-        ) : (
-          <DialogPanel>
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              No stacks detected. Check that the selected repositories have a{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">package.json</code> at the root
-              (or in a pnpm workspace).
-            </div>
-          </DialogPanel>
-        )}
-
-        <DialogFooter>
-          <DialogClose render={<Button variant="ghost" type="button" />}>Close</DialogClose>
           {hasResults ? (
-            <Button
-              type="button"
-              onClick={() => void handleAddSelected()}
-              disabled={isSubmitting || selectedCount === 0}
-            >
-              {isSubmitting ? "Adding…" : `Add Selected (${selectedCount})`}
+            <DialogPanel className="flex flex-col gap-4">
+              <p className="text-sm text-muted-foreground">
+                {allStacks.length} stack{allStacks.length === 1 ? "" : "s"} found across {repoCount}{" "}
+                repositor{repoCount === 1 ? "y" : "ies"}. New stacks are selected by default; stacks
+                already in your library are unchecked.
+              </p>
+
+              <AiChangeList
+                title="Detected stacks"
+                fromLabel="Repositories"
+                toLabel="Project stack list"
+                items={detectItems}
+                kindMeta={DETECT_KIND_META}
+                filterKinds={["added", "modified", "removed"]}
+                emptyMessage="No stacks detected."
+                maxHeightClassName="max-h-[min(28rem,50vh)]"
+                toolbar={
+                  <>
+                    <span>
+                      {selectedCount} of {selectableIds.length} selected
+                      {results?.hasChanges
+                        ? " · includes scan diff (removed packages are not selectable)"
+                        : null}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="font-medium hover:text-foreground"
+                        onClick={() => toggleAllSelectable(true)}
+                      >
+                        Select all
+                      </button>
+                      <button
+                        type="button"
+                        className="font-medium hover:text-foreground"
+                        onClick={() => toggleAllSelectable(false)}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </>
+                }
+              />
+
+              {results!.groupedByRepo?.length > 0 ? (
+                <details className="text-xs text-muted-foreground">
+                  <summary className="cursor-pointer select-none">View by repository</summary>
+                  <div className="mt-2 flex flex-col gap-2">
+                    {results!.groupedByRepo.map(({ repo, stacks }) => (
+                      <div
+                        key={repo}
+                        className="flex flex-col gap-1 rounded-lg border border-border bg-muted/50 p-3"
+                      >
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {repo.replace("https://github.com/", "")}
+                        </p>
+                        {stacks.map((s) => (
+                          <span key={s.npmPackage} className="text-xs">
+                            {s.name}
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+            </DialogPanel>
+          ) : (
+            <DialogPanel>
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                No stacks detected. Check that the selected repositories have a{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">package.json</code> at the
+                root (or in a pnpm workspace).
+              </div>
+            </DialogPanel>
+          )}
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={requestClose}>
+              Close
             </Button>
-          ) : null}
-        </DialogFooter>
-      </DialogPopup>
-    </Dialog>
+            {hasResults ? (
+              <Button
+                type="button"
+                onClick={() => void handleAddSelected()}
+                disabled={isSubmitting || selectedCount === 0}
+              >
+                {isSubmitting ? "Adding…" : `Add Selected (${selectedCount})`}
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved stack selections. Close without adding them to the project?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep reviewing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscard}>Discard</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -484,7 +538,20 @@ export function DetectStacksResultsHost() {
       results={results}
       onStacksSelected={async (upserted) => {
         if (projectId) {
+          // Form path: merge into open project form stackIds (user may still save other fields).
           notifyDetectStacksApplied(projectId, upserted);
+
+          // List/menu path (and form path): always persist project↔stack links.
+          // Previously only the form bridge ran, so menu detect never attached stacks.
+          const project = await orpcClient.projects.get({ id: projectId });
+          if (project) {
+            const existingIds = (project.stacks ?? []).map((s) => s.id);
+            const merged = Array.from(new Set([...existingIds, ...upserted.map((s) => s.id)]));
+            await orpcClient.projects.update({
+              id: projectId,
+              data: { stackIds: merged }
+            });
+          }
         }
 
         // Optimistic full-catalog cache (pickers); listPage invalidates for dashboard grid.

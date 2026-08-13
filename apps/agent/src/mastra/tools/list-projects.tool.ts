@@ -12,7 +12,7 @@ import { createDb, projectRepository, runWithDb } from "@tsu-stack/db";
 export const listProjectsTool = createTool({
   id: "list-projects",
   description:
-    "List the seeker's projects (title, year, summary). Use to ground career answers in real portfolio evidence.",
+    "List the seeker's projects (title, year, summary, stackNames). Enough for a portfolio or all-projects summary — do not follow with getProject unless the user asked about one project.",
   inputSchema: z.object({
     limit: z.number().int().min(1).max(20).optional().default(20)
     // Intentionally no userId — tenant is requestContext only.

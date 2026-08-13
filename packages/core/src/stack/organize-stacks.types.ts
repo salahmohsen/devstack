@@ -15,7 +15,16 @@ export const OrganizeStacksInputSchema = z.object({
         type: z.string().nullable().describe("Stack type category"),
         description: z.string().nullable().describe("Current description"),
         icon: z.string().nullable().describe("SVG icon string or null"),
-        projectCount: z.number().int().describe("Number of projects using this stack")
+        projectCount: z.number().int().describe("Number of projects using this stack"),
+        /**
+         * Linked npm package names (from stack_dependency). Used for deterministic
+         * family/scope merges — display names alone cannot separate TanStack products.
+         */
+        npmPackages: z
+          .array(z.string())
+          .optional()
+          .default([])
+          .describe("npm packages linked to this stack")
       })
     )
     .describe("All existing stacks from the database"),

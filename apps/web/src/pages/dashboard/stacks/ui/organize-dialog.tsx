@@ -11,12 +11,21 @@ import {
   type OrganizeAction,
   type StackOutput
 } from "@tsu-stack/core";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
   Dialog,
-  DialogClose,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -152,6 +161,8 @@ export function OrganizeDialog({
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [portfolioSelection, setPortfolioSelection] = useState<Record<string, boolean>>({});
   const [portfolioQuery, setPortfolioQuery] = useState("");
+  /** coss AlertDialog — same discard pattern as entity forms / settings. */
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   const stackById = useMemo(() => new Map(stacks.map((s) => [s.id, s])), [stacks]);
 
@@ -163,6 +174,7 @@ export function OrganizeDialog({
       setRowSelection({});
       setPortfolioQuery("");
       setPortfolioSelection({});
+      setDiscardOpen(false);
       return;
     }
     const next: Record<string, boolean> = {};
@@ -394,7 +406,17 @@ export function OrganizeDialog({
     });
   }, [survivingStacks, sortOrder, portfolioQuery]);
 
-  function handleClose() {
+  function requestClose() {
+    if (hasUnsavedOrganize && !isEmpty) {
+      setDiscardOpen(true);
+      return;
+    }
+    onOpenChange(false);
+    onClearSortOrder();
+  }
+
+  function confirmDiscard() {
+    setDiscardOpen(false);
     onOpenChange(false);
     onClearSortOrder();
   }
@@ -443,253 +465,285 @@ export function OrganizeDialog({
         : "Continue"
       : `Apply (${selectedCount} change${selectedCount === 1 ? "" : "s"} · ${portfolioIncludedCount} on portfolio)`;
 
+  const hasUnsavedOrganize =
+    isPending ||
+    selectedCount > 0 ||
+    (step === "portfolio" && Object.values(portfolioSelection).some(Boolean));
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      onOpenChange(true);
+      return;
+    }
+    requestClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="sm:max-w-2xl lg:max-w-4xl" showCloseButton={!isPending}>
-        <DialogHeader>
-          <DialogTitle>Organize Stacks</DialogTitle>
-          <DialogDescription>
-            {step === "review"
-              ? "Review AI-proposed merges, renames, and enrichments. Expand a row for before / after."
-              : "Pick stacks that belong on the public portfolio and resume. Leave tooling noise off."}
-          </DialogDescription>
-          {!isEmpty ? <StepIndicator step={step} /> : null}
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogPopup className="sm:max-w-2xl lg:max-w-4xl" showCloseButton={!isPending}>
+          <DialogHeader>
+            <DialogTitle>Organize Stacks</DialogTitle>
+            <DialogDescription>
+              {step === "review"
+                ? "Review AI-proposed merges, renames, and enrichments. Expand a row for before / after."
+                : "Pick stacks that belong on the public portfolio and resume. Leave tooling noise off."}
+            </DialogDescription>
+            {!isEmpty ? <StepIndicator step={step} /> : null}
+          </DialogHeader>
 
-        <DialogPanel className="flex flex-col gap-4">
-          {hasNotes ? (
-            <AiErrorBanner
-              notes={notes}
-              feature="organize"
-              severity="partial"
-              density="compact"
-              onRetry={
-                onRetry && !isPending
-                  ? () => {
-                      onRetry();
-                    }
-                  : undefined
-              }
-            />
-          ) : null}
-
-          {isEmpty ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              {hasNotes
-                ? "Nothing ready to apply yet."
-                : "Nothing to apply — your stacks are already organized."}
-            </div>
-          ) : step === "review" ? (
-            hasActions ? (
-              <AiChangeList
-                title="Proposed changes"
-                fromLabel="Current catalog"
-                toLabel={
-                  sortOrder.length > 0
-                    ? `Organized · reorder ${sortOrder.length}`
-                    : "Organized catalog"
-                }
-                items={changeItems}
-                kindMeta={ORGANIZE_KIND_META}
-                filterKinds={["removed", "modified", "added"]}
-                emptyMessage="No proposed changes."
-                toolbar={
-                  <>
-                    <span>
-                      {selectedCount} of {actions.length} selected
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="font-medium hover:text-foreground"
-                        onClick={() => toggleAll(true)}
-                      >
-                        Select all
-                      </button>
-                      <button
-                        type="button"
-                        className="font-medium hover:text-foreground"
-                        onClick={() => toggleAll(false)}
-                      >
-                        Clear all
-                      </button>
-                    </div>
-                  </>
+          <DialogPanel className="flex flex-col gap-4">
+            {hasNotes ? (
+              <AiErrorBanner
+                notes={notes}
+                feature="organize"
+                severity="partial"
+                density="compact"
+                onRetry={
+                  onRetry && !isPending
+                    ? () => {
+                        onRetry();
+                      }
+                    : undefined
                 }
               />
+            ) : null}
+
+            {isEmpty ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                {hasNotes
+                  ? "Nothing ready to apply yet."
+                  : "Nothing to apply — your stacks are already organized."}
+              </div>
+            ) : step === "review" ? (
+              hasActions ? (
+                <AiChangeList
+                  title="Proposed changes"
+                  fromLabel="Current catalog"
+                  toLabel={
+                    sortOrder.length > 0
+                      ? `Organized · reorder ${sortOrder.length}`
+                      : "Organized catalog"
+                  }
+                  items={changeItems}
+                  kindMeta={ORGANIZE_KIND_META}
+                  filterKinds={["removed", "modified", "added"]}
+                  emptyMessage="No proposed changes."
+                  toolbar={
+                    <>
+                      <span>
+                        {selectedCount} of {actions.length} selected
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="font-medium hover:text-foreground"
+                          onClick={() => toggleAll(true)}
+                        >
+                          Select all
+                        </button>
+                        <button
+                          type="button"
+                          className="font-medium hover:text-foreground"
+                          onClick={() => toggleAll(false)}
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                    </>
+                  }
+                />
+              ) : (
+                <div className="rounded-lg border border-border/70 p-4 text-sm text-muted-foreground">
+                  {hasSortOnly
+                    ? "No merges, renames, or enrichments — only an importance reorder is ready. Continue to set portfolio inclusion."
+                    : null}
+                </div>
+              )
             ) : (
-              <div className="rounded-lg border border-border/70 p-4 text-sm text-muted-foreground">
-                {hasSortOnly
-                  ? "No merges, renames, or enrichments — only an importance reorder is ready. Continue to set portfolio inclusion."
-                  : null}
-              </div>
-            )
-          ) : (
-            <section className="w-full min-w-0 overflow-hidden rounded-lg border border-border/70 bg-card shadow-xs">
-              <header className="flex min-w-0 flex-col gap-2 border-b border-border/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold">Portfolio & resume</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Only included stacks appear on the public portfolio and generated resumes.
-                  </p>
-                </div>
-                <Badge variant="outline" size="sm" className="tabular-nums">
-                  {portfolioIncludedCount} / {survivingStacks.length} included
-                </Badge>
-              </header>
+              <section className="w-full min-w-0 overflow-hidden rounded-lg border border-border/70 bg-card shadow-xs">
+                <header className="flex min-w-0 flex-col gap-2 border-b border-border/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold">Portfolio & resume</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Only included stacks appear on the public portfolio and generated resumes.
+                    </p>
+                  </div>
+                  <Badge variant="outline" size="sm" className="tabular-nums">
+                    {portfolioIncludedCount} / {survivingStacks.length} included
+                  </Badge>
+                </header>
 
-              <div className="flex min-w-0 flex-col gap-2 border-b border-border/60 p-3 sm:flex-row sm:items-center">
-                <div className="relative block min-w-0 flex-1">
-                  <label htmlFor="organize-portfolio-search" className="sr-only">
-                    Search stacks
-                  </label>
-                  <SearchIcon
-                    aria-hidden
-                    className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
-                    id="organize-portfolio-search"
-                    type="search"
-                    value={portfolioQuery}
-                    onChange={(e) => setPortfolioQuery(e.target.value)}
-                    placeholder="Search stacks…"
-                    className="h-8 pl-8 text-xs"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 gap-1 text-xs"
-                    onClick={seedPortfolioDefaults}
-                  >
-                    <SparklesIcon className="size-3.5" />
-                    Recommend
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 text-xs"
-                    onClick={() => setAllPortfolio(true)}
-                  >
-                    Include all
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 text-xs"
-                    onClick={() => setAllPortfolio(false)}
-                  >
-                    Exclude all
-                  </Button>
-                </div>
-              </div>
-
-              <ul className="max-h-[min(28rem,50vh)] overflow-y-auto">
-                {filteredPortfolioStacks.map((s) => {
-                  const included = !!portfolioSelection[s.id];
-                  const wasIncluded = !!s.includedInPortfolio;
-                  const type = typeLabel(s.type);
-                  const noise = STACK_NOISE_TYPES.has(normalizeStackType(s.type));
-                  return (
-                    <li
-                      key={s.id}
-                      className="flex items-center gap-3 border-b border-border/60 px-3 py-2 last:border-b-0"
+                <div className="flex min-w-0 flex-col gap-2 border-b border-border/60 p-3 sm:flex-row sm:items-center">
+                  <div className="relative block min-w-0 flex-1">
+                    <label htmlFor="organize-portfolio-search" className="sr-only">
+                      Search stacks
+                    </label>
+                    <SearchIcon
+                      aria-hidden
+                      className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                      id="organize-portfolio-search"
+                      type="search"
+                      value={portfolioQuery}
+                      onChange={(e) => setPortfolioQuery(e.target.value)}
+                      placeholder="Search stacks…"
+                      className="h-8 pl-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-1 text-xs"
+                      onClick={seedPortfolioDefaults}
                     >
-                      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                        <Icon
-                          icon={s.icon}
-                          className="size-4"
-                          fallbackToLetter
-                          letterClassName="size-8 text-xs"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-                          <span className="truncate text-sm font-medium">{s.name}</span>
-                          {type ? (
-                            <Badge variant="outline" size="sm">
-                              {type}
-                            </Badge>
-                          ) : null}
-                          {noise ? (
-                            <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
-                              often noise
-                            </span>
-                          ) : null}
-                          {wasIncluded !== included ? (
-                            <span
-                              className={cn(
-                                "text-[10px] font-medium tracking-wide uppercase",
-                                included
-                                  ? "text-emerald-600 dark:text-emerald-400"
-                                  : "text-destructive"
-                              )}
-                            >
-                              {included ? "will include" : "will remove"}
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {s.projectCount} project{s.projectCount === 1 ? "" : "s"}
-                          {s.description ? ` · ${s.description}` : null}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={included}
-                        aria-label={`${included ? "Exclude" : "Include"} ${s.name} on portfolio`}
-                        onCheckedChange={(v) => {
-                          setPortfolioSelection((prev) => {
-                            return { ...prev, [s.id]: !!v };
-                          });
-                        }}
-                      />
-                    </li>
-                  );
-                })}
-                {filteredPortfolioStacks.length === 0 ? (
-                  <li className="p-6 text-center text-sm text-muted-foreground">
-                    No stacks match this search.
-                  </li>
-                ) : null}
-              </ul>
-            </section>
-          )}
-        </DialogPanel>
+                      <SparklesIcon className="size-3.5" />
+                      Recommend
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs"
+                      onClick={() => setAllPortfolio(true)}
+                    >
+                      Include all
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs"
+                      onClick={() => setAllPortfolio(false)}
+                    >
+                      Exclude all
+                    </Button>
+                  </div>
+                </div>
 
-        <DialogFooter>
-          {step === "portfolio" ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => setStep("review")}
-            >
-              Back
-            </Button>
-          ) : (
-            <DialogClose render={<Button variant="outline" type="button" onClick={handleClose} />}>
-              {isEmpty ? "Dismiss" : "Cancel"}
-            </DialogClose>
-          )}
-          {isEmpty ? null : step === "review" ? (
-            <Button
-              type="button"
-              disabled={isPending || (hasActions && selectedCount === 0 && sortOrder.length === 0)}
-              onClick={handleContinueToPortfolio}
-            >
-              {confirmLabel}
-            </Button>
-          ) : (
-            <Button type="button" disabled={isPending} onClick={handleConfirm}>
-              {confirmLabel}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogPopup>
-    </Dialog>
+                <ul className="max-h-[min(28rem,50vh)] overflow-y-auto">
+                  {filteredPortfolioStacks.map((s) => {
+                    const included = !!portfolioSelection[s.id];
+                    const wasIncluded = !!s.includedInPortfolio;
+                    const type = typeLabel(s.type);
+                    const noise = STACK_NOISE_TYPES.has(normalizeStackType(s.type));
+                    return (
+                      <li
+                        key={s.id}
+                        className="flex items-center gap-3 border-b border-border/60 px-3 py-2 last:border-b-0"
+                      >
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                          <Icon
+                            icon={s.icon}
+                            className="size-4"
+                            fallbackToLetter
+                            letterClassName="size-8 text-xs"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span className="truncate text-sm font-medium">{s.name}</span>
+                            {type ? (
+                              <Badge variant="outline" size="sm">
+                                {type}
+                              </Badge>
+                            ) : null}
+                            {noise ? (
+                              <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+                                often noise
+                              </span>
+                            ) : null}
+                            {wasIncluded !== included ? (
+                              <span
+                                className={cn(
+                                  "text-[10px] font-medium tracking-wide uppercase",
+                                  included
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : "text-destructive"
+                                )}
+                              >
+                                {included ? "will include" : "will remove"}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {s.projectCount} project{s.projectCount === 1 ? "" : "s"}
+                            {s.description ? ` · ${s.description}` : null}
+                          </p>
+                        </div>
+                        <Switch
+                          checked={included}
+                          aria-label={`${included ? "Exclude" : "Include"} ${s.name} on portfolio`}
+                          onCheckedChange={(v) => {
+                            setPortfolioSelection((prev) => {
+                              return { ...prev, [s.id]: !!v };
+                            });
+                          }}
+                        />
+                      </li>
+                    );
+                  })}
+                  {filteredPortfolioStacks.length === 0 ? (
+                    <li className="p-6 text-center text-sm text-muted-foreground">
+                      No stacks match this search.
+                    </li>
+                  ) : null}
+                </ul>
+              </section>
+            )}
+          </DialogPanel>
+
+          <DialogFooter>
+            {step === "portfolio" ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => setStep("review")}
+              >
+                Back
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" disabled={isPending} onClick={requestClose}>
+                {isEmpty ? "Dismiss" : "Cancel"}
+              </Button>
+            )}
+            {isEmpty ? null : step === "review" ? (
+              <Button
+                type="button"
+                disabled={
+                  isPending || (hasActions && selectedCount === 0 && sortOrder.length === 0)
+                }
+                onClick={handleContinueToPortfolio}
+              >
+                {confirmLabel}
+              </Button>
+            ) : (
+              <Button type="button" disabled={isPending} onClick={handleConfirm}>
+                {confirmLabel}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
+
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved organize changes. Close without applying them?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep reviewing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscard}>Discard</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

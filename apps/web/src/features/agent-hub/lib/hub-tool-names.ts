@@ -1,0 +1,150 @@
+import { type UIMessage } from "ai";
+
+import { type ProposeApplicationFromJdOutput } from "@tsu-stack/core";
+
+/**
+ * Mastra tool id plus the camelCase agent registration key. Stream UI parts
+ * may use either (`tool-propose-application-from-jd` vs
+ * `tool-proposeApplicationFromJd`).
+ */
+export const HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES = new Set([
+  "propose-application-from-jd",
+  "proposeApplicationFromJd"
+]);
+
+/** Mastra tool id plus camelCase registration key for apply-package HITL. */
+export const HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES = new Set([
+  "generate-apply-package",
+  "generateApplyPackage"
+]);
+
+export type HubToolNamePart = {
+  type: string;
+  toolName?: string;
+  toolCallId?: string;
+  state?: string;
+  input?: unknown;
+  output?: unknown;
+};
+
+export type ProposeApplicationFromJdCardInput = {
+  title: string;
+  companyName: string;
+  description: string;
+  url?: string | null;
+  applyUrl?: string | null;
+  location?: string | null;
+  matchScore?: number | null;
+  notes?: string | null;
+};
+
+export type ProposeApplicationFromJdAction = ProposeApplicationFromJdOutput["action"];
+
+export type PendingProposeApplicationFromJd = {
+  toolCallId: string;
+  toolName: string;
+  input: ProposeApplicationFromJdCardInput;
+};
+
+/** AI SDK static (`tool-<name>`) or dynamic-tool part. */
+export function isHubToolUiPart(part: { type: string }): boolean {
+  return part.type.startsWith("tool-") || part.type === "dynamic-tool";
+}
+
+/**
+ * Resolve the Mastra / AI SDK tool name from a UI part.
+ * Prefers `toolName`, then the suffix after `tool-`.
+ */
+export function hubToolNameFromPart(part: HubToolNamePart): string {
+  if (part.toolName && part.toolName.length > 0) return part.toolName;
+  if (part.type === "dynamic-tool") return "tool";
+  if (part.type.startsWith("tool-")) return part.type.slice("tool-".length);
+  return part.type;
+}
+
+export function isProposeApplicationFromJdToolName(name: string): boolean {
+  return HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES.has(name);
+}
+
+export function isGenerateApplyPackageToolName(name: string): boolean {
+  return HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES.has(name);
+}
+
+export function parseProposeApplicationFromJdInput(
+  input: unknown
+): ProposeApplicationFromJdCardInput {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return { title: "", companyName: "", description: "" };
+  }
+  const o = input as Partial<ProposeApplicationFromJdCardInput>;
+  return {
+    title: typeof o.title === "string" ? o.title : "",
+    companyName: typeof o.companyName === "string" ? o.companyName : "",
+    description: typeof o.description === "string" ? o.description : "",
+    url: typeof o.url === "string" ? o.url : null,
+    applyUrl: typeof o.applyUrl === "string" ? o.applyUrl : null,
+    location: typeof o.location === "string" ? o.location : null,
+    matchScore: typeof o.matchScore === "number" ? o.matchScore : null,
+    notes: typeof o.notes === "string" ? o.notes : null
+  };
+}
+
+export function parseProposeApplicationFromJdOutputAction(
+  output: unknown
+): ProposeApplicationFromJdAction | null {
+  if (!output || typeof output !== "object" || Array.isArray(output)) return null;
+  const action = (output as { action?: unknown }).action;
+  if (action === "package" || action === "save" || action === "dismiss") return action;
+  return null;
+}
+
+export type HubHitlKind = "approval" | "client";
+
+/**
+ * HITL wait on the last assistant message, from AI SDK part states only
+ * (no TAP / assistant-ui thread status).
+ */
+export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
+  const last = messages.at(-1);
+  if (!last || last.role !== "assistant") return null;
+
+  for (const raw of last.parts ?? []) {
+    const part = raw as HubToolNamePart;
+    if (!isHubToolUiPart(part)) continue;
+    if (part.state === "approval-requested") return "approval";
+    const name = hubToolNameFromPart(part);
+    const waiting =
+      part.state === "input-available" ||
+      part.state === "input-streaming" ||
+      part.state === "call" ||
+      part.state === "partial-call";
+    if (!waiting) continue;
+    if (isGenerateApplyPackageToolName(name)) return "approval";
+    if (isProposeApplicationFromJdToolName(name)) return "client";
+  }
+  return null;
+}
+
+/** Latest assistant propose-from-jd tool still waiting for a client `addToolOutput`. */
+export function findPendingProposeApplicationFromJd(
+  messages: UIMessage[]
+): PendingProposeApplicationFromJd | null {
+  for (const msg of [...messages].toReversed()) {
+    if (msg.role !== "assistant") continue;
+    for (const raw of [...(msg.parts ?? [])].toReversed()) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      const toolName = hubToolNameFromPart(part);
+      if (!isProposeApplicationFromJdToolName(toolName)) continue;
+      if (part.state !== "input-available" && part.state !== "input-streaming") continue;
+      const toolCallId = part.toolCallId ?? "";
+      if (!toolCallId) continue;
+      return {
+        toolCallId,
+        toolName,
+        input: parseProposeApplicationFromJdInput(part.input)
+      };
+    }
+  }
+  return null;
+}

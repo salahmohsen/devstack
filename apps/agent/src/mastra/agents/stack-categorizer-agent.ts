@@ -25,11 +25,17 @@ For each package, decide:
 
 IMPORTANT RULES:
 - Return exactly one result per input package, in the same order.
-- Packages under the same npm scope (e.g., @radix-ui/*) likely belong to
-  the same library. Use a shared display name for all packages in the same scope.
+- Multi-product orgs must stay SEPARATE products, even under one npm scope:
+  e.g. @tanstack/react-query ≠ @tanstack/react-form ≠ @tanstack/react-start ≠
+  @tanstack/react-router. Do NOT collapse them into a single "TanStack" stack.
+- Mono-product scopes (e.g. @tiptap/*, @radix-ui/*) usually share one display name.
 - REUSE an existing display name if this package belongs to the same
   library/family as another package already categorized. Only invent a NEW
   unique name for genuinely distinct libraries.
+- Confidence: use "high" for well-known packages and clear family members;
+  "medium" when the type is clear but the product is less common; "low" only
+  when guessing type/name. Prefer high/medium over low when unsure between
+  medium and low.
 - Do NOT use any tools. Process all packages from the information provided.`,
     model: byoModelFromRequestContext
   });

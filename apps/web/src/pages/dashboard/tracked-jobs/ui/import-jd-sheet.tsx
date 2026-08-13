@@ -1,10 +1,8 @@
 "use client";
 
-import { type UIMessage } from "@ai-sdk/react";
 import { FileTextIcon, Loader2Icon } from "lucide-react";
 import * as React from "react";
 
-import { type ProposeApplicationFromJdInput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   Dialog,
@@ -16,83 +14,16 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { Textarea } from "@tsu-stack/ui/components/textarea";
 
-import { useHubChat } from "@/features/agent-hub";
-
-import { ApplicationFromJdCard, type ApplicationFromJdCardInput } from "@/widgets/agent-hub";
+import {
+  ApplicationFromJdCard,
+  findPendingProposeApplicationFromJd,
+  useHubChat
+} from "@/features/agent-hub";
 
 type ImportJdSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-
-type HubToolPart = {
-  type: string;
-  toolCallId?: string;
-  toolName?: string;
-  state?: string;
-  input?: unknown;
-  output?: unknown;
-};
-
-const PROPOSE_FROM_JD_TOOL_NAMES = new Set([
-  "propose-application-from-jd",
-  "proposeApplicationFromJd"
-]);
-
-function getToolName(part: HubToolPart): string {
-  if (part.toolName && part.toolName.length > 0) return part.toolName;
-  if (part.type === "dynamic-tool") return "tool";
-  if (part.type.startsWith("tool-")) return part.type.slice("tool-".length);
-  return part.type;
-}
-
-function isToolPart(part: HubToolPart): boolean {
-  return part.type.startsWith("tool-") || part.type === "dynamic-tool";
-}
-
-function parseProposeInput(input: unknown): ApplicationFromJdCardInput {
-  if (!input || typeof input !== "object" || Array.isArray(input)) {
-    return { title: "", companyName: "", description: "" };
-  }
-  const o = input as Partial<ProposeApplicationFromJdInput>;
-  return {
-    title: typeof o.title === "string" ? o.title : "",
-    companyName: typeof o.companyName === "string" ? o.companyName : "",
-    description: typeof o.description === "string" ? o.description : "",
-    url: o.url ?? null,
-    applyUrl: o.applyUrl ?? null,
-    location: o.location ?? null,
-    matchScore: typeof o.matchScore === "number" ? o.matchScore : null,
-    notes: o.notes ?? null
-  };
-}
-
-type PendingPropose = {
-  toolCallId: string;
-  toolName: string;
-  input: ApplicationFromJdCardInput;
-};
-
-/** Latest assistant propose-from-jd tool still waiting for user choice. */
-function findPendingProposeFromJd(messages: UIMessage[]): PendingPropose | null {
-  for (const msg of [...messages].toReversed()) {
-    if (msg.role !== "assistant") continue;
-    for (const raw of [...(msg.parts ?? [])].toReversed()) {
-      const part = raw as HubToolPart;
-      if (!isToolPart(part)) continue;
-      if (!PROPOSE_FROM_JD_TOOL_NAMES.has(getToolName(part))) continue;
-      if (part.state !== "input-available" && part.state !== "input-streaming") continue;
-      const toolCallId = part.toolCallId ?? "";
-      if (!toolCallId) continue;
-      return {
-        toolCallId,
-        toolName: getToolName(part) || "propose-application-from-jd",
-        input: parseProposeInput(part.input)
-      };
-    }
-  }
-  return null;
-}
 
 function buildImportMessage(jd: string): string {
   return `Import this job description and propose an application:\n\n${jd}`;
@@ -108,7 +39,10 @@ export function ImportJdSheet({ open, onOpenChange }: ImportJdSheetProps) {
   const sendingRef = React.useRef(false);
 
   const isStreaming = status === "submitted" || status === "streaming";
-  const pendingPropose = React.useMemo(() => findPendingProposeFromJd(messages), [messages]);
+  const pendingPropose = React.useMemo(
+    () => findPendingProposeApplicationFromJd(messages),
+    [messages]
+  );
 
   React.useEffect(() => {
     if (!isStreaming) {

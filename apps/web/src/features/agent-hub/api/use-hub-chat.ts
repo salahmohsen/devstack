@@ -33,6 +33,9 @@ type HubChatHelpers = ReturnType<typeof useChat>;
 export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
   chat: Chat<UIMessage>;
   historyReady: boolean;
+  hasMoreHistory: boolean;
+  isLoadingOlder: boolean;
+  loadOlderMessages: () => Promise<void>;
   /**
    * Composite approval id from the tool part (`runId::toolCallId`).
    * Runtime: `Chat` extends `AbstractChat` which defines this method;

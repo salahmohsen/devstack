@@ -34,6 +34,7 @@ import {
 } from "#@/lib/github/detect-stacks-prefetch";
 import { ownerProcedure, protectedProcedure } from "#@/lib/procedures/factory";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
+import { emptyHubMessagesPage, shapeListHubMessagesPage } from "#@/routers/agent.list-hub-messages";
 
 /**
  * Parse Mastra worker JSON without throwing on Studio HTML SPA fallbacks.
@@ -388,19 +389,23 @@ export const agentRouter = {
    */
   listHubMessages: protectedProcedure
     .route({
-      description: "List recent hub chat messages for the caller's memory thread",
+      description: "List paginated hub chat messages for the caller's memory thread",
       method: "POST"
     })
     .input(
       z.object({
         agentId: agentIdSchema.optional(),
-        limit: z.number().int().min(1).max(80).optional().default(40)
+        limit: z.number().int().min(1).max(80).optional().default(40),
+        /** 0 = newest page (default). Higher = older pages. */
+        page: z.number().int().min(0).optional().default(0)
       })
     )
     .output(
       z.object({
         messages: z.array(z.unknown()),
-        uiMessages: z.array(z.unknown()).nullable()
+        uiMessages: z.array(z.unknown()).nullable(),
+        hasMore: z.boolean(),
+        page: z.number().int().min(0)
       })
     )
     .handler(async ({ input, context }) => {
@@ -413,12 +418,14 @@ export const agentRouter = {
       if (!isChatAllowedAgentId(agentId)) {
         throw new ORPCError("BAD_REQUEST", { message: "Invalid agentId" });
       }
+      const page = input.page ?? 0;
+      const perPage = input.limit ?? 40;
       const threadId = hubChatThreadId(userId);
       const qs = new URLSearchParams({
         agentId,
         resourceId: userId,
-        page: "0",
-        perPage: String(input.limit ?? 40)
+        page: String(page),
+        perPage: String(perPage)
       });
 
       // Built-in Mastra route (apiPrefix `/api`). Path without `/api` hits Studio HTML.
@@ -429,11 +436,12 @@ export const agentRouter = {
       if (!upstream.ok) {
         // Empty / missing thread is fine — return empty history.
         if (upstream.status === 404 || upstream.status === 401 || upstream.status === 403) {
-          return { messages: [], uiMessages: [] };
+          return emptyHubMessagesPage(page);
         }
         context.logger.set({
           event: "agent_hub_list_messages_upstream_error",
           status: upstream.status,
+          page,
           bodyPreview: bodyText.slice(0, 200)
         });
         throw new Error(`List hub messages returned ${upstream.status}: ${bodyText.slice(0, 200)}`);
@@ -443,18 +451,25 @@ export const agentRouter = {
       if (parsed === undefined || typeof parsed !== "object" || parsed === null) {
         context.logger.set({
           event: "agent_hub_list_messages_non_json",
+          page,
           bodyPreview: bodyText.slice(0, 200)
         });
-        return { messages: [], uiMessages: [] };
+        return emptyHubMessagesPage(page);
       }
       const data = parsed as {
         messages?: unknown[];
         uiMessages?: unknown[] | null;
+        hasMore?: unknown;
+        total?: unknown;
       };
-      return {
-        messages: Array.isArray(data.messages) ? data.messages : [],
-        uiMessages: data.uiMessages ?? null
-      };
+      return shapeListHubMessagesPage({
+        page,
+        perPage,
+        messages: data.messages,
+        uiMessages: data.uiMessages,
+        hasMore: data.hasMore,
+        total: data.total
+      });
     }),
 
   /**
@@ -602,7 +617,8 @@ export const agentRouter = {
           existingStacks: existingStacks.map((stack) => {
             return {
               id: stack.id,
-              name: stack.name
+              name: stack.name,
+              icon: stack.icon ?? null
             };
           }),
           existingDependencies: existingDependencies.map((dep) => {
@@ -730,11 +746,11 @@ export const agentRouter = {
     })
     .input(z.object({}))
     .handler(async function* ({ context, signal }) {
-      // 1. Fetch all existing stacks for the session user
+      // 1. Fetch all existing stacks + npm deps for the session user
       const userId = context.session.user.id;
-      const allStacks = await stackRepository.findAllByUserId(userId);
+      const allStacks = await stackRepository.findAllWithDependenciesByUserId(userId);
 
-      // 2. Build workflow input
+      // 2. Build workflow input (npmPackages drive family/scope merges)
       const llm = await resolveRuntimeAiCredentials(userId, "stacks");
       const byo = llmLogFields(llm);
       const workflowInput = {
@@ -745,7 +761,8 @@ export const agentRouter = {
             type: stack.type,
             description: stack.description,
             icon: stack.icon,
-            projectCount: stack.projectCount ?? 0
+            projectCount: stack.projectCount ?? 0,
+            npmPackages: (stack.dependencies ?? []).map((d) => d.npmPackage)
           };
         }),
         llm

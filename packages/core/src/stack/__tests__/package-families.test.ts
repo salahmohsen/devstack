@@ -7,8 +7,9 @@ import {
 } from "#@/stack/package-families";
 
 describe("package-families", () => {
-  it("has no single-member families (merge needs 2+ packages)", () => {
-    const singles = SAME_PROJECT_PACKAGE_FAMILIES.filter((f) => f.length < 2);
+  it("allows single-member families for display-name / confidence curation", () => {
+    // Multi-member families drive merges; singles still provide curated labels.
+    const singles = SAME_PROJECT_PACKAGE_FAMILIES.filter((f) => f.length === 0);
     expect(singles).toEqual([]);
   });
 
@@ -44,5 +45,37 @@ describe("package-families", () => {
     for (const scope of ["@orpc", "@mastra", "@tiptap", "@radix-ui", "@heroui"]) {
       expect(SCOPE_MERGE_ALLOWLIST.has(scope)).toBe(true);
     }
+  });
+
+  it("keeps TanStack products in separate families", () => {
+    expect(findPackageFamily("@tanstack/react-query")?.[0]).toBe("@tanstack/react-query");
+    expect(findPackageFamily("@tanstack/react-form")?.[0]).toBe("@tanstack/react-form");
+    expect(findPackageFamily("@tanstack/react-start")?.[0]).toBe("@tanstack/react-start");
+    expect(findPackageFamily("@tanstack/react-query")?.[0]).not.toBe(
+      findPackageFamily("@tanstack/react-form")?.[0]
+    );
+  });
+
+  it("maps family packages to distinct curated display names", async () => {
+    const { getPackageFamilyDisplayName, getPackageFamilyType } =
+      await import("#@/stack/package-families");
+    expect(getPackageFamilyDisplayName("@tanstack/react-query")).toBe("TanStack Query");
+    expect(getPackageFamilyDisplayName("@tanstack/react-form-start")).toBe("TanStack Form");
+    expect(getPackageFamilyDisplayName("@tanstack/react-start")).toBe("TanStack Start");
+    expect(getPackageFamilyDisplayName("@tiptap/extension-link")).toBe("TipTap");
+    expect(getPackageFamilyType("@tanstack/react-query")).toBe("framework");
+    expect(getPackageFamilyType("@tiptap/react")).toBe("ui");
+  });
+
+  it("refuses reserved brand names for unrelated packages", async () => {
+    const { resolveSafeDisplayName, humanizeNpmPackageName } =
+      await import("#@/stack/package-families");
+    expect(resolveSafeDisplayName("@zappicon/react", "React")).not.toBe("React");
+    expect(resolveSafeDisplayName("@zappicon/react", "React")).toBe(
+      humanizeNpmPackageName("@zappicon/react")
+    );
+    expect(resolveSafeDisplayName("react", "React")).toBe("React");
+    expect(resolveSafeDisplayName("@tanstack/react-query", "TanStack")).toBe("TanStack Query");
+    expect(humanizeNpmPackageName("@zappicon/react")).toBe("Zappicon");
   });
 });

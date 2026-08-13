@@ -3,6 +3,11 @@ import { type z } from "zod";
 
 import {
   buildCanonicalDisplayNamesHint,
+  findPackageFamily,
+  getPackageFamilyType,
+  humanizeNpmPackageName,
+  resolveSafeDisplayName,
+  SCOPE_MERGE_ALLOWLIST,
   type DetectStacksWorkflowInputSchema
 } from "@tsu-stack/core";
 
@@ -24,12 +29,14 @@ import {
 
 function lowConfidenceFallback(deps: Array<{ name: string; repo: string }>): CategorizedEntry[] {
   return deps.map((dep) => {
+    const family = findPackageFamily(dep.name);
     return {
       npmPackage: dep.name,
-      name: dep.name,
-      type: "other",
+      name: resolveSafeDisplayName(dep.name) || humanizeNpmPackageName(dep.name),
+      type: getPackageFamilyType(dep.name) ?? "other",
       description: null,
-      confidence: "low" as const,
+      // Curated families are deterministic knowledge — high confidence so icons + UI match.
+      confidence: family ? ("high" as const) : ("low" as const),
       repo: dep.repo,
       relatedPackages: [] as string[],
       iconSvg: null,
@@ -87,114 +94,99 @@ export const aiCategorize = createStep({
       };
     }
 
-    const agent = params.mastra?.getAgent("stackCategorizerAgent");
-    if (!agent) {
-      log.set({
-        event: "detect_stacks_ai_categorize_completed",
-        unknownCount: unknown.length,
-        categorizedCount: unknown.length,
-        durationMs: Date.now() - started,
-        reason: "missing_agent",
-        softFailed: true
-      });
-      log.emit({ _forceKeep: true });
-      return {
-        matched,
-        categorized: lowConfidenceFallback(unknown)
-      };
+    // Deterministic path for curated families — skip LLM so TanStack products stay
+    // separate, TipTap collapses, confidence stays high, and wall-clock is preserved.
+    const knownUnknown: typeof unknown = [];
+    const llmUnknown: typeof unknown = [];
+    for (const dep of unknown) {
+      if (findPackageFamily(dep.name)) knownUnknown.push(dep);
+      else llmUnknown.push(dep);
     }
+    const seedCategorized: CategorizedEntry[] = lowConfidenceFallback(knownUnknown);
 
-    // Build context: existing stacks with their dependency lists
+    const agent = params.mastra?.getAgent("stackCategorizerAgent");
     const initCtx = params.getInitData() as z.infer<typeof DetectStacksWorkflowInputSchema>;
     const { model } = generateModelOption(initCtx.llm);
-    // Missing BYO: programmatic matches still apply; unknowns stay low-confidence.
-    if (!model) {
-      log.set({
-        event: "detect_stacks_ai_categorize_completed",
-        unknownCount: unknown.length,
-        categorizedCount: unknown.length,
-        durationMs: Date.now() - started,
-        reason: "missing_byo",
-        softFailed: true
-      });
-      log.emit({ _forceKeep: true });
-      return {
-        matched,
-        categorized: lowConfidenceFallback(unknown)
-      };
-    }
-    const existingStacks = initCtx.existingStacks;
-    const existingDeps = initCtx.existingDependencies;
 
-    // Group existing dependencies by stackId
-    const depsByStack = new Map<string, string[]>();
-    for (const dep of existingDeps) {
-      const list = depsByStack.get(dep.stackId) ?? [];
-      list.push(dep.npmPackage);
-      depsByStack.set(dep.stackId, list);
-    }
-
-    const existingStackContext = existingStacks
-      .map((s) => {
-        const deps = depsByStack.get(s.id) ?? [];
-        return `- ${s.name} — dependencies: ${deps.join(", ")}`;
-      })
-      .join("\n");
-
-    const categorized: CategorizedEntry[] = [];
-    const usedNames = new Set<string>();
-    const chunkTotal = Math.ceil(unknown.length / BATCH_CHUNK_SIZE);
+    // LLM path only for packages not covered by curated families.
+    let llmResults: CategorizedEntry[] = [];
     let chunksFailed = 0;
     let stopReason: "completed" | "aborted" | "wall_clock" = "completed";
+    let chunkTotal = 0;
 
-    // Sequential chunks keep usedNames accurate across batches (name reuse).
-    for (let i = 0; i < unknown.length; i += BATCH_CHUNK_SIZE) {
-      // Mastra cancel triggers abortSignal — stop between chunks (docs: steps must check it)
-      if (abortSignal?.aborted) {
-        stopReason = "aborted";
-        break;
+    if (llmUnknown.length > 0 && agent && model) {
+      // Build context: existing stacks with their dependency lists
+      const existingStacks = initCtx.existingStacks;
+      const existingDeps = initCtx.existingDependencies;
+
+      // Group existing dependencies by stackId
+      const depsByStack = new Map<string, string[]>();
+      for (const dep of existingDeps) {
+        const list = depsByStack.get(dep.stackId) ?? [];
+        list.push(dep.npmPackage);
+        depsByStack.set(dep.stackId, list);
       }
 
-      // Soft wall-clock: leave remaining unknowns as low-confidence so the stream can finish
-      // under reverse-proxy kill (~310s) instead of hanging mid-categorize.
-      const elapsedMs = Date.now() - started;
-      if (elapsedMs >= CATEGORIZE_WALL_CLOCK_MS) {
-        stopReason = "wall_clock";
-        break;
-      }
-
-      const chunkIndex = Math.floor(i / BATCH_CHUNK_SIZE);
-      const chunk = unknown.slice(i, i + BATCH_CHUNK_SIZE);
-      const rangeStart = i + 1;
-      const rangeEnd = i + chunk.length;
-      const label = buildDetectCategorizeLabel(rangeStart, rangeEnd, unknown.length);
-
-      // Intermediate fields on the same wide-event logger (emitted once at end).
-      // Live UI progress is via writer.custom data-detect-progress (Task 4 maps stepLabel).
-      log.set({
-        unknownCount: unknown.length,
-        chunkIndex,
-        chunkTotal,
-        chunkSize: chunk.length,
-        durationMs: elapsedMs,
-        progressLabel: label
-      });
-
-      await writeDetectProgress(writer, {
-        chunkIndex,
-        chunkTotal,
-        unknownTotal: unknown.length,
-        label
-      });
-
-      const packageList = chunk
-        .map(
-          (dep, idx) =>
-            `${idx + 1}. ${dep.name} | repo: ${dep.repo} | workspace: ${dep.workspace ?? "(root)"}`
-        )
+      const existingStackContext = existingStacks
+        .map((s) => {
+          const deps = depsByStack.get(s.id) ?? [];
+          return `- ${s.name} — dependencies: ${deps.join(", ")}`;
+        })
         .join("\n");
 
-      const prompt = `Existing stacks:
+      const categorized: CategorizedEntry[] = [];
+      const usedNames = new Set<string>(seedCategorized.map((c) => c.name));
+      chunkTotal = Math.ceil(llmUnknown.length / BATCH_CHUNK_SIZE);
+
+      // Sequential chunks keep usedNames accurate across batches (name reuse).
+      for (let i = 0; i < llmUnknown.length; i += BATCH_CHUNK_SIZE) {
+        // Mastra cancel triggers abortSignal — stop between chunks (docs: steps must check it)
+        if (abortSignal?.aborted) {
+          stopReason = "aborted";
+          break;
+        }
+
+        // Soft wall-clock: leave remaining unknowns as low-confidence so the stream can finish
+        // under reverse-proxy kill (~310s) instead of hanging mid-categorize.
+        const elapsedMs = Date.now() - started;
+        if (elapsedMs >= CATEGORIZE_WALL_CLOCK_MS) {
+          stopReason = "wall_clock";
+          break;
+        }
+
+        const chunkIndex = Math.floor(i / BATCH_CHUNK_SIZE);
+        const chunk = llmUnknown.slice(i, i + BATCH_CHUNK_SIZE);
+        const rangeStart = i + 1;
+        const rangeEnd = i + chunk.length;
+        const label = buildDetectCategorizeLabel(rangeStart, rangeEnd, llmUnknown.length);
+
+        // Intermediate fields on the same wide-event logger (emitted once at end).
+        // Live UI progress is via writer.custom data-detect-progress (Task 4 maps stepLabel).
+        log.set({
+          unknownCount: llmUnknown.length,
+          knownFamilyCount: knownUnknown.length,
+          chunkIndex,
+          chunkTotal,
+          chunkSize: chunk.length,
+          durationMs: elapsedMs,
+          progressLabel: label
+        });
+
+        await writeDetectProgress(writer, {
+          chunkIndex,
+          chunkTotal,
+          unknownTotal: llmUnknown.length,
+          label
+        });
+
+        const packageList = chunk
+          .map(
+            (dep, idx) =>
+              `${idx + 1}. ${dep.name} | repo: ${dep.repo} | workspace: ${dep.workspace ?? "(root)"}`
+          )
+          .join("\n");
+
+        const prompt = `Existing stacks:
 ${existingStackContext || "(none)"}
 
 Already categorized in this run (REUSE the same name for related packages of the same library/family):
@@ -220,165 +212,185 @@ For each package:
 5. Confidence: high/medium/low
 Do NOT invent descriptions — they are filled from the official npm registry later.`;
 
-      const chunkStarted = Date.now();
-      try {
-        // Cap this chunk's budget by remaining wall-clock so we don't start a full timeout
-        // when the soft deadline is near.
-        const remainingWall = CATEGORIZE_WALL_CLOCK_MS - (Date.now() - started);
-        const chunkTimeoutMs = Math.max(5_000, Math.min(BATCH_TIMEOUT_MS, remainingWall));
+        const chunkStarted = Date.now();
+        try {
+          // Cap this chunk's budget by remaining wall-clock so we don't start a full timeout
+          // when the soft deadline is near.
+          const remainingWall = CATEGORIZE_WALL_CLOCK_MS - (Date.now() - started);
+          const chunkTimeoutMs = Math.max(5_000, Math.min(BATCH_TIMEOUT_MS, remainingWall));
 
-        const result = await withTimeoutSignal(
-          (signal) =>
-            agent.generate([{ role: "user", content: prompt }], {
-              structuredOutput: {
-                schema: batchOutputSchema,
-                // Schema failures → empty array; missing packages soft-fallback below.
-                errorStrategy: "fallback",
-                fallbackValue: []
-              },
-              model,
-              abortSignal: signal
-            }),
-          chunkTimeoutMs,
-          `LLM timeout after ${chunkTimeoutMs / 1000}s`,
-          abortSignal
-        );
+          const result = await withTimeoutSignal(
+            (signal) =>
+              agent.generate([{ role: "user", content: prompt }], {
+                structuredOutput: {
+                  schema: batchOutputSchema,
+                  // Schema failures → empty array; missing packages soft-fallback below.
+                  errorStrategy: "fallback",
+                  fallbackValue: []
+                },
+                model,
+                abortSignal: signal
+              }),
+            chunkTimeoutMs,
+            `LLM timeout after ${chunkTimeoutMs / 1000}s`,
+            abortSignal
+          );
 
-        const aiResults = Array.isArray(result.object) ? result.object : [];
+          const aiResults = Array.isArray(result.object) ? result.object : [];
 
-        // Validate: build lookup of returned packages
-        const returnedPackages = new Set(aiResults.map((r) => r.npmPackage));
+          // Validate: build lookup of returned packages
+          const returnedPackages = new Set(aiResults.map((r) => r.npmPackage));
 
-        // Process each AI result
-        for (const ai of aiResults) {
-          const dep = chunk.find((d) => d.name === ai.npmPackage);
-          if (!dep) continue; // extra entry — discard
+          // Process each AI result
+          for (const ai of aiResults) {
+            const dep = chunk.find((d) => d.name === ai.npmPackage);
+            if (!dep) continue; // extra entry — discard
 
-          if (ai.belongsToExistingStack && ai.existingStackName) {
-            const match = existingStacks.find(
-              (s) => s.name.toLowerCase() === ai.existingStackName!.toLowerCase()
-            );
-            if (match) {
-              categorized.push({
-                npmPackage: dep.name,
-                name: match.name,
-                type: "other",
-                description: null,
-                confidence: ai.confidence,
-                repo: dep.repo,
-                relatedPackages: [],
-                iconSvg: null,
-                stackId: null,
-                existingStackId: match.id,
-                health: null
-              });
-              usedNames.add(match.name);
-              continue;
+            if (ai.belongsToExistingStack && ai.existingStackName) {
+              const match = existingStacks.find(
+                (s) => s.name.toLowerCase() === ai.existingStackName!.toLowerCase()
+              );
+              if (match) {
+                categorized.push({
+                  npmPackage: dep.name,
+                  name: match.name,
+                  type: "other",
+                  description: null,
+                  confidence: ai.confidence,
+                  repo: dep.repo,
+                  relatedPackages: [],
+                  iconSvg: null,
+                  stackId: null,
+                  existingStackId: match.id,
+                  health: null
+                });
+                usedNames.add(match.name);
+                continue;
+              }
+            }
+
+            const safeName = resolveSafeDisplayName(dep.name, ai.displayName);
+            categorized.push({
+              npmPackage: dep.name,
+              name: safeName,
+              type: ai.type ?? "other",
+              description: null,
+              confidence: ai.confidence,
+              repo: dep.repo,
+              relatedPackages: [],
+              iconSvg: null,
+              stackId: null,
+              existingStackId: null,
+              health: null
+            });
+            usedNames.add(safeName);
+          }
+
+          // Fallback for missing packages (LLM didn't return them / schema fallback)
+          for (const dep of chunk) {
+            if (!returnedPackages.has(dep.name)) {
+              categorized.push(...lowConfidenceFallback([dep]));
+              usedNames.add(dep.name);
             }
           }
 
-          categorized.push({
-            npmPackage: dep.name,
-            name: ai.displayName,
-            type: ai.type ?? "other",
-            description: null,
-            confidence: ai.confidence,
-            repo: dep.repo,
-            relatedPackages: [],
-            iconSvg: null,
-            stackId: null,
-            existingStackId: null,
-            health: null
+          log.set({
+            unknownCount: llmUnknown.length,
+            chunkIndex,
+            chunkTotal,
+            chunkSize: chunk.length,
+            returnedCount: aiResults.length,
+            lastChunkDurationMs: Date.now() - chunkStarted
           });
-          usedNames.add(ai.displayName);
-        }
-
-        // Fallback for missing packages (LLM didn't return them / schema fallback)
-        for (const dep of chunk) {
-          if (!returnedPackages.has(dep.name)) {
+        } catch (error) {
+          // Workflow cancel only: stop without inventing rows for unprocessed packages.
+          // Orphan provider AbortError (without abortSignal.aborted) soft-fails the chunk.
+          if (isWorkflowAborted(abortSignal)) {
+            stopReason = "aborted";
+            log.set({
+              unknownCount: llmUnknown.length,
+              chunkIndex,
+              chunkTotal,
+              chunkSize: chunk.length,
+              lastChunkDurationMs: Date.now() - chunkStarted,
+              abortAtChunk: true
+            });
+            break;
+          }
+          chunksFailed += 1;
+          // Separate short logger so chunk failures are searchable in Axiom without
+          // sealing the parent wide-event early.
+          const chunkLog = createLogger({ operation: "agent__detect_stacks_ai_categorize_chunk" });
+          chunkLog.error(error instanceof Error ? error : new Error(String(error)), {
+            event: "detect_stacks_ai_categorize_chunk_failed",
+            unknownCount: llmUnknown.length,
+            chunkIndex,
+            chunkTotal,
+            chunkStart: i,
+            chunkSize: chunk.length,
+            durationMs: Date.now() - chunkStarted,
+            reason: "chunk_error"
+          });
+          chunkLog.emit({ _forceKeep: true });
+          // Timeout / LLM failure: soft-fail this chunk only
+          for (const dep of chunk) {
             categorized.push(...lowConfidenceFallback([dep]));
             usedNames.add(dep.name);
           }
         }
+      }
 
-        log.set({
-          unknownCount: unknown.length,
-          chunkIndex,
-          chunkTotal,
-          chunkSize: chunk.length,
-          returnedCount: aiResults.length,
-          lastChunkDurationMs: Date.now() - chunkStarted
-        });
-      } catch (error) {
-        // Workflow cancel only: stop without inventing rows for unprocessed packages.
-        // Orphan provider AbortError (without abortSignal.aborted) soft-fails the chunk.
-        if (isWorkflowAborted(abortSignal)) {
-          stopReason = "aborted";
+      // Wall-clock soft-complete: remaining LLM unknowns not yet categorized.
+      // Abort must NOT invent rows for unprocessed packages.
+      if (stopReason === "wall_clock") {
+        const done = new Set(categorized.map((c) => c.npmPackage));
+        const remaining = llmUnknown.filter((d) => !done.has(d.name));
+        if (remaining.length > 0) {
+          categorized.push(...lowConfidenceFallback(remaining));
           log.set({
-            unknownCount: unknown.length,
-            chunkIndex,
-            chunkTotal,
-            chunkSize: chunk.length,
-            lastChunkDurationMs: Date.now() - chunkStarted,
-            abortAtChunk: true
+            unknownCount: llmUnknown.length,
+            remainingCount: remaining.length,
+            wallClockSoftFilled: remaining.length
           });
-          break;
-        }
-        chunksFailed += 1;
-        // Separate short logger so chunk failures are searchable in Axiom without
-        // sealing the parent wide-event early.
-        const chunkLog = createLogger({ operation: "agent__detect_stacks_ai_categorize_chunk" });
-        chunkLog.error(error instanceof Error ? error : new Error(String(error)), {
-          event: "detect_stacks_ai_categorize_chunk_failed",
-          unknownCount: unknown.length,
-          chunkIndex,
-          chunkTotal,
-          chunkStart: i,
-          chunkSize: chunk.length,
-          durationMs: Date.now() - chunkStarted,
-          reason: "chunk_error"
-        });
-        chunkLog.emit({ _forceKeep: true });
-        // Timeout / LLM failure: soft-fail this chunk only
-        for (const dep of chunk) {
-          categorized.push(...lowConfidenceFallback([dep]));
-          usedNames.add(dep.name);
         }
       }
+
+      llmResults = categorized;
+    } else if (llmUnknown.length > 0) {
+      // No agent/model: soft-fail remaining unknowns (known families already seeded).
+      llmResults = lowConfidenceFallback(llmUnknown);
+      chunksFailed = 1;
+      log.set({
+        event: "detect_stacks_ai_categorize_llm_skipped",
+        unknownCount: unknown.length,
+        knownFamilyCount: knownUnknown.length,
+        llmUnknownCount: llmUnknown.length,
+        reason: !agent ? "missing_agent" : "missing_byo",
+        softFailed: true
+      });
     }
 
-    // Wall-clock soft-complete: remaining unknowns not yet categorized.
-    // Abort must NOT invent rows for unprocessed packages.
-    if (stopReason === "wall_clock") {
-      const done = new Set(categorized.map((c) => c.npmPackage));
-      const remaining = unknown.filter((d) => !done.has(d.name));
-      if (remaining.length > 0) {
-        categorized.push(...lowConfidenceFallback(remaining));
-        log.set({
-          unknownCount: unknown.length,
-          remainingCount: remaining.length,
-          wallClockSoftFilled: remaining.length
-        });
-      }
-    }
+    const categorized: CategorizedEntry[] = [...seedCategorized, ...llmResults];
 
-    // Deterministic scope grouping: merge packages under same npm scope
+    // Scope grouping only for mono-product allowlisted scopes (@tiptap, @radix-ui, …).
+    // Multi-product orgs (@tanstack, @aws-sdk, …) must stay separate — collapsing them
+    // by most-common displayName was merging Query/Form/Start into one stack.
     const scopeGroups = new Map<string, CategorizedEntry[]>();
     const unscoped: CategorizedEntry[] = [];
 
     for (const entry of categorized) {
-      const scopeMatch = entry.npmPackage.match(/^(@[^/]+\/)/);
-      if (scopeMatch) {
-        const scope = scopeMatch[1];
-        const list = scopeGroups.get(scope) ?? [];
+      const scopeMatch = entry.npmPackage.match(/^@([^/]+)\//);
+      const scopeKey = scopeMatch ? `@${scopeMatch[1]}` : null;
+      if (scopeKey && SCOPE_MERGE_ALLOWLIST.has(scopeKey)) {
+        const list = scopeGroups.get(scopeKey) ?? [];
         list.push(entry);
-        scopeGroups.set(scope, list);
+        scopeGroups.set(scopeKey, list);
       } else {
         unscoped.push(entry);
       }
     }
 
-    // For each scope group, pick the most common displayName as canonical
+    // For allowlisted scope groups, pick the most common displayName as canonical
     const finalCategorized: CategorizedEntry[] = [...unscoped];
     for (const entries of scopeGroups.values()) {
       if (entries.length <= 1) {
@@ -391,7 +403,7 @@ Do NOT invent descriptions — they are filled from the official npm registry la
       for (const e of entries) {
         nameCounts.set(e.name, (nameCounts.get(e.name) ?? 0) + 1);
       }
-      const canonicalName = [...nameCounts.entries()].toSorted((a, b) => b[1] - a[1])[0][0];
+      const canonicalName = [...nameCounts.entries()].toSorted((a, b) => b[1] - a[1])[0]![0];
 
       // Merge all entries under the canonical name
       for (const e of entries) {
@@ -399,10 +411,29 @@ Do NOT invent descriptions — they are filled from the official npm registry la
       }
     }
 
+    // Polish every entry: safe display names + high confidence for curated families.
+    for (let i = 0; i < finalCategorized.length; i++) {
+      const entry = finalCategorized[i]!;
+      const family = findPackageFamily(entry.npmPackage);
+      const safeName = resolveSafeDisplayName(entry.npmPackage, entry.name);
+      const curatedType = getPackageFamilyType(entry.npmPackage);
+      finalCategorized[i] = {
+        ...entry,
+        name: safeName,
+        type:
+          family && entry.type === "other" && curatedType
+            ? curatedType
+            : (entry.type ?? curatedType ?? "other"),
+        confidence: family ? "high" : entry.confidence
+      };
+    }
+
     const softFailed = chunksFailed > 0 || stopReason === "wall_clock";
     log.set({
       event: "detect_stacks_ai_categorize_completed",
       unknownCount: unknown.length,
+      knownFamilyCount: knownUnknown.length,
+      llmUnknownCount: llmUnknown.length,
       categorizedCount: finalCategorized.length,
       chunkTotal,
       chunksFailed,

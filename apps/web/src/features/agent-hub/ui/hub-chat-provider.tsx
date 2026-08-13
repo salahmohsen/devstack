@@ -1,7 +1,9 @@
-import { useChat, type UIMessage } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
+import { AssistantRuntimeProvider } from "@assistant-ui/react";
+import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
 import * as React from "react";
 
-import { useListHubMessagesQuery } from "@/features/agent-hub/api/list-hub-messages.query";
+import { fetchHubMessagesPage } from "@/features/agent-hub/api/list-hub-messages.query";
 import {
   createHubChat,
   HubChatContext,
@@ -9,15 +11,15 @@ import {
   type HubToolApprovalResponseArgs,
   type HubToolOutputArgs
 } from "@/features/agent-hub/api/use-hub-chat";
+import {
+  createHubThreadHistoryAdapter,
+  hubHistoryHeadPath,
+  mapUiMessagesToHistoryItems,
+  prependUniqueHubMessages,
+  unionHubMessages
+} from "@/features/agent-hub/lib/hub-thread-history-adapter";
 
-function isUiMessageArray(value: unknown): value is UIMessage[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (m) => m && typeof m === "object" && "role" in m && (m as { role: string }).role !== undefined
-    )
-  );
-}
+import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 
 /**
  * Owns the single dashboard hub `Chat` instance and hydrates Mastra memory once.
@@ -29,43 +31,85 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const { setMessages, messages } = helpers;
 
   const [historyReady, setHistoryReady] = React.useState(false);
-  const hydrateStartedRef = React.useRef(false);
+  const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
+  const nextHistoryPageRef = React.useRef(1);
+  const loadingOlderRef = React.useRef(false);
+  const allMessagesRef = React.useRef<typeof messages>([]);
+  const setMessagesRef = React.useRef(setMessages);
+  const messagesRef = React.useRef(messages);
 
-  const historyQuery = useListHubMessagesQuery(!historyReady);
+  const history = React.useMemo(
+    () => createHubThreadHistoryAdapter({ loadPage: fetchHubMessagesPage }),
+    []
+  );
 
-  // Hydrate from Memory once history settles (async setState avoids sync-effect lint).
+  // 1.3 `useExternalHistory` only invokes `history.withFormat().load()` when a
+  // Cloud `threadListItem.remoteId` exists. Without Cloud we inject page 0
+  // once via `setMessages` — never dual-load with the adapter.
+  //
+  // Casts: `@assistant-ui/react-ai-sdk@1.3` types against nested `@ai-sdk/react@3`
+  // + `@assistant-ui/core@0.2`; the app uses catalog `@ai-sdk/react@2` and
+  // `@assistant-ui/react` (core 0.3). Runtime shapes match.
+  const runtime = useAISDKRuntime(helpers as unknown as Parameters<typeof useAISDKRuntime>[0], {
+    joinStrategy: "concat-content",
+    adapters: { history }
+  });
+
   React.useEffect(() => {
-    if (historyReady || historyQuery.isLoading || hydrateStartedRef.current) return;
-    hydrateStartedRef.current = true;
+    setMessagesRef.current = setMessages;
+    messagesRef.current = messages;
+  }, [messages, setMessages]);
 
+  const importHistory = React.useCallback((uiMessages: typeof messages, replacePath: boolean) => {
+    allMessagesRef.current = uiMessages;
+    if (uiMessages.length === 0) return;
+    if (!replacePath && messagesRef.current.length > 0) return;
+    // Official AI SDK hydrate: setMessages only (useExternalHistory.load is
+    // gated on Cloud remoteId). joinStrategy concat-content merges consecutive
+    // assistants, so persist the latest sibling path — durable history is linear.
+    const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(uiMessages));
+    setMessagesRef.current(linear.length > 0 ? linear : uiMessages);
+  }, []);
+
+  React.useEffect(() => {
     let cancelled = false;
-    void Promise.resolve().then(() => {
-      if (cancelled) return;
-      if (historyQuery.isError) {
+    void fetchHubMessagesPage(0)
+      .then((page) => {
+        if (cancelled) return;
+        importHistory(page.uiMessages, false);
+        setHasMoreHistory(page.hasMore);
+        nextHistoryPageRef.current = 1;
         setHistoryReady(true);
-        return;
-      }
-      const data = historyQuery.data as
-        | { uiMessages?: unknown[] | null; messages?: unknown[] }
-        | undefined;
-      const ui = data?.uiMessages;
-      if (isUiMessageArray(ui) && ui.length > 0 && messages.length === 0) {
-        setMessages(ui);
-      }
-      setHistoryReady(true);
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setHistoryReady(true);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [
-    historyQuery.data,
-    historyQuery.isError,
-    historyQuery.isLoading,
-    historyReady,
-    messages.length,
-    setMessages
-  ]);
+  }, [importHistory]);
+
+  const loadOlderMessages = React.useCallback(async () => {
+    if (!historyReady || !hasMoreHistory || loadingOlderRef.current) return;
+    loadingOlderRef.current = true;
+    setIsLoadingOlder(true);
+    try {
+      const page = nextHistoryPageRef.current;
+      const data = await fetchHubMessagesPage(page);
+      const merged = prependUniqueHubMessages(
+        data.uiMessages,
+        unionHubMessages(allMessagesRef.current, messagesRef.current)
+      );
+      importHistory(merged, true);
+      nextHistoryPageRef.current = page + 1;
+      setHasMoreHistory(data.hasMore);
+    } finally {
+      loadingOlderRef.current = false;
+      setIsLoadingOlder(false);
+    }
+  }, [hasMoreHistory, historyReady, importHistory]);
 
   const addToolApprovalResponse = React.useCallback(
     (args: HubToolApprovalResponseArgs): void | PromiseLike<void> => {
@@ -91,9 +135,21 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     ...helpers,
     chat,
     historyReady,
+    hasMoreHistory,
+    isLoadingOlder,
+    loadOlderMessages,
     addToolApprovalResponse,
     addToolOutput
   };
 
-  return <HubChatContext value={value}>{children}</HubChatContext>;
+  return (
+    <AssistantRuntimeProvider
+      runtime={
+        runtime as unknown as React.ComponentProps<typeof AssistantRuntimeProvider>["runtime"]
+      }
+      config={hubAssistantAuiConfig}
+    >
+      <HubChatContext value={value}>{children}</HubChatContext>
+    </AssistantRuntimeProvider>
+  );
 }

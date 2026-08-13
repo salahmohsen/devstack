@@ -276,6 +276,7 @@ export function startDetectStacksJob(input: StartDetectStacksJobInput) {
         stepLabel: null,
         results: result,
         error: null,
+        // Open review immediately; host is dashboard-mounted so this works after form close.
         dialogOpen: true,
         projectId
       });
@@ -289,7 +290,10 @@ export function startDetectStacksJob(input: StartDetectStacksJobInput) {
         action: {
           label: "Review",
           onClick: () => {
-            setDetectJobState({ dialogOpen: true });
+            // Defer so sonner focus/dismiss does not race Base UI dialog open.
+            queueMicrotask(() => {
+              setDetectReviewOpen(true);
+            });
           }
         },
         duration: 12_000

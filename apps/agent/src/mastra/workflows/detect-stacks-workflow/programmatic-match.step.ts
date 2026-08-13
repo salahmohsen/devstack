@@ -37,6 +37,7 @@ export const programmaticMatch = createStep({
     const dependencyMap = new Map(
       initData.existingDependencies.map((d) => [d.npmPackage, d.stackId])
     );
+    const stackNameById = new Map(initData.existingStacks.map((s) => [s.id, s.name]));
 
     const matched: Array<{
       npmPackage: string;
@@ -53,7 +54,8 @@ export const programmaticMatch = createStep({
         matched.push({
           npmPackage: dep.name,
           stackId,
-          name: dep.name,
+          // Prefer library display name over raw npm package (was showing "react-dom" etc.)
+          name: stackNameById.get(stackId) ?? dep.name,
           repo: dep.repo,
           relatedPackages: []
         });
