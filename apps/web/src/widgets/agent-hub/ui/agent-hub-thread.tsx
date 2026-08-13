@@ -7,8 +7,7 @@ import {
   SuggestionPrimitive,
   ThreadPrimitive,
   unstable_useThreadMessageIds,
-  useAuiState,
-  useThreadViewport
+  useAuiState
 } from "@assistant-ui/react";
 import { Sparkles } from "lucide-react";
 import * as React from "react";
@@ -105,36 +104,51 @@ function useHubDayRows(hubMessages: UIMessage[]): HubDayRow[] {
 }
 
 export function AgentHubThread() {
+  const { messages, historyReady, hasMoreHistory, isLoadingOlder, loadOlderMessages } =
+    useHubChat();
+  const [viewportEl, setViewportEl] = React.useState<HTMLDivElement | null>(null);
+  const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
+    enabled: historyReady && messages.length > 0,
+    hasMore: hasMoreHistory,
+    isLoading: isLoadingOlder,
+    loadOlder: loadOlderMessages,
+    viewport: viewportEl,
+    messageCount: messages.length
+  });
+
   return (
     <ThreadPrimitive.Root
       className="aui-root aui-thread-root @container flex h-full min-h-0 flex-col bg-background"
       style={threadRootStyle}
     >
       <ThreadPrimitive.Viewport
+        ref={setViewportEl}
         turnAnchor="bottom"
         scrollToBottomOnInitialize
         data-slot="aui_thread-viewport"
         className="relative flex min-h-0 flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
       >
-        <AgentHubThreadBody />
+        <AgentHubThreadBody
+          sentinelRef={sentinelRef}
+          loadError={loadError}
+          onRetryLoadOlder={retry}
+        />
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
   );
 }
 
-function AgentHubThreadBody() {
-  const {
-    messages,
-    historyReady,
-    hasMoreHistory,
-    isLoadingOlder,
-    loadOlderMessages,
-    error,
-    clearError,
-    regenerate
-  } = useHubChat();
+function AgentHubThreadBody({
+  sentinelRef,
+  loadError,
+  onRetryLoadOlder
+}: {
+  sentinelRef: (node: HTMLElement | null) => void;
+  loadError: boolean;
+  onRetryLoadOlder: () => void;
+}) {
+  const { messages, historyReady, isLoadingOlder, error, clearError, regenerate } = useHubChat();
 
-  const viewport = useThreadViewport((s) => s.element.viewport);
   const threadMessageCount = useAuiState((s) => s.thread.messages.length);
   const isRunning = useAuiState((s) => s.thread.isRunning);
   const lastMessageStatus = useAuiState((s) => s.thread.messages.at(-1)?.status);
@@ -142,29 +156,9 @@ function AgentHubThreadBody() {
   const waitingApproval =
     lastMessageStatus?.type === "requires-action" && lastMessageStatus.reason === "interrupt";
   const dayRows = useHubDayRows(messages);
-  const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
-    enabled: historyReady && threadMessageCount > 0,
-    hasMore: hasMoreHistory,
-    isLoading: isLoadingOlder,
-    loadOlder: loadOlderMessages,
-    viewport,
-    messageCount: threadMessageCount
-  });
 
-  const [dismissedError, setDismissedError] = React.useState<string | null>(null);
-
-  const errorMessage = error?.message ?? null;
-  const showError = Boolean(errorMessage) && errorMessage !== dismissedError;
   const isEmpty = historyReady && threadMessageCount === 0 && !isRunning;
   const composerDisabled = !historyReady || hitlPending;
-
-  const handleRetryError = React.useCallback(() => {
-    setDismissedError(null);
-    clearError();
-    if (messages.some((message) => message.role === "user")) {
-      void regenerate();
-    }
-  }, [clearError, messages, regenerate]);
 
   return (
     <div
@@ -185,7 +179,7 @@ function AgentHubThreadBody() {
           sentinelRef={sentinelRef}
           isLoading={isLoadingOlder}
           loadError={loadError}
-          onRetry={retry}
+          onRetry={onRetryLoadOlder}
         />
       ) : null}
 
@@ -224,16 +218,14 @@ function AgentHubThreadBody() {
         )}
       >
         <ThreadScrollToBottom />
-        {showError ? (
-          <AgentHubErrorCard
-            message={errorMessage ?? undefined}
-            onRetry={handleRetryError}
-            onDismiss={() => {
-              setDismissedError(errorMessage);
-              clearError();
-            }}
-          />
-        ) : null}
+        <HubStreamErrorCard
+          errorMessage={error?.message ?? null}
+          hasUserMessage={messages.some((message) => message.role === "user")}
+          onClearError={clearError}
+          onRegenerate={() => {
+            void regenerate();
+          }}
+        />
         <Composer
           attachments={false}
           disabled={composerDisabled}
@@ -260,6 +252,37 @@ function AgentHubThreadBody() {
         </AuiIf>
       </ThreadPrimitive.ViewportFooter>
     </div>
+  );
+}
+
+function HubStreamErrorCard({
+  errorMessage,
+  hasUserMessage,
+  onClearError,
+  onRegenerate
+}: {
+  errorMessage: string | null;
+  hasUserMessage: boolean;
+  onClearError: () => void;
+  onRegenerate: () => void;
+}) {
+  const [dismissedError, setDismissedError] = React.useState<string | null>(null);
+  const showError = Boolean(errorMessage) && errorMessage !== dismissedError;
+  if (!showError) return null;
+
+  return (
+    <AgentHubErrorCard
+      message={errorMessage ?? undefined}
+      onRetry={() => {
+        setDismissedError(null);
+        onClearError();
+        if (hasUserMessage) onRegenerate();
+      }}
+      onDismiss={() => {
+        setDismissedError(errorMessage);
+        onClearError();
+      }}
+    />
   );
 }
 
