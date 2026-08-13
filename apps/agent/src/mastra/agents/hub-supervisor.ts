@@ -10,6 +10,7 @@ import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agen
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
+import { createHubInputProcessors } from "#@/mastra/processors/hub-processors";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
 import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
@@ -33,13 +34,18 @@ import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-work
 import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow";
 
 /**
- * Hub supervisor — single /dashboard chat orchestrator.
- * Career mail agents/workflows are the same ones queues use (no second path).
+ * Hub capability inventory (product wiring — no weather demo).
  *
- * Tenant auth: chat handlers set `requestContext.userId` from the session.
- * When starting workflows that take a `userId` input field, that value MUST be
- * the authenticated user's id from context — never invent or accept a different
- * tenant id. CRM tools never take `userId` from tool input (requestContext only).
+ * | Surface        | Hub-exposed                                                                 | Intentionally not on hub                                      |
+ * | -------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
+ * | Tools          | CRM/evidence reads, propose JD, create-application, generate-apply-package  | fetch-job-page (used by harvest/extractor agents)             |
+ * | Agents         | stack, mail classify/reply, harvest extractors, CRM matcher/stage advisor   | applyPackageAgent, jobAgentTake, providerPing, resume extractor |
+ * | Workflows      | detect/organize stacks, resume import, mail process/classify/harvest/reply  | applyPackageWorkflow (via generate-apply-package tool + HITL) |
+ *
+ * Long multi-step workflows opt into Mastra background tasks (manager +
+ * Postgres domain required — enabled on the Mastra instance). HITL tools stay
+ * foreground: create-application, generate-apply-package, and approval-gated
+ * workflows still use requireToolApproval before execute.
  */
 export function createHubSupervisor() {
   return new Agent({
@@ -62,6 +68,7 @@ CRM reads: \`listOpenApplications\`, \`getApplication\`.
 CRM write / HITL: \`propose-application-from-jd\` (client confirm card), \`create-application\` (after save|package).
 Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`.
 Apply package (HITL approval): \`generateApplyPackage\` — application must already exist; never invent package success.
+Long jobs (detect/organize/import/mail process/harvest) may run as background tasks — acknowledge briefly and wait for results if the stream continues; do not invent completion.
 
 ## Response discipline (critical)
 - Intermediate steps: prefer **tools only** (or one short status sentence). Never dump full capability lists mid-loop.
@@ -77,6 +84,24 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
 - Surface empty/error tool results plainly.
 - Keep responses concise and actionable.`,
     model: byoModelFromRequestContext,
+    inputProcessors: createHubInputProcessors(),
+    /**
+     * Long workflows: background dispatch (Mastra manager + Postgres).
+     * Keys are agent/workflows registration names (framework strips agent-/workflow- prefixes).
+     * HITL tools are intentionally omitted so approval stays on the chat stream.
+     */
+    backgroundTasks: {
+      tools: {
+        detectStacksWorkflow: { enabled: true, timeoutMs: 900_000 },
+        organizeStacksWorkflow: { enabled: true, timeoutMs: 900_000 },
+        resumeImportWorkflow: { enabled: true, timeoutMs: 600_000 },
+        mailProcessWorkflow: { enabled: true, timeoutMs: 600_000 },
+        mailJobHarvestWorkflow: { enabled: true, timeoutMs: 900_000 },
+        mailClassifyWorkflow: { enabled: true, timeoutMs: 300_000 }
+        // mailReplyWorkflow: foreground — draft quality needed in-turn
+        // createApplication / generateApplyPackage: HITL foreground only
+      }
+    },
     /**
      * maxSteps: 4 (align with packages/api HUB_CHAT_MAX_STEPS).
      * Multi-step enables real tool chains (read → propose → package).
@@ -99,8 +124,24 @@ Apply package (HITL approval): \`generateApplyPackage\` — application must alr
         }
         return { continue: true };
       },
+      /**
+       * Limit parent history forwarded to specialists/workflows — full tool
+       * dumps blow sub-agent context and confuse narrow skills.
+       */
+      delegation: {
+        messageFilter: ({ messages }) => {
+          // Forward recent text turns only — drop tool-invocation parts so
+          // specialists don't inherit huge detect/organize/CRM tool dumps.
+          const withoutToolParts = messages.filter((m) => {
+            const parts = m.content?.parts;
+            if (!Array.isArray(parts) || parts.length === 0) return true;
+            return !parts.some((p) => p?.type === "tool-invocation");
+          });
+          return withoutToolParts.slice(-8);
+        }
+      },
       requireToolApproval: ({ toolName }) =>
-        // Workflow tools are exposed as agent tools named after the workflow id.
+        // Workflow tools are exposed as agent tools named after the workflow id / key.
         // generate-apply-package is the thin CRM package bridge (HITL).
         // create-application must not silently insert tracked rows without HITL.
         /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify|generate-apply-package|generateApplyPackage|create-application|createApplication/i.test(
