@@ -26,6 +26,7 @@
     "@hextaui": "https://hextaui.com/r/{name}.json",
     "@files-sdk": "https://files-sdk.dev/r/{name}.json",
     "@coss": "https://coss.com/ui/r/{name}.json",
-    "@reui": "https://reui.io/r/{name}.json"
+    "@reui": "https://reui.io/r/{name}.json",
+    "@assistant-ui": "https://r.assistant-ui.com/styles/{style}/{name}.json"
   }
 }
