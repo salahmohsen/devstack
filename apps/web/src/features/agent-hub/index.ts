@@ -52,10 +52,6 @@ export type {
   HubMessagesPageResult,
   ListHubMessagesQueryResult
 } from "./api/list-hub-messages.query";
-export {
-  collapseConsecutiveTextParts,
-  filterTextWhileStreaming
-} from "./lib/collapse-consecutive-text-parts";
 export { messageCreatedAt, formatHubDayLabel, formatHubTimeLabel } from "./lib/hub-ui-message-time";
 export {
   createHubThreadHistoryAdapter,
@@ -63,7 +59,6 @@ export {
   prependUniqueHubMessages
 } from "./lib/hub-thread-history-adapter";
 export type { HubHistoryPage, HubHistoryItem } from "./lib/hub-thread-history-adapter";
-export type { CollapseMessagePart } from "./lib/collapse-consecutive-text-parts";
 export {
   HUB_CLIENT_RESUME_TOOL_NAMES,
   lastAssistantMessageIsCompleteWithClientResumeTools,

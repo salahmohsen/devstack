@@ -303,9 +303,6 @@ catalogs:
     lucide-react:
       specifier: ^1.22.0
       version: 1.22.0
-    marked:
-      specifier: ^18.0.7
-      version: 18.0.7
     mastra:
       specifier: ^1.20.3
       version: 1.20.3
@@ -778,9 +775,6 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 1.22.0(react@19.2.7)
-      marked:
-        specifier: 'catalog:'
-        version: 18.0.7
       motion:
         specifier: 'catalog:'
         version: 12.42.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -9650,11 +9644,6 @@ packages:
   marked@15.0.12:
     resolution: {integrity: sha512-8dD6FusOQSrpv9Z1rdNMdlSgQOIP880DHqnohobOmYLElGEqAL/JvxvuxZO16r4HtjTlfPRDC1hbvxC9dPN2nA==}
     engines: {node: '>= 18'}
-    hasBin: true
-
-  marked@18.0.7:
-    resolution: {integrity: sha512-iDVQ5ldaiKXn6b2JroX5kgRfmwgqolW7NpaEzTl1k/2Zh1njIEN9yniyLV/mOvWwtsE8OGgkjsCYvijuPk1dtA==}
-    engines: {node: '>= 20'}
     hasBin: true
 
   mastra@1.20.3:
@@ -19762,8 +19751,6 @@ snapshots:
   markdown-table@3.0.4: {}
 
   marked@15.0.12: {}
-
-  marked@18.0.7: {}
 
   mastra@1.20.3(@hono/node-server@1.19.14(hono@4.12.32))(@mastra/core@1.54.0(ai@6.0.250(zod@4.4.3))(express@5.2.1)(zod@4.4.3))(typescript@6.0.3)(zod@4.4.3):
     dependencies:
