@@ -12,13 +12,18 @@ import { createDb, projectRepository, runWithDb } from "@tsu-stack/db";
 export const getProjectTool = createTool({
   id: "get-project",
   description:
-    "Fetch one project by id (title, year, summary, stacks, links) for the current user only.",
+    "Fetch one project by id (title, year, summary, stacks, links) for the current user only. Required: projectId from listProjects. Never call with {} or a missing id — list first, then pass that id.",
   inputSchema: z.object({
-    projectId: z.string().min(1)
+    projectId: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Project id from listProjects. Required; do not omit.")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
     found: z.boolean(),
+    error: z.string().optional(),
     project: z
       .object({
         id: z.string(),
@@ -36,6 +41,13 @@ export const getProjectTool = createTool({
       .nullable()
   }),
   execute: async ({ projectId }, context) => {
+    if (!projectId) {
+      return {
+        found: false,
+        project: null,
+        error: "projectId is required. Call listProjects first and pass one of the returned ids."
+      };
+    }
     // Force tenant from requestContext — ignore any model-supplied identity.
     const userId = context.requestContext?.get?.("userId") as string | undefined;
     if (!userId) {

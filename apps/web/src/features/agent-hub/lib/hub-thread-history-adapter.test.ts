@@ -3,8 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   createHubThreadHistoryAdapter,
+  hubHistoryHasBranches,
+  hubHistoryHeadPath,
   mapUiMessagesToHistoryItems,
-  prependUniqueHubMessages
+  prependUniqueHubMessages,
+  unionHubMessages
 } from "./hub-thread-history-adapter";
 
 function msg(id: string, role: "user" | "assistant" = "user"): UIMessage {
@@ -36,6 +39,72 @@ describe("mapUiMessagesToHistoryItems", () => {
     expect(items).toHaveLength(1);
     expect(items[0]).toEqual({ parentId: null, message: expect.objectContaining({ id: "kept" }) });
   });
+
+  it("treats consecutive text-only assistant replies as siblings of the user turn", () => {
+    const items = mapUiMessagesToHistoryItems([
+      msg("u1"),
+      msg("a1", "assistant"),
+      msg("a2", "assistant"),
+      msg("u2"),
+      msg("a3", "assistant")
+    ]);
+    expect(items.map((item) => item.parentId)).toEqual([null, "u1", "u1", "a2", "u2"]);
+    expect(hubHistoryHeadPath(items).map((message) => message.id)).toEqual([
+      "u1",
+      "a2",
+      "u2",
+      "a3"
+    ]);
+    expect(hubHistoryHasBranches(items)).toBe(true);
+  });
+
+  it("treats consecutive tool-bearing assistant turns as regenerate siblings", () => {
+    const toolTurn = (id: string, text: string): UIMessage => {
+      return {
+        id,
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-listProjects",
+            toolCallId: `tc-${id}`,
+            state: "output-available",
+            input: {},
+            output: { projects: [] }
+          },
+          { type: "text", text }
+        ]
+      };
+    };
+    const items = mapUiMessagesToHistoryItems([
+      msg("u1"),
+      toolTurn("a1", "first summary"),
+      toolTurn("a2", "second summary")
+    ]);
+    expect(items.map((item) => item.parentId)).toEqual([null, "u1", "u1"]);
+    expect(hubHistoryHeadPath(items).map((message) => message.id)).toEqual(["u1", "a2"]);
+    expect(hubHistoryHasBranches(items)).toBe(true);
+  });
+
+  it("keeps a completed tool step then final text on a linear path", () => {
+    const toolThenText = {
+      id: "tool",
+      role: "assistant",
+      parts: [
+        { type: "text", text: "Looking that up." },
+        {
+          type: "tool-getProject",
+          toolCallId: "tc1",
+          state: "output-available",
+          input: { projectId: "p1" },
+          output: { found: true }
+        }
+      ]
+    } as UIMessage;
+    const items = mapUiMessagesToHistoryItems([msg("u1"), toolThenText, msg("a1", "assistant")]);
+    expect(items.map((item) => item.parentId)).toEqual([null, "u1", "tool"]);
+    expect(hubHistoryHeadPath(items).map((message) => message.id)).toEqual(["u1", "tool", "a1"]);
+    expect(hubHistoryHasBranches(items)).toBe(false);
+  });
 });
 
 describe("prependUniqueHubMessages", () => {
@@ -43,6 +112,14 @@ describe("prependUniqueHubMessages", () => {
     const current = [msg("b"), msg("c")];
     const older = [msg("a"), msg("b")];
     expect(prependUniqueHubMessages(older, current).map((m) => m.id)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("unionHubMessages", () => {
+  it("appends extras that are not already present", () => {
+    expect(unionHubMessages([msg("a")], [msg("a"), msg("b")]).map((message) => message.id)).toEqual(
+      ["a", "b"]
+    );
   });
 });
 

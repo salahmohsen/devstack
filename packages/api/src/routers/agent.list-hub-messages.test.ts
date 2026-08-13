@@ -199,4 +199,89 @@ describe("shapeListHubMessagesPage", () => {
       page: 1
     });
   });
+
+  it("converts Mastra DB messages when uiMessages is missing", () => {
+    const page = shapeListHubMessagesPage({
+      page: 0,
+      perPage: 40,
+      uiMessages: null,
+      messages: [
+        {
+          id: "m2",
+          role: "assistant",
+          createdAt: "2026-08-13T12:00:00.000Z",
+          content: { format: 2, parts: [{ type: "text", text: "hi" }] }
+        },
+        {
+          id: "m1",
+          role: "user",
+          createdAt: "2026-08-13T11:00:00.000Z",
+          content: { format: 2, parts: [{ type: "text", text: "hello" }] }
+        }
+      ]
+    });
+
+    expect(page.uiMessages).toEqual([
+      {
+        id: "m1",
+        role: "user",
+        parts: [{ type: "text", text: "hello" }],
+        metadata: { createdAt: "2026-08-13T11:00:00.000Z" }
+      },
+      {
+        id: "m2",
+        role: "assistant",
+        parts: [{ type: "text", text: "hi" }],
+        metadata: { createdAt: "2026-08-13T12:00:00.000Z" }
+      }
+    ]);
+  });
+
+  it("maps tool-invocation parts so hydrated HITL stays renderable", () => {
+    const page = shapeListHubMessagesPage({
+      page: 0,
+      perPage: 40,
+      uiMessages: [],
+      messages: [
+        {
+          id: "a1",
+          role: "assistant",
+          createdAt: "2026-08-13T12:00:00.000Z",
+          content: {
+            format: 2,
+            parts: [
+              {
+                type: "tool-invocation",
+                toolInvocation: {
+                  toolCallId: "tc1",
+                  toolName: "generate-apply-package",
+                  state: "approval-requested",
+                  args: { applicationId: "app-1" },
+                  approval: { id: "run-1::tc1" }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    });
+
+    expect(page.uiMessages).toEqual([
+      {
+        id: "a1",
+        role: "assistant",
+        parts: [
+          {
+            type: "tool-generate-apply-package",
+            toolCallId: "tc1",
+            toolName: "generate-apply-package",
+            state: "approval-requested",
+            input: { applicationId: "app-1" },
+            approval: { id: "run-1::tc1" }
+          }
+        ],
+        metadata: { createdAt: "2026-08-13T12:00:00.000Z" }
+      }
+    ]);
+  });
 });

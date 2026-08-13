@@ -2,6 +2,7 @@ import { type UIMessage } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { mastraDbMessagesToUiMessages } from "@tsu-stack/api/routers/agent.list-hub-messages";
 
 import { HUB_AGENT_ID } from "./use-hub-chat";
 
@@ -59,8 +60,13 @@ export async function fetchHubMessagesPage(page: number): Promise<HubMessagesPag
     limit: HUB_MESSAGES_PAGE_SIZE,
     page
   });
+  const fromUi = isHubUiMessageArray(data.uiMessages) ? data.uiMessages : [];
+  const fromDb =
+    fromUi.length === 0 && Array.isArray(data.messages)
+      ? mastraDbMessagesToUiMessages(data.messages)
+      : [];
   return {
-    uiMessages: isHubUiMessageArray(data.uiMessages) ? data.uiMessages : [],
+    uiMessages: fromUi.length > 0 ? fromUi : isHubUiMessageArray(fromDb) ? fromDb : [],
     hasMore: data.hasMore,
     page: data.page
   };

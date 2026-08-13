@@ -13,7 +13,10 @@ import {
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
   createHubThreadHistoryAdapter,
-  prependUniqueHubMessages
+  hubHistoryHeadPath,
+  mapUiMessagesToHistoryItems,
+  prependUniqueHubMessages,
+  unionHubMessages
 } from "@/features/agent-hub/lib/hub-thread-history-adapter";
 
 import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
@@ -25,14 +28,16 @@ import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const chat = React.useMemo(() => createHubChat(), []);
   const helpers = useChat({ chat });
-  const { setMessages } = helpers;
+  const { setMessages, messages } = helpers;
 
   const [historyReady, setHistoryReady] = React.useState(false);
   const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
   const nextHistoryPageRef = React.useRef(1);
-  const hydrateStartedRef = React.useRef(false);
   const loadingOlderRef = React.useRef(false);
+  const allMessagesRef = React.useRef<typeof messages>([]);
+  const setMessagesRef = React.useRef(setMessages);
+  const messagesRef = React.useRef(messages);
 
   const history = React.useMemo(
     () => createHubThreadHistoryAdapter({ loadPage: fetchHubMessagesPage }),
@@ -52,16 +57,27 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   });
 
   React.useEffect(() => {
-    if (hydrateStartedRef.current) return;
-    hydrateStartedRef.current = true;
+    setMessagesRef.current = setMessages;
+    messagesRef.current = messages;
+  }, [messages, setMessages]);
 
+  const importHistory = React.useCallback((uiMessages: typeof messages, replacePath: boolean) => {
+    allMessagesRef.current = uiMessages;
+    if (uiMessages.length === 0) return;
+    if (!replacePath && messagesRef.current.length > 0) return;
+    // Official AI SDK hydrate: setMessages only (useExternalHistory.load is
+    // gated on Cloud remoteId). joinStrategy concat-content merges consecutive
+    // assistants, so persist the latest sibling path — durable history is linear.
+    const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(uiMessages));
+    setMessagesRef.current(linear.length > 0 ? linear : uiMessages);
+  }, []);
+
+  React.useEffect(() => {
     let cancelled = false;
     void fetchHubMessagesPage(0)
       .then((page) => {
         if (cancelled) return;
-        if (page.uiMessages.length > 0) {
-          setMessages((current) => (current.length === 0 ? page.uiMessages : current));
-        }
+        importHistory(page.uiMessages, false);
         setHasMoreHistory(page.hasMore);
         nextHistoryPageRef.current = 1;
         setHistoryReady(true);
@@ -73,7 +89,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [setMessages]);
+  }, [importHistory]);
 
   const loadOlderMessages = React.useCallback(async () => {
     if (!historyReady || !hasMoreHistory || loadingOlderRef.current) return;
@@ -82,14 +98,18 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     try {
       const page = nextHistoryPageRef.current;
       const data = await fetchHubMessagesPage(page);
-      setMessages((current) => prependUniqueHubMessages(data.uiMessages, current));
+      const merged = prependUniqueHubMessages(
+        data.uiMessages,
+        unionHubMessages(allMessagesRef.current, messagesRef.current)
+      );
+      importHistory(merged, true);
       nextHistoryPageRef.current = page + 1;
       setHasMoreHistory(data.hasMore);
     } finally {
       loadingOlderRef.current = false;
       setIsLoadingOlder(false);
     }
-  }, [hasMoreHistory, historyReady, setMessages]);
+  }, [hasMoreHistory, historyReady, importHistory]);
 
   const addToolApprovalResponse = React.useCallback(
     (args: HubToolApprovalResponseArgs): void | PromiseLike<void> => {

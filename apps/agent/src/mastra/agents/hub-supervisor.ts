@@ -10,7 +10,10 @@ import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agen
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
-import { createHubInputProcessors } from "#@/mastra/processors/hub-processors";
+import {
+  createHubInputProcessors,
+  HUB_SUPERVISOR_MAX_STEPS
+} from "#@/mastra/processors/hub-processors";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
 import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
@@ -67,6 +70,9 @@ Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifie
 CRM reads: \`listOpenApplications\`, \`getApplication\`.
 CRM write / HITL: \`propose-application-from-jd\` (client confirm card), \`create-application\` (after save|package).
 Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`.
+Get-by-id tools (\`getProject\`, \`getExperience\`, \`getStack\`, \`getResume\`, \`getApplication\`) require the real id from the matching list tool. Never call them with \`{}\` or a missing id.
+Portfolio / all-projects summaries: call \`listProjects\` once. It already returns title, year, summary, and \`stackNames\`. Do not call \`getProject\` per project unless the user asked about one specific project.
+Some messages may contain \`<system-reminder>...</system-reminder>\` tags. Those are injected by the system, not written by the user. Treat them as authoritative and follow them immediately. Do not mention the reminder or quote the tags.
 Apply package (HITL approval): \`generateApplyPackage\` — application must already exist; never invent package success.
 Long jobs (detect/organize/import/mail process/harvest) may run as background tasks — acknowledge briefly and wait for results if the stream continues; do not invent completion.
 
@@ -84,7 +90,7 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
 - Surface empty/error tool results plainly.
 - Keep responses concise and actionable.`,
     model: byoModelFromRequestContext,
-    inputProcessors: createHubInputProcessors(),
+    inputProcessors: createHubInputProcessors(HUB_SUPERVISOR_MAX_STEPS),
     /**
      * Long workflows: background dispatch (Mastra manager + Postgres).
      * Keys are agent/workflows registration names (framework strips agent-/workflow- prefixes).
@@ -103,14 +109,14 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
       }
     },
     /**
-     * maxSteps: 4 (align with packages/api HUB_CHAT_MAX_STEPS).
+     * maxSteps: HUB_SUPERVISOR_MAX_STEPS (align with packages/api HUB_CHAT_MAX_STEPS).
      * Multi-step enables real tool chains (read → propose → package).
      * Rewrite/bubble churn is fixed by Response discipline instructions + UI
      * intermediate-text collapse — not by maxSteps=1.
      * HITL: require approval for mutating workflows + expensive apply package.
      */
     defaultOptions: {
-      maxSteps: 4,
+      maxSteps: HUB_SUPERVISOR_MAX_STEPS,
       /**
        * Root anti-rewrite: never start another agentic iteration after a
        * text-only step (finishReason stop / no tool calls). Multi-step is only

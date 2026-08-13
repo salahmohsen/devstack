@@ -207,6 +207,10 @@ overrides:
   hono: "catalog:"
   kysely: 0.28.17
   yoga-layout: 2.0.1
+  # assistant-ui doctor: one core/store. @assistant-ui/react@0.15.13 uses 0.3;
+  # @assistant-ui/react-ai-sdk@1.3.40 (last AI SDK v6 pin) still declares 0.2.
+  "@assistant-ui/core": 0.3.12
+  "@assistant-ui/store": 0.3.8
 
 # vite-plus-core is published under a different package name than "vite"; allow
 # consumers that declare peer vite to resolve the aliased package.

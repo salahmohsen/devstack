@@ -127,7 +127,16 @@ export default defineConfig({
     alias: {
       "@": resolve(import.meta.dirname, "./src")
     },
-    tsconfigPaths: true
+    tsconfigPaths: true,
+    // assistant-ui doctor: one core instance. Vite can still instantiate
+    // react + react-ai-sdk copies separately without this.
+    dedupe: [
+      "@assistant-ui/core",
+      "@assistant-ui/store",
+      "@assistant-ui/tap",
+      "@assistant-ui/react",
+      "@assistant-ui/react-ai-sdk"
+    ]
   },
   define: {
     __BUILD_NODE_ENV__: JSON.stringify(ENV_WEB_SERVER.NODE_ENV),

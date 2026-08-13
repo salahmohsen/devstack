@@ -1,6 +1,11 @@
 "use client";
 
-import { AuiIf, SuggestionPrimitive, ThreadPrimitive } from "@assistant-ui/react";
+import {
+  AuiIf,
+  SuggestionPrimitive,
+  ThreadPrimitive,
+  unstable_useThreadMessageIds
+} from "@assistant-ui/react";
 import { Sparkles } from "lucide-react";
 import * as React from "react";
 
@@ -18,7 +23,7 @@ import {
   UserMessage
 } from "@/shared/ui/assistant-ui/thread";
 
-import { buildHubDayRows, lastHubHitlKind, useHubChat } from "@/features/agent-hub";
+import { buildHubDayRows, lastHubHitlKind, useHubChat, type HubDayRow } from "@/features/agent-hub";
 
 import { useLoadOlderOnScrollTop } from "@/widgets/agent-hub/lib/use-load-older-on-scroll-top";
 
@@ -59,7 +64,10 @@ export function AgentHubThread() {
   const isRunning = status === "submitted" || status === "streaming";
   const hitl = lastHubHitlKind(messages);
   const isEmpty = historyReady && messages.length === 0 && !isRunning;
-  const dayRows = React.useMemo(() => buildHubDayRows(messages), [messages]);
+  const dayById = React.useMemo(
+    () => new Map(buildHubDayRows(messages).map((row) => [row.id, row])),
+    [messages]
+  );
 
   return (
     <ThreadPrimitive.Root
@@ -97,31 +105,7 @@ export function AgentHubThread() {
 
           {isEmpty ? <HubWelcome /> : null}
 
-          {historyReady && dayRows.length > 0 ? (
-            <div data-slot="aui_message-group" className="mb-14 flex flex-col gap-y-6">
-              {dayRows.map((row) => (
-                <div key={row.id} className="group relative flex flex-col gap-2">
-                  {row.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
-                  <div className="relative">
-                    {row.timeLabel ? (
-                      <DaySeparatorTime
-                        className={cn(
-                          "pointer-events-none absolute top-3 z-10",
-                          row.role === "user" ? "inset-s-0" : "inset-e-0"
-                        )}
-                      >
-                        {row.timeLabel}
-                      </DaySeparatorTime>
-                    ) : null}
-                    <ThreadPrimitive.Unstable_MessageById
-                      messageId={row.id}
-                      components={HUB_MESSAGE_COMPONENTS}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
+          {historyReady && !isEmpty ? <HubDayMessages dayById={dayById} /> : null}
 
           <ThreadPrimitive.ViewportFooter
             className={cn(
@@ -196,6 +180,44 @@ function HubStreamErrorCard({
         onClearError();
       }}
     />
+  );
+}
+
+/**
+ * TAP-only: `unstable_useThreadMessageIds` must not share a component with
+ * React `useState` (assistant-ui TAP compiler hook cache).
+ */
+function HubDayMessages({ dayById }: { dayById: Map<string, HubDayRow> }) {
+  const ids = unstable_useThreadMessageIds();
+  if (ids.length === 0) return null;
+
+  return (
+    <div data-slot="aui_message-group" className="mb-14 flex flex-col gap-y-6">
+      {ids.map((id) => {
+        const row = dayById.get(id);
+        return (
+          <div key={id} className="group relative flex flex-col gap-2">
+            {row?.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
+            <div className="relative">
+              {row?.timeLabel ? (
+                <DaySeparatorTime
+                  className={cn(
+                    "pointer-events-none absolute top-3 z-10",
+                    row.role === "user" ? "inset-s-0" : "inset-e-0"
+                  )}
+                >
+                  {row.timeLabel}
+                </DaySeparatorTime>
+              ) : null}
+              <ThreadPrimitive.Unstable_MessageById
+                messageId={id}
+                components={HUB_MESSAGE_COMPONENTS}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

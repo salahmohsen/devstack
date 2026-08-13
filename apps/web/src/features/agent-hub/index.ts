@@ -58,8 +58,14 @@ export { buildHubDayRows } from "./lib/hub-day-rows";
 export type { HubDayRow } from "./lib/hub-day-rows";
 export {
   createHubThreadHistoryAdapter,
+  hubHistoryExportedRepository,
+  hubHistoryHasBranches,
+  hubHistoryHeadPath,
+  isPureTextHubAssistantReply,
+  isToolBearingHubAssistant,
   mapUiMessagesToHistoryItems,
-  prependUniqueHubMessages
+  prependUniqueHubMessages,
+  unionHubMessages
 } from "./lib/hub-thread-history-adapter";
 export type { HubHistoryPage, HubHistoryItem } from "./lib/hub-thread-history-adapter";
 export {
