@@ -1,5 +1,4 @@
 import { ORPCError } from "@orpc/server";
-import { buildDocumentPDFBytes } from "pdfnative";
 
 import {
   DeleteInputSchema,
@@ -25,7 +24,7 @@ import {
   toProjectOutput,
   toStackOutput
 } from "#@/routers/portfolio.mappers";
-import { buildResumeDocument } from "#@/routers/resume-pdf";
+import { renderResumePdfBytes } from "#@/routers/resume-pdf";
 
 async function fetchPortfolioData(userId: string) {
   const experiences = await experienceRepository.findOptedInByUserId(userId);
@@ -139,8 +138,7 @@ export const resumeRouter = {
       const filename = formatFilename(profile.name);
       const r2Key = `${userId}/resumes/${filename}`;
 
-      const { params, layout } = buildResumeDocument({ portfolio, profile });
-      const bytes = buildDocumentPDFBytes(params, layout);
+      const bytes = await renderResumePdfBytes({ portfolio, profile });
 
       await context.mediaBucket.put(r2Key, bytes.slice().buffer as ArrayBuffer, {
         httpMetadata: { contentType: "application/pdf" }

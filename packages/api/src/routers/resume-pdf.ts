@@ -1,4 +1,4 @@
-import { type DocumentBlock, type DocumentParams } from "pdfnative";
+import { buildDocumentPDFBytes, type DocumentBlock, type DocumentParams } from "pdfnative";
 
 import {
   formatStackTypeLabel,
@@ -6,6 +6,8 @@ import {
   STACK_TYPE_ORDER,
   stripUrl
 } from "@tsu-stack/core";
+
+import { loadPdfALatinFontEntries } from "#@/lib/pdf/pdfa-latin-font";
 
 // Re-export for callers/tests that import from this module.
 export { formatStackTypeLabel } from "@tsu-stack/core";
@@ -510,6 +512,7 @@ function estimateBlockHeight(block: DocumentBlock, contentWidth: number): number
       return estimateLines(block.text, contentWidth, sz) * (sz * 1.4) + 4;
     }
     case "barcode":
+    case "chart":
     case "formField":
     case "image":
     case "svg":
@@ -751,4 +754,11 @@ export function buildResumeDocument(data: ResumeBuilderData): {
     // PDF/A-2u + tagged structure: best pdfnative target for ATS/text extraction.
     layout: { tagged: "pdfa2u", margins }
   };
+}
+
+/** Generate resume PDF bytes with embedded Noto Sans (strict PDF/A-2u). */
+export async function renderResumePdfBytes(data: ResumeBuilderData): Promise<Uint8Array> {
+  const { params, layout } = buildResumeDocument(data);
+  const fontEntries = await loadPdfALatinFontEntries();
+  return buildDocumentPDFBytes({ ...params, fontEntries }, layout);
 }

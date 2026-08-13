@@ -144,7 +144,7 @@ catalog:
   "@tanstack/react-store": ^0.11.0
   "@fontsource-variable/inter": ^5.2.8
   geist: ^1.7.2
-  pdfnative: ^1.4.0
+  pdfnative: ^1.6.0
   pdfnative-react: ^0.2.0
   "@better-auth/drizzle-adapter": 1.7.0-rc.1
   "mastra": "^1.20.3"

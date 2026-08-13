@@ -1,3 +1,4 @@
+import { extractText, validatePdfUA } from "pdfnative";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -11,7 +12,9 @@ import {
   formatStackTypeLabel,
   groupStacksByType,
   preventOrphanHeadings,
-  projectStackNames
+  projectStackNames,
+  renderResumePdfBytes,
+  type ResumeBuilderData
 } from "#@/routers/resume-pdf";
 
 describe("contactHref", () => {
@@ -328,5 +331,87 @@ describe("buildResumeDocument", () => {
       true
     );
     expect(skillLines.some((t) => t.startsWith("UI:") && t.includes("React"))).toBe(true);
+  });
+});
+
+function flattenExtractedText(extracted: unknown): string {
+  if (typeof extracted === "string") return extracted;
+  if (Array.isArray(extracted)) {
+    return extracted
+      .map((page) => {
+        if (typeof page === "string") return page;
+        if (page && typeof page === "object" && "text" in page) {
+          const text = (page as { text?: unknown }).text;
+          return typeof text === "string" ? text : "";
+        }
+        return "";
+      })
+      .join("\n");
+  }
+  throw new Error(`Unexpected extractText shape: ${JSON.stringify(extracted).slice(0, 240)}`);
+}
+
+function atsResumeFixture(): ResumeBuilderData {
+  return {
+    profile: { name: "Salah Mohsen", email: "salah@example.com" },
+    portfolio: {
+      experiences: [
+        {
+          organization: "Acme Labs",
+          title: "Senior Frontend Engineer",
+          fromDate: "2024-01-01",
+          toDate: null,
+          isPresent: true,
+          description: "<ul><li>Shipped typed design systems</li></ul>",
+          includedInPortfolio: true
+        }
+      ],
+      projects: [
+        {
+          title: "Dev-Hub",
+          summary: null,
+          description: "<ul><li>Built multi-tenant career OS</li></ul>",
+          stacks: [{ name: "TypeScript", includedInPortfolio: true, sortOrder: 0 }],
+          includedInPortfolio: true,
+          isArchived: false
+        }
+      ],
+      stacks: [{ name: "TypeScript", type: "language", includedInPortfolio: true, sortOrder: 0 }],
+      contacts: [
+        { type: "email", value: "salah@example.com", sortOrder: 0 },
+        { type: "github", value: "salah", sortOrder: 1 }
+      ]
+    }
+  };
+}
+
+describe("ATS extractText smoke", () => {
+  it("preserves heading and bullet reading order in generated resume PDF", async () => {
+    const bytes = await renderResumePdfBytes(atsResumeFixture());
+    const pdfLatin1 = Buffer.from(bytes).toString("latin1");
+    expect(pdfLatin1).toMatch(/\/FontFile2/);
+
+    const ua = validatePdfUA(bytes);
+    expect(ua.errors.join("; ")).toBe("");
+    expect(ua.valid).toBe(true);
+
+    const extracted = extractText(bytes);
+    const text = flattenExtractedText(extracted).replace(/\s+/g, " ");
+
+    expect(text).toContain("Salah Mohsen");
+    expect(text).toContain("salah@example.com");
+    expect(text).toContain("github.com/salah");
+
+    const experienceAt = text.indexOf("EXPERIENCE");
+    const projectsAt = text.indexOf("PROJECTS");
+    const skillsAt = text.indexOf("SKILLS");
+    expect(experienceAt).toBeGreaterThan(-1);
+    expect(projectsAt).toBeGreaterThan(experienceAt);
+    expect(skillsAt).toBeGreaterThan(projectsAt);
+
+    expect(text.indexOf("Senior Frontend Engineer")).toBeLessThan(text.indexOf("Acme Labs"));
+    expect(text).toContain("Shipped typed design systems");
+    expect(text).toContain("Built multi-tenant career OS");
+    expect(text).toContain("Language: TypeScript");
   });
 });

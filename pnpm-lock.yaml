@@ -328,8 +328,8 @@ catalogs:
       specifier: 7.0.2001
       version: 7.0.2001
     pdfnative:
-      specifier: ^1.4.0
-      version: 1.4.0
+      specifier: ^1.6.0
+      version: 1.6.0
     pg:
       specifier: ^8.21.0
       version: 8.22.0
@@ -608,7 +608,7 @@ importers:
         version: 5.11.1
       pdfnative:
         specifier: 'catalog:'
-        version: 1.4.0
+        version: 1.6.0
       pg:
         specifier: 'catalog:'
         version: 8.22.0
@@ -771,7 +771,7 @@ importers:
         version: 2.9.0(@tanstack/react-router@1.170.16(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       pdfnative:
         specifier: 'catalog:'
-        version: 1.4.0
+        version: 1.6.0
       pg:
         specifier: 'catalog:'
         version: 8.22.0
@@ -955,7 +955,7 @@ importers:
         version: 6.2.4
       pdfnative:
         specifier: 'catalog:'
-        version: 1.4.0
+        version: 1.6.0
       unpdf:
         specifier: 'catalog:'
         version: 1.8.0
@@ -7067,6 +7067,7 @@ packages:
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
+    deprecated: v4 is no longer maintained, upgrade to v5
 
   croner@10.0.1:
     resolution: {integrity: sha512-ixNtAJndqh173VQ4KodSdJEI6nuioBWI0V1ITNKhZZsO0pEMoDxz539T4FTTbSZ/xIOSuDnzxLVRqBVSvPNE2g==}
@@ -9437,8 +9438,8 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
-  pdfnative@1.4.0:
-    resolution: {integrity: sha512-AckW7BeWr+nRoazFVB5/EoOXs1UOermEqsxL6fUnRV5jvD5+I953PvkDJZtiIWtTk41NsRQLVUFFAr1FKtW8bg==}
+  pdfnative@1.6.0:
+    resolution: {integrity: sha512-gzwDxXD8iMLM5tSd86RQwIiX0gh9Oe2IzpYCnOgVzsHqOIPnbOZdiHWRkxZphAXIofEdrqBb5Zr/uhSBiVyD7w==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -19002,7 +19003,7 @@ snapshots:
 
   pathe@2.0.3: {}
 
-  pdfnative@1.4.0: {}
+  pdfnative@1.6.0: {}
 
   peberminta@0.9.0: {}
 

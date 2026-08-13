@@ -1,5 +1,7 @@
 import { buildDocumentPDFBytes, type DocumentBlock, type DocumentParams } from "pdfnative";
 
+import { loadPdfALatinFontEntries } from "#@/lib/pdf/pdfa-latin-font";
+
 export type CoverLetterPdfInput = {
   candidateName: string;
   body: string;
@@ -39,7 +41,7 @@ function splitParagraphs(body: string): string[] {
 /**
  * Build a simple multi-paragraph cover letter PDF (pdfnative, same stack as resume).
  */
-export function buildCoverLetterPdfBytes(input: CoverLetterPdfInput): Uint8Array {
+export async function buildCoverLetterPdfBytes(input: CoverLetterPdfInput): Promise<Uint8Array> {
   const blocks: DocumentBlock[] = [];
 
   blocks.push({
@@ -79,9 +81,12 @@ export function buildCoverLetterPdfBytes(input: CoverLetterPdfInput): Uint8Array
     blocks.push({ type: "spacer", height: 10 });
   }
 
-  const params: DocumentParams = { blocks };
+  const params: DocumentParams = {
+    blocks,
+    fontEntries: await loadPdfALatinFontEntries()
+  };
   return buildDocumentPDFBytes(params, {
-    tagged: true,
+    tagged: "pdfa2u",
     margins: { t: 52, r: 52, b: 52, l: 52 }
   });
 }

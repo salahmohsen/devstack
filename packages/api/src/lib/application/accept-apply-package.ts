@@ -1,4 +1,3 @@
-import { buildDocumentPDFBytes } from "pdfnative";
 import { z } from "zod";
 
 import {
@@ -19,7 +18,7 @@ import {
 } from "@tsu-stack/db";
 
 import { buildCoverLetterPdfBytes } from "#@/lib/application/cover-letter-pdf";
-import { buildResumeDocument, type ResumeBuilderData } from "#@/routers/resume-pdf";
+import { renderResumePdfBytes, type ResumeBuilderData } from "#@/routers/resume-pdf";
 
 export type AcceptApplyPackageErrorCode = "NOT_FOUND" | "NO_DRAFT" | "INVALID_DRAFT";
 
@@ -241,12 +240,11 @@ export async function acceptApplyPackage(input: {
   const resumeFilename = formatResumeFilename(app.companyName, app.title);
   const resumeR2Key = `${input.userId}/resumes/${resumeFilename}`;
 
-  const { params, layout } = buildResumeDocument({
+  const resumeBytes = await renderResumePdfBytes({
     portfolio,
     profile,
     professionalSummary: draft.professionalSummary
   });
-  const resumeBytes = buildDocumentPDFBytes(params, layout);
 
   await input.mediaBucket.put(resumeR2Key, resumeBytes.slice().buffer as ArrayBuffer, {
     httpMetadata: { contentType: "application/pdf" }
@@ -267,7 +265,7 @@ export async function acceptApplyPackage(input: {
   const coverFilename = formatCoverFilename(app.companyName, app.title);
   const coverR2Key = `${input.userId}/cover-letters/${app.id}-${coverUuid}.pdf`;
 
-  const coverBytes = buildCoverLetterPdfBytes({
+  const coverBytes = await buildCoverLetterPdfBytes({
     candidateName: profile.name,
     body: draft.coverLetterBody,
     companyName: app.companyName,
