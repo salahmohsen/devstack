@@ -99,7 +99,7 @@ const SETTINGS_NAV: readonly NavItem[] = [
   {
     id: "ai",
     label: "AI",
-    description: "Providers, models, and mail reply autonomy",
+    description: "Providers, models, and AI features",
     to: "/dashboard/settings/ai",
     icon: Sparkles,
     group: "Intelligence"

@@ -247,7 +247,7 @@ registerCommands([
     label: "Settings: AI",
     group: "Settings",
     icon: Sparkles,
-    keywords: ["ai", "models", "providers", "autonomy"],
+    keywords: ["ai", "models", "providers"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/settings/ai" }
   },
