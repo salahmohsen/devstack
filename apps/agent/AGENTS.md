@@ -10,6 +10,7 @@ Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge â
 - Monorepo index: [Agents.md](../../Agents.md)
 - Logging facade: [Logging](../../.agents/logging.md) â€” use `@tsu-stack/logger` only; never import `evlog` directly from this app
 - Product glossary: [CONTEXT.md](../../CONTEXT.md)
+- After shipping hub tools / workflows / HITL: [app-ai-feature-hardening](../../.agents/skills/app-ai-feature-hardening/SKILL.md) (required verification + living `LESSONS.md`)
 
 ## Rules
 
