@@ -183,6 +183,7 @@ catalog:
   "@assistant-ui/react-ai-sdk": 1.3.40
   "@assistant-ui/react-markdown": 0.14.10
   zustand: ^5.0.14
+  react-doctor: ^0.9.11
 
 catalogMode: prefer
 

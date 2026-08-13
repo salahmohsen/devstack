@@ -40,7 +40,8 @@
     "log:map:write": "evlog map --cwd apps/web --framework tanstack-start",
     "log:doctor": "evlog doctor --cwd apps/web",
     "log:doctor:logger": "evlog doctor --cwd packages/logger",
-    "log:doctor:server": "evlog doctor --cwd apps/server"
+    "log:doctor:server": "evlog doctor --cwd apps/server",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "tailwindcss": "catalog:"
@@ -58,6 +59,7 @@
     "oxlint": "catalog:",
     "oxlint-tailwindcss": "catalog:",
     "oxlint-tsgolint": "catalog:",
+    "react-doctor": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
   },
