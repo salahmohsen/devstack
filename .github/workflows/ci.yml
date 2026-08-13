@@ -9,9 +9,12 @@ on:
 permissions:
   contents: read
 
+# PRs can cancel superseded check runs. Never cancel main: a later
+# web-only push was cancelling the server deploy that added listPage,
+# so production web called /rpc/*/listPage and got 404 empty lists.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Shared env for jobs that need packages/env/.env (web tests + build).
 env:
@@ -104,8 +107,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Need parent commit so paths-filter can diff push before..after.
-          fetch-depth: 2
+          # Need the full push range. fetch-depth: 2 only sees HEAD~1, so a
+          # multi-commit push (API + later web-only) looks web-only and skips
+          # the server deploy.
+          fetch-depth: 0
 
       # Mirrors prior Dokploy watch paths: app tree + workspace packages it
       # actually depends on. Root lockfile / workspace / docker helpers force
@@ -113,6 +118,8 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          # Diff the whole push, not just the tip commit.
+          base: ${{ github.event.before }}
           filters: |
             shared:
               - 'package.json'
