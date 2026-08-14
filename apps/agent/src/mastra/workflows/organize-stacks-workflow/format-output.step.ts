@@ -4,7 +4,8 @@ import { z } from "zod";
 import {
   OrganizeStacksOutputSchema,
   type OrganizeAction,
-  normalizeOrganizeActions
+  normalizeOrganizeActions,
+  sanitizeFeaturedStackIds
 } from "@tsu-stack/core";
 
 import { createAgentLogger as createLogger } from "#@/mastra/agent-logger";
@@ -25,6 +26,7 @@ export const formatOutput = createStep({
     renameActions: z.array(RenameActionSchema),
     enrichActions: z.array(EnrichActionSchema),
     sortOrder: z.array(z.string()),
+    featuredStackIds: z.array(z.string()).default([]),
     notes: z.array(z.string()).default([])
   }),
   outputSchema: OrganizeStacksOutputSchema,
@@ -78,6 +80,12 @@ export const formatOutput = createStep({
       sortOrder
     );
 
+    const victimIds = new Set(mergeActions.map((m) => m.victimId));
+    const featuredStackIds = sanitizeFeaturedStackIds(
+      inputData.featuredStackIds ?? [],
+      stacks.filter((s) => !victimIds.has(s.id)).map((s) => s.id)
+    );
+
     const summary = {
       merges: actions.filter((a) => a.type === "merge").length,
       renames: actions.filter((a) => a.type === "rename").length,
@@ -94,6 +102,7 @@ export const formatOutput = createStep({
       enrichCount: summary.enrichments,
       sorted: summary.sorted,
       sortCount: normalizedSortOrder.length,
+      featuredCount: featuredStackIds.length,
       noteCount: notes.length,
       durationMs: Date.now() - started
     });
@@ -103,7 +112,8 @@ export const formatOutput = createStep({
       actions,
       sortOrder: normalizedSortOrder,
       summary,
-      notes
+      notes,
+      featuredStackIds
     };
   }
 });

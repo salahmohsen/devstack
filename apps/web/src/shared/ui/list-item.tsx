@@ -3,11 +3,12 @@
 import { GripVertical } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@tsu-stack/ui/components/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
   Dialog,
+  DialogAction,
+  DialogCancel,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -106,21 +107,12 @@ export function ListItem({
 
   function handleDelete() {
     onDelete?.();
-    setDeleteDialogOpen(false);
   }
 
   const bodyContent = children ?? (
-    <div className="grid gap-5 md:max-w-3/4 md:grid-cols-[20rem_1fr]">
+    <div className={cn("grid min-w-0 gap-5 md:max-w-3/4", meta && "md:grid-cols-[20rem_1fr]")}>
       <CardTitle className="flex min-w-0 flex-col gap-1.5 self-center text-sm">
         <div className="flex min-w-0 items-center gap-2">
-          {inPortfolio !== undefined ? (
-            <span
-              className={cn(
-                "size-1 shrink-0 animate-pulse rounded-full",
-                inPortfolio ? "bg-success" : "bg-destructive"
-              )}
-            />
-          ) : null}
           {titleStart}
           <h3 className="min-w-0 truncate">{title}</h3>
         </div>
@@ -264,19 +256,23 @@ export function ListItem({
       </Card>
 
       {showDefaultActions && onDelete ? (
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <Dialog
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open && isDeleting) return;
+            setDeleteDialogOpen(open);
+          }}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{deleteTitle}</DialogTitle>
               <DialogDescription>{deleteDescription}</DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button onClick={() => setDeleteDialogOpen(false)} variant="outline">
-                Cancel
-              </Button>
-              <Button disabled={isDeleting} onClick={handleDelete} variant="destructive">
-                {isDeleting ? "Deleting..." : "Delete"}
-              </Button>
+              <DialogCancel disabled={isDeleting}>Cancel</DialogCancel>
+              <DialogAction variant="destructive" loading={isDeleting} onClick={handleDelete}>
+                Delete
+              </DialogAction>
             </DialogFooter>
           </DialogContent>
         </Dialog>

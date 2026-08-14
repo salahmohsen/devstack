@@ -4,6 +4,8 @@ import {
   AiSettingsOutputSchema,
   defaultAiModels,
   defaultAiSettingsOutput,
+  hubAvatarById,
+  hubPersonalityById,
   ListProviderModelsInputSchema,
   ListProviderModelsOutputSchema,
   maskApiKeyLast4,
@@ -51,6 +53,8 @@ function toOutput(
     providers: toPublicProviders(row.providers),
     models,
     modelProviderIds: row.modelProviderIds ?? {},
+    hubPersonality: hubPersonalityById(row.hubPersonality).id,
+    hubAvatar: hubAvatarById(row.hubAvatar).id,
     updatedAt: row.updatedAt
   });
 }
@@ -144,7 +148,9 @@ export const aiSettingsRouter = {
         userId,
         providers,
         models,
-        modelProviderIds
+        modelProviderIds,
+        hubPersonality: input.hubPersonality,
+        hubAvatar: input.hubAvatar
       });
 
       return toOutput(row);

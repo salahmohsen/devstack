@@ -10,8 +10,12 @@ export type ItemsNavContextValue = {
 
 const ItemsNavContext = createContext<ItemsNavContextValue | null>(null);
 
+export function useItemsNavContextOptional() {
+  return useContext(ItemsNavContext);
+}
+
 export function useItemsNavContext() {
-  const ctx = useContext(ItemsNavContext);
+  const ctx = useItemsNavContextOptional();
   if (!ctx) {
     throw new Error("useItemsNavContext must be used inside <ItemsNavProvider>.");
   }

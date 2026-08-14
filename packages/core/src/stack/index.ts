@@ -6,6 +6,7 @@ export * from "#@/stack/normalize-organize-actions";
 export * from "#@/stack/npm-registry";
 export * from "#@/stack/organize-stacks.types";
 export * from "#@/stack/package-families";
+export * from "#@/stack/recommend-profile-stacks";
 export * from "#@/stack/stack-type";
 export * from "#@/stack/types";
 export * from "#@/stack/sanitize-svg";

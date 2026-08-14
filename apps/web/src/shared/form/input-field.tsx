@@ -11,6 +11,9 @@ type InputFieldProps = {
   placeholder?: string;
   description?: string;
   type?: string;
+  autoComplete?: string;
+  disabled?: boolean;
+  maxLength?: number;
   classNames?: {
     field?: string;
     label?: string;
@@ -40,6 +43,9 @@ function InputField(props: InputFieldProps) {
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
         type={props.type ?? "text"}
+        autoComplete={props.autoComplete}
+        disabled={props.disabled}
+        maxLength={props.maxLength}
         value={field.state.value ?? ""}
         placeholder={props.placeholder}
         className={props.classNames?.input}

@@ -3,7 +3,7 @@
  * Never include API keys or full stack traces — first line / short message only.
  */
 
-export type OrganizeLlmStep = "rename" | "enrich" | "sort";
+export type OrganizeLlmStep = "rename" | "enrich" | "sort" | "profile";
 
 function firstLine(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error);
@@ -32,6 +32,8 @@ export function organizeLlmFailedNote(step: OrganizeLlmStep, error: unknown): st
       return `AI enrichments failed for some stacks — results may be incomplete${detailSuffix}.`;
     case "sort":
       return `AI importance order failed — used a default type + project ranking instead${detailSuffix}.`;
+    case "profile":
+      return `AI profile picks failed — featured stacks used resume-style defaults instead${detailSuffix}.`;
   }
 }
 

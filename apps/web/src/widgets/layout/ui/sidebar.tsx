@@ -62,6 +62,9 @@ const DashboardItems = [
   }
 ] as const;
 
+/** Initial nav width — keep in sync with `Sidebar001 defaultWidth`. */
+export const DASHBOARD_NAV_DEFAULT_WIDTH = 150;
+
 type NavItem = { href: string; label: string; group?: string; matchPrefix?: string };
 
 type Section = { label?: string; items: NavItem[] };
@@ -143,7 +146,7 @@ export function PublicSidebar() {
   const inboxBadgeLabel = inboxCount > 99 ? "99+" : String(inboxCount);
 
   return (
-    <Sidebar001 defaultWidth={150}>
+    <Sidebar001 defaultWidth={DASHBOARD_NAV_DEFAULT_WIDTH}>
       <Sidebar001Content>
         {sections.map((section, index) => (
           <Sidebar001Section key={section.label ?? `ungrouped-${index}`} label={section.label}>

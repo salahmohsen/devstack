@@ -31,6 +31,7 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] Agent does not invent success after reject
 - [ ] Related lists (New/Tracked/Dismissed) refresh via existing sync hooks
 - [ ] Toolkit registration name matches stream tool name
+- [ ] No assistant wrap-up text after a pending confirmation card (card is the UI; hide leftover “awaiting confirmation” if the model still writes it)
 
 ## D. Hub chat / assistant-ui
 

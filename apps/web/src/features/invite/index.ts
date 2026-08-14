@@ -14,6 +14,12 @@ export type {
   CreateInviteMutationResult
 } from "@/features/invite/api/create-invite.mutation";
 
+export { useSendInviteEmailsMutation } from "@/features/invite/api/send-invite-emails.mutation";
+export type {
+  SendInviteEmailsInput,
+  SendInviteEmailsMutationResult
+} from "@/features/invite/api/send-invite-emails.mutation";
+
 export {
   getRevokeInviteMutationOptions,
   useRevokeInviteMutation

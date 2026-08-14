@@ -1,7 +1,13 @@
 import { ORPCError, streamToEventIterator } from "@orpc/server";
 import { z } from "zod";
 
-import { DetectStacksClientInputSchema, llmLogFields } from "@tsu-stack/core";
+import {
+  DetectStacksClientInputSchema,
+  hubAvatarById,
+  hubPersonalityById,
+  llmLogFields
+} from "@tsu-stack/core";
+import { userAiSettingsRepository } from "@tsu-stack/db";
 import {
   projectStackScanRepository,
   stackDependencyRepository,
@@ -22,6 +28,15 @@ import {
 import { parseConcatenatedJsonStream } from "#@/lib/agent/parse-workflow-json-stream";
 import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
 import { assertWorkflowRunOwner } from "#@/lib/agent/workflow-run-registry";
+
+async function hubChatRequestContext(userId: string) {
+  const row = await userAiSettingsRepository.findByUserId(userId);
+  return {
+    userId,
+    hubPersonality: hubPersonalityById(row?.hubPersonality).id,
+    hubAvatar: hubAvatarById(row?.hubAvatar).id
+  };
+}
 import {
   abortPromise,
   cancelMastraWorkflowRun,
@@ -123,7 +138,7 @@ export const agentRouter = {
               llm,
               maxSteps: HUB_CHAT_MAX_STEPS,
               memory: hubChatMemoryOptions(userId).memory,
-              requestContext: { userId }
+              requestContext: await hubChatRequestContext(userId)
             })
           )
         });
@@ -242,7 +257,7 @@ export const agentRouter = {
               llm,
               maxSteps: HUB_CHAT_MAX_STEPS,
               memory: hubChatMemoryOptions(userId).memory,
-              requestContext: { userId },
+              requestContext: await hubChatRequestContext(userId),
               extras: { trigger }
             })
           ),
@@ -762,7 +777,9 @@ export const agentRouter = {
             description: stack.description,
             icon: stack.icon,
             projectCount: stack.projectCount ?? 0,
-            npmPackages: (stack.dependencies ?? []).map((d) => d.npmPackage)
+            npmPackages: (stack.dependencies ?? []).map((d) => d.npmPackage),
+            isFeatured: Boolean(stack.isFeatured),
+            includedInPortfolio: Boolean(stack.portfolioEntryId)
           };
         }),
         llm

@@ -87,6 +87,7 @@ export function ContextMenuItem({
       )}
       data-inset={inset}
       data-slot="context-menu-item"
+      data-cuelume-hover="tick"
       data-variant={variant}
       {...props}
     />

@@ -10,18 +10,18 @@ import {
   UpdateExperienceInputSchema,
   type ExperienceOutput
 } from "@tsu-stack/core";
-import { Button } from "@tsu-stack/ui/components/button";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
-import { useAppForm } from "@/shared/form";
+import { SubmitButton, useAppForm } from "@/shared/form";
 import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
-import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
+
+import { EntityFormSheet } from "@/pages/dashboard/_lib/entity-form-panel";
 
 type ExperienceFormProps = {
   initialData?: ExperienceOutput | null;
@@ -217,22 +217,21 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
       isDirty={isDirty}
       title={isEdit ? "Edit Experience" : "New Experience"}
       description={isEdit ? "Update your position details." : "Add a new position to your resume."}
-      footer={({ requestClose }) => (
-        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" type="button" disabled={busy} onClick={requestClose}>
-            Cancel
-          </Button>
-          <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
-            {isEdit
-              ? updateMutation.isPending
-                ? "Saving..."
-                : "Save"
-              : createMutation.isPending
-                ? "Creating..."
-                : "Create"}
-          </Button>
-        </div>
-      )}
+      updatedAt={experience?.updatedAt}
+      createdAt={experience?.createdAt}
+      actions={
+        <form.AppForm>
+          <SubmitButton
+            type="button"
+            size="sm"
+            actionLabel={isEdit ? "Save" : "Create"}
+            isLoading={busy}
+            submitFailed={createMutation.isError || updateMutation.isError}
+            resetKey={`${open}:${id ?? "new"}`}
+            onClick={() => void form.handleSubmit()}
+          />
+        </form.AppForm>
+      }
     >
       {body}
     </EntityFormSheet>

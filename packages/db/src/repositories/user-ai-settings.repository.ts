@@ -17,6 +17,8 @@ export type UpsertUserAiSettingsInput = {
   models: StoredAiModels;
   /** Omit to keep existing bindings (update) or default `{}` (insert). */
   modelProviderIds?: StoredAiModelProviderIds;
+  hubPersonality?: string;
+  hubAvatar?: string;
 };
 
 export const userAiSettingsRepository = {
@@ -34,6 +36,8 @@ export const userAiSettingsRepository = {
     const existing = await this.findByUserId(input.userId);
     const modelProviderIds =
       input.modelProviderIds ?? existing?.modelProviderIds ?? ({} as StoredAiModelProviderIds);
+    const hubPersonality = input.hubPersonality ?? existing?.hubPersonality ?? "cairo";
+    const hubAvatar = input.hubAvatar ?? existing?.hubAvatar ?? "scarab";
 
     if (existing) {
       const [row] = await db
@@ -42,6 +46,8 @@ export const userAiSettingsRepository = {
           providers: input.providers,
           models: input.models,
           modelProviderIds,
+          hubPersonality,
+          hubAvatar,
           updatedAt: new Date()
         })
         .where(eq(userAiSettings.userId, input.userId))
@@ -57,7 +63,9 @@ export const userAiSettingsRepository = {
         userId: input.userId,
         providers: input.providers,
         models: input.models,
-        modelProviderIds
+        modelProviderIds,
+        hubPersonality,
+        hubAvatar
       })
       .returning();
     if (!row) throw new Error("Failed to insert user_ai_settings");

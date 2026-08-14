@@ -112,7 +112,7 @@ function GitHubRepoMultiCombobox(props: GitHubRepoMultiComboboxProps) {
         {selectedUrls.length > 0 ? (
           <Button
             type="button"
-            variant="ghost"
+            variant="destructive"
             size="icon-sm"
             onClick={clear}
             aria-label="Clear repositories"

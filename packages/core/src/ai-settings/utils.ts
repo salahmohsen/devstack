@@ -44,6 +44,8 @@ export function defaultAiSettingsOutput(): AiSettingsOutput {
     providers: [],
     models: defaultAiModels(),
     modelProviderIds: {},
+    hubPersonality: "cairo",
+    hubAvatar: "scarab",
     updatedAt: null
   };
 }

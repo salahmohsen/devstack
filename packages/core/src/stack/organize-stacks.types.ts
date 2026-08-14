@@ -24,7 +24,9 @@ export const OrganizeStacksInputSchema = z.object({
           .array(z.string())
           .optional()
           .default([])
-          .describe("npm packages linked to this stack")
+          .describe("npm packages linked to this stack"),
+        isFeatured: z.boolean().optional().describe("Already featured on the public profile"),
+        includedInPortfolio: z.boolean().optional().describe("Already on the public portfolio")
       })
     )
     .describe("All existing stacks from the database"),
@@ -78,7 +80,15 @@ export const OrganizeStacksOutputSchema = z.object({
   notes: z
     .array(z.string())
     .default([])
-    .describe("Soft-failure notes for UI (missing BYO, provider errors, timeouts)")
+    .describe("Soft-failure notes for UI (missing BYO, provider errors, timeouts)"),
+  /**
+   * Stacks to feature on the public profile row (resume Skills).
+   * Tight curated set — not the full portfolio. Empty → client heuristic.
+   */
+  featuredStackIds: z
+    .array(z.string())
+    .default([])
+    .describe("Recommended stack IDs for the public profile featured section")
 });
 
 export type OrganizeStacksInput = z.infer<typeof OrganizeStacksInputSchema>;

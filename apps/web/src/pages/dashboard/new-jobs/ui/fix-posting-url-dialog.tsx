@@ -1,19 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Link2Icon } from "lucide-react";
 
 import { type ApplicationOutput } from "@tsu-stack/core";
-import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Dialog,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
-import { Input } from "@tsu-stack/ui/components/input";
-import { Label } from "@tsu-stack/ui/components/label";
+import { PromptDialog } from "@tsu-stack/ui/components/prompt-dialog";
+
+import { useAppForm } from "@/shared/form";
 
 import { useRefreshFromListingUrlMutation } from "@/features/applications";
 
@@ -28,17 +20,8 @@ type FixPostingUrlDialogProps = {
  * extract in the background (sticky toast with live steps).
  */
 export function FixPostingUrlDialog({ open, application, onOpenChange }: FixPostingUrlDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {open && application ? (
-        <FixPostingUrlDialogBody
-          key={application.id}
-          application={application}
-          onOpenChange={onOpenChange}
-        />
-      ) : null}
-    </Dialog>
-  );
+  if (!open || !application) return null;
+  return <FixPostingUrlDialogBody application={application} onOpenChange={onOpenChange} />;
 }
 
 function FixPostingUrlDialogBody({
@@ -49,64 +32,42 @@ function FixPostingUrlDialogBody({
   onOpenChange: (open: boolean) => void;
 }) {
   const refresh = useRefreshFromListingUrlMutation();
-  const [url, setUrl] = useState(() => application.url ?? application.applyUrl ?? "");
-
-  const canSubmit = Boolean(url.trim().length > 8 && !refresh.isPending);
+  const form = useAppForm({
+    defaultValues: { url: application.url ?? application.applyUrl ?? "" },
+    onSubmit: ({ value }) => {
+      const url = value.url.trim();
+      if (url.length < 8) return;
+      void refresh.mutateAsync({
+        id: application.id,
+        url,
+        title: application.title,
+        companyName: application.companyName
+      });
+      onOpenChange(false);
+    }
+  });
 
   return (
-    <DialogPopup
-      className="flex w-full max-w-md flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
-      bottomStickOnMobile={false}
-      showCloseButton
+    <PromptDialog
+      open
+      onOpenChange={onOpenChange}
+      size="md"
+      title="Fix posting URL"
+      description={`${application.title} · ${application.companyName}. We fetch the page and re-run extract in the background.`}
+      icon={<Link2Icon className="size-4" strokeWidth={2} />}
+      submitLabel="Fetch job details"
+      submitLoading={refresh.isPending}
+      onSubmit={() => void form.handleSubmit()}
     >
-      <DialogHeader className="shrink-0 border-b px-5 py-4">
-        <DialogTitle>Fix posting URL</DialogTitle>
-        <DialogDescription>
-          {`${application.title} · ${application.companyName}`} We fetch the page and re-run AI
-          extract for title, company, and description in the background — you can keep browsing.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="space-y-2 px-5 py-4">
-        <Label htmlFor="fix-posting-url">Posting URL</Label>
-        <Input
-          id="fix-posting-url"
-          type="url"
-          inputMode="url"
-          autoComplete="url"
-          placeholder="https://…"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          disabled={refresh.isPending}
-          aria-label="Posting URL"
-        />
-      </div>
-      <DialogFooter className="shrink-0 border-t px-5 py-3">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => onOpenChange(false)}
-          disabled={refresh.isPending}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="button"
-          loading={refresh.isPending}
-          disabled={!canSubmit}
-          onClick={() => {
-            void refresh.mutateAsync({
-              id: application.id,
-              url: url.trim(),
-              title: application.title,
-              companyName: application.companyName
-            });
-            // Close immediately — progress lives in the sticky toast.
-            onOpenChange(false);
-          }}
-        >
-          Fetch job details
-        </Button>
-      </DialogFooter>
-    </DialogPopup>
+      <form.AppField name="url">
+        {(field) => (
+          <field.UrlField
+            label="Posting URL"
+            placeholder="jobs.example.com/…"
+            disabled={refresh.isPending}
+          />
+        )}
+      </form.AppField>
+    </PromptDialog>
   );
 }

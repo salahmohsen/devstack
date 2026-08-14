@@ -6,7 +6,12 @@ import { useRender } from "@base-ui/react/use-render";
 import { XIcon } from "lucide-react";
 import type React from "react";
 
-import { Button } from "@tsu-stack/ui/components/button";
+import { Button, type ButtonProps } from "@tsu-stack/ui/components/button";
+import {
+  DialogStatusAction,
+  dialogStatusSize,
+  labelFromChildren
+} from "@tsu-stack/ui/components/dialog-status-action";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -22,6 +27,71 @@ export function DialogTrigger(props: DialogPrimitive.Trigger.Props): React.React
 
 export function DialogClose(props: DialogPrimitive.Close.Props): React.ReactElement {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
+}
+
+type DialogFooterButtonProps = {
+  variant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
+  loading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+};
+
+/** Footer confirm. Glow follows `variant`; `loading` switches to pending. */
+export function DialogAction({
+  variant = "default",
+  size = "sm",
+  loading,
+  disabled,
+  className,
+  icon,
+  children,
+  onClick
+}: DialogFooterButtonProps): React.ReactElement {
+  const label = labelFromChildren(children) ?? "Continue";
+  return (
+    <DialogStatusAction
+      variant={variant}
+      size={dialogStatusSize(size)}
+      loading={loading === true}
+      disabled={disabled === true || loading === true}
+      label={label}
+      icon={icon}
+      className={className}
+      onClick={onClick}
+    />
+  );
+}
+
+/** Footer dismiss. Outline glow by default. */
+export function DialogCancel({
+  variant = "outline",
+  size = "sm",
+  disabled,
+  className,
+  children,
+  onClick
+}: DialogFooterButtonProps): React.ReactElement {
+  const label = labelFromChildren(children) ?? "Cancel";
+  return (
+    <DialogPrimitive.Close
+      data-slot="dialog-cancel"
+      disabled={disabled}
+      className={className}
+      render={
+        <DialogStatusAction
+          variant={variant}
+          size={dialogStatusSize(size)}
+          disabled={disabled === true}
+          label={label}
+        />
+      }
+      onClick={onClick}
+    />
+  );
 }
 
 export function DialogBackdrop({

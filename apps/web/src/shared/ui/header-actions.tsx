@@ -9,21 +9,14 @@ import {
   RotateCcwIcon,
   SparklesIcon,
   Trash2Icon,
-  X,
-  XIcon
+  X
 } from "lucide-react";
 
 import { Button } from "@tsu-stack/ui/components/button";
-import { Group, GroupSeparator, GroupText } from "@tsu-stack/ui/components/group";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { IconMorph, IconShake } from "@tsu-stack/ui/components/icon-motion";
-import {
-  Tooltip,
-  TooltipPopup,
-  TooltipProvider,
-  TooltipTrigger
-} from "@tsu-stack/ui/components/tooltip";
 
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiFlowTrigger } from "@/shared/ui/ai-flow-trigger";
 
 type OrganizeConfig = {
   isRunning: boolean;
@@ -136,38 +129,16 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
         </Group>
       ) : (
         <>
-          {organize?.isRunning ? (
-            <Group>
-              <GroupText aria-live="polite" className="cursor-default gap-2" role="status">
-                <DefaultLoader size="xs" />
-                <span className="max-w-45 min-w-fit shimmer truncate text-sm font-medium text-foreground">
-                  {organize.currentStep ?? "Organizing"}
-                </span>
-              </GroupText>
-              <GroupSeparator />
-              <TooltipProvider delay={0}>
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        aria-label="Cancel organize"
-                        onClick={organize.onCancel}
-                        size="icon"
-                        variant="outline"
-                      />
-                    }
-                  >
-                    <XIcon aria-hidden="true" />
-                  </TooltipTrigger>
-                  <TooltipPopup>Cancel</TooltipPopup>
-                </Tooltip>
-              </TooltipProvider>
-            </Group>
-          ) : organize ? (
-            <Button onClick={organize.onStart} variant="outline">
-              <SparklesIcon aria-hidden="true" />
-              Organize
-            </Button>
+          {organize ? (
+            <AiFlowTrigger
+              idleLabel="Organize"
+              icon={<SparklesIcon aria-hidden />}
+              running={organize.isRunning}
+              stepLabel={organize.currentStep}
+              runningFallback="Organizing"
+              onStart={organize.onStart}
+              onCancel={organize.onCancel}
+            />
           ) : null}
           {onSortStart && (
             <Button onClick={onSortStart} variant="outline">

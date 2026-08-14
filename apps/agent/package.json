@@ -14,7 +14,8 @@
     ".": "./src/index"
   },
   "scripts": {
-    "dev": "PORT=4111 dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
+    "rebuild:core-cache": "pnpm -w exec esbuild packages/core/src/index.ts --bundle --format=esm --platform=node --packages=external --outfile=packages/core/node_modules/.cache/@tsu-stack__core.mjs --sourcemap",
+    "dev": "pnpm run rebuild:core-cache && PORT=4111 dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
     "build": "IS_BUILD=true mastra build",
     "start": "node .mastra/output/index.mjs",
     "check": "vp check",
@@ -37,8 +38,10 @@
     "@tsu-stack/logger": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
+    "files-sdk": "catalog:",
     "hono": "catalog:",
     "ollama-ai-provider-v2": "catalog:",
+    "pdfnative": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"
   },

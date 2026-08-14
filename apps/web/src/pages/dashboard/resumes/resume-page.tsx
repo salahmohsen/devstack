@@ -2,20 +2,23 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import { FileTextIcon, StarIcon } from "lucide-react";
+import { DownloadIcon, FileTextIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import { type ResumeAuthor } from "@tsu-stack/core";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogPopup,
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
+import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 
 import {
@@ -39,11 +42,22 @@ import {
   isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
-import { ItemsInfoPanel } from "@/widgets/layout";
 
+import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { useResumeStore } from "@/pages/dashboard/resumes/_lib/resume.slice";
 
 const resumesRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/resumes/");
+
+function ResumeTypeBadges({ author, isDefault }: { author: ResumeAuthor; isDefault: boolean }) {
+  return (
+    <>
+      <Badge variant="secondary" size="sm">
+        {author}
+      </Badge>
+      {isDefault ? <Badge size="sm">Default</Badge> : null}
+    </>
+  );
+}
 
 export function ResumesPage() {
   const {
@@ -140,13 +154,13 @@ export function ResumesPage() {
 
   async function handleBatchDelete() {
     setBatchAction("delete");
-    setBatchDeleteDialogOpen(false);
     const ids = selectedIdList;
 
     try {
       await deleteMutation.mutateAsync({ ids });
       toast.success(`Deleted ${ids.length} resume(s).`);
       clearSelection();
+      setBatchDeleteDialogOpen(false);
     } catch {
       toast.error("Deletion failed.");
     }
@@ -209,18 +223,7 @@ export function ResumesPage() {
             deleteTitle="Delete this resume?"
             deleteDescription="This will permanently delete this resume PDF."
             title={resume.filename}
-            meta={
-              <p className="flex items-center gap-1">
-                <FileTextIcon size={14} />
-                <span>{resume.author}</span>
-                {resume.default && (
-                  <span className="ml-2 inline-flex items-center gap-1 text-xs text-amber-600">
-                    <StarIcon size={12} />
-                    Default
-                  </span>
-                )}
-              </p>
-            }
+            titleEnd={<ResumeTypeBadges author={resume.author} isDefault={resume.default} />}
           />
         ))}
       </ul>
@@ -256,28 +259,65 @@ export function ResumesPage() {
 
         {renderList()}
 
-        <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
+        <ItemsInspectHost
+          open={isAnyOpen}
+          item={openedItem}
+          title="Resume"
+          onOpenChange={(next) => {
+            if (!next) {
+              setOpenedItem(null);
+              setIsItemOpen(null);
+            }
+          }}
+        >
           {(item) => {
             if (!item) return null;
             return (
               <ItemInfoPanel
+                eyebrow={<FileTextIcon strokeWidth={1.75} />}
                 title={item.filename}
-                description={`Author: ${item.author}${item.default ? " • Default" : ""}`}
+                description={
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <ResumeTypeBadges author={item.author} isDefault={item.default} />
+                  </span>
+                }
+                actions={
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    render={
+                      <a
+                        href={`/api/resume/download/?id=${item.id}`}
+                        download
+                        aria-label={`Download ${item.filename}`}
+                      />
+                    }
+                  >
+                    <DownloadIcon strokeWidth={2} />
+                  </Button>
+                }
                 updatedAt={item.updatedAt}
                 createdAt={item.createdAt}
-                className="p-0"
               >
                 <embed
                   src={`/api/resume/download/?id=${item.id}&view=1`}
                   type="application/pdf"
-                  className="min-h-150 w-full overflow-hidden rounded-lg"
+                  className="min-h-150 w-full overflow-hidden rounded-xl border border-border/50 bg-muted/20"
+                  title={item.filename}
                 />
               </ItemInfoPanel>
             );
           }}
-        </ItemsInfoPanel>
+        </ItemsInspectHost>
 
-        <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+        <AlertDialog
+          open={batchDeleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open && isDeleting) return;
+            setBatchDeleteDialogOpen(open);
+          }}
+        >
           <AlertDialogPopup>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete {selectedCount} resume(s)?</AlertDialogTitle>
@@ -286,13 +326,16 @@ export function ResumesPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-              <AlertDialogClose
-                render={<Button variant="destructive" disabled={isDeleting} />}
-                onClick={handleBatchDelete}
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                loading={isDeleting}
+                onClick={() => {
+                  void handleBatchDelete();
+                }}
               >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </AlertDialogClose>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogPopup>
         </AlertDialog>

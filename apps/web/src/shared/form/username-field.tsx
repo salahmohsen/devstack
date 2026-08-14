@@ -1,11 +1,11 @@
 "use client";
 
-import { Check, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode } from "react";
 
-import { UsernameSchema } from "@tsu-stack/core";
 import { Field, FieldError } from "@tsu-stack/ui/components/field";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "@tsu-stack/ui/components/input-group";
+import { Group } from "@tsu-stack/ui/components/group";
+import { Input } from "@tsu-stack/ui/components/input";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { FieldLabelWithTooltip } from "./field-label-with-tooltip";
 import { useFieldContext } from "./form-contexts";
@@ -14,15 +14,18 @@ type UsernameFieldProps = {
   label?: string;
   description?: string;
   placeholder?: string;
-  /** Current saved username — suppresses the “available” checkmark when unchanged. */
-  currentUsername?: string;
+  readOnly?: boolean;
+  /** Used when `label` is omitted so the input stays named for assistive tech. */
+  ariaLabel?: string;
+  /** Trailing group actions (Cancel / Rename) joined to the input. */
+  actions?: ReactNode;
   classNames?: {
     field?: string;
     label?: string;
     description?: string;
     error?: string;
     input?: string;
-    inputGroup?: string;
+    group?: string;
   };
 };
 
@@ -42,65 +45,43 @@ function normalizeFieldErrors(raw: unknown[]): Array<{ message: string }> {
 }
 
 /**
- * Username input with trailing status: spinner while debounced async check runs,
- * green check only after a completed successful availability check for the current value.
+ * Username input. Availability is field-level async validation (errors below).
+ * No in-input spinner / check — pair with grouped Cancel / Submit actions.
  */
 function UsernameField(props: UsernameFieldProps) {
   const field = useFieldContext<string>();
   const value = field.state.value ?? "";
-  const isValidating = field.state.meta.isValidating;
   const errors = normalizeFieldErrors(field.state.meta.errors);
-  const hasError = errors.length > 0;
-  const normalized = value.trim().toLowerCase();
-  const isCurrent =
-    Boolean(props.currentUsername) && normalized === props.currentUsername?.toLowerCase();
-  const formatValid = UsernameSchema.safeParse(value).success;
-  const isDirty = field.state.meta.isDirty;
+  const isValidating = field.state.meta.isValidating;
 
-  // Track last isValidating + last confirmed username. Updated during render when
-  // inputs change (React-supported "adjusting state when a prop changes" pattern).
-  const [availability, setAvailability] = useState<{
-    wasValidating: boolean;
-    confirmedFor: string | null;
-  }>({ wasValidating: false, confirmedFor: null });
-
-  let confirmedFor = availability.confirmedFor;
-  let wasValidating = availability.wasValidating;
-  let availabilityDirty = false;
-
-  if (isValidating && !wasValidating) {
-    wasValidating = true;
-    confirmedFor = null;
-    availabilityDirty = true;
-  } else if (!isValidating && wasValidating) {
-    wasValidating = false;
-    if (!hasError && !isCurrent && formatValid && isDirty && normalized.length > 0) {
-      confirmedFor = normalized;
-    } else {
-      confirmedFor = null;
-    }
-    availabilityDirty = true;
-  }
-
-  if (
-    confirmedFor !== null &&
-    (confirmedFor !== normalized || hasError || isCurrent || !formatValid || !isDirty)
-  ) {
-    confirmedFor = null;
-    availabilityDirty = true;
-  }
-
-  if (availabilityDirty) {
-    setAvailability({ wasValidating, confirmedFor });
-  }
-
-  const showAvailable = confirmedFor !== null && confirmedFor === normalized;
-
-  let statusLabel = "";
-  if (isValidating) statusLabel = "Checking username";
-  else if (showAvailable) statusLabel = "Username available";
-  else if (hasError) statusLabel = errors[0]?.message ?? "Invalid username";
-  else if (isCurrent) statusLabel = "Current username";
+  const control = (
+    <Input
+      id={field.name}
+      name={field.name}
+      autoComplete="username"
+      autoCapitalize="none"
+      autoCorrect="off"
+      spellCheck={false}
+      readOnly={props.readOnly}
+      onBlur={field.handleBlur}
+      onChange={(e) => {
+        // validate() no-ops until touched; mark on first keystroke so every
+        // subsequent edit re-runs onChangeAsync (not only the first blur).
+        if (!field.state.meta.isTouched) {
+          field.setMeta((prev) => {
+            return { ...prev, isTouched: true };
+          });
+        }
+        field.handleChange(e.target.value);
+      }}
+      type="text"
+      value={value}
+      placeholder={props.placeholder}
+      aria-label={props.label ? undefined : props.ariaLabel}
+      aria-busy={isValidating || undefined}
+      className={cn(props.actions && "min-w-0 flex-1", props.classNames?.input)}
+    />
+  );
 
   return (
     <Field className={props.classNames?.field}>
@@ -113,34 +94,15 @@ function UsernameField(props: UsernameFieldProps) {
           description: props.classNames?.description
         }}
       />
-      <InputGroup className={props.classNames?.inputGroup}>
-        <InputGroupInput
-          id={field.name}
-          name={field.name}
-          autoComplete="username"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          onBlur={field.handleBlur}
-          onChange={(e) => field.handleChange(e.target.value)}
-          type="text"
-          value={value}
-          placeholder={props.placeholder}
-          aria-busy={isValidating || undefined}
-          aria-describedby={statusLabel ? `${field.name}-status` : undefined}
-          className={props.classNames?.input}
-        />
-        <InputGroupAddon align="inline-end" className="pointer-events-none">
-          {isValidating ? (
-            <Loader2 size={16} className="animate-spin text-muted-foreground" aria-hidden />
-          ) : null}
-          {showAvailable ? <Check size={16} className="text-success" aria-hidden /> : null}
-        </InputGroupAddon>
-      </InputGroup>
+      {props.actions ? (
+        <Group className={props.classNames?.group ?? "w-full min-w-0 items-stretch"}>
+          {control}
+          {props.actions}
+        </Group>
+      ) : (
+        control
+      )}
       <FieldError errors={errors} className={props.classNames?.error} />
-      <span id={`${field.name}-status`} className="sr-only" aria-live="polite">
-        {statusLabel}
-      </span>
     </Field>
   );
 }

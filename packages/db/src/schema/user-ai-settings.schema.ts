@@ -60,6 +60,10 @@ export const userAiSettings = pgTable(
       .$type<StoredAiModelProviderIds>()
       .notNull()
       .default({}),
+    /** Hub chat voice. Default `cairo` (Egyptian-cool). */
+    hubPersonality: text("hub_personality").notNull().default("cairo"),
+    /** Preset avatar id for the hub assistant floater. */
+    hubAvatar: text("hub_avatar").notNull().default("scarab"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

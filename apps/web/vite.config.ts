@@ -261,9 +261,11 @@ export default defineConfig({
          */
         tailwindcss(),
         /**
-         * TanStack Devtools Vite plugin.
+         * TanStack Devtools Vite plugin (@tanstack/devtools-vite 0.8).
          *
-         * The event bus defaults to :4206. Two failure modes we hit on this monorepo:
+         * 0.8 can also bridge isolated server runtimes (Nitro worker) over Vite's
+         * HotChannel, but the dedicated event bus still defaults to :4206.
+         * Two failure modes we hit on this monorepo:
          * 1) Stale process holds 4206 → next start throws EADDRINUSE and never binds
          *    :3000 (server/agent still start via `vp run dev`, so it "looks fine").
          * 2) With the bus enabled, configureServer can stall before Vite listens on

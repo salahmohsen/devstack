@@ -13,6 +13,8 @@ export const invite = pgTable(
     usedByUserId: text("used_by_user_id").references(() => user.id, {
       onDelete: "set null"
     }),
+    /** When set, this invite was emailed to this address. */
+    email: text("email"),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     usedAt: timestamp("used_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()

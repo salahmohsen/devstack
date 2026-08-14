@@ -1,16 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+function subscribe(query: string, onChange: () => void) {
+  const mq = window.matchMedia(query);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
 
 export function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false);
+  return useSyncExternalStore(
+    (onChange) => subscribe(query, onChange),
+    () => window.matchMedia(query).matches,
+    () => false
+  );
+}
 
+/** False until after mount so SSR/hydration do not flash a mobile overlay on desktop. */
+export function useIsClient() {
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia(query);
-    // oxlint-disable-next-line react-hooks-js/set-state-in-effect
-    setMatches(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, [query]);
-
-  return matches;
+    setReady(true);
+  }, []);
+  return ready;
 }

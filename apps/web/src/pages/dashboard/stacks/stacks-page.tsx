@@ -2,7 +2,7 @@
 
 import { rectSortingStrategy } from "@dnd-kit/sortable";
 import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Package } from "lucide-react";
+import { BoxesIcon, FolderKanbanIcon, LayersIcon, Package } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,7 +14,8 @@ import {
 } from "@tsu-stack/core";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -22,8 +23,6 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
-import { Button } from "@tsu-stack/ui/components/button";
-import { FrameTitle } from "@tsu-stack/ui/components/frame";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
@@ -51,6 +50,7 @@ import {
 import {
   GridSkeleton,
   ItemInfoPanel,
+  ItemInfoSection,
   ItemsEmpty,
   ItemsNavProvider,
   PageHeader,
@@ -58,8 +58,8 @@ import {
   isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
-import { ItemsInfoPanel } from "@/widgets/layout";
 
+import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { useStackStore } from "@/pages/dashboard/stacks/_lib/stack.slice";
 import {
   STACKS_LIST_STALE_TIME_MS,
@@ -85,65 +85,61 @@ function StackDetailPanel({ stack }: { stack: StackOutput }) {
 
   return (
     <ItemInfoPanel
-      title={
-        <div className="flex min-w-0 items-center gap-3">
-          {item.icon ? (
-            <Icon icon={item.icon} className="size-10 shrink-0 rounded object-contain" />
-          ) : (
-            <Package className="size-10 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-          )}
-          <FrameTitle className="text-lg">{item.name}</FrameTitle>
-        </div>
+      eyebrow={
+        item.icon ? (
+          <Icon icon={item.icon} className="size-5 rounded object-contain" />
+        ) : (
+          <LayersIcon strokeWidth={1.75} />
+        )
       }
+      title={item.name}
       description={
-        <>
-          {item.projectCount > 0 ? (
-            <span>
-              {item.projectCount} {item.projectCount === 1 ? "project" : "projects"}
-            </span>
-          ) : null}
-        </>
+        item.projectCount > 0
+          ? `${item.projectCount} ${item.projectCount === 1 ? "project" : "projects"}`
+          : "Not used on any project yet"
       }
       updatedAt={item.updatedAt}
       createdAt={item.createdAt}
     >
-      {item.description ? (
-        <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-          {item.description}
-        </Markdown>
-      ) : (
-        <p className="text-sm text-muted-foreground">No description.</p>
-      )}
+      <div className="space-y-8">
+        <ItemInfoSection title="Summary" icon={<Package strokeWidth={1.75} />}>
+          {item.description ? (
+            <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+              {item.description}
+            </Markdown>
+          ) : (
+            <p>No description.</p>
+          )}
+        </ItemInfoSection>
 
-      {detailQuery.isLoading && !detailQuery.data ? (
-        <p className="mt-4 text-xs text-muted-foreground">Loading details…</p>
-      ) : null}
+        {detailQuery.isLoading && !detailQuery.data ? (
+          <p className="text-sm text-muted-foreground">Loading details…</p>
+        ) : null}
 
-      {item.dependencies && item.dependencies.length > 0 ? (
-        <div className="mt-4">
-          <h4 className="mb-2 text-sm font-medium">Dependencies</h4>
-          <div className="flex flex-wrap gap-1.5">
-            {item.dependencies.map((dep) => (
-              <Badge key={dep.npmPackage} variant="secondary" size="sm">
-                {dep.npmPackage}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ) : null}
+        {item.dependencies && item.dependencies.length > 0 ? (
+          <ItemInfoSection title="Dependencies" icon={<BoxesIcon />}>
+            <div className="flex flex-wrap gap-1.5">
+              {item.dependencies.map((dep) => (
+                <Badge key={dep.npmPackage} variant="secondary" size="sm">
+                  {dep.npmPackage}
+                </Badge>
+              ))}
+            </div>
+          </ItemInfoSection>
+        ) : null}
 
-      {item.projects && item.projects.length > 0 ? (
-        <div className="mt-4">
-          <h4 className="mb-2 text-sm font-medium">Projects</h4>
-          <div className="flex flex-wrap gap-1.5">
-            {item.projects.map((project) => (
-              <Badge key={project.id} variant="secondary" size="sm">
-                {project.name}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      ) : null}
+        {item.projects && item.projects.length > 0 ? (
+          <ItemInfoSection title="Projects" icon={<FolderKanbanIcon />}>
+            <div className="flex flex-wrap gap-1.5">
+              {item.projects.map((project) => (
+                <Badge key={project.id} variant="secondary" size="sm">
+                  {project.name}
+                </Badge>
+              ))}
+            </div>
+          </ItemInfoSection>
+        ) : null}
+      </div>
     </ItemInfoPanel>
   );
 }
@@ -199,6 +195,7 @@ export function StacksPage() {
   const organizeActions = useOrganizeStacksJobSelector((s) => s.actions);
   const organizeSortOrder = useOrganizeStacksJobSelector((s) => s.sortOrder);
   const organizeNotes = useOrganizeStacksJobSelector((s) => s.notes);
+  const organizeFeaturedStackIds = useOrganizeStacksJobSelector((s) => s.featuredStackIds);
   const [isApplyingOrganize, setIsApplyingOrganize] = useState(false);
 
   function handleStartOrganize() {
@@ -280,22 +277,27 @@ export function StacksPage() {
           }
         }
 
-        // Portfolio inclusion (step 2): only write stacks whose flag actually changes
+        // Portfolio + featured (step 2): only write stacks whose flags actually change
         const currentById = new Map(stacks.map((s) => [s.id, s]));
         for (const item of payload.portfolio) {
           const current = currentById.get(item.id);
           if (!current) continue;
-          if (!!current.includedInPortfolio === item.includedInPortfolio) continue;
+          const portfolioChanged = !!current.includedInPortfolio !== item.includedInPortfolio;
+          const featuredChanged = !!current.isFeatured !== item.isFeatured;
+          if (!portfolioChanged && !featuredChanged) continue;
+          const patch: Record<string, unknown> = {};
+          if (portfolioChanged) patch.includedInPortfolio = item.includedInPortfolio;
+          if (featuredChanged) patch.isFeatured = item.isFeatured;
           const existing = batchItemMap.get(item.id);
           if (existing) {
             batchItemMap.set(item.id, {
               id: item.id,
-              data: { ...existing.data, includedInPortfolio: item.includedInPortfolio }
+              data: { ...existing.data, ...patch }
             });
           } else {
             batchItemMap.set(item.id, {
               id: item.id,
-              data: { includedInPortfolio: item.includedInPortfolio }
+              data: patch
             });
           }
         }
@@ -313,6 +315,7 @@ export function StacksPage() {
                   icon?: string | null;
                   type?: string | null;
                   includedInPortfolio?: boolean;
+                  isFeatured?: boolean;
                 };
               }>
             });
@@ -344,10 +347,21 @@ export function StacksPage() {
             const cur = currentById.get(p.id);
             return cur && !!cur.includedInPortfolio !== p.includedInPortfolio;
           }).length;
+          const featuredChanges = payload.portfolio.filter((p) => {
+            const cur = currentById.get(p.id);
+            return cur && !!cur.isFeatured !== p.isFeatured;
+          }).length;
           const totalChanges =
-            totalActions + (planSortOrder.length > 0 ? 1 : 0) + (portfolioChanges > 0 ? 1 : 0);
+            totalActions +
+            (planSortOrder.length > 0 ? 1 : 0) +
+            (portfolioChanges > 0 ? 1 : 0) +
+            (featuredChanges > 0 ? 1 : 0);
+          const extras = [
+            featuredChanges ? `${featuredChanges} featured` : null,
+            portfolioChanges ? `${portfolioChanges} portfolio` : null
+          ].filter(Boolean);
           toast.success(
-            `Organized ${totalChanges} change(s)${portfolioChanges ? ` · ${portfolioChanges} portfolio` : ""}.`
+            `Organized ${totalChanges} change(s)${extras.length > 0 ? ` · ${extras.join(" · ")}` : ""}.`
           );
           dismissOrganizeStacksJob();
         }
@@ -530,7 +544,6 @@ export function StacksPage() {
 
   async function handleBatchDelete() {
     setBatchAction("delete");
-    setBatchDeleteDialogOpen(false);
     const ids = selectedIdList;
     const results = await Promise.allSettled(ids.map((id) => orpcClient.stacks.delete({ id })));
 
@@ -538,6 +551,7 @@ export function StacksPage() {
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
+    setBatchDeleteDialogOpen(false);
 
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
@@ -718,12 +732,22 @@ export function StacksPage() {
 
         {renderGrid()}
 
-        <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
+        <ItemsInspectHost
+          open={isAnyOpen && !dialogOpen}
+          item={openedItem}
+          title="Stack"
+          onOpenChange={(next) => {
+            if (!next) {
+              setOpenedItem(null);
+              setIsItemOpen(null);
+            }
+          }}
+        >
           {(item) => {
             if (!item) return null;
             return <StackDetailPanel stack={item} />;
           }}
-        </ItemsInfoPanel>
+        </ItemsInspectHost>
 
         <StackForm
           key={editingStackId ?? "new"}
@@ -735,7 +759,13 @@ export function StacksPage() {
         />
 
         {/* ── Batch delete dialog ─────────────────────────────────── */}
-        <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+        <AlertDialog
+          open={batchDeleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open && isDeleting) return;
+            setBatchDeleteDialogOpen(open);
+          }}
+        >
           <AlertDialogPopup>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete {selectedCount} stack(s)?</AlertDialogTitle>
@@ -744,13 +774,16 @@ export function StacksPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-              <AlertDialogClose
-                render={<Button variant="destructive" disabled={isDeleting} />}
-                onClick={handleBatchDelete}
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                loading={isDeleting}
+                onClick={() => {
+                  void handleBatchDelete();
+                }}
               >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </AlertDialogClose>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogPopup>
         </AlertDialog>
@@ -773,6 +806,7 @@ export function StacksPage() {
           }}
           actions={organizeActions}
           sortOrder={organizeSortOrder}
+          featuredStackIds={organizeFeaturedStackIds}
           notes={organizeNotes}
           stacks={stacks}
           isPending={isApplyingOrganize}

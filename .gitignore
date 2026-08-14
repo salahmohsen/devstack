@@ -51,6 +51,7 @@ scripts/cloudflared.tunnel.yml
 *.playwright-mcp
 
 # Agent/browser debug screenshots dropped in repo root
+/*.png
 /stack-*.png
 /project-card-*.png
 /projects-stack-*.png

@@ -1,7 +1,19 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { DownloadIcon, ExternalLinkIcon, FileTextIcon, RefreshCwIcon } from "lucide-react";
+import {
+  AlignLeftIcon,
+  BriefcaseIcon,
+  DownloadIcon,
+  ExternalLinkIcon,
+  FileTextIcon,
+  HistoryIcon,
+  InfoIcon,
+  PackageIcon,
+  RefreshCwIcon,
+  SparklesIcon,
+  StickyNoteIcon
+} from "lucide-react";
 import { useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -22,7 +34,6 @@ import {
   DialogPopup,
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
-import { FrameDescription } from "@tsu-stack/ui/components/frame";
 
 import { Markdown } from "@/shared/ui/markdown";
 
@@ -36,7 +47,7 @@ import {
   useRegenerateAgentTakeMutation
 } from "@/features/applications";
 
-import { ItemInfoPanel } from "@/widgets/items-page";
+import { ItemInfoPanel, ItemInfoSection } from "@/widgets/items-page";
 
 import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
@@ -65,26 +76,12 @@ function postingHost(url: string) {
   }
 }
 
-/** Label left, value right — values share one foreground color. */
-function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 text-sm">
-      <dt className="shrink-0 pt-0.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        {label}
-      </dt>
+      <dt className="shrink-0 pt-0.5 text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-right text-foreground">{children}</dd>
     </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-2">
-      <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        {title}
-      </h3>
-      {children}
-    </section>
   );
 }
 
@@ -127,53 +124,92 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
   return (
     <>
       <ItemInfoPanel
+        eyebrow={<BriefcaseIcon strokeWidth={1.75} />}
         title={item.title}
         description={
-          <FrameDescription className="flex flex-col gap-2">
-            <span className="text-base font-medium text-foreground">{item.companyName}</span>
-            <span className="flex flex-wrap items-center gap-1.5">
-              {!isDiscovery ? (
+          <div className="space-y-2">
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>{item.companyName}</span>
+              {item.location?.trim() ? (
                 <>
-                  <ApplicationStageBadge stage={item.stage} />
-                  <ApplicationStatusBadge outcome={item.outcome} />
+                  <span aria-hidden className="text-border">
+                    ·
+                  </span>
+                  <span>{item.location}</span>
                 </>
               ) : null}
-              {item.matchScore != null ? (
-                <ApplicationMatchScoreBadge matchScore={item.matchScore} />
-              ) : null}
               {!isDiscovery && item.employmentType !== "unknown" ? (
-                <Badge variant="outline">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</Badge>
+                <>
+                  <span aria-hidden className="text-border">
+                    ·
+                  </span>
+                  <span>{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</span>
+                </>
               ) : null}
-              {!isDiscovery && item.hiringUrgency !== "unknown" ? (
-                <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
-              ) : null}
-              {(item.sourceTags ?? []).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-[10px] font-medium">
-                  {tag in APPLICATION_SOURCE_TAG_LABELS
-                    ? APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag]
-                    : tag}
-                </Badge>
-              ))}
-            </span>
-          </FrameDescription>
+            </p>
+            {(item.sourceTags ?? []).length > 0 ? (
+              <span className="flex flex-wrap items-center gap-1.5">
+                {(item.sourceTags ?? []).map((tag) => (
+                  <Badge key={tag} variant="secondary" size="sm">
+                    {tag in APPLICATION_SOURCE_TAG_LABELS
+                      ? APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag]
+                      : tag}
+                  </Badge>
+                ))}
+              </span>
+            ) : null}
+          </div>
+        }
+        actions={
+          <>
+            {!isDiscovery ? <ApplicationStageBadge stage={item.stage} /> : null}
+            {!isDiscovery ? <ApplicationStatusBadge outcome={item.outcome} /> : null}
+            {item.matchScore != null ? (
+              <ApplicationMatchScoreBadge matchScore={item.matchScore} />
+            ) : null}
+            {!isDiscovery && item.hiringUrgency !== "unknown" ? (
+              <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
+            ) : null}
+            {item.url ? (
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                render={
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Open job posting (${postingHost(item.url)})`}
+                  />
+                }
+              >
+                <ExternalLinkIcon strokeWidth={2} />
+              </Button>
+            ) : null}
+          </>
         }
         updatedAt={item.updatedAt}
         createdAt={item.createdAt}
       >
-        <div className="space-y-5">
-          {!isDiscovery ? <ApplyPackagePanelActions app={item} /> : null}
+        <div className="space-y-8">
+          {!isDiscovery ? (
+            <ItemInfoSection title="Apply package" icon={<PackageIcon />}>
+              <ApplyPackagePanelActions app={item} />
+            </ItemInfoSection>
+          ) : null}
 
-          <Section title="Agent's take">
+          <ItemInfoSection title="Agent's take" icon={<SparklesIcon />}>
             {item.agentTake?.trim() ? (
-              <p className="text-sm leading-relaxed text-muted-foreground">{item.agentTake}</p>
+              <p className="text-foreground">{item.agentTake}</p>
             ) : (
-              <p className="text-sm text-muted-foreground italic">No agent take yet.</p>
+              <p className="italic">No agent take yet.</p>
             )}
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="mt-2"
+              className="mt-3"
               loading={regenerateTake.isPending}
               onClick={() => {
                 void regenerateTake.mutateAsync({
@@ -187,16 +223,13 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
               <RefreshCwIcon className="size-3.5" aria-hidden />
               {item.agentTake?.trim() ? "Regenerate" : "Generate take"}
             </Button>
-          </Section>
+          </ItemInfoSection>
 
           {!isDiscovery && hasMaterials ? (
-            <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
-              <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Materials
-              </p>
+            <ItemInfoSection title="Materials" icon={<FileTextIcon />}>
               <dl className="space-y-2.5">
                 {item.resumeId ? (
-                  <MetaRow label="Resume">
+                  <DetailRow label="Resume">
                     <span className="inline-flex items-center gap-1">
                       <Button
                         type="button"
@@ -226,10 +259,10 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
                         <DownloadIcon className="size-3.5" aria-hidden />
                       </Button>
                     </span>
-                  </MetaRow>
+                  </DetailRow>
                 ) : null}
                 {item.coverLetterR2Key ? (
-                  <MetaRow label="Cover letter">
+                  <DetailRow label="Cover letter">
                     <span className="inline-flex items-center gap-1">
                       <Button
                         type="button"
@@ -268,75 +301,79 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
                         <DownloadIcon className="size-3.5" aria-hidden />
                       </Button>
                     </span>
-                  </MetaRow>
+                  </DetailRow>
                 ) : null}
                 {item.recruiterEmail ? (
-                  <MetaRow label="Recruiter">{item.recruiterEmail}</MetaRow>
+                  <DetailRow label="Recruiter">{item.recruiterEmail}</DetailRow>
                 ) : null}
                 {item.outreachSentAt ? (
-                  <MetaRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</MetaRow>
+                  <DetailRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</DetailRow>
                 ) : null}
               </dl>
-            </div>
+            </ItemInfoSection>
           ) : null}
 
-          <dl className="space-y-2.5">
-            <MetaRow label="Employment type">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</MetaRow>
-            <MetaRow label="Location">{displayText(item.location)}</MetaRow>
-            <MetaRow label="Salary">{displayText(item.salaryRange)}</MetaRow>
-            <MetaRow label="Source">{sourceDisplay ?? "—"}</MetaRow>
-            <MetaRow label="Posting URL">
-              {item.url ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 max-w-full gap-1.5 px-2 text-foreground hover:text-foreground"
-                  render={
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Open job posting (${postingHost(item.url)})`}
-                    />
-                  }
-                >
-                  <ExternalLinkIcon className="size-3.5 shrink-0" aria-hidden />
-                  <span className="truncate">{postingHost(item.url)}</span>
-                </Button>
-              ) : (
-                "—"
-              )}
-            </MetaRow>
-            {!hasMaterials ? (
-              <MetaRow label="Resume">
-                {item.resumeId ? (
+          <ItemInfoSection title="Details" icon={<InfoIcon />}>
+            <dl className="space-y-2.5">
+              <DetailRow label="Employment">
+                {EMPLOYMENT_TYPE_LABELS[item.employmentType]}
+              </DetailRow>
+              <DetailRow label="Location">{displayText(item.location)}</DetailRow>
+              <DetailRow label="Salary">{displayText(item.salaryRange)}</DetailRow>
+              <DetailRow label="Source">{sourceDisplay ?? "—"}</DetailRow>
+              <DetailRow label="Posting">
+                {item.url ? (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     className="h-7 max-w-full gap-1.5 px-2 text-foreground hover:text-foreground"
-                    onClick={() => setResumePreviewOpen(true)}
+                    render={
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Open job posting (${postingHost(item.url)})`}
+                      />
+                    }
                   >
-                    <FileTextIcon className="size-3.5 shrink-0" aria-hidden />
-                    <span className="truncate">{resumeLabel ?? "Preview"}</span>
+                    <ExternalLinkIcon className="size-3.5 shrink-0" aria-hidden />
+                    <span className="truncate">{postingHost(item.url)}</span>
                   </Button>
                 ) : (
                   "—"
                 )}
-              </MetaRow>
-            ) : null}
-            {!isDiscovery ? (
-              <>
-                <MetaRow label="Stage changed">{formatWhen(item.stageChangedAt)}</MetaRow>
-                <MetaRow label="Closed">
-                  {item.outcomeAt ? formatWhen(item.outcomeAt) : item.outcome ? "—" : "Open"}
-                </MetaRow>
-              </>
-            ) : null}
-          </dl>
+              </DetailRow>
+              {!hasMaterials ? (
+                <DetailRow label="Resume">
+                  {item.resumeId ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 max-w-full gap-1.5 px-2 text-foreground hover:text-foreground"
+                      onClick={() => setResumePreviewOpen(true)}
+                    >
+                      <FileTextIcon className="size-3.5 shrink-0" aria-hidden />
+                      <span className="truncate">{resumeLabel ?? "Preview"}</span>
+                    </Button>
+                  ) : (
+                    "—"
+                  )}
+                </DetailRow>
+              ) : null}
+              {!isDiscovery ? (
+                <>
+                  <DetailRow label="Stage changed">{formatWhen(item.stageChangedAt)}</DetailRow>
+                  <DetailRow label="Closed">
+                    {item.outcomeAt ? formatWhen(item.outcomeAt) : item.outcome ? "—" : "Open"}
+                  </DetailRow>
+                </>
+              ) : null}
+            </dl>
+          </ItemInfoSection>
 
-          <Section title="Job description">
+          <ItemInfoSection title="Job description" icon={<AlignLeftIcon />}>
             {item.description?.trim() ? (
               <Markdown
                 allowRawHtml={false}
@@ -345,22 +382,24 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
                 {item.description}
               </Markdown>
             ) : (
-              <p className="text-sm text-muted-foreground">No job description.</p>
+              <p>No job description.</p>
             )}
-          </Section>
+          </ItemInfoSection>
 
           {item.notes?.trim() ? (
-            <Section title="Legacy notes">
+            <ItemInfoSection title="Notes" icon={<StickyNoteIcon />}>
               <Markdown
                 allowRawHtml={false}
                 className="prose prose-sm max-w-none text-foreground dark:prose-invert"
               >
                 {item.notes}
               </Markdown>
-            </Section>
+            </ItemInfoSection>
           ) : null}
 
-          <ApplicationActivitySection applicationId={item.id} />
+          <ItemInfoSection title="Activity" icon={<HistoryIcon />}>
+            <ApplicationActivitySection applicationId={item.id} hideHeading />
+          </ItemInfoSection>
         </div>
       </ItemInfoPanel>
 

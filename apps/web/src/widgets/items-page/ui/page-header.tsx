@@ -15,12 +15,12 @@ type PageHeaderProps = {
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
     <CardFrame>
-      <div className="me-5 flex items-center justify-between">
-        <CardFrameHeader>
+      <div className="me-5 flex items-center justify-between gap-4">
+        <CardFrameHeader className="min-w-0">
           <CardTitle>{title}</CardTitle>
           {description ? <CardDescription>{description}</CardDescription> : null}
         </CardFrameHeader>
-        {actions ? <CardFrameAction>{actions}</CardFrameAction> : null}
+        {actions ? <CardFrameAction className="shrink-0">{actions}</CardFrameAction> : null}
       </div>
     </CardFrame>
   );

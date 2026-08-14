@@ -18,6 +18,7 @@ export type CreateInviteInput = {
   id: string;
   code: string;
   createdByUserId: string | null;
+  email?: string | null;
   expiresAt?: Date | null;
 };
 
@@ -52,6 +53,7 @@ export const inviteRepository = {
         id: input.id,
         code: input.code.trim(),
         createdByUserId: input.createdByUserId,
+        email: input.email ?? null,
         expiresAt: input.expiresAt ?? null
       } satisfies InferInsertModel<typeof invite>)
       .returning();

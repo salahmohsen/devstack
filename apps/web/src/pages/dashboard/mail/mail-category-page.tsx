@@ -534,7 +534,7 @@ function MessageReaderBody({
               size="sm"
               variant="outline"
               className="h-7 shrink-0 text-xs"
-              disabled={undoCrm.isPending}
+              loading={undoCrm.isPending}
               onClick={() => {
                 undoCrm.mutate({ applyId: crmApply.id });
               }}
@@ -650,6 +650,7 @@ function MessageReaderBody({
                 type="button"
                 size="sm"
                 disabled={!canSend || busy}
+                loading={sendReply.isPending}
                 onClick={() => setSendConfirmOpen(true)}
               >
                 {sendReply.isPending ? "Sending…" : "Send reply"}
@@ -659,6 +660,7 @@ function MessageReaderBody({
                 size="sm"
                 variant="outline"
                 disabled={busy || !detail?.id || isLoadingDetail}
+                loading={generateReply.isPending}
                 onClick={runGenerateReply}
               >
                 {generateReply.isPending ? "Generating…" : "Generate reply"}
@@ -728,13 +730,13 @@ function MessageReaderBody({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={sendReply.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              disabled={sendReply.isPending || !canSend}
-              onClick={(e) => {
-                e.preventDefault();
+              loading={sendReply.isPending}
+              disabled={!canSend}
+              onClick={() => {
                 confirmSend();
               }}
             >
-              {sendReply.isPending ? "Sending…" : "Send reply"}
+              Send reply
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

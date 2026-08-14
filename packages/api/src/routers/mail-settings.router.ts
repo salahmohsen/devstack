@@ -172,5 +172,28 @@ export const mailSettingsRouter = {
       });
 
       return toOutput(row);
+    }),
+
+  rotateWebhook: protectedProcedure
+    .route({
+      description: "Rotate the Resend inbound webhook path token (invalidates the previous URL)",
+      method: "POST"
+    })
+    .output(MailSettingsOutputSchema)
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+      const existing = await userMailSettingsRepository.findByUserId(userId);
+      const row = await userMailSettingsRepository.upsert({
+        id: existing?.id ?? randomUUID(),
+        userId,
+        inboundEnabled: existing?.inboundEnabled ?? false,
+        inboundAddress: existing?.inboundAddress ?? null,
+        resendApiKeyLast4: existing?.resendApiKeyLast4 ?? null,
+        resendApiKeyCiphertext: existing?.resendApiKeyCiphertext ?? null,
+        webhookSecretLast4: existing?.webhookSecretLast4 ?? null,
+        webhookSecretCiphertext: existing?.webhookSecretCiphertext ?? null,
+        webhookToken: freshToken()
+      });
+      return toOutput(row);
     })
 };

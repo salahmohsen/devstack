@@ -41,6 +41,26 @@ Rules:
 - Reuse this shell for Mail hub cards and `/dashboard/review` — do not fork styles.
 - Motion: minimal opacity/y fade only; respect `prefers-reduced-motion` (built into the shell).
 
+## Dashboard entity forms
+
+Create/edit for experiences, projects, stacks, and applications uses `EntityFormSheet` (`apps/web/src/pages/dashboard/_lib/entity-form-panel.tsx`):
+
+- **Desktop (`xl+`):** same side-panel chrome as item inspect (`ItemInfoPanel` — header, scroll body, prev/next + timestamps).
+- **Mobile:** inset right `Sheet` (`variant="inset"`), not a centered Dialog.
+- **Save in the header.** Do not add a Cancel/Save footer. Close is Escape, the sheet X, or deselecting (dirty confirm still runs).
+- PromptDialog / AlertDialog stay for short collect-a-value and destroy confirms.
+
+## Small input dialogs
+
+For a title + one (or few) fields + Cancel / Continue, use `PromptDialog` from `@tsu-stack/ui/components/prompt-dialog`.
+
+- **Dialog**, not AlertDialog (AlertDialog is confirm/destroy only).
+- Header **outside** the form; `Form className="contents"` wraps **panel + footer** (coss `p-dialog-1`).
+- Footer actions via `DialogCancel` / `DialogAction` (already inside `PromptDialog`).
+- Fields stay TanStack `form.AppField` in the caller. Pass `onSubmit={() => void form.handleSubmit()}`.
+- Let the dialog focus the first field. Skip a field tooltip when the header description already explains the value.
+- Size `sm` (`sm:max-w-sm`) for a single input; `md` for URL or slightly longer copy.
+
 ## Extraction Rule
 
 - Extract a component to `packages/ui` when it is reusable, app-agnostic, and the shared package can own its styling and accessibility.
@@ -88,6 +108,38 @@ type CardProps = {
   };
 };
 ```
+
+## Remove icon buttons (X)
+
+Row-remove and clear-value controls that render an X use `variant="destructive"`. That variant already owns the glass red glow — do not restyle it at the call site.
+
+Dialog, sheet, and drawer close controls stay `variant="ghost"`. Cancel / dismiss in a toolbar stays outline or ghost.
+
+```tsx
+<Button type="button" size="icon" variant="destructive" aria-label="Remove contact">
+  <X aria-hidden="true" />
+</Button>
+```
+
+## Dialog footer actions
+
+Do not restyle confirm/cancel buttons in `AlertDialog` or `Dialog` footers. The primitives own glow and pending:
+
+| Primitive                            | Idle chrome                         | Pending                  |
+| ------------------------------------ | ----------------------------------- | ------------------------ |
+| `AlertDialogAction` / `DialogAction` | `variant` (default, destructive, …) | `loading` → pending glow |
+| `AlertDialogCancel` / `DialogCancel` | outline                             | —                        |
+
+Call site only passes `variant` and `loading`. Keep the label stable — do not swap in “Deleting…” / “Removing…” text.
+
+```tsx
+<AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+<AlertDialogAction variant="destructive" loading={pending} onClick={onConfirm}>
+  Remove domain
+</AlertDialogAction>
+```
+
+Do not use `AlertDialogClose render={<Button />}` or a raw `StatusSubmitButton` in a dialog footer. Those skip this chrome.
 
 ## shadcn Usage
 

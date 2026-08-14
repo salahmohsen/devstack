@@ -18,12 +18,13 @@ import {
   PageLayout,
   useItemsNavigation
 } from "@/widgets/items-page";
-import { ItemsInfoPanel } from "@/widgets/layout";
 
+import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { useApplicationsView } from "@/pages/dashboard/tracked-jobs/_lib/use-applications-view";
 import { ApplicationFormSheet } from "@/pages/dashboard/tracked-jobs/application-form-sheet";
 import { ApplicationInfoPanel } from "@/pages/dashboard/tracked-jobs/ui/application-info-panel";
+import { ApplicationMaterialPreviewDialog } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 import { ApplyPackageSheet } from "@/pages/dashboard/tracked-jobs/ui/apply-package-sheet";
 import { ApplicationsBoard } from "@/pages/dashboard/tracked-jobs/ui/board";
 import { ImportJdSheet } from "@/pages/dashboard/tracked-jobs/ui/import-jd-sheet";
@@ -54,7 +55,9 @@ export function TrackedJobsPage() {
     closeSendOutreach,
     importJdSheetOpen,
     openImportJdSheet,
-    closeImportJdSheet
+    closeImportJdSheet,
+    materialPreview,
+    closeMaterialPreview
   } = useApplicationStore();
 
   // Stable empty fallback so memo deps do not thrash every render.
@@ -81,6 +84,11 @@ export function TrackedJobsPage() {
     if (!sendOutreachAppId) return null;
     return applications.find((a) => a.id === sendOutreachAppId) ?? null;
   }, [sendOutreachAppId, applications]);
+
+  const materialPreviewApplication = useMemo(() => {
+    if (!materialPreview) return null;
+    return applications.find((a) => a.id === materialPreview.applicationId) ?? null;
+  }, [materialPreview, applications]);
 
   // Side panel works for both board (View / card click) and list (row click).
   const isItemOpen = useMemo(
@@ -186,9 +194,16 @@ export function TrackedJobsPage() {
           )}
         </div>
 
-        <ItemsInfoPanel open={isAnyOpen} item={liveViewItem}>
+        <ItemsInspectHost
+          open={isAnyOpen && !sheetOpen}
+          item={liveViewItem}
+          title="Application"
+          onOpenChange={(next) => {
+            if (!next) closeView();
+          }}
+        >
           {(item) => <ApplicationInfoPanel item={item} />}
-        </ItemsInfoPanel>
+        </ItemsInspectHost>
 
         <ApplicationFormSheet
           key={editItem?.id ?? "new"}
@@ -224,6 +239,17 @@ export function TrackedJobsPage() {
             else closeImportJdSheet();
           }}
         />
+
+        {materialPreviewApplication && materialPreview ? (
+          <ApplicationMaterialPreviewDialog
+            app={materialPreviewApplication}
+            kind={materialPreview.kind}
+            open
+            onOpenChange={(open) => {
+              if (!open) closeMaterialPreview();
+            }}
+          />
+        ) : null}
       </PageLayout>
     </ItemsNavProvider>
   );

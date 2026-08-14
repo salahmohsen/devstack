@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowRightIcon, SearchIcon, SparklesIcon } from "lucide-react";
+import { ArrowRightIcon, SearchIcon, SparklesIcon, StarIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
   formatStackTypeLabel,
   normalizeStackType,
   recommendPortfolioInclusion,
+  resolveFeaturedStackIds,
   STACK_NOISE_TYPES,
   type OrganizeAction,
   type StackOutput
@@ -79,8 +80,8 @@ const ORGANIZE_KIND_META: Record<AiChangeKind, AiChangeKindMeta> = {
 
 export type OrganizeConfirmPayload = {
   actions: OrganizeAction[];
-  /** Surviving stacks after selected merges + portfolio flags. */
-  portfolio: Array<{ id: string; includedInPortfolio: boolean }>;
+  /** Surviving stacks after selected merges + portfolio / featured flags. */
+  portfolio: Array<{ id: string; includedInPortfolio: boolean; isFeatured: boolean }>;
 };
 
 type OrganizeDialogProps = {
@@ -88,6 +89,8 @@ type OrganizeDialogProps = {
   onOpenChange: (open: boolean) => void;
   actions: OrganizeAction[];
   sortOrder: string[];
+  /** LLM / fallback featured-on-profile ids. */
+  featuredStackIds?: string[];
   /** Soft-failure notes from LLM steps (skip / provider errors). */
   notes?: string[];
   stacks: StackOutput[];
@@ -110,7 +113,7 @@ function typeLabel(type: string | null | undefined): string | null {
 function StepIndicator({ step }: { step: Step }) {
   const items: Array<{ id: Step; label: string; n: number }> = [
     { id: "review", label: "Review changes", n: 1 },
-    { id: "portfolio", label: "Portfolio", n: 2 }
+    { id: "portfolio", label: "Portfolio & profile", n: 2 }
   ];
   return (
     <ol className="flex items-center gap-2 text-xs">
@@ -130,8 +133,10 @@ function StepIndicator({ step }: { step: Step }) {
             >
               <span
                 className={cn(
-                  "flex size-4 items-center justify-center rounded-full text-[10px] tabular-nums",
-                  active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  "flex size-4 items-center justify-center rounded-full border text-[10px] tabular-nums",
+                  active && "border-primary bg-primary text-primary-foreground",
+                  done && "border-border bg-background text-muted-foreground",
+                  !active && !done && "border-border bg-background text-muted-foreground"
                 )}
               >
                 {item.n}
@@ -150,6 +155,7 @@ export function OrganizeDialog({
   onOpenChange,
   actions,
   sortOrder,
+  featuredStackIds = [],
   notes = [],
   stacks,
   isPending,
@@ -160,6 +166,7 @@ export function OrganizeDialog({
   const [step, setStep] = useState<Step>("review");
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [portfolioSelection, setPortfolioSelection] = useState<Record<string, boolean>>({});
+  const [featuredSelection, setFeaturedSelection] = useState<Record<string, boolean>>({});
   const [portfolioQuery, setPortfolioQuery] = useState("");
   /** coss AlertDialog — same discard pattern as entity forms / settings. */
   const [discardOpen, setDiscardOpen] = useState(false);
@@ -174,6 +181,7 @@ export function OrganizeDialog({
       setRowSelection({});
       setPortfolioQuery("");
       setPortfolioSelection({});
+      setFeaturedSelection({});
       setDiscardOpen(false);
       return;
     }
@@ -204,7 +212,8 @@ export function OrganizeDialog({
   const selectedCount = selectedActions.length;
   const hasActions = actions.length > 0;
   const hasSortOnly = !hasActions && sortOrder.length > 0;
-  const isEmpty = !hasActions && sortOrder.length === 0;
+  const hasFeaturedReady = featuredStackIds.length > 0;
+  const isEmpty = !hasActions && sortOrder.length === 0 && !hasFeaturedReady;
   const hasNotes = notes.length > 0;
 
   // Static change payloads — selection is layered on so checkbox toggles don't rebuild bodies.
@@ -367,27 +376,43 @@ export function OrganizeDialog({
   }, [stacks, selectedActions]);
 
   function seedPortfolioDefaults() {
-    const recommended = recommendPortfolioInclusion(
-      survivingStacks.map((s) => {
-        return {
-          id: s.id,
-          type: s.type,
-          projectCount: s.projectCount,
-          includedInPortfolio: s.includedInPortfolio
-        };
-      }),
-      sortOrder.filter((id) => survivingStacks.some((s) => s.id === id))
-    );
-    const next: Record<string, boolean> = {};
+    const survivingOrder = sortOrder.filter((id) => survivingStacks.some((s) => s.id === id));
+    const candidates = survivingStacks.map((s) => {
+      return {
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        projectCount: s.projectCount,
+        includedInPortfolio: s.includedInPortfolio,
+        isFeatured: s.isFeatured
+      };
+    });
+    const featuredIds = resolveFeaturedStackIds({
+      llmIds: featuredStackIds,
+      stacks: candidates,
+      sortOrder: survivingOrder
+    });
+    const featuredSet = new Set(featuredIds);
+    const recommended = recommendPortfolioInclusion(candidates, survivingOrder);
+    const nextPortfolio: Record<string, boolean> = {};
+    const nextFeatured: Record<string, boolean> = {};
     for (const s of survivingStacks) {
-      next[s.id] = recommended.has(s.id);
+      const featured = featuredSet.has(s.id);
+      nextFeatured[s.id] = featured;
+      nextPortfolio[s.id] = featured || recommended.has(s.id);
     }
-    setPortfolioSelection(next);
+    setFeaturedSelection(nextFeatured);
+    setPortfolioSelection(nextPortfolio);
   }
 
   const portfolioIncludedCount = useMemo(
     () => Object.values(portfolioSelection).filter(Boolean).length,
     [portfolioSelection]
+  );
+
+  const featuredCount = useMemo(
+    () => Object.values(featuredSelection).filter(Boolean).length,
+    [featuredSelection]
   );
 
   const filteredPortfolioStacks = useMemo(() => {
@@ -422,16 +447,18 @@ export function OrganizeDialog({
   }
 
   function handleContinueToPortfolio() {
-    if (hasActions && selectedCount === 0 && sortOrder.length === 0) return;
+    if (hasActions && selectedCount === 0 && sortOrder.length === 0 && !hasFeaturedReady) return;
     seedPortfolioDefaults();
     setStep("portfolio");
   }
 
   function handleConfirm() {
     const portfolio = survivingStacks.map((s) => {
+      const featured = !!featuredSelection[s.id];
       return {
         id: s.id,
-        includedInPortfolio: !!portfolioSelection[s.id]
+        includedInPortfolio: featured || !!portfolioSelection[s.id],
+        isFeatured: featured
       };
     });
     onConfirm({ actions: selectedActions, portfolio });
@@ -455,6 +482,15 @@ export function OrganizeDialog({
       }
       return copy;
     });
+    if (!next) {
+      setFeaturedSelection((prev) => {
+        const copy = { ...prev };
+        for (const s of filteredPortfolioStacks) {
+          copy[s.id] = false;
+        }
+        return copy;
+      });
+    }
   }
 
   const confirmLabel = isPending
@@ -463,12 +499,14 @@ export function OrganizeDialog({
       ? isEmpty
         ? "Close"
         : "Continue"
-      : `Apply (${selectedCount} change${selectedCount === 1 ? "" : "s"} · ${portfolioIncludedCount} on portfolio)`;
+      : `Apply (${selectedCount} change${selectedCount === 1 ? "" : "s"} · ${featuredCount} featured · ${portfolioIncludedCount} on portfolio)`;
 
   const hasUnsavedOrganize =
     isPending ||
     selectedCount > 0 ||
-    (step === "portfolio" && Object.values(portfolioSelection).some(Boolean));
+    (step === "portfolio" &&
+      (Object.values(portfolioSelection).some(Boolean) ||
+        Object.values(featuredSelection).some(Boolean)));
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
@@ -487,7 +525,7 @@ export function OrganizeDialog({
             <DialogDescription>
               {step === "review"
                 ? "Review AI-proposed merges, renames, and enrichments. Expand a row for before / after."
-                : "Pick stacks that belong on the public portfolio and resume. Leave tooling noise off."}
+                : "Feature a tight resume-style skills row on your profile. Keep the broader portfolio for everything else."}
             </DialogDescription>
             {!isEmpty ? <StepIndicator step={step} /> : null}
           </DialogHeader>
@@ -556,22 +594,30 @@ export function OrganizeDialog({
               ) : (
                 <div className="rounded-lg border border-border/70 p-4 text-sm text-muted-foreground">
                   {hasSortOnly
-                    ? "No merges, renames, or enrichments — only an importance reorder is ready. Continue to set portfolio inclusion."
-                    : null}
+                    ? "No merges, renames, or enrichments — only an importance reorder is ready. Continue to set profile and portfolio."
+                    : hasFeaturedReady
+                      ? "No catalog edits — continue to review the auto-selected profile stacks."
+                      : null}
                 </div>
               )
             ) : (
               <section className="w-full min-w-0 overflow-hidden rounded-lg border border-border/70 bg-card shadow-xs">
                 <header className="flex min-w-0 flex-col gap-2 border-b border-border/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold">Portfolio & resume</h3>
+                    <h3 className="text-sm font-semibold">Profile & portfolio</h3>
                     <p className="text-xs text-muted-foreground">
-                      Only included stacks appear on the public portfolio and generated resumes.
+                      Stars land on the public profile row (resume Skills). The switch adds the rest
+                      to the portfolio.
                     </p>
                   </div>
-                  <Badge variant="outline" size="sm" className="tabular-nums">
-                    {portfolioIncludedCount} / {survivingStacks.length} included
-                  </Badge>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge variant="brand" size="sm" className="tabular-nums">
+                      {featuredCount} featured
+                    </Badge>
+                    <Badge variant="outline" size="sm" className="tabular-nums">
+                      {portfolioIncludedCount} / {survivingStacks.length} portfolio
+                    </Badge>
+                  </div>
                 </header>
 
                 <div className="flex min-w-0 flex-col gap-2 border-b border-border/60 p-3 sm:flex-row sm:items-center">
@@ -627,7 +673,9 @@ export function OrganizeDialog({
                 <ul className="max-h-[min(28rem,50vh)] overflow-y-auto">
                   {filteredPortfolioStacks.map((s) => {
                     const included = !!portfolioSelection[s.id];
+                    const featured = !!featuredSelection[s.id];
                     const wasIncluded = !!s.includedInPortfolio;
+                    const wasFeatured = !!s.isFeatured;
                     const type = typeLabel(s.type);
                     const noise = STACK_NOISE_TYPES.has(normalizeStackType(s.type));
                     return (
@@ -656,6 +704,18 @@ export function OrganizeDialog({
                                 often noise
                               </span>
                             ) : null}
+                            {wasFeatured !== featured ? (
+                              <span
+                                className={cn(
+                                  "text-[10px] font-medium tracking-wide uppercase",
+                                  featured
+                                    ? "text-emerald-600 dark:text-emerald-400"
+                                    : "text-destructive"
+                                )}
+                              >
+                                {featured ? "will feature" : "will unfeature"}
+                              </span>
+                            ) : null}
                             {wasIncluded !== included ? (
                               <span
                                 className={cn(
@@ -674,13 +734,47 @@ export function OrganizeDialog({
                             {s.description ? ` · ${s.description}` : null}
                           </p>
                         </div>
+                        <Button
+                          type="button"
+                          size="icon-sm"
+                          variant={featured ? "default" : "ghost"}
+                          aria-label={
+                            featured
+                              ? `Remove ${s.name} from profile`
+                              : `Feature ${s.name} on profile`
+                          }
+                          aria-pressed={featured}
+                          onClick={() => {
+                            const next = !featured;
+                            setFeaturedSelection((prev) => {
+                              return { ...prev, [s.id]: next };
+                            });
+                            if (next) {
+                              setPortfolioSelection((prev) => {
+                                return { ...prev, [s.id]: true };
+                              });
+                            }
+                          }}
+                        >
+                          <StarIcon
+                            className="size-3.5"
+                            fill={featured ? "currentColor" : "none"}
+                            strokeWidth={featured ? 1.75 : 2}
+                          />
+                        </Button>
                         <Switch
                           checked={included}
                           aria-label={`${included ? "Exclude" : "Include"} ${s.name} on portfolio`}
                           onCheckedChange={(v) => {
+                            const on = !!v;
                             setPortfolioSelection((prev) => {
-                              return { ...prev, [s.id]: !!v };
+                              return { ...prev, [s.id]: on };
                             });
+                            if (!on) {
+                              setFeaturedSelection((prev) => {
+                                return { ...prev, [s.id]: false };
+                              });
+                            }
                           }}
                         />
                       </li>
@@ -715,14 +809,15 @@ export function OrganizeDialog({
               <Button
                 type="button"
                 disabled={
-                  isPending || (hasActions && selectedCount === 0 && sortOrder.length === 0)
+                  isPending ||
+                  (hasActions && selectedCount === 0 && sortOrder.length === 0 && !hasFeaturedReady)
                 }
                 onClick={handleContinueToPortfolio}
               >
                 {confirmLabel}
               </Button>
             ) : (
-              <Button type="button" disabled={isPending} onClick={handleConfirm}>
+              <Button type="button" loading={isPending} onClick={handleConfirm}>
                 {confirmLabel}
               </Button>
             )}

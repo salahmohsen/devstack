@@ -45,6 +45,7 @@ export type StackListRow = {
   healthStatus: StackEntity["healthStatus"];
   confidence: string | null;
   sortOrder: number;
+  isFeatured: boolean;
   portfolioEntryId: string | null;
   updatedAt: Date;
   createdAt: Date;
@@ -106,6 +107,7 @@ export const stackRepository = {
         healthStatus: stack.healthStatus,
         confidence: stack.confidence,
         sortOrder: stack.sortOrder,
+        isFeatured: stack.isFeatured,
         portfolioEntryId: stack.portfolioEntryId,
         updatedAt: stack.updatedAt,
         createdAt: stack.createdAt,
@@ -161,6 +163,7 @@ export const stackRepository = {
           healthStatus: stack.healthStatus,
           confidence: stack.confidence,
           sortOrder: stack.sortOrder,
+          isFeatured: stack.isFeatured,
           portfolioEntryId: stack.portfolioEntryId,
           updatedAt: stack.updatedAt,
           createdAt: stack.createdAt,
@@ -341,6 +344,7 @@ export const stackRepository = {
         healthStatus: input.healthStatus ?? null,
         confidence: input.confidence ?? null,
         sortOrder: input.sortOrder ?? 0,
+        isFeatured: input.isFeatured ?? false,
         portfolioEntryId: pid
       });
 
@@ -496,12 +500,21 @@ export const stackRepository = {
         const filtered = Object.fromEntries(
           Object.entries(data).filter(([, v]) => v !== undefined)
         ) as UpdateStackData;
-        if (Object.keys(filtered).length === 0) continue;
-        const [updated] = await tx
-          .update(stack)
-          .set(filtered)
-          .where(and(eq(stack.id, id), eq(stack.userId, userId)))
-          .returning();
+        const hasColumns = Object.keys(filtered).length > 0;
+        if (!hasColumns && options?.includedInPortfolio === undefined) continue;
+
+        let updated: StackEntity | undefined;
+        if (hasColumns) {
+          const [row] = await tx
+            .update(stack)
+            .set(filtered)
+            .where(and(eq(stack.id, id), eq(stack.userId, userId)))
+            .returning();
+          updated = row;
+        } else {
+          const row = await tx.query.stack.findFirst({ where: { id, userId } });
+          updated = row ?? undefined;
+        }
 
         if (!updated) continue;
 

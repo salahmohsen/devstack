@@ -11,9 +11,13 @@ import {
   MenuItem,
   MenuPopup,
   MenuSeparator,
+  MenuSub,
+  MenuSubPopup,
+  MenuSubTrigger,
   MenuTrigger
 } from "@tsu-stack/ui/components/menu";
 import { Switch } from "@tsu-stack/ui/components/switch";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 type ActionButtonConfig = {
   onAction: () => void;
@@ -24,11 +28,22 @@ type ActionButtonConfig = {
   ariaLabel?: string;
 };
 
-type TogglePortfolioConfig = {
+type ToggleConfig = {
   onAction: () => void;
   isLoading?: boolean;
   initialValue: boolean;
 };
+
+function PortfolioStatusDot({ inPortfolio }: { inPortfolio: boolean }) {
+  return (
+    <span
+      className={cn(
+        "size-1.5 shrink-0 animate-pulse rounded-full",
+        inPortfolio ? "bg-success" : "bg-destructive"
+      )}
+    />
+  );
+}
 
 type classNames = {
   wrapper?: string;
@@ -38,7 +53,8 @@ type classNames = {
 type ListItemActionButtonsProps = {
   view?: ActionButtonConfig;
   edit?: ActionButtonConfig;
-  togglePortfolio?: TogglePortfolioConfig;
+  togglePortfolio?: ToggleConfig;
+  toggleFeatured?: ToggleConfig;
   delete?: ActionButtonConfig;
   /**
    * Extra items rendered at the top of the overflow menu (e.g. “Detect stacks”).
@@ -52,12 +68,14 @@ export function ListItemActionButtons({
   view,
   edit,
   togglePortfolio,
+  toggleFeatured,
   delete: deleteConfig,
   extraMenuItems,
   classNames
 }: ListItemActionButtonsProps) {
-  const hasMenu = !!togglePortfolio || !!deleteConfig || !!extraMenuItems;
-  const menuLoading = togglePortfolio?.isLoading ?? deleteConfig?.isLoading;
+  const hasMenu = !!togglePortfolio || !!toggleFeatured || !!deleteConfig || !!extraMenuItems;
+  const menuLoading =
+    togglePortfolio?.isLoading ?? toggleFeatured?.isLoading ?? deleteConfig?.isLoading;
 
   if (!view && !edit && !hasMenu) {
     return null;
@@ -86,17 +104,56 @@ export function ListItemActionButtons({
       </MenuTrigger>
       <MenuPopup align="end">
         {extraMenuItems}
-        {togglePortfolio ? (
-          <MenuItem
-            onClick={(event: React.MouseEvent) => {
-              event.stopPropagation();
-              togglePortfolio.onAction();
-            }}
-            disabled={togglePortfolio.isLoading}
-          >
-            <span className="flex-1">In portfolio</span>
-            <Switch checked={togglePortfolio.initialValue} className="pointer-events-none" />
-          </MenuItem>
+        {togglePortfolio || toggleFeatured ? (
+          toggleFeatured ? (
+            <MenuSub>
+              <MenuSubTrigger
+                onClick={(event: React.MouseEvent) => {
+                  event.stopPropagation();
+                }}
+              >
+                Add to
+              </MenuSubTrigger>
+              <MenuSubPopup>
+                {togglePortfolio ? (
+                  <MenuItem
+                    onClick={(event: React.MouseEvent) => {
+                      event.stopPropagation();
+                      togglePortfolio.onAction();
+                    }}
+                    disabled={togglePortfolio.isLoading}
+                  >
+                    <span className="flex-1">Portfolio</span>
+                    <Switch
+                      checked={togglePortfolio.initialValue}
+                      className="pointer-events-none"
+                    />
+                  </MenuItem>
+                ) : null}
+                <MenuItem
+                  onClick={(event: React.MouseEvent) => {
+                    event.stopPropagation();
+                    toggleFeatured.onAction();
+                  }}
+                  disabled={toggleFeatured.isLoading}
+                >
+                  <span className="flex-1">Featured</span>
+                  <Switch checked={toggleFeatured.initialValue} className="pointer-events-none" />
+                </MenuItem>
+              </MenuSubPopup>
+            </MenuSub>
+          ) : togglePortfolio ? (
+            <MenuItem
+              onClick={(event: React.MouseEvent) => {
+                event.stopPropagation();
+                togglePortfolio.onAction();
+              }}
+              disabled={togglePortfolio.isLoading}
+            >
+              <span className="flex-1">In portfolio</span>
+              <Switch checked={togglePortfolio.initialValue} className="pointer-events-none" />
+            </MenuItem>
+          ) : null
         ) : null}
         {deleteConfig ? (
           <>
@@ -123,6 +180,20 @@ export function ListItemActionButtons({
   if ((view || edit) && hasMenu) {
     return (
       <Group aria-label="Item actions" className={classNames?.wrapper}>
+        {togglePortfolio ? (
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled
+              aria-label={togglePortfolio.initialValue ? "In portfolio" : "Not in portfolio"}
+              className="disabled:opacity-100"
+            >
+              <PortfolioStatusDot inPortfolio={togglePortfolio.initialValue} />
+            </Button>
+            <GroupSeparator />
+          </>
+        ) : null}
         {view ? (
           <Button
             onClick={(event: React.MouseEvent) => {

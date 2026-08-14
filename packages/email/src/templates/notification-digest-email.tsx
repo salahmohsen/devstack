@@ -1,6 +1,6 @@
-import { Button, Text } from "react-email";
+import { Heading, Text } from "react-email";
 
-import { EmailLayout } from "#@/templates/layout-email";
+import { EmailCta, EmailFooterNote, EmailLayout } from "#@/templates/layout-email";
 
 export type DigestItem = {
   title: string;
@@ -9,35 +9,38 @@ export type DigestItem = {
 };
 
 /**
- * Hourly (or batched) career notification digest.
+ * Hourly (or batched) career notification digest. Same card as
+ * {@link AppNotificationEmail}.
  */
 const NotificationDigestEmail = ({
   items,
-  dashboardUrl
+  dashboardUrl,
+  logoUrl
 }: {
   items: DigestItem[];
   dashboardUrl: string;
+  logoUrl?: string | null;
 }) => (
-  <EmailLayout preview={`${items.length} career update${items.length === 1 ? "" : "s"}`}>
-    <Text className="text-2xl font-bold text-gray-800">Your career digest</Text>
-    <Text className="text-gray-600">
+  <EmailLayout
+    preview={`${items.length} career update${items.length === 1 ? "" : "s"}`}
+    logoUrl={logoUrl}
+  >
+    <Heading className="mx-0 my-7.5 p-0 text-center text-[24px] font-normal text-black">
+      Your career digest
+    </Heading>
+    <Text className="text-[14px] leading-6 text-black">
       {items.length} update{items.length === 1 ? "" : "s"} since the last digest:
     </Text>
     {items.map((item, i) => (
-      <Text key={`${item.title}-${i}`} className="text-gray-700">
+      <Text key={`${item.title}-${i}`} className="text-[14px] leading-6 text-black">
         <strong>{item.title}</strong>
         {item.body ? ` — ${item.body}` : ""}
       </Text>
     ))}
-    <Button
-      className="mt-4 rounded-md bg-blue-600 px-6 py-3 font-medium text-white"
-      href={dashboardUrl}
-    >
-      Open dashboard
-    </Button>
-    <Text className="mt-6 text-sm text-gray-500">
+    <EmailCta href={dashboardUrl} label="Open dashboard" />
+    <EmailFooterNote>
       Digest mode is on in Settings → Notifications. Switch to immediate for one email per event.
-    </Text>
+    </EmailFooterNote>
   </EmailLayout>
 );
 
@@ -48,5 +51,6 @@ NotificationDigestEmail.PreviewProps = {
     { title: "Reply draft ready", body: "Acme Corp" },
     { title: "Important mail classified", body: "Interview invite" }
   ],
-  dashboardUrl: "https://example.com/dashboard"
+  dashboardUrl: "https://example.com/dashboard",
+  logoUrl: "https://example.com/logo192.png"
 };

@@ -13,6 +13,7 @@ export function Switch({ className, ...props }: SwitchPrimitive.Root.Props): Rea
         className
       )}
       data-slot="switch"
+      data-cuelume-toggle=""
       {...props}
     >
       <SwitchPrimitive.Thumb

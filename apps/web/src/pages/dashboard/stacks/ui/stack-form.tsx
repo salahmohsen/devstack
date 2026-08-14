@@ -11,20 +11,20 @@ import {
   StackUpdateInputSchema,
   type StackOutput
 } from "@tsu-stack/core";
-import { Button } from "@tsu-stack/ui/components/button";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 
-import { useAppForm } from "@/shared/form";
+import { SubmitButton, useAppForm } from "@/shared/form";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { DefaultLoader } from "@/shared/ui/default-loader";
-import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
 import { Icon } from "@/shared/ui/icon";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
+
+import { EntityFormSheet } from "@/pages/dashboard/_lib/entity-form-panel";
 
 type StackFormProps = {
   initialData?: StackOutput | null;
@@ -97,6 +97,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
       icon: stack?.icon ?? "",
       type: stack?.type ?? "",
       includedInPortfolio: !!stack?.portfolioEntryId,
+      isFeatured: !!stack?.isFeatured,
       dependencies: (stack?.dependencies ?? []).map((d) => {
         return {
           npmPackage: d.npmPackage,
@@ -119,6 +120,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
             icon: value.icon ? sanitizeSvg(value.icon) : null,
             type: value.type || null,
             includedInPortfolio: value.includedInPortfolio,
+            isFeatured: value.isFeatured,
             dependencies: value.dependencies,
             projectIds: value.projectIds
           }
@@ -130,6 +132,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           icon: value.icon ? sanitizeSvg(value.icon) : null,
           type: value.type || null,
           includedInPortfolio: value.includedInPortfolio,
+          isFeatured: value.isFeatured,
           dependencies: value.dependencies,
           projectIds: value.projectIds
         });
@@ -148,6 +151,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
         icon: stack.icon ?? "",
         type: stack.type ?? "",
         includedInPortfolio: !!stack.portfolioEntryId,
+        isFeatured: !!stack.isFeatured,
         dependencies: stack.dependencies.map((d) => {
           return {
             npmPackage: d.npmPackage,
@@ -164,6 +168,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
         icon: "",
         type: "",
         includedInPortfolio: false,
+        isFeatured: false,
         dependencies: [],
         projectIds: []
       });
@@ -268,6 +273,15 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
               />
             )}
           </form.AppField>
+
+          <form.AppField name="isFeatured">
+            {(field) => (
+              <field.SwitchField
+                label="Featured"
+                description="Highlight this stack on your public profile (also adds it to the portfolio)."
+              />
+            )}
+          </form.AppField>
         </FieldGroup>
       </Form>
     );
@@ -283,22 +297,21 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           ? "Update the name or icon. Changes apply to every project using this stack."
           : "Add a shared tech stack that can be attached to any project."
       }
-      footer={({ requestClose }) => (
-        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" type="button" disabled={busy} onClick={requestClose}>
-            Cancel
-          </Button>
-          <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
-            {isEdit
-              ? updateMutation.isPending
-                ? "Saving..."
-                : "Save"
-              : createMutation.isPending
-                ? "Creating..."
-                : "Create"}
-          </Button>
-        </div>
-      )}
+      updatedAt={initialData?.updatedAt}
+      createdAt={initialData?.createdAt}
+      actions={
+        <form.AppForm>
+          <SubmitButton
+            type="button"
+            size="sm"
+            actionLabel={isEdit ? "Save" : "Create"}
+            isLoading={busy}
+            submitFailed={createMutation.isError || updateMutation.isError}
+            resetKey={`${open}:${id ?? "new"}`}
+            onClick={() => void form.handleSubmit()}
+          />
+        </form.AppForm>
+      }
     >
       {body}
     </EntityFormSheet>

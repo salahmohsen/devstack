@@ -60,6 +60,7 @@ export function TabsTab({ className, ...props }: TabsPrimitive.Tab.Props): React
         className
       )}
       data-slot="tabs-tab"
+      data-cuelume-toggle=""
       {...props}
     />
   );

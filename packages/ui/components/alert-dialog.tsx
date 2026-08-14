@@ -3,6 +3,18 @@
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
 import type React from "react";
 
+import { BadgeTopGlow } from "@tsu-stack/ui/components/badge-effects";
+import {
+  buttonGlowSize,
+  buttonGlowVariant,
+  buttonVariants,
+  type ButtonProps
+} from "@tsu-stack/ui/components/button";
+import {
+  DialogStatusAction,
+  dialogStatusSize,
+  labelFromChildren
+} from "@tsu-stack/ui/components/dialog-status-action";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 export const AlertDialogCreateHandle: typeof AlertDialogPrimitive.createHandle =
@@ -139,22 +151,86 @@ export function AlertDialogClose(props: AlertDialogPrimitive.Close.Props): React
   return <AlertDialogPrimitive.Close data-slot="alert-dialog-close" {...props} />;
 }
 
-export const AlertDialogAction = AlertDialogClose;
+type AlertDialogButtonCloseProps = AlertDialogPrimitive.Close.Props &
+  Pick<ButtonProps, "variant" | "size"> & {
+    /**
+     * When set, the dialog stays open on click so the pending glow can play.
+     * Parent should close after the work finishes.
+     */
+    loading?: boolean;
+    icon?: React.ReactNode;
+  };
 
-export function AlertDialogCancel({
+function AlertDialogButtonClose({
   className,
+  variant,
+  size = "sm",
+  children,
+  slot,
+  loading,
+  disabled,
+  icon,
+  onClick,
   ...props
-}: AlertDialogPrimitive.Close.Props): React.ReactElement {
+}: AlertDialogButtonCloseProps & { slot: string }): React.ReactElement {
+  const label = labelFromChildren(children);
+  const isBusy = loading === true;
+  const isDisabled = disabled === true || isBusy;
+
+  if (label != null) {
+    return (
+      <AlertDialogPrimitive.Close
+        data-slot={slot}
+        disabled={isDisabled}
+        className={typeof className === "string" ? className : undefined}
+        render={
+          <DialogStatusAction
+            variant={variant}
+            size={dialogStatusSize(size)}
+            loading={isBusy}
+            label={label}
+            icon={icon}
+            disabled={isDisabled}
+          />
+        }
+        onClick={(event) => {
+          if (loading !== undefined) {
+            event.preventDefault();
+          }
+          onClick?.(event);
+        }}
+        {...props}
+      />
+    );
+  }
+
+  const glow = buttonGlowVariant(variant);
   return (
     <AlertDialogPrimitive.Close
-      className={cn(
-        "inline-flex items-center justify-center rounded-lg border border-input bg-popover px-4 py-2 text-sm font-medium text-foreground shadow-xs/5 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-64",
-        className
-      )}
-      data-slot="alert-dialog-cancel"
+      className={cn(buttonVariants({ variant, size }), className)}
+      data-slot={slot}
+      disabled={isDisabled}
+      onClick={onClick}
       {...props}
-    />
+    >
+      {glow ? <BadgeTopGlow variant={glow} size={buttonGlowSize(size)} /> : null}
+      {children}
+    </AlertDialogPrimitive.Close>
   );
+}
+
+export function AlertDialogAction({
+  variant = "default",
+  ...props
+}: AlertDialogButtonCloseProps): React.ReactElement {
+  return <AlertDialogButtonClose slot="alert-dialog-action" variant={variant} {...props} />;
+}
+
+export function AlertDialogCancel({
+  variant = "outline",
+  ...props
+}: AlertDialogButtonCloseProps): React.ReactElement {
+  return <AlertDialogButtonClose slot="alert-dialog-cancel" variant={variant} {...props} />;
 }
 
 export {

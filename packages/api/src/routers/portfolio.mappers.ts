@@ -22,6 +22,7 @@ export type StackRow = {
   confidence: string | null;
   projectCount?: number;
   sortOrder: number;
+  isFeatured?: boolean;
   portfolioEntryId: string | null;
   dependencies?: Array<{
     npmPackage: string;
@@ -48,6 +49,7 @@ export function toStackOutput(s: StackRow): StackOutput {
     confidence: s.confidence,
     projectCount: s.projectCount ?? 0,
     sortOrder: s.sortOrder,
+    isFeatured: Boolean(s.isFeatured),
     portfolioEntryId: s.portfolioEntryId,
     includedInPortfolio: !!s.portfolioEntryId,
     dependencies: (s.dependencies ?? []).map((d) => {

@@ -5,7 +5,7 @@ import { useSelector } from "@tanstack/react-store";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Dirty detection for EntityFormSheet that matches the applications form:
+ * Dirty detection for entity create/edit panels that matches the applications form:
  * only true when current values differ from the snapshot taken right after
  * open + reset. Avoids false positives from Switch/Calendar/RichText mount
  * noise (isTouched + isDirty from empty create sheets).

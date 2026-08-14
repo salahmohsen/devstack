@@ -155,7 +155,8 @@ export const stacksRouter = {
     .output(StackOutputSchema)
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
-      const { includedInPortfolio, name, description, icon, dependencies, projectIds } = input;
+      const { includedInPortfolio, isFeatured, name, description, icon, dependencies, projectIds } =
+        input;
       const existing = await stackRepository.findByNameForUser(userId, name);
       if (existing) {
         throw new ORPCError("CONFLICT", {
@@ -170,9 +171,14 @@ export const stacksRouter = {
           name,
           description: description ?? null,
           icon: icon ?? null,
-          sortOrder: nextSortOrder
+          sortOrder: nextSortOrder,
+          isFeatured: isFeatured ?? false
         },
-        { includedInPortfolio, dependencies: dependencies ?? [], projectIds }
+        {
+          includedInPortfolio: includedInPortfolio ? true : Boolean(isFeatured),
+          dependencies: dependencies ?? [],
+          projectIds
+        }
       );
       return toStackOutput({
         ...created!,
@@ -203,7 +209,8 @@ export const stacksRouter = {
     .output(StackOutputSchema.nullable())
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
-      const { includedInPortfolio, dependencies, projectIds, ...updateData } = input.data;
+      const { includedInPortfolio, isFeatured, dependencies, projectIds, ...updateData } =
+        input.data;
       if (updateData.name) {
         const existing = await stackRepository.findByNameForUser(userId, updateData.name);
         if (existing && existing.id !== input.id) {
@@ -212,11 +219,17 @@ export const stacksRouter = {
           });
         }
       }
-      const updated = await stackRepository.update(input.id, userId, updateData, {
-        includedInPortfolio,
-        dependencies,
-        projectIds
-      });
+      const updated = await stackRepository.update(
+        input.id,
+        userId,
+        { ...updateData, ...(isFeatured === undefined ? {} : { isFeatured }) },
+        {
+          includedInPortfolio:
+            includedInPortfolio === undefined && isFeatured === true ? true : includedInPortfolio,
+          dependencies,
+          projectIds
+        }
+      );
       return updated ? toStackOutput(updated) : null;
     }),
   reorder: protectedProcedure
@@ -317,9 +330,19 @@ export const stacksRouter = {
       return stackRepository.batchUpdate(
         userId,
         input.items.map((item) => {
+          const { includedInPortfolio, isFeatured, ...updateData } = item.data;
           return {
             id: item.id,
-            data: item.data
+            data: {
+              ...updateData,
+              ...(isFeatured === undefined ? {} : { isFeatured })
+            },
+            options: {
+              includedInPortfolio:
+                includedInPortfolio === undefined && isFeatured === true
+                  ? true
+                  : includedInPortfolio
+            }
           };
         })
       );

@@ -66,9 +66,9 @@ export function SendOutreachDialog({ open, application, onOpenChange }: SendOutr
         <AlertDialogFooter>
           <AlertDialogCancel disabled={sendMutation.isPending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            disabled={sendMutation.isPending || !application}
-            onClick={(e) => {
-              e.preventDefault();
+            loading={sendMutation.isPending}
+            disabled={!application}
+            onClick={() => {
               if (!application) return;
               sendMutation.mutate(
                 { applicationId: application.id },
@@ -78,7 +78,7 @@ export function SendOutreachDialog({ open, application, onOpenChange }: SendOutr
               );
             }}
           >
-            {sendMutation.isPending ? "Sending…" : "Send outreach"}
+            Send outreach
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

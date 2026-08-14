@@ -28,7 +28,7 @@ export function createMailReplyAgent() {
 
 ## Tools (use for job + profile context)
 - Job CRM: list-open-applications, get-application — ground the reply in the pipeline when company/role is unclear or job context is missing.
-- Preferences: get-job-preferences — tone/constraints (roles, locations, work modes) when relevant.
+- Preferences: get-job-preferences — tone/constraints (roles, locations, multi-select work modes) when relevant.
 - Profile evidence: list-experiences / get-experience, list-projects / get-project, list-stacks / get-stack — mention real experience only when it strengthens the reply.
 - Resumes: list-resumes / get-resume — metadata only (names/default); never claim you attached a file.
 

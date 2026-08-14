@@ -1,8 +1,8 @@
 "use client";
 
 import { useFiles } from "files-sdk/react";
-import { CircleAlertIcon, Loader2Icon, UserIcon, XIcon } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { CircleAlertIcon, Loader2Icon, UserIcon, XIcon, type LucideIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AVATAR_KEY_PREFIX, extractAvatarClientKey } from "@tsu-stack/core";
@@ -34,23 +34,50 @@ function normalizeAvatarUrl(url: string | null | undefined): string | null {
 export type ProfileAvatarUploadProps = {
   maxSize?: number;
   className?: string;
+  id?: string;
   /** Current saved avatar URL (session / profile). Empty string treated as none. */
   defaultAvatar?: string | null;
   /** Called with the public URL after a successful upload, or null when cleared. */
   onAvatarUrlChange: (url: string | null) => void | Promise<void>;
   disabled?: boolean;
+  /** Circle for profile photos; rounded square for project logos. */
+  shape?: "circle" | "rounded";
+  /** Centered stack (profile) or start-aligned (form fields). */
+  align?: "center" | "start";
+  emptyIcon?: LucideIcon;
+  labels?: {
+    empty?: string;
+    change?: string;
+    uploading?: string;
+    ariaUpload?: string;
+    ariaRemove?: string;
+    persistError?: string;
+    uploadError?: string;
+  };
+  /**
+   * Delete the previous `avatars/` object after a successful replace/clear.
+   * Keep true for immediate-persist surfaces (profile). Forms that save later
+   * should pass false so discarding an edit does not delete the live image.
+   */
+  deletePreviousOnChange?: boolean;
 };
 
 /**
- * Avatar dropzone (ReUI c-file-upload-2 pattern) + files-sdk upload to `/api/files`.
- * Immediate apply: parent persists `user.image` when `onAvatarUrlChange` resolves.
+ * Public-image dropzone (profile photo / project logo) via files-sdk `/api/files`.
+ * Writes `{userId}/avatars/{uuid}.ext` so MinIO and `/api/media` can serve it.
  */
 export function ProfileAvatarUpload({
   maxSize = DEFAULT_MAX_SIZE,
   className,
+  id,
   defaultAvatar,
   onAvatarUrlChange,
-  disabled = false
+  disabled = false,
+  shape = "circle",
+  align = "center",
+  emptyIcon: EmptyIcon = UserIcon,
+  labels,
+  deletePreviousOnChange = true
 }: ProfileAvatarUploadProps) {
   const filesApi = useFiles({ endpoint: "/api/files" });
   const [uploading, setUploading] = useState(false);
@@ -63,13 +90,20 @@ export function ProfileAvatarUpload({
   const savedAvatar = normalizeAvatarUrl(defaultAvatar);
   const skipNextEmptyFilesChange = useRef(false);
 
+  const persistErrorFallback = labels?.persistError ?? "Could not update profile photo";
+  const uploadErrorFallback = labels?.uploadError ?? "Could not upload profile photo";
+
+  useEffect(() => {
+    if (savedAvatar) setSuppressDefault(false);
+  }, [savedAvatar]);
+
   const persistAvatar = useCallback(
     async (url: string | null) => {
       setUploadError(null);
       try {
         await onAvatarUrlChange(url);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Could not update profile photo";
+        const message = error instanceof Error ? error.message : persistErrorFallback;
         setUploadError(message);
         toast.error(message);
         // Roll back optimistic hide if server clear failed.
@@ -77,7 +111,7 @@ export function ProfileAvatarUpload({
         throw error;
       }
     },
-    [onAvatarUrlChange]
+    [onAvatarUrlChange, persistErrorFallback]
   );
 
   /** Best-effort remove prior S3 object after a successful replace/clear (ignore failures). */
@@ -106,7 +140,7 @@ export function ProfileAvatarUpload({
         setSuppressDefault(true);
         const previous = savedAvatar;
         await persistAvatar(null);
-        void deletePreviousObject(previous);
+        if (deletePreviousOnChange) void deletePreviousObject(previous);
         return;
       }
       const raw = entry.file;
@@ -125,17 +159,24 @@ export function ProfileAvatarUpload({
         // Uses MEDIA_PUBLIC_URL on the server (MinIO path-style or app /api/media).
         const publicUrl = await filesApi.url(key);
         await persistAvatar(publicUrl);
-        if (previous && previous !== publicUrl) {
+        if (deletePreviousOnChange && previous && previous !== publicUrl) {
           void deletePreviousObject(previous);
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Could not upload profile photo";
+        const message = error instanceof Error ? error.message : uploadErrorFallback;
         setUploadError(message);
         toast.error(message);
       }
       setUploading(false);
     },
-    [deletePreviousObject, filesApi, persistAvatar, savedAvatar]
+    [
+      deletePreviousObject,
+      deletePreviousOnChange,
+      filesApi,
+      persistAvatar,
+      savedAvatar,
+      uploadErrorFallback
+    ]
   );
 
   const [
@@ -179,18 +220,34 @@ export function ProfileAvatarUpload({
       removeFile(currentFile.id);
     }
     void persistAvatar(null).then(() => {
-      void deletePreviousObject(previous);
+      if (deletePreviousOnChange) void deletePreviousObject(previous);
     });
   };
 
+  const roundedClass = shape === "rounded" ? "rounded-xl" : "rounded-full";
+  const objectClass = shape === "rounded" ? "object-contain p-1.5" : "object-cover";
+  const emptyLabel = labels?.empty ?? "Upload photo";
+  const changeLabel = labels?.change ?? "Change photo";
+  const uploadingLabel = labels?.uploading ?? "Uploading…";
+  const ariaUpload = labels?.ariaUpload ?? "Upload profile photo";
+  const ariaRemove = labels?.ariaRemove ?? "Remove profile photo";
+
   return (
-    <div className={cn("flex flex-col items-center gap-3", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-3",
+        align === "start" ? "items-start" : "items-center",
+        className
+      )}
+    >
       <div className="relative">
         <input {...getInputProps()} className="sr-only" disabled={busy} />
         <button
           type="button"
+          id={id}
           className={cn(
-            "group/avatar relative size-24 cursor-pointer overflow-hidden rounded-full border border-dashed transition-colors",
+            "group/avatar relative size-24 cursor-pointer overflow-hidden border border-dashed transition-colors",
+            roundedClass,
             isDragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25 hover:border-muted-foreground/40",
@@ -205,13 +262,13 @@ export function ProfileAvatarUpload({
             if (!busy) openFileDialog();
           }}
           disabled={busy}
-          aria-label="Upload profile photo"
+          aria-label={ariaUpload}
         >
           {previewUrl ? (
-            <img src={previewUrl} alt="" className="size-full object-cover" />
+            <img src={previewUrl} alt="" className={cn("size-full", objectClass)} />
           ) : (
             <div className="flex size-full items-center justify-center bg-muted">
-              <UserIcon className="size-6 text-muted-foreground" />
+              <EmptyIcon className="size-6 text-muted-foreground" />
             </div>
           )}
 
@@ -227,10 +284,10 @@ export function ProfileAvatarUpload({
           <Button
             type="button"
             size="icon"
-            variant="outline"
+            variant="destructive"
             onClick={handleRemove}
             className="absolute inset-e-0.5 top-0.5 z-10 size-6 rounded-full"
-            aria-label="Remove profile photo"
+            aria-label={ariaRemove}
             disabled={busy}
           >
             <XIcon className="size-3.5" />
@@ -238,9 +295,9 @@ export function ProfileAvatarUpload({
         ) : null}
       </div>
 
-      <div className="space-y-0.5 text-center">
+      <div className={cn("space-y-0.5", align === "start" ? "text-start" : "text-center")}>
         <p className="text-sm font-medium">
-          {uploading ? "Uploading…" : previewUrl ? "Change photo" : "Upload photo"}
+          {uploading ? uploadingLabel : previewUrl ? changeLabel : emptyLabel}
         </p>
         <p className="text-xs text-muted-foreground">PNG, JPG, WebP up to {formatBytes(maxSize)}</p>
       </div>

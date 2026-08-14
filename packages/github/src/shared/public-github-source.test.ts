@@ -22,7 +22,8 @@ function baseRow(
     refreshToken: overrides.refreshToken === undefined ? "refresh-1" : overrides.refreshToken,
     accessTokenExpiresAt: overrides.accessTokenExpiresAt ?? null,
     refreshTokenExpiresAt: null,
-    scope: "repo"
+    scope: "repo",
+    updatedAt: new Date("2026-08-14T06:00:00.000Z")
   };
 }
 

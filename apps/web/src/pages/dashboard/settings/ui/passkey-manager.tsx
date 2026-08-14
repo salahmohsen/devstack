@@ -9,7 +9,8 @@ import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -25,13 +26,12 @@ import {
   EmptyMedia,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
-import { Field } from "@tsu-stack/ui/components/field";
-import { Input } from "@tsu-stack/ui/components/input";
+import { PromptDialog } from "@tsu-stack/ui/components/prompt-dialog";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { FieldLabelWithTooltip } from "@/shared/form/field-label-with-tooltip";
+import { useAppForm } from "@/shared/form";
 
 type PasskeyRow = {
   id: string;
@@ -89,14 +89,12 @@ export function PasskeyManager({ className }: { className?: string }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
-  const [newName, setNewName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<PasskeyRow | null>(null);
 
   const listQuery = useQuery(passkeysQueryOptions);
   const passkeys = useMemo(() => listQuery.data ?? [], [listQuery.data]);
 
-  async function handleAddPasskey() {
-    const name = newName.trim();
+  async function handleAddPasskey(name: string) {
     setAdding(true);
     try {
       const result = await authClient.passkey.addPasskey({
@@ -112,7 +110,6 @@ export function PasskeyManager({ className }: { className?: string }) {
       } else {
         toast.success("Passkey added");
         setNameDialogOpen(false);
-        setNewName("");
         await queryClient.invalidateQueries({ queryKey: passkeysQueryOptions.queryKey });
       }
     } catch (error) {
@@ -144,7 +141,6 @@ export function PasskeyManager({ className }: { className?: string }) {
   }
 
   function openAddDialog() {
-    setNewName("");
     setNameDialogOpen(true);
   }
 
@@ -267,41 +263,13 @@ export function PasskeyManager({ className }: { className?: string }) {
         </ScrollArea>
       )}
 
-      <AlertDialog open={nameDialogOpen} onOpenChange={setNameDialogOpen}>
-        <AlertDialogPopup>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Add a passkey</AlertDialogTitle>
-            <AlertDialogDescription>
-              Name this passkey so you can tell devices apart. Your browser will ask you to confirm
-              with biometrics or a security key.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <Field className="px-1 pb-1">
-            <FieldLabelWithTooltip
-              label="Name"
-              description="Optional — e.g. “iPhone” or “YubiKey”."
-              htmlFor="passkey-name"
-            />
-            <Input
-              id="passkey-name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="MacBook Touch ID"
-              autoComplete="off"
-              maxLength={64}
-              disabled={adding}
-            />
-          </Field>
-          <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="ghost" disabled={adding} />}>
-              Cancel
-            </AlertDialogClose>
-            <Button type="button" loading={adding} onClick={() => void handleAddPasskey()}>
-              Continue
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogPopup>
-      </AlertDialog>
+      {nameDialogOpen ? (
+        <PasskeyNameForm
+          adding={adding}
+          onOpenChange={setNameDialogOpen}
+          onSubmit={(name) => void handleAddPasskey(name)}
+        />
+      ) : null}
 
       <AlertDialog
         open={deleteTarget != null}
@@ -321,20 +289,61 @@ export function PasskeyManager({ className }: { className?: string }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-            <Button
-              type="button"
+            <AlertDialogCancel disabled={busyId != null}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
-              disabled={busyId != null}
+              loading={busyId != null}
               onClick={() => {
                 if (deleteTarget) void handleDelete(deleteTarget);
               }}
             >
               Remove passkey
-            </Button>
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogPopup>
       </AlertDialog>
     </div>
+  );
+}
+
+function PasskeyNameForm({
+  adding,
+  onOpenChange,
+  onSubmit
+}: {
+  adding: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (name: string) => void;
+}) {
+  const form = useAppForm({
+    defaultValues: { name: "" },
+    onSubmit: ({ value }) => {
+      onSubmit(value.name.trim());
+    }
+  });
+
+  return (
+    <PromptDialog
+      open
+      onOpenChange={onOpenChange}
+      title="Add a passkey"
+      description="Optional name so you can tell devices apart. Next, your browser will ask for Face ID, Touch ID, or a security key."
+      icon={<FingerprintIcon className="size-4" strokeWidth={2} />}
+      submitLabel="Continue"
+      submitLoading={adding}
+      onSubmit={() => void form.handleSubmit()}
+    >
+      <form.AppField name="name">
+        {(field) => (
+          <field.InputField
+            label="Name"
+            placeholder="MacBook Touch ID"
+            autoComplete="off"
+            maxLength={64}
+            disabled={adding}
+          />
+        )}
+      </form.AppField>
+    </PromptDialog>
   );
 }

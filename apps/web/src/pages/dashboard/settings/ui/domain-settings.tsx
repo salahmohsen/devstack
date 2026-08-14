@@ -18,7 +18,8 @@ import { type CustomDomainOutput, HostnameSchema } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -42,15 +43,9 @@ import {
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
 import { Form } from "@tsu-stack/ui/components/form";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle
-} from "@tsu-stack/ui/components/frame";
 import { Separator } from "@tsu-stack/ui/components/separator";
 import { Skeleton } from "@tsu-stack/ui/components/skeleton";
+import { StatusSubmitButton } from "@tsu-stack/ui/components/status-submit-button";
 import {
   Table,
   TableBody,
@@ -73,24 +68,28 @@ import {
   useVerifyCustomDomainMutation
 } from "@/features/domain";
 
+import { SettingsFrame } from "./settings-frame";
+
 const DomainHostnameFormSchema = z.object({
   hostname: HostnameSchema
 });
 
 type StatusMeta = {
   label: string;
-  variant: "success" | "warning" | "destructive" | "secondary" | "outline";
+  variant: "success" | "warning" | "error";
+  /** Coss p-badge-16/17/18 status-dot color. */
+  dot: string;
 };
 
 function statusMeta(status: CustomDomainOutput["status"]): StatusMeta {
   switch (status) {
     case "verified":
-      return { label: "Valid configuration", variant: "success" };
+      return { label: "Valid configuration", variant: "success", dot: "bg-emerald-500" };
     case "failed":
-      return { label: "Invalid configuration", variant: "destructive" };
+      return { label: "Invalid configuration", variant: "error", dot: "bg-red-500" };
     case "pending":
     default:
-      return { label: "Pending verification", variant: "warning" };
+      return { label: "Pending verification", variant: "warning", dot: "bg-amber-500" };
   }
 }
 
@@ -177,10 +176,11 @@ function DomainHostnameForm({
     >
       <form.AppField name="hostname">
         {(field) => (
-          <field.InputField
+          <field.UrlField
+            kind="hostname"
             label="Domain"
             placeholder="portfolio.example.com"
-            description="Hostname only — no https:// or path."
+            description="Hostname only — no path. Paste a full URL and we’ll keep the host."
           />
         )}
       </form.AppField>
@@ -340,6 +340,7 @@ export const DomainSettings = () => {
   const [edgeOpen, setEdgeOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [lastVerifyError, setLastVerifyError] = useState<string | null>(null);
+  const [verifyFlash, setVerifyFlash] = useState<"success" | "failed" | null>(null);
 
   const customUrl = useMemo(() => {
     if (!domain?.hostname) return null;
@@ -374,10 +375,12 @@ export const DomainSettings = () => {
 
   const handleVerify = useCallback(() => {
     setLastVerifyError(null);
+    setVerifyFlash(null);
     verifyDomain.mutate(undefined, {
       // Server throws DNS_NOT_VERIFIED (and marks failed) when TXT is missing.
       onSuccess: () => {
         setLastVerifyError(null);
+        setVerifyFlash("success");
         toast.success("Domain verified — portfolio is available on this host");
       },
       onError: (error) => {
@@ -385,6 +388,7 @@ export const DomainSettings = () => {
           error.message ||
           "We couldn’t find the expected TXT record yet. Confirm the name and value at your DNS provider, wait a few minutes, then try again.";
         setLastVerifyError(message);
+        setVerifyFlash("failed");
         toast.error(message);
       }
     });
@@ -407,22 +411,45 @@ export const DomainSettings = () => {
 
   const lastChecked = domain ? formatRelativeTime(domain.updatedAt) : null;
   const isVerified = domain?.status === "verified";
+  const domainStatus = domain ? statusMeta(domain.status) : null;
+
+  useEffect(() => {
+    if (verifyFlash !== "success") return;
+    const timer = window.setTimeout(() => setVerifyFlash(null), 800);
+    return () => window.clearTimeout(timer);
+  }, [verifyFlash]);
+
+  const verifyState = verifyDomain.isPending
+    ? "pending"
+    : verifyFlash === "failed"
+      ? "failed"
+      : verifyFlash === "success"
+        ? "success"
+        : "idle";
+  const verifyLabel =
+    verifyState === "pending"
+      ? "Checking…"
+      : verifyState === "failed"
+        ? "Failed"
+        : verifyState === "success"
+          ? "Verified"
+          : isVerified
+            ? "Re-check"
+            : "Refresh configuration";
 
   return (
-    <Frame>
-      <FrameHeader>
-        <FrameTitle className="flex items-center gap-2">
-          <GlobeIcon className="size-4" />
-          Domains
-        </FrameTitle>
-        <FrameDescription>
-          Connect a custom hostname so your portfolio is served at{" "}
-          <span className="font-medium text-foreground">/</span> on that host. Dashboard and sign-in
-          stay on the app origin.
-        </FrameDescription>
-      </FrameHeader>
-
-      <FramePanel className="space-y-8">
+    <>
+      <SettingsFrame
+        title="Domains"
+        icon={<GlobeIcon className="size-4" />}
+        description={
+          <>
+            Connect a custom hostname so your portfolio is served at{" "}
+            <span className="font-medium text-foreground">/</span> on that host. Dashboard and
+            sign-in stay on the app origin.
+          </>
+        }
+      >
         {isPending || (isLoading && !isError) ? (
           <div className="space-y-3" aria-busy aria-label="Loading domain settings">
             <Skeleton className="h-16 w-full rounded-xl" />
@@ -527,14 +554,23 @@ export const DomainSettings = () => {
             {/* Resource row */}
             <section className="space-y-3">
               <p className="text-sm font-medium text-foreground">Your domains</p>
-              <div className="flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate font-medium">{domain.hostname}</p>
-                    <Badge variant={statusMeta(domain.status).variant}>
-                      {statusMeta(domain.status).label}
+              <div className="flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  {domainStatus ? (
+                    <Badge
+                      size="sm"
+                      variant={domainStatus.variant}
+                      icon={
+                        <span
+                          aria-hidden
+                          className={cn("size-1.5 rounded-full", domainStatus.dot)}
+                        />
+                      }
+                    >
+                      {domainStatus.label}
                     </Badge>
-                  </div>
+                  ) : null}
+                  <p className="truncate font-medium">{domain.hostname}</p>
                   <p className="text-xs text-muted-foreground">
                     {lastChecked ? `Last checked ${lastChecked}` : "Not verified yet"}
                     {domain.verifiedAt && domain.status === "verified" ? (
@@ -646,24 +682,14 @@ export const DomainSettings = () => {
                     />
                     DNS records
                   </CollapsibleTrigger>
-                  <Button
-                    type="button"
+                  <StatusSubmitButton
                     size="sm"
+                    state={verifyState}
+                    label={verifyLabel}
+                    disabled={verifyDomain.isPending || verifyState === "success"}
                     onClick={handleVerify}
-                    disabled={verifyDomain.isPending}
-                  >
-                    {verifyDomain.isPending ? (
-                      <>
-                        <Loader2Icon className="size-4 animate-spin" />
-                        Checking…
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCwIcon className="size-4" />
-                        {isVerified ? "Re-check" : "Refresh configuration"}
-                      </>
-                    )}
-                  </Button>
+                    icon={<RefreshCwIcon className="size-3.5" aria-hidden />}
+                  />
                 </div>
                 <CollapsiblePanel className="pt-3">
                   <DomainDnsTable domain={domain} />
@@ -765,9 +791,15 @@ export const DomainSettings = () => {
             </section>
           </div>
         )}
-      </FramePanel>
+      </SettingsFrame>
 
-      <AlertDialog open={removeOpen} onOpenChange={setRemoveOpen}>
+      <AlertDialog
+        open={removeOpen}
+        onOpenChange={(open) => {
+          if (!open && removeDomain.isPending) return;
+          setRemoveOpen(open);
+        }}
+      >
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {domain?.hostname ?? "this domain"}?</AlertDialogTitle>
@@ -777,25 +809,17 @@ export const DomainSettings = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-            <Button
-              type="button"
+            <AlertDialogCancel disabled={removeDomain.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
+              loading={removeDomain.isPending}
               onClick={handleRemove}
-              disabled={removeDomain.isPending}
             >
-              {removeDomain.isPending ? (
-                <>
-                  <Loader2Icon className="size-4 animate-spin" />
-                  Removing…
-                </>
-              ) : (
-                "Remove domain"
-              )}
-            </Button>
+              Remove domain
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogPopup>
       </AlertDialog>
-    </Frame>
+    </>
   );
 };

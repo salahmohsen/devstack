@@ -1,7 +1,11 @@
 // Lib
 export { createItemsUIStore } from "@/widgets/items-page/lib/create-items-ui-store";
 export { isAnyOpened } from "@/widgets/items-page/lib/is-any-item-open";
-export { ItemsNavProvider, useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
+export {
+  ItemsNavProvider,
+  useItemsNavContext,
+  useItemsNavContextOptional
+} from "@/widgets/items-page/lib/items-nav-context";
 export type {
   ItemsUIConfig,
   ItemsUIState,
@@ -15,7 +19,11 @@ export { GridSkeleton, ListSkeleton } from "@/widgets/items-page/ui/item-skeleto
 export { ItemsEmpty } from "@/widgets/items-page/ui/items-empty";
 export { ItemsFilterButton } from "@/widgets/items-page/ui/items-filter-button";
 export type { ItemsFilterOption } from "@/widgets/items-page/ui/items-filter-button";
-export { ItemInfoPanel } from "@/widgets/items-page/ui/item-info-panel";
+export {
+  ItemInfoPanel,
+  ItemInfoRow,
+  ItemInfoSection
+} from "@/widgets/items-page/ui/item-info-panel";
 export { ItemsInfoFooter } from "@/widgets/items-page/ui/items-info-footer";
 export { ItemsInfoSheet } from "@/widgets/items-page/ui/items-info-sheet";
 export { ItemsList } from "@/widgets/items-page/ui/items-list";

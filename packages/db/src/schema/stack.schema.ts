@@ -1,4 +1,13 @@
-import { index, integer, json, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  json,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex
+} from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
 import { portfolioEntry } from "./portfolio-entry.schema.ts";
@@ -21,6 +30,7 @@ export const stack = pgTable(
     }>(),
     confidence: text("confidence"),
     sortOrder: integer("sort_order").notNull().default(0),
+    isFeatured: boolean("is_featured").notNull().default(false),
     portfolioEntryId: text("portfolio_entry_id").references(() => portfolioEntry.id, {
       onDelete: "set null"
     }),

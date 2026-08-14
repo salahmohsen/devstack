@@ -6,10 +6,13 @@ import {
   type ToolCallMessagePartProps
 } from "@assistant-ui/react";
 import * as React from "react";
+import { z } from "zod";
 
 import {
   ProposeApplicationFromJdInputSchema,
-  type ProposeApplicationFromJdOutput
+  ProposeNewJobsTriageInputSchema,
+  type ProposeApplicationFromJdOutput,
+  type ProposeNewJobsTriageOutput
 } from "@tsu-stack/core";
 
 import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
@@ -18,8 +21,11 @@ import { HUB_AUI_SUGGESTIONS } from "@/features/agent-hub/api/hub-suggestions";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import {
   isProposeApplicationFromJdToolName,
+  isProposeNewJobsTriageToolName,
   parseProposeApplicationFromJdInput,
-  parseProposeApplicationFromJdOutputAction
+  parseProposeApplicationFromJdOutputAction,
+  parseProposeNewJobsTriageInput,
+  parseProposeNewJobsTriageOutput
 } from "@/features/agent-hub/lib/hub-tool-names";
 
 import { AgentHubToolApproval } from "./agent-hub-tool-approval";
@@ -28,8 +34,11 @@ import {
   PROPOSE_FROM_JD_CHOICE_LABELS,
   type ApplicationFromJdCardAction
 } from "./application-from-jd-card";
+import { NewJobsTriageCard } from "./new-jobs-triage-card";
+import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
 
 const PROPOSE_FROM_JD_TOOL_ID = "propose-application-from-jd";
+const PROPOSE_TRIAGE_TOOL_ID = "propose-new-jobs-triage";
 
 type ProposeArgs = {
   title?: string;
@@ -59,9 +68,10 @@ function ProposeApplicationFromJdToolUI({
   const handleSubmit = React.useCallback(
     ({ action: next }: { action: ApplicationFromJdCardAction }) => {
       const output = { action: next };
+      // Prefer toolkit addResult for UI part state, then Chat.addToolOutput so
+      // sendAutomaticallyWhen re-POSTs (addResult alone does not always resume).
       if (typeof addResult === "function") {
         addResult(output);
-        return;
       }
       void addToolOutput({
         tool: resolvedToolName,
@@ -91,9 +101,97 @@ function ProposeApplicationFromJdToolUI({
   );
 }
 
-function GenerateApplyPackageToolUI(
-  props: ToolCallMessagePartProps<Record<string, unknown>, unknown>
-) {
+function ProposeNewJobsTriageToolUI({
+  args,
+  result,
+  addResult,
+  toolCallId,
+  toolName
+}: ToolCallMessagePartProps<Record<string, unknown>, ProposeNewJobsTriageOutput>) {
+  const { addToolOutput, messages } = useHubChat();
+  const completed = parseProposeNewJobsTriageOutput(result);
+  const input = parseProposeNewJobsTriageInput(args);
+  const resolvedToolName = isProposeNewJobsTriageToolName(toolName)
+    ? toolName
+    : PROPOSE_TRIAGE_TOOL_ID;
+
+  const handleSubmit = React.useCallback(
+    (output: ProposeNewJobsTriageOutput) => {
+      // Cancel sibling open triage cards so auto-resume is not blocked by other
+      // pending client tools in the same thread (model sometimes proposes twice).
+      if (output.action === "confirm") {
+        for (const msg of messages) {
+          if (msg.role !== "assistant") continue;
+          for (const raw of msg.parts ?? []) {
+            const part = raw as {
+              type?: string;
+              toolName?: string;
+              toolCallId?: string;
+              state?: string;
+            };
+            const type = part.type ?? "";
+            const isTool = type.startsWith("tool-") || type === "dynamic-tool";
+            if (!isTool) continue;
+            const name =
+              part.toolName ?? (type.startsWith("tool-") ? type.slice("tool-".length) : "");
+            if (!isProposeNewJobsTriageToolName(name)) continue;
+            const id = part.toolCallId ?? "";
+            if (!id || id === toolCallId) continue;
+            if (
+              part.state !== "input-available" &&
+              part.state !== "input-streaming" &&
+              part.state !== "call" &&
+              part.state !== "partial-call"
+            ) {
+              continue;
+            }
+            void addToolOutput({
+              tool: name,
+              toolCallId: id,
+              output: { action: "cancel", trackIds: [], dismissIds: [] }
+            });
+          }
+        }
+      }
+
+      if (typeof addResult === "function") {
+        addResult(output);
+      }
+      void addToolOutput({
+        tool: resolvedToolName,
+        toolCallId,
+        output
+      });
+    },
+    [addResult, addToolOutput, messages, resolvedToolName, toolCallId]
+  );
+
+  if (completed) {
+    if (completed.action === "cancel") {
+      return (
+        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+          You cancelled triage — no track/dismiss changes.
+        </p>
+      );
+    }
+    return (
+      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+        Confirmed triage: track {completed.trackIds.length}, dismiss {completed.dismissIds.length}.
+      </p>
+    );
+  }
+
+  return (
+    <NewJobsTriageCard
+      toolCallId={toolCallId}
+      input={input}
+      disabled={result != null || !toolCallId}
+      onSubmit={handleSubmit}
+    />
+  );
+}
+
+function ApprovalGatedToolUI(props: ToolCallMessagePartProps<Record<string, unknown>, unknown>) {
   const { args, approval, respondToApproval, toolName } = props;
   const { addToolApprovalResponse } = useHubChat();
   const [pending, setPending] = React.useState(false);
@@ -148,10 +246,28 @@ const proposeApplicationFromJdTool = {
   render: ProposeApplicationFromJdToolUI
 };
 
-const generateApplyPackageTool = {
+const proposeNewJobsTriageTool = {
+  type: "human" as const,
+  description: "Propose New jobs triage Track/Dismiss lists. Wait for Confirm or Cancel.",
+  parameters: ProposeNewJobsTriageInputSchema,
+  render: ProposeNewJobsTriageToolUI
+};
+
+const approvalTool = {
   type: "backend" as const,
   display: "standalone" as const,
-  render: GenerateApplyPackageToolUI
+  render: ApprovalGatedToolUI
+};
+
+const OpenSurfaceParametersSchema = z.object({
+  href: z.string().min(1)
+});
+
+const openSurfaceToolEntry = {
+  type: "human" as const,
+  description: "Navigate the dashboard to an href under /dashboard.",
+  parameters: OpenSurfaceParametersSchema,
+  render: OpenSurfaceToolUI
 };
 
 /**
@@ -161,8 +277,20 @@ const generateApplyPackageTool = {
 export const hubAssistantToolkit = defineToolkit({
   "propose-application-from-jd": proposeApplicationFromJdTool,
   proposeApplicationFromJd: proposeApplicationFromJdTool,
-  "generate-apply-package": generateApplyPackageTool,
-  generateApplyPackage: generateApplyPackageTool
+  "propose-new-jobs-triage": proposeNewJobsTriageTool,
+  proposeNewJobsTriage: proposeNewJobsTriageTool,
+  "generate-apply-package": approvalTool,
+  generateApplyPackage: approvalTool,
+  "accept-apply-package": approvalTool,
+  acceptApplyPackage: approvalTool,
+  "send-apply-outreach": approvalTool,
+  sendApplyOutreach: approvalTool,
+  "send-mail-reply": approvalTool,
+  sendMailReply: approvalTool,
+  "create-application": approvalTool,
+  createApplication: approvalTool,
+  "open-surface": openSurfaceToolEntry,
+  openSurface: openSurfaceToolEntry
 });
 
 export const hubAssistantAuiConfig = AuiConfig({

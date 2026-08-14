@@ -2,7 +2,7 @@
 
 import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
+import { AlignLeftIcon, BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,14 +10,14 @@ import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-star
 import { type ExperienceListPageOutput, type ExperienceOutput } from "@tsu-stack/core";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogPopup,
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
-import { Button } from "@tsu-stack/ui/components/button";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
@@ -38,6 +38,8 @@ import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
   ItemInfoPanel,
+  ItemInfoRow,
+  ItemInfoSection,
   ItemsEmpty,
   ItemsNavProvider,
   ListSkeleton,
@@ -46,7 +48,8 @@ import {
   isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
-import { ItemsInfoPanel } from "@/widgets/layout";
+
+import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 
 import { useExperienceStore } from "./_lib/experience.slice";
 import {
@@ -247,7 +250,6 @@ export function ExperiencesPage() {
 
   async function handleBatchDelete() {
     setBatchAction("delete");
-    setBatchDeleteDialogOpen(false);
     const ids = selectedIdList;
     const results = await Promise.allSettled(
       ids.map((id) => orpcClient.experiences.delete({ id }))
@@ -257,6 +259,7 @@ export function ExperiencesPage() {
     await queryClient.invalidateQueries({ queryKey: getPortfolioListQueryKey() });
 
     setBatchAction(null);
+    setBatchDeleteDialogOpen(false);
 
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
@@ -486,44 +489,66 @@ export function ExperiencesPage() {
 
         {renderList()}
 
-        <ItemsInfoPanel open={isAnyOpen} item={openedItem}>
+        <ItemsInspectHost
+          open={isAnyOpen && !dialogOpen}
+          item={openedItem}
+          title="Experience"
+          onOpenChange={(next) => {
+            if (!next) {
+              setOpenedItem(null);
+              setIsItemOpen(null);
+            }
+          }}
+        >
           {(item) => {
             if (!item) return null;
             return (
               <ItemInfoPanel
+                eyebrow={<BriefcaseIcon strokeWidth={1.75} />}
                 title={item.title}
-                description={`${item.organization} · ${formatRangeFull(item.fromDate, item.toDate)}`}
+                description={
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span>{item.organization}</span>
+                    <span aria-hidden className="text-border">
+                      ·
+                    </span>
+                    <span>{formatRangeFull(item.fromDate, item.toDate)}</span>
+                  </p>
+                }
                 updatedAt={item.updatedAt}
                 createdAt={item.createdAt}
               >
-                {item.description ? (
-                  <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                    {item.description}
-                  </Markdown>
-                ) : (
-                  <p className="text-muted-foreground">No description.</p>
-                )}
-                {item.projects.length > 0 ? (
-                  <>
-                    <p className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                      Projects
-                    </p>
-                    <ul className="space-y-2">
-                      {item.projects.map((project) => (
-                        <li key={project.id} className="flex items-baseline justify-between gap-3">
-                          <span className="font-medium">{project.title}</span>
-                          <span className="text-xs text-muted-foreground tabular-nums">
-                            {project.year}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null}
+                <div className="space-y-8">
+                  <ItemInfoSection title="Summary" icon={<AlignLeftIcon />}>
+                    {item.description ? (
+                      <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                        {item.description}
+                      </Markdown>
+                    ) : (
+                      <p>No description.</p>
+                    )}
+                  </ItemInfoSection>
+                  {item.projects.length > 0 ? (
+                    <ItemInfoSection title="Projects" icon={<Building2Icon />}>
+                      <ul className="space-y-2.5">
+                        {item.projects.map((project) => (
+                          <ItemInfoRow key={project.id}>
+                            <div className="flex items-baseline justify-between gap-3">
+                              <span className="font-medium text-foreground">{project.title}</span>
+                              <span className="text-xs text-muted-foreground tabular-nums">
+                                {project.year}
+                              </span>
+                            </div>
+                          </ItemInfoRow>
+                        ))}
+                      </ul>
+                    </ItemInfoSection>
+                  ) : null}
+                </div>
               </ItemInfoPanel>
             );
           }}
-        </ItemsInfoPanel>
+        </ItemsInspectHost>
 
         <ExperienceForm
           key={editingExperienceId ?? "new"}
@@ -536,7 +561,13 @@ export function ExperiencesPage() {
           onOpenChange={setDialogOpen}
         />
 
-        <AlertDialog open={batchDeleteDialogOpen} onOpenChange={setBatchDeleteDialogOpen}>
+        <AlertDialog
+          open={batchDeleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open && isDeleting) return;
+            setBatchDeleteDialogOpen(open);
+          }}
+        >
           <AlertDialogPopup>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete {selectedCount} experience(s)?</AlertDialogTitle>
@@ -546,13 +577,16 @@ export function ExperiencesPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-              <AlertDialogClose
-                render={<Button variant="destructive" disabled={isDeleting} />}
-                onClick={handleBatchDelete}
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                loading={isDeleting}
+                onClick={() => {
+                  void handleBatchDelete();
+                }}
               >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </AlertDialogClose>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogPopup>
         </AlertDialog>
