@@ -1,6 +1,9 @@
 import { buildDocumentPDFBytes, type DocumentBlock, type DocumentParams } from "pdfnative";
 
-import { loadPdfALatinFontEntries } from "#@/mastra/lib/pdf/pdfa-latin-font";
+import {
+  applyPdfHeadingWeights,
+  loadPdfALatinFontEntries
+} from "#@/mastra/lib/pdf/pdfa-latin-font";
 
 export type CoverLetterPdfInput = {
   candidateName: string;
@@ -82,7 +85,7 @@ export async function buildCoverLetterPdfBytes(input: CoverLetterPdfInput): Prom
   }
 
   const params: DocumentParams = {
-    blocks,
+    blocks: applyPdfHeadingWeights(blocks),
     fontEntries: await loadPdfALatinFontEntries()
   };
   return buildDocumentPDFBytes(params, {

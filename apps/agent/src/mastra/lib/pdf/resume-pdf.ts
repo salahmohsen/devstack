@@ -7,7 +7,10 @@ import {
   stripUrl
 } from "@tsu-stack/core";
 
-import { loadPdfALatinFontEntries } from "#@/mastra/lib/pdf/pdfa-latin-font";
+import {
+  applyPdfHeadingWeights,
+  loadPdfALatinFontEntries
+} from "#@/mastra/lib/pdf/pdfa-latin-font";
 
 // Re-export for callers/tests that import from this module.
 export { formatStackTypeLabel } from "@tsu-stack/core";
@@ -100,6 +103,41 @@ const HEADING_SPACING = {
   2: { top: 10, bottom: 8 },
   3: { top: 8, bottom: 6 }
 } as const;
+
+/**
+ * Role-based type scale. Headings render SemiBold (600); body/meta stay Regular (400).
+ * Sizes descend with level; weight separates titles from reading text.
+ */
+const TYPE = {
+  name: { kind: "heading", level: 1 as const },
+  section: { kind: "heading", level: 2 as const },
+  role: { kind: "heading", level: 3 as const },
+  meta: { kind: "paragraph", fontSize: 9, color: COLORS.secondary },
+  body: { kind: "paragraph", fontSize: 9, lineHeight: 1.35 },
+  list: { kind: "list", fontSize: 9 },
+  label: { kind: "paragraph", fontSize: 8, color: COLORS.muted }
+} as const;
+
+function headingBlock(
+  text: string,
+  role: keyof Pick<typeof TYPE, "name" | "section" | "role">
+): DocumentBlock {
+  return { type: "heading", text, level: TYPE[role].level };
+}
+
+function paragraphBlock(
+  text: string,
+  role: keyof Pick<typeof TYPE, "meta" | "body" | "label">
+): DocumentBlock {
+  const spec = TYPE[role];
+  return {
+    type: "paragraph",
+    text,
+    fontSize: spec.fontSize,
+    ...("color" in spec ? { color: spec.color } : {}),
+    ...("lineHeight" in spec ? { lineHeight: spec.lineHeight } : {})
+  };
+}
 
 function stripHtml(html: string): string {
   return html
@@ -613,51 +651,32 @@ export function buildResumeDocument(data: ResumeBuilderData): {
 
   const blocks: DocumentBlock[] = [];
 
-  blocks.push({ type: "heading" as const, text: data.profile.name, level: 1 as const });
+  blocks.push(headingBlock(data.profile.name, "name"));
   blocks.push({ type: "spacer" as const, height: SPACING.nameToContact });
 
   const contactLine = buildContactLine(data.portfolio.contacts, data.profile.email);
   if (contactLine) {
-    blocks.push({
-      type: "paragraph" as const,
-      text: contactLine,
-      fontSize: 9,
-      color: COLORS.secondary
-    });
+    blocks.push(paragraphBlock(contactLine, "meta"));
   }
 
   blocks.push({ type: "spacer" as const, height: SPACING.contactToFirstSection });
 
   const professionalSummary = data.professionalSummary?.trim();
   if (professionalSummary) {
-    blocks.push({ type: "heading" as const, text: "SUMMARY", level: 2 as const });
-    blocks.push({
-      type: "paragraph" as const,
-      text: professionalSummary,
-      fontSize: 9,
-      lineHeight: 1.35
-    });
+    blocks.push(headingBlock("SUMMARY", "section"));
+    blocks.push(paragraphBlock(professionalSummary, "body"));
     blocks.push({ type: "spacer" as const, height: SPACING.itemMarginBottom });
   }
 
   if (experiences.length > 0) {
-    blocks.push({ type: "heading" as const, text: "EXPERIENCE", level: 2 as const });
+    blocks.push(headingBlock("EXPERIENCE", "section"));
     for (const exp of experiences) {
       // ATS-friendly order: Title, then company + dates on one line.
-      blocks.push({
-        type: "heading" as const,
-        text: exp.title,
-        level: 3 as const
-      });
+      blocks.push(headingBlock(exp.title, "role"));
       const dates = formatDateRange(exp.fromDate, exp.toDate, exp.isPresent);
       const meta = [exp.organization, dates].filter(Boolean).join(" | ");
       if (meta) {
-        blocks.push({
-          type: "paragraph" as const,
-          text: meta,
-          fontSize: 9,
-          color: COLORS.secondary
-        });
+        blocks.push(paragraphBlock(meta, "meta"));
       }
       const rewritten = (exp.bullets ?? []).map((b) => b.trim()).filter(Boolean);
       const bullets = rewritten.length > 0 ? rewritten : extractBullets(exp.description);
@@ -666,7 +685,7 @@ export function buildResumeDocument(data: ResumeBuilderData): {
           type: "list" as const,
           items: bullets,
           style: "bullet" as const,
-          fontSize: 9
+          fontSize: TYPE.list.fontSize
         });
       }
       blocks.push({ type: "spacer" as const, height: SPACING.itemMarginBottom });
@@ -674,9 +693,9 @@ export function buildResumeDocument(data: ResumeBuilderData): {
   }
 
   if (projects.length > 0) {
-    blocks.push({ type: "heading" as const, text: "PROJECTS", level: 2 as const });
+    blocks.push(headingBlock("PROJECTS", "section"));
     for (const proj of projects) {
-      blocks.push({ type: "heading" as const, text: proj.title, level: 3 as const });
+      blocks.push(headingBlock(proj.title, "role"));
 
       // Prefer rewritten bullets → description bullets → summary paragraph.
       const rewritten = (proj.bullets ?? []).map((b) => b.trim()).filter(Boolean);
@@ -689,50 +708,31 @@ export function buildResumeDocument(data: ResumeBuilderData): {
           type: "list" as const,
           items: bullets,
           style: "bullet" as const,
-          fontSize: 9
+          fontSize: TYPE.list.fontSize
         });
       } else if (proj.summary?.trim()) {
-        blocks.push({
-          type: "paragraph" as const,
-          text: stripHtml(proj.summary),
-          fontSize: 9,
-          lineHeight: 1.35
-        });
+        blocks.push(paragraphBlock(stripHtml(proj.summary), "body"));
       }
 
       // Portfolio-included stack entity names only (no npm package / deny / cap).
       const techNames = projectStackNames(filterPortfolioProjectStacks(proj.stacks ?? [], stacks));
       if (techNames.length > 0) {
-        blocks.push({
-          type: "paragraph" as const,
-          text: "Stack",
-          fontSize: 8,
-          color: COLORS.muted
-        });
+        blocks.push(paragraphBlock("Stack", "label"));
         blocks.push({
           type: "spacer" as const,
           height: SPACING.stackLabelToNames
         });
-        blocks.push({
-          type: "paragraph" as const,
-          text: techNames.join(" · "),
-          fontSize: 9,
-          color: COLORS.secondary
-        });
+        blocks.push(paragraphBlock(techNames.join(" · "), "meta"));
       }
       blocks.push({ type: "spacer" as const, height: SPACING.itemMarginBottom });
     }
   }
 
   if (stacks.length > 0) {
-    blocks.push({ type: "heading" as const, text: "SKILLS", level: 2 as const });
+    blocks.push(headingBlock("SKILLS", "section"));
     const groups = groupStacksByType(stacks);
     for (const group of groups) {
-      blocks.push({
-        type: "paragraph" as const,
-        text: `${group.label}: ${group.names.join(", ")}`,
-        fontSize: 9
-      });
+      blocks.push(paragraphBlock(`${group.label}: ${group.names.join(", ")}`, "body"));
       blocks.push({ type: "spacer" as const, height: SPACING.skillCategoryMarginBottom });
     }
   }
@@ -760,5 +760,8 @@ export function buildResumeDocument(data: ResumeBuilderData): {
 export async function renderResumePdfBytes(data: ResumeBuilderData): Promise<Uint8Array> {
   const { params, layout } = buildResumeDocument(data);
   const fontEntries = await loadPdfALatinFontEntries();
-  return buildDocumentPDFBytes({ ...params, fontEntries }, layout);
+  return buildDocumentPDFBytes(
+    { ...params, fontEntries, blocks: applyPdfHeadingWeights(params.blocks) },
+    layout
+  );
 }

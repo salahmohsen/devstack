@@ -87,7 +87,7 @@ export const resumeRouter = {
       method: "GET"
     })
     .input(PublicUsernameInputSchema)
-    .output(ResumeOutputSchema.optional())
+    .output(ResumeOutputSchema.nullable())
     .errors({
       NOT_FOUND: {
         message: "Profile not found",
@@ -102,7 +102,8 @@ export const resumeRouter = {
       if (!resolved) {
         throw errors.NOT_FOUND();
       }
-      return resumeRepository.findDefaultByUserId(resolved.userId);
+      // Query clients cannot store `undefined`. No default resume is `null`.
+      return (await resumeRepository.findDefaultByUserId(resolved.userId)) ?? null;
     }),
   setDefault: protectedProcedure
     .route({
