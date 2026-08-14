@@ -79,6 +79,11 @@ export function hubPersonalityById(id: string | null | undefined): HubPersonalit
   return HUB_PERSONALITIES.find((p) => p.id === id) ?? HUB_PERSONALITIES[0]!;
 }
 
+/** Deterministic Agent Avatar seed — one unique face per personality. */
+export function hubPersonalityAvatarSeed(id: string | null | undefined): string {
+  return `hub-assistant:${hubPersonalityById(id).id}`;
+}
+
 export function hubAvatarById(id: string | null | undefined): HubAvatarPreset {
   return HUB_AVATARS.find((a) => a.id === id) ?? HUB_AVATARS[0]!;
 }

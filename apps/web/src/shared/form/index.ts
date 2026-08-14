@@ -3,6 +3,8 @@ export { useFieldContext, useFormContext, fieldContext, formContext } from "./fo
 export { useAppForm, withForm, withFieldGroup } from "./form";
 
 export { FieldLabelWithTooltip } from "./field-label-with-tooltip";
+export { AvatarSelectField } from "./avatar-select-field";
+export type { AvatarSelectOption } from "./avatar-select-field";
 export { AvatarUploadField } from "./avatar-upload-field";
 export { CheckboxField } from "./checkbox-field";
 export { ComboboxMultipleField } from "./combobox-multiple-field";

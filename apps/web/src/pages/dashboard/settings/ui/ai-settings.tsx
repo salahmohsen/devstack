@@ -31,8 +31,8 @@ import {
   type AiProviderPublic,
   type HubAvatarId,
   type HubPersonalityId,
-  HUB_AVATARS,
-  HUB_PERSONALITIES
+  HUB_PERSONALITIES,
+  hubPersonalityAvatarSeed
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -60,7 +60,6 @@ import {
   EmptyMedia,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
-import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 import { Label } from "@tsu-stack/ui/components/label";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
@@ -710,45 +709,29 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
         >
           <SettingsSection
             title="Hub assistant"
-            description="Voice and face for the dashboard chat. Cairo is the default — useful, a little cheeky, and it already knows your product words."
+            description="Voice and face for the dashboard chat. Each character has its own look. Cairo is the default — useful, a little cheeky, and it already knows your product words."
           >
-            <FieldGroup className="gap-3">
-              <form.AppField name="hubPersonality">
-                {(field) => (
-                  <field.SelectableCardsField
-                    options={HUB_PERSONALITIES.map((preset) => {
-                      return {
-                        value: preset.id,
-                        title: preset.label,
-                        description: preset.tagline
-                      };
-                    })}
-                    onValueChange={(nextId) => {
-                      const prevDefault = HUB_PERSONALITIES.find(
-                        (preset) => preset.id === values.hubPersonality
-                      )?.defaultAvatar;
-                      const nextPreset = HUB_PERSONALITIES.find((preset) => preset.id === nextId);
-                      if (nextPreset && values.hubAvatar === prevDefault) {
-                        form.setFieldValue("hubAvatar", nextPreset.defaultAvatar);
-                      }
-                    }}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name="hubAvatar">
-                {(field) => (
-                  <field.EmojiChoiceField
-                    options={HUB_AVATARS.map((avatar) => {
-                      return {
-                        value: avatar.id,
-                        label: avatar.label,
-                        emoji: avatar.emoji
-                      };
-                    })}
-                  />
-                )}
-              </form.AppField>
-            </FieldGroup>
+            <form.AppField name="hubPersonality">
+              {(field) => (
+                <field.AvatarSelectField
+                  ariaLabel="Hub assistant"
+                  options={HUB_PERSONALITIES.map((preset) => {
+                    return {
+                      value: preset.id,
+                      label: preset.label,
+                      description: preset.tagline,
+                      seed: hubPersonalityAvatarSeed(preset.id)
+                    };
+                  })}
+                  onValueChange={(nextId) => {
+                    const nextPreset = HUB_PERSONALITIES.find((preset) => preset.id === nextId);
+                    if (nextPreset) {
+                      form.setFieldValue("hubAvatar", nextPreset.defaultAvatar);
+                    }
+                  }}
+                />
+              )}
+            </form.AppField>
           </SettingsSection>
 
           <SettingsSection

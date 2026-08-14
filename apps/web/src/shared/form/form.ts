@@ -1,5 +1,6 @@
 import { createFormHook } from "@tanstack/react-form";
 
+import { AvatarSelectField } from "@/shared/form/avatar-select-field";
 import { AvatarUploadField } from "@/shared/form/avatar-upload-field";
 import { CalendarField } from "@/shared/form/calendar-field";
 import { IconPickerField } from "@/shared/form/icon-field";
@@ -60,6 +61,7 @@ export const { useAppForm, withForm, withFieldGroup, extendForm, useTypedAppForm
       InputGroupField,
       StackSelector,
       SwitchField,
+      AvatarSelectField,
       AvatarUploadField,
       IconPickerField,
       IconifyField,
