@@ -4,7 +4,9 @@ import {
   desc,
   eq,
   inArray,
+  isNotNull,
   isNull,
+  lte,
   lt,
   sql,
   type InferInsertModel,
@@ -40,6 +42,9 @@ export type UpdateApplicationData = Partial<
     "userId" | "stage" | "stageChangedAt" | "outcome" | "outcomeAt" | "trackingStatus"
   >
 >;
+
+/** First inbox HTTP check; keep in sync with core `LIVENESS_AFTER_MS` (~3.5d). */
+const INBOX_LIVENESS_AFTER_MS = Math.floor((7 * 24 * 60 * 60 * 1000) / 2);
 
 export const applicationRepository = {
   async findAllByUserId(userId: string) {
@@ -142,7 +147,10 @@ export const applicationRepository = {
         outcome: null,
         outcomeAt: null,
         hiringUrgency: input.hiringUrgency ?? "unknown",
-        resumeId: input.resumeId ?? null
+        resumeId: input.resumeId ?? null,
+        postingId: input.postingId ?? null,
+        inboxExpiresAt: input.inboxExpiresAt ?? null,
+        discoveryRunId: input.discoveryRunId ?? null
       })
       .returning();
     return created;
@@ -184,7 +192,10 @@ export const applicationRepository = {
         outcome: null,
         outcomeAt: null,
         hiringUrgency: input.hiringUrgency ?? "unknown",
-        resumeId: input.resumeId ?? null
+        resumeId: input.resumeId ?? null,
+        postingId: input.postingId ?? null,
+        inboxExpiresAt: input.inboxExpiresAt ?? null,
+        discoveryRunId: input.discoveryRunId ?? null
       })
       .onConflictDoNothing({
         target: [application.userId, application.url],
@@ -203,6 +214,85 @@ export const applicationRepository = {
       );
     }
     return { row: existing, created: false };
+  },
+
+  async countInboxThisRun(userId: string, discoveryRunId: string): Promise<number> {
+    const [row] = await getDb()
+      .select({ n: sql<number>`count(*)::int` })
+      .from(application)
+      .where(
+        and(
+          eq(application.userId, userId),
+          eq(application.discoveryRunId, discoveryRunId),
+          eq(application.trackingStatus, "inbox")
+        )
+      );
+    return row?.n ?? 0;
+  },
+
+  async listUserUrlsAndPostingIds(
+    userId: string
+  ): Promise<{ urls: string[]; postingIds: string[] }> {
+    const rows = await getDb()
+      .select({
+        url: application.url,
+        postingId: application.postingId
+      })
+      .from(application)
+      .where(eq(application.userId, userId));
+
+    const urls: string[] = [];
+    const postingIds: string[] = [];
+    const seenUrls = new Set<string>();
+    const seenPostingIds = new Set<string>();
+    for (const row of rows) {
+      if (row.url && !seenUrls.has(row.url)) {
+        seenUrls.add(row.url);
+        urls.push(row.url);
+      }
+      if (row.postingId && !seenPostingIds.has(row.postingId)) {
+        seenPostingIds.add(row.postingId);
+        postingIds.push(row.postingId);
+      }
+    }
+    return { urls, postingIds };
+  },
+
+  /**
+   * Inbox rows ready for first HTTP liveness check.
+   * No last-liveness column — due at `createdAt + ~3.5d` (core `LIVENESS_AFTER_MS`).
+   */
+  async listInboxDueLiveness(now: Date, limit: number): Promise<ApplicationEntity[]> {
+    if (limit <= 0) return [];
+    const dueAt = new Date(now.getTime() - INBOX_LIVENESS_AFTER_MS);
+    return getDb()
+      .select()
+      .from(application)
+      .where(
+        and(
+          eq(application.trackingStatus, "inbox"),
+          isNotNull(application.inboxExpiresAt),
+          lte(application.createdAt, dueAt)
+        )
+      )
+      .orderBy(asc(application.createdAt))
+      .limit(limit);
+  },
+
+  async listInboxExpired(now: Date, limit: number): Promise<ApplicationEntity[]> {
+    if (limit <= 0) return [];
+    return getDb()
+      .select()
+      .from(application)
+      .where(
+        and(
+          eq(application.trackingStatus, "inbox"),
+          isNotNull(application.inboxExpiresAt),
+          lte(application.inboxExpiresAt, now)
+        )
+      )
+      .orderBy(asc(application.inboxExpiresAt))
+      .limit(limit);
   },
 
   async update(id: string, userId: string, patch: UpdateApplicationData) {
