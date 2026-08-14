@@ -11,7 +11,12 @@ export function useUpdateMailSmartRuleMutation() {
   return useMutation(
     orpcQueryClient.mailSmartRules.update.mutationOptions({
       onSuccess: async (_data, variables) => {
-        if (variables.keywords === undefined) {
+        const isMetadataEdit =
+          variables.title !== undefined ||
+          variables.description !== undefined ||
+          variables.icon !== undefined ||
+          variables.keywords !== undefined;
+        if (isMetadataEdit) {
           toast.success("Rule saved");
         }
         await queryClient.invalidateQueries({ queryKey: mailSmartRulesQueryKeys.list() });
