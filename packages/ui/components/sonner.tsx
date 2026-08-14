@@ -35,7 +35,7 @@ function Toaster({ ...props }: ToasterProps) {
           icon: "relative flex size-4 shrink-0 items-center justify-center [&_svg]:size-3.5",
           actionButton: cn(
             buttonVariants({ size: "xs", variant: "outline" }),
-            "bg-background/90! text-foreground!"
+            "h-6! max-h-6! min-h-6! shrink-0 self-center bg-background/90! text-foreground!"
           ),
           cancelButton: cn(buttonVariants({ size: "xs", variant: "ghost" }), "text-foreground!"),
           closeButton: buttonVariants({ size: "icon-xs", variant: "ghost" })

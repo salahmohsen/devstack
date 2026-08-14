@@ -147,6 +147,9 @@ export function ToastTypeIcon({ type }: { type?: string | null }): React.ReactEl
 /** Sonner root classes. `!` beats sonner's styled `background` shorthand. */
 export const sonnerToastClassName = cn(
   "cn-toast overflow-visible bg-background/90! text-foreground backdrop-blur-md not-dark:bg-clip-padding",
+  // Sonner locks `height` to a stale --initial-height on hover/expand and
+  // transitions it — that is the toast "growing" on hover.
+  "transition-[transform,opacity,box-shadow]! data-[expanded=true]:h-auto!",
   "bg-[radial-gradient(ellipse_40%_50%_at_50%_0%,var(--btn-glow-line)_0%,transparent_100%),radial-gradient(ellipse_80%_55%_at_50%_0%,var(--btn-glow)_0%,transparent_72%)]!",
   "bg-size-[56%_1px,100%_100%]! bg-position-[center_top,center]! bg-no-repeat!",
   "shadow-[0_-10px_20px_-8px_var(--btn-glow),0_1px_2px_rgb(0_0_0/0.05)]!",

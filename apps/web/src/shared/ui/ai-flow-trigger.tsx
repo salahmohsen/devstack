@@ -54,7 +54,30 @@ export type AiFlowTriggerProps = {
 };
 
 /** Inline solving orb — shared by workflow pills and AI job toasts. */
-export function WorkflowSolvingOrb({ className }: { className?: string }) {
+export function WorkflowSolvingOrb({
+  className,
+  size = "inline"
+}: {
+  className?: string;
+  /** `toast` uses the 64px preset scaled to 32px — the 20px preset is too small in Sonner. */
+  size?: "inline" | "toast";
+}) {
+  if (size === "toast") {
+    return (
+      <span
+        className={cn("relative flex size-8 shrink-0 items-center justify-center", className)}
+        aria-hidden
+      >
+        <ThinkingOrb
+          state="solving"
+          size={64}
+          theme="auto"
+          className="absolute size-16 origin-center scale-50"
+        />
+      </span>
+    );
+  }
+
   return (
     <ThinkingOrb
       state="solving"

@@ -17,7 +17,7 @@ function PasswordInput({
   const [visible, setVisible] = React.useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <Input
         className={cn(showToggle && "pr-9", className)}
         type={visible ? "text" : "password"}

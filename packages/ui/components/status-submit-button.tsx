@@ -13,8 +13,10 @@ import {
   buttonGlowSize,
   buttonGlowVariant,
   buttonVariants,
+  useButtonAnimateDefault,
   type ButtonProps
 } from "@tsu-stack/ui/components/button";
+import { FlipHoverLayers } from "@tsu-stack/ui/components/flip-hover";
 import {
   ICON_VARIANTS,
   StatusStateIcon,
@@ -38,6 +40,8 @@ export type StatusSubmitButtonProps = {
   idleVariant?: ButtonProps["variant"];
   /** Convenience alias: when true, visual state is `pending`. */
   loading?: boolean;
+  /** Navbar flip while idle. Defaults true inside `ButtonAnimateScope`. */
+  animate?: boolean;
 } & Omit<
   ComponentProps<typeof motion.button>,
   "children" | "onClick" | "type" | "disabled" | "onDrag" | "onDragStart" | "onDragEnd"
@@ -65,37 +69,20 @@ function StatusSubmitButton({
   icon,
   idleVariant = "default",
   loading = false,
+  animate,
   ...props
 }: StatusSubmitButtonProps) {
   const reduceMotion = Boolean(useReducedMotion());
+  const animateDefault = useButtonAnimateDefault();
   const visual: StatusSubmitVisual = loading ? "pending" : state;
   const variant = visual === "idle" ? idleVariant : STATE_VARIANT[visual];
   const glow = buttonGlowVariant(variant);
   const isPending = visual === "pending";
   const isDisabled = disabled === true || isPending;
+  const flipHover = (animate ?? animateDefault) && visual === "idle" && !reduceMotion;
 
-  return (
-    <MotionButton
-      type={type}
-      disabled={isDisabled}
-      aria-label={label}
-      aria-busy={isPending || undefined}
-      data-slot="button"
-      data-cuelume-press=""
-      data-cuelume-release=""
-      onClick={onClick}
-      layout={!reduceMotion}
-      className={cn(
-        buttonVariants({ size, variant }),
-        "transition-[color,background-color,border-color,box-shadow,opacity] duration-300 ease-out",
-        // buttonVariants hides label at data-loading (spinner overlay). This
-        // control shows the pending icon + label instead.
-        "data-loading:text-current data-loading:select-auto",
-        className
-      )}
-      {...props}
-    >
-      {glow ? <BadgeTopGlow variant={glow} size={buttonGlowSize(size)} /> : null}
+  const body = (
+    <>
       {visual !== "idle" || icon ? (
         <span className="relative flex size-3.5 shrink-0 items-center justify-center">
           <AnimatePresence mode="wait">
@@ -133,6 +120,36 @@ function StatusSubmitButton({
           />
         </AnimatePresence>
       </span>
+    </>
+  );
+
+  return (
+    <MotionButton
+      type={type}
+      disabled={isDisabled}
+      aria-label={label}
+      aria-busy={isPending || undefined}
+      data-slot="button"
+      data-cuelume-press=""
+      data-cuelume-release=""
+      onClick={onClick}
+      layout={!reduceMotion}
+      initial="initial"
+      whileHover={flipHover ? "hover" : undefined}
+      whileFocus={flipHover ? "hover" : undefined}
+      className={cn(
+        buttonVariants({ size, variant }),
+        "transition-[color,background-color,border-color,box-shadow,opacity] duration-300 ease-out",
+        // buttonVariants hides label at data-loading (spinner overlay). This
+        // control shows the pending icon + label instead.
+        "data-loading:text-current data-loading:select-auto",
+        flipHover && "overflow-hidden",
+        className
+      )}
+      {...props}
+    >
+      {glow ? <BadgeTopGlow variant={glow} size={buttonGlowSize(size)} /> : null}
+      {flipHover ? <FlipHoverLayers>{body}</FlipHoverLayers> : body}
     </MotionButton>
   );
 }

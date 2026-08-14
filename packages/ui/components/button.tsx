@@ -13,8 +13,20 @@ import {
   BadgeTopGlow,
   type BadgeGlowVariant
 } from "@tsu-stack/ui/components/badge-effects";
+import { FlipHoverLayers } from "@tsu-stack/ui/components/flip-hover";
 import { StatusStateIcon } from "@tsu-stack/ui/components/status-badge";
 import { cn } from "@tsu-stack/ui/lib/utils";
+
+const ButtonAnimateContext = React.createContext(false);
+
+/** Opt descendants into navbar-style flip hover (`animate` default true). */
+export function ButtonAnimateScope({ children }: { children: React.ReactNode }) {
+  return <ButtonAnimateContext value>{children}</ButtonAnimateContext>;
+}
+
+export function useButtonAnimateDefault(): boolean {
+  return React.useContext(ButtonAnimateContext);
+}
 
 const glassTone = (glow: BadgeGlowVariant, text: string) =>
   cn(
@@ -29,7 +41,7 @@ const glassTone = (glow: BadgeGlowVariant, text: string) =>
 export const buttonVariants = cva(
   cn(
     "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 overflow-visible rounded-lg border text-base font-medium whitespace-nowrap transition-shadow outline-none",
-    "before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)]",
+    "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit]",
     "before:bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,var(--btn-glow)_0%,transparent_72%)]",
     "after:pointer-events-none after:absolute after:top-0 after:right-[22%] after:left-[22%] after:h-px after:bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,var(--btn-glow-line)_0%,transparent_100%)]",
     "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
@@ -52,11 +64,11 @@ export const buttonVariants = cva(
         "icon-xl":
           "size-11 sm:size-10 [&_svg:not([class*='size-'])]:size-5 sm:[&_svg:not([class*='size-'])]:size-4.5",
         "icon-xs":
-          "size-7 rounded-md before:rounded-[calc(var(--radius-md)-1px)] sm:size-6 not-in-data-[slot=input-group]:[&_svg:not([class*='size-'])]:size-4 sm:not-in-data-[slot=input-group]:[&_svg:not([class*='size-'])]:size-3.5",
+          "size-7 rounded-md sm:size-6 not-in-data-[slot=input-group]:[&_svg:not([class*='size-'])]:size-4 sm:not-in-data-[slot=input-group]:[&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-10 px-[calc(--spacing(3.5)-1px)] sm:h-9",
         sm: "h-8 gap-1.5 px-[calc(--spacing(2.5)-1px)] sm:h-7",
         xl: "h-11 px-[calc(--spacing(4)-1px)] text-lg sm:h-10 sm:text-base [&_svg:not([class*='size-'])]:size-5 sm:[&_svg:not([class*='size-'])]:size-4.5",
-        xs: "h-7 gap-1 rounded-md px-[calc(--spacing(2)-1px)] text-sm before:rounded-[calc(var(--radius-md)-1px)] sm:h-6 sm:text-xs [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-3.5"
+        xs: "h-7 gap-1 rounded-md px-[calc(--spacing(2)-1px)] text-sm sm:h-6 sm:text-xs [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-3.5"
       },
       variant: {
         default: glassTone("default", "text-foreground"),
@@ -86,6 +98,11 @@ export type ButtonProps = {
   variant?: VariantProps<typeof buttonVariants>["variant"];
   size?: VariantProps<typeof buttonVariants>["size"];
   loading?: boolean;
+  /**
+   * Navbar flip on hover/focus-visible. Defaults true inside `ButtonAnimateScope`.
+   * Ignored while `loading` — pending icon + label animation stay the default.
+   */
+  animate?: boolean;
 } & useRender.ComponentProps<"button">;
 
 function collectButtonLabel(node: React.ReactNode): string {
@@ -154,6 +171,7 @@ export function Button({
   render,
   children,
   loading = false,
+  animate,
   disabled: disabledProp,
   ...props
 }: ButtonProps): React.ReactElement {
@@ -164,12 +182,15 @@ export function Button({
    */
   const [hovered, setHovered] = React.useState(false);
   const reduceMotion = Boolean(useReducedMotion());
+  const animateDefault = useButtonAnimateDefault();
+  const flipHover = (animate ?? animateDefault) && !loading && !reduceMotion;
   const isDisabled: boolean = Boolean(loading || disabledProp);
+  const isIconSize = typeof size === "string" && size.startsWith("icon");
+  const resolvedVariant = loading && isIconSize ? "warning" : variant;
   const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>["type"] = render
     ? undefined
     : "button";
-  const visualVariant = loading ? "warning" : variant;
-  const glow = buttonGlowVariant(visualVariant);
+  const glow = buttonGlowVariant(resolvedVariant);
   const loadingLabel = loading ? collectButtonLabel(children).trim() : "";
 
   const defaultProps = {
@@ -193,14 +214,21 @@ export function Button({
               </span>
             ) : null}
           </>
+        ) : flipHover ? (
+          <FlipHoverLayers hovered={hovered}>{children}</FlipHoverLayers>
         ) : (
           children
         )}
       </>
     ),
     className: cn(
-      buttonVariants({ className, size, variant: visualVariant }),
-      loading && "data-loading:text-current data-loading:select-auto"
+      buttonVariants({ size, variant: resolvedVariant }),
+      className,
+      loading && "data-loading:text-current data-loading:select-auto",
+      loading &&
+        isIconSize &&
+        "border-amber-500/40 bg-amber-500/15 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400",
+      flipHover && "overflow-hidden"
     ),
     "aria-disabled": loading || undefined,
     "data-loading": loading ? "" : undefined,
@@ -213,7 +241,11 @@ export function Button({
     onPointerEnter: () => setHovered(true),
     onPointerLeave: () => setHovered(false),
     onMouseEnter: () => setHovered(true),
-    onMouseLeave: () => setHovered(false)
+    onMouseLeave: () => setHovered(false),
+    onFocus: (event: React.FocusEvent<HTMLButtonElement>) => {
+      if (event.currentTarget.matches(":focus-visible")) setHovered(true);
+    },
+    onBlur: () => setHovered(false)
   };
 
   return useRender({

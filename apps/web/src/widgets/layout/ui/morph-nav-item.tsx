@@ -1,27 +1,16 @@
 "use client";
 
 import { Link } from "@tanstack/react-router";
-import { motion, useReducedMotion, type Easing, type Transition } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { type ReactNode } from "react";
 
+import { FlipHoverLayers } from "@tsu-stack/ui/components/flip-hover";
 import { cn } from "@tsu-stack/ui/lib/utils";
-
-const SPRING_CONFIG_TEXT = {
-  type: "spring",
-  stiffness: 320,
-  damping: 32,
-  mass: 1.3
-} as Transition;
-
-const EASE_CUBIC_CONFIG = {
-  duration: 0.5,
-  ease: [0.32, 0.72, 0, 1] as Easing
-} as Transition;
 
 const MotionLink = motion.create(Link);
 
 const itemClassName =
-  "relative block overflow-hidden rounded-md px-2 py-1.5 text-xs font-semibold text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  "relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-md px-2 py-1.5 text-xs font-semibold text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 type MorphNavItemBase = {
   active?: boolean;
@@ -100,7 +89,7 @@ export function MorphNavItem({
           className={sharedClassName}
           {...motionProps}
         >
-          <MorphNavLayers>{children}</MorphNavLayers>
+          <FlipHoverLayers>{children}</FlipHoverLayers>
         </motion.a>
       </li>
     );
@@ -116,47 +105,8 @@ export function MorphNavItem({
         className={sharedClassName}
         {...motionProps}
       >
-        <MorphNavLayers>{children}</MorphNavLayers>
+        <FlipHoverLayers>{children}</FlipHoverLayers>
       </MotionLink>
     </li>
-  );
-}
-
-function MorphNavLayers({ children }: { children: ReactNode }) {
-  return (
-    <>
-      <span className="relative inline-flex items-center justify-center gap-1.5 text-transparent">
-        {children}
-      </span>
-      <motion.span
-        className="absolute inset-0 z-2 flex items-center justify-center gap-1.5"
-        initial={{ y: 0, scale: 1, rotate: 0 }}
-        variants={{ hover: { y: -100, scale: 0.5, rotate: -30 } }}
-        transition={SPRING_CONFIG_TEXT}
-      >
-        {children}
-      </motion.span>
-      <motion.span
-        className="absolute inset-0 z-1 w-full scale-x-150 overflow-hidden bg-brand"
-        initial={{ y: 100, rotate: -40 }}
-        variants={{ hover: { y: 0, rotate: 0 } }}
-        transition={EASE_CUBIC_CONFIG}
-      >
-        <motion.span
-          className="absolute inset-0 bg-foreground"
-          initial={{ y: 150, rotate: -60 }}
-          variants={{ hover: { y: 0, rotate: 0 } }}
-          transition={EASE_CUBIC_CONFIG}
-        />
-      </motion.span>
-      <motion.span
-        className="absolute inset-0 z-2 flex items-center justify-center gap-1.5 text-background"
-        initial={{ y: 180, rotate: -60, scale: 0.5 }}
-        variants={{ hover: { y: 0, rotate: 0, scale: 1 } }}
-        transition={SPRING_CONFIG_TEXT}
-      >
-        {children}
-      </motion.span>
-    </>
   );
 }

@@ -42,7 +42,9 @@ export function showAiJobRunningToast(options: {
 
   toast(body, {
     id,
-    icon: <WorkflowSolvingOrb />,
+    icon: <WorkflowSolvingOrb size="toast" />,
+    className:
+      "items-start! [&_[data-icon]]:me-3! [&_[data-icon]]:mt-0.5! [&_[data-icon]]:h-8! [&_[data-icon]]:w-8! [&_[data-icon]]:min-h-8! [&_[data-icon]]:min-w-8!",
     duration: Infinity,
     action: {
       label: cancelLabel,
