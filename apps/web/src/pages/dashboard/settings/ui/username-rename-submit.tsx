@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { type UsernameAvailabilityStatus } from "@tsu-stack/core";
 import {
   StatusSubmitButton,
@@ -11,9 +9,18 @@ import {
 type UsernameRenameSubmitProps = {
   currentUsername: string;
   username: string;
-  isValidating: boolean;
+  /** True while a check for *this* typed value is in flight (including debounce). */
+  isChecking: boolean;
   isSubmitting: boolean;
+  /** Server/schema availability for the current typed value only; null if stale. */
+  availability: UsernameAvailabilityStatus | "error" | null;
   errors: unknown[];
+};
+
+type UsernameRenameSubmitView = {
+  state: StatusSubmitVisual;
+  label: string;
+  disabled: boolean;
 };
 
 function errorMessage(error: unknown): string {
@@ -46,52 +53,45 @@ function unavailableLabel(status: UsernameAvailabilityStatus): string {
   return "Used";
 }
 
-export function UsernameRenameSubmit({
+function getUsernameRenameSubmitView({
   currentUsername,
   username,
-  isValidating,
+  isChecking,
   isSubmitting,
+  availability,
   errors
-}: UsernameRenameSubmitProps) {
+}: UsernameRenameSubmitProps): UsernameRenameSubmitView {
   const normalized = username.trim().toLowerCase();
   const isDirty = Boolean(currentUsername) && normalized !== currentUsername;
-  const [snapshot, setSnapshot] = useState({
-    currentUsername,
-    isValidating,
-    settledValue: currentUsername
-  });
-
-  if (currentUsername !== snapshot.currentUsername) {
-    setSnapshot({ currentUsername, isValidating, settledValue: currentUsername });
-  } else if (isValidating !== snapshot.isValidating) {
-    setSnapshot({
-      currentUsername,
-      isValidating,
-      settledValue: isValidating ? snapshot.settledValue : normalized
-    });
-  }
-
-  const availability = availabilityStatusFromErrors(errors);
-  const isPendingCheck = isDirty && (isValidating || snapshot.settledValue !== normalized);
-
-  let state: StatusSubmitVisual = "idle";
-  let label = "Rename";
-  let disabled = true;
+  const errorAvailability = availabilityStatusFromErrors(errors);
+  const resolvedAvailability =
+    availability === "taken" || availability === "reserved" || availability === "available"
+      ? availability
+      : errorAvailability;
 
   if (isSubmitting) {
-    state = "pending";
-    label = "Saving…";
-  } else if (isPendingCheck) {
-    state = "pending";
-    label = "Checking…";
-  } else if (isDirty && (availability === "taken" || availability === "reserved")) {
-    state = "unavailable";
-    label = unavailableLabel(availability);
-  } else if (isDirty && errors.length === 0) {
-    state = "success";
-    label = "Save";
-    disabled = false;
+    return { state: "pending", label: "Saving…", disabled: true };
   }
+  if (isDirty && isChecking) {
+    return { state: "pending", label: "Checking…", disabled: true };
+  }
+  if (isDirty && (resolvedAvailability === "taken" || resolvedAvailability === "reserved")) {
+    return { state: "unavailable", label: unavailableLabel(resolvedAvailability), disabled: true };
+  }
+  if (isDirty && errors.length > 0) {
+    return { state: "idle", label: "Rename", disabled: true };
+  }
+  if (isDirty && resolvedAvailability === "available") {
+    return { state: "success", label: "Save", disabled: false };
+  }
+  if (isDirty) {
+    return { state: "pending", label: "Checking…", disabled: true };
+  }
+  return { state: "idle", label: "Rename", disabled: true };
+}
+
+export function UsernameRenameSubmit(props: UsernameRenameSubmitProps) {
+  const { state, label, disabled } = getUsernameRenameSubmitView(props);
 
   return (
     <StatusSubmitButton

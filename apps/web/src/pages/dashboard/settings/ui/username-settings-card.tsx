@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { UsernameSchema } from "@tsu-stack/core";
-import { Button } from "@tsu-stack/ui/components/button";
+import { Button, ButtonAnimateScope } from "@tsu-stack/ui/components/button";
 import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import {
   Frame,
@@ -25,7 +25,8 @@ import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import {
   checkUsernameAvailability,
   useGetProfileQuery,
-  useRenameUsernameMutation
+  useRenameUsernameMutation,
+  useUsernameAvailability
 } from "@/features/profile";
 
 import { appConfig } from "@/config/app.config";
@@ -37,33 +38,23 @@ const RenameUsernameFormSchema = z.object({
   username: UsernameSchema
 });
 
-function isUsernameCheckAbort(error: unknown, signal?: AbortSignal) {
-  if (signal?.aborted) return true;
-  return error instanceof DOMException && error.name === "AbortError";
-}
-
-/** Format is sync; this is the network availability check. Never treat abort as "available". */
-async function validateUsernameAvailable(
-  value: string,
-  currentUsername: string,
-  signal?: AbortSignal
-) {
-  const parsed = UsernameSchema.safeParse(value);
-  if (!parsed.success) return undefined;
-  if (parsed.data === currentUsername) return undefined;
-  try {
-    const result = await checkUsernameAvailability(parsed.data, signal);
-    if (!result.available) {
-      return {
-        message: result.message ?? "That username is already taken.",
-        status: result.status
-      };
-    }
-    return undefined;
-  } catch (error) {
-    if (isUsernameCheckAbort(error, signal)) throw error;
-    return "Could not check username availability";
+function availabilityFieldError(availability: {
+  username: string;
+  isChecking: boolean;
+  status: string | null;
+  message?: string;
+}) {
+  if (availability.isChecking) return undefined;
+  if (availability.status === "taken" || availability.status === "reserved") {
+    return {
+      message: availability.message ?? "That username is already taken.",
+      status: availability.status
+    };
   }
+  if (availability.status === "error") {
+    return availability.message ?? "Could not check username availability";
+  }
+  return undefined;
 }
 
 function publicProfileUrl(username: string): string {
@@ -86,8 +77,26 @@ export function UsernameSettingsCard() {
       onSubmit: RenameUsernameFormSchema
     },
     onSubmit: async ({ value }) => {
+      const parsed = UsernameSchema.safeParse(value.username);
+      if (!parsed.success) return;
       try {
-        await renameMutation.mutateAsync({ username: value.username });
+        const check = await checkUsernameAvailability(parsed.data);
+        if (!check.available) {
+          renameForm.setFieldMeta("username", (prev) => {
+            return {
+              ...prev,
+              errorMap: {
+                ...prev?.errorMap,
+                onServer: {
+                  message: check.message ?? "That username is already taken.",
+                  status: check.status
+                }
+              }
+            };
+          });
+          return;
+        }
+        await renameMutation.mutateAsync({ username: parsed.data });
         setIsUsernameEditing(false);
       } catch {
         // Typed toasts are handled in useRenameUsernameMutation onError.
@@ -110,6 +119,34 @@ export function UsernameSettingsCard() {
 
   const renameUsernameValue = useStore(renameForm.store, (state) => state.values.username);
   const isRenameDirty = Boolean(currentUsername) && renameUsernameValue !== currentUsername;
+  const availability = useUsernameAvailability({
+    value: renameUsernameValue,
+    currentUsername,
+    enabled: isUsernameEditing && Boolean(currentUsername)
+  });
+
+  useEffect(() => {
+    if (!isUsernameEditing || !currentUsername) return;
+    const error = availabilityFieldError(availability);
+    renameForm.setFieldMeta("username", (prev) => {
+      return {
+        ...prev,
+        errorMap: {
+          ...prev?.errorMap,
+          onServer: error
+        }
+      };
+    });
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- form API is stable
+  }, [
+    availability.isChecking,
+    availability.message,
+    availability.status,
+    availability.username,
+    currentUsername,
+    isUsernameEditing
+  ]);
+
   const leaveGuard = useSettingsDirtyGuard(isRenameDirty, {
     onDiscard: () => {
       renameForm.reset({ username: currentUsername });
@@ -145,7 +182,7 @@ export function UsernameSettingsCard() {
             >
               <renameForm.AppField
                 name="username"
-                asyncAlways
+                defaultMeta={{ isTouched: true }}
                 validators={{
                   onChange: ({ value }) => {
                     const parsed = UsernameSchema.safeParse(value);
@@ -153,12 +190,7 @@ export function UsernameSettingsCard() {
                       return parsed.error.issues[0]?.message ?? "Invalid username";
                     }
                     return undefined;
-                  },
-                  onChangeAsyncDebounceMs: 400,
-                  onChangeAsync: ({ value, signal }) =>
-                    validateUsernameAvailable(value, currentUsername, signal),
-                  onBlurAsync: ({ value, signal }) =>
-                    validateUsernameAvailable(value, currentUsername, signal)
+                  }
                 }}
               >
                 {(field) => (
@@ -168,58 +200,65 @@ export function UsernameSettingsCard() {
                     placeholder="your-name"
                     classNames={{ field: "w-full" }}
                     actions={
-                      isUsernameEditing ? (
-                        <>
-                          <GroupSeparator />
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="min-h-9 shrink-0 self-stretch rounded-lg"
-                            onClick={() => {
-                              renameForm.reset({ username: currentUsername });
-                              setIsUsernameEditing(false);
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <GroupSeparator />
-                          <renameForm.Subscribe
-                            selector={(state) => {
-                              return {
-                                isSubmitting: state.isSubmitting,
-                                isValidating: state.isValidating,
-                                username: state.values.username,
-                                errors: state.fieldMeta.username?.errors ?? []
-                              };
-                            }}
-                          >
-                            {({ isSubmitting, isValidating, username, errors }) => (
-                              <UsernameRenameSubmit
-                                currentUsername={currentUsername}
-                                username={username}
-                                isValidating={isValidating}
-                                isSubmitting={isSubmitting || renameMutation.isPending}
-                                errors={errors}
-                              />
-                            )}
-                          </renameForm.Subscribe>
-                        </>
-                      ) : (
-                        <>
-                          <GroupSeparator />
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="min-h-9 shrink-0 self-stretch rounded-lg"
-                            onClick={() => setIsUsernameEditing(true)}
-                          >
-                            <Edit aria-hidden="true" />
-                            Edit
-                          </Button>
-                        </>
-                      )
+                      <ButtonAnimateScope>
+                        {isUsernameEditing ? (
+                          <>
+                            <GroupSeparator />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="min-h-9 shrink-0 self-stretch rounded-lg"
+                              onClick={() => {
+                                renameForm.reset({ username: currentUsername });
+                                setIsUsernameEditing(false);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <GroupSeparator />
+                            <renameForm.Subscribe
+                              selector={(state) => {
+                                return {
+                                  isSubmitting: state.isSubmitting,
+                                  username: state.values.username,
+                                  errors: state.fieldMeta.username?.errors ?? []
+                                };
+                              }}
+                            >
+                              {({ isSubmitting, username, errors }) => (
+                                <UsernameRenameSubmit
+                                  currentUsername={currentUsername}
+                                  username={username}
+                                  isChecking={availability.isChecking}
+                                  availability={
+                                    availability.username === username.trim().toLowerCase() ||
+                                    availability.username === username
+                                      ? availability.status
+                                      : null
+                                  }
+                                  isSubmitting={isSubmitting || renameMutation.isPending}
+                                  errors={errors}
+                                />
+                              )}
+                            </renameForm.Subscribe>
+                          </>
+                        ) : (
+                          <>
+                            <GroupSeparator />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="min-h-9 shrink-0 self-stretch rounded-lg"
+                              onClick={() => setIsUsernameEditing(true)}
+                            >
+                              <Edit aria-hidden="true" />
+                              Edit
+                            </Button>
+                          </>
+                        )}
+                      </ButtonAnimateScope>
                     }
                   />
                 )}

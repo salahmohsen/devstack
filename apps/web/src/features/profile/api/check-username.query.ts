@@ -2,8 +2,8 @@ import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type CheckUsernameInput, type CheckUsernameOutput } from "@tsu-stack/core";
 
 /**
- * One-shot availability check for TanStack Form async validators.
- * Pass the field validator `signal` so in-flight checks cancel on retype.
+ * One-shot availability check (submit confirm). Live typing uses
+ * `useUsernameAvailability`, which keys the query on the current value.
  */
 export async function checkUsernameAvailability(
   username: CheckUsernameInput["username"],
