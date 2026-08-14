@@ -1,47 +1,62 @@
 "use client";
 
-import { useCallback } from "react";
+import { getRouteApi } from "@tanstack/react-router";
+import { useCallback, useEffect } from "react";
 
 import { type ResumeImportDraft } from "@tsu-stack/core";
 
 import {
   cancelExtractResumeJob,
+  readPersistedOnboardingStep,
   resetOnboardingSessionState,
   setOnboardingSessionState,
   startExtractResumeJob,
-  useOnboardingSession
+  useOnboardingSession,
+  type OnboardingFlowStep
 } from "@/features/onboarding";
 
 import { AnalyzingStep } from "@/pages/dashboard/onboarding/ui/analyzing-step";
+import { ConnectStep } from "@/pages/dashboard/onboarding/ui/connect-step";
 import { DoneStep } from "@/pages/dashboard/onboarding/ui/done-step";
-import {
-  type OnboardingFlowStep,
-  OnboardingShell
-} from "@/pages/dashboard/onboarding/ui/onboarding-shell";
+import { JobsStep } from "@/pages/dashboard/onboarding/ui/jobs-step";
+import { OnboardingShell } from "@/pages/dashboard/onboarding/ui/onboarding-shell";
 import { ReviewStep } from "@/pages/dashboard/onboarding/ui/review-step";
 import { UploadStep } from "@/pages/dashboard/onboarding/ui/upload-step";
 
+const onboardingRoute = getRouteApi("/(root-layout)/__protected/dashboard/onboarding/");
+
 const COPY: Record<OnboardingFlowStep, { title: string; description: React.ReactNode }> = {
   upload: {
-    title: "Import from your resume",
-    description:
-      "We’ll draft profile, experiences, projects, and stacks. You review before anything is saved."
+    title: "Start from your resume",
+    description: "About three minutes. We’ll draft your profile — you decide what to keep."
   },
   analyzing: {
-    title: "Analyzing resume",
-    description: "Analysis continues if you leave this page."
+    title: "Reading your resume",
+    description:
+      "This keeps running if you leave the page. You’ll get a toast when the draft is ready."
   },
   review: {
-    title: "Review before import",
-    description: "Scan the list, uncheck what you don’t want, expand a row only to edit."
+    title: "Review the draft",
+    description: "Uncheck anything you don’t want. Expand a row only when you need to edit."
+  },
+  jobs: {
+    title: "What jobs should we keep?",
+    description: "These filters decide which email listings become New jobs."
+  },
+  connect: {
+    title: "Connect the accounts you already use",
+    description: "Gmail fills Career Inbox. GitHub helps detect stacks from your repos."
   },
   done: {
-    title: "You’re all set",
-    description: "Jump into any section to refine details."
+    title: "You’re ready",
+    description: "Refine anything later from the dashboard — nothing here is locked in."
   }
 };
 
+const RESTORE_STEPS: OnboardingFlowStep[] = ["jobs", "connect", "done"];
+
 export function OnboardingPage() {
+  const search = onboardingRoute.useSearch();
   const session = useOnboardingSession();
   const {
     step,
@@ -53,6 +68,20 @@ export function OnboardingPage() {
     extractStepLabel,
     extractError
   } = session;
+
+  useEffect(() => {
+    const fromUrl = search.step;
+    if (fromUrl && RESTORE_STEPS.includes(fromUrl) && fromUrl !== step) {
+      setOnboardingSessionState({ step: fromUrl });
+      return;
+    }
+    const persisted = readPersistedOnboardingStep();
+    if (!fromUrl && persisted && RESTORE_STEPS.includes(persisted) && persisted !== step) {
+      setOnboardingSessionState({ step: persisted });
+    }
+    // Only on mount / OAuth return — don't fight in-flow step changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.step]);
 
   const handleUploaded = useCallback((payload: { objectKey: string; filename: string }) => {
     setOnboardingSessionState({
@@ -91,8 +120,7 @@ export function OnboardingPage() {
     (summary: { experiences: number; projects: number; stacks: number }) => {
       setOnboardingSessionState({
         applySummary: summary,
-        step: "done",
-        // Keep draft/source cleared so a later revisit doesn't re-show review
+        step: "jobs",
         draft: null,
         objectKey: null,
         filename: null,
@@ -105,10 +133,9 @@ export function OnboardingPage() {
     []
   );
 
-  const handleSkipped = useCallback(() => {
+  const handleSkippedResume = useCallback(() => {
     setOnboardingSessionState({
-      applySummary: null,
-      step: "done",
+      step: "jobs",
       draft: null,
       objectKey: null,
       filename: null,
@@ -144,7 +171,7 @@ export function OnboardingPage() {
             onUploaded={handleUploaded}
             onCleared={handleCleared}
             onAnalyze={handleAnalyze}
-            onSkipped={handleSkipped}
+            onSkipped={handleSkippedResume}
           />
         ) : null}
 
@@ -168,6 +195,20 @@ export function OnboardingPage() {
             onBack={() => setOnboardingSessionState({ step: "upload" })}
             onApplied={handleApplySuccess}
             onDiscarded={handleDiscardAndRestart}
+          />
+        ) : null}
+
+        {step === "jobs" ? (
+          <JobsStep
+            onContinue={() => setOnboardingSessionState({ step: "connect" })}
+            onBack={() => setOnboardingSessionState({ step: "upload" })}
+          />
+        ) : null}
+
+        {step === "connect" ? (
+          <ConnectStep
+            onContinue={() => setOnboardingSessionState({ step: "done" })}
+            onBack={() => setOnboardingSessionState({ step: "jobs" })}
           />
         ) : null}
 

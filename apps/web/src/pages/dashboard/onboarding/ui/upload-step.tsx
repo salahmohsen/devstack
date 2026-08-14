@@ -11,9 +11,10 @@ import {
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
+import { Frame } from "@tsu-stack/ui/components/frame";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useDiscardSourceMutation, useSkipOnboardingMutation } from "@/features/onboarding";
+import { useDiscardSourceMutation } from "@/features/onboarding";
 
 import {
   FileUploadProgress,
@@ -52,7 +53,6 @@ export function UploadStep({
   const readyStatusId = useId();
   const files = useFiles({ endpoint: "/api/files" });
   const discardMutation = useDiscardSourceMutation();
-  const skipMutation = useSkipOnboardingMutation();
   const [localError, setLocalError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   /** Local UI progress — do not rely on ambient `files.uploads` for success/error. */
@@ -158,87 +158,70 @@ export function UploadStep({
 
   const handleSkip = async () => {
     setLocalError(null);
-    try {
-      await skipMutation.mutateAsync({
-        objectKey: objectKey ?? undefined
-      });
-      onSkipped();
-    } catch (error) {
-      setLocalError(error instanceof Error ? error.message : "Failed to skip onboarding");
-    }
+    await discardPrevious(objectKey);
+    onSkipped();
   };
 
-  const isBusy =
-    uploadUi?.status === "uploading" ||
-    files.isUploading ||
-    discardMutation.isPending ||
-    skipMutation.isPending;
+  const isBusy = uploadUi?.status === "uploading" || files.isUploading || discardMutation.isPending;
   const errorMessage = localError ?? files.error?.message ?? null;
   const hasFile = Boolean(objectKey && filename);
   const showReady = hasFile && uploadUi?.status !== "uploading";
 
   return (
-    <div className="flex w-full flex-col gap-5">
-      {/* Dropzone — labeled file input + drag surface */}
+    <div className="flex w-full max-w-xl flex-col gap-5">
       {!showReady ? (
-        <div
-          className={cn(
-            "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-5 py-10 text-center transition-[border-color,background-color] duration-150 motion-reduce:transition-none",
-            "has-[:focus-visible]:border-ring has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
-            isDragging
-              ? "border-primary bg-primary/5"
-              : "border-border/80 bg-muted/15 hover:border-muted-foreground/30 hover:bg-muted/25",
-            isBusy && "pointer-events-none opacity-70"
-          )}
-          onDragEnter={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-        >
+        <Frame>
           <div
             className={cn(
-              "flex size-11 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border/70",
-              isDragging && "text-primary ring-primary/30"
+              "group relative flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-5 py-10 text-center transition-[border-color,background-color] duration-150 motion-reduce:transition-none",
+              "has-[:focus-visible]:border-ring has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-border/80 bg-muted/15 hover:border-muted-foreground/30 hover:bg-muted/25",
+              isBusy ? "pointer-events-none opacity-70" : "cursor-pointer"
             )}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
           >
-            <UploadCloudIcon className="size-5" aria-hidden />
-          </div>
-          <div className="space-y-1">
-            <label
-              htmlFor={fileInputId}
-              className={cn("text-sm font-medium text-foreground", !isBusy && "cursor-pointer")}
+            <div
+              className={cn(
+                "pointer-events-none flex size-11 items-center justify-center rounded-full bg-background text-muted-foreground ring-1 ring-border/70",
+                isDragging && "text-primary ring-primary/30"
+              )}
             >
-              {isDragging ? "Drop to upload" : "Drop your resume here"}
-            </label>
-            <p className="text-xs text-muted-foreground">
-              PDF · up to {formatBytes(RESUME_SOURCE_MAX_BYTES)} ·{" "}
-              <label
-                htmlFor={fileInputId}
-                className={cn(
-                  "text-foreground underline-offset-2 group-hover:underline",
-                  !isBusy && "cursor-pointer"
-                )}
-              >
-                browse
-              </label>
-            </p>
+              <UploadCloudIcon className="size-5" aria-hidden />
+            </div>
+            <div className="pointer-events-none space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                {isDragging ? "Drop to upload" : "Drop your resume here"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PDF · up to {formatBytes(RESUME_SOURCE_MAX_BYTES)} ·{" "}
+                <span className="text-foreground underline-offset-2 group-hover:underline">
+                  browse
+                </span>
+              </p>
+            </div>
+            <input
+              ref={inputRef}
+              id={fileInputId}
+              type="file"
+              accept={RESUME_SOURCE_MIME}
+              aria-label="Upload resume PDF"
+              className="absolute inset-0 z-10 cursor-pointer opacity-0"
+              onChange={handleInputChange}
+              disabled={isBusy}
+            />
           </div>
-          <input
-            ref={inputRef}
-            id={fileInputId}
-            type="file"
-            accept={RESUME_SOURCE_MIME}
-            className="sr-only"
-            onChange={handleInputChange}
-            disabled={isBusy}
-          />
-        </div>
+        </Frame>
       ) : null}
 
       {uploadUi ? <FileUploadProgress upload={uploadUi} /> : null}
@@ -284,10 +267,9 @@ export function UploadStep({
           size="sm"
           className="text-muted-foreground"
           disabled={isBusy}
-          loading={skipMutation.isPending}
           onClick={() => void handleSkip()}
         >
-          Skip for now
+          Skip resume
         </Button>
 
         {showReady ? (
