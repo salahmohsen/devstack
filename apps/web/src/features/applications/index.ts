@@ -38,6 +38,7 @@ export {
   type AgentTakeJobState
 } from "@/features/applications/lib/agent-take-store";
 export { useScanJobAlertsMutation } from "@/features/applications/api/scan-job-alerts.mutation";
+export { ScanJobAlertsButton } from "@/features/applications/ui/scan-job-alerts-button";
 export { useRefreshFromListingUrlMutation } from "@/features/applications/api/refresh-from-listing-url.mutation";
 export {
   dismissRefreshFromListingTracking,

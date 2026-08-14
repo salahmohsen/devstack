@@ -15,6 +15,8 @@ export type OrganizeJobState = {
   /** Proposed actions awaiting review */
   actions: OrganizeAction[];
   sortOrder: string[];
+  /** Recommended public-profile featured stack ids (resume Skills row). */
+  featuredStackIds: string[];
   /**
    * Soft-failure notes from the workflow (LLM skip/fail).
    * Shown in the review dialog so partial results are never silent.
@@ -32,6 +34,7 @@ const initialState: OrganizeJobState = {
   runId: null,
   actions: [],
   sortOrder: [],
+  featuredStackIds: [],
   notes: [],
   error: null,
   dialogOpen: false,

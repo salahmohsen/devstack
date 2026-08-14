@@ -51,7 +51,7 @@ export function AgentHubToolApproval({
           <Check className="size-3.5" aria-hidden />
           Approve
         </Button>
-        <Button variant="outline" size="sm" onClick={onDecline} disabled={isPending}>
+        <Button variant="destructive" size="sm" onClick={onDecline} disabled={isPending}>
           <X className="size-3.5" aria-hidden />
           Decline
         </Button>

@@ -42,8 +42,8 @@ export type Session = {
 
 export type AuthSessionManagerProps = {
   sessions?: Session[];
-  onRevoke?: (sessionId: string) => void;
-  onRevokeAll?: () => void;
+  onRevoke?: (sessionId: string) => void | Promise<unknown>;
+  onRevokeAll?: () => void | Promise<unknown>;
   className?: string;
   isLoading?: boolean;
   /**
@@ -123,7 +123,7 @@ function EmptyState({ message = "No active sessions found" }: EmptyStateProps) {
 type RevokeSessionDialogProps = {
   deviceName: string;
   isLoading: boolean;
-  onRevoke: (sessionId: string) => void;
+  onRevoke: (sessionId: string) => void | Promise<unknown>;
   sessionId: string;
 };
 
@@ -133,14 +133,24 @@ function RevokeSessionDialog({
   onRevoke,
   sessionId
 }: RevokeSessionDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  const busy = isLoading || pending;
+
   return (
-    <AlertDialog>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (pending && !next) return;
+        setOpen(next);
+      }}
+    >
       <AlertDialogTrigger
         render={
           <Button
             aria-label={`Revoke session on ${deviceName}`}
             className="min-h-8 min-w-8 touch-manipulation"
-            disabled={isLoading}
+            disabled={busy}
             size="icon"
             type="button"
             variant="ghost"
@@ -158,10 +168,16 @@ function RevokeSessionDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={() => onRevoke(sessionId)}
+            variant="destructive"
+            loading={pending}
+            onClick={() => {
+              setPending(true);
+              void Promise.resolve(onRevoke(sessionId))
+                .then(() => setOpen(false))
+                .finally(() => setPending(false));
+            }}
           >
             Revoke session
           </AlertDialogAction>
@@ -173,7 +189,7 @@ function RevokeSessionDialog({
 
 type SessionItemProps = {
   isLoading: boolean;
-  onRevoke?: (sessionId: string) => void;
+  onRevoke?: (sessionId: string) => void | Promise<unknown>;
   session: Session;
 };
 
@@ -229,19 +245,28 @@ function SessionItem({ session, onRevoke, isLoading }: SessionItemProps) {
 
 type RevokeAllDialogProps = {
   isLoading: boolean;
-  onRevokeAll: () => void;
+  onRevokeAll: () => void | Promise<unknown>;
   revokingAll: boolean;
 };
 
 function RevokeAllDialog({ isLoading, onRevokeAll, revokingAll }: RevokeAllDialogProps) {
+  const [open, setOpen] = useState(false);
+  const busy = isLoading || revokingAll;
+
   return (
-    <AlertDialog>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (revokingAll && !next) return;
+        setOpen(next);
+      }}
+    >
       <AlertDialogTrigger
         render={
           <Button
             aria-label="Revoke all other sessions"
             className="min-h-11 w-full touch-manipulation sm:w-auto"
-            disabled={isLoading || revokingAll}
+            disabled={busy}
             type="button"
             variant="destructive-outline"
           />
@@ -268,10 +293,13 @@ function RevokeAllDialog({ isLoading, onRevokeAll, revokingAll }: RevokeAllDialo
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={revokingAll}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={onRevokeAll}
+            variant="destructive"
+            loading={revokingAll}
+            onClick={() => {
+              void Promise.resolve(onRevokeAll()).then(() => setOpen(false));
+            }}
           >
             Revoke all sessions
           </AlertDialogAction>
@@ -283,7 +311,7 @@ function RevokeAllDialog({ isLoading, onRevokeAll, revokingAll }: RevokeAllDialo
 
 type CurrentSessionSectionProps = {
   isLoading: boolean;
-  onRevoke?: (sessionId: string) => void;
+  onRevoke?: (sessionId: string) => void | Promise<unknown>;
   session: Session;
 };
 
@@ -298,7 +326,7 @@ function CurrentSessionSection({ session, onRevoke, isLoading }: CurrentSessionS
 
 type OtherSessionsSectionProps = {
   isLoading: boolean;
-  onRevoke?: (sessionId: string) => void;
+  onRevoke?: (sessionId: string) => void | Promise<unknown>;
   sessions: Session[];
 };
 

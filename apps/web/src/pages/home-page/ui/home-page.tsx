@@ -14,6 +14,7 @@ import { useIsClient } from "@tsu-stack/ui/hooks/use-is-client.hook";
 
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { useGitHubSignalStream } from "@/shared/lib/use-github-signal-stream";
+import { normalizePublicSummary } from "@/shared/ui/public-summary";
 
 import { getGithubProfileReposQueryOptions, useGetGithubSetupStatusQuery } from "@/features/github";
 import { useGetPortfolioListQuery } from "@/features/portfolio";
@@ -28,9 +29,10 @@ import {
   useGetGithubProfileQuery
 } from "@/pages/home-page/api/get-github-profile.query";
 import { Experience } from "@/pages/home-page/ui/experience-section";
+import { FeaturedStacksSection } from "@/pages/home-page/ui/featured-stacks-section";
 import { ProfileOverview } from "@/pages/home-page/ui/profile-overview";
 import { ProfileSocialLinks } from "@/pages/home-page/ui/profile-social-links";
-import { normalizePublicSummary, ProfileSummary } from "@/pages/home-page/ui/profile-summary";
+import { ProfileSummary } from "@/pages/home-page/ui/profile-summary";
 import { ProjectsSection } from "@/pages/home-page/ui/projects-section";
 
 /**
@@ -174,23 +176,25 @@ export function HomePage({
                 <AvatarFallback>{heroInitial}</AvatarFallback>
               </Avatar>
 
-              <div className="flex min-w-0 flex-1 items-end justify-between gap-3 pb-1">
-                <div className="flex min-w-0 flex-col gap-1">
-                  <h1 className="text-2xl font-semibold tracking-tight capitalize">
-                    {heroDisplayName}
-                  </h1>
-                  {publicSummary ? <ProfileSummary summary={publicSummary} /> : null}
-                </div>
+              <div className="flex min-w-0 flex-1 flex-col justify-end gap-1.5 pb-1">
+                <h1 className="text-2xl font-semibold tracking-tight capitalize">
+                  {heroDisplayName}
+                </h1>
+                {publicSummary ? <ProfileSummary id="about" summary={publicSummary} /> : null}
               </div>
             </div>
           ) : (
-            <div className="screen-line-bottom -mt-8 space-y-2 px-4 pb-4 sm:-mt-10">
+            <div className="screen-line-bottom -mt-8 flex flex-col gap-1.5 px-4 pb-4 sm:-mt-10">
               <h1 className="text-2xl font-semibold tracking-tight">@{username}</h1>
-              <p className="text-sm text-muted-foreground">Portfolio</p>
-              {publicSummary ? <ProfileSummary summary={publicSummary} /> : null}
+              {publicSummary ? (
+                <ProfileSummary id="about" summary={publicSummary} />
+              ) : (
+                <p className="text-sm text-muted-foreground">Portfolio</p>
+              )}
             </div>
           )}
 
+          <FeaturedStacksSection username={username} />
           <ProfileOverview
             profile={profile}
             experiences={portfolioExperiences}

@@ -355,12 +355,21 @@ const MessageError: FC = () => (
   </MessagePrimitive.Error>
 );
 
-export const AssistantMessage: FC = () => {
+export type AssistantMessageProps = {
+  /**
+   * Hide text parts whose first occurrence is after this index (HITL card is
+   * the confirmation UI). `null` / omit shows every text part.
+   */
+  hideTextAfterIndex?: number | null;
+};
+
+export const AssistantMessage: FC<AssistantMessageProps> = ({ hideTextAfterIndex = null }) => {
   const {
     ToolFallback: ToolFallbackComponent = ToolFallback,
     ToolGroup,
     ReasoningGroup
   } = useContext(ThreadComponentsContext);
+  const parts = useAuiState((s) => s.message.parts);
 
   const ACTION_BAR_PT = "pt-1.5";
   // Keep the action bar inside the contained root's paint box, then cancel its reserved space in flow.
@@ -415,6 +424,12 @@ export const AssistantMessage: FC = () => {
                 );
               }
               case "text":
+                if (hideTextAfterIndex != null && part.type === "text") {
+                  const first = parts.findIndex(
+                    (candidate) => candidate.type === "text" && candidate.text === part.text
+                  );
+                  if (first > hideTextAfterIndex) return null;
+                }
                 return <MarkdownText />;
               case "reasoning":
                 return <Reasoning {...part} />;

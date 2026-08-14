@@ -482,14 +482,13 @@ function ApplyPackageSheetForm({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={generatePending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              disabled={generatePending}
-              onClick={(e) => {
-                e.preventDefault();
+              loading={generatePending}
+              onClick={() => {
                 onRegenerate();
                 setRegenerateOpen(false);
               }}
             >
-              {generatePending ? "Generating…" : "Regenerate"}
+              Regenerate
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

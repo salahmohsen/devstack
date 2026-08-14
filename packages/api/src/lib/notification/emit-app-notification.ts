@@ -120,6 +120,7 @@ export async function sendNotificationEmail(input: {
     if (!to) return false;
 
     const actionUrl = absoluteActionUrl(input.href);
+    const logoUrl = `${ENV_SERVER.VITE_WEB_URL.replace(/\/$/, "")}/logo192.png`;
     await sendEmail({
       to,
       subject: input.title,
@@ -127,7 +128,8 @@ export async function sendNotificationEmail(input: {
         title: input.title,
         body: input.body,
         actionUrl,
-        actionLabel: actionUrl?.includes("/dashboard/mail") ? "Open mail" : "Open dashboard"
+        actionLabel: actionUrl?.includes("/dashboard/mail") ? "Open mail" : "Open dashboard",
+        logoUrl
       })
     });
     return true;

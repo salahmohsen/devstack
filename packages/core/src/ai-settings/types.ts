@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { HubAvatarIdSchema, HubPersonalityIdSchema } from "./hub-personality";
 import { isMastraProviderId } from "./mastra-provider-catalog";
 
 export const AiFeatureSchema = z.enum([
@@ -71,6 +72,8 @@ export const AiSettingsOutputSchema = z.object({
   providers: z.array(AiProviderPublicSchema),
   models: AiModelsMapSchema,
   modelProviderIds: AiModelProviderIdsMapSchema.default({}),
+  hubPersonality: HubPersonalityIdSchema.default("cairo"),
+  hubAvatar: HubAvatarIdSchema.default("scarab"),
   updatedAt: z.coerce.date().nullable()
 });
 export type AiSettingsOutput = z.infer<typeof AiSettingsOutputSchema>;
@@ -90,7 +93,9 @@ export const UpdateAiSettingsInputSchema = z.object({
   /** When true with providers[], replace full provider list (including deletions). */
   replaceProviders: z.boolean().optional(),
   models: AiModelsMapSchema.partial().optional(),
-  modelProviderIds: AiModelProviderIdsMapSchema.optional()
+  modelProviderIds: AiModelProviderIdsMapSchema.optional(),
+  hubPersonality: HubPersonalityIdSchema.optional(),
+  hubAvatar: HubAvatarIdSchema.optional()
 });
 export type UpdateAiSettingsInput = z.infer<typeof UpdateAiSettingsInputSchema>;
 

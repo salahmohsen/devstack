@@ -1,5 +1,6 @@
 "use client";
 
+import { useStore } from "@tanstack/react-form";
 import {
   CheckCircle2Icon,
   ChevronDownIcon,
@@ -8,12 +9,11 @@ import {
   Trash2Icon,
   UnplugIcon
 } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
   AI_FEATURE_LABELS,
-  AI_FEATURES,
   AI_PROVIDER_FEATURED,
   aiProviderLabel,
   cascadeDefaultModelChange,
@@ -28,7 +28,11 @@ import {
   type AiModelProviderIdsMap,
   type AiModelsMap,
   type AiProviderKind,
-  type AiProviderPublic
+  type AiProviderPublic,
+  type HubAvatarId,
+  type HubPersonalityId,
+  HUB_AVATARS,
+  HUB_PERSONALITIES
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -56,27 +60,24 @@ import {
   EmptyMedia,
   EmptyTitle
 } from "@tsu-stack/ui/components/empty";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle
-} from "@tsu-stack/ui/components/frame";
-import { Input } from "@tsu-stack/ui/components/input";
+import { FieldGroup } from "@tsu-stack/ui/components/field";
+import { Form } from "@tsu-stack/ui/components/form";
 import { Label } from "@tsu-stack/ui/components/label";
-import { SecretInput } from "@tsu-stack/ui/components/secret-input";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { useAppForm } from "@/shared/form";
 
 import {
   useGetAiSettingsQuery,
   useListProviderModelsMutation,
   useTestAiProviderMutation,
-  useUpdateAiSettingsMutation
+  useUpdateAiSettingsMutation,
+  type AiSettingsQueryResult
 } from "@/features/ai-settings";
 
 import { useSettingsDirtyGuard } from "./settings-dirty-guard";
+import { SettingsFrame } from "./settings-frame";
 import { SettingsSaveBar } from "./settings-save-bar";
 import { SettingsSection } from "./settings-section";
 
@@ -95,6 +96,8 @@ type FormState = {
   providers: DraftProvider[];
   models: AiModelsMap;
   modelProviderIds: AiModelProviderIdsMap;
+  hubPersonality: HubPersonalityId;
+  hubAvatar: HubAvatarId;
 };
 
 /** Combobox option for a model under a specific provider row (multipes-safe). */
@@ -165,30 +168,16 @@ function formFromQuery(data: {
   providers: AiProviderPublic[];
   models: AiModelsMap;
   modelProviderIds?: AiModelProviderIdsMap;
+  hubPersonality?: HubPersonalityId;
+  hubAvatar?: HubAvatarId;
 }): FormState {
   return {
     providers: toDraftProviders(data.providers),
     models: data.models,
-    modelProviderIds: { ...data.modelProviderIds }
+    modelProviderIds: { ...data.modelProviderIds },
+    hubPersonality: data.hubPersonality ?? "cairo",
+    hubAvatar: data.hubAvatar ?? "scarab"
   };
-}
-
-function modelsEqual(a: AiModelsMap, b: AiModelsMap): boolean {
-  return AI_FEATURES.every((f) => a[f] === b[f]);
-}
-
-function bindingsEqual(a: AiModelProviderIdsMap, b: AiModelProviderIdsMap): boolean {
-  return AI_FEATURES.every((f) => (a[f] ?? undefined) === (b[f] ?? undefined));
-}
-
-function providersDirty(draft: DraftProvider[], server: AiProviderPublic[]): boolean {
-  if (draft.length !== server.length) return true;
-  return draft.some((p, i) => {
-    const s = server[i];
-    if (!s) return true;
-    if (p.apiKey.trim()) return true;
-    return p.id !== s.id || p.kind !== s.kind || p.label !== s.label;
-  });
 }
 
 function providerHasKey(p: DraftProvider): boolean {
@@ -309,11 +298,41 @@ function ModelCombobox({
 
 export function AiSettings() {
   const query = useGetAiSettingsQuery();
+
+  if (query.isError) {
+    return (
+      <SettingsFrame title="AI" description="Could not load AI settings.">
+        <Alert variant="error">
+          <AlertTitle>Failed to load</AlertTitle>
+          <AlertDescription>Refresh the page or try again later.</AlertDescription>
+        </Alert>
+      </SettingsFrame>
+    );
+  }
+
+  if (query.isLoading || !query.data) {
+    return (
+      <SettingsFrame
+        title="AI"
+        description="Connect providers and choose models. Keys stay on your account."
+      >
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner className="size-4" />
+          Loading…
+        </div>
+      </SettingsFrame>
+    );
+  }
+
+  return <AiSettingsForm data={query.data} />;
+}
+
+function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
   const update = useUpdateAiSettingsMutation();
   const testProvider = useTestAiProviderMutation();
   const listProviderModels = useListProviderModelsMutation();
+  const serverValues = useMemo(() => formFromQuery(data), [data]);
 
-  const [draft, setDraft] = useState<FormState | null>(null);
   const [customizeModels, setCustomizeModels] = useState(false);
   /** Force combobox on a feature that is currently “on Default”. */
   const [editingFeatures, setEditingFeatures] = useState<Partial<Record<AiFeature, boolean>>>({});
@@ -328,68 +347,90 @@ export function AiSettings() {
   const loadedListKeyRef = useRef("");
   const modelsLoadInFlightRef = useRef(false);
 
-  // Keep an open draft across refetches / tab focus. Only re-sync from the
-  // server when there is no local draft (initial load or after save/discard).
-  const form = useMemo(() => {
-    if (!query.data) return null;
-    if (draft) return draft;
-    return formFromQuery(query.data);
-  }, [query.data, draft]);
+  const form = useAppForm({
+    defaultValues: serverValues,
+    onSubmit: async ({ value }) => {
+      try {
+        await update.mutateAsync({
+          replaceProviders: true,
+          providers: value.providers.map((p) => {
+            return {
+              id: p.id,
+              kind: p.kind,
+              label: p.label.trim() || aiProviderLabel(p.kind),
+              apiKey: p.apiKey.trim() || undefined
+            };
+          }),
+          models: value.models,
+          modelProviderIds: value.modelProviderIds,
+          hubPersonality: value.hubPersonality,
+          hubAvatar: value.hubAvatar
+        });
+        form.reset({
+          ...value,
+          providers: value.providers.map((p) => {
+            return {
+              ...p,
+              apiKey: "",
+              hasApiKey: Boolean(p.hasApiKey || p.apiKey.trim()),
+              apiKeyLast4: p.apiKey.trim() ? p.apiKey.trim().slice(-4) : p.apiKeyLast4
+            };
+          })
+        });
+        toast.success("AI settings saved");
+      } catch {
+        toast.error("Could not save AI settings");
+      }
+    }
+  });
 
-  const serverSnapshot = useMemo(() => {
-    if (!query.data) return null;
-    return formFromQuery(query.data);
-  }, [query.data]);
+  useEffect(() => {
+    if (form.store.state.isDirty) return;
+    form.reset(serverValues);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- form API is stable; re-sync only when server values change
+  }, [serverValues]);
 
-  const dirty = useMemo(() => {
-    if (!form || !serverSnapshot || !query.data) return false;
-    if (!modelsEqual(form.models, serverSnapshot.models)) return true;
-    if (!bindingsEqual(form.modelProviderIds, serverSnapshot.modelProviderIds)) return true;
-    return providersDirty(form.providers, query.data.providers);
-  }, [form, serverSnapshot, query.data]);
-
-  function ensureDraft(): FormState | null {
-    if (!query.data) return null;
-    if (draft) return draft;
-    const next = formFromQuery(query.data);
-    setDraft(next);
-    return next;
-  }
+  const values = useStore(form.store, (state) => state.values);
+  const isDirty = useStore(form.store, (state) => state.isDirty);
 
   function patch(mutator: (current: FormState) => FormState) {
-    const base = ensureDraft();
-    if (!base) return;
-    setDraft(mutator(base));
+    const next = mutator(form.store.state.values);
+    form.setFieldValue("providers", next.providers);
+    form.setFieldValue("models", next.models);
+    form.setFieldValue("modelProviderIds", next.modelProviderIds);
+    form.setFieldValue("hubPersonality", next.hubPersonality);
+    form.setFieldValue("hubAvatar", next.hubAvatar);
   }
 
-  function discard() {
-    setDraft(null);
-  }
+  const discard = useCallback(() => {
+    form.reset(serverValues);
+  }, [form, serverValues]);
 
-  const leaveGuard = useSettingsDirtyGuard(dirty, { onDiscard: discard });
+  const leaveGuard = useSettingsDirtyGuard(isDirty, { onDiscard: discard });
 
   /** Fingerprint of providers that can list models (id, kind, key availability). */
-  const listableProvidersKey = useMemo(() => {
-    if (!form) return "";
-    return form.providers
-      .filter((p) => p.kind && p.kind !== "custom" && providerHasKey(p))
-      .map((p) => {
-        const keyState = p.apiKey.trim() ? `draft:${p.apiKey.trim().slice(-4)}` : "saved";
-        return `${p.id}|${p.kind}|${keyState}|${p.label}`;
-      })
-      .join(";");
-  }, [form]);
+  const listableProvidersKey = useMemo(
+    () =>
+      values.providers
+        .filter((p) => p.kind && p.kind !== "custom" && providerHasKey(p))
+        .map((p) => {
+          const keyState = p.apiKey.trim() ? `draft:${p.apiKey.trim().slice(-4)}` : "saved";
+          return `${p.id}|${p.kind}|${keyState}|${p.label}`;
+        })
+        .join(";"),
+    [values.providers]
+  );
 
   /**
    * Lazy live list: fetch when a model combobox opens (or providers/keys change).
    * Catalog is always available as an immediate fallback in `modelOptions`.
    */
   const ensureLiveModels = useCallback(async () => {
-    if (!form || !listableProvidersKey) return;
+    if (!listableProvidersKey) return;
     if (loadedListKeyRef.current === listableProvidersKey) return;
     if (modelsLoadInFlightRef.current) return;
 
-    const eligible = form.providers.filter(
+    const eligible = values.providers.filter(
       (p) => p.kind && p.kind !== "custom" && providerHasKey(p)
     );
     if (eligible.length === 0) return;
@@ -438,12 +479,11 @@ export function AiSettings() {
     }
     modelsLoadInFlightRef.current = false;
     setModelsLoading(false);
-  }, [form, listableProvidersKey, listProviderModels]);
+  }, [values.providers, listableProvidersKey, listProviderModels]);
 
   const modelOptions = useMemo((): ModelOption[] => {
-    if (!form) return [];
     const options: ModelOption[] = [];
-    const providers = form.providers.filter((p) => p.id);
+    const providers = values.providers.filter((p) => p.id);
 
     if (providers.length > 0) {
       for (const p of providers) {
@@ -477,34 +517,10 @@ export function AiSettings() {
       }
     }
     return options;
-  }, [form, liveModelsByProviderId]);
+  }, [values.providers, liveModelsByProviderId]);
 
-  const defaultModel = form?.models.reply ?? defaultAiModels().reply;
-  const defaultProviderId = form?.modelProviderIds.reply;
-
-  async function handleSave() {
-    const current = form;
-    if (!current) return;
-    try {
-      await update.mutateAsync({
-        replaceProviders: true,
-        providers: current.providers.map((p) => {
-          return {
-            id: p.id,
-            kind: p.kind,
-            label: p.label.trim() || aiProviderLabel(p.kind),
-            apiKey: p.apiKey.trim() || undefined
-          };
-        }),
-        models: current.models,
-        modelProviderIds: current.modelProviderIds
-      });
-      toast.success("AI settings saved");
-      setDraft(null);
-    } catch {
-      toast.error("Could not save AI settings");
-    }
-  }
+  const defaultModel = values.models.reply ?? defaultAiModels().reply;
+  const defaultProviderId = values.modelProviderIds.reply;
 
   function addProvider() {
     patch((current) => {
@@ -595,8 +611,7 @@ export function AiSettings() {
    * Probe a concrete model. Resolve key with same orphan/kind rules as runtime.
    */
   async function handleTestModel(feature: AiFeature) {
-    const current = form;
-    if (!current) return;
+    const current = values;
 
     const modelId = current.models[feature]?.trim() ?? "";
     if (!modelId.includes("/")) {
@@ -656,391 +671,388 @@ export function AiSettings() {
   }
 
   function canTestFeature(feature: AiFeature): boolean {
-    if (!form) return false;
-    const modelId = form.models[feature]?.trim() ?? "";
+    const modelId = values.models[feature]?.trim() ?? "";
     if (!modelId.includes("/")) return false;
 
     const provider = resolveProviderRowForModel({
       modelId,
-      preferredProviderId: form.modelProviderIds[feature],
-      providers: form.providers,
+      preferredProviderId: values.modelProviderIds[feature],
+      providers: values.providers,
       prefer: (p) => Boolean(p.apiKey.trim() || (p.hasApiKey && p.id))
     });
     if (!provider) return false;
     return Boolean(provider.apiKey.trim() || (provider.hasApiKey && provider.id));
   }
 
-  if (query.isError) {
-    return (
-      <Frame>
-        <FrameHeader>
-          <FrameTitle>AI</FrameTitle>
-          <FrameDescription>Could not load AI settings.</FrameDescription>
-        </FrameHeader>
-        <FramePanel>
-          <Alert variant="error">
-            <AlertTitle>Failed to load</AlertTitle>
-            <AlertDescription>Refresh the page or try again later.</AlertDescription>
-          </Alert>
-        </FramePanel>
-      </Frame>
-    );
-  }
-
-  const isBusy = query.isLoading || !form;
-
   return (
     <>
-      <Frame>
-        <FrameHeader>
-          <FrameTitle>AI</FrameTitle>
-          <FrameDescription>
-            Connect providers and choose models. Keys stay on your account.
-          </FrameDescription>
-        </FrameHeader>
+      <SettingsFrame
+        title="AI"
+        description="Connect providers and choose models. Keys stay on your account."
+        actions={
+          <SettingsSaveBar
+            dirty={isDirty}
+            saving={update.isPending}
+            statusKey={values}
+            onSave={() => void form.handleSubmit()}
+            onDiscard={discard}
+            saveLabel="Save"
+          />
+        }
+      >
+        <Form
+          className="space-y-8"
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void form.handleSubmit();
+          }}
+        >
+          <SettingsSection
+            title="Hub assistant"
+            description="Voice and face for the dashboard chat. Cairo is the default — useful, a little cheeky, and it already knows your product words."
+          >
+            <FieldGroup className="gap-3">
+              <form.AppField name="hubPersonality">
+                {(field) => (
+                  <field.SelectableCardsField
+                    options={HUB_PERSONALITIES.map((preset) => {
+                      return {
+                        value: preset.id,
+                        title: preset.label,
+                        description: preset.tagline
+                      };
+                    })}
+                    onValueChange={(nextId) => {
+                      const prevDefault = HUB_PERSONALITIES.find(
+                        (preset) => preset.id === values.hubPersonality
+                      )?.defaultAvatar;
+                      const nextPreset = HUB_PERSONALITIES.find((preset) => preset.id === nextId);
+                      if (nextPreset && values.hubAvatar === prevDefault) {
+                        form.setFieldValue("hubAvatar", nextPreset.defaultAvatar);
+                      }
+                    }}
+                  />
+                )}
+              </form.AppField>
+              <form.AppField name="hubAvatar">
+                {(field) => (
+                  <field.EmojiChoiceField
+                    options={HUB_AVATARS.map((avatar) => {
+                      return {
+                        value: avatar.id,
+                        label: avatar.label,
+                        emoji: avatar.emoji
+                      };
+                    })}
+                  />
+                )}
+              </form.AppField>
+            </FieldGroup>
+          </SettingsSection>
 
-        <FramePanel className="space-y-8">
-          {isBusy || !form ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Spinner className="size-4" />
-              Loading…
-            </div>
-          ) : (
-            <>
-              <SettingsSection
-                title="Providers"
-                description="API keys for models you run. Saved keys are stored encrypted; only the last four characters are shown."
-                action={
-                  form.providers.length > 0 ? (
-                    <Button type="button" size="sm" variant="outline" onClick={addProvider}>
-                      <PlusIcon className="size-3.5" />
-                      Add provider
+          <SettingsSection
+            title="Providers"
+            description="API keys for models you run. Saved keys are stored encrypted; only the last four characters are shown."
+            action={
+              values.providers.length > 0 ? (
+                <Button type="button" size="sm" variant="outline" onClick={addProvider}>
+                  <PlusIcon className="size-3.5" />
+                  Add provider
+                </Button>
+              ) : null
+            }
+          >
+            {values.providers.length === 0 ? (
+              <Empty className="rounded-xl border border-dashed py-10 md:py-12">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <SparklesIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>No providers yet</EmptyTitle>
+                  <EmptyDescription>
+                    Add a provider with an API key to run Hub, mail, and packages.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button type="button" size="sm" onClick={addProvider}>
+                    <PlusIcon className="size-3.5" />
+                    Add provider
+                  </Button>
+                </EmptyContent>
+              </Empty>
+            ) : (
+              <ul className="space-y-3">
+                {values.providers.map((p, index) => (
+                  <li
+                    key={p.id}
+                    className="relative space-y-3 rounded-xl border border-border/80 p-4 pe-12"
+                  >
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      className="absolute inset-e-2 top-3 text-muted-foreground hover:text-destructive"
+                      aria-label="Remove provider"
+                      onClick={() =>
+                        patch((current) => {
+                          return {
+                            ...current,
+                            providers: current.providers.filter((_, i) => i !== index)
+                          };
+                        })
+                      }
+                    >
+                      <Trash2Icon className="size-3.5" />
                     </Button>
-                  ) : null
-                }
-              >
-                {form.providers.length === 0 ? (
-                  <Empty className="rounded-xl border border-dashed py-10 md:py-12">
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <SparklesIcon />
-                      </EmptyMedia>
-                      <EmptyTitle>No providers yet</EmptyTitle>
-                      <EmptyDescription>
-                        Add a provider with an API key to run Hub, mail, and packages.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                    <EmptyContent>
-                      <Button type="button" size="sm" onClick={addProvider}>
-                        <PlusIcon className="size-3.5" />
-                        Add provider
-                      </Button>
-                    </EmptyContent>
-                  </Empty>
-                ) : (
-                  <ul className="space-y-3">
-                    {form.providers.map((p, index) => (
-                      <li
-                        key={p.id}
-                        className="relative space-y-3 rounded-xl border border-border/80 p-4 pe-12"
-                      >
-                        <Button
-                          type="button"
-                          size="icon-sm"
-                          variant="ghost"
-                          className="absolute inset-e-2 top-3 text-muted-foreground hover:text-destructive"
-                          aria-label="Remove provider"
-                          onClick={() =>
+
+                    {/* Provider · Label · API key — one row on large screens */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.4fr)]">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Provider</Label>
+                        <Combobox
+                          value={p.kind || null}
+                          onValueChange={(val) => {
+                            if (!val) return;
+                            const kind = val as AiProviderKind;
                             patch((current) => {
                               return {
                                 ...current,
-                                providers: current.providers.filter((_, i) => i !== index)
+                                providers: current.providers.map((row, i) =>
+                                  i === index ? { ...row, kind, label: aiProviderLabel(kind) } : row
+                                )
                               };
-                            })
-                          }
+                            });
+                          }}
+                          items={PROVIDER_OPTIONS}
+                          itemToStringLabel={(item) => {
+                            if (typeof item === "string") {
+                              return PROVIDER_OPTIONS.find((o) => o.value === item)?.label ?? item;
+                            }
+                            if (item && typeof item === "object" && "label" in item) {
+                              return String((item as ProviderOption).label);
+                            }
+                            return String(item ?? "");
+                          }}
                         >
-                          <Trash2Icon className="size-3.5" />
-                        </Button>
+                          <ComboboxInput placeholder="Search providers…" showClear={false} />
+                          <ComboboxContent>
+                            <ComboboxEmpty>No provider found.</ComboboxEmpty>
+                            <ComboboxList>
+                              {(item: ProviderOption) => (
+                                <ComboboxItem key={item.value} value={item.value}>
+                                  {item.label}
+                                </ComboboxItem>
+                              )}
+                            </ComboboxList>
+                          </ComboboxContent>
+                        </Combobox>
+                      </div>
+                      <form.AppField name={`providers[${index}].label`}>
+                        {(field) => (
+                          <field.InputField
+                            label="Label"
+                            placeholder="Display name"
+                            classNames={{ label: "text-xs" }}
+                          />
+                        )}
+                      </form.AppField>
+                      <form.AppField name={`providers[${index}].apiKey`}>
+                        {(field) => (
+                          <field.SecretInputField
+                            label="API key"
+                            hasSavedSecret={p.hasApiKey}
+                            savedLast4={p.apiKeyLast4}
+                            placeholder={p.hasApiKey ? "Leave blank to keep" : "API key"}
+                            classNames={{
+                              field: "sm:col-span-2 lg:col-span-1",
+                              label: "text-xs"
+                            }}
+                          />
+                        )}
+                      </form.AppField>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SettingsSection>
 
-                        {/* Provider · Label · API key — one row on large screens */}
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.4fr)]">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Provider</Label>
-                            <Combobox
-                              value={p.kind || null}
-                              onValueChange={(val) => {
-                                if (!val) return;
-                                const kind = val as AiProviderKind;
-                                patch((current) => {
-                                  return {
-                                    ...current,
-                                    providers: current.providers.map((row, i) =>
-                                      i === index
-                                        ? { ...row, kind, label: aiProviderLabel(kind) }
-                                        : row
-                                    )
-                                  };
-                                });
-                              }}
-                              items={PROVIDER_OPTIONS}
-                              itemToStringLabel={(item) => {
-                                if (typeof item === "string") {
-                                  return (
-                                    PROVIDER_OPTIONS.find((o) => o.value === item)?.label ?? item
-                                  );
-                                }
-                                if (item && typeof item === "object" && "label" in item) {
-                                  return String((item as ProviderOption).label);
-                                }
-                                return String(item ?? "");
-                              }}
-                            >
-                              <ComboboxInput placeholder="Search providers…" showClear={false} />
-                              <ComboboxContent>
-                                <ComboboxEmpty>No provider found.</ComboboxEmpty>
-                                <ComboboxList>
-                                  {(item: ProviderOption) => (
-                                    <ComboboxItem key={item.value} value={item.value}>
-                                      {item.label}
-                                    </ComboboxItem>
-                                  )}
-                                </ComboboxList>
-                              </ComboboxContent>
-                            </Combobox>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Label</Label>
-                            <Input
-                              value={p.label}
-                              onChange={(e) =>
-                                patch((current) => {
-                                  return {
-                                    ...current,
-                                    providers: current.providers.map((row, i) =>
-                                      i === index ? { ...row, label: e.target.value } : row
-                                    )
-                                  };
-                                })
-                              }
-                              placeholder="Display name"
-                            />
-                          </div>
-                          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-                            <Label className="text-xs" htmlFor={`ai-provider-key-${p.id}`}>
-                              API key
-                            </Label>
-                            <SecretInput
-                              id={`ai-provider-key-${p.id}`}
-                              value={p.apiKey}
-                              hasSavedSecret={p.hasApiKey}
-                              savedLast4={p.apiKeyLast4}
-                              placeholder={p.hasApiKey ? "Leave blank to keep" : "API key"}
-                              onChange={(next) =>
-                                patch((current) => {
-                                  return {
-                                    ...current,
-                                    providers: current.providers.map((row, i) =>
-                                      i === index ? { ...row, apiKey: next } : row
-                                    )
-                                  };
-                                })
-                              }
-                            />
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </SettingsSection>
-
-              <SettingsSection
-                title="Models"
-                description="Test runs a small request with this model and the matching provider key."
-              >
-                <div className="space-y-5">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs" htmlFor="ai-default-model">
-                      Default model
-                    </Label>
-                    {/*
+          <SettingsSection
+            title="Models"
+            description="Test runs a small request with this model and the matching provider key."
+          >
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs" htmlFor="ai-default-model">
+                  Default model
+                </Label>
+                {/*
                       Model + Test share one row from sm. items-end keeps the button
                       on the input baseline (label sits above the field only).
                     */}
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                      <div className="min-w-0 flex-1">
-                        <ModelCombobox
-                          id="ai-default-model"
-                          modelId={defaultModel}
-                          providerId={defaultProviderId}
-                          options={modelOptions}
-                          onPick={setDefaultFromOption}
-                          onFreeType={setDefaultFreeType}
-                          onOpen={() => {
-                            void ensureLiveModels();
-                          }}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="w-full shrink-0 sm:w-auto"
-                        disabled={testingFeature !== null || !canTestFeature("reply")}
-                        aria-label={`Test model ${defaultModel}`}
-                        onClick={() => void handleTestModel("reply")}
-                      >
-                        {testingFeature === "reply" ? (
-                          <Spinner className="size-3.5" />
-                        ) : (
-                          <UnplugIcon className="size-3.5" />
-                        )}
-                        {testingFeature === "reply" ? "Testing…" : "Test"}
-                      </Button>
-                    </div>
-                    {modelsLoading ? (
-                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Spinner className="size-3" />
-                        Loading models…
-                      </p>
-                    ) : null}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="min-w-0 flex-1">
+                    <ModelCombobox
+                      id="ai-default-model"
+                      modelId={defaultModel}
+                      providerId={defaultProviderId}
+                      options={modelOptions}
+                      onPick={setDefaultFromOption}
+                      onFreeType={setDefaultFreeType}
+                      onOpen={() => {
+                        void ensureLiveModels();
+                      }}
+                    />
                   </div>
-
-                  <Collapsible open={customizeModels} onOpenChange={setCustomizeModels}>
-                    <CollapsibleTrigger
-                      className={cn(
-                        "flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      )}
-                    >
-                      <ChevronDownIcon
-                        className={cn(
-                          "size-3.5 shrink-0 transition-transform",
-                          customizeModels && "rotate-180"
-                        )}
-                      />
-                      Customize per feature
-                    </CollapsibleTrigger>
-                    <CollapsiblePanel className="mt-4 space-y-6">
-                      {CUSTOMIZE_FEATURE_GROUPS.map((group) => (
-                        <div key={group.title} className="space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground">{group.title}</p>
-                          <div
-                            className={cn(
-                              "grid auto-rows-[1fr] gap-3",
-                              group.features.length > 1 && "sm:grid-cols-2"
-                            )}
-                          >
-                            {group.features.map((feature) => {
-                              const onDefault = isFeatureOnDefault({
-                                feature,
-                                models: form.models,
-                                bindings: form.modelProviderIds
-                              });
-                              const featureModel = form.models[feature];
-                              const featureProviderId = form.modelProviderIds[feature];
-                              const isTesting = testingFeature === feature;
-                              const forceEdit = Boolean(editingFeatures[feature]);
-                              const showDefaultLabel = onDefault && !forceEdit;
-
-                              // Shared tile shell so Default vs override align on edges/height.
-                              return (
-                                <div
-                                  key={feature}
-                                  className="flex h-full min-h-20 flex-col gap-2 rounded-lg border border-border/80 px-3 py-3"
-                                >
-                                  <div className="flex min-h-5 items-center justify-between gap-2">
-                                    <Label className="text-xs font-medium text-foreground">
-                                      {AI_FEATURE_LABELS[feature]}
-                                    </Label>
-                                    {showDefaultLabel ? (
-                                      <span className="inline-flex shrink-0 items-center rounded-md border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
-                                        Default
-                                      </span>
-                                    ) : null}
-                                  </div>
-
-                                  {showDefaultLabel ? (
-                                    <div className="mt-auto flex items-center justify-between gap-2">
-                                      <span className="truncate text-xs text-muted-foreground">
-                                        Uses default model
-                                      </span>
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="ghost"
-                                        className="h-8 shrink-0 px-2 text-xs"
-                                        onClick={() =>
-                                          setEditingFeatures((prev) => {
-                                            return { ...prev, [feature]: true };
-                                          })
-                                        }
-                                      >
-                                        Change
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center">
-                                      <div className="min-w-0 flex-1">
-                                        <ModelCombobox
-                                          modelId={featureModel}
-                                          providerId={featureProviderId}
-                                          options={modelOptions}
-                                          onPick={(opt) => {
-                                            setFeatureFromOption(feature, opt);
-                                            setEditingFeatures((prev) => {
-                                              return { ...prev, [feature]: false };
-                                            });
-                                          }}
-                                          onFreeType={(next) => {
-                                            setFeatureFreeType(feature, next);
-                                          }}
-                                          onOpen={() => {
-                                            void ensureLiveModels();
-                                          }}
-                                        />
-                                      </div>
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        className="w-full shrink-0 sm:w-auto"
-                                        disabled={
-                                          testingFeature !== null || !canTestFeature(feature)
-                                        }
-                                        aria-label={`Test ${AI_FEATURE_LABELS[feature]} model`}
-                                        onClick={() => void handleTestModel(feature)}
-                                      >
-                                        {isTesting ? (
-                                          <Spinner className="size-3.5" />
-                                        ) : (
-                                          <UnplugIcon className="size-3.5" />
-                                        )}
-                                        {isTesting ? "Testing…" : "Test"}
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </CollapsiblePanel>
-                  </Collapsible>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="w-full shrink-0 sm:w-auto"
+                    disabled={testingFeature !== null || !canTestFeature("reply")}
+                    aria-label={`Test model ${defaultModel}`}
+                    onClick={() => void handleTestModel("reply")}
+                  >
+                    {testingFeature === "reply" ? (
+                      <Spinner className="size-3.5" />
+                    ) : (
+                      <UnplugIcon className="size-3.5" />
+                    )}
+                    {testingFeature === "reply" ? "Testing…" : "Test"}
+                  </Button>
                 </div>
-              </SettingsSection>
+                {modelsLoading ? (
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Spinner className="size-3" />
+                    Loading models…
+                  </p>
+                ) : null}
+              </div>
 
-              <SettingsSaveBar
-                dirty={dirty}
-                saving={update.isPending}
-                onSave={() => void handleSave()}
-                onDiscard={discard}
-                saveLabel="Save AI settings"
-              />
-            </>
-          )}
-        </FramePanel>
-      </Frame>
+              <Collapsible open={customizeModels} onOpenChange={setCustomizeModels}>
+                <CollapsibleTrigger
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  )}
+                >
+                  <ChevronDownIcon
+                    className={cn(
+                      "size-3.5 shrink-0 transition-transform",
+                      customizeModels && "rotate-180"
+                    )}
+                  />
+                  Customize per feature
+                </CollapsibleTrigger>
+                <CollapsiblePanel className="mt-4 space-y-6">
+                  {CUSTOMIZE_FEATURE_GROUPS.map((group) => (
+                    <div key={group.title} className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">{group.title}</p>
+                      <div
+                        className={cn(
+                          "grid auto-rows-[1fr] gap-3",
+                          group.features.length > 1 && "sm:grid-cols-2"
+                        )}
+                      >
+                        {group.features.map((feature) => {
+                          const onDefault = isFeatureOnDefault({
+                            feature,
+                            models: values.models,
+                            bindings: values.modelProviderIds
+                          });
+                          const featureModel = values.models[feature];
+                          const featureProviderId = values.modelProviderIds[feature];
+                          const isTesting = testingFeature === feature;
+                          const forceEdit = Boolean(editingFeatures[feature]);
+                          const showDefaultLabel = onDefault && !forceEdit;
+
+                          // Shared tile shell so Default vs override align on edges/height.
+                          return (
+                            <div
+                              key={feature}
+                              className="flex h-full min-h-20 flex-col gap-2 rounded-lg border border-border/80 px-3 py-3"
+                            >
+                              <div className="flex min-h-5 items-center justify-between gap-2">
+                                <Label className="text-xs font-medium text-foreground">
+                                  {AI_FEATURE_LABELS[feature]}
+                                </Label>
+                                {showDefaultLabel ? (
+                                  <span className="inline-flex shrink-0 items-center rounded-md border border-border/70 bg-muted/40 px-2 py-0.5 text-[11px] text-muted-foreground">
+                                    Default
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {showDefaultLabel ? (
+                                <div className="mt-auto flex items-center justify-between gap-2">
+                                  <span className="truncate text-xs text-muted-foreground">
+                                    Uses default model
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 shrink-0 px-2 text-xs"
+                                    onClick={() =>
+                                      setEditingFeatures((prev) => {
+                                        return { ...prev, [feature]: true };
+                                      })
+                                    }
+                                  >
+                                    Change
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center">
+                                  <div className="min-w-0 flex-1">
+                                    <ModelCombobox
+                                      modelId={featureModel}
+                                      providerId={featureProviderId}
+                                      options={modelOptions}
+                                      onPick={(opt) => {
+                                        setFeatureFromOption(feature, opt);
+                                        setEditingFeatures((prev) => {
+                                          return { ...prev, [feature]: false };
+                                        });
+                                      }}
+                                      onFreeType={(next) => {
+                                        setFeatureFreeType(feature, next);
+                                      }}
+                                      onOpen={() => {
+                                        void ensureLiveModels();
+                                      }}
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full shrink-0 sm:w-auto"
+                                    disabled={testingFeature !== null || !canTestFeature(feature)}
+                                    aria-label={`Test ${AI_FEATURE_LABELS[feature]} model`}
+                                    onClick={() => void handleTestModel(feature)}
+                                  >
+                                    {isTesting ? (
+                                      <Spinner className="size-3.5" />
+                                    ) : (
+                                      <UnplugIcon className="size-3.5" />
+                                    )}
+                                    {isTesting ? "Testing…" : "Test"}
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </CollapsiblePanel>
+              </Collapsible>
+            </div>
+          </SettingsSection>
+        </Form>
+      </SettingsFrame>
       {leaveGuard.alertDialog}
     </>
   );

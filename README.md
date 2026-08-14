@@ -222,6 +222,8 @@ cp packages/env/.env.example packages/env/.env
 pnpm db:setup
 
 # Apps (web + server + agent via scripts/dev.sh)
+# If server/agent crash on a file-watch reload, the orchestrator restarts them.
+# Disable: DEV_NO_RESTART=1 pnpm dev
 pnpm dev
 
 # Public HTTPS tunnel for Resend / Gmail / GitHub webhooks (cloudflared CLI)

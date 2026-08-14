@@ -1,37 +1,36 @@
-# Dashboard entity create/edit uses Sheet, not Dialog
+# Dashboard entity create/edit uses the side panel (inset Sheet on mobile)
 
 Create and edit flows for durable dashboard entities (applications,
-experiences, projects, stacks) use a **right side Sheet** (drawer), not a
-centered Dialog. Short tools and destructive confirms stay on Dialog /
-AlertDialog.
+experiences, projects, stacks) use the **dashboard side panel** — the same
+chrome as item inspect (`ItemInfoPanel`). On viewports below `xl`, that
+chrome is an **inset right Sheet**. Centered Dialog is not used for these
+forms. Short tools and destructive confirms stay on Dialog / AlertDialog.
 
 ## Context
 
 NN/g and Material guidance: modals for multi-field edit **cover context**
-users need (list/board rows). Side sheets keep the primary surface
-partially visible and scale better for long forms. Experiences, projects,
-and stacks historically used Dialog; applications (longer CRM form)
-should not invent a third pattern.
+users need (list/board rows). The existing inspect panel already keeps the
+list visible and scales for long content. Entity forms should share that
+surface instead of a second overlay language.
 
 ## Decision
 
-- Introduce a shared **entity form Sheet** shell (app-level, e.g.
-  `apps/web/src/shared/ui` or widgets) wrapping `@tsu-stack/ui` `Sheet`:
-  title, description, scrollable body, sticky footer actions.
-- **Applications:** one Sheet for create and edit.
-- **Experiences, projects, stacks:** migrate create/edit from Dialog to
-  the same Sheet shell in the same epic as applications.
-- **Keep Dialog / AlertDialog** for: merge stacks, organize, detect-stacks,
-  delete confirms, other short multi-step tools.
-- Dirty close: if the form is dirty, confirm before discard (do not silent
-  wipe long notes/JD).
-- Primary Save and destructive Delete must not sit as equal adjacent
-  twins; Delete in danger zone / overflow menu + AlertDialog.
+- Shared shell: `apps/web/src/pages/dashboard/_lib/entity-form-panel.tsx`.
+  - **Desktop (`xl+`):** `SidePanelPortal` + `ItemInfoPanel` (header, scroll
+    body, prev/next + timestamps footer).
+  - **Mobile:** `Sheet` `variant="inset"` `side="right"` with the same
+    panel chrome and a close button.
+- **Save lives in the header** (same idea as Settings). Do **not** add a
+  dialog-style Cancel/Save footer.
+- Dirty close: confirm before discard (Escape, sheet close, or navigating
+  away). No silent wipe of long notes/JD.
+- Destructive Delete stays in a danger zone / overflow + AlertDialog, not
+  as an equal twin of Save.
+- Keep Dialog / AlertDialog / PromptDialog for: merge stacks, organize,
+  detect-stacks, passkey name, fix URL, delete confirms.
 
 ## Consequences
 
-- One interaction language across evidence entities and Seeker CRM.
+- One inspect/edit language across evidence entities and Seeker CRM.
 - Mechanical form-body moves; validation/schemas stay TanStack Form + core
   Zod.
-- Mobile: full-height Sheet is acceptable for long forms; do not force
-  bottom sheets for multi-section entity edit (those suit short tasks).

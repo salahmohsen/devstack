@@ -2,8 +2,8 @@
 export const AVATAR_KEY_PREFIX = "avatars/" as const;
 
 /**
- * Full object key shape written by the profile avatar uploader:
- * `{userId}/avatars/{uuid}.{ext}`
+ * Full object key shape written by the public image uploader (profile photo and
+ * project logos): `{userId}/avatars/{uuid}.{ext}`
  *
  * Only these keys are safe for anonymous public read (MinIO policy / `/api/media`).
  */

@@ -127,7 +127,7 @@ function GitHubRepoCombobox(props: GitHubRepoComboboxProps) {
         {selectedUrl ? (
           <Button
             type="button"
-            variant="ghost"
+            variant="destructive"
             size="icon-sm"
             onClick={() => field.handleChange("")}
             aria-label="Clear repository"

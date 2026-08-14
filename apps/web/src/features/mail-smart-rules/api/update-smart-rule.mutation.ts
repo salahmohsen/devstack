@@ -10,8 +10,10 @@ export function useUpdateMailSmartRuleMutation() {
 
   return useMutation(
     orpcQueryClient.mailSmartRules.update.mutationOptions({
-      onSuccess: async () => {
-        toast.success("Rule saved");
+      onSuccess: async (_data, variables) => {
+        if (variables.keywords === undefined) {
+          toast.success("Rule saved");
+        }
         await queryClient.invalidateQueries({ queryKey: mailSmartRulesQueryKeys.list() });
       },
       onError: (error) => {

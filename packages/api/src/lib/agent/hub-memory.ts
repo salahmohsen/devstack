@@ -26,11 +26,11 @@ export type ChatAllowedAgentId = (typeof CHAT_ALLOWED_AGENT_IDS)[number];
 
 /**
  * Multi-step bound for hub chat (align with hub-supervisor defaultOptions.maxSteps).
- * Multi-step is required for real tool chains (read → propose → package).
+ * Superpowers golden path + last-step final answer (triage → package → send → notifs).
  * Answer-rewrite / bubble churn is fixed by anti-rewrite instructions + UI
  * intermediate-text collapse — not by locking maxSteps to 1.
  */
-export const HUB_CHAT_MAX_STEPS = 4 as const;
+export const HUB_CHAT_MAX_STEPS = 16 as const;
 
 export function hubChatThreadId(userId: string): string {
   return `dashboard-home:${userId}`;

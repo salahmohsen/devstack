@@ -89,6 +89,7 @@ export function MenuItem({
       )}
       data-inset={inset}
       data-slot="menu-item"
+      data-cuelume-hover="tick"
       data-variant={variant}
       {...props}
     />
@@ -114,6 +115,7 @@ export function MenuLinkItem({
       closeOnClick={closeOnClick}
       data-inset={inset}
       data-slot="menu-link-item"
+      data-cuelume-hover="tick"
       data-variant={variant}
       {...props}
     />

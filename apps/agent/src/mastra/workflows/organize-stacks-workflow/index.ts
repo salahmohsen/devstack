@@ -7,6 +7,7 @@ import { findEnrichments } from "#@/mastra/workflows/organize-stacks-workflow/fi
 import { findMerges } from "#@/mastra/workflows/organize-stacks-workflow/find-merges.step";
 import { findRenames } from "#@/mastra/workflows/organize-stacks-workflow/find-renames.step";
 import { formatOutput } from "#@/mastra/workflows/organize-stacks-workflow/format-output.step";
+import { pickProfileStacks } from "#@/mastra/workflows/organize-stacks-workflow/pick-profile-stacks.step";
 import { sortStacks } from "#@/mastra/workflows/organize-stacks-workflow/sort-stacks.step";
 
 export const organizeStacksWorkflow = createWorkflow({
@@ -19,6 +20,7 @@ export const organizeStacksWorkflow = createWorkflow({
   .then(findEnrichments)
   .then(fetchMissingIcons)
   .then(sortStacks)
+  .then(pickProfileStacks)
   .then(formatOutput);
 
 organizeStacksWorkflow.commit();

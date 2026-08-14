@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { WorkflowSolvingOrb } from "@/shared/ui/ai-flow-trigger";
 
 /**
  * AI job toast body — step line uses the shared shadcn `shimmer` utility.
@@ -42,7 +42,7 @@ export function showAiJobRunningToast(options: {
 
   toast(body, {
     id,
-    icon: <DefaultLoader size="sm" />,
+    icon: <WorkflowSolvingOrb />,
     duration: Infinity,
     action: {
       label: cancelLabel,

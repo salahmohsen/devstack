@@ -31,9 +31,8 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 
-import { useAppForm } from "@/shared/form";
+import { SubmitButton, useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
-import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import {
@@ -42,6 +41,8 @@ import {
   useSetOutcomeMutation,
   useUpdateApplicationMutation
 } from "@/features/applications";
+
+import { EntityFormSheet } from "@/pages/dashboard/_lib/entity-form-panel";
 
 type ApplicationFormSheetProps = {
   open: boolean;
@@ -176,58 +177,21 @@ export function ApplicationFormSheet({
             ? "Update details or close this application with an outcome."
             : "Track a job and link a resume from your library."
         }
-        footer={({ requestClose }) => (
-          <div
-            className={
-              isEdit && id
-                ? "flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between"
-                : "flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end"
-            }
-          >
-            {isEdit && id ? (
-              <div className="flex gap-2">
-                <Menu>
-                  <MenuTrigger render={<Button type="button" variant="outline" disabled={busy} />}>
-                    Close as…
-                  </MenuTrigger>
-                  <MenuPopup align="start">
-                    {(Object.keys(APPLICATION_OUTCOME_LABELS) as ApplicationOutcome[]).map(
-                      (outcome) => (
-                        <MenuItem
-                          key={outcome}
-                          onClick={() =>
-                            setOutcomeMutation.mutate(
-                              { id, outcome },
-                              { onSuccess: () => onOpenChange(false) }
-                            )
-                          }
-                        >
-                          {APPLICATION_OUTCOME_LABELS[outcome]}
-                        </MenuItem>
-                      )
-                    )}
-                  </MenuPopup>
-                </Menu>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={busy}
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  Delete
-                </Button>
-              </div>
-            ) : null}
-            <div className="flex gap-2 sm:justify-end">
-              <Button type="button" variant="ghost" disabled={busy} onClick={requestClose}>
-                Cancel
-              </Button>
-              <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
-                {isEdit ? "Save" : "Add to pipeline"}
-              </Button>
-            </div>
-          </div>
-        )}
+        updatedAt={initialData?.updatedAt}
+        createdAt={initialData?.createdAt}
+        actions={
+          <form.AppForm>
+            <SubmitButton
+              type="button"
+              size="sm"
+              actionLabel={isEdit ? "Save" : "Add to pipeline"}
+              isLoading={busy}
+              submitFailed={createMutation.isError || updateMutation.isError}
+              resetKey={`${open}:${id ?? "new"}`}
+              onClick={() => void form.handleSubmit()}
+            />
+          </form.AppForm>
+        }
       >
         <Form
           className="contents"
@@ -245,7 +209,9 @@ export function ApplicationFormSheet({
               {(field) => <field.InputField label="Role / title *" placeholder="Senior Engineer" />}
             </form.AppField>
             <form.AppField name="url">
-              {(field) => <field.InputField label="Job posting URL" placeholder="https://…" />}
+              {(field) => (
+                <field.UrlField label="Job posting URL" placeholder="jobs.example.com/…" />
+              )}
             </form.AppField>
             <div className="grid gap-4 sm:grid-cols-2">
               <form.AppField name="source">
@@ -345,6 +311,40 @@ export function ApplicationFormSheet({
                 />
               )}
             </form.AppField>
+            {isEdit && id ? (
+              <div className="flex flex-wrap gap-2 border-t border-border/60 pt-4">
+                <Menu>
+                  <MenuTrigger render={<Button type="button" variant="outline" disabled={busy} />}>
+                    Close as…
+                  </MenuTrigger>
+                  <MenuPopup align="start">
+                    {(Object.keys(APPLICATION_OUTCOME_LABELS) as ApplicationOutcome[]).map(
+                      (outcome) => (
+                        <MenuItem
+                          key={outcome}
+                          onClick={() =>
+                            setOutcomeMutation.mutate(
+                              { id, outcome },
+                              { onSuccess: () => onOpenChange(false) }
+                            )
+                          }
+                        >
+                          {APPLICATION_OUTCOME_LABELS[outcome]}
+                        </MenuItem>
+                      )
+                    )}
+                  </MenuPopup>
+                </Menu>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={busy}
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Delete
+                </Button>
+              </div>
+            ) : null}
           </FieldGroup>
         </Form>
       </EntityFormSheet>
@@ -361,6 +361,8 @@ export function ApplicationFormSheet({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
+              loading={deleteMutation.isPending}
               onClick={() => {
                 if (!id) return;
                 deleteMutation.mutate(

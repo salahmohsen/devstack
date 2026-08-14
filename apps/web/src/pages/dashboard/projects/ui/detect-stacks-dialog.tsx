@@ -133,7 +133,8 @@ export function DetectStacksDialog({
     [allStacks]
   );
 
-  // New stacks checked by default; existing stacks left unchecked (ADR 0017).
+  // All detected stacks selected by default (new + already in library) so
+  // "Add Selected" associates every finding with this project. Users can uncheck.
   // Reset selection when dialog opens or detect results change (external → UI state).
   useEffect(() => {
     if (!open) {
@@ -149,9 +150,7 @@ export function DetectStacksDialog({
     }
     const next: Record<string, boolean> = {};
     for (const stack of allStacks) {
-      if (!stack.exists) {
-        next[stack.npmPackage] = true;
-      }
+      next[stack.npmPackage] = true;
     }
     // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- sync selection to open/results
     setRowSelection(next);
@@ -407,8 +406,9 @@ export function DetectStacksDialog({
             <DialogPanel className="flex flex-col gap-4">
               <p className="text-sm text-muted-foreground">
                 {allStacks.length} stack{allStacks.length === 1 ? "" : "s"} found across {repoCount}{" "}
-                repositor{repoCount === 1 ? "y" : "ies"}. New stacks are selected by default; stacks
-                already in your library are unchecked.
+                repositor{repoCount === 1 ? "y" : "ies"}. All findings are selected by default
+                (including stacks already in your library); uncheck any you do not want on this
+                project.
               </p>
 
               <AiChangeList
@@ -569,6 +569,7 @@ export function DetectStacksResultsHost() {
               confidence: null,
               projectCount: 0,
               sortOrder: existing.length,
+              isFeatured: false,
               portfolioEntryId: null,
               includedInPortfolio: false,
               dependencies: [],

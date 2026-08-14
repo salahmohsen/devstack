@@ -15,32 +15,23 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  ArrowRightLeftIcon,
   BookmarkIcon,
   BriefcaseIcon,
-  CheckCircle2Icon,
-  CircleDashedIcon,
   CircleDotIcon,
   CircleIcon,
-  EyeIcon,
   FileTextIcon,
-  GhostIcon,
   MoreHorizontalIcon,
-  PencilIcon,
   PhoneIcon,
   PlusIcon,
-  SparklesIcon,
-  XCircleIcon
+  SparklesIcon
 } from "lucide-react";
-import { useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { useMemo, useState, type ComponentType } from "react";
 
 import {
-  APPLICATION_OUTCOME_LABELS,
   APPLICATION_STAGES,
   APPLICATION_STAGE_LABELS,
   HIRING_URGENCY_LABELS,
   isApplicationOpen,
-  type ApplicationOutcome,
   type ApplicationOutput,
   type ApplicationStage
 } from "@tsu-stack/core";
@@ -48,25 +39,11 @@ import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   ContextMenu,
-  ContextMenuItem,
   ContextMenuPopup,
-  ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubPopup,
-  ContextMenuSubTrigger,
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
-import {
-  Menu,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuSub,
-  MenuSubPopup,
-  MenuSubTrigger,
-  MenuTrigger
-} from "@tsu-stack/ui/components/menu";
+import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -74,14 +51,17 @@ import {
   ApplicationApplyLinks,
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
-  useSetOutcomeMutation,
   useUpdateStageMutation
 } from "@/features/applications";
 
 import { ItemsEmpty } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
-import { ApplyPackageMenuItems } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
+import {
+  applicationContextSlots,
+  applicationMenuSlots
+} from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
+import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
@@ -94,126 +74,6 @@ const STAGE_ICONS: Record<ApplicationStage, ComponentType<{ className?: string }
   interview: CircleDotIcon,
   offer: SparklesIcon
 };
-
-const OUTCOME_ICONS: Record<ApplicationOutcome, ComponentType<{ className?: string }>> = {
-  rejected: XCircleIcon,
-  withdrawn: CircleDashedIcon,
-  ghosted: GhostIcon,
-  accepted: CheckCircle2Icon
-};
-
-type ActionItemProps = {
-  children: ReactNode;
-  onClick?: () => void;
-  variant?: "default" | "destructive";
-  className?: string;
-};
-
-type ActionSubTriggerProps = {
-  children: ReactNode;
-};
-
-type ActionSubPopupProps = {
-  children: ReactNode;
-};
-
-type ActionSlots = {
-  Item: ComponentType<ActionItemProps>;
-  Separator: ComponentType;
-  Sub: ComponentType<{ children: ReactNode }>;
-  SubTrigger: ComponentType<ActionSubTriggerProps>;
-  SubPopup: ComponentType<ActionSubPopupProps>;
-};
-
-const menuSlots: ActionSlots = {
-  Item: ({ children, onClick, variant }) => (
-    <MenuItem onClick={onClick} variant={variant}>
-      {children}
-    </MenuItem>
-  ),
-  Separator: () => <MenuSeparator />,
-  Sub: ({ children }) => <MenuSub>{children}</MenuSub>,
-  SubTrigger: ({ children }) => <MenuSubTrigger>{children}</MenuSubTrigger>,
-  SubPopup: ({ children }) => <MenuSubPopup>{children}</MenuSubPopup>
-};
-
-const contextSlots: ActionSlots = {
-  Item: ({ children, onClick, variant }) => (
-    <ContextMenuItem onClick={onClick} variant={variant}>
-      {children}
-    </ContextMenuItem>
-  ),
-  Separator: () => <ContextMenuSeparator />,
-  Sub: ({ children }) => <ContextMenuSub>{children}</ContextMenuSub>,
-  SubTrigger: ({ children }) => <ContextMenuSubTrigger>{children}</ContextMenuSubTrigger>,
-  SubPopup: ({ children }) => <ContextMenuSubPopup>{children}</ContextMenuSubPopup>
-};
-
-function ApplicationCardActions({ app, slots }: { app: ApplicationOutput; slots: ActionSlots }) {
-  const { openEdit, openView } = useApplicationStore();
-  const updateStage = useUpdateStageMutation();
-  const setOutcome = useSetOutcomeMutation();
-  const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
-
-  return (
-    <>
-      <Item onClick={() => openView(app)}>
-        <EyeIcon aria-hidden="true" />
-        View
-      </Item>
-      <Item onClick={() => openEdit(app)}>
-        <PencilIcon aria-hidden="true" />
-        Edit
-      </Item>
-
-      <Separator />
-
-      <Sub>
-        <SubTrigger>
-          <ArrowRightLeftIcon aria-hidden="true" />
-          Move to
-        </SubTrigger>
-        <SubPopup>
-          {APPLICATION_STAGES.filter((s) => s !== app.stage).map((stage) => {
-            const Icon = STAGE_ICONS[stage];
-            return (
-              <Item key={stage} onClick={() => updateStage.mutate({ id: app.id, stage })}>
-                <Icon aria-hidden="true" />
-                {APPLICATION_STAGE_LABELS[stage]}
-              </Item>
-            );
-          })}
-        </SubPopup>
-      </Sub>
-
-      <ApplyPackageMenuItems app={app} slots={{ Item, Separator }} />
-
-      <Sub>
-        <SubTrigger>
-          <XCircleIcon aria-hidden="true" />
-          Close as
-        </SubTrigger>
-        <SubPopup>
-          {(Object.keys(APPLICATION_OUTCOME_LABELS) as ApplicationOutcome[]).map((outcome) => {
-            const Icon = OUTCOME_ICONS[outcome];
-            return (
-              <Item
-                key={outcome}
-                onClick={() => setOutcome.mutate({ id: app.id, outcome })}
-                variant={
-                  outcome === "rejected" || outcome === "withdrawn" ? "destructive" : "default"
-                }
-              >
-                <Icon aria-hidden="true" />
-                {APPLICATION_OUTCOME_LABELS[outcome]}
-              </Item>
-            );
-          })}
-        </SubPopup>
-      </Sub>
-    </>
-  );
-}
 
 function ApplicationCard({
   app,
@@ -274,7 +134,7 @@ function ApplicationCard({
             <MoreHorizontalIcon className="size-4" aria-hidden="true" />
           </MenuTrigger>
           <MenuPopup align="end" side="bottom" className="min-w-44">
-            <ApplicationCardActions app={app} slots={menuSlots} />
+            <ApplicationItemActions app={app} slots={applicationMenuSlots} />
           </MenuPopup>
         </Menu>
       </div>
@@ -315,7 +175,7 @@ function ApplicationCard({
       <ContextMenu>
         <ContextMenuTrigger className="block w-full outline-none">{cardBody}</ContextMenuTrigger>
         <ContextMenuPopup className="min-w-44">
-          <ApplicationCardActions app={app} slots={contextSlots} />
+          <ApplicationItemActions app={app} slots={applicationContextSlots} />
         </ContextMenuPopup>
       </ContextMenu>
     </div>

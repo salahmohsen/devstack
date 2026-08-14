@@ -15,7 +15,6 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { DaySeparatorRule, DaySeparatorTime } from "@/shared/ui/assistant-ui/day-separator";
 import {
-  AssistantMessage,
   Composer,
   EditComposer,
   threadRootStyle,
@@ -23,7 +22,13 @@ import {
   UserMessage
 } from "@/shared/ui/assistant-ui/thread";
 
-import { buildHubDayRows, lastHubHitlKind, useHubChat, type HubDayRow } from "@/features/agent-hub";
+import {
+  buildHubDayRows,
+  HubAssistantMessage,
+  lastHubHitlKind,
+  useHubChat,
+  type HubDayRow
+} from "@/features/agent-hub";
 
 import { useLoadOlderOnScrollTop } from "@/widgets/agent-hub/lib/use-load-older-on-scroll-top";
 
@@ -31,7 +36,7 @@ import { AgentHubErrorCard } from "./agent-hub-error-card";
 
 const HUB_MESSAGE_COMPONENTS = {
   UserMessage,
-  AssistantMessage,
+  AssistantMessage: HubAssistantMessage,
   EditComposer
 };
 

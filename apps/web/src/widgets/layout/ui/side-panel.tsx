@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 // w-72 (288px) + pl-2 (8px)
 export const PUBLIC_SIDE_PANEL_WIDTH = 320;
-export const DASHBOARD_SIDE_PANEL_WIDTH = 530;
+export const DASHBOARD_SIDE_PANEL_WIDTH = 560;
 
 type SidePanelState = {
   node: HTMLDivElement | null;
@@ -124,7 +124,7 @@ export function SidePanelSlot({
   const painted = hasChildren;
 
   return (
-    <div className="hidden overflow-hidden xl:block xl:h-full">
+    <div className="hidden h-full min-h-0 overflow-hidden xl:block">
       <motion.div
         animate={{ opacity: painted ? 1 : 0 }}
         transition={{
@@ -132,11 +132,11 @@ export function SidePanelSlot({
           // Slight delay on enter so the width spring has started expanding.
           delay: painted ? 0.08 : 0
         }}
-        className="h-full overflow-hidden ps-5 pb-2"
+        className="h-full overflow-hidden"
         // Avoid pointer events on content while the shell is closed/closing.
         style={{ pointerEvents: collapsed || !painted ? "none" : "auto" }}
       >
-        <div ref={refCallback} />
+        <div ref={refCallback} className="h-full min-h-0" />
         <div ref={ghostRef} className="pointer-events-none" aria-hidden />
       </motion.div>
     </div>

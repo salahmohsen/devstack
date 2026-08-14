@@ -1,5 +1,6 @@
 "use client";
 
+import { useStore } from "@tanstack/react-form";
 import {
   Bell,
   BriefcaseBusiness,
@@ -12,12 +13,18 @@ import {
   Trash2Icon,
   Users
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 
-import { type MailCategoryIcon, type MailSmartRule } from "@tsu-stack/core";
+import {
+  CreateMailSmartRuleInputSchema,
+  type MailCategoryIcon,
+  type MailSmartRule
+} from "@tsu-stack/core";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -26,19 +33,13 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle
-} from "@tsu-stack/ui/components/frame";
-import { Input } from "@tsu-stack/ui/components/input";
-import { Label } from "@tsu-stack/ui/components/label";
+import { FieldGroup } from "@tsu-stack/ui/components/field";
+import { Form } from "@tsu-stack/ui/components/form";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { Switch } from "@tsu-stack/ui/components/switch";
-import { Textarea } from "@tsu-stack/ui/components/textarea";
-import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { useAppForm } from "@/shared/form";
+import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 
 import {
   useCreateMailSmartRuleMutation,
@@ -47,6 +48,9 @@ import {
   useUpdateMailSmartRuleMutation
 } from "@/features/mail-smart-rules";
 
+import { useSettingsDirtyGuard } from "./settings-dirty-guard";
+import { SettingsFrame } from "./settings-frame";
+import { SettingsSaveBar } from "./settings-save-bar";
 import { SettingsSection } from "./settings-section";
 
 const ICONS: Record<MailCategoryIcon, typeof Sparkles> = {
@@ -70,205 +74,305 @@ const RULE_ICON_CHOICES: MailCategoryIcon[] = [
   "gift"
 ];
 
+const RULE_ICON_OPTIONS = RULE_ICON_CHOICES.map((value) => {
+  return {
+    value,
+    label: value,
+    icon: ICONS[value]
+  };
+});
+
+const EMPTY_RULE = {
+  title: "",
+  description: "",
+  keywords: [] as string[],
+  icon: "sparkles" as MailCategoryIcon
+};
+
+const RULES_DESCRIPTION = (
+  <>
+    Custom Career Inbox categories. The AI classifier applies them as{" "}
+    <code className="text-xs">rule:…</code> during classify and show in the mail sidebar.
+  </>
+);
+
+function hintsFromRules(rules: MailSmartRule[]): Record<string, string[]> {
+  return Object.fromEntries(rules.map((rule) => [rule.id, [...rule.keywords]]));
+}
+
+function sameKeywords(left: string[] | undefined, right: string[]): boolean {
+  const a = left ?? [];
+  if (a.length !== right.length) return false;
+  return a.every((value, index) => value === right[index]);
+}
+
 export function SmartRulesSettings() {
   const list = useListMailSmartRulesQuery();
-  const create = useCreateMailSmartRuleMutation();
-  const update = useUpdateMailSmartRuleMutation();
-  const del = useDeleteMailSmartRuleMutation();
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [keywordsText, setKeywordsText] = useState("");
-  const [icon, setIcon] = useState<MailCategoryIcon>("sparkles");
-
-  const rules = list.data ?? [];
-
-  async function handleCreate() {
-    // Hints for AI classify (semantic), not deterministic keyword matches.
-    const keywords = keywordsText
-      .split(/[,;\n]/)
-      .map((k) => k.trim())
-      .filter(Boolean);
-    if (!title.trim()) return;
-    await create.mutateAsync({
-      title: title.trim(),
-      description: description.trim(),
-      keywords,
-      icon
-    });
-    setTitle("");
-    setDescription("");
-    setKeywordsText("");
-    setIcon("sparkles");
-  }
 
   if (list.isLoading) {
     return (
-      <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-        <Spinner className="size-4" />
-        Loading rules…
-      </div>
+      <SettingsFrame
+        title="Smart rules"
+        icon={<FilterIcon className="size-4 opacity-80" aria-hidden />}
+        description={RULES_DESCRIPTION}
+      >
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner className="size-4" />
+          Loading rules…
+        </div>
+      </SettingsFrame>
     );
   }
 
   if (list.isError) {
     return (
-      <Frame>
-        <FrameHeader>
-          <FrameTitle className="flex items-center gap-2">
-            <FilterIcon className="size-4 opacity-80" aria-hidden />
-            Smart rules
-          </FrameTitle>
-          <FrameDescription>Couldn’t load your rules.</FrameDescription>
-        </FrameHeader>
-        <FramePanel>
-          <Button type="button" size="sm" variant="outline" onClick={() => void list.refetch()}>
-            Retry
-          </Button>
-        </FramePanel>
-      </Frame>
+      <SettingsFrame
+        title="Smart rules"
+        icon={<FilterIcon className="size-4 opacity-80" aria-hidden />}
+        description="Couldn’t load your rules."
+      >
+        <Button type="button" size="sm" variant="outline" onClick={() => void list.refetch()}>
+          Retry
+        </Button>
+      </SettingsFrame>
     );
   }
 
-  return (
-    <Frame>
-      <FrameHeader>
-        <FrameTitle className="flex items-center gap-2">
-          <FilterIcon className="size-4 opacity-80" aria-hidden />
-          Smart rules
-        </FrameTitle>
-        <FrameDescription>
-          Custom Career Inbox categories. The AI classifier applies them as{" "}
-          <code className="text-xs">rule:…</code> during classify and show in the mail sidebar.
-        </FrameDescription>
-      </FrameHeader>
+  return <SmartRulesLoaded rules={list.data ?? []} />;
+}
 
-      <FramePanel className="space-y-8">
-        <SettingsSection
-          title="Your rules"
-          description="Toggle, edit AI hints, or remove a filter. Classification is semantic — not exact keyword match."
+function SmartRulesLoaded({ rules }: { rules: MailSmartRule[] }) {
+  const update = useUpdateMailSmartRuleMutation();
+  const del = useDeleteMailSmartRuleMutation();
+
+  const form = useAppForm({
+    defaultValues: { keywordsById: hintsFromRules(rules) },
+    onSubmit: async ({ value }) => {
+      const dirty = rules.filter(
+        (rule) => !sameKeywords(value.keywordsById[rule.id], rule.keywords)
+      );
+      if (dirty.length === 0) return;
+      try {
+        await Promise.all(
+          dirty.map((rule) =>
+            update.mutateAsync({
+              id: rule.id,
+              keywords: value.keywordsById[rule.id] ?? []
+            })
+          )
+        );
+        form.reset({
+          keywordsById: hintsFromRules(
+            rules.map((rule) => {
+              const next = value.keywordsById[rule.id];
+              return next ? { ...rule, keywords: next } : rule;
+            })
+          )
+        });
+        toast.success("Hints saved");
+      } catch {
+        toast.error("Could not save hints");
+      }
+    }
+  });
+
+  const serverKey = useMemo(
+    () => rules.map((rule) => `${rule.id}:${rule.keywords.join("\u0001")}`).join("|"),
+    [rules]
+  );
+
+  useEffect(() => {
+    const current = form.getFieldValue("keywordsById") ?? {};
+    const dirty = rules.some((rule) => !sameKeywords(current[rule.id], rule.keywords));
+    if (!dirty) {
+      form.reset({ keywordsById: hintsFromRules(rules) });
+      return;
+    }
+    const missing = rules.filter((rule) => !(rule.id in current));
+    if (missing.length === 0) return;
+    const next = { ...current };
+    for (const rule of missing) {
+      next[rule.id] = [...rule.keywords];
+    }
+    form.setFieldValue("keywordsById", next);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- sync when the server list changes
+  }, [serverKey]);
+
+  const isDirty = useStore(form.store, (state) =>
+    rules.some((rule) => !sameKeywords(state.values.keywordsById[rule.id], rule.keywords))
+  );
+  const valuesKey = useStore(form.store, (state) =>
+    rules
+      .map((rule) => `${rule.id}:${(state.values.keywordsById[rule.id] ?? []).join("\u0001")}`)
+      .join("|")
+  );
+
+  const discard = () => {
+    form.reset({ keywordsById: hintsFromRules(rules) });
+  };
+
+  const leaveGuard = useSettingsDirtyGuard(isDirty, { onDiscard: discard });
+  const busy = update.isPending || del.isPending;
+
+  return (
+    <>
+      {leaveGuard.alertDialog}
+      <SettingsFrame
+        title="Smart rules"
+        icon={<FilterIcon className="size-4 opacity-80" aria-hidden />}
+        description={RULES_DESCRIPTION}
+        actions={
+          <SettingsSaveBar
+            dirty={isDirty}
+            saving={update.isPending}
+            statusKey={valuesKey}
+            onSave={() => void form.handleSubmit()}
+            onDiscard={discard}
+            saveLabel="Save"
+          />
+        }
+      >
+        <Form
+          className="space-y-8"
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            void form.handleSubmit();
+          }}
         >
-          {rules.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No rules yet. Create one below.</p>
-          ) : (
-            <ul className="space-y-3">
-              {rules.map((rule) => (
-                <RuleRow
-                  key={rule.id}
-                  rule={rule}
-                  busy={update.isPending || del.isPending}
-                  onToggle={(enabled) => {
-                    update.mutate({ id: rule.id, enabled });
-                  }}
-                  onSaveKeywords={(keywords) => {
-                    update.mutate({ id: rule.id, keywords });
-                  }}
-                  onDelete={() => {
-                    del.mutate({ id: rule.id });
-                  }}
-                />
-              ))}
-            </ul>
-          )}
-        </SettingsSection>
+          <SettingsSection
+            title="Your rules"
+            description="Toggle, edit AI hints, or remove a filter. Classification is semantic — not exact keyword match."
+          >
+            {rules.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No rules yet. Create one below.</p>
+            ) : (
+              <ul className="space-y-3">
+                {rules.map((rule) => (
+                  <RuleRow
+                    key={rule.id}
+                    rule={rule}
+                    busy={busy}
+                    hintsField={
+                      <form.AppField name={`keywordsById.${rule.id}`}>
+                        {(field) => (
+                          <field.TagsField
+                            label="AI hints"
+                            placeholder="Add a semantic hint"
+                            disabled={busy}
+                            hint={null}
+                            maxItems={40}
+                            maxItemLength={80}
+                          />
+                        )}
+                      </form.AppField>
+                    }
+                    onToggle={(enabled) => {
+                      update.mutate({ id: rule.id, enabled });
+                    }}
+                    onDelete={() => {
+                      del.mutate({ id: rule.id });
+                    }}
+                  />
+                ))}
+              </ul>
+            )}
+          </SettingsSection>
+        </Form>
 
         <SettingsSection
           title="New rule"
           description="Title is required. Description and hints teach the AI when to apply this filter."
         >
-          <div className="space-y-3 rounded-xl border border-border/80 bg-muted/20 p-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="rule-title">Title</Label>
-              <Input
-                id="rule-title"
-                value={title}
-                placeholder="e.g. Visa / immigration"
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="rule-desc">Description</Label>
-              <Input
-                id="rule-desc"
-                value={description}
-                placeholder="Shown on the mail category nav"
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="rule-kw">AI hints (optional)</Label>
-              <Textarea
-                id="rule-kw"
-                rows={3}
-                value={keywordsText}
-                placeholder="Comma-separated semantic hints: visa, H1B, immigration"
-                onChange={(e) => setKeywordsText(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Hints for the AI classifier — not exact string matching. Title and description
-                matter most.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Icon</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {RULE_ICON_CHOICES.map((key) => {
-                  const Icon = ICONS[key];
-                  const active = icon === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setIcon(key)}
-                      className={cn(
-                        "flex size-9 items-center justify-center rounded-lg border transition-colors",
-                        active
-                          ? "border-foreground bg-background shadow-xs"
-                          : "border-border/80 text-muted-foreground hover:bg-background/60"
-                      )}
-                      aria-label={key}
-                      aria-pressed={active}
-                    >
-                      <Icon className="size-4" aria-hidden />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              disabled={!title.trim() || create.isPending}
-              onClick={() => {
-                void handleCreate();
-              }}
-            >
-              {create.isPending ? "Creating…" : "Create rule"}
-            </Button>
-          </div>
+          <NewRuleForm />
         </SettingsSection>
-      </FramePanel>
-    </Frame>
+      </SettingsFrame>
+    </>
+  );
+}
+
+function NewRuleForm() {
+  const create = useCreateMailSmartRuleMutation();
+
+  const form = useAppForm({
+    defaultValues: EMPTY_RULE,
+    validators: {
+      onChange: createZodFormValidator(CreateMailSmartRuleInputSchema)
+    },
+    onSubmit: async ({ value }) => {
+      try {
+        await create.mutateAsync({
+          title: value.title.trim(),
+          description: value.description.trim(),
+          keywords: value.keywords,
+          icon: value.icon
+        });
+        form.reset(EMPTY_RULE);
+        toast.success("Rule created");
+      } catch {
+        toast.error("Could not create rule");
+      }
+    }
+  });
+
+  return (
+    <Form
+      className="space-y-3 rounded-xl border border-border/80 bg-muted/20 p-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void form.handleSubmit();
+      }}
+    >
+      <FieldGroup className="gap-3">
+        <form.AppField name="title">
+          {(field) => <field.InputField label="Title" placeholder="e.g. Visa / immigration" />}
+        </form.AppField>
+        <form.AppField name="description">
+          {(field) => (
+            <field.InputField label="Description" placeholder="Shown on the mail category nav" />
+          )}
+        </form.AppField>
+        <form.AppField name="keywords">
+          {(field) => (
+            <field.TagsField
+              label="AI hints (optional)"
+              placeholder="e.g. visa, H1B, immigration"
+              description="Hints for the AI classifier — not exact string matching. Title and description matter most."
+              maxItems={40}
+              maxItemLength={80}
+              hint={null}
+            />
+          )}
+        </form.AppField>
+        <form.AppField name="icon">
+          {(field) => <field.IconChoiceField label="Icon" options={RULE_ICON_OPTIONS} />}
+        </form.AppField>
+      </FieldGroup>
+      <form.AppForm>
+        <form.SubmitButton isLoading={create.isPending} size="sm">
+          Create rule
+        </form.SubmitButton>
+      </form.AppForm>
+    </Form>
   );
 }
 
 function RuleRow({
   rule,
   busy,
+  hintsField,
   onToggle,
-  onSaveKeywords,
   onDelete
 }: {
   rule: MailSmartRule;
   busy: boolean;
+  hintsField: ReactNode;
   onToggle: (enabled: boolean) => void;
-  onSaveKeywords: (keywords: string[]) => void;
   onDelete: () => void;
 }) {
   const Icon = ICONS[rule.icon] ?? Sparkles;
-  const [kw, setKw] = useState(rule.keywords.join(", "));
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const dirty = kw !== rule.keywords.join(", ");
 
   return (
     <li className="space-y-3 rounded-xl border border-border/80 p-3">
@@ -314,34 +418,7 @@ function RuleRow({
           </Button>
         </div>
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="min-w-0 flex-1 space-y-1">
-          <Label className="text-xs" htmlFor={`kw-${rule.id}`}>
-            AI hints
-          </Label>
-          <Input
-            id={`kw-${rule.id}`}
-            value={kw}
-            disabled={busy}
-            onChange={(e) => setKw(e.target.value)}
-          />
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={!dirty || busy}
-          onClick={() => {
-            const keywords = kw
-              .split(/[,;\n]/)
-              .map((k) => k.trim())
-              .filter(Boolean);
-            onSaveKeywords(keywords);
-          }}
-        >
-          Save hints
-        </Button>
-      </div>
+      {hintsField}
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogPopup>
@@ -354,18 +431,17 @@ function RuleRow({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-            <Button
-              type="button"
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
-              disabled={busy}
+              loading={busy}
               onClick={() => {
                 onDelete();
                 setDeleteOpen(false);
               }}
             >
               Delete rule
-            </Button>
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogPopup>
       </AlertDialog>

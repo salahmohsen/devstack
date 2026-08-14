@@ -76,12 +76,15 @@ type ApplicationActivitySectionProps = {
   className?: string;
   /** When false, skip fetching (e.g. collapsed card). Default true. */
   enabled?: boolean;
+  /** When true, omit the local heading (parent already provides one). */
+  hideHeading?: boolean;
 };
 
 export function ApplicationActivitySection({
   applicationId,
   className,
-  enabled = true
+  enabled = true,
+  hideHeading = false
 }: ApplicationActivitySectionProps) {
   const [draft, setDraft] = useState("");
   const activityQuery = useListApplicationActivityQuery(applicationId, { enabled });
@@ -104,9 +107,9 @@ export function ApplicationActivitySection({
 
   return (
     <section className={cn("space-y-3", className)}>
-      <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        Activity
-      </h3>
+      {hideHeading ? null : (
+        <h3 className="text-[15px] font-semibold tracking-tight text-foreground">Activity</h3>
+      )}
 
       {activityQuery.isLoading ? (
         <div className="flex justify-center py-4">

@@ -1,6 +1,10 @@
 import { type UIMessage } from "ai";
 
-import { type ProposeApplicationFromJdOutput } from "@tsu-stack/core";
+import {
+  type ProposeApplicationFromJdOutput,
+  type ProposeNewJobsTriageOutput,
+  type ProposeNewJobsTriageRow
+} from "@tsu-stack/core";
 
 /**
  * Mastra tool id plus the camelCase agent registration key. Stream UI parts
@@ -17,6 +21,23 @@ export const HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES = new Set([
   "generate-apply-package",
   "generateApplyPackage"
 ]);
+
+export const HUB_ACCEPT_APPLY_PACKAGE_TOOL_NAMES = new Set([
+  "accept-apply-package",
+  "acceptApplyPackage"
+]);
+
+export const HUB_SEND_APPLY_OUTREACH_TOOL_NAMES = new Set([
+  "send-apply-outreach",
+  "sendApplyOutreach"
+]);
+
+export const HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES = new Set([
+  "propose-new-jobs-triage",
+  "proposeNewJobsTriage"
+]);
+
+export const HUB_OPEN_SURFACE_TOOL_NAMES = new Set(["open-surface", "openSurface"]);
 
 export type HubToolNamePart = {
   type: string;
@@ -46,6 +67,11 @@ export type PendingProposeApplicationFromJd = {
   input: ProposeApplicationFromJdCardInput;
 };
 
+export type ProposeNewJobsTriageCardInput = {
+  track: ProposeNewJobsTriageRow[];
+  dismiss: ProposeNewJobsTriageRow[];
+};
+
 /** AI SDK static (`tool-<name>`) or dynamic-tool part. */
 export function isHubToolUiPart(part: { type: string }): boolean {
   return part.type.startsWith("tool-") || part.type === "dynamic-tool";
@@ -68,6 +94,35 @@ export function isProposeApplicationFromJdToolName(name: string): boolean {
 
 export function isGenerateApplyPackageToolName(name: string): boolean {
   return HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES.has(name);
+}
+
+export function isAcceptApplyPackageToolName(name: string): boolean {
+  return HUB_ACCEPT_APPLY_PACKAGE_TOOL_NAMES.has(name);
+}
+
+export function isSendApplyOutreachToolName(name: string): boolean {
+  return HUB_SEND_APPLY_OUTREACH_TOOL_NAMES.has(name);
+}
+
+export function isProposeNewJobsTriageToolName(name: string): boolean {
+  return HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES.has(name);
+}
+
+export function isOpenSurfaceToolName(name: string): boolean {
+  return HUB_OPEN_SURFACE_TOOL_NAMES.has(name);
+}
+
+/** Approval-gated package / send tools (requireToolApproval). */
+export function isHubApprovalToolName(name: string): boolean {
+  return (
+    isGenerateApplyPackageToolName(name) ||
+    isAcceptApplyPackageToolName(name) ||
+    isSendApplyOutreachToolName(name) ||
+    name === "send-mail-reply" ||
+    name === "sendMailReply" ||
+    name === "create-application" ||
+    name === "createApplication"
+  );
 }
 
 export function parseProposeApplicationFromJdInput(
@@ -98,6 +153,63 @@ export function parseProposeApplicationFromJdOutputAction(
   return null;
 }
 
+function parseTriageRow(raw: unknown): ProposeNewJobsTriageRow | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const id = typeof o.id === "string" ? o.id.trim() : "";
+  if (!id) return null;
+  return {
+    id,
+    title: typeof o.title === "string" ? o.title : "",
+    companyName: typeof o.companyName === "string" ? o.companyName : "",
+    matchScore: typeof o.matchScore === "number" ? o.matchScore : null,
+    reason: typeof o.reason === "string" ? o.reason : null
+  };
+}
+
+export function parseProposeNewJobsTriageInput(input: unknown): ProposeNewJobsTriageCardInput {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return { track: [], dismiss: [] };
+  }
+  const o = input as { track?: unknown; dismiss?: unknown };
+  const track = Array.isArray(o.track)
+    ? o.track.map(parseTriageRow).filter((r): r is ProposeNewJobsTriageRow => r != null)
+    : [];
+  const dismiss = Array.isArray(o.dismiss)
+    ? o.dismiss.map(parseTriageRow).filter((r): r is ProposeNewJobsTriageRow => r != null)
+    : [];
+  return { track, dismiss };
+}
+
+export function parseProposeNewJobsTriageOutput(
+  output: unknown
+): ProposeNewJobsTriageOutput | null {
+  if (!output || typeof output !== "object" || Array.isArray(output)) return null;
+  const o = output as {
+    action?: unknown;
+    trackIds?: unknown;
+    dismissIds?: unknown;
+  };
+  if (o.action !== "confirm" && o.action !== "cancel") return null;
+  return {
+    action: o.action,
+    trackIds: Array.isArray(o.trackIds)
+      ? o.trackIds.filter((id): id is string => typeof id === "string")
+      : [],
+    dismissIds: Array.isArray(o.dismissIds)
+      ? o.dismissIds.filter((id): id is string => typeof id === "string")
+      : []
+  };
+}
+
+export function parseOpenSurfaceHref(args: unknown): string | null {
+  if (!args || typeof args !== "object" || Array.isArray(args)) return null;
+  const href = (args as { href?: unknown }).href;
+  if (typeof href !== "string") return null;
+  const trimmed = href.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export type HubHitlKind = "approval" | "client";
 
 /**
@@ -119,8 +231,10 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
       part.state === "call" ||
       part.state === "partial-call";
     if (!waiting) continue;
-    if (isGenerateApplyPackageToolName(name)) return "approval";
+    if (isHubApprovalToolName(name)) return "approval";
     if (isProposeApplicationFromJdToolName(name)) return "client";
+    if (isProposeNewJobsTriageToolName(name)) return "client";
+    if (isOpenSurfaceToolName(name)) return "client";
   }
   return null;
 }

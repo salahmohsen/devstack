@@ -30,6 +30,7 @@ export const StackOutputSchema = z.object({
   confidence: z.string().nullable().describe("LLM categorization confidence (high, medium, low)"),
   projectCount: z.number().int().describe("Number of projects using this stack"),
   sortOrder: z.number().int(),
+  isFeatured: z.boolean(),
   portfolioEntryId: z.string().nullable(),
   includedInPortfolio: z.boolean(),
   dependencies: z.array(StackDependencyItemSchema),
@@ -80,6 +81,7 @@ export const StackCreateInputSchema = z.object({
   icon: z.string().nullable().optional(),
   type: z.string().nullable().optional().describe("Stack type category"),
   includedInPortfolio: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
   dependencies: z.array(StackDependencyItemSchema).optional(),
   projectIds: z.array(z.string()).optional()
 });
@@ -90,6 +92,7 @@ export const StackUpdateInputSchema = z.object({
   icon: z.string().nullable().optional(),
   type: z.string().nullable().optional().describe("Stack type category"),
   includedInPortfolio: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
   dependencies: z.array(StackDependencyItemSchema).optional(),
   projectIds: z.array(z.string()).optional()
 });

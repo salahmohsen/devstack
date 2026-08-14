@@ -18,7 +18,10 @@ export {
 } from "@/features/onboarding/api/extract-resume-job";
 
 export {
+  clearPersistedOnboardingStep,
   getOnboardingSessionState,
+  ONBOARDING_DESTINATION_STEPS,
+  readPersistedOnboardingStep,
   resetOnboardingSessionState,
   setOnboardingSessionState,
   useOnboardingSession,

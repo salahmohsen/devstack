@@ -1,30 +1,32 @@
-import { Button, Text } from "react-email";
+import { Heading, Text } from "react-email";
 
-import { EmailLayout } from "#@/templates/layout-email";
+import { EmailCta, EmailFooterNote, EmailLayout } from "#@/templates/layout-email";
 
 const SendMagicLinkEmail = ({
   username,
   url,
-  token
+  token,
+  logoUrl
 }: {
   username: string;
   url: string;
   token: string;
+  logoUrl?: string | null;
 }) => {
   const link = url + "?token=" + token;
   return (
-    <EmailLayout preview="Your magic link to sign in">
-      <Text className="text-2xl font-bold text-gray-800">Magic Link</Text>
-      <Text className="text-gray-600">Hi {username},</Text>
-      <Text className="text-gray-600">Please click the button below to sign in:</Text>
-      <Button className="rounded-md bg-blue-600 px-6 py-3 font-medium text-white" href={link}>
-        Sign In
-      </Button>
-      <Text className="mt-4 text-gray-600">Or copy and paste this link in your browser:</Text>
-      <Text className="font-medium break-all text-blue-600">{link}</Text>
-      <Text className="mt-6 text-sm text-gray-500">
-        If you didn't request this magic link, you can safely ignore this email.
+    <EmailLayout preview="Your magic link to sign in" logoUrl={logoUrl}>
+      <Heading className="mx-0 my-7.5 p-0 text-center text-[24px] font-normal text-black">
+        Sign in to <strong>DevHub</strong>
+      </Heading>
+      <Text className="text-[14px] leading-6 text-black">Hi {username},</Text>
+      <Text className="text-[14px] leading-6 text-black">
+        Please click the button below to sign in:
       </Text>
+      <EmailCta href={link} label="Sign in" />
+      <EmailFooterNote>
+        If you didn&apos;t request this magic link, you can ignore this email.
+      </EmailFooterNote>
     </EmailLayout>
   );
 };
@@ -34,5 +36,6 @@ export default SendMagicLinkEmail;
 SendMagicLinkEmail.PreviewProps = {
   username: "John Doe",
   url: "https://example.com/magic-link",
-  token: "123456"
+  token: "123456",
+  logoUrl: "https://example.com/logo192.png"
 };

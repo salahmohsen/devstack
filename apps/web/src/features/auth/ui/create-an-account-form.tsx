@@ -1,53 +1,62 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, type NavigateOptions, useNavigate } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
+import { Link, type NavigateOptions } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import { FaGithub } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
-import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
-import { UsernameSchema } from "@tsu-stack/core";
+import { stripTrailingSlashes } from "@tsu-stack/core";
+import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
 import { Button } from "@tsu-stack/ui/components/button";
-import { FieldGroup, FieldSeparator } from "@tsu-stack/ui/components/field";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@tsu-stack/ui/components/card";
+import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useAppForm } from "@/shared/form";
-import { Container } from "@/shared/ui/container";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { LogoIcon } from "@/shared/ui/logo";
 
 import { appConfig } from "@/config/app.config";
 
-const SIGNUP_ERROR_MESSAGES: Record<string, string> = {
-  INVITE_REQUIRED: "An invite code is required to create an account.",
-  INVITE_INVALID: "This invite code is invalid or has already been used.",
-  USERNAME_TAKEN: "That username is already taken. Try another.",
-  USERNAME_INVALID: "Invalid username. Use 3–30 lowercase letters, numbers, and single hyphens."
-};
+type SocialProvider = "google" | "github";
 
-function messageForSignUpError(error: { code?: string | null; message?: string | null }): string {
-  const code = error.code?.trim();
-  if (code && SIGNUP_ERROR_MESSAGES[code]) {
-    return SIGNUP_ERROR_MESSAGES[code];
+function createWebCallbackUrl(redirectTo?: string): string {
+  const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
+
+  if (typeof redirectTo === "string" && /^https?:\/\//i.test(redirectTo)) {
+    try {
+      const target = new URL(redirectTo);
+      if (target.origin === new URL(baseUrl).origin) {
+        return `${baseUrl}${target.pathname}${target.search}${target.hash}`;
+      }
+    } catch {
+      // fall through
+    }
   }
-  return error.message?.trim() ?? "Sign up failed";
+
+  const raw = typeof redirectTo === "string" && redirectTo.length > 0 ? redirectTo : "/";
+  const path = raw.startsWith("/") ? raw : `/${raw}`;
+  return `${baseUrl}${path}`;
 }
 
-type SignUpEmailBody = {
-  email: string;
-  name: string;
-  password: string;
-  /** User additionalField (input: true) — persisted after auth hooks normalize. */
-  username: string;
-  /**
-   * Non-persisted body field read by auth hooks (`extractInviteCode`).
-   * Must not be treated as a user column.
-   */
-  inviteCode: string;
+function createOAuthErrorCallbackUrl(): string {
+  const baseUrl = stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL);
+  return `${baseUrl}/sign-in/create-an-account`;
+}
+
+const PROVIDER_LABEL: Record<SocialProvider, string> = {
+  google: "Google",
+  github: "GitHub"
 };
 
 export function CreateAnAccountForm({
@@ -60,194 +69,162 @@ export function CreateAnAccountForm({
   /** Prefill from `?invite=` search param. */
   inviteCode?: string;
 }) {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { isPending } = useAuth();
+  const { isPending: authPending } = useAuth();
+  const inviteCode = inviteCodePrefill.trim();
 
-  const signUpMutation = useMutation({
-    mutationFn: async (values: SignUpEmailBody) => {
-      // better-auth sign-up body is open-ended (`.and(z.record(...))`);
-      // username is additionalFields.input; inviteCode is body-only for hooks.
-      const result = await authClient.signUp.email(values as never);
+  const signUpWithSocialMutation = useMutation({
+    mutationFn: async (provider: SocialProvider) => {
+      const result = await authClient.signIn.social({
+        callbackURL: createWebCallbackUrl(typeof redirectTo === "string" ? redirectTo : "/"),
+        errorCallbackURL: createOAuthErrorCallbackUrl(),
+        provider,
+        requestSignUp: true,
+        ...(inviteCode.length > 0 ? { additionalData: { inviteCode } } : {})
+      });
 
       if (!result.data) {
-        const err = new Error(messageForSignUpError(result.error ?? {}));
-        (err as Error & { code?: string }).code = result.error?.code ?? undefined;
-        throw err;
+        const message = result.error?.message;
+        if (message) throw new Error(message);
+        throw new Error(`${PROVIDER_LABEL[provider]} sign-up failed (no response).`);
       }
 
-      return result;
+      return { data: result.data, provider };
     },
-    onError: (error: Error & { code?: string }) => {
-      toast.error(messageForSignUpError(error));
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries(getAuthUserQueryOptions());
-      await navigate({
-        to: redirectTo
-      });
-      toast.success("Sign up successful");
+    onSuccess: ({ data, provider }) => {
+      const url = typeof data === "object" && data && "url" in data ? data.url : null;
+      if (typeof url === "string" && url.length > 0) {
+        toast.success(`Redirecting to ${PROVIDER_LABEL[provider]}…`);
+        window.location.assign(url);
+        return;
+      }
+      toast.error(`${PROVIDER_LABEL[provider]} sign-up failed (missing redirect URL).`);
     }
   });
 
-  const form = useAppForm({
-    defaultValues: {
-      confirmPassword: "",
-      email: "",
-      name: "",
-      password: "",
-      username: "",
-      inviteCode: inviteCodePrefill
-    },
-    onSubmit: async ({ value }) => {
-      const { email, name, password, username, inviteCode } = value;
-      signUpMutation.mutate({
-        email,
-        name,
-        password,
-        username,
-        inviteCode: inviteCode.trim()
-      });
-    },
-    validators: {
-      onSubmit: z
-        .object({
-          confirmPassword: z.string(),
-          email: z.email("Invalid email address"),
-          name: z.string().min(2, "Name must be at least 2 characters"),
-          password: z.string().min(8, "Password must be at least 8 characters"),
-          username: UsernameSchema,
-          // Empty allowed for first-user bootstrap; server returns INVITE_REQUIRED otherwise.
-          inviteCode: z.string().trim()
-        })
-        .refine((data) => data.password === data.confirmPassword, {
-          message: "Passwords do not match",
-          path: ["confirmPassword"]
-        })
-    }
-  });
+  const pendingProvider = signUpWithSocialMutation.isPending
+    ? signUpWithSocialMutation.variables
+    : null;
+  const isPending = signUpWithSocialMutation.isPending;
 
-  if (isPending) {
+  if (authPending) {
     return <DefaultLoader />;
   }
 
   return (
-    <Container className={cn("flex max-w-md flex-col gap-6", className)} {...props}>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          await form.handleSubmit();
-        }}
-      >
-        <FieldGroup>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <Link to="/" className="flex flex-col items-center gap-2 font-medium">
-              <LogoIcon className="flex size-8 items-center justify-center rounded-md" />
-              <span className="sr-only">{appConfig.site.shortName}</span>
-            </Link>
-            <h1 className="text-xl font-bold">Create an account</h1>
-            {/* Plain text — FieldDescription must live inside Field.Root (Base UI). */}
-            <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                className="font-medium text-foreground underline-offset-4 hover:underline"
-                to="/sign-in"
-                search={
-                  typeof redirectTo === "string" && redirectTo.length > 0
-                    ? { redirect: redirectTo }
-                    : {}
-                }
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-
-          <form.AppField name="name">
-            {(field) => <field.InputField label="Name" placeholder="John Doe" />}
-          </form.AppField>
-
-          <form.AppField name="username">
-            {(field) => (
-              <field.InputField
-                label="Username"
-                placeholder="johndoe"
-                description="Public URL: /your-username (lowercase, hyphens ok)"
-              />
-            )}
-          </form.AppField>
-
-          <form.AppField name="email">
-            {(field) => (
-              <field.InputField label="Email" placeholder="john-doe@example.com" type="email" />
-            )}
-          </form.AppField>
-
-          <form.AppField name="inviteCode">
-            {(field) => (
-              <field.InputField label="Invite code" placeholder="Paste your invite code" />
-            )}
-          </form.AppField>
-
-          <form.AppField name="password">
-            {(field) => <field.InputField label="Password" type="password" />}
-          </form.AppField>
-
-          <form.AppField name="confirmPassword">
-            {(field) => <field.InputField label="Confirm Password" type="password" />}
-          </form.AppField>
-
-          <form.AppForm>
-            <form.SubmitButton isLoading={signUpMutation.isPending}>
-              {signUpMutation.isPending ? "Creating account..." : "Create Account"}
-            </form.SubmitButton>
-          </form.AppForm>
-
-          <FieldSeparator>Or</FieldSeparator>
-
-          {/*
-            SVG without size classes filled the grid cell (broken “G” + stacked label).
-            Match sign-in: coss Button + fixed icon size.
-            OAuth invite preflight (cookie / additionalData) still TODO when signing up via Google.
-          */}
-          <Button
-            className="h-11 w-full justify-center gap-2.5 font-medium"
-            disabled={signUpMutation.isPending}
-            onClick={() =>
-              toast.error(
-                "Use email + invite for new accounts, or sign in with Google if you already have one."
-              )
-            }
-            type="button"
-            variant="outline"
-          >
-            {signUpMutation.isPending ? (
-              <Loader2 aria-hidden className="size-4 shrink-0 animate-spin" />
-            ) : (
-              <FcGoogle aria-hidden className="size-4 shrink-0" />
-            )}
-            Continue with Google
-          </Button>
-        </FieldGroup>
-      </form>
-      <p className="px-6 text-center text-xs leading-5 text-muted-foreground">
-        By clicking continue, you agree to our{" "}
+    <div
+      className={cn(
+        "mx-auto flex w-full max-w-md flex-col items-center gap-8 px-4 py-10 sm:px-0",
+        className
+      )}
+      {...props}
+    >
+      <div className="flex flex-col items-center gap-3 text-center">
         <Link
-          className="font-medium text-foreground underline-offset-4 hover:underline"
-          to="/terms-of-service"
+          className="inline-flex rounded-xl ring-offset-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring"
+          to="/"
         >
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link
-          className="font-medium text-foreground underline-offset-4 hover:underline"
-          to="/privacy-policy"
-        >
-          Privacy Policy
+          <LogoIcon aria-hidden className="size-10" />
+          <span className="sr-only">{appConfig.site.shortName}</span>
         </Link>
-        .
-      </p>
-    </Container>
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium text-muted-foreground">{appConfig.site.shortName}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-balance text-foreground">
+            {inviteCode ? "You've been invited" : "Create an account"}
+          </h1>
+          <p className="max-w-sm text-sm leading-relaxed text-pretty text-muted-foreground">
+            Continue with Google or GitHub. Registration is invite-only after the first user.
+          </p>
+        </div>
+      </div>
+
+      <Card className="w-full border-border/80 shadow-sm">
+        <CardHeader className="items-center gap-1 pb-2 text-center">
+          <CardTitle className="text-base font-semibold tracking-tight">
+            Accept invitation
+          </CardTitle>
+          <CardDescription className="text-sm">
+            {inviteCode ? (
+              <>
+                Invite code <span className="font-mono text-foreground">{inviteCode}</span> will be
+                applied when you continue.
+              </>
+            ) : (
+              "Use Google or GitHub. Ask an existing member for an invite if signup is closed."
+            )}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pt-2">
+          <FieldGroup className="gap-3">
+            <Button
+              className="h-11 w-full justify-center gap-2.5 font-medium"
+              disabled={isPending}
+              onClick={() => signUpWithSocialMutation.mutate("google")}
+              type="button"
+              variant="outline"
+            >
+              {pendingProvider === "google" ? (
+                <Loader2 aria-hidden className="size-4 animate-spin" />
+              ) : (
+                <FcGoogle aria-hidden className="size-4 shrink-0" />
+              )}
+              Continue with Google
+            </Button>
+
+            <Button
+              className="h-11 w-full justify-center gap-2.5 font-medium"
+              disabled={isPending}
+              onClick={() => signUpWithSocialMutation.mutate("github")}
+              type="button"
+              variant="outline"
+            >
+              {pendingProvider === "github" ? (
+                <Loader2 aria-hidden className="size-4 animate-spin" />
+              ) : (
+                <FaGithub aria-hidden className="size-4 shrink-0" />
+              )}
+              Continue with GitHub
+            </Button>
+          </FieldGroup>
+        </CardContent>
+
+        <CardFooter className="flex flex-col gap-4 border-t border-border/60 bg-muted/20 px-6 py-4">
+          <p className="text-center text-xs leading-5 text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+              to="/sign-in"
+              search={
+                typeof redirectTo === "string" && redirectTo.length > 0
+                  ? { redirect: redirectTo }
+                  : {}
+              }
+            >
+              Sign in
+            </Link>
+          </p>
+          <p className="text-center text-xs leading-5 text-muted-foreground">
+            By continuing, you agree to our{" "}
+            <Link
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+              to="/terms-of-service"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+              to="/privacy-policy"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

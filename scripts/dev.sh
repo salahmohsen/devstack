@@ -468,11 +468,15 @@ print_dev_links_banner "$PUBLIC_SERVER_URL" "$DEV_WEB_URL" "$VITE_SERVER_URL"
 # Do not export CI=true here — it changes behavior in many tools (tests, bundlers).
 
 APP_PIDS=()
+# Sentinel so restart loops exit on Ctrl+C instead of racing a new child.
+DEV_STOP_SENTINEL="${TMPDIR:-/tmp}/tsu-stack-dev-stop-$$"
+rm -f "$DEV_STOP_SENTINEL"
 
 # Trap Ctrl+C to also stop docker infra + tunnel
 cleanup() {
   echo ""
   info "Stopping apps..."
+  : >"$DEV_STOP_SENTINEL"
   # Kill processes on all known ports.
   # 4206 = @tanstack/devtools-vite event bus (held even when :3000 is dead;
   # a stale holder causes `listen EADDRINUSE ::1:4206` and web never binds 3000).
@@ -497,7 +501,7 @@ cleanup() {
     info "Stopping infrastructure..."
     docker compose -f "$INFRA_COMPOSE" down
   fi
-  rm -f "$TUNNEL_LOG" 2>/dev/null || true
+  rm -f "$TUNNEL_LOG" "$DEV_STOP_SENTINEL" 2>/dev/null || true
   ok "All services stopped"
 }
 trap cleanup EXIT INT TERM
@@ -508,6 +512,30 @@ trap cleanup EXIT INT TERM
 #
 # VITE_* / PUBLIC_SERVER_URL already exported above (before first banner).
 
+# Ports held by each app — freed before a self-heal restart so EADDRINUSE
+# from a zombie watcher does not fail-loop.
+ports_for_app() {
+  case "$1" in
+    server) echo "5200" ;;
+    web) echo "3000 4206" ;;
+    agent) echo "4111 9229" ;;
+    *) echo "" ;;
+  esac
+}
+
+free_app_ports() {
+  local name="$1"
+  local port
+  for port in $(ports_for_app "$name"); do
+    lsof -ti :"$port" 2>/dev/null | xargs kill -9 2>/dev/null || true
+  done
+}
+
+# vite-node --watch (server) and mastra dev (agent) reload on package changes
+# but can still *exit* (syntax error during reload, inspect race, EMFILE).
+# There is no first-party supervisor for that; wrap each app in a restart
+# loop so one crash does not leave the rest of the stack half-dead.
+# Disable: DEV_NO_RESTART=1 pnpm dev
 start_app() {
   local name="$1"
   local filter="$2"
@@ -516,13 +544,44 @@ start_app() {
   # Stream with prefix; pipefail so pnpm's exit code is preserved.
   # Sibling apps keep running if one exits (unlike pnpm -r --parallel).
   (
-    set -o pipefail
-    pnpm --filter "$filter" dev 2>&1 | while IFS= read -r line || [ -n "$line" ]; do
-      printf '[%s] %s\n' "$name" "$line"
-      printf '%s\n' "$line" >>"$log"
+    attempt=0
+    backoff=1
+    while [ ! -f "$DEV_STOP_SENTINEL" ]; do
+      attempt=$((attempt + 1))
+      started_at=$(date +%s)
+      if [ "$attempt" -gt 1 ]; then
+        echo -e "${YELLOW}↻ ${name} self-heal restart (attempt ${attempt}, wait ${backoff}s) — see ${log}${RESET}"
+        sleep "$backoff"
+        [ -f "$DEV_STOP_SENTINEL" ] && break
+        free_app_ports "$name"
+      fi
+      set +e
+      set -o pipefail
+      pnpm --filter "$filter" dev 2>&1 | while IFS= read -r line || [ -n "$line" ]; do
+        printf '[%s] %s\n' "$name" "$line"
+        printf '%s\n' "$line" >>"$log"
+      done
+      code=$?
+      set +o pipefail
+      set -e
+      [ -f "$DEV_STOP_SENTINEL" ] && break
+      if [ "${DEV_NO_RESTART:-0}" = "1" ]; then
+        echo -e "${RED}✘ ${name} exited (code ${code}) — DEV_NO_RESTART=1, not restarting — see ${log}${RESET}"
+        break
+      fi
+      lived=$(( $(date +%s) - started_at ))
+      echo -e "${RED}✘ ${name} exited (code ${code} after ${lived}s) — restarting — see ${log}${RESET}"
+      # Reset backoff after a healthy run so a later crash is not delayed 15s.
+      if [ "$lived" -ge 30 ]; then
+        attempt=1
+        backoff=1
+      else
+        backoff=$((backoff * 2))
+        if [ "$backoff" -gt 15 ]; then
+          backoff=15
+        fi
+      fi
     done
-    code=$?
-    echo -e "${RED}✘ ${name} exited (code ${code}) — see ${log}${RESET}"
   ) &
   APP_PIDS+=($!)
 }

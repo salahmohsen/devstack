@@ -1,5 +1,6 @@
 "use client";
 
+import { play } from "cuelume";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type UseCopyToClipboardOptions = {
@@ -29,12 +30,14 @@ export function useCopyToClipboard(options: UseCopyToClipboardOptions = {}) {
       if (!value) return false;
       try {
         await navigator.clipboard.writeText(value);
+        play("success");
         setCopied(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => setCopied(false), resetMs);
         onCopied?.(value);
         return true;
       } catch (error) {
+        play("error");
         onError?.(error);
         return false;
       }

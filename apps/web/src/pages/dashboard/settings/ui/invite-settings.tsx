@@ -2,18 +2,12 @@ import { Link2, Plus, Trash2 } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
-import { type InviteOutput } from "@tsu-stack/core";
+import { inviteSignupPath, SendInviteEmailsInputSchema, type InviteOutput } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import { CopyButton } from "@tsu-stack/ui/components/copy-button";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle
-} from "@tsu-stack/ui/components/frame";
+import { Form } from "@tsu-stack/ui/components/form";
 import {
   Table,
   TableBody,
@@ -23,23 +17,24 @@ import {
   TableRow
 } from "@tsu-stack/ui/components/table";
 
+import { useAppForm } from "@/shared/form";
+import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
+
 import {
   useCreateInviteMutation,
   useListInvitesQuery,
-  useRevokeInviteMutation
+  useRevokeInviteMutation,
+  useSendInviteEmailsMutation
 } from "@/features/invite";
 
 import { ItemsEmpty } from "@/widgets/items-page";
 
-function inviteSignupPath(code: string): string {
-  return `/sign-in/create-an-account?invite=${encodeURIComponent(code)}`;
-}
+import { SettingsFrame } from "./settings-frame";
 
-function inviteSignupUrl(code: string): string {
-  if (typeof window === "undefined") {
-    return inviteSignupPath(code);
-  }
-  return `${window.location.origin}${inviteSignupPath(code)}`;
+function inviteSignupHref(code: string): string {
+  const path = inviteSignupPath(code);
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
 }
 
 function formatDate(value: Date | string | null | undefined): string {
@@ -68,14 +63,45 @@ function inviteStatus(invite: InviteOutput): {
 export const InviteSettings = () => {
   const { data: invites = [], isLoading, isError } = useListInvitesQuery();
   const createInvite = useCreateInviteMutation();
+  const sendInvites = useSendInviteEmailsMutation();
   const revokeInvite = useRevokeInviteMutation();
 
-  const handleCreate = useCallback(() => {
+  const form = useAppForm({
+    defaultValues: {
+      emails: [] as string[]
+    },
+    validators: {
+      onSubmit: createZodFormValidator(SendInviteEmailsInputSchema)
+    },
+    onSubmit: ({ value }) => {
+      sendInvites.mutate(
+        { emails: value.emails },
+        {
+          onSuccess: (result) => {
+            const sent = result.sent.length;
+            const failed = result.failed.length;
+            if (sent > 0) {
+              toast.success(sent === 1 ? "Invite sent" : `${sent} invites sent`);
+            }
+            if (failed > 0) {
+              toast.error(result.failed.map((f) => `${f.email}: ${f.message}`).join(" · "));
+            }
+            form.reset({ emails: [] });
+          },
+          onError: (error) => {
+            toast.error(error.message || "Failed to send invites");
+          }
+        }
+      );
+    }
+  });
+
+  const handleCreateLink = useCallback(() => {
     createInvite.mutate(
       {},
       {
         onSuccess: () => {
-          toast.success("Invite created");
+          toast.success("Invite link created");
         },
         onError: (error) => {
           toast.error(error.message || "Failed to create invite");
@@ -102,128 +128,159 @@ export const InviteSettings = () => {
   );
 
   return (
-    <Frame>
-      <FrameHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div className="space-y-1.5">
-          <FrameTitle>Invites</FrameTitle>
-          <FrameDescription>Share a one-time signup link. Each code works once.</FrameDescription>
-        </div>
-        <Button type="button" size="sm" onClick={handleCreate} disabled={createInvite.isPending}>
+    <SettingsFrame
+      title="Invites"
+      description="Email one-time signup links, or copy a link. Each code works once."
+      actions={
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleCreateLink}
+          loading={createInvite.isPending}
+        >
           <Plus className="size-4" />
-          {createInvite.isPending ? "Creating…" : "Create invite"}
+          {createInvite.isPending ? "Creating…" : "Create link"}
         </Button>
-      </FrameHeader>
+      }
+    >
+      <Form
+        className="mb-8"
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void form.handleSubmit();
+        }}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="min-w-0 flex-1">
+            <form.AppField name="emails">
+              {(field) => (
+                <field.TagsField
+                  label="Invite by email"
+                  description="Press Enter after each address. Each person gets their own one-time code."
+                  placeholder="name@example.com"
+                  hint="Up to 20 emails"
+                  maxItems={20}
+                  maxItemLength={320}
+                />
+              )}
+            </form.AppField>
+          </div>
+          <form.AppForm>
+            <form.Subscribe selector={(s) => s.values.emails.length}>
+              {(count) => (
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="shrink-0"
+                  loading={sendInvites.isPending}
+                  disabled={count === 0}
+                >
+                  {sendInvites.isPending ? "Sending…" : "Send invites"}
+                </Button>
+              )}
+            </form.Subscribe>
+          </form.AppForm>
+        </div>
+      </Form>
 
-      <FramePanel>
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading invites…</p>
-        ) : isError ? (
-          <Alert variant="error">
-            <AlertTitle>Failed to load</AlertTitle>
-            <AlertDescription>Refresh the page or try again later.</AlertDescription>
-          </Alert>
-        ) : invites.length === 0 ? (
-          <ItemsEmpty
-            className="py-10 md:py-12"
-            icon={<Link2 aria-hidden />}
-            title="No invites yet"
-            description="Share a one-time signup link. Each code works once."
-            action={
-              <Button
-                type="button"
-                onClick={handleCreate}
-                disabled={createInvite.isPending}
-                loading={createInvite.isPending}
-              >
-                <Plus aria-hidden />
-                Create invite
-              </Button>
-            }
-          />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Expires</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invites.map((invite) => {
-                const status = inviteStatus(invite);
-                const isUnused = !invite.usedAt;
-                const isRevoking =
-                  revokeInvite.isPending && revokeInvite.variables?.id === invite.id;
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading invites…</p>
+      ) : isError ? (
+        <Alert variant="error">
+          <AlertTitle>Failed to load</AlertTitle>
+          <AlertDescription>Refresh the page or try again later.</AlertDescription>
+        </Alert>
+      ) : invites.length === 0 ? (
+        <ItemsEmpty
+          className="py-10 md:py-12"
+          icon={<Link2 aria-hidden />}
+          title="No invites yet"
+          description="Add emails above to send the invite, or create a copyable link."
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Email</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {invites.map((invite) => {
+              const status = inviteStatus(invite);
+              const isUnused = !invite.usedAt;
+              const isRevoking = revokeInvite.isPending && revokeInvite.variables?.id === invite.id;
 
-                return (
-                  <TableRow key={invite.id}>
-                    <TableCell className="font-mono text-xs sm:text-sm">{invite.code}</TableCell>
-                    <TableCell>
-                      <Badge variant={status.variant}>{status.label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(invite.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(invite.expiresAt)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="inline-flex items-center justify-end gap-1">
-                        {isUnused ? (
-                          <>
-                            <CopyButton
-                              value={inviteSignupUrl(invite.code)}
-                              label="Copy invite link"
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              onError={() => toast.error("Could not copy link")}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              title="Open signup link"
-                              onClick={() => {
-                                window.open(
-                                  inviteSignupPath(invite.code),
-                                  "_blank",
-                                  "noopener,noreferrer"
-                                );
-                              }}
-                            >
-                              <Link2 className="size-4" />
-                              <span className="sr-only">Open invite link</span>
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 text-destructive hover:text-destructive"
-                              title="Revoke invite"
-                              disabled={isRevoking}
-                              onClick={() => handleRevoke(invite.id)}
-                            >
-                              <Trash2 className="size-4" />
-                              <span className="sr-only">Revoke invite</span>
-                            </Button>
-                          </>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </FramePanel>
-    </Frame>
+              return (
+                <TableRow key={invite.id}>
+                  <TableCell className="max-w-56 truncate text-sm">
+                    {invite.email ?? <span className="text-muted-foreground">Link only</span>}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs sm:text-sm">{invite.code}</TableCell>
+                  <TableCell>
+                    <Badge variant={status.variant}>{status.label}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {formatDate(invite.createdAt)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center justify-end gap-1">
+                      {isUnused ? (
+                        <>
+                          <CopyButton
+                            value={inviteSignupHref(invite.code)}
+                            label="Copy invite link"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            onError={() => toast.error("Could not copy link")}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            title="Open signup link"
+                            onClick={() => {
+                              window.open(
+                                inviteSignupPath(invite.code),
+                                "_blank",
+                                "noopener,noreferrer"
+                              );
+                            }}
+                          >
+                            <Link2 className="size-4" />
+                            <span className="sr-only">Open invite link</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive hover:text-destructive"
+                            title="Revoke invite"
+                            disabled={isRevoking}
+                            onClick={() => handleRevoke(invite.id)}
+                          >
+                            <Trash2 className="size-4" />
+                            <span className="sr-only">Revoke invite</span>
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+    </SettingsFrame>
   );
 };

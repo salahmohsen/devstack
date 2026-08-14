@@ -1,23 +1,12 @@
 import { useStore } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import {
-  Calendar,
-  Check,
-  ChevronsUpDown,
-  Edit,
-  ExternalLink,
-  FileUp,
-  GripVertical,
-  Mail,
-  X
-} from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Calendar, Check, ChevronsUpDown, Edit, FileUp, GripVertical, Mail, X } from "lucide-react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
-import { contactTypeSchema, ProfileUpdateInputSchema, UsernameSchema } from "@tsu-stack/core";
+import { contactTypeSchema, ProfileUpdateInputSchema } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -30,48 +19,32 @@ import {
   ComboboxPrimitive,
   ComboboxTrigger
 } from "@tsu-stack/ui/components/combobox";
-import { CopyButton } from "@tsu-stack/ui/components/copy-button";
 import { FieldGroup, FieldSet } from "@tsu-stack/ui/components/field";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle
-} from "@tsu-stack/ui/components/frame";
 import { ButtonGroup, Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Input } from "@tsu-stack/ui/components/input";
 import { Label } from "@tsu-stack/ui/components/label";
 import { Switch } from "@tsu-stack/ui/components/switch";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useAppForm } from "@/shared/form";
+import { SubmitButton, useAppForm } from "@/shared/form";
 import { ContactIcon } from "@/shared/lib/contact-icon";
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
-import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { sortContactsByOrder } from "@/shared/lib/sort-contacts";
+import { FlipSummary } from "@/shared/ui/flip-summary";
 import { ProfileAvatarUpload } from "@/shared/ui/profile-avatar-upload";
-import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
+import { normalizePublicSummary } from "@/shared/ui/public-summary";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
-  checkUsernameAvailability,
   getProfileQueryOptions,
   getUpdateProfileMutationOptions,
   useGetProfileQuery,
-  useRenameUsernameMutation,
   type ProfileUpdateInput
 } from "@/features/profile";
 
-import { appConfig } from "@/config/app.config";
-
 import { useSettingsDirtyGuard } from "./settings-dirty-guard";
-import { SettingsSection } from "./settings-section";
-
-const RenameUsernameFormSchema = z.object({
-  username: UsernameSchema
-});
+import { SettingsFrame } from "./settings-frame";
 
 const CONTACT_TYPES = contactTypeSchema.options;
 
@@ -137,25 +110,12 @@ function ContactLink({
   );
 }
 
-function publicProfilePath(username: string): string {
-  return `/${username}`;
-}
-
-function publicProfileUrl(username: string): string {
-  const base = appConfig.site.baseUrl.replace(/\/$/, "");
-  return `${base}${publicProfilePath(username)}`;
-}
-
 export function ProfileSettings() {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   const profileQuery = useGetProfileQuery();
   const [isEditing, setIsEditing] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
-  const renameMutation = useRenameUsernameMutation();
-
-  const currentUsername =
-    profileQuery.data?.username ?? sessionUsernameFromUser(session?.user) ?? "";
 
   const serverValues = {
     name: profileQuery.data?.name ?? session?.user?.name ?? "",
@@ -255,53 +215,21 @@ export function ProfileSettings() {
     [queryClient]
   );
 
-  const renameForm = useAppForm({
-    defaultValues: { username: currentUsername },
-    // Format is validated on the field; form-level keeps submit aligned with schema.
-    validators: {
-      onSubmit: RenameUsernameFormSchema
-    },
-    onSubmit: async ({ value }) => {
-      try {
-        await renameMutation.mutateAsync({ username: value.username });
-      } catch {
-        // Typed toasts are handled in useRenameUsernameMutation onError.
-      }
-    }
-  });
-
-  useEffect(() => {
-    // Don't wipe an in-progress rename when profile query refetches.
-    if (renameForm.store.state.isDirty) return;
-    if (currentUsername) {
-      renameForm.reset({ username: currentUsername });
-    }
-    // oxlint-disable-next-line react-hooks/exhaustive-deps -- form API is stable; re-sync only when server username changes
-  }, [currentUsername]);
-
   const handleCancel = () => {
     form.reset(serverValues);
     setIsEditing(false);
   };
 
   const handleLeaveDiscard = () => {
-    renameForm.reset({ username: currentUsername });
     form.reset(serverValues);
     setIsEditing(false);
   };
 
   const isFormDirty = useStore(form.store, (state) => state.isDirty);
-  const renameUsernameValue = useStore(renameForm.store, (state) => state.values.username);
-  const isRenameDirty = Boolean(currentUsername) && renameUsernameValue !== currentUsername;
-  const isDirty = (isEditing && isFormDirty) || isRenameDirty;
+  const isDirty = isEditing && isFormDirty;
   const leaveGuard = useSettingsDirtyGuard(isDirty, {
     onDiscard: handleLeaveDiscard
   });
-
-  const publicUrl = useMemo(
-    () => (currentUsername ? publicProfileUrl(currentUsername) : ""),
-    [currentUsername]
-  );
 
   const handleSendVerification = async () => {
     const email = session?.user?.email;
@@ -339,7 +267,7 @@ export function ProfileSettings() {
   const emailVerified = !!session?.user?.emailVerified;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex h-full min-h-0 flex-col">
       {leaveGuard.alertDialog}
       {profileQuery.isError ? (
         <Alert variant="error">
@@ -351,135 +279,128 @@ export function ProfileSettings() {
       <form.Subscribe
         selector={(state) => {
           return {
-            canSubmit: state.canSubmit,
-            isSubmitting: state.isSubmitting,
-            values: state.values
+            isSubmitting: state.isSubmitting
           };
         }}
       >
-        {({ canSubmit, isSubmitting, values }) => (
-          <Frame>
-            <FrameHeader>
-              <div className="flex w-full items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <FrameTitle>Profile</FrameTitle>
-                  <FrameDescription>
-                    Manage your personal information and contacts.
-                  </FrameDescription>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="ghost" render={<Link to="/dashboard/onboarding" />}>
-                    <FileUp aria-hidden="true" />
-                    Import from resume
-                  </Button>
-                  {isEditing ? (
-                    <ButtonGroup>
-                      <Button onClick={handleCancel} size="sm" variant="outline">
-                        Cancel
-                      </Button>
-                      <GroupSeparator />
-                      <Button
-                        disabled={!canSubmit || isSubmitting}
-                        loading={isSubmitting}
-                        onClick={() => void form.handleSubmit()}
-                        size="sm"
-                      >
-                        Save Changes
-                      </Button>
-                    </ButtonGroup>
-                  ) : (
-                    <Button
-                      loading={profileQuery.isLoading}
-                      onClick={() => setIsEditing(true)}
-                      size="sm"
-                      variant="outline"
-                      disabled={profileQuery.isError}
-                    >
-                      <Edit aria-hidden="true" />
-                      Edit Profile
+        {({ isSubmitting }) => (
+          <SettingsFrame
+            title="Profile"
+            description="Manage your personal information and contacts."
+            actions={
+              <>
+                <Button size="sm" variant="ghost" render={<Link to="/dashboard/onboarding" />}>
+                  <FileUp aria-hidden="true" />
+                  Import from resume
+                </Button>
+                {isEditing ? (
+                  <ButtonGroup>
+                    <Button onClick={handleCancel} size="sm" variant="outline">
+                      Cancel
                     </Button>
-                  )}
-                </div>
-              </div>
-            </FrameHeader>
-
-            <FramePanel className="flex items-start gap-6">
-              <div className="shrink-0">
-                <ProfileAvatarUpload
-                  defaultAvatar={userImage}
-                  onAvatarUrlChange={handleAvatarUrlChange}
-                  disabled={isAvatarUpdating}
-                />
-              </div>
-
-              <div className="flex min-w-0 flex-col gap-2">
-                <h3 className="truncate text-2xl font-semibold">{values.name || displayName}</h3>
-
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span className="truncate">{values.email || displayEmail}</span>
-                  {emailVerified ? (
-                    <Badge variant="secondary">
-                      <Check aria-hidden="true" className="size-3" />
-                      Verified
-                    </Badge>
-                  ) : (
-                    <>
-                      <Badge variant="destructive">
-                        <X aria-hidden="true" className="size-3" />
-                        Unverified
-                      </Badge>
-                      <Button
+                    <GroupSeparator />
+                    <form.AppForm>
+                      <SubmitButton
                         type="button"
                         size="sm"
-                        variant="ghost"
-                        className="h-7 px-2"
-                        loading={sendingVerification}
-                        disabled={sendingVerification || !session?.user?.email}
-                        onClick={() => void handleSendVerification()}
-                      >
-                        <Mail aria-hidden="true" className="size-3.5" />
-                        Send verification
-                      </Button>
-                    </>
+                        actionLabel="Save"
+                        isLoading={isSubmitting}
+                        onClick={() => void form.handleSubmit()}
+                      />
+                    </form.AppForm>
+                  </ButtonGroup>
+                ) : (
+                  <Button
+                    loading={profileQuery.isLoading}
+                    onClick={() => setIsEditing(true)}
+                    size="sm"
+                    variant="outline"
+                    disabled={profileQuery.isError}
+                  >
+                    <Edit aria-hidden="true" />
+                    Edit Profile
+                  </Button>
+                )}
+              </>
+            }
+          >
+            {!isEditing ? (
+              <div className="flex items-start gap-6">
+                <div className="shrink-0">
+                  <ProfileAvatarUpload
+                    defaultAvatar={userImage}
+                    onAvatarUrlChange={handleAvatarUrlChange}
+                    disabled={isAvatarUpdating}
+                  />
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-2">
+                  <h3 className="truncate text-2xl font-semibold">{displayName}</h3>
+
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <span className="truncate">{displayEmail}</span>
+                    {emailVerified ? (
+                      <Badge variant="secondary">
+                        <Check aria-hidden="true" className="size-3" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <>
+                        <Badge variant="destructive">
+                          <X aria-hidden="true" className="size-3" />
+                          Unverified
+                        </Badge>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          loading={sendingVerification}
+                          disabled={sendingVerification || !session?.user?.email}
+                          onClick={() => void handleSendVerification()}
+                        >
+                          <Mail aria-hidden="true" className="size-3.5" />
+                          Send verification
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Calendar aria-hidden="true" className="size-4" />
+                    Member since{" "}
+                    {session?.user?.createdAt
+                      ? new Date(session.user.createdAt).getFullYear()
+                      : new Date().getFullYear()}
+                  </div>
+
+                  {normalizePublicSummary(displaySummary) ? (
+                    <FlipSummary summary={displaySummary} className="mt-1" />
+                  ) : null}
+
+                  {contacts.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      {sortContactsByOrder(contacts).map((c) => (
+                        <ContactLink
+                          key={c.id}
+                          href={c.type === "email" ? `mailto:${c.value}` : c.value}
+                          icon={<ContactIcon type={c.type} className="size-3.5" />}
+                        >
+                          {c.type === "linkedin" ? "LinkedIn" : c.value.replace(/^https?:\/\//, "")}
+                        </ContactLink>
+                      ))}
+                    </div>
                   )}
                 </div>
-
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Calendar aria-hidden="true" className="size-4" />
-                  Member since{" "}
-                  {session?.user?.createdAt
-                    ? new Date(session.user.createdAt).getFullYear()
-                    : new Date().getFullYear()}
-                </div>
-
-                {!isEmptyRichHtml(displaySummary) ? (
-                  <RichHtml html={displaySummary} className="mt-1" />
-                ) : null}
-
-                {contacts.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    {sortContactsByOrder(contacts).map((c) => (
-                      <ContactLink
-                        key={c.id}
-                        href={c.type === "email" ? `mailto:${c.value}` : c.value}
-                        icon={<ContactIcon type={c.type} className="size-3.5" />}
-                      >
-                        {c.type === "linkedin" ? "LinkedIn" : c.value.replace(/^https?:\/\//, "")}
-                      </ContactLink>
-                    ))}
-                  </div>
-                )}
               </div>
-            </FramePanel>
-
-            {isEditing && (
+            ) : (
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   void form.handleSubmit();
                 }}
-                className="m-5"
+                className="flex flex-col gap-6"
               >
                 <FieldSet>
                   <FieldGroup className="grid grid-cols-1 md:grid-cols-2">
@@ -688,7 +609,7 @@ export function ProfileSettings() {
                                       aria-label="Remove contact"
                                       onClick={() => field.removeValue(i)}
                                       size="icon"
-                                      variant="outline"
+                                      variant="destructive"
                                       className="min-h-9 shrink-0 self-stretch rounded-lg"
                                     >
                                       <X aria-hidden="true" />
@@ -705,133 +626,9 @@ export function ProfileSettings() {
                 </FieldSet>
               </form>
             )}
-          </Frame>
+          </SettingsFrame>
         )}
       </form.Subscribe>
-
-      <Frame>
-        <FramePanel className="space-y-4">
-          <SettingsSection
-            title="Username"
-            description="Your portfolio is available at this path. Renaming keeps the old name as a redirect alias."
-          >
-            {currentUsername ? (
-              <div className="flex flex-col gap-2 rounded-xl border border-border/80 p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-2">
-                  <p className="text-sm font-medium text-foreground">Public path</p>
-                  <p className="truncate text-xs text-muted-foreground">{publicUrl}</p>
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <CopyButton
-                    value={publicUrl}
-                    label="Copy URL"
-                    showLabel
-                    size="sm"
-                    variant="outline"
-                    onError={() => toast.error("Could not copy URL")}
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    render={
-                      <a
-                        href={publicUrl}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                        aria-label="Open public profile"
-                      />
-                    }
-                  >
-                    <ExternalLink aria-hidden="true" />
-                    Open
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Loading username…</p>
-            )}
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void renameForm.handleSubmit();
-              }}
-              className="flex flex-col gap-3 sm:flex-row sm:items-end"
-            >
-              <div className="min-w-0 flex-1">
-                <renameForm.AppField
-                  name="username"
-                  validators={{
-                    onChange: ({ value }) => {
-                      const parsed = UsernameSchema.safeParse(value);
-                      if (!parsed.success) {
-                        return parsed.error.issues[0]?.message ?? "Invalid username";
-                      }
-                      return undefined;
-                    },
-                    // Debounce network checks only (format stays instant via onChange).
-                    onChangeAsyncDebounceMs: 400,
-                    onChangeAsync: async ({ value, signal }) => {
-                      // Sync onChange already rejected invalid format; re-parse for normalized value.
-                      const parsed = UsernameSchema.safeParse(value);
-                      if (!parsed.success) return undefined;
-                      if (parsed.data === currentUsername) return undefined;
-                      try {
-                        const result = await checkUsernameAvailability(parsed.data, signal);
-                        if (!result.available) {
-                          return result.message ?? "That username is already taken.";
-                        }
-                        return undefined;
-                      } catch {
-                        if (signal.aborted) return undefined;
-                        return "Could not check username availability";
-                      }
-                    }
-                  }}
-                >
-                  {(field) => (
-                    <field.UsernameField
-                      currentUsername={currentUsername}
-                      label="Username"
-                      description="3–30 lowercase letters, numbers, and single hyphens. Availability is checked as you type."
-                      placeholder="your-name"
-                    />
-                  )}
-                </renameForm.AppField>
-              </div>
-              <renameForm.Subscribe
-                selector={(state) => {
-                  return {
-                    canSubmit: state.canSubmit,
-                    isSubmitting: state.isSubmitting,
-                    isValidating: state.isValidating,
-                    username: state.values.username
-                  };
-                }}
-              >
-                {({ canSubmit, isSubmitting, isValidating, username }) => (
-                  <Button
-                    disabled={
-                      !canSubmit ||
-                      isSubmitting ||
-                      isValidating ||
-                      renameMutation.isPending ||
-                      username.trim().toLowerCase() === currentUsername
-                    }
-                    loading={isSubmitting || renameMutation.isPending}
-                    size="sm"
-                    type="submit"
-                    className="sm:mb-0.5"
-                  >
-                    Rename
-                  </Button>
-                )}
-              </renameForm.Subscribe>
-            </form>
-          </SettingsSection>
-        </FramePanel>
-      </Frame>
     </div>
   );
 }

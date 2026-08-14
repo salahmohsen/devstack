@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SparklesIcon, XIcon } from "lucide-react";
+import { ImageIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,22 +11,13 @@ import {
   UpdateProjectInputSchema,
   type ProjectOutput
 } from "@tsu-stack/core";
-import { Button } from "@tsu-stack/ui/components/button";
 import { Form } from "@tsu-stack/ui/components/form";
-import { Group, GroupSeparator, GroupText } from "@tsu-stack/ui/components/group";
 import { Label } from "@tsu-stack/ui/components/label";
-import {
-  Tooltip,
-  TooltipPopup,
-  TooltipProvider,
-  TooltipTrigger
-} from "@tsu-stack/ui/components/tooltip";
 
-import { useAppForm } from "@/shared/form";
+import { SubmitButton, useAppForm } from "@/shared/form";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
-import { DefaultLoader } from "@/shared/ui/default-loader";
-import { EntityFormSheet } from "@/shared/ui/entity-form-sheet";
+import { AiFlowTrigger } from "@/shared/ui/ai-flow-trigger";
 import { Icon } from "@/shared/ui/icon";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
@@ -38,6 +29,7 @@ import {
   useDetectStacksJobSelector
 } from "@/features/stacks";
 
+import { EntityFormSheet } from "@/pages/dashboard/_lib/entity-form-panel";
 import { setDetectStacksFormMergeHandler } from "@/pages/dashboard/projects/_lib/detect-stacks-form-bridge";
 
 type ProjectFormProps = {
@@ -45,6 +37,15 @@ type ProjectFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+const PROJECT_LOGO_UPLOAD_LABELS = {
+  empty: "Upload logo",
+  change: "Change logo",
+  ariaUpload: "Upload project logo",
+  ariaRemove: "Remove project logo",
+  persistError: "Could not update project logo",
+  uploadError: "Could not upload project logo"
+} as const;
 
 export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProps) {
   const queryClient = useQueryClient();
@@ -230,25 +231,23 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       open={open}
       onOpenChange={onOpenChange}
       isDirty={isDirty}
-      className="max-w-xl sm:max-w-xl"
       title={isEdit ? "Edit Project" : "New Project"}
       description={isEdit ? "Update your project details." : "Add a new project to your portfolio."}
-      footer={({ requestClose }) => (
-        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" type="button" disabled={busy} onClick={requestClose}>
-            Cancel
-          </Button>
-          <Button type="button" disabled={busy} onClick={() => void form.handleSubmit()}>
-            {isEdit
-              ? updateMutation.isPending
-                ? "Saving..."
-                : "Save"
-              : createMutation.isPending
-                ? "Creating..."
-                : "Create"}
-          </Button>
-        </div>
-      )}
+      updatedAt={initialData?.updatedAt}
+      createdAt={initialData?.createdAt}
+      actions={
+        <form.AppForm>
+          <SubmitButton
+            type="button"
+            size="sm"
+            actionLabel={isEdit ? "Save" : "Create"}
+            isLoading={busy}
+            submitFailed={createMutation.isError || updateMutation.isError}
+            resetKey={`${open}:${id ?? "new"}`}
+            onClick={() => void form.handleSubmit()}
+          />
+        </form.AppForm>
+      }
     >
       <Form
         className="contents"
@@ -260,7 +259,16 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       >
         <div className="space-y-4">
           <form.AppField name="logo">
-            {(field) => <field.ImageField label="Project logo" />}
+            {(field) => (
+              <field.AvatarUploadField
+                key={`${open}:${projectIdKey}`}
+                label="Project logo"
+                description="Shown next to the project title on your public portfolio."
+                shape="rounded"
+                emptyIcon={ImageIcon}
+                labels={PROJECT_LOGO_UPLOAD_LABELS}
+              />
+            )}
           </form.AppField>
 
           <form.AppField name="title">
@@ -316,9 +324,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           </form.AppField>
 
           <form.AppField name="demoUrl">
-            {(field) => (
-              <field.InputField label="Demo URL" type="url" placeholder="https://example.com" />
-            )}
+            {(field) => <field.UrlField label="Demo URL" placeholder="example.com" />}
           </form.AppField>
 
           <form.AppField name="repos">
@@ -347,9 +353,14 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                   return (
                     <div className="flex flex-col gap-2">
                       <Label htmlFor={field.name}>Stack</Label>
-                      <Group
+                      {/*
+                        One continuous shell: Group vertical join cannot style Combobox
+                        chips through Root wrappers, so the outer frame owns border/radius.
+                      */}
+                      <div
+                        role="group"
                         aria-label="Project stacks"
-                        className="w-full min-w-0 [&>*:first-child]:min-w-0 [&>*:first-child]:flex-1 [&>*:first-child]:overflow-hidden"
+                        className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-input bg-background shadow-xs/5 not-dark:bg-clip-padding dark:bg-input/32"
                       >
                         <field.ComboboxMultipleField
                           items={stacks.map((stack) => {
@@ -361,56 +372,25 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                           })}
                           classNames={{
                             field: "contents",
-                            chips: "rounded-e-none before:rounded-none"
+                            chips:
+                              "rounded-none border-0 bg-transparent shadow-none before:hidden focus-within:border-transparent focus-within:ring-0 dark:bg-transparent"
                           }}
                           placeholder="Select stacks..."
                           emptyMessage="No stacks found."
                         />
-                        {isDetectRunningForThis ? (
-                          <>
-                            <GroupText
-                              aria-live="polite"
-                              className="cursor-default gap-2 px-2"
-                              role="status"
-                            >
-                              <DefaultLoader size="xs" />
-                              <span className="max-w-28 min-w-0 shimmer truncate text-sm font-medium text-foreground">
-                                {detectStepLabel ?? "Detecting…"}
-                              </span>
-                            </GroupText>
-                            <GroupSeparator />
-                            <TooltipProvider delay={0}>
-                              <Tooltip>
-                                <TooltipTrigger
-                                  render={
-                                    <Button
-                                      aria-label="Cancel stack detection"
-                                      onClick={() => cancelDetectStacksJob()}
-                                      size="icon"
-                                      type="button"
-                                      variant="outline"
-                                    />
-                                  }
-                                >
-                                  <XIcon aria-hidden="true" />
-                                </TooltipTrigger>
-                                <TooltipPopup>Cancel</TooltipPopup>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            type="button"
-                            className="shrink-0"
-                            onClick={handleStartDetect}
-                            disabled={!canDetect}
-                          >
-                            <SparklesIcon />
-                            Detect Stacks
-                          </Button>
-                        )}
-                      </Group>
+                        <AiFlowTrigger
+                          idleLabel="Detect stacks"
+                          icon={<SparklesIcon aria-hidden />}
+                          running={isDetectRunningForThis}
+                          stepLabel={detectStepLabel}
+                          runningFallback="Detecting…"
+                          onStart={handleStartDetect}
+                          onCancel={() => cancelDetectStacksJob()}
+                          disabled={!canDetect}
+                          layout="stretch"
+                          className="border-t border-input"
+                        />
+                      </div>
                       {!id ? (
                         <p className="text-xs text-muted-foreground">
                           Save the project first to enable automatic stack detection.

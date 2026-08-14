@@ -21,7 +21,7 @@ export type OrganizeProgressPayload = {
   /** Optional stack/candidate total for richer labels. */
   itemTotal?: number;
   /** Which organize LLM phase is running. */
-  phase: "sort" | "rename" | "enrich";
+  phase: "sort" | "rename" | "enrich" | "profile";
   label: string;
 };
 
@@ -48,6 +48,8 @@ export function buildOrganizeChunkLabel(
       return `Checking names ${chunkNumber}/${chunkTotal}…`;
     case "enrich":
       return `Analyzing metadata ${chunkNumber}/${chunkTotal}…`;
+    case "profile":
+      return `Picking profile stacks ${chunkNumber}/${chunkTotal}…`;
   }
 }
 

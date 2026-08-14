@@ -23,20 +23,34 @@ export {
   findPendingProposeApplicationFromJd,
   lastHubHitlKind,
   hubToolNameFromPart,
+  HUB_ACCEPT_APPLY_PACKAGE_TOOL_NAMES,
   HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES,
+  HUB_OPEN_SURFACE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
+  HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES,
+  HUB_SEND_APPLY_OUTREACH_TOOL_NAMES,
+  isAcceptApplyPackageToolName,
   isGenerateApplyPackageToolName,
+  isHubApprovalToolName,
   isHubToolUiPart,
+  isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
+  isProposeNewJobsTriageToolName,
+  isSendApplyOutreachToolName,
+  parseOpenSurfaceHref,
   parseProposeApplicationFromJdInput,
-  parseProposeApplicationFromJdOutputAction
+  parseProposeApplicationFromJdOutputAction,
+  parseProposeNewJobsTriageInput,
+  parseProposeNewJobsTriageOutput
 } from "./lib/hub-tool-names";
 export type {
   HubToolNamePart,
   PendingProposeApplicationFromJd,
   ProposeApplicationFromJdAction,
-  ProposeApplicationFromJdCardInput
+  ProposeApplicationFromJdCardInput,
+  ProposeNewJobsTriageCardInput
 } from "./lib/hub-tool-names";
+export { NewJobsTriageCard } from "./ui/new-jobs-triage-card";
 export {
   useListSuspendedRunsQuery,
   listSuspendedRunsQueryOptions
@@ -68,8 +82,10 @@ export {
   unionHubMessages
 } from "./lib/hub-thread-history-adapter";
 export type { HubHistoryPage, HubHistoryItem } from "./lib/hub-thread-history-adapter";
+export { HubAssistantMessage } from "./ui/hub-assistant-message";
 export {
   HUB_CLIENT_RESUME_TOOL_NAMES,
+  hideHubAssistantTextAfterIndex,
   lastAssistantMessageIsCompleteWithClientResumeTools,
   shouldAutoResumeHubChat
 } from "./lib/should-auto-resume-hub-chat";

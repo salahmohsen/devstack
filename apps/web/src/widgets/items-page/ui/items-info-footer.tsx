@@ -1,10 +1,9 @@
-import { Calendar, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@tsu-stack/ui/components/button.js";
-import { FrameFooter } from "@tsu-stack/ui/components/frame.js";
-import { KbdGroup } from "@tsu-stack/ui/components/kbd.js";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useItemsNavContext } from "@/widgets/items-page/lib/items-nav-context";
+import { useItemsNavContextOptional } from "@/widgets/items-page/lib/items-nav-context";
 
 type TimestampValue = string | Date | null | undefined;
 
@@ -35,60 +34,56 @@ function toDateTimeAttr(value: TimestampValue): string | undefined {
   return date.toISOString();
 }
 
-type TimestampMetaProps = {
-  icon: React.ReactNode;
-  label: string;
-  value: TimestampValue;
-};
-
-function TimestampMeta({ icon, label, value }: TimestampMetaProps) {
+function TimestampMeta({ label, value }: { label: string; value: TimestampValue }) {
   const formatted = formatTimestamp(value);
   if (!formatted) return null;
 
   return (
     <span className="inline-flex items-center gap-1 whitespace-nowrap">
-      <span className="shrink-0" aria-hidden>
-        {icon}
-      </span>
-      <span>
-        {label}{" "}
-        <time dateTime={toDateTimeAttr(value)} className="tabular-nums">
-          {formatted}
-        </time>
-      </span>
+      <span className="text-muted-foreground/80">{label}</span>
+      <time dateTime={toDateTimeAttr(value)} className="text-muted-foreground tabular-nums">
+        {formatted}
+      </time>
     </span>
   );
 }
 
 export function ItemsInfoFooter({ updatedAt, createdAt }: ItemsInfoFooterProps) {
-  const { handlePrev, handleNext } = useItemsNavContext();
+  const nav = useItemsNavContextOptional();
   const hasTimestamps = formatTimestamp(updatedAt) != null || formatTimestamp(createdAt) != null;
 
+  if (!nav && !hasTimestamps) return null;
+
   return (
-    <FrameFooter className="flex flex-row items-center justify-between gap-3 py-2">
-      <KbdGroup className="shrink-0">
-        <Button variant="ghost" onClick={handlePrev} size="icon">
-          <ChevronLeft />
-        </Button>
-        <Button size="icon" onClick={handleNext} variant="ghost">
-          <ChevronRight />
-        </Button>
-      </KbdGroup>
+    <footer
+      className={cn(
+        "flex shrink-0 items-center justify-between gap-3 border-t border-border/50 px-4 py-2"
+      )}
+    >
+      {nav ? (
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            onClick={nav.handlePrev}
+            size="icon-sm"
+            aria-label="Previous item"
+          >
+            <ChevronLeft />
+          </Button>
+          <Button size="icon-sm" onClick={nav.handleNext} variant="ghost" aria-label="Next item">
+            <ChevronRight />
+          </Button>
+        </div>
+      ) : (
+        <span />
+      )}
 
       {hasTimestamps ? (
-        <div className="flex flex-row flex-nowrap items-center justify-end gap-3 overflow-hidden text-xs text-muted-foreground">
-          <TimestampMeta
-            icon={<Clock className="size-3" strokeWidth={2} />}
-            label="Updated"
-            value={updatedAt}
-          />
-          <TimestampMeta
-            icon={<Calendar className="size-3" strokeWidth={2} />}
-            label="Created"
-            value={createdAt}
-          />
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-0.5 overflow-hidden text-[11px]">
+          <TimestampMeta label="Updated" value={updatedAt} />
+          <TimestampMeta label="Created" value={createdAt} />
         </div>
       ) : null}
-    </FrameFooter>
+    </footer>
   );
 }

@@ -11,7 +11,7 @@ import {
   Inbox,
   KeyRound,
   Layers,
-  Link2,
+  Blocks,
   ListChecks,
   Mail,
   Rocket,
@@ -193,7 +193,7 @@ registerCommands([
     label: "Settings: Account",
     group: "Settings",
     icon: KeyRound,
-    keywords: ["account", "sessions", "security", "sign-in"],
+    keywords: ["account", "sessions", "security", "sign-in", "username", "rename"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/settings/account" }
   },
@@ -217,10 +217,10 @@ registerCommands([
   },
   {
     id: "nav:settings-connections",
-    label: "Settings: Connections",
+    label: "Settings: Integrations",
     group: "Settings",
-    icon: Link2,
-    keywords: ["connections", "google", "gmail", "github", "oauth"],
+    icon: Blocks,
+    keywords: ["integrations", "connections", "google", "gmail", "github", "oauth"],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/settings/connections" }
   },

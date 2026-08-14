@@ -104,9 +104,10 @@ Per-application hiring pressure: `unknown | immediate | soon | flexible`.
 Not the user’s global job preference profile.
 _Avoid_: conflating with `job_preference` (future).
 
-**Entity form Sheet**:
+**Entity form panel**:
 Dashboard create/edit for applications, experiences, projects, and stacks
-uses a right side Sheet (drawer), not a centered Dialog. Short tools and
+uses the inspect side panel (inset Sheet below `xl`), not a centered Dialog.
+Save is in the header; the footer is prev/next + timestamps. Short tools and
 delete confirms stay Dialog/AlertDialog. ADR:
 `docs/adr/0025-entity-form-sheet.md`.
 _Avoid_: long multi-field entity forms in modals that cover the list/board.

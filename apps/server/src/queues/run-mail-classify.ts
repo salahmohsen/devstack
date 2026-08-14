@@ -4,7 +4,9 @@ import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve
 import {
   AI_CORRECTION_CANDIDATE_POOL,
   AI_CORRECTION_FEW_SHOT_K,
+  applyJobAlertDigestGuard,
   correctionEmbedText,
+  heuristicClassifyMail,
   llmLogFields,
   MailSystemLabelSchema,
   selectCorrectionsForFewShot,
@@ -195,14 +197,19 @@ export async function runMailClassify(input: {
     mastraClassifyTraceId = agentCall.data.traceId;
     usedAgent = true;
   } else {
-    // AI-only: no regex/heuristic fallback for system or smart filters.
+    // Agent down / fetch failed: keep Career Inbox moving with the
+    // offline heuristic + digest guard (same fixtures as classify tests).
     agentFailReason = agentCall.failure.reason;
+    const heuristic = heuristicClassifyMail(classifyInput);
     result = {
-      labels: row.labels ?? [],
-      systemLabels: [],
-      source: "llm",
-      confidence: 0,
-      notes: `agent:${agentCall.failure.reason}${agentCall.failure.status != null ? `:${agentCall.failure.status}` : ""}`
+      ...heuristic,
+      notes: [
+        `agent:${agentCall.failure.reason}${agentCall.failure.status != null ? `:${agentCall.failure.status}` : ""}`,
+        heuristic.notes,
+        "heuristic_fallback"
+      ]
+        .filter(Boolean)
+        .join(";")
     };
 
     if (hadByo || agentCall.failure.reason !== "not_configured") {
@@ -221,11 +228,27 @@ export async function runMailClassify(input: {
     }
   }
 
+  result = applyJobAlertDigestGuard(classifyInput, result);
+
   // job_notifier / noise: CRM effects are no-ops via proposeMailCrmEffect label table.
   const hasJobNotifier =
     result.systemLabels.includes("job_notifier") || result.labels.includes("job_notifier");
   const hasNoise = result.systemLabels.includes("noise") || result.labels.includes("noise");
   const skipCareerNotify = hasJobNotifier || hasNoise;
+
+  // Agent failure + no label: leave unclassified so a later retry can run AI.
+  if (!usedAgent && result.systemLabels.length === 0) {
+    log.set({
+      event: "mail_classify_left_unclassified",
+      messageId: row.id,
+      userId: row.userId,
+      agentFailReason,
+      notes: result.notes ?? null,
+      ...byo
+    });
+    log.emit({ _forceKeep: true });
+    return { ...result, skipped: true };
+  }
 
   await mailMessageRepository.applyClassification(row.id, row.userId, result.labels, {
     mastraClassifyRunId,

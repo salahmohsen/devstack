@@ -4,20 +4,14 @@ import { useMemo, useState } from "react";
 import { FaGithub } from "react-icons/fa6";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
-import { sanitizeHtml, type ProjectPublicOutput, type StackOutput } from "@tsu-stack/core";
+import { sanitizeHtml, type ProjectPublicOutput } from "@tsu-stack/core";
 import { AnimatedWash } from "@tsu-stack/ui/components/animated-wash";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card6 } from "@tsu-stack/ui/components/cardcn";
 import { CenterUnderline } from "@tsu-stack/ui/components/fancy/text";
 import { Group } from "@tsu-stack/ui/components/group";
-import {
-  PreviewCard,
-  PreviewCardPopup,
-  PreviewCardTrigger
-} from "@tsu-stack/ui/components/preview-card";
 import { StickyCardStack } from "@tsu-stack/ui/components/skiper-ui";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
-import { NativeMarquee, type NativeMarqueeItem } from "@tsu-stack/ui/components/uitripled";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
@@ -27,107 +21,10 @@ import {
   type PublicSurface
 } from "@/shared/lib/public-surface";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
-import { Icon } from "@/shared/ui/icon";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
-const chipClassName = cn(
-  // Fixed h + items-center keeps icon glyph and uppercase label on one midline.
-  // better-layout: controls float above the content layer (wash) — solid surface, not
-  // transparent-on-texture. better-colors: semantic primary pair for readable contrast.
-  "inline-flex h-5 items-center gap-1 rounded-none border border-transparent bg-muted px-2",
-  "text-[0.65rem] leading-none font-medium tracking-wide whitespace-nowrap uppercase",
-  "text-primary transition-colors hover:bg-primary/20",
-  // Kill button/link defaults from PreviewCardTrigger that skew flex centering.
-  "font-[inherit] no-underline"
-);
-
-function formatStackType(type: string | null | undefined): string | null {
-  if (!type?.trim()) return null;
-  return type.replace(/[_-]+/g, " ").trim();
-}
-
-/**
- * Icon slot matches font-size (1em) so the glyph is the same optical height as
- * the uppercase label; empty slot reserved so chips without icons stay aligned.
- */
-function StackChipIcon({ stack, className }: { stack: StackOutput; className?: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex size-[1em] shrink-0 items-center justify-center overflow-hidden leading-none",
-        className
-      )}
-      aria-hidden
-    >
-      {stack.icon ? (
-        <Icon
-          icon={stack.icon}
-          name={stack.name}
-          className="flex size-full items-center justify-center saturate-0 [&_svg]:block [&_svg]:size-full"
-        />
-      ) : null}
-    </span>
-  );
-}
-
-function StackChip({ stack }: { stack: StackOutput }) {
-  const description = stack.description?.trim();
-  const typeLabel = formatStackType(stack.type);
-
-  const label = (
-    <>
-      <StackChipIcon stack={stack} />
-      <span className="leading-none">{stack.name}</span>
-    </>
-  );
-
-  if (!description) {
-    return <span className={chipClassName}>{label}</span>;
-  }
-
-  return (
-    <PreviewCard>
-      <PreviewCardTrigger className={cn(chipClassName, "cursor-default")}>
-        {label}
-      </PreviewCardTrigger>
-      {/*
-        better-layout: one leading edge, header group tight, body spaced 2×,
-        comfortable measure (w-72), no text-balance jank on short labels.
-      */}
-      <PreviewCardPopup
-        className="w-72 flex-col gap-0 p-0 text-start text-pretty shadow-lg/10"
-        sideOffset={10}
-        align="center"
-      >
-        <div className="flex items-start gap-3 px-3.5 pt-3.5 pb-2.5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/50">
-            {stack.icon ? (
-              <Icon icon={stack.icon} name={stack.name} className="size-4" />
-            ) : (
-              <span className="text-xs font-semibold text-muted-foreground">
-                {stack.name.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <p className="text-sm leading-snug font-semibold text-popover-foreground">
-              {stack.name}
-            </p>
-            {typeLabel ? (
-              <p className="text-[0.65rem] leading-none font-medium tracking-wider text-muted-foreground uppercase">
-                {typeLabel}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <div className="border-t border-border/50 px-3.5 pt-2.5 pb-3.5">
-          <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
-        </div>
-      </PreviewCardPopup>
-    </PreviewCard>
-  );
-}
+import { StackChip } from "@/pages/home-page/ui/stack-chip";
 
 export const ProjectsSection = ({
   username,
@@ -234,19 +131,35 @@ export const ProjectsItem = ({
 
   // Center underline on the title, driven by whole-card hover (not title-only).
   // Open repo controls always sit next to the title (all breakpoints).
+  const stackRow =
+    project.stacks.length > 0 ? (
+      <span className="flex flex-wrap items-center gap-1.5">
+        {project.stacks.map((stack) => (
+          <StackChip key={stack.id} stack={stack} />
+        ))}
+      </span>
+    ) : null;
+
   const title = (
-    <span className="inline-flex min-w-0 items-center gap-2">
-      {project.logo ? (
-        <img
-          src={project.logo}
-          alt=""
-          className="size-7 shrink-0 rounded-md object-contain saturate-0"
+    <span className="flex min-w-0 flex-col gap-2">
+      <span className="inline-flex min-w-0 items-center gap-2">
+        {project.logo ? (
+          <img
+            src={project.logo}
+            alt=""
+            className="size-7 shrink-0 rounded-md object-contain saturate-0"
+          />
+        ) : null}
+        <CenterUnderline active={hovered} className="min-w-0">
+          {project.title}
+        </CenterUnderline>
+        <ProjectRepoButtons
+          project={project}
+          surface={surface}
+          isPortfolioOwner={isPortfolioOwner}
         />
-      ) : null}
-      <CenterUnderline active={hovered} className="min-w-0">
-        {project.title}
-      </CenterUnderline>
-      <ProjectRepoButtons project={project} surface={surface} isPortfolioOwner={isPortfolioOwner} />
+      </span>
+      {stackRow}
     </span>
   );
 
@@ -261,30 +174,6 @@ export const ProjectsItem = ({
       <ExternalLink className="size-3.5" strokeWidth={2.25} />
     </a>
   ) : null;
-
-  const marqueeItems: NativeMarqueeItem[] = project.stacks.map((stack) => {
-    return {
-      id: stack.id,
-      label: stack.name,
-      content: <StackChip stack={stack} />
-    };
-  });
-
-  // Two horizontal rows; split evenly so both tracks stay populated.
-  const mid = Math.ceil(marqueeItems.length / 2);
-  const row1 = marqueeItems.slice(0, mid);
-  const row2 = marqueeItems.slice(mid);
-
-  const stacksFooter =
-    marqueeItems.length > 0 ? (
-      // No side fades (from-card would paint solid and hide the wash under the stack).
-      <div className="relative z-10 w-full min-w-0 space-y-1.5 bg-transparent">
-        <NativeMarquee items={row1} speed={4} gap={8} pauseOnHover />
-        {row2.length > 0 ? (
-          <NativeMarquee items={row2} speed={4} gap={8} reverse pauseOnHover />
-        ) : null}
-      </div>
-    ) : null;
 
   const summary = project.summary?.trim();
   const description = project.description?.trim();
@@ -322,7 +211,6 @@ export const ProjectsItem = ({
         title={title}
         description={yearLabel}
         action={action}
-        footer={stacksFooter}
         overlay={washOverlay}
       >
         {hasBody ? (

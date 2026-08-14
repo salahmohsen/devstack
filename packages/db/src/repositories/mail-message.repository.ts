@@ -279,6 +279,25 @@ export const mailMessageRepository = {
    * Apply classification: replace system career labels, keep smart-rule labels
    * passed in `labels`, stamp `classifiedAt`.
    */
+  /**
+   * Wipe AI classification for a tenant: system + smart labels, classifiedAt,
+   * linked application, and Mastra run ids. Used to re-run Career Inbox tagging.
+   */
+  async clearClassificationByUserId(userId: string): Promise<number> {
+    const updated = await getDb()
+      .update(mailMessage)
+      .set({
+        labels: [],
+        classifiedAt: null,
+        applicationId: null,
+        mastraClassifyRunId: null,
+        mastraClassifyTraceId: null
+      })
+      .where(eq(mailMessage.userId, userId))
+      .returning({ id: mailMessage.id });
+    return updated.length;
+  },
+
   async applyClassification(
     id: string,
     userId: string,

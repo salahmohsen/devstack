@@ -17,7 +17,14 @@ export function createJobPreferenceMatchScorerAgent() {
 
 Always activate the **job-preference-match** skill before scoring.
 Score EVERY job; never invent listingUrls.
-Return structured output only via the schema.`,
+Return structured output only via the schema.
+
+JobPreference.workModes is a multi-select array (OR semantics): empty = no mode filter;
+match when the job's single workMode is any of the preferred modes. Soft-penalize only when
+the job mode is known and outside the preferred set. Never use only workModes[0].
+
+When roleKeywords are empty, use SeekerProfileEvidence (experience titles, stacks, projects)
+to judge craft fit. Fail orthogonal careers. Generic "engineer"/"developer" is not enough.`,
     skills: [WRITE_SKILLS_PATH, JOB_PREFERENCE_MATCH_SKILL_PATH],
     model: byoModelFromRequestContext
   });

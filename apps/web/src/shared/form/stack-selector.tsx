@@ -25,6 +25,12 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { Field, FieldError, FieldLabel } from "@tsu-stack/ui/components/field";
 import { Input } from "@tsu-stack/ui/components/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText
+} from "@tsu-stack/ui/components/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@tsu-stack/ui/components/popover";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -200,12 +206,24 @@ function StackSelector(props: StackSelectorProps) {
                 description="Optional image URL."
                 htmlFor="new-stack-icon"
               />
-              <Input
-                id="new-stack-icon"
-                value={newIcon}
-                onChange={(e) => setNewIcon(e.target.value)}
-                placeholder="https://..."
-              />
+              <InputGroup>
+                <InputGroupInput
+                  id="new-stack-icon"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="url"
+                  spellCheck={false}
+                  value={newIcon.replace(/^https?:\/\//i, "")}
+                  onChange={(e) => {
+                    const next = e.target.value.trim().replace(/^https?:\/\//i, "");
+                    setNewIcon(next.length === 0 ? "" : `https://${next}`);
+                  }}
+                  placeholder="cdn.example.com/icon.svg"
+                />
+                <InputGroupAddon>
+                  <InputGroupText>https://</InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
             </Field>
             {createMutation.error ? (
               <p className="text-sm text-destructive">
@@ -221,8 +239,8 @@ function StackSelector(props: StackSelectorProps) {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending || !newName.trim()}>
-                {createMutation.isPending ? "Creating..." : "Create"}
+              <Button type="submit" disabled={!newName.trim()} loading={createMutation.isPending}>
+                {createMutation.isPending ? "Creating…" : "Create"}
               </Button>
             </DialogFooter>
           </form>

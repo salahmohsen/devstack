@@ -39,6 +39,7 @@ const STEP_LABELS: Record<string, string> = {
   "find-enrichments": "Analyzing metadata",
   "fetch-missing-icons": "Fetching icons",
   "sort-stacks": "Sorting by importance",
+  "pick-profile-stacks": "Picking profile stacks",
   "format-output": "Preparing results"
 };
 
@@ -65,7 +66,8 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
     actions: [],
     sortOrder: [],
     summary: { merges: 0, renames: 0, enrichments: 0, sorted: false },
-    notes: []
+    notes: [],
+    featuredStackIds: []
   };
 
   let runId: string | null = null;
@@ -129,6 +131,9 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
           result.notes = Array.isArray(output.notes)
             ? (output.notes as string[]).filter((n) => typeof n === "string" && n.trim())
             : [];
+          result.featuredStackIds = Array.isArray(output.featuredStackIds)
+            ? (output.featuredStackIds as string[]).filter((id) => typeof id === "string" && id)
+            : [];
           setOrganizeJobState({ stepLabel: null });
         }
       }
@@ -176,7 +181,10 @@ export function startOrganizeStacksJob() {
   // Ready results waiting for review — open dialog instead of re-running
   if (
     current.status === "ready" &&
-    (current.actions.length > 0 || current.sortOrder.length > 0 || current.notes.length > 0)
+    (current.actions.length > 0 ||
+      current.sortOrder.length > 0 ||
+      current.featuredStackIds.length > 0 ||
+      current.notes.length > 0)
   ) {
     setOrganizeJobState({ dialogOpen: true });
     return;
@@ -190,6 +198,7 @@ export function startOrganizeStacksJob() {
     runId: null,
     actions: [],
     sortOrder: [],
+    featuredStackIds: [],
     notes: [],
     error: null,
     dialogOpen: false,
@@ -216,19 +225,24 @@ export function startOrganizeStacksJob() {
 
       const { actions, sortOrder } = normalizeOrganizeActions(raw.actions, stacks, raw.sortOrder);
       const notes = (raw.notes ?? []).filter((n) => typeof n === "string" && n.trim());
+      const featuredStackIds = (raw.featuredStackIds ?? []).filter((id) => {
+        if (typeof id !== "string" || !id) return false;
+        return stacks.length === 0 || stacks.some((s) => s.id === id);
+      });
 
       if (!jobController.isCurrent(generation)) return;
 
       toast.dismiss(ORGANIZE_TOAST_ID);
 
       // No actions and no reorder — either truly clean, or AI soft-failed with notes
-      if (actions.length === 0 && sortOrder.length === 0) {
+      if (actions.length === 0 && sortOrder.length === 0 && featuredStackIds.length === 0) {
         if (notes.length > 0) {
           setOrganizeJobState({
             status: "ready",
             stepLabel: null,
             actions: [],
             sortOrder: [],
+            featuredStackIds,
             notes,
             error: null,
             dialogOpen: true
@@ -258,6 +272,7 @@ export function startOrganizeStacksJob() {
         stepLabel: null,
         actions,
         sortOrder,
+        featuredStackIds,
         notes,
         error: null,
         dialogOpen: true

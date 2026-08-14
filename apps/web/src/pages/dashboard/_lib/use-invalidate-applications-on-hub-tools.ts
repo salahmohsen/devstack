@@ -20,7 +20,17 @@ const HUB_APPLICATION_MUTATING_TOOLS = new Set([
   "create-application",
   "createApplication",
   "generate-apply-package",
-  "generateApplyPackage"
+  "generateApplyPackage",
+  "accept-apply-package",
+  "acceptApplyPackage",
+  "send-apply-outreach",
+  "sendApplyOutreach",
+  "track-job",
+  "trackJob",
+  "dismiss-job",
+  "dismissJob",
+  "update-application-stage",
+  "updateApplicationStage"
 ]);
 
 function getToolName(part: HubToolPart): string {
@@ -36,17 +46,22 @@ function isToolPart(part: HubToolPart): boolean {
 
 function isSuccessfulMutatingToolOutput(toolName: string, output: unknown): boolean {
   if (!output || typeof output !== "object" || Array.isArray(output)) return false;
-  const o = output as { applicationId?: unknown; created?: unknown; ok?: unknown };
+  const o = output as {
+    applicationId?: unknown;
+    created?: unknown;
+    ok?: unknown;
+  };
+
+  // Prefer explicit ok when present.
+  if (o.ok === false) return false;
+  if (o.ok === true) return true;
 
   if (toolName === "create-application" || toolName === "createApplication") {
-    if (o.ok === false) return false;
     const id = typeof o.applicationId === "string" ? o.applicationId.trim() : "";
     return id.length > 0;
   }
 
   if (toolName === "generate-apply-package" || toolName === "generateApplyPackage") {
-    // Tool returns { applicationId } on success; some shapes may use ok.
-    if (o.ok === false) return false;
     const id = typeof o.applicationId === "string" ? o.applicationId.trim() : "";
     return id.length > 0;
   }
@@ -85,7 +100,7 @@ async function invalidateAllApplicationSurfaces(
 
 /**
  * Dashboard-global: watch shared hub chat and invalidate New / Tracked / Dismissed
- * lists + inbox badge when create-application or generate-apply-package succeeds.
+ * lists + inbox badge when superpowers CRM tools succeed.
  *
  * Must run under HubChatProvider (dashboard layout).
  */

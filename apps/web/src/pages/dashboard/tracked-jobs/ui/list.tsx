@@ -1,23 +1,13 @@
 "use client";
 
-import {
-  Building2Icon,
-  BriefcaseIcon,
-  ExternalLinkIcon,
-  FileTextIcon,
-  MapPinIcon,
-  PencilIcon,
-  PlusIcon
-} from "lucide-react";
-import { useMemo, type ComponentType, type ReactNode } from "react";
+import { Building2Icon, BriefcaseIcon, FileTextIcon, MapPinIcon, PlusIcon } from "lucide-react";
+import { useMemo } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   ContextMenu,
-  ContextMenuItem,
   ContextMenuPopup,
-  ContextMenuSeparator,
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
@@ -39,7 +29,11 @@ import {
 import { ItemsEmpty, ListSkeleton } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
-import { ApplyPackageMenuItems } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
+import {
+  applicationContextSlots,
+  applicationListMenuSlots
+} from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
+import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
 
 const LIST_FILTERS = [
   { value: "open", label: "Open" },
@@ -51,22 +45,6 @@ type ApplicationsListProps = {
   applications: ApplicationOutput[];
   isLoading?: boolean;
   listRef?: React.RefObject<HTMLUListElement | null>;
-};
-
-type ActionItemProps = {
-  children: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  variant?: "default" | "destructive";
-};
-
-const contextSlots = {
-  Item: (({ children, onClick, disabled, variant }: ActionItemProps) => (
-    <ContextMenuItem onClick={onClick} disabled={disabled} variant={variant}>
-      {children}
-    </ContextMenuItem>
-  )) as ComponentType<ActionItemProps>,
-  Separator: (() => <ContextMenuSeparator />) as ComponentType
 };
 
 export function ApplicationsList({ applications, isLoading, listRef }: ApplicationsListProps) {
@@ -217,10 +195,15 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       onView={openListing}
                       viewLabel="View listing"
                       onEdit={() => openEdit(app)}
-                      onDelete={() => deleteMutation.mutate({ ids: [app.id] })}
-                      isDeleting={deleteMutation.isPending}
-                      deleteTitle="Delete this application?"
-                      deleteDescription="This permanently removes the application from your pipeline."
+                      // Full board parity lives in the ⋮ menu (and right-click).
+                      // Delete is in ApplicationItemActions with confirm dialog.
+                      extraMenuItems={
+                        <ApplicationItemActions
+                          app={app}
+                          slots={applicationListMenuSlots}
+                          density="list-overflow"
+                        />
+                      }
                       title={app.title}
                       titleEnd={
                         <>
@@ -254,17 +237,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                     />
                   </ContextMenuTrigger>
                   <ContextMenuPopup className="min-w-44">
-                    {openListing ? (
-                      <ContextMenuItem onClick={openListing}>
-                        <ExternalLinkIcon aria-hidden="true" />
-                        View listing
-                      </ContextMenuItem>
-                    ) : null}
-                    <ContextMenuItem onClick={() => openEdit(app)}>
-                      <PencilIcon aria-hidden="true" />
-                      Edit
-                    </ContextMenuItem>
-                    <ApplyPackageMenuItems app={app} slots={contextSlots} />
+                    <ApplicationItemActions app={app} slots={applicationContextSlots} />
                   </ContextMenuPopup>
                 </ContextMenu>
               </li>

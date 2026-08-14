@@ -5,6 +5,9 @@ import { type ApplicationOutput } from "@tsu-stack/core";
 type SheetMode = "create" | "edit";
 type ListFilter = "open" | "closed" | "all";
 
+/** Accepted package material previewed from Review materials submenu. */
+export type ApplicationMaterialKind = "resume" | "cover-letter" | "outreach";
+
 type ApplicationUIState = {
   sheetOpen: boolean;
   sheetMode: SheetMode;
@@ -21,6 +24,12 @@ type ApplicationUIState = {
   sendOutreachAppId: string | null;
   /** Import JD via shared hub chat sheet. */
   importJdSheetOpen: boolean;
+  /**
+   * Material preview dialog (page-level host).
+   * Must not live inside Menu/ContextMenu — those unmount on item click and
+   * would close the dialog immediately.
+   */
+  materialPreview: { applicationId: string; kind: ApplicationMaterialKind } | null;
 };
 
 type ApplicationUIActions = {
@@ -43,6 +52,8 @@ type ApplicationUIActions = {
   closeSendOutreach: () => void;
   openImportJdSheet: () => void;
   closeImportJdSheet: () => void;
+  openMaterialPreview: (applicationId: string, kind: ApplicationMaterialKind) => void;
+  closeMaterialPreview: () => void;
 };
 
 let state: ApplicationUIState = {
@@ -55,7 +66,8 @@ let state: ApplicationUIState = {
   stageInFlightIds: {},
   packageSheetAppId: null,
   sendOutreachAppId: null,
-  importJdSheetOpen: false
+  importJdSheetOpen: false,
+  materialPreview: null
 };
 
 const listeners = new Set<() => void>();
@@ -100,7 +112,10 @@ const actions: ApplicationUIActions = {
   openSendOutreach: (applicationId) => setState({ sendOutreachAppId: applicationId }),
   closeSendOutreach: () => setState({ sendOutreachAppId: null }),
   openImportJdSheet: () => setState({ importJdSheetOpen: true }),
-  closeImportJdSheet: () => setState({ importJdSheetOpen: false })
+  closeImportJdSheet: () => setState({ importJdSheetOpen: false }),
+  openMaterialPreview: (applicationId, kind) =>
+    setState({ materialPreview: { applicationId, kind } }),
+  closeMaterialPreview: () => setState({ materialPreview: null })
 };
 
 function subscribe(listener: () => void) {

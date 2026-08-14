@@ -43,15 +43,33 @@ If none fit, return **null** / empty system labels.
 Treat as `job_notifier` when the primary intent is **promoting open positions** for the seeker to consider, including:
 
 - LinkedIn / Indeed / Google job alert digests
+- Otta, Wellfound, Built In, Levels.fyi “roles we found” / weekly matching mail
 - AI job-search assistants (e.g. Jack and Jill) listing multiple roles with links
-- “N new senior frontend roles…”, “New matches for you”, fresh market sweeps
-- Single-role pitches that still present a listing to apply to
+- Agency **blasts** of several openings with apply/view-job links
+- “N new senior frontend roles…”, “New matches for you”, “jobs you might like”, fresh market sweeps
+- Single-role pitches that still present a listing to apply to (not a 1:1 conversation)
 
 Do **not** use `job_notifier` for:
 
 - Pure welcome/onboarding product email without role listings
-- “Your application was sent to Company X” status only
-- One-to-one recruiter conversation without a digest of open roles
+- “Your application was sent to Company X” / Greenhouse / Lever / Ashby **receipts**
+- One-to-one recruiter conversation about **you** (even if they mention one role)
+- Interview scheduling that happens to include the word “role”
+
+## Recruiter vs digest vs ATS (real-world)
+
+| Pattern                                                                                      | Label                |
+| -------------------------------------------------------------------------------------------- | -------------------- |
+| LinkedIn `jobalerts-noreply`, Indeed alerts, Google Job Alerts, Otta/Wellfound weekly        | `job_notifier`       |
+| Agency: “5 openings this week” + listing links                                               | `job_notifier`       |
+| Recruiter: “I came across your profile” / “are you open to…” about one role, no digest       | `recruiter`          |
+| Greenhouse / Lever / Ashby / Workable: “thanks for applying”, “we received your application” | `application_status` |
+| “Your application was sent / viewed / updated”                                               | `application_status` |
+| Calendar / HireVue / “schedule your interview” for **your** candidacy                        | `interview`          |
+| Offer letter / compensation package                                                          | `offer`              |
+| LinkedIn profile views, SaaS product updates, “complete your profile”                        | `noise`              |
+
+A card title that says “Interviewing now” inside a **job-alert digest** is still `job_notifier`.
 
 ## User smart filters (dynamic)
 

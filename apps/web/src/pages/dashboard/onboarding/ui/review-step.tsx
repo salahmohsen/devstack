@@ -19,7 +19,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -407,7 +408,7 @@ export function ReviewStep({
         ...draft,
         objectKey: objectKey ?? undefined
       });
-      toast.success("Resume import applied");
+      toast.success("Resume saved — next, set job filters");
       onApplied({
         experiences: result.experiencesCreated,
         projects: result.projectsCreated,
@@ -840,7 +841,7 @@ export function ReviewStep({
               }
               onClick={() => void handleApply()}
             >
-              Apply import
+              Save and continue
             </Button>
           </div>
         </div>
@@ -860,9 +861,8 @@ export function ReviewStep({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="ghost" />}>Keep editing</AlertDialogClose>
-            <Button
-              type="button"
+            <AlertDialogCancel disabled={discardMutation.isPending}>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
               loading={discardMutation.isPending}
               onClick={() => {
@@ -870,7 +870,7 @@ export function ReviewStep({
               }}
             >
               Discard draft
-            </Button>
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogPopup>
       </AlertDialog>

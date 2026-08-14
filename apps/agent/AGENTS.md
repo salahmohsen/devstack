@@ -28,6 +28,7 @@ Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge �
 - Logging: `initLogger` / `createLogger` from `@tsu-stack/logger/server` for job outcomes; include `traceId` when present; one `emit()` per wide-event lifetime
 - **Auth:** `MastraAuthBetterAuth` with a **session-only** Better Auth instance (`session-auth.ts`) — same `BETTER_AUTH_SECRET` + app session tables as the API (do not import full `@tsu-stack/auth`; Mastra cannot bundle it). Server forwards the user's session as `Authorization: Bearer <session_token>`. Never expose the agent HTTP port without auth.
 - **LLM keys:** BYO only via Settings → AI (workflow `input.llm` / requestContext). No `DEEPSEEK_API_KEY` or other provider env keys.
+- **Core ESM cache:** Mastra prebundles `@tsu-stack/core` to `packages/core/node_modules/.cache/@tsu-stack__core.mjs` and does not invalidate it when core source exports change. New core exports then crash the agent (`does not provide an export named '…'`) and every workflow looks like “AI temporarily unavailable”. `pnpm --filter @tsu-stack/agent rebuild:core-cache` (runs automatically from `dev`) regenerates that file.
 - **Memory (hub chat):** Agents with `new Memory()` need `memory: { thread, resource }` on chat/generate bodies (see `packages/api/src/lib/agent/hub-memory.ts`). Do **not** pass only top-level `threadId`/`resourceId` — prepare-stream ignores those and throws `threadId "undefined"`. Auth middleware still sets resourceId via `mapUserToResourceId`.
 
 ## Layout conventions

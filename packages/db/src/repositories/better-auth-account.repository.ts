@@ -12,6 +12,7 @@ export type GitHubAccountTokens = {
   accessTokenExpiresAt: Date | null;
   refreshTokenExpiresAt: Date | null;
   scope: string | null;
+  updatedAt: Date;
 };
 
 export const betterAuthAccountRepository = {
@@ -55,7 +56,8 @@ export const betterAuthAccountRepository = {
         refreshToken: account.refreshToken,
         accessTokenExpiresAt: account.accessTokenExpiresAt,
         refreshTokenExpiresAt: account.refreshTokenExpiresAt,
-        scope: account.scope
+        scope: account.scope,
+        updatedAt: account.updatedAt
       })
       .from(account)
       .where(and(eq(account.userId, userId), eq(account.providerId, providerId)))

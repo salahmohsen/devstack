@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  applyJobAlertDigestGuard,
   heuristicClassifyMail,
   isJobAlertDigestMail,
   suppressCareerLabelsForJobAlertDigest,
@@ -79,6 +80,15 @@ describe("isJobAlertDigestMail", () => {
     ).toBe(true);
   });
 
+  it("does not treat LinkedIn messaging digests as job alerts", () => {
+    expect(
+      isJobAlertDigestMail({
+        fromEmail: "messaging-digest-noreply@linkedin.com",
+        subject: "Hatem just messaged you"
+      })
+    ).toBe(false);
+  });
+
   it("does not treat Jack and Jill onboarding as a digest", () => {
     expect(
       isJobAlertDigestMail({
@@ -123,6 +133,46 @@ describe("heuristicClassifyMail", () => {
       })
     );
     expect(result.systemLabels).toEqual(["interview"]);
+  });
+});
+
+describe("applyJobAlertDigestGuard", () => {
+  it("forces job_notifier when AI mislabels a LinkedIn digest as interview", () => {
+    const guarded = applyJobAlertDigestGuard(
+      baseInput({
+        fromEmail: "jobalerts-noreply@linkedin.com",
+        subject: "Jobs you may be interested in",
+        preview: "Interview roles and more"
+      }),
+      {
+        labels: ["interview"],
+        systemLabels: ["interview"],
+        source: "llm",
+        confidence: 0.8,
+        notes: "llm:interview"
+      }
+    );
+    expect(guarded.systemLabels).toEqual(["job_notifier"]);
+    expect(guarded.labels).toContain("job_notifier");
+    expect(guarded.notes).toMatch(/guard:job_alert_digest/);
+  });
+
+  it("does not override a real offer", () => {
+    const guarded = applyJobAlertDigestGuard(
+      baseInput({
+        fromEmail: "hr@acme.example",
+        subject: "Offer letter — Senior Engineer",
+        preview: "We are pleased to offer you the position"
+      }),
+      {
+        labels: ["offer"],
+        systemLabels: ["offer"],
+        source: "llm",
+        confidence: 0.9,
+        notes: "llm:offer"
+      }
+    );
+    expect(guarded.systemLabels).toEqual(["offer"]);
   });
 });
 

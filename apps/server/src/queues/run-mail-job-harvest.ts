@@ -1,3 +1,4 @@
+import { loadSeekerMatchEvidence } from "@tsu-stack/api/lib/application/load-seeker-match-evidence";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
@@ -6,6 +7,7 @@ import {
   defaultJobPreference,
   isValidHarvestedJob,
   resolveApplicationSourceFields,
+  type HarvestJobPreference,
   type JobPreference,
   type MailJobHarvestResult,
   type ScoredHarvestedJob
@@ -89,7 +91,11 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
-  const prefs = await loadPreference(row.userId);
+  const [prefs, evidence] = await Promise.all([
+    loadPreference(row.userId),
+    loadSeekerMatchEvidence(row.userId)
+  ]);
+  const harvestPreference: HarvestJobPreference = { ...prefs, evidence };
   const llm = await resolveRuntimeAiCredentials(row.userId, "classify");
   // Shared diagnostic fields — emitted once on terminal outcome.
   const harvestContext = {
@@ -100,6 +106,8 @@ export async function runMailJobHarvest(input: {
     minMatchScore: prefs.minMatchScore,
     roleKeywordCount: prefs.roleKeywords?.length ?? 0,
     excludeKeywordCount: prefs.excludeKeywords?.length ?? 0,
+    evidenceRoleTitles: evidence.roleTitles.length,
+    evidenceStacks: evidence.stackNames.length,
     hasByoApiKey: Boolean(llm.apiKey?.trim()),
     modelId: llm.modelId ?? null
   };
@@ -112,7 +120,7 @@ export async function runMailJobHarvest(input: {
     subject: row.subject ?? "",
     bodyText: row.bodyText ?? "",
     bodyHtml: row.bodyHtml,
-    preference: prefs,
+    preference: harvestPreference,
     llm
   });
 

@@ -1,13 +1,22 @@
 import {
   ConnectionsStatusOutputSchema,
   GmailSyncResultSchema,
+  RefreshGithubConnectionOutputSchema,
   scopeListIncludesGmail,
   StartGmailWatchOutputSchema,
   UpdateGmailAutoSyncInputSchema,
   UpdateGmailAutoSyncOutputSchema
 } from "@tsu-stack/core";
-import { betterAuthAccountRepository, userGmailSyncRepository } from "@tsu-stack/db/repositories";
+import {
+  betterAuthAccountRepository,
+  githubConfigRepository,
+  userGmailSyncRepository
+} from "@tsu-stack/db/repositories";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
+import {
+  invalidatePublicGitHubSourceCache,
+  resolveWorkingGitHubAccessToken
+} from "@tsu-stack/github/shared/public-github-source";
 
 import { startGmailWatch } from "#@/lib/gmail/start-gmail-watch";
 import { syncGmailInbox } from "#@/lib/gmail/sync-gmail-inbox";
@@ -22,10 +31,11 @@ export const connectionsRouter = {
     .output(ConnectionsStatusOutputSchema)
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
-      const [google, github, gmailSync] = await Promise.all([
+      const [google, github, gmailSync, githubConfig] = await Promise.all([
         betterAuthAccountRepository.findGoogleAccountForUser(userId),
         betterAuthAccountRepository.findGitHubAccountForUser(userId),
-        userGmailSyncRepository.findByUserId(userId)
+        userGmailSyncRepository.findByUserId(userId),
+        githubConfigRepository.findByUserId(userId)
       ]);
 
       const googleAvailable = Boolean(
@@ -50,7 +60,12 @@ export const connectionsRouter = {
           connected: Boolean(github),
           accountId: github?.accountId ?? null,
           scope: github?.scope ?? null,
-          available: githubAvailable
+          available: githubAvailable,
+          username: githubConfig?.githubUsername?.trim()
+            ? githubConfig.githubUsername.trim()
+            : null,
+          tokenExpiresAt: github?.accessTokenExpiresAt ?? null,
+          lastRefreshedAt: github?.updatedAt ?? null
         },
         gmailSync: {
           connected: Boolean(google),
@@ -150,5 +165,31 @@ export const connectionsRouter = {
         historyId: result.historyId,
         expiration: result.expiration
       };
+    }),
+
+  refreshGithub: protectedProcedure
+    .route({
+      description:
+        "Refresh the GitHub OAuth access token on the server without sending the user through GitHub OAuth again.",
+      method: "POST"
+    })
+    .output(RefreshGithubConnectionOutputSchema)
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+      const github = await betterAuthAccountRepository.findGitHubAccountForUser(userId);
+      if (!github) {
+        return { ok: false as const, reason: "not_connected" as const };
+      }
+
+      invalidatePublicGitHubSourceCache(userId);
+      const resolved = await resolveWorkingGitHubAccessToken(github);
+      if (resolved.token === null) {
+        return { ok: false as const, reason: "needs_reauth" as const };
+      }
+      if (resolved.login) {
+        await githubConfigRepository.upsertUsername(userId, resolved.login).catch(() => undefined);
+      }
+      invalidatePublicGitHubSourceCache(userId);
+      return { ok: true as const };
     })
 };

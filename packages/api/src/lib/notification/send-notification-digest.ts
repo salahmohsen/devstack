@@ -40,7 +40,8 @@ export async function sendNotificationDigestForUser(userId: string): Promise<{
             href: p.href
           };
         }),
-        dashboardUrl
+        dashboardUrl,
+        logoUrl: `${base}/logo192.png`
       })
     });
   } catch {

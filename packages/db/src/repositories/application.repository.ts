@@ -432,6 +432,14 @@ export const applicationRepository = {
       .returning({ id: application.id });
   },
 
+  /** Hard-delete every application for a tenant (activity cascades). */
+  async deleteAllByUserId(userId: string) {
+    return getDb()
+      .delete(application)
+      .where(eq(application.userId, userId))
+      .returning({ id: application.id });
+  },
+
   /**
    * Hard-delete dismissed applications last updated before `cutoff` (auto-purge).
    * Returns cover keys for best-effort object cleanup. Activity cascades via FK.

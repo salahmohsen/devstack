@@ -1,18 +1,26 @@
-import { Button, Text } from "react-email";
+import { Heading, Text } from "react-email";
 
-import { EmailLayout } from "#@/templates/layout-email";
+import { EmailCta, EmailFooterNote, EmailLayout } from "#@/templates/layout-email";
 
-// TODO: add a template for the email using React EMAIL instead of plain text
-const VerifyEmail = ({ url, username }: { url: string; username: string }) => (
-  <EmailLayout preview="Verify your email address">
-    <Text className="text-2xl font-bold text-gray-800">Verify your email</Text>
-    <Text className="text-gray-600">Hi {username},</Text>
-    <Text className="text-gray-600">
+const VerifyEmail = ({
+  url,
+  username,
+  logoUrl
+}: {
+  url: string;
+  username: string;
+  logoUrl?: string | null;
+}) => (
+  <EmailLayout preview="Verify your email address" logoUrl={logoUrl}>
+    <Heading className="mx-0 my-7.5 p-0 text-center text-[24px] font-normal text-black">
+      Verify your email
+    </Heading>
+    <Text className="text-[14px] leading-6 text-black">Hi {username},</Text>
+    <Text className="text-[14px] leading-6 text-black">
       Please click the button below to verify your email address:
     </Text>
-    <Button className="rounded-md bg-blue-600 px-6 py-3 font-medium text-white" href={url}>
-      Verify Email
-    </Button>
+    <EmailCta href={url} label="Verify email" />
+    <EmailFooterNote>If you did not create an account, you can ignore this email.</EmailFooterNote>
   </EmailLayout>
 );
 
@@ -20,5 +28,6 @@ export default VerifyEmail;
 
 VerifyEmail.PreviewProps = {
   url: "https://example.com/verify-email",
-  username: "John Doe"
+  username: "John Doe",
+  logoUrl: "https://example.com/logo192.png"
 };

@@ -235,7 +235,7 @@ describe("HarvestedJobSchema LLM coercion", () => {
 
 describe("scoreJobAgainstPreference", () => {
   const prefs = {
-    workModes: ["remote"] as const,
+    workModes: ["remote" as const],
     locations: [] as string[],
     roleKeywords: ["frontend", "react", "engineer", "developer", "software"],
     excludeKeywords: [] as string[],
@@ -292,6 +292,156 @@ describe("scoreJobAgainstPreference", () => {
       { ...prefs, workModes: ["remote"] }
     );
     expect(r.passed).toBe(false);
+  });
+
+  it("treats multi workModes as OR (any preferred mode matches)", () => {
+    const multi = {
+      workModes: ["remote" as const, "hybrid" as const],
+      locations: [] as string[],
+      roleKeywords: [] as string[],
+      excludeKeywords: [] as string[],
+      salaryMin: null,
+      salaryCurrency: null,
+      minMatchScore: 40
+    };
+    const baseJob = {
+      title: "Software Engineer",
+      companyName: "Acme",
+      location: "Berlin",
+      listingUrl: "https://www.linkedin.com/jobs/view/10",
+      applyUrl: null,
+      applyMethod: "external" as const,
+      source: "linkedin" as const
+    };
+
+    const hybrid = scoreJobAgainstPreference({ ...baseJob, workMode: "hybrid" }, multi);
+    expect(hybrid.reasons.some((r) => r.includes("matches preferred"))).toBe(true);
+    expect(hybrid.score).toBeGreaterThanOrEqual(60);
+
+    const remote = scoreJobAgainstPreference({ ...baseJob, workMode: "remote" }, multi);
+    expect(remote.reasons.some((r) => r.includes("matches preferred"))).toBe(true);
+
+    const onsite = scoreJobAgainstPreference({ ...baseJob, workMode: "onsite" }, multi);
+    expect(onsite.reasons.some((r) => r.includes("not in preferred"))).toBe(true);
+    expect(onsite.score).toBeLessThan(hybrid.score);
+  });
+
+  it("does not filter by work mode when workModes is empty", () => {
+    const open = {
+      workModes: [] as Array<"remote" | "hybrid" | "onsite">,
+      locations: [] as string[],
+      roleKeywords: [] as string[],
+      excludeKeywords: [] as string[],
+      salaryMin: null,
+      salaryCurrency: null,
+      minMatchScore: 40
+    };
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Engineer",
+        companyName: "Acme",
+        location: "NYC",
+        listingUrl: "https://www.linkedin.com/jobs/view/11",
+        applyUrl: null,
+        applyMethod: "unknown",
+        workMode: "onsite",
+        source: "linkedin"
+      },
+      open
+    );
+    expect(r.reasons.every((reason) => !reason.includes("work mode"))).toBe(true);
+  });
+
+  const frontendEvidence = {
+    roleTitles: ["Senior Frontend Engineer", "Full Stack Developer"],
+    organizations: ["Acme"],
+    stackNames: ["React", "TypeScript", "Next.js", "Node.js"],
+    featuredStackNames: ["React", "TypeScript"],
+    projectTitles: ["Personal Hub"]
+  };
+
+  const openPrefs = {
+    workModes: [] as Array<"remote" | "hybrid" | "onsite">,
+    locations: [] as string[],
+    roleKeywords: [] as string[],
+    excludeKeywords: [] as string[],
+    salaryMin: null,
+    salaryCurrency: null,
+    minMatchScore: 60
+  };
+
+  it("passes a profile-aligned role when preferences are open", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Senior React Engineer",
+        companyName: "Linear",
+        location: "Remote",
+        listingUrl: "https://www.linkedin.com/jobs/view/20",
+        applyUrl: null,
+        applyMethod: "easy_apply",
+        workMode: "remote",
+        source: "linkedin",
+        description: "Build product UI with React and TypeScript."
+      },
+      openPrefs,
+      frontendEvidence
+    );
+    expect(r.passed).toBe(true);
+    expect(r.score).toBeGreaterThanOrEqual(60);
+    expect(r.reasons.some((reason) => /stack|experience|featured/i.test(reason))).toBe(true);
+  });
+
+  it("rejects orthogonal careers when profile evidence exists", () => {
+    const nurse = scoreJobAgainstPreference(
+      {
+        title: "Registered Nurse",
+        companyName: "City Hospital",
+        location: "Cairo",
+        listingUrl: "https://www.linkedin.com/jobs/view/21",
+        applyUrl: null,
+        applyMethod: "unknown",
+        workMode: "onsite",
+        source: "linkedin"
+      },
+      openPrefs,
+      frontendEvidence
+    );
+    expect(nurse.passed).toBe(false);
+    expect(nurse.reasons).toContain("no profile evidence fit");
+
+    const sales = scoreJobAgainstPreference(
+      {
+        title: "Enterprise Account Executive",
+        companyName: "SaaS Co",
+        location: "NYC",
+        listingUrl: "https://www.linkedin.com/jobs/view/22",
+        applyUrl: null,
+        applyMethod: "unknown",
+        workMode: "hybrid",
+        source: "linkedin"
+      },
+      openPrefs,
+      frontendEvidence
+    );
+    expect(sales.passed).toBe(false);
+  });
+
+  it("does not let profile stacks override an explicit role-keyword miss", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Registered Nurse",
+        companyName: "Clinic",
+        listingUrl: "https://www.linkedin.com/jobs/view/23",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin",
+        description: "We use React internally."
+      },
+      { ...prefs, roleKeywords: ["frontend", "react"] },
+      frontendEvidence
+    );
+    expect(r.passed).toBe(false);
+    expect(r.reasons).toContain("no role keyword in title");
   });
 });
 

@@ -2,7 +2,7 @@ import geistMonoLatin from "@fontsource-variable/geist-mono/files/geist-mono-lat
 import geistVariableLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 import { a11yDevtoolsPlugin } from "@tanstack/devtools-a11y/react";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { formDevtoolsPlugin } from "@tanstack/react-form-devtools";
+import { FormDevtoolsPanel } from "@tanstack/react-form-devtools";
 import { type QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
@@ -21,6 +21,7 @@ import { TooltipProvider } from "@tsu-stack/ui/components/tooltip";
 import { generateAppSeo } from "@/shared/lib/seo";
 import { ProgressProvider } from "@/shared/providers/progress.provider";
 import appCss from "@/shared/styles/app.css?url";
+import { CuelumeProvider } from "@/shared/ui/cuelume-provider";
 
 import { DefaultErrorPage } from "@/pages/default-error";
 
@@ -94,6 +95,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <TooltipProvider>
             <ProgressProvider>
               <NuqsAdapter>
+                <CuelumeProvider />
                 {children}
                 <Toaster richColors />
               </NuqsAdapter>
@@ -107,7 +109,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                     name: "TanStack Router",
                     render: <TanStackRouterDevtoolsPanel />
                   },
-                  formDevtoolsPlugin(),
+                  {
+                    name: "TanStack Form",
+                    render: <FormDevtoolsPanel />
+                  },
                   a11yDevtoolsPlugin()
                 ]}
               />

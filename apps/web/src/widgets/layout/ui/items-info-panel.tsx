@@ -12,9 +12,7 @@ type ItemsInfoPanelProps<T> = {
  * Renders content into the dashboard's <SidePanelPortal>.
  *
  * When `open` is false, nothing is rendered and the portal's slot
- * auto-collapses via the `SidePanelSlot` MutationObserver. This means
- * the side panel "disappears" between selections without any extra
- * cleanup in the page.
+ * auto-collapses via the `SidePanelSlot` MutationObserver.
  */
 export function ItemsInfoPanel<T>({ open, item, children }: ItemsInfoPanelProps<T>) {
   if (!open || !item) return null;

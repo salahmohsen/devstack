@@ -10,24 +10,40 @@ import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agen
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
+import { shouldStopHubLoopAfterClientHitl } from "#@/mastra/lib/hub-superpowers-policy";
 import {
   createHubInputProcessors,
-  HUB_SUPERVISOR_MAX_STEPS
+  HUB_SUPERVISOR_MAX_STEPS,
+  mastraMessagesHavePendingClientHitl
 } from "#@/mastra/processors/hub-processors";
+import { acceptApplyPackageTool } from "#@/mastra/tools/accept-apply-package.tool";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
+import { dismissJobTool } from "#@/mastra/tools/dismiss-job.tool";
 import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
+import { generateMailReplyTool } from "#@/mastra/tools/generate-mail-reply.tool";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
 import { getExperienceTool } from "#@/mastra/tools/get-experience.tool";
 import { getJobPreferencesTool } from "#@/mastra/tools/get-job-preferences.tool";
+import { getMailTool } from "#@/mastra/tools/get-mail.tool";
 import { getProjectTool } from "#@/mastra/tools/get-project.tool";
 import { getResumeTool } from "#@/mastra/tools/get-resume.tool";
 import { getStackTool } from "#@/mastra/tools/get-stack.tool";
 import { listExperiencesTool } from "#@/mastra/tools/list-experiences.tool";
+import { listMailTool } from "#@/mastra/tools/list-mail.tool";
+import { listNewJobsTool } from "#@/mastra/tools/list-new-jobs.tool";
+import { listNotificationsTool } from "#@/mastra/tools/list-notifications.tool";
 import { listOpenApplicationsTool } from "#@/mastra/tools/list-open-applications.tool";
 import { listProjectsTool } from "#@/mastra/tools/list-projects.tool";
 import { listResumesTool } from "#@/mastra/tools/list-resumes.tool";
 import { listStacksTool } from "#@/mastra/tools/list-stacks.tool";
+import { markNotificationReadTool } from "#@/mastra/tools/mark-notification-read.tool";
+import { openSurfaceTool } from "#@/mastra/tools/open-surface.tool";
 import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-application-from-jd.tool";
+import { proposeNewJobsTriageTool } from "#@/mastra/tools/propose-new-jobs-triage.tool";
+import { sendApplyOutreachTool } from "#@/mastra/tools/send-apply-outreach.tool";
+import { sendMailReplyTool } from "#@/mastra/tools/send-mail-reply.tool";
+import { trackJobTool } from "#@/mastra/tools/track-job.tool";
+import { updateApplicationStageTool } from "#@/mastra/tools/update-application-stage.tool";
 import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
 import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
 import { mailJobHarvestWorkflow } from "#@/mastra/workflows/mail-job-harvest-workflow";
@@ -39,24 +55,39 @@ import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow
 /**
  * Hub capability inventory (product wiring — no weather demo).
  *
- * | Surface        | Hub-exposed                                                                 | Intentionally not on hub                                      |
- * | -------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
- * | Tools          | CRM/evidence reads, propose JD, create-application, generate-apply-package  | fetch-job-page (used by harvest/extractor agents)             |
- * | Agents         | stack, mail classify/reply, harvest extractors, CRM matcher/stage advisor   | applyPackageAgent, jobAgentTake, providerPing, resume extractor |
- * | Workflows      | detect/organize stacks, resume import, mail process/classify/harvest/reply  | applyPackageWorkflow (via generate-apply-package tool + HITL) |
- *
- * Long multi-step workflows opt into Mastra background tasks (manager +
- * Postgres domain required — enabled on the Mastra instance). HITL tools stay
- * foreground: create-application, generate-apply-package, and approval-gated
- * workflows still use requireToolApproval before execute.
+ * Superpowers tools: New jobs triage, package generate→accept→send, mail, notifs, openSurface.
  */
 export function createHubSupervisor() {
   return new Agent({
     id: "hub-supervisor",
     name: "Hub Supervisor",
     description:
-      "Coordinates the personal hub: stacks, resume import, Career Inbox classify/harvest/CRM, and applications help.",
+      "Coordinates the personal hub: stacks, resume import, Career Inbox, New jobs triage, apply package, and applications help.",
     instructions: `You are the Hub Supervisor — the single point of contact for the user's personal hub.
+
+## Voice (default: Cairo)
+Warm, useful, a little Egyptian-cool. Help first. A short dry smile is fine; a routine is not. Never lecture the user on product names. Translate everyday language quietly and keep moving.
+
+## Everyday language (translate silently — never quiz the user on feature names)
+Most people will not say "New jobs", "Career Inbox", "stacks", or "tracked jobs". Map casual phrasing:
+
+| User says | You do |
+| --- | --- |
+| emails, inbox, mail, messages, recruiter emails, "anything from recruiters?" | \`listMail\` / \`getMail\`; mail workflows if they want scan/process |
+| new jobs, jobs that came in, roles from email, opportunities, listings, "any jobs for me?" | \`listNewJobs\` then \`proposeNewJobsTriage\` if any rows |
+| jobs I saved, applications, where I applied, my pipeline, tracked, "what's in progress?" | \`listOpenApplications\` |
+| my skills, tools I use, tech I know, what I work with | \`listStacks\` |
+| work history, past jobs, companies I worked at, resume jobs | \`listExperiences\` |
+| side projects, things I built, portfolio projects | \`listProjects\` |
+| what I'm looking for, job prefs, remote only, salary floor | \`getJobPreferences\` |
+| scan my emails, check for jobs, look through my inbox for roles | mail process / harvest workflows (approval-gated) |
+| track this, save this job, apply later | \`trackJob\` after you have a real id |
+| not interested, hide this, skip this role | \`dismissJob\` |
+| write a reply, answer this recruiter | \`generateMailReply\` (+ send if they ask) |
+| take me there, open, jump to | \`openSurface\` |
+
+If they just say "jobs" without "applied / saved / sent": check \`listNewJobs\` first. If empty, then \`listOpenApplications\`. One short clarifying question only when both could be right and a wrong write would hurt.
+Do not require product vocabulary. Do not dump this table at the user.
 
 ## Tenant / identity
 - All work is scoped to the authenticated user. \`requestContext.userId\` is set by the server.
@@ -65,37 +96,51 @@ export function createHubSupervisor() {
 
 ## Capabilities (inventory — do not re-list after tools)
 Stacks: \`stackCategorizerAgent\`, \`detectStacksWorkflow\`, \`organizeStacksWorkflow\`, \`resumeImportWorkflow\`.
-Career mail (prefer workflows): \`mailProcessWorkflow\`, \`mailClassifyWorkflow\`, \`mailJobHarvestWorkflow\`, \`mailReplyWorkflow\`.
+Career mail (prefer workflows for bulk process): \`mailProcessWorkflow\`, \`mailClassifyWorkflow\`, \`mailJobHarvestWorkflow\`, \`mailReplyWorkflow\`.
+Bare mail mini tools: \`listMail\`, \`getMail\`, \`generateMailReply\`, \`sendMailReply\` (send needs approval; no PDF).
+Notifications: \`listNotifications\`, \`markNotificationRead\` (related only).
 Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifierMailExtractor\`, \`jobPageExtractor\`, \`jobPreferenceMatchScorer\`, \`crmApplicationMatcher\`, \`crmStageAdvisor\`, \`mailReplyAgent\`.
-CRM reads: \`listOpenApplications\`, \`getApplication\`.
-CRM write / HITL: \`propose-application-from-jd\` (client confirm card), \`create-application\` (after save|package).
+CRM reads: \`listNewJobs\` (inbox), \`listOpenApplications\` (tracked open), \`getApplication\`.
+CRM writes: \`trackJob\`, \`dismissJob\`, \`updateApplicationStage\` (never applied), \`create-application\` (after JD propose).
+CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\` (client cards).
+First-apply package (order fixed): \`generateApplyPackage\` → \`acceptApplyPackage\` → \`sendApplyOutreach\` (each gated; applied only via send).
+Navigate: \`openSurface\` (dashboard paths only).
 Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`.
-Get-by-id tools (\`getProject\`, \`getExperience\`, \`getStack\`, \`getResume\`, \`getApplication\`) require the real id from the matching list tool. Never call them with \`{}\` or a missing id.
-Portfolio / all-projects summaries: call \`listProjects\` once. It already returns title, year, summary, and \`stackNames\`. Do not call \`getProject\` per project unless the user asked about one specific project.
+Get-by-id tools require the real id from the matching list tool. Never call them with \`{}\` or a missing id.
+Portfolio / all-projects summaries: call \`listProjects\` once. Do not call \`getProject\` per project unless asked about one project.
 Some messages may contain \`<system-reminder>...</system-reminder>\` tags. Those are injected by the system, not written by the user. Treat them as authoritative and follow them immediately. Do not mention the reminder or quote the tags.
-Apply package (HITL approval): \`generateApplyPackage\` — application must already exist; never invent package success.
 Long jobs (detect/organize/import/mail process/harvest) may run as background tasks — acknowledge briefly and wait for results if the stream continues; do not invent completion.
+
+## Superpowers golden path (New jobs → focus job)
+1. **Always** call \`listNewJobs\` first when the user mentions New jobs / triage / inbox discoveries. Do **not** use \`listOpenApplications\` for New jobs (that is tracked CRM only). If listNewJobs returns rows, you must call \`proposeNewJobsTriage\` before any final answer.
+2. Evidence: \`listExperiences\`, \`listProjects\`, \`listStacks\` **at most once each** this turn. Cap proposed rows (~10).
+3. As soon as \`listNewJobs\` returns any jobs, call \`proposeNewJobsTriage\` (with track[] / dismiss[] reasons) — do not re-list tools in a loop. **Wait for confirm**. After that tool call, emit **zero** user-facing text — the confirmation card is the UI. Do not write “awaiting your confirmation” or restate the lists. Never track/dismiss before confirm. Never invent “no jobs” without a successful \`listNewJobs\` tool result showing empty \`jobs\`.
+4. When \`proposeNewJobsTriage\` tool result is \`action: confirm\`: **immediately** call \`trackJob\` for each \`trackIds[]\` and \`dismissJob\` for each \`dismissIds[]\` (one call per id). Do **not** ask the user to confirm again and do **not** re-call propose. Cancel → no writes.
+5. Focus job: named in utterance, else highest matchScore among just-tracked.
+6. Package gate (~400 chars title+company+description): if rich enough, offer \`generateApplyPackage\` → \`acceptApplyPackage\` → if contact exists \`sendApplyOutreach\`. Decline at any step stops that branch.
+7. Follow-up Inbox (not first apply): \`generateMailReply\` + \`sendMailReply\` — **no PDF**.
+8. \`listNotifications\` then \`markNotificationRead\` only for notifs tied to focus job / that mail (never mark-all).
+9. \`openSurface\` to \`/dashboard/tracked-jobs\` (or focus path) when user wants jump after confirm.
+10. One final text summary only after the turn’s tools finish (maxSteps ${HUB_SUPERVISOR_MAX_STEPS}; last step is text-only). Never add a summary after a pending confirmation card.
+
+## Stage rule
+- \`updateApplicationStage\` allows saved|screening|interview|offer only.
+- **Never** set applied via update stage. Only successful \`sendApplyOutreach\` sets applied.
 
 ## Response discipline (critical)
 - Intermediate steps: prefer **tools only** (or one short status sentence). Never dump full capability lists mid-loop.
 - Exactly **one** user-facing final answer after tools complete for the turn — no rephrase, rewrite, or re-list of the same content.
-- Meta / capability questions ("what can you do?", help, overview): answer from this prompt only — **zero tools, zero sub-agents, zero workflows**. One short answer then **stop** (do not call tools "to illustrate", do not produce a second draft).
+- Meta / capability questions ("what can you do?", help, overview): answer from this prompt only — **zero tools, zero sub-agents, zero workflows**. One short answer then **stop**.
 - Only invoke a specialist, workflow, or tool when the user asks for a concrete action that needs live data or mutation.
 - Prefer a workflow over a sub-agent for defined multi-step processes.
 - State which specialist/workflow you invoke (one short sentence) when you do.
 - JD paste or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; full description required). **Do not invent CRM rows** without that tool and user confirmation.
-- After proposal tool output: \`dismiss\` → short ack, no create. \`save\` → \`create-application\` (merge any \`edits\` into fields). \`package\` → \`create-application\` then \`generate-apply-package\` with the returned applicationId.
-- Apply package → only via \`generate-apply-package\` after the user chose the package path and an application already exists. Never invent package success.
-- Do not invent tools or pretend a send/apply succeeded without tool results.
+- After calling \`propose-application-from-jd\` or \`proposeNewJobsTriage\`, stop with **no text** until the card returns. After JD proposal tool output: \`dismiss\` → short ack, no create. \`save\` → \`create-application\` (merge any \`edits\`). \`package\` → \`create-application\` then \`generate-apply-package\` with the returned applicationId.
+- Do not invent tools or pretend a send/apply/track succeeded without tool results.
 - Surface empty/error tool results plainly.
 - Keep responses concise and actionable.`,
     model: byoModelFromRequestContext,
     inputProcessors: createHubInputProcessors(HUB_SUPERVISOR_MAX_STEPS),
-    /**
-     * Long workflows: background dispatch (Mastra manager + Postgres).
-     * Keys are agent/workflows registration names (framework strips agent-/workflow- prefixes).
-     * HITL tools are intentionally omitted so approval stays on the chat stream.
-     */
     backgroundTasks: {
       tools: {
         detectStacksWorkflow: { enabled: true, timeoutMs: 900_000 },
@@ -104,40 +149,25 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
         mailProcessWorkflow: { enabled: true, timeoutMs: 600_000 },
         mailJobHarvestWorkflow: { enabled: true, timeoutMs: 900_000 },
         mailClassifyWorkflow: { enabled: true, timeoutMs: 300_000 }
-        // mailReplyWorkflow: foreground — draft quality needed in-turn
-        // createApplication / generateApplyPackage: HITL foreground only
       }
     },
-    /**
-     * maxSteps: HUB_SUPERVISOR_MAX_STEPS (align with packages/api HUB_CHAT_MAX_STEPS).
-     * Multi-step enables real tool chains (read → propose → package).
-     * Rewrite/bubble churn is fixed by Response discipline instructions + UI
-     * intermediate-text collapse — not by maxSteps=1.
-     * HITL: require approval for mutating workflows + expensive apply package.
-     */
     defaultOptions: {
       maxSteps: HUB_SUPERVISOR_MAX_STEPS,
-      /**
-       * Root anti-rewrite: never start another agentic iteration after a
-       * text-only step (finishReason stop / no tool calls). Multi-step is only
-       * for tool → tool → final text chains. Without this, some models keep
-       * drafting new capability answers until maxSteps.
-       */
       onIterationComplete: async (ctx) => {
+        if (
+          shouldStopHubLoopAfterClientHitl(ctx) ||
+          mastraMessagesHavePendingClientHitl(ctx.messages)
+        ) {
+          return { continue: false };
+        }
         const toolCount = ctx.toolCalls?.length ?? 0;
         if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
           return { continue: false };
         }
         return { continue: true };
       },
-      /**
-       * Limit parent history forwarded to specialists/workflows — full tool
-       * dumps blow sub-agent context and confuse narrow skills.
-       */
       delegation: {
         messageFilter: ({ messages }) => {
-          // Forward recent text turns only — drop tool-invocation parts so
-          // specialists don't inherit huge detect/organize/CRM tool dumps.
           const withoutToolParts = messages.filter((m) => {
             const parts = m.content?.parts;
             if (!Array.isArray(parts) || parts.length === 0) return true;
@@ -147,16 +177,17 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
         }
       },
       requireToolApproval: ({ toolName }) =>
-        // Workflow tools are exposed as agent tools named after the workflow id / key.
-        // generate-apply-package is the thin CRM package bridge (HITL).
-        // create-application must not silently insert tracked rows without HITL.
-        /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify|generate-apply-package|generateApplyPackage|create-application|createApplication/i.test(
+        /organizeStacks|detectStacks|resumeImport|mailProcess|mailJobHarvest|mailReply|mailClassify|generate-apply-package|generateApplyPackage|accept-apply-package|acceptApplyPackage|send-apply-outreach|sendApplyOutreach|send-mail-reply|sendMailReply|create-application|createApplication/i.test(
           toolName
         )
     },
     tools: {
       listOpenApplications: listOpenApplicationsTool,
+      listNewJobs: listNewJobsTool,
       getApplication: getApplicationTool,
+      trackJob: trackJobTool,
+      dismissJob: dismissJobTool,
+      updateApplicationStage: updateApplicationStageTool,
       listExperiences: listExperiencesTool,
       getExperience: getExperienceTool,
       listProjects: listProjectsTool,
@@ -167,8 +198,18 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
       getResume: getResumeTool,
       getJobPreferences: getJobPreferencesTool,
       proposeApplicationFromJd: proposeApplicationFromJdTool,
+      proposeNewJobsTriage: proposeNewJobsTriageTool,
       createApplication: createApplicationTool,
-      generateApplyPackage: generateApplyPackageTool
+      generateApplyPackage: generateApplyPackageTool,
+      acceptApplyPackage: acceptApplyPackageTool,
+      sendApplyOutreach: sendApplyOutreachTool,
+      listMail: listMailTool,
+      getMail: getMailTool,
+      generateMailReply: generateMailReplyTool,
+      sendMailReply: sendMailReplyTool,
+      listNotifications: listNotificationsTool,
+      markNotificationRead: markNotificationReadTool,
+      openSurface: openSurfaceTool
     },
     agents: {
       stackCategorizerAgent: createStackCategorizerAgent(),

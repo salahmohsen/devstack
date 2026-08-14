@@ -6,7 +6,7 @@ import {
   Filter,
   Inbox,
   KeyRound,
-  Link2,
+  Blocks,
   Mail,
   Sparkles,
   UserRound
@@ -43,7 +43,7 @@ const SETTINGS_NAV: readonly NavItem[] = [
   {
     id: "profile",
     label: "Profile",
-    description: "Public identity, contacts, and portfolio path",
+    description: "Public identity and contacts",
     to: "/dashboard/settings/profile",
     icon: UserRound,
     group: "You"
@@ -51,7 +51,7 @@ const SETTINGS_NAV: readonly NavItem[] = [
   {
     id: "account",
     label: "Account",
-    description: "Sessions and sign-in security",
+    description: "Username, sessions, and sign-in security",
     to: "/dashboard/settings/account",
     icon: KeyRound,
     group: "You"
@@ -74,10 +74,10 @@ const SETTINGS_NAV: readonly NavItem[] = [
   },
   {
     id: "connections",
-    label: "Connections",
-    description: "Google, Gmail, and GitHub links",
+    label: "Integrations",
+    description: "Gmail and GitHub integrations",
     to: "/dashboard/settings/connections",
-    icon: Link2,
+    icon: Blocks,
     group: "Workspace"
   },
   {
@@ -135,12 +135,17 @@ export const SettingsLayout = () => {
   const activeNav = SETTINGS_NAV.find((item) => item.id === activeId) ?? SETTINGS_NAV[0]!;
 
   return (
-    <PageLayout>
+    <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
       <PageHeader title="Settings" description={activeNav.description} />
 
       <SurfaceIslandLayout
+        className="min-h-0 flex-1 overflow-hidden"
+        islandClassName="max-h-48 min-h-0 md:max-h-none"
         island={
-          <nav aria-label="Settings sections" className="flex flex-col gap-3 p-2">
+          <nav
+            aria-label="Settings sections"
+            className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2"
+          >
             {NAV_GROUPS.map((group) => {
               const items = SETTINGS_NAV.filter((item) => item.group === group);
               if (items.length === 0) return null;
@@ -156,6 +161,7 @@ export const SettingsLayout = () => {
                       <Link
                         key={item.id}
                         to={item.to}
+                        data-cuelume-hover="tick"
                         className={cn(
                           "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors",
                           "outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -178,7 +184,7 @@ export const SettingsLayout = () => {
           </nav>
         }
       >
-        <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-1 md:px-2">
+        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <Outlet />
         </div>
       </SurfaceIslandLayout>

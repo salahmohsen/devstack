@@ -10,7 +10,6 @@ import {
   FileTextIcon,
   InboxIcon,
   LinkIcon,
-  MailSearchIcon,
   MapPinIcon,
   PackageIcon,
   PencilIcon,
@@ -30,7 +29,8 @@ import {
 } from "@tsu-stack/core";
 import {
   AlertDialog,
-  AlertDialogClose,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -59,6 +59,7 @@ import { ListItem } from "@/shared/ui/list-item";
 
 import {
   ApplicationMatchScoreBadge,
+  ScanJobAlertsButton,
   clearPendingOpenApplicationId,
   useAgentTakeJob,
   useBatchDismissApplicationsMutation,
@@ -71,8 +72,7 @@ import {
   usePromoteApplicationMutation,
   useRefreshFromListingJob,
   useRegenerateAgentTakeMutation,
-  useRestoreApplicationMutation,
-  useScanJobAlertsMutation
+  useRestoreApplicationMutation
 } from "@/features/applications";
 
 import {
@@ -84,8 +84,8 @@ import {
   isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
-import { ItemsInfoPanel } from "@/widgets/layout";
 
+import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { FixPostingUrlDialog } from "@/pages/dashboard/new-jobs/ui/fix-posting-url-dialog";
 import { UpdateDescriptionDialog } from "@/pages/dashboard/new-jobs/ui/update-description-dialog";
 import { ApplicationFormSheet } from "@/pages/dashboard/tracked-jobs/application-form-sheet";
@@ -279,7 +279,6 @@ export function NewJobsPage() {
   const regenerateTake = useRegenerateAgentTakeMutation();
   const agentTakeJob = useAgentTakeJob();
   const deleteApps = useDeleteApplicationsMutation();
-  const scanJobAlerts = useScanJobAlertsMutation();
 
   const jobs = useMemo(() => listQuery.data ?? [], [listQuery.data]);
   const tabCounts: Record<InboxFilter, number> = {
@@ -416,17 +415,7 @@ export function NewJobsPage() {
         <PageHeader
           title="New jobs"
           description="AI discoveries from job alerts. Track to add to your pipeline, or dismiss."
-          actions={
-            <Button
-              type="button"
-              size="sm"
-              loading={scanJobAlerts.isPending}
-              onClick={() => void scanJobAlerts.mutateAsync({})}
-            >
-              <MailSearchIcon className="size-4" aria-hidden />
-              Scan job alerts
-            </Button>
-          }
+          actions={<ScanJobAlertsButton />}
         />
 
         <Tabs
@@ -497,15 +486,7 @@ export function NewJobsPage() {
                   description="Job alert digests that pass your preferences will show up here. Scan recent digests, or set preferences under Settings."
                   action={
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        loading={scanJobAlerts.isPending}
-                        onClick={() => void scanJobAlerts.mutateAsync({})}
-                      >
-                        <MailSearchIcon className="size-4" aria-hidden />
-                        Scan job alerts
-                      </Button>
+                      <ScanJobAlertsButton />
                       <Button
                         type="button"
                         size="sm"
@@ -656,9 +637,16 @@ export function NewJobsPage() {
           </div>
         </Tabs>
 
-        <ItemsInfoPanel open={isAnyOpen} item={liveViewItem}>
+        <ItemsInspectHost
+          open={isAnyOpen && editApp == null}
+          item={liveViewItem}
+          title="Job"
+          onOpenChange={(next) => {
+            if (!next) setViewItem(null);
+          }}
+        >
           {(item) => <ApplicationInfoPanel item={item} variant="discovery" />}
-        </ItemsInfoPanel>
+        </ItemsInspectHost>
 
         {packageApplication ? (
           <ApplyPackageSheet
@@ -741,9 +729,8 @@ export function NewJobsPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-              <Button
-                type="button"
+              <AlertDialogCancel disabled={deleteApps.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
                 variant="destructive"
                 loading={deleteApps.isPending}
                 onClick={() => {
@@ -761,7 +748,7 @@ export function NewJobsPage() {
                 }}
               >
                 Delete
-              </Button>
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogPopup>
         </AlertDialog>
@@ -780,15 +767,16 @@ export function NewJobsPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
-              <Button
-                type="button"
+              <AlertDialogCancel disabled={busyId === "__bulk_delete__"}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
                 variant="destructive"
                 loading={busyId === "__bulk_delete__"}
-                onClick={() => void bulkDeletePermanent()}
+                onClick={() => {
+                  void bulkDeletePermanent();
+                }}
               >
                 Delete
-              </Button>
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogPopup>
         </AlertDialog>

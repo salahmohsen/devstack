@@ -233,6 +233,7 @@ export const Sidebar001Item = memo(function Sidebar001Item({
           to={href}
           onClick={onClick}
           preload={false}
+          data-cuelume-hover="tick"
           activeOptions={{ exact: true }}
           activeProps={{ className: "active" }}
           onMouseEnter={() => {

@@ -1,29 +1,26 @@
 "use client";
 
-import { BriefcaseIcon, XIcon } from "lucide-react";
-import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
+import { useStore } from "@tanstack/react-form";
+import { BriefcaseIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
   DEFAULT_MIN_MATCH_SCORE,
+  JobPreferenceFieldsSchema,
   WORK_MODE_LABELS,
   WORK_MODES,
   type WorkMode
 } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
-import { Badge } from "@tsu-stack/ui/components/badge";
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle
-} from "@tsu-stack/ui/components/frame";
-import { Input } from "@tsu-stack/ui/components/input";
-import { Label } from "@tsu-stack/ui/components/label";
-import { Slider } from "@tsu-stack/ui/components/slider";
+import { FieldGroup } from "@tsu-stack/ui/components/field";
+import { Form } from "@tsu-stack/ui/components/form";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
-import { ToggleGroup, ToggleGroupItem } from "@tsu-stack/ui/components/toggle-group";
+import { StatusBadge, type StatusState } from "@tsu-stack/ui/components/status-badge";
+import { normalizeTags } from "@tsu-stack/ui/components/tags-input";
+
+import { useAppForm } from "@/shared/form";
+import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 
 import {
   useGetJobPreferenceQuery,
@@ -32,8 +29,8 @@ import {
 } from "@/features/job-preference";
 
 import { useSettingsDirtyGuard } from "./settings-dirty-guard";
+import { SettingsFrame } from "./settings-frame";
 import { SettingsSaveBar } from "./settings-save-bar";
-import { SettingsSection } from "./settings-section";
 
 type FormState = {
   workModes: WorkMode[];
@@ -43,34 +40,20 @@ type FormState = {
   minMatchScore: number;
 };
 
-const MAX_LIST_ITEMS = 50;
-const MAX_ITEM_LENGTH = 120;
+const JobSettingsFormSchema = JobPreferenceFieldsSchema.pick({
+  workModes: true,
+  locations: true,
+  roleKeywords: true,
+  excludeKeywords: true,
+  minMatchScore: true
+});
 
-function normalizeList(items: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of items) {
-    const value = raw.trim();
-    if (!value) continue;
-    const key = value.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(value.slice(0, MAX_ITEM_LENGTH));
-    if (out.length >= MAX_LIST_ITEMS) break;
-  }
-  return out;
-}
-
-function listsEqual(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((v, i) => v === b[i]);
-}
-
-function workModesEqual(a: WorkMode[], b: WorkMode[]): boolean {
-  if (a.length !== b.length) return false;
-  const set = new Set(b);
-  return a.every((m) => set.has(m));
-}
+const WORK_MODE_OPTIONS = WORK_MODES.map((mode) => {
+  return {
+    value: mode,
+    label: WORK_MODE_LABELS[mode]
+  };
+});
 
 function formFromQuery(data: JobPreferenceQueryResult): FormState {
   return {
@@ -94,17 +77,12 @@ function isEmptyPrefs(form: FormState): boolean {
   );
 }
 
-function JobSettingsHeader() {
-  return (
-    <FrameHeader>
-      <FrameTitle className="flex items-center gap-2">
-        <BriefcaseIcon className="size-4 opacity-80" aria-hidden />
-        Jobs
-      </FrameTitle>
-      <FrameDescription>Used to filter jobs from email alerts</FrameDescription>
-    </FrameHeader>
-  );
-}
+const FORM_STATUS_LABELS = {
+  success: "Saved",
+  warning: "Changes unsaved",
+  pending: "Submitted",
+  failed: "Failed"
+} as const;
 
 /**
  * Shell: load / error / ready. Form hooks live only in the ready branch so React
@@ -115,35 +93,31 @@ export function JobSettings() {
 
   if (query.isError) {
     return (
-      <Frame>
-        <FrameHeader>
-          <FrameTitle className="flex items-center gap-2">
-            <BriefcaseIcon className="size-4 opacity-80" aria-hidden />
-            Jobs
-          </FrameTitle>
-          <FrameDescription>Could not load job preferences.</FrameDescription>
-        </FrameHeader>
-        <FramePanel>
-          <Alert variant="error">
-            <AlertTitle>Failed to load</AlertTitle>
-            <AlertDescription>Refresh the page or try again later.</AlertDescription>
-          </Alert>
-        </FramePanel>
-      </Frame>
+      <SettingsFrame
+        title="Jobs"
+        icon={<BriefcaseIcon className="size-4 opacity-80" aria-hidden />}
+        description="Could not load job preferences."
+      >
+        <Alert variant="error">
+          <AlertTitle>Failed to load</AlertTitle>
+          <AlertDescription>Refresh the page or try again later.</AlertDescription>
+        </Alert>
+      </SettingsFrame>
     );
   }
 
   if (query.isLoading || !query.data) {
     return (
-      <Frame>
-        <JobSettingsHeader />
-        <FramePanel>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Spinner className="size-4" />
-            Loading…
-          </div>
-        </FramePanel>
-      </Frame>
+      <SettingsFrame
+        title="Jobs"
+        icon={<BriefcaseIcon className="size-4 opacity-80" aria-hidden />}
+        description="Used to filter jobs from email alerts"
+      >
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner className="size-4" />
+          Loading…
+        </div>
+      </SettingsFrame>
     );
   }
 
@@ -152,262 +126,177 @@ export function JobSettings() {
 
 function JobSettingsForm({ data }: { data: JobPreferenceQueryResult }) {
   const upsert = useUpsertJobPreferenceMutation();
-  const [draft, setDraft] = useState<FormState | null>(null);
+  const serverValues = useMemo(() => formFromQuery(data), [data]);
+  const [flashSubmitted, setFlashSubmitted] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
 
-  const form = useMemo(() => {
-    if (draft) return draft;
-    return formFromQuery(data);
-  }, [data, draft]);
+  const form = useAppForm({
+    defaultValues: serverValues,
+    validators: {
+      onChange: createZodFormValidator(JobSettingsFormSchema)
+    },
+    onSubmit: async ({ value }) => {
+      setSaveFailed(false);
+      try {
+        const saved = await upsert.mutateAsync({
+          workModes: value.workModes,
+          locations: normalizeTags(value.locations, 50, 120),
+          roleKeywords: normalizeTags(value.roleKeywords, 50, 120),
+          excludeKeywords: normalizeTags(value.excludeKeywords, 50, 120),
+          minMatchScore: value.minMatchScore
+        });
+        form.reset(formFromQuery(saved));
+        setFlashSubmitted(true);
+        toast.success("Job preferences saved");
+      } catch {
+        setSaveFailed(true);
+        toast.error("Could not save job preferences");
+      }
+    }
+  });
 
-  const dirty = useMemo(() => {
-    const server = formFromQuery(data);
-    if (!workModesEqual(form.workModes, server.workModes)) return true;
-    if (!listsEqual(form.locations, server.locations)) return true;
-    if (!listsEqual(form.roleKeywords, server.roleKeywords)) return true;
-    if (!listsEqual(form.excludeKeywords, server.excludeKeywords)) return true;
-    if (form.minMatchScore !== server.minMatchScore) return true;
-    return false;
-  }, [form, data]);
+  useEffect(() => {
+    if (form.store.state.isDirty) return;
+    form.reset(serverValues);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- form API is stable; re-sync only when server values change
+  }, [serverValues]);
+
+  useEffect(() => {
+    if (!flashSubmitted) return;
+    const timer = window.setTimeout(() => setFlashSubmitted(false), 1000);
+    return () => window.clearTimeout(timer);
+  }, [flashSubmitted]);
 
   const discard = useCallback(() => {
-    setDraft(null);
-  }, []);
+    setSaveFailed(false);
+    setFlashSubmitted(false);
+    form.reset(serverValues);
+  }, [form, serverValues]);
 
-  const leaveGuard = useSettingsDirtyGuard(dirty, { onDiscard: discard });
+  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const values = useStore(form.store, (state) => state.values);
+  const leaveGuard = useSettingsDirtyGuard(isDirty, { onDiscard: discard });
 
-  function ensureDraft(): FormState {
-    if (draft) return draft;
-    const next = formFromQuery(data);
-    setDraft(next);
-    return next;
-  }
+  useEffect(() => {
+    setSaveFailed(false);
+  }, [values]);
 
-  function patch(mutator: (current: FormState) => FormState) {
-    setDraft(mutator(ensureDraft()));
-  }
-
-  async function handleSave() {
-    try {
-      await upsert.mutateAsync({
-        workModes: form.workModes,
-        locations: normalizeList(form.locations),
-        roleKeywords: normalizeList(form.roleKeywords),
-        excludeKeywords: normalizeList(form.excludeKeywords),
-        minMatchScore: form.minMatchScore
-      });
-      toast.success("Job preferences saved");
-      setDraft(null);
-    } catch {
-      toast.error("Could not save job preferences");
-    }
-  }
+  const formStatus: StatusState = upsert.isPending
+    ? "pending"
+    : flashSubmitted
+      ? "pending"
+      : saveFailed
+        ? "failed"
+        : isDirty
+          ? "warning"
+          : "success";
 
   return (
     <>
-      <Frame>
-        <JobSettingsHeader />
-
-        <FramePanel className="space-y-8">
-          {isEmptyPrefs(form) ? (
-            <p className="rounded-xl border border-dashed border-border/80 px-3 py-3 text-sm text-muted-foreground">
-              Used to filter jobs from email alerts. Add work modes, locations, or keywords so mail
-              harvest can match roles you care about.
-            </p>
-          ) : null}
-
-          <SettingsSection
-            title="Work modes"
-            description="Jobs outside selected modes are less likely to match. Leave empty to accept any."
-          >
-            <ToggleGroup
-              variant="outline"
-              value={form.workModes}
-              onValueChange={(next) => {
-                const modes = (next as string[]).filter((m): m is WorkMode =>
-                  (WORK_MODES as readonly string[]).includes(m)
-                );
-                patch((current) => {
-                  return { ...current, workModes: modes };
-                });
-              }}
-              className="flex flex-wrap"
-            >
-              {WORK_MODES.map((mode) => (
-                <ToggleGroupItem key={mode} value={mode}>
-                  {WORK_MODE_LABELS[mode]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </SettingsSection>
-
-          <SettingsSection
-            title="Locations"
-            description="Cities, regions, or countries you want in job digests."
-          >
-            <StringListField
-              id="job-locations"
-              values={form.locations}
-              placeholder="e.g. Berlin, Remote EU"
-              onChange={(locations) =>
-                patch((current) => {
-                  return { ...current, locations };
-                })
-              }
+      <SettingsFrame
+        title="Jobs"
+        icon={<BriefcaseIcon className="size-4 opacity-80" aria-hidden />}
+        description="Used to filter jobs from email alerts"
+        actions={
+          <>
+            {!isDirty && !upsert.isPending && !saveFailed && !flashSubmitted ? (
+              <StatusBadge state={formStatus} labels={FORM_STATUS_LABELS} />
+            ) : null}
+            <SettingsSaveBar
+              dirty={isDirty}
+              saving={upsert.isPending}
+              statusKey={values}
+              onSave={() => void form.handleSubmit()}
+              onDiscard={discard}
+              saveLabel="Save"
             />
-          </SettingsSection>
+          </>
+        }
+      >
+        <Form
+          className="space-y-8"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void form.handleSubmit();
+          }}
+        >
+          <form.Subscribe selector={(s) => s.values}>
+            {(values) =>
+              isEmptyPrefs(values) ? (
+                <p className="rounded-xl border border-dashed border-border/80 px-3 py-3 text-sm text-muted-foreground">
+                  Used to filter jobs from email alerts. Add work modes, locations, or keywords so
+                  mail harvest can match roles you care about.
+                </p>
+              ) : null
+            }
+          </form.Subscribe>
 
-          <SettingsSection
-            title="Role keywords"
-            description="Titles or skills that raise match score (e.g. TypeScript, Staff Engineer)."
-          >
-            <StringListField
-              id="job-role-keywords"
-              values={form.roleKeywords}
-              placeholder="e.g. Full-stack, React"
-              onChange={(roleKeywords) =>
-                patch((current) => {
-                  return { ...current, roleKeywords };
-                })
-              }
-            />
-          </SettingsSection>
+          <FieldGroup className="gap-6">
+            <form.AppField name="workModes">
+              {(field) => (
+                <field.ToggleGroupField
+                  label="Work modes"
+                  description="Jobs outside selected modes are less likely to match. Leave empty to accept any."
+                  options={WORK_MODE_OPTIONS}
+                  multiple
+                  variant="outline"
+                />
+              )}
+            </form.AppField>
 
-          <SettingsSection
-            title="Exclude keywords"
-            description="Hard negatives — roles or tech you never want harvested."
-          >
-            <StringListField
-              id="job-exclude-keywords"
-              values={form.excludeKeywords}
-              placeholder="e.g. PHP, Salesforce"
-              onChange={(excludeKeywords) =>
-                patch((current) => {
-                  return { ...current, excludeKeywords };
-                })
-              }
-            />
-          </SettingsSection>
+            <form.AppField name="locations">
+              {(field) => (
+                <field.TagsField
+                  label="Locations"
+                  description="Cities, regions, or countries you want in job digests. Press Enter or comma to add."
+                  placeholder="e.g. Berlin, Remote EU"
+                  maxItems={50}
+                  maxItemLength={120}
+                />
+              )}
+            </form.AppField>
 
-          <SettingsSection
-            title="Minimum match score"
-            description="Auto-harvest skips jobs below this score (0–100). Default is 60."
-          >
-            <div className="max-w-lg space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <Label htmlFor="job-min-match-score">Threshold</Label>
-                <span className="text-sm font-medium text-foreground tabular-nums">
-                  {form.minMatchScore}%
-                </span>
-              </div>
-              <Slider
-                id="job-min-match-score"
-                aria-label="Minimum match score"
-                min={0}
-                max={100}
-                step={1}
-                value={[form.minMatchScore]}
-                onValueChange={(value) => {
-                  const next = Array.isArray(value) ? value[0] : value;
-                  if (typeof next !== "number" || Number.isNaN(next)) return;
-                  patch((current) => {
-                    return {
-                      ...current,
-                      minMatchScore: Math.min(100, Math.max(0, Math.round(next)))
-                    };
-                  });
-                }}
-              />
-            </div>
-          </SettingsSection>
+            <form.AppField name="roleKeywords">
+              {(field) => (
+                <field.TagsField
+                  label="Role keywords"
+                  description="Titles or skills that raise match score (e.g. TypeScript, Staff Engineer). Press Enter or comma to add."
+                  placeholder="e.g. Full-stack, React"
+                  maxItems={50}
+                  maxItemLength={120}
+                />
+              )}
+            </form.AppField>
 
-          <SettingsSaveBar
-            dirty={dirty}
-            saving={upsert.isPending}
-            onSave={() => void handleSave()}
-            onDiscard={discard}
-            saveLabel="Save job preferences"
-          />
-        </FramePanel>
-      </Frame>
+            <form.AppField name="excludeKeywords">
+              {(field) => (
+                <field.TagsField
+                  label="Exclude keywords"
+                  description="Hard negatives — roles or tech you never want harvested. Press Enter or comma to add."
+                  placeholder="e.g. PHP, Salesforce"
+                  maxItems={50}
+                  maxItemLength={120}
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="minMatchScore">
+              {(field) => (
+                <field.SliderField
+                  label="Minimum match score"
+                  description="Auto-harvest skips jobs below this score (0–100). Default is 60."
+                  min={0}
+                  max={100}
+                  step={1}
+                  formatValue={(v) => `${v}%`}
+                />
+              )}
+            </form.AppField>
+          </FieldGroup>
+        </Form>
+      </SettingsFrame>
       {leaveGuard.alertDialog}
     </>
-  );
-}
-
-function StringListField({
-  id,
-  values,
-  placeholder,
-  onChange
-}: {
-  id: string;
-  values: string[];
-  placeholder?: string;
-  onChange: (next: string[]) => void;
-}) {
-  const [input, setInput] = useState("");
-
-  function addTokens(raw: string) {
-    const tokens = raw
-      .split(/[,;\n]/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (tokens.length === 0) return;
-    onChange(normalizeList([...values, ...tokens]));
-    setInput("");
-  }
-
-  function removeAt(index: number) {
-    onChange(values.filter((_, i) => i !== index));
-  }
-
-  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addTokens(input);
-      return;
-    }
-    if (e.key === "Backspace" && input === "" && values.length > 0) {
-      e.preventDefault();
-      removeAt(values.length - 1);
-    }
-  }
-
-  return (
-    <div className="space-y-2">
-      {values.length > 0 ? (
-        <ul className="flex flex-wrap gap-1.5" aria-label="Selected values">
-          {values.map((value, index) => (
-            <li key={`${value}-${index}`}>
-              <Badge variant="secondary" className="gap-1 pe-1">
-                <span className="max-w-56 truncate">{value}</span>
-                <button
-                  type="button"
-                  className="inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:bg-background/80 hover:text-foreground"
-                  aria-label={`Remove ${value}`}
-                  onClick={() => removeAt(index)}
-                >
-                  <XIcon className="size-3" />
-                </button>
-              </Badge>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <Input
-        id={id}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={onKeyDown}
-        onBlur={() => {
-          if (input.trim()) addTokens(input);
-        }}
-        placeholder={placeholder}
-        autoComplete="off"
-      />
-      <p className="text-xs text-muted-foreground">
-        Press Enter or comma to add. Max {MAX_LIST_ITEMS}.
-      </p>
-    </div>
   );
 }

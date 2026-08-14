@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { defaultJobPreference, isOpenJobPreference } from "#@/job-preference/utils";
+import {
+  buildSeekerMatchEvidence,
+  defaultJobPreference,
+  emptySeekerMatchEvidence,
+  isOpenJobPreference,
+  mergeJobPreference,
+  normalizeWorkModes,
+  seekerEvidenceHasSignal,
+  shouldPassAllHarvestJobs
+} from "#@/job-preference/utils";
 
 describe("isOpenJobPreference", () => {
   it("treats default empty filters as open", () => {
@@ -22,6 +31,83 @@ describe("isOpenJobPreference", () => {
         ...defaultJobPreference(),
         salaryMin: 100_000
       })
+    ).toBe(false);
+  });
+
+  it("is closed when any work mode is selected", () => {
+    expect(
+      isOpenJobPreference({
+        ...defaultJobPreference(),
+        workModes: ["remote", "hybrid"]
+      })
+    ).toBe(false);
+  });
+});
+
+describe("normalizeWorkModes", () => {
+  it("dedupes and preserves product order for multi-select", () => {
+    expect(normalizeWorkModes(["onsite", "remote", "remote", "hybrid"])).toEqual([
+      "remote",
+      "hybrid",
+      "onsite"
+    ]);
+  });
+
+  it("returns empty when none selected", () => {
+    expect(normalizeWorkModes([])).toEqual([]);
+  });
+});
+
+describe("mergeJobPreference", () => {
+  it("replaces workModes array on patch (including multi)", () => {
+    const current = { ...defaultJobPreference(), workModes: ["remote" as const] };
+    const merged = mergeJobPreference(current, {
+      workModes: ["remote", "hybrid"],
+      salaryCurrency: undefined
+    });
+    expect(merged.workModes).toEqual(["remote", "hybrid"]);
+  });
+
+  it("keeps current workModes when patch omits the field", () => {
+    const current = {
+      ...defaultJobPreference(),
+      workModes: ["hybrid" as const, "onsite" as const]
+    };
+    const merged = mergeJobPreference(current, {
+      minMatchScore: 70,
+      salaryCurrency: undefined
+    });
+    expect(merged.workModes).toEqual(["hybrid", "onsite"]);
+  });
+});
+
+describe("seeker match evidence", () => {
+  it("treats empty evidence as no signal", () => {
+    expect(seekerEvidenceHasSignal(emptySeekerMatchEvidence())).toBe(false);
+    expect(shouldPassAllHarvestJobs(defaultJobPreference())).toBe(true);
+  });
+
+  it("does not pass-all when the profile has stacks or titles", () => {
+    const evidence = buildSeekerMatchEvidence({
+      experiences: [{ title: "Frontend Engineer", organization: "Acme" }],
+      stacks: [{ name: "React", isFeatured: true }],
+      projects: [{ title: "Hub", stacks: [{ name: "TypeScript" }] }]
+    });
+    expect(evidence.featuredStackNames).toEqual(["React"]);
+    expect(evidence.stackNames).toEqual(expect.arrayContaining(["React", "TypeScript"]));
+    expect(shouldPassAllHarvestJobs(defaultJobPreference(), evidence)).toBe(false);
+  });
+
+  it("still pass-all when prefs are open and evidence is empty", () => {
+    expect(shouldPassAllHarvestJobs(defaultJobPreference(), emptySeekerMatchEvidence())).toBe(true);
+  });
+
+  it("never pass-all when role keywords are set", () => {
+    const evidence = buildSeekerMatchEvidence({
+      stacks: [{ name: "React", isFeatured: true }]
+    });
+    expect(
+      shouldPassAllHarvestJobs({ ...defaultJobPreference(), roleKeywords: ["frontend"] }, evidence)
     ).toBe(false);
   });
 });
