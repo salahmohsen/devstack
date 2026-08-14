@@ -44,39 +44,44 @@ Discovery is **search + inbox**, not a public job board product. Tracked jobs CR
 
 ## Frozen decisions (grill log)
 
-| #   | Topic                    | Decision                                                                                                                                                          |
-| --- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Catalog                  | Shared `job_posting`. One listing, many users.                                                                                                                    |
-| 2   | Shared AI                | **None.** Shared = HTTP fetch + fields the source already sent. Personal score / take / field-fix = that user’s BYO key on **their** row.                         |
-| 3   | Delivery                 | Hybrid: cheap retrieve → land → AI.                                                                                                                               |
-| 4   | Title                    | One combobox pack **or** custom title with **≥2** role keywords.                                                                                                  |
-| 5   | Title list               | Wider tech (see packs below).                                                                                                                                     |
-| 6   | Cheap score              | Tag hits on **title + structured catalog fields** (work mode, location, ATS skills/salary). Not full HTML JD. Exclude = kill.                                     |
-| 7   | `minMatchScore`          | Applies to the **AI** score. Cheap score **ranks** only.                                                                                                          |
-| 8   | AI fail                  | Auto-dismiss. **Backfill** next cheap candidates until **N pass** or pile empty.                                                                                  |
-| 9   | N                        | **Jobs per search run**, slider **15–40**, default **25**.                                                                                                        |
-| 10  | Open inbox cap           | Max **50** `trackingStatus=inbox` rows. Extra cheap hits stay on the shelf.                                                                                       |
-| 11  | AI when                  | **Immediately** on land (all landed jobs).                                                                                                                        |
-| 12  | Daily AI cap             | Hidden **2 × N** successful AI jobs / UTC day (default 50).                                                                                                       |
-| 13  | TTL                      | Unread inbox auto-dismiss after **7 days**. HTTP liveness at **~day 3.5**. Tracked never auto-dismissed (may mark listing closed).                                |
-| 14  | Liveness                 | **HTTP / board JSON**, not AI.                                                                                                                                    |
-| 15  | Mail harvest             | Optional Jobs toggle, **default off** for everyone. Status/recruiter mail still **tracks**.                                                                       |
-| 16  | v1 sources               | **freehire search (ATS-only)** + Himalayas, Arbeitnow, Remotive, RemoteOK. **No company watchlist.** No Workday/JobSpy/LinkedIn scrape.                           |
-| 17  | First-party ATS adapters | Greenhouse / Ashby / Lever / Workable / SmartRecruiters **not built in v1** (freehire already read those boards). Later epic = watchlist slugs.                   |
-| 18  | Cadence                  | Daily cron + **Find jobs now**. Each run still ≤ N and ≤ remaining daily AI budget.                                                                               |
-| 19  | Dedup                    | User: existing `(userId, url)` unique. Catalog: `(adapter, externalId)`. Prefer first-party URL if we later have both; v1 skip land if user already has that URL. |
-| 20  | Live probe (2026-08-14)  | Frontend prefs: ~**21 cheap matches/day** (freehire ~12 + Himalayas ~7). N=25 ≈ one average day.                                                                  |
+| #   | Topic                    | Decision                                                                                                                                                       |
+| --- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Catalog                  | Shared `job_posting`. One listing, many users.                                                                                                                 |
+| 2   | Shared AI                | **None.** Shared = HTTP fetch + fields the source already sent. Personal score / take / field-fix = that user’s BYO key on **their** row.                      |
+| 3   | Delivery                 | Hybrid: cheap retrieve → land → AI.                                                                                                                            |
+| 4   | Title                    | One combobox pack **or** custom title with **≥2** role keywords.                                                                                               |
+| 5   | Title list               | Wider tech (see packs below).                                                                                                                                  |
+| 6   | Cheap score              | Tag hits on **title + structured catalog fields** (work mode, location, ATS skills/salary). Not full HTML JD. Exclude = kill.                                  |
+| 7   | `minMatchScore`          | Applies to the **AI** score. Cheap score **ranks** only.                                                                                                       |
+| 8   | AI fail                  | Auto-dismiss (`via: low_match` on activity). **Backfill** until **N AI-passed** this run or pile/budget empty. Visible in New jobs → Dismissed.                |
+| 9   | N                        | **AI-passed inbox jobs this run** (cheap-passed if no key). Slider **15–40**, default **25**. Daily **2×N** caps **attempts**, not only passes.                |
+| 10  | Open inbox cap           | Max **50** `trackingStatus=inbox` rows. Extra cheap hits stay on the shelf.                                                                                    |
+| 11  | AI when                  | Enqueue **immediately** on land. Land worker does **not** await the model. After each AI dismiss, **retrigger land** for that user (see land loop).            |
+| 12  | Daily AI cap             | Hidden **2 × N** **AI attempts** / UTC day (default 50). Shared by cron, Find jobs now, and backfill.                                                          |
+| 13  | TTL                      | Unread inbox auto-dismiss after **7 days**. HTTP liveness at **~day 3.5**. Tracked never auto-dismissed (may mark listing closed).                             |
+| 14  | Liveness                 | **HTTP / board JSON**, not AI.                                                                                                                                 |
+| 15  | Mail harvest             | Optional Jobs toggle, **default off** for everyone. Status/recruiter mail still **tracks**.                                                                    |
+| 16  | v1 sources               | **freehire search (ATS-only)** + Himalayas, Arbeitnow, Remotive, RemoteOK. **No company watchlist.** No Workday/JobSpy/LinkedIn scrape.                        |
+| 17  | First-party ATS adapters | Greenhouse / Ashby / Lever / Workable / SmartRecruiters **not built in v1** (freehire already read those boards). Later epic = watchlist slugs.                |
+| 18  | Cadence                  | Daily cron + **Find jobs now**. Each run still ≤ **N passed** and ≤ remaining daily AI budget.                                                                 |
+| 19  | Dedup                    | Canonicalize URL first. User: `(userId, url)` unique. Catalog: `(adapter, externalId)`. Skip land if user already has that URL (any trackingStatus).           |
+| 20  | Live probe (2026-08-14)  | Frontend prefs: ~**21 cheap matches/day** (freehire ~12 + Himalayas ~7). N=25 ≈ one average day.                                                               |
+| 21  | Ingest vs land           | **Ingest is shared** (Ingest query set). **Land is per-user.** Find jobs now **ingests this user’s `q`** if the shelf has too few cheap hits, then lands.      |
+| 22  | Scan job alerts          | Header default = **Find jobs now**. **Scan job alerts** only when mail-harvest toggle is **on**. Classify **must not** enqueue harvest when the toggle is off. |
+| 23  | No BYO key               | **Still land** (cheap score, no take). Find jobs now does **not** refuse. Optional toast → Settings → AI. Same as cron.                                        |
+| 24  | TTL clock                | 7 days from inbox `createdAt`. Applies to **new** `discovery` / opt-in mail-harvest rows after ship. **Existing** inbox rows are grandfathered.                |
+| 25  | Tracked closed listing   | Join `posting.closedAt`. Surface “listing closed.” **Do not** set a CRM `outcome`.                                                                             |
 
 ---
 
 ## Information architecture
 
-| Surface                   | Change                                                                                          |
-| ------------------------- | ----------------------------------------------------------------------------------------------- |
-| Settings → Jobs           | Title combobox, N slider, mail-harvest toggle, existing prefs. Description no longer mail-only. |
-| `/dashboard/new-jobs`     | Same inbox; new channel tag `discovery`. **Find jobs now** in header.                           |
-| `/dashboard/tracked-jobs` | Unchanged CRM.                                                                                  |
-| Career Inbox              | Harvest **off** by default. Classify + CRM match remain.                                        |
+| Surface                   | Change                                                                                                                                                         |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Settings → Jobs           | Title combobox, N slider, mail-harvest toggle, existing prefs. Description no longer mail-only.                                                                |
+| `/dashboard/new-jobs`     | Same inbox; channel `discovery`. Header: **Find jobs now**. **Scan job alerts** only if mail-harvest is on. Empty copy is adapter-first, not mail-digest-only. |
+| `/dashboard/tracked-jobs` | Unchanged CRM. Listing closed = `posting.closedAt` badge, not an outcome.                                                                                      |
+| Career Inbox              | Harvest **off** by default. Classify + CRM match remain. No harvest enqueue when toggle off.                                                                   |
 
 ---
 
@@ -155,30 +160,48 @@ New table `job_posting` (**no `userId`**):
 
 Workers **upsert** here. Unchanged hash → bump `lastSeenAt` only.
 
-**HTTP hydrate (shared, $0 tokens):** if `description` is empty and `listingUrl` is a public page, one fetch + existing `extractJobListingFromHtml` (JSON-LD first). Result writes to **catalog**, not a user row. Dedup so 50 users do not scrape Stripe 50 times.
+**HTTP hydrate (shared, $0 tokens):** if `description` is empty and `listingUrl` is a public page, one fetch + existing `extractJobListingFromHtml` (JSON-LD first). Result writes to **catalog**, not a user row. Dedup so 50 users do not scrape Stripe 50 times. **Run hydrate before enqueueing personal AI** so empty-JD list payloads do not burn BYO budget.
+
+---
+
+## Ingest query set (shared shelf)
+
+Adapters **do not** run once per user.
+
+| When                | What to fetch                                                                                                                                                                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Daily cron          | **Feeds** (Arbeitnow, RemoteOK) unfiltered pages. **Search** adapters (freehire, Himalayas, Remotive) once per **distinct active query** among users who have a valid title (normalize: `titleId` or sorted extra keywords). Union onto `job_posting`. |
+| Find jobs now       | **Land only** if the shelf already has ≥ `budget` cheap hits for this user. Else **ingest this user’s `q` now**, upsert, then land.                                                                                                                    |
+| freehire / Remotive | Cap pages per ingest (v1: enough for ~2–3× N cheap hits, not the whole 3k index).                                                                                                                                                                      |
+
+Remotive’s ~4 requests/day budget is **global** for our server, not per user. Share the distinct-query set; do not fan out one Remotive call per tenant.
 
 ---
 
 ## Per-user land (New jobs)
 
-Landing writes an **`application`** row (`trackingStatus=inbox`) as today, plus `postingId` FK (nullable for manual/hub/mail).
+Landing writes an **`application`** row (`trackingStatus=inbox`) as today, plus `postingId` FK (nullable for manual/hub/mail). Canonicalize `listingUrl` before write.
 
-**Land algorithm (one run, one user):**
+**N** = inbox rows **this run** that **keep** `inbox` after AI (or cheap-only if no key). It is **not** “how many stubs we created.”
+
+**Loop (async workers, no blocking the HTTP request on the model):**
 
 1. Require a valid title pack **or** custom title + ≥2 role keywords. Else no-op + settings hint.
-2. `openInbox = count(inbox)`. Seats = `max(0, 50 - openInbox)`. Stop if 0.
-3. `budget = min(N, seats, remainingDailyAiBudget)`.
-4. Cheap-score **open, unseen** catalog rows (not already this user’s url/postingId; not dismissed/tracked).
-5. Sort cheap desc, walk the pile:
-   - Exclude-keyword or no title-tag hit → skip (never land).
-   - Land a **stub** inbox row (heuristic score stored as `cheapScore` or until AI overwrites `matchScore`).
-   - Enqueue **personal AI** (user key). On AI `score < minMatchScore` → dismiss + do not count as a filled seat; continue.
-   - On AI success → count +1 toward budget.
-6. Stop at budget or pile empty.
+2. `openInbox = count(inbox)` including **pending-AI** stubs. Seats = `max(0, 50 - openInbox)`. Stop if 0.
+3. `passedThisRun` starts at 0. `toLand = min(N - passedThisRun, seats, remainingDailyAiAttempts)` (if no key, ignore AI attempt budget; still honor N and 50).
+4. Cheap-score **open, unseen** catalog rows (not this user’s url/postingId in any `trackingStatus`). Sort desc.
+5. Land up to `toLand` stubs (heuristic in `matchScore` until AI overwrites). Enqueue personal AI **after** catalog hydrate. Pending stubs **count toward the 50 cap**.
+6. **AI worker:** hydrate already done. Score + take + fill/fix on the **application** row only.
+   - Pass (`score >= minMatchScore` or no key): stub stays inbox; increment `passedThisRun`.
+   - Fail: set `dismissed`, activity `via: low_match`. **Retrigger land** for this user (step 2) so a new cheap hit can fill the hole.
+   - Attempt always decrements daily AI budget (pass or fail).
+7. Stop when `passedThisRun >= N` or pile empty or seats 0 or AI budget 0.
 
-**Daily AI cap:** count successful AI jobs (score+take attempt that ran the model) per user per UTC day. Hidden. Cron + button share the cap.
+Cron “run” and Find jobs now “run” each have their own `passedThisRun` counter but **share** the UTC daily AI attempt cap and the 50-open cap.
 
-**Find jobs now:** same algorithm; disabled when budget=0 or no title.
+**Find jobs now:** same loop; disabled when seats=0 or no title (not when there is no AI key). Optional toast if no key.
+
+**Daily AI cap:** count **model attempts** (score+take that called the agent) per user per UTC day. Hidden.
 
 ---
 
@@ -206,9 +229,9 @@ On land, same agents as harvest:
 2. `job-preference-match-scorer` → `matchScore`, `matchPassed`, reasons.
 3. Agent take → `agentTake` (soft-fail).
 
-No key → land with cheap score only; `matchScore` stays heuristic; take null. User can still track. Do not burn retries.
+No key → land with cheap score only; `matchScore` stays heuristic; take null. Counts toward **N** (cheap-passed). User can still track. Do not enqueue AI / do not decrement AI budget.
 
-Missing key + Find jobs now: toast to Settings → AI (existing BYO pattern).
+Missing key + Find jobs now: **still lands**. Optional toast to Settings → AI. Do **not** throw `AI_NOT_CONFIGURED`.
 
 ---
 
@@ -257,11 +280,11 @@ Custom: `titleId = custom`, `customTitle` required, `roleKeywords.length >= 2`.
 
 ## Mail
 
-| Path                             | v1                                                                                                                                                |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `application_status` / recruiter | Unchanged: match existing **tracked** (or create tracked per existing CRM rules). Not New jobs.                                                   |
-| `job_notifier`                   | If toggle **off**: classify only. No harvest.                                                                                                     |
-| `job_notifier`                   | If toggle **on**: existing harvest workflow, same cheap+AI+TTL. Does **not** consume adapter N. Still counts toward daily AI cap and 50-open cap. |
+| Path                             | v1                                                                                                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `application_status` / recruiter | Unchanged: match existing **tracked** (or create tracked per existing CRM rules). Not New jobs.                                    |
+| `job_notifier`                   | Toggle **off**: classify only. **Do not enqueue harvest** (classify worker and **Scan job alerts**). Hide/disable Scan.            |
+| `job_notifier`                   | Toggle **on**: existing harvest, same cheap+AI+TTL+50-open+daily AI cap. Does **not** consume adapter **N**. Scan stays available. |
 
 Default toggle **off** for all users (including those with prior mail-harvested inbox rows). Those rows stay.
 
@@ -280,14 +303,14 @@ Discovery land: `sourceTags = ["discovery", platform?]`.
 
 ## Lifecycle
 
-| Event                    | Action                                                                  |
-| ------------------------ | ----------------------------------------------------------------------- |
-| Daily cron               | Fetch adapters → upsert catalog → run land for users with a valid title |
-| Find jobs now            | Same land for session user                                              |
-| ~3.5 days after land     | HTTP/board check listing. Closed → dismiss inbox (or flag tracked).     |
-| 7 days inbox, still open | Auto-dismiss.                                                           |
-| User dismiss / track     | Frees an open seat (next run can fill).                                 |
-| Catalog `closedAt`       | Do not land; mid-life check uses this if already known.                 |
+| Event                    | Action                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| Daily cron               | Shared ingest (distinct queries + feeds) → upsert → land each user with a valid title |
+| Find jobs now            | Ingest this user’s `q` if shelf thin → land session user                              |
+| ~3.5 days after land     | HTTP/board check. Closed → dismiss inbox; tracked gets listing-closed badge only.     |
+| 7 days inbox, still open | Auto-dismiss **discovery** / post-ship mail-harvest rows. Grandfather existing inbox. |
+| User dismiss / track     | Frees an open seat (next run can fill).                                               |
+| Catalog `closedAt`       | Do not land; mid-life check uses this if already known.                               |
 
 Liveness: HEAD/GET listing URL or, for freehire-sourced rows, search/detail if URL is gone. Shared result updates `job_posting.closedAt`.
 
