@@ -1,4 +1,4 @@
-import { llmLogFields } from "@tsu-stack/core";
+import { assessAgentTakeReadiness, llmLogFields } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
@@ -17,7 +17,11 @@ import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai"
 const AGENT_ID = "job-agent-take";
 const TIMEOUT_MS = 45_000;
 
-export type GenerateAgentTakeErrorCode = "NOT_FOUND" | "AI_NOT_CONFIGURED" | "AGENT_FAILED";
+export type GenerateAgentTakeErrorCode =
+  | "NOT_FOUND"
+  | "AI_NOT_CONFIGURED"
+  | "AGENT_FAILED"
+  | "INSUFFICIENT_LISTING";
 
 export type GenerateAgentTakeResult =
   | { ok: true; application: ApplicationEntity }
@@ -61,6 +65,11 @@ export async function generateAgentTake(input: {
   const log = createLogger({ operation: "api__generate_agent_take" });
   const owned = await applicationRepository.findByIdForUser(input.applicationId, input.userId);
   if (!owned) return { ok: false, code: "NOT_FOUND" };
+
+  const readiness = assessAgentTakeReadiness(owned);
+  if (!readiness.ok) {
+    return { ok: false, code: "INSUFFICIENT_LISTING", message: readiness.message };
+  }
 
   const llm = await resolveRuntimeAiCredentials(input.userId, "scorer");
   if (!llm.apiKey) {

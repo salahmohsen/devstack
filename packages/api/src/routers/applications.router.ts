@@ -626,6 +626,10 @@ export const applicationsRouter = {
       AI_NOT_CONFIGURED: {
         message: "Configure a BYO API key under Settings → AI"
       },
+      INSUFFICIENT_LISTING: {
+        message:
+          "Need a fuller job description and listing details before the agent can write a take."
+      },
       AGENT_FAILED: {
         message: "Agent take generation failed — check Settings → AI and try again"
       }
@@ -640,6 +644,9 @@ export const applicationsRouter = {
         if (result.code === "NOT_FOUND") throw errors.NOT_FOUND();
         if (result.code === "AI_NOT_CONFIGURED") {
           throw errors.AI_NOT_CONFIGURED({ message: result.message });
+        }
+        if (result.code === "INSUFFICIENT_LISTING") {
+          throw errors.INSUFFICIENT_LISTING({ message: result.message });
         }
         throw errors.AGENT_FAILED({ message: result.message });
       }
@@ -795,7 +802,7 @@ export const applicationsRouter = {
         message: "Set a valid recruiter email before sending outreach"
       },
       MAIL_NOT_CONFIGURED: {
-        message: "Configure Resend under Settings → Mail before sending"
+        message: "Configure Resend under Settings → Integrations before sending"
       },
       SEND_FAILED: {
         message: "Failed to send outreach email"

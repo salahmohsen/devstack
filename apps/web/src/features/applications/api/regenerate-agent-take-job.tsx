@@ -209,6 +209,11 @@ export async function startRegenerateAgentTake(
       error: message
     });
 
+    if (code === "INSUFFICIENT_LISTING") {
+      toast.error(message);
+      return;
+    }
+
     if (code === "AI_NOT_CONFIGURED" || code === "AGENT_FAILED") {
       toastAiError(message ?? "Could not generate agent take", {
         feature: "generic",

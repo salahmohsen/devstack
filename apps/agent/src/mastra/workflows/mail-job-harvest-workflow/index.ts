@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   AiJobAgentTakeBatchSchema,
   AiJobMatchBatchSchema,
+  canGenerateAgentTake,
   canonicalizeJobUrl,
   formatJobMatchScorePrompt,
   HarvestedJobSchema,
@@ -559,11 +560,23 @@ const generateAgentTakesAi = createStep({
       return base;
     }
 
-    const passed = inputData.jobs.filter((j) => j.matchPassed).slice(0, MAX_JOBS_TO_TAKE);
+    const passed = inputData.jobs
+      .filter((j) => j.matchPassed && canGenerateAgentTake(j))
+      .slice(0, MAX_JOBS_TO_TAKE);
     if (passed.length === 0) {
+      const skippedThin = inputData.jobs.filter(
+        (j) => j.matchPassed && !canGenerateAgentTake(j)
+      ).length;
       return {
         ...base,
-        notes: [inputData.notes, "agent_take_skip_no_passed"].filter(Boolean).join(";")
+        notes: [
+          inputData.notes,
+          skippedThin > 0
+            ? `agent_take_skip_thin_listing_${skippedThin}`
+            : "agent_take_skip_no_passed"
+        ]
+          .filter(Boolean)
+          .join(";")
       };
     }
 
