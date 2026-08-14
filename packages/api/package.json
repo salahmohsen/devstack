@@ -29,6 +29,7 @@
     "bullmq": "catalog:",
     "drizzle-orm": "catalog:",
     "files-sdk": "catalog:",
+    "ioredis": "catalog:",
     "jose": "catalog:",
     "pdfnative": "catalog:",
     "unpdf": "catalog:",
