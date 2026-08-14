@@ -405,6 +405,9 @@ catalogs:
     thinking-orbs:
       specifier: ^0.3.1
       version: 0.3.1
+    tslib:
+      specifier: 2.8.1
+      version: 2.8.1
     tw-animate-css:
       specifier: ^1.4.0
       version: 1.4.0
@@ -852,6 +855,9 @@ importers:
       thinking-orbs:
         specifier: 'catalog:'
         version: 0.3.1(react@19.2.7)
+      tslib:
+        specifier: 'catalog:'
+        version: 2.8.1
       zod:
         specifier: 'catalog:'
         version: 4.4.3

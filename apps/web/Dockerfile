@@ -81,6 +81,11 @@ RUN --mount=type=cache,id=pnpm-store,target=/home/vp/.local/share/pnpm/store,uid
   && pnpm config set fetch-retries 5 \
   && pnpm --filter @tsu-stack/web deploy --prod --legacy --prefer-offline --no-optional /tmp/web-deploy \
   && cp -a /tmp/web-deploy/node_modules /app/apps/web/.output/node_modules \
+  && rm -rf /app/apps/web/.output/server/node_modules/tslib \
+  && if [ -e /tmp/web-deploy/node_modules/tslib ]; then \
+       mkdir -p /app/apps/web/.output/server/node_modules \
+       && cp -a /tmp/web-deploy/node_modules/tslib /app/apps/web/.output/server/node_modules/tslib; \
+     fi \
   && rm -rf /tmp/web-deploy
 
 # Exact Node matching .node-version (official Vite+ runtime pattern).

@@ -72,6 +72,7 @@
     "socket.io-client": "catalog:",
     "sonner": "catalog:",
     "thinking-orbs": "catalog:",
+    "tslib": "catalog:",
     "zod": "catalog:",
     "zustand": "catalog:"
   },

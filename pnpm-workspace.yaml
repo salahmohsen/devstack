@@ -186,6 +186,7 @@ catalog:
   react-doctor: ^0.9.11
   cuelume: ^0.2.2
   thinking-orbs: ^0.3.1
+  tslib: 2.8.1
 
 catalogMode: prefer
 
