@@ -1,6 +1,13 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { motion } from "motion/react";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState
+} from "react";
 import { createPortal } from "react-dom";
 
 // w-72 (288px) + pl-2 (8px)
@@ -11,6 +18,10 @@ type SidePanelState = {
   node: HTMLDivElement | null;
   collapsed: boolean;
   hasContent: boolean;
+  /** True as soon as a portal mounts (before MutationObserver). */
+  inspectOpen: boolean;
+  requestInspectOpen: () => void;
+  releaseInspectOpen: () => void;
   toggle: () => void;
 };
 
@@ -18,6 +29,9 @@ const SidePanelContext = createContext<SidePanelState>({
   node: null,
   collapsed: false,
   hasContent: false,
+  inspectOpen: false,
+  requestInspectOpen: () => {},
+  releaseInspectOpen: () => {},
   toggle: () => {}
 });
 
@@ -25,15 +39,33 @@ export function useSidePanelSlot() {
   const [node, setNode] = useState<HTMLDivElement | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [hasContent, setHasContent] = useState(false);
+  const [inspectOpen, setInspectOpen] = useState(false);
+  const inspectCountRef = useRef(0);
   const toggle = useCallback(() => setCollapsed((c) => !c), []);
+  const requestInspectOpen = useCallback(() => {
+    inspectCountRef.current += 1;
+    setInspectOpen(true);
+  }, []);
+  const releaseInspectOpen = useCallback(() => {
+    inspectCountRef.current = Math.max(0, inspectCountRef.current - 1);
+    if (inspectCountRef.current === 0) setInspectOpen(false);
+  }, []);
   return {
     node,
     setNode,
     collapsed,
     hasContent,
     setHasContent,
+    inspectOpen,
+    requestInspectOpen,
+    releaseInspectOpen,
     toggle
   } as const;
+}
+
+/** Read the layout side-panel slot (collapse + whether inspect content is mounted). */
+export function useSidePanel() {
+  return useContext(SidePanelContext);
 }
 
 export function SidePanelProvider({
@@ -47,7 +79,13 @@ export function SidePanelProvider({
 }
 
 export function SidePanelPortal({ children }: { children: React.ReactNode }) {
-  const { node } = useContext(SidePanelContext);
+  const { node, requestInspectOpen, releaseInspectOpen } = useContext(SidePanelContext);
+
+  useLayoutEffect(() => {
+    requestInspectOpen();
+    return () => releaseInspectOpen();
+  }, [requestInspectOpen, releaseInspectOpen]);
+
   if (!node) return null;
   return createPortal(children, node);
 }
@@ -85,27 +123,12 @@ export function SidePanelSlot({
     };
 
     check();
-    const observer = new MutationObserver((mutations) => {
+    const observer = new MutationObserver(() => {
       const has = el.childNodes.length > 0;
-
-      if (!has && ghostRef.current) {
-        // Content removed — clone into ghost for exit animation
-        ghostRef.current.innerHTML = "";
-        for (const mutation of mutations) {
-          for (const node of mutation.removedNodes) {
-            ghostRef.current.appendChild(node.cloneNode(true));
-          }
-        }
-        if (exitTimer.current) clearTimeout(exitTimer.current);
-        exitTimer.current = setTimeout(() => {
-          if (ghostRef.current) ghostRef.current.innerHTML = "";
-        }, 500);
-      } else if (has && ghostRef.current) {
-        // Content added — clear ghost
-        ghostRef.current.innerHTML = "";
+      if (has && ghostRef.current) {
+        ghostRef.current.replaceChildren();
         if (exitTimer.current) clearTimeout(exitTimer.current);
       }
-
       setHasChildren(has);
       onHasContent(has);
     });
@@ -121,24 +144,16 @@ export function SidePanelSlot({
   // Stay fully opaque while the shell collapses (`collapsed`). The root layout
   // clips via overflow + width layout animation; fading out here made content
   // vanish before that spring finished. Only fade when portal children are gone.
-  const painted = hasChildren;
+  const { inspectOpen } = useContext(SidePanelContext);
+  const painted = hasChildren || inspectOpen;
 
   return (
-    <div className="hidden h-full min-h-0 overflow-hidden xl:block">
-      <motion.div
-        animate={{ opacity: painted ? 1 : 0 }}
-        transition={{
-          duration: painted ? 0.2 : 0.15,
-          // Slight delay on enter so the width spring has started expanding.
-          delay: painted ? 0.08 : 0
-        }}
-        className="h-full overflow-hidden"
-        // Avoid pointer events on content while the shell is closed/closing.
-        style={{ pointerEvents: collapsed || !painted ? "none" : "auto" }}
-      >
-        <div ref={refCallback} className="h-full min-h-0" />
-        <div ref={ghostRef} className="pointer-events-none" aria-hidden />
-      </motion.div>
+    <div
+      className="hidden h-full min-h-0 overflow-hidden xl:block"
+      style={{ pointerEvents: collapsed || !painted ? "none" : "auto" }}
+    >
+      <div ref={refCallback} className="h-full min-h-0" />
+      <div ref={ghostRef} className="pointer-events-none" aria-hidden />
     </div>
   );
 }
@@ -151,6 +166,8 @@ export function SidePanelToggle() {
     <button
       type="button"
       onClick={toggle}
+      aria-label={collapsed ? "Expand details panel" : "Collapse details panel"}
+      aria-expanded={!collapsed}
       className="absolute top-14 right-0 hidden -translate-y-1/2 items-center justify-center rounded-l-md border border-r-0 bg-background py-2.5 pr-1 pl-0.5 text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground xl:flex"
     >
       {collapsed ? (

@@ -20,6 +20,7 @@ import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   APPLICATION_SOURCE_LABELS,
   APPLICATION_SOURCE_TAG_LABELS,
+  assessAgentTakeReadiness,
   EMPLOYMENT_TYPE_LABELS,
   HIRING_URGENCY_LABELS,
   type ApplicationOutput,
@@ -47,7 +48,7 @@ import {
   useRegenerateAgentTakeMutation
 } from "@/features/applications";
 
-import { ItemInfoPanel, ItemInfoSection } from "@/widgets/items-page";
+import { ItemInfoPanel, ItemInfoSection, PanelEditButton } from "@/widgets/items-page";
 
 import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
@@ -93,9 +94,14 @@ type ApplicationInfoPanelProps = {
    * description, take, meta, activity + notes.
    */
   variant?: "tracked" | "discovery";
+  onEdit?: () => void;
 };
 
-export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationInfoPanelProps) {
+export function ApplicationInfoPanel({
+  item,
+  variant = "tracked",
+  onEdit
+}: ApplicationInfoPanelProps) {
   const [resumePreviewOpen, setResumePreviewOpen] = useState(false);
   const regenerateTake = useRegenerateAgentTakeMutation();
   const isDiscovery = variant === "discovery";
@@ -120,6 +126,7 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
   const hasMaterials = Boolean(
     item.resumeId ?? item.coverLetterR2Key ?? item.coverLetterBody ?? item.outreachBody
   );
+  const takeReady = assessAgentTakeReadiness(item);
 
   return (
     <>
@@ -162,6 +169,7 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
         }
         actions={
           <>
+            {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
             {!isDiscovery ? <ApplicationStageBadge stage={item.stage} /> : null}
             {!isDiscovery ? <ApplicationStatusBadge outcome={item.outcome} /> : null}
             {item.matchScore != null ? (
@@ -200,18 +208,27 @@ export function ApplicationInfoPanel({ item, variant = "tracked" }: ApplicationI
           ) : null}
 
           <ItemInfoSection title="Agent's take" icon={<SparklesIcon />}>
-            {item.agentTake?.trim() ? (
+            {takeReady.ok && item.agentTake?.trim() ? (
               <p className="text-foreground">{item.agentTake}</p>
             ) : (
-              <p className="italic">No agent take yet.</p>
+              <p className="italic">
+                {takeReady.ok
+                  ? "No agent take yet."
+                  : "Agent take stays off until this listing has enough detail."}
+              </p>
             )}
+            {!takeReady.ok ? (
+              <p className="mt-2 text-sm text-muted-foreground">{takeReady.message}</p>
+            ) : null}
             <Button
               type="button"
               variant="outline"
               size="sm"
               className="mt-3"
+              disabled={!takeReady.ok}
               loading={regenerateTake.isPending}
               onClick={() => {
+                if (!takeReady.ok) return;
                 void regenerateTake.mutateAsync({
                   id: item.id,
                   title: item.title,

@@ -5,6 +5,16 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle
+} from "@tsu-stack/ui/components/alert-dialog";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
@@ -18,16 +28,6 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
-import {
-  Dialog,
-  DialogAction,
-  DialogCancel,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from "@tsu-stack/ui/components/dialog";
 import { IconShake } from "@tsu-stack/ui/components/icon-motion";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -149,87 +149,37 @@ export const StackItem = memo(function StackItem({
     });
   }
 
-  // Card is the interactive surface (sort mode disables activation).
-  // oxlint-disable jsx-a11y/prefer-tag-over-role
   const card = (
     <Card
-      role="button"
-      tabIndex={isSort ? -1 : 0}
-      aria-pressed={isOpen}
-      aria-label={`View details for ${stack.name}`}
       data-item-id={stack.id}
       data-selected={isOpen}
-      onClick={
-        isSort
-          ? undefined
-          : (event) => {
-              if (
-                event.target instanceof Element &&
-                event.target.closest("[data-slot=checkbox], [data-batch-select]")
-              ) {
-                return;
-              }
-              onOpen(stack.id, stack);
-            }
-      }
-      onMouseEnter={
-        isSort || !onPrefetch
-          ? undefined
-          : () => {
-              onPrefetch(stack.id);
-            }
-      }
-      onKeyDown={
-        isSort
-          ? undefined
-          : (event) => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              if (
-                event.target instanceof Element &&
-                event.target.closest("[data-slot=checkbox], [data-batch-select]")
-              ) {
-                return;
-              }
-              event.preventDefault();
-              onOpen(stack.id, stack);
-            }
-      }
       className={cn(
         // content-visibility skips layout/paint for off-screen cards in long grids
         "[contain-intrinsic-size:12.5rem] [content-visibility:auto]",
-        "group relative aspect-square cursor-pointer overflow-visible py-0!",
-        // Only transition interactive chrome — not every descendant (** → all)
-        "transition-[box-shadow,transform] duration-200",
-        "h-50 w-full max-w-full shrink-0",
+        "group relative aspect-square w-full max-w-full shrink-0 overflow-hidden py-0!",
+        "motion-safe:transition-shadow motion-safe:duration-150",
         isSort && "cursor-grab active:cursor-grabbing",
         isOpen && "ring-1 ring-primary/40"
       )}
     >
-      <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-2xl)-1px)]">
+      <div className="relative flex h-full flex-col">
         {isSort && dragHandleProps ? (
           <div
             {...dragHandleProps.attributes}
             {...dragHandleProps.listeners}
             className={cn("absolute top-2 left-3 z-20", dragHandleProps.className)}
           >
-            <GripVertical className="size-4" />
+            <GripVertical className="size-4" aria-hidden />
           </div>
         ) : null}
-        <div
-          data-batch-select
-          role="presentation"
-          className="absolute top-2 left-3 z-10"
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-        >
+        <div data-batch-select className="absolute top-2 left-3 z-10">
           {!isSort ? (
             <Checkbox
               checked={isChecked}
               onCheckedChange={() => onToggleSelect(stack.id)}
+              aria-label={`Select ${stack.name}`}
               className={cn(
-                "transition-opacity duration-150",
+                "motion-safe:transition-opacity motion-safe:duration-150",
                 isChecked || batchSelectActive
                   ? "opacity-100"
                   : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
@@ -237,95 +187,132 @@ export const StackItem = memo(function StackItem({
             />
           ) : null}
         </div>
-        <CardContent
-          data-selected={isOpen}
-          className={cn(
-            "flex h-full flex-col items-center justify-center gap-2 p-4 transition-transform duration-200",
-            !isSort && "translate-y-4 scale-100 data-selected:translate-y-0 data-selected:scale-90"
-          )}
-        >
-          <Icon
-            icon={stack.icon}
-            className="size-14 shrink-0 rounded object-contain"
-            fallbackToLetter
-            letterClassName="size-14 text-xl"
-            name={stack.name}
-          />
-          <p
-            className="warp-break-words line-clamp-2 block max-w-full text-center text-sm font-medium"
-            title={stack.name}
-          >
-            {stack.name}
-          </p>
-          {stack.type || stack.isFeatured || usageCount > 0 ? (
-            <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
-              <StackIdentityBadges
-                type={stack.type}
-                isFeatured={stack.isFeatured}
-                projectCount={usageCount}
+        {isSort ? (
+          <CardContent className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-4 pt-8">
+            <Icon
+              icon={stack.icon}
+              className="size-14 shrink-0 rounded object-contain"
+              fallbackToLetter
+              letterClassName="size-14 text-xl"
+              name={stack.name}
+            />
+            <p
+              className="line-clamp-2 block max-w-full text-center text-sm font-medium wrap-break-word"
+              title={stack.name}
+            >
+              {stack.name}
+            </p>
+            {stack.type || stack.isFeatured || usageCount > 0 ? (
+              <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
+                <StackIdentityBadges
+                  type={stack.type}
+                  isFeatured={stack.isFeatured}
+                  projectCount={usageCount}
+                />
+              </div>
+            ) : null}
+          </CardContent>
+        ) : (
+          <>
+            <button
+              type="button"
+              aria-pressed={isOpen}
+              aria-label={`View details for ${stack.name}`}
+              className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-4 pt-8 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              onClick={() => {
+                onOpen(stack.id, stack);
+              }}
+              onMouseEnter={
+                onPrefetch
+                  ? () => {
+                      onPrefetch(stack.id);
+                    }
+                  : undefined
+              }
+            >
+              <Icon
+                icon={stack.icon}
+                className="size-14 shrink-0 rounded object-contain"
+                fallbackToLetter
+                letterClassName="size-14 text-xl"
+                name={stack.name}
+              />
+              <p className="line-clamp-2 block max-w-full text-center text-sm font-medium wrap-break-word">
+                {stack.name}
+              </p>
+              {stack.type || stack.isFeatured || usageCount > 0 ? (
+                <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
+                  <StackIdentityBadges
+                    type={stack.type}
+                    isFeatured={stack.isFeatured}
+                    projectCount={usageCount}
+                  />
+                </div>
+              ) : null}
+            </button>
+            <div
+              className={cn(
+                "flex h-10 shrink-0 items-center justify-center px-2 pb-2",
+                "motion-safe:transition-opacity motion-safe:duration-150",
+                isOpen || batchSelectActive
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100 focus-within:opacity-100"
+              )}
+            >
+              <ListItemActionButtons
+                edit={{
+                  onAction: () => onEdit(stack.id),
+                  isLoading: false
+                }}
+                togglePortfolio={{
+                  onAction: handleTogglePortfolio,
+                  initialValue: !!stack.portfolioEntryId,
+                  isLoading: togglePortfolioMutation.isPending
+                }}
+                toggleFeatured={{
+                  onAction: handleToggleFeatured,
+                  initialValue: !!stack.isFeatured,
+                  isLoading: featuredMutation.isPending
+                }}
+                delete={{
+                  onAction: () => setDeleteDialogOpen(true),
+                  isLoading: deleteMutation.isPending
+                }}
               />
             </div>
-          ) : null}
-        </CardContent>
-        {!isSort ? (
-          <div
-            className="mx-auto translate-y-9 transition-transform duration-200 data-selected:-translate-y-2"
-            data-selected={isOpen}
-          >
-            <ListItemActionButtons
-              edit={{
-                onAction: () => onEdit(stack.id),
-                isLoading: false
-              }}
-              togglePortfolio={{
-                onAction: handleTogglePortfolio,
-                initialValue: !!stack.portfolioEntryId,
-                isLoading: togglePortfolioMutation.isPending
-              }}
-              toggleFeatured={{
-                onAction: handleToggleFeatured,
-                initialValue: !!stack.isFeatured,
-                isLoading: featuredMutation.isPending
-              }}
-              delete={{
-                onAction: () => setDeleteDialogOpen(true),
-                isLoading: deleteMutation.isPending
-              }}
-            />
-          </div>
-        ) : null}
+          </>
+        )}
       </div>
     </Card>
   );
-  // oxlint-enable jsx-a11y/prefer-tag-over-role
 
   const deleteDialog = (
-    <Dialog
+    <AlertDialog
       open={deleteDialogOpen}
       onOpenChange={(open) => {
         if (!open && deleteMutation.isPending) return;
         setDeleteDialogOpen(open);
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete this stack?</DialogTitle>
-          <DialogDescription>
+      <AlertDialogPopup>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this stack?</AlertDialogTitle>
+          <AlertDialogDescription>
             {`"${stack.name}" will be removed from all projects that use it.`}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogCancel disabled={deleteMutation.isPending}>Cancel</DialogCancel>
-          <DialogAction
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
             variant="destructive"
             loading={deleteMutation.isPending}
             onClick={handleDelete}
           >
-            Delete
-          </DialogAction>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            Delete stack
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogPopup>
+    </AlertDialog>
   );
 
   if (isSort) {

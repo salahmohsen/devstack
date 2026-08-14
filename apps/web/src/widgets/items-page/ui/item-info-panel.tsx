@@ -1,7 +1,26 @@
+import { startTransition, useEffect, useState } from "react";
+
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { ItemsInfoFooter } from "./items-info-footer";
+
+/** Matches ClipWidth open duration so markdown mounts after the tween. */
+const INSPECT_BODY_DEFER_MS = 400;
+
+/** Mount inspect body after the panel tween so markdown does not fight layout. */
+export function useDeferredInspectBody() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      startTransition(() => setReady(true));
+    }, INSPECT_BODY_DEFER_MS);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  return ready;
+}
 
 type ItemInfoPanelProps = {
   title: string | React.ReactNode;
@@ -11,6 +30,8 @@ type ItemInfoPanelProps = {
   eyebrow?: React.ReactNode;
   /** Header trailing actions (Save, status, open). */
   actions?: React.ReactNode;
+  /** Optional nav under the header (tabs). Stays out of the scroll body. */
+  nav?: React.ReactNode;
   headerClassName?: string;
   updatedAt?: string | Date | null;
   createdAt?: string | Date | null;
@@ -27,6 +48,7 @@ export function ItemInfoPanel({
   description,
   eyebrow,
   actions,
+  nav,
   headerClassName,
   updatedAt,
   createdAt,
@@ -37,11 +59,11 @@ export function ItemInfoPanel({
     <div className="flex h-full min-h-0 flex-col bg-background">
       <header className={cn("shrink-0 px-6 pt-5 pb-5 max-xl:pe-12", headerClassName)}>
         <div className="flex items-center justify-between gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/70 text-muted-foreground [&_img]:size-5 [&_svg]:size-4">
+          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/70 text-muted-foreground [&_img]:size-full [&_img]:object-contain [&_svg]:size-4">
             {eyebrow ?? <span className="size-1.5 rounded-full bg-foreground/40" aria-hidden />}
           </div>
           {actions ? (
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+            <div className="hidden shrink-0 flex-wrap items-center justify-end gap-1.5 xl:flex">
               {actions}
             </div>
           ) : null}
@@ -59,10 +81,14 @@ export function ItemInfoPanel({
               {typeof description === "string" ? <p>{description}</p> : description}
             </div>
           ) : null}
+          {actions ? (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 xl:hidden">{actions}</div>
+          ) : null}
         </div>
       </header>
+      {nav ? <div className="shrink-0 border-b border-border/60 px-6">{nav}</div> : null}
       <ScrollArea className="min-h-0 flex-1" scrollFade fill>
-        <div className={cn("px-6 pb-8", className)}>{children}</div>
+        <div className={cn("px-6 pb-8", nav && "pt-5", className)}>{children}</div>
       </ScrollArea>
       <ItemsInfoFooter updatedAt={updatedAt} createdAt={createdAt} />
     </div>

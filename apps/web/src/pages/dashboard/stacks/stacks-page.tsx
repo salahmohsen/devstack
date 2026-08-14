@@ -2,6 +2,7 @@
 
 import { rectSortingStrategy } from "@dnd-kit/sortable";
 import { type InfiniteData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { BoxesIcon, FolderKanbanIcon, LayersIcon, Package } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -51,6 +52,7 @@ import {
   GridSkeleton,
   ItemInfoPanel,
   ItemInfoSection,
+  PanelEditButton,
   ItemsEmpty,
   ItemsNavProvider,
   PageHeader,
@@ -77,7 +79,7 @@ import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
-function StackDetailPanel({ stack }: { stack: StackOutput }) {
+function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit: () => void }) {
   const detailQuery = useQuery({
     ...orpcQueryClient.stacks.get.queryOptions({ input: { id: stack.id } }),
     staleTime: STACKS_LIST_STALE_TIME_MS
@@ -108,6 +110,7 @@ function StackDetailPanel({ stack }: { stack: StackOutput }) {
           <p>Not used on any project yet</p>
         )
       }
+      actions={<PanelEditButton onClick={onEdit} />}
       updatedAt={item.updatedAt}
       createdAt={item.createdAt}
     >
@@ -118,13 +121,9 @@ function StackDetailPanel({ stack }: { stack: StackOutput }) {
               {item.description}
             </Markdown>
           ) : (
-            <p>No description.</p>
+            <p>No summary yet. Edit this stack to add one.</p>
           )}
         </ItemInfoSection>
-
-        {detailQuery.isLoading && !detailQuery.data ? (
-          <p className="text-sm text-muted-foreground">Loading details…</p>
-        ) : null}
 
         {item.dependencies && item.dependencies.length > 0 ? (
           <ItemInfoSection title="Dependencies" icon={<BoxesIcon />}>
@@ -138,15 +137,30 @@ function StackDetailPanel({ stack }: { stack: StackOutput }) {
           </ItemInfoSection>
         ) : null}
 
-        {item.projects && item.projects.length > 0 ? (
+        {item.projects.length > 0 ? (
           <ItemInfoSection title="Projects" icon={<FolderKanbanIcon />}>
             <div className="flex flex-wrap gap-1.5">
               {item.projects.map((project) => (
-                <Badge key={project.id} variant="secondary" size="sm">
+                <Badge
+                  key={project.id}
+                  variant="secondary"
+                  size="sm"
+                  render={<Link to="/dashboard/projects" search={{ projectId: project.id }} />}
+                >
                   {project.name}
                 </Badge>
               ))}
             </div>
+          </ItemInfoSection>
+        ) : detailQuery.isFetching ? (
+          <ItemInfoSection title="Projects" icon={<FolderKanbanIcon />}>
+            <p>Loading linked projects…</p>
+          </ItemInfoSection>
+        ) : projectCount > 0 ? (
+          <ItemInfoSection title="Projects" icon={<FolderKanbanIcon />}>
+            <p>
+              Used on {projectCount} {projectCount === 1 ? "project" : "projects"}.
+            </p>
           </ItemInfoSection>
         ) : null}
       </div>
@@ -698,8 +712,8 @@ export function StacksPage() {
     <ItemsNavProvider value={{ handleNext, handlePrev }}>
       <PageLayout>
         <PageHeader
-          title="Tech Stacks"
-          description="Click a stack to inspect its details. Use ← → to navigate."
+          title="Stacks"
+          description="Select a stack to inspect its details. Use ← → to move between stacks."
           actions={
             <HeaderActions
               add={{ onAdd: () => openDialog(null), label: "Add Stack" }}
@@ -755,18 +769,20 @@ export function StacksPage() {
         >
           {(item) => {
             if (!item) return null;
-            return <StackDetailPanel stack={item} />;
+            return <StackDetailPanel stack={item} onEdit={() => openDialog(item.id)} />;
           }}
         </ItemsInspectHost>
 
-        <StackForm
-          key={editingStackId ?? "new"}
-          initialData={
-            editingStackId ? (stacks.find((s) => s.id === editingStackId) ?? null) : null
-          }
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-        />
+        {dialogOpen ? (
+          <StackForm
+            key={editingStackId ?? "new"}
+            initialData={
+              editingStackId ? (stacks.find((s) => s.id === editingStackId) ?? null) : null
+            }
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+          />
+        ) : null}
 
         {/* ── Batch delete dialog ─────────────────────────────────── */}
         <AlertDialog

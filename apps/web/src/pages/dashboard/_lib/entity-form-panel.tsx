@@ -17,7 +17,7 @@ import { Sheet, SheetDescription, SheetPopup, SheetTitle } from "@tsu-stack/ui/c
 
 import { useIsClient, useMediaQuery } from "@/shared/lib/use-media-query";
 
-import { ItemInfoPanel } from "@/widgets/items-page";
+import { ItemInfoPanel, PanelCancelButton } from "@/widgets/items-page";
 import { SidePanelPortal } from "@/widgets/layout";
 
 type EntityFormSheetProps = {
@@ -28,7 +28,7 @@ type EntityFormSheetProps = {
   title: string;
   description?: string;
   eyebrow?: ReactNode;
-  /** Header actions (Save). There is no Cancel/Save footer. */
+  /** Header actions after Cancel (usually Save). */
   actions?: ReactNode;
   children: ReactNode;
   updatedAt?: string | Date | null;
@@ -38,8 +38,8 @@ type EntityFormSheetProps = {
 
 /**
  * Dashboard entity create/edit: ItemInfoPanel chrome in the side panel on
- * desktop, inset Sheet on mobile. Save lives in the header; the footer is
- * prev/next + timestamps — not dialog Cancel/Save.
+ * desktop, inset Sheet on mobile. Cancel + Save live in the header; the footer
+ * is prev/next + timestamps. Dirty dismiss still confirms.
  */
 export function EntityFormSheet({
   open,
@@ -100,7 +100,12 @@ export function EntityFormSheet({
       title={title}
       description={description}
       eyebrow={eyebrow ?? <FilePenLineIcon strokeWidth={1.75} />}
-      actions={actions}
+      actions={
+        <>
+          <PanelCancelButton onClick={requestClose} />
+          {actions}
+        </>
+      }
       updatedAt={updatedAt}
       createdAt={createdAt}
       headerClassName={useSheet ? "pe-12" : undefined}

@@ -57,7 +57,7 @@ export function ItemsInfoFooter({ updatedAt, createdAt }: ItemsInfoFooterProps) 
   return (
     <footer
       className={cn(
-        "flex shrink-0 items-center justify-between gap-3 border-t border-border/50 px-4 py-2"
+        "flex shrink-0 items-center justify-between gap-3 border-t border-border/50 px-4 py-2 max-xl:pe-20"
       )}
     >
       {nav ? (

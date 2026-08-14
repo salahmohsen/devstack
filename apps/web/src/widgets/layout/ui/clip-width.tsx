@@ -1,16 +1,25 @@
-import { type HTMLAttributes, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type HTMLAttributes,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState
+} from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-/**
- * Clip a column to `contentWidth` and tween the shell width.
- *
- * CSS width only — no Motion `layout` / `animate={{ width }}` (those scale-
- * distort children). Ease approximates stiffness 320 / damping 36.
- */
-export const CLIP_WIDTH_MS = 420;
-export const CLIP_WIDTH_TRANSITION =
-  `width ${CLIP_WIDTH_MS}ms cubic-bezier(0.32, 0.72, 0, 1)` as const;
+/** Panel/sidebar open — `--duration-slow`. */
+export const CLIP_WIDTH_OPEN_MS = 400;
+/** Panel/sidebar close — `--duration-medium`, faster than open. */
+export const CLIP_WIDTH_CLOSE_MS = 350;
+/** `--ease-smooth-out` */
+export const CLIP_WIDTH_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+/** @deprecated Use CLIP_WIDTH_OPEN_MS — kept for existing imports. */
+export const CLIP_WIDTH_MS = CLIP_WIDTH_OPEN_MS;
+
+export const CLIP_WIDTH_TRANSITION = `width ${CLIP_WIDTH_OPEN_MS}ms ${CLIP_WIDTH_EASE}` as const;
 
 type ClipWidthProps = {
   open: boolean;
@@ -23,14 +32,26 @@ type ClipWidthProps = {
   unlockWhenOpen?: boolean;
   /** Unmount children after the close tween (skip work on public routes). */
   unmountClosed?: boolean;
+  /**
+   * Tween the in-flow slot width (so the main card shrinks/grows) and slide
+   * the paint layer with transform. Same duration and easing both ways.
+   */
+  overlay?: boolean;
   children: ReactNode;
 } & Omit<HTMLAttributes<HTMLDivElement>, "children">;
 
+/**
+ * Clip a column to `contentWidth` and tween the shell width.
+ *
+ * CSS width only — no Motion `layout` / `animate={{ width }}` (those scale-
+ * distort children). Open 400ms / close 350ms, `--ease-smooth-out`.
+ */
 export function ClipWidth({
   open,
   contentWidth,
   unlockWhenOpen = false,
   unmountClosed = false,
+  overlay = false,
   className,
   style,
   children,
@@ -41,73 +62,134 @@ export function ClipWidth({
   const [width, setWidth] = useState(0);
   const [lockWidth, setLockWidth] = useState(contentWidth);
   const [unlocked, setUnlocked] = useState(false);
+  const [durationMs, setDurationMs] = useState(open ? CLIP_WIDTH_OPEN_MS : CLIP_WIDTH_CLOSE_MS);
   const shellRef = useRef<HTMLDivElement>(null);
   const contentWidthRef = useRef(contentWidth);
+  const lastWidthRef = useRef(open ? contentWidth : 0);
+  const widthRef = useRef(0);
 
   useEffect(() => {
     contentWidthRef.current = contentWidth;
   }, [contentWidth]);
+
+  useEffect(() => {
+    widthRef.current = width;
+  }, [width]);
+
+  useEffect(() => {
+    const el = shellRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      const next = entries[0]?.contentRect.width;
+      if (next && next > 0) lastWidthRef.current = next;
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [mounted]);
 
   if (open && !unlocked && lockWidth !== contentWidth) {
     setLockWidth(contentWidth);
     setWidth(contentWidth);
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!open) return;
     let cancelled = false;
     let timeout = 0;
-    let frame2 = 0;
+    let frame = 0;
     const target = contentWidthRef.current;
-
-    if (open) {
-      const frame = requestAnimationFrame(() => {
-        if (cancelled) return;
-        setMounted(true);
-        setUnlocked(false);
-        setLockWidth(target);
-        setWidth(0);
-        frame2 = requestAnimationFrame(() => {
-          if (!cancelled) setWidth(target);
-        });
+    setMounted(true);
+    setUnlocked(false);
+    setLockWidth(target);
+    setDurationMs(CLIP_WIDTH_OPEN_MS);
+    if (widthRef.current <= 0) {
+      setWidth(0);
+      frame = requestAnimationFrame(() => {
+        if (!cancelled) setWidth(target);
       });
-      timeout = window.setTimeout(() => {
-        if (!cancelled && unlockWhenOpen) setUnlocked(true);
-      }, CLIP_WIDTH_MS);
-      return () => {
-        cancelled = true;
-        cancelAnimationFrame(frame);
-        cancelAnimationFrame(frame2);
-        window.clearTimeout(timeout);
-      };
+    } else {
+      setWidth(target);
     }
-
-    if (unmountClosed && !shellRef.current) return;
-
-    const measured = shellRef.current?.offsetWidth ?? 0;
-    const current = measured > 0 ? measured : target;
-    const frame = requestAnimationFrame(() => {
-      if (cancelled) return;
-      setUnlocked(false);
-      setLockWidth(current);
-      setWidth(current);
-      frame2 = requestAnimationFrame(() => {
-        if (cancelled) return;
-        setWidth(0);
-        if (!unmountClosed) return;
-        timeout = window.setTimeout(() => {
-          if (!cancelled) setMounted(false);
-        }, CLIP_WIDTH_MS);
-      });
-    });
+    timeout = window.setTimeout(() => {
+      if (!cancelled && unlockWhenOpen) setUnlocked(true);
+    }, CLIP_WIDTH_OPEN_MS);
     return () => {
       cancelled = true;
       cancelAnimationFrame(frame);
-      cancelAnimationFrame(frame2);
+      window.clearTimeout(timeout);
+    };
+  }, [open, unlockWhenOpen]);
+
+  useEffect(() => {
+    if (open) return;
+    let cancelled = false;
+    let timeout = 0;
+    let frame = 0;
+    const target = contentWidthRef.current;
+
+    if (unmountClosed && !shellRef.current) return;
+    if (widthRef.current <= 0 && lastWidthRef.current <= 0) return;
+
+    const measured = lastWidthRef.current;
+    const current = measured > 0 ? measured : widthRef.current > 0 ? widthRef.current : target;
+    setUnlocked(false);
+    setLockWidth(current);
+    setDurationMs(CLIP_WIDTH_CLOSE_MS);
+    setWidth(current);
+    frame = requestAnimationFrame(() => {
+      if (cancelled) return;
+      setWidth(0);
+    });
+    timeout = window.setTimeout(() => {
+      if (!cancelled && unmountClosed) setMounted(false);
+    }, CLIP_WIDTH_CLOSE_MS);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
       window.clearTimeout(timeout);
     };
   }, [open, unlockWhenOpen, unmountClosed]);
 
   if (!mounted) return null;
+
+  if (overlay) {
+    const motionMs = open ? CLIP_WIDTH_OPEN_MS : CLIP_WIDTH_CLOSE_MS;
+    const motion = `${motionMs}ms ${CLIP_WIDTH_EASE}`;
+    return (
+      <div
+        className={cn("relative h-full min-h-0 shrink-0 overflow-hidden", className)}
+        style={{
+          width: open ? contentWidth : 0,
+          transition: `width ${motion}`,
+          ...style
+        }}
+        {...shellProps}
+      >
+        <div
+          ref={shellRef}
+          className="absolute inset-y-0 right-0 h-full min-h-0 overflow-hidden"
+          style={{
+            width: contentWidth,
+            transform: open ? "translateX(0)" : "translateX(100%)",
+            transition: `transform ${motion}`,
+            willChange: "transform",
+            contain: "layout paint"
+          }}
+          onTransitionEnd={(event) => {
+            onTransitionEnd?.(event);
+            if (event.target !== event.currentTarget) return;
+            if (event.propertyName !== "transform") return;
+            if (open && unlockWhenOpen) setUnlocked(true);
+            if (!open && unmountClosed) setMounted(false);
+          }}
+        >
+          <div className="h-full" style={{ width: contentWidth }}>
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -115,7 +197,9 @@ export function ClipWidth({
       className={cn("min-h-0 shrink-0 overflow-hidden", className)}
       style={{
         width: unlocked ? undefined : width,
-        transition: unlocked ? undefined : CLIP_WIDTH_TRANSITION,
+        transition: unlocked ? undefined : `width ${durationMs}ms ${CLIP_WIDTH_EASE}`,
+        willChange: unlocked ? undefined : "width",
+        contain: "layout",
         ...style
       }}
       onTransitionEnd={(event) => {

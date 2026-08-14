@@ -155,7 +155,8 @@ export function ListItem({
         }}
         onMouseEnter={onMouseEnter}
         className={cn(
-          "group mx-3 cursor-pointer transition-all duration-200",
+          "group mx-3 cursor-pointer [contain-intrinsic-size:auto_4.5rem] [content-visibility:auto]",
+          "transition-[transform,opacity] duration-200",
           "data-selected:scale-[1.01] data-selected:opacity-100",
           "hover:scale-[1.01] hover:opacity-100",
           className

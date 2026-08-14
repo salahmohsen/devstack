@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Circle, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
@@ -17,6 +17,7 @@ import {
   MenuTrigger
 } from "@tsu-stack/ui/components/menu";
 import { Switch } from "@tsu-stack/ui/components/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 type ActionButtonConfig = {
@@ -34,14 +35,58 @@ type ToggleConfig = {
   initialValue: boolean;
 };
 
-function PortfolioStatusDot({ inPortfolio }: { inPortfolio: boolean }) {
+function LiveStatusDot({ live }: { live: boolean }) {
   return (
-    <span
+    <Circle
       className={cn(
-        "size-1.5 shrink-0 animate-pulse rounded-full",
-        inPortfolio ? "bg-success" : "bg-destructive"
+        "size-2 opacity-100",
+        live ? "fill-success text-success" : "fill-destructive text-destructive"
       )}
     />
+  );
+}
+
+function PortfolioStatusButton({
+  inPortfolio,
+  isLoading,
+  onToggle,
+  className
+}: {
+  inPortfolio: boolean;
+  isLoading?: boolean;
+  onToggle: () => void;
+  className?: string;
+}) {
+  const hint = inPortfolio ? "On your public profile" : "Not on your public profile";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            size="icon"
+            variant="outline"
+            disabled={isLoading}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggle();
+            }}
+            aria-label={hint}
+            aria-pressed={inPortfolio}
+            data-slot="button"
+            className={className}
+          />
+        }
+      >
+        <IconSwap
+          state={isLoading ? "b" : "a"}
+          aria-hidden
+          iconA={<LiveStatusDot live={inPortfolio} />}
+          iconB={<Loader2 className="size-4 animate-spin" />}
+        />
+      </TooltipTrigger>
+      <TooltipPopup>{hint}</TooltipPopup>
+    </Tooltip>
   );
 }
 
@@ -73,11 +118,11 @@ export function ListItemActionButtons({
   extraMenuItems,
   classNames
 }: ListItemActionButtonsProps) {
-  const hasMenu = !!togglePortfolio || !!toggleFeatured || !!deleteConfig || !!extraMenuItems;
-  const menuLoading =
-    togglePortfolio?.isLoading ?? toggleFeatured?.isLoading ?? deleteConfig?.isLoading;
+  const hasOverflowMenu = !!togglePortfolio || !!toggleFeatured || !!extraMenuItems;
+  const showDeleteInGroup = !!deleteConfig && !hasOverflowMenu;
+  const hasMenu = hasOverflowMenu;
 
-  if (!view && !edit && !hasMenu) {
+  if (!view && !edit && !hasMenu && !showDeleteInGroup) {
     return null;
   }
 
@@ -88,19 +133,13 @@ export function ListItemActionButtons({
           <Button
             size="icon"
             variant="outline"
-            disabled={menuLoading}
             onClick={(e) => e.stopPropagation()}
             aria-label="More actions"
             className={classNames?.trigger}
           />
         }
       >
-        <IconSwap
-          state={menuLoading ? "b" : "a"}
-          aria-hidden
-          iconA={<ChevronDown className="size-4" />}
-          iconB={<Loader2 className="size-4 animate-spin" />}
-        />
+        <ChevronDown className="size-4" aria-hidden />
       </MenuTrigger>
       <MenuPopup align="end">
         {extraMenuItems}
@@ -155,7 +194,7 @@ export function ListItemActionButtons({
             </MenuItem>
           ) : null
         ) : null}
-        {deleteConfig ? (
+        {deleteConfig && !showDeleteInGroup ? (
           <>
             <MenuSeparator />
             <MenuItem
@@ -177,20 +216,17 @@ export function ListItemActionButtons({
     </Menu>
   );
 
-  if ((view || edit) && hasMenu) {
+  if ((view || edit || showDeleteInGroup) && (hasMenu || showDeleteInGroup || (view && edit))) {
     return (
       <Group aria-label="Item actions" className={classNames?.wrapper}>
         {togglePortfolio ? (
           <>
-            <Button
-              variant="outline"
-              size="icon"
-              disabled
-              aria-label={togglePortfolio.initialValue ? "In portfolio" : "Not in portfolio"}
-              className="disabled:opacity-100"
-            >
-              <PortfolioStatusDot inPortfolio={togglePortfolio.initialValue} />
-            </Button>
+            <PortfolioStatusButton
+              inPortfolio={togglePortfolio.initialValue}
+              isLoading={togglePortfolio.isLoading}
+              onToggle={togglePortfolio.onAction}
+              className={classNames?.trigger}
+            />
             <GroupSeparator />
           </>
         ) : null}
@@ -223,9 +259,48 @@ export function ListItemActionButtons({
             {edit.label ?? "Edit"}
           </Button>
         ) : null}
-        {view || edit ? <GroupSeparator /> : null}
-        {menuContent}
+        {showDeleteInGroup ? (
+          <>
+            {view || edit ? <GroupSeparator /> : null}
+            <Button
+              onClick={(event: React.MouseEvent) => {
+                event.stopPropagation();
+                deleteConfig.onAction();
+              }}
+              loading={deleteConfig.isLoading}
+              variant="destructive-outline"
+              aria-label={deleteConfig.ariaLabel ?? deleteConfig.label ?? "Delete"}
+            >
+              <Trash2 />
+              {deleteConfig.label ?? "Delete"}
+            </Button>
+          </>
+        ) : null}
+        {hasMenu ? (
+          <>
+            {view || edit || showDeleteInGroup ? <GroupSeparator /> : null}
+            {menuContent}
+          </>
+        ) : null}
       </Group>
+    );
+  }
+
+  if (showDeleteInGroup && !view && !edit) {
+    return (
+      <Button
+        className={classNames?.wrapper}
+        onClick={(event: React.MouseEvent) => {
+          event.stopPropagation();
+          deleteConfig.onAction();
+        }}
+        loading={deleteConfig.isLoading}
+        variant="destructive-outline"
+        aria-label={deleteConfig.ariaLabel ?? deleteConfig.label ?? "Delete"}
+      >
+        <Trash2 />
+        {deleteConfig.label ?? "Delete"}
+      </Button>
     );
   }
 

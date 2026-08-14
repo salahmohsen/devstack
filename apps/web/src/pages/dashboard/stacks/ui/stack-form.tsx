@@ -46,7 +46,8 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
   });
 
   const projectsQuery = useQuery({
-    ...orpcQueryClient.projects.list.queryOptions({})
+    ...orpcQueryClient.projects.list.queryOptions({}),
+    enabled: open
   });
 
   const createMutation = useMutation(

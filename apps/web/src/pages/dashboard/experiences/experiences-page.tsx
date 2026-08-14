@@ -38,6 +38,7 @@ import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
   ItemInfoPanel,
+  PanelEditButton,
   ItemInfoRow,
   ItemInfoSection,
   ItemsEmpty,
@@ -515,6 +516,7 @@ export function ExperiencesPage() {
                     <span>{formatRangeFull(item.fromDate, item.toDate)}</span>
                   </p>
                 }
+                actions={<PanelEditButton onClick={() => openDialog(item.id)} />}
                 updatedAt={item.updatedAt}
                 createdAt={item.createdAt}
               >
@@ -550,16 +552,18 @@ export function ExperiencesPage() {
           }}
         </ItemsInspectHost>
 
-        <ExperienceForm
-          key={editingExperienceId ?? "new"}
-          initialData={
-            editingExperienceId
-              ? (visibleExperiences.find((exp) => exp.id === editingExperienceId) ?? null)
-              : null
-          }
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-        />
+        {dialogOpen ? (
+          <ExperienceForm
+            key={editingExperienceId ?? "new"}
+            initialData={
+              editingExperienceId
+                ? (visibleExperiences.find((exp) => exp.id === editingExperienceId) ?? null)
+                : null
+            }
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+          />
+        ) : null}
 
         <AlertDialog
           open={batchDeleteDialogOpen}

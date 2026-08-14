@@ -27,9 +27,13 @@ import {
 export function RootLayout({ children }: PropsWithChildren) {
   const sidePanel = useSidePanelSlot();
   const isXl = useMediaQuery("(min-width: 1280px)");
-  const showPanel = isXl && sidePanel.hasContent && !sidePanel.collapsed;
-  const isDashboard = useLocation().pathname.startsWith("/dashboard");
-  const panelWidth = isDashboard ? DASHBOARD_SIDE_PANEL_WIDTH : PUBLIC_SIDE_PANEL_WIDTH;
+  const showPanel = isXl && (sidePanel.hasContent || sidePanel.inspectOpen) && !sidePanel.collapsed;
+  const pathname = useLocation().pathname;
+  const isDashboard = pathname.startsWith("/dashboard");
+  // Public repos list inspects portfolio projects with the same chrome as dashboard.
+  const isPublicReposList = /(?:^|\/)repos\/?$/.test(pathname);
+  const panelWidth =
+    isDashboard || isPublicReposList ? DASHBOARD_SIDE_PANEL_WIDTH : PUBLIC_SIDE_PANEL_WIDTH;
 
   return (
     <div
@@ -49,6 +53,9 @@ export function RootLayout({ children }: PropsWithChildren) {
           node: sidePanel.node,
           collapsed: sidePanel.collapsed,
           hasContent: sidePanel.hasContent,
+          inspectOpen: sidePanel.inspectOpen,
+          requestInspectOpen: sidePanel.requestInspectOpen,
+          releaseInspectOpen: sidePanel.releaseInspectOpen,
           toggle: sidePanel.toggle
         }}
       >
@@ -75,10 +82,12 @@ export function RootLayout({ children }: PropsWithChildren) {
               )}
             >
               <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                <main className="relative flex min-h-0 w-full flex-1 overflow-hidden bg-background">
-                  <ScrollArea scrollFade fill clampContentMinWidth={true}>
-                    {children}
-                  </ScrollArea>
+                <main className="relative flex min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-background">
+                  <div className="size-full min-h-0 min-w-0">
+                    <ScrollArea scrollFade fill clampContentMinWidth={true}>
+                      {children}
+                    </ScrollArea>
+                  </div>
                 </main>
                 <SidePanelToggle />
               </div>
@@ -86,6 +95,7 @@ export function RootLayout({ children }: PropsWithChildren) {
               <ClipWidth
                 open={showPanel}
                 contentWidth={panelWidth}
+                overlay
                 data-side-panel-shell=""
                 className="hidden h-full xl:flex"
               >

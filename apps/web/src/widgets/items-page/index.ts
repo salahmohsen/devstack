@@ -24,6 +24,15 @@ export {
   ItemInfoRow,
   ItemInfoSection
 } from "@/widgets/items-page/ui/item-info-panel";
+export {
+  PanelCancelButton,
+  PanelDeleteButton,
+  PanelEditButton
+} from "@/widgets/items-page/ui/panel-header-actions";
+export {
+  ProjectInfoPanel,
+  type ProjectInfoPanelProject
+} from "@/widgets/items-page/ui/project-info-panel";
 export { ItemsInfoFooter } from "@/widgets/items-page/ui/items-info-footer";
 export { ItemsInfoSheet } from "@/widgets/items-page/ui/items-info-sheet";
 export { ItemsList } from "@/widgets/items-page/ui/items-list";

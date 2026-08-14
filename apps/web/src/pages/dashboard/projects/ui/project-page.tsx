@@ -1,18 +1,13 @@
 "use client";
 
 import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link, type NavigateOptions } from "@tanstack/react-router";
-import { ExternalLink, FolderKanbanIcon, LayersIcon, LinkIcon, SparklesIcon } from "lucide-react";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
+import { FolderKanbanIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import {
-  type ProjectListPageOutput,
-  type ProjectOutput,
-  stripTrailingSlashes
-} from "@tsu-stack/core";
-import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
+import { type ProjectListPageOutput, type ProjectOutput } from "@tsu-stack/core";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +19,6 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
-import { Button } from "@tsu-stack/ui/components/button";
 import { MenuItem } from "@tsu-stack/ui/components/menu";
 import {
   PreviewCard,
@@ -45,20 +39,18 @@ import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
-import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
 import {
-  ItemInfoPanel,
-  ItemInfoSection,
   ItemsEmpty,
   ItemsNavProvider,
   ListSkeleton,
   PageHeader,
   PageLayout,
+  ProjectInfoPanel,
   isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
@@ -74,9 +66,13 @@ import {
 import { DetectStacksReposDialog } from "@/pages/dashboard/projects/ui/detect-stacks-repos-dialog";
 import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
+const projectsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/projects/");
+
 export function ProjectsPage() {
   const projectsQuery = useListProjectsPageInfiniteQuery();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { projectId: deepLinkProjectId } = projectsRouteApi.useSearch();
 
   const {
     openedItem,
@@ -92,6 +88,45 @@ export function ProjectsPage() {
 
   const projects = useMemo(() => flattenProjectsPages(projectsQuery.data), [projectsQuery.data]);
   const totalCount = projectsQuery.data?.pages[0]?.totalCount;
+
+  // Open inspect when arriving with ?projectId= from the public profile.
+  useEffect(() => {
+    if (!deepLinkProjectId) return;
+
+    const fromList = projects.find((project) => project.id === deepLinkProjectId);
+    if (fromList) {
+      setOpenedItem(fromList);
+      setIsItemOpen({ [fromList.id]: true });
+      void navigate({ to: "/dashboard/projects", search: {}, replace: true });
+      return;
+    }
+
+    if (projectsQuery.isLoading) return;
+
+    let cancelled = false;
+    void queryClient
+      .fetchQuery(orpcQueryClient.projects.get.queryOptions({ input: { id: deepLinkProjectId } }))
+      .then((project) => {
+        if (cancelled) return;
+        if (project) {
+          setOpenedItem(project);
+          setIsItemOpen({ [project.id]: true });
+        }
+        void navigate({ to: "/dashboard/projects", search: {}, replace: true });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    deepLinkProjectId,
+    projects,
+    projectsQuery.isLoading,
+    queryClient,
+    setOpenedItem,
+    setIsItemOpen,
+    navigate
+  ]);
 
   const [isSort, setIsSort] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<ProjectOutput[] | null>(null);
@@ -536,141 +571,21 @@ export function ProjectsPage() {
             }
           }}
         >
-          {(item: ProjectOutput | null) => {
-            if (!item) return null;
-            const projectLink = `${stripTrailingSlashes(ENV_WEB_ISOMORPHIC.VITE_WEB_URL)}/${item.title}`;
-            return (
-              <ItemInfoPanel
-                eyebrow={<FolderKanbanIcon strokeWidth={1.75} />}
-                title={item.title}
-                description={
-                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span>{item.isPresent ? `${item.year} — Present` : item.year}</span>
-                    {item.experienceId ? (
-                      <>
-                        <span aria-hidden className="text-border">
-                          ·
-                        </span>
-                        <span>Linked to an experience</span>
-                      </>
-                    ) : null}
-                  </p>
-                }
-                actions={
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="ghost"
-                    render={
-                      <a
-                        href={projectLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`Open ${item.title}`}
-                      />
-                    }
-                  >
-                    <ExternalLink strokeWidth={2} />
-                  </Button>
-                }
-                updatedAt={item.updatedAt}
-                createdAt={item.createdAt}
-              >
-                <div className="space-y-8">
-                  {item.summary ? (
-                    <ItemInfoSection title="Summary" icon={<SparklesIcon />}>
-                      <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                        {item.summary}
-                      </Markdown>
-                    </ItemInfoSection>
-                  ) : null}
-                  <ItemInfoSection title="Description" icon={<FolderKanbanIcon />}>
-                    {item.description ? (
-                      <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                        {item.description}
-                      </Markdown>
-                    ) : (
-                      <p>No description.</p>
-                    )}
-                  </ItemInfoSection>
-                  {item.repos.length > 0 || item.demoUrl ? (
-                    <ItemInfoSection title="Links" icon={<LinkIcon />}>
-                      <div className="flex flex-wrap gap-1.5">
-                        {item.repos.map((repo) => (
-                          <Badge
-                            key={repo}
-                            variant="secondary"
-                            size="lg"
-                            render={
-                              <Link
-                                to={`/repos/${repo.split("/").at(-1)}` as NavigateOptions["to"]}
-                                aria-label={`Open repository ${repo}`}
-                              >
-                                {repo.replace(/^https?:\/\/(www\.)?github\.com\//, "")}
-                              </Link>
-                            }
-                          />
-                        ))}
-                        {item.demoUrl ? (
-                          <Badge
-                            variant="secondary"
-                            size="lg"
-                            render={
-                              <a
-                                href={item.demoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label={`Open demo for ${item.title}`}
-                              >
-                                Demo
-                              </a>
-                            }
-                          />
-                        ) : null}
-                      </div>
-                    </ItemInfoSection>
-                  ) : null}
-                  {item.stacks.length > 0 ? (
-                    <ItemInfoSection title="Stack" icon={<LayersIcon />}>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {item.stacks.slice(0, 8).map((stack) => (
-                          <Badge key={stack.id} variant="secondary" size="sm">
-                            {stack.icon ? <Icon icon={stack.icon} name={stack.name} /> : null}
-                            {stack.name}
-                          </Badge>
-                        ))}
-                        {item.stacks.length > 8 && (
-                          <PreviewCard>
-                            <PreviewCardTrigger render={<Badge variant="secondary" size="sm" />}>
-                              +{item.stacks.length - 8}
-                            </PreviewCardTrigger>
-                            <PreviewCardPopup className="flex w-md flex-wrap gap-1 p-1">
-                              {item.stacks.slice(8).map((stack) => (
-                                <Badge key={stack.id} variant="secondary" size="sm">
-                                  {stack.icon ? <Icon icon={stack.icon} name={stack.name} /> : null}
-                                  {stack.name}
-                                </Badge>
-                              ))}
-                            </PreviewCardPopup>
-                          </PreviewCard>
-                        )}
-                      </div>
-                    </ItemInfoSection>
-                  ) : null}
-                </div>
-              </ItemInfoPanel>
-            );
-          }}
+          {(item: ProjectOutput | null) =>
+            item ? <ProjectInfoPanel project={item} onEdit={() => openDialog(item.id)} /> : null
+          }
         </ItemsInspectHost>
 
-        <ProjectForm
-          key={editingProjectId ?? "new"}
-          initialData={
-            editingProjectId ? (projects.find((p) => p.id === editingProjectId) ?? null) : null
-          }
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-        />
+        {dialogOpen ? (
+          <ProjectForm
+            key={editingProjectId ?? "new"}
+            initialData={
+              editingProjectId ? (projects.find((p) => p.id === editingProjectId) ?? null) : null
+            }
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+          />
+        ) : null}
 
         {detectReposProject ? (
           <DetectStacksReposDialog

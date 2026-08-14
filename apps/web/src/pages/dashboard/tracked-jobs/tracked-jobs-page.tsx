@@ -1,7 +1,7 @@
 "use client";
 
 import { FileTextIcon, LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
-import { useCallback, useMemo, useRef } from "react";
+import { lazy, Suspense, useCallback, useMemo, useRef } from "react";
 
 import { type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -22,14 +22,51 @@ import {
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { useApplicationsView } from "@/pages/dashboard/tracked-jobs/_lib/use-applications-view";
-import { ApplicationFormSheet } from "@/pages/dashboard/tracked-jobs/application-form-sheet";
-import { ApplicationInfoPanel } from "@/pages/dashboard/tracked-jobs/ui/application-info-panel";
-import { ApplicationMaterialPreviewDialog } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
-import { ApplyPackageSheet } from "@/pages/dashboard/tracked-jobs/ui/apply-package-sheet";
 import { ApplicationsBoard } from "@/pages/dashboard/tracked-jobs/ui/board";
-import { ImportJdSheet } from "@/pages/dashboard/tracked-jobs/ui/import-jd-sheet";
 import { ApplicationsList } from "@/pages/dashboard/tracked-jobs/ui/list";
-import { SendOutreachDialog } from "@/pages/dashboard/tracked-jobs/ui/send-outreach-dialog";
+
+const ApplicationFormSheet = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/application-form-sheet").then((m) => {
+    return {
+      default: m.ApplicationFormSheet
+    };
+  })
+);
+const ApplicationInfoPanel = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/application-info-panel").then((m) => {
+    return {
+      default: m.ApplicationInfoPanel
+    };
+  })
+);
+const ApplicationMaterialPreviewDialog = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions").then((m) => {
+    return {
+      default: m.ApplicationMaterialPreviewDialog
+    };
+  })
+);
+const ApplyPackageSheet = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/apply-package-sheet").then((m) => {
+    return {
+      default: m.ApplyPackageSheet
+    };
+  })
+);
+const ImportJdSheet = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/import-jd-sheet").then((m) => {
+    return {
+      default: m.ImportJdSheet
+    };
+  })
+);
+const SendOutreachDialog = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/send-outreach-dialog").then((m) => {
+    return {
+      default: m.SendOutreachDialog
+    };
+  })
+);
 
 const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 
@@ -44,6 +81,7 @@ export function TrackedJobsPage() {
     editItem,
     viewItem,
     openCreate,
+    openEdit,
     closeSheet,
     closeView,
     showView,
@@ -194,62 +232,72 @@ export function TrackedJobsPage() {
           )}
         </div>
 
-        <ItemsInspectHost
-          open={isAnyOpen && !sheetOpen}
-          item={liveViewItem}
-          title="Application"
-          onOpenChange={(next) => {
-            if (!next) closeView();
-          }}
-        >
-          {(item) => <ApplicationInfoPanel item={item} />}
-        </ItemsInspectHost>
-
-        <ApplicationFormSheet
-          key={editItem?.id ?? "new"}
-          open={sheetOpen}
-          onOpenChange={(open) => {
-            if (!open) closeSheet();
-            else if (sheetMode === "create") openCreate();
-          }}
-          mode={sheetMode}
-          initialData={editItem}
-        />
-
-        <ApplyPackageSheet
-          open={packageSheetAppId != null}
-          application={packageApplication}
-          onOpenChange={(open) => {
-            if (!open) closePackageSheet();
-          }}
-        />
-
-        <SendOutreachDialog
-          open={sendOutreachAppId != null}
-          application={sendApplication}
-          onOpenChange={(open) => {
-            if (!open) closeSendOutreach();
-          }}
-        />
-
-        <ImportJdSheet
-          open={importJdSheetOpen}
-          onOpenChange={(open) => {
-            if (open) openImportJdSheet();
-            else closeImportJdSheet();
-          }}
-        />
-
-        {materialPreviewApplication && materialPreview ? (
-          <ApplicationMaterialPreviewDialog
-            app={materialPreviewApplication}
-            kind={materialPreview.kind}
-            open
-            onOpenChange={(open) => {
-              if (!open) closeMaterialPreview();
+        <Suspense fallback={null}>
+          <ItemsInspectHost
+            open={isAnyOpen && !sheetOpen}
+            item={liveViewItem}
+            title="Application"
+            onOpenChange={(next) => {
+              if (!next) closeView();
             }}
-          />
-        ) : null}
+          >
+            {(item) => <ApplicationInfoPanel item={item} onEdit={() => openEdit(item)} />}
+          </ItemsInspectHost>
+
+          {sheetOpen ? (
+            <ApplicationFormSheet
+              key={editItem?.id ?? "new"}
+              open={sheetOpen}
+              onOpenChange={(open) => {
+                if (!open) closeSheet();
+                else if (sheetMode === "create") openCreate();
+              }}
+              mode={sheetMode}
+              initialData={editItem}
+            />
+          ) : null}
+
+          {packageSheetAppId != null ? (
+            <ApplyPackageSheet
+              open
+              application={packageApplication}
+              onOpenChange={(open) => {
+                if (!open) closePackageSheet();
+              }}
+            />
+          ) : null}
+
+          {sendOutreachAppId != null ? (
+            <SendOutreachDialog
+              open
+              application={sendApplication}
+              onOpenChange={(open) => {
+                if (!open) closeSendOutreach();
+              }}
+            />
+          ) : null}
+
+          {importJdSheetOpen ? (
+            <ImportJdSheet
+              open
+              onOpenChange={(open) => {
+                if (open) openImportJdSheet();
+                else closeImportJdSheet();
+              }}
+            />
+          ) : null}
+
+          {materialPreviewApplication && materialPreview ? (
+            <ApplicationMaterialPreviewDialog
+              app={materialPreviewApplication}
+              kind={materialPreview.kind}
+              open
+              onOpenChange={(open) => {
+                if (!open) closeMaterialPreview();
+              }}
+            />
+          ) : null}
+        </Suspense>
       </PageLayout>
     </ItemsNavProvider>
   );

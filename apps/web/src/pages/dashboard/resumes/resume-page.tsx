@@ -39,6 +39,7 @@ import {
   ListSkeleton,
   PageHeader,
   PageLayout,
+  PanelDeleteButton,
   isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
@@ -151,6 +152,7 @@ export function ResumesPage() {
   const isDeleting = batchAction === "delete";
 
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+  const [panelDeleteOpen, setPanelDeleteOpen] = useState(false);
 
   async function handleBatchDelete() {
     setBatchAction("delete");
@@ -216,10 +218,20 @@ export function ResumesPage() {
             onDelete={() => {
               deleteMutation.mutate(
                 { ids: [resume.id] },
-                { onSuccess: () => toast.success("Resume deleted.") }
+                {
+                  onSuccess: () => {
+                    toast.success("Resume deleted.");
+                    if (openedItem?.id === resume.id) {
+                      setOpenedItem(null);
+                      setIsItemOpen(null);
+                    }
+                  }
+                }
               );
             }}
-            isDeleting={deleteMutation.isPending}
+            isDeleting={
+              deleteMutation.isPending && Boolean(deleteMutation.variables?.ids.includes(resume.id))
+            }
             deleteTitle="Delete this resume?"
             deleteDescription="This will permanently delete this resume PDF."
             title={resume.filename}
@@ -282,20 +294,30 @@ export function ResumesPage() {
                   </span>
                 }
                 actions={
-                  <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="ghost"
-                    render={
-                      <a
-                        href={`/api/resume/download/?id=${item.id}`}
-                        download
-                        aria-label={`Download ${item.filename}`}
-                      />
-                    }
-                  >
-                    <DownloadIcon strokeWidth={2} />
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      render={
+                        <a
+                          href={`/api/resume/download/?id=${item.id}`}
+                          download
+                          aria-label={`Download ${item.filename}`}
+                        />
+                      }
+                    >
+                      <DownloadIcon strokeWidth={2} />
+                      Download
+                    </Button>
+                    <PanelDeleteButton
+                      loading={
+                        deleteMutation.isPending &&
+                        Boolean(deleteMutation.variables?.ids.includes(item.id))
+                      }
+                      onClick={() => setPanelDeleteOpen(true)}
+                    />
+                  </>
                 }
                 updatedAt={item.updatedAt}
                 createdAt={item.createdAt}
@@ -310,6 +332,49 @@ export function ResumesPage() {
             );
           }}
         </ItemsInspectHost>
+
+        <AlertDialog
+          open={panelDeleteOpen && openedItem != null}
+          onOpenChange={(open) => {
+            if (!open && deleteMutation.isPending) return;
+            setPanelDeleteOpen(open);
+          }}
+        >
+          <AlertDialogPopup>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete{openedItem ? ` “${openedItem.filename}”` : " this resume"}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete this resume PDF.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                loading={deleteMutation.isPending}
+                onClick={() => {
+                  if (!openedItem) return;
+                  const id = openedItem.id;
+                  deleteMutation.mutate(
+                    { ids: [id] },
+                    {
+                      onSuccess: () => {
+                        toast.success("Resume deleted.");
+                        setPanelDeleteOpen(false);
+                        setOpenedItem(null);
+                        setIsItemOpen(null);
+                      }
+                    }
+                  );
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogPopup>
+        </AlertDialog>
 
         <AlertDialog
           open={batchDeleteDialogOpen}
