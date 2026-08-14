@@ -135,7 +135,7 @@ export const ApplicationOutputSchema = z.object({
   /** Computed from job_posting.closedAt join — not a DB column on application. */
   listingClosed: z.boolean().default(false)
 }) satisfies z.ZodType<
-  Omit<ApplicationSchemaSelect, "userId"> & {
+  Omit<ApplicationSchemaSelect, "userId" | "postingId" | "inboxExpiresAt" | "discoveryRunId"> & {
     listingClosed: boolean;
   }
 >;

@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
+import { jobPosting } from "./job-posting.schema.ts";
 import { resume } from "./resume.schema.ts";
 
 export const applicationStageEnum = pgEnum("application_stage", [
@@ -112,6 +113,12 @@ export const application = pgTable(
     outcomeAt: timestamp("outcome_at", { withTimezone: true }),
     hiringUrgency: hiringUrgencyEnum("hiring_urgency").notNull().default("unknown"),
     resumeId: text("resume_id").references(() => resume.id, { onDelete: "set null" }),
+    /** Shared catalog row; null for manual/hub/mail. */
+    postingId: text("posting_id").references(() => jobPosting.id, { onDelete: "set null" }),
+    /** Inbox TTL; null = grandfathered (pre-discovery). */
+    inboxExpiresAt: timestamp("inbox_expires_at", { withTimezone: true }),
+    /** Land/discovery batch id for this inbox row. */
+    discoveryRunId: text("discovery_run_id"),
     /** Recruiter / hiring contact email for outreach. */
     recruiterEmail: text("recruiter_email"),
     coverLetterBody: text("cover_letter_body"),
@@ -134,6 +141,8 @@ export const application = pgTable(
     index("application_user_id_idx").on(table.userId),
     index("application_user_id_stage_idx").on(table.userId, table.stage),
     index("application_user_id_tracking_status_idx").on(table.userId, table.trackingStatus),
+    index("application_user_id_discovery_run_id_idx").on(table.userId, table.discoveryRunId),
+    index("application_posting_id_idx").on(table.postingId),
     // Partial unique: manual apps may omit url (multiple nulls allowed).
     uniqueIndex("application_user_id_url_uidx")
       .on(table.userId, table.url)
