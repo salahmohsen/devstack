@@ -83,7 +83,9 @@ function toApplicationOutput(
     applyPackageDraft: row.applyPackageDraft,
     applyPackageDraftedAt: row.applyPackageDraftedAt,
     createdAt: row.createdAt,
-    updatedAt: row.updatedAt
+    updatedAt: row.updatedAt,
+    // Real closedAt join lands in Task 14.
+    listingClosed: false
   };
 }
 

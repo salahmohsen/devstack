@@ -6,8 +6,10 @@ import {
   JobPreferenceOutputSchema,
   mergeJobPreference,
   normalizeWorkModes,
+  refineJobsPerRun,
   UpsertJobPreferenceInputSchema,
   type JobPreference,
+  type JobTitleId,
   type WorkMode
 } from "@tsu-stack/core";
 import { jobPreferenceRepository } from "@tsu-stack/db";
@@ -26,6 +28,10 @@ function toOutput(
     salaryMin: row.salaryMin ?? null,
     salaryCurrency: row.salaryCurrency ?? null,
     minMatchScore: row.minMatchScore,
+    titleId: (row.titleId as JobTitleId | null) ?? null,
+    customTitle: row.customTitle ?? null,
+    jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    importFromEmail: row.importFromEmail ?? false,
     updatedAt: row.updatedAt
   });
 }
@@ -40,7 +46,11 @@ function rowToPreference(
     excludeKeywords: row.excludeKeywords,
     salaryMin: row.salaryMin ?? null,
     salaryCurrency: row.salaryCurrency ?? null,
-    minMatchScore: row.minMatchScore
+    minMatchScore: row.minMatchScore,
+    titleId: (row.titleId as JobTitleId | null) ?? null,
+    customTitle: row.customTitle ?? null,
+    jobsPerRun: refineJobsPerRun(row.jobsPerRun ?? 25),
+    importFromEmail: row.importFromEmail ?? false
   };
 }
 
@@ -80,7 +90,11 @@ export const jobPreferenceRouter = {
         excludeKeywords: merged.excludeKeywords,
         salaryMin: merged.salaryMin,
         salaryCurrency: merged.salaryCurrency,
-        minMatchScore: merged.minMatchScore
+        minMatchScore: merged.minMatchScore,
+        titleId: merged.titleId,
+        customTitle: merged.customTitle,
+        jobsPerRun: refineJobsPerRun(merged.jobsPerRun),
+        importFromEmail: merged.importFromEmail
       });
 
       return toOutput(row);

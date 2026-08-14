@@ -28,7 +28,11 @@ export const getJobPreferencesTool = createTool({
         excludeKeywords: z.array(z.string()),
         salaryMin: z.number().nullable(),
         salaryCurrency: z.string().nullable(),
-        minMatchScore: z.number().int()
+        minMatchScore: z.number().int(),
+        titleId: z.string().nullable(),
+        customTitle: z.string().nullable(),
+        jobsPerRun: z.number().int(),
+        importFromEmail: z.boolean()
       })
       .nullable()
   }),
@@ -51,7 +55,11 @@ export const getJobPreferencesTool = createTool({
         excludeKeywords: row.excludeKeywords ?? [],
         salaryMin: row.salaryMin ?? null,
         salaryCurrency: row.salaryCurrency ?? null,
-        minMatchScore: row.minMatchScore
+        minMatchScore: row.minMatchScore,
+        titleId: row.titleId ?? null,
+        customTitle: row.customTitle ?? null,
+        jobsPerRun: row.jobsPerRun ?? 25,
+        importFromEmail: row.importFromEmail ?? false
       }
     };
   }
