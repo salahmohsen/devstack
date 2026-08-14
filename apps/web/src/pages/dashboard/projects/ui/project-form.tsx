@@ -354,30 +354,32 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                     <div className="flex flex-col gap-2">
                       <Label htmlFor={field.name}>Stack</Label>
                       {/*
-                        One continuous shell: Group vertical join cannot style Combobox
-                        chips through Root wrappers, so the outer frame owns border/radius.
+                        Chips sit in a rounded frame. Detect stacks bleeds over that
+                        frame (no clip, no radius) so the footer is square and full-bleed.
                       */}
                       <div
                         role="group"
                         aria-label="Project stacks"
-                        className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-input bg-background shadow-xs/5 not-dark:bg-clip-padding dark:bg-input/32"
+                        className="relative flex w-full min-w-0 flex-col"
                       >
-                        <field.ComboboxMultipleField
-                          items={stacks.map((stack) => {
-                            return {
-                              label: stack.name,
-                              value: stack.id,
-                              icon: stack.icon ? <Icon icon={stack.icon} /> : undefined
-                            };
-                          })}
-                          classNames={{
-                            field: "contents",
-                            chips:
-                              "rounded-none border-0 bg-transparent shadow-none before:hidden focus-within:border-transparent focus-within:ring-0 dark:bg-transparent"
-                          }}
-                          placeholder="Select stacks..."
-                          emptyMessage="No stacks found."
-                        />
+                        <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-input bg-background shadow-xs/5 not-dark:bg-clip-padding dark:bg-input/32">
+                          <field.ComboboxMultipleField
+                            items={stacks.map((stack) => {
+                              return {
+                                label: stack.name,
+                                value: stack.id,
+                                icon: stack.icon ? <Icon icon={stack.icon} /> : undefined
+                              };
+                            })}
+                            classNames={{
+                              field: "contents",
+                              chips:
+                                "rounded-none border-0 bg-transparent shadow-none before:hidden focus-within:border-transparent focus-within:ring-0 dark:bg-transparent"
+                            }}
+                            placeholder="Select stacks..."
+                            emptyMessage="No stacks found."
+                          />
+                        </div>
                         <AiFlowTrigger
                           idleLabel="Detect stacks"
                           icon={<SparklesIcon aria-hidden />}
@@ -388,7 +390,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
                           onCancel={() => cancelDetectStacksJob()}
                           disabled={!canDetect}
                           layout="stretch"
-                          className="border-t border-input"
+                          className="relative z-10 -mx-px -mt-px w-[calc(100%+2px)]"
                         />
                       </div>
                       {!id ? (

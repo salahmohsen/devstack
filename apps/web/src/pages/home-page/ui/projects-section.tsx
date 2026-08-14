@@ -24,7 +24,7 @@ import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
 
-import { StackChip } from "@/pages/home-page/ui/stack-chip";
+import { StackChipMarqueeRows } from "@/pages/home-page/ui/stack-chip-marquee";
 
 export const ProjectsSection = ({
   username,
@@ -132,16 +132,10 @@ export const ProjectsItem = ({
   // Center underline on the title, driven by whole-card hover (not title-only).
   // Open repo controls always sit next to the title (all breakpoints).
   const stackRow =
-    project.stacks.length > 0 ? (
-      <span className="flex flex-wrap items-center gap-1.5">
-        {project.stacks.map((stack) => (
-          <StackChip key={stack.id} stack={stack} />
-        ))}
-      </span>
-    ) : null;
+    project.stacks.length > 0 ? <StackChipMarqueeRows stacks={project.stacks} rows={2} /> : null;
 
   const title = (
-    <span className="flex min-w-0 flex-col gap-2">
+    <span className="flex w-full min-w-0 flex-col gap-2">
       <span className="inline-flex min-w-0 items-center gap-2">
         {project.logo ? (
           <img
@@ -208,6 +202,7 @@ export const ProjectsItem = ({
       <Card6
         // isolate keeps the wash canvas under content without leaking stacking contexts.
         className="isolate w-full transition-[border-color,box-shadow] duration-300"
+        titleClassName="min-w-0"
         title={title}
         description={yearLabel}
         action={action}

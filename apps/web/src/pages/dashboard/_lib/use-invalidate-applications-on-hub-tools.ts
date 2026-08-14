@@ -4,16 +4,13 @@ import { type UIMessage } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 
-import { useHubChat } from "@/features/agent-hub";
+import {
+  hubToolNameFromPart,
+  isHubToolUiPart,
+  useHubChat,
+  type HubToolNamePart
+} from "@/features/agent-hub";
 import { applicationCountQueryKeys, applicationsQueryKeys } from "@/features/applications";
-
-type HubToolPart = {
-  type: string;
-  toolCallId?: string;
-  toolName?: string;
-  state?: string;
-  output?: unknown;
-};
 
 /** Tools that mutate applications from the shared hub thread. */
 const HUB_APPLICATION_MUTATING_TOOLS = new Set([
@@ -32,17 +29,6 @@ const HUB_APPLICATION_MUTATING_TOOLS = new Set([
   "update-application-stage",
   "updateApplicationStage"
 ]);
-
-function getToolName(part: HubToolPart): string {
-  if (part.toolName && part.toolName.length > 0) return part.toolName;
-  if (part.type === "dynamic-tool") return "tool";
-  if (part.type.startsWith("tool-")) return part.type.slice("tool-".length);
-  return part.type;
-}
-
-function isToolPart(part: HubToolPart): boolean {
-  return part.type.startsWith("tool-") || part.type === "dynamic-tool";
-}
 
 function isSuccessfulMutatingToolOutput(toolName: string, output: unknown): boolean {
   if (!output || typeof output !== "object" || Array.isArray(output)) return false;
@@ -74,9 +60,9 @@ function collectSuccessfulToolCallIds(messages: UIMessage[]): string[] {
   for (const msg of messages) {
     if (msg.role !== "assistant") continue;
     for (const raw of msg.parts ?? []) {
-      const part = raw as HubToolPart;
-      if (!isToolPart(part)) continue;
-      const toolName = getToolName(part);
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      const toolName = hubToolNameFromPart(part);
       if (!HUB_APPLICATION_MUTATING_TOOLS.has(toolName)) continue;
       if (part.state !== "output-available") continue;
       if (!isSuccessfulMutatingToolOutput(toolName, part.output)) continue;

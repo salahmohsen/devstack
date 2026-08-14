@@ -1,40 +1,24 @@
+import { loadJobPreference } from "@tsu-stack/api/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "@tsu-stack/api/lib/application/load-seeker-match-evidence";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
   buildApplicationSourceTags,
   canonicalizeJobUrl,
-  defaultJobPreference,
   isValidHarvestedJob,
   resolveApplicationSourceFields,
   type HarvestJobPreference,
-  type JobPreference,
   type MailJobHarvestResult,
   type ScoredHarvestedJob
 } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
-  jobPreferenceRepository,
   mailMessageRepository
 } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { callMailJobHarvestAgent } from "#@/queues/call-mail-job-harvest-agent";
-
-async function loadPreference(userId: string): Promise<JobPreference> {
-  const row = await jobPreferenceRepository.findByUserId(userId);
-  if (!row) return defaultJobPreference();
-  return {
-    workModes: row.workModes ?? [],
-    locations: row.locations ?? [],
-    roleKeywords: row.roleKeywords ?? [],
-    excludeKeywords: row.excludeKeywords ?? [],
-    salaryMin: row.salaryMin,
-    salaryCurrency: row.salaryCurrency,
-    minMatchScore: row.minMatchScore ?? 60
-  };
-}
 
 /**
  * Harvest job listings from a classified `job_notifier` mail via Mastra AI:
@@ -92,7 +76,7 @@ export async function runMailJobHarvest(input: {
   }
 
   const [prefs, evidence] = await Promise.all([
-    loadPreference(row.userId),
+    loadJobPreference(row.userId),
     loadSeekerMatchEvidence(row.userId)
   ]);
   const harvestPreference: HarvestJobPreference = { ...prefs, evidence };

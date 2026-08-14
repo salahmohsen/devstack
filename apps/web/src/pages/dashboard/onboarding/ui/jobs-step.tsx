@@ -4,74 +4,24 @@ import { useStore } from "@tanstack/react-form";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
-import {
-  DEFAULT_MIN_MATCH_SCORE,
-  JobPreferenceFieldsSchema,
-  WORK_MODE_LABELS,
-  WORK_MODES,
-  type WorkMode
-} from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
-import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 import { Frame, FramePanel } from "@tsu-stack/ui/components/frame";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
-import { normalizeTags } from "@tsu-stack/ui/components/tags-input";
 
 import { useAppForm } from "@/shared/form";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 
 import {
+  JobPreferenceFields,
+  JobPreferenceFormSchema,
+  jobPreferenceFormFromQuery,
+  jobPreferenceInputFromForm,
   useGetJobPreferenceQuery,
   useUpsertJobPreferenceMutation,
   type JobPreferenceQueryResult
 } from "@/features/job-preference";
-
-type FormState = {
-  workModes: WorkMode[];
-  locations: string[];
-  roleKeywords: string[];
-  excludeKeywords: string[];
-  minMatchScore: number;
-};
-
-const JobSettingsFormSchema = JobPreferenceFieldsSchema.pick({
-  workModes: true,
-  locations: true,
-  roleKeywords: true,
-  excludeKeywords: true,
-  minMatchScore: true
-});
-
-const WORK_MODE_OPTIONS = WORK_MODES.map((mode) => {
-  return {
-    value: mode,
-    label: WORK_MODE_LABELS[mode]
-  };
-});
-
-function formFromQuery(data: JobPreferenceQueryResult): FormState {
-  return {
-    workModes: data.workModes.filter((m): m is WorkMode =>
-      (WORK_MODES as readonly string[]).includes(m)
-    ),
-    locations: [...data.locations],
-    roleKeywords: [...data.roleKeywords],
-    excludeKeywords: [...data.excludeKeywords],
-    minMatchScore: data.minMatchScore
-  };
-}
-
-function isEmptyPrefs(form: FormState): boolean {
-  return (
-    form.workModes.length === 0 &&
-    form.locations.length === 0 &&
-    form.roleKeywords.length === 0 &&
-    form.excludeKeywords.length === 0 &&
-    form.minMatchScore === DEFAULT_MIN_MATCH_SCORE
-  );
-}
 
 export function JobsStep({ onContinue, onBack }: { onContinue: () => void; onBack?: () => void }) {
   const query = useGetJobPreferenceQuery();
@@ -116,22 +66,16 @@ function JobsStepForm({
   onBack?: () => void;
 }) {
   const upsert = useUpsertJobPreferenceMutation();
-  const serverValues = useMemo(() => formFromQuery(data), [data]);
+  const serverValues = useMemo(() => jobPreferenceFormFromQuery(data), [data]);
 
   const form = useAppForm({
     defaultValues: serverValues,
     validators: {
-      onChange: createZodFormValidator(JobSettingsFormSchema)
+      onChange: createZodFormValidator(JobPreferenceFormSchema)
     },
     onSubmit: async ({ value }) => {
       try {
-        await upsert.mutateAsync({
-          workModes: value.workModes,
-          locations: normalizeTags(value.locations, 50, 120),
-          roleKeywords: normalizeTags(value.roleKeywords, 50, 120),
-          excludeKeywords: normalizeTags(value.excludeKeywords, 50, 120),
-          minMatchScore: value.minMatchScore
-        });
+        await upsert.mutateAsync(jobPreferenceInputFromForm(value));
         toast.success("Job preferences saved");
         onContinue();
       } catch {
@@ -157,79 +101,10 @@ function JobsStepForm({
     >
       <Frame>
         <FramePanel className="space-y-6">
-          <form.Subscribe selector={(s) => s.values}>
-            {(values) =>
-              isEmptyPrefs(values) ? (
-                <p className="rounded-lg border border-dashed border-border/80 px-3 py-3 text-sm text-muted-foreground">
-                  Empty filters accept every harvested listing. Add modes, locations, or keywords so
-                  New jobs stays close to your craft.
-                </p>
-              ) : null
-            }
-          </form.Subscribe>
-
-          <FieldGroup className="gap-6">
-            <form.AppField name="workModes">
-              {(field) => (
-                <field.ToggleGroupField
-                  label="Work modes"
-                  description="Jobs outside selected modes are less likely to match. Leave empty to accept any."
-                  options={WORK_MODE_OPTIONS}
-                  multiple
-                  variant="outline"
-                />
-              )}
-            </form.AppField>
-
-            <form.AppField name="locations">
-              {(field) => (
-                <field.TagsField
-                  label="Locations"
-                  description="Cities, regions, or countries. Press Enter or comma to add."
-                  placeholder="e.g. Berlin, Remote EU"
-                  maxItems={50}
-                  maxItemLength={120}
-                />
-              )}
-            </form.AppField>
-
-            <form.AppField name="roleKeywords">
-              {(field) => (
-                <field.TagsField
-                  label="Role keywords"
-                  description="Titles or skills that raise match score. Press Enter or comma to add."
-                  placeholder="e.g. Frontend, React"
-                  maxItems={50}
-                  maxItemLength={120}
-                />
-              )}
-            </form.AppField>
-
-            <form.AppField name="excludeKeywords">
-              {(field) => (
-                <field.TagsField
-                  label="Exclude keywords"
-                  description="Hard negatives — roles or tech you never want harvested."
-                  placeholder="e.g. PHP, Salesforce"
-                  maxItems={50}
-                  maxItemLength={120}
-                />
-              )}
-            </form.AppField>
-
-            <form.AppField name="minMatchScore">
-              {(field) => (
-                <field.SliderField
-                  label="Minimum match score"
-                  description="Auto-harvest skips jobs below this score. Default is 60."
-                  min={0}
-                  max={100}
-                  step={1}
-                  formatValue={(v) => `${v}%`}
-                />
-              )}
-            </form.AppField>
-          </FieldGroup>
+          <JobPreferenceFields
+            form={form}
+            emptyHint="Empty filters accept every harvested listing. Add modes, locations, or keywords so New jobs stays close to your craft."
+          />
         </FramePanel>
       </Frame>
 
