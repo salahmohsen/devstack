@@ -79,6 +79,27 @@ export const betterAuthAccountRepository = {
     return this.updateProviderTokens(accountRowId, tokens);
   },
 
+  async countAccountsForUser(userId: string): Promise<number> {
+    const rows = await getDb()
+      .select({ id: account.id })
+      .from(account)
+      .where(eq(account.userId, userId));
+    return rows.length;
+  },
+
+  async deleteProviderAccountForUser(userId: string, providerId: string): Promise<void> {
+    await getDb()
+      .delete(account)
+      .where(and(eq(account.userId, userId), eq(account.providerId, providerId)));
+  },
+
+  async updateProviderScope(accountRowId: string, scope: string): Promise<void> {
+    await getDb()
+      .update(account)
+      .set({ scope, updatedAt: new Date() })
+      .where(eq(account.id, accountRowId));
+  },
+
   async updateProviderTokens(
     accountRowId: string,
     tokens: {

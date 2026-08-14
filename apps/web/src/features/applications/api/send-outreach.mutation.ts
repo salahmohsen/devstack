@@ -41,13 +41,13 @@ export function useSendOutreachMutation() {
               return;
             case "MAIL_NOT_CONFIGURED":
               toastAiError(
-                error.message || "Configure Resend under Settings → Mail before sending.",
+                error.message || "Configure Resend under Settings → Integrations before sending.",
                 {
                   feature: "generic",
                   severity: "hard",
                   action: {
-                    label: "Mail settings",
-                    to: "/dashboard/settings/mail"
+                    label: "Integrations",
+                    to: "/dashboard/settings/connections"
                   }
                 }
               );
@@ -68,8 +68,8 @@ export function useSendOutreachMutation() {
           feature: "generic",
           severity: "hard",
           action: {
-            label: "Mail settings",
-            to: "/dashboard/settings/mail"
+            label: "Integrations",
+            to: "/dashboard/settings/connections"
           }
         });
       }

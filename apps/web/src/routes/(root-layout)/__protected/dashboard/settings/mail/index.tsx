@@ -1,12 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import { getMailSettingsQueryOptions } from "@/features/mail-settings";
-
-import { MailSettings } from "@/pages/dashboard/settings/ui/mail-settings";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/(root-layout)/__protected/dashboard/settings/mail/")({
-  loader: ({ context }) => {
-    void context.queryClient.prefetchQuery(getMailSettingsQueryOptions());
-  },
-  component: MailSettings
+  beforeLoad: () => {
+    throw redirect({ to: "/dashboard/settings/connections", replace: true });
+  }
 });

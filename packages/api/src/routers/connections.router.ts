@@ -1,9 +1,12 @@
 import {
   ConnectionsStatusOutputSchema,
+  DisconnectProviderInputSchema,
+  DisconnectProviderOutputSchema,
   GmailSyncResultSchema,
   RefreshGithubConnectionOutputSchema,
   scopeListIncludesGmail,
   StartGmailWatchOutputSchema,
+  stripGmailScopes,
   UpdateGmailAutoSyncInputSchema,
   UpdateGmailAutoSyncOutputSchema
 } from "@tsu-stack/core";
@@ -165,6 +168,52 @@ export const connectionsRouter = {
         historyId: result.historyId,
         expiration: result.expiration
       };
+    }),
+
+  disconnectProvider: protectedProcedure
+    .route({
+      description:
+        "Disconnect Google or GitHub from Settings → Connections. Does not use Better Auth unlinkAccount (that requires a session created within freshAge).",
+      method: "POST"
+    })
+    .input(DisconnectProviderInputSchema)
+    .output(DisconnectProviderOutputSchema)
+    .errors({
+      NOT_CONNECTED: {
+        message: "That provider is not connected.",
+        status: 400
+      },
+      LAST_LOGIN: {
+        message:
+          "This is your only sign-in method. Add another login before disconnecting it entirely.",
+        status: 400
+      }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const [target, accountCount] = await Promise.all([
+        betterAuthAccountRepository.findProviderAccountForUser(userId, input.provider),
+        betterAuthAccountRepository.countAccountsForUser(userId)
+      ]);
+      if (!target) throw errors.NOT_CONNECTED();
+
+      if (accountCount <= 1) {
+        if (input.provider === "google" && scopeListIncludesGmail(target.scope)) {
+          await betterAuthAccountRepository.updateProviderScope(
+            target.id,
+            stripGmailScopes(target.scope)
+          );
+          await userGmailSyncRepository.setAutoSyncEnabled(userId, false);
+          return { ok: true as const, mode: "gmail_scopes_removed" as const };
+        }
+        throw errors.LAST_LOGIN();
+      }
+
+      await betterAuthAccountRepository.deleteProviderAccountForUser(userId, input.provider);
+      if (input.provider === "google") {
+        await userGmailSyncRepository.deleteByUserId(userId);
+      }
+      return { ok: true as const, mode: "unlinked" as const };
     }),
 
   refreshGithub: protectedProcedure

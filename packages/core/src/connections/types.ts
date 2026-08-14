@@ -41,3 +41,15 @@ export const RefreshGithubConnectionOutputSchema = z.discriminatedUnion("ok", [
   })
 ]);
 export type RefreshGithubConnectionOutput = z.infer<typeof RefreshGithubConnectionOutputSchema>;
+
+export const DisconnectProviderInputSchema = z.object({
+  provider: z.enum(["google", "github"])
+});
+export type DisconnectProviderInput = z.infer<typeof DisconnectProviderInputSchema>;
+
+export const DisconnectProviderOutputSchema = z.object({
+  ok: z.literal(true),
+  /** `unlinked` removed the OAuth row; `gmail_scopes_removed` kept Google login. */
+  mode: z.enum(["unlinked", "gmail_scopes_removed"])
+});
+export type DisconnectProviderOutput = z.infer<typeof DisconnectProviderOutputSchema>;

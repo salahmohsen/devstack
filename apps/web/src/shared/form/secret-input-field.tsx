@@ -49,7 +49,7 @@ function SecretInputField(props: SecretInputFieldProps) {
   const showClear = Boolean(props.allowClear && props.hasSavedSecret && props.onClearedChange);
 
   return (
-    <Field className={props.classNames?.field}>
+    <Field className={cn("w-full min-w-0 items-stretch", props.classNames?.field)}>
       <FieldLabelWithTooltip
         label={props.label}
         description={props.description}

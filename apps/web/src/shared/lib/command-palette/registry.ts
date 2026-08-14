@@ -8,7 +8,6 @@ import {
   FlaskConical,
   FolderKanban,
   Home,
-  Inbox,
   KeyRound,
   Layers,
   Blocks,
@@ -207,20 +206,21 @@ registerCommands([
     action: { type: "navigate", to: "/dashboard/settings/domain" }
   },
   {
-    id: "nav:settings-mail",
-    label: "Settings: Mail",
-    group: "Settings",
-    icon: Inbox,
-    keywords: ["mail", "resend", "inbound", "byo"],
-    authRequired: true,
-    action: { type: "navigate", to: "/dashboard/settings/mail" }
-  },
-  {
     id: "nav:settings-connections",
     label: "Settings: Integrations",
     group: "Settings",
     icon: Blocks,
-    keywords: ["integrations", "connections", "google", "gmail", "github", "oauth"],
+    keywords: [
+      "integrations",
+      "connections",
+      "google",
+      "gmail",
+      "github",
+      "oauth",
+      "resend",
+      "mail",
+      "inbound"
+    ],
     authRequired: true,
     action: { type: "navigate", to: "/dashboard/settings/connections" }
   },

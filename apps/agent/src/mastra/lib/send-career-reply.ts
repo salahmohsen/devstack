@@ -69,7 +69,7 @@ export async function sendCareerReply(
       ok: false,
       code: "MISSING_API_KEY",
       message:
-        "Add a Resend API key under Settings → Mail (or configure platform RESEND_API_KEY) before sending."
+        "Add a Resend API key under Settings → Integrations (or configure platform RESEND_API_KEY) before sending."
     };
   }
 
@@ -79,7 +79,7 @@ export async function sendCareerReply(
       ok: false,
       code: "MISSING_FROM",
       message:
-        "Set your inbound/career From address under Settings → Mail (or platform EMAIL_FROM)."
+        "Set your inbound/career From address under Settings → Integrations (or platform EMAIL_FROM)."
     };
   }
 

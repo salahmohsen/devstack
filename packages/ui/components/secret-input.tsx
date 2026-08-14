@@ -8,7 +8,6 @@ import {
   InputGroupInput,
   InputGroupText
 } from "@tsu-stack/ui/components/input-group";
-import { PasswordInput } from "@tsu-stack/ui/components/password-input";
 
 import { cn } from "#@/lib/utils";
 
@@ -73,7 +72,7 @@ function SecretInput({
   if (showSavedMask) {
     if (endAddon) {
       return (
-        <InputGroup className={className}>
+        <InputGroup className={cn("w-full min-w-0 self-stretch", className)}>
           <InputGroupInput
             id={id}
             name={name}
@@ -143,48 +142,26 @@ function SecretInput({
     );
   }
 
-  if (endAddon) {
-    return (
-      <InputGroup className={className}>
-        <InputGroupInput
-          id={id}
-          name={name}
-          type="password"
-          autoComplete={autoComplete}
-          spellCheck={false}
-          disabled={disabled}
-          value={value}
-          aria-label={ariaLabel}
-          placeholder={placeholder ?? (hasSavedSecret ? "Leave blank to keep" : "Secret")}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={(e) => {
-            if (!value.trim()) setReplacing(false);
-            onBlur?.(e);
-          }}
-        />
-        <InputGroupAddon align="inline-end">{endAddon}</InputGroupAddon>
-      </InputGroup>
-    );
-  }
-
   return (
-    <PasswordInput
-      id={id}
-      name={name}
-      autoComplete={autoComplete}
-      spellCheck={false}
-      showToggle={false}
-      disabled={disabled}
-      value={value}
-      aria-label={ariaLabel}
-      className={className}
-      onChange={(e) => onChange(e.target.value)}
-      onBlur={(e) => {
-        if (!value.trim()) setReplacing(false);
-        onBlur?.(e);
-      }}
-      placeholder={placeholder ?? (hasSavedSecret ? "Leave blank to keep" : "Secret")}
-    />
+    <InputGroup className={cn("w-full min-w-0 self-stretch", className)}>
+      <InputGroupInput
+        id={id}
+        name={name}
+        type="password"
+        autoComplete={autoComplete}
+        spellCheck={false}
+        disabled={disabled}
+        value={value}
+        aria-label={ariaLabel}
+        placeholder={placeholder ?? (hasSavedSecret ? "Leave blank to keep" : "Secret")}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={(e) => {
+          if (!value.trim()) setReplacing(false);
+          onBlur?.(e);
+        }}
+      />
+      {endAddon ? <InputGroupAddon align="inline-end">{endAddon}</InputGroupAddon> : null}
+    </InputGroup>
   );
 }
 

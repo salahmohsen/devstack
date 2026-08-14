@@ -1,8 +1,7 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2Icon, RefreshCwIcon, UnplugIcon } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { SiGithub, SiGmail } from "react-icons/si";
 import { toast } from "sonner";
 
@@ -20,21 +19,22 @@ import {
   AlertDialogTitle
 } from "@tsu-stack/ui/components/alert-dialog";
 import { Badge } from "@tsu-stack/ui/components/badge";
-import { Card } from "@tsu-stack/ui/components/card";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import {
   StatusSubmitButton,
   type StatusSubmitVisual
 } from "@tsu-stack/ui/components/status-submit-button";
 import { Switch } from "@tsu-stack/ui/components/switch";
-import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { primaryAppUrl } from "@/shared/lib/primary-app-url";
-
 import {
-  connectionsQueryKeys,
-  useGetConnectionsStatusQuery
-} from "@/features/connections/api/get-connections-status.query";
+  IntegrationBrandMark,
+  IntegrationCard,
+  IntegrationMeta
+} from "@/shared/ui/integration-card";
+
+import { useDisconnectProviderMutation } from "@/features/connections/api/disconnect-provider.mutation";
+import { useGetConnectionsStatusQuery } from "@/features/connections/api/get-connections-status.query";
 import { useRefreshGithubMutation } from "@/features/connections/api/refresh-github.mutation";
 import { useSetGmailAutoSyncMutation } from "@/features/connections/api/set-gmail-auto-sync.mutation";
 import { useSyncGmailMutation } from "@/features/connections/api/sync-gmail.mutation";
@@ -107,111 +107,25 @@ function formatConnectionTime(value: Date | string): string {
   });
 }
 
-function ConnectionMeta({
-  rows
-}: {
-  rows: Array<{ label: string; value: string; tone?: "default" | "warning" } | null | undefined>;
-}) {
-  const visible = rows.filter(
-    (row): row is { label: string; value: string; tone?: "default" | "warning" } =>
-      Boolean(row?.value.trim())
-  );
-  if (visible.length === 0) return null;
-
-  return (
-    <dl className="space-y-1">
-      {visible.map((row) => (
-        <div key={row.label} className="flex min-w-0 items-baseline gap-1.5 text-xs">
-          <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
-          <span className="shrink-0 text-muted-foreground/70" aria-hidden>
-            ·
-          </span>
-          <dd
-            className={cn(
-              "min-w-0 truncate",
-              row.tone === "warning" ? "text-warning-foreground" : "text-foreground"
-            )}
-            title={row.value}
-          >
-            {row.value}
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
-function BrandMark({ children }: { children: ReactNode }) {
-  return (
-    <div
-      className={cn(
-        "flex size-11 shrink-0 items-center justify-center rounded-lg bg-background",
-        "shadow-[0_0_0_1px_oklch(0_0_0/0.1)] dark:shadow-[0_0_0_1px_oklch(1_0_0/0.1)]"
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function IntegrationCard({
-  title,
-  logo,
-  badge,
-  description,
-  meta,
-  extra,
-  toggle,
-  actions
-}: {
-  title: string;
-  logo: ReactNode;
-  badge: ReactNode;
-  description: string;
-  meta?: ReactNode;
-  extra?: ReactNode;
-  toggle?: ReactNode;
-  actions: ReactNode;
-}) {
-  return (
-    <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden p-0">
-      <div className="flex flex-1 flex-col gap-4 p-5">
-        <div className="flex items-start justify-between gap-3">
-          {logo}
-          {badge}
-        </div>
-        <div className="space-y-1.5">
-          <h3 className="text-base font-semibold tracking-tight text-pretty">{title}</h3>
-          <p className="text-sm leading-relaxed text-pretty text-muted-foreground">{description}</p>
-        </div>
-        {meta}
-        {extra}
-      </div>
-      <div className="flex items-center justify-between gap-3 border-t border-border/60 px-5 py-3">
-        <div className="flex min-h-7 min-w-10 items-center">{toggle}</div>
-        <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>
-      </div>
-    </Card>
-  );
-}
-
 export function ConnectionsIntegrations({
   callbackPath,
   oauthError,
   oauthErrorDescription,
-  onClearOauthError
+  onClearOauthError,
+  extra
 }: {
   /** Path Better Auth returns to after link (include search if needed). */
   callbackPath: string;
   oauthError?: string;
   oauthErrorDescription?: string;
   onClearOauthError?: () => void;
+  extra?: ReactNode;
 }) {
   const query = useGetConnectionsStatusQuery();
-  const queryClient = useQueryClient();
   const syncGmail = useSyncGmailMutation();
   const setAutoSync = useSetGmailAutoSyncMutation();
   const refreshGithub = useRefreshGithubMutation();
+  const disconnectProviderMutation = useDisconnectProviderMutation();
   const [busy, setBusy] = useState<"google" | "github" | "unlink-google" | "unlink-github" | null>(
     null
   );
@@ -278,14 +192,15 @@ export function ConnectionsIntegrations({
     const unlinkBusy = provider === "google" ? "unlink-google" : "unlink-github";
     setBusy(unlinkBusy);
     try {
-      const result = await authClient.unlinkAccount({ providerId: provider });
-      if (result.error) {
-        toast.error(result.error.message ?? "Unlink failed");
-      } else {
-        toast.success(provider === "google" ? "Google disconnected" : "GitHub disconnected");
-        setDisconnectTarget(null);
-        await queryClient.invalidateQueries({ queryKey: connectionsQueryKeys.status() });
-      }
+      const result = await disconnectProviderMutation.mutateAsync({ provider });
+      toast.success(
+        result.mode === "gmail_scopes_removed"
+          ? "Gmail disconnected. Google sign-in is still linked."
+          : provider === "google"
+            ? "Google disconnected"
+            : "GitHub disconnected"
+      );
+      setDisconnectTarget(null);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -501,15 +416,15 @@ export function ConnectionsIntegrations({
         <IntegrationCard
           title="Gmail"
           logo={
-            <BrandMark>
+            <IntegrationBrandMark>
               <SiGmail className="size-5 text-[#EA4335]" aria-hidden />
-            </BrandMark>
+            </IntegrationBrandMark>
           }
           badge={<ConnectionStatusBadge state={googleState} />}
           description={googleDescription}
           meta={
             <>
-              <ConnectionMeta
+              <IntegrationMeta
                 rows={[
                   gmailSync.emailAddress
                     ? { label: "Mailbox", value: gmailSync.emailAddress }
@@ -552,14 +467,14 @@ export function ConnectionsIntegrations({
         <IntegrationCard
           title="GitHub"
           logo={
-            <BrandMark>
+            <IntegrationBrandMark>
               <SiGithub className="size-5 text-foreground" aria-hidden />
-            </BrandMark>
+            </IntegrationBrandMark>
           }
           badge={<ConnectionStatusBadge state={githubState} />}
           description={githubDescription}
           meta={
-            <ConnectionMeta
+            <IntegrationMeta
               rows={[
                 githubStatus.username
                   ? { label: "Account", value: `@${githubStatus.username}` }
@@ -577,6 +492,8 @@ export function ConnectionsIntegrations({
           }
           actions={githubActions}
         />
+
+        {extra}
       </div>
 
       <AlertDialog

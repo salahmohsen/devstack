@@ -5,13 +5,14 @@ import { Blocks } from "lucide-react";
 import { useCallback } from "react";
 
 import { ConnectionsIntegrations } from "@/features/connections";
+import { ResendIntegration } from "@/features/mail-settings";
 
 import { SettingsFrame } from "./settings-frame";
 
 const connectionsRoute = getRouteApi("/(root-layout)/__protected/dashboard/settings/connections/");
 
 const FRAME_DESCRIPTION =
-  "Link Gmail and GitHub. Sign-in and inbox access are separate — grant only what Career Inbox needs.";
+  "Gmail, GitHub, and Resend. Sign-in, inbox sync, and inbound mail are separate — grant only what you need.";
 
 export function ConnectionsSettings() {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ export function ConnectionsSettings() {
         oauthError={oauthError}
         oauthErrorDescription={oauthErrorDescription}
         onClearOauthError={clearOauthError}
+        extra={<ResendIntegration />}
       />
       <p className="text-xs text-muted-foreground">
         Sessions and password live under{" "}
@@ -46,13 +48,6 @@ export function ConnectionsSettings() {
           className="font-medium text-foreground underline-offset-2 hover:underline"
         >
           Account
-        </Link>
-        . Resend inbound keys live under{" "}
-        <Link
-          to="/dashboard/settings/mail"
-          className="font-medium text-foreground underline-offset-2 hover:underline"
-        >
-          Mail
         </Link>
         .
       </p>

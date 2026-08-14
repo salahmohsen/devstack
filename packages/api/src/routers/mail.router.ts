@@ -253,7 +253,7 @@ export const mailRouter = {
         status: 400
       },
       MAIL_NOT_CONFIGURED: {
-        message: "Configure Resend under Settings → Mail before sending",
+        message: "Configure Resend under Settings → Integrations before sending",
         status: 400
       },
       SEND_FAILED: {

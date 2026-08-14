@@ -4,7 +4,6 @@ import {
   Briefcase,
   Building2,
   Filter,
-  Inbox,
   KeyRound,
   Blocks,
   Mail,
@@ -27,7 +26,6 @@ type NavItem = {
     | "/dashboard/settings/profile"
     | "/dashboard/settings/account"
     | "/dashboard/settings/domain"
-    | "/dashboard/settings/mail"
     | "/dashboard/settings/connections"
     | "/dashboard/settings/rules"
     | "/dashboard/settings/jobs"
@@ -65,17 +63,9 @@ const SETTINGS_NAV: readonly NavItem[] = [
     group: "Workspace"
   },
   {
-    id: "mail",
-    label: "Mail",
-    description: "BYO Resend for Career Inbox inbound",
-    to: "/dashboard/settings/mail",
-    icon: Inbox,
-    group: "Workspace"
-  },
-  {
     id: "connections",
     label: "Integrations",
-    description: "Gmail and GitHub integrations",
+    description: "Gmail, GitHub, and Resend inbound",
     to: "/dashboard/settings/connections",
     icon: Blocks,
     group: "Workspace"

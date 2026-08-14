@@ -3,6 +3,7 @@ import { zodValidator } from "@tanstack/zod-adapter";
 import z from "zod";
 
 import { getConnectionsStatusQueryOptions } from "@/features/connections";
+import { getMailSettingsQueryOptions } from "@/features/mail-settings";
 
 import { ConnectionsSettings } from "@/pages/dashboard/settings/ui/connections-settings";
 
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/(root-layout)/__protected/dashboard/setti
   validateSearch: zodValidator(connectionsSearchSchema),
   loader: ({ context }) => {
     void context.queryClient.prefetchQuery(getConnectionsStatusQueryOptions());
+    void context.queryClient.prefetchQuery(getMailSettingsQueryOptions());
   },
   component: ConnectionsSettings
 });

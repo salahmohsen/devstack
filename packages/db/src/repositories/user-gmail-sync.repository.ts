@@ -67,6 +67,10 @@ export const userGmailSyncRepository = {
     return row!;
   },
 
+  async deleteByUserId(userId: string): Promise<void> {
+    await getDb().delete(userGmailSync).where(eq(userGmailSync.userId, userId));
+  },
+
   async setAutoSyncEnabled(userId: string, autoSyncEnabled: boolean): Promise<UserGmailSyncEntity> {
     const existing = await this.findByUserId(userId);
     if (existing) {

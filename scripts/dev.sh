@@ -382,7 +382,7 @@ print_dev_links_banner() {
   else
     echo -e "${BOLD}${MAGENTA}║${RESET}  ${BOLD}Inbound webhooks${RESET} (public origin)                                      ${BOLD}${MAGENTA}║${RESET}"
     printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Resend" "$public/webhooks/resend/<token>"
-    echo -e "${BOLD}${MAGENTA}║${RESET}            ${DIM}token from Settings → Mail; paste full URL in Resend${RESET}       ${BOLD}${MAGENTA}║${RESET}"
+    echo -e "${BOLD}${MAGENTA}║${RESET}            ${DIM}token from Settings → Integrations; paste full URL in Resend${RESET} ${BOLD}${MAGENTA}║${RESET}"
     printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "Gmail push" "$public/webhooks/gmail-push"
     printf "${BOLD}${MAGENTA}║${RESET}    %-18s ${GREEN}%-48s${RESET} ${BOLD}${MAGENTA}║${RESET}\n" "GitHub hook" "$public/webhooks/github"
     if [ -n "${GMAIL_PUSH_OIDC_AUDIENCE:-}" ]; then

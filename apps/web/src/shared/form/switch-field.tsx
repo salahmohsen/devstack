@@ -42,7 +42,10 @@ function SwitchField(props: SwitchFieldProps) {
         <FieldLabel
           htmlFor={field.name}
           className={cn(
-            "flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border border-border/80 px-3 py-2.5 hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50",
+            "flex w-full items-center justify-between gap-3 rounded-lg border border-border/80 px-3 py-2.5",
+            props.disabled
+              ? "cursor-default opacity-80"
+              : "cursor-pointer hover:bg-accent/50 has-data-checked:border-primary/48 has-data-checked:bg-accent/50",
             props.classNames?.label
           )}
         >
