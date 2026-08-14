@@ -4,8 +4,7 @@ import { memo, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
-import { formatStackTypeLabel, type StackOutput } from "@tsu-stack/core";
-import { Badge } from "@tsu-stack/ui/components/badge";
+import { type StackOutput } from "@tsu-stack/core";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
 import {
@@ -39,22 +38,7 @@ import { ListItemActionButtons } from "@/shared/ui/list-item-action-buttons";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
-const TYPE_VARIANTS: Record<
-  string,
-  "default" | "secondary" | "outline" | "info" | "success" | "warning" | "error"
-> = {
-  framework: "default",
-  language: "info",
-  database: "success",
-  ui: "secondary",
-  auth: "warning",
-  deployment: "outline",
-  testing: "error",
-  ai: "info",
-  tooling: "secondary",
-  storage: "success",
-  other: "outline"
-};
+import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
 export type StackItemProps = {
   stack: StackOutput;
@@ -222,20 +206,6 @@ export const StackItem = memo(function StackItem({
       )}
     >
       <div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-2xl)-1px)]">
-        {stack.type || stack.isFeatured ? (
-          <div className="absolute inset-e-0 top-1.5 z-10 flex flex-col items-end gap-1">
-            {stack.type ? (
-              <Badge variant={TYPE_VARIANTS[stack.type] ?? "outline"} size="sm">
-                {formatStackTypeLabel(stack.type)}
-              </Badge>
-            ) : null}
-            {stack.isFeatured ? (
-              <Badge variant="brand" size="sm">
-                Featured
-              </Badge>
-            ) : null}
-          </div>
-        ) : null}
         {isSort && dragHandleProps ? (
           <div
             {...dragHandleProps.attributes}
@@ -287,10 +257,14 @@ export const StackItem = memo(function StackItem({
           >
             {stack.name}
           </p>
-          {usageCount > 0 ? (
-            <p className="text-center text-xs text-muted-foreground">
-              {usageCount} {usageCount === 1 ? "project" : "projects"}
-            </p>
+          {stack.type || stack.isFeatured || usageCount > 0 ? (
+            <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
+              <StackIdentityBadges
+                type={stack.type}
+                isFeatured={stack.isFeatured}
+                projectCount={usageCount}
+              />
+            </div>
           ) : null}
         </CardContent>
         {!isSort ? (

@@ -111,6 +111,22 @@ export const stacksRouter = {
       const stack = await stackRepository.findByIdForUser(input.id, userId);
       if (!stack) return null;
       const deps = await stackDependencyRepository.findByStackId(input.id);
+      const projects = (stack.projects ?? [])
+        .filter(
+          (
+            ps
+          ): ps is { project: { id: string; title: string; logo: string | null } } & Omit<
+            typeof ps,
+            "project"
+          > => ps.project !== null
+        )
+        .map((ps) => {
+          return {
+            id: ps.project.id,
+            name: ps.project.title,
+            logo: ps.project.logo
+          };
+        });
       return toStackOutput({
         ...stack,
         name: stack.name,
@@ -121,6 +137,7 @@ export const stacksRouter = {
         confidence: stack.confidence,
         sortOrder: stack.sortOrder,
         portfolioEntryId: stack.portfolioEntryId,
+        projectCount: projects.length,
         dependencies: deps.map((d) => {
           return {
             npmPackage: d.npmPackage,
@@ -128,22 +145,7 @@ export const stacksRouter = {
             homepage: d.homepage
           };
         }),
-        projects: (stack.projects ?? [])
-          .filter(
-            (
-              ps
-            ): ps is { project: { id: string; title: string; logo: string | null } } & Omit<
-              typeof ps,
-              "project"
-            > => ps.project !== null
-          )
-          .map((ps) => {
-            return {
-              id: ps.project.id,
-              name: ps.project.title,
-              logo: ps.project.logo
-            };
-          })
+        projects
       });
     }),
   create: protectedProcedure

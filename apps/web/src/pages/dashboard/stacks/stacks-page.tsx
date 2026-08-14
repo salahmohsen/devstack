@@ -74,6 +74,7 @@ import {
 } from "@/pages/dashboard/stacks/ui/organize-dialog";
 import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
+import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
 function StackDetailPanel({ stack }: { stack: StackOutput }) {
@@ -82,6 +83,7 @@ function StackDetailPanel({ stack }: { stack: StackOutput }) {
     staleTime: STACKS_LIST_STALE_TIME_MS
   });
   const item = detailQuery.data ?? stack;
+  const projectCount = Math.max(item.projectCount, item.projects?.length ?? 0);
 
   return (
     <ItemInfoPanel
@@ -94,9 +96,17 @@ function StackDetailPanel({ stack }: { stack: StackOutput }) {
       }
       title={item.name}
       description={
-        item.projectCount > 0
-          ? `${item.projectCount} ${item.projectCount === 1 ? "project" : "projects"}`
-          : "Not used on any project yet"
+        item.type || item.isFeatured || projectCount > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <StackIdentityBadges
+              type={item.type}
+              isFeatured={item.isFeatured}
+              projectCount={projectCount}
+            />
+          </div>
+        ) : (
+          <p>Not used on any project yet</p>
+        )
       }
       updatedAt={item.updatedAt}
       createdAt={item.createdAt}
