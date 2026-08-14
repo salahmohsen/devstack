@@ -1,11 +1,5 @@
 import { useLocation } from "@tanstack/react-router";
-import {
-  type CSSProperties,
-  type PropsWithChildren,
-  type ReactNode,
-  useEffect,
-  useState
-} from "react";
+import { type PropsWithChildren } from "react";
 
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area.js";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -13,6 +7,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { useMediaQuery } from "@/shared/lib/use-media-query";
 import { IntersectionProvider } from "@/shared/providers/intersection.provider";
 
+import { ClipWidth } from "@/widgets/layout/ui/clip-width";
 import { DASHBOARD_NAV_DEFAULT_WIDTH, PublicSidebar } from "@/widgets/layout/ui/sidebar";
 
 import { CommandPalette } from "./command-palette";
@@ -29,75 +24,12 @@ import {
   useSidePanelSlot
 } from "./side-panel";
 
-/**
- * Panel open/close without Motion `layout` or `animate={{ width }}`.
- *
- * Why not Motion `layout` on the main column?
- * Layout size projection uses scale transforms. That stretches every dashboard
- * card/text for the duration of the spring → visible flicker (Motion docs:
- * children distort unless every descendant also has `layout`).
- *
- * Why not `animate={{ width }}`?
- * React Doctor flags it (layout thrash). A CSS width transition on the panel
- * shell gives the same flex reflow for the main Card without scale projection
- * and without that rule.
- *
- * Ease approximates the previous spring (stiffness 320 / damping 36).
- */
-const PANEL_WIDTH_TRANSITION = "width 420ms cubic-bezier(0.32, 0.72, 0, 1)" as const;
-
-/**
- * Left nav enter: start at width 0 so the main Card is full-bleed, then
- * expand to the nav width. Same CSS width transition as the right side panel
- * (no Motion `layout` / `animate={{ width }}` — those scale-distort children).
- */
-function DashboardNavShell({ children }: { children: ReactNode }) {
-  const [width, setWidth] = useState(0);
-  const [unlocked, setUnlocked] = useState(false);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setWidth(DASHBOARD_NAV_DEFAULT_WIDTH);
-    });
-    const timeout = window.setTimeout(() => setUnlocked(true), 420);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(timeout);
-    };
-  }, []);
-
-  return (
-    <div
-      data-dashboard-nav-shell
-      className="hidden h-full min-h-0 shrink-0 overflow-hidden xl:block"
-      style={{
-        width: unlocked ? undefined : width,
-        transition: unlocked ? undefined : PANEL_WIDTH_TRANSITION
-      }}
-      onTransitionEnd={(event) => {
-        if (event.target !== event.currentTarget) return;
-        if (event.propertyName !== "width") return;
-        if (width > 0) setUnlocked(true);
-      }}
-    >
-      <div className="h-full" style={unlocked ? undefined : { width: DASHBOARD_NAV_DEFAULT_WIDTH }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export function RootLayout({ children }: PropsWithChildren) {
   const sidePanel = useSidePanelSlot();
   const isXl = useMediaQuery("(min-width: 1280px)");
   const showPanel = isXl && sidePanel.hasContent && !sidePanel.collapsed;
   const isDashboard = useLocation().pathname.startsWith("/dashboard");
   const panelWidth = isDashboard ? DASHBOARD_SIDE_PANEL_WIDTH : PUBLIC_SIDE_PANEL_WIDTH;
-
-  const panelShellStyle = {
-    width: showPanel ? panelWidth : 0,
-    transition: PANEL_WIDTH_TRANSITION
-  } satisfies CSSProperties;
 
   return (
     <div
@@ -122,11 +54,16 @@ export function RootLayout({ children }: PropsWithChildren) {
       >
         <div className="flex min-h-0 flex-1 flex-row overflow-hidden p-2 pt-0">
           <IntersectionProvider>
-            {isDashboard ? (
-              <DashboardNavShell>
-                <PublicSidebar />
-              </DashboardNavShell>
-            ) : null}
+            <ClipWidth
+              open={isDashboard}
+              contentWidth={DASHBOARD_NAV_DEFAULT_WIDTH}
+              unlockWhenOpen
+              unmountClosed
+              data-dashboard-nav-shell=""
+              className="hidden h-full xl:block"
+            >
+              <PublicSidebar />
+            </ClipWidth>
             {/*
               One surface: main + panel share the same rounded-2xl shell.
               Panel width animates; facing edges stay square; a 1px rule is the only seam.
@@ -146,12 +83,13 @@ export function RootLayout({ children }: PropsWithChildren) {
                 <SidePanelToggle />
               </div>
 
-              <div
-                data-side-panel-shell
-                style={panelShellStyle}
-                className="hidden h-full min-h-0 shrink-0 overflow-hidden xl:flex"
+              <ClipWidth
+                open={showPanel}
+                contentWidth={panelWidth}
+                data-side-panel-shell=""
+                className="hidden h-full xl:flex"
               >
-                <div className="flex h-full min-h-0" style={{ width: panelWidth }}>
+                <div className="flex h-full min-h-0">
                   <div aria-hidden className="w-px shrink-0 self-stretch bg-border" />
                   <div className="h-full min-h-0 min-w-0 flex-1 overflow-hidden">
                     <SidePanelSlot
@@ -161,7 +99,7 @@ export function RootLayout({ children }: PropsWithChildren) {
                     />
                   </div>
                 </div>
-              </div>
+              </ClipWidth>
             </div>
           </IntersectionProvider>
         </div>
