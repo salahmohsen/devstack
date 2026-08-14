@@ -1,9 +1,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronDown, Eye, Filter, Lock } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { createElement, useEffect, useMemo, useRef } from "react";
+import { createElement, useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
+import { type ProjectPublicOutput } from "@tsu-stack/core";
 import { type GitHubUserRepoSummary } from "@tsu-stack/github/types";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card } from "@tsu-stack/ui/components/card.js";
@@ -27,10 +28,17 @@ import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 import { RepositoryRow } from "@/shared/ui/repository-row";
 
+import { useGetPortfolioListQuery } from "@/features/portfolio";
+
+import { ProjectInfoPanel } from "@/widgets/items-page";
+
 import { githubReposHubQueryOptions } from "@/pages/github-repos/api/get-github-repos-hub.query";
+import { indexProjectsByRepo, projectsForRepo } from "@/pages/github-repos/lib/projects-for-repo";
 import { type ReposHubInput } from "@/pages/github-repos/lib/repos-hub-filter";
 import { FilterBar } from "@/pages/github-repos/ui/filter-bar";
 import { type SerializedFilterStore } from "@/pages/github-repos/ui/filter-cookie";
+import { ProjectInspectHost } from "@/pages/github-repos/ui/project-inspect-host";
+import { RepoLinkedProjectButton } from "@/pages/github-repos/ui/repo-linked-project-button";
 import {
   useListFilters,
   type FilterableItem,
@@ -142,6 +150,13 @@ export function RepositoriesPage({
   const sessionUsername = sessionUsernameFromUser(user);
   const isOwnProfile = Boolean(user && sessionUsername === username);
   const isAdmin = isOwnProfile;
+  const [openedProject, setOpenedProject] = useState<ProjectPublicOutput | null>(null);
+
+  const portfolioQuery = useGetPortfolioListQuery(username);
+  const projectsByRepo = useMemo(
+    () => indexProjectsByRepo(portfolioQuery.data?.projects ?? []),
+    [portfolioQuery.data?.projects]
+  );
 
   const hubQuery = useQuery({
     ...githubReposHubQueryOptions(hubInput, isOwnProfile, username),
@@ -216,19 +231,35 @@ export function RepositoriesPage({
           </p>
         ) : (
           <>
-            {displayedRepos.map((repo) => (
-              <RepositoryRow
-                key={repo.id}
-                style={{
-                  contentVisibility: "auto",
-                  containIntrinsicSize: "auto 72px"
-                }}
-                repo={repo}
-                isAdmin={isAdmin}
-                username={username}
-                surface={surface}
-              />
-            ))}
+            {displayedRepos.map((repo) => {
+              const linkedProjects = projectsForRepo(projectsByRepo, repo);
+              return (
+                <RepositoryRow
+                  key={repo.id}
+                  style={{
+                    contentVisibility: "auto",
+                    containIntrinsicSize: "auto 72px"
+                  }}
+                  repo={repo}
+                  isAdmin={isAdmin}
+                  username={username}
+                  surface={surface}
+                  nameEnd={
+                    linkedProjects.length > 0 ? (
+                      <RepoLinkedProjectButton
+                        projects={linkedProjects}
+                        openedProjectId={openedProject?.id ?? null}
+                        onOpenProject={(project) => {
+                          setOpenedProject((current) =>
+                            current?.id === project.id ? null : project
+                          );
+                        }}
+                      />
+                    ) : null
+                  }
+                />
+              );
+            })}
             {repoListHasNextPage(safePage, matchingCount) ? (
               <Button
                 type="button"
@@ -246,6 +277,18 @@ export function RepositoriesPage({
           </>
         )}
       </div>
+
+      <ProjectInspectHost
+        open={openedProject != null}
+        item={openedProject}
+        title="Project"
+        description="Linked portfolio project"
+        onOpenChange={(next) => {
+          if (!next) setOpenedProject(null);
+        }}
+      >
+        {(item) => <ProjectInfoPanel project={item} surface={surface} />}
+      </ProjectInspectHost>
     </Frame>
   );
 }

@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, LayoutDashboardIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { FaGithub } from "react-icons/fa6";
 
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
-import { sanitizeHtml, type ProjectPublicOutput } from "@tsu-stack/core";
+import { sanitizeHtml, type ProjectPublicOutput, type StackOutput } from "@tsu-stack/core";
 import { AnimatedWash } from "@tsu-stack/ui/components/animated-wash";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Card6 } from "@tsu-stack/ui/components/cardcn";
@@ -26,6 +26,21 @@ import { useGetPortfolioListQuery } from "@/features/portfolio";
 
 import { StackChipMarqueeRows } from "@/pages/home-page/ui/stack-chip-marquee";
 
+function hydrateProjectStacks(
+  project: ProjectPublicOutput,
+  catalogById: Map<string, StackOutput>
+): ProjectPublicOutput {
+  if (project.stacks.length === 0) return project;
+  return {
+    ...project,
+    stacks: project.stacks.map((stack) => {
+      if (stack.icon) return stack;
+      const catalog = catalogById.get(stack.id);
+      return catalog?.icon ? { ...stack, icon: catalog.icon } : stack;
+    })
+  };
+}
+
 export const ProjectsSection = ({
   username,
   surfaceMode
@@ -35,7 +50,17 @@ export const ProjectsSection = ({
   surfaceMode?: "path" | "custom_domain";
 }) => {
   const portfolioQuery = useGetPortfolioListQuery(username);
-  const projects = portfolioQuery.data?.projects ?? [];
+  const catalogById = useMemo(
+    () => new Map((portfolioQuery.data?.stacks ?? []).map((stack) => [stack.id, stack])),
+    [portfolioQuery.data?.stacks]
+  );
+  const projects = useMemo(
+    () =>
+      (portfolioQuery.data?.projects ?? []).map((project) =>
+        hydrateProjectStacks(project, catalogById)
+      ),
+    [portfolioQuery.data?.projects, catalogById]
+  );
   const { user } = useAuth();
   const sessionUsername = sessionUsernameFromUser(user);
   const isPortfolioOwner = Boolean(sessionUsername && sessionUsername === username);
@@ -147,6 +172,25 @@ export const ProjectsItem = ({
         <CenterUnderline active={hovered} className="min-w-0">
           {project.title}
         </CenterUnderline>
+        {isPortfolioOwner ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  className="text-foreground/80 shadow-none"
+                  render={<Link to="/dashboard/projects" search={{ projectId: project.id }} />}
+                  aria-label={`Open ${project.title} in dashboard`}
+                />
+              }
+            >
+              <LayoutDashboardIcon className="size-3.5" aria-hidden />
+              <span className="sr-only">Open {project.title} in dashboard</span>
+            </TooltipTrigger>
+            <TooltipContent>Open in dashboard</TooltipContent>
+          </Tooltip>
+        ) : null}
         <ProjectRepoButtons
           project={project}
           surface={surface}

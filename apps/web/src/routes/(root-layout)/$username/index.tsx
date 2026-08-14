@@ -1,6 +1,6 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
-import { parseUsername } from "@tsu-stack/core";
+import { parseUsername } from "@tsu-stack/core/profile";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
 import { getRequestHostname } from "@/shared/lib/request-host";
@@ -33,19 +33,23 @@ export const Route = createFileRoute("/(root-layout)/$username/")({
   loader: async ({ context, params }) => {
     const { username } = params;
 
+    const portfolioPromise = context.queryClient.ensureQueryData(
+      getPortfolioListQueryOptions(username)
+    );
+    const setupPromise = context.queryClient.ensureQueryData(
+      getGithubSetupStatusQueryOptions(username)
+    );
+    void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(username));
+
     // Portfolio is required for this page — missing profile → 404.
     try {
-      await context.queryClient.ensureQueryData(getPortfolioListQueryOptions(username));
+      await portfolioPromise;
     } catch {
       throw notFound();
     }
 
-    void context.queryClient.prefetchQuery(getDefaultResumeQueryOptions(username));
-
     // Optional GitHub for **this** profile only (not a global owner).
-    const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions(username)
-    );
+    const setupStatus = await setupPromise;
 
     if (setupStatus?.isConfigured && setupStatus?.owner) {
       void context.queryClient.prefetchQuery(getGithubProfileQueryOptions(username));

@@ -1,12 +1,13 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 
-import { parseUsername } from "@tsu-stack/core";
+import { parseUsername } from "@tsu-stack/core/profile";
 
 import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
 import { getRequestHostname } from "@/shared/lib/request-host";
 import { generateAppSeo } from "@/shared/lib/seo";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
 import {
   buildReposHubPrefetchInput,
@@ -44,20 +45,23 @@ export const Route = createFileRoute("/(root-layout)/$username/repos/")({
   },
   loader: async ({ context, location, params }) => {
     const { username } = params;
+    const setupPromise = context.queryClient.ensureQueryData(
+      getGithubSetupStatusQueryOptions(username)
+    );
     const filterStore = await getFilterCookie();
     const search = location.search as { page?: number };
     const urlPage = typeof search.page === "number" && search.page > 0 ? search.page : 1;
     const hubPrefetchInput = buildReposHubPrefetchInput(filterStore, urlPage);
 
-    const setupStatus = await context.queryClient.ensureQueryData(
-      getGithubSetupStatusQueryOptions(username)
-    );
+    const setupStatus = await setupPromise;
 
     if (setupStatus?.isConfigured && setupStatus.owner) {
       void context.queryClient.prefetchQuery(
         githubReposHubQueryOptions(hubPrefetchInput, false, username)
       );
     }
+
+    void context.queryClient.prefetchQuery(getPortfolioListQueryOptions(username));
 
     return { filterStore, username };
   },

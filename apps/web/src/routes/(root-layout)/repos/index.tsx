@@ -9,6 +9,7 @@ import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
+import { getPortfolioListQueryOptions } from "@/features/portfolio";
 
 import {
   buildReposHubPrefetchInput,
@@ -56,14 +57,15 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
   },
   loader: async ({ context, location }) => {
     const host = getRequestHostname();
+    const resolvedPromise = context.queryClient.ensureQueryData(
+      getResolvePublicPortfolioQueryOptions({ host: host ?? undefined })
+    );
     const filterStore = await getFilterCookie();
     const search = location.search as { page?: number };
     const urlPage = typeof search.page === "number" && search.page > 0 ? search.page : 1;
     const hubPrefetchInput = buildReposHubPrefetchInput(filterStore, urlPage);
 
-    const resolved = await context.queryClient.ensureQueryData(
-      getResolvePublicPortfolioQueryOptions({ host: host ?? undefined })
-    );
+    const resolved = await resolvedPromise;
 
     if (!resolved?.username) {
       throw notFound();
@@ -79,6 +81,8 @@ export const Route = createFileRoute("/(root-layout)/repos/")({
         githubReposHubQueryOptions(hubPrefetchInput, false, username)
       );
     }
+
+    void context.queryClient.prefetchQuery(getPortfolioListQueryOptions(username));
 
     return { filterStore, username, pathUsername: null as string | null };
   },
