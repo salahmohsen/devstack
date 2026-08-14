@@ -110,6 +110,27 @@ export const TITLE_PACKS: Record<JobTitlePackId, TitlePack> = {
   }
 };
 
+export const JOB_ADAPTER_IDS = [
+  "freehire",
+  "himalayas",
+  "arbeitnow",
+  "remotive",
+  "remoteok"
+] as const;
+
+export type JobAdapterId = (typeof JOB_ADAPTER_IDS)[number];
+
+/** freehire `source=` allowlist — drop aggregator copies we fetch ourselves. */
+export const FREEHIRE_ATS_SOURCES = [
+  "greenhouse",
+  "ashby",
+  "lever",
+  "workable",
+  "smartrecruiters"
+] as const;
+
+export type FreehireAtsSource = (typeof FREEHIRE_ATS_SOURCES)[number];
+
 export const DEFAULT_JOBS_PER_RUN = 25;
 export const MIN_JOBS_PER_RUN = 15;
 export const MAX_JOBS_PER_RUN = 40;
