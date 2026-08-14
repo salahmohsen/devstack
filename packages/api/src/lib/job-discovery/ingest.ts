@@ -28,12 +28,13 @@ const REMOTIVE_TTL_SECONDS = 48 * 60 * 60;
 const MAX_SEARCH_Q_CHARS = 80;
 const PACK_Q_KEYWORD_LIMIT = 4;
 const REDIS_STORE_KEY = "__tsu_stack_job_discovery_remotive_redis__";
+const REDIS_CONNECT_TIMEOUT_MS = 2_000;
 
-type RedisStore = { client: Redis | null; tried: boolean };
+type RedisStore = { ready?: Promise<Redis | null> };
 
 function redisStore(): RedisStore {
   const g = globalThis as typeof globalThis & Record<string, RedisStore | undefined>;
-  g[REDIS_STORE_KEY] ??= { client: null, tried: false };
+  g[REDIS_STORE_KEY] ??= {};
   return g[REDIS_STORE_KEY]!;
 }
 
@@ -45,30 +46,46 @@ function isJobTitlePackId(value: string): value is JobTitlePackId {
   return (JOB_TITLE_PACK_IDS as readonly string[]).includes(value);
 }
 
-function getRedis(): Redis | null {
-  const store = redisStore();
-  if (store.tried) return store.client;
-  store.tried = true;
-  const url = ENV_SERVER.REDIS_URL?.trim();
-  if (!url) return null;
+async function connectRemotiveRedis(url: string): Promise<Redis | null> {
+  const client = new Redis(url, {
+    enableOfflineQueue: false,
+    lazyConnect: true,
+    maxRetriesPerRequest: 1,
+    connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
+    commandTimeout: REDIS_CONNECT_TIMEOUT_MS
+  });
+  client.on("error", () => {});
   try {
-    const client = new Redis(url, {
-      enableOfflineQueue: false,
-      maxRetriesPerRequest: 1,
-      connectTimeout: 2_000,
-      commandTimeout: 2_000
-    });
-    client.on("error", () => {});
-    store.client = client;
+    // Wait for ready/ping — offline-queue-off commands issued during handshake reject
+    // and would skip Remotive even when Redis is up.
+    await Promise.race([
+      client.connect().then(() => client.ping()),
+      new Promise<never>((_, reject) => {
+        setTimeout(
+          () => reject(new Error("remotive redis connect timeout")),
+          REDIS_CONNECT_TIMEOUT_MS
+        );
+      })
+    ]);
     return client;
   } catch {
+    client.disconnect();
     return null;
   }
 }
 
+async function getRedis(): Promise<Redis | null> {
+  const store = redisStore();
+  if (!store.ready) {
+    const url = ENV_SERVER.REDIS_URL?.trim();
+    store.ready = url ? connectRemotiveRedis(url) : Promise.resolve(null);
+  }
+  return store.ready;
+}
+
 /** Remaining Remotive calls today. 0 when Redis is unset or down. */
 export async function getRemotiveCallsLeft(): Promise<number> {
-  const redis = getRedis();
+  const redis = await getRedis();
   if (!redis) return 0;
   try {
     const raw = await redis.get(remotiveBudgetKey());
@@ -81,7 +98,7 @@ export async function getRemotiveCallsLeft(): Promise<number> {
 }
 
 async function consumeRemotiveCall(): Promise<boolean> {
-  const redis = getRedis();
+  const redis = await getRedis();
   if (!redis) return false;
   try {
     const key = remotiveBudgetKey();
