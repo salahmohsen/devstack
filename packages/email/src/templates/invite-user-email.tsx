@@ -1,6 +1,6 @@
 import { Column, Heading, Img, Link, Row, Section, Text } from "react-email";
 
-import { EmailCta, EmailFooterNote, EmailLayout } from "#@/templates/layout-email";
+import { EMAIL_LOGO_SRC, EmailCta, EmailFooterNote, EmailLayout } from "#@/templates/layout-email";
 
 export type InviteUserEmailProps = {
   invitedEmail: string;
@@ -28,8 +28,8 @@ const InviteUserEmail = ({
   logoUrl
 }: InviteUserEmailProps) => {
   const previewText = `Join ${invitedByName} on ${productName}`;
-  const leftAvatar = invitedByImageUrl ?? logoUrl ?? productImageUrl;
-  const rightAvatar = productImageUrl ?? logoUrl ?? invitedByImageUrl;
+  const leftAvatar = invitedByImageUrl ?? logoUrl ?? productImageUrl ?? EMAIL_LOGO_SRC;
+  const rightAvatar = productImageUrl ?? logoUrl ?? invitedByImageUrl ?? EMAIL_LOGO_SRC;
 
   return (
     <EmailLayout preview={previewText} logoUrl={logoUrl} logoAlt={productName}>

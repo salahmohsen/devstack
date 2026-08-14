@@ -1,5 +1,7 @@
 "use client";
 
+import { type ReactNode } from "react";
+
 import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { TagsInput } from "@tsu-stack/ui/components/tags-input";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -18,6 +20,8 @@ type TagsFieldProps = {
   /** Shown under the control. Pass `null` to hide. */
   hint?: string | null;
   disabled?: boolean;
+  /** Trailing control joined to the input (e.g. Send). */
+  actions?: ReactNode;
   classNames?: {
     field?: string;
     label?: string;
@@ -55,6 +59,7 @@ function TagsField(props: TagsFieldProps) {
         maxItemLength={props.maxItemLength}
         hint={props.hint ?? null}
         disabled={props.disabled}
+        actions={props.actions}
         aria-label={props.label ?? props.placeholder ?? "Tags"}
         aria-invalid={hasError || undefined}
         className={props.classNames?.input}

@@ -146,14 +146,9 @@ export function CreateAnAccountForm({
             Accept invitation
           </CardTitle>
           <CardDescription className="text-sm">
-            {inviteCode ? (
-              <>
-                Invite code <span className="font-mono text-foreground">{inviteCode}</span> will be
-                applied when you continue.
-              </>
-            ) : (
-              "Use Google or GitHub. Ask an existing member for an invite if signup is closed."
-            )}
+            {inviteCode
+              ? "Continue with Google or GitHub to join."
+              : "Use Google or GitHub. Ask an existing member for an invite if signup is closed."}
           </CardDescription>
         </CardHeader>
 

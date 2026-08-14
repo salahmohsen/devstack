@@ -14,6 +14,9 @@ import {
   Text
 } from "react-email";
 
+export const EMAIL_LOGO_CONTENT_ID = "devhub-logo";
+export const EMAIL_LOGO_SRC = `cid:${EMAIL_LOGO_CONTENT_ID}`;
+
 export const EMAIL_CTA_CLASS =
   "rounded bg-[#000000] px-5 py-3 text-center font-semibold text-[12px] text-white no-underline";
 
@@ -33,7 +36,7 @@ type EmailLayoutProps = {
 export const EmailLayout = ({
   preview,
   children,
-  logoUrl,
+  logoUrl = EMAIL_LOGO_SRC,
   logoAlt = "DevHub"
 }: EmailLayoutProps) => (
   <Html>

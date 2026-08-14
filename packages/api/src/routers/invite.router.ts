@@ -11,7 +11,7 @@ import {
   inviteSignupPath
 } from "@tsu-stack/core";
 import { inviteRepository, userRepository } from "@tsu-stack/db";
-import { InviteUserEmail, sendEmail } from "@tsu-stack/email";
+import { EMAIL_LOGO_SRC, InviteUserEmail, sendEmail, toEmailSafeImageUrl } from "@tsu-stack/email";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
@@ -75,10 +75,9 @@ export const inviteRouter = {
       const userId = context.session.user.id;
       const inviter = await userRepository.findById(userId);
       const webOrigin = ENV_SERVER.VITE_WEB_URL.replace(/\/$/, "");
-      const logoUrl = `${webOrigin}/logo192.png`;
       const inviterName = inviter?.name?.trim() ?? inviter?.username ?? "A teammate";
       const inviterEmail = inviter?.email ?? "";
-      const invitedByImageUrl = inviter?.image?.trim() ?? logoUrl;
+      const invitedByImageUrl = toEmailSafeImageUrl(inviter?.image) ?? EMAIL_LOGO_SRC;
 
       const sent: ReturnType<typeof toInviteOutput>[] = [];
       const failed: { email: string; message: string }[] = [];
@@ -101,9 +100,9 @@ export const inviteRouter = {
               invitedByEmail: inviterEmail,
               invitedByImageUrl,
               productName: "DevHub",
-              productImageUrl: logoUrl,
+              productImageUrl: EMAIL_LOGO_SRC,
               inviteUrl,
-              logoUrl
+              logoUrl: EMAIL_LOGO_SRC
             })
           });
           sent.push(toInviteOutput(row));

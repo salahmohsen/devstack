@@ -1,4 +1,6 @@
 export { sendEmail } from "./resend";
+export { toEmailSafeImageUrl } from "./public-image-url";
+export { EMAIL_LOGO_CONTENT_ID, EMAIL_LOGO_SRC } from "./templates/layout-email";
 
 export { default as AppNotificationEmail } from "./templates/app-notification-email";
 export type { AppNotificationEmailProps } from "./templates/app-notification-email";

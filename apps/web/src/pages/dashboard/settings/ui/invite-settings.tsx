@@ -152,37 +152,35 @@ export const InviteSettings = () => {
           void form.handleSubmit();
         }}
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="min-w-0 flex-1">
-            <form.AppField name="emails">
-              {(field) => (
-                <field.TagsField
-                  label="Invite by email"
-                  description="Press Enter after each address. Each person gets their own one-time code."
-                  placeholder="name@example.com"
-                  hint="Up to 20 emails"
-                  maxItems={20}
-                  maxItemLength={320}
-                />
-              )}
-            </form.AppField>
-          </div>
-          <form.AppForm>
-            <form.Subscribe selector={(s) => s.values.emails.length}>
-              {(count) => (
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="shrink-0"
-                  loading={sendInvites.isPending}
-                  disabled={count === 0}
-                >
-                  {sendInvites.isPending ? "Sending…" : "Send invites"}
-                </Button>
-              )}
-            </form.Subscribe>
-          </form.AppForm>
-        </div>
+        <form.AppField name="emails">
+          {(field) => (
+            <field.TagsField
+              label="Invite by email"
+              description="Press Enter after each address. Each person gets their own one-time code."
+              placeholder="name@example.com"
+              hint="Up to 20 emails"
+              maxItems={20}
+              maxItemLength={320}
+              actions={
+                <form.AppForm>
+                  <form.Subscribe selector={(s) => s.values.emails.length}>
+                    {(count) => (
+                      <Button
+                        type="submit"
+                        size="sm"
+                        className="min-h-9 shrink-0 self-stretch rounded-lg"
+                        loading={sendInvites.isPending}
+                        disabled={count === 0}
+                      >
+                        Send invites
+                      </Button>
+                    )}
+                  </form.Subscribe>
+                </form.AppForm>
+              }
+            />
+          )}
+        </form.AppField>
       </Form>
 
       {isLoading ? (
@@ -263,11 +261,11 @@ export const InviteSettings = () => {
                             size="icon"
                             className="size-8 text-destructive hover:text-destructive"
                             title="Revoke invite"
-                            disabled={isRevoking}
+                            aria-label="Revoke invite"
+                            loading={isRevoking}
                             onClick={() => handleRevoke(invite.id)}
                           >
                             <Trash2 className="size-4" />
-                            <span className="sr-only">Revoke invite</span>
                           </Button>
                         </>
                       ) : (

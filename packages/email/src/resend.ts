@@ -4,7 +4,12 @@ import { Resend } from "resend";
 
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
+import { EMAIL_LOGO_PNG_BASE64 } from "./logo192.base64";
+import { EMAIL_LOGO_CONTENT_ID } from "./templates/layout-email";
+
 const DEFAULT_FROM = "contact@salahmohsen.com";
+
+const logoPng = Buffer.from(EMAIL_LOGO_PNG_BASE64, "base64");
 
 export async function sendEmail({
   subject,
@@ -36,7 +41,15 @@ export async function sendEmail({
     from,
     html,
     subject,
-    to
+    to,
+    attachments: [
+      {
+        filename: "logo192.png",
+        content: logoPng,
+        contentId: EMAIL_LOGO_CONTENT_ID,
+        contentType: "image/png"
+      }
+    ]
   });
 
   if (error) {
