@@ -1,6 +1,9 @@
-import { AlertTriangle, CheckCircle, OctagonX, Info, LoaderCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
+
+import { buttonVariants } from "@tsu-stack/ui/components/button";
+import { sonnerToastClassName, ToastStateGlyph } from "@tsu-stack/ui/components/toast-chrome";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 function Toaster({ ...props }: ToasterProps) {
   const { theme = "system" } = useTheme();
@@ -10,23 +13,32 @@ function Toaster({ ...props }: ToasterProps) {
       theme={theme as ToasterProps["theme"]}
       className="group"
       icons={{
-        error: <OctagonX className="size-4" />,
-        info: <Info className="size-4" />,
-        loading: <LoaderCircle className="size-4 animate-spin" />,
-        success: <CheckCircle className="size-4" />,
-        warning: <AlertTriangle className="size-4" />
+        error: <ToastStateGlyph tone="error" />,
+        info: <ToastStateGlyph tone="info" />,
+        loading: <ToastStateGlyph tone="loading" />,
+        success: <ToastStateGlyph tone="success" />,
+        warning: <ToastStateGlyph tone="warning" />
       }}
       style={
         {
           "--border-radius": "var(--radius)",
-          "--normal-bg": "var(--popover)",
+          "--normal-bg": "color-mix(in srgb, var(--background) 90%, transparent)",
           "--normal-border": "var(--border)",
-          "--normal-text": "var(--popover-foreground)"
+          "--normal-text": "var(--foreground)"
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast"
+          toast: sonnerToastClassName,
+          title: "font-medium",
+          description: "!text-muted-foreground",
+          icon: "relative flex size-4 shrink-0 items-center justify-center [&_svg]:size-3.5",
+          actionButton: cn(
+            buttonVariants({ size: "xs", variant: "outline" }),
+            "bg-background/90! text-foreground!"
+          ),
+          cancelButton: cn(buttonVariants({ size: "xs", variant: "ghost" }), "text-foreground!"),
+          closeButton: buttonVariants({ size: "icon-xs", variant: "ghost" })
         }
       }}
       {...props}

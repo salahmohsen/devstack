@@ -1,25 +1,17 @@
 "use client";
 
 import { Toast } from "@base-ui/react/toast";
-import {
-  CircleAlertIcon,
-  CircleCheckIcon,
-  InfoIcon,
-  LoaderCircleIcon,
-  TriangleAlertIcon
-} from "lucide-react";
 import type React from "react";
 
 import { buttonVariants } from "@tsu-stack/ui/components/button";
+import {
+  toastGlowSurfaceClass,
+  toastGlowVariant,
+  toastToneFromType,
+  ToastGlowChrome,
+  ToastTypeIcon
+} from "@tsu-stack/ui/components/toast-chrome";
 import { cn } from "@tsu-stack/ui/lib/utils";
-
-const TOAST_ICONS = {
-  error: CircleAlertIcon,
-  info: InfoIcon,
-  loading: LoaderCircleIcon,
-  success: CircleCheckIcon,
-  warning: TriangleAlertIcon
-} as const;
 
 type SwipeDirection = "up" | "down" | "left" | "right";
 
@@ -55,6 +47,18 @@ function upsertReplayClassName(toast: { type?: string; updateKey?: number }): st
   return isEven ? "animate-toast-success-even" : "animate-toast-success-odd";
 }
 
+function toastRootChrome(type?: string): string {
+  const tone = toastToneFromType(type);
+  return cn(
+    toastGlowSurfaceClass(tone),
+    tone === "error"
+      ? "animate-toast-error-odd"
+      : tone === "success" || tone === "info" || tone === "warning"
+        ? "animate-toast-success-odd"
+        : undefined
+  );
+}
+
 function Toasts({
   position,
   portalProps
@@ -82,14 +86,15 @@ function Toasts({
         data-slot="toast-viewport"
       >
         {toasts.map((toast) => {
-          const Icon = toast.type ? TOAST_ICONS[toast.type as keyof typeof TOAST_ICONS] : null;
           const toastData = toast.data as ToastData | undefined;
+          const tone = toastToneFromType(toast.type);
 
           return (
             <Toast.Root
               key={toast.id}
               className={cn(
-                "absolute z-[calc(9999-var(--toast-index))] h-(--toast-calc-height) w-full rounded-lg border bg-[color-mix(in_srgb,var(--popover),var(--color-black)_calc(1%*max(0,var(--toast-index,0))))] text-popover-foreground shadow-lg/5 select-none [transition:transform_.5s_cubic-bezier(.22,1,.36,1),opacity_.5s,height_.15s,background-color_.5s] not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] data-expanded:bg-popover dark:bg-[color-mix(in_srgb,var(--popover),var(--color-black)_calc(6%*max(0,var(--toast-index,0))))] dark:before:shadow-[0_-1px_--theme(--color-white/6%)] dark:data-expanded:bg-popover",
+                "absolute z-[calc(9999-var(--toast-index))] h-(--toast-calc-height) w-full overflow-visible rounded-lg border select-none [transition:transform_.5s_cubic-bezier(.22,1,.36,1),opacity_.5s,height_.15s,background-color_.5s]",
+                toastRootChrome(toast.type),
                 // Base positioning using data-position
                 "data-[position*=right]:right-0 data-[position*=right]:left-auto",
                 "data-[position*=left]:right-auto data-[position*=left]:left-0",
@@ -135,16 +140,10 @@ function Toasts({
               swipeDirection={swipeDirection}
               toast={toast}
             >
+              <ToastGlowChrome variant={toastGlowVariant(tone)} />
               <Toast.Content className="pointer-events-auto flex items-center justify-between gap-1.5 overflow-hidden px-3.5 py-3 text-sm transition-opacity duration-250 data-behind:opacity-0 data-behind:not-data-expanded:pointer-events-none data-expanded:opacity-100">
                 <div className="flex gap-2">
-                  {Icon && (
-                    <div
-                      className="[&_svg]:pointer-events-none [&_svg]:shrink-0 [&>svg]:h-lh [&>svg]:w-4"
-                      data-slot="toast-icon"
-                    >
-                      <Icon className="in-data-[type=error]:text-destructive in-data-[type=info]:text-info in-data-[type=loading]:animate-spin in-data-[type=loading]:opacity-80 in-data-[type=success]:text-success in-data-[type=warning]:text-warning" />
-                    </div>
-                  )}
+                  <ToastTypeIcon type={toast.type} />
 
                   <div className="flex flex-col gap-0.5">
                     <Toast.Title className="font-medium" data-slot="toast-title" />
@@ -179,10 +178,10 @@ function AnchoredToasts({
     <Toast.Portal data-slot="toast-portal-anchored" {...portalProps}>
       <Toast.Viewport className="outline-none" data-slot="toast-viewport-anchored">
         {toasts.map((toast) => {
-          const Icon = toast.type ? TOAST_ICONS[toast.type as keyof typeof TOAST_ICONS] : null;
           const toastData = toast.data as ToastData | undefined;
           const tooltipStyle = toastData?.tooltipStyle ?? false;
           const positionerProps = toast.positionerProps;
+          const tone = toastToneFromType(toast.type);
 
           if (!positionerProps?.anchor) {
             return null;
@@ -198,16 +197,19 @@ function AnchoredToasts({
             >
               <Toast.Root
                 className={cn(
-                  "relative border bg-popover text-xs text-balance text-popover-foreground transition-[scale,opacity] not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:shadow-[0_1px_--theme(--color-black/4%)] data-ending-style:scale-98 data-ending-style:opacity-0 data-starting-style:scale-98 data-starting-style:opacity-0 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
-                  tooltipStyle
-                    ? "rounded-md shadow-md/5 before:rounded-[calc(var(--radius-md)-1px)]"
-                    : "rounded-lg shadow-lg/5 before:rounded-[calc(var(--radius-lg)-1px)]",
+                  "relative overflow-visible text-xs text-balance transition-[scale,opacity] data-ending-style:scale-98 data-ending-style:opacity-0 data-starting-style:scale-98 data-starting-style:opacity-0",
+                  tooltipStyle ? "rounded-md" : "rounded-lg",
+                  toastRootChrome(toast.type),
                   upsertReplayClassName(toast)
                 )}
                 {...toastData?.rootProps}
                 data-slot="toast-popup"
                 toast={toast}
               >
+                <ToastGlowChrome
+                  variant={toastGlowVariant(tone)}
+                  size={tooltipStyle ? "sm" : "lg"}
+                />
                 {tooltipStyle ? (
                   <Toast.Content className="pointer-events-auto px-2 py-1">
                     <Toast.Title data-slot="toast-title" />
@@ -215,14 +217,7 @@ function AnchoredToasts({
                 ) : (
                   <Toast.Content className="pointer-events-auto flex items-center justify-between gap-1.5 overflow-hidden px-3.5 py-3 text-sm">
                     <div className="flex gap-2">
-                      {Icon && (
-                        <div
-                          className="[&_svg]:pointer-events-none [&_svg]:shrink-0 [&>svg]:h-lh [&>svg]:w-4"
-                          data-slot="toast-icon"
-                        >
-                          <Icon className="in-data-[type=error]:text-destructive in-data-[type=info]:text-info in-data-[type=loading]:animate-spin in-data-[type=loading]:opacity-80 in-data-[type=success]:text-success in-data-[type=warning]:text-warning" />
-                        </div>
-                      )}
+                      <ToastTypeIcon type={toast.type} />
 
                       <div className="flex flex-col gap-0.5">
                         <Toast.Title className="font-medium" data-slot="toast-title" />

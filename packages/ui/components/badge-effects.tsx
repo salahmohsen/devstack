@@ -24,6 +24,19 @@ export type BadgeGlowVariant =
   | "success"
   | "warning";
 
+export const BADGE_GLOW_VARS: Record<BadgeGlowVariant, string> = {
+  default:
+    "[--btn-glow:rgba(24,24,27,0.4)] [--btn-glow-line:rgba(24,24,27,0.55)] dark:[--btn-glow:rgba(250,250,250,0.45)] dark:[--btn-glow-line:rgba(250,250,250,0.7)]",
+  brand: "[--btn-glow:rgba(99,102,241,0.7)] [--btn-glow-line:rgba(99,102,241,0.95)]",
+  destructive: "[--btn-glow:rgba(239,68,68,0.7)] [--btn-glow-line:rgba(239,68,68,0.95)]",
+  error: "[--btn-glow:rgba(239,68,68,0.65)] [--btn-glow-line:rgba(239,68,68,0.95)]",
+  info: "[--btn-glow:rgba(14,165,233,0.65)] [--btn-glow-line:rgba(14,165,233,0.95)]",
+  outline: "[--btn-glow:rgba(113,113,122,0.4)] [--btn-glow-line:rgba(113,113,122,0.55)]",
+  secondary: "[--btn-glow:rgba(113,113,122,0.45)] [--btn-glow-line:rgba(113,113,122,0.6)]",
+  success: "[--btn-glow:rgba(34,197,94,0.65)] [--btn-glow-line:rgba(34,197,94,0.95)]",
+  warning: "[--btn-glow:rgba(245,158,11,0.65)] [--btn-glow-line:rgba(245,158,11,0.95)]"
+};
+
 export const BADGE_GLOW: Record<BadgeGlowVariant, BadgeGlowClasses> = {
   default: {
     icon: "text-primary",

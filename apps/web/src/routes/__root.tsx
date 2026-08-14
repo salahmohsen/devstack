@@ -97,7 +97,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <NuqsAdapter>
                 <CuelumeProvider />
                 {children}
-                <Toaster richColors />
+                <Toaster />
               </NuqsAdapter>
               <TanStackDevtools
                 plugins={[

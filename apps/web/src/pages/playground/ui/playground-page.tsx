@@ -71,13 +71,43 @@ export function PlaygroundPage() {
           >
             Throw Error
           </Button>
+          <Button variant="secondary" onClick={() => toast("Default toast")}>
+            Default
+          </Button>
           <Button
-            variant="secondary"
+            variant="success"
+            onClick={() => toast.success("Saved", { description: "Changes are live." })}
+          >
+            Success
+          </Button>
+          <Button
+            variant="error"
+            onClick={() => toast.error("Failed", { description: "Please try again." })}
+          >
+            Error
+          </Button>
+          <Button
+            variant="info"
+            onClick={() => toast.info("Heads up", { description: "This is informational." })}
+          >
+            Info
+          </Button>
+          <Button
+            variant="warning"
+            onClick={() => toast.warning("Careful", { description: "This needs a look." })}
+          >
+            Warning
+          </Button>
+          <Button
+            variant="warning"
             onClick={() => {
-              toast.info("This is a test toast!");
+              const id = toast.loading("Working…", { description: "This may take a moment." });
+              window.setTimeout(() => {
+                toast.success("Done", { id, description: "Finished the job." });
+              }, 1800);
             }}
           >
-            Show Toast
+            Loading
           </Button>
           <Button variant="outline" render={<Link to="/privacy-policy" />}>
             Visit Privacy Policy
