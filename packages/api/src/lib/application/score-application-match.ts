@@ -1,21 +1,19 @@
 import {
   AiJobMatchBatchSchema,
-  defaultJobPreference,
   formatJobMatchScorePrompt,
   scoreJobAgainstPreference,
   shouldPassAllHarvestJobs,
   type ApplicationApplyMethod,
   type HarvestedJob,
-  type JobPreference,
   type RuntimeLlmConfig,
   type WorkMode
 } from "@tsu-stack/core";
-import { jobPreferenceRepository } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
 import { agentFetch } from "#@/lib/agent/agent-fetch";
 import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
 import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
+import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "#@/lib/application/load-seeker-match-evidence";
 
 const SCORER_AGENT_ID = "job-preference-match-scorer";
@@ -27,20 +25,6 @@ export type ApplicationMatchScoreResult = {
   reasons: string[];
   source: "ai" | "heuristic";
 };
-
-async function loadPreference(userId: string): Promise<JobPreference> {
-  const row = await jobPreferenceRepository.findByUserId(userId);
-  if (!row) return defaultJobPreference();
-  return {
-    workModes: row.workModes ?? [],
-    locations: row.locations ?? [],
-    roleKeywords: row.roleKeywords ?? [],
-    excludeKeywords: row.excludeKeywords ?? [],
-    salaryMin: row.salaryMin,
-    salaryCurrency: row.salaryCurrency,
-    minMatchScore: row.minMatchScore ?? 60
-  };
-}
 
 function toHarvestedJob(job: {
   listingUrl: string;
@@ -111,7 +95,7 @@ export async function scoreApplicationMatch(input: {
   };
 }): Promise<ApplicationMatchScoreResult> {
   const [prefs, evidence] = await Promise.all([
-    loadPreference(input.userId),
+    loadJobPreference(input.userId),
     loadSeekerMatchEvidence(input.userId)
   ]);
   const harvested = toHarvestedJob(input.job);
