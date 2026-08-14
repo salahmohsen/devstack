@@ -49,8 +49,8 @@ export type AiFlowTriggerProps = {
   disabled?: boolean;
   className?: string;
   size?: "sm" | "default";
-  /** Compact header pill, full-width field footer, or native button chrome. */
-  layout?: "pill" | "stretch" | "default";
+  /** Native button chrome, full-width field footer, or compact pill. */
+  layout?: "default" | "stretch" | "pill";
 };
 
 /** Inline solving orb — shared by workflow pills and AI job toasts. */
@@ -67,7 +67,7 @@ export function WorkflowSolvingOrb({ className }: { className?: string }) {
 }
 
 /**
- * Glossy AI job trigger: idle glass pill, running solving orb + step + cancel.
+ * Glossy AI job trigger: idle glass button, running solving orb + step + cancel.
  * Shared by Scan job alerts, Detect stacks, and Organize.
  */
 export function AiFlowTrigger({
@@ -81,7 +81,7 @@ export function AiFlowTrigger({
   disabled = false,
   className,
   size = "default",
-  layout = "pill"
+  layout = "default"
 }: AiFlowTriggerProps) {
   const pill = layout === "pill";
   const stretch = layout === "stretch";

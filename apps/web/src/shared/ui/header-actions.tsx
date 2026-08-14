@@ -138,16 +138,18 @@ export function HeaderActions({ add, organize, batch, sort }: HeaderActionProps)
               runningFallback="Organizing"
               onStart={organize.onStart}
               onCancel={organize.onCancel}
+              size="default"
+              layout="default"
             />
           ) : null}
           {onSortStart && (
-            <Button onClick={onSortStart} variant="outline">
+            <Button onClick={onSortStart} variant="outline" size="default">
               <ArrowUpDownIcon />
               Reorder
             </Button>
           )}
           {add?.onAdd && (
-            <Button onClick={add.onAdd} loading={add.isLoading}>
+            <Button onClick={add.onAdd} loading={add.isLoading} size="default">
               <IconMorph
                 mode="hover"
                 iconA={<PlusIcon aria-hidden />}
