@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams, useRouterState } from "@tanstack/react-router";
+import { useParams, useRouterState } from "@tanstack/react-router";
 import { Archive, LayoutDashboard, UserCircle } from "lucide-react";
 import { useMemo } from "react";
 
@@ -15,6 +15,8 @@ import { resolvePublicScopeNav } from "@/shared/lib/resolve-public-scope-nav";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 
 import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
+
+import { MorphNavItem } from "@/widgets/layout/ui/morph-nav-item";
 
 /**
  * Profile / Repositories / Dashboard product nav for public + dashboard chrome.
@@ -57,96 +59,52 @@ export function PublicScopeNav({ className }: { className?: string }) {
   return (
     <nav
       aria-label="Portfolio"
-      className={cn(
-        "flex h-8 shrink-0 items-center gap-0.5 rounded-lg bg-muted/80 p-0.5",
-        className
-      )}
+      className={cn("flex h-8 shrink-0 items-center rounded-lg bg-muted/80 p-0.5", className)}
     >
-      <ScopeNavLink
-        to={home.to}
-        params={"params" in home ? home.params : undefined}
-        active={nav.active === "profile"}
-        label="Profile"
-        icon={UserCircle}
-      />
-      <ScopeNavLink
-        to={repos.to}
-        params={"params" in repos ? repos.params : undefined}
-        active={nav.active === "repos"}
-        label="Repositories"
-        icon={Archive}
-      />
-      {nav.showDashboard ? (
-        <DashboardNavLink active={nav.active === "dashboard"} customHost={customHost} />
-      ) : null}
+      <ul className="flex min-h-7 items-center gap-0.5">
+        <MorphNavItem
+          to={home.to}
+          params={"params" in home ? home.params : undefined}
+          active={nav.active === "profile"}
+          label="Profile"
+        >
+          <UserCircle className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span className="hidden md:inline">Profile</span>
+        </MorphNavItem>
+        <MorphNavItem
+          to={repos.to}
+          params={"params" in repos ? repos.params : undefined}
+          active={nav.active === "repos"}
+          label="Repositories"
+        >
+          <Archive className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span className="hidden md:inline">Repos</span>
+        </MorphNavItem>
+        {nav.showDashboard ? (
+          customHost ? (
+            <MorphNavItem
+              href={primaryAppUrl("/dashboard")}
+              active={nav.active === "dashboard"}
+              label="Dashboard"
+            >
+              <DashboardLabel />
+            </MorphNavItem>
+          ) : (
+            <MorphNavItem to="/dashboard" active={nav.active === "dashboard"} label="Dashboard">
+              <DashboardLabel />
+            </MorphNavItem>
+          )
+        ) : null}
+      </ul>
     </nav>
   );
 }
 
-function DashboardNavLink({ active, customHost }: { active: boolean; customHost: boolean }) {
-  const className = cn(
-    "inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors",
-    "text-muted-foreground hover:text-foreground",
-    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-    active && "bg-background text-foreground shadow-sm/5 dark:bg-input"
-  );
-
-  // Custom portfolio Host cannot keep session cookies for /dashboard — jump to primary origin.
-  if (customHost) {
-    return (
-      <a
-        href={primaryAppUrl("/dashboard")}
-        aria-label="Dashboard"
-        aria-current={active ? "page" : undefined}
-        className={className}
-      >
-        <LayoutDashboard size={15} strokeWidth={2} className="shrink-0" aria-hidden />
-        <span className="hidden md:inline">Dashboard</span>
-      </a>
-    );
-  }
-
+function DashboardLabel() {
   return (
-    <Link
-      to="/dashboard"
-      aria-label="Dashboard"
-      aria-current={active ? "page" : undefined}
-      className={className}
-    >
-      <LayoutDashboard size={15} strokeWidth={2} className="shrink-0" aria-hidden />
+    <>
+      <LayoutDashboard className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
       <span className="hidden md:inline">Dashboard</span>
-    </Link>
-  );
-}
-
-function ScopeNavLink({
-  to,
-  params,
-  active,
-  label,
-  icon: Icon
-}: {
-  to: string;
-  params?: Record<string, string>;
-  active: boolean;
-  label: string;
-  icon: typeof UserCircle;
-}) {
-  return (
-    <Link
-      to={to as never}
-      params={params as never}
-      aria-label={label}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-medium transition-colors",
-        "text-muted-foreground hover:text-foreground",
-        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-        active && "bg-background text-foreground shadow-sm/5 dark:bg-input"
-      )}
-    >
-      <Icon size={15} strokeWidth={2} className="shrink-0" aria-hidden />
-      <span className="hidden md:inline">{label === "Repositories" ? "Repos" : label}</span>
-    </Link>
+    </>
   );
 }
