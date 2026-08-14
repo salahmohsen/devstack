@@ -9,11 +9,14 @@ Examples (positive):
 - LinkedIn “Your job alerts” with multiple View job cards
 - Jack and Jill “4 new senior frontend roles (Paires, …)” with job links
 - Indeed / Google job alert digests
+- Otta / Wellfound “roles we found for you”
+- Agency blast: “5 openings this week” with apply links
 
 Examples (negative):
 
 - “Application was sent to MixRank”
-- Recruiter: “Would you chat next week about a Staff role at …”
+- Greenhouse / Lever / Ashby “thanks for applying”
+- Recruiter: “Would you chat next week about a Staff role at …” (1:1, not a digest)
 
 ## application_status
 

@@ -3,6 +3,7 @@ import { createStep } from "@mastra/core/workflows";
 import { z } from "zod";
 
 import {
+  applyJobAlertDigestGuard,
   assembleClassifyLabelsFromAi,
   enabledSmartRulesForClassify,
   formatCorrectionsFewShot,
@@ -164,7 +165,7 @@ ${fewShot ? `\n${fewShot}` : ""}`;
       });
       log.emit();
 
-      return {
+      return applyJobAlertDigestGuard(inputData, {
         labels,
         systemLabels,
         source: "llm" as const,
@@ -175,7 +176,7 @@ ${fewShot ? `\n${fewShot}` : ""}`;
         ]
           .filter(Boolean)
           .join(";")
-      };
+      });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       const log = createLogger({ operation: "agent__mail_classify_llm" });

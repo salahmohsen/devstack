@@ -12,7 +12,7 @@ import { createDb, experienceRepository, runWithDb } from "@tsu-stack/db";
 export const listExperiencesTool = createTool({
   id: "list-experiences",
   description:
-    "List the seeker's work experiences (title, organization, dates). Use to ground career answers in real portfolio evidence.",
+    "List the user's work history (title, organization, dates). Use when they say past jobs, companies I worked at, resume jobs, or work history.",
   inputSchema: z.object({
     limit: z.number().int().min(1).max(20).optional().default(20)
     // Intentionally no userId — tenant is requestContext only.

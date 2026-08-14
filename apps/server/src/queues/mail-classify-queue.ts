@@ -93,7 +93,8 @@ export function startMailClassifyQueue(redisUrl: string): void {
  * No-op when queue was never started (no REDIS_URL).
  */
 export async function enqueueMailClassify(
-  payload: MailClassifyJobPayload
+  payload: MailClassifyJobPayload,
+  options?: { force?: boolean }
 ): Promise<{ enqueued: boolean; jobId?: string }> {
   if (!queue) {
     return { enqueued: false };
@@ -104,16 +105,34 @@ export async function enqueueMailClassify(
     enqueuedAt: payload.enqueuedAt ?? new Date().toISOString()
   };
 
-  const job = await queue.add(MAIL_CLASSIFY_JOB_NAME, data, {
-    // Dedupe rapid double-delivery of same message.
-    jobId: `classify:${data.userId}:${data.messageId}`,
-    removeOnComplete: 1000,
-    removeOnFail: 5000,
-    attempts: 3,
-    backoff: { type: "exponential", delay: 2000 }
-  });
+  // BullMQ custom job ids cannot contain `:`. force=new id so a reset can re-run.
+  const jobId = options?.force
+    ? `classify_${data.userId}_${data.messageId}_${crypto.randomUUID()}`
+    : `classify_${data.userId}_${data.messageId}`;
 
-  return { enqueued: true, jobId: job.id };
+  try {
+    const job = await queue.add(MAIL_CLASSIFY_JOB_NAME, data, {
+      jobId,
+      removeOnComplete: 1000,
+      removeOnFail: 5000,
+      attempts: 3,
+      backoff: { type: "exponential", delay: 2000 }
+    });
+    return { enqueued: true, jobId: job.id };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!options?.force && /already exists|JobId/i.test(message)) {
+      return { enqueued: false };
+    }
+    const log = createLogger({ operation: "server__mail_classify_queue" });
+    log.error(error instanceof Error ? error : new Error(message), {
+      event: "mail_classify_enqueue_failed",
+      jobId,
+      force: Boolean(options?.force)
+    });
+    log.emit({ _forceKeep: true });
+    return { enqueued: false };
+  }
 }
 
 export async function stopMailClassifyQueue(): Promise<void> {

@@ -1,8 +1,9 @@
 import {
   AiJobMatchBatchSchema,
   defaultJobPreference,
-  isOpenJobPreference,
+  formatJobMatchScorePrompt,
   scoreJobAgainstPreference,
+  shouldPassAllHarvestJobs,
   type ApplicationApplyMethod,
   type HarvestedJob,
   type JobPreference,
@@ -15,6 +16,7 @@ import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { agentFetch } from "#@/lib/agent/agent-fetch";
 import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
 import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
+import { loadSeekerMatchEvidence } from "#@/lib/application/load-seeker-match-evidence";
 
 const SCORER_AGENT_ID = "job-preference-match-scorer";
 const TIMEOUT_MS = 60_000;
@@ -108,17 +110,20 @@ export async function scoreApplicationMatch(input: {
     workMode?: WorkMode | null;
   };
 }): Promise<ApplicationMatchScoreResult> {
-  const prefs = await loadPreference(input.userId);
+  const [prefs, evidence] = await Promise.all([
+    loadPreference(input.userId),
+    loadSeekerMatchEvidence(input.userId)
+  ]);
   const harvested = toHarvestedJob(input.job);
   const minScore = prefs.minMatchScore ?? 60;
-  const openPrefs = isOpenJobPreference(prefs);
+  const passAll = shouldPassAllHarvestJobs(prefs, evidence);
 
-  const heuristic = scoreJobAgainstPreference(harvested, prefs);
+  const heuristic = scoreJobAgainstPreference(harvested, prefs, evidence);
 
   if (!ENV_SERVER.AGENT_WORKER_URL?.trim() || !input.llm.apiKey?.trim()) {
     return {
       score: heuristic.score,
-      passed: openPrefs ? true : heuristic.passed,
+      passed: passAll ? true : heuristic.passed,
       reasons: [...heuristic.reasons, "heuristic_only"],
       source: "heuristic"
     };
@@ -137,16 +142,12 @@ export async function scoreApplicationMatch(input: {
     }
   ];
 
-  const prompt = `Score these jobs for the seeker.
-
-JobPreference (JSON):
-${JSON.stringify(prefs, null, 2)}
-
-Jobs (JSON array):
-${JSON.stringify(jobsJson, null, 2)}
-
-Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${minScore} and not excluded), and reasons.
-Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.`;
+  const prompt = formatJobMatchScorePrompt({
+    prefs,
+    evidence,
+    jobs: jobsJson,
+    minScore
+  });
 
   try {
     const sessionToken = await ensureSessionTokenForUser(input.userId);
@@ -194,7 +195,7 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
     if (!response?.ok) {
       return {
         score: heuristic.score,
-        passed: openPrefs ? true : heuristic.passed,
+        passed: passAll ? true : heuristic.passed,
         reasons: [...heuristic.reasons, "ai_scorer_http_fallback"],
         source: "heuristic"
       };
@@ -212,7 +213,7 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
     if (!batch.success || batch.data.matches.length === 0) {
       return {
         score: heuristic.score,
-        passed: openPrefs ? true : heuristic.passed,
+        passed: passAll ? true : heuristic.passed,
         reasons: [...heuristic.reasons, "ai_scorer_parse_fallback"],
         source: "heuristic"
       };
@@ -224,21 +225,21 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
       ) ?? batch.data.matches[0]!;
 
     const score = Math.max(0, Math.min(100, Math.round(hit.score)));
-    const passed = openPrefs ? true : hit.passed && score >= minScore;
+    const passed = passAll ? true : hit.passed && score >= minScore;
 
     return {
       score,
       passed,
       reasons: [
         ...(hit.reasons?.length ? hit.reasons : ["ai_match"]),
-        ...(openPrefs ? ["open_preference_profile"] : [])
+        ...(passAll ? ["open_preference_profile"] : [])
       ],
       source: "ai"
     };
   } catch {
     return {
       score: heuristic.score,
-      passed: openPrefs ? true : heuristic.passed,
+      passed: passAll ? true : heuristic.passed,
       reasons: [...heuristic.reasons, "ai_scorer_error_fallback"],
       source: "heuristic"
     };

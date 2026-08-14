@@ -61,5 +61,50 @@
     "subject": "Offer letter — Senior Engineer",
     "preview": "We are pleased to offer you the position",
     "expectedSystemLabels": ["offer"]
+  },
+  {
+    "id": "greenhouse-thanks-applying",
+    "description": "Greenhouse ATS receipt → application_status",
+    "fromEmail": "no-reply@greenhouse.io",
+    "fromName": "Stripe via Greenhouse",
+    "subject": "Thank you for applying to Stripe",
+    "preview": "We received your application for Senior Frontend Engineer",
+    "expectedSystemLabels": ["application_status"]
+  },
+  {
+    "id": "lever-application-received",
+    "description": "Lever ATS receipt → application_status",
+    "fromEmail": "no-reply@hire.lever.co",
+    "fromName": "Lever",
+    "subject": "Your application has been received",
+    "preview": "Thanks for applying — we received your application",
+    "expectedSystemLabels": ["application_status"]
+  },
+  {
+    "id": "otta-role-digest",
+    "description": "Otta weekly roles digest → job_notifier",
+    "fromEmail": "hello@otta.com",
+    "fromName": "Otta",
+    "subject": "8 new roles we found for you",
+    "preview": "Roles we found matching Software Engineer",
+    "expectedSystemLabels": ["job_notifier"]
+  },
+  {
+    "id": "recruiter-one-to-one",
+    "description": "Human recruiter outreach about the seeker → recruiter",
+    "fromEmail": "maya@acme.com",
+    "fromName": "Maya Chen",
+    "subject": "Are you open to a Staff role at Acme?",
+    "preview": "I came across your profile and thought of you for a Staff frontend role",
+    "expectedSystemLabels": ["recruiter"]
+  },
+  {
+    "id": "agency-role-blast",
+    "description": "Agency blast of many openings → job_notifier",
+    "fromEmail": "roles@talentco.com",
+    "fromName": "Talent Co Roles",
+    "subject": "5 openings this week — React, Node, Staff",
+    "preview": "Here are 5 openings this week across our portfolio",
+    "expectedSystemLabels": ["job_notifier"]
   }
 ]

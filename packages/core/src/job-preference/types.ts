@@ -17,6 +17,9 @@ const salaryCurrencyField = z
 /**
  * Fully resolved preference body (no optional/default ambiguity).
  * Used for storage mapping, merge base, and API output fields.
+ *
+ * `workModes` is multi-select (0–3 values). Empty = no work-mode filter.
+ * Match semantics elsewhere treat the array as OR (any preferred mode).
  */
 export const JobPreferenceFieldsSchema = z.object({
   workModes: z.array(WorkModeSchema).max(3),
@@ -70,3 +73,17 @@ export const UpsertJobPreferenceInputSchema = z.object({
   minMatchScore: z.number().int().min(0).max(100).optional()
 });
 export type UpsertJobPreferenceInput = z.infer<typeof UpsertJobPreferenceInputSchema>;
+
+/**
+ * Compact career-profile signal used when scoring harvested jobs.
+ * Preferences stay the explicit filter; this fills gaps when role keywords
+ * are empty so New jobs still match the seeker's actual craft.
+ */
+export const SeekerMatchEvidenceSchema = z.object({
+  roleTitles: z.array(z.string().trim().min(1).max(160)).max(24).default([]),
+  organizations: z.array(z.string().trim().min(1).max(160)).max(24).default([]),
+  stackNames: z.array(z.string().trim().min(1).max(80)).max(60).default([]),
+  featuredStackNames: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+  projectTitles: z.array(z.string().trim().min(1).max(160)).max(24).default([])
+});
+export type SeekerMatchEvidence = z.infer<typeof SeekerMatchEvidenceSchema>;

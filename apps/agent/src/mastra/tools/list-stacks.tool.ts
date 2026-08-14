@@ -12,7 +12,7 @@ import { createDb, runWithDb, stackRepository } from "@tsu-stack/db";
 export const listStacksTool = createTool({
   id: "list-stacks",
   description:
-    "List the seeker's tech stacks (name, type, project count). Use when matching skills to a role or grounding stack answers.",
+    "List the user's skills / tools / tech (name, type, project count). Use when they say skills, tools I use, tech I know, or what I work with.",
   inputSchema: z.object({
     limit: z.number().int().min(1).max(20).optional().default(20)
     // Intentionally no userId — tenant is requestContext only.
@@ -25,6 +25,8 @@ export const listStacksTool = createTool({
         type: z.string().nullable(),
         confidence: z.string().nullable(),
         projectCount: z.number().int(),
+        inPortfolio: z.boolean(),
+        featured: z.boolean(),
         summary: z.string().nullable()
       })
     )
@@ -45,6 +47,8 @@ export const listStacksTool = createTool({
           type: r.type ?? null,
           confidence: r.confidence ?? null,
           projectCount: r.projectCount ?? 0,
+          inPortfolio: Boolean(r.portfolioEntryId),
+          featured: Boolean(r.isFeatured),
           // Short text only — omit large description bodies.
           summary: r.description ? r.description.slice(0, 200) : null
         };

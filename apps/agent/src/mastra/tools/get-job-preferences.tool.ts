@@ -12,7 +12,7 @@ import { createDb, jobPreferenceRepository, runWithDb } from "@tsu-stack/db";
 export const getJobPreferencesTool = createTool({
   id: "get-job-preferences",
   description:
-    "Fetch the seeker's job preferences (work modes, locations, role keywords, salary floor, min match score). Use when proposing applications from a JD.",
+    "Fetch what the user is looking for (job preferences). workModes is a multi-select array (remote|hybrid|onsite; empty = any mode). Also returns locations, role/exclude keywords, salary floor, min match score. Use for 'what jobs do I want', fit questions, or JD propose. If role keywords are empty, also call listExperiences + listStacks + listProjects — New jobs are filtered by that profile, not only this row.",
   inputSchema: z.object({
     // Intentionally empty — tenant is requestContext only; one prefs row per user.
   }),
@@ -21,7 +21,8 @@ export const getJobPreferencesTool = createTool({
     preferences: z
       .object({
         id: z.string(),
-        workModes: z.array(z.string()),
+        /** Multi-select preferred work modes (OR). Empty = no work-mode filter. */
+        workModes: z.array(z.enum(["remote", "hybrid", "onsite"])),
         locations: z.array(z.string()),
         roleKeywords: z.array(z.string()),
         excludeKeywords: z.array(z.string()),

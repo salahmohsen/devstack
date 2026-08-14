@@ -67,12 +67,16 @@ const RECRUITER_RE =
   /\b(recruiter|talent\s+acquisition|i\s+came\s+across\s+your\s+profile|opportunity\s+for\s+you|are\s+you\s+open\s+to)\b/i;
 /** Application status updates — CRM path, not new-job harvest. */
 const APPLICATION_STATUS_RE =
-  /\b(application\s+(was\s+)?(sent|received|update|status)|thank\s+you\s+for\s+applying|we\s+received\s+your\s+application|candidate\s+portal|your\s+application|application\s+was\s+sent)\b/i;
-/** LinkedIn/Indeed/Jack&Jill digests — must not become interview/offer or create CRM apps. */
+  /\b(application\s+(was\s+)?(sent|received|update|status|viewed)|thank\s+you\s+for\s+applying|thanks\s+for\s+applying|we\s+received\s+your\s+application|application\s+has\s+been\s+received|successfully\s+applied|application\s+confirmation|candidate\s+portal|your\s+application|application\s+was\s+sent)\b/i;
+/** LinkedIn/Indeed/Jack&Jill/Otta/Wellfound digests — must not become interview/offer or create CRM apps. */
 const JOB_ALERT_DIGEST_RE =
-  /\b(job\s+alert|jobs?\s+alerts?|your\s+job\s+alert|linkedin\s+job\s+alerts?|jobs?\s+you\s+may\s+be\s+interested|recommended\s+jobs?|see\s+all\s+jobs|manage\s+(your\s+)?alerts?|jobalerts?[-.]noreply|indeed\.com|new\s+matches\s+for\s+you|fresh\s+sweep\s+of\s+the\s+market|new\s+senior\s+(frontend\s+)?roles?)\b|\d+\s+new\b[\s\S]{0,80}\broles?\b/i;
+  /\b(job\s+alert|jobs?\s+alerts?|your\s+job\s+alert|linkedin\s+job\s+alerts?|jobs?\s+you\s+may\s+be\s+interested|jobs?\s+you\s+might\s+like|recommended\s+jobs?|see\s+all\s+jobs|manage\s+(your\s+)?alerts?|jobalerts?[-.]noreply|indeed\.com|new\s+matches\s+for\s+you|fresh\s+sweep\s+of\s+the\s+market|new\s+senior\s+(frontend\s+)?roles?|roles?\s+we\s+found|opportunities\s+matching|openings?\s+this\s+week)\b|\d+\s+new\b[\s\S]{0,80}\b(roles?|jobs?|positions?|openings?)\b|\d+\s+(open\s+)?(roles?|positions?|openings?)\b/i;
+/** Exact local-parts only — do not match messaging-digest-noreply@linkedin.com. */
 const JOB_ALERT_FROM_RE =
-  /\b(jobalerts?[-.]noreply@|jobs-noreply@|noreply@linkedin\.com|jobs@indeed\.com)\b/i;
+  /(?:^|[\s<,;])(?:jobalerts?[-.]noreply@|jobs-noreply@|noreply@linkedin\.com|jobs@indeed\.com|alerts@indeed\.com)|@(?:otta\.com|wellfound\.com|angel\.co|builtin\.com)\b|notify-noreply@google\.com/i;
+/** ATS receipt senders — usually application_status, never job_notifier. */
+const ATS_RECEIPT_FROM_RE =
+  /@(?:[a-z0-9-]+\.)*(?:greenhouse\.io|lever\.co|ashbyhq\.com|workablemail\.com|smartrecruiters\.com)\b/i;
 /** Jack and Jill AI job-search digests (multi-role + single-role pitches). */
 const JACK_AND_JILL_FROM_RE = /@jackandjill\.ai\b/i;
 /** Welcome/onboarding from Jack — not a job listing digest. */
@@ -122,6 +126,20 @@ export function isJobAlertDigestMail(input: {
   }
 
   return JOB_ALERT_DIGEST_RE.test(haystack);
+}
+
+function isAtsApplicationReceipt(input: {
+  fromEmail?: string;
+  subject?: string;
+  preview?: string;
+  bodyText?: string;
+}): boolean {
+  const fromBlob = input.fromEmail ?? "";
+  if (!ATS_RECEIPT_FROM_RE.test(fromBlob)) return false;
+  const haystack = [input.subject, input.preview, (input.bodyText ?? "").slice(0, 2_000)]
+    .join("\n")
+    .slice(0, 4_000);
+  return APPLICATION_STATUS_RE.test(haystack);
 }
 
 function isNoiseMail(input: {
@@ -178,9 +196,9 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
     system = "recruiter";
     confidence = 0.65;
     notes = "heuristic:recruiter";
-  } else if (APPLICATION_STATUS_RE.test(haystack)) {
+  } else if (isAtsApplicationReceipt(input) || APPLICATION_STATUS_RE.test(haystack)) {
     system = "application_status";
-    confidence = 0.65;
+    confidence = isAtsApplicationReceipt(input) ? 0.8 : 0.65;
     notes = "heuristic:application_status";
   } else if (isNoiseMail(input)) {
     system = "noise";
@@ -334,8 +352,31 @@ export function assembleClassifyLabelsFromAi(input: {
 }
 
 /**
- * @deprecated AI mail-classification skill owns digest labeling.
- * Do not call from server paths.
+ * Safety net after AI: well-known job-alert digests must stay `job_notifier`
+ * so harvest runs (models often mislabel cards that mention "interview").
+ * Does not override a clear offer.
+ */
+export function applyJobAlertDigestGuard(
+  input: Pick<MailClassifyInput, "fromEmail" | "fromName" | "subject" | "preview" | "bodyText">,
+  result: MailClassifyOutput
+): MailClassifyOutput {
+  if (!isJobAlertDigestMail(input)) return result;
+  if (result.systemLabels.includes("job_notifier")) return result;
+  if (result.systemLabels.includes("offer")) return result;
+
+  const smartOnly = result.labels.filter((l) => l.startsWith("rule:"));
+  const systemLabels: MailSystemLabel[] = ["job_notifier"];
+  return {
+    ...result,
+    systemLabels,
+    labels: [...systemLabels, ...smartOnly],
+    confidence: Math.max(result.confidence ?? 0, 0.85),
+    notes: [result.notes, "guard:job_alert_digest→job_notifier"].filter(Boolean).join(";")
+  };
+}
+
+/**
+ * @deprecated Prefer {@link applyJobAlertDigestGuard}. Kept for existing tests.
  */
 export function suppressCareerLabelsForJobAlertDigest(
   input: MailClassifyInput,

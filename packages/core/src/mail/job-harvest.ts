@@ -15,8 +15,19 @@ import {
   type ListingPageExtract
 } from "#@/common/extract-job-listing-page";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
-import { WorkModeSchema, type JobPreference, type WorkMode } from "#@/job-preference/types";
-import { defaultJobPreference } from "#@/job-preference/utils";
+import {
+  SeekerMatchEvidenceSchema,
+  WorkModeSchema,
+  type JobPreference,
+  type SeekerMatchEvidence,
+  type WorkMode
+} from "#@/job-preference/types";
+import {
+  defaultJobPreference,
+  formatSeekerEvidenceForPrompt,
+  isOpenJobPreference,
+  seekerEvidenceHasSignal
+} from "#@/job-preference/utils";
 
 /**
  * LLMs often emit display labels (`Unknown`, `Easy Apply`) or aliases (`company`
@@ -162,7 +173,9 @@ export const HarvestJobPreferenceSchema = z.object({
   excludeKeywords: z.array(z.string()).default([]),
   salaryMin: z.number().nullable().optional(),
   salaryCurrency: z.string().nullable().optional(),
-  minMatchScore: z.number().int().min(0).max(100).default(60)
+  minMatchScore: z.number().int().min(0).max(100).default(60),
+  /** Career-profile signal (experiences / stacks / projects) for fit scoring. */
+  evidence: SeekerMatchEvidenceSchema.optional()
 });
 export type HarvestJobPreference = z.infer<typeof HarvestJobPreferenceSchema>;
 
@@ -1193,13 +1206,199 @@ function includesAny(haystack: string, needles: string[]): boolean {
   return needles.some((n) => n.trim().length > 0 && h.includes(n.toLowerCase()));
 }
 
+const SENIORITY_STOP = new Set([
+  "senior",
+  "sr",
+  "junior",
+  "jr",
+  "staff",
+  "principal",
+  "lead",
+  "intern",
+  "mid",
+  "midlevel",
+  "associate",
+  "i",
+  "ii",
+  "iii",
+  "iv"
+]);
+
+const ROLE_GENERIC_STOP = new Set([
+  "software",
+  "engineer",
+  "engineering",
+  "developer",
+  "development",
+  "programmer",
+  "programming",
+  "specialist",
+  "consultant",
+  "contractor",
+  "manager",
+  "director",
+  "head",
+  "officer",
+  "founder",
+  "remote",
+  "hybrid",
+  "onsite",
+  "the",
+  "and",
+  "of",
+  "for",
+  "with",
+  "a",
+  "an",
+  "at",
+  "in",
+  "to",
+  "or"
+]);
+
+const KNOWN_ROLE_PHRASES = [
+  "full stack",
+  "fullstack",
+  "front end",
+  "frontend",
+  "back end",
+  "backend",
+  "product design",
+  "product designer",
+  "ux design",
+  "ui design",
+  "data science",
+  "data scientist",
+  "machine learning",
+  "site reliability",
+  "devops",
+  "sre",
+  "mobile",
+  "ios",
+  "android",
+  "platform",
+  "infrastructure",
+  "security",
+  "quality assurance",
+  "test automation"
+] as const;
+
+function normalizeMatchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9+.#/\s-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function haystackHasPhrase(haystack: string, phrase: string): boolean {
+  const needle = phrase.trim();
+  if (needle.length < 3) return false;
+  const pattern = escapeRegExp(needle).replace(/\s+/g, "[\\s._/+-]*");
+  return new RegExp(`(^|[^a-z0-9])${pattern}([^a-z0-9]|$)`, "i").test(haystack);
+}
+
+function haystackHasStack(haystack: string, stackName: string): boolean {
+  const needle = stackName.trim();
+  if (needle.length < 2) return false;
+  if (needle.length === 2 && !/^[.#+]/.test(needle)) {
+    // Short tokens (Go, AI) need a strict word boundary.
+    return new RegExp(`(^|[^a-z0-9])${escapeRegExp(needle)}([^a-z0-9]|$)`, "i").test(haystack);
+  }
+  return haystackHasPhrase(haystack, needle);
+}
+
+/** Domain phrases from experience titles after dropping seniority / generic role words. */
+export function meaningfulRolePhrases(title: string): string[] {
+  const normalized = normalizeMatchText(title);
+  if (!normalized) return [];
+  const phrases = new Set<string>();
+  for (const known of KNOWN_ROLE_PHRASES) {
+    if (haystackHasPhrase(normalized, known)) phrases.add(known);
+  }
+  const tokens = normalized.split(" ").filter((token) => {
+    if (!token || token.length < 3) return false;
+    if (SENIORITY_STOP.has(token)) return false;
+    if (ROLE_GENERIC_STOP.has(token)) return false;
+    return true;
+  });
+  if (tokens.length > 0) {
+    phrases.add(tokens.join(" "));
+    for (const token of tokens) phrases.add(token);
+  }
+  return [...phrases];
+}
+
+function applyEvidenceToScore(
+  job: HarvestedJob,
+  evidence: SeekerMatchEvidence,
+  score: number,
+  reasons: string[]
+): { score: number; evidenceFit: boolean; reasons: string[] } {
+  const titleBlob = job.title.toLowerCase();
+  const descBlob = `${job.title}\n${job.description ?? ""}`.toLowerCase();
+  let next = score;
+  let evidenceFit = false;
+
+  const titlePhrases = evidence.roleTitles.flatMap((title) => meaningfulRolePhrases(title));
+  const titleHits = titlePhrases.filter((phrase) => haystackHasPhrase(titleBlob, phrase));
+  if (titleHits.length > 0) {
+    next += Math.min(30, 18 + titleHits.length * 4);
+    reasons.push(`experience title: ${titleHits.slice(0, 3).join(", ")}`);
+    evidenceFit = true;
+  }
+
+  const featuredInTitle = evidence.featuredStackNames.filter((name) =>
+    haystackHasStack(titleBlob, name)
+  );
+  if (featuredInTitle.length > 0) {
+    next += Math.min(30, 16 + featuredInTitle.length * 6);
+    reasons.push(`featured stack in title: ${featuredInTitle.slice(0, 3).join(", ")}`);
+    evidenceFit = true;
+  }
+
+  const stacksInTitle = evidence.stackNames.filter((name) => haystackHasStack(titleBlob, name));
+  if (stacksInTitle.length > 0) {
+    next += Math.min(24, 10 + stacksInTitle.length * 5);
+    reasons.push(`stack in title: ${stacksInTitle.slice(0, 3).join(", ")}`);
+    evidenceFit = true;
+  }
+
+  const featuredInDesc = evidence.featuredStackNames.filter(
+    (name) => !featuredInTitle.includes(name) && haystackHasStack(descBlob, name)
+  );
+  if (featuredInDesc.length > 0) {
+    next += Math.min(12, featuredInDesc.length * 4);
+    reasons.push(`featured stack in listing: ${featuredInDesc.slice(0, 3).join(", ")}`);
+    evidenceFit = true;
+  }
+
+  const stacksInDesc = evidence.stackNames.filter(
+    (name) => !stacksInTitle.includes(name) && haystackHasStack(descBlob, name)
+  );
+  if (stacksInDesc.length >= 2) {
+    next += Math.min(12, stacksInDesc.length * 3);
+    reasons.push(`stacks in listing: ${stacksInDesc.slice(0, 4).join(", ")}`);
+    evidenceFit = true;
+  }
+
+  return { score: next, evidenceFit, reasons };
+}
+
 /**
- * Score a harvested job against user preferences (0–100). Rules-only.
+ * Score a harvested job against user preferences and optional career-profile
+ * evidence (0–100). Rules-only.
  * When role keywords are set, require a hit on the **title** (not random URL text).
+ * When preferences are open and evidence exists, require a profile fit.
  */
 export function scoreJobAgainstPreference(
   job: HarvestedJob,
-  prefs: JobPreference | null | undefined
+  prefs: JobPreference | null | undefined,
+  evidence?: SeekerMatchEvidence | null
 ): JobMatchScoreResult {
   const p = prefs ?? defaultJobPreference();
   const reasons: string[] = [];
@@ -1229,13 +1428,15 @@ export function scoreJobAgainstPreference(
     }
   }
 
+  // workModes is multi-select (OR): any preferred mode counts as a match.
   if (p.workModes.length > 0) {
+    const preferred = p.workModes.join(", ");
     if (job.workMode && p.workModes.includes(job.workMode)) {
       score += 20;
-      reasons.push(`work mode ${job.workMode}`);
+      reasons.push(`work mode ${job.workMode} matches preferred (${preferred})`);
     } else if (job.workMode && !p.workModes.includes(job.workMode)) {
       score -= 20;
-      reasons.push(`work mode ${job.workMode} not preferred`);
+      reasons.push(`work mode ${job.workMode} not in preferred (${preferred})`);
     } else {
       reasons.push("work mode unknown");
     }
@@ -1259,6 +1460,18 @@ export function scoreJobAgainstPreference(
     }
   }
 
+  if (seekerEvidenceHasSignal(evidence) && evidence) {
+    const applied = applyEvidenceToScore(job, evidence, score, reasons);
+    score = applied.score;
+    if (isOpenJobPreference(p) && !applied.evidenceFit) {
+      return {
+        score: Math.min(applied.score, 25),
+        passed: false,
+        reasons: [...applied.reasons, "no profile evidence fit"]
+      };
+    }
+  }
+
   score = Math.max(0, Math.min(100, Math.round(score)));
   const min = p.minMatchScore ?? DEFAULT_MIN_MATCH_SCORE;
   return {
@@ -1266,4 +1479,42 @@ export function scoreJobAgainstPreference(
     passed: score >= min,
     reasons
   };
+}
+
+/** Shared harvest / application-match scorer prompt. */
+export function formatJobMatchScorePrompt(input: {
+  prefs: HarvestJobPreference | JobPreference;
+  evidence?: SeekerMatchEvidence | null;
+  jobs: unknown[];
+  minScore: number;
+}): string {
+  const evidence =
+    input.evidence ?? ("evidence" in input.prefs ? (input.prefs.evidence ?? null) : null);
+  return `Score these jobs for the seeker.
+
+JobPreference (JSON):
+${JSON.stringify(
+  {
+    workModes: input.prefs.workModes ?? [],
+    locations: input.prefs.locations ?? [],
+    roleKeywords: input.prefs.roleKeywords ?? [],
+    excludeKeywords: input.prefs.excludeKeywords ?? [],
+    salaryMin: input.prefs.salaryMin ?? null,
+    salaryCurrency: input.prefs.salaryCurrency ?? null,
+    minMatchScore: input.minScore
+  },
+  null,
+  2
+)}
+
+${formatSeekerEvidenceForPrompt(evidence)}
+
+Jobs (JSON array):
+${JSON.stringify(input.jobs, null, 2)}
+
+Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${input.minScore} and not excluded), and reasons.
+Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.
+workModes is multi-select (OR): empty array = any mode; boost when job.workMode is any preferred mode; soft-penalize only when job mode is known and outside the preferred set.
+When roleKeywords are empty, infer fit from SeekerProfileEvidence (experience titles, featured stacks, project stacks). Fail jobs that are orthogonal to this career (nursing, sales SDR, graphic design vs a frontend engineer, etc.).
+A job should pass only if it reasonably matches the seeker's craft or explicit preferences.`;
 }

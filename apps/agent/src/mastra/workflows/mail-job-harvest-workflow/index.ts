@@ -6,16 +6,18 @@ import {
   AiJobAgentTakeBatchSchema,
   AiJobMatchBatchSchema,
   canonicalizeJobUrl,
+  formatJobMatchScorePrompt,
   HarvestedJobSchema,
   HarvestJobPreferenceSchema,
   inferApplicationSource,
-  isOpenJobPreference,
   isValidHarvestedJob,
   MailJobHarvestAfterScoreSchema,
   MailJobHarvestWorkflowInputSchema,
   MailJobHarvestWorkflowOutputSchema,
   MailNotifierExtractSchema,
   mergeJobListingExtract,
+  scoreJobAgainstPreference,
+  shouldPassAllHarvestJobs,
   type HarvestedJob,
   type HarvestJobPreference,
   type RuntimeLlmConfig,
@@ -373,18 +375,49 @@ const scoreJobsAgainstPreferenceAi = createStep({
       minMatchScore: 60
     };
     const minScore = prefs.minMatchScore ?? 60;
+    const evidence = prefs.evidence ?? null;
+    const passAll = shouldPassAllHarvestJobs(prefs, evidence);
+
+    const heuristicScore = (job: HarvestedJob, extraReasons: string[] = []): ScoredHarvestedJob => {
+      const r = scoreJobAgainstPreference(
+        job,
+        {
+          workModes: prefs.workModes,
+          locations: prefs.locations,
+          roleKeywords: prefs.roleKeywords,
+          excludeKeywords: prefs.excludeKeywords,
+          salaryMin: prefs.salaryMin ?? null,
+          salaryCurrency: prefs.salaryCurrency ?? null,
+          minMatchScore: prefs.minMatchScore
+        },
+        evidence
+      );
+      return {
+        ...job,
+        matchScore: r.score,
+        matchPassed: passAll ? true : r.passed,
+        matchReasons: [
+          ...r.reasons,
+          ...extraReasons,
+          ...(passAll ? ["open_preference_profile"] : [])
+        ],
+        agentTake: null
+      };
+    };
 
     const agent = mastra?.getAgent("jobPreferenceMatchScorer");
     const { model, skipNote } = generateModelOption(inputData.llm as RuntimeLlmConfig | undefined);
 
-    // No scorer / no model → fail closed (do not invent keyword scores)
+    // No scorer / no model → rules + profile evidence (do not drop listings).
     if (!agent || !model) {
       return {
         messageId: inputData.messageId,
         userId: inputData.userId,
         isJobNotifier: true,
-        jobs: [],
-        notes: [inputData.notes, skipNote ?? "match_scorer_unavailable"].filter(Boolean).join(";"),
+        jobs: inputData.jobs.map((job) => heuristicScore(job, ["heuristic_match"])),
+        notes: [inputData.notes, skipNote ?? "match_scorer_unavailable_heuristic"]
+          .filter(Boolean)
+          .join(";"),
         preference: inputData.preference,
         llm: inputData.llm
       };
@@ -403,16 +436,12 @@ const scoreJobsAgainstPreferenceAi = createStep({
       };
     });
 
-    const prompt = `Score these jobs for the seeker.
-
-JobPreference (JSON):
-${JSON.stringify(prefs, null, 2)}
-
-Jobs (JSON array):
-${JSON.stringify(jobsJson, null, 2)}
-
-Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${minScore} and not excluded), and reasons.
-Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.`;
+    const prompt = formatJobMatchScorePrompt({
+      prefs,
+      evidence,
+      jobs: jobsJson,
+      minScore
+    });
 
     const requestContext = harvestRequestContext(
       inputData.llm as RuntimeLlmConfig | undefined,
@@ -440,17 +469,14 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
           messageId: inputData.messageId,
           userId: inputData.userId,
           isJobNotifier: true,
-          jobs: [],
-          notes: [inputData.notes, "match_score_schema_failed"].filter(Boolean).join(";"),
+          jobs: inputData.jobs.map((job) => heuristicScore(job, ["heuristic_match"])),
+          notes: [inputData.notes, "match_score_schema_failed_heuristic"].filter(Boolean).join(";"),
           preference: inputData.preference,
           llm: inputData.llm
         };
       }
 
       const byUrl = new Map(parsed.data.matches.map((m) => [urlKey(m.listingUrl), m] as const));
-      // No role/location/salary filters → surface all harvested listings; minMatchScore alone
-      // was dropping every card when the seeker never configured preferences.
-      const openPrefs = isOpenJobPreference(prefs);
 
       const scored: ScoredHarvestedJob[] = [];
       let unmatchedScoreRows = 0;
@@ -458,27 +484,18 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
         const hit = byUrl.get(urlKey(job.listingUrl));
         if (!hit) {
           unmatchedScoreRows += 1;
-          // Keep the job — do not silently drop when the scorer omits a URL.
-          scored.push({
-            ...job,
-            matchScore: openPrefs ? Math.max(minScore, 50) : 0,
-            matchPassed: openPrefs,
-            matchReasons: openPrefs
-              ? ["open_preference_profile", "score_row_missing"]
-              : ["score_row_missing"],
-            agentTake: null
-          });
+          scored.push(heuristicScore(job, ["score_row_missing"]));
           continue;
         }
         const score = Math.max(0, Math.min(100, Math.round(hit.score)));
-        const passed = openPrefs ? true : hit.passed && score >= minScore;
+        const passed = passAll ? true : hit.passed && score >= minScore;
         scored.push({
           ...job,
           matchScore: score,
           matchPassed: passed,
           matchReasons: [
             ...(hit.reasons?.length ? hit.reasons : ["ai_match"]),
-            ...(openPrefs ? ["open_preference_profile"] : [])
+            ...(passAll ? ["open_preference_profile"] : [])
           ],
           agentTake: null
         });
@@ -492,7 +509,7 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
         notes: [
           inputData.notes,
           `ai_match_scored_${scored.length}`,
-          openPrefs ? "open_preference_pass_all" : null,
+          passAll ? "open_preference_pass_all" : null,
           unmatchedScoreRows > 0 ? `score_url_miss_${unmatchedScoreRows}` : null
         ]
           .filter(Boolean)
@@ -505,8 +522,12 @@ Use semantic role fit — do not treat generic words like "engineer" or "develop
         messageId: inputData.messageId,
         userId: inputData.userId,
         isJobNotifier: true,
-        jobs: [],
-        notes: [inputData.notes, err instanceof Error ? err.message : "match_score_error"]
+        jobs: inputData.jobs.map((job) => heuristicScore(job, ["heuristic_match"])),
+        notes: [
+          inputData.notes,
+          err instanceof Error ? err.message : "match_score_error",
+          "match_score_error_heuristic"
+        ]
           .filter(Boolean)
           .join(";"),
         preference: inputData.preference,
