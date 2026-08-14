@@ -10,14 +10,18 @@ export async function loadSeekerMatchEvidence(userId: string): Promise<SeekerMat
   ]);
 
   return buildSeekerMatchEvidence({
-    experiences: experiences.map((row) => {return {
-      title: row.title,
-      organization: row.organization
-    }}),
-    stacks: stacks.map((row) => {return {
-      name: row.name,
-      isFeatured: row.isFeatured
-    }}),
+    experiences: experiences.map((row) => {
+      return {
+        title: row.title,
+        organization: row.organization
+      };
+    }),
+    stacks: stacks.map((row) => {
+      return {
+        name: row.name,
+        isFeatured: row.isFeatured
+      };
+    }),
     projects: projects.map((row) => {
       return {
         title: row.title,
