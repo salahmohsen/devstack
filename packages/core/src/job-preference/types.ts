@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+import {
+  DEFAULT_JOBS_PER_RUN,
+  JobTitleIdSchema,
+  MAX_JOBS_PER_RUN,
+  MIN_JOBS_PER_RUN,
+  refineJobsPerRun
+} from "#@/job-discovery/constants";
+
 export const WorkModeSchema = z.enum(["remote", "hybrid", "onsite"]);
 export type WorkMode = z.infer<typeof WorkModeSchema>;
 
@@ -13,6 +21,15 @@ const salaryCurrencyField = z
   .max(8)
   .nullable()
   .transform((v) => (v === "" || v == null ? null : v.toUpperCase()));
+
+const jobsPerRunField = z
+  .number()
+  .int()
+  .min(MIN_JOBS_PER_RUN)
+  .max(MAX_JOBS_PER_RUN)
+  .transform(refineJobsPerRun);
+
+const customTitleField = z.string().trim().max(120).nullable();
 
 /**
  * Fully resolved preference body (no optional/default ambiguity).
@@ -28,7 +45,11 @@ export const JobPreferenceFieldsSchema = z.object({
   excludeKeywords: preferenceStringList,
   salaryMin: z.number().nonnegative().nullable(),
   salaryCurrency: z.string().nullable(),
-  minMatchScore: z.number().int().min(0).max(100)
+  minMatchScore: z.number().int().min(0).max(100),
+  titleId: JobTitleIdSchema.nullable(),
+  customTitle: customTitleField,
+  jobsPerRun: jobsPerRunField,
+  importFromEmail: z.boolean()
 });
 export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
 
@@ -43,7 +64,11 @@ export const JobPreferenceSchema = z.object({
   excludeKeywords: preferenceStringList.default([]),
   salaryMin: z.number().nonnegative().nullable().optional(),
   salaryCurrency: salaryCurrencyField.optional(),
-  minMatchScore: z.number().int().min(0).max(100).default(60)
+  minMatchScore: z.number().int().min(0).max(100).default(60),
+  titleId: JobTitleIdSchema.nullable().default(null),
+  customTitle: customTitleField.default(null),
+  jobsPerRun: jobsPerRunField.default(DEFAULT_JOBS_PER_RUN),
+  importFromEmail: z.boolean().default(false)
 });
 
 /** API get/upsert response. */
@@ -70,7 +95,11 @@ export const UpsertJobPreferenceInputSchema = z.object({
       if (v === "" || v == null) return null;
       return v.toUpperCase();
     }),
-  minMatchScore: z.number().int().min(0).max(100).optional()
+  minMatchScore: z.number().int().min(0).max(100).optional(),
+  titleId: JobTitleIdSchema.nullable().optional(),
+  customTitle: customTitleField.optional(),
+  jobsPerRun: jobsPerRunField.optional(),
+  importFromEmail: z.boolean().optional()
 });
 export type UpsertJobPreferenceInput = z.infer<typeof UpsertJobPreferenceInputSchema>;
 
