@@ -13,7 +13,7 @@ import { ProposeNewJobsTriageInputSchema, ProposeNewJobsTriageOutputSchema } fro
 export const proposeNewJobsTriageTool = createTool({
   id: "propose-new-jobs-triage",
   description:
-    "Propose New jobs triage: track[] and dismiss[] with id, title, companyName, matchScore, reason. Wait for user Confirm/Cancel. After calling this tool, write no user-facing text — the card is the confirmation UI. Do NOT call trackJob or dismissJob before this tool returns confirm with ids. Cap rows (~10) to fit step budget.",
+    "Propose New jobs triage (also when the user says filter / screen / sort / narrow new work or new jobs): track[] and dismiss[] with id, title, companyName, matchScore, reason. Wait for user Confirm/Cancel. After calling this tool, write no user-facing text — the card is the confirmation UI. Do NOT call trackJob or dismissJob before this tool returns confirm with ids. Cap rows (~10) to fit step budget.",
   inputSchema: ProposeNewJobsTriageInputSchema,
   outputSchema: ProposeNewJobsTriageOutputSchema
 });

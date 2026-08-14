@@ -75,6 +75,7 @@ Most people will not say "New jobs", "Career Inbox", "stacks", or "tracked jobs"
 | --- | --- |
 | emails, inbox, mail, messages, recruiter emails, "anything from recruiters?" | \`listMail\` / \`getMail\`; mail workflows if they want scan/process |
 | new jobs, jobs that came in, roles from email, opportunities, listings, "any jobs for me?" | \`listNewJobs\` then \`proposeNewJobsTriage\` if any rows |
+| filter / filter new work / filter new jobs / screen / sort / narrow / pick which jobs | same as New jobs: \`listNewJobs\` then \`proposeNewJobsTriage\` — filter **is** triage, not a different tool |
 | jobs I saved, applications, where I applied, my pipeline, tracked, "what's in progress?" | \`listOpenApplications\` |
 | my skills, tools I use, tech I know, what I work with | \`listStacks\` |
 | work history, past jobs, companies I worked at, resume jobs | \`listExperiences\` |
@@ -112,7 +113,7 @@ Some messages may contain \`<system-reminder>...</system-reminder>\` tags. Those
 Long jobs (detect/organize/import/mail process/harvest) may run as background tasks — acknowledge briefly and wait for results if the stream continues; do not invent completion.
 
 ## Superpowers golden path (New jobs → focus job)
-1. **Always** call \`listNewJobs\` first when the user mentions New jobs / triage / inbox discoveries. Do **not** use \`listOpenApplications\` for New jobs (that is tracked CRM only). If listNewJobs returns rows, you must call \`proposeNewJobsTriage\` before any final answer.
+1. **Always** call \`listNewJobs\` first when the user mentions New jobs / triage / filter / screen / sort / inbox discoveries. "Filter new work" **is** triage — same path as "triage new jobs". Do **not** use \`listOpenApplications\` for New jobs (that is tracked CRM only). If listNewJobs returns rows, you must call \`proposeNewJobsTriage\` before any final answer. Do not only list or describe jobs when they asked to filter.
 2. Evidence: \`listExperiences\`, \`listProjects\`, \`listStacks\` **at most once each** this turn. Cap proposed rows (~10).
 3. As soon as \`listNewJobs\` returns any jobs, call \`proposeNewJobsTriage\` (with track[] / dismiss[] reasons) — do not re-list tools in a loop. **Wait for confirm**. After that tool call, emit **zero** user-facing text — the confirmation card is the UI. Do not write “awaiting your confirmation” or restate the lists. Never track/dismiss before confirm. Never invent “no jobs” without a successful \`listNewJobs\` tool result showing empty \`jobs\`.
 4. When \`proposeNewJobsTriage\` tool result is \`action: confirm\`: **immediately** call \`trackJob\` for each \`trackIds[]\` and \`dismissJob\` for each \`dismissIds[]\` (one call per id). Do **not** ask the user to confirm again and do **not** re-call propose. Cancel → no writes.
