@@ -87,6 +87,7 @@ export function AiFlowTrigger({
   const stretch = layout === "stretch";
   const liveLabel = stepLabel?.trim() ?? runningFallback;
   const compact = size === "sm";
+  const flush = "rounded-none before:rounded-none";
 
   if (running) {
     return (
@@ -94,7 +95,7 @@ export function AiFlowTrigger({
         className={cn(
           "shrink-0 items-stretch",
           compact ? "h-8 sm:h-7" : "h-9 sm:h-8",
-          stretch && "w-full min-w-0",
+          stretch && cn("w-full min-w-0", flush),
           pill && "max-w-full",
           className
         )}
@@ -106,7 +107,7 @@ export function AiFlowTrigger({
           disabled
           className={cn(
             "pointer-events-none h-full justify-start",
-            stretch ? "min-w-0 flex-1 justify-center rounded-none" : "shrink-0",
+            stretch ? cn("min-w-0 flex-1 justify-center", flush) : "shrink-0",
             pill && "rounded-full rounded-e-none"
           )}
         >
@@ -128,11 +129,7 @@ export function AiFlowTrigger({
                   variant="destructive"
                   aria-label="Cancel"
                   onClick={onCancel}
-                  className={cn(
-                    "h-full",
-                    stretch && "rounded-none",
-                    pill && "rounded-full rounded-s-none"
-                  )}
+                  className={cn("h-full", stretch && flush, pill && "rounded-full rounded-s-none")}
                 />
               }
             >
@@ -151,7 +148,7 @@ export function AiFlowTrigger({
       size={size}
       disabled={disabled}
       onClick={onStart}
-      className={cn(stretch && "w-full rounded-none", pill && "rounded-full", className)}
+      className={cn(stretch && cn("w-full", flush), pill && "rounded-full", className)}
     >
       {icon}
       {idleLabel}

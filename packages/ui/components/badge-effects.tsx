@@ -27,7 +27,7 @@ export type BadgeGlowVariant =
 export const BADGE_GLOW: Record<BadgeGlowVariant, BadgeGlowClasses> = {
   default: {
     icon: "text-primary",
-    border: "border-primary/30",
+    border: "border-primary/20",
     soft: "bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(24,24,27,0.55)_0%,transparent_70%)] dark:bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(250,250,250,0.55)_0%,transparent_70%)]",
     mid: "bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(24,24,27,0.4)_0%,transparent_70%)] dark:bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(250,250,250,0.4)_0%,transparent_70%)]",
     line: "bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,rgba(24,24,27,0.7)_0%,transparent_100%)] dark:bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,rgba(250,250,250,0.7)_0%,transparent_100%)]"
@@ -62,7 +62,7 @@ export const BADGE_GLOW: Record<BadgeGlowVariant, BadgeGlowClasses> = {
   },
   outline: {
     icon: "text-foreground",
-    border: "border-input",
+    border: "border-primary/20",
     soft: "bg-[radial-gradient(ellipse_80%_100%_at_50%_100%,rgba(113,113,122,0.45)_0%,transparent_70%)]",
     mid: "bg-[radial-gradient(ellipse_70%_100%_at_50%_100%,rgba(113,113,122,0.3)_0%,transparent_70%)]",
     line: "bg-[radial-gradient(ellipse_40%_50%_at_50%_50%,rgba(113,113,122,0.55)_0%,transparent_100%)]"
