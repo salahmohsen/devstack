@@ -20,7 +20,8 @@ export type SuspendedRun = {
  */
 export function listSuspendedRunsQueryOptions() {
   return orpcQueryClient.agent.listSuspendedRuns.queryOptions({
-    input: { agentId: HUB_AGENT_ID }
+    input: { agentId: HUB_AGENT_ID },
+    retry: false
   });
 }
 

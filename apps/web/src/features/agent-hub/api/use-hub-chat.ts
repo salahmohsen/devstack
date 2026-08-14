@@ -36,6 +36,8 @@ export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
   hasMoreHistory: boolean;
   isLoadingOlder: boolean;
   loadOlderMessages: () => Promise<void>;
+  /** Load Mastra history once — call when a thread is actually on screen. */
+  ensureHistory: () => void;
   /**
    * Composite approval id from the tool part (`runId::toolCallId`).
    * Runtime: `Chat` extends `AbstractChat` which defines this method;

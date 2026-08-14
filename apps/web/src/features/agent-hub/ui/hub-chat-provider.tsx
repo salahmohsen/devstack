@@ -35,6 +35,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
   const nextHistoryPageRef = React.useRef(1);
   const loadingOlderRef = React.useRef(false);
+  const historyLoadRef = React.useRef<Promise<void> | null>(null);
   const allMessagesRef = React.useRef<typeof messages>([]);
   const setMessagesRef = React.useRef(setMessages);
   const messagesRef = React.useRef(messages);
@@ -72,23 +73,18 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     setMessagesRef.current(linear.length > 0 ? linear : uiMessages);
   }, []);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    void fetchHubMessagesPage(0)
+  const ensureHistory = React.useCallback(() => {
+    if (historyLoadRef.current) return;
+    historyLoadRef.current = fetchHubMessagesPage(0)
       .then((page) => {
-        if (cancelled) return;
         importHistory(page.uiMessages, false);
         setHasMoreHistory(page.hasMore);
         nextHistoryPageRef.current = 1;
         setHistoryReady(true);
       })
       .catch(() => {
-        if (!cancelled) setHistoryReady(true);
+        setHistoryReady(true);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [importHistory]);
 
   const loadOlderMessages = React.useCallback(async () => {
@@ -139,6 +135,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     hasMoreHistory,
     isLoadingOlder,
     loadOlderMessages,
+    ensureHistory,
     addToolApprovalResponse,
     addToolOutput
   };

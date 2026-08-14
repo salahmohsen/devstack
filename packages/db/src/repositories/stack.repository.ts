@@ -290,6 +290,19 @@ export const stackRepository = {
     });
   },
 
+  /** Linked projects for inspect — explicit join, not the relational `with` shape. */
+  async findLinkedProjectsForUser(stackId: string, userId: string) {
+    return getDb()
+      .select({
+        id: project.id,
+        name: project.title,
+        logo: project.logo
+      })
+      .from(projectStack)
+      .innerJoin(project, eq(projectStack.projectId, project.id))
+      .where(and(eq(projectStack.stackId, stackId), eq(project.userId, userId)));
+  },
+
   async findByNameForUser(userId: string, name: string) {
     return getDb().query.stack.findFirst({ where: { userId, name } });
   },

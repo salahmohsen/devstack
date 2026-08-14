@@ -25,6 +25,7 @@ import {
   toContactOutput,
   toExperiencePublicOutput,
   toProjectPublicOutput,
+  toPublicCatalogStack,
   toStackOutput
 } from "#@/routers/portfolio.mappers";
 import {
@@ -105,15 +106,17 @@ async function listAllOptedIn(userId: string, filterString?: string) {
     ? buildPortfolioEntityFilter(filterString, "contact")
     : undefined;
 
-  const experiences = await experienceRepository.findOptedInByUserId(userId, experienceFilter);
-  const projects = await projectRepository.findOptedInByUserId(userId, projectFilter);
-  const stacks = await stackRepository.findOptedInByUserId(userId, stackFilter);
-  const contacts = await contactRepository.findOptedInByUserId(userId, contactFilter);
+  const [experiences, projects, stacks, contacts] = await Promise.all([
+    experienceRepository.findOptedInByUserId(userId, experienceFilter),
+    projectRepository.findOptedInByUserId(userId, projectFilter),
+    stackRepository.findOptedInByUserId(userId, stackFilter),
+    contactRepository.findOptedInByUserId(userId, contactFilter)
+  ]);
 
   return {
     experiences: experiences.map((exp) => toExperiencePublicOutput(exp!)),
     projects: projects.map((proj) => toProjectPublicOutput(proj!)),
-    stacks: stacks.map((stackRow) => toStackOutput(stackRow!)),
+    stacks: stacks.map((stackRow) => toPublicCatalogStack(toStackOutput(stackRow!))),
     contacts: contacts.map(toContactOutput)
   };
 }
@@ -158,23 +161,15 @@ export const PortfolioRouter = {
           }
           throw errors.NOT_FOUND();
         }
+        const ownerPromise = userRepository.findById(resolved.userId);
         const all = await listAllOptedIn(resolved.userId, input.filter);
-        // One GitHub list load: enrich top-level projects + nested experience projects together.
-        const nested = all.experiences.flatMap((e) => e.projects);
-        const enrichedAll = await enrichProjectsWithGithubRepos(
-          [...all.projects, ...nested],
-          resolved.userId,
-          context
-        );
+        const [enrichedAll, owner] = await Promise.all([
+          enrichProjectsWithGithubRepos(all.projects, resolved.userId, context),
+          ownerPromise
+        ]);
         const byId = new Map(enrichedAll.map((p) => [p.id, p]));
         const projects = all.projects.map((p) => byId.get(p.id) ?? { ...p, githubRepos: [] });
-        const experiences = all.experiences.map((exp) => {
-          return {
-            ...exp,
-            projects: exp.projects.map((p) => byId.get(p.id) ?? { ...p, githubRepos: [] })
-          };
-        });
-        const owner = await userRepository.findById(resolved.userId);
+        const experiences = all.experiences;
         const summary = owner?.summary?.trim() ? owner.summary.trim() : null;
         const image = owner?.image?.trim() ? owner.image.trim() : null;
         const name = owner?.name?.trim() ? owner.name.trim() : null;

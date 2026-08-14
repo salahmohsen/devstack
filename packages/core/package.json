@@ -2,11 +2,14 @@
   "name": "@tsu-stack/core",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "imports": {
     "#@/*": "./src/*.ts"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./utils": "./src/utils/index.ts",
+    "./profile": "./src/profile/index.ts"
   },
   "scripts": {
     "test:unit": "vp test run"

@@ -110,23 +110,10 @@ export const stacksRouter = {
       const userId = context.session.user.id;
       const stack = await stackRepository.findByIdForUser(input.id, userId);
       if (!stack) return null;
-      const deps = await stackDependencyRepository.findByStackId(input.id);
-      const projects = (stack.projects ?? [])
-        .filter(
-          (
-            ps
-          ): ps is { project: { id: string; title: string; logo: string | null } } & Omit<
-            typeof ps,
-            "project"
-          > => ps.project !== null
-        )
-        .map((ps) => {
-          return {
-            id: ps.project.id,
-            name: ps.project.title,
-            logo: ps.project.logo
-          };
-        });
+      const [deps, projects] = await Promise.all([
+        stackDependencyRepository.findByStackId(input.id),
+        stackRepository.findLinkedProjectsForUser(input.id, userId)
+      ]);
       return toStackOutput({
         ...stack,
         name: stack.name,

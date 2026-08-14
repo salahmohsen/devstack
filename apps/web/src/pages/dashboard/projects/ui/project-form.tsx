@@ -52,10 +52,16 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
   const isEdit = !!initialData;
   const id = initialData?.id;
 
-  const experiencesQuery = useQuery(orpcQueryClient.experiences.list.queryOptions());
-  const stacksQuery = useQuery(orpcQueryClient.stacks.list.queryOptions());
+  const experiencesQuery = useQuery({
+    ...orpcQueryClient.experiences.list.queryOptions(),
+    enabled: open
+  });
+  const stacksQuery = useQuery({
+    ...orpcQueryClient.stacks.list.queryOptions(),
+    enabled: open
+  });
   // Dashboard form: session user's private repos only.
-  const reposQuery = useGetGithubProfileReposQuery("me", true);
+  const reposQuery = useGetGithubProfileReposQuery("me", true, open);
   const stacks = stacksQuery.data ?? [];
   const repos = reposQuery.data ?? [];
 

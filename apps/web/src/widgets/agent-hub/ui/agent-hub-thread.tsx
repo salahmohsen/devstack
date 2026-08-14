@@ -54,8 +54,13 @@ export function AgentHubThread() {
     error,
     clearError,
     regenerate,
-    status
+    status,
+    ensureHistory
   } = useHubChat();
+
+  React.useEffect(() => {
+    ensureHistory();
+  }, [ensureHistory]);
   const [viewportEl, setViewportEl] = React.useState<HTMLDivElement | null>(null);
   const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
     enabled: historyReady && messages.length > 0,

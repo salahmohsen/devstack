@@ -1,6 +1,10 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
-import { RepoCommitSparkline } from "@/shared/ui/repo-commit-sparkline";
+const RepoCommitSparkline = lazy(() =>
+  import("@/shared/ui/repo-commit-sparkline").then((m) => {
+    return { default: m.RepoCommitSparkline };
+  })
+);
 
 const DEFAULT_PLACEHOLDER_CLASSES = "h-13 w-42 shrink-0 rounded-sm bg-muted/15";
 

@@ -1,28 +1,48 @@
 "use client";
 
 import { AssistantModalPrimitive } from "@assistant-ui/react";
+import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
 
-import { hubAvatarById } from "@tsu-stack/core";
+import { hubPersonalityAvatarSeed } from "@tsu-stack/core";
+import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { useGetAiSettingsQuery } from "@/features/ai-settings";
+import { getAiSettingsQueryOptions } from "@/features/ai-settings";
 
-import { AgentHubThread } from "./agent-hub-thread";
+import { useSidePanel } from "@/widgets/layout";
+
+const AgentHubThread = lazy(() =>
+  import("@/widgets/agent-hub").then((m) => {
+    return {
+      default: m.AgentHubThread
+    };
+  })
+);
 
 /**
  * Official Assistant Modal floater for non-home dashboard routes.
  * Shares HubChatProvider / runtime from layout — do not mount a second provider.
+ * Thread + AI settings stay unmounted until the user opens the floater.
  */
 export function HubAssistantModal({ className }: { className?: string }) {
-  const aiSettings = useGetAiSettingsQuery();
-  const avatar = hubAvatarById(aiSettings.data?.hubAvatar);
+  const [open, setOpen] = useState(false);
+  const { hasContent } = useSidePanel();
+  const aiSettings = useQuery(getAiSettingsQueryOptions());
+  const avatarSeed = hubPersonalityAvatarSeed(aiSettings.data?.hubPersonality);
 
   return (
-    <AssistantModalPrimitive.Root>
+    <AssistantModalPrimitive.Root open={open} onOpenChange={setOpen}>
       <AssistantModalPrimitive.Anchor
-        className={cn("fixed right-4 bottom-4 z-40 sm:right-6 sm:bottom-6", className)}
+        className={cn(
+          "fixed z-40",
+          hasContent
+            ? "right-4 bottom-20 sm:bottom-6 xl:right-145 xl:bottom-6"
+            : "right-4 bottom-20 sm:right-6 sm:bottom-6",
+          className
+        )}
       >
         <AssistantModalPrimitive.Trigger
           render={
@@ -35,9 +55,7 @@ export function HubAssistantModal({ className }: { className?: string }) {
             />
           }
         >
-          <span className="text-base leading-none" aria-hidden>
-            {avatar.emoji}
-          </span>
+          <AgentAvatar seed={avatarSeed} size={28} animated={open} aria-hidden />
         </AssistantModalPrimitive.Trigger>
       </AssistantModalPrimitive.Anchor>
       <AssistantModalPrimitive.Content
@@ -50,9 +68,7 @@ export function HubAssistantModal({ className }: { className?: string }) {
       >
         <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
           <p className="text-sm font-medium text-foreground">
-            <span className="me-1.5" aria-hidden>
-              {avatar.emoji}
-            </span>
+            <AgentAvatar seed={avatarSeed} size={20} className="me-1.5 inline-block align-middle" />
             Hub assistant
           </p>
           <AssistantModalPrimitive.Trigger
@@ -69,7 +85,11 @@ export function HubAssistantModal({ className }: { className?: string }) {
           </AssistantModalPrimitive.Trigger>
         </div>
         <div className="min-h-0 flex-1">
-          <AgentHubThread />
+          {open ? (
+            <Suspense fallback={null}>
+              <AgentHubThread />
+            </Suspense>
+          ) : null}
         </div>
       </AssistantModalPrimitive.Content>
     </AssistantModalPrimitive.Root>

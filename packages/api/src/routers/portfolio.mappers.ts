@@ -43,7 +43,7 @@ export function toStackOutput(s: StackRow): StackOutput {
     id: s.id,
     name: s.name,
     description: s.description,
-    icon: s.icon,
+    icon: capPublicStackIcon(s.icon),
     type: s.type,
     healthStatus: s.healthStatus,
     confidence: s.confidence,
@@ -126,9 +126,46 @@ export function toProjectOutput(proj: ProjectRow): ProjectOutput {
   };
 }
 
+/**
+ * Inline SVG icons larger than this explode public JSON (Emotion is ~125kB).
+ * Project cards fall back to the stack initial when the icon is omitted.
+ */
+export const PUBLIC_STACK_ICON_MAX_CHARS = 4096;
+
+export function capPublicStackIcon(icon: string | null | undefined): string | null {
+  if (!icon) return null;
+  return icon.length > PUBLIC_STACK_ICON_MAX_CHARS ? null : icon;
+}
+
+/** Drop fields the public profile does not render on each nested project stack. */
+export function toPublicEmbeddedStack(stack: StackOutput): StackOutput {
+  return {
+    ...stack,
+    // Icons live once on the top-level catalog; join by id on the client.
+    icon: null,
+    description: null,
+    healthStatus: null,
+    dependencies: [],
+    projects: []
+  };
+}
+
+export function toPublicCatalogStack(stack: StackOutput): StackOutput {
+  return {
+    ...stack,
+    icon: capPublicStackIcon(stack.icon),
+    dependencies: [],
+    projects: []
+  };
+}
+
 export function toProjectPublicOutput(proj: ProjectRow): ProjectPublicOutput {
   const { analysis: _analysis, ...publicFields } = toProjectOutput(proj);
-  return { ...publicFields, githubRepos: [] };
+  return {
+    ...publicFields,
+    stacks: publicFields.stacks.map(toPublicEmbeddedStack),
+    githubRepos: []
+  };
 }
 
 export type ExperienceRow = {
@@ -164,6 +201,24 @@ export function toExperienceOutput(exp: ExperienceRow): ExperienceOutput {
   };
 }
 
+/** List/grid only needs nested project title + year — not stack SVGs. */
+export function toExperienceListOutput(exp: ExperienceRow): ExperienceOutput {
+  const full = toExperienceOutput(exp);
+  return {
+    ...full,
+    projects: full.projects.map((project) => {
+      return {
+        ...project,
+        analysis: null,
+        description: "",
+        summary: "",
+        stacks: [],
+        stackTypeSummary: {}
+      };
+    })
+  };
+}
+
 export function toExperiencePublicOutput(exp: ExperienceRow): ExperiencePublicOutput {
   return {
     id: exp.id,
@@ -176,7 +231,9 @@ export function toExperiencePublicOutput(exp: ExperienceRow): ExperiencePublicOu
     isPresent: exp.isPresent ?? false,
     portfolioEntryId: exp.portfolioEntryId,
     includedInPortfolio: !!exp.portfolioEntryId,
-    projects: exp.projects.map(toProjectPublicOutput),
+    // Public timeline does not render nested projects. Embedding them
+    // duplicated every project stack SVG (Emotion ~125kB × N).
+    projects: [],
     createdAt: exp.createdAt,
     updatedAt: exp.updatedAt
   };

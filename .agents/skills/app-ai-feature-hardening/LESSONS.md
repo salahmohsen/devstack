@@ -17,6 +17,38 @@
 
 ---
 
+## 2026-08-14 — Dashboard chrome must not work until the surface is on screen
+
+- **Trigger:** Close remaining dashboard first-paint gaps after the payload loop; restart Mastra agent
+- **Finding:** A widget barrel that re-exports both the home Thread and the floater makes Vite evaluate the Thread on every dashboard route. Keep the floater off that barrel (page-local modal + lazy Thread) so mail/jobs/settings do not parse hub history
+- **Finding:** `HubChatProvider` can own the Chat instance, but `listHubMessages` / `aiSettings` must wait until a Thread actually mounts (`ensureHistory` + `enabled: open`)
+- **Finding:** Entity forms that fetch GitHub repos / sibling lists on mount tax the list page. Mount the sheet only when `open`, and gate those queries with `enabled: open`
+- **Finding:** FSD `no-public-api-sidestep` rejects `lazy(() => import("@/features/x/ui/…"))`. Lazy through the slice public API (`import("@/features/x")`) or move the overlay into the page layer
+- **Finding:** Dashboard topbar must not `preloadRouteOnce` public `/` and `/repos` — those loaders fetch portfolio + GitHub and delay every dashboard navigation
+- **Finding:** Restart the agent with the package `dev` script (rebuilds the core ESM cache first). A live Studio 200 is not enough after a kill — confirm `listHubMessages` 200
+- **Evidence class:** Chrome fetch log on mail/projects/jobs/settings (no `listHubMessages` / `portfolio.list` / `privateGetProfileRepos` until hub or form open); floater + home Thread after agent restart; Settings username `salah`; Profile nav `/salah`
+
+## 2026-08-14 — Dashboard lists share the SVG payload tax
+
+- **Trigger:** Authenticated dashboard performance loop (home, jobs, mail, projects, stacks, settings)
+- **Finding:** Cap inline stack SVGs in `toStackOutput`, not only the public portfolio mapper. Dashboard `stacks.list` / `projects.listPage` / `experiences.list` shipped the same 125kB Emotion/Zustand icons
+- **Finding:** Experience list/inspect only needs nested project `title` + `year`. Mapping full `toProjectOutput` (stacks + analysis) turned 3 experiences into hundreds of KB
+- **Finding:** Hub home LCP is the ClientOnly fallback. A spinner as fallback makes LCP a placeholder; paint the same welcome heading in the fallback
+- **Finding:** Agent history RPCs (`listHubMessages`, `listSuspendedRuns`) 500 when the agent is down. Retrying them on every dashboard route delays first paint — `retry: false` and treat failure as empty history
+- **Finding:** Extra `Cookie` headers authenticate the first navigation; reload traces need a real `document.cookie` (or the cookie jar). Isolated Chrome does not inherit the user's browser cookies
+- **Evidence class:** Chrome traces on `/dashboard`, `/dashboard/new-jobs`, `/dashboard/mail`, `/dashboard/projects`, `/dashboard/stacks`; curl sizes for list RPCs (no secrets)
+
+## 2026-08-14 — Public portfolio payload is the LCP budget
+
+- **Trigger:** Browser + Chrome DevTools performance hardening (CWV, React, animation, backend)
+- **Finding:** `portfolio.list` must not embed full stack SVGs on every project. Emotion was ~125kB duplicated across projects and nested `experience.projects`. Send icons once on the catalog; join by id on the client. Cap or drop inline SVGs over ~4kB
+- **Finding:** Public experience timeline does not render nested projects. Shipping `experience.projects` with the same stack blobs doubles the JSON and the SSR dehydrate payload
+- **Finding:** `resume.getDefault` returning `undefined` (serialized as `{}`) makes TanStack Query throw on every public profile SSR. Optional empty reads must be `null`
+- **Finding:** Vite-node `--watch` on `apps/server` does not reliably reload `packages/api` edits. Restart the API after mapper/router changes or you will measure the old payload
+- **Finding:** Eager TanStack Devtools in `__root` puts vendor fonts on the critical path. Lazy-import the overlay only in `import.meta.env.DEV`
+- **Finding:** Reading `offsetWidth` in a width-tween effect forces a ~50ms reflow. Track last width with ResizeObserver instead
+- **Evidence class:** Chrome Performance traces (`/salah` LCP/TTFB/document bytes); curl `portfolio/list` + SSR HTML sizes; mapper unit tests
+
 ## 2026-08-14 — Onboarding skip must not skip first value
 
 - **Trigger:** Redesign onboarding to add Jobs + Connect after resume review

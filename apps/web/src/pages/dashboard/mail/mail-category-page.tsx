@@ -12,7 +12,7 @@ import {
   Sparkles,
   Users
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 
 import {
   APPLICATION_STAGE_LABELS,
@@ -47,7 +47,6 @@ import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import {
-  MailBody,
   useCorrectMailClassificationMutation,
   useGenerateMailReplyMutation,
   useGetMailQuery,
@@ -58,6 +57,14 @@ import {
 import { useListMailSmartRulesQuery } from "@/features/mail-smart-rules";
 
 import { ItemsEmpty, PageHeader, PageLayout } from "@/widgets/items-page";
+
+const MailBody = lazy(() =>
+  import("@/features/mail").then((m) => {
+    return {
+      default: m.MailBody
+    };
+  })
+);
 
 const EMPTY_MESSAGES: MailMessageListItem[] = [];
 
@@ -597,7 +604,15 @@ function MessageReaderBody({
             <DefaultLoader />
           </div>
         ) : (
-          <MailBody bodyHtml={bodyHtml} bodyText={bodyText} preview={message.preview} />
+          <Suspense
+            fallback={
+              <div className="flex min-h-24 items-center justify-center">
+                <DefaultLoader />
+              </div>
+            }
+          >
+            <MailBody bodyHtml={bodyHtml} bodyText={bodyText} preview={message.preview} />
+          </Suspense>
         )}
       </div>
 

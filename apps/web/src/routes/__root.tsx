@@ -1,13 +1,9 @@
 import geistMonoLatin from "@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2?url";
 import geistVariableLatin from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
-import { a11yDevtoolsPlugin } from "@tanstack/devtools-a11y/react";
-import { TanStackDevtools } from "@tanstack/react-devtools";
-import { FormDevtoolsPanel } from "@tanstack/react-form-devtools";
 import { type QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
+import { lazy, Suspense } from "react";
 
 import {
   getAuthUserQueryOptions,
@@ -24,6 +20,14 @@ import appCss from "@/shared/styles/app.css?url";
 import { CuelumeProvider } from "@/shared/ui/cuelume-provider";
 
 import { DefaultErrorPage } from "@/pages/default-error";
+
+const AppTanStackDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import("@/shared/ui/tanstack-devtools").then((m) => {
+        return { default: m.AppTanStackDevtools };
+      })
+    )
+  : () => null;
 
 // Root route with shared context for the entire app, inject them in router.tsx
 type RouterAppContext = {
@@ -99,23 +103,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 {children}
                 <Toaster />
               </NuqsAdapter>
-              <TanStackDevtools
-                plugins={[
-                  {
-                    name: "TanStack Query",
-                    render: <ReactQueryDevtoolsPanel />
-                  },
-                  {
-                    name: "TanStack Router",
-                    render: <TanStackRouterDevtoolsPanel />
-                  },
-                  {
-                    name: "TanStack Form",
-                    render: <FormDevtoolsPanel />
-                  },
-                  a11yDevtoolsPlugin()
-                ]}
-              />
+              {import.meta.env.DEV ? (
+                <Suspense fallback={null}>
+                  <AppTanStackDevtools />
+                </Suspense>
+              ) : null}
               <Scripts />
             </ProgressProvider>
           </TooltipProvider>

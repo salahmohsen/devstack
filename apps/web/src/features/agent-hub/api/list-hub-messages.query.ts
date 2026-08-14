@@ -37,7 +37,8 @@ export const listHubMessagesQueryKeys = {
  */
 export function listHubMessagesQueryOptions(page = 0) {
   return orpcQueryClient.agent.listHubMessages.queryOptions({
-    input: { agentId: HUB_AGENT_ID, limit: HUB_MESSAGES_PAGE_SIZE, page }
+    input: { agentId: HUB_AGENT_ID, limit: HUB_MESSAGES_PAGE_SIZE, page },
+    retry: false
   });
 }
 

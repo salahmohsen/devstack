@@ -15,7 +15,7 @@ import {
 import { experienceRepository } from "@tsu-stack/db/repositories";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
-import { toExperienceOutput } from "#@/routers/portfolio.mappers";
+import { toExperienceListOutput, toExperienceOutput } from "#@/routers/portfolio.mappers";
 
 export const experiencesRouter = {
   /**
@@ -32,7 +32,7 @@ export const experiencesRouter = {
     .handler(async ({ context }) => {
       const userId = context.session.user.id;
       const experiences = await experienceRepository.findAllByUserId(userId);
-      return experiences.map(toExperienceOutput);
+      return experiences.map(toExperienceListOutput);
     }),
 
   /** Cursor page for dashboard infinite scroll. */
@@ -52,7 +52,7 @@ export const experiencesRouter = {
       });
 
       return {
-        items: page.items.map(toExperienceOutput),
+        items: page.items.map(toExperienceListOutput),
         nextCursor: page.nextCursor,
         totalCount: page.totalCount
       };

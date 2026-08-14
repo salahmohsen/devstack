@@ -18,7 +18,7 @@ import {
   SparklesIcon,
   Trash2Icon
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -88,9 +88,28 @@ import {
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { FixPostingUrlDialog } from "@/pages/dashboard/new-jobs/ui/fix-posting-url-dialog";
 import { UpdateDescriptionDialog } from "@/pages/dashboard/new-jobs/ui/update-description-dialog";
-import { ApplicationFormSheet } from "@/pages/dashboard/tracked-jobs/application-form-sheet";
-import { ApplicationInfoPanel } from "@/pages/dashboard/tracked-jobs/ui/application-info-panel";
-import { ApplyPackageSheet } from "@/pages/dashboard/tracked-jobs/ui/apply-package-sheet";
+
+const ApplicationFormSheet = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/application-form-sheet").then((m) => {
+    return {
+      default: m.ApplicationFormSheet
+    };
+  })
+);
+const ApplicationInfoPanel = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/application-info-panel").then((m) => {
+    return {
+      default: m.ApplicationInfoPanel
+    };
+  })
+);
+const ApplyPackageSheet = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/apply-package-sheet").then((m) => {
+    return {
+      default: m.ApplyPackageSheet
+    };
+  })
+);
 
 type InboxFilter = "inbox" | "dismissed";
 
@@ -637,26 +656,46 @@ export function NewJobsPage() {
           </div>
         </Tabs>
 
-        <ItemsInspectHost
-          open={isAnyOpen && editApp == null}
-          item={liveViewItem}
-          title="Job"
-          onOpenChange={(next) => {
-            if (!next) setViewItem(null);
-          }}
-        >
-          {(item) => <ApplicationInfoPanel item={item} variant="discovery" />}
-        </ItemsInspectHost>
-
-        {packageApplication ? (
-          <ApplyPackageSheet
-            open
-            application={packageApplication}
-            onOpenChange={(open) => {
-              if (!open) setPackageApplication(null);
+        <Suspense fallback={null}>
+          <ItemsInspectHost
+            open={isAnyOpen && editApp == null}
+            item={liveViewItem}
+            title="Job"
+            onOpenChange={(next) => {
+              if (!next) setViewItem(null);
             }}
-          />
-        ) : null}
+          >
+            {(item) => (
+              <ApplicationInfoPanel
+                item={item}
+                variant="discovery"
+                onEdit={() => setEditApp(item)}
+              />
+            )}
+          </ItemsInspectHost>
+
+          {packageApplication ? (
+            <ApplyPackageSheet
+              open
+              application={packageApplication}
+              onOpenChange={(open) => {
+                if (!open) setPackageApplication(null);
+              }}
+            />
+          ) : null}
+
+          {editApp != null ? (
+            <ApplicationFormSheet
+              key={editApp.id ?? "new-jobs-edit"}
+              open
+              onOpenChange={(open) => {
+                if (!open) setEditApp(null);
+              }}
+              mode="edit"
+              initialData={editApp}
+            />
+          ) : null}
+        </Suspense>
 
         <FixPostingUrlDialog
           open={fixUrlApp != null}
@@ -701,16 +740,6 @@ export function NewJobsPage() {
               });
             }
           }}
-        />
-
-        <ApplicationFormSheet
-          key={editApp?.id ?? "new-jobs-edit"}
-          open={editApp != null}
-          onOpenChange={(open) => {
-            if (!open) setEditApp(null);
-          }}
-          mode="edit"
-          initialData={editApp}
         />
 
         <AlertDialog

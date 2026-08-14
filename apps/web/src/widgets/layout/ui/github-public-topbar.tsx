@@ -120,20 +120,21 @@ export function Topbar() {
   // );
 
   useEffect(() => {
+    // Public `/` and `/repos` loaders fetch portfolio + GitHub. Do not run
+    // those on dashboard chrome — they are unused and delay every page.
+    if (pathname.startsWith("/dashboard")) return;
     let cancelled = false;
     void (async () => {
       const routes = ["/", "/repos", "/dashboard"];
-      for (const to of routes) {
-        if (cancelled) break;
-        try {
-          await preloadRouteOnce(routerRef.current, to);
-        } catch {}
-      }
+      await Promise.all(
+        routes.map((to) => preloadRouteOnce(routerRef.current, to).catch(() => undefined))
+      );
+      if (cancelled) return;
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pathname]);
 
   function navigateToTab(tab: { url: string } | undefined) {
     if (!tab) return;

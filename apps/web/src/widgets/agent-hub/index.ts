@@ -1,2 +1,2 @@
 export { AgentHubChat } from "./ui/agent-hub-chat";
-export { HubAssistantModal } from "./ui/hub-assistant-modal";
+export { AgentHubThread } from "./ui/agent-hub-thread";
