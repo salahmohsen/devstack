@@ -32,24 +32,30 @@ export function NotificationsBell() {
 
   return (
     <Menu>
-      <MenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="relative size-8"
-            aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
-          />
-        }
-      >
-        <BellIcon className="size-4" aria-hidden />
-        {unreadCount > 0 ? (
-          <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-medium text-primary-foreground">
-            {unreadCount > 9 ? "9+" : unreadCount}
+      <span className="relative inline-flex size-8 shrink-0">
+        <MenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="relative size-8 overflow-visible"
+              aria-label={
+                unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"
+              }
+            />
+          }
+        >
+          <BellIcon className="size-4" aria-hidden />
+        </MenuTrigger>
+        <span className="t-badge" data-open={unreadCount > 0 ? "true" : "false"}>
+          <span className="t-badge-dot size-4 min-w-4 rounded-full border-0 bg-brand p-0 font-semibold text-zinc-950 shadow-none ring-1 ring-background before:hidden after:hidden">
+            <span className="flex size-full items-center justify-center text-[9px] leading-none font-semibold tabular-nums">
+              {unreadCount > 9 ? "9+" : unreadCount || 0}
+            </span>
           </span>
-        ) : null}
-      </MenuTrigger>
+        </span>
+      </span>
       <MenuPopup align="end" className="w-80 p-0">
         <MenuGroup>
           <MenuGroupLabel className="flex items-center justify-between gap-2 py-2">

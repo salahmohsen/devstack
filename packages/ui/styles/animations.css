@@ -120,6 +120,52 @@
   animation: t-dropdown-out var(--dropdown-close-dur) var(--dropdown-ease) both;
 }
 
+@keyframes t-badge-slide-in {
+  from {
+    transform: translate(var(--badge-offset-x), var(--badge-offset-y));
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+
+/* .t-badge is the absolutely-positioned wrapper for the dot.
+   Adjust top/right (or left/bottom) to anchor it on your trigger. */
+.t-badge {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  pointer-events: none;
+  will-change: transform;
+}
+.t-badge[data-open="true"] {
+  animation: t-badge-slide-in var(--badge-slide-dur) var(--badge-slide-ease);
+}
+
+.t-badge-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+  transform: scale(1);
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    transform var(--badge-pop-dur) var(--badge-pop-ease),
+    opacity var(--badge-fade-dur) var(--badge-pop-ease),
+    filter var(--badge-pop-dur) var(--badge-pop-ease);
+  will-change: transform, opacity, filter;
+}
+.t-badge[data-open="false"] .t-badge-dot {
+  transform: scale(0);
+  opacity: 0;
+  filter: blur(var(--badge-blur));
+  transition:
+    transform var(--badge-pop-close-dur) var(--badge-close-ease),
+    opacity var(--badge-fade-close-dur) var(--badge-close-ease),
+    filter var(--badge-pop-close-dur) var(--badge-close-ease);
+}
+
 /*
  * Icon swap (09-icon-swap) — two icons stacked in one grid cell.
  * Toggle data-state="a"|"b" on .t-icon-swap.
@@ -468,6 +514,12 @@ a:hover [data-slot="icon-motion"][data-im-mode="hover"],
   .t-dropdown-radix[data-state="open"],
   .t-dropdown-radix[data-state="closed"] {
     animation: none !important;
+  }
+
+  .t-badge,
+  .t-badge-dot {
+    animation: none !important;
+    transition: none !important;
   }
 
   .t-icon-swap .t-icon {

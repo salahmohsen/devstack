@@ -43,6 +43,7 @@ import { getGithubSetupStatusQueryOptions } from "@/features/github";
 import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
 import { NotificationsBell } from "@/widgets/layout/ui/notifications-bell";
 import { PublicScopeNav } from "@/widgets/layout/ui/public-scope-nav";
+import { SoundMuteButton } from "@/widgets/layout/ui/sound-mute-button";
 
 const MAX_TAB_SHORTCUTS = 9;
 
@@ -376,6 +377,7 @@ export function Topbar() {
       <div className="relative z-10 flex shrink-0 items-center gap-1">
         {/* Bell stays visible below md on dashboard. */}
         {admin && pathname.includes("dashboard") ? <NotificationsBell /> : null}
+        <SoundMuteButton />
 
         <div className="hidden items-center gap-1 md:flex">
           <ThemeSwitcher variant="ghost" />

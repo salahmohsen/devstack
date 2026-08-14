@@ -10,15 +10,10 @@ import {
   FramePanel,
   FrameTitle
 } from "@tsu-stack/ui/components/frame";
-import { Label } from "@tsu-stack/ui/components/label";
-import { Switch } from "@tsu-stack/ui/components/switch";
-
-import { useCuelumeEnabled } from "@/shared/lib/cuelume";
 
 import { PasskeyManager } from "@/pages/dashboard/settings/ui/passkey-manager";
 
 import { SettingsFrame } from "./settings-frame";
-import { SettingsSection } from "./settings-section";
 import { UsernameSettingsCard } from "./username-settings-card";
 
 /** Scroll sessions after this height (~3–4 session cards). */
@@ -31,7 +26,6 @@ export const AccountSettings = () => {
   });
   const { data: session } = authClient.useSession();
   const accountEmail = session?.user?.email;
-  const [soundsEnabled, setSoundsEnabled] = useCuelumeEnabled();
 
   const revokeSession = useMutation({
     mutationFn: (id: string) => authClient.revokeSession({ token: id }),
@@ -53,24 +47,6 @@ export const AccountSettings = () => {
       description="Username, sessions, and sign-in security"
       contentClassName="space-y-8"
     >
-      <UsernameSettingsCard />
-
-      <SettingsSection
-        title="Interface sounds"
-        description="Clicks and confirmations for buttons, switches, and completed actions."
-      >
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2.5">
-          <Label htmlFor="interface-sounds" className="text-sm font-normal">
-            Play sounds
-          </Label>
-          <Switch
-            id="interface-sounds"
-            checked={soundsEnabled}
-            onCheckedChange={setSoundsEnabled}
-          />
-        </div>
-      </SettingsSection>
-
       {accountEmail ? (
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div className="min-w-0 space-y-0.5">
@@ -92,7 +68,10 @@ export const AccountSettings = () => {
       ) : null}
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
-        <Frame>
+        <div className="min-w-0 lg:col-start-2">
+          <UsernameSettingsCard />
+        </div>
+        <Frame className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
           <FrameHeader className="px-4 py-3">
             <FrameTitle>Sessions</FrameTitle>
             <FrameDescription className="text-xs text-pretty">
@@ -111,7 +90,6 @@ export const AccountSettings = () => {
             />
           </FramePanel>
         </Frame>
-
         <Frame>
           <FrameHeader className="px-4 py-3">
             <FrameTitle>Passkeys</FrameTitle>
