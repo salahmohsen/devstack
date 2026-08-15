@@ -1,17 +1,19 @@
 import { Queue, Worker, type ConnectionOptions, type Job } from "bullmq";
 
-import { JOB_INBOX_LIVENESS_JOB_NAME, JOB_INBOX_LIVENESS_QUEUE_NAME } from "@tsu-stack/core";
+import { runInboxLivenessTick } from "@tsu-stack/api/lib/job-discovery/liveness";
+import {
+  JOB_INBOX_LIVENESS_JOB_NAME,
+  JOB_INBOX_LIVENESS_QUEUE_NAME,
+  LIVENESS_TICK_INTERVAL_MS
+} from "@tsu-stack/core";
+import { createDb, runWithDb } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 /**
- * Inbox TTL + HTTP liveness tick.
- *
- * Stub no-op until Task 15. Repeat (12h) is registered now so the schedule
- * exists before the real worker lands.
+ * Inbox TTL + HTTP liveness tick (12h).
  */
 
 const STORE_KEY = "__tsu_stack_job_inbox_liveness_server_store__";
-const LIVENESS_TICK_INTERVAL_MS = 12 * 60 * 60 * 1000;
 const LIVENESS_TICK_JOB_ID = "job-inbox-liveness-tick";
 
 type TickPayload = Record<string, never>;
@@ -40,8 +42,18 @@ export function startJobInboxLivenessQueue(redisUrl: string): void {
 
   s.worker = new Worker<TickPayload>(
     JOB_INBOX_LIVENESS_QUEUE_NAME,
-    async (_job: Job<TickPayload>) => {
-      // Task 15: runInboxLivenessTick
+    async (job: Job<TickPayload>) => {
+      if (job.name !== JOB_INBOX_LIVENESS_JOB_NAME) return;
+      const log = createLogger({ operation: "server__job_inbox_liveness_tick" });
+      const db = createDb();
+      const result = await runWithDb(db, () => runInboxLivenessTick());
+      log.set({
+        event: "job_inbox_liveness_tick_done",
+        checked: result.checked,
+        closed: result.closed,
+        dismissedExpired: result.dismissedExpired
+      });
+      log.emit();
     },
     { connection, concurrency: 1 }
   );
@@ -70,8 +82,7 @@ export function startJobInboxLivenessQueue(redisUrl: string): void {
   boot.set({
     event: "job_inbox_liveness_queue_started",
     queue: JOB_INBOX_LIVENESS_QUEUE_NAME,
-    intervalMs: LIVENESS_TICK_INTERVAL_MS,
-    stub: true
+    intervalMs: LIVENESS_TICK_INTERVAL_MS
   });
   boot.emit();
 }

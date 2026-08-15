@@ -147,6 +147,8 @@ export const JOBS_PER_RUN_STEP = 5;
 export const MAX_OPEN_INBOX = 50;
 export const INBOX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const LIVENESS_AFTER_MS = Math.floor(INBOX_TTL_MS / 2); // ~3.5d
+export const LIVENESS_TICK_INTERVAL_MS = 12 * 60 * 60 * 1000;
+export const LIVENESS_TICK_BATCH = 100;
 
 /** Snap to 15/20/25/30/35/40 (nearest step, clamped). */
 export function refineJobsPerRun(n: number): number {

@@ -8,6 +8,7 @@ import {
   isNull,
   lte,
   lt,
+  or,
   sql,
   type InferInsertModel,
   type InferSelectModel
@@ -24,6 +25,7 @@ import {
   type ApplicationStage,
   type ApplicationTrackingStatus
 } from "../schema/application.schema.ts";
+import { jobPosting } from "../schema/job-posting.schema.ts";
 
 export type ApplicationEntity = InferSelectModel<typeof application>;
 export type CreateApplicationData = Omit<
@@ -259,24 +261,39 @@ export const applicationRepository = {
   },
 
   /**
-   * Inbox rows ready for first HTTP liveness check.
-   * No last-liveness column — due at `createdAt + ~3.5d` (core `LIVENESS_AFTER_MS`).
+   * Inbox + tracked rows ready for HTTP liveness.
+   * `inboxExpiresAt` set (discovery / post-ship harvest). Due at `createdAt + ~3.5d`.
+   * Skips postings already closed. Tracked stays so `job_posting.closedAt` can still be set.
    */
   async listInboxDueLiveness(now: Date, limit: number): Promise<ApplicationEntity[]> {
     if (limit <= 0) return [];
     const dueAt = new Date(now.getTime() - INBOX_LIVENESS_AFTER_MS);
-    return getDb()
-      .select()
+    const rows = await getDb()
+      .select({ application })
       .from(application)
+      .leftJoin(jobPosting, eq(application.postingId, jobPosting.id))
       .where(
         and(
-          eq(application.trackingStatus, "inbox"),
+          inArray(application.trackingStatus, ["inbox", "tracked"]),
           isNotNull(application.inboxExpiresAt),
-          lte(application.createdAt, dueAt)
+          lte(application.createdAt, dueAt),
+          or(isNull(application.postingId), isNull(jobPosting.closedAt))
         )
       )
       .orderBy(asc(application.createdAt))
       .limit(limit);
+    return rows.map((row) => row.application);
+  },
+
+  /** Open inbox rows linked to the given catalog postings (shared closed-listing dismiss). */
+  async listInboxByPostingIds(postingIds: string[]): Promise<ApplicationEntity[]> {
+    if (postingIds.length === 0) return [];
+    return getDb()
+      .select()
+      .from(application)
+      .where(
+        and(eq(application.trackingStatus, "inbox"), inArray(application.postingId, postingIds))
+      );
   },
 
   async listInboxExpired(now: Date, limit: number): Promise<ApplicationEntity[]> {
