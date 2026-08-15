@@ -47,4 +47,15 @@ describe("scoreCatalogAgainstPreference", () => {
     const r = scoreCatalogAgainstPreference({ ...listing, title: "Staff Nurse" }, prefs);
     expect(r.passed).toBe(false);
   });
+
+  it("passes a title hit when remote listing mismatches hybrid+Egypt prefs (mode/location are later gates)", () => {
+    const r = scoreCatalogAgainstPreference(listing, {
+      ...prefs,
+      workModes: ["hybrid"],
+      locations: ["Egypt"]
+    });
+    expect(r.passed).toBe(true);
+    expect(r.score).toBeGreaterThan(0);
+    expect(r.reasons.join(" ")).not.toMatch(/work mode|location match|location mismatch/i);
+  });
 });

@@ -1,4 +1,3 @@
-import { WORK_MODES } from "#@/job-preference/constants";
 import { type JobPreference } from "#@/job-preference/types";
 import { isGarbageCompany, isGarbageJobTitle } from "#@/mail/job-harvest";
 
@@ -27,6 +26,7 @@ function structuredBlob(listing: CheapListing): string {
 /**
  * Catalog cheap score on structured fields only (no description / JD HTML).
  * `passed` means eligible to land/rank — never gated on minMatchScore.
+ * Work mode and location are not scored here; two-axis is a later gate.
  */
 export function scoreCatalogAgainstPreference(
   listing: CheapListing,
@@ -66,38 +66,6 @@ export function scoreCatalogAgainstPreference(
   ) {
     score += 5;
     reasons.push("structured skill hit");
-  }
-
-  // All three work modes selected = no mode filter (treat as empty)
-  const workModes =
-    prefs.workModes.length === WORK_MODES.length &&
-    WORK_MODES.every((m) => prefs.workModes.includes(m))
-      ? []
-      : prefs.workModes;
-
-  if (workModes.length > 0 && listing.workMode) {
-    if (workModes.includes(listing.workMode)) {
-      score += 15;
-      reasons.push(`work mode ${listing.workMode} matches preferred`);
-    } else {
-      score -= 15;
-      reasons.push(`work mode ${listing.workMode} not preferred`);
-    }
-  }
-
-  if (prefs.locations.length > 0) {
-    const locFromJob =
-      listing.location != null && listing.location.length > 0
-        ? includesAny(listing.location, prefs.locations)
-        : false;
-    const remoteOk = listing.workMode === "remote" && prefs.workModes.includes("remote");
-    if (locFromJob || remoteOk) {
-      score += 10;
-      reasons.push("location match");
-    } else if (listing.location) {
-      score -= 10;
-      reasons.push("location mismatch");
-    }
   }
 
   score = Math.max(0, Math.min(100, Math.round(score)));
