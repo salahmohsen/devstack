@@ -6,6 +6,8 @@ import { createFiles } from "@tsu-stack/api/lib/storage/index";
 import { buildContentDisposition } from "@/shared/lib/content-disposition";
 import { createLogger } from "@/shared/lib/evlog";
 
+import { isUnauthorizedError } from "@/server/protected-download";
+
 export const Route = createFileRoute("/api/cover-letter/download/")({
   server: {
     handlers: {
@@ -80,10 +82,17 @@ export const Route = createFileRoute("/api/cover-letter/download/")({
             }
           });
         } catch (error) {
+          const unauthorized = isUnauthorizedError(error);
           log.error(error instanceof Error ? error : new Error(String(error)), {
-            event: "cover_letter_download_failed"
+            event: unauthorized
+              ? "cover_letter_download_unauthorized"
+              : "cover_letter_download_failed",
+            status: unauthorized ? 401 : 500
           });
           log.emit({ _forceKeep: true });
+          if (unauthorized) {
+            return new Response("Sign in to download this cover letter", { status: 401 });
+          }
           throw error;
         }
       }

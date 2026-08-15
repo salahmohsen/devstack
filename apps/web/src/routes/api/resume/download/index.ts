@@ -6,6 +6,8 @@ import { createFiles } from "@tsu-stack/api/lib/storage/index";
 import { buildContentDisposition } from "@/shared/lib/content-disposition";
 import { createLogger } from "@/shared/lib/evlog";
 
+import { isUnauthorizedError } from "@/server/protected-download";
+
 export const Route = createFileRoute("/api/resume/download/")({
   server: {
     handlers: {
@@ -64,10 +66,15 @@ export const Route = createFileRoute("/api/resume/download/")({
             }
           });
         } catch (error) {
+          const unauthorized = isUnauthorizedError(error);
           log.error(error instanceof Error ? error : new Error(String(error)), {
-            event: "resume_download_failed"
+            event: unauthorized ? "resume_download_unauthorized" : "resume_download_failed",
+            status: unauthorized ? 401 : 500
           });
           log.emit({ _forceKeep: true });
+          if (unauthorized) {
+            return new Response("Sign in to download this resume", { status: 401 });
+          }
           throw error;
         }
       }
