@@ -55,7 +55,7 @@ export function HubHitlFrame({
         data-hitl-kind={kind}
         className={cn(width, className)}
       >
-        {icon ?? <ShieldAlert />}
+        {icon ?? <ShieldAlert aria-hidden={false} />}
         <AlertTitle id={headingId}>{title}</AlertTitle>
         <AlertDescription>
           {description}

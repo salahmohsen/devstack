@@ -1,7 +1,8 @@
 import { type UIMessage } from "ai";
 import { describe, expect, it } from "vitest";
 
-import { summarizeHubApproval } from "./hub-approval-summary";
+import { findHubApprovalId, withApprovalRequested } from "./hub-approval-resume";
+import { isHubApprovalPending, summarizeHubApproval } from "./hub-approval-summary";
 import {
   isOpenSurfaceToolName,
   isProposeNewJobsTriageToolName,
@@ -218,5 +219,80 @@ describe("summarizeHubApproval", () => {
     expect(summary.title).toBe("Approval required");
     expect(summary.body).not.toContain("{");
     expect(summary.body).not.toContain("foo");
+  });
+});
+
+describe("isHubApprovalPending", () => {
+  it("is true when approval exists and is undecided", () => {
+    expect(isHubApprovalPending({ approval: {}, status: { type: "running" } })).toBe(true);
+  });
+
+  it("is true for requires-action even without approval object", () => {
+    expect(isHubApprovalPending({ status: { type: "requires-action" } })).toBe(true);
+  });
+
+  it("is true when Mastra omits approval and the part has no result yet", () => {
+    expect(isHubApprovalPending({ status: { type: "running" }, result: undefined })).toBe(true);
+    expect(isHubApprovalPending({})).toBe(true);
+  });
+
+  it("is false after the user decides", () => {
+    expect(
+      isHubApprovalPending({ approval: { approved: true }, status: { type: "running" } })
+    ).toBe(false);
+    expect(isHubApprovalPending({ approval: { resolution: "done" } })).toBe(false);
+  });
+
+  it("is false when the tool already has a result or finished", () => {
+    expect(isHubApprovalPending({ result: { ok: true }, status: { type: "running" } })).toBe(false);
+    expect(isHubApprovalPending({ status: { type: "complete" } })).toBe(false);
+    expect(isHubApprovalPending({ status: { type: "incomplete" } })).toBe(false);
+  });
+});
+
+describe("findHubApprovalId + withApprovalRequested", () => {
+  it("reads approval.id off the tool part", () => {
+    const messages = [
+      assistant([
+        {
+          type: "tool-generateApplyPackage",
+          toolCallId: "tc1",
+          toolName: "generateApplyPackage",
+          state: "approval-requested",
+          approval: { id: "run::tc1" }
+        } as never
+      ])
+    ];
+    expect(findHubApprovalId(messages, "tc1")).toBe("run::tc1");
+  });
+
+  it("builds runId::toolCallId from data-tool-call-approval", () => {
+    const messages = [
+      assistant([
+        {
+          type: "data-tool-call-approval",
+          data: { state: "data-tool-call-approval", runId: "run-9", toolCallId: "tc9" }
+        } as never
+      ])
+    ];
+    expect(findHubApprovalId(messages, "tc9")).toBe("run-9::tc9");
+  });
+
+  it("lifts input-available to approval-requested so addToolApprovalResponse matches", () => {
+    const messages = [
+      assistant([
+        {
+          type: "tool-generateApplyPackage",
+          toolCallId: "tc1",
+          toolName: "generateApplyPackage",
+          state: "input-available",
+          input: { applicationId: "app_1" }
+        } as never
+      ])
+    ];
+    const next = withApprovalRequested(messages, "tc1", "run::tc1");
+    const part = next[0]?.parts[0] as { state?: string; approval?: { id?: string } };
+    expect(part.state).toBe("approval-requested");
+    expect(part.approval?.id).toBe("run::tc1");
   });
 });

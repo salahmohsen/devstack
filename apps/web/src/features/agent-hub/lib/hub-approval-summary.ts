@@ -11,6 +11,36 @@ function str(args: Record<string, unknown>, key: string): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
+/** AI SDK / assistant-ui approval object on a tool part. */
+export type HubApprovalState = {
+  approved?: boolean;
+  resolution?: unknown;
+} | null;
+
+/**
+ * Whether a requireToolApproval tool is still waiting for the user.
+ * Mastra often omits `approval` and leaves `status.type` as `running`
+ * (or unset) until Allow/Deny — do not treat that as a completed tool.
+ */
+export function isHubApprovalPending(input: {
+  approval?: HubApprovalState;
+  status?: { type?: string } | null;
+  result?: unknown;
+}): boolean {
+  const approval = input.approval ?? null;
+  const decided =
+    approval != null && (approval.approved !== undefined || approval.resolution !== undefined);
+  if (decided) return false;
+
+  const statusType = input.status?.type;
+  if (statusType === "requires-action") return true;
+  if (approval != null && approval.approved === undefined) return true;
+  if (input.result != null) return false;
+  if (statusType === "complete" || statusType === "incomplete") return false;
+  // Paused generate/accept/send/create: no result yet, not a finished part.
+  return true;
+}
+
 export function summarizeHubApproval(
   toolName: string,
   args: Record<string, unknown>

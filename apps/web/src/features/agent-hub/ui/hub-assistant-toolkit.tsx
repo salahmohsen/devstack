@@ -20,6 +20,11 @@ import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 import { HUB_AUI_SUGGESTIONS } from "@/features/agent-hub/api/hub-suggestions";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import {
+  findHubApprovalId,
+  withApprovalRequested
+} from "@/features/agent-hub/lib/hub-approval-resume";
+import { isHubApprovalPending } from "@/features/agent-hub/lib/hub-approval-summary";
+import {
   isProposeApplicationFromJdToolName,
   isProposeNewJobsTriageToolName,
   parseProposeApplicationFromJdInput,
@@ -192,35 +197,74 @@ function ProposeNewJobsTriageToolUI({
 }
 
 function ApprovalGatedToolUI(props: ToolCallMessagePartProps<Record<string, unknown>, unknown>) {
-  const { args, approval, respondToApproval, toolName } = props;
-  const { addToolApprovalResponse } = useHubChat();
+  const { args, approval, respondToApproval, toolName, toolCallId, status, result } = props;
+  const { addToolApprovalResponse, addToolOutput, messages, setMessages } = useHubChat();
   const [pending, setPending] = React.useState(false);
 
-  const awaitingApproval =
-    approval != null && approval.approved === undefined && approval.resolution === undefined;
+  const awaitingApproval = isHubApprovalPending({ approval, status, result });
 
   const respond = React.useCallback(
     (approved: boolean) => {
       if (pending) return;
       setPending(true);
-      if (typeof respondToApproval === "function") {
-        respondToApproval({ approved });
+
+      const approvalId =
+        (typeof approval?.id === "string" && approval.id.length > 0 ? approval.id : null) ??
+        findHubApprovalId(messages, toolCallId);
+
+      if (approvalId) {
+        setMessages(
+          withApprovalRequested(messages, toolCallId, approvalId) as Parameters<
+            typeof setMessages
+          >[0]
+        );
+        void Promise.resolve(addToolApprovalResponse({ id: approvalId, approved })).finally(() => {
+          setPending(false);
+        });
         return;
       }
-      if (approval?.id) {
+
+      if (
+        approval != null &&
+        approval.approved === undefined &&
+        typeof respondToApproval === "function"
+      ) {
+        try {
+          respondToApproval({ approved });
+        } finally {
+          setPending(false);
+        }
+        return;
+      }
+
+      // Mastra sometimes persists requireToolApproval as input-available with no
+      // approval id. Local output unsticks the card so the composer is not locked.
+      if (toolCallId) {
         void Promise.resolve(
-          addToolApprovalResponse({
-            id: approval.id,
-            approved
+          addToolOutput({
+            tool: toolName,
+            toolCallId,
+            output: { approved, localOnly: true }
           })
         ).finally(() => {
           setPending(false);
         });
         return;
       }
+
       setPending(false);
     },
-    [addToolApprovalResponse, approval, pending, respondToApproval]
+    [
+      addToolApprovalResponse,
+      addToolOutput,
+      approval,
+      messages,
+      pending,
+      respondToApproval,
+      setMessages,
+      toolCallId,
+      toolName
+    ]
   );
 
   if (awaitingApproval) {
