@@ -48,6 +48,29 @@ export type UpdateApplicationData = Partial<
 /** First inbox HTTP check; keep in sync with core `LIVENESS_AFTER_MS` (~3.5d). */
 const INBOX_LIVENESS_AFTER_MS = Math.floor((7 * 24 * 60 * 60 * 1000) / 2);
 
+async function listDueLivenessByStatus(
+  dueAt: Date,
+  trackingStatus: "inbox" | "tracked",
+  limit: number
+): Promise<ApplicationEntity[]> {
+  if (limit <= 0) return [];
+  const rows = await getDb()
+    .select({ application })
+    .from(application)
+    .leftJoin(jobPosting, eq(application.postingId, jobPosting.id))
+    .where(
+      and(
+        eq(application.trackingStatus, trackingStatus),
+        isNotNull(application.inboxExpiresAt),
+        lte(application.createdAt, dueAt),
+        or(isNull(application.postingId), isNull(jobPosting.closedAt))
+      )
+    )
+    .orderBy(asc(application.createdAt))
+    .limit(limit);
+  return rows.map((row) => row.application);
+}
+
 export const applicationRepository = {
   async findAllByUserId(userId: string) {
     return getDb()
@@ -263,21 +286,28 @@ export const applicationRepository = {
   /**
    * Inbox + tracked rows ready for HTTP liveness.
    * `inboxExpiresAt` set (discovery / post-ship harvest). Due at `createdAt + ~3.5d`.
-   * Skips postings already closed. Tracked stays so `job_posting.closedAt` can still be set.
+   * Skips postings already closed. Fills inbox first so tracked cannot starve newer probes.
    */
   async listInboxDueLiveness(now: Date, limit: number): Promise<ApplicationEntity[]> {
     if (limit <= 0) return [];
     const dueAt = new Date(now.getTime() - INBOX_LIVENESS_AFTER_MS);
+    const inbox = await listDueLivenessByStatus(dueAt, "inbox", limit);
+    const tracked = await listDueLivenessByStatus(dueAt, "tracked", limit - inbox.length);
+    return [...inbox, ...tracked];
+  },
+
+  /** Inbox rows (TTL-eligible) whose catalog posting is already closed. */
+  async listInboxWithClosedPosting(limit: number): Promise<ApplicationEntity[]> {
+    if (limit <= 0) return [];
     const rows = await getDb()
       .select({ application })
       .from(application)
-      .leftJoin(jobPosting, eq(application.postingId, jobPosting.id))
+      .innerJoin(jobPosting, eq(application.postingId, jobPosting.id))
       .where(
         and(
-          inArray(application.trackingStatus, ["inbox", "tracked"]),
+          eq(application.trackingStatus, "inbox"),
           isNotNull(application.inboxExpiresAt),
-          lte(application.createdAt, dueAt),
-          or(isNull(application.postingId), isNull(jobPosting.closedAt))
+          isNotNull(jobPosting.closedAt)
         )
       )
       .orderBy(asc(application.createdAt))
@@ -370,7 +400,8 @@ export const applicationRepository = {
   async setTrackingStatus(
     id: string,
     userId: string,
-    trackingStatus: ApplicationTrackingStatus
+    trackingStatus: ApplicationTrackingStatus,
+    fromStatus?: ApplicationTrackingStatus
   ): Promise<ApplicationEntity | null> {
     const owned = await applicationRepository.findByIdForUser(id, userId);
     if (!owned) return null;
@@ -378,7 +409,13 @@ export const applicationRepository = {
     const [updated] = await getDb()
       .update(application)
       .set({ trackingStatus })
-      .where(and(eq(application.id, id), eq(application.userId, userId)))
+      .where(
+        and(
+          eq(application.id, id),
+          eq(application.userId, userId),
+          ...(fromStatus ? [eq(application.trackingStatus, fromStatus)] : [])
+        )
+      )
       .returning();
     return updated ?? null;
   },

@@ -23,6 +23,8 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
   closed: number;
   dismissedExpired: number;
 }> {
+  await dismissClosedListingInbox();
+
   const due = (await applicationRepository.listInboxDueLiveness(now, LIVENESS_TICK_BATCH)).filter(
     (row) => inboxLivenessDueAt(row.createdAt).getTime() <= now.getTime()
   );
@@ -33,7 +35,6 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
   );
 
   const targets = uniqueTargets(due, postingById);
-  const gonePostingIds: string[] = [];
   const goneUrls = new Set<string>();
   let closed = 0;
 
@@ -47,16 +48,12 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
     closed += 1;
     if (target.postingId) {
       await jobPostingRepository.markClosed(target.postingId, now);
-      gonePostingIds.push(target.postingId);
     } else {
       goneUrls.add(target.listingUrl);
     }
   }
 
-  const inboxForClosed = await applicationRepository.listInboxByPostingIds(gonePostingIds);
-  for (const row of inboxForClosed) {
-    await dismissInbox(row, "listing_closed");
-  }
+  await dismissClosedListingInbox();
   for (const row of due) {
     if (row.trackingStatus !== "inbox" || !row.url || !goneUrls.has(row.url)) continue;
     await dismissInbox(row, "listing_closed");
@@ -123,16 +120,22 @@ async function probeListingUrl(url: string): Promise<FetchPublicHttpStatusResult
   return fetchPublicHttpStatus(url, { method: "GET" });
 }
 
+async function dismissClosedListingInbox(): Promise<void> {
+  const rows = await applicationRepository.listInboxWithClosedPosting(LIVENESS_TICK_BATCH);
+  for (const row of rows) {
+    await dismissInbox(row, "listing_closed");
+  }
+}
+
 async function dismissInbox(
   row: ApplicationEntity,
   via: "listing_closed" | "ttl"
 ): Promise<boolean> {
-  const owned = await applicationRepository.findByIdForUser(row.id, row.userId);
-  if (!owned || owned.trackingStatus !== "inbox") return false;
   const updated = await applicationRepository.setTrackingStatus(
-    owned.id,
-    owned.userId,
-    "dismissed"
+    row.id,
+    row.userId,
+    "dismissed",
+    "inbox"
   );
   if (!updated) return false;
   await applicationActivityRepository.append({
