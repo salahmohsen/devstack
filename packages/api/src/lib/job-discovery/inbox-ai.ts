@@ -19,6 +19,18 @@ import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai"
 
 export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
 
+/**
+ * Soft AI failure (heuristic fallback) must not auto-dismiss.
+ * minMatchScore is the AI bar; cheap already passed at land.
+ */
+export function decideInboxAiKeep(match: {
+  passed: boolean;
+  source: "ai" | "heuristic";
+}): "passed" | "dismissed" | "heuristic" {
+  if (match.source === "heuristic") return "heuristic";
+  return match.passed ? "passed" : "dismissed";
+}
+
 function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
@@ -125,7 +137,8 @@ export async function runInboxAi(input: {
     };
   }
 
-  if (!match.passed) {
+  const decision = decideInboxAiKeep(match);
+  if (decision === "dismissed") {
     return {
       outcome: await dismissInboxAndBackfill({
         userId: input.userId,
@@ -136,6 +149,12 @@ export async function runInboxAi(input: {
         reasons: match.reasons
       })
     };
+  }
+
+  if (decision === "heuristic") {
+    // Soft AI failure did not judge the JD — do not burn the 2×N cap.
+    await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
+    return { outcome: "heuristic" };
   }
 
   await applicationRepository.update(owned.id, input.userId, {
@@ -151,5 +170,5 @@ export async function runInboxAi(input: {
     // Soft-fail: leave agentTake null. Do not retrigger land.
   }
 
-  return { outcome: match.source === "heuristic" ? "heuristic" : "passed" };
+  return { outcome: "passed" };
 }

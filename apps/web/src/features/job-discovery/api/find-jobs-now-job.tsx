@@ -272,16 +272,18 @@ export async function startFindJobsNow(
     });
 
     const pollStartedAt = Date.now();
+    let lastSeenCount = newJobsFound;
+    let grewOnLastPoll = false;
     for (let i = 0; i < POLL_AT_MS.length; i += 1) {
       const waitMs = Math.max(0, pollStartedAt + POLL_AT_MS[i]! - Date.now());
       await sleep(waitMs, signal);
       if (!jobController.isCurrent(generation)) return;
 
       await invalidateInbox(queryClient);
-      newJobsFound = Math.max(
-        newJobsFound,
-        Math.max(0, inboxCountFromCache(queryClient) - baselineInbox)
-      );
+      const latest = Math.max(0, inboxCountFromCache(queryClient) - baselineInbox);
+      grewOnLastPoll = latest > lastSeenCount;
+      lastSeenCount = latest;
+      newJobsFound = Math.max(newJobsFound, latest);
       setFindJobsNowState({
         newJobsFound,
         stepLabel: stepForPoll(i + 1, data.ingestTriggered, newJobsFound)
@@ -297,9 +299,27 @@ export async function startFindJobsNow(
       newJobsFound
     });
 
-    if (newJobsFound > 0) {
+    const hasAiKey = cachedHasAiKey(queryClient);
+
+    if (grewOnLastPoll) {
+      toast.message("Still landing in the background", {
+        description:
+          newJobsFound > 0
+            ? `${newJobsFound} already under New jobs. More may arrive as catalog hydrate finishes.`
+            : "Board refresh and landing are still running. Check New jobs shortly.",
+        action: (
+          <Link to="/dashboard/new-jobs" data-button>
+            New jobs
+          </Link>
+        ),
+        duration: 14_000
+      });
+    } else if (newJobsFound > 0) {
       toast.success(newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`, {
-        description: "Matches that passed your Job preferences are under New jobs.",
+        description:
+          hasAiKey === true
+            ? "They're under New jobs. AI scoring can still rewrite scores or dismiss weak matches."
+            : "Matches that passed your Job preferences are under New jobs.",
         action: (
           <Link to="/dashboard/new-jobs" data-button>
             Open New jobs

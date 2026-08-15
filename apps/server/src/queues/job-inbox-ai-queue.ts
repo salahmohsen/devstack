@@ -78,7 +78,7 @@ export function startJobInboxAiQueue(redisUrl: string): void {
       });
       log.emit();
     },
-    { connection }
+    { connection, concurrency: 3 }
   );
 
   s.worker.on("failed", (job, err) => {

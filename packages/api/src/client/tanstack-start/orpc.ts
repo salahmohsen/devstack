@@ -111,7 +111,9 @@ const getORPCClient = createIsomorphicFn()
   .server((): RouterClient<AppRouter> => {
     const link = new RPCLink({
       url: `${getServerURL()}/rpc`,
-      headers: getHeaders(),
+      // Per call — a one-shot getHeaders() at module load has no Cookie
+      // (Dokploy Node keeps this client for the process lifetime).
+      headers: () => getHeaders(),
       fetch: (url, options) =>
         fetchWithRetry(url, options ?? {}).catch((error) => {
           // SSR aborts in-flight RPCs after render/dehydrate; not actionable.

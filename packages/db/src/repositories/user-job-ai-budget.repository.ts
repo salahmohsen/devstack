@@ -39,5 +39,21 @@ export const userJobAiBudgetRepository = {
       .returning({ id: userJobAiBudget.id });
 
     return Boolean(row);
+  },
+
+  /** Refund one reserved attempt (heuristic / no model call). Never goes below 0. */
+  async tryDecrement(userId: string, dayUtc: string): Promise<boolean> {
+    const [row] = await getDb()
+      .update(userJobAiBudget)
+      .set({ attempts: sql`greatest(${userJobAiBudget.attempts} - 1, 0)` })
+      .where(
+        and(
+          eq(userJobAiBudget.userId, userId),
+          eq(userJobAiBudget.dayUtc, dayUtc),
+          sql`${userJobAiBudget.attempts} > 0`
+        )
+      )
+      .returning({ id: userJobAiBudget.id });
+    return Boolean(row);
   }
 };

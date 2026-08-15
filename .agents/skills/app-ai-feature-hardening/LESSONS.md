@@ -17,6 +17,18 @@
 
 ---
 
+## 2026-08-15 — Discovery land pool, BullMQ job ids, and the AI bar
+
+- **Trigger:** Harden + review job discovery after adapters shipped (Find jobs now, land, inbox AI, Settings, Tracked)
+- **Finding:** A reserved-slot land pool is incremental per call. Passing `alreadyLanded + extraBudget` as the extra-pass limit reuses the old sequential _cumulative_ target and overshoots N / 50
+- **Finding:** BullMQ custom job ids reject `:`. Query keys like `pack:frontend` must be sanitized before they become `ingest_*` ids or Find jobs now returns `queue_unavailable` whenever the shelf is thin
+- **Finding:** Soft AI failure (`source: heuristic`) must keep the cheap stub and refund the reserved daily attempt. Dismissing on the cheap bar after a scorer fallback treats `minMatchScore` as a cheap gate
+- **Finding:** If inbox-AI enqueue fails, delete the stub you just created. A forever-pending row occupies the 50 cap and blocks the URL
+- **Finding:** The preference scorer must see more than a 800-char teaser once hydrate wrote a full JD (use a named window well above the thin-JD threshold)
+- **Finding:** `applications.list` for inbox still ships every JD. Fifty hydrated descriptions is ~50–120kB; do not parse the full JSON in a shell heredoc
+- **Finding:** A cookie file can exist and still be 401 — mint HMAC from the _current_ `session` row. Isolated Chrome already on `:3000` can stay signed in while curl is not
+- **Evidence class:** oRPC findNow `Custom Id cannot contain :` → sanitized `ingest_…_pack_frontend_…` then `{ok, ingestTriggered, landed:2}` to inbox 50; Chrome New jobs / Settings pack+N / Tracked board+list “Listing closed”; core/api unit tests
+
 ## 2026-08-15 — Harden the worktree binary, not a healthy port from another checkout
 
 - **Trigger:** Job discovery adapters Task 17 (findNow, Scan gate, classify harvest, inbox land)

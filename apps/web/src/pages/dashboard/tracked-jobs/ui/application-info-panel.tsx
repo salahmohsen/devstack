@@ -37,6 +37,7 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 
 import { Markdown } from "@/shared/ui/markdown";
+import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
 import {
   ApplicationActivitySection,
@@ -75,6 +76,45 @@ function postingHost(url: string) {
   } catch {
     return url;
   }
+}
+
+/** Harvested JDs are often HTML (`<p>`, `<ul>`); user pastes may be Markdown. */
+function looksLikeJobDescriptionHtml(value: string): boolean {
+  return /<(?:p|br|div|ul|ol|li|h[1-6]|span|strong|em|b|i|a|section|article|blockquote)\b/i.test(
+    value
+  );
+}
+
+/** Some adapters persist tags as `&lt;p&gt;`. Decode before detect/render. */
+function decodeJobDescriptionEntities(value: string): string {
+  if (!/&(?:lt|gt|amp|quot|#39|#x27);/i.test(value)) return value;
+  return value
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&amp;/gi, "&");
+}
+
+function JobDescriptionBody({ value }: { value: string }) {
+  const html = decodeJobDescriptionEntities(value);
+  if (looksLikeJobDescriptionHtml(html)) {
+    return (
+      <RichHtml
+        html={html}
+        className="max-w-none text-foreground [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold"
+      />
+    );
+  }
+  return (
+    <Markdown
+      allowRawHtml={false}
+      className="prose prose-sm max-w-none text-foreground dark:prose-invert"
+    >
+      {value}
+    </Markdown>
+  );
 }
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -406,13 +446,8 @@ export function ApplicationInfoPanel({
           </ItemInfoSection>
 
           <ItemInfoSection title="Job description" icon={<AlignLeftIcon />}>
-            {item.description?.trim() ? (
-              <Markdown
-                allowRawHtml={false}
-                className="prose prose-sm max-w-none text-foreground dark:prose-invert"
-              >
-                {item.description}
-              </Markdown>
+            {item.description?.trim() && !isEmptyRichHtml(item.description) ? (
+              <JobDescriptionBody value={item.description} />
             ) : (
               <p>No job description.</p>
             )}

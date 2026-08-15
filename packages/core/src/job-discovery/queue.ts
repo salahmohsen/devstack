@@ -20,6 +20,11 @@ export function inboxAiJobId(applicationId: string): string {
   return `inboxai_${applicationId}`;
 }
 
+/** BullMQ custom job ids reject `:`. Query keys are `pack:frontend` / `custom:k8s|sre`. */
+export function sanitizeBullJobIdPart(value: string): string {
+  return value.replace(/[^A-Za-z0-9_-]+/g, "_");
+}
+
 /**
  * Coalesce ingest while waiting/active. Find-now uses
  * `ingest_${userId}_${queryKey}_${utcDay}` so same-day repeats share a job;
@@ -35,8 +40,12 @@ export function ingestJobId(input: {
   const utcDay = (input.now ?? new Date()).toISOString().slice(0, 10);
   if (input.mode === "user_query" && input.userId) {
     const queryKey = input.queryKey?.trim();
-    if (queryKey) return `ingest_${input.userId}_${queryKey}_${utcDay}`;
-    if (input.runId) return `ingest_${input.userId}_${input.runId}`;
+    if (queryKey) {
+      return `ingest_${sanitizeBullJobIdPart(input.userId)}_${sanitizeBullJobIdPart(queryKey)}_${utcDay}`;
+    }
+    if (input.runId) {
+      return `ingest_${sanitizeBullJobIdPart(input.userId)}_${sanitizeBullJobIdPart(input.runId)}`;
+    }
   }
   return `ingest_daily_${utcDay}`;
 }

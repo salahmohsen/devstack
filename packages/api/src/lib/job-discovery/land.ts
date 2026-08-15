@@ -102,6 +102,16 @@ export function selectListingsToLand<T extends { score: number }>(
   return [...scored].toSorted((a, b) => b.score - a.score).slice(0, toLand);
 }
 
+/**
+ * Extra pass may create this many NEW inbox rows.
+ * `landUpTo` is incremental (reserved slots this call). Passing
+ * `alreadyLanded + extraBudget` reintroduces the sequential cumulative
+ * target and overshoots N / 50 under a parallel pool.
+ */
+export function extraPassCreateLimit(extraBudget: number): number {
+  return Math.max(0, extraBudget);
+}
+
 type ScoredPosting = {
   posting: JobPostingEntity;
   score: number;
@@ -153,6 +163,10 @@ async function landScoredPosting(input: {
   const listingUrl = canonicalizeJobUrl(posting.listingUrl);
   if (!listingUrl) return false;
 
+  const description = hydrate.description ?? posting.description;
+  // With a BYO key, N is AI-passed keepers. Do not occupy a seat on a thin JD.
+  if (input.hasAiKey && isThinJobDescription(description)) return false;
+
   const { source, sourceLabel } = discoverySourceFields({
     listingUrl,
     adapterId: posting.adapterId,
@@ -162,7 +176,6 @@ async function landScoredPosting(input: {
     hydrate.salaryRange ??
     formatCatalogSalaryRange(posting.salaryMin, posting.salaryMax, posting.salaryCurrency);
   const location = applicationLocation(hydrate.location, posting.location);
-  const description = hydrate.description ?? posting.description;
 
   const { row, created } = await applicationRepository.createIfAbsentByUrl({
     userId: input.userId,
@@ -209,13 +222,17 @@ async function landScoredPosting(input: {
     }
   });
 
-  // Thin/empty JD stays as the cheap-scored stub — do not burn BYO or auto-dismiss.
-  if (input.hasAiKey && !isThinJobDescription(description)) {
-    await requestJobInboxAi({
+  if (input.hasAiKey) {
+    const queued = await requestJobInboxAi({
       userId: input.userId,
       applicationId: row.id,
       runId: input.runId
     });
+    if (!queued) {
+      // Do not occupy N / 50 with a forever-pending stub.
+      await applicationRepository.deleteMany([row.id], input.userId);
+      return false;
+    }
   }
 
   return true;
@@ -283,24 +300,44 @@ export async function runDiscoveryLand(input: {
 
   const attempted = new Set<string>();
   let landed = 0;
+  /** Listing-page hydrate is the slow hop — run a small pool, not one-by-one. */
+  const LAND_CONCURRENCY = 4;
 
   const landUpTo = async (limit: number): Promise<void> => {
-    for (const candidate of passed) {
-      if (landed >= limit) break;
-      if (attempted.has(candidate.posting.id)) continue;
-      attempted.add(candidate.posting.id);
-      try {
-        const created = await landScoredPosting({
-          userId: input.userId,
-          runId: input.runId,
-          candidate,
-          hasAiKey
-        });
-        if (created) landed += 1;
-      } catch {
-        continue;
+    let next = 0;
+    let reserved = 0;
+    const worker = async (): Promise<void> => {
+      while (true) {
+        if (reserved >= limit) return;
+        reserved += 1;
+        const index = next;
+        next += 1;
+        const candidate = passed[index];
+        if (!candidate) {
+          reserved -= 1;
+          return;
+        }
+        if (attempted.has(candidate.posting.id)) {
+          reserved -= 1;
+          continue;
+        }
+        attempted.add(candidate.posting.id);
+        try {
+          const created = await landScoredPosting({
+            userId: input.userId,
+            runId: input.runId,
+            candidate,
+            hasAiKey
+          });
+          if (created) landed += 1;
+          else reserved -= 1;
+        } catch {
+          reserved -= 1;
+        }
       }
-    }
+    };
+    const pool = Math.min(LAND_CONCURRENCY, Math.max(1, limit));
+    await Promise.all(Array.from({ length: pool }, () => worker()));
   };
 
   await landUpTo(toLand);
@@ -313,7 +350,7 @@ export async function runDiscoveryLand(input: {
     hasAiKey
   });
   if (extraBudget > 0) {
-    await landUpTo(landed + extraBudget);
+    await landUpTo(extraPassCreateLimit(extraBudget));
   }
 
   return { landed, reason: landed === 0 ? "empty_shelf" : "ok" };

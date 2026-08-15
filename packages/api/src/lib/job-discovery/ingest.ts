@@ -238,35 +238,40 @@ export async function ingestQuery(input: {
   let remotiveUsed = 0;
   const fetchInput = { q, workMode: input.workMode ?? null };
 
-  for (const adapter of adapters) {
-    if (!adapter.capabilities.includes("search")) continue;
-    if (adapter.id === "remotive") {
-      if (input.remotiveCallsLeft <= 0) continue;
-      const reserved = input.adapters != null ? true : await consumeRemotiveCall();
-      if (!reserved) continue;
-      remotiveUsed += 1;
-      upserted += await ingestAdapter(adapter, fetchInput, {
+  const searchAdapters = adapters.filter((adapter) => adapter.capabilities.includes("search"));
+  const remotive = searchAdapters.find((adapter) => adapter.id === "remotive");
+  const parallelSearch = searchAdapters.filter((adapter) => adapter.id !== "remotive");
+
+  const parallelCounts = await Promise.all(
+    parallelSearch.map((adapter) =>
+      ingestAdapter(adapter, fetchInput, {
         maxPages: pageCap(adapter),
         stopAt: SEARCH_UPSERT_CAP
+      })
+    )
+  );
+  upserted += parallelCounts.reduce((sum, n) => sum + n, 0);
+
+  if (remotive && input.remotiveCallsLeft > 0) {
+    const reserved = input.adapters != null ? true : await consumeRemotiveCall();
+    if (reserved) {
+      remotiveUsed += 1;
+      upserted += await ingestAdapter(remotive, fetchInput, {
+        maxPages: pageCap(remotive),
+        stopAt: SEARCH_UPSERT_CAP
       });
-      continue;
     }
-    upserted += await ingestAdapter(adapter, fetchInput, {
-      maxPages: pageCap(adapter),
-      stopAt: SEARCH_UPSERT_CAP
-    });
   }
 
   return { upserted, remotiveUsed };
 }
 
 export async function ingestFeeds(): Promise<{ upserted: number }> {
-  let upserted = 0;
-  for (const adapter of resolveAdapters()) {
-    if (!adapter.capabilities.includes("feed")) continue;
-    upserted += await ingestAdapter(adapter, {}, { maxPages: pageCap(adapter) });
-  }
-  return { upserted };
+  const feeds = resolveAdapters().filter((adapter) => adapter.capabilities.includes("feed"));
+  const counts = await Promise.all(
+    feeds.map((adapter) => ingestAdapter(adapter, {}, { maxPages: pageCap(adapter) }))
+  );
+  return { upserted: counts.reduce((sum, n) => sum + n, 0) };
 }
 
 export async function ingestForUserQuery(prefs: JobPreference): Promise<{ upserted: number }> {
