@@ -3,7 +3,8 @@ import * as React from "react";
 
 import { type ProposeApplicationFromJdOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
-import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { HubHitlFrame } from "./hub-hitl-frame";
 
 export type ApplicationFromJdCardInput = {
   title: string;
@@ -71,17 +72,10 @@ export function ApplicationFromJdCard({
   );
 
   return (
-    <div
-      className={cn(
-        "w-full max-w-[min(72ch,100%)] rounded-xl border border-border/60 bg-muted/30 p-4",
-        className
-      )}
-      data-tool-call-id={toolCallId}
-    >
-      <div className="space-y-1.5">
-        <h3 className="text-sm leading-snug font-semibold text-foreground">
-          {input.title.trim() || "Untitled role"}
-        </h3>
+    <HubHitlFrame
+      kind="recommendation"
+      title={input.title.trim() || "Untitled role"}
+      description={
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <Building2 className="size-3.5 shrink-0 opacity-80" aria-hidden />
@@ -99,18 +93,45 @@ export function ApplicationFromJdCard({
             </span>
           ) : null}
         </div>
-        {listingUrl ? (
-          <a
-            href={listingUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex max-w-full items-center gap-1 truncate text-xs font-medium text-primary underline-offset-2 hover:underline"
+      }
+      toolCallId={toolCallId}
+      submitting={submitting}
+      className={className}
+      footer={
+        <>
+          <Button size="sm" onClick={() => handleAction("package")} disabled={locked} autoFocus>
+            {ACTION_LABELS.package}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => handleAction("save")}
+            disabled={locked}
           >
-            <ExternalLink className="size-3 shrink-0" aria-hidden />
-            <span className="truncate">{listingUrl}</span>
-          </a>
-        ) : null}
-      </div>
+            {ACTION_LABELS.save}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAction("dismiss")}
+            disabled={locked}
+          >
+            {ACTION_LABELS.dismiss}
+          </Button>
+        </>
+      }
+    >
+      {listingUrl ? (
+        <a
+          href={listingUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex max-w-full items-center gap-1 truncate text-xs font-medium text-primary underline-offset-2 hover:underline"
+        >
+          <ExternalLink className="size-3 shrink-0" aria-hidden />
+          <span className="truncate">{listingUrl}</span>
+        </a>
+      ) : null}
 
       {input.description.trim() ? (
         <p className="mt-3 line-clamp-8 text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
@@ -123,34 +144,6 @@ export function ApplicationFromJdCard({
       {input.notes?.trim() ? (
         <p className="mt-2 text-xs text-muted-foreground">{input.notes.trim()}</p>
       ) : null}
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => handleAction("package")} disabled={locked}>
-          {ACTION_LABELS.package}
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => handleAction("save")}
-          disabled={locked}
-        >
-          {ACTION_LABELS.save}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => handleAction("dismiss")}
-          disabled={locked}
-        >
-          {ACTION_LABELS.dismiss}
-        </Button>
-      </div>
-
-      {submitting ? (
-        <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
-          Submitting…
-        </p>
-      ) : null}
-    </div>
+    </HubHitlFrame>
   );
 }
