@@ -109,26 +109,26 @@ function toastMissingAiKey() {
 function stepForPoll(index: number, ingestTriggered: boolean, newJobsFound: number): string {
   if (newJobsFound > 0) {
     return newJobsFound === 1
-      ? "1 new match under New jobs so far…"
-      : `${newJobsFound} new matches under New jobs so far…`;
+      ? "1 keeper under New jobs so far…"
+      : `${newJobsFound} keepers under New jobs so far…`;
   }
   if (index <= 0) {
     return ingestTriggered
-      ? "Refreshing public boards, then landing matches…"
-      : "Landing matches from the catalog…";
+      ? "Refreshing public boards, then scoring matches…"
+      : "Scoring matches, then adding keepers…";
   }
   if (index === 1) {
     return ingestTriggered
-      ? "Fetching board listings & scoring against your title…"
-      : "Scoring catalog listings against your title…";
+      ? "Fetching board listings & scoring matches…"
+      : "Scoring catalog listings, then adding keepers…";
   }
   if (index === 2) {
-    return "Still working — only new matches appear under New jobs…";
+    return "Still scoring — keepers appear under New jobs when they pass…";
   }
   if (index === 3) {
-    return "Duplicates are skipped; waiting for remaining listings…";
+    return "Duplicates are skipped; waiting for remaining evaluations…";
   }
-  return "Finishing remaining listings…";
+  return "Finishing remaining evaluations…";
 }
 
 /**
@@ -259,8 +259,8 @@ export async function startFindJobsNow(
       ingestTriggered: data.ingestTriggered,
       seats: data.seats,
       stepLabel: data.ingestTriggered
-        ? "Queued a board refresh — landing runs after ingest…"
-        : "Queued landing from the catalog…"
+        ? "Queued a board refresh — scoring runs after ingest…"
+        : "Queued scoring — keepers appear as they pass…"
     });
 
     await invalidateInbox(queryClient);
@@ -302,11 +302,11 @@ export async function startFindJobsNow(
     const hasAiKey = cachedHasAiKey(queryClient);
 
     if (grewOnLastPoll) {
-      toast.message("Still landing in the background", {
+      toast.message("Still scoring in the background", {
         description:
           newJobsFound > 0
-            ? `${newJobsFound} already under New jobs. More may arrive as catalog hydrate finishes.`
-            : "Board refresh and landing are still running. Check New jobs shortly.",
+            ? `${newJobsFound} already under New jobs. More keepers may appear as evaluate finishes.`
+            : "Board refresh and scoring are still running. Check New jobs shortly.",
         action: (
           <Link to="/dashboard/new-jobs" data-button>
             New jobs
@@ -318,7 +318,7 @@ export async function startFindJobsNow(
       toast.success(newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`, {
         description:
           hasAiKey === true
-            ? "They're under New jobs. AI scoring can still rewrite scores or dismiss weak matches."
+            ? "They're under New jobs. Score-fails go to Dismissed; more keepers may still arrive."
             : "Matches that passed your Job preferences are under New jobs.",
         action: (
           <Link to="/dashboard/new-jobs" data-button>
@@ -330,7 +330,7 @@ export async function startFindJobsNow(
     } else if (data.ingestTriggered) {
       toast.message("No new inbox jobs yet", {
         description:
-          "Board refresh can take several minutes. Check New jobs again shortly — listings are not marked scored until land finishes.",
+          "Board refresh and scoring can take several minutes. Keepers appear under New jobs as they pass.",
         action: (
           <Link to="/dashboard/new-jobs" data-button>
             New jobs

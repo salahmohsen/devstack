@@ -23,8 +23,10 @@ import {
   assessAgentTakeReadiness,
   EMPLOYMENT_TYPE_LABELS,
   HIRING_URGENCY_LABELS,
+  WORK_MODE_LABELS,
   type ApplicationOutput,
-  type ApplicationSourceTag
+  type ApplicationSourceTag,
+  type JobSkillTag
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
@@ -68,6 +70,61 @@ function displayText(value: string | null | undefined) {
   const trimmed = value?.trim();
   if (!trimmed) return "—";
   return trimmed;
+}
+
+const HIRING_REGION_LABELS: Record<string, string> = {
+  worldwide: "Worldwide",
+  mena: "MENA",
+  emea: "EMEA",
+  eu: "EU",
+  uk: "UK",
+  us: "US",
+  latam: "LatAm",
+  africa: "Africa",
+  apac: "APAC",
+  egypt: "Egypt",
+  saudi_arabia: "Saudi Arabia",
+  de: "Germany",
+  br: "Brazil"
+};
+
+function formatHiringRegion(value: string): string {
+  const slug = value.trim().toLowerCase();
+  return HIRING_REGION_LABELS[slug] ?? value.trim().replaceAll("_", " ");
+}
+
+function workModeLabel(workMode: ApplicationOutput["workMode"]) {
+  return workMode ? WORK_MODE_LABELS[workMode] : null;
+}
+
+/** Header/location line: remote jobs must show Remote, not only LatAm. */
+function locationHeadline(item: ApplicationOutput): string | null {
+  const location = item.location?.trim() ?? "";
+  const remoteLabel = workModeLabel(item.workMode);
+  if (item.workMode === "remote") {
+    if (!location) return remoteLabel;
+    if (/\bremote\b/i.test(location)) return location;
+    return remoteLabel ? `${remoteLabel} · ${location}` : location;
+  }
+  return location || null;
+}
+
+function SkillChips({ skills }: { skills: JobSkillTag[] }) {
+  if (skills.length === 0) return "—";
+  return (
+    <span className="flex flex-wrap justify-end gap-1.5">
+      {skills.map((skill, index) => (
+        <Badge
+          key={`${skill.name}-${index}`}
+          variant="secondary"
+          size="sm"
+          className="font-normal tracking-normal normal-case"
+        >
+          {skill.name}
+        </Badge>
+      ))}
+    </span>
+  );
 }
 
 function postingHost(url: string) {
@@ -167,6 +224,7 @@ export function ApplicationInfoPanel({
     item.resumeId ?? item.coverLetterR2Key ?? item.coverLetterBody ?? item.outreachBody
   );
   const takeReady = assessAgentTakeReadiness(item);
+  const locationLine = locationHeadline(item);
 
   return (
     <>
@@ -177,12 +235,12 @@ export function ApplicationInfoPanel({
           <div className="space-y-2">
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span>{item.companyName}</span>
-              {item.location?.trim() ? (
+              {locationLine ? (
                 <>
                   <span aria-hidden className="text-border">
                     ·
                   </span>
-                  <span>{item.location}</span>
+                  <span>{locationLine}</span>
                 </>
               ) : null}
               {!isDiscovery && item.employmentType !== "unknown" ? (
@@ -387,11 +445,21 @@ export function ApplicationInfoPanel({
 
           <ItemInfoSection title="Details" icon={<InfoIcon />}>
             <dl className="space-y-2.5">
+              <DetailRow label="Work mode">{workModeLabel(item.workMode) ?? "—"}</DetailRow>
+              <DetailRow label="Location">{displayText(item.location)}</DetailRow>
+              {item.hiringRegion?.trim() ? (
+                <DetailRow label="Hiring region">{formatHiringRegion(item.hiringRegion)}</DetailRow>
+              ) : null}
               <DetailRow label="Employment">
                 {EMPLOYMENT_TYPE_LABELS[item.employmentType]}
               </DetailRow>
-              <DetailRow label="Location">{displayText(item.location)}</DetailRow>
               <DetailRow label="Salary">{displayText(item.salaryRange)}</DetailRow>
+              <DetailRow label="Required skills">
+                <SkillChips skills={item.requiredSkills ?? []} />
+              </DetailRow>
+              <DetailRow label="Preferred skills">
+                <SkillChips skills={item.preferredSkills ?? []} />
+              </DetailRow>
               <DetailRow label="Source">{sourceDisplay ?? "—"}</DetailRow>
               <DetailRow label="Posting">
                 {item.url ? (

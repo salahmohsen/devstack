@@ -102,6 +102,7 @@ export const JobPreferenceFields = withForm({
                 options={JOB_PREFERENCE_WORK_MODE_OPTIONS}
                 multiple
                 variant="outline"
+                showSelectedCheck
               />
             )}
           </form.AppField>
@@ -110,7 +111,7 @@ export const JobPreferenceFields = withForm({
             {(field) => (
               <field.TagsField
                 label="Locations"
-                description="Cities, regions, or countries you want in job digests. Press Enter or comma to add."
+                description="On-site and hybrid must match these places. Remote uses hiring-region overlap (MENA/worldwide), not any remote role on earth. Press Enter or comma to add."
                 placeholder="e.g. Berlin, Remote EU"
                 maxItems={50}
                 maxItemLength={120}
