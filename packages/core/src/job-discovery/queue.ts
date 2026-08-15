@@ -15,9 +15,25 @@ export function landJobId(userId: string, runId: string): string {
   return `land_${userId}_${runId}`;
 }
 
-/** One AI pass per application while waiting or active. */
+/** One AI pass per application while waiting or active (harvest / manual). */
 export function inboxAiJobId(applicationId: string): string {
   return `inboxai_${applicationId}`;
+}
+
+/** One evaluate pass per user+posting while waiting or active. */
+export function inboxEvaluateJobId(userId: string, postingId: string): string {
+  return `eval_${sanitizeBullJobIdPart(userId)}_${sanitizeBullJobIdPart(postingId)}`;
+}
+
+/** Discovery evaluate uses postingId; harvest/manual keep applicationId. */
+export function inboxAiQueueJobId(payload: {
+  userId: string;
+  postingId?: string;
+  applicationId?: string;
+}): string {
+  if (payload.applicationId) return inboxAiJobId(payload.applicationId);
+  if (payload.postingId) return inboxEvaluateJobId(payload.userId, payload.postingId);
+  throw new Error("inboxAiQueueJobId: postingId or applicationId is required");
 }
 
 /** BullMQ custom job ids reject `:`. Query keys are `pack:frontend` / `custom:k8s|sre`. */
@@ -56,11 +72,16 @@ export const JobDiscoveryLandPayloadSchema = z.object({
   trigger: z.enum(["cron", "find_now", "backfill"]),
   enqueuedAt: z.string().datetime().optional()
 });
-export const JobInboxAiPayloadSchema = z.object({
-  userId: z.string().min(1),
-  applicationId: z.string().min(1),
-  runId: z.string().min(1)
-});
+export const JobInboxAiPayloadSchema = z
+  .object({
+    userId: z.string().min(1),
+    runId: z.string().min(1),
+    postingId: z.string().min(1).optional(),
+    applicationId: z.string().min(1).optional()
+  })
+  .refine((data) => Boolean(data.postingId ?? data.applicationId), {
+    message: "postingId or applicationId is required"
+  });
 export const JobCatalogIngestPayloadSchema = z.object({
   mode: z.enum(["daily", "user_query"]),
   userId: z.string().optional(),

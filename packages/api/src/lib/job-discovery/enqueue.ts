@@ -10,7 +10,7 @@ import {
   JobCatalogIngestPayloadSchema,
   JobDiscoveryLandPayloadSchema,
   JobInboxAiPayloadSchema,
-  inboxAiJobId,
+  inboxAiQueueJobId,
   ingestJobId,
   landJobId,
   type JobCatalogIngestPayload,
@@ -208,8 +208,13 @@ export async function requestJobInboxAi(input: JobInboxAiPayload): Promise<boole
     data,
     operation: "api__job_inbox_ai_enqueue",
     event: "job_inbox_ai_enqueued",
-    extra: { userId: data.userId, applicationId: data.applicationId, runId: data.runId },
-    jobId: inboxAiJobId(data.applicationId),
+    extra: {
+      userId: data.userId,
+      runId: data.runId,
+      postingId: data.postingId ?? null,
+      applicationId: data.applicationId ?? null
+    },
+    jobId: inboxAiQueueJobId(data),
     removeOnComplete: true,
     removeOnFail: true
   });

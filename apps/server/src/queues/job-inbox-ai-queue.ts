@@ -2,7 +2,7 @@ import { Queue, Worker, type ConnectionOptions, type Job } from "bullmq";
 
 import { runInboxAi } from "@tsu-stack/api/lib/job-discovery/inbox-ai";
 import {
-  inboxAiJobId,
+  inboxAiQueueJobId,
   JOB_INBOX_AI_JOB_NAME,
   JOB_INBOX_AI_QUEUE_NAME,
   JobInboxAiPayloadSchema,
@@ -12,10 +12,11 @@ import { createDb, runWithDb } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 /**
- * Per-application inbox AI (score + take).
+ * Inbox evaluate / harvest AI (score + take).
  *
- * jobId `inboxai_${applicationId}` while waiting/active. Remove on complete/fail
- * so a later retry can reuse the id (or callers can mint a new one).
+ * Discovery: jobId `eval_${userId}_${postingId}`. Harvest/manual:
+ * `inboxai_${applicationId}`. Remove on complete/fail so a later retry can
+ * reuse the id.
  */
 
 const STORE_KEY = "__tsu_stack_job_inbox_ai_server_store__";
@@ -60,19 +61,14 @@ export function startJobInboxAiQueue(redisUrl: string): void {
       }
 
       const db = createDb();
-      const result = await runWithDb(db, () =>
-        runInboxAi({
-          userId: parsed.data.userId,
-          applicationId: parsed.data.applicationId,
-          runId: parsed.data.runId
-        })
-      );
+      const result = await runWithDb(db, () => runInboxAi(parsed.data));
 
       log.set({
         event: "job_inbox_ai_ok",
         jobId: job.id ?? null,
         userId: parsed.data.userId,
-        applicationId: parsed.data.applicationId,
+        applicationId: parsed.data.applicationId ?? null,
+        postingId: parsed.data.postingId ?? null,
         runId: parsed.data.runId,
         outcome: result.outcome
       });
@@ -115,7 +111,7 @@ export async function enqueueJobInboxAi(
     return { enqueued: false };
   }
 
-  const jobId = inboxAiJobId(payload.applicationId);
+  const jobId = inboxAiQueueJobId(payload);
 
   try {
     await removeFinishedInboxAiJob(s.queue, jobId);

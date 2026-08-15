@@ -1,23 +1,17 @@
 import {
-  buildApplicationSourceTags,
-  canonicalizeJobUrl,
+  applyZeroDollarCandidate,
   computeLandBudget,
   dailyAiAttemptCap,
+  decideTwoAxis,
   hasValidDiscoveryTitle,
-  inferApplicationSource,
-  INBOX_TTL_MS,
   isThinJobDescription,
-  JOB_ADAPTER_IDS,
-  JOB_ADAPTER_LABELS,
   MAX_OPEN_INBOX,
   scoreCatalogAgainstPreference,
   WorkModeSchema,
-  type ApplicationSource,
-  type JobAdapterId,
+  type TwoAxisPrefs,
   type WorkMode
 } from "@tsu-stack/core";
 import {
-  applicationActivityRepository,
   applicationRepository,
   jobPostingRepository,
   userJobAiBudgetRepository,
@@ -26,16 +20,8 @@ import {
 
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { requestJobInboxAi } from "#@/lib/job-discovery/enqueue";
-import { formatCatalogSalaryRange, hydratePostingIfNeeded } from "#@/lib/job-discovery/hydrate";
+import { hydratePostingIfNeeded } from "#@/lib/job-discovery/hydrate";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
-
-const FREEHIRE_SOURCE_LABELS: Record<string, string> = {
-  greenhouse: "Greenhouse",
-  ashby: "Ashby",
-  lever: "Lever",
-  workable: "Workable",
-  smartrecruiters: "SmartRecruiters"
-};
 
 export type DiscoveryLandReason = "ok" | "title_required" | "inbox_full" | "empty_shelf";
 
@@ -48,39 +34,9 @@ function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
-function asWorkMode(value: string | null): WorkMode | null {
+function asWorkMode(value: string | null | undefined): WorkMode | null {
   const parsed = WorkModeSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
-}
-
-function isJobAdapterId(value: string): value is JobAdapterId {
-  return (JOB_ADAPTER_IDS as readonly string[]).includes(value);
-}
-
-function adapterDisplayName(adapterId: string, sourcePlatform: string | null): string {
-  const platform = sourcePlatform?.trim().toLowerCase() ?? "";
-  if (platform && FREEHIRE_SOURCE_LABELS[platform]) return FREEHIRE_SOURCE_LABELS[platform]!;
-  if (isJobAdapterId(adapterId)) return JOB_ADAPTER_LABELS[adapterId];
-  if (sourcePlatform?.trim()) {
-    const raw = sourcePlatform.trim();
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
-  }
-  return adapterId;
-}
-
-function discoverySourceFields(input: {
-  listingUrl: string;
-  adapterId: string;
-  sourcePlatform: string | null;
-}): { source: ApplicationSource; sourceLabel: string | null } {
-  const source = inferApplicationSource(input.listingUrl);
-  if (source !== "other" && source !== "company_website") {
-    return { source, sourceLabel: null };
-  }
-  return {
-    source,
-    sourceLabel: adapterDisplayName(input.adapterId, input.sourcePlatform)
-  };
 }
 
 function applicationLocation(
@@ -103,13 +59,41 @@ export function selectListingsToLand<T extends { score: number }>(
 }
 
 /**
- * Extra pass may create this many NEW inbox rows.
+ * Extra pass may enqueue this many NEW evaluate jobs.
  * `landUpTo` is incremental (reserved slots this call). Passing
  * `alreadyLanded + extraBudget` reintroduces the sequential cumulative
  * target and overshoots N / 50 under a parallel pool.
  */
 export function extraPassCreateLimit(extraBudget: number): number {
   return Math.max(0, extraBudget);
+}
+
+/**
+ * $0 extract + two-axis gate. `created` means enqueue evaluate — never an inbox row.
+ * Two-axis drop / unknown mode → created=false (no enqueue, no stub).
+ */
+export function decideLandCandidate(input: {
+  workMode: WorkMode | null;
+  hiringRegion: string | null;
+  location: string | null;
+  description: string | null;
+  prefs: TwoAxisPrefs;
+}): { created: boolean; reason: string } {
+  const candidate = applyZeroDollarCandidate({
+    workMode: input.workMode,
+    hiringRegion: input.hiringRegion,
+    location: input.location,
+    employmentType: null,
+    description: input.description,
+    skills: []
+  });
+  const decision = decideTwoAxis({
+    workMode: candidate.workMode,
+    hiringRegion: candidate.hiringRegion,
+    location: candidate.location,
+    prefs: input.prefs
+  });
+  return { created: decision.action === "pass", reason: decision.reason };
 }
 
 type ScoredPosting = {
@@ -149,93 +133,36 @@ async function remainingLandBudget(input: {
   });
 }
 
-/** Land one cheap-passed catalog row. Returns true when a new inbox stub was created. */
-async function landScoredPosting(input: {
+/** Hydrate + $0 two-axis. Pass enqueues evaluate — never createIfAbsentByUrl. */
+async function enqueueEvaluateIfPassed(input: {
   userId: string;
   runId: string;
   candidate: ScoredPosting;
   hasAiKey: boolean;
+  prefs: TwoAxisPrefs;
 }): Promise<boolean> {
   const hydrate = await hydratePostingIfNeeded(input.candidate.posting.id);
   const posting = await jobPostingRepository.findById(input.candidate.posting.id);
   if (!posting || posting.closedAt != null || hydrate.listingClosed) return false;
 
-  const listingUrl = canonicalizeJobUrl(posting.listingUrl);
-  if (!listingUrl) return false;
-
   const description = hydrate.description ?? posting.description;
-  // With a BYO key, N is AI-passed keepers. Do not occupy a seat on a thin JD.
+  // With a BYO key, N is AI-passed keepers. Do not spend an evaluate on a thin JD.
   if (input.hasAiKey && isThinJobDescription(description)) return false;
 
-  const { source, sourceLabel } = discoverySourceFields({
-    listingUrl,
-    adapterId: posting.adapterId,
-    sourcePlatform: posting.sourcePlatform
-  });
-  const salaryRange =
-    hydrate.salaryRange ??
-    formatCatalogSalaryRange(posting.salaryMin, posting.salaryMax, posting.salaryCurrency);
-  const location = applicationLocation(hydrate.location, posting.location);
-
-  const { row, created } = await applicationRepository.createIfAbsentByUrl({
-    userId: input.userId,
-    companyName: posting.companyName,
-    title: posting.title,
-    url: listingUrl,
-    applyUrl: listingUrl,
-    applyMethod: "external",
-    matchScore: input.candidate.score,
-    source,
-    sourceLabel,
-    sourceTags: buildApplicationSourceTags({ channel: "discovery", platform: source }),
-    location,
-    salaryRange,
+  const gate = decideLandCandidate({
+    workMode: asWorkMode(hydrate.workMode ?? posting.workMode),
+    hiringRegion: hydrate.hiringRegion ?? posting.hiringRegion,
+    location: applicationLocation(hydrate.location, posting.location),
     description,
-    trackingStatus: "inbox",
-    stage: "saved",
-    postingId: posting.id,
-    discoveryRunId: input.runId,
-    inboxExpiresAt: new Date(Date.now() + INBOX_TTL_MS)
+    prefs: input.prefs
   });
-  if (!created) return false;
+  if (!gate.created) return false;
 
-  const locationFix = applicationLocation(hydrate.location, row.location);
-  const salaryFix = salaryRange ?? row.salaryRange;
-  if (locationFix !== row.location || salaryFix !== row.salaryRange) {
-    await applicationRepository.update(row.id, input.userId, {
-      location: locationFix,
-      salaryRange: salaryFix
-    });
-  }
-
-  await applicationActivityRepository.append({
+  return requestJobInboxAi({
     userId: input.userId,
-    applicationId: row.id,
-    kind: "discovered",
-    metadata: {
-      via: "discovery",
-      runId: input.runId,
-      cheapScore: input.candidate.score,
-      cheapReasons: input.candidate.reasons,
-      matchReasons: input.candidate.reasons,
-      adapterId: posting.adapterId
-    }
+    runId: input.runId,
+    postingId: posting.id
   });
-
-  if (input.hasAiKey) {
-    const queued = await requestJobInboxAi({
-      userId: input.userId,
-      applicationId: row.id,
-      runId: input.runId
-    });
-    if (!queued) {
-      // Do not occupy N / 50 with a forever-pending stub.
-      await applicationRepository.deleteMany([row.id], input.userId);
-      return false;
-    }
-  }
-
-  return true;
 }
 
 export async function runDiscoveryLand(input: {
@@ -323,13 +250,14 @@ export async function runDiscoveryLand(input: {
         }
         attempted.add(candidate.posting.id);
         try {
-          const created = await landScoredPosting({
+          const enqueued = await enqueueEvaluateIfPassed({
             userId: input.userId,
             runId: input.runId,
             candidate,
-            hasAiKey
+            hasAiKey,
+            prefs
           });
-          if (created) landed += 1;
+          if (enqueued) landed += 1;
           else reserved -= 1;
         } catch {
           reserved -= 1;
@@ -342,13 +270,17 @@ export async function runDiscoveryLand(input: {
 
   await landUpTo(toLand);
 
-  // AI dismissals during this job may have opened seats — one extra pass only.
-  const extraBudget = await remainingLandBudget({
-    userId: input.userId,
-    runId: input.runId,
-    jobsPerRun: prefs.jobsPerRun,
-    hasAiKey
-  });
+  // In-flight evaluate is not an inbox row — subtract this call's enqueues so
+  // extra pass cannot double the evaluate pool while keepers are still pending.
+  const extraBudget = Math.max(
+    0,
+    (await remainingLandBudget({
+      userId: input.userId,
+      runId: input.runId,
+      jobsPerRun: prefs.jobsPerRun,
+      hasAiKey
+    })) - landed
+  );
   if (extraBudget > 0) {
     await landUpTo(extraPassCreateLimit(extraBudget));
   }
