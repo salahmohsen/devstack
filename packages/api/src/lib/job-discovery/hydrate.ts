@@ -10,7 +10,7 @@ import {
   type JobPostingEntity
 } from "@tsu-stack/db";
 
-import { catalogFieldsHash } from "#@/lib/job-discovery/content-hash";
+import { catalogFieldsHash, type CatalogHashFields } from "#@/lib/job-discovery/content-hash";
 
 export type HydratePostingResult = {
   description: string | null;
@@ -153,29 +153,40 @@ function applyPatch(base: HydratePostingResult, patch: StatedCatalogWrite): Hydr
   };
 }
 
+/** Rehash only when the JD text changed. Workplace fills must not change the hash. */
+export function statedPersistContentHash(
+  posting: CatalogHashFields,
+  nextDescription: string | null
+): string | undefined {
+  if (nextDescription == null || nextDescription === posting.description) return undefined;
+  return catalogFieldsHash({
+    ...posting,
+    description: nextDescription
+  });
+}
+
 async function persistStated(
   posting: JobPostingEntity,
   patch: StatedCatalogWrite,
   description: string | null
 ): Promise<void> {
   const descriptionChanged = description != null && description !== posting.description;
-  const hashedChanged =
-    descriptionChanged || patch.location != null || patch.workMode != null || patch.skills != null;
   if (!descriptionChanged && Object.keys(patch).length === 0) return;
 
-  const contentHash = hashedChanged
-    ? catalogFieldsHash({
-        adapterId: posting.adapterId,
-        externalId: posting.externalId,
-        listingUrl: posting.listingUrl,
-        title: posting.title,
-        companyName: posting.companyName,
-        location: patch.location ?? posting.location,
-        workMode: patch.workMode ?? posting.workMode,
-        skills: patch.skills ?? posting.skills ?? [],
-        description: (descriptionChanged ? description : posting.description) ?? null
-      })
-    : undefined;
+  const contentHash = statedPersistContentHash(
+    {
+      adapterId: posting.adapterId,
+      externalId: posting.externalId,
+      listingUrl: posting.listingUrl,
+      title: posting.title,
+      companyName: posting.companyName,
+      location: posting.location,
+      workMode: posting.workMode,
+      skills: posting.skills ?? [],
+      description: posting.description
+    },
+    description
+  );
 
   await jobPostingRepository
     .patchStatedFields(posting.id, {

@@ -11,8 +11,8 @@ export type UpsertJobPostingInput = {
   listingUrl: string;
   title: string;
   companyName: string;
-  location: string | null;
-  workMode: string | null;
+  location?: string | null;
+  workMode?: string | null;
   hiringRegion?: string | null;
   employmentType?: string | null;
   salaryMin: number | null;
@@ -34,6 +34,17 @@ export type ListOpenForLandInput = {
 };
 
 const DEFAULT_OPEN_FOR_LAND_LIMIT = 400;
+
+/** Keep stored skills when the incoming adapter payload did not state any. */
+export function preferCatalogSkills(
+  incoming: readonly string[] | null | undefined,
+  stored: readonly string[] | null | undefined
+): string[] {
+  const next = incoming?.filter((skill) => skill.trim().length > 0) ?? [];
+  const prev = stored?.filter((skill) => skill.trim().length > 0) ?? [];
+  if (next.length === 0 && prev.length > 0) return [...prev];
+  return [...next];
+}
 
 /** Keep the longer JD; incoming null/blank does not wipe a stored description. */
 export function preferLongerJobDescription(
@@ -67,8 +78,8 @@ export const jobPostingRepository = {
           listingUrl: input.listingUrl,
           title: input.title,
           companyName: input.companyName,
-          location: input.location,
-          workMode: input.workMode,
+          location: input.location ?? null,
+          workMode: input.workMode ?? null,
           hiringRegion: input.hiringRegion ?? null,
           employmentType: input.employmentType ?? null,
           salaryMin: input.salaryMin,
@@ -117,14 +128,14 @@ export const jobPostingRepository = {
         listingUrl: input.listingUrl,
         title: input.title,
         companyName: input.companyName,
-        location: input.location,
-        workMode: input.workMode,
+        ...(input.location !== undefined ? { location: input.location } : {}),
+        ...(input.workMode !== undefined ? { workMode: input.workMode } : {}),
         ...(input.hiringRegion !== undefined ? { hiringRegion: input.hiringRegion } : {}),
         ...(input.employmentType !== undefined ? { employmentType: input.employmentType } : {}),
         salaryMin: input.salaryMin,
         salaryMax: input.salaryMax,
         salaryCurrency: input.salaryCurrency,
-        skills: input.skills,
+        skills: preferCatalogSkills(input.skills, current.skills),
         description: preferLongerJobDescription(input.description, current.description),
         sourcePlatform: input.sourcePlatform,
         contentHash: input.contentHash,

@@ -157,15 +157,16 @@ function resolveAdapters(
   return JOB_ADAPTER_IDS.map((id) => jobSourceAdapters[id]);
 }
 
-function toUpsertInput(listing: NormalizedListing) {
+/** Omit unstated workMode/location so a later upsert cannot wipe hydrate fills. */
+export function toUpsertInput(listing: NormalizedListing) {
   return {
     adapterId: listing.adapterId,
     externalId: listing.externalId,
     listingUrl: listing.listingUrl,
     title: listing.title,
     companyName: listing.companyName,
-    location: listing.location,
-    workMode: listing.workMode,
+    ...(listing.location != null ? { location: listing.location } : {}),
+    ...(listing.workMode != null ? { workMode: listing.workMode } : {}),
     ...(listing.hiringRegion != null ? { hiringRegion: listing.hiringRegion } : {}),
     ...(listing.employmentType != null ? { employmentType: listing.employmentType } : {}),
     salaryMin: listing.salaryMin,
