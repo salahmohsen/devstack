@@ -39,6 +39,7 @@ import {
 import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
 import { generateAgentTake } from "#@/lib/application/generate-agent-take";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
+import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { refreshApplicationFromListingUrl } from "#@/lib/application/refresh-from-listing-url";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
 import { requestMailJobHarvest } from "#@/lib/mail/harvest-enqueue-hook";
@@ -145,13 +146,28 @@ export const applicationsRouter = {
   scanJobAlerts: protectedProcedure
     .route({
       description:
-        "Enqueue harvest for recent job_notifier digests (manual Scan job alerts). Dedupes by listing URL.",
+        "Enqueue harvest for recent job_notifier digests when importFromEmail is on. Dedupes by listing URL.",
       method: "POST"
     })
     .input(ScanJobAlertsInputSchema)
     .output(ScanJobAlertsOutputSchema)
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
+      const prefs = await loadJobPreference(userId);
+      if (!prefs.importFromEmail) {
+        context.logger.set({
+          event: "scan_job_alerts_done",
+          userId,
+          importFromEmail: false,
+          limit: input?.limit ?? 20,
+          digestsFound: 0,
+          enqueued: 0,
+          enqueueFailed: 0,
+          queueUnavailable: false
+        });
+        return { digestsFound: 0, enqueued: 0, queueUnavailable: false };
+      }
+
       const limit = input?.limit ?? 20;
       // Must filter labels to job_notifier only (repo category map + belt-and-suspenders).
       const digests = (
@@ -182,6 +198,7 @@ export const applicationsRouter = {
       context.logger.set({
         event: "scan_job_alerts_done",
         userId,
+        importFromEmail: true,
         limit,
         digestsFound: digests.length,
         enqueued,

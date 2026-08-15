@@ -5,7 +5,10 @@ import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve
 import {
   buildApplicationSourceTags,
   canonicalizeJobUrl,
+  dailyAiAttemptCap,
+  INBOX_TTL_MS,
   isValidHarvestedJob,
+  MAX_OPEN_INBOX,
   resolveApplicationSourceFields,
   type HarvestJobPreference,
   type MailJobHarvestResult,
@@ -14,11 +17,16 @@ import {
 import {
   applicationActivityRepository,
   applicationRepository,
-  mailMessageRepository
+  mailMessageRepository,
+  userJobAiBudgetRepository
 } from "@tsu-stack/db";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { callMailJobHarvestAgent } from "#@/queues/call-mail-job-harvest-agent";
+
+function utcDay(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
 
 /**
  * Harvest job listings from a classified `job_notifier` mail via Mastra AI:
@@ -79,8 +87,22 @@ export async function runMailJobHarvest(input: {
     loadJobPreference(row.userId),
     loadSeekerMatchEvidence(row.userId)
   ]);
+  if (!prefs.importFromEmail) {
+    log.set({
+      event: "mail_job_harvest_skip_import_disabled",
+      messageId: row.id,
+      userId: row.userId,
+      importFromEmail: false
+    });
+    log.emit({ _forceKeep: true });
+    return empty();
+  }
+
   const harvestPreference: HarvestJobPreference = { ...prefs, evidence };
-  const llm = await resolveRuntimeAiCredentials(row.userId, "classify");
+  const [llm, openInboxBeforeAgent] = await Promise.all([
+    resolveRuntimeAiCredentials(row.userId, "classify"),
+    applicationRepository.countByUserIdAndTrackingStatus(row.userId, "inbox")
+  ]);
   // Shared diagnostic fields — emitted once on terminal outcome.
   const harvestContext = {
     messageId: row.id,
@@ -93,8 +115,36 @@ export async function runMailJobHarvest(input: {
     evidenceRoleTitles: evidence.roleTitles.length,
     evidenceStacks: evidence.stackNames.length,
     hasByoApiKey: Boolean(llm.apiKey?.trim()),
-    modelId: llm.modelId ?? null
+    modelId: llm.modelId ?? null,
+    importFromEmail: prefs.importFromEmail,
+    openInbox: openInboxBeforeAgent
   };
+
+  if (openInboxBeforeAgent >= MAX_OPEN_INBOX) {
+    log.set({
+      event: "mail_job_harvest_skip_inbox_full",
+      ...harvestContext
+    });
+    log.emit({ _forceKeep: true });
+    return empty();
+  }
+
+  // One daily AI slot for the whole digest — increment before the model, not per listing.
+  if (llm.apiKey?.trim()) {
+    const reserved = await userJobAiBudgetRepository.tryIncrement(
+      row.userId,
+      utcDay(),
+      dailyAiAttemptCap(prefs.jobsPerRun)
+    );
+    if (!reserved) {
+      log.set({
+        event: "mail_job_harvest_daily_ai_cap",
+        ...harvestContext
+      });
+      log.emit({ _forceKeep: true });
+      return empty();
+    }
+  }
 
   const agentResult = await callMailJobHarvestAgent({
     messageId: row.id,
@@ -147,7 +197,10 @@ export async function runMailJobHarvest(input: {
   let skippedLowMatch = 0;
   let skippedDuplicate = 0;
   let skippedFailed = 0;
+  let skippedInboxFull = 0;
   const applicationIds: string[] = [];
+  let openInbox = await applicationRepository.countByUserIdAndTrackingStatus(row.userId, "inbox");
+  const inboxExpiresAt = new Date(Date.now() + INBOX_TTL_MS);
 
   for (const job of jobs) {
     try {
@@ -159,6 +212,11 @@ export async function runMailJobHarvest(input: {
         continue;
       }
 
+      if (openInbox >= MAX_OPEN_INBOX) {
+        skippedInboxFull += 1;
+        continue;
+      }
+
       const { source: platform, sourceLabel } = resolveApplicationSourceFields({
         listingUrl,
         fromEmail: row.fromEmail,
@@ -167,7 +225,7 @@ export async function runMailJobHarvest(input: {
       });
       const sourceTags = buildApplicationSourceTags({ channel: "mail", platform });
 
-      // Race-safe: unique (userId, url) + onConflictDoNothing
+      // Race-safe: unique (userId, url) + onConflictDoNothing. No discoveryRunId / adapter N.
       const { row: app, created: wasCreated } = await applicationRepository.createIfAbsentByUrl({
         userId: row.userId,
         companyName: job.companyName,
@@ -188,7 +246,8 @@ export async function runMailJobHarvest(input: {
         trackingStatus: "inbox",
         stage: "saved",
         hiringUrgency: "unknown",
-        resumeId: null
+        resumeId: null,
+        inboxExpiresAt
       });
 
       if (!wasCreated) {
@@ -197,6 +256,7 @@ export async function runMailJobHarvest(input: {
       }
 
       created += 1;
+      openInbox += 1;
       applicationIds.push(app.id);
       await applicationActivityRepository.append({
         userId: row.userId,
@@ -271,6 +331,7 @@ export async function runMailJobHarvest(input: {
     via: "mastra_ai",
     notes: output.notes ?? null,
     scoreSample,
+    skippedInboxFull,
     ...harvestContext,
     ...result
   });

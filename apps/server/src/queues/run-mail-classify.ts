@@ -1,3 +1,4 @@
+import { loadJobPreference } from "@tsu-stack/api/lib/application/load-job-preference";
 import { embedTextForCorrections } from "@tsu-stack/api/lib/mail/embed-text";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
@@ -33,7 +34,7 @@ import { enqueueMailJobHarvest } from "#@/queues/mail-job-harvest-queue";
  * 2. Mastra `mail-classify-workflow` + mail-classification skill (AI only)
  * 3. Smart filters (user rules) are AI-assigned in the same call via skill injection
  * 4. CRM stage effects when labels require CRM (job_notifier/noise skip CRM)
- * 5. Enqueue job harvest when label is job_notifier
+ * 5. Enqueue job harvest when label is job_notifier and importFromEmail is on
  */
 export async function runMailClassify(input: {
   messageId: string;
@@ -261,14 +262,21 @@ export async function runMailClassify(input: {
     systemLabels: result.systemLabels
   });
 
-  // job_notifier → harvest queue (AI extract + score + Applications).
+  // job_notifier → harvest queue only when Jobs → import from email is on.
   let harvestEnqueued: boolean | null = null;
+  let importFromEmail: boolean | null = null;
   if (hasJobNotifier) {
-    const harvest = await enqueueMailJobHarvest({
-      messageId: row.id,
-      userId: row.userId
-    });
-    harvestEnqueued = harvest.enqueued;
+    const prefs = await loadJobPreference(row.userId);
+    importFromEmail = prefs.importFromEmail;
+    if (prefs.importFromEmail) {
+      const harvest = await enqueueMailJobHarvest({
+        messageId: row.id,
+        userId: row.userId
+      });
+      harvestEnqueued = harvest.enqueued;
+    } else {
+      harvestEnqueued = false;
+    }
   }
 
   // Career-labeled mail → notify (replies are on-demand from the mail composer).
@@ -300,6 +308,7 @@ export async function runMailClassify(input: {
     crmKind: crm.effect.kind,
     crmReason: crm.effect.reason,
     harvestEnqueued,
+    importFromEmail,
     hasJobNotifier,
     hasNoise,
     ...byo

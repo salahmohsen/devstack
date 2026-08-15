@@ -58,7 +58,7 @@ export const MAIL_CATEGORY_TO_SYSTEM_LABEL = {
 
 /**
  * System label → hub card category.
- * Job-alert digests map to the Job notifier hub filter (harvest still feeds New jobs).
+ * Job-alert digests map to the Job notifier hub filter (optional harvest when email import is on).
  */
 export const MAIL_SYSTEM_LABEL_TO_CATEGORY = {
   application: "applications",
@@ -97,7 +97,8 @@ export const MAIL_CATEGORY_LABELS: Record<MailCategoryId, string> = {
 export const MAIL_CATEGORY_DESCRIPTIONS: Record<MailCategoryId, string> = {
   needs_action: "Replies, interviews, and status that need you",
   applications: "Linked to roles in your pipeline",
-  job_notifier: "Job-alert digests (LinkedIn, Indeed, …) — harvest source for New jobs",
+  job_notifier:
+    "Job-alert digests (LinkedIn, Indeed, …) — optional harvest when email import is on",
   recruiters: "People and agencies reaching out",
   interviews: "Scheduling and interview loops",
   offers: "Offer letters and compensation",
