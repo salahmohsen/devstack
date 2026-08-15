@@ -563,6 +563,16 @@ export function NewJobsPage() {
                         title={job.title}
                         titleEnd={
                           <>
+                            {job.listingClosed ? (
+                              <Badge
+                                variant="secondary"
+                                size="sm"
+                                className="font-normal tracking-normal text-muted-foreground normal-case"
+                                title="This posting is no longer on the board."
+                              >
+                                Listing closed
+                              </Badge>
+                            ) : null}
                             {job.matchScore != null ? (
                               <ApplicationMatchScoreBadge matchScore={job.matchScore} />
                             ) : null}

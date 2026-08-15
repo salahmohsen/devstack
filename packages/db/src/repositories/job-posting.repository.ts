@@ -137,6 +137,12 @@ export const jobPostingRepository = {
     return row ?? null;
   },
 
+  /** Batch load by id — includes closed postings (unlike findOpenByIds). */
+  async findByIds(ids: string[]): Promise<JobPostingEntity[]> {
+    if (ids.length === 0) return [];
+    return getDb().select().from(jobPosting).where(inArray(jobPosting.id, ids));
+  },
+
   async findOpenByIds(ids: string[]): Promise<JobPostingEntity[]> {
     if (ids.length === 0) return [];
     return getDb()

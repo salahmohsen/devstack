@@ -32,6 +32,7 @@ import {
 import {
   applicationActivityRepository,
   applicationRepository,
+  jobPostingRepository,
   mailMessageRepository,
   resumeRepository
 } from "@tsu-stack/db/repositories";
@@ -45,9 +46,11 @@ import { sendApplicationOutreach } from "#@/lib/application/send-application-out
 import { requestMailJobHarvest } from "#@/lib/mail/harvest-enqueue-hook";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
-function toApplicationOutput(
-  row: NonNullable<Awaited<ReturnType<typeof applicationRepository.findByIdForUser>>>
-) {
+type ApplicationRow = NonNullable<
+  Awaited<ReturnType<typeof applicationRepository.findByIdForUser>>
+>;
+
+function toApplicationOutput(row: ApplicationRow, listingClosed = false) {
   return {
     id: row.id,
     companyName: row.companyName,
@@ -85,9 +88,35 @@ function toApplicationOutput(
     applyPackageDraftedAt: row.applyPackageDraftedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    // Real closedAt join lands in Task 14.
-    listingClosed: false
+    listingClosed
   };
+}
+
+/** Batch-resolve catalog closedAt for application.postingId (avoids N+1). */
+async function listingClosedByPostingId(
+  postingIds: Array<string | null | undefined>
+): Promise<Map<string, boolean>> {
+  const ids = [
+    ...new Set(postingIds.filter((id): id is string => typeof id === "string" && id.length > 0))
+  ];
+  if (ids.length === 0) return new Map();
+  const postings = await jobPostingRepository.findByIds(ids);
+  return new Map(postings.map((p) => [p.id, p.closedAt != null]));
+}
+
+async function toApplicationOutputs(rows: ApplicationRow[]) {
+  const closedById = await listingClosedByPostingId(rows.map((r) => r.postingId));
+  return rows.map((row) =>
+    toApplicationOutput(
+      row,
+      row.postingId != null ? (closedById.get(row.postingId) ?? false) : false
+    )
+  );
+}
+
+async function toApplicationOutputWithListing(row: ApplicationRow) {
+  const [out] = await toApplicationOutputs([row]);
+  return out;
 }
 
 function toActivityOutput(
@@ -124,7 +153,7 @@ export const applicationsRouter = {
       const userId = context.session.user.id;
       const status = input?.trackingStatus ?? "tracked";
       const rows = await applicationRepository.findByUserIdAndTrackingStatus(userId, status);
-      return rows.map(toApplicationOutput);
+      return toApplicationOutputs(rows);
     }),
 
   count: protectedProcedure
@@ -225,7 +254,7 @@ export const applicationsRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const row = await applicationRepository.findByIdForUser(input.id, userId);
-      return row ? toApplicationOutput(row) : null;
+      return row ? await toApplicationOutputWithListing(row) : null;
     }),
 
   create: protectedProcedure
@@ -282,7 +311,7 @@ export const applicationsRouter = {
         if (!created) {
           // Already tracked (open or closed): return as-is — no field overwrite, no reopen.
           if (row.trackingStatus === "tracked") {
-            return toApplicationOutput(row);
+            return toApplicationOutputWithListing(row);
           }
           // inbox / dismissed → promote to tracked
           const promoted = await applicationRepository.setTrackingStatus(row.id, userId, "tracked");
@@ -294,7 +323,7 @@ export const applicationsRouter = {
             actorUserId: userId,
             metadata: { from: row.trackingStatus, via: "manual_create_conflict" }
           });
-          return toApplicationOutput(promoted);
+          return toApplicationOutputWithListing(promoted);
         }
         await applicationActivityRepository.append({
           userId,
@@ -303,7 +332,7 @@ export const applicationsRouter = {
           actorUserId: userId,
           metadata: { via: "manual_create", sourceTags }
         });
-        return toApplicationOutput(row);
+        return toApplicationOutputWithListing(row);
       }
 
       const created = await applicationRepository.create({
@@ -317,7 +346,7 @@ export const applicationsRouter = {
         actorUserId: userId,
         metadata: { via: "manual_create", sourceTags }
       });
-      return toApplicationOutput(created);
+      return toApplicationOutputWithListing(created);
     }),
 
   promote: protectedProcedure
@@ -336,7 +365,7 @@ export const applicationsRouter = {
       const owned = await applicationRepository.findByIdForUser(input.id, userId);
       if (!owned) throw errors.NOT_FOUND();
       if (owned.trackingStatus === "tracked") {
-        return toApplicationOutput(owned);
+        return toApplicationOutputWithListing(owned);
       }
       if (owned.trackingStatus !== "inbox" && owned.trackingStatus !== "dismissed") {
         throw errors.INVALID_STATE();
@@ -351,7 +380,7 @@ export const applicationsRouter = {
         actorUserId: userId,
         metadata: { from }
       });
-      return toApplicationOutput(updated);
+      return toApplicationOutputWithListing(updated);
     }),
 
   dismiss: protectedProcedure
@@ -370,7 +399,7 @@ export const applicationsRouter = {
       const owned = await applicationRepository.findByIdForUser(input.id, userId);
       if (!owned) throw errors.NOT_FOUND();
       if (owned.trackingStatus === "dismissed") {
-        return toApplicationOutput(owned);
+        return toApplicationOutputWithListing(owned);
       }
       if (owned.trackingStatus !== "inbox") throw errors.INVALID_STATE();
       const updated = await applicationRepository.setTrackingStatus(input.id, userId, "dismissed");
@@ -381,7 +410,7 @@ export const applicationsRouter = {
         kind: "dismissed",
         actorUserId: userId
       });
-      return toApplicationOutput(updated);
+      return toApplicationOutputWithListing(updated);
     }),
 
   restore: protectedProcedure
@@ -400,7 +429,7 @@ export const applicationsRouter = {
       const owned = await applicationRepository.findByIdForUser(input.id, userId);
       if (!owned) throw errors.NOT_FOUND();
       if (owned.trackingStatus === "inbox") {
-        return toApplicationOutput(owned);
+        return toApplicationOutputWithListing(owned);
       }
       if (owned.trackingStatus !== "dismissed") throw errors.INVALID_STATE();
       const updated = await applicationRepository.setTrackingStatus(input.id, userId, "inbox");
@@ -411,7 +440,7 @@ export const applicationsRouter = {
         kind: "restored",
         actorUserId: userId
       });
-      return toApplicationOutput(updated);
+      return toApplicationOutputWithListing(updated);
     }),
 
   batchDismiss: protectedProcedure
@@ -431,7 +460,7 @@ export const applicationsRouter = {
         activityKind: "dismissed",
         actorUserId: userId
       });
-      return rows.map(toApplicationOutput);
+      return toApplicationOutputs(rows);
     }),
 
   batchRestore: protectedProcedure
@@ -451,7 +480,7 @@ export const applicationsRouter = {
         activityKind: "restored",
         actorUserId: userId
       });
-      return rows.map(toApplicationOutput);
+      return toApplicationOutputs(rows);
     }),
 
   listActivity: protectedProcedure
@@ -525,7 +554,7 @@ export const applicationsRouter = {
       }
       const updated = await applicationRepository.update(input.id, userId, input.data);
       if (!updated) throw errors.NOT_FOUND();
-      return toApplicationOutput(updated);
+      return toApplicationOutputWithListing(updated);
     }),
 
   updateStage: protectedProcedure
@@ -560,7 +589,7 @@ export const applicationsRouter = {
         actorUserId: userId,
         metadata: { fromStage: before?.stage ?? null, toStage: input.stage }
       });
-      return toApplicationOutput(result.row);
+      return toApplicationOutputWithListing(result.row);
     }),
 
   setOutcome: protectedProcedure
@@ -592,7 +621,7 @@ export const applicationsRouter = {
         actorUserId: userId,
         metadata: { outcome: input.outcome, stage: owned.stage }
       });
-      return toApplicationOutput(updated);
+      return toApplicationOutputWithListing(updated);
     }),
 
   delete: protectedProcedure
@@ -669,7 +698,7 @@ export const applicationsRouter = {
         }
         throw errors.AGENT_FAILED({ message: result.message });
       }
-      return toApplicationOutput(result.application);
+      return toApplicationOutputWithListing(result.application);
     }),
 
   refreshFromListingUrl: protectedProcedure
@@ -715,7 +744,7 @@ export const applicationsRouter = {
         }
         throw errors.AGENT_FAILED({ message: result.message });
       }
-      return toApplicationOutput(result.application);
+      return toApplicationOutputWithListing(result.application);
     }),
 
   generateApplyPackage: protectedProcedure
@@ -761,7 +790,7 @@ export const applicationsRouter = {
         actorUserId: userId,
         metadata: { via: "generate_apply_package" }
       });
-      return toApplicationOutput(result.application);
+      return toApplicationOutputWithListing(result.application);
     }),
 
   acceptApplyPackage: protectedProcedure
@@ -796,7 +825,7 @@ export const applicationsRouter = {
         if (result.code === "NO_DRAFT") throw errors.NO_DRAFT({ message: result.message });
         throw errors.INVALID_DRAFT({ message: result.message });
       }
-      return toApplicationOutput(result.application);
+      return toApplicationOutputWithListing(result.application);
     }),
 
   sendOutreach: protectedProcedure
@@ -844,6 +873,6 @@ export const applicationsRouter = {
         }
         throw errors.SEND_FAILED({ message: result.message });
       }
-      return toApplicationOutput(result.application);
+      return toApplicationOutputWithListing(result.application);
     })
 };

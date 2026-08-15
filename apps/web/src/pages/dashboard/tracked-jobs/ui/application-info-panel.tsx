@@ -153,7 +153,22 @@ export function ApplicationInfoPanel({
                   <span>{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</span>
                 </>
               ) : null}
+              {item.listingClosed ? (
+                <Badge
+                  variant="secondary"
+                  size="sm"
+                  className="font-normal tracking-normal text-muted-foreground normal-case"
+                  title="This posting is no longer on the board."
+                >
+                  Listing closed
+                </Badge>
+              ) : null}
             </p>
+            {item.listingClosed ? (
+              <p className="text-sm text-muted-foreground">
+                This posting is no longer on the board.
+              </p>
+            ) : null}
             {(item.sourceTags ?? []).length > 0 ? (
               <span className="flex flex-wrap items-center gap-1.5">
                 {(item.sourceTags ?? []).map((tag) => (
