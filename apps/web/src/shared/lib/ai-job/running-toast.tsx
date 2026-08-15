@@ -44,7 +44,7 @@ export function showAiJobRunningToast(options: {
     id,
     icon: <WorkflowSolvingOrb size="toast" />,
     className:
-      "items-start! [&_[data-icon]]:me-3! [&_[data-icon]]:mt-0.5! [&_[data-icon]]:h-8! [&_[data-icon]]:w-8! [&_[data-icon]]:min-h-8! [&_[data-icon]]:min-w-8!",
+      "w-[368px]! items-center! [&_[data-content]]:min-w-0! [&_[data-icon]]:size-[calc((2*0.875rem*1.375+0.125rem)/0.82)]! [&_[data-icon]]:min-h-[calc((2*0.875rem*1.375+0.125rem)/0.82)]! [&_[data-icon]]:min-w-[calc((2*0.875rem*1.375+0.125rem)/0.82)]!",
     duration: Infinity,
     action: {
       label: cancelLabel,

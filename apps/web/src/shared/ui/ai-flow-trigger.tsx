@@ -53,26 +53,31 @@ export type AiFlowTriggerProps = {
   layout?: "default" | "stretch" | "pill";
 };
 
+/**
+ * Title + step = two `text-sm leading-snug` lines + `gap-0.5`.
+ * Solving orb draws at 0.82 of the canvas, so the box is that block / 0.82
+ * and the globe sits on the copy. Keep in lockstep with `AiJobRunningToastBody`.
+ */
+const TOAST_ORB_BOX_CLASS = "size-[calc((2*0.875rem*1.375+0.125rem)/0.82)]";
+
 /** Inline solving orb — shared by workflow pills and AI job toasts. */
 export function WorkflowSolvingOrb({
   className,
   size = "inline"
 }: {
   className?: string;
-  /** `toast` uses the 64px preset scaled to 32px — the 20px preset is too small in Sonner. */
+  /** `toast` uses the 64px preset CSS-scaled to the title + step block. */
   size?: "inline" | "toast";
 }) {
   if (size === "toast") {
     return (
-      <span
-        className={cn("relative flex size-8 shrink-0 items-center justify-center", className)}
-        aria-hidden
-      >
+      <span className={cn("relative block shrink-0", TOAST_ORB_BOX_CLASS, className)} aria-hidden>
         <ThinkingOrb
           state="solving"
           size={64}
           theme="auto"
-          className="absolute size-16 origin-center scale-50"
+          className="block size-full"
+          style={{ width: "100%", height: "100%" }}
         />
       </span>
     );
