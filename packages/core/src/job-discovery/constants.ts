@@ -120,6 +120,15 @@ export const JOB_ADAPTER_IDS = [
 
 export type JobAdapterId = (typeof JOB_ADAPTER_IDS)[number];
 
+/** UI / `sourceLabel` names when discovery platform is `other` or `company_website`. */
+export const JOB_ADAPTER_LABELS: Record<JobAdapterId, string> = {
+  freehire: "freehire",
+  himalayas: "Himalayas",
+  arbeitnow: "Arbeitnow",
+  remotive: "Remotive",
+  remoteok: "RemoteOK"
+};
+
 /** freehire `source=` allowlist — drop aggregator copies we fetch ourselves. */
 export const FREEHIRE_ATS_SOURCES = [
   "greenhouse",
