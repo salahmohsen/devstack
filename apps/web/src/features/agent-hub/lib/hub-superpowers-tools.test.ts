@@ -1,6 +1,7 @@
 import { type UIMessage } from "ai";
 import { describe, expect, it } from "vitest";
 
+import { summarizeHubApproval } from "./hub-approval-summary";
 import {
   isOpenSurfaceToolName,
   isProposeNewJobsTriageToolName,
@@ -177,5 +178,45 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       } as never
     ]);
     expect(shouldAutoResumeHubChat({ messages: [done] })).toBe(resumeAfterOutput);
+  });
+});
+
+describe("summarizeHubApproval", () => {
+  it("generateApplyPackage includes applicationId and no raw JSON", () => {
+    const summary = summarizeHubApproval("generateApplyPackage", { applicationId: "app_1" });
+    expect(summary.kind).toBe("approval");
+    expect(summary.body).toContain("app_1");
+    expect(summary.body).not.toContain("{");
+  });
+
+  it("send-apply-outreach is confirm with Send primary", () => {
+    const summary = summarizeHubApproval("send-apply-outreach", {});
+    expect(summary.kind).toBe("confirm");
+    expect(summary.primaryLabel).toBe("Send");
+  });
+
+  it("send-mail-reply uses subject and omits bodyText", () => {
+    const summary = summarizeHubApproval("send-mail-reply", {
+      subject: "Thanks",
+      bodyText: "SECRET"
+    });
+    expect(summary.body).toContain("Thanks");
+    expect(summary.body).not.toContain("SECRET");
+  });
+
+  it("create-application includes title and company", () => {
+    const summary = summarizeHubApproval("create-application", {
+      title: "Engineer",
+      companyName: "Acme"
+    });
+    expect(summary.body).toContain("Engineer");
+    expect(summary.body).toContain("Acme");
+  });
+
+  it("unknown tool uses fallback title without JSON", () => {
+    const summary = summarizeHubApproval("some-unknown-tool", { foo: "bar" });
+    expect(summary.title).toBe("Approval required");
+    expect(summary.body).not.toContain("{");
+    expect(summary.body).not.toContain("foo");
   });
 });
