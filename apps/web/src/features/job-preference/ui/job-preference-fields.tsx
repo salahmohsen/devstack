@@ -31,6 +31,8 @@ export const JobPreferenceFields = withForm({
     const previousTitleIdRef = useRef<JobTitleId | "">(titleId);
 
     useEffect(() => {
+      // Keep last non-empty pack so clear → next pack still drops previous seeds.
+      if (titleId === "") return;
       previousTitleIdRef.current = titleId;
     }, [titleId]);
 
