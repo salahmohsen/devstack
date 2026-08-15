@@ -10,6 +10,8 @@ import {
   JobCatalogIngestPayloadSchema,
   JobDiscoveryLandPayloadSchema,
   JobInboxAiPayloadSchema,
+  inboxAiJobId,
+  landJobId,
   type JobCatalogIngestPayload,
   type JobDiscoveryLandPayload,
   type JobInboxAiPayload
@@ -47,6 +49,15 @@ function getProducerQueue(queueKey: string, queueName: string): Queue | null {
   return g[queueKey]!;
 }
 
+async function removeFinishedJob(queue: Queue, jobId: string): Promise<void> {
+  const existing = await queue.getJob(jobId);
+  if (!existing) return;
+  const state = await existing.getState();
+  if (state === "completed" || state === "failed") {
+    await existing.remove();
+  }
+}
+
 async function enqueueDirect(input: {
   queueKey: string;
   queueName: string;
@@ -55,18 +66,25 @@ async function enqueueDirect(input: {
   operation: string;
   event: string;
   extra?: Record<string, unknown>;
+  jobId?: string;
+  removeOnComplete?: boolean | number;
+  removeOnFail?: boolean | number;
 }): Promise<boolean> {
   const queue = getProducerQueue(input.queueKey, input.queueName);
   if (!queue) return false;
 
   try {
     await Promise.race([
-      queue.add(input.jobName, input.data, {
-        removeOnComplete: 1000,
-        removeOnFail: 5000,
-        attempts: 3,
-        backoff: { type: "exponential", delay: 2000 }
-      }),
+      (async () => {
+        if (input.jobId) await removeFinishedJob(queue, input.jobId);
+        await queue.add(input.jobName, input.data, {
+          jobId: input.jobId,
+          removeOnComplete: input.removeOnComplete ?? 1000,
+          removeOnFail: input.removeOnFail ?? 5000,
+          attempts: 3,
+          backoff: { type: "exponential", delay: 2000 }
+        });
+      })(),
       new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error(`${input.queueName} enqueue timed out (3s)`)), 3_000);
       })
@@ -108,6 +126,9 @@ async function requestWithHook<T>(input: {
   operation: string;
   event: string;
   extra?: Record<string, unknown>;
+  jobId?: string;
+  removeOnComplete?: boolean | number;
+  removeOnFail?: boolean | number;
 }): Promise<boolean> {
   const direct = await enqueueDirect(input);
   if (direct) return true;
@@ -160,7 +181,10 @@ export async function requestJobDiscoveryLand(
     data,
     operation: "api__job_discovery_land_enqueue",
     event: "job_discovery_land_enqueued",
-    extra: { userId: data.userId, runId: data.runId, trigger: data.trigger }
+    extra: { userId: data.userId, runId: data.runId, trigger: data.trigger },
+    jobId: landJobId(data.userId, data.runId),
+    removeOnComplete: true,
+    removeOnFail: true
   });
 }
 
@@ -174,7 +198,10 @@ export async function requestJobInboxAi(input: JobInboxAiPayload): Promise<boole
     data,
     operation: "api__job_inbox_ai_enqueue",
     event: "job_inbox_ai_enqueued",
-    extra: { userId: data.userId, applicationId: data.applicationId, runId: data.runId }
+    extra: { userId: data.userId, applicationId: data.applicationId, runId: data.runId },
+    jobId: inboxAiJobId(data.applicationId),
+    removeOnComplete: true,
+    removeOnFail: true
   });
 }
 

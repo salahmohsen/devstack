@@ -5,6 +5,7 @@ import {
   JOB_DISCOVERY_LAND_JOB_NAME,
   JOB_DISCOVERY_LAND_QUEUE_NAME,
   JobDiscoveryLandPayloadSchema,
+  landJobId,
   type JobDiscoveryLandPayload
 } from "@tsu-stack/core";
 import { createDb, runWithDb } from "@tsu-stack/db";
@@ -33,10 +34,6 @@ function store(): QueueStore {
 
 function bullConnection(redisUrl: string): ConnectionOptions {
   return { url: redisUrl, maxRetriesPerRequest: null };
-}
-
-export function landJobId(userId: string, runId: string): string {
-  return `land_${userId}_${runId}`;
 }
 
 export function startJobDiscoveryLandQueue(redisUrl: string): void {

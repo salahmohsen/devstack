@@ -2,6 +2,7 @@ import { Queue, Worker, type ConnectionOptions, type Job } from "bullmq";
 
 import { runInboxAi } from "@tsu-stack/api/lib/job-discovery/inbox-ai";
 import {
+  inboxAiJobId,
   JOB_INBOX_AI_JOB_NAME,
   JOB_INBOX_AI_QUEUE_NAME,
   JobInboxAiPayloadSchema,
@@ -32,10 +33,6 @@ function store(): QueueStore {
 
 function bullConnection(redisUrl: string): ConnectionOptions {
   return { url: redisUrl, maxRetriesPerRequest: null };
-}
-
-export function inboxAiJobId(applicationId: string): string {
-  return `inboxai_${applicationId}`;
 }
 
 export function startJobInboxAiQueue(redisUrl: string): void {

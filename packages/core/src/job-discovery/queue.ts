@@ -10,6 +10,16 @@ export const JOB_DISCOVERY_LAND_JOB_NAME = "discovery-land";
 export const JOB_INBOX_AI_JOB_NAME = "inbox-ai";
 export const JOB_INBOX_LIVENESS_JOB_NAME = "inbox-liveness";
 
+/** Coalesce cron / findNow / backfill while waiting or active. */
+export function landJobId(userId: string, runId: string): string {
+  return `land_${userId}_${runId}`;
+}
+
+/** One AI pass per application while waiting or active. */
+export function inboxAiJobId(applicationId: string): string {
+  return `inboxai_${applicationId}`;
+}
+
 export const JobDiscoveryLandPayloadSchema = z.object({
   userId: z.string().min(1),
   runId: z.string().min(1),
