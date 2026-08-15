@@ -25,6 +25,7 @@ export function HubHitlFrame({
   title,
   description,
   icon,
+  aside,
   footer,
   submitting = false,
   toolCallId,
@@ -35,6 +36,7 @@ export function HubHitlFrame({
   title: string;
   description?: React.ReactNode;
   icon?: React.ReactNode;
+  aside?: React.ReactNode;
   footer?: React.ReactNode;
   submitting?: boolean;
   toolCallId?: string;
@@ -87,9 +89,18 @@ export function HubHitlFrame({
     >
       <CardHeader className="p-4">
         {/* Keep icon inside the title — a CardHeader sibling steals a grid cell. */}
-        <CardTitle id={headingId} className={cn("text-sm", icon && "flex items-center gap-2")}>
-          {icon}
-          {title}
+        <CardTitle
+          id={headingId}
+          className={cn(
+            "flex items-start justify-between gap-3 text-sm leading-snug font-semibold",
+            icon && "gap-2"
+          )}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            {icon}
+            <span className="min-w-0 text-pretty">{title}</span>
+          </span>
+          {aside ? <span className="shrink-0 self-start">{aside}</span> : null}
         </CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>

@@ -19,7 +19,7 @@ import {
 export const proposeApplicationFromJdTool = createTool({
   id: "propose-application-from-jd",
   description:
-    "Propose a job application parsed from a JD. Wait for user button: package | save | dismiss. After calling this tool, write no user-facing text — the card is the confirmation UI. Do not invent CRM rows without this confirmation.",
+    "Propose a job application parsed from a JD. Always set matchScore 0–100 vs the seeker's profile (use a number, not a string). Include title, companyName, full description, location, and url when known. Wait for user button: package | save | dismiss. After calling this tool, write no user-facing text — the card is the confirmation UI. Do not invent CRM rows without this confirmation.",
   inputSchema: ProposeApplicationFromJdInputSchema,
   outputSchema: ProposeApplicationFromJdOutputSchema
 });

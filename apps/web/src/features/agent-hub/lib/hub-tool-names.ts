@@ -131,7 +131,7 @@ export function parseProposeApplicationFromJdInput(
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { title: "", companyName: "", description: "" };
   }
-  const o = input as Partial<ProposeApplicationFromJdCardInput>;
+  const o = input as Partial<ProposeApplicationFromJdCardInput> & { matchScore?: unknown };
   return {
     title: typeof o.title === "string" ? o.title : "",
     companyName: typeof o.companyName === "string" ? o.companyName : "",
@@ -139,9 +139,20 @@ export function parseProposeApplicationFromJdInput(
     url: typeof o.url === "string" ? o.url : null,
     applyUrl: typeof o.applyUrl === "string" ? o.applyUrl : null,
     location: typeof o.location === "string" ? o.location : null,
-    matchScore: typeof o.matchScore === "number" ? o.matchScore : null,
+    matchScore: coerceMatchScore(o.matchScore),
     notes: typeof o.notes === "string" ? o.notes : null
   };
+}
+
+function coerceMatchScore(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.min(100, Math.max(0, Math.round(value)));
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value.trim());
+    if (Number.isFinite(parsed)) return Math.min(100, Math.max(0, Math.round(parsed)));
+  }
+  return null;
 }
 
 export function parseProposeApplicationFromJdOutputAction(

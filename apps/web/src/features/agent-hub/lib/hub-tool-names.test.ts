@@ -81,6 +81,11 @@ describe("parseProposeApplicationFromJdInput", () => {
     });
   });
 
+  it("coerces string matchScore into 0–100", () => {
+    expect(parseProposeApplicationFromJdInput({ matchScore: "87.4" }).matchScore).toBe(87);
+    expect(parseProposeApplicationFromJdInput({ matchScore: "n/a" }).matchScore).toBeNull();
+  });
+
   it("keeps strings and numeric matchScore, nulls the rest", () => {
     expect(
       parseProposeApplicationFromJdInput({
