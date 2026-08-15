@@ -7,6 +7,7 @@ import {
   MIN_JOBS_PER_RUN,
   refineJobsPerRun
 } from "#@/job-discovery/constants";
+import { refineCustomDiscoveryTitle } from "#@/job-discovery/title-packs";
 
 export const WorkModeSchema = z.enum(["remote", "hybrid", "onsite"]);
 export type WorkMode = z.infer<typeof WorkModeSchema>;
@@ -78,29 +79,31 @@ export const JobPreferenceOutputSchema = JobPreferenceFieldsSchema.extend({
 export type JobPreferenceOutput = z.infer<typeof JobPreferenceOutputSchema>;
 
 /** Partial upsert — omitted fields keep existing (or product defaults on first write). */
-export const UpsertJobPreferenceInputSchema = z.object({
-  workModes: z.array(WorkModeSchema).max(3).optional(),
-  locations: preferenceStringList.optional(),
-  roleKeywords: preferenceStringList.optional(),
-  excludeKeywords: preferenceStringList.optional(),
-  salaryMin: z.number().nonnegative().nullable().optional(),
-  salaryCurrency: z
-    .string()
-    .trim()
-    .max(8)
-    .nullable()
-    .optional()
-    .transform((v) => {
-      if (v === undefined) return undefined;
-      if (v === "" || v == null) return null;
-      return v.toUpperCase();
-    }),
-  minMatchScore: z.number().int().min(0).max(100).optional(),
-  titleId: JobTitleIdSchema.nullable().optional(),
-  customTitle: customTitleField.optional(),
-  jobsPerRun: jobsPerRunField.optional(),
-  importFromEmail: z.boolean().optional()
-});
+export const UpsertJobPreferenceInputSchema = z
+  .object({
+    workModes: z.array(WorkModeSchema).max(3).optional(),
+    locations: preferenceStringList.optional(),
+    roleKeywords: preferenceStringList.optional(),
+    excludeKeywords: preferenceStringList.optional(),
+    salaryMin: z.number().nonnegative().nullable().optional(),
+    salaryCurrency: z
+      .string()
+      .trim()
+      .max(8)
+      .nullable()
+      .optional()
+      .transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === "" || v == null) return null;
+        return v.toUpperCase();
+      }),
+    minMatchScore: z.number().int().min(0).max(100).optional(),
+    titleId: JobTitleIdSchema.nullable().optional(),
+    customTitle: customTitleField.optional(),
+    jobsPerRun: jobsPerRunField.optional(),
+    importFromEmail: z.boolean().optional()
+  })
+  .superRefine(refineCustomDiscoveryTitle);
 export type UpsertJobPreferenceInput = z.infer<typeof UpsertJobPreferenceInputSchema>;
 
 /**

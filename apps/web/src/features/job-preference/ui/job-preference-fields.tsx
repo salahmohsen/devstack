@@ -1,22 +1,39 @@
 "use client";
 
-import { isOpenJobPreference } from "@tsu-stack/core";
+import { useStore } from "@tanstack/react-form";
+import { useEffect, useRef } from "react";
+
+import {
+  applyTitlePack,
+  isOpenJobPreference,
+  JOBS_PER_RUN_STEP,
+  MAX_JOBS_PER_RUN,
+  MIN_JOBS_PER_RUN,
+  type JobTitleId
+} from "@tsu-stack/core";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 
 import { withForm } from "@/shared/form";
 
 import {
   emptyJobPreferenceForm,
-  JOB_PREFERENCE_WORK_MODE_OPTIONS
+  JOB_PREFERENCE_WORK_MODE_OPTIONS,
+  JOB_TITLE_PACK_OPTIONS
 } from "@/features/job-preference/lib/job-preference-form";
 
 export const JobPreferenceFields = withForm({
   defaultValues: emptyJobPreferenceForm,
   props: {
-    emptyHint:
-      "Used to filter jobs from email alerts. Add work modes, locations, or keywords so mail harvest can match roles you care about."
+    emptyHint: "Used to find and rank jobs from public boards. Email import is optional."
   },
   render: function JobPreferenceFieldsRender({ form, emptyHint }) {
+    const titleId = useStore(form.store, (state) => state.values.titleId);
+    const previousTitleIdRef = useRef<JobTitleId | "">(titleId);
+
+    useEffect(() => {
+      previousTitleIdRef.current = titleId;
+    }, [titleId]);
+
     return (
       <>
         <form.Subscribe selector={(state) => state.values}>
@@ -30,6 +47,51 @@ export const JobPreferenceFields = withForm({
         </form.Subscribe>
 
         <FieldGroup className="gap-6">
+          <form.AppField
+            name="titleId"
+            listeners={{
+              onChange: ({ value }) => {
+                const previous = previousTitleIdRef.current;
+                if (value === "" || value === previous) return;
+                form.setFieldValue(
+                  "roleKeywords",
+                  applyTitlePack({
+                    nextTitleId: value,
+                    previousTitleId: previous === "" ? null : previous,
+                    currentKeywords: form.getFieldValue("roleKeywords")
+                  })
+                );
+              }
+            }}
+          >
+            {(field) => (
+              <field.ComboboxField
+                label="Job title"
+                description="Packs seed role keywords. Choose Custom title to type your own."
+                placeholder="Select a title"
+                emptyMessage="No titles match."
+                items={JOB_TITLE_PACK_OPTIONS}
+              />
+            )}
+          </form.AppField>
+
+          <form.Subscribe selector={(state) => state.values.titleId}>
+            {(titleId) =>
+              titleId === "custom" ? (
+                <form.AppField name="customTitle">
+                  {(field) => (
+                    <field.InputField
+                      label="Custom title"
+                      description="Shown as the search title. Needs at least two role keywords."
+                      placeholder="e.g. Staff SRE"
+                      maxLength={120}
+                    />
+                  )}
+                </form.AppField>
+              ) : null
+            }
+          </form.Subscribe>
+
           <form.AppField name="workModes">
             {(field) => (
               <field.ToggleGroupField
@@ -58,7 +120,7 @@ export const JobPreferenceFields = withForm({
             {(field) => (
               <field.TagsField
                 label="Role keywords"
-                description="Titles or skills that raise match score (e.g. TypeScript, Staff Engineer). Press Enter or comma to add."
+                description="Pack seeds stay; add extras. Custom needs at least two keywords."
                 placeholder="e.g. Full-stack, React"
                 maxItems={50}
                 maxItemLength={120}
@@ -78,15 +140,38 @@ export const JobPreferenceFields = withForm({
             )}
           </form.AppField>
 
+          <form.AppField name="jobsPerRun">
+            {(field) => (
+              <field.SliderField
+                label="Jobs per search"
+                description="How many listings to land each search (15–40)."
+                min={MIN_JOBS_PER_RUN}
+                max={MAX_JOBS_PER_RUN}
+                step={JOBS_PER_RUN_STEP}
+                formatValue={(value) => `${value} jobs`}
+              />
+            )}
+          </form.AppField>
+
           <form.AppField name="minMatchScore">
             {(field) => (
               <field.SliderField
                 label="Minimum match score"
-                description="Auto-harvest skips jobs below this score (0–100). Default is 60."
+                description="AI match bar (0–100). Cheap ranking does not use this."
                 min={0}
                 max={100}
                 step={1}
                 formatValue={(value) => `${value}%`}
+              />
+            )}
+          </form.AppField>
+
+          <form.AppField name="importFromEmail">
+            {(field) => (
+              <field.SwitchField
+                label="Also import from email"
+                description="Turn on to harvest job-alert digests into New jobs. Off by default — discovery APIs still run."
+                layout="card"
               />
             )}
           </form.AppField>

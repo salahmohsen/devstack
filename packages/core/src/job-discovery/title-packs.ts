@@ -1,3 +1,5 @@
+import { type z } from "zod";
+
 import { JOB_TITLE_PACK_IDS, TITLE_PACKS, type JobTitleId, type JobTitlePackId } from "./constants";
 
 function isJobTitlePackId(value: string): value is JobTitlePackId {
@@ -69,6 +71,46 @@ export function hasValidDiscoveryTitle(input: {
   if (input.titleId !== "custom") return false;
   const title = input.customTitle?.trim() ?? "";
   return title.length > 0 && input.roleKeywords.length >= 2;
+}
+
+/** Combobox items: pack labels plus Custom title. */
+export function titlePackOptions(): Array<{ value: JobTitleId; label: string }> {
+  return [
+    ...JOB_TITLE_PACK_IDS.map((id) => {
+      return { value: id, label: TITLE_PACKS[id].label };
+    }),
+    { value: "custom", label: "Custom title" }
+  ];
+}
+
+/**
+ * When `titleId === "custom"`, require a non-empty title and ≥2 role keywords.
+ * No-op for packs, unset, or omitted `titleId` (partial upsert).
+ */
+export function refineCustomDiscoveryTitle(
+  value: {
+    titleId?: JobTitleId | "" | null;
+    customTitle?: string | null;
+    roleKeywords?: readonly string[] | null;
+  },
+  ctx: z.core.$RefinementCtx
+): void {
+  if (value.titleId !== "custom") return;
+  const title = value.customTitle?.trim() ?? "";
+  if (title.length === 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["customTitle"],
+      message: "Enter a custom title"
+    });
+  }
+  if ((value.roleKeywords?.length ?? 0) < 2) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["roleKeywords"],
+      message: "Custom titles need at least two role keywords"
+    });
+  }
 }
 
 /** Stable catalog/query key for a discovery title config; null when invalid. */

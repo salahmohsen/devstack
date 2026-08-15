@@ -61,7 +61,7 @@ export function JobSettings() {
       <SettingsFrame
         title="Jobs"
         icon={<BriefcaseIcon className="size-4 opacity-80" aria-hidden />}
-        description="Used to filter jobs from email alerts"
+        description="Used to find and rank jobs from public boards. Email import is optional."
       >
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Spinner className="size-4" />
@@ -137,7 +137,7 @@ function JobSettingsForm({ data }: { data: JobPreferenceQueryResult }) {
       <SettingsFrame
         title="Jobs"
         icon={<BriefcaseIcon className="size-4 opacity-80" aria-hidden />}
-        description="Used to filter jobs from email alerts"
+        description="Used to find and rank jobs from public boards. Email import is optional."
         actions={
           <>
             {!isDirty && !upsert.isPending && !saveFailed && !flashSubmitted ? (
@@ -164,7 +164,7 @@ function JobSettingsForm({ data }: { data: JobPreferenceQueryResult }) {
         >
           <JobPreferenceFields
             form={form}
-            emptyHint="Used to filter jobs from email alerts. Add work modes, locations, or keywords so mail harvest can match roles you care about."
+            emptyHint="Used to find and rank jobs from public boards. Email import is optional."
           />
         </Form>
       </SettingsFrame>
