@@ -179,7 +179,7 @@ export const mailSettingsRouter = {
 
   test: protectedProcedure
     .route({
-      description: "Probe the Resend API key and check the saved webhook signing secret",
+      description: "Probe the Resend API key and webhook signing secret (saved or draft)",
       method: "POST"
     })
     .input(TestMailSettingsInputSchema)
@@ -187,7 +187,10 @@ export const mailSettingsRouter = {
     .handler(async ({ input, context }) =>
       testResendSettings({
         userId: context.session.user.id,
-        resendApiKey: input.resendApiKey
+        resendApiKey: input.resendApiKey,
+        webhookSecret: input.webhookSecret,
+        clearResendApiKey: input.clearResendApiKey,
+        clearWebhookSecret: input.clearWebhookSecret
       })
     ),
 

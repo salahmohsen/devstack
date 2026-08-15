@@ -63,59 +63,42 @@ function SecretInput({
   const showSavedMask = locked ? true : Boolean(!value && hasSavedSecret && last4 && !replacing);
 
   const beginReplace = React.useCallback(() => {
+    if (locked) return;
     setReplacing(true);
     requestAnimationFrame(() => {
       if (id) document.getElementById(id)?.focus();
     });
-  }, [id]);
+  }, [id, locked]);
+
+  // InputGroup marks the control wrapper `contents`; size/padding must hit `input`.
+  const maskInputClassName =
+    "[&_input]:field-sizing-content [&_input]:w-auto [&_input]:max-w-none [&_input]:min-w-0 [&_input]:shrink-0 [&_input]:pe-0! [&_input]:font-mono [&_input]:text-muted-foreground";
+  const maskAriaLabel =
+    ariaLabel ??
+    (locked
+      ? `Secret on file, ends with ${last4}. Will remove on save.`
+      : `Secret on file, ends with ${last4}. Focus to replace.`);
+
+  function handleMaskPointerDown(event: React.MouseEvent<HTMLElement>) {
+    if (locked) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest("[data-slot=input-group-addon]")) return;
+    event.preventDefault();
+    beginReplace();
+  }
 
   if (showSavedMask) {
-    if (endAddon) {
-      return (
-        <InputGroup className={cn("w-full min-w-0 self-stretch", className)}>
-          <InputGroupInput
-            id={id}
-            name={name}
-            type="password"
-            autoComplete={autoComplete}
-            spellCheck={false}
-            readOnly
-            tabIndex={locked ? -1 : 0}
-            value={SAVED_SECRET_MASK_CHARS}
-            aria-label={
-              ariaLabel ??
-              (locked
-                ? `Secret on file, ends with ${last4}. Will remove on save.`
-                : `Secret on file, ends with ${last4}. Focus to replace.`)
-            }
-            className="w-auto max-w-none min-w-0 shrink-0 font-mono"
-            style={{ width: `${SAVED_SECRET_MASK_CHARS.length * 0.625}em` }}
-            onFocus={locked ? undefined : beginReplace}
-          />
-          <InputGroupText aria-hidden className="font-mono text-sm text-foreground">
-            {last4}
-          </InputGroupText>
-          <InputGroupAddon align="inline-end">{endAddon}</InputGroupAddon>
-        </InputGroup>
-      );
-    }
-
-    // label focuses the readonly input (no click handler on a static div).
     return (
-      <label
-        htmlFor={locked ? undefined : id}
+      <InputGroup
         className={cn(
-          "relative flex w-full items-center overflow-visible rounded-lg border border-input bg-background px-[calc(--spacing(3)-1px)] text-base shadow-xs/5 ring-ring/24 transition-shadow",
+          "w-full min-w-0 self-stretch",
           locked ? "cursor-default" : "cursor-text",
-          "h-8.5 sm:h-7.5 sm:text-sm",
-          "not-dark:bg-clip-padding dark:bg-input/32",
-          "before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)]",
-          "before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
-          "has-focus-within:border-ring has-focus-within:ring-[3px]",
           className
         )}
+        onMouseDown={handleMaskPointerDown}
       >
-        <input
+        <InputGroupInput
           id={id}
           name={name}
           type="password"
@@ -125,20 +108,22 @@ function SecretInput({
           tabIndex={locked ? -1 : 0}
           value={SAVED_SECRET_MASK_CHARS}
           size={SAVED_SECRET_MASK_CHARS.length}
-          aria-label={
-            ariaLabel ??
-            (locked
-              ? `Secret on file, ends with ${last4}. Will remove on save.`
-              : `Secret on file, ends with ${last4}. Focus to replace.`)
-          }
-          className="leading-inherit m-0 w-auto max-w-none min-w-0 shrink-0 border-0 bg-transparent p-0 font-mono text-sm text-foreground outline-none"
-          style={{ width: `${SAVED_SECRET_MASK_CHARS.length * 0.625}em` }}
+          aria-label={maskAriaLabel}
+          className={maskInputClassName}
           onFocus={locked ? undefined : beginReplace}
         />
-        <span aria-hidden className="shrink-0 font-mono text-sm text-foreground">
+        <InputGroupText
+          aria-hidden
+          className="pointer-events-none shrink-0 gap-0 ps-0 font-mono text-sm text-muted-foreground"
+        >
           {last4}
-        </span>
-      </label>
+        </InputGroupText>
+        {endAddon ? (
+          <InputGroupAddon align="inline-end" className="ms-auto">
+            {endAddon}
+          </InputGroupAddon>
+        ) : null}
+      </InputGroup>
     );
   }
 
@@ -160,7 +145,11 @@ function SecretInput({
           onBlur?.(e);
         }}
       />
-      {endAddon ? <InputGroupAddon align="inline-end">{endAddon}</InputGroupAddon> : null}
+      {endAddon ? (
+        <InputGroupAddon align="inline-end" className="ms-auto">
+          {endAddon}
+        </InputGroupAddon>
+      ) : null}
     </InputGroup>
   );
 }

@@ -1,12 +1,20 @@
 "use client";
 
-import { CheckCircle2Icon, KeyRoundIcon, RefreshCwIcon, TriangleAlertIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  CheckCircle2Icon,
+  CheckIcon,
+  FlaskConicalIcon,
+  KeyRoundIcon,
+  RefreshCwIcon,
+  TriangleAlertIcon,
+  XIcon
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { SiResend } from "react-icons/si";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { mailSetupStatus } from "@tsu-stack/core";
+import { mailSetupStatus, type TestMailSettingsInput } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import {
   AlertDialog,
@@ -33,6 +41,7 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@tsu-stack/ui/components/input-group";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import {
@@ -81,6 +90,22 @@ function valuesFromQuery(data: MailSettingsQueryResult): ConfigureValues {
     clearResendApiKey: false,
     webhookSecret: "",
     clearWebhookSecret: false
+  };
+}
+
+function testInputFromConfigure(
+  value: Pick<
+    ConfigureValues,
+    "resendApiKey" | "webhookSecret" | "clearResendApiKey" | "clearWebhookSecret"
+  >
+): TestMailSettingsInput {
+  const resendApiKey = value.resendApiKey.trim();
+  const webhookSecret = value.webhookSecret.trim();
+  return {
+    ...(resendApiKey ? { resendApiKey } : {}),
+    ...(webhookSecret ? { webhookSecret } : {}),
+    ...(value.clearResendApiKey ? { clearResendApiKey: true } : {}),
+    ...(value.clearWebhookSecret ? { clearWebhookSecret: true } : {})
   };
 }
 
@@ -307,7 +332,13 @@ function ResendStatusBadge({ setup }: { setup: ReturnType<typeof mailSetupStatus
   );
 }
 
-function ResendTestButton({ draftApiKey, disabled }: { draftApiKey?: string; disabled?: boolean }) {
+function ResendTestButton({
+  draft,
+  disabled
+}: {
+  draft?: TestMailSettingsInput;
+  disabled?: boolean;
+}) {
   const test = useTestMailSettingsMutation();
   const [flash, setFlash] = useState<"success" | "failed" | null>(null);
   useEffect(() => {
@@ -331,6 +362,7 @@ function ResendTestButton({ draftApiKey, disabled }: { draftApiKey?: string; dis
       idleVariant="outline"
       state={state}
       disabled={disabled === true || test.isPending || state === "success"}
+      icon={<FlaskConicalIcon aria-hidden />}
       label={
         state === "pending"
           ? "Testing…"
@@ -342,8 +374,7 @@ function ResendTestButton({ draftApiKey, disabled }: { draftApiKey?: string; dis
       }
       onClick={() => {
         setFlash(null);
-        const typed = draftApiKey?.trim();
-        void test.mutateAsync(typed ? { resendApiKey: typed } : {}).then(
+        void test.mutateAsync(draft ?? {}).then(
           (result) => {
             if (result.ok) {
               setFlash("success");
@@ -373,9 +404,11 @@ function ResendConfigureDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const update = useUpdateMailSettingsMutation();
+  const test = useTestMailSettingsMutation();
   const rotateWebhook = useRotateMailWebhookMutation();
   const [rotateOpen, setRotateOpen] = useState(false);
-  const pending = update.isPending;
+  const [saveFlash, setSaveFlash] = useState<"failed" | null>(null);
+  const pending = test.isPending || update.isPending;
 
   const form = useAppForm({
     defaultValues: valuesFromQuery(data),
@@ -383,9 +416,19 @@ function ResendConfigureDialog({
       onChange: createZodFormValidator(ConfigureSchema)
     },
     onSubmit: async ({ value }) => {
+      setSaveFlash(null);
       try {
+        const probed = await test.mutateAsync(testInputFromConfigure(value));
+        if (!probed.ok) {
+          setSaveFlash("failed");
+          toast.error(probed.message);
+          return;
+        }
+        const inboundAddress =
+          value.inboundAddress.trim() === "" ? null : value.inboundAddress.trim();
+        const inboundChanged = inboundAddress !== (data.inboundAddress ?? null);
         const saved = await update.mutateAsync({
-          inboundAddress: value.inboundAddress.trim() === "" ? null : value.inboundAddress.trim(),
+          ...(inboundChanged ? { inboundAddress } : {}),
           resendApiKey: value.resendApiKey.trim() || undefined,
           clearResendApiKey: value.clearResendApiKey || undefined,
           webhookSecret: value.webhookSecret.trim() || undefined,
@@ -395,18 +438,25 @@ function ResendConfigureDialog({
         toast.success("Resend settings saved");
         onOpenChange(false);
       } catch (error) {
+        setSaveFlash("failed");
         toast.error(error instanceof Error ? error.message : "Could not save Resend settings");
       }
     }
   });
 
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    const justOpened = open && !wasOpenRef.current;
+    wasOpenRef.current = open;
+    if (!justOpened) return;
     form.reset(valuesFromQuery(data));
-    // oxlint-disable-next-line react-hooks/exhaustive-deps -- seed fields when the dialog opens
-  }, [open, data.updatedAt, data.hasResendApiKey, data.hasWebhookSecret, data.inboundAddress]);
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- seed once when the dialog opens
+  }, [open, data, form]);
 
-  const close = () => onOpenChange(false);
+  const close = () => {
+    setSaveFlash(null);
+    onOpenChange(false);
+  };
   const { alertDialog, handleCloseAttempt } = useFormDirtyGuard(form, close);
 
   return (
@@ -537,24 +587,54 @@ function ResendConfigureDialog({
               </FieldGroup>
             </DialogPanel>
             <DialogFooter>
-              <form.Subscribe selector={(state) => state.values.resendApiKey}>
-                {(draftKey) => (
-                  <ResendTestButton
-                    draftApiKey={draftKey}
-                    disabled={!data.hasResendApiKey && !draftKey.trim()}
-                  />
-                )}
-              </form.Subscribe>
-              <DialogCancel disabled={pending}>Cancel</DialogCancel>
-              <DialogAction
-                loading={pending}
-                onClick={() => {
-                  if (pending) return;
-                  void form.handleSubmit();
+              <DialogCancel variant="ghost" disabled={pending} icon={<XIcon aria-hidden />}>
+                Cancel
+              </DialogCancel>
+              <form.Subscribe
+                selector={(state) => {
+                  return {
+                    resendApiKey: state.values.resendApiKey,
+                    webhookSecret: state.values.webhookSecret,
+                    clearResendApiKey: state.values.clearResendApiKey,
+                    clearWebhookSecret: state.values.clearWebhookSecret
+                  };
                 }}
               >
-                Save
-              </DialogAction>
+                {(draft) => (
+                  <Group>
+                    {pending ? null : (
+                      <>
+                        <ResendTestButton
+                          draft={testInputFromConfigure(draft)}
+                          disabled={
+                            draft.clearResendApiKey ||
+                            (!data.hasResendApiKey && !draft.resendApiKey.trim())
+                          }
+                        />
+                        <GroupSeparator />
+                      </>
+                    )}
+                    <DialogAction
+                      loading={pending}
+                      state={saveFlash === "failed" ? "failed" : undefined}
+                      disabled={pending}
+                      icon={<CheckIcon aria-hidden />}
+                      onClick={() => {
+                        if (pending) return;
+                        void form.handleSubmit();
+                      }}
+                    >
+                      {test.isPending
+                        ? "Testing…"
+                        : update.isPending
+                          ? "Saving…"
+                          : saveFlash === "failed"
+                            ? "Failed"
+                            : "Save"}
+                    </DialogAction>
+                  </Group>
+                )}
+              </form.Subscribe>
             </DialogFooter>
           </Form>
         </DialogPopup>

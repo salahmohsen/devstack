@@ -13,6 +13,7 @@ import {
   labelFromChildren
 } from "@tsu-stack/ui/components/dialog-status-action";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
+import { type StatusSubmitVisual } from "@tsu-stack/ui/components/status-submit-button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 export const DialogCreateHandle: typeof DialogPrimitive.createHandle = DialogPrimitive.createHandle;
@@ -33,6 +34,7 @@ type DialogFooterButtonProps = {
   variant?: ButtonProps["variant"];
   size?: ButtonProps["size"];
   loading?: boolean;
+  state?: StatusSubmitVisual;
   disabled?: boolean;
   className?: string;
   icon?: React.ReactNode;
@@ -45,6 +47,7 @@ export function DialogAction({
   variant = "default",
   size = "sm",
   loading,
+  state,
   disabled,
   className,
   icon,
@@ -57,6 +60,7 @@ export function DialogAction({
       variant={variant}
       size={dialogStatusSize(size)}
       loading={loading === true}
+      state={state}
       disabled={disabled === true || loading === true}
       label={label}
       icon={icon}
@@ -72,6 +76,7 @@ export function DialogCancel({
   size = "sm",
   disabled,
   className,
+  icon,
   children,
   onClick
 }: DialogFooterButtonProps): React.ReactElement {
@@ -87,6 +92,7 @@ export function DialogCancel({
           size={dialogStatusSize(size)}
           disabled={disabled === true}
           label={label}
+          icon={icon}
         />
       }
       onClick={onClick}

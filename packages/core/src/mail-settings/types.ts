@@ -47,7 +47,13 @@ export type UpdateMailSettingsInput = z.infer<typeof UpdateMailSettingsInputSche
 
 export const TestMailSettingsInputSchema = z.object({
   /** Probe this key instead of the saved one (configure dialog). */
-  resendApiKey: z.string().min(1).max(512).optional()
+  resendApiKey: z.string().min(1).max(512).optional(),
+  /** Check this signing secret instead of the saved one (configure dialog). */
+  webhookSecret: z.string().min(1).max(512).optional(),
+  /** Treat the saved API key as removed (pre-save probe). */
+  clearResendApiKey: z.boolean().optional(),
+  /** Treat the saved signing secret as removed (pre-save probe). */
+  clearWebhookSecret: z.boolean().optional()
 });
 export type TestMailSettingsInput = z.infer<typeof TestMailSettingsInputSchema>;
 
