@@ -1,7 +1,9 @@
 import {
   canonicalizeJobUrl,
+  normalizeHiringRegion,
+  normalizeStatedEmploymentType,
+  normalizeStatedWorkMode,
   NormalizedListingSchema,
-  WorkModeSchema,
   type NormalizedListing,
   type WorkMode
 } from "@tsu-stack/core";
@@ -33,9 +35,21 @@ export function asStringList(value: unknown): string[] {
 }
 
 export function asWorkMode(value: unknown): WorkMode | null {
-  const raw = typeof value === "string" ? value.trim().toLowerCase() : value;
-  const parsed = WorkModeSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
+  return normalizeStatedWorkMode(value);
+}
+
+export function asEmploymentType(value: unknown): string | null {
+  return normalizeStatedEmploymentType(value);
+}
+
+export function asHiringRegion(...values: unknown[]): string | null {
+  for (const value of values) {
+    const text = asNonEmptyString(value);
+    if (!text) continue;
+    const slug = normalizeHiringRegion(text);
+    if (slug) return slug;
+  }
+  return null;
 }
 
 export function asPostedAt(value: unknown): Date | null {

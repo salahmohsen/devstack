@@ -8,7 +8,9 @@ import {
 
 import { fetchNormalizedListings } from "#@/lib/job-discovery/fetch-json";
 import {
+  asEmploymentType,
   asFiniteNumber,
+  asHiringRegion,
   asListingUrl,
   asNonEmptyString,
   asPostedAt,
@@ -41,14 +43,39 @@ export function normalizeFreehireJob(raw: unknown): NormalizedListing | null {
   if (!title || !companyName || !listingUrl || !externalId) return null;
 
   const enrichment = asRecord(rec.enrichment);
+  const address = asRecord(rec.address) ?? asRecord(enrichment?.address);
+  const location = asNonEmptyString(rec.location) ?? asNonEmptyString(enrichment?.location);
+  const workMode =
+    asWorkMode(rec.work_mode) ??
+    asWorkMode(rec.workplaceType) ??
+    asWorkMode(rec.workplace_type) ??
+    asWorkMode(enrichment?.work_mode) ??
+    asWorkMode(enrichment?.workplaceType) ??
+    asWorkMode(rec.isRemote) ??
+    asWorkMode(rec.remote) ??
+    asWorkMode(enrichment?.isRemote);
+  const employmentType =
+    asEmploymentType(rec.employmentType) ??
+    asEmploymentType(rec.employment_type) ??
+    asEmploymentType(enrichment?.employmentType) ??
+    asEmploymentType(enrichment?.employment_type);
+
   return toNormalizedListing({
     adapterId: "freehire",
     externalId,
     listingUrl,
     title,
     companyName,
-    location: asNonEmptyString(rec.location),
-    workMode: asWorkMode(rec.work_mode),
+    location,
+    workMode,
+    hiringRegion: asHiringRegion(
+      location,
+      address?.addressCountry,
+      rec.country,
+      rec.addressCountry,
+      enrichment?.country
+    ),
+    employmentType,
     salaryMin: asFiniteNumber(enrichment?.salary_min),
     salaryMax: asFiniteNumber(enrichment?.salary_max),
     salaryCurrency: asNonEmptyString(enrichment?.salary_currency),

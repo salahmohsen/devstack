@@ -166,6 +166,8 @@ function toUpsertInput(listing: NormalizedListing) {
     companyName: listing.companyName,
     location: listing.location,
     workMode: listing.workMode,
+    ...(listing.hiringRegion != null ? { hiringRegion: listing.hiringRegion } : {}),
+    ...(listing.employmentType != null ? { employmentType: listing.employmentType } : {}),
     salaryMin: listing.salaryMin,
     salaryMax: listing.salaryMax,
     salaryCurrency: listing.salaryCurrency,

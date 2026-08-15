@@ -16,6 +16,17 @@ import { getJobSourceAdapter, jobSourceAdapters } from "#@/lib/job-discovery/ada
 import { normalizeRemoteokJob } from "#@/lib/job-discovery/adapters/remoteok";
 import { normalizeRemotiveJob } from "#@/lib/job-discovery/adapters/remotive";
 
+const ashbyShapedRaw = {
+  public_slug: "staff-engineer-acme-latam",
+  source: "ashby",
+  url: "https://jobs.ashbyhq.com/acme/staff-engineer-latam",
+  title: "Staff Engineer",
+  company: "Acme",
+  location: "LatAm",
+  workplaceType: "Remote",
+  employmentType: "FullTime"
+};
+
 describe("normalizeFreehireJob", () => {
   it("keeps greenhouse and drops himalayas copies", () => {
     const rows = fixture.data.map(normalizeFreehireJob).filter(Boolean);
@@ -34,6 +45,22 @@ describe("normalizeFreehireJob", () => {
   it("uses public_slug as externalId", () => {
     const row = normalizeFreehireJob(fixture.data[0]);
     expect(row?.externalId).toBe(fixture.data[0].public_slug);
+  });
+
+  it("maps Ashby workplaceType, LatAm location, and FullTime", () => {
+    const row = normalizeFreehireJob(ashbyShapedRaw);
+    expect(row?.workMode).toBe("remote");
+    expect(row?.hiringRegion).toBe("latam");
+    expect(row?.employmentType).toBe("full_time");
+    expect(row?.location).toBe("LatAm");
+    expect(row?.sourcePlatform).toBe("ashby");
+  });
+
+  it("still maps freehire work_mode and Remote — EU location", () => {
+    const row = normalizeFreehireJob(fixture.data[0]);
+    expect(row?.workMode).toBe("remote");
+    expect(row?.hiringRegion).toBe("eu");
+    expect(row?.location).toBe("Remote — EU");
   });
 });
 

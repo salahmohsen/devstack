@@ -15,6 +15,8 @@ export const NormalizedListingSchema = z.object({
   companyName: z.string().min(1),
   location: z.string().nullable(),
   workMode: WorkModeSchema.nullable(),
+  hiringRegion: z.string().min(1).nullable().optional(),
+  employmentType: z.string().min(1).nullable().optional(),
   salaryMin: z.number().nullable(),
   salaryMax: z.number().nullable(),
   salaryCurrency: z.string().nullable(),

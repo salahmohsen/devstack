@@ -189,6 +189,48 @@ export const jobPostingRepository = {
       .limit(limit);
   },
 
+  /**
+   * Fill stated HTTP/ATS catalog fields. Only provided keys are written.
+   * Callers must omit a key to leave the stored value untouched.
+   */
+  async patchStatedFields(
+    id: string,
+    patch: {
+      description?: string;
+      contentHash?: string;
+      location?: string;
+      workMode?: string;
+      hiringRegion?: string;
+      employmentType?: string;
+      skills?: string[];
+    }
+  ): Promise<JobPostingEntity | null> {
+    const set: {
+      description?: string;
+      contentHash?: string;
+      location?: string;
+      workMode?: string;
+      hiringRegion?: string;
+      employmentType?: string;
+      skills?: string[];
+    } = {};
+    if (patch.description !== undefined) set.description = patch.description;
+    if (patch.contentHash !== undefined) set.contentHash = patch.contentHash;
+    if (patch.location !== undefined) set.location = patch.location;
+    if (patch.workMode !== undefined) set.workMode = patch.workMode;
+    if (patch.hiringRegion !== undefined) set.hiringRegion = patch.hiringRegion;
+    if (patch.employmentType !== undefined) set.employmentType = patch.employmentType;
+    if (patch.skills !== undefined) set.skills = patch.skills;
+    if (Object.keys(set).length === 0) return this.findById(id);
+
+    const [row] = await getDb()
+      .update(jobPosting)
+      .set(set)
+      .where(eq(jobPosting.id, id))
+      .returning();
+    return row ?? null;
+  },
+
   async setDescription(
     id: string,
     description: string,

@@ -13,6 +13,7 @@
 import { extractFromHtml } from "@extractus/article-extractor";
 
 import { type ApplicationApplyMethod, type ApplicationSource } from "#@/application/types";
+import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
 import { type WorkMode } from "#@/job-preference/types";
 
 export type ListingPageExtract = {
@@ -23,11 +24,55 @@ export type ListingPageExtract = {
   applyMethod?: ApplicationApplyMethod;
   applyUrl?: string | null;
   workMode?: WorkMode | null;
+  /** True when workMode came from JSON-LD / explicit ATS fields, not JD prose. */
+  workModeStated?: boolean;
+  hiringRegion?: string | null;
+  employmentType?: string | null;
+  skills?: string[];
   source?: ApplicationSource;
   listingClosed?: boolean;
   /** Which layer produced the description (diagnostics / tests). */
   descriptionSource?: "jsonld" | "embedded_json" | "readability" | "meta";
 };
+
+const EMPLOYMENT_COMPACT: Readonly<Record<string, string>> = {
+  fulltime: "full_time",
+  parttime: "part_time",
+  contract: "contract",
+  contractor: "contract",
+  intern: "internship",
+  internship: "internship"
+};
+
+/** Map ATS / schema.org employment strings. Does not invent `unknown`. */
+export function normalizeStatedEmploymentType(value: unknown): string | null {
+  const items = Array.isArray(value) ? value : [value];
+  for (const item of items) {
+    if (typeof item !== "string") continue;
+    const compact = item
+      .trim()
+      .toLowerCase()
+      .replace(/[_\s-]+/g, "");
+    if (!compact) continue;
+    const mapped = EMPLOYMENT_COMPACT[compact];
+    if (mapped) return mapped;
+  }
+  return null;
+}
+
+/** Map ATS workplace / JSON-LD jobLocationType / isRemote. */
+export function normalizeStatedWorkMode(value: unknown): WorkMode | null {
+  if (value === true) return "remote";
+  if (typeof value !== "string") return null;
+  const compact = value
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s-]+/g, "");
+  if (compact === "remote" || compact === "telecommute" || compact === "wfh") return "remote";
+  if (compact === "hybrid") return "hybrid";
+  if (compact === "onsite") return "onsite";
+  return null;
+}
 
 const TITLE_KEYS =
   /^(job_?opening_?name|posting_?title|job_?title|position_?title|position|role|title|name)$/i;
@@ -37,6 +82,9 @@ const COMPANY_KEYS =
   /^(company_?name|company|organization|organisation|hiring_?organization|employer|org_?name|employer_?name)$/i;
 const LOCATION_KEYS = /^(location|job_?location|city|address|work_?location)$/i;
 const REMOTE_KEYS = /^(remote_?job|is_?remote|remote|work_?remotely|telecommute)$/i;
+const WORKPLACE_KEYS = /^(workplace_?type|work_?mode)$/i;
+const EMPLOYMENT_KEYS = /^(employment_?type)$/i;
+const SKILL_FIELD_KEYS = /^(skills?|skill_?names?|required_?skills?)$/i;
 const CLOSED_KEYS = /^(is_?closed|closed|expired|publish|is_?published|active|is_?active)$/i;
 
 const MAX_WALK_NODES = 4_000;
@@ -215,6 +263,76 @@ function metaContent(html: string, propertyOrName: string): string | null {
   return s;
 }
 
+function asPlaceText(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const rec = value as Record<string, unknown>;
+  if (typeof rec.name === "string" && rec.name.trim()) return rec.name.trim();
+  if (typeof rec.addressCountry === "string" && rec.addressCountry.trim()) {
+    return rec.addressCountry.trim();
+  }
+  const addr = rec.address;
+  if (addr && typeof addr === "object" && !Array.isArray(addr)) {
+    const a = addr as Record<string, unknown>;
+    if (typeof a.addressCountry === "string" && a.addressCountry.trim()) {
+      return a.addressCountry.trim();
+    }
+    if (typeof a.name === "string" && a.name.trim()) return a.name.trim();
+  }
+  return null;
+}
+
+function firstPlaceText(value: unknown): string | null {
+  const items = Array.isArray(value) ? value : [value];
+  for (const item of items) {
+    const text = asPlaceText(item);
+    if (text) return text;
+  }
+  return null;
+}
+
+function hiringRegionFromPlaces(value: unknown): string | null {
+  const items = Array.isArray(value) ? value : [value];
+  for (const item of items) {
+    const text = asPlaceText(item);
+    const slug = text ? normalizeHiringRegion(text) : null;
+    if (slug) return slug;
+  }
+  return null;
+}
+
+function asSkillName(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const rec = value as Record<string, unknown>;
+  const name = rec.name ?? rec.termCode;
+  return typeof name === "string" && name.trim() ? name.trim() : null;
+}
+
+function asSkillList(value: unknown): string[] {
+  if (value == null) return [];
+  const items = Array.isArray(value) ? value : [value];
+  const out: string[] = [];
+  for (const item of items) {
+    if (typeof item === "string" && item.includes(",")) {
+      for (const part of item.split(",")) {
+        const name = part.trim();
+        if (name) out.push(name);
+      }
+      continue;
+    }
+    const name = asSkillName(item);
+    if (name) out.push(name);
+  }
+  return out;
+}
+
 function scoreExtract(e: ListingPageExtract): number {
   let s = 0;
   if (e.title) s += 20 + Math.min(e.title.length, 80) / 4;
@@ -222,6 +340,9 @@ function scoreExtract(e: ListingPageExtract): number {
   if (e.description) s += Math.min(e.description.length, 8_000) / 20;
   if (e.location) s += 5;
   if (e.workMode) s += 3;
+  if (e.hiringRegion) s += 2;
+  if (e.employmentType) s += 2;
+  if (e.skills && e.skills.length > 0) s += 2;
   return s;
 }
 
@@ -236,7 +357,15 @@ function mergePreferRicher(
   if (next.location && !out.location) out.location = next.location;
   if (next.applyMethod && !out.applyMethod) out.applyMethod = next.applyMethod;
   if (next.applyUrl && !out.applyUrl) out.applyUrl = next.applyUrl;
-  if (next.workMode && !out.workMode) out.workMode = next.workMode;
+  if (next.workMode && (!out.workMode || (next.workModeStated && !out.workModeStated))) {
+    out.workMode = next.workMode;
+    out.workModeStated = next.workModeStated;
+  }
+  if (next.hiringRegion && !out.hiringRegion) out.hiringRegion = next.hiringRegion;
+  if (next.employmentType && !out.employmentType) out.employmentType = next.employmentType;
+  if (next.skills && next.skills.length > 0 && (!out.skills || out.skills.length === 0)) {
+    out.skills = next.skills;
+  }
   if (next.source && !out.source) out.source = next.source;
   if (next.listingClosed) out.listingClosed = true;
   const nextDesc = next.description?.trim() ?? "";
@@ -264,6 +393,10 @@ type WalkHit = {
   location?: string;
   description?: string;
   remote?: boolean;
+  workMode?: WorkMode;
+  employmentType?: string;
+  hiringRegion?: string;
+  skills?: string[];
   closed?: boolean;
 };
 
@@ -308,6 +441,15 @@ export function walkJsonForJobFields(root: unknown): WalkHit {
               bestDesc = plain;
             }
           }
+        } else if (WORKPLACE_KEYS.test(key)) {
+          const mode = normalizeStatedWorkMode(trimmed);
+          if (mode) hit.workMode ??= mode;
+        } else if (EMPLOYMENT_KEYS.test(key)) {
+          const employmentType = normalizeStatedEmploymentType(trimmed);
+          if (employmentType) hit.employmentType ??= employmentType;
+        } else if (SKILL_FIELD_KEYS.test(key)) {
+          const skills = asSkillList(trimmed);
+          if (skills.length > 0) hit.skills ??= skills;
         } else if (CLOSED_KEYS.test(key)) {
           const lower = trimmed.toLowerCase();
           if (lower === "false" || lower === "0" || lower === "closed" || lower === "expired") {
@@ -324,6 +466,12 @@ export function walkJsonForJobFields(root: unknown): WalkHit {
           if ((k.includes("publish") || k.includes("active")) && value === false) hit.closed = true;
           if ((k.includes("closed") || k.includes("expired")) && value === true) hit.closed = true;
         }
+      } else if (Array.isArray(value) && SKILL_FIELD_KEYS.test(key)) {
+        const skills = asSkillList(value);
+        if (skills.length > 0) hit.skills ??= skills;
+      } else if (Array.isArray(value) && EMPLOYMENT_KEYS.test(key)) {
+        const employmentType = normalizeStatedEmploymentType(value);
+        if (employmentType) hit.employmentType ??= employmentType;
       } else if (value && typeof value === "object") {
         // hiringOrganization: { name: "..." }
         if (COMPANY_KEYS.test(key) && !hit.companyName) {
@@ -354,7 +502,20 @@ function hitToExtract(
     out.description = hit.description;
     out.descriptionSource = source;
   }
-  if (hit.remote) out.workMode = "remote";
+  if (hit.workMode) {
+    out.workMode = hit.workMode;
+    out.workModeStated = true;
+  } else if (hit.remote) {
+    out.workMode = "remote";
+    out.workModeStated = true;
+  }
+  if (hit.employmentType) out.employmentType = hit.employmentType;
+  if (hit.hiringRegion) out.hiringRegion = hit.hiringRegion;
+  else if (hit.location) {
+    const region = normalizeHiringRegion(hit.location);
+    if (region) out.hiringRegion = region;
+  }
+  if (hit.skills && hit.skills.length > 0) out.skills = hit.skills;
   if (hit.closed) out.listingClosed = true;
   return out;
 }
@@ -425,7 +586,20 @@ export function extractJsonLdJobPostings(html: string): ListingPageExtract | nul
       }
       if (o.jobLocationType === "TELECOMMUTE" || o.jobLocationType === "remote") {
         extract.workMode = "remote";
+        extract.workModeStated = true;
       }
+      const employmentType = normalizeStatedEmploymentType(o.employmentType);
+      if (employmentType) extract.employmentType = employmentType;
+      const requirementText = firstPlaceText(o.applicantLocationRequirements);
+      if (!extract.location && requirementText) {
+        extract.location = requirementText.slice(0, 200);
+      }
+      const hiringRegion =
+        hiringRegionFromPlaces(o.applicantLocationRequirements) ??
+        (extract.location ? normalizeHiringRegion(extract.location) : null);
+      if (hiringRegion) extract.hiringRegion = hiringRegion;
+      const skills = asSkillList(o.skills);
+      if (skills.length > 0) extract.skills = skills;
       if (typeof o.validThrough === "string") {
         const through = Date.parse(o.validThrough);
         if (!Number.isNaN(through) && through < Date.now()) extract.listingClosed = true;
