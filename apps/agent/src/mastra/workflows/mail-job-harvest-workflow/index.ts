@@ -380,19 +380,7 @@ const scoreJobsAgainstPreferenceAi = createStep({
     const passAll = shouldPassAllHarvestJobs(prefs, evidence);
 
     const heuristicScore = (job: HarvestedJob, extraReasons: string[] = []): ScoredHarvestedJob => {
-      const r = scoreJobAgainstPreference(
-        job,
-        {
-          workModes: prefs.workModes,
-          locations: prefs.locations,
-          roleKeywords: prefs.roleKeywords,
-          excludeKeywords: prefs.excludeKeywords,
-          salaryMin: prefs.salaryMin ?? null,
-          salaryCurrency: prefs.salaryCurrency ?? null,
-          minMatchScore: prefs.minMatchScore
-        },
-        evidence
-      );
+      const r = scoreJobAgainstPreference(job, prefs, evidence);
       return {
         ...job,
         matchScore: r.score,
