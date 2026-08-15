@@ -152,6 +152,22 @@ describe("findPendingProposeApplicationFromJd", () => {
     });
   });
 
+  it("treats call/partial-call as still waiting", () => {
+    expect(
+      findPendingProposeApplicationFromJd([
+        assistant([
+          {
+            type: "tool-propose-application-from-jd",
+            toolCallId: "live",
+            toolName: "propose-application-from-jd",
+            state: "call",
+            input: { title: "Eng", companyName: "Acme", description: "d" }
+          } as never
+        ])
+      ])?.toolCallId
+    ).toBe("live");
+  });
+
   it("skips completed propose parts", () => {
     expect(
       findPendingProposeApplicationFromJd([

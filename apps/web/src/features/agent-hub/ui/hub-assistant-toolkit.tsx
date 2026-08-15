@@ -25,6 +25,7 @@ import {
 } from "@/features/agent-hub/lib/hub-approval-resume";
 import { isHubApprovalPending } from "@/features/agent-hub/lib/hub-approval-summary";
 import {
+  findPendingProposeApplicationFromJd,
   isProposeApplicationFromJdToolName,
   isProposeNewJobsTriageToolName,
   parseProposeApplicationFromJdInput,
@@ -63,18 +64,51 @@ function ProposeApplicationFromJdToolUI({
   toolCallId,
   toolName
 }: ToolCallMessagePartProps<ProposeArgs, ProposeApplicationFromJdOutput>) {
-  const { addToolOutput } = useHubChat();
+  const { addToolOutput, messages } = useHubChat();
   const action = parseProposeApplicationFromJdOutputAction(result);
   const input = parseProposeApplicationFromJdInput(args);
   const resolvedToolName = isProposeApplicationFromJdToolName(toolName)
     ? toolName
     : PROPOSE_FROM_JD_TOOL_ID;
+  const latestPending = findPendingProposeApplicationFromJd(messages);
+  const superseded = Boolean(latestPending && latestPending.toolCallId !== toolCallId);
 
   const handleSubmit = React.useCallback(
     ({ action: next }: { action: ApplicationFromJdCardAction }) => {
       const output = { action: next };
-      // Prefer toolkit addResult for UI part state, then Chat.addToolOutput so
-      // sendAutomaticallyWhen re-POSTs (addResult alone does not always resume).
+      // Close older open proposal cards so auto-resume is not blocked.
+      for (const msg of messages) {
+        if (msg.role !== "assistant") continue;
+        for (const raw of msg.parts ?? []) {
+          const part = raw as {
+            type?: string;
+            toolName?: string;
+            toolCallId?: string;
+            state?: string;
+          };
+          const type = part.type ?? "";
+          const isTool = type.startsWith("tool-") || type === "dynamic-tool";
+          if (!isTool) continue;
+          const name =
+            part.toolName ?? (type.startsWith("tool-") ? type.slice("tool-".length) : "");
+          if (!isProposeApplicationFromJdToolName(name)) continue;
+          const id = part.toolCallId ?? "";
+          if (!id || id === toolCallId) continue;
+          if (
+            part.state !== "input-available" &&
+            part.state !== "input-streaming" &&
+            part.state !== "call" &&
+            part.state !== "partial-call"
+          ) {
+            continue;
+          }
+          void addToolOutput({
+            tool: name,
+            toolCallId: id,
+            output: { action: "dismiss" }
+          });
+        }
+      }
       if (typeof addResult === "function") {
         addResult(output);
       }
@@ -84,7 +118,7 @@ function ProposeApplicationFromJdToolUI({
         output
       });
     },
-    [addResult, addToolOutput, resolvedToolName, toolCallId]
+    [addResult, addToolOutput, messages, resolvedToolName, toolCallId]
   );
 
   if (action) {
@@ -100,7 +134,8 @@ function ProposeApplicationFromJdToolUI({
     <ApplicationFromJdCard
       toolCallId={toolCallId}
       input={input}
-      disabled={result != null || !toolCallId}
+      disabled={result != null || !toolCallId || superseded}
+      superseded={superseded}
       onSubmit={handleSubmit}
     />
   );

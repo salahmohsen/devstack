@@ -250,7 +250,14 @@ export function findPendingProposeApplicationFromJd(
       if (!isHubToolUiPart(part)) continue;
       const toolName = hubToolNameFromPart(part);
       if (!isProposeApplicationFromJdToolName(toolName)) continue;
-      if (part.state !== "input-available" && part.state !== "input-streaming") continue;
+      if (
+        part.state !== "input-available" &&
+        part.state !== "input-streaming" &&
+        part.state !== "call" &&
+        part.state !== "partial-call"
+      ) {
+        continue;
+      }
       const toolCallId = part.toolCallId ?? "";
       if (!toolCallId) continue;
       return {

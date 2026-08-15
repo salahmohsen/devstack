@@ -77,7 +77,13 @@ export function HubHitlFrame({
       aria-labelledby={headingId}
       data-tool-call-id={toolCallId}
       data-hitl-kind={kind}
-      className={cn(width, "bg-muted/30 shadow-none", className)}
+      data-submitting={submitting ? "" : undefined}
+      className={cn(
+        width,
+        "bg-muted/30 shadow-none transition-opacity duration-200 ease-out",
+        submitting && "opacity-90",
+        className
+      )}
     >
       <CardHeader className="p-4">
         {/* Keep icon inside the title — a CardHeader sibling steals a grid cell. */}
@@ -89,7 +95,9 @@ export function HubHitlFrame({
       </CardHeader>
       {children ? <CardPanel className="px-4 pb-2">{children}</CardPanel> : null}
       {footer ? (
-        <CardFooter className="flex flex-wrap gap-2 border-t-0 px-4 pb-4">{footer}</CardFooter>
+        <CardFooter className="flex flex-wrap gap-2 border-t border-border/60 px-4 pt-3 pb-4">
+          {footer}
+        </CardFooter>
       ) : null}
       {submitting ? (
         <p className="px-4 pb-3 text-xs text-muted-foreground" aria-live="polite">
