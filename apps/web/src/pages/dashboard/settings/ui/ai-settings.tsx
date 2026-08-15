@@ -1,26 +1,17 @@
 "use client";
 
 import { useStore } from "@tanstack/react-form";
-import {
-  CheckCircle2Icon,
-  ChevronDownIcon,
-  PlusIcon,
-  SparklesIcon,
-  Trash2Icon,
-  UnplugIcon
-} from "lucide-react";
+import { CheckCircle2Icon, ChevronDownIcon, UnplugIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
   AI_FEATURE_LABELS,
-  AI_PROVIDER_FEATURED,
   aiProviderLabel,
   cascadeDefaultModelChange,
   defaultAiModels,
   getMastraProvider,
   isFeatureOnDefault,
-  MASTRA_PROVIDER_CATALOG,
   providerKindFromModelId,
   resolveProviderRowForModel,
   toMastraModelId,
@@ -52,14 +43,6 @@ import {
   ComboboxItem,
   ComboboxList
 } from "@tsu-stack/ui/components/combobox";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle
-} from "@tsu-stack/ui/components/empty";
 import { Form } from "@tsu-stack/ui/components/form";
 import { Label } from "@tsu-stack/ui/components/label";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
@@ -68,6 +51,7 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 import { useAppForm } from "@/shared/form";
 
 import {
+  AiProvidersSection,
   useGetAiSettingsQuery,
   useListProviderModelsMutation,
   useTestAiProviderMutation,
@@ -79,8 +63,6 @@ import { useSettingsDirtyGuard } from "./settings-dirty-guard";
 import { SettingsFrame } from "./settings-frame";
 import { SettingsSaveBar } from "./settings-save-bar";
 import { SettingsSection } from "./settings-section";
-
-type ProviderOption = { value: string; label: string };
 
 type DraftProvider = {
   id: string;
@@ -112,24 +94,6 @@ type ModelGroup = {
   value: string;
   items: ModelOption[];
 };
-
-const FEATURED_SET = new Set<string>(AI_PROVIDER_FEATURED);
-
-const PROVIDER_OPTIONS: ProviderOption[] = (() => {
-  const featured = AI_PROVIDER_FEATURED.map((id) => {
-    return {
-      value: id,
-      label: `${aiProviderLabel(id)} (${id})`
-    };
-  });
-  const rest = MASTRA_PROVIDER_CATALOG.filter((p) => !FEATURED_SET.has(p.id)).map((p) => {
-    return {
-      value: p.id,
-      label: `${p.name} (${p.id})`
-    };
-  });
-  return [...featured, ...rest];
-})();
 
 /** Customize excludes `reply` (Default template). Includes all other features. */
 const CUSTOMIZE_FEATURE_GROUPS: { title: string; features: AiFeature[] }[] = [
@@ -390,7 +354,19 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
   }, [serverValues]);
 
   const values = useStore(form.store, (state) => state.values);
-  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isDirty = useStore(
+    form.store,
+    (state) =>
+      JSON.stringify(state.values.models) !== JSON.stringify(serverValues.models) ||
+      JSON.stringify(state.values.modelProviderIds) !==
+        JSON.stringify(serverValues.modelProviderIds) ||
+      state.values.hubPersonality !== serverValues.hubPersonality ||
+      state.values.hubAvatar !== serverValues.hubAvatar
+  );
+
+  useEffect(() => {
+    form.setFieldValue("providers", toDraftProviders(data.providers));
+  }, [data.providers, form]);
 
   function patch(mutator: (current: FormState) => FormState) {
     const next = mutator(form.store.state.values);
@@ -520,25 +496,6 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
 
   const defaultModel = values.models.reply ?? defaultAiModels().reply;
   const defaultProviderId = values.modelProviderIds.reply;
-
-  function addProvider() {
-    patch((current) => {
-      return {
-        ...current,
-        providers: [
-          ...current.providers,
-          {
-            id: crypto.randomUUID(),
-            kind: "deepseek",
-            label: aiProviderLabel("deepseek"),
-            apiKey: "",
-            hasApiKey: false,
-            apiKeyLast4: null
-          }
-        ]
-      };
-    });
-  }
 
   function setDefaultFromOption(option: ModelOption) {
     patch((current) => {
@@ -734,132 +691,10 @@ function AiSettingsForm({ data }: { data: AiSettingsQueryResult }) {
             </form.AppField>
           </SettingsSection>
 
-          <SettingsSection
-            title="Providers"
-            description="API keys for models you run. Saved keys are stored encrypted; only the last four characters are shown."
-            action={
-              values.providers.length > 0 ? (
-                <Button type="button" size="sm" variant="outline" onClick={addProvider}>
-                  <PlusIcon className="size-3.5" />
-                  Add provider
-                </Button>
-              ) : null
-            }
-          >
-            {values.providers.length === 0 ? (
-              <Empty className="rounded-xl border border-dashed py-10 md:py-12">
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <SparklesIcon />
-                  </EmptyMedia>
-                  <EmptyTitle>No providers yet</EmptyTitle>
-                  <EmptyDescription>
-                    Add a provider with an API key to run Hub, mail, and packages.
-                  </EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                  <Button type="button" size="sm" onClick={addProvider}>
-                    <PlusIcon className="size-3.5" />
-                    Add provider
-                  </Button>
-                </EmptyContent>
-              </Empty>
-            ) : (
-              <ul className="space-y-3">
-                {values.providers.map((p, index) => (
-                  <li
-                    key={p.id}
-                    className="relative space-y-3 rounded-xl border border-border/80 p-4 pe-12"
-                  >
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      className="absolute inset-e-2 top-3 text-muted-foreground hover:text-destructive"
-                      aria-label="Remove provider"
-                      onClick={() =>
-                        patch((current) => {
-                          return {
-                            ...current,
-                            providers: current.providers.filter((_, i) => i !== index)
-                          };
-                        })
-                      }
-                    >
-                      <Trash2Icon className="size-3.5" />
-                    </Button>
-
-                    {/* Provider · Label · API key — one row on large screens */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.4fr)]">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Provider</Label>
-                        <Combobox
-                          value={p.kind || null}
-                          onValueChange={(val) => {
-                            if (!val) return;
-                            const kind = val as AiProviderKind;
-                            patch((current) => {
-                              return {
-                                ...current,
-                                providers: current.providers.map((row, i) =>
-                                  i === index ? { ...row, kind, label: aiProviderLabel(kind) } : row
-                                )
-                              };
-                            });
-                          }}
-                          items={PROVIDER_OPTIONS}
-                          itemToStringLabel={(item) => {
-                            if (typeof item === "string") {
-                              return PROVIDER_OPTIONS.find((o) => o.value === item)?.label ?? item;
-                            }
-                            if (item && typeof item === "object" && "label" in item) {
-                              return String((item as ProviderOption).label);
-                            }
-                            return String(item ?? "");
-                          }}
-                        >
-                          <ComboboxInput placeholder="Search providers…" showClear={false} />
-                          <ComboboxContent>
-                            <ComboboxEmpty>No provider found.</ComboboxEmpty>
-                            <ComboboxList>
-                              {(item: ProviderOption) => (
-                                <ComboboxItem key={item.value} value={item.value}>
-                                  {item.label}
-                                </ComboboxItem>
-                              )}
-                            </ComboboxList>
-                          </ComboboxContent>
-                        </Combobox>
-                      </div>
-                      <form.AppField name={`providers[${index}].label`}>
-                        {(field) => (
-                          <field.InputField
-                            label="Label"
-                            placeholder="Display name"
-                            classNames={{ label: "text-xs" }}
-                          />
-                        )}
-                      </form.AppField>
-                      <form.AppField name={`providers[${index}].apiKey`}>
-                        {(field) => (
-                          <field.SecretInputField
-                            label="API key"
-                            hasSavedSecret={p.hasApiKey}
-                            savedLast4={p.apiKeyLast4}
-                            placeholder={p.hasApiKey ? "Leave blank to keep" : "API key"}
-                            classNames={{
-                              field: "sm:col-span-2 lg:col-span-1",
-                              label: "text-xs"
-                            }}
-                          />
-                        )}
-                      </form.AppField>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SettingsSection>
+          <AiProvidersSection
+            providers={data.providers}
+            modelProviderIds={data.modelProviderIds ?? {}}
+          />
 
           <SettingsSection
             title="Models"

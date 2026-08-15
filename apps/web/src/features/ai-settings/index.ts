@@ -22,3 +22,5 @@ export type {
   ListProviderModelsInput,
   ListProviderModelsMutationResult
 } from "@/features/ai-settings/api/list-provider-models.mutation";
+
+export { AiProvidersSection } from "@/features/ai-settings/ui/ai-providers";

@@ -53,6 +53,15 @@ function ComboboxField(props: ComboboxFieldProps) {
         value={field.state.value || null}
         onValueChange={(val) => field.handleChange(val ?? "")}
         items={props.items}
+        itemToStringLabel={(item) => {
+          if (typeof item === "string") {
+            return props.items.find((entry) => entry.value === item)?.label ?? item;
+          }
+          if (item && typeof item === "object" && "label" in item) {
+            return String((item as ComboboxItemType).label);
+          }
+          return String(item ?? "");
+        }}
       >
         <ComboboxInput
           placeholder={props.placeholder}
