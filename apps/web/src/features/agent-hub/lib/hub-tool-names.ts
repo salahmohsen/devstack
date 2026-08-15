@@ -39,6 +39,10 @@ export const HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES = new Set([
 
 export const HUB_OPEN_SURFACE_TOOL_NAMES = new Set(["open-surface", "openSurface"]);
 
+export const HUB_LIST_EXPERIENCES_TOOL_NAMES = new Set(["list-experiences", "listExperiences"]);
+
+export const HUB_GET_EXPERIENCE_TOOL_NAMES = new Set(["get-experience", "getExperience"]);
+
 export type HubToolNamePart = {
   type: string;
   toolName?: string;

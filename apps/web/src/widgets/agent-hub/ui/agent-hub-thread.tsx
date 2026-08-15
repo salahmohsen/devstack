@@ -15,7 +15,6 @@ import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { DaySeparatorRule, DaySeparatorTime } from "@/shared/ui/assistant-ui/day-separator";
 import {
-  Composer,
   EditComposer,
   threadRootStyle,
   ThreadScrollToBottom,
@@ -31,6 +30,7 @@ import {
 } from "@/features/agent-hub";
 
 import { useLoadOlderOnScrollTop } from "@/widgets/agent-hub/lib/use-load-older-on-scroll-top";
+import { HubElementsComposer } from "@/widgets/agent-hub/ui/hub-elements-composer";
 
 import { AgentHubErrorCard } from "./agent-hub-error-card";
 
@@ -132,8 +132,7 @@ export function AgentHubThread() {
                 void regenerate();
               }}
             />
-            <Composer
-              attachments={false}
+            <HubElementsComposer
               disabled={!historyReady || hitl !== null}
               placeholder={
                 hitl === "approval"
