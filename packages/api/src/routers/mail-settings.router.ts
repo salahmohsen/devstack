@@ -4,11 +4,14 @@ import {
   buildResendWebhookUrl,
   MailSettingsOutputSchema,
   maskSecretLast4,
+  TestMailSettingsInputSchema,
+  TestMailSettingsOutputSchema,
   UpdateMailSettingsInputSchema
 } from "@tsu-stack/core";
 import { userMailSettingsRepository } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
+import { testResendSettings } from "#@/lib/mail/test-resend-settings";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { sealSecret } from "#@/lib/settings/seal-secret";
 
@@ -173,6 +176,20 @@ export const mailSettingsRouter = {
 
       return toOutput(row);
     }),
+
+  test: protectedProcedure
+    .route({
+      description: "Probe the Resend API key and check the saved webhook signing secret",
+      method: "POST"
+    })
+    .input(TestMailSettingsInputSchema)
+    .output(TestMailSettingsOutputSchema)
+    .handler(async ({ input, context }) =>
+      testResendSettings({
+        userId: context.session.user.id,
+        resendApiKey: input.resendApiKey
+      })
+    ),
 
   rotateWebhook: protectedProcedure
     .route({

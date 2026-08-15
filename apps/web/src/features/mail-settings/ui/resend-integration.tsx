@@ -6,6 +6,7 @@ import { SiResend } from "react-icons/si";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { mailSetupStatus } from "@tsu-stack/core";
 import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import {
   AlertDialog,
@@ -34,6 +35,10 @@ import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { Form } from "@tsu-stack/ui/components/form";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@tsu-stack/ui/components/input-group";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
+import {
+  StatusSubmitButton,
+  type StatusSubmitVisual
+} from "@tsu-stack/ui/components/status-submit-button";
 import { Switch } from "@tsu-stack/ui/components/switch";
 
 import { useAppForm } from "@/shared/form";
@@ -50,6 +55,7 @@ import {
   type MailSettingsQueryResult
 } from "@/features/mail-settings/api/get-mail-settings.query";
 import { useRotateMailWebhookMutation } from "@/features/mail-settings/api/rotate-mail-webhook.mutation";
+import { useTestMailSettingsMutation } from "@/features/mail-settings/api/test-mail-settings.mutation";
 import { useUpdateMailSettingsMutation } from "@/features/mail-settings/api/update-mail-settings.mutation";
 
 const ConfigureSchema = z.object({
@@ -139,14 +145,20 @@ export function ResendIntegration() {
   }
 
   const data = query.data;
-  const secretsReady = data.hasResendApiKey && data.hasWebhookSecret;
-  const inboundOn = Boolean(data.inboundEnabled && secretsReady);
+  const setup = mailSetupStatus(data);
+  const secretsReady = setup === "ready" || setup === "paused";
+  const inboundOn = setup === "ready";
 
-  const description = !secretsReady
-    ? "Add a Resend API key and webhook signing secret to accept Career Inbox mail."
-    : inboundOn
-      ? "Inbound is on. Resend posts email.received to your unique webhook URL."
-      : "Secrets are saved, but inbound is paused. Resend gets 503 until you turn it on.";
+  const description =
+    setup === "need_webhook_secret"
+      ? "API key is saved. Copy the webhook URL into Resend, then paste the signing secret it shows."
+      : setup === "need_api_key"
+        ? "Signing secret is saved. Add a Resend API key to send and fetch inbound mail."
+        : setup === "need_secrets"
+          ? "Add a Resend API key, then copy the webhook URL into Resend to get the signing secret."
+          : inboundOn
+            ? "Inbound is on. Resend posts email.received to your unique webhook URL."
+            : "Secrets are saved, but inbound is paused. Resend gets 503 until you turn it on.";
 
   return (
     <>
@@ -157,7 +169,7 @@ export function ResendIntegration() {
             <SiResend className="size-5" aria-hidden />
           </IntegrationBrandMark>
         }
-        badge={<ResendStatusBadge secretsReady={secretsReady} inboundOn={inboundOn} />}
+        badge={<ResendStatusBadge setup={setup} />}
         description={description}
         meta={
           <IntegrationMeta
@@ -190,13 +202,19 @@ export function ResendIntegration() {
           !secretsReady ? (
             <Alert variant="warning" className="py-2">
               <TriangleAlertIcon />
-              <AlertTitle className="text-xs">Setup needed</AlertTitle>
+              <AlertTitle className="text-xs">
+                {setup === "need_webhook_secret"
+                  ? "Add signing secret"
+                  : setup === "need_api_key"
+                    ? "Add API key"
+                    : "Setup needed"}
+              </AlertTitle>
               <AlertDescription className="text-xs">
-                {data.hasWebhookSecret
-                  ? "Save a Resend API key to turn inbound on."
-                  : data.hasResendApiKey
-                    ? "Save the webhook signing secret to turn inbound on."
-                    : "Save both the API key and webhook signing secret."}
+                {setup === "need_webhook_secret"
+                  ? "Resend only shows the signing secret after you add this webhook URL."
+                  : setup === "need_api_key"
+                    ? "Save a Resend API key to send replies and fetch inbound bodies."
+                    : "Save the API key, copy the webhook URL into Resend, then paste the signing secret."}
               </AlertDescription>
             </Alert>
           ) : null
@@ -219,17 +237,12 @@ export function ResendIntegration() {
               );
             }}
             aria-label={inboundOn ? "Pause inbound mail" : "Accept inbound mail"}
-            title={
-              secretsReady
-                ? inboundOn
-                  ? "On — inbound mail is stored"
-                  : "Off — webhook returns 503"
-                : "Save API key and webhook secret first"
-            }
           />
         }
+        toggleCaption="Accept inbound mail"
         actions={
           <>
+            <ResendTestButton disabled={!data.hasResendApiKey && !data.hasWebhookSecret} />
             <CopyButton
               value={data.webhookUrl}
               label="Copy URL"
@@ -257,14 +270,8 @@ export function ResendIntegration() {
   );
 }
 
-function ResendStatusBadge({
-  secretsReady,
-  inboundOn
-}: {
-  secretsReady: boolean;
-  inboundOn: boolean;
-}) {
-  if (inboundOn) {
+function ResendStatusBadge({ setup }: { setup: ReturnType<typeof mailSetupStatus> }) {
+  if (setup === "ready") {
     return (
       <Badge variant="success" size="sm" className="gap-1">
         <CheckCircle2Icon className="size-3" aria-hidden />
@@ -272,10 +279,24 @@ function ResendStatusBadge({
       </Badge>
     );
   }
-  if (secretsReady) {
+  if (setup === "paused") {
     return (
       <Badge variant="outline" size="sm">
         Paused
+      </Badge>
+    );
+  }
+  if (setup === "need_webhook_secret") {
+    return (
+      <Badge variant="warning" size="sm">
+        Add signing secret
+      </Badge>
+    );
+  }
+  if (setup === "need_api_key") {
+    return (
+      <Badge variant="warning" size="sm">
+        Add API key
       </Badge>
     );
   }
@@ -283,6 +304,62 @@ function ResendStatusBadge({
     <Badge variant="warning" size="sm">
       Setup needed
     </Badge>
+  );
+}
+
+function ResendTestButton({ draftApiKey, disabled }: { draftApiKey?: string; disabled?: boolean }) {
+  const test = useTestMailSettingsMutation();
+  const [flash, setFlash] = useState<"success" | "failed" | null>(null);
+  useEffect(() => {
+    if (flash !== "success") return;
+    const timer = window.setTimeout(() => setFlash(null), 800);
+    return () => window.clearTimeout(timer);
+  }, [flash]);
+
+  const state: StatusSubmitVisual = test.isPending
+    ? "pending"
+    : flash === "failed"
+      ? "failed"
+      : flash === "success"
+        ? "success"
+        : "idle";
+
+  return (
+    <StatusSubmitButton
+      type="button"
+      size="sm"
+      idleVariant="outline"
+      state={state}
+      disabled={disabled === true || test.isPending || state === "success"}
+      label={
+        state === "pending"
+          ? "Testing…"
+          : state === "success"
+            ? "Passed"
+            : state === "failed"
+              ? "Failed"
+              : "Test"
+      }
+      onClick={() => {
+        setFlash(null);
+        const typed = draftApiKey?.trim();
+        void test.mutateAsync(typed ? { resendApiKey: typed } : {}).then(
+          (result) => {
+            if (result.ok) {
+              setFlash("success");
+              toast.success(result.message);
+              return;
+            }
+            setFlash("failed");
+            toast.error(result.message);
+          },
+          (error) => {
+            setFlash("failed");
+            toast.error(error instanceof Error ? error.message : "Could not test Resend");
+          }
+        );
+      }}
+    />
   );
 }
 
@@ -348,8 +425,8 @@ function ResendConfigureDialog({
           <DialogHeader>
             <DialogTitle>Configure Resend</DialogTitle>
             <DialogDescription>
-              API key and signing secret stay sealed on the server. Inbound turns on automatically
-              the first time both are saved.
+              Copy the webhook URL into Resend first. Resend then shows the signing secret. API key
+              and secret stay sealed on the server.
             </DialogDescription>
           </DialogHeader>
           <Form
@@ -398,33 +475,11 @@ function ResendConfigureDialog({
                   )}
                 </form.Subscribe>
 
-                <form.Subscribe selector={(state) => state.values.clearWebhookSecret}>
-                  {(cleared) => (
-                    <form.AppField name="webhookSecret">
-                      {(field) => (
-                        <field.SecretInputField
-                          label="Webhook signing secret"
-                          autoComplete="new-password"
-                          hasSavedSecret={data.hasWebhookSecret}
-                          savedLast4={data.webhookSecretLast4}
-                          placeholder={data.hasWebhookSecret ? "Leave blank to keep" : "whsec_…"}
-                          allowClear={data.hasWebhookSecret}
-                          cleared={cleared}
-                          onClearedChange={(next) => form.setFieldValue("clearWebhookSecret", next)}
-                          clearAriaLabels={{
-                            mark: "Remove secret",
-                            unmark: "Keep existing secret"
-                          }}
-                        />
-                      )}
-                    </form.AppField>
-                  )}
-                </form.Subscribe>
-
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Webhook URL</p>
                   <p className="text-xs text-muted-foreground">
-                    Paste this into Resend as the email.received endpoint.
+                    Paste this into Resend as the email.received endpoint. Resend then shows the
+                    signing secret.
                   </p>
                   <InputGroup className="w-full">
                     <InputGroupInput
@@ -455,9 +510,41 @@ function ResendConfigureDialog({
                     </InputGroupAddon>
                   </InputGroup>
                 </div>
+
+                <form.Subscribe selector={(state) => state.values.clearWebhookSecret}>
+                  {(cleared) => (
+                    <form.AppField name="webhookSecret">
+                      {(field) => (
+                        <field.SecretInputField
+                          label="Webhook signing secret"
+                          description="From Resend after you add the webhook URL."
+                          autoComplete="new-password"
+                          hasSavedSecret={data.hasWebhookSecret}
+                          savedLast4={data.webhookSecretLast4}
+                          placeholder={data.hasWebhookSecret ? "Leave blank to keep" : "whsec_…"}
+                          allowClear={data.hasWebhookSecret}
+                          cleared={cleared}
+                          onClearedChange={(next) => form.setFieldValue("clearWebhookSecret", next)}
+                          clearAriaLabels={{
+                            mark: "Remove secret",
+                            unmark: "Keep existing secret"
+                          }}
+                        />
+                      )}
+                    </form.AppField>
+                  )}
+                </form.Subscribe>
               </FieldGroup>
             </DialogPanel>
             <DialogFooter>
+              <form.Subscribe selector={(state) => state.values.resendApiKey}>
+                {(draftKey) => (
+                  <ResendTestButton
+                    draftApiKey={draftKey}
+                    disabled={!data.hasResendApiKey && !draftKey.trim()}
+                  />
+                )}
+              </form.Subscribe>
               <DialogCancel disabled={pending}>Cancel</DialogCancel>
               <DialogAction
                 loading={pending}

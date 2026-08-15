@@ -42,6 +42,27 @@ export function parseEmailAddress(raw: string): { name: string; email: string } 
   return { name: "", email: trimmed.toLowerCase() };
 }
 
+export type MailSetupStatus =
+  | "ready"
+  | "paused"
+  | "need_api_key"
+  | "need_webhook_secret"
+  | "need_secrets";
+
+/** Card badge: both secrets required before inbound can turn on. */
+export function mailSetupStatus(input: {
+  hasResendApiKey: boolean;
+  hasWebhookSecret: boolean;
+  inboundEnabled: boolean;
+}): MailSetupStatus {
+  if (input.hasResendApiKey && input.hasWebhookSecret) {
+    return input.inboundEnabled ? "ready" : "paused";
+  }
+  if (input.hasResendApiKey) return "need_webhook_secret";
+  if (input.hasWebhookSecret) return "need_api_key";
+  return "need_secrets";
+}
+
 export function mailPreviewFromBody(bodyText: string, maxLen = 160): string {
   const collapsed = bodyText.replace(/\s+/g, " ").trim();
   if (collapsed.length <= maxLen) return collapsed;

@@ -44,3 +44,17 @@ export const UpdateMailSettingsInputSchema = z.object({
   rotateWebhookToken: z.boolean().optional()
 });
 export type UpdateMailSettingsInput = z.infer<typeof UpdateMailSettingsInputSchema>;
+
+export const TestMailSettingsInputSchema = z.object({
+  /** Probe this key instead of the saved one (configure dialog). */
+  resendApiKey: z.string().min(1).max(512).optional()
+});
+export type TestMailSettingsInput = z.infer<typeof TestMailSettingsInputSchema>;
+
+export const TestMailSettingsOutputSchema = z.object({
+  ok: z.boolean(),
+  apiKey: z.enum(["valid", "invalid", "missing"]),
+  webhookSecret: z.enum(["present", "missing", "invalid_format"]),
+  message: z.string()
+});
+export type TestMailSettingsOutput = z.infer<typeof TestMailSettingsOutputSchema>;

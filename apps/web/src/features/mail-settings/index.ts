@@ -14,4 +14,10 @@ export type {
 export { useRotateMailWebhookMutation } from "@/features/mail-settings/api/rotate-mail-webhook.mutation";
 export type { RotateMailWebhookMutationResult } from "@/features/mail-settings/api/rotate-mail-webhook.mutation";
 
+export { useTestMailSettingsMutation } from "@/features/mail-settings/api/test-mail-settings.mutation";
+export type {
+  TestMailSettingsInput,
+  TestMailSettingsMutationResult
+} from "@/features/mail-settings/api/test-mail-settings.mutation";
+
 export { ResendIntegration } from "@/features/mail-settings/ui/resend-integration";

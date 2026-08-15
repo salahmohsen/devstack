@@ -58,6 +58,7 @@ export function IntegrationCard({
   meta,
   extra,
   toggle,
+  toggleCaption,
   actions
 }: {
   title: string;
@@ -67,6 +68,8 @@ export function IntegrationCard({
   meta?: ReactNode;
   extra?: ReactNode;
   toggle?: ReactNode;
+  /** Visible ON-state label next to the switch. */
+  toggleCaption?: ReactNode;
   actions: ReactNode;
 }) {
   return (
@@ -84,7 +87,14 @@ export function IntegrationCard({
         {extra}
       </div>
       <div className="flex items-center justify-between gap-3 border-t border-border/60 px-5 py-3">
-        <div className="flex min-h-7 min-w-10 items-center">{toggle}</div>
+        <div className="flex min-h-7 min-w-0 items-center gap-2">
+          {toggle}
+          {toggleCaption ? (
+            <span className="max-w-40 text-[11px] leading-snug text-muted-foreground">
+              {toggleCaption}
+            </span>
+          ) : null}
+        </div>
         <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div>
       </div>
     </Card>

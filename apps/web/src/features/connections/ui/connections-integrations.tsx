@@ -456,9 +456,15 @@ export function ConnectionsIntegrations({
                 onCheckedChange={(checked) => {
                   setAutoSync.mutate({ autoSyncEnabled: checked });
                 }}
-                aria-label="Auto-sync Gmail every 15 minutes"
-                title="Auto-sync every ~15 minutes"
+                aria-label="Auto-sync inbox every 15 minutes"
               />
+            ) : null
+          }
+          toggleCaption={
+            googleStatus.gmailConnected ? (
+              <label htmlFor="gmail-auto-sync" className="cursor-pointer">
+                Auto-sync inbox every 15 min
+              </label>
             ) : null
           }
           actions={googleActions}
