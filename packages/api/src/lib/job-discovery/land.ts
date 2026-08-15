@@ -6,6 +6,7 @@ import {
   hasValidDiscoveryTitle,
   inferApplicationSource,
   INBOX_TTL_MS,
+  isThinJobDescription,
   JOB_ADAPTER_IDS,
   JOB_ADAPTER_LABELS,
   MAX_OPEN_INBOX,
@@ -114,6 +115,112 @@ function compareScoredPostings(a: ScoredPosting, b: ScoredPosting): number {
   return bPosted - aPosted;
 }
 
+async function remainingLandBudget(input: {
+  userId: string;
+  runId: string;
+  jobsPerRun: number;
+  hasAiKey: boolean;
+}): Promise<number> {
+  const [openInbox, inboxThisRun, remaining] = await Promise.all([
+    applicationRepository.countByUserIdAndTrackingStatus(input.userId, "inbox"),
+    applicationRepository.countInboxThisRun(input.userId, input.runId),
+    userJobAiBudgetRepository.remainingAttempts(
+      input.userId,
+      utcDay(),
+      dailyAiAttemptCap(input.jobsPerRun)
+    )
+  ]);
+  return computeLandBudget({
+    jobsPerRun: input.jobsPerRun,
+    openInbox,
+    inboxThisRun,
+    remainingDailyAiAttempts: remaining,
+    hasAiKey: input.hasAiKey
+  });
+}
+
+/** Land one cheap-passed catalog row. Returns true when a new inbox stub was created. */
+async function landScoredPosting(input: {
+  userId: string;
+  runId: string;
+  candidate: ScoredPosting;
+  hasAiKey: boolean;
+}): Promise<boolean> {
+  const hydrate = await hydratePostingIfNeeded(input.candidate.posting.id);
+  const posting = await jobPostingRepository.findById(input.candidate.posting.id);
+  if (!posting || posting.closedAt != null || hydrate.listingClosed) return false;
+
+  const listingUrl = canonicalizeJobUrl(posting.listingUrl);
+  if (!listingUrl) return false;
+
+  const { source, sourceLabel } = discoverySourceFields({
+    listingUrl,
+    adapterId: posting.adapterId,
+    sourcePlatform: posting.sourcePlatform
+  });
+  const salaryRange =
+    hydrate.salaryRange ??
+    formatCatalogSalaryRange(posting.salaryMin, posting.salaryMax, posting.salaryCurrency);
+  const location = applicationLocation(hydrate.location, posting.location);
+  const description = hydrate.description ?? posting.description;
+
+  const { row, created } = await applicationRepository.createIfAbsentByUrl({
+    userId: input.userId,
+    companyName: posting.companyName,
+    title: posting.title,
+    url: listingUrl,
+    applyUrl: listingUrl,
+    applyMethod: "external",
+    matchScore: input.candidate.score,
+    source,
+    sourceLabel,
+    sourceTags: buildApplicationSourceTags({ channel: "discovery", platform: source }),
+    location,
+    salaryRange,
+    description,
+    trackingStatus: "inbox",
+    stage: "saved",
+    postingId: posting.id,
+    discoveryRunId: input.runId,
+    inboxExpiresAt: new Date(Date.now() + INBOX_TTL_MS)
+  });
+  if (!created) return false;
+
+  const locationFix = applicationLocation(hydrate.location, row.location);
+  const salaryFix = salaryRange ?? row.salaryRange;
+  if (locationFix !== row.location || salaryFix !== row.salaryRange) {
+    await applicationRepository.update(row.id, input.userId, {
+      location: locationFix,
+      salaryRange: salaryFix
+    });
+  }
+
+  await applicationActivityRepository.append({
+    userId: input.userId,
+    applicationId: row.id,
+    kind: "discovered",
+    metadata: {
+      via: "discovery",
+      runId: input.runId,
+      cheapScore: input.candidate.score,
+      cheapReasons: input.candidate.reasons,
+      matchReasons: input.candidate.reasons,
+      adapterId: posting.adapterId
+    }
+  });
+
+  // Thin/empty JD stays as the cheap-scored stub — do not burn BYO or auto-dismiss.
+  if (input.hasAiKey && !isThinJobDescription(description)) {
+    await requestJobInboxAi({
+      userId: input.userId,
+      applicationId: row.id,
+      runId: input.runId
+    });
+  }
+
+  return true;
+}
+
 export async function runDiscoveryLand(input: {
   userId: string;
   runId: string;
@@ -134,22 +241,15 @@ export async function runDiscoveryLand(input: {
   }
 
   const hasAiKey = Boolean(llm.apiKey?.trim());
-  const [openInbox, inboxThisRun, remaining] = await Promise.all([
-    applicationRepository.countByUserIdAndTrackingStatus(input.userId, "inbox"),
-    applicationRepository.countInboxThisRun(input.userId, input.runId),
-    userJobAiBudgetRepository.remainingAttempts(
-      input.userId,
-      utcDay(),
-      dailyAiAttemptCap(prefs.jobsPerRun)
-    )
-  ]);
-
+  const openInbox = await applicationRepository.countByUserIdAndTrackingStatus(
+    input.userId,
+    "inbox"
+  );
   const seats = Math.max(0, MAX_OPEN_INBOX - openInbox);
-  const toLand = computeLandBudget({
+  const toLand = await remainingLandBudget({
+    userId: input.userId,
+    runId: input.runId,
     jobsPerRun: prefs.jobsPerRun,
-    openInbox,
-    inboxThisRun,
-    remainingDailyAiAttempts: remaining,
     hasAiKey
   });
   if (toLand === 0) {
@@ -181,85 +281,39 @@ export async function runDiscoveryLand(input: {
   }
   passed.sort(compareScoredPostings);
 
+  const attempted = new Set<string>();
   let landed = 0;
-  for (const candidate of passed) {
-    if (landed >= toLand) break;
-    try {
-      const hydrate = await hydratePostingIfNeeded(candidate.posting.id);
-      const posting = await jobPostingRepository.findById(candidate.posting.id);
-      if (!posting || posting.closedAt != null || hydrate.listingClosed) continue;
 
-      const listingUrl = canonicalizeJobUrl(posting.listingUrl);
-      if (!listingUrl) continue;
-
-      const { source, sourceLabel } = discoverySourceFields({
-        listingUrl,
-        adapterId: posting.adapterId,
-        sourcePlatform: posting.sourcePlatform
-      });
-      const salaryRange =
-        hydrate.salaryRange ??
-        formatCatalogSalaryRange(posting.salaryMin, posting.salaryMax, posting.salaryCurrency);
-      const location = applicationLocation(hydrate.location, posting.location);
-      const description = hydrate.description ?? posting.description;
-
-      const { row, created } = await applicationRepository.createIfAbsentByUrl({
-        userId: input.userId,
-        companyName: posting.companyName,
-        title: posting.title,
-        url: listingUrl,
-        applyUrl: listingUrl,
-        applyMethod: "external",
-        matchScore: candidate.score,
-        source,
-        sourceLabel,
-        sourceTags: buildApplicationSourceTags({ channel: "discovery", platform: source }),
-        location,
-        salaryRange,
-        description,
-        trackingStatus: "inbox",
-        stage: "saved",
-        postingId: posting.id,
-        discoveryRunId: input.runId,
-        inboxExpiresAt: new Date(Date.now() + INBOX_TTL_MS)
-      });
-      if (!created) continue;
-
-      const locationFix = applicationLocation(hydrate.location, row.location);
-      const salaryFix = salaryRange ?? row.salaryRange;
-      if (locationFix !== row.location || salaryFix !== row.salaryRange) {
-        await applicationRepository.update(row.id, input.userId, {
-          location: locationFix,
-          salaryRange: salaryFix
-        });
-      }
-
-      await applicationActivityRepository.append({
-        userId: input.userId,
-        applicationId: row.id,
-        kind: "discovered",
-        metadata: {
-          via: "discovery",
-          runId: input.runId,
-          cheapScore: candidate.score,
-          cheapReasons: candidate.reasons,
-          matchReasons: candidate.reasons,
-          adapterId: posting.adapterId
-        }
-      });
-
-      if (hasAiKey) {
-        await requestJobInboxAi({
+  const landUpTo = async (limit: number): Promise<void> => {
+    for (const candidate of passed) {
+      if (landed >= limit) break;
+      if (attempted.has(candidate.posting.id)) continue;
+      attempted.add(candidate.posting.id);
+      try {
+        const created = await landScoredPosting({
           userId: input.userId,
-          applicationId: row.id,
-          runId: input.runId
+          runId: input.runId,
+          candidate,
+          hasAiKey
         });
+        if (created) landed += 1;
+      } catch {
+        continue;
       }
-
-      landed += 1;
-    } catch {
-      continue;
     }
+  };
+
+  await landUpTo(toLand);
+
+  // AI dismissals during this job may have opened seats — one extra pass only.
+  const extraBudget = await remainingLandBudget({
+    userId: input.userId,
+    runId: input.runId,
+    jobsPerRun: prefs.jobsPerRun,
+    hasAiKey
+  });
+  if (extraBudget > 0) {
+    await landUpTo(landed + extraBudget);
   }
 
   return { landed, reason: landed === 0 ? "empty_shelf" : "ok" };

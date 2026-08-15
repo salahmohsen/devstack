@@ -32,7 +32,9 @@ const FIND_TOAST_ID = "find-jobs-now-job";
  * Absolute poll times from enqueue (ms). Ingest + land are async BullMQ work —
  * matches land under New jobs as workers finish, not only at the end.
  */
-const POLL_AT_MS = [4_000, 12_000, 25_000, 45_000, 70_000, 100_000] as const;
+const POLL_AT_MS = [
+  4_000, 12_000, 25_000, 45_000, 70_000, 100_000, 160_000, 220_000, 280_000, 340_000
+] as const;
 
 const jobController = createDetachedJobController({
   // Ingest/land run on the server queue; UI “Dismiss” only stops client tracking.
@@ -220,6 +222,20 @@ export async function startFindJobsNow(
       return;
     }
 
+    if (data.reason === "ai_budget") {
+      toast.dismiss(FIND_TOAST_ID);
+      setFindJobsNowState({
+        status: "ready",
+        stepLabel: null,
+        ingestTriggered: false,
+        seats: data.seats
+      });
+      toast.message("Daily AI scoring budget used up", {
+        description: "Try again tomorrow, or raise N in Settings → Jobs to lift the hidden 2×N cap."
+      });
+      return;
+    }
+
     if (data.reason === "queue_unavailable" || !data.enqueued) {
       toast.dismiss(FIND_TOAST_ID);
       setFindJobsNowState({
@@ -291,10 +307,21 @@ export async function startFindJobsNow(
         ),
         duration: 12_000
       });
-    } else {
-      toast.message("Search finished — no new inbox jobs", {
+    } else if (data.ingestTriggered) {
+      toast.message("No new inbox jobs yet", {
         description:
-          "Listings were scored, but every URL is already on a tracked job (or did not match your title). Deleting New jobs does not free URLs still on Tracked jobs.",
+          "Board refresh can take several minutes. Check New jobs again shortly — listings are not marked scored until land finishes.",
+        action: (
+          <Link to="/dashboard/new-jobs" data-button>
+            New jobs
+          </Link>
+        ),
+        duration: 14_000
+      });
+    } else {
+      toast.message("No new inbox jobs", {
+        description:
+          "Every URL is already on a tracked job (or did not match your title). Deleting New jobs does not free URLs still on Tracked jobs.",
         action: (
           <Link to="/dashboard/tracked-jobs" data-button>
             Tracked jobs

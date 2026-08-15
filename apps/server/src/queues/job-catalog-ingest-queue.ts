@@ -10,6 +10,7 @@ import {
 } from "@tsu-stack/api/lib/job-discovery/ingest";
 import {
   hasValidDiscoveryTitle,
+  ingestJobId,
   JOB_CATALOG_INGEST_JOB_NAME,
   JOB_CATALOG_INGEST_QUEUE_NAME,
   JobCatalogIngestPayloadSchema,
@@ -213,16 +214,22 @@ export async function enqueueJobCatalogIngest(
   }
 
   const data = JobCatalogIngestPayloadSchema.parse(payload);
-  const jobId =
-    data.mode === "user_query" && data.userId && data.runId
-      ? `ingest_${data.userId}_${data.runId}`
-      : `ingest_daily_${utcDay()}`;
+  const jobId = ingestJobId(data);
 
   try {
+    const existing = await s.queue.getJob(jobId);
+    if (existing) {
+      const state = await existing.getState();
+      if (state === "completed" || state === "failed") {
+        await existing.remove();
+      } else {
+        return { enqueued: true, jobId };
+      }
+    }
     const job = await s.queue.add(JOB_CATALOG_INGEST_JOB_NAME, data, {
       jobId,
-      removeOnComplete: 50,
-      removeOnFail: 100,
+      removeOnComplete: true,
+      removeOnFail: true,
       attempts: 3,
       backoff: { type: "exponential", delay: 2000 }
     });
@@ -230,7 +237,7 @@ export async function enqueueJobCatalogIngest(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (/already exists|JobId/i.test(message)) {
-      return { enqueued: false };
+      return { enqueued: true, jobId };
     }
     const log = createLogger({ operation: "server__job_catalog_ingest_queue" });
     log.error(error instanceof Error ? error : new Error(message), {

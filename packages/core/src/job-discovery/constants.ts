@@ -149,6 +149,8 @@ export const INBOX_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const LIVENESS_AFTER_MS = Math.floor(INBOX_TTL_MS / 2); // ~3.5d
 export const LIVENESS_TICK_INTERVAL_MS = 12 * 60 * 60 * 1000;
 export const LIVENESS_TICK_BATCH = 100;
+/** Skip due rows touched more recently than this so a 100-row tick rotates. */
+export const LIVENESS_REPROBE_AFTER_MS = Math.floor(LIVENESS_TICK_INTERVAL_MS / 2);
 
 /** Snap to 15/20/25/30/35/40 (nearest step, clamped). */
 export function refineJobsPerRun(n: number): number {

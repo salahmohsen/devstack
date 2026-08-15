@@ -11,6 +11,7 @@ import {
   JobDiscoveryLandPayloadSchema,
   JobInboxAiPayloadSchema,
   inboxAiJobId,
+  ingestJobId,
   landJobId,
   type JobCatalogIngestPayload,
   type JobDiscoveryLandPayload,
@@ -49,13 +50,18 @@ function getProducerQueue(queueKey: string, queueName: string): Queue | null {
   return g[queueKey]!;
 }
 
-async function removeFinishedJob(queue: Queue, jobId: string): Promise<void> {
+async function coalesceOrRemoveFinished(
+  queue: Queue,
+  jobId: string
+): Promise<"coalesced" | "free"> {
   const existing = await queue.getJob(jobId);
-  if (!existing) return;
+  if (!existing) return "free";
   const state = await existing.getState();
   if (state === "completed" || state === "failed") {
     await existing.remove();
+    return "free";
   }
+  return "coalesced";
 }
 
 async function enqueueDirect(input: {
@@ -74,9 +80,12 @@ async function enqueueDirect(input: {
   if (!queue) return false;
 
   try {
-    await Promise.race([
+    const result = await Promise.race([
       (async () => {
-        if (input.jobId) await removeFinishedJob(queue, input.jobId);
+        if (input.jobId) {
+          const gate = await coalesceOrRemoveFinished(queue, input.jobId);
+          if (gate === "coalesced") return "coalesced" as const;
+        }
         await queue.add(input.jobName, input.data, {
           jobId: input.jobId,
           removeOnComplete: input.removeOnComplete ?? 1000,
@@ -84,6 +93,7 @@ async function enqueueDirect(input: {
           attempts: 3,
           backoff: { type: "exponential", delay: 2000 }
         });
+        return "added" as const;
       })(),
       new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error(`${input.queueName} enqueue timed out (3s)`)), 3_000);
@@ -91,7 +101,7 @@ async function enqueueDirect(input: {
     ]);
     const log = createLogger({ operation: input.operation });
     log.set({
-      event: input.event,
+      event: result === "coalesced" ? `${input.event}_duplicate` : input.event,
       ...input.extra
     });
     log.emit();
@@ -105,7 +115,7 @@ async function enqueueDirect(input: {
         ...input.extra
       });
       log.emit();
-      return false;
+      return true;
     }
     const log = createLogger({ operation: input.operation });
     log.error(error instanceof Error ? error : new Error(message), {
@@ -215,6 +225,9 @@ export async function requestJobCatalogIngest(input: JobCatalogIngestPayload): P
     data,
     operation: "api__job_catalog_ingest_enqueue",
     event: "job_catalog_ingest_enqueued",
-    extra: { mode: data.mode, userId: data.userId, runId: data.runId }
+    extra: { mode: data.mode, userId: data.userId, runId: data.runId },
+    jobId: ingestJobId(data),
+    removeOnComplete: true,
+    removeOnFail: true
   });
 }

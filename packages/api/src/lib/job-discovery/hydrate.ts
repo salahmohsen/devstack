@@ -1,5 +1,15 @@
-import { extractJobListingFromHtml, fetchPublicHtmlAsText } from "@tsu-stack/core";
-import { jobPostingRepository, type JobPostingEntity } from "@tsu-stack/db";
+import {
+  extractJobListingFromHtml,
+  fetchPublicHtmlAsText,
+  isThinJobDescription
+} from "@tsu-stack/core";
+import {
+  jobPostingRepository,
+  preferLongerJobDescription,
+  type JobPostingEntity
+} from "@tsu-stack/db";
+
+import { catalogFieldsHash } from "#@/lib/job-discovery/content-hash";
 
 export type HydratePostingResult = {
   description: string | null;
@@ -47,7 +57,7 @@ function fromCatalog(posting: JobPostingEntity): HydratePostingResult {
 export async function hydratePostingIfNeeded(postingId: string): Promise<HydratePostingResult> {
   const posting = await jobPostingRepository.findById(postingId);
   if (!posting) return EMPTY_HYDRATE;
-  if (posting.description?.trim()) return fromCatalog(posting);
+  if (!isThinJobDescription(posting.description)) return fromCatalog(posting);
 
   const fallback = fromCatalog(posting);
   try {
@@ -56,10 +66,26 @@ export async function hydratePostingIfNeeded(postingId: string): Promise<Hydrate
 
     const extract = await extractJobListingFromHtml(fetched.html, posting.listingUrl);
     const extractedDescription = extract.description?.trim() ?? "";
-    const description = extractedDescription.length > 0 ? extractedDescription : null;
+    const description = preferLongerJobDescription(
+      extractedDescription.length > 0 ? extractedDescription : null,
+      posting.description
+    );
     // Description is the only shared HTTP field written back to the catalog.
-    if (description) {
-      await jobPostingRepository.setDescription(posting.id, description).catch(() => null);
+    if (description && description !== posting.description) {
+      const contentHash = catalogFieldsHash({
+        adapterId: posting.adapterId,
+        externalId: posting.externalId,
+        listingUrl: posting.listingUrl,
+        title: posting.title,
+        companyName: posting.companyName,
+        location: posting.location,
+        workMode: posting.workMode,
+        skills: posting.skills ?? [],
+        description
+      });
+      await jobPostingRepository
+        .setDescription(posting.id, description, contentHash)
+        .catch(() => null);
     }
     let listingClosed = posting.closedAt != null;
     if (extract.listingClosed) {

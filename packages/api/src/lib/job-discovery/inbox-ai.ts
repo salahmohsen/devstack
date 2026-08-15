@@ -1,7 +1,13 @@
-import { dailyAiAttemptCap } from "@tsu-stack/core";
+import {
+  dailyAiAttemptCap,
+  isThinJobDescription,
+  WorkModeSchema,
+  type WorkMode
+} from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
+  jobPostingRepository,
   userJobAiBudgetRepository
 } from "@tsu-stack/db";
 
@@ -15,6 +21,11 @@ export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
 
 function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
+}
+
+function asWorkMode(value: string | null | undefined): WorkMode | null {
+  const parsed = WorkModeSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }
 
 async function dismissInboxAndBackfill(input: {
@@ -61,13 +72,14 @@ export async function runInboxAi(input: {
     return { outcome: "skipped" };
   }
 
-  const [prefs, llm] = await Promise.all([
+  const [prefs, llm, posting] = await Promise.all([
     loadJobPreference(input.userId),
-    resolveRuntimeAiCredentials(input.userId, "scorer")
+    resolveRuntimeAiCredentials(input.userId, "scorer"),
+    owned.postingId ? jobPostingRepository.findById(owned.postingId) : Promise.resolve(null)
   ]);
 
-  // No key: keep the cheap-landed stub. Do not consume daily AI budget.
-  if (!llm.apiKey?.trim()) {
+  // No key or thin JD: keep the cheap-landed stub. Do not consume daily AI budget.
+  if (!llm.apiKey?.trim() || isThinJobDescription(owned.description)) {
     return { outcome: "heuristic" };
   }
 
@@ -92,7 +104,8 @@ export async function runInboxAi(input: {
         location: owned.location,
         salaryRange: owned.salaryRange,
         description: owned.description,
-        applyMethod: owned.applyMethod
+        applyMethod: owned.applyMethod,
+        workMode: asWorkMode(posting?.workMode)
       }
     });
   } catch (error) {

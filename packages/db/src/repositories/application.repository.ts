@@ -51,7 +51,8 @@ const INBOX_LIVENESS_AFTER_MS = Math.floor((7 * 24 * 60 * 60 * 1000) / 2);
 async function listDueLivenessByStatus(
   dueAt: Date,
   trackingStatus: "inbox" | "tracked",
-  limit: number
+  limit: number,
+  updatedAtBefore: Date
 ): Promise<ApplicationEntity[]> {
   if (limit <= 0) return [];
   const rows = await getDb()
@@ -63,10 +64,11 @@ async function listDueLivenessByStatus(
         eq(application.trackingStatus, trackingStatus),
         isNotNull(application.inboxExpiresAt),
         lte(application.createdAt, dueAt),
+        lte(application.updatedAt, updatedAtBefore),
         or(isNull(application.postingId), isNull(jobPosting.closedAt))
       )
     )
-    .orderBy(asc(application.createdAt))
+    .orderBy(asc(application.updatedAt), asc(application.createdAt), asc(application.id))
     .limit(limit);
   return rows.map((row) => row.application);
 }
@@ -286,14 +288,32 @@ export const applicationRepository = {
   /**
    * Inbox + tracked rows ready for HTTP liveness.
    * `inboxExpiresAt` set (discovery / post-ship harvest). Due at `createdAt + ~3.5d`.
-   * Skips postings already closed. Fills inbox first so tracked cannot starve newer probes.
+   * Skips postings already closed and rows touched after `updatedAtBefore`.
+   * Orders by `updatedAt` so a tick rotates instead of re-probing the same 100.
+   * Fills inbox first so tracked cannot starve newer probes.
    */
-  async listInboxDueLiveness(now: Date, limit: number): Promise<ApplicationEntity[]> {
+  async listInboxDueLiveness(
+    now: Date,
+    limit: number,
+    opts?: { updatedAtBefore?: Date }
+  ): Promise<ApplicationEntity[]> {
     if (limit <= 0) return [];
     const dueAt = new Date(now.getTime() - INBOX_LIVENESS_AFTER_MS);
-    const inbox = await listDueLivenessByStatus(dueAt, "inbox", limit);
-    const tracked = await listDueLivenessByStatus(dueAt, "tracked", limit - inbox.length);
+    const updatedAtBefore = opts?.updatedAtBefore ?? now;
+    const inbox = await listDueLivenessByStatus(dueAt, "inbox", limit, updatedAtBefore);
+    const tracked = await listDueLivenessByStatus(
+      dueAt,
+      "tracked",
+      limit - inbox.length,
+      updatedAtBefore
+    );
     return [...inbox, ...tracked];
+  },
+
+  /** Bump `updatedAt` so probed rows fall out of the next oldest-first batch. */
+  async touchUpdatedAt(ids: string[], now = new Date()): Promise<void> {
+    if (ids.length === 0) return;
+    await getDb().update(application).set({ updatedAt: now }).where(inArray(application.id, ids));
   },
 
   /** Inbox rows (TTL-eligible) whose catalog posting is already closed. */

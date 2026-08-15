@@ -241,7 +241,7 @@ export const FindJobsNowOutputSchema = z.object({
   enqueued: z.boolean(),
   ingestTriggered: z.boolean(),
   seats: z.number().int().nonnegative(),
-  reason: z.enum(["ok", "title_required", "inbox_full", "queue_unavailable"])
+  reason: z.enum(["ok", "title_required", "inbox_full", "queue_unavailable", "ai_budget"])
 });
 
 /** Body-field patch only — never stage/outcome (use dedicated procedures). */

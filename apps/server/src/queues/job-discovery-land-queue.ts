@@ -97,16 +97,18 @@ export function startJobDiscoveryLandQueue(redisUrl: string): void {
 }
 
 /** Drop a leftover completed/failed id so backfill can reuse `land_${userId}_${runId}`. */
-async function removeFinishedLandJob(
+async function coalesceOrRemoveFinishedLandJob(
   queue: Queue<JobDiscoveryLandPayload>,
   jobId: string
-): Promise<void> {
+): Promise<"coalesced" | "free"> {
   const existing = await queue.getJob(jobId);
-  if (!existing) return;
+  if (!existing) return "free";
   const state = await existing.getState();
   if (state === "completed" || state === "failed") {
     await existing.remove();
+    return "free";
   }
+  return "coalesced";
 }
 
 export async function enqueueJobDiscoveryLand(
@@ -124,7 +126,10 @@ export async function enqueueJobDiscoveryLand(
   const jobId = landJobId(data.userId, data.runId);
 
   try {
-    await removeFinishedLandJob(s.queue, jobId);
+    const gate = await coalesceOrRemoveFinishedLandJob(s.queue, jobId);
+    if (gate === "coalesced") {
+      return { enqueued: true, jobId };
+    }
     const job = await s.queue.add(JOB_DISCOVERY_LAND_JOB_NAME, data, {
       jobId,
       removeOnComplete: true,
@@ -136,7 +141,7 @@ export async function enqueueJobDiscoveryLand(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (/already exists|JobId/i.test(message)) {
-      return { enqueued: false };
+      return { enqueued: true, jobId };
     }
     const log = createLogger({ operation: "server__job_discovery_land_queue" });
     log.error(error instanceof Error ? error : new Error(message), {

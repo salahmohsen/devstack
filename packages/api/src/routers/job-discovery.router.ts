@@ -6,6 +6,7 @@ import {
   FindJobsNowInputSchema,
   FindJobsNowOutputSchema,
   hasValidDiscoveryTitle,
+  ingestQueryKey,
   MAX_OPEN_INBOX,
   scoreCatalogAgainstPreference,
   WorkModeSchema,
@@ -124,13 +125,27 @@ export const jobDiscoveryRouter = {
         remainingDailyAiAttempts,
         hasAiKey
       });
+      if (budget === 0) {
+        return {
+          enqueued: false,
+          ingestTriggered: false,
+          seats,
+          reason: "ai_budget"
+        };
+      }
 
       const runId = `find_${userId}_${randomUUID()}`;
       const cheapUnseen = await countCheapPassedUnseen({ userId, prefs, budget });
       const ingestTriggered = cheapUnseen < budget;
+      const queryKey =
+        ingestQueryKey({
+          titleId: prefs.titleId,
+          customTitle: prefs.customTitle,
+          roleKeywords: prefs.roleKeywords
+        }) ?? undefined;
 
       const enqueued = ingestTriggered
-        ? await requestJobCatalogIngest({ mode: "user_query", userId, runId })
+        ? await requestJobCatalogIngest({ mode: "user_query", userId, runId, queryKey })
         : await requestJobDiscoveryLand({
             userId,
             runId,

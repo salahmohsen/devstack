@@ -33,11 +33,23 @@ export type ListOpenForLandInput = {
 
 const DEFAULT_OPEN_FOR_LAND_LIMIT = 400;
 
+/** Keep the longer JD; incoming null/blank does not wipe a stored description. */
+export function preferLongerJobDescription(
+  incoming: string | null | undefined,
+  stored: string | null | undefined
+): string | null {
+  const next = incoming?.trim() ?? "";
+  const prev = stored?.trim() ?? "";
+  if (next.length === 0) return stored ?? null;
+  if (next.length >= prev.length) return incoming ?? next;
+  return stored ?? prev;
+}
+
 export const jobPostingRepository = {
   /**
    * Idempotent catalog write on `(adapterId, externalId)`.
-   * Unchanged `contentHash` only bumps `lastSeenAt`. Incoming null description
-   * does not wipe a stored JD.
+   * Unchanged `contentHash` only bumps `lastSeenAt`. Never replaces a longer
+   * stored JD with a shorter incoming one (null/blank incoming keeps stored).
    */
   async upsert(input: UpsertJobPostingInput): Promise<{ row: JobPostingEntity; changed: boolean }> {
     const now = new Date();
@@ -107,7 +119,7 @@ export const jobPostingRepository = {
         salaryMax: input.salaryMax,
         salaryCurrency: input.salaryCurrency,
         skills: input.skills,
-        description: input.description ?? current.description,
+        description: preferLongerJobDescription(input.description, current.description),
         sourcePlatform: input.sourcePlatform,
         contentHash: input.contentHash,
         postedAt: input.postedAt,
@@ -171,10 +183,17 @@ export const jobPostingRepository = {
       .limit(limit);
   },
 
-  async setDescription(id: string, description: string): Promise<JobPostingEntity | null> {
+  async setDescription(
+    id: string,
+    description: string,
+    contentHash?: string
+  ): Promise<JobPostingEntity | null> {
     const [row] = await getDb()
       .update(jobPosting)
-      .set({ description })
+      .set({
+        description,
+        ...(contentHash != null ? { contentHash } : {})
+      })
       .where(eq(jobPosting.id, id))
       .returning();
     return row ?? null;

@@ -2,6 +2,7 @@ import {
   fetchPublicHttpStatus,
   inboxLivenessDueAt,
   isInboxExpired,
+  LIVENESS_REPROBE_AFTER_MS,
   LIVENESS_TICK_BATCH,
   type FetchPublicHttpStatusResult
 } from "@tsu-stack/core";
@@ -25,9 +26,12 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
 }> {
   await dismissClosedListingInbox();
 
-  const due = (await applicationRepository.listInboxDueLiveness(now, LIVENESS_TICK_BATCH)).filter(
-    (row) => inboxLivenessDueAt(row.createdAt).getTime() <= now.getTime()
-  );
+  const updatedAtBefore = new Date(now.getTime() - LIVENESS_REPROBE_AFTER_MS);
+  const due = (
+    await applicationRepository.listInboxDueLiveness(now, LIVENESS_TICK_BATCH, {
+      updatedAtBefore
+    })
+  ).filter((row) => inboxLivenessDueAt(row.createdAt).getTime() <= now.getTime());
 
   const postingIds = uniqueIds(due.map((row) => row.postingId));
   const postingById = new Map(
@@ -42,6 +46,10 @@ export async function runInboxLivenessTick(now = new Date()): Promise<{
     const gone = await listingIsClosed(target);
     return { target, gone };
   });
+  await applicationRepository.touchUpdatedAt(
+    due.map((row) => row.id),
+    now
+  );
 
   for (const { target, gone } of probes) {
     if (!gone) continue;

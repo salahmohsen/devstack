@@ -46,6 +46,7 @@ export {
 } from "./job-preference.repository.ts";
 export {
   jobPostingRepository,
+  preferLongerJobDescription,
   type JobPostingEntity,
   type ListOpenForLandInput,
   type UpsertJobPostingInput

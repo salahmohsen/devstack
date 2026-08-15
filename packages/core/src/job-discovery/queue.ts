@@ -20,6 +20,27 @@ export function inboxAiJobId(applicationId: string): string {
   return `inboxai_${applicationId}`;
 }
 
+/**
+ * Coalesce ingest while waiting/active. Find-now uses
+ * `ingest_${userId}_${queryKey}_${utcDay}` so same-day repeats share a job;
+ * daily cron uses `ingest_daily_${utcDay}`.
+ */
+export function ingestJobId(input: {
+  mode: "daily" | "user_query";
+  userId?: string;
+  runId?: string;
+  queryKey?: string | null;
+  now?: Date;
+}): string {
+  const utcDay = (input.now ?? new Date()).toISOString().slice(0, 10);
+  if (input.mode === "user_query" && input.userId) {
+    const queryKey = input.queryKey?.trim();
+    if (queryKey) return `ingest_${input.userId}_${queryKey}_${utcDay}`;
+    if (input.runId) return `ingest_${input.userId}_${input.runId}`;
+  }
+  return `ingest_daily_${utcDay}`;
+}
+
 export const JobDiscoveryLandPayloadSchema = z.object({
   userId: z.string().min(1),
   runId: z.string().min(1),
@@ -34,7 +55,9 @@ export const JobInboxAiPayloadSchema = z.object({
 export const JobCatalogIngestPayloadSchema = z.object({
   mode: z.enum(["daily", "user_query"]),
   userId: z.string().optional(),
-  runId: z.string().optional()
+  runId: z.string().optional(),
+  /** Used only to mint `ingestJobId` for user_query coalesce. */
+  queryKey: z.string().optional()
 });
 
 export type JobDiscoveryLandPayload = z.infer<typeof JobDiscoveryLandPayloadSchema>;
