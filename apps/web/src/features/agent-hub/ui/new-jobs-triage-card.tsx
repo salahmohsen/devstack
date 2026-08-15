@@ -166,20 +166,22 @@ export function NewJobsTriageCard({
         </>
       }
     >
-      <RowList
-        label="Track"
-        rows={input.track}
-        checked={trackChecked}
-        onToggle={toggleTrack}
-        locked={locked}
-      />
-      <RowList
-        label="Dismiss"
-        rows={input.dismiss}
-        checked={dismissChecked}
-        onToggle={toggleDismiss}
-        locked={locked}
-      />
+      <div className="space-y-4">
+        <RowList
+          label="Track"
+          rows={input.track}
+          checked={trackChecked}
+          onToggle={toggleTrack}
+          locked={locked}
+        />
+        <RowList
+          label="Dismiss"
+          rows={input.dismiss}
+          checked={dismissChecked}
+          onToggle={toggleDismiss}
+          locked={locked}
+        />
+      </div>
     </HubHitlFrame>
   );
 }
