@@ -67,6 +67,7 @@ catalog:
   defu: ^6.1.7
   drizzle-kit: 1.0.0-rc.4-ca0f029
   drizzle-orm: 1.0.0-rc.4-5d5b77c
+  esbuild: ^0.28.1
   eslint-plugin-fsd-lint: ^1.2.1
   eslint-plugin-react-hooks: ^7.1.1
   evlog: ^2.22.4
@@ -187,6 +188,7 @@ catalog:
   cuelume: ^0.2.2
   thinking-orbs: ^0.3.1
   tslib: 2.8.1
+  tw-shimmer: ^0.4.12
 
 catalogMode: prefer
 

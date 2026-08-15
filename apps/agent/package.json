@@ -14,7 +14,7 @@
     ".": "./src/index"
   },
   "scripts": {
-    "rebuild:core-cache": "pnpm -w exec esbuild packages/core/src/index.ts --bundle --format=esm --platform=node --packages=external --outfile=packages/core/node_modules/.cache/@tsu-stack__core.mjs --sourcemap",
+    "rebuild:core-cache": "pnpm exec esbuild ../../packages/core/src/index.ts --bundle --format=esm --platform=node --packages=external --outfile=../../packages/core/node_modules/.cache/@tsu-stack__core.mjs --sourcemap",
     "dev": "pnpm run rebuild:core-cache && PORT=4111 dotenvx run -f ../../packages/env/.env -- mastra dev --inspect",
     "build": "IS_BUILD=true mastra build",
     "start": "node .mastra/output/index.mjs",
@@ -49,6 +49,7 @@
     "@dotenvx/dotenvx": "catalog:",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
+    "esbuild": "catalog:",
     "mastra": "catalog:",
     "typescript": "~6.0.3"
   }

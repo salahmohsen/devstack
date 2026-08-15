@@ -14,6 +14,7 @@
 @import "./base-theme.css";
 @import "./scrollbar.css";
 @import "./prose.css";
+@import "tw-shimmer";
 
 /* Scan UI package sources for Tailwind class generation */
 @source "../**/*.ts";
