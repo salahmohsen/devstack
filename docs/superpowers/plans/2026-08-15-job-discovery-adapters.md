@@ -40,34 +40,34 @@
 
 ## File map
 
-| Path | Responsibility |
-| --- | --- |
-| `packages/core/src/job-discovery/constants.ts` | Adapter ids, ATS allowlist, N/cap/TTL numbers, pack table, queue names |
-| `packages/core/src/job-discovery/types.ts` | Zod: `NormalizedListing`, adapter fetch input, land/findNow payloads |
-| `packages/core/src/job-discovery/title-packs.ts` | Pack lookup, `applyTitlePack`, `effectiveRoleKeywords`, `hasValidDiscoveryTitle`, `ingestQueryKey` |
-| `packages/core/src/job-discovery/cheap-score.ts` | Structured cheap score (no JD HTML, no `minMatchScore` hard-skip) |
-| `packages/core/src/job-discovery/land-budget.ts` | `computeLandBudget` |
-| `packages/core/src/job-discovery/index.ts` | Barrel |
-| `packages/core/src/job-preference/types.ts` | `titleId`, `customTitle`, `jobsPerRun`, `importFromEmail` |
-| `packages/core/src/job-preference/utils.ts` | defaults + merge for new fields |
-| `packages/core/src/application/types.ts` | `discovery` source tag; `listingClosed`; findNow schemas |
-| `packages/core/src/application/utils.ts` | `buildApplicationSourceTags` channel + labels |
-| `packages/db/src/schema/job-posting.schema.ts` | Shared catalog table |
-| `packages/db/src/schema/user-job-ai-budget.schema.ts` | Daily attempt counter |
-| `packages/db/src/schema/job-preference.schema.ts` | New preference columns |
-| `packages/db/src/schema/application.schema.ts` | `postingId`, `inboxExpiresAt`, `discoveryRunId` |
-| `packages/db/src/repositories/job-posting.repository.ts` | Upsert by `(adapterId, externalId)`, hydrate, close |
-| `packages/db/src/repositories/user-job-ai-budget.repository.ts` | Atomic increment under cap |
-| `packages/api/src/lib/job-discovery/adapters/*.ts` | HTTP adapters + registry |
-| `packages/api/src/lib/job-discovery/ingest.ts` | Distinct-query ingest + feeds |
-| `packages/api/src/lib/job-discovery/hydrate.ts` | Shared HTTP JD extract → catalog |
-| `packages/api/src/lib/job-discovery/land.ts` | Per-user land loop |
-| `packages/api/src/lib/job-discovery/inbox-ai.ts` | Score + take; dismiss + retrigger |
-| `packages/api/src/lib/job-discovery/liveness.ts` | HTTP close + 7-day dismiss |
-| `packages/api/src/routers/job-discovery.router.ts` | `findNow` |
-| `packages/api/src/lib/mail/harvest-enqueue-hook.ts` + classify | Gate harvest on `importFromEmail` |
-| `apps/server/src/queues/job-*-queue.ts` | Ingest / land / inbox-ai / liveness workers |
-| `apps/web` settings + new-jobs + tracked panel | Title combobox, N, toggle, Find jobs now, Scan gate, listing-closed |
+| Path                                                            | Responsibility                                                                                     |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `packages/core/src/job-discovery/constants.ts`                  | Adapter ids, ATS allowlist, N/cap/TTL numbers, pack table, queue names                             |
+| `packages/core/src/job-discovery/types.ts`                      | Zod: `NormalizedListing`, adapter fetch input, land/findNow payloads                               |
+| `packages/core/src/job-discovery/title-packs.ts`                | Pack lookup, `applyTitlePack`, `effectiveRoleKeywords`, `hasValidDiscoveryTitle`, `ingestQueryKey` |
+| `packages/core/src/job-discovery/cheap-score.ts`                | Structured cheap score (no JD HTML, no `minMatchScore` hard-skip)                                  |
+| `packages/core/src/job-discovery/land-budget.ts`                | `computeLandBudget`                                                                                |
+| `packages/core/src/job-discovery/index.ts`                      | Barrel                                                                                             |
+| `packages/core/src/job-preference/types.ts`                     | `titleId`, `customTitle`, `jobsPerRun`, `importFromEmail`                                          |
+| `packages/core/src/job-preference/utils.ts`                     | defaults + merge for new fields                                                                    |
+| `packages/core/src/application/types.ts`                        | `discovery` source tag; `listingClosed`; findNow schemas                                           |
+| `packages/core/src/application/utils.ts`                        | `buildApplicationSourceTags` channel + labels                                                      |
+| `packages/db/src/schema/job-posting.schema.ts`                  | Shared catalog table                                                                               |
+| `packages/db/src/schema/user-job-ai-budget.schema.ts`           | Daily attempt counter                                                                              |
+| `packages/db/src/schema/job-preference.schema.ts`               | New preference columns                                                                             |
+| `packages/db/src/schema/application.schema.ts`                  | `postingId`, `inboxExpiresAt`, `discoveryRunId`                                                    |
+| `packages/db/src/repositories/job-posting.repository.ts`        | Upsert by `(adapterId, externalId)`, hydrate, close                                                |
+| `packages/db/src/repositories/user-job-ai-budget.repository.ts` | Atomic increment under cap                                                                         |
+| `packages/api/src/lib/job-discovery/adapters/*.ts`              | HTTP adapters + registry                                                                           |
+| `packages/api/src/lib/job-discovery/ingest.ts`                  | Distinct-query ingest + feeds                                                                      |
+| `packages/api/src/lib/job-discovery/hydrate.ts`                 | Shared HTTP JD extract → catalog                                                                   |
+| `packages/api/src/lib/job-discovery/land.ts`                    | Per-user land loop                                                                                 |
+| `packages/api/src/lib/job-discovery/inbox-ai.ts`                | Score + take; dismiss + retrigger                                                                  |
+| `packages/api/src/lib/job-discovery/liveness.ts`                | HTTP close + 7-day dismiss                                                                         |
+| `packages/api/src/routers/job-discovery.router.ts`              | `findNow`                                                                                          |
+| `packages/api/src/lib/mail/harvest-enqueue-hook.ts` + classify  | Gate harvest on `importFromEmail`                                                                  |
+| `apps/server/src/queues/job-*-queue.ts`                         | Ingest / land / inbox-ai / liveness workers                                                        |
+| `apps/web` settings + new-jobs + tracked panel                  | Title combobox, N, toggle, Find jobs now, Scan gate, listing-closed                                |
 
 ---
 
@@ -92,9 +92,20 @@
 
 ```ts
 export const JOB_TITLE_PACK_IDS = [
-  "frontend", "backend", "fullstack", "mobile", "data_ml", "devops",
-  "product", "design", "qa", "security", "eng_manager", "devrel",
-  "data_analyst", "solutions"
+  "frontend",
+  "backend",
+  "fullstack",
+  "mobile",
+  "data_ml",
+  "devops",
+  "product",
+  "design",
+  "qa",
+  "security",
+  "eng_manager",
+  "devrel",
+  "data_analyst",
+  "solutions"
 ] as const;
 export type JobTitlePackId = (typeof JOB_TITLE_PACK_IDS)[number];
 export type JobTitleId = JobTitlePackId | "custom";
@@ -176,9 +187,9 @@ describe("applyTitlePack", () => {
 
 describe("hasValidDiscoveryTitle", () => {
   it("accepts a pack even if extras are empty", () => {
-    expect(hasValidDiscoveryTitle({ titleId: "frontend", customTitle: null, roleKeywords: [] })).toBe(
-      true
-    );
+    expect(
+      hasValidDiscoveryTitle({ titleId: "frontend", customTitle: null, roleKeywords: [] })
+    ).toBe(true);
   });
   it("rejects custom with fewer than 2 keywords", () => {
     expect(
@@ -199,17 +210,17 @@ describe("hasValidDiscoveryTitle", () => {
     ).toBe(true);
   });
   it("rejects unset title", () => {
-    expect(hasValidDiscoveryTitle({ titleId: null, customTitle: null, roleKeywords: ["react"] })).toBe(
-      false
-    );
+    expect(
+      hasValidDiscoveryTitle({ titleId: null, customTitle: null, roleKeywords: ["react"] })
+    ).toBe(false);
   });
 });
 
 describe("ingestQueryKey", () => {
   it("is stable for the same pack", () => {
-    expect(ingestQueryKey({ titleId: "frontend", customTitle: null, roleKeywords: ["graphql"] })).toBe(
-      "pack:frontend"
-    );
+    expect(
+      ingestQueryKey({ titleId: "frontend", customTitle: null, roleKeywords: ["graphql"] })
+    ).toBe("pack:frontend");
   });
   it("sorts custom keywords case-insensitively", () => {
     expect(
@@ -291,10 +302,20 @@ git commit -m "feat(core): title packs and discovery preference fields"
 **Interfaces:**
 
 ```ts
-export const JOB_ADAPTER_IDS = ["freehire", "himalayas", "arbeitnow", "remotive", "remoteok"] as const;
+export const JOB_ADAPTER_IDS = [
+  "freehire",
+  "himalayas",
+  "arbeitnow",
+  "remotive",
+  "remoteok"
+] as const;
 export type JobAdapterId = (typeof JOB_ADAPTER_IDS)[number];
 export const FREEHIRE_ATS_SOURCES = [
-  "greenhouse", "ashby", "lever", "workable", "smartrecruiters"
+  "greenhouse",
+  "ashby",
+  "lever",
+  "workable",
+  "smartrecruiters"
 ] as const;
 
 export const AdapterCapabilitySchema = z.enum(["search", "feed"]);
@@ -415,10 +436,7 @@ it("fails without a title keyword hit", () => {
 });
 
 it("does not use description text for excludes or title hits", () => {
-  const r = scoreCatalogAgainstPreference(
-    { ...listing, title: "Staff Nurse" },
-    prefs
-  );
+  const r = scoreCatalogAgainstPreference({ ...listing, title: "Staff Nurse" }, prefs);
   expect(r.passed).toBe(false);
 });
 ```
@@ -570,28 +588,28 @@ git commit -m "feat(core): discovery source tag and findNow schema"
 
 `job_posting` (no `userId`):
 
-| Column | Type |
-| --- | --- |
-| `id` | text PK |
-| `adapterId` | text not null |
-| `externalId` | text not null |
-| `listingUrl` | text not null |
-| `title`, `companyName` | text not null |
-| `location` | text |
-| `workMode` | text |
-| `salaryMin`, `salaryMax` | integer |
-| `salaryCurrency` | text |
-| `skills` | jsonb `string[]` default `[]` |
-| `description` | text |
-| `sourcePlatform` | text |
-| `contentHash` | text not null |
-| `postedAt` | timestamptz |
-| `firstSeenAt`, `lastSeenAt` | timestamptz not null default now |
-| `closedAt` | timestamptz |
-| `raw` | jsonb |
+| Column                           | Type                                |
+| -------------------------------- | ----------------------------------- |
+| `id`                             | text PK                             |
+| `adapterId`                      | text not null                       |
+| `externalId`                     | text not null                       |
+| `listingUrl`                     | text not null                       |
+| `title`, `companyName`           | text not null                       |
+| `location`                       | text                                |
+| `workMode`                       | text                                |
+| `salaryMin`, `salaryMax`         | integer                             |
+| `salaryCurrency`                 | text                                |
+| `skills`                         | jsonb `string[]` default `[]`       |
+| `description`                    | text                                |
+| `sourcePlatform`                 | text                                |
+| `contentHash`                    | text not null                       |
+| `postedAt`                       | timestamptz                         |
+| `firstSeenAt`, `lastSeenAt`      | timestamptz not null default now    |
+| `closedAt`                       | timestamptz                         |
+| `raw`                            | jsonb                               |
 | UNIQUE `(adapterId, externalId)` | `job_posting_adapter_external_uidx` |
-| INDEX `listingUrl` | `job_posting_listing_url_idx` |
-| INDEX `closedAt` | `job_posting_closed_at_idx` |
+| INDEX `listingUrl`               | `job_posting_listing_url_idx`       |
+| INDEX `closedAt`                 | `job_posting_closed_at_idx`         |
 
 `job_preference` add (all with defaults so existing rows stay valid):
 
@@ -783,23 +801,23 @@ export function getJobSourceAdapter(id: JobAdapterId): JobSourceAdapter;
 
 Adapter fetch contracts:
 
-| Adapter | URL | Notes |
-| --- | --- | --- |
-| `freehire` search | `https://freehire.me/api/v1/jobs/search` | `q` = pack label keywords joined with space (or custom keywords joined). `sort=posted_at`, `order=desc`, `limit` (≤50), `offset`, `source=greenhouse,ashby,lever,workable,smartrecruiters`. `work_mode` = comma-joined prefs when 1–2 modes selected; omit when 0 or all 3. Drop rows whose `source` is not in `FREEHIRE_ATS_SOURCES`. Never call `/agent/jobs/search` or match-analysis. |
-| `himalayas` search | `https://himalayas.app/jobs/api/search` | `q`, `sort=recent`, `page`. Stringify `timezoneRestrictions` (API may send ints). `externalId = guid` or slug. |
-| `arbeitnow` feed | `https://www.arbeitnow.com/api/job-board-api` | `page`. Ignore `q` (feed). |
-| `remotive` search | `https://remotive.com/api/remote-jobs` | `search=q`, `category=software-dev`. Return all hits (title filter is cheap-score). |
-| `remoteok` feed | `https://remoteok.com/api` | Dump. Skip the legal first object (`!id` / `!position`). Ignore `q`. |
+| Adapter            | URL                                           | Notes                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `freehire` search  | `https://freehire.me/api/v1/jobs/search`      | `q` = pack label keywords joined with space (or custom keywords joined). `sort=posted_at`, `order=desc`, `limit` (≤50), `offset`, `source=greenhouse,ashby,lever,workable,smartrecruiters`. `work_mode` = comma-joined prefs when 1–2 modes selected; omit when 0 or all 3. Drop rows whose `source` is not in `FREEHIRE_ATS_SOURCES`. Never call `/agent/jobs/search` or match-analysis. |
+| `himalayas` search | `https://himalayas.app/jobs/api/search`       | `q`, `sort=recent`, `page`. Stringify `timezoneRestrictions` (API may send ints). `externalId = guid` or slug.                                                                                                                                                                                                                                                                            |
+| `arbeitnow` feed   | `https://www.arbeitnow.com/api/job-board-api` | `page`. Ignore `q` (feed).                                                                                                                                                                                                                                                                                                                                                                |
+| `remotive` search  | `https://remotive.com/api/remote-jobs`        | `search=q`, `category=software-dev`. Return all hits (title filter is cheap-score).                                                                                                                                                                                                                                                                                                       |
+| `remoteok` feed    | `https://remoteok.com/api`                    | Dump. Skip the legal first object (`!id` / `!position`). Ignore `q`.                                                                                                                                                                                                                                                                                                                      |
 
 Field maps (copy only if the source sent the field; otherwise null / `[]`):
 
-| Adapter | `externalId` | `listingUrl` | `title` / `companyName` | `location` | `workMode` | `skills` | `salary*` | `description` | `postedAt` | `sourcePlatform` |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| freehire | `public_slug` | `url` | `title` / `company` | `location` | `work_mode` if `remote\|hybrid\|onsite` | `skills` | `enrichment.salary_min/max/currency` | list preview if present | `posted_at` | `source` |
-| himalayas | `guid` ?? `slug` | `applicationLink` ?? `url` | `title` / `companyName` | join `locationRestrictions` (stringify every entry) | null unless API has an explicit remote flag | `[]` | min/max/currency if numeric | `description` if present | `createdAt` | `"himalayas"` |
-| arbeitnow | `slug` | `url` | `title` / `company_name` | `location` | `remote === true` → `"remote"` else null | `tags` | null | `description` if present | `created_at` (unix or iso) | `"arbeitnow"` |
-| remotive | `String(id)` | `url` | `title` / `company_name` | `candidate_required_location` | `"remote"` (board is remote) | `tags` | parse only if a structured salary object exists; do not regex the salary string | `description` if present | `publication_date` | `"remotive"` |
-| remoteok | `String(id)` | `url` | `position` / `company` | `location` | `"remote"` | `tags` | `salary_min` / `salary_max` if numeric | `description` if present | `date` | `"remoteok"` |
+| Adapter   | `externalId`     | `listingUrl`               | `title` / `companyName`  | `location`                                          | `workMode`                                  | `skills` | `salary*`                                                                       | `description`            | `postedAt`                 | `sourcePlatform` |
+| --------- | ---------------- | -------------------------- | ------------------------ | --------------------------------------------------- | ------------------------------------------- | -------- | ------------------------------------------------------------------------------- | ------------------------ | -------------------------- | ---------------- |
+| freehire  | `public_slug`    | `url`                      | `title` / `company`      | `location`                                          | `work_mode` if `remote\|hybrid\|onsite`     | `skills` | `enrichment.salary_min/max/currency`                                            | list preview if present  | `posted_at`                | `source`         |
+| himalayas | `guid` ?? `slug` | `applicationLink` ?? `url` | `title` / `companyName`  | join `locationRestrictions` (stringify every entry) | null unless API has an explicit remote flag | `[]`     | min/max/currency if numeric                                                     | `description` if present | `createdAt`                | `"himalayas"`    |
+| arbeitnow | `slug`           | `url`                      | `title` / `company_name` | `location`                                          | `remote === true` → `"remote"` else null    | `tags`   | null                                                                            | `description` if present | `created_at` (unix or iso) | `"arbeitnow"`    |
+| remotive  | `String(id)`     | `url`                      | `title` / `company_name` | `candidate_required_location`                       | `"remote"` (board is remote)                | `tags`   | parse only if a structured salary object exists; do not regex the salary string | `description` if present | `publication_date`         | `"remotive"`     |
+| remoteok  | `String(id)`     | `url`                      | `position` / `company`   | `location`                                          | `"remote"`                                  | `tags`   | `salary_min` / `salary_max` if numeric                                          | `description` if present | `date`                     | `"remoteok"`     |
 
 Normalize: do **not** infer work mode or salary from JD text. Only copy structured fields. `canonicalizeJobUrl` on `listingUrl`. Skip rows missing title, company, or http(s) URL. Stringify Himalayas `timezoneRestrictions` if touched (ints have broken naive joins).
 
@@ -813,7 +831,15 @@ import fixture from "../__fixtures__/freehire-search.json";
 
 it("keeps greenhouse and drops himalayas copies", () => {
   const rows = fixture.data.map(normalizeFreehireJob).filter(Boolean);
-  expect(rows.every((r) => r && ["greenhouse", "ashby", "lever", "workable", "smartrecruiters"].includes(r.sourcePlatform ?? ""))).toBe(true);
+  expect(
+    rows.every(
+      (r) =>
+        r &&
+        ["greenhouse", "ashby", "lever", "workable", "smartrecruiters"].includes(
+          r.sourcePlatform ?? ""
+        )
+    )
+  ).toBe(true);
   expect(rows.find((r) => r?.sourcePlatform === "himalayas")).toBeUndefined();
 });
 
@@ -895,6 +921,7 @@ Paging caps (v1): search adapters 3 pages × 50 (or until a page returns 0). Fee
 Remotive: shared **global** 4/day budget for cron **and** Find jobs now (`ingestForUserQuery`). Use Redis `INCR remotive:${utcDate}` with 48h TTL when `REDIS_URL` is set; if Redis is down, skip Remotive rather than unbounded fan-out. If `remotiveCallsLeft <= 0`, skip Remotive for that query.
 
 `queryKey` → search `q`:
+
 - `pack:frontend` → `TITLE_PACKS.frontend.keywords.join(" ")` (or the pack’s first 4 keywords if the query string is huge).
 - `custom:k8s|sre` → keywords joined with space (`k8s sre`).
 
@@ -915,9 +942,7 @@ it("dedupes two users on the same pack", () => {
 });
 it("keeps custom distinct from packs", () => {
   expect(
-    planIngestQueries([
-      { titleId: "custom", customTitle: "SRE", roleKeywords: ["sre", "k8s"] }
-    ])
+    planIngestQueries([{ titleId: "custom", customTitle: "SRE", roleKeywords: ["sre", "k8s"] }])
   ).toEqual(["custom:k8s|sre"]);
 });
 ```
@@ -1379,12 +1404,12 @@ git commit -m "docs: link job-discovery spec and fix mail-first copy"
 
 **Contract to write in the hardening reply:**
 
-| Item | Content |
-| --- | --- |
+| Item                 | Content                                                                                                                                                                                                                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | User-visible success | Settings save a pack + N; Find jobs now lands ≤ N inbox rows; AI pass stays, AI fail appears under Dismissed and backfills; no key still lands; Scan hidden when mail off; inbox never exceeds 50; listing-closed badge on tracked; 7-day / liveness dismiss only new rows |
-| Entry paths | Settings → Jobs; New jobs → Find jobs now; New jobs → Scan (toggle on); daily ingest tick; classify `job_notifier` with toggle off/on; Tracked jobs panel; Dismissed tab |
-| Shared state | `job_posting`, `application` inbox, `user_job_ai_budget`, job preference row, BullMQ jobs |
-| Non-goals | Company watchlist, LinkedIn scrape, communal embeddings, live Remotive quota against production |
+| Entry paths          | Settings → Jobs; New jobs → Find jobs now; New jobs → Scan (toggle on); daily ingest tick; classify `job_notifier` with toggle off/on; Tracked jobs panel; Dismissed tab                                                                                                   |
+| Shared state         | `job_posting`, `application` inbox, `user_job_ai_budget`, job preference row, BullMQ jobs                                                                                                                                                                                  |
+| Non-goals            | Company watchlist, LinkedIn scrape, communal embeddings, live Remotive quota against production                                                                                                                                                                            |
 
 **Loops (required):**
 
@@ -1412,33 +1437,33 @@ git commit -m "test: harden job discovery adapters"
 
 ## Spec coverage (self-review)
 
-| Spec item | Task |
-| --- | --- |
-| Shared `job_posting`, no userId | 4, 5, 8 |
-| No shared LLM / BYO only | 9, 12, Global |
-| Hybrid cheap → land → AI | 2, 9 |
-| Title combobox + custom ≥2 | 1, 11 |
-| Wider pack list | 1 |
-| Cheap = title + structured; exclude kill; no JD; no minMatchScore skip | 2 |
-| AI minMatchScore; fail → dismiss `via: low_match` + backfill | 9 |
-| N 15–40 default 25; 50 open; 2N attempts | 1, 2, 9 |
-| AI enqueue immediately; land does not await model | 9, 10, 12 |
-| 7-day TTL + ~3.5d HTTP liveness; grandfather; tracked badge | 4, 14, 15 |
-| Mail toggle default off; classify/Scan gated | 11, 12, 13 |
-| v1 sources + ATS gate + no watchlist | 7 |
-| Daily cron + Find jobs now | 10, 12 |
-| Dedup canonicalize + (userId,url) + (adapter,externalId) | 7, 9 |
-| Ingest shared distinct q; Find jobs now ingest if thin | 8, 12 |
-| No key still lands | 9, 12 |
-| `discovery` source tag + labels | 3 |
-| Hydrate catalog before personal AI | 8, 9 |
-| Fill/fix location/salary on the **application** only | 8, 9 |
-| Do not land `closedAt` | 9 |
-| Remotive global 4/day (cron + Find jobs now) | 8, 12 |
-| Liveness checks inbox **and** tracked | 15 |
-| Attribution source + URL | 9, UI existing listing link |
-| Out of v1 (watchlist, Workday, communal LLM, …) | not scheduled |
-| Hardening skill | 17 |
+| Spec item                                                              | Task                        |
+| ---------------------------------------------------------------------- | --------------------------- |
+| Shared `job_posting`, no userId                                        | 4, 5, 8                     |
+| No shared LLM / BYO only                                               | 9, 12, Global               |
+| Hybrid cheap → land → AI                                               | 2, 9                        |
+| Title combobox + custom ≥2                                             | 1, 11                       |
+| Wider pack list                                                        | 1                           |
+| Cheap = title + structured; exclude kill; no JD; no minMatchScore skip | 2                           |
+| AI minMatchScore; fail → dismiss `via: low_match` + backfill           | 9                           |
+| N 15–40 default 25; 50 open; 2N attempts                               | 1, 2, 9                     |
+| AI enqueue immediately; land does not await model                      | 9, 10, 12                   |
+| 7-day TTL + ~3.5d HTTP liveness; grandfather; tracked badge            | 4, 14, 15                   |
+| Mail toggle default off; classify/Scan gated                           | 11, 12, 13                  |
+| v1 sources + ATS gate + no watchlist                                   | 7                           |
+| Daily cron + Find jobs now                                             | 10, 12                      |
+| Dedup canonicalize + (userId,url) + (adapter,externalId)               | 7, 9                        |
+| Ingest shared distinct q; Find jobs now ingest if thin                 | 8, 12                       |
+| No key still lands                                                     | 9, 12                       |
+| `discovery` source tag + labels                                        | 3                           |
+| Hydrate catalog before personal AI                                     | 8, 9                        |
+| Fill/fix location/salary on the **application** only                   | 8, 9                        |
+| Do not land `closedAt`                                                 | 9                           |
+| Remotive global 4/day (cron + Find jobs now)                           | 8, 12                       |
+| Liveness checks inbox **and** tracked                                  | 15                          |
+| Attribution source + URL                                               | 9, UI existing listing link |
+| Out of v1 (watchlist, Workday, communal LLM, …)                        | not scheduled               |
+| Hardening skill                                                        | 17                          |
 
 ## Out of this plan
 
