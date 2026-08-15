@@ -17,6 +17,41 @@
 
 ---
 
+## 2026-08-15 — Two-axis evaluate-then-insert hardening
+
+- **Trigger:** Task 9 harden Find now after evaluate-then-insert (hybrid-only then hybrid+remote, Settings check, New jobs Details, Dismissed `via: low_match`)
+- **Finding:** Do not run worktree `scripts/dev.sh` against infra already owned by another checkout. The compose bind-mount path for `init-databases.sh` recreates postgres; the script EXIT trap then `compose down`. Start the three package `dev` scripts and `docker compose -f docker-compose.infra.yml up -d`. SIGSTOP parent restart wrappers instead of killing a compose-attached `dev.sh`
+- **Finding:** `findNow` cheap-unseen ignores two-axis. Hybrid-only prefs on a remote-heavy catalog return `ingestTriggered: false` then land `empty_shelf`. That is a correct two-axis drop, not a dead queue. Add remote (or an overlapping hybrid place) before expecting keepers
+- **Finding:** Isolated Chrome after a binary switch is signed out. Mint HMAC from the current `session` row; set `document.cookie` on `localhost` (not `127.0.0.1`) plus `Cookie` extra headers. A parent-tab serverFn ID 500 is stale Start cache, not an auth outage
+- **Finding:** Remote+uk overlaps Egypt/KSA through the `emea` ancestor walk. That is taxonomy, not a LatAm leak. Assert `Remote · LatAm` / catalog latam `app_rows=0`, not “no UK remotes”
+- **Finding:** Tracked empty is not a wipe when the surviving non-discovery rows are `tracking_status=inbox`. Count those rows by `discovery_run_id IS NULL` / missing `discovery` tag, then look at New jobs
+- **Finding:** BYO scorer can still return `source: heuristic` for most evaluates. Soft-fail must keep the stub (no take). Raise `minMatchScore` while inbox-ai jobs are still queued to get a `via: low_match` dismissed row; restore 70 after settle
+- **Evidence class:** oRPC findNow 401→`{ok, ingestTriggered:false}` then land `empty_shelf` / `{ok}` + 9 inbox + 1 dismissed; DB latam `app_rows=0`; Chrome Settings Hybrid check + locations tooltip; Details `Work mode Remote`; activity `via: low_match`; core 51 + api 33 unit tests
+
+## 2026-08-15 — Discovery land pool, BullMQ job ids, and the AI bar
+
+- **Trigger:** Harden + review job discovery after adapters shipped (Find jobs now, land, inbox AI, Settings, Tracked)
+- **Finding:** A reserved-slot land pool is incremental per call. Passing `alreadyLanded + extraBudget` as the extra-pass limit reuses the old sequential _cumulative_ target and overshoots N / 50
+- **Finding:** BullMQ custom job ids reject `:`. Query keys like `pack:frontend` must be sanitized before they become `ingest_*` ids or Find jobs now returns `queue_unavailable` whenever the shelf is thin
+- **Finding:** Soft AI failure (`source: heuristic`) must keep the cheap stub and refund the reserved daily attempt. Dismissing on the cheap bar after a scorer fallback treats `minMatchScore` as a cheap gate
+- **Finding:** If inbox-AI enqueue fails, delete the stub you just created. A forever-pending row occupies the 50 cap and blocks the URL
+- **Finding:** The preference scorer must see more than a 800-char teaser once hydrate wrote a full JD (use a named window well above the thin-JD threshold)
+- **Finding:** `applications.list` for inbox still ships every JD. Fifty hydrated descriptions is ~50–120kB; do not parse the full JSON in a shell heredoc
+- **Finding:** A cookie file can exist and still be 401 — mint HMAC from the _current_ `session` row. Isolated Chrome already on `:3000` can stay signed in while curl is not
+- **Evidence class:** oRPC findNow `Custom Id cannot contain :` → sanitized `ingest_…_pack_frontend_…` then `{ok, ingestTriggered, landed:2}` to inbox 50; Chrome New jobs / Settings pack+N / Tracked board+list “Listing closed”; core/api unit tests
+
+## 2026-08-15 — Harden the worktree binary, not a healthy port from another checkout
+
+- **Trigger:** Job discovery adapters Task 17 (findNow, Scan gate, classify harvest, inbox land)
+- **Finding:** HTTP 200 on `:3000` / `:5200` is not this branch. A parent-repo `pnpm dev` can own the product ports while the worktree has `findNow`, title packs, and `importFromEmail` gates. Probe a procedure that only exists on the feature (`POST /rpc/jobDiscovery/findNow`) before treating the loop as live
+- **Finding:** Stopping a compose-attached `pnpm dev` can exit postgres/redis/minio. `docker compose -f docker-compose.infra.yml up -d` and a DB row count before claiming the app cannot start
+- **Finding:** Do not call `applications.scanJobAlerts` against an unverified binary — a stale handler enqueues harvest even when the toggle is off. Confirm `importFromEmail: false` on the running server first (or expect leftover BullMQ harvests)
+- **Finding:** Leftover harvest jobs are a valid toggle-off proof: worker log `mail_job_harvest_skip_import_disabled` / `importFromEmail: false` and `created: 0`
+- **Finding:** Extra `Cookie` headers authenticate one document request; the client router then signs out unless `document.cookie` is set on that origin (httpOnly jar is not shared with isolated Chrome)
+- **Finding:** Natural AI scores may all pass. To exercise fail → Dismissed → backfill, raise `minMatchScore` while inbox-AI jobs are still queued (worker reads prefs at run time), then restore the bar so the daily `2×N` cap is not burned
+- **Finding:** URL dedup (`any trackingStatus`) means no-key then with-key cannot re-land the same listing. Run no-key first, or rely on a thick shelf for a second land
+- **Evidence class:** oRPC findNow 404 vs `{ title_required | ok }`; scanJobAlerts 13-enqueue vs `{0,0}`; classify `harvestEnqueued: false`; land `inboxai` outcomes; Chrome Settings / New jobs / Tracked
+
 ## 2026-08-14 — Dashboard chrome must not work until the surface is on screen
 
 - **Trigger:** Close remaining dashboard first-paint gaps after the payload loop; restart Mastra agent

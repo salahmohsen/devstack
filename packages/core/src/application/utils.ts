@@ -36,10 +36,10 @@ const PLATFORM_TAGS = new Set<string>(ApplicationSourceSchema.options);
 
 /**
  * Build multi source tags for discovery writes.
- * Channel: mail | hub | manual (+ future). Platform: linkedin | indeed | …
+ * Channel: mail | hub | manual | discovery. Platform: linkedin | indeed | …
  */
 export function buildApplicationSourceTags(input: {
-  channel: "mail" | "hub" | "manual";
+  channel: "mail" | "hub" | "manual" | "discovery";
   platform?: ApplicationSource | null;
 }): ApplicationSourceTag[] {
   const tags = new Set<ApplicationSourceTag>([input.channel]);
@@ -53,6 +53,7 @@ export const APPLICATION_SOURCE_TAG_LABELS: Record<ApplicationSourceTag, string>
   mail: "Mail",
   hub: "Hub",
   manual: "Manual",
+  discovery: "Discovery",
   linkedin: "LinkedIn",
   indeed: "Indeed",
   company_website: "Company site",
@@ -95,6 +96,7 @@ export function formatApplicationActivitySummary(input: {
       if (via === "manual_create") return "Added manually";
       if (via === "hub_create") return "Created from hub";
       if (via === "crm_create") return "Created from mail";
+      if (via === "discovery") return "Discovered from job search";
       return "Discovered from job alert";
     }
     case "promoted": {

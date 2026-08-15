@@ -1390,6 +1390,18 @@ function applyEvidenceToScore(
 }
 
 /**
+ * Fields the harvest scorer reads. Discovery-only JobPreference keys
+ * (`titleId`, `jobsPerRun`, `importFromEmail`) are not part of match.
+ */
+export type ScoreJobPreferenceInput = Pick<
+  JobPreference,
+  "workModes" | "locations" | "roleKeywords" | "excludeKeywords" | "minMatchScore"
+> & {
+  salaryMin?: number | null;
+  salaryCurrency?: string | null;
+};
+
+/**
  * Score a harvested job against user preferences and optional career-profile
  * evidence (0–100). Rules-only.
  * When role keywords are set, require a hit on the **title** (not random URL text).
@@ -1397,7 +1409,7 @@ function applyEvidenceToScore(
  */
 export function scoreJobAgainstPreference(
   job: HarvestedJob,
-  prefs: JobPreference | null | undefined,
+  prefs: ScoreJobPreferenceInput | null | undefined,
   evidence?: SeekerMatchEvidence | null
 ): JobMatchScoreResult {
   const p = prefs ?? defaultJobPreference();

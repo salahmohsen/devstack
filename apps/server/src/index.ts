@@ -2,6 +2,11 @@ import { type Server as HTTPServer } from "node:http";
 
 import { serve } from "@hono/node-server";
 
+import {
+  registerJobCatalogIngestEnqueue,
+  registerJobDiscoveryLandEnqueue,
+  registerJobInboxAiEnqueue
+} from "@tsu-stack/api/lib/job-discovery/enqueue";
 import { registerMailClassifyEnqueue } from "@tsu-stack/api/lib/mail/classify-enqueue-hook";
 import { registerMailJobHarvestEnqueue } from "@tsu-stack/api/lib/mail/harvest-enqueue-hook";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -9,6 +14,16 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { app } from "#@/app";
 import { createGithubGateway, broadcastSignals } from "#@/github-gateway";
+import {
+  enqueueJobCatalogIngest,
+  startJobCatalogIngestQueue
+} from "#@/queues/job-catalog-ingest-queue";
+import {
+  enqueueJobDiscoveryLand,
+  startJobDiscoveryLandQueue
+} from "#@/queues/job-discovery-land-queue";
+import { enqueueJobInboxAi, startJobInboxAiQueue } from "#@/queues/job-inbox-ai-queue";
+import { startJobInboxLivenessQueue } from "#@/queues/job-inbox-liveness-queue";
 import { enqueueMailClassify, startMailClassifyQueue } from "#@/queues/mail-classify-queue";
 import { enqueueMailJobHarvest, startMailJobHarvestQueue } from "#@/queues/mail-job-harvest-queue";
 import { initRuntime, setBroadcastSignals } from "#@/runtime-context";
@@ -132,6 +147,60 @@ async function start(): Promise<void> {
       const log = createLogger({ operation: "server__dismissed_application_purge_queue" });
       log.error(error instanceof Error ? error : new Error(String(error)), {
         event: "dismissed_application_purge_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
+
+    // Discovery land first so daily ingest can enqueue `land_${userId}_${runId}`.
+    try {
+      startJobDiscoveryLandQueue(ENV_SERVER.REDIS_URL);
+      registerJobDiscoveryLandEnqueue(async (payload) => {
+        const result = await enqueueJobDiscoveryLand(payload);
+        return result.enqueued;
+      });
+    } catch (error) {
+      const log = createLogger({ operation: "server__job_discovery_land_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "job_discovery_land_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
+
+    try {
+      startJobInboxAiQueue(ENV_SERVER.REDIS_URL);
+      registerJobInboxAiEnqueue(async (payload) => {
+        const result = await enqueueJobInboxAi(payload);
+        return result.enqueued;
+      });
+    } catch (error) {
+      const log = createLogger({ operation: "server__job_inbox_ai_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "job_inbox_ai_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
+
+    try {
+      startJobCatalogIngestQueue(ENV_SERVER.REDIS_URL);
+      registerJobCatalogIngestEnqueue(async (payload) => {
+        const result = await enqueueJobCatalogIngest(payload);
+        return result.enqueued;
+      });
+    } catch (error) {
+      const log = createLogger({ operation: "server__job_catalog_ingest_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "job_catalog_ingest_queue_start_failed"
+      });
+      log.emit({ _forceKeep: true });
+    }
+
+    // Stub no-op until Task 15; 12h repeat is registered now.
+    try {
+      startJobInboxLivenessQueue(ENV_SERVER.REDIS_URL);
+    } catch (error) {
+      const log = createLogger({ operation: "server__job_inbox_liveness_queue" });
+      log.error(error instanceof Error ? error : new Error(String(error)), {
+        event: "job_inbox_liveness_queue_start_failed"
       });
       log.emit({ _forceKeep: true });
     }

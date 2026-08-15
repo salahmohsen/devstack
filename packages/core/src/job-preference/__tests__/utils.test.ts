@@ -79,6 +79,24 @@ describe("mergeJobPreference", () => {
     });
     expect(merged.workModes).toEqual(["hybrid", "onsite"]);
   });
+
+  it("defaults new discovery fields", () => {
+    const d = defaultJobPreference();
+    expect(d.titleId).toBeNull();
+    expect(d.customTitle).toBeNull();
+    expect(d.jobsPerRun).toBe(25);
+    expect(d.importFromEmail).toBe(false);
+  });
+
+  it("merges jobsPerRun and importFromEmail when provided", () => {
+    const merged = mergeJobPreference(defaultJobPreference(), {
+      jobsPerRun: 17,
+      importFromEmail: true,
+      salaryCurrency: undefined
+    });
+    expect(merged.jobsPerRun).toBe(15); // snapped
+    expect(merged.importFromEmail).toBe(true);
+  });
 });
 
 describe("seeker match evidence", () => {

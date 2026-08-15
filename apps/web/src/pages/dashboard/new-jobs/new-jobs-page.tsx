@@ -74,6 +74,8 @@ import {
   useRegenerateAgentTakeMutation,
   useRestoreApplicationMutation
 } from "@/features/applications";
+import { FindJobsNowButton } from "@/features/job-discovery";
+import { useGetJobPreferenceQuery } from "@/features/job-preference";
 
 import {
   ItemsEmpty,
@@ -289,6 +291,8 @@ export function NewJobsPage() {
   const listQuery = useListApplicationsQuery(filter);
   const inboxCountQuery = useCountApplicationsQuery("inbox");
   const dismissedCountQuery = useCountApplicationsQuery("dismissed");
+  const jobPreferenceQuery = useGetJobPreferenceQuery();
+  const importFromEmail = jobPreferenceQuery.data?.importFromEmail === true;
   const promote = usePromoteApplicationMutation();
   const dismiss = useDismissApplicationMutation();
   const restore = useRestoreApplicationMutation();
@@ -433,8 +437,13 @@ export function NewJobsPage() {
       <PageLayout className="flex h-[calc(100dvh-var(--navbar-height)-10px)] min-h-0 flex-col gap-5 overflow-hidden p-5">
         <PageHeader
           title="New jobs"
-          description="AI discoveries from job alerts. Track to add to your pipeline, or dismiss."
-          actions={<ScanJobAlertsButton />}
+          description="Matches from public job boards. Track to add to your pipeline, or dismiss."
+          actions={
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <FindJobsNowButton />
+              {importFromEmail ? <ScanJobAlertsButton /> : null}
+            </div>
+          }
         />
 
         <Tabs
@@ -502,10 +511,11 @@ export function NewJobsPage() {
                 <ItemsEmpty
                   icon={<SparklesIcon aria-hidden />}
                   title="No new matches"
-                  description="Job alert digests that pass your preferences will show up here. Scan recent digests, or set preferences under Settings."
+                  description="Public job boards that match your title and keywords show up here. Find jobs now, or set a title under Settings."
                   action={
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                      <ScanJobAlertsButton />
+                      <FindJobsNowButton />
+                      {importFromEmail ? <ScanJobAlertsButton /> : null}
                       <Button
                         type="button"
                         size="sm"
@@ -553,6 +563,16 @@ export function NewJobsPage() {
                         title={job.title}
                         titleEnd={
                           <>
+                            {job.listingClosed ? (
+                              <Badge
+                                variant="secondary"
+                                size="sm"
+                                className="font-normal tracking-normal text-muted-foreground normal-case"
+                                title="This posting is no longer on the board."
+                              >
+                                Listing closed
+                              </Badge>
+                            ) : null}
                             {job.matchScore != null ? (
                               <ApplicationMatchScoreBadge matchScore={job.matchScore} />
                             ) : null}

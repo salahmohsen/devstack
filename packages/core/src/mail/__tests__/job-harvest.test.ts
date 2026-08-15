@@ -9,6 +9,7 @@ import {
   scoreListingDescription,
   stripListingChromeFromText
 } from "#@/common/extract-job-listing-page";
+import { defaultJobPreference } from "#@/job-preference/utils";
 import {
   canonicalizeJobUrl,
   extractPublicJobListingFromHtml,
@@ -235,12 +236,9 @@ describe("HarvestedJobSchema LLM coercion", () => {
 
 describe("scoreJobAgainstPreference", () => {
   const prefs = {
+    ...defaultJobPreference(),
     workModes: ["remote" as const],
-    locations: [] as string[],
     roleKeywords: ["frontend", "react", "engineer", "developer", "software"],
-    excludeKeywords: [] as string[],
-    salaryMin: null,
-    salaryCurrency: null,
     minMatchScore: 40
   };
 
@@ -296,12 +294,8 @@ describe("scoreJobAgainstPreference", () => {
 
   it("treats multi workModes as OR (any preferred mode matches)", () => {
     const multi = {
+      ...defaultJobPreference(),
       workModes: ["remote" as const, "hybrid" as const],
-      locations: [] as string[],
-      roleKeywords: [] as string[],
-      excludeKeywords: [] as string[],
-      salaryMin: null,
-      salaryCurrency: null,
       minMatchScore: 40
     };
     const baseJob = {
@@ -328,12 +322,7 @@ describe("scoreJobAgainstPreference", () => {
 
   it("does not filter by work mode when workModes is empty", () => {
     const open = {
-      workModes: [] as Array<"remote" | "hybrid" | "onsite">,
-      locations: [] as string[],
-      roleKeywords: [] as string[],
-      excludeKeywords: [] as string[],
-      salaryMin: null,
-      salaryCurrency: null,
+      ...defaultJobPreference(),
       minMatchScore: 40
     };
     const r = scoreJobAgainstPreference(
@@ -360,15 +349,7 @@ describe("scoreJobAgainstPreference", () => {
     projectTitles: ["Personal Hub"]
   };
 
-  const openPrefs = {
-    workModes: [] as Array<"remote" | "hybrid" | "onsite">,
-    locations: [] as string[],
-    roleKeywords: [] as string[],
-    excludeKeywords: [] as string[],
-    salaryMin: null,
-    salaryCurrency: null,
-    minMatchScore: 60
-  };
+  const openPrefs = defaultJobPreference();
 
   it("passes a profile-aligned role when preferences are open", () => {
     const r = scoreJobAgainstPreference(

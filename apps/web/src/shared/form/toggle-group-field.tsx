@@ -1,5 +1,7 @@
 "use client";
 
+import { CheckIcon } from "lucide-react";
+
 import { Field, FieldError } from "@tsu-stack/ui/components/field";
 import { ToggleGroup, ToggleGroupItem } from "@tsu-stack/ui/components/toggle-group";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -19,6 +21,8 @@ type ToggleGroupFieldProps = {
   /** When false, selecting a value replaces the previous selection. Default true. */
   multiple?: boolean;
   variant?: "default" | "outline";
+  /** Render a check next to the label when that option is selected. */
+  showSelectedCheck?: boolean;
   classNames?: {
     field?: string;
     label?: string;
@@ -36,6 +40,7 @@ function ToggleGroupField(props: ToggleGroupFieldProps) {
   const multiple = props.multiple ?? true;
   const field = useFieldContext<string[]>();
   const selected = field.state.value ?? [];
+  const selectedSet = new Set(selected);
 
   return (
     <Field className={props.classNames?.field}>
@@ -63,11 +68,15 @@ function ToggleGroupField(props: ToggleGroupFieldProps) {
         }}
         className={cn("flex flex-wrap", props.classNames?.group)}
       >
-        {props.options.map((option) => (
-          <ToggleGroupItem key={option.value} value={option.value}>
-            {option.label}
-          </ToggleGroupItem>
-        ))}
+        {props.options.map((option) => {
+          const isSelected = selectedSet.has(option.value);
+          return (
+            <ToggleGroupItem key={option.value} value={option.value}>
+              {props.showSelectedCheck && isSelected ? <CheckIcon aria-hidden="true" /> : null}
+              {option.label}
+            </ToggleGroupItem>
+          );
+        })}
       </ToggleGroup>
       <FieldError errors={field.state.meta.errors} className={props.classNames?.error} />
     </Field>

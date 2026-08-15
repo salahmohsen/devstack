@@ -6,6 +6,8 @@
 
 **Hardening:** After implementation, run [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) before claiming done. Fresh report + lessons in that skill’s `LESSONS.md`.
 
+**Amended (2026-08-15):** Land-then-AI stubs, cheap ± location/mode, and post-insert fill/fix are superseded by [two-axis matching + evaluate-then-insert](./2026-08-15-job-preference-two-axis-extraction-design.md).
+
 **Related**
 
 - [New jobs + Tracked jobs](./2026-08-11-new-jobs-tracked-jobs-design.md)

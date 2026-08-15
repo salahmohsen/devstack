@@ -81,7 +81,7 @@ const SETTINGS_NAV: readonly NavItem[] = [
   {
     id: "jobs",
     label: "Jobs",
-    description: "Preferences for mail job-alert filtering",
+    description: "Find and rank jobs from public boards",
     to: "/dashboard/settings/jobs",
     icon: Briefcase,
     group: "Intelligence"

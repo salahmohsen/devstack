@@ -1,0 +1,15 @@
+{
+  "jobs": [
+    {
+      "id": 99,
+      "url": "https://remotive.com/remote-jobs/software-dev/engineer-99",
+      "title": "Software Engineer",
+      "company_name": "Remotive Co",
+      "candidate_required_location": "Worldwide",
+      "tags": ["javascript"],
+      "salary": "$40,000 - $50,000",
+      "description": "Ship features.",
+      "publication_date": "2026-08-01T10:00:00"
+    }
+  ]
+}

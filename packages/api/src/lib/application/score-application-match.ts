@@ -1,6 +1,7 @@
 import {
   AiJobMatchBatchSchema,
   formatJobMatchScorePrompt,
+  SCORER_JOB_DESCRIPTION_CHARS,
   scoreJobAgainstPreference,
   shouldPassAllHarvestJobs,
   type ApplicationApplyMethod,
@@ -122,7 +123,7 @@ export async function scoreApplicationMatch(input: {
       workMode: input.job.workMode ?? null,
       applyMethod: input.job.applyMethod ?? "unknown",
       salaryRange: input.job.salaryRange,
-      description: (input.job.description ?? "").slice(0, 800) || null
+      description: (input.job.description ?? "").slice(0, SCORER_JOB_DESCRIPTION_CHARS) || null
     }
   ];
 

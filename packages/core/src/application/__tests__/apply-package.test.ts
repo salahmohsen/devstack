@@ -9,6 +9,7 @@ import {
   assembleApplyPackageDraft,
   chunkArray,
   isThinJobDescription,
+  SCORER_JOB_DESCRIPTION_CHARS,
   THIN_JD_DESCRIPTION_CHARS
 } from "#@/application/apply-package";
 
@@ -98,6 +99,11 @@ describe("ApplyPackageDraftSchema", () => {
 describe("isThinJobDescription", () => {
   it("exposes thin JD threshold", () => {
     expect(THIN_JD_DESCRIPTION_CHARS).toBe(400);
+  });
+
+  it("lets the scorer read more than a teaser", () => {
+    expect(SCORER_JOB_DESCRIPTION_CHARS).toBeGreaterThan(THIN_JD_DESCRIPTION_CHARS);
+    expect(SCORER_JOB_DESCRIPTION_CHARS).toBeGreaterThanOrEqual(4_000);
   });
 
   it("treats null / undefined / empty as thin", () => {

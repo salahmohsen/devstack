@@ -1,4 +1,12 @@
-import { integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex
+} from "drizzle-orm/pg-core";
 
 import { user } from "./auth.schema.ts";
 
@@ -22,6 +30,10 @@ export const jobPreference = pgTable(
     salaryMin: integer("salary_min"),
     salaryCurrency: text("salary_currency"),
     minMatchScore: integer("min_match_score").notNull().default(60),
+    titleId: text("title_id"),
+    customTitle: text("custom_title"),
+    jobsPerRun: integer("jobs_per_run").notNull().default(25),
+    importFromEmail: boolean("import_from_email").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()

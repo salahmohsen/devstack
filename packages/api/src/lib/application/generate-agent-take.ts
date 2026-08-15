@@ -1,4 +1,4 @@
-import { assessAgentTakeReadiness, llmLogFields } from "@tsu-stack/core";
+import { assessAgentTakeReadiness, llmLogFields, type RuntimeLlmConfig } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
@@ -27,24 +27,38 @@ export type GenerateAgentTakeResult =
   | { ok: true; application: ApplicationEntity }
   | { ok: false; code: GenerateAgentTakeErrorCode; message?: string };
 
+export type GenerateAgentTakeTextResult =
+  | { ok: true; text: string }
+  | { ok: false; code: Exclude<GenerateAgentTakeErrorCode, "NOT_FOUND">; message?: string };
+
+export type AgentTakeJobInput = {
+  title: string;
+  companyName: string;
+  location: string | null;
+  employmentType: string | null;
+  salaryRange: string | null;
+  matchScore: number | null;
+  description: string | null;
+};
+
 function buildPrompt(
-  app: ApplicationEntity,
+  job: AgentTakeJobInput,
   prefsSummary: string | null,
   matchReasons: string[]
 ): string {
-  const job = {
-    title: app.title,
-    companyName: app.companyName,
-    location: app.location,
-    employmentType: app.employmentType,
-    salaryRange: app.salaryRange,
-    matchScore: app.matchScore,
-    description: (app.description ?? "").slice(0, 2500) || null
+  const listing = {
+    title: job.title,
+    companyName: job.companyName,
+    location: job.location,
+    employmentType: job.employmentType,
+    salaryRange: job.salaryRange,
+    matchScore: job.matchScore,
+    description: (job.description ?? "").slice(0, 2500) || null
   };
   return `Write the agent take for this job.
 
 Job (JSON):
-${JSON.stringify(job, null, 2)}
+${JSON.stringify(listing, null, 2)}
 
 Match reasons (if any):
 ${matchReasons.length > 0 ? matchReasons.map((r) => `- ${r}`).join("\n") : "(none)"}
@@ -55,23 +69,42 @@ ${prefsSummary ?? "(not set)"}
 Reply with 1–3 sentences only.`;
 }
 
-/**
- * Generate or regenerate `application.agentTake` via the job-agent-take agent.
- */
-export async function generateAgentTake(input: {
-  applicationId: string;
-  userId: string;
-}): Promise<GenerateAgentTakeResult> {
-  const log = createLogger({ operation: "api__generate_agent_take" });
-  const owned = await applicationRepository.findByIdForUser(input.applicationId, input.userId);
-  if (!owned) return { ok: false, code: "NOT_FOUND" };
+function prefsSummaryFromRow(
+  prefs: {
+    roleKeywords: string[] | null;
+    locations: string[] | null;
+    workModes: string[] | null;
+    minMatchScore: number | null;
+    salaryMin: number | null;
+  } | null
+): string | null {
+  if (!prefs) return null;
+  return JSON.stringify({
+    roleKeywords: prefs.roleKeywords,
+    locations: prefs.locations,
+    workModes: prefs.workModes,
+    minMatchScore: prefs.minMatchScore,
+    salaryMin: prefs.salaryMin
+  });
+}
 
-  const readiness = assessAgentTakeReadiness(owned);
+/**
+ * Produce take text without an application row (evaluate-then-insert).
+ */
+export async function generateAgentTakeText(input: {
+  userId: string;
+  job: AgentTakeJobInput;
+  matchReasons: string[];
+  prefsSummary?: string | null;
+  llm?: RuntimeLlmConfig;
+}): Promise<GenerateAgentTakeTextResult> {
+  const log = createLogger({ operation: "api__generate_agent_take" });
+  const readiness = assessAgentTakeReadiness(input.job);
   if (!readiness.ok) {
     return { ok: false, code: "INSUFFICIENT_LISTING", message: readiness.message };
   }
 
-  const llm = await resolveRuntimeAiCredentials(input.userId, "scorer");
+  const llm = input.llm ?? (await resolveRuntimeAiCredentials(input.userId, "scorer"));
   if (!llm.apiKey) {
     return {
       ok: false,
@@ -87,31 +120,11 @@ export async function generateAgentTake(input: {
     };
   }
 
-  const [prefs, activity] = await Promise.all([
-    jobPreferenceRepository.findByUserId(input.userId),
-    applicationActivityRepository.listByApplicationId(input.applicationId, input.userId, {
-      limit: 20,
-      order: "desc"
-    })
-  ]);
-
-  const discovered = activity.find((a) => a.kind === "discovered");
-  const meta = (discovered?.metadata ?? {}) as Record<string, unknown>;
-  const matchReasons = Array.isArray(meta.matchReasons)
-    ? meta.matchReasons.filter((r): r is string => typeof r === "string")
-    : [];
-
-  const prefsSummary = prefs
-    ? JSON.stringify({
-        roleKeywords: prefs.roleKeywords,
-        locations: prefs.locations,
-        workModes: prefs.workModes,
-        minMatchScore: prefs.minMatchScore,
-        salaryMin: prefs.salaryMin
-      })
-    : null;
-
-  const prompt = buildPrompt(owned, prefsSummary, matchReasons);
+  const prefsSummary =
+    input.prefsSummary !== undefined
+      ? input.prefsSummary
+      : prefsSummaryFromRow(await jobPreferenceRepository.findByUserId(input.userId));
+  const prompt = buildPrompt(input.job, prefsSummary, input.matchReasons);
   const byo = llmLogFields(llm);
 
   try {
@@ -134,7 +147,6 @@ export async function generateAgentTake(input: {
     if (!response) {
       log.error(new Error("agent take unreachable"), {
         event: "generate_agent_take_unreachable",
-        applicationId: input.applicationId,
         ...byo
       });
       log.emit({ _forceKeep: true });
@@ -145,7 +157,6 @@ export async function generateAgentTake(input: {
     if (!response.ok) {
       log.error(new Error(`agent take ${response.status}`), {
         event: "generate_agent_take_failed",
-        applicationId: input.applicationId,
         status: response.status,
         bodyPreview: bodyText.slice(0, 200),
         ...byo
@@ -169,24 +180,16 @@ export async function generateAgentTake(input: {
       return { ok: false, code: "AGENT_FAILED", message: "Empty agent take response" };
     }
 
-    const updated = await applicationRepository.update(input.applicationId, input.userId, {
-      agentTake: take
-    });
-    if (!updated) return { ok: false, code: "NOT_FOUND" };
-
     log.set({
-      event: "generate_agent_take_ok",
-      applicationId: input.applicationId,
+      event: "generate_agent_take_text_ok",
       takeLength: take.length,
       ...byo
     });
     log.emit();
-
-    return { ok: true, application: updated };
+    return { ok: true, text: take };
   } catch (err) {
     log.error(err instanceof Error ? err : new Error(String(err)), {
       event: "generate_agent_take_error",
-      applicationId: input.applicationId,
       ...byo
     });
     log.emit({ _forceKeep: true });
@@ -196,4 +199,56 @@ export async function generateAgentTake(input: {
       message: err instanceof Error ? err.message : "Agent take failed"
     };
   }
+}
+
+/**
+ * Generate or regenerate `application.agentTake` via the job-agent-take agent.
+ */
+export async function generateAgentTake(input: {
+  applicationId: string;
+  userId: string;
+}): Promise<GenerateAgentTakeResult> {
+  const owned = await applicationRepository.findByIdForUser(input.applicationId, input.userId);
+  if (!owned) return { ok: false, code: "NOT_FOUND" };
+
+  const activity = await applicationActivityRepository.listByApplicationId(
+    input.applicationId,
+    input.userId,
+    { limit: 20, order: "desc" }
+  );
+  const discovered = activity.find((row) => row.kind === "discovered");
+  const meta = (discovered?.metadata ?? {}) as Record<string, unknown>;
+  const matchReasons = Array.isArray(meta.matchReasons)
+    ? meta.matchReasons.filter((reason): reason is string => typeof reason === "string")
+    : [];
+
+  const text = await generateAgentTakeText({
+    userId: input.userId,
+    job: {
+      title: owned.title,
+      companyName: owned.companyName,
+      location: owned.location,
+      employmentType: owned.employmentType,
+      salaryRange: owned.salaryRange,
+      matchScore: owned.matchScore,
+      description: owned.description
+    },
+    matchReasons
+  });
+  if (!text.ok) return text;
+
+  const updated = await applicationRepository.update(input.applicationId, input.userId, {
+    agentTake: text.text
+  });
+  if (!updated) return { ok: false, code: "NOT_FOUND" };
+
+  const log = createLogger({ operation: "api__generate_agent_take" });
+  log.set({
+    event: "generate_agent_take_ok",
+    applicationId: input.applicationId,
+    takeLength: text.text.length
+  });
+  log.emit();
+
+  return { ok: true, application: updated };
 }

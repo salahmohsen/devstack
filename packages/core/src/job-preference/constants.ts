@@ -10,3 +10,6 @@ export const WORK_MODE_LABELS: Record<WorkMode, string> = {
 
 /** Default hard-skip threshold for auto job harvest → Application. */
 export const DEFAULT_MIN_MATCH_SCORE = 60;
+
+/** Default for mail-harvest → discovery import toggle (off for all users). */
+export const DEFAULT_IMPORT_FROM_EMAIL = false;

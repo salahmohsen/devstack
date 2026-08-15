@@ -2,6 +2,9 @@ import { z } from "zod";
 
 import { type ApplicationSchemaInsert, type ApplicationSchemaSelect } from "@tsu-stack/db/types";
 
+import { JobSkillTagSchema } from "#@/application/job-skills";
+import { WorkModeSchema } from "#@/job-preference/types";
+
 export const ApplicationStageSchema = z.enum([
   "saved",
   "applied",
@@ -32,6 +35,7 @@ export const ApplicationSourceTagSchema = z.enum([
   "mail",
   "hub",
   "manual",
+  "discovery",
   "linkedin",
   "indeed",
   "company_website",
@@ -130,8 +134,18 @@ export const ApplicationOutputSchema = z.object({
   applyPackageDraft: z.unknown().nullable(),
   applyPackageDraftedAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date()
-}) satisfies z.ZodType<Omit<ApplicationSchemaSelect, "userId">>;
+  updatedAt: z.coerce.date(),
+  /** Computed from job_posting.closedAt join — not a DB column on application. */
+  listingClosed: z.boolean().default(false),
+  workMode: WorkModeSchema.nullable(),
+  hiringRegion: z.string().nullable(),
+  requiredSkills: z.array(JobSkillTagSchema).default([]),
+  preferredSkills: z.array(JobSkillTagSchema).default([])
+}) satisfies z.ZodType<
+  Omit<ApplicationSchemaSelect, "userId" | "postingId" | "inboxExpiresAt" | "discoveryRunId"> & {
+    listingClosed: boolean;
+  }
+>;
 
 export const ApplicationListOutputSchema = z.array(ApplicationOutputSchema);
 
@@ -228,6 +242,15 @@ export const ScanJobAlertsOutputSchema = z.object({
   queueUnavailable: z.boolean()
 });
 
+/** Manual “Find jobs now” — enqueue discovery + optional ingest. */
+export const FindJobsNowInputSchema = z.object({}).optional();
+export const FindJobsNowOutputSchema = z.object({
+  enqueued: z.boolean(),
+  ingestTriggered: z.boolean(),
+  seats: z.number().int().nonnegative(),
+  reason: z.enum(["ok", "title_required", "inbox_full", "queue_unavailable", "ai_budget"])
+});
+
 /** Body-field patch only — never stage/outcome (use dedicated procedures). */
 export const UpdateApplicationInputSchema = z.object({
   companyName: z.string().min(1).optional(),
@@ -286,3 +309,5 @@ export type RegenerateAgentTakeInput = z.infer<typeof RegenerateAgentTakeInputSc
 export type RefreshApplicationFromUrlInput = z.infer<typeof RefreshApplicationFromUrlInputSchema>;
 export type ScanJobAlertsInput = z.infer<typeof ScanJobAlertsInputSchema>;
 export type ScanJobAlertsOutput = z.infer<typeof ScanJobAlertsOutputSchema>;
+export type FindJobsNowInput = z.infer<typeof FindJobsNowInputSchema>;
+export type FindJobsNowOutput = z.infer<typeof FindJobsNowOutputSchema>;

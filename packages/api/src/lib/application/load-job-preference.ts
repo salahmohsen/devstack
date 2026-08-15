@@ -1,4 +1,9 @@
-import { DEFAULT_MIN_MATCH_SCORE, defaultJobPreference, type JobPreference } from "@tsu-stack/core";
+import {
+  DEFAULT_MIN_MATCH_SCORE,
+  defaultJobPreference,
+  type JobPreference,
+  type JobTitleId
+} from "@tsu-stack/core";
 import { jobPreferenceRepository } from "@tsu-stack/db";
 
 export async function loadJobPreference(userId: string): Promise<JobPreference> {
@@ -11,6 +16,10 @@ export async function loadJobPreference(userId: string): Promise<JobPreference> 
     excludeKeywords: row.excludeKeywords ?? [],
     salaryMin: row.salaryMin,
     salaryCurrency: row.salaryCurrency,
-    minMatchScore: row.minMatchScore ?? DEFAULT_MIN_MATCH_SCORE
+    minMatchScore: row.minMatchScore ?? DEFAULT_MIN_MATCH_SCORE,
+    titleId: (row.titleId as JobTitleId | null) ?? null,
+    customTitle: row.customTitle ?? null,
+    jobsPerRun: row.jobsPerRun ?? 25,
+    importFromEmail: row.importFromEmail ?? false
   };
 }

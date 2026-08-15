@@ -8,6 +8,7 @@ export type * from "./experience.schema.ts";
 export type * from "./github-cache.schema.ts";
 export type * from "./github-config.schema.ts";
 export type * from "./job-preference.schema.ts";
+export type * from "./job-posting.schema.ts";
 export type * from "./mail-crm-apply.schema.ts";
 
 export type * from "./mail-message.schema.ts";
@@ -21,5 +22,6 @@ export type * from "./stack.schema.ts";
 export type * from "./user-ai-settings.schema.ts";
 export type * from "./user-custom-domain.schema.ts";
 export type * from "./user-gmail-sync.schema.ts";
+export type * from "./user-job-ai-budget.schema.ts";
 export type * from "./user-mail-settings.schema.ts";
 export type * from "./user-notification-settings.schema.ts";

@@ -1,4 +1,6 @@
-import { DEFAULT_MIN_MATCH_SCORE, WORK_MODES } from "./constants";
+import { DEFAULT_JOBS_PER_RUN, refineJobsPerRun } from "#@/job-discovery/constants";
+
+import { DEFAULT_IMPORT_FROM_EMAIL, DEFAULT_MIN_MATCH_SCORE, WORK_MODES } from "./constants";
 import {
   SeekerMatchEvidenceSchema,
   type JobPreference,
@@ -16,7 +18,11 @@ export function defaultJobPreference(): JobPreference {
     excludeKeywords: [],
     salaryMin: null,
     salaryCurrency: null,
-    minMatchScore: DEFAULT_MIN_MATCH_SCORE
+    minMatchScore: DEFAULT_MIN_MATCH_SCORE,
+    titleId: null,
+    customTitle: null,
+    jobsPerRun: DEFAULT_JOBS_PER_RUN,
+    importFromEmail: DEFAULT_IMPORT_FROM_EMAIL
   };
 }
 
@@ -43,13 +49,7 @@ export function isOpenJobPreference(prefs: {
 
 export function defaultJobPreferenceOutput(): JobPreferenceOutput {
   return {
-    workModes: [],
-    locations: [],
-    roleKeywords: [],
-    excludeKeywords: [],
-    salaryMin: null,
-    salaryCurrency: null,
-    minMatchScore: DEFAULT_MIN_MATCH_SCORE,
+    ...defaultJobPreference(),
     updatedAt: null
   };
 }
@@ -72,7 +72,12 @@ export function mergeJobPreference(
     salaryMin: patch.salaryMin !== undefined ? patch.salaryMin : current.salaryMin,
     salaryCurrency:
       patch.salaryCurrency !== undefined ? patch.salaryCurrency : current.salaryCurrency,
-    minMatchScore: patch.minMatchScore ?? current.minMatchScore
+    minMatchScore: patch.minMatchScore ?? current.minMatchScore,
+    titleId: patch.titleId !== undefined ? patch.titleId : current.titleId,
+    customTitle: patch.customTitle !== undefined ? patch.customTitle : current.customTitle,
+    jobsPerRun:
+      patch.jobsPerRun !== undefined ? refineJobsPerRun(patch.jobsPerRun) : current.jobsPerRun,
+    importFromEmail: patch.importFromEmail ?? current.importFromEmail
   };
 }
 

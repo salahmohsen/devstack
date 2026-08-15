@@ -1,0 +1,33 @@
+{
+  "data": [
+    {
+      "public_slug": "senior-go-engineer-acme-1a2b",
+      "source": "greenhouse",
+      "url": "https://boards.greenhouse.io/acme/jobs/123?utm_source=freehire",
+      "title": "Senior Go Engineer",
+      "company": "Acme",
+      "location": "Remote — EU",
+      "work_mode": "remote",
+      "skills": ["go", "postgresql"],
+      "description": "Build APIs in Go.",
+      "posted_at": "2026-06-18T00:00:00Z",
+      "enrichment": {
+        "salary_min": 90000,
+        "salary_max": 130000,
+        "salary_currency": "EUR"
+      }
+    },
+    {
+      "public_slug": "frontend-engineer-globex-copy",
+      "source": "himalayas",
+      "url": "https://himalayas.app/companies/globex/jobs/frontend-engineer",
+      "title": "Frontend Engineer",
+      "company": "Globex",
+      "location": "Worldwide",
+      "work_mode": "remote",
+      "skills": ["react"],
+      "posted_at": "2026-06-19T00:00:00Z"
+    }
+  ],
+  "meta": { "total": 2, "limit": 20, "offset": 0 }
+}

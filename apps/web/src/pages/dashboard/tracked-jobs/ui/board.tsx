@@ -138,10 +138,21 @@ function ApplicationCard({
           </MenuPopup>
         </Menu>
       </div>
-      {(app.matchScore != null ||
+      {(app.listingClosed ||
+        app.matchScore != null ||
         app.applyMethod !== "unknown" ||
         app.hiringUrgency !== "unknown") && (
         <div className="mt-2 flex flex-wrap gap-1.5">
+          {app.listingClosed ? (
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="font-normal tracking-normal text-muted-foreground normal-case"
+              title="This posting is no longer on the board."
+            >
+              Listing closed
+            </Badge>
+          ) : null}
           <ApplicationMatchScoreBadge matchScore={app.matchScore} />
           <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
           {app.hiringUrgency !== "unknown" ? (

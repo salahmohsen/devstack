@@ -4,6 +4,7 @@ import { Building2Icon, BriefcaseIcon, FileTextIcon, MapPinIcon, PlusIcon } from
 import { useMemo } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
+import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   ContextMenu,
@@ -207,6 +208,16 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       title={app.title}
                       titleEnd={
                         <>
+                          {app.listingClosed ? (
+                            <Badge
+                              variant="secondary"
+                              size="sm"
+                              className="font-normal tracking-normal text-muted-foreground normal-case"
+                              title="This posting is no longer on the board."
+                            >
+                              Listing closed
+                            </Badge>
+                          ) : null}
                           <ApplicationMatchScoreBadge matchScore={app.matchScore} />
                           <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
                           <ApplicationStageBadge stage={app.stage} />

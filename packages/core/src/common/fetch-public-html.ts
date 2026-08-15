@@ -174,3 +174,58 @@ export async function fetchPublicHtmlAsText(
     };
   }
 }
+
+export type FetchPublicHttpStatusResult = {
+  ok: boolean;
+  status?: number;
+  finalUrl?: string;
+  error?: string;
+};
+
+/** SSRF-safe status probe (HEAD or GET). Does not read the body. */
+export async function fetchPublicHttpStatus(
+  url: string,
+  options?: { timeoutMs?: number; method?: "HEAD" | "GET" }
+): Promise<FetchPublicHttpStatusResult> {
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const method = options?.method ?? "HEAD";
+
+  try {
+    await assertPublicHttpUrlResolved(url);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method,
+        signal: controller.signal,
+        redirect: "follow",
+        headers: { ...DEFAULT_HEADERS }
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    const finalUrl = res.url || url;
+    try {
+      assertPublicHttpUrl(finalUrl);
+      if (hostKey(finalUrl) !== hostKey(url)) {
+        await assertPublicHttpUrlResolved(finalUrl);
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        finalUrl,
+        status: res.status,
+        error: err instanceof Error ? err.message : String(err)
+      };
+    }
+
+    return { ok: res.ok, status: res.status, finalUrl };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err)
+    };
+  }
+}

@@ -7,6 +7,13 @@ import { ApplicationApplyMethodSchema, ApplicationSourceSchema } from "#@/applic
 export const THIN_JD_DESCRIPTION_CHARS = 400;
 
 /**
+ * How much JD the preference scorer is allowed to see.
+ * Must stay well above {@link THIN_JD_DESCRIPTION_CHARS} — 800 chars was a
+ * teaser and made BYO score on a hydrated listing little better than cheap rank.
+ */
+export const SCORER_JOB_DESCRIPTION_CHARS = 4_000;
+
+/**
  * Phrases that mark a harvest stub / paywall placeholder rather than a real JD.
  * Matched case-insensitively even when length is above {@link THIN_JD_DESCRIPTION_CHARS}.
  */
