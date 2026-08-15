@@ -17,6 +17,40 @@ function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
+async function dismissInboxAndBackfill(input: {
+  userId: string;
+  applicationId: string;
+  runId: string;
+  via: "low_match" | "score_error";
+  score: number | null;
+  reasons: string[];
+}): Promise<"dismissed" | "skipped"> {
+  const dismissed = await applicationRepository.setTrackingStatus(
+    input.applicationId,
+    input.userId,
+    "dismissed"
+  );
+  if (!dismissed) return "skipped";
+
+  await applicationActivityRepository.append({
+    userId: input.userId,
+    applicationId: input.applicationId,
+    kind: "dismissed",
+    metadata: {
+      via: input.via,
+      runId: input.runId,
+      score: input.score,
+      reasons: input.reasons
+    }
+  });
+  await requestJobDiscoveryLand({
+    userId: input.userId,
+    runId: input.runId,
+    trigger: "backfill"
+  });
+  return "dismissed";
+}
+
 export async function runInboxAi(input: {
   userId: string;
   applicationId: string;
@@ -61,35 +95,34 @@ export async function runInboxAi(input: {
         applyMethod: owned.applyMethod
       }
     });
-  } catch {
-    return { outcome: "skipped" };
+  } catch (error) {
+    // Attempt already consumed — dismiss so this stub cannot occupy N forever.
+    return {
+      outcome: await dismissInboxAndBackfill({
+        userId: input.userId,
+        applicationId: owned.id,
+        runId: input.runId,
+        via: "score_error",
+        score: owned.matchScore,
+        reasons: [
+          "score_error",
+          error instanceof Error ? error.message : "scoreApplicationMatch threw"
+        ]
+      })
+    };
   }
 
   if (!match.passed) {
-    const dismissed = await applicationRepository.setTrackingStatus(
-      owned.id,
-      input.userId,
-      "dismissed"
-    );
-    if (!dismissed) return { outcome: "skipped" };
-
-    await applicationActivityRepository.append({
-      userId: input.userId,
-      applicationId: owned.id,
-      kind: "dismissed",
-      metadata: {
-        via: "low_match",
+    return {
+      outcome: await dismissInboxAndBackfill({
+        userId: input.userId,
+        applicationId: owned.id,
         runId: input.runId,
+        via: "low_match",
         score: match.score,
         reasons: match.reasons
-      }
-    });
-    await requestJobDiscoveryLand({
-      userId: input.userId,
-      runId: input.runId,
-      trigger: "backfill"
-    });
-    return { outcome: "dismissed" };
+      })
+    };
   }
 
   await applicationRepository.update(owned.id, input.userId, {
