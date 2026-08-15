@@ -1,5 +1,4 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
 
 import { type FindJobsNowInput } from "@tsu-stack/core";
 
@@ -14,12 +13,9 @@ export function useFindJobsNowMutation() {
   const queryClient = useQueryClient();
   const { status } = useFindJobsNowJob();
 
-  const mutateAsync = useCallback(
-    async (input?: FindJobsNowInput) => {
-      await startFindJobsNow(queryClient, input);
-    },
-    [queryClient]
-  );
+  const mutateAsync = async (input?: FindJobsNowInput) => {
+    await startFindJobsNow(queryClient, input);
+  };
 
   return {
     mutateAsync,

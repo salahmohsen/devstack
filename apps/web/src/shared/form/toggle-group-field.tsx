@@ -40,6 +40,7 @@ function ToggleGroupField(props: ToggleGroupFieldProps) {
   const multiple = props.multiple ?? true;
   const field = useFieldContext<string[]>();
   const selected = field.state.value ?? [];
+  const selectedSet = new Set(selected);
 
   return (
     <Field className={props.classNames?.field}>
@@ -68,7 +69,7 @@ function ToggleGroupField(props: ToggleGroupFieldProps) {
         className={cn("flex flex-wrap", props.classNames?.group)}
       >
         {props.options.map((option) => {
-          const isSelected = selected.includes(option.value);
+          const isSelected = selectedSet.has(option.value);
           return (
             <ToggleGroupItem key={option.value} value={option.value}>
               {props.showSelectedCheck && isSelected ? <CheckIcon aria-hidden="true" /> : null}

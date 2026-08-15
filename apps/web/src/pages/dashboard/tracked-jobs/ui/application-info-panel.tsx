@@ -109,13 +109,17 @@ function locationHeadline(item: ApplicationOutput): string | null {
   return location || null;
 }
 
+function skillChipKey(skill: JobSkillTag): string {
+  return `${skill.band}:${skill.stackId ?? ""}:${skill.name}`;
+}
+
 function SkillChips({ skills }: { skills: JobSkillTag[] }) {
   if (skills.length === 0) return "—";
   return (
     <span className="flex flex-wrap justify-end gap-1.5">
-      {skills.map((skill, index) => (
+      {skills.map((skill) => (
         <Badge
-          key={`${skill.name}-${index}`}
+          key={skillChipKey(skill)}
           variant="secondary"
           size="sm"
           className="font-normal tracking-normal normal-case"
