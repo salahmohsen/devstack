@@ -2,8 +2,8 @@ import { z } from "zod";
 
 import { type ApplicationSchemaInsert, type ApplicationSchemaSelect } from "@tsu-stack/db/types";
 
-import { JobSkillTagSchema, type JobSkillTag } from "#@/application/job-skills";
-import { WorkModeSchema, type WorkMode } from "#@/job-preference/types";
+import { JobSkillTagSchema } from "#@/application/job-skills";
+import { WorkModeSchema } from "#@/job-preference/types";
 
 export const ApplicationStageSchema = z.enum([
   "saved",
@@ -137,7 +137,6 @@ export const ApplicationOutputSchema = z.object({
   updatedAt: z.coerce.date(),
   /** Computed from job_posting.closedAt join — not a DB column on application. */
   listingClosed: z.boolean().default(false),
-  /** Stated / extracted workplace mode — not on DB select type until Task 4 migration. */
   workMode: WorkModeSchema.nullable(),
   hiringRegion: z.string().nullable(),
   requiredSkills: z.array(JobSkillTagSchema).default([]),
@@ -145,10 +144,6 @@ export const ApplicationOutputSchema = z.object({
 }) satisfies z.ZodType<
   Omit<ApplicationSchemaSelect, "userId" | "postingId" | "inboxExpiresAt" | "discoveryRunId"> & {
     listingClosed: boolean;
-    workMode: WorkMode | null;
-    hiringRegion: string | null;
-    requiredSkills: JobSkillTag[];
-    preferredSkills: JobSkillTag[];
   }
 >;
 

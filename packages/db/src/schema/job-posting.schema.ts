@@ -15,6 +15,8 @@ export const jobPosting = pgTable(
     companyName: text("company_name").notNull(),
     location: text("location"),
     workMode: text("work_mode"),
+    hiringRegion: text("hiring_region"),
+    employmentType: text("employment_type"),
     salaryMin: integer("salary_min"),
     salaryMax: integer("salary_max"),
     salaryCurrency: text("salary_currency"),

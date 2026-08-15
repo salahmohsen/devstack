@@ -12,7 +12,15 @@ import {
 
 import { user } from "./auth.schema.ts";
 import { jobPosting } from "./job-posting.schema.ts";
+import { type StoredWorkMode } from "./job-preference.schema.ts";
 import { resume } from "./resume.schema.ts";
+
+/** Persisted skill tag on an application (required vs preferred). */
+export type ApplicationJobSkillTag = {
+  name: string;
+  stackId: string | null;
+  band: "required" | "preferred";
+};
 
 export const applicationStageEnum = pgEnum("application_stage", [
   "saved",
@@ -95,6 +103,16 @@ export const application = pgTable(
      */
     sourceTags: text("source_tags").array().notNull().default([]),
     location: text("location"),
+    workMode: text("work_mode").$type<StoredWorkMode>(),
+    hiringRegion: text("hiring_region"),
+    requiredSkills: jsonb("required_skills")
+      .$type<ApplicationJobSkillTag[]>()
+      .notNull()
+      .default([]),
+    preferredSkills: jsonb("preferred_skills")
+      .$type<ApplicationJobSkillTag[]>()
+      .notNull()
+      .default([]),
     salaryRange: text("salary_range"),
     employmentType: employmentTypeEnum("employment_type").notNull().default("unknown"),
     description: text("description"),

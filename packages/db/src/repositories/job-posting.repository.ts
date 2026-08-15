@@ -13,6 +13,8 @@ export type UpsertJobPostingInput = {
   companyName: string;
   location: string | null;
   workMode: string | null;
+  hiringRegion?: string | null;
+  employmentType?: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;
@@ -67,6 +69,8 @@ export const jobPostingRepository = {
           companyName: input.companyName,
           location: input.location,
           workMode: input.workMode,
+          hiringRegion: input.hiringRegion ?? null,
+          employmentType: input.employmentType ?? null,
           salaryMin: input.salaryMin,
           salaryMax: input.salaryMax,
           salaryCurrency: input.salaryCurrency,
@@ -115,6 +119,8 @@ export const jobPostingRepository = {
         companyName: input.companyName,
         location: input.location,
         workMode: input.workMode,
+        hiringRegion: input.hiringRegion ?? null,
+        employmentType: input.employmentType ?? null,
         salaryMin: input.salaryMin,
         salaryMax: input.salaryMax,
         salaryCurrency: input.salaryCurrency,
