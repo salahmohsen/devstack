@@ -112,6 +112,11 @@ export function decideEvaluateOutcome(input: {
   };
 }
 
+/** Soft score fallback must not refund 2×N after leftover extract already used the tick. */
+export function shouldRefundHeuristicIncrement(leftoverExtractRan: boolean): boolean {
+  return !leftoverExtractRan;
+}
+
 function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
@@ -499,6 +504,7 @@ async function runInboxAiForPosting(input: {
   let employmentType = asEmploymentType(leftover.employmentType);
   let requiredNames = leftover.skills;
   let preferredNames: string[] = [];
+  let leftoverExtractRan = false;
 
   if (willCallAgent) {
     const reserved = await userJobAiBudgetRepository.tryIncrement(
@@ -526,6 +532,7 @@ async function runInboxAiForPosting(input: {
           }
         })
     });
+    leftoverExtractRan = leftoverByo.invoked;
     if (leftoverByo.invoked) {
       const merged = mergeLeftoverExtract(
         { employmentType, required: requiredNames, preferred: preferredNames },
@@ -608,7 +615,7 @@ async function runInboxAiForPosting(input: {
 
   const keep = decideInboxAiKeep(match);
   let takeText: string | null = null;
-  if (keep === "heuristic") {
+  if (keep === "heuristic" && shouldRefundHeuristicIncrement(leftoverExtractRan)) {
     await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
   }
   if (keep === "passed") {

@@ -98,7 +98,16 @@ export async function leftoverExtractIfNeeded<T>(input: {
   return { invoked: true, result: await input.extract() };
 }
 
-function leftoverFromUnknown(body: unknown): LeftoverExtractResult | null {
+function leftoverHasUsefulFields(extracted: LeftoverExtractResult): boolean {
+  return (
+    extracted.employmentType != null ||
+    extracted.required.length > 0 ||
+    extracted.preferred.length > 0
+  );
+}
+
+/** Parse leftover extract JSON. Empty / unusable objects are null (merge is a no-op). */
+export function parseLeftoverExtract(body: unknown): LeftoverExtractResult | null {
   let payload: unknown = body;
   if (payload && typeof payload === "object") {
     const rec = payload as Record<string, unknown>;
@@ -121,11 +130,12 @@ function leftoverFromUnknown(body: unknown): LeftoverExtractResult | null {
     ? rec.preferred.filter((item): item is string => typeof item === "string")
     : [];
   const employmentRaw = typeof rec.employmentType === "string" ? rec.employmentType : null;
-  return {
+  const extracted: LeftoverExtractResult = {
     employmentType: asEmploymentType(employmentRaw),
     required: cleanSkillNames(required),
     preferred: cleanSkillNames(preferred)
   };
+  return leftoverHasUsefulFields(extracted) ? extracted : null;
 }
 
 /**
@@ -205,10 +215,10 @@ Do not include workMode. Do not invent skills the text does not support.`;
     } catch {
       parsed = { text: bodyText };
     }
-    const fromObject = leftoverFromUnknown(parsed);
+    const fromObject = parseLeftoverExtract(parsed);
     if (fromObject) return fromObject;
     const text = extractTextFromAgentBody(parsed);
-    return text ? leftoverFromUnknown(text) : null;
+    return text ? parseLeftoverExtract(text) : null;
   } catch {
     return null;
   }
