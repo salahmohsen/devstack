@@ -1,5 +1,14 @@
 import { MAX_OPEN_INBOX } from "./constants";
 
+/** Inbox insert gate. 50-cap is trackingStatus=inbox only. */
+export function inboxKeeperInsertAllowed(input: {
+  openInbox: number;
+  inboxThisRun: number;
+  jobsPerRun: number;
+}): boolean {
+  return input.openInbox < MAX_OPEN_INBOX && input.inboxThisRun < input.jobsPerRun;
+}
+
 /**
  * How many catalog rows this run may still land into inbox.
  * seats from open-inbox cap; remainingN from jobsPerRun; AI seats only when a key is present.

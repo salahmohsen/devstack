@@ -7,6 +7,7 @@ import {
   EmploymentTypeSchema,
   inferApplicationSource,
   INBOX_TTL_MS,
+  inboxKeeperInsertAllowed,
   isThinJobDescription,
   JOB_ADAPTER_IDS,
   JOB_ADAPTER_LABELS,
@@ -194,6 +195,21 @@ async function resolveSkillsForUser(
   };
 }
 
+/** Re-check immediately before inbox insert. Dismissed is never gated. */
+export function shouldInsertAfterCapRecheck(input: {
+  trackingStatus: "inbox" | "dismissed";
+  openInbox: number;
+  inboxThisRun: number;
+  jobsPerRun: number;
+}): boolean {
+  if (input.trackingStatus !== "inbox") return true;
+  return inboxKeeperInsertAllowed({
+    openInbox: input.openInbox,
+    inboxThisRun: input.inboxThisRun,
+    jobsPerRun: input.jobsPerRun
+  });
+}
+
 async function canInsertInboxKeeper(input: {
   userId: string;
   runId: string;
@@ -203,7 +219,12 @@ async function canInsertInboxKeeper(input: {
     applicationRepository.countByUserIdAndTrackingStatus(input.userId, "inbox"),
     applicationRepository.countInboxThisRun(input.userId, input.runId)
   ]);
-  return openInbox < MAX_OPEN_INBOX && inboxThisRun < input.jobsPerRun;
+  return shouldInsertAfterCapRecheck({
+    trackingStatus: "inbox",
+    openInbox,
+    inboxThisRun,
+    jobsPerRun: input.jobsPerRun
+  });
 }
 
 async function dismissExistingAndBackfill(input: {
@@ -257,6 +278,7 @@ async function insertDiscoveryApplication(input: {
   cheapReasons: string[];
   matchReasons: string[];
   trackingStatus: "inbox" | "dismissed";
+  jobsPerRun: number;
   dismissVia?: "low_match";
   agentTake?: string | null;
 }): Promise<ApplicationEntity | null> {
@@ -271,13 +293,13 @@ async function insertDiscoveryApplication(input: {
     input.posting.salaryCurrency
   );
 
-  const { row, created } = await applicationRepository.createIfAbsentByUrl({
+  const insertInput = {
     userId: input.userId,
     companyName: input.posting.companyName,
     title: input.posting.title,
     url: input.listingUrl,
     applyUrl: input.listingUrl,
-    applyMethod: "external",
+    applyMethod: "external" as const,
     matchScore: input.matchScore,
     source,
     sourceLabel,
@@ -292,12 +314,22 @@ async function insertDiscoveryApplication(input: {
     description: input.description,
     agentTake: input.agentTake ?? null,
     trackingStatus: input.trackingStatus,
-    stage: "saved",
+    stage: "saved" as const,
     postingId: input.posting.id,
     discoveryRunId: input.runId,
     inboxExpiresAt: new Date(Date.now() + INBOX_TTL_MS)
-  });
-  if (!created) return null;
+  };
+
+  const { row, created } =
+    input.trackingStatus === "inbox"
+      ? await applicationRepository.createInboxIfUnderCaps({
+          ...insertInput,
+          discoveryRunId: input.runId,
+          jobsPerRun: input.jobsPerRun,
+          maxOpenInbox: MAX_OPEN_INBOX
+        })
+      : await applicationRepository.createIfAbsentByUrl(insertInput);
+  if (!created || !row) return null;
 
   if (input.trackingStatus === "inbox") {
     await applicationActivityRepository.append({
@@ -580,7 +612,8 @@ async function runInboxAiForPosting(input: {
       ...baseInsert,
       matchScore: cheap.score,
       matchReasons: cheap.reasons,
-      trackingStatus: "inbox"
+      trackingStatus: "inbox",
+      jobsPerRun: prefs.jobsPerRun
     });
     return { outcome: row ? "heuristic" : "skipped" };
   }
@@ -676,6 +709,7 @@ async function runInboxAiForPosting(input: {
       keep === "dismissed" || keep === "passed" || keep === "heuristic" ? match.score : cheap.score,
     matchReasons: match.reasons,
     trackingStatus: plan.insert.trackingStatus,
+    jobsPerRun: prefs.jobsPerRun,
     dismissVia: plan.insert.trackingStatus === "dismissed" ? "low_match" : undefined,
     agentTake: plan.insert.agentTake
   });

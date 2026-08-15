@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeLandBudget } from "#@/job-discovery/land-budget";
+import { computeLandBudget, inboxKeeperInsertAllowed } from "#@/job-discovery/land-budget";
 
 describe("computeLandBudget", () => {
   it("stops at 50 open including pending", () => {
@@ -25,6 +25,16 @@ describe("computeLandBudget", () => {
         hasAiKey: false
       })
     ).toBe(25);
+  });
+
+  it("refuses inbox insert when the re-check sees 50 open inbox", () => {
+    expect(inboxKeeperInsertAllowed({ openInbox: 50, inboxThisRun: 0, jobsPerRun: 25 })).toBe(
+      false
+    );
+    expect(inboxKeeperInsertAllowed({ openInbox: 49, inboxThisRun: 0, jobsPerRun: 25 })).toBe(true);
+    expect(inboxKeeperInsertAllowed({ openInbox: 10, inboxThisRun: 25, jobsPerRun: 25 })).toBe(
+      false
+    );
   });
 
   it("does not over-land pending stubs past N", () => {

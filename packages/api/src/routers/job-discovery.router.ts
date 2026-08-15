@@ -2,16 +2,14 @@ import { randomUUID } from "node:crypto";
 
 import {
   computeLandBudget,
+  countTwoAxisPassedUnseen,
   dailyAiAttemptCap,
   FindJobsNowInputSchema,
   FindJobsNowOutputSchema,
   hasValidDiscoveryTitle,
   ingestQueryKey,
   MAX_OPEN_INBOX,
-  scoreCatalogAgainstPreference,
-  WorkModeSchema,
-  type JobPreference,
-  type WorkMode
+  type JobPreference
 } from "@tsu-stack/core";
 import {
   applicationRepository,
@@ -28,13 +26,8 @@ function utcDay(now = new Date()): string {
   return now.toISOString().slice(0, 10);
 }
 
-function asWorkMode(value: string | null): WorkMode | null {
-  const parsed = WorkModeSchema.safeParse(value);
-  return parsed.success ? parsed.data : null;
-}
-
-/** Cheap-passed unseen open catalog rows, short-circuiting once `budget` is met. */
-async function countCheapPassedUnseen(input: {
+/** Unseen catalog rows that survive cheap + $0 two-axis, up to `budget`. */
+async function countTwoAxisUnseenShelf(input: {
   userId: string;
   prefs: JobPreference;
   budget: number;
@@ -46,26 +39,7 @@ async function countCheapPassedUnseen(input: {
     excludeUrls: seen.urls,
     excludePostingIds: seen.postingIds
   });
-
-  let passed = 0;
-  for (const posting of shelf) {
-    const cheap = scoreCatalogAgainstPreference(
-      {
-        title: posting.title,
-        companyName: posting.companyName,
-        location: posting.location,
-        workMode: asWorkMode(posting.workMode),
-        skills: posting.skills ?? [],
-        salaryMin: posting.salaryMin,
-        salaryCurrency: posting.salaryCurrency
-      },
-      input.prefs
-    );
-    if (!cheap.passed) continue;
-    passed += 1;
-    if (passed >= input.budget) break;
-  }
-  return passed;
+  return countTwoAxisPassedUnseen(shelf, input.prefs, input.budget);
 }
 
 export const jobDiscoveryRouter = {
@@ -135,8 +109,8 @@ export const jobDiscoveryRouter = {
       }
 
       const runId = `find_${userId}_${randomUUID()}`;
-      const cheapUnseen = await countCheapPassedUnseen({ userId, prefs, budget });
-      const ingestTriggered = cheapUnseen < budget;
+      const twoAxisUnseen = await countTwoAxisUnseenShelf({ userId, prefs, budget });
+      const ingestTriggered = twoAxisUnseen < budget;
       const queryKey =
         ingestQueryKey({
           titleId: prefs.titleId,

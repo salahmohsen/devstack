@@ -73,6 +73,80 @@ async function listDueLivenessByStatus(
   return rows.map((row) => row.application);
 }
 
+async function insertIfAbsentByUrl(
+  db: Pick<ReturnType<typeof getDb>, "insert" | "select">,
+  input: CreateApplicationData & { url: string }
+): Promise<{ row: ApplicationEntity; created: boolean }> {
+  const id = crypto.randomUUID();
+  const now = new Date();
+  const [inserted] = await db
+    .insert(application)
+    .values({
+      id,
+      userId: input.userId,
+      companyName: input.companyName,
+      title: input.title,
+      url: input.url,
+      applyUrl: input.applyUrl ?? null,
+      applyMethod: input.applyMethod ?? "unknown",
+      matchScore: input.matchScore ?? null,
+      source: input.source ?? null,
+      sourceLabel: input.sourceLabel ?? null,
+      sourceTags: input.sourceTags ?? [],
+      location: input.location ?? null,
+      workMode: input.workMode ?? null,
+      hiringRegion: input.hiringRegion ?? null,
+      requiredSkills: input.requiredSkills ?? [],
+      preferredSkills: input.preferredSkills ?? [],
+      salaryRange: input.salaryRange ?? null,
+      employmentType: input.employmentType ?? "unknown",
+      description: input.description ?? null,
+      notes: input.notes ?? null,
+      agentTake: input.agentTake ?? null,
+      sourceMessageId: input.sourceMessageId ?? null,
+      trackingStatus: input.trackingStatus ?? "tracked",
+      stage: input.stage ?? "saved",
+      stageChangedAt: input.stageChangedAt ?? now,
+      outcome: null,
+      outcomeAt: null,
+      hiringUrgency: input.hiringUrgency ?? "unknown",
+      resumeId: input.resumeId ?? null,
+      postingId: input.postingId ?? null,
+      inboxExpiresAt: input.inboxExpiresAt ?? null,
+      discoveryRunId: input.discoveryRunId ?? null
+    })
+    .onConflictDoNothing({
+      target: [application.userId, application.url],
+      where: sql`${application.url} is not null`
+    })
+    .returning();
+
+  if (inserted) {
+    return { row: inserted, created: true };
+  }
+
+  const existing = await findByUserIdAndUrlOn(db, input.userId, input.url);
+  if (!existing) {
+    throw new Error(
+      `createIfAbsentByUrl: conflict without existing row for userId=${input.userId} url=${input.url}`
+    );
+  }
+  return { row: existing, created: false };
+}
+
+async function findByUserIdAndUrlOn(
+  db: Pick<ReturnType<typeof getDb>, "select">,
+  userId: string,
+  url: string
+): Promise<ApplicationEntity | null> {
+  const rows = await db
+    .select()
+    .from(application)
+    .where(and(eq(application.userId, userId), eq(application.url, url)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export const applicationRepository = {
   async findAllByUserId(userId: string) {
     return getDb()
@@ -194,61 +268,50 @@ export const applicationRepository = {
   async createIfAbsentByUrl(
     input: CreateApplicationData & { url: string }
   ): Promise<{ row: ApplicationEntity; created: boolean }> {
-    const id = crypto.randomUUID();
-    const now = new Date();
-    const [inserted] = await getDb()
-      .insert(application)
-      .values({
-        id,
-        userId: input.userId,
-        companyName: input.companyName,
-        title: input.title,
-        url: input.url,
-        applyUrl: input.applyUrl ?? null,
-        applyMethod: input.applyMethod ?? "unknown",
-        matchScore: input.matchScore ?? null,
-        source: input.source ?? null,
-        sourceLabel: input.sourceLabel ?? null,
-        sourceTags: input.sourceTags ?? [],
-        location: input.location ?? null,
-        workMode: input.workMode ?? null,
-        hiringRegion: input.hiringRegion ?? null,
-        requiredSkills: input.requiredSkills ?? [],
-        preferredSkills: input.preferredSkills ?? [],
-        salaryRange: input.salaryRange ?? null,
-        employmentType: input.employmentType ?? "unknown",
-        description: input.description ?? null,
-        notes: input.notes ?? null,
-        agentTake: input.agentTake ?? null,
-        sourceMessageId: input.sourceMessageId ?? null,
-        trackingStatus: input.trackingStatus ?? "tracked",
-        stage: input.stage ?? "saved",
-        stageChangedAt: input.stageChangedAt ?? now,
-        outcome: null,
-        outcomeAt: null,
-        hiringUrgency: input.hiringUrgency ?? "unknown",
-        resumeId: input.resumeId ?? null,
-        postingId: input.postingId ?? null,
-        inboxExpiresAt: input.inboxExpiresAt ?? null,
-        discoveryRunId: input.discoveryRunId ?? null
-      })
-      .onConflictDoNothing({
-        target: [application.userId, application.url],
-        where: sql`${application.url} is not null`
-      })
-      .returning();
+    return insertIfAbsentByUrl(getDb(), input);
+  },
 
-    if (inserted) {
-      return { row: inserted, created: true };
+  /**
+   * Inbox insert under N / 50. Transaction + advisory lock on (userId, runId),
+   * then re-check counts immediately before insert. Dismissed rows must not
+   * use this path (they do not count toward 50).
+   */
+  async createInboxIfUnderCaps(
+    input: CreateApplicationData & {
+      url: string;
+      discoveryRunId: string;
+      jobsPerRun: number;
+      maxOpenInbox: number;
     }
-
-    const existing = await applicationRepository.findByUserIdAndUrl(input.userId, input.url);
-    if (!existing) {
-      throw new Error(
-        `createIfAbsentByUrl: conflict without existing row for userId=${input.userId} url=${input.url}`
+  ): Promise<{ row: ApplicationEntity | null; created: boolean }> {
+    return getDb().transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${input.userId}), hashtext(${input.discoveryRunId}))`
       );
-    }
-    return { row: existing, created: false };
+
+      const [openRow] = await tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(application)
+        .where(and(eq(application.userId, input.userId), eq(application.trackingStatus, "inbox")));
+      const [runRow] = await tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(application)
+        .where(
+          and(
+            eq(application.userId, input.userId),
+            eq(application.discoveryRunId, input.discoveryRunId),
+            eq(application.trackingStatus, "inbox")
+          )
+        );
+
+      const openInbox = openRow?.n ?? 0;
+      const inboxThisRun = runRow?.n ?? 0;
+      if (openInbox >= input.maxOpenInbox || inboxThisRun >= input.jobsPerRun) {
+        return { row: null, created: false };
+      }
+
+      return insertIfAbsentByUrl(tx, input);
+    });
   },
 
   async countInboxThisRun(userId: string, discoveryRunId: string): Promise<number> {

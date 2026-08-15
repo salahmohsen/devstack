@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   decideEvaluateOutcome,
   decideInboxAiKeep,
+  shouldInsertAfterCapRecheck,
   shouldRefundHeuristicIncrement
 } from "#@/lib/job-discovery/inbox-ai";
 import {
@@ -57,6 +58,30 @@ describe("decideEvaluateOutcome", () => {
       insert: null,
       backfill: true
     });
+  });
+});
+
+describe("shouldInsertAfterCapRecheck", () => {
+  it("refuses inbox insert when the re-check sees 50 open inbox", () => {
+    expect(
+      shouldInsertAfterCapRecheck({
+        trackingStatus: "inbox",
+        openInbox: 50,
+        inboxThisRun: 3,
+        jobsPerRun: 25
+      })
+    ).toBe(false);
+  });
+
+  it("still inserts dismissed when open inbox is already 50", () => {
+    expect(
+      shouldInsertAfterCapRecheck({
+        trackingStatus: "dismissed",
+        openInbox: 50,
+        inboxThisRun: 25,
+        jobsPerRun: 25
+      })
+    ).toBe(true);
   });
 });
 

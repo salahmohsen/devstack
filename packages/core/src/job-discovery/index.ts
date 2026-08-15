@@ -3,6 +3,7 @@ export * from "./constants";
 export * from "./hiring-region";
 export * from "./land-budget";
 export * from "./queue";
+export * from "./shelf";
 export * from "./title-packs";
 export * from "./ttl";
 export * from "./two-axis";
