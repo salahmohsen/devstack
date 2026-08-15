@@ -32,11 +32,16 @@ import {
 } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
 
-import { generateAgentTake } from "#@/lib/application/generate-agent-take";
+import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/generate-agent-take";
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { scoreApplicationMatch } from "#@/lib/application/score-application-match";
 import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
 import { formatCatalogSalaryRange } from "#@/lib/job-discovery/hydrate";
+import {
+  leftoverExtractFromListing,
+  leftoverExtractIfNeeded,
+  mergeLeftoverExtract
+} from "#@/lib/job-discovery/leftover-extract";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 export type InboxAiOutcome = "passed" | "dismissed" | "heuristic" | "skipped";
@@ -59,6 +64,52 @@ export function decideInboxAiKeep(match: {
 }): "passed" | "dismissed" | "heuristic" {
   if (match.source === "heuristic") return "heuristic";
   return match.passed ? "passed" : "dismissed";
+}
+
+export type EvaluateInsertPlan =
+  | { outcome: "skipped"; insert: null; backfill: true }
+  | {
+      outcome: "dismissed";
+      insert: { trackingStatus: "dismissed"; agentTake: null };
+      backfill: true;
+    }
+  | {
+      outcome: "heuristic" | "passed";
+      insert: { trackingStatus: "inbox"; agentTake: string | null };
+      backfill: false;
+    };
+
+/**
+ * Evaluate insert plan. score_error never creates a dismissed row.
+ * Pass includes take text (or null on take-fail) before insert.
+ */
+export function decideEvaluateOutcome(input: {
+  scoreError: boolean;
+  keep: "passed" | "dismissed" | "heuristic" | null;
+  takeText: string | null;
+}): EvaluateInsertPlan {
+  if (input.scoreError) {
+    return { outcome: "skipped", insert: null, backfill: true };
+  }
+  if (input.keep === "dismissed") {
+    return {
+      outcome: "dismissed",
+      insert: { trackingStatus: "dismissed", agentTake: null },
+      backfill: true
+    };
+  }
+  if (input.keep === "heuristic") {
+    return {
+      outcome: "heuristic",
+      insert: { trackingStatus: "inbox", agentTake: null },
+      backfill: false
+    };
+  }
+  return {
+    outcome: "passed",
+    insert: { trackingStatus: "inbox", agentTake: input.takeText },
+    backfill: false
+  };
 }
 
 function utcDay(now = new Date()): string {
@@ -115,13 +166,19 @@ function persistHiringRegion(
 
 async function resolveSkillsForUser(
   userId: string,
-  names: string[]
+  required: readonly string[],
+  preferred: readonly string[] = []
 ): Promise<{ requiredSkills: JobSkillTag[]; preferredSkills: JobSkillTag[] }> {
   const stacks = await stackRepository.findAllByUserId(userId);
   const tags = resolveJobSkillTags(
-    names.map((name) => {
-      return { name, band: "required" as const };
-    }),
+    [
+      ...required.map((name) => {
+        return { name, band: "required" as const };
+      }),
+      ...preferred.map((name) => {
+        return { name, band: "preferred" as const };
+      })
+    ],
     stacks.map((stack) => {
       return { id: stack.id, name: stack.name };
     })
@@ -195,7 +252,8 @@ async function insertDiscoveryApplication(input: {
   cheapReasons: string[];
   matchReasons: string[];
   trackingStatus: "inbox" | "dismissed";
-  dismissVia?: "low_match" | "score_error";
+  dismissVia?: "low_match";
+  agentTake?: string | null;
 }): Promise<ApplicationEntity | null> {
   const { source, sourceLabel } = discoverySourceFields({
     listingUrl: input.listingUrl,
@@ -227,6 +285,7 @@ async function insertDiscoveryApplication(input: {
     salaryRange,
     employmentType: input.employmentType,
     description: input.description,
+    agentTake: input.agentTake ?? null,
     trackingStatus: input.trackingStatus,
     stage: "saved",
     postingId: input.posting.id,
@@ -428,19 +487,68 @@ async function runInboxAiForPosting(input: {
     },
     prefs
   );
+  const hiringRegion = persistHiringRegion(workMode, leftover.hiringRegion);
+  const description = leftover.description ?? posting.description;
+  const salaryRange = formatCatalogSalaryRange(
+    posting.salaryMin,
+    posting.salaryMax,
+    posting.salaryCurrency
+  );
+
+  const willCallAgent = hasAiKey && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
+  let employmentType = asEmploymentType(leftover.employmentType);
+  let requiredNames = leftover.skills;
+  let preferredNames: string[] = [];
+
+  if (willCallAgent) {
+    const reserved = await userJobAiBudgetRepository.tryIncrement(
+      input.userId,
+      utcDay(),
+      dailyAiAttemptCap(prefs.jobsPerRun)
+    );
+    if (!reserved) return { outcome: "skipped" };
+
+    const leftoverByo = await leftoverExtractIfNeeded({
+      willCallAgent: true,
+      skills: requiredNames,
+      employmentType,
+      extract: () =>
+        leftoverExtractFromListing({
+          userId: input.userId,
+          llm,
+          job: {
+            listingUrl,
+            title: posting.title,
+            companyName: posting.companyName,
+            location: leftover.location,
+            description,
+            employmentType
+          }
+        })
+    });
+    if (leftoverByo.invoked) {
+      const merged = mergeLeftoverExtract(
+        { employmentType, required: requiredNames, preferred: preferredNames },
+        leftoverByo.result
+      );
+      employmentType = merged.employmentType;
+      requiredNames = merged.required;
+      preferredNames = merged.preferred;
+    }
+  }
+
   const { requiredSkills, preferredSkills } = await resolveSkillsForUser(
     input.userId,
-    leftover.skills
+    requiredNames,
+    preferredNames
   );
-  const employmentType = asEmploymentType(leftover.employmentType);
-  const hiringRegion = persistHiringRegion(workMode, leftover.hiringRegion);
 
   const baseInsert = {
     userId: input.userId,
     runId: input.runId,
     posting,
     listingUrl,
-    description: leftover.description ?? posting.description,
+    description,
     location: leftover.location,
     workMode,
     hiringRegion,
@@ -451,7 +559,6 @@ async function runInboxAiForPosting(input: {
     cheapReasons: cheap.reasons
   };
 
-  const willCallAgent = hasAiKey && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
   if (!willCallAgent) {
     if (
       !(await canInsertInboxKeeper({
@@ -471,13 +578,6 @@ async function runInboxAiForPosting(input: {
     return { outcome: row ? "heuristic" : "skipped" };
   }
 
-  const reserved = await userJobAiBudgetRepository.tryIncrement(
-    input.userId,
-    utcDay(),
-    dailyAiAttemptCap(prefs.jobsPerRun)
-  );
-  if (!reserved) return { outcome: "skipped" };
-
   let match;
   try {
     match = await scoreApplicationMatch({
@@ -488,63 +588,72 @@ async function runInboxAiForPosting(input: {
         title: posting.title,
         companyName: posting.companyName,
         location: leftover.location,
-        salaryRange: formatCatalogSalaryRange(
-          posting.salaryMin,
-          posting.salaryMax,
-          posting.salaryCurrency
-        ),
-        description: leftover.description ?? posting.description,
+        salaryRange,
+        description,
         applyMethod: "external",
         workMode
       }
     });
-  } catch (error) {
-    const row = await insertDiscoveryApplication({
-      ...baseInsert,
-      matchScore: cheap.score,
-      matchReasons: [
-        "score_error",
-        error instanceof Error ? error.message : "scoreApplicationMatch threw"
-      ],
-      trackingStatus: "dismissed",
-      dismissVia: "score_error"
-    });
-    return { outcome: row ? "dismissed" : "skipped" };
-  }
-
-  const decision = decideInboxAiKeep(match);
-  if (decision === "dismissed") {
-    const row = await insertDiscoveryApplication({
-      ...baseInsert,
-      matchScore: match.score,
-      matchReasons: match.reasons,
-      trackingStatus: "dismissed",
-      dismissVia: "low_match"
-    });
-    return { outcome: row ? "dismissed" : "skipped" };
-  }
-
-  if (decision === "heuristic") {
-    await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
-    if (
-      !(await canInsertInboxKeeper({
+  } catch {
+    const plan = decideEvaluateOutcome({ scoreError: true, keep: null, takeText: null });
+    if (plan.backfill) {
+      await requestJobDiscoveryLand({
         userId: input.userId,
         runId: input.runId,
-        jobsPerRun: prefs.jobsPerRun
-      }))
-    ) {
-      return { outcome: "skipped" };
+        trigger: "backfill"
+      });
     }
-    const row = await insertDiscoveryApplication({
-      ...baseInsert,
-      matchScore: match.score,
-      matchReasons: match.reasons,
-      trackingStatus: "inbox"
-    });
-    return { outcome: row ? "heuristic" : "skipped" };
+    return { outcome: plan.outcome };
+  }
+
+  const keep = decideInboxAiKeep(match);
+  let takeText: string | null = null;
+  if (keep === "heuristic") {
+    await userJobAiBudgetRepository.tryDecrement(input.userId, utcDay());
+  }
+  if (keep === "passed") {
+    try {
+      const take = await generateAgentTakeText({
+        userId: input.userId,
+        llm,
+        job: {
+          title: posting.title,
+          companyName: posting.companyName,
+          location: leftover.location,
+          employmentType,
+          salaryRange,
+          matchScore: match.score,
+          description
+        },
+        matchReasons: match.reasons,
+        prefsSummary: JSON.stringify({
+          roleKeywords: prefs.roleKeywords,
+          locations: prefs.locations,
+          workModes: prefs.workModes,
+          minMatchScore: prefs.minMatchScore,
+          salaryMin: prefs.salaryMin
+        })
+      });
+      takeText = take.ok ? take.text : null;
+    } catch {
+      takeText = null;
+    }
+  }
+
+  const plan = decideEvaluateOutcome({ scoreError: false, keep, takeText });
+  if (!plan.insert) {
+    if (plan.backfill) {
+      await requestJobDiscoveryLand({
+        userId: input.userId,
+        runId: input.runId,
+        trigger: "backfill"
+      });
+    }
+    return { outcome: plan.outcome };
   }
 
   if (
+    plan.insert.trackingStatus === "inbox" &&
     !(await canInsertInboxKeeper({
       userId: input.userId,
       runId: input.runId,
@@ -556,22 +665,14 @@ async function runInboxAiForPosting(input: {
 
   const row = await insertDiscoveryApplication({
     ...baseInsert,
-    matchScore: match.score,
+    matchScore:
+      keep === "dismissed" || keep === "passed" || keep === "heuristic" ? match.score : cheap.score,
     matchReasons: match.reasons,
-    trackingStatus: "inbox"
+    trackingStatus: plan.insert.trackingStatus,
+    dismissVia: plan.insert.trackingStatus === "dismissed" ? "low_match" : undefined,
+    agentTake: plan.insert.agentTake
   });
-  if (!row) return { outcome: "skipped" };
-
-  try {
-    await generateAgentTake({
-      applicationId: row.id,
-      userId: input.userId
-    });
-  } catch {
-    // Soft-fail: keeper stays; Generate take remains.
-  }
-
-  return { outcome: "passed" };
+  return { outcome: row ? plan.outcome : "skipped" };
 }
 
 export async function runInboxAi(input: JobInboxAiPayload): Promise<{ outcome: InboxAiOutcome }> {
