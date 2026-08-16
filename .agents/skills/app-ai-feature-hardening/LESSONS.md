@@ -17,6 +17,18 @@
 
 ---
 
+## 2026-08-16 — Everyday multi-ask: promised card, then re-proposed after Confirm
+
+- **Trigger:** Casual hub chat: “what am I looking for / RAYA still says frontend / Dev-Hub is backend / don’t want RN / anything new in the pile”
+- **Finding:** A packed ask can list prefs + inbox + one get, show the brief, then **say** a File Diff is coming and never call `propose-evidence-change`. User has to poke (“i don’t see any card”)
+- **Finding:** After Confirm persist (`Updated project` + DB summary changed), auto-resume opened a **second** project File Diff on the same entity. Treat same-id re-propose this turn like hard-stop/triage — next named entity only, or stop
+- **Finding:** Model dumps thinking as visible list items (`Wait — maxSteps 16…`). Hide reasoning / thought lists in the thread; they are not the product UI
+- **Finding:** Six parallel “Confirm new stack” cards violate one-entity-per-interview. Start with one; after Confirm, ask/queue the next
+- **Finding:** `listExperiences` empty + “No experiences yet” is confusing when RAYA lives as a **project** title. Search projects too when they name a workplace
+- **Finding:** Unauthenticated `:4111/chat` is 401. Identity brief File Diff (preview, no `+/−`) rendered. Confirm File Diff was `project.md +2/−2` then persist
+- **User preference:** Everyday language; do not coach product steps; keep testing multi-tool asks
+- **Evidence class:** Chrome hub Thread; `projects.list` Dev-Hub summary starts “Backend-first…”; unauth chat 401
+
 ## 2026-08-16 — Evidence interview: identity brief does not resume; list + needs live agent
 
 - **Trigger:** Conversational evidence Tasks 1–10 then hardening (home Thread + floater + list `+`)
