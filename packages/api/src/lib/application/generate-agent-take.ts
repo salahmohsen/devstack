@@ -1,4 +1,9 @@
-import { assessAgentTakeReadiness, llmLogFields, type RuntimeLlmConfig } from "@tsu-stack/core";
+import {
+  assessAgentTakeReadiness,
+  llmLogFields,
+  normalizeAgentTakeText,
+  type RuntimeLlmConfig
+} from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
@@ -175,7 +180,7 @@ export async function generateAgentTakeText(input: {
     } catch {
       parsed = { text: bodyText };
     }
-    const take = extractTextFromAgentBody(parsed)?.replace(/\s+/g, " ").trim().slice(0, 1200);
+    const take = normalizeAgentTakeText(extractTextFromAgentBody(parsed) ?? "");
     if (!take) {
       return { ok: false, code: "AGENT_FAILED", message: "Empty agent take response" };
     }
