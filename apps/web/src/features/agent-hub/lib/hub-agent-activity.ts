@@ -1,8 +1,10 @@
 import {
   type AgentActivityItem,
-  type AgentActivityStatus
+  type AgentActivityStatus,
+  type AgentStepStatus
 } from "@/shared/ui/agents/agent-activity";
 
+import { hubSubagentListShouldShow, isHubSubagentWorkerName } from "./hub-subagent-workers";
 import {
   hubToolNameFromPart,
   isHubApprovalToolName,
@@ -105,17 +107,30 @@ export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActi
     if (!isHubToolUiPart(part)) continue;
     const name = hubToolNameFromPart(part);
     if (!isHubWorkingStripToolName(name)) continue;
+    if (hubSubagentListShouldShow(parts) && isHubSubagentWorkerName(name)) continue;
 
     const statusType = part.status?.type;
     const running = isWaitingState(part.state, statusType);
     const complete = isCompleteState(part.state, statusType);
     const id = part.toolCallId && part.toolCallId.length > 0 ? part.toolCallId : `tool-${index}`;
+    const status: AgentStepStatus = running ? "active" : complete ? "complete" : "pending";
+    const label = humanizeHubToolName(name);
+
+    if (isHubJobPageExtractToolName(name)) {
+      const existing = items.find(
+        (item) => item.type === "step" && item.label === "Reading listing"
+      );
+      if (existing && existing.type === "step") {
+        if (existing.status !== "active" && status === "active") existing.status = "active";
+        continue;
+      }
+    }
 
     items.push({
       id,
       type: "step",
-      label: humanizeHubToolName(name),
-      status: running ? "active" : complete ? "complete" : "pending"
+      label,
+      status
     });
   }
 

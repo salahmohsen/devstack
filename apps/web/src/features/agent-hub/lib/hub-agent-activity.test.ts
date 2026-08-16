@@ -83,4 +83,61 @@ describe("buildHubAgentActivityItems", () => {
     expect(hubAgentActivityStatus({ items, parts, isRunning: true })).toBe("working");
     expect(hubAgentActivityActiveLabel(items, parts)).toBe("Reading listing…");
   });
+
+  it("omits specialist workers from the strip when the subagent list owns them", () => {
+    const items = buildHubAgentActivityItems([
+      {
+        type: "tool-getJobPreferences",
+        toolName: "getJobPreferences",
+        toolCallId: "prefs1",
+        state: "output-available"
+      },
+      {
+        type: "tool-agent-mailClassifierAgent",
+        toolName: "agent-mailClassifierAgent",
+        toolCallId: "a1",
+        state: "call"
+      }
+    ]);
+    expect(items).toEqual([
+      {
+        id: "prefs1",
+        type: "step",
+        label: "Checking job preferences",
+        status: "complete"
+      }
+    ]);
+  });
+
+  it("collapses extractor + fetch into one Reading listing step", () => {
+    const items = buildHubAgentActivityItems([
+      {
+        type: "tool-getJobPreferences",
+        toolName: "getJobPreferences",
+        toolCallId: "prefs1",
+        state: "output-available"
+      },
+      {
+        type: "tool-agent-jobPageExtractor",
+        toolName: "agent-jobPageExtractor",
+        toolCallId: "ex1",
+        state: "output-available"
+      },
+      {
+        type: "tool-fetch-job-page",
+        toolName: "fetch-job-page",
+        toolCallId: "ex2",
+        state: "call"
+      }
+    ]);
+    expect(items).toEqual([
+      {
+        id: "prefs1",
+        type: "step",
+        label: "Checking job preferences",
+        status: "complete"
+      },
+      { id: "ex1", type: "step", label: "Reading listing", status: "active" }
+    ]);
+  });
 });

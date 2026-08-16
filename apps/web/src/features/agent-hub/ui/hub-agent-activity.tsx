@@ -5,6 +5,7 @@ import { type PropsWithChildren } from "react";
 
 import { AgentActivity } from "@/shared/ui/agents/agent-activity";
 import { ThinkingShimmer } from "@/shared/ui/agents/thinking-shimmer";
+import { SubagentList } from "@/shared/ui/subagent-list";
 
 import {
   buildHubAgentActivityItems,
@@ -12,6 +13,8 @@ import {
   hubAgentActivityStatus,
   isHubListingExtractActive
 } from "@/features/agent-hub/lib/hub-agent-activity";
+import { getHubComposerModel } from "@/features/agent-hub/lib/hub-composer-model";
+import { buildHubSubagentListModel } from "@/features/agent-hub/lib/hub-subagent-workers";
 
 /** Drop assistant-ui reasoning chrome — the activity strip owns that text. */
 export function HubHiddenReasoningGroup(_props: PropsWithChildren) {
@@ -39,28 +42,47 @@ export function HubAgentActivity() {
       : 0;
   const extractOnly =
     items.length === 1 && items[0]?.type === "step" && isHubListingExtractActive(messageParts);
+  const modelId = getHubComposerModel()?.modelId ?? "";
+  const modelLabel = modelId.includes("/")
+    ? (modelId.split("/").pop() ?? modelId)
+    : modelId || "BYO";
+  const workers = buildHubSubagentListModel(messageParts, { modelLabel, isRunning });
 
-  if (items.length === 0 || extractOnly) {
-    if (status !== "working" && !extractOnly) return null;
-    return (
-      <output
-        className="mb-2 flex h-7 w-full max-w-[min(72ch,100%)] items-center text-sm text-muted-foreground"
-        aria-live="polite"
-      >
-        <ThinkingShimmer>{hubAgentActivityActiveLabel(items, messageParts)}</ThinkingShimmer>
-      </output>
+  const activity =
+    items.length === 0 || extractOnly ? (
+      status !== "working" && !extractOnly ? null : (
+        <output
+          className="mb-2 flex h-7 w-full max-w-[min(72ch,100%)] items-center text-sm text-muted-foreground"
+          aria-live="polite"
+        >
+          <ThinkingShimmer>{hubAgentActivityActiveLabel(items, messageParts)}</ThinkingShimmer>
+        </output>
+      )
+    ) : (
+      <AgentActivity
+        items={items}
+        status={status}
+        duration={durationSec}
+        collapseOnComplete
+        maxHeight={208}
+        activeLabel={hubAgentActivityActiveLabel(items, messageParts)}
+        className="mb-2 max-w-[min(72ch,100%)]"
+      />
     );
-  }
+
+  if (!workers) return activity;
 
   return (
-    <AgentActivity
-      items={items}
-      status={status}
-      duration={durationSec}
-      collapseOnComplete
-      maxHeight={208}
-      activeLabel={hubAgentActivityActiveLabel(items, messageParts)}
-      className="mb-2 max-w-[min(72ch,100%)]"
-    />
+    <div className="mb-2 flex max-w-[min(72ch,100%)] flex-col gap-2">
+      <SubagentList
+        agents={workers.agents}
+        completedCount={workers.completedCount}
+        progress={workers.progress}
+        showSummary={workers.showSummary}
+        summaryAgent={workers.summaryAgent}
+        className="min-h-0 max-w-xs"
+      />
+      {activity}
+    </div>
   );
 }

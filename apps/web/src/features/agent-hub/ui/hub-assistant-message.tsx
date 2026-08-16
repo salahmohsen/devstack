@@ -5,13 +5,13 @@ import { type ToolCallMessagePartProps, useAuiState } from "@assistant-ui/react"
 import { AssistantMessage, ThreadComponentsContext } from "@/shared/ui/assistant-ui/thread";
 import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 
-import { isHubJobPageExtractToolName } from "@/features/agent-hub/lib/hub-tool-names";
+import { isHubWorkingStripToolName } from "@/features/agent-hub/lib/hub-agent-activity";
 import { hideHubAssistantTextAfterIndex } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
 import { HubAgentActivity, HubBareToolGroup, HubHiddenReasoningGroup } from "./hub-agent-activity";
 
 function HubToolFallback(props: ToolCallMessagePartProps) {
-  if (isHubJobPageExtractToolName(props.toolName ?? "")) {
+  if (isHubWorkingStripToolName(props.toolName ?? "")) {
     return null;
   }
   return <ToolFallback {...props} />;
