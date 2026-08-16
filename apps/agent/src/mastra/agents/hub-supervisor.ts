@@ -11,7 +11,7 @@ import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import {
-  HUB_JOB_URL_IMPORT_FEEDBACK,
+  hubJobUrlImportFeedback,
   shouldForceProposeApplicationFromJd,
   shouldStopHubLoopAfterClientHitl
 } from "#@/mastra/lib/hub-superpowers-policy";
@@ -19,6 +19,7 @@ import {
   createHubInputProcessors,
   HUB_SUPERVISOR_MAX_STEPS,
   mastraMessagesHavePendingClientHitl,
+  messagesNeedProposeAfterJobExtract,
   messagesNeedProposeAfterJobImport
 } from "#@/mastra/processors/hub-processors";
 import { acceptApplyPackageTool } from "#@/mastra/tools/accept-apply-package.tool";
@@ -143,7 +144,7 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
 - Prefer a workflow over a sub-agent for defined multi-step processes.
 - State which specialist/workflow you invoke (one short sentence) when you do. Exception: never announce \`jobPageExtractor\` / fetch-job-page — those are silent.
 - JD paste, a job listing URL (especially LinkedIn \`/jobs/view/…\`), or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; **full** JD in \`description\` — every section, not a teaser; numeric \`matchScore\` 0–100; \`notes\` = 1–3 sentence agent's take vs the seeker; \`workMode\` / \`salaryRange\` / \`requiredSkills\` / \`preferredSkills\` when the posting states them — never invent pay or mode). **Do not invent CRM rows** without that tool and user confirmation.
-- **URL-only paste (no JD body):** you MAY call \`jobPageExtractor\` first as a silent prelude. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails or the page is a login wall, still propose with that \`url\` and an empty description. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
+- **URL-only paste (no JD body):** call \`jobPageExtractor\` at most once as a silent prelude — do **not** call \`getJobPreferences\` or list tools first. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails, returns a teaser, or the page is a login wall, still propose with that \`url\` and an empty (or short) description. Do **not** extract or fetch-job-page again. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
 - After calling \`propose-application-from-jd\` or \`proposeNewJobsTriage\`, stop with **no text** until the card returns. After JD proposal tool output \`save\` | \`package\` | \`dismiss\`: do **not** call \`propose-application-from-jd\` again for that listing, do **not** call \`create-application\` if \`applicationId\` is already set, and emit **no** second card. Short ack only if you must speak. Otherwise \`save\` without \`applicationId\` → \`create-application\`. \`package\` without \`applicationId\` → \`create-application\` then \`generate-apply-package\`.
 - Do not invent tools or pretend a send/apply/track succeeded without tool results.
 - Surface empty/error tool results plainly.
@@ -174,7 +175,13 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
           shouldForceProposeApplicationFromJd(toolNames) ||
           messagesNeedProposeAfterJobImport(ctx.messages)
         ) {
-          return { continue: true, feedback: HUB_JOB_URL_IMPORT_FEEDBACK };
+          return {
+            continue: true,
+            feedback: hubJobUrlImportFeedback(
+              shouldForceProposeApplicationFromJd(toolNames) ||
+                messagesNeedProposeAfterJobExtract(ctx.messages)
+            )
+          };
         }
         const toolCount = ctx.toolCalls?.length ?? 0;
         if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
@@ -192,7 +199,7 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
           ) {
             return;
           }
-          return { feedback: HUB_JOB_URL_IMPORT_FEEDBACK };
+          return { feedback: hubJobUrlImportFeedback(true) };
         },
         messageFilter: ({ messages }) => {
           const withoutToolParts = messages.filter((m) => {

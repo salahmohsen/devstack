@@ -4,6 +4,8 @@ import {
   APPLY_PACKAGE_MIN_DESCRIPTION_CHARS,
   descriptionQualityLength,
   filterConfirmedTriageIds,
+  filterHubJobUrlImportActiveTools,
+  hubJobUrlImportFeedback,
   isHubClientHitlToolName,
   meetsApplyPackageQualityGate,
   selectFocusJob,
@@ -210,5 +212,35 @@ describe("shouldStopHubLoopAfterClientHitl", () => {
         toolResults: []
       })
     ).toBe(false);
+  });
+});
+
+const URL_IMPORT_TOOL_NAMES = [
+  "getJobPreferences",
+  "listNewJobs",
+  "agent-jobPageExtractor",
+  "proposeApplicationFromJd"
+] as const;
+
+describe("hub job URL import lock", () => {
+  it("keeps only extract + propose before extract runs", () => {
+    expect(filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, false)).toEqual([
+      "agent-jobPageExtractor",
+      "proposeApplicationFromJd"
+    ]);
+  });
+
+  it("keeps only propose after extract already ran", () => {
+    expect(filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, true)).toEqual([
+      "proposeApplicationFromJd"
+    ]);
+  });
+
+  it("tells the model not to extract again once extract ran", () => {
+    const after = hubJobUrlImportFeedback(true);
+    expect(after).toMatch(/do not/i);
+    expect(after).toMatch(/jobPageExtractor|fetch-job-page/i);
+    expect(after).toMatch(/propose-application-from-jd/);
+    expect(hubJobUrlImportFeedback(false)).not.toBe(after);
   });
 });

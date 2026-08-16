@@ -178,7 +178,26 @@ export function isUrlOnlyJobListingPaste(text: string): boolean {
 }
 
 export const HUB_JOB_URL_IMPORT_FEEDBACK =
-  "The user pasted a job listing URL. Extract only as a silent prelude if you still need page text (`jobPageExtractor`). Then you MUST call propose-application-from-jd with title, companyName, the FULL job description (all sections from the page — not an 800-char teaser), url (the listing URL), applyUrl, location, numeric matchScore 0–100, notes (1–3 sentence agent's take vs the seeker), and when stated: workMode, salaryRange, requiredSkills[], preferredSkills[]. If extract fails or the page is a login wall, still propose with that url and an empty description. Emit ZERO user-facing text until the proposal card. Never dump extractor JSON or restate the listing as prose.";
+  "The user pasted a job listing URL. You may call jobPageExtractor at most once as a silent prelude. Do not call getJobPreferences, list*, or any other tool. Then you MUST call propose-application-from-jd with title, companyName, the FULL job description (all sections from the page — not an 800-char teaser), url (the listing URL), applyUrl, location, numeric matchScore 0–100, notes (1–3 sentence agent's take vs the seeker), and when stated: workMode, salaryRange, requiredSkills[], preferredSkills[]. If extract fails or the page is a login wall, still propose with that url and an empty description. Emit ZERO user-facing text until the proposal card. Never dump extractor JSON or restate the listing as prose. Do not extract twice.";
+
+export const HUB_JOB_URL_MUST_PROPOSE_FEEDBACK =
+  "Extract already ran. Do NOT call jobPageExtractor, fetch-job-page, or getJobPreferences again. Call propose-application-from-jd NOW with title, companyName, the FULL job description from the extract (or an empty description if the page was a login wall or extract failed), url (the listing URL), applyUrl, location, numeric matchScore 0–100, notes (1–3 sentence agent's take vs the seeker), and when stated: workMode, salaryRange, requiredSkills[], preferredSkills[]. Emit ZERO user-facing text until the proposal card. Never dump extractor JSON or restate the listing as prose.";
+
+export function hubJobUrlImportFeedback(sawExtract: boolean): string {
+  return sawExtract ? HUB_JOB_URL_MUST_PROPOSE_FEEDBACK : HUB_JOB_URL_IMPORT_FEEDBACK;
+}
+
+/** Tools the supervisor may use while importing a pasted listing URL. */
+export function filterHubJobUrlImportActiveTools(
+  toolNames: readonly string[],
+  sawExtract: boolean
+): string[] {
+  return toolNames.filter((name) => {
+    if (isProposeApplicationFromJdToolName(name)) return true;
+    if (sawExtract) return false;
+    return isHubJobPageExtractToolName(name);
+  });
+}
 
 /** Extract ran this iteration; the JD card has not been proposed yet. */
 export function shouldForceProposeApplicationFromJd(toolNames: readonly string[]): boolean {

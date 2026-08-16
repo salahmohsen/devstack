@@ -8,7 +8,8 @@ import {
 import { hubPersonalityById } from "@tsu-stack/core";
 
 import {
-  HUB_JOB_URL_IMPORT_FEEDBACK,
+  filterHubJobUrlImportActiveTools,
+  hubJobUrlImportFeedback,
   isHubClientHitlToolName,
   isHubJobPageExtractToolName,
   isProposeApplicationFromJdToolName,
@@ -224,7 +225,7 @@ export class HubPersonalityProcessor implements Processor {
 export class HubJobUrlImportProcessor implements Processor {
   readonly id = "hub-job-url-import";
 
-  async processInputStep({ messages, sendSignal }: ProcessInputStepArgs) {
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
     if (mastraMessagesHavePendingClientHitl(messages)) return;
 
     const state = latestUserTurnJobImportState(messages);
@@ -233,13 +234,20 @@ export class HubJobUrlImportProcessor implements Processor {
 
     await sendSignal?.({
       type: "reactive",
-      contents: HUB_JOB_URL_IMPORT_FEEDBACK,
+      contents: hubJobUrlImportFeedback(state.sawExtract),
       attributes: {
         reason: state.sawExtract ? "job-extract-must-propose" : "job-url-import"
       }
     });
 
-    return { toolChoice: "required" as const };
+    const activeTools = filterHubJobUrlImportActiveTools(
+      tools ? Object.keys(tools) : [],
+      state.sawExtract
+    );
+    return {
+      toolChoice: "required" as const,
+      ...(activeTools.length > 0 ? { activeTools } : {})
+    };
   }
 }
 
