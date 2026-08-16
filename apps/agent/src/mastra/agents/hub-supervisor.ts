@@ -10,11 +10,16 @@ import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agen
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
-import { shouldStopHubLoopAfterClientHitl } from "#@/mastra/lib/hub-superpowers-policy";
+import {
+  HUB_JOB_URL_IMPORT_FEEDBACK,
+  shouldForceProposeApplicationFromJd,
+  shouldStopHubLoopAfterClientHitl
+} from "#@/mastra/lib/hub-superpowers-policy";
 import {
   createHubInputProcessors,
   HUB_SUPERVISOR_MAX_STEPS,
-  mastraMessagesHavePendingClientHitl
+  mastraMessagesHavePendingClientHitl,
+  messagesNeedProposeAfterJobImport
 } from "#@/mastra/processors/hub-processors";
 import { acceptApplyPackageTool } from "#@/mastra/tools/accept-apply-package.tool";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
@@ -81,6 +86,7 @@ Most people will not say "New jobs", "Career Inbox", "stacks", or "tracked jobs"
 | work history, past jobs, companies I worked at, resume jobs | \`listExperiences\` |
 | side projects, things I built, portfolio projects | \`listProjects\` |
 | what I'm looking for, job prefs, remote only, salary floor | \`getJobPreferences\` |
+| a LinkedIn / Indeed / Greenhouse / job URL, "this listing", "import this job" | extract (optional silent prelude) then \`propose-application-from-jd\` |
 | scan my emails, check for jobs, look through my inbox for roles | mail process / harvest workflows (approval-gated) |
 | track this, save this job, apply later | \`trackJob\` after you have a real id |
 | not interested, hide this, skip this role | \`dismissJob\` |
@@ -100,7 +106,8 @@ Stacks: \`stackCategorizerAgent\`, \`detectStacksWorkflow\`, \`organizeStacksWor
 Career mail (prefer workflows for bulk process): \`mailProcessWorkflow\`, \`mailClassifyWorkflow\`, \`mailJobHarvestWorkflow\`, \`mailReplyWorkflow\`.
 Bare mail mini tools: \`listMail\`, \`getMail\`, \`generateMailReply\`, \`sendMailReply\` (send needs approval; no PDF).
 Notifications: \`listNotifications\`, \`markNotificationRead\` (related only).
-Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifierMailExtractor\`, \`jobPageExtractor\`, \`jobPreferenceMatchScorer\`, \`crmApplicationMatcher\`, \`crmStageAdvisor\`, \`mailReplyAgent\`.
+Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifierMailExtractor\`, \`jobPreferenceMatchScorer\`, \`crmApplicationMatcher\`, \`crmStageAdvisor\`, \`mailReplyAgent\`.
+\`jobPageExtractor\` is a **silent prelude** for listing URLs only — never a user-facing answer; after it returns you MUST call \`propose-application-from-jd\`.
 CRM reads: \`listNewJobs\` (inbox), \`listOpenApplications\` (tracked open), \`getApplication\`.
 CRM writes: \`trackJob\`, \`dismissJob\`, \`updateApplicationStage\` (never applied), \`create-application\` (after JD propose).
 CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\` (client cards).
@@ -134,9 +141,10 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
 - Meta / capability questions ("what can you do?", help, overview): answer from this prompt only — **zero tools, zero sub-agents, zero workflows**. One short answer then **stop**.
 - Only invoke a specialist, workflow, or tool when the user asks for a concrete action that needs live data or mutation.
 - Prefer a workflow over a sub-agent for defined multi-step processes.
-- State which specialist/workflow you invoke (one short sentence) when you do.
-- JD paste or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; full description + numeric \`matchScore\` 0–100 required). **Do not invent CRM rows** without that tool and user confirmation.
-- After calling \`propose-application-from-jd\` or \`proposeNewJobsTriage\`, stop with **no text** until the card returns. After JD proposal tool output: \`dismiss\` → short ack, no create. \`save\` → \`create-application\` (merge any \`edits\`). \`package\` → \`create-application\` then \`generate-apply-package\` with the returned applicationId.
+- State which specialist/workflow you invoke (one short sentence) when you do. Exception: never announce \`jobPageExtractor\` / fetch-job-page — those are silent.
+- JD paste, a job listing URL (especially LinkedIn \`/jobs/view/…\`), or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; **full** JD in \`description\` — every section, not a teaser; numeric \`matchScore\` 0–100; \`notes\` = 1–3 sentence agent's take vs the seeker; \`workMode\` / \`salaryRange\` / \`requiredSkills\` / \`preferredSkills\` when the posting states them — never invent pay or mode). **Do not invent CRM rows** without that tool and user confirmation.
+- **URL-only paste (no JD body):** you MAY call \`jobPageExtractor\` first as a silent prelude. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails or the page is a login wall, still propose with that \`url\` and an empty description. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
+- After calling \`propose-application-from-jd\` or \`proposeNewJobsTriage\`, stop with **no text** until the card returns. After JD proposal tool output \`save\` | \`package\` | \`dismiss\`: do **not** call \`propose-application-from-jd\` again for that listing, do **not** call \`create-application\` if \`applicationId\` is already set, and emit **no** second card. Short ack only if you must speak. Otherwise \`save\` without \`applicationId\` → \`create-application\`. \`package\` without \`applicationId\` → \`create-application\` then \`generate-apply-package\`.
 - Do not invent tools or pretend a send/apply/track succeeded without tool results.
 - Surface empty/error tool results plainly.
 - Keep responses concise and actionable.`,
@@ -161,6 +169,13 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
         ) {
           return { continue: false };
         }
+        const toolNames = (ctx.toolCalls ?? []).map((call) => call.name);
+        if (
+          shouldForceProposeApplicationFromJd(toolNames) ||
+          messagesNeedProposeAfterJobImport(ctx.messages)
+        ) {
+          return { continue: true, feedback: HUB_JOB_URL_IMPORT_FEEDBACK };
+        }
         const toolCount = ctx.toolCalls?.length ?? 0;
         if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
           return { continue: false };
@@ -168,6 +183,17 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
         return { continue: true };
       },
       delegation: {
+        onDelegationComplete: (context) => {
+          if (
+            !shouldForceProposeApplicationFromJd([
+              context.primitiveId,
+              `agent-${context.primitiveId}`
+            ])
+          ) {
+            return;
+          }
+          return { feedback: HUB_JOB_URL_IMPORT_FEEDBACK };
+        },
         messageFilter: ({ messages }) => {
           const withoutToolParts = messages.filter((m) => {
             const parts = m.content?.parts;
@@ -234,7 +260,11 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
     memory: new Memory({
       options: {
         lastMessages: 20,
-        observationalMemory: true
+        // `true` defaults to google/gemini-2.5-flash and aborts the stream
+        // when GOOGLE_API_KEY is unset (product LLM is Settings BYO only).
+        observationalMemory: {
+          model: byoModelFromRequestContext
+        }
       }
     })
   });
