@@ -1,4 +1,4 @@
-export type EvidenceKind = "project" | "experience" | "stack";
+import { type EvidenceKind } from "#@/evidence/propose";
 
 export type EvidenceGoal = {
   id: string;

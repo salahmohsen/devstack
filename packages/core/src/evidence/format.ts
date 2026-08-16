@@ -1,4 +1,4 @@
-import { type EvidenceKind } from "./goals";
+import { type EvidenceKind } from "#@/evidence/propose";
 
 /** Generated File Diff view of evidence columns. Not stored. */
 export function formatEvidenceMarkdown(
