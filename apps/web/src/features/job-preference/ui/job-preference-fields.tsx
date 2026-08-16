@@ -193,8 +193,9 @@ export const JobPreferenceFields = withForm({
                 <field.InputField
                   type="number"
                   label="Minimum monthly"
-                  description="Optional monthly floor. Leave empty for no salary filter."
+                  description="Optional whole monthly floor. Leave empty for no salary filter."
                   placeholder="e.g. 4000"
+                  maxLength={10}
                 />
               )}
             </form.AppField>
@@ -204,7 +205,7 @@ export const JobPreferenceFields = withForm({
                 <field.ComboboxField
                   label="Currency"
                   description="ISO code for the monthly floor (USD, EUR, EGP…)."
-                  placeholder="USD"
+                  placeholder="Select currency"
                   emptyMessage="No currencies match."
                   items={salaryCurrencyOptions(field.state.value)}
                 />

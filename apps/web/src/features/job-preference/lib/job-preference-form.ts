@@ -25,6 +25,18 @@ import { normalizeTags } from "@tsu-stack/ui/components/tags-input";
 
 import { type JobPreferenceQueryResult } from "@/features/job-preference/api/get-job-preference.query";
 
+/** Postgres `integer` ceiling so the mapper cannot emit a value the column rejects. */
+const MAX_MONTHLY_SALARY = 2_147_483_647;
+
+export function parseOptionalMonthlyAmount(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (!/^\d+$/.test(trimmed)) return null;
+  const amount = Number(trimmed);
+  if (!Number.isSafeInteger(amount) || amount < 0 || amount > MAX_MONTHLY_SALARY) return null;
+  return amount;
+}
+
 export type JobPreferenceFormState = {
   workModes: WorkMode[];
   locations: string[];
@@ -58,15 +70,23 @@ export const JobPreferenceFormSchema = JobPreferenceFieldsSchema.pick({
     salaryMin: z
       .string()
       .trim()
-      .max(12)
-      .refine((value) => {
-        if (value === "") return true;
-        const amount = Number(value);
-        return Number.isFinite(amount) && amount >= 0;
-      }, "Enter a monthly minimum or leave empty"),
+      .max(10)
+      .refine(
+        (value) => value === "" || parseOptionalMonthlyAmount(value) != null,
+        "Enter a whole monthly amount or leave empty"
+      ),
     salaryCurrency: z.string().trim().max(8)
   })
-  .superRefine(refineCustomDiscoveryTitle);
+  .superRefine(refineCustomDiscoveryTitle)
+  .superRefine((value, ctx) => {
+    if (parseOptionalMonthlyAmount(value.salaryMin) == null) return;
+    if (value.salaryCurrency.trim() !== "") return;
+    ctx.addIssue({
+      code: "custom",
+      path: ["salaryCurrency"],
+      message: "Select a currency for the monthly floor"
+    });
+  });
 
 export const JOB_PREFERENCE_WORK_MODE_OPTIONS = WORK_MODES.map((mode) => {
   return {
@@ -140,14 +160,6 @@ export function jobPreferenceFormFromQuery(data: JobPreferenceQueryResult): JobP
     jobsPerRun: data.jobsPerRun,
     importFromEmail: data.importFromEmail
   };
-}
-
-export function parseOptionalMonthlyAmount(raw: string): number | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const amount = Number(trimmed);
-  if (!Number.isFinite(amount) || amount < 0) return null;
-  return amount;
 }
 
 export function normalizeSalaryCurrencyInput(raw: string): string | null {
