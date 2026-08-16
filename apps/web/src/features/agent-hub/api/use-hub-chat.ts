@@ -6,6 +6,7 @@ import {
   orpcClient
 } from "@tsu-stack/api/client/tanstack-start/orpc";
 
+import { getHubComposerModel } from "@/features/agent-hub/lib/hub-composer-model";
 import { messagesForMastraMemoryChat } from "@/features/agent-hub/lib/messages-for-mastra-memory";
 import { shouldAutoResumeHubChat } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
@@ -79,12 +80,16 @@ export function createHubChat(): Chat<UIMessage> {
         // Full history + memory = duplicate turns → multi-step rewrite thrash.
         const trigger = sendOptions.trigger ?? "submit-message";
         const messages = messagesForMastraMemoryChat(sendOptions.messages as UIMessage[], trigger);
+        const composerModel = getHubComposerModel();
         return eventIteratorToUnproxiedDataStream(
           await orpcClient.agent.chatStream(
             {
               agentId: HUB_AGENT_ID,
               messages: messages as never,
-              trigger
+              trigger,
+              ...(composerModel
+                ? { modelId: composerModel.modelId, providerId: composerModel.providerId }
+                : {})
             },
             { signal: sendOptions.abortSignal }
           )

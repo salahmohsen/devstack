@@ -1,6 +1,6 @@
 # Hub HITL card family — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
 > **REQUIRED after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) — load the skill, read `LESSONS.md`, run a fresh loop on hub Thread HITL cards (JD, triage, package/send approval), and append lessons. Do not claim done from a visual screenshot.
 
@@ -52,7 +52,7 @@
 - Create: `apps/web/src/features/agent-hub/lib/hub-approval-summary.ts`
 - Modify: `apps/web/src/features/agent-hub/lib/hub-superpowers-tools.test.ts`
 
-- [x] **Step 1:** Add the helper. Normalize kebab and camel tool names.
+- [ ] **Step 1:** Add the helper. Normalize kebab and camel tool names.
 
 ```ts
 export type HubApprovalSummary = {
@@ -138,7 +138,7 @@ export function summarizeHubApproval(
 
 Camel → kebab: `sendApplyOutreach` → `send-apply-outreach`. If a name is already kebab, the replace still works (`send-apply-outreach` has no `A-Z`).
 
-- [x] **Step 2:** Add cases to `hub-superpowers-tools.test.ts` (existing file; this is the new logic, not a new suite):
+- [ ] **Step 2:** Add cases to `hub-superpowers-tools.test.ts` (existing file; this is the new logic, not a new suite):
 
   - `generateApplyPackage` + `{ applicationId: "app_1" }` → approval, body includes `app_1`, no `{`
   - `send-apply-outreach` → kind `confirm`, primary `Send`
@@ -146,7 +146,7 @@ Camel → kebab: `sendApplyOutreach` → `send-apply-outreach`. If a name is alr
   - `create-application` + title/company → body includes both
   - unknown tool → fallback title, still no JSON
 
-- [x] **Step 3:** `vp run --filter @tsu-stack/web test:unit` (or the package script that already runs `hub-superpowers-tools.test.ts`). Expect pass.
+- [ ] **Step 3:** `vp run --filter @tsu-stack/web test:unit` (or the package script that already runs `hub-superpowers-tools.test.ts`). Expect pass.
 
 ---
 
@@ -156,7 +156,7 @@ Camel → kebab: `sendApplyOutreach` → `send-apply-outreach`. If a name is alr
 
 - Create: `apps/web/src/features/agent-hub/ui/hub-hitl-frame.tsx`
 
-- [x] **Step 1:** Implement the frame. Use coss Card for `recommendation` / `elicitation`, coss Alert for `approval` / `confirm`.
+- [ ] **Step 1:** Implement the frame. Use coss Card for `recommendation` / `elicitation`, coss Alert for `approval` / `confirm`.
 
 ```tsx
 "use client";
@@ -259,7 +259,7 @@ export function HubHitlFrame({
 
 Check `CardHeader` actually lays out an icon + title. If the coss Card header is title-only and the extra icon child breaks grid, drop the default `Sparkles` and keep the title as the heading (JD already has its own title in the body). Prefer a working header over forcing an icon.
 
-- [x] **Step 2:** Confirm Card/Alert imports compile. If `CardPanel` / `CardFooter` class names differ, match existing dashboard cards (e.g. `page-header.tsx`) — do not invent a second card language.
+- [ ] **Step 2:** Confirm Card/Alert imports compile. If `CardPanel` / `CardFooter` class names differ, match existing dashboard cards (e.g. `page-header.tsx`) — do not invent a second card language.
 
 ---
 
@@ -270,7 +270,7 @@ Check `CardHeader` actually lays out an icon + title. If the coss Card header is
 - Modify: `apps/web/src/features/agent-hub/ui/agent-hub-tool-approval.tsx`
 - Modify: `apps/web/src/features/agent-hub/ui/hub-assistant-toolkit.tsx` only if the approval component API changes
 
-- [x] **Step 1:** Rewrite the approval card to use the frame + summary. Delete the `<pre>` JSON block.
+- [ ] **Step 1:** Rewrite the approval card to use the frame + summary. Delete the `<pre>` JSON block.
 
 ```tsx
 export function AgentHubToolApproval({
@@ -310,9 +310,9 @@ export function AgentHubToolApproval({
 
 `ApprovalGatedToolUI` already passes `toolName` + `args`. No toolkit change required if this signature stays.
 
-- [x] **Step 2:** Keep `respond` / `respondToApproval` / `addToolApprovalResponse` exactly as today. Do not change pending-state detection.
+- [ ] **Step 2:** Keep `respond` / `respondToApproval` / `addToolApprovalResponse` exactly as today. Do not change pending-state detection.
 
-- [x] **Step 3:** `vp check` (or `vp check` scoped to `apps/web`) on the touched files.
+- [ ] **Step 3:** `vp check` (or `vp check` scoped to `apps/web`) on the touched files.
 
 ---
 
@@ -322,7 +322,7 @@ export function AgentHubToolApproval({
 
 - Modify: `apps/web/src/features/agent-hub/ui/application-from-jd-card.tsx`
 
-- [x] **Step 1:** Wrap the existing body in `HubHitlFrame`. Do **not** change `onSubmit` / `handleAction` / action labels.
+- [ ] **Step 1:** Wrap the existing body in `HubHitlFrame`. Do **not** change `onSubmit` / `handleAction` / action labels.
 
   - `kind="recommendation"`
   - `title` = job title (same fallback “Untitled role”)
@@ -334,7 +334,7 @@ export function AgentHubToolApproval({
   - Remove the outer hand-rolled `rounded-xl border …` wrapper so width/chrome come only from the frame
   - Delete the inner “Submitting…” `<p>` — the frame owns that line
 
-- [x] **Step 2:** Toolkit `ProposeApplicationFromJdToolUI` receipt lines stay. Do not move receipts into the frame.
+- [ ] **Step 2:** Toolkit `ProposeApplicationFromJdToolUI` receipt lines stay. Do not move receipts into the frame.
 
 ---
 
@@ -344,7 +344,7 @@ export function AgentHubToolApproval({
 
 - Modify: `apps/web/src/features/agent-hub/ui/new-jobs-triage-card.tsx`
 
-- [x] **Step 1:** Same wrap.
+- [ ] **Step 1:** Same wrap.
 
   - `kind="recommendation"`
   - `title="New jobs triage"`
@@ -354,7 +354,7 @@ export function AgentHubToolApproval({
   - Keep checkbox toggle + sibling-cancel behavior in the toolkit
   - Delete the inner “Submitting…” line if present — the frame owns it
 
-- [x] **Step 2:** `vp check` for `apps/web`.
+- [ ] **Step 2:** `vp check` for `apps/web`.
 
 ---
 
@@ -362,7 +362,7 @@ export function AgentHubToolApproval({
 
 **Files:** none new. Follow `.agents/skills/app-ai-feature-hardening/SKILL.md`.
 
-- [x] **Step 1:** Browser, desktop + a narrow width (~390). Hub Thread:
+- [ ] **Step 1:** Browser, desktop + a narrow width (~390). Hub Thread:
 
   | Path                               | Expect                                                        |
   | ---------------------------------- | ------------------------------------------------------------- |
@@ -374,9 +374,9 @@ export function AgentHubToolApproval({
   | Pending HITL                       | Composer placeholder “Waiting…”, input disabled               |
   | After receipt                      | Composer enabled                                              |
 
-- [x] **Step 2:** Hunt regressions: Tracked-jobs / Import JD floater if it renders the same toolkit; history reload of a completed JD card still shows the receipt, not a live card.
+- [ ] **Step 2:** Hunt regressions: Tracked-jobs / Import JD floater if it renders the same toolkit; history reload of a completed JD card still shows the receipt, not a live card.
 
-- [x] **Step 3:** Append lessons to `.agents/skills/app-ai-feature-hardening/LESSONS.md`. Write a hardening report. Do not claim done without the loop.
+- [ ] **Step 3:** Append lessons to `.agents/skills/app-ai-feature-hardening/LESSONS.md`. Write a hardening report. Do not claim done without the loop.
 
 ---
 
@@ -386,7 +386,7 @@ export function AgentHubToolApproval({
 
 - Modify: `docs/superpowers/specs/2026-08-15-hub-hitl-card-family-design.md`
 
-- [x] **Step 1:** After ship, set spec **Status:** Implemented. The plan link is already on the spec — do not rewrite it to “Plan written”.
+- [ ] **Step 1:** After ship, set spec **Status:** Implemented. The plan link is already on the spec — do not rewrite it to “Plan written”.
 
 ---
 

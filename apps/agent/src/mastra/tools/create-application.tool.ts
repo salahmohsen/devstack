@@ -13,6 +13,8 @@ import {
   runWithDb
 } from "@tsu-stack/db";
 
+import { linkJobSkillsForUserInAgent } from "#@/mastra/lib/link-job-skills";
+
 function isHttpUrl(value: string): boolean {
   try {
     const u = new URL(value);
@@ -93,6 +95,14 @@ export const createApplicationTool = createTool({
 
     const platform = listingUrl ? inferApplicationSource(listingUrl) : null;
     const sourceTags = buildApplicationSourceTags({ channel: "hub", platform });
+    const linked = await linkJobSkillsForUserInAgent({
+      userId,
+      title: input.title,
+      companyName: input.companyName,
+      description: input.description,
+      listingUrl,
+      mastra: context.mastra
+    });
     const common = {
       userId,
       companyName: input.companyName,
@@ -104,6 +114,8 @@ export const createApplicationTool = createTool({
       notes: input.notes ?? null,
       source: platform,
       sourceTags,
+      requiredSkills: linked.requiredSkills,
+      preferredSkills: linked.preferredSkills,
       trackingStatus: "tracked" as const,
       stage: "saved" as const,
       hiringUrgency: "unknown" as const,

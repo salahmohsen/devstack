@@ -49,7 +49,7 @@
     "@dotenvx/dotenvx": "catalog:",
     "@tsu-stack/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "esbuild": "^0.28.1",
+    "esbuild": "catalog:",
     "mastra": "catalog:",
     "typescript": "~6.0.3"
   }

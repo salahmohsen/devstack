@@ -1,7 +1,7 @@
 # Hub HITL card family — Design
 
 **Date:** 2026-08-15  
-**Status:** Implemented  
+**Status:** Plan written  
 **Plan:** `docs/superpowers/plans/2026-08-15-hub-hitl-card-family.md`  
 **Goal:** One card grammar for every hub pause — existing JD / triage / package approval, and playbook extract / confirm / prefs / integrations / contact. Steal assistant-ui **approval / recommendation / elicitation / confirm** interactions. Compose with coss. Do not install the demo catalog.
 

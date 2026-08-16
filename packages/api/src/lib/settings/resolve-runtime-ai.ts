@@ -20,12 +20,18 @@ import { openSecret } from "#@/lib/settings/seal-secret";
  */
 export async function resolveRuntimeAiCredentials(
   userId: string,
-  feature: AiFeature
+  feature: AiFeature,
+  override?: { modelId?: string | null; providerId?: string | null }
 ): Promise<RuntimeLlmConfig> {
   const row = await userAiSettingsRepository.findByUserId(userId);
+  const overrideModel = override?.modelId?.trim();
   const fromSettings = row?.models?.[feature]?.trim();
   let modelId =
-    fromSettings && fromSettings.length > 0 ? fromSettings : defaultModelIdForFeature(feature);
+    overrideModel && overrideModel.length > 0
+      ? overrideModel
+      : fromSettings && fromSettings.length > 0
+        ? fromSettings
+        : defaultModelIdForFeature(feature);
 
   if (!isMastraRouterModelId(modelId)) {
     // Bare model names are not routable; fall back to product default.
@@ -34,7 +40,8 @@ export async function resolveRuntimeAiCredentials(
 
   const providerKind = providerKindFromModelId(modelId) ?? "deepseek";
   const providers = row?.providers ?? [];
-  const boundId = row?.modelProviderIds?.[feature]?.trim();
+  const overrideProviderId = override?.providerId?.trim();
+  const boundId = overrideProviderId ?? row?.modelProviderIds?.[feature]?.trim();
 
   let provider = boundId ? providers.find((p) => p.id === boundId) : undefined;
 

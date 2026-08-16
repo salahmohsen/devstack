@@ -157,6 +157,12 @@ describe("canonicalizeJobUrl", () => {
       "https://www.linkedin.com/jobs/view/4452452790"
     );
   });
+
+  it("still strips tracking params on non-LinkedIn hosts", () => {
+    expect(
+      canonicalizeJobUrl("https://app.jackandjill.ai/jobs/abc?utm_source=email&utm_medium=digest")
+    ).toBe("https://app.jackandjill.ai/jobs/abc");
+  });
 });
 
 describe("harvestJobsFromHtmlAnchors — Jack and Jill digests", () => {

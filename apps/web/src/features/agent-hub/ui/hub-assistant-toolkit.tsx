@@ -63,6 +63,7 @@ import {
   ApplicationFromJdCard,
   type ApplicationFromJdCardAction
 } from "./application-from-jd-card";
+import { GetExperienceToolUI, ListExperiencesToolUI } from "./experiences-timeline-tool-ui";
 import { JobListingPreludeStatus } from "./job-listing-prelude-status";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
@@ -485,6 +486,18 @@ const jobListingPreludeTool = {
   render: JobListingPreludeStatus
 };
 
+const listExperiencesToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: ListExperiencesToolUI
+};
+
+const getExperienceToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: GetExperienceToolUI
+};
+
 /**
  * Hub HITL tool UIs. Keys cover Mastra ids (kebab) and agent registration
  * names (camel) — `part.toolName` lookup is exact.
@@ -511,7 +524,11 @@ export const hubAssistantToolkit = defineToolkit({
   "agent-job-page-extractor": jobListingPreludeTool,
   "job-page-extractor": jobListingPreludeTool,
   "fetch-job-page": jobListingPreludeTool,
-  fetchJobPage: jobListingPreludeTool
+  fetchJobPage: jobListingPreludeTool,
+  "list-experiences": listExperiencesToolEntry,
+  listExperiences: listExperiencesToolEntry,
+  "get-experience": getExperienceToolEntry,
+  getExperience: getExperienceToolEntry
 });
 
 export const hubAssistantAuiConfig = AuiConfig({

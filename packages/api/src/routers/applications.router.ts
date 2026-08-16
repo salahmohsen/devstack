@@ -52,6 +52,7 @@ import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
 import { fetchListingPageText } from "#@/lib/application/fetch-listing-page";
 import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/generate-agent-take";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
+import { linkJobSkillsForUser } from "#@/lib/application/link-job-skills";
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { refreshApplicationFromListingUrl } from "#@/lib/application/refresh-from-listing-url";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
@@ -418,6 +419,13 @@ export const applicationsRouter = {
       const trimmedUrl = input.url?.trim();
       const rawUrl = trimmedUrl && trimmedUrl.length > 0 ? trimmedUrl : null;
       const listingUrl = rawUrl ? (canonicalizeJobUrl(rawUrl) ?? rawUrl) : null;
+      const linked = await linkJobSkillsForUser({
+        userId,
+        title: input.title,
+        companyName: input.companyName,
+        description: input.description ?? null,
+        listingUrl
+      });
 
       const common = {
         userId,
@@ -432,8 +440,8 @@ export const applicationsRouter = {
         salaryRange: input.salaryRange ?? null,
         employmentType: input.employmentType,
         workMode: input.workMode ?? null,
-        requiredSkills: input.requiredSkills ?? [],
-        preferredSkills: input.preferredSkills ?? [],
+        requiredSkills: linked.requiredSkills,
+        preferredSkills: linked.preferredSkills,
         description: input.description ?? null,
         notes: input.notes ?? null,
         trackingStatus: "tracked" as const,

@@ -31,6 +31,8 @@ export {
   hubToolNameFromPart,
   HUB_ACCEPT_APPLY_PACKAGE_TOOL_NAMES,
   HUB_GENERATE_APPLY_PACKAGE_TOOL_NAMES,
+  HUB_GET_EXPERIENCE_TOOL_NAMES,
+  HUB_LIST_EXPERIENCES_TOOL_NAMES,
   HUB_OPEN_SURFACE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
   HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES,
@@ -89,6 +91,7 @@ export {
 } from "./lib/hub-thread-history-adapter";
 export type { HubHistoryPage, HubHistoryItem } from "./lib/hub-thread-history-adapter";
 export { HubAssistantMessage } from "./ui/hub-assistant-message";
+export { HubComposerModelPicker } from "./ui/hub-composer-model-picker";
 export {
   HUB_CLIENT_RESUME_TOOL_NAMES,
   hideHubAssistantTextAfterIndex,

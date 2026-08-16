@@ -49,6 +49,7 @@
     "std-env": "catalog:",
     "tailwind-merge": "catalog:",
     "tw-animate-css": "catalog:",
+    "tw-shimmer": "catalog:",
     "vaul": "^1.1.2"
   },
   "devDependencies": {

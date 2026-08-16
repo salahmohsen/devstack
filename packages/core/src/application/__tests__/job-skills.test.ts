@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { extractSkillMentions, resolveJobSkillTags } from "#@/application/job-skills";
+import {
+  buildJobSkillLinkPrompt,
+  extractSkillMentions,
+  resolveJobSkillTags,
+  sanitizeLinkedJobSkills
+} from "#@/application/job-skills";
 
 const stacks = [
   { id: "stack-react", name: "React" },
@@ -87,5 +92,52 @@ describe("extractSkillMentions", () => {
     ]);
     expect(skills.required).toEqual(expect.arrayContaining(["React Query", "Next.js"]));
     expect(skills.required).not.toContain("TanStack Query");
+  });
+});
+
+describe("sanitizeLinkedJobSkills", () => {
+  it("keeps only stack ids from the provided catalog", () => {
+    expect(
+      sanitizeLinkedJobSkills(
+        {
+          skills: [
+            { name: "React Query", band: "required", stackId: "stack-ts" },
+            { name: "Invented", band: "required", stackId: "not-a-stack" },
+            { name: "shadcn/ui", band: "preferred", stackId: null }
+          ]
+        },
+        stacks
+      )
+    ).toEqual([
+      { name: "React Query", stackId: "stack-ts", band: "required" },
+      { name: "Invented", stackId: null, band: "required" },
+      { name: "shadcn/ui", stackId: null, band: "preferred" }
+    ]);
+  });
+
+  it("builds a catalog-aware prompt that forbids inventing stack ids", () => {
+    const prompt = buildJobSkillLinkPrompt({
+      title: "Senior Frontend Engineer",
+      companyName: "intella",
+      listingUrl: "https://www.linkedin.com/jobs/view/4452452790",
+      description: "Stack: Next.js, TypeScript, React Query.",
+      stacks: [{ id: "stack-tq", name: "TanStack Query" }]
+    });
+    expect(prompt).toContain("stack-tq | TanStack Query");
+    expect(prompt).toContain("Do not invent stack ids");
+  });
+
+  it("drops invalid rows and dedupes by band + normalized name", () => {
+    expect(
+      sanitizeLinkedJobSkills(
+        [
+          { name: "React", band: "required", stackId: "stack-react" },
+          { name: "react", band: "required", stackId: "stack-react" },
+          { name: "", band: "required", stackId: null },
+          { name: "Go", band: "maybe", stackId: null }
+        ],
+        stacks
+      )
+    ).toEqual([{ name: "React", stackId: "stack-react", band: "required" }]);
   });
 });

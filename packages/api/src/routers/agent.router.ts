@@ -214,7 +214,11 @@ export const agentRouter = {
         agentId: agentIdSchema,
         messages: uiMessagesSchema,
         /** AI SDK Chat transport trigger — used to slim messages for Memory. */
-        trigger: z.enum(["submit-message", "regenerate-message"]).optional()
+        trigger: z.enum(["submit-message", "regenerate-message"]).optional(),
+        /** Composer override — Mastra `provider/model`. */
+        modelId: z.string().min(1).max(200).optional(),
+        /** Settings provider row that supplies the BYO key. */
+        providerId: z.string().min(1).max(64).optional()
       })
     )
     .handler(async ({ input, context, signal }) => {
@@ -222,7 +226,10 @@ export const agentRouter = {
         throw new Error("agentWorker not configured");
       }
 
-      const llm = await resolveRuntimeAiCredentials(context.session.user.id, "hubChat");
+      const llm = await resolveRuntimeAiCredentials(context.session.user.id, "hubChat", {
+        modelId: input.modelId,
+        providerId: input.providerId
+      });
       const byo = llmLogFields(llm);
       if (!llm.apiKey) {
         context.logger.set({

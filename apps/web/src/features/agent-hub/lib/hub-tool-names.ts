@@ -59,6 +59,10 @@ export const HUB_JOB_PAGE_EXTRACT_TOOL_NAMES = new Set([
   "fetchJobPage"
 ]);
 
+export const HUB_LIST_EXPERIENCES_TOOL_NAMES = new Set(["list-experiences", "listExperiences"]);
+
+export const HUB_GET_EXPERIENCE_TOOL_NAMES = new Set(["get-experience", "getExperience"]);
+
 export type HubToolNamePart = {
   type: string;
   toolName?: string;
