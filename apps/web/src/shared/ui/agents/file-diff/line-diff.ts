@@ -10,9 +10,12 @@ export type FileDiffLine = {
 
 export function searchBriefChanged(
   previousMarkdown: string | null | undefined,
-  markdown: string | null | undefined
+  markdown: string | null | undefined,
+  rebuilt?: boolean
 ): boolean {
-  return (previousMarkdown ?? null) !== (markdown ?? null);
+  if (rebuilt === false) return false;
+  if (previousMarkdown == null) return false;
+  return previousMarkdown !== (markdown ?? null);
 }
 
 function toLines(value: string): string[] {

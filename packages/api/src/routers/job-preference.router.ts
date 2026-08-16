@@ -139,6 +139,7 @@ export const jobPreferenceRouter = {
         hash: result.hash,
         structured: result.structured,
         proseSkipped: result.proseSkipped,
+        rebuilt: result.rebuilt,
         previousMarkdown: result.previousMarkdown
       };
     })

@@ -62,6 +62,14 @@ export type EnsureSearchBriefResult = {
   structured: SearchBriefStructured;
 };
 
+/** Snapshot for File Diff: previous markdown only on the rebuild call. */
+export function previousMarkdownForFileDiff(
+  rebuilt: boolean,
+  previousMarkdown: string | null
+): string | null {
+  return rebuilt ? previousMarkdown : null;
+}
+
 function profileFromUser(user: { name?: string | null; summary?: string | null } | null): {
   name: string;
   summary: string;
@@ -227,7 +235,7 @@ export async function ensureSearchBrief(userId: string): Promise<EnsureSearchBri
       markdown: row.searchBriefMarkdown,
       hash,
       rebuilt: false,
-      previousMarkdown,
+      previousMarkdown: previousMarkdownForFileDiff(false, previousMarkdown),
       proseSkipped: isListsOnlyBrief(row.searchBriefMarkdown, prefs),
       structured
     };
@@ -270,7 +278,7 @@ export async function ensureSearchBrief(userId: string): Promise<EnsureSearchBri
     markdown,
     hash,
     rebuilt: true,
-    previousMarkdown,
+    previousMarkdown: previousMarkdownForFileDiff(true, previousMarkdown),
     proseSkipped,
     structured
   };

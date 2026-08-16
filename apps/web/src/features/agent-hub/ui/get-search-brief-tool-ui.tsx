@@ -38,7 +38,8 @@ const EMPTY_BRIEF: GetSearchBriefOutput = {
     profile: { name: "", summary: "" }
   },
   proseSkipped: true,
-  previousMarkdown: null
+  previousMarkdown: null,
+  rebuilt: false
 };
 
 export function GetSearchBriefToolUI({
@@ -85,7 +86,7 @@ export function GetSearchBriefToolUI({
     );
   }
 
-  if (!searchBriefChanged(result.previousMarkdown, result.markdown)) {
+  if (!searchBriefChanged(result.previousMarkdown, result.markdown, result.rebuilt)) {
     return null;
   }
 

@@ -13,10 +13,19 @@ describe("searchBriefChanged", () => {
     expect(searchBriefChanged("# brief", "# brief")).toBe(false);
   });
 
-  it("is true when previousMarkdown differs from markdown", () => {
+  it("is false when there is no previous snapshot", () => {
+    expect(searchBriefChanged(null, "# new")).toBe(false);
+    expect(searchBriefChanged(undefined, "# new")).toBe(false);
+  });
+
+  it("is false on a cache hit even if a leftover snapshot differs", () => {
+    expect(searchBriefChanged("# old", "# new", false)).toBe(false);
+  });
+
+  it("is true when a rebuild has a previous snapshot that differs", () => {
     expect(searchBriefChanged("# old", "# new")).toBe(true);
-    expect(searchBriefChanged(null, "# new")).toBe(true);
-    expect(searchBriefChanged("# old", null)).toBe(true);
+    expect(searchBriefChanged("# old", "# new", true)).toBe(true);
+    expect(searchBriefChanged("# old", null, true)).toBe(true);
   });
 });
 

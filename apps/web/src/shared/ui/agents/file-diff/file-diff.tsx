@@ -35,6 +35,7 @@ export type FileDiffProps = {
   maxHeight?: number;
   language?: AgentCodeLanguage;
   copyText?: string;
+  copyLabel?: string;
   onCopy?: () => void | Promise<void>;
   className?: string;
 };
@@ -67,6 +68,7 @@ export function FileDiff({
   maxHeight = 220,
   language = "typescript",
   copyText,
+  copyLabel = "Copy diff",
   onCopy,
   className
 }: FileDiffProps) {
@@ -228,8 +230,8 @@ export function FileDiff({
               <div className="flex justify-end px-2 pt-1 pb-1.5">
                 <motion.button
                   type="button"
-                  aria-label={copied ? "Copied" : "Copy diff"}
-                  title={copied ? "Copied" : "Copy diff"}
+                  aria-label={copied ? "Copied" : copyLabel}
+                  title={copied ? "Copied" : copyLabel}
                   onClick={() => void handleCopy()}
                   whileTap={reduce ? undefined : { scale: 0.9 }}
                   transition={SPRING_PRESS}

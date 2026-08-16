@@ -49,7 +49,8 @@ vi.mock("@tsu-stack/logger/server", () => {
 import {
   ensureSearchBrief,
   hashSearchBriefSource,
-  invalidateSearchBrief
+  invalidateSearchBrief,
+  previousMarkdownForFileDiff
 } from "#@/lib/application/search-brief";
 
 afterEach(() => {
@@ -66,6 +67,14 @@ describe("hashSearchBriefSource", () => {
     expect(hashSearchBriefSource(source)).toBe(
       createHash("sha256").update(stableSearchBriefSourceJson(source)).digest("hex")
     );
+  });
+});
+
+describe("previousMarkdownForFileDiff", () => {
+  it("returns the snapshot only on the rebuild call", () => {
+    expect(previousMarkdownForFileDiff(false, "# old")).toBeNull();
+    expect(previousMarkdownForFileDiff(true, "# old")).toBe("# old");
+    expect(previousMarkdownForFileDiff(true, null)).toBeNull();
   });
 });
 

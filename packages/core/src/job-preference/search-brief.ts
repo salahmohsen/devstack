@@ -44,7 +44,9 @@ export const GetSearchBriefOutputSchema = z.object({
   hash: z.string(),
   structured: SearchBriefStructuredSchema,
   proseSkipped: z.boolean(),
-  previousMarkdown: z.string().nullable().optional()
+  previousMarkdown: z.string().nullable().optional(),
+  /** True only on the ensure that rebuilt. File Diff uses this call, not later cache hits. */
+  rebuilt: z.boolean().optional()
 });
 export type GetSearchBriefOutput = z.infer<typeof GetSearchBriefOutputSchema>;
 

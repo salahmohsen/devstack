@@ -24,9 +24,9 @@ export function SearchBriefFileDiff({
       status="complete"
       defaultOpen={false}
       collapseOnComplete
-      // Highlighter registers bash|diff|json|tsx|typescript — "text" is not loaded.
-      language="diff"
+      language="text"
       copyText={markdown}
+      copyLabel="Copy brief"
       className="w-full max-w-[min(72ch,100%)]"
     />
   );
