@@ -61,6 +61,7 @@ import { openSurfaceTool } from "#@/mastra/tools/open-surface.tool";
 import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-application-from-jd.tool";
 import { proposeHardPreferenceChangeTool } from "#@/mastra/tools/propose-hard-preference-change.tool";
 import { proposeNewJobsTriageTool } from "#@/mastra/tools/propose-new-jobs-triage.tool";
+import { searchEvidenceTool } from "#@/mastra/tools/search-evidence.tool";
 import { sendApplyOutreachTool } from "#@/mastra/tools/send-apply-outreach.tool";
 import { sendMailReplyTool } from "#@/mastra/tools/send-mail-reply.tool";
 import { trackJobTool } from "#@/mastra/tools/track-job.tool";
@@ -243,6 +244,7 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
       getProject: getProjectTool,
       listStacks: listStacksTool,
       getStack: getStackTool,
+      searchEvidence: searchEvidenceTool,
       listResumes: listResumesTool,
       getResume: getResumeTool,
       getJobPreferences: getJobPreferencesTool,
