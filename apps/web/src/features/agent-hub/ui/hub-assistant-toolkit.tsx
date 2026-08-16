@@ -397,9 +397,10 @@ function ApprovalGatedToolUI(props: ToolCallMessagePartProps<Record<string, unkn
       ) {
         try {
           respondToApproval({ approved });
-        } finally {
-          setPending(false);
+        } catch {
+          // Approval runtime throws when the part has no approval id.
         }
+        setPending(false);
         return;
       }
 
