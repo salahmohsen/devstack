@@ -10,7 +10,7 @@ import {
   ComposerToolbar
 } from "@/shared/ui/composer";
 
-import { HubComposerModelPicker } from "@/features/agent-hub";
+import { HubComposerModelPicker, useHubChat } from "@/features/agent-hub";
 
 export function HubElementsComposer({
   placeholder,
@@ -21,7 +21,7 @@ export function HubElementsComposer({
 }) {
   return (
     <ComposerPrimitive.Root className="relative w-full">
-      <Composer className="max-w-none">
+      <Composer className="mx-auto w-full max-w-(--thread-max-width)">
         <ComposerBar>
           <ComposerPrimitive.Input
             placeholder={placeholder}
@@ -48,17 +48,21 @@ export function HubElementsComposer({
 
 function HubComposerSend({ disabled }: { disabled: boolean }) {
   const isEmpty = useAuiState((state) => state.composer.isEmpty);
+  const { error, status } = useHubChat();
+  const hasError = status === "error" || error != null;
 
   return (
     <>
       <AuiIf condition={(state) => !state.thread.isRunning}>
         <ComposerPrimitive.Send
           disabled={disabled}
-          render={<ComposerSend streaming={false} idle={isEmpty || disabled} />}
+          render={<ComposerSend streaming={false} idle={isEmpty || disabled} error={hasError} />}
         />
       </AuiIf>
       <AuiIf condition={(state) => state.thread.isRunning}>
-        <ComposerPrimitive.Cancel render={<ComposerSend streaming idle={false} />} />
+        <ComposerPrimitive.Cancel
+          render={<ComposerSend streaming idle={false} error={hasError} />}
+        />
       </AuiIf>
     </>
   );

@@ -14,8 +14,11 @@ import {
   XIcon,
   type LucideIcon
 } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 import { type ComponentProps, useMemo } from "react";
 
+import { Button } from "@tsu-stack/ui/components/button";
+import { StatusStateIcon } from "@tsu-stack/ui/components/status-badge";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { clamp, pct } from "./range";
@@ -123,7 +126,7 @@ export function ComposerBar({
       data-drag-active={dragActive || undefined}
       className={cn(
         paper,
-        "flex w-full flex-col gap-2 rounded-[24px] p-2.5 transition-colors",
+        "flex w-full flex-col gap-2 rounded-[24px] border border-black/10 p-2.5 transition-[border-color,background-color] duration-150 ease-out dark:border-white/10",
         dragActive && "bg-blue-500/4 dark:bg-blue-500/10",
         className
       )}
@@ -431,19 +434,21 @@ export function ComposerModelTrigger({
   open: boolean;
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       aria-expanded={open}
       data-slot="composer-model-trigger"
       className={cn(
-        "flex h-8 max-w-full min-w-0 items-center gap-1.5 rounded-full px-3 text-[12.5px] text-foreground/55 transition-colors hover:bg-foreground/6 hover:text-foreground/90 hover:dark:bg-foreground/9",
+        "max-w-full min-w-0 rounded-full px-3 font-normal text-foreground/55",
         className
       )}
       {...props}
     >
       <span className="truncate">{model}</span>
-      <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
-    </button>
+      <ChevronDownIcon className="size-3 shrink-0 opacity-60" aria-hidden="true" />
+    </Button>
   );
 }
 
@@ -598,30 +603,43 @@ export function ComposerVoiceButton({
 export function ComposerSend({
   streaming,
   idle,
+  error = false,
   className,
   ...props
 }: Omit<ComponentProps<"button">, "children"> & {
   streaming: boolean;
   idle: boolean;
+  error?: boolean;
 }) {
+  const reduceMotion = Boolean(useReducedMotion());
+  const showSend = !streaming && !error;
+  const showLoad = streaming && !error;
+  const variant = error ? "destructive" : streaming ? "warning" : idle ? "secondary" : "default";
+
   return (
-    <button
+    <Button
       type="button"
-      aria-label={streaming ? "Stop generating" : "Send message"}
+      size="icon-sm"
+      variant={variant}
+      animate={false}
+      aria-label={error ? "Generation failed" : streaming ? "Stop generating" : "Send message"}
+      aria-invalid={error || undefined}
       data-slot="composer-send"
-      className={cn(
-        "grid size-8 place-items-center rounded-full",
-        streaming || !idle
-          ? inkButton
-          : "bg-foreground/6 text-foreground/30 transition-colors dark:bg-foreground/9",
-        className
-      )}
+      className={cn("rounded-full", className)}
       {...props}
     >
-      <ArrowUpIcon className={cn(iconSwap, "size-4", streaming ? iconSwapOut : iconSwapIn)} />
-      <SquareIcon
-        className={cn(iconSwap, "size-3 fill-current", streaming ? iconSwapIn : iconSwapOut)}
-      />
-    </button>
+      <span className="grid size-4 place-items-center">
+        <ArrowUpIcon
+          aria-hidden="true"
+          className={cn(iconSwap, "size-4", showSend ? iconSwapIn : iconSwapOut)}
+        />
+        <span className={cn(iconSwap, showLoad ? iconSwapIn : iconSwapOut)}>
+          <StatusStateIcon state="pending" reduceMotion={reduceMotion} />
+        </span>
+        <span className={cn(iconSwap, error ? iconSwapIn : iconSwapOut)}>
+          <StatusStateIcon state="failed" reduceMotion={reduceMotion} />
+        </span>
+      </span>
+    </Button>
   );
 }

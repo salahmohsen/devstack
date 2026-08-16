@@ -143,36 +143,38 @@ export function AgentHubThread() {
               <span className="sr-only">Scroll to latest</span>
             </Button>
           ) : null}
-          <HubStreamErrorCard
-            errorMessage={error?.message ?? null}
-            hasUserMessage={messages.some((message) => message.role === "user")}
-            onClearError={clearError}
-            onRegenerate={() => {
-              void regenerate();
-            }}
-          />
-          <HubElementsComposer
-            disabled={!historyReady || hitl !== null}
-            placeholder={
-              hitl === "approval"
-                ? "Waiting for approval…"
-                : hitl === "client"
-                  ? "Waiting for your choice…"
-                  : isRunning
-                    ? "Generating a response…"
-                    : "Ask the hub anything…"
-            }
-          />
-          <AuiIf
-            condition={(s) =>
-              historyReady &&
-              s.thread.messages.length === 0 &&
-              !s.thread.isRunning &&
-              s.composer.isEmpty
-            }
-          >
-            <HubSuggestions />
-          </AuiIf>
+          <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-col">
+            <HubStreamErrorCard
+              errorMessage={error?.message ?? null}
+              hasUserMessage={messages.some((message) => message.role === "user")}
+              onClearError={clearError}
+              onRegenerate={() => {
+                void regenerate();
+              }}
+            />
+            <HubElementsComposer
+              disabled={!historyReady || hitl !== null}
+              placeholder={
+                hitl === "approval"
+                  ? "Waiting for approval…"
+                  : hitl === "client"
+                    ? "Waiting for your choice…"
+                    : isRunning
+                      ? "Generating a response…"
+                      : "Ask the hub anything…"
+              }
+            />
+            <AuiIf
+              condition={(s) =>
+                historyReady &&
+                s.thread.messages.length === 0 &&
+                !s.thread.isRunning &&
+                s.composer.isEmpty
+              }
+            >
+              <HubSuggestions />
+            </AuiIf>
+          </div>
         </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
