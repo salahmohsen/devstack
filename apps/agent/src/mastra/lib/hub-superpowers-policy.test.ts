@@ -221,7 +221,28 @@ const URL_IMPORT_TOOL_NAMES = [
   "getJobPreferences",
   "listNewJobs",
   "agent-jobPageExtractor",
-  "proposeApplicationFromJd"
+  "proposeApplicationFromJd",
+  "get-search-brief",
+  "getSearchBrief",
+  "upsert-soft-job-preferences",
+  "upsertSoftJobPreferences",
+  "find-jobs-now",
+  "findJobsNow",
+  "open-entity-form",
+  "openEntityForm",
+  "propose-hard-preference-change",
+  "proposeHardPreferenceChange"
+] as const;
+
+const URL_IMPORT_FORBIDDEN = [
+  "get-search-brief",
+  "getSearchBrief",
+  "upsert-soft-job-preferences",
+  "upsertSoftJobPreferences",
+  "find-jobs-now",
+  "findJobsNow",
+  "open-entity-form",
+  "openEntityForm"
 ] as const;
 
 describe("hub job URL import lock", () => {
@@ -236,6 +257,15 @@ describe("hub job URL import lock", () => {
     expect(filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, true)).toEqual([
       "proposeApplicationFromJd"
     ]);
+  });
+
+  it("cannot call get-search-brief / upsert / find-jobs-now / open-entity-form during import", () => {
+    const before = filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, false);
+    const after = filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, true);
+    for (const name of URL_IMPORT_FORBIDDEN) {
+      expect(before).not.toContain(name);
+      expect(after).not.toContain(name);
+    }
   });
 
   it("tells the model not to extract again once extract ran", () => {
@@ -272,5 +302,43 @@ describe("hub triage lock", () => {
     expect(
       filterHubTriageActiveTools(["listNewJobs", "proposeNewJobsTriage", "getJobPreferences"])
     ).toEqual(["proposeNewJobsTriage"]);
+  });
+});
+
+describe("search-loop HITL stop matrix", () => {
+  it.each([
+    "propose-hard-preference-change",
+    "proposeHardPreferenceChange",
+    "find-jobs-now",
+    "get-search-brief",
+    "open-entity-form"
+  ])("stops while %s is waiting", (name) => {
+    expect(isHubClientHitlToolName(name)).toBe(true);
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name }],
+        toolResults: []
+      })
+    ).toBe(true);
+  });
+
+  it("does not stop after the hard-stop card has a result", () => {
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name: "propose-hard-preference-change" }],
+        toolResults: [{ id: "c1" }]
+      })
+    ).toBe(false);
+  });
+
+  it("does not treat soft upsert as client HITL", () => {
+    expect(isHubClientHitlToolName("upsert-soft-job-preferences")).toBe(false);
+    expect(isHubClientHitlToolName("upsertSoftJobPreferences")).toBe(false);
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name: "upsert-soft-job-preferences" }],
+        toolResults: []
+      })
+    ).toBe(false);
   });
 });

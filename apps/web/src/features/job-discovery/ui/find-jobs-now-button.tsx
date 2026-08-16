@@ -3,13 +3,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 
+import { dismissFindJobsNowTracking, startFindJobsNow } from "@/shared/lib/find-jobs-now-job";
+import { useFindJobsNowJob } from "@/shared/lib/find-jobs-now-store";
 import { AiFlowTrigger } from "@/shared/ui/ai-flow-trigger";
-
-import {
-  dismissFindJobsNowTracking,
-  startFindJobsNow
-} from "@/features/job-discovery/api/find-jobs-now-job";
-import { useFindJobsNowJob } from "@/features/job-discovery/lib/find-jobs-now-store";
 
 export function FindJobsNowButton({ className }: { className?: string }) {
   const queryClient = useQueryClient();

@@ -133,6 +133,34 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       resumeAfterOutput: true
     },
     {
+      name: "hard-stop confirm waiting locks composer",
+      toolName: "propose-hard-preference-change",
+      state: "input-available",
+      expected: "client",
+      resumeAfterOutput: true
+    },
+    {
+      name: "find-jobs-now waiting is not a user choice",
+      toolName: "find-jobs-now",
+      state: "input-available",
+      expected: null,
+      resumeAfterOutput: true
+    },
+    {
+      name: "get-search-brief waiting is not a user choice",
+      toolName: "get-search-brief",
+      state: "input-available",
+      expected: null,
+      resumeAfterOutput: true
+    },
+    {
+      name: "open-entity-form waiting locks composer",
+      toolName: "open-entity-form",
+      state: "input-available",
+      expected: "client",
+      resumeAfterOutput: true
+    },
+    {
       name: "accept package approval",
       toolName: "accept-apply-package",
       state: "approval-requested",

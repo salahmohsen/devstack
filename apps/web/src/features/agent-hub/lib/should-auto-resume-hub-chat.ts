@@ -1,8 +1,12 @@
 import { lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
 
 import {
+  HUB_FIND_JOBS_NOW_TOOL_NAMES,
+  HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
+  HUB_OPEN_ENTITY_FORM_TOOL_NAMES,
   HUB_OPEN_SURFACE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
+  HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES,
   HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES
 } from "./hub-tool-names";
 
@@ -15,7 +19,11 @@ import {
 export const HUB_CLIENT_RESUME_TOOL_NAMES = new Set([
   ...HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
   ...HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES,
-  ...HUB_OPEN_SURFACE_TOOL_NAMES
+  ...HUB_OPEN_SURFACE_TOOL_NAMES,
+  ...HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES,
+  ...HUB_OPEN_ENTITY_FORM_TOOL_NAMES,
+  ...HUB_FIND_JOBS_NOW_TOOL_NAMES,
+  ...HUB_GET_SEARCH_BRIEF_TOOL_NAMES
 ]);
 
 type ToolLikePart = {
@@ -190,7 +198,14 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
     const needsMutationContinuation = clientTools.some((p) => {
       if (!isClientToolComplete(p)) return false;
       const name = toolNameFromPart(p);
-      if (HUB_OPEN_SURFACE_TOOL_NAMES.has(name)) return true;
+      if (
+        HUB_OPEN_SURFACE_TOOL_NAMES.has(name) ||
+        HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) ||
+        HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name) ||
+        HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name)
+      ) {
+        return true;
+      }
       const output =
         p.output && typeof p.output === "object" && !Array.isArray(p.output)
           ? (p.output as { action?: unknown; applicationId?: unknown })

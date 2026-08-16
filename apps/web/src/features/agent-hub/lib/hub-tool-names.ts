@@ -4,11 +4,15 @@ import {
   ApplicationApplyMethodSchema,
   ApplicationSourceSchema,
   EmploymentTypeSchema,
+  ProposeHardPreferenceChangeInputSchema,
+  ProposeHardPreferenceChangeOutputSchema,
   WorkModeSchema,
   type ApplicationApplyMethod,
   type ApplicationSource,
   type EmploymentType,
   type ProposeApplicationFromJdOutput,
+  type ProposeHardPreferenceChangeInput,
+  type ProposeHardPreferenceChangeOutput,
   type ProposeNewJobsTriageOutput,
   type ProposeNewJobsTriageRow,
   type WorkMode
@@ -48,6 +52,22 @@ export const HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES = new Set([
 ]);
 
 export const HUB_OPEN_SURFACE_TOOL_NAMES = new Set(["open-surface", "openSurface"]);
+
+export const HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES = new Set([
+  "propose-hard-preference-change",
+  "proposeHardPreferenceChange"
+]);
+
+export const HUB_OPEN_ENTITY_FORM_TOOL_NAMES = new Set(["open-entity-form", "openEntityForm"]);
+
+export const HUB_FIND_JOBS_NOW_TOOL_NAMES = new Set(["find-jobs-now", "findJobsNow"]);
+
+export const HUB_GET_SEARCH_BRIEF_TOOL_NAMES = new Set(["get-search-brief", "getSearchBrief"]);
+
+export const HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES = new Set([
+  "upsert-soft-job-preferences",
+  "upsertSoftJobPreferences"
+]);
 
 /** Silent listing prelude (Mastra `agent-<key>` + kebab/camel fetch). */
 export const HUB_JOB_PAGE_EXTRACT_TOOL_NAMES = new Set([
@@ -144,6 +164,26 @@ export function isProposeNewJobsTriageToolName(name: string): boolean {
 
 export function isOpenSurfaceToolName(name: string): boolean {
   return HUB_OPEN_SURFACE_TOOL_NAMES.has(name);
+}
+
+export function isProposeHardPreferenceChangeToolName(name: string): boolean {
+  return HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(name);
+}
+
+export function isOpenEntityFormToolName(name: string): boolean {
+  return HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name);
+}
+
+export function isFindJobsNowToolName(name: string): boolean {
+  return HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name);
+}
+
+export function isGetSearchBriefToolName(name: string): boolean {
+  return HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name);
+}
+
+export function isUpsertSoftJobPreferencesToolName(name: string): boolean {
+  return HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES.has(name);
 }
 
 export function isHubJobPageExtractToolName(name: string): boolean {
@@ -345,6 +385,20 @@ export function parseProposeNewJobsTriageOutput(
   };
 }
 
+export function parseProposeHardPreferenceChangeInput(
+  input: unknown
+): ProposeHardPreferenceChangeInput | null {
+  const parsed = ProposeHardPreferenceChangeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeHardPreferenceChangeOutput(
+  output: unknown
+): ProposeHardPreferenceChangeOutput | null {
+  const parsed = ProposeHardPreferenceChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
 export function parseOpenSurfaceHref(args: unknown): string | null {
   if (!args || typeof args !== "object" || Array.isArray(args)) return null;
   const href = (args as { href?: unknown }).href;
@@ -390,8 +444,9 @@ export function isActionablePendingJdProposal(
 
 /**
  * HITL wait on the last assistant message.
- * Only lock the composer when a visible approval or a JD/triage choice remains.
- * `open-surface` auto-completes — it is not a user choice.
+ * Only lock the composer when a visible approval or a JD/triage/hard-stop/form
+ * choice remains. `open-surface`, `find-jobs-now`, and `get-search-brief`
+ * auto-complete — they are not user choices.
  */
 export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
   const last = messages.at(-1);
@@ -410,6 +465,14 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     }
     if (isProposeNewJobsTriageToolName(name)) {
       if (parseProposeNewJobsTriageOutput(part.output)) continue;
+      return "client";
+    }
+    if (isProposeHardPreferenceChangeToolName(name)) {
+      if (parseProposeHardPreferenceChangeOutput(part.output)) continue;
+      return "client";
+    }
+    if (isOpenEntityFormToolName(name)) {
+      if (part.output != null) continue;
       return "client";
     }
   }

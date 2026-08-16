@@ -390,6 +390,18 @@ describe("hideHubAssistantTextAfterIndex", () => {
       hideHubAssistantTextAfterIndex([{ type: "text", text: "I can help with stacks." }])
     ).toBeNull();
   });
+
+  it("hides text after a waiting hard-stop confirm card", () => {
+    const parts = [
+      {
+        type: "tool-propose-hard-preference-change",
+        toolName: "propose-hard-preference-change",
+        state: "input-available"
+      },
+      { type: "text", text: "Awaiting your confirmation." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
 });
 
 describe("shouldAutoResumeHubChat", () => {

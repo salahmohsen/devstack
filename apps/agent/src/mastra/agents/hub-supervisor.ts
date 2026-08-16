@@ -27,6 +27,7 @@ import {
 import { acceptApplyPackageTool } from "#@/mastra/tools/accept-apply-package.tool";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
 import { dismissJobTool } from "#@/mastra/tools/dismiss-job.tool";
+import { findJobsNowTool } from "#@/mastra/tools/find-jobs-now.tool";
 import { generateApplyPackageTool } from "#@/mastra/tools/generate-apply-package.tool";
 import { generateMailReplyTool } from "#@/mastra/tools/generate-mail-reply.tool";
 import { getApplicationTool } from "#@/mastra/tools/get-application.tool";
@@ -35,6 +36,7 @@ import { getJobPreferencesTool } from "#@/mastra/tools/get-job-preferences.tool"
 import { getMailTool } from "#@/mastra/tools/get-mail.tool";
 import { getProjectTool } from "#@/mastra/tools/get-project.tool";
 import { getResumeTool } from "#@/mastra/tools/get-resume.tool";
+import { getSearchBriefTool } from "#@/mastra/tools/get-search-brief.tool";
 import { getStackTool } from "#@/mastra/tools/get-stack.tool";
 import {
   detectStacksWorkflowTool,
@@ -55,11 +57,13 @@ import { listStacksTool } from "#@/mastra/tools/list-stacks.tool";
 import { markNotificationReadTool } from "#@/mastra/tools/mark-notification-read.tool";
 import { openSurfaceTool } from "#@/mastra/tools/open-surface.tool";
 import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-application-from-jd.tool";
+import { proposeHardPreferenceChangeTool } from "#@/mastra/tools/propose-hard-preference-change.tool";
 import { proposeNewJobsTriageTool } from "#@/mastra/tools/propose-new-jobs-triage.tool";
 import { sendApplyOutreachTool } from "#@/mastra/tools/send-apply-outreach.tool";
 import { sendMailReplyTool } from "#@/mastra/tools/send-mail-reply.tool";
 import { trackJobTool } from "#@/mastra/tools/track-job.tool";
 import { updateApplicationStageTool } from "#@/mastra/tools/update-application-stage.tool";
+import { upsertSoftJobPreferencesTool } from "#@/mastra/tools/upsert-soft-job-preferences.tool";
 import { mailReplyWorkflow } from "#@/mastra/workflows/mail-reply-workflow";
 
 /**
@@ -91,6 +95,10 @@ Most people will not say "New jobs", "Career Inbox", "stacks", or "tracked jobs"
 | work history, past jobs, companies I worked at, resume jobs | \`listExperiences\` |
 | side projects, things I built, portfolio projects | \`listProjects\` |
 | what I'm looking for, job prefs, remote only, salary floor | \`getJobPreferences\` |
+| who am I, my identity, career brief, search brief | \`getSearchBrief\` |
+| looking for remote EU, add keyword X, switch to frontend pack | \`upsertSoftJobPreferences\` (delta; remote EU only → remoteRegions set) |
+| exclude RN, salary floor, nothing below senior | \`proposeHardPreferenceChange\` (card writes; never infer hard stops from prose) |
+| find jobs, search now | \`findJobsNow\`; triage only if inbox already has rows |
 | a LinkedIn / Indeed / Greenhouse / job URL, "this listing", "import this job" | extract (optional silent prelude) then \`propose-application-from-jd\` |
 | scan my emails, check for jobs, look through my inbox for roles | mail process / harvest workflows (approval-gated) |
 | track this, save this job, apply later | \`trackJob\` after you have a real id |
@@ -115,10 +123,12 @@ Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifie
 \`jobPageExtractor\` is a **silent prelude** for listing URLs only — never a user-facing answer; after it returns you MUST call \`propose-application-from-jd\`.
 CRM reads: \`listNewJobs\` (inbox), \`listOpenApplications\` (tracked open), \`getApplication\`.
 CRM writes: \`trackJob\`, \`dismissJob\`, \`updateApplicationStage\` (never applied), \`create-application\` (after JD propose).
-CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\` (client cards).
+CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\` (client cards).
 First-apply package (order fixed): \`generateApplyPackage\` → \`acceptApplyPackage\` → \`sendApplyOutreach\` (each gated; applied only via send).
 Navigate: \`openSurface\` (dashboard paths only).
-Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`.
+Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`, \`getSearchBrief\`.
+Search-loop writes: \`upsertSoftJobPreferences\` (immediate title/keywords/modes/locations/remoteRegions) and \`proposeHardPreferenceChange\` (confirm card writes salary/exclude/level). Never call playbook \`upsert-job-preferences\`. Never infer a hard stop from prose.
+Find jobs from chat: \`findJobsNow\` (enqueue + toast; do not wait for land; do not triage an empty inbox).
 Get-by-id tools require the real id from the matching list tool. Never call them with \`{}\` or a missing id.
 Portfolio / all-projects summaries: call \`listProjects\` once. Do not call \`getProject\` per project unless asked about one project.
 Some messages may contain \`<system-reminder>...</system-reminder>\` tags. Those are injected by the system, not written by the user. Treat them as authoritative and follow them immediately. Do not mention the reminder or quote the tags.
@@ -148,8 +158,10 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
 - Prefer a workflow over a sub-agent for defined multi-step processes.
 - State which specialist/workflow you invoke (one short sentence) when you do. Exception: never announce \`jobPageExtractor\` / fetch-job-page — those are silent.
 - JD paste, a job listing URL (especially LinkedIn \`/jobs/view/…\`), or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; **full** JD in \`description\` — every section, not a teaser; numeric \`matchScore\` 0–100; \`notes\` = 1–3 sentence agent's take vs the seeker; \`workMode\` / \`salaryRange\` / \`requiredSkills\` / \`preferredSkills\` when the posting states them — never invent pay or mode). **Do not invent CRM rows** without that tool and user confirmation.
-- **URL-only paste (no JD body):** call \`jobPageExtractor\` at most once as a silent prelude — do **not** call \`getJobPreferences\`, \`jobPreferenceMatchScorer\`, or list tools first. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails, returns a teaser, or the page is a login wall, still propose with that \`url\` and an empty (or short) description. Do **not** extract or fetch-job-page again. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
-- After calling \`propose-application-from-jd\` or \`proposeNewJobsTriage\`, stop with **no text** until the card returns. After JD proposal tool output \`save\` | \`package\` | \`dismiss\`: do **not** call \`propose-application-from-jd\` again for that listing, do **not** call \`create-application\` if \`applicationId\` is already set, and emit **no** second card. Short ack only if you must speak. Otherwise \`save\` without \`applicationId\` → \`create-application\`. \`package\` without \`applicationId\` → \`create-application\` then \`generate-apply-package\`.
+- **URL-only paste (no JD body):** call \`jobPageExtractor\` at most once as a silent prelude — do **not** call \`getJobPreferences\`, \`jobPreferenceMatchScorer\`, \`getSearchBrief\`, \`upsertSoftJobPreferences\`, \`findJobsNow\`, \`proposeHardPreferenceChange\`, or list tools first. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails, returns a teaser, or the page is a login wall, still propose with that \`url\` and an empty (or short) description. Do **not** extract or fetch-job-page again. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
+- After calling \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, or \`proposeHardPreferenceChange\`, stop with **no text** until the card returns. Hard-stop confirm already wrote — do not call a second apply tool.
+- After \`findJobsNow\`: report that search is queued (or the reason). Call \`listNewJobs\` / \`proposeNewJobsTriage\` only if the inbox is already non-empty.
+- After JD proposal tool output \`save\` | \`package\` | \`dismiss\`: do **not** call \`propose-application-from-jd\` again for that listing, do **not** call \`create-application\` if \`applicationId\` is already set, and emit **no** second card. Short ack only if you must speak. Otherwise \`save\` without \`applicationId\` → \`create-application\`. \`package\` without \`applicationId\` → \`create-application\` then \`generate-apply-package\`.
 - Do not invent tools or pretend a send/apply/track succeeded without tool results.
 - Surface empty/error tool results plainly.
 - Keep responses concise and actionable.`,
@@ -228,6 +240,10 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
       listResumes: listResumesTool,
       getResume: getResumeTool,
       getJobPreferences: getJobPreferencesTool,
+      getSearchBrief: getSearchBriefTool,
+      upsertSoftJobPreferences: upsertSoftJobPreferencesTool,
+      proposeHardPreferenceChange: proposeHardPreferenceChangeTool,
+      findJobsNow: findJobsNowTool,
       proposeApplicationFromJd: proposeApplicationFromJdTool,
       proposeNewJobsTriage: proposeNewJobsTriageTool,
       createApplication: createApplicationTool,

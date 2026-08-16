@@ -7,11 +7,14 @@ import {
 import { hubSubagentListShouldShow, isHubSubagentWorkerName } from "./hub-subagent-workers";
 import {
   hubToolNameFromPart,
+  isFindJobsNowToolName,
   isHubApprovalToolName,
   isHubJobPageExtractToolName,
   isHubToolUiPart,
+  isOpenEntityFormToolName,
   isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
+  isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
   type HubToolNamePart
 } from "./hub-tool-names";
@@ -37,7 +40,10 @@ export function isHubChoiceToolName(name: string): boolean {
     isProposeApplicationFromJdToolName(name) ||
     isProposeNewJobsTriageToolName(name) ||
     isOpenSurfaceToolName(name) ||
-    isHubApprovalToolName(name)
+    isHubApprovalToolName(name) ||
+    isProposeHardPreferenceChangeToolName(name) ||
+    isOpenEntityFormToolName(name) ||
+    isFindJobsNowToolName(name)
   );
 }
 
@@ -61,6 +67,12 @@ export function humanizeHubToolName(name: string): string {
   const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;
   if (/jobPageExtractor|fetch-job-page|fetchJobPage/i.test(bare)) return "Reading listing";
   if (/getJobPreferences|get-job-preferences/i.test(bare)) return "Checking job preferences";
+  if (/upsertSoftJobPreferences|upsert-soft-job-preferences/i.test(bare)) {
+    return "Updating job preferences";
+  }
+  if (/findJobsNow|find-jobs-now/i.test(bare)) return "Finding jobs";
+  if (/getSearchBrief|get-search-brief/i.test(bare)) return "Loading search brief";
+  if (/openEntityForm|open-entity-form/i.test(bare)) return "Opening experience form";
   return bare
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/[-_]/g, " ")

@@ -2,8 +2,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { type FindJobsNowInput } from "@tsu-stack/core";
 
-import { startFindJobsNow } from "@/features/job-discovery/api/find-jobs-now-job";
-import { useFindJobsNowJob } from "@/features/job-discovery/lib/find-jobs-now-store";
+import { startFindJobsNow } from "@/shared/lib/find-jobs-now-job";
+import { useFindJobsNowJob } from "@/shared/lib/find-jobs-now-store";
 
 /**
  * Manual “Find jobs now” — enqueues ingest (if the shelf is thin) + land and

@@ -93,7 +93,15 @@ export const HUB_CLIENT_HITL_TOOL_NAMES = new Set([
   "propose-application-from-jd",
   "proposeApplicationFromJd",
   "open-surface",
-  "openSurface"
+  "openSurface",
+  "propose-hard-preference-change",
+  "proposeHardPreferenceChange",
+  "open-entity-form",
+  "openEntityForm",
+  "find-jobs-now",
+  "findJobsNow",
+  "get-search-brief",
+  "getSearchBrief"
 ]);
 
 export function isHubClientHitlToolName(name: string): boolean {

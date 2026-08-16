@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import {
   ProposeApplicationFromJdInputSchema,
+  ProposeHardPreferenceChangeInputSchema,
   ProposeNewJobsTriageInputSchema,
   normalizeAgentTakeText,
   type ProposeApplicationFromJdOutput,
@@ -64,6 +65,9 @@ import {
   type ApplicationFromJdCardAction
 } from "./application-from-jd-card";
 import { GetExperienceToolUI, ListExperiencesToolUI } from "./experiences-timeline-tool-ui";
+import { FindJobsNowToolUI } from "./find-jobs-now-tool-ui";
+import { GetSearchBriefToolUI } from "./get-search-brief-tool-ui";
+import { HardPreferenceChangeToolUI } from "./hard-preference-change-tool-ui";
 import { JobListingPreludeStatus } from "./job-listing-prelude-status";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
@@ -496,6 +500,30 @@ const listExperiencesToolEntry = {
   render: ListExperiencesToolUI
 };
 
+const proposeHardPreferenceChangeTool = {
+  type: "human" as const,
+  description:
+    "Propose a hard-stop preference change. Wait for Confirm/Cancel. The card writes on confirm.",
+  parameters: ProposeHardPreferenceChangeInputSchema,
+  render: HardPreferenceChangeToolUI
+};
+
+const EmptyToolArgsSchema = z.object({});
+
+const findJobsNowToolEntry = {
+  type: "human" as const,
+  description: "Enqueue Find jobs now. Completes with enqueued/seats/reason.",
+  parameters: EmptyToolArgsSchema,
+  render: FindJobsNowToolUI
+};
+
+const getSearchBriefToolEntry = {
+  type: "human" as const,
+  description: "Load the search brief via ensureBrief.",
+  parameters: EmptyToolArgsSchema,
+  render: GetSearchBriefToolUI
+};
+
 const getExperienceToolEntry = {
   type: "backend" as const,
   display: "standalone" as const,
@@ -523,6 +551,12 @@ export const hubAssistantToolkit = defineToolkit({
   createApplication: approvalTool,
   "open-surface": openSurfaceToolEntry,
   openSurface: openSurfaceToolEntry,
+  "propose-hard-preference-change": proposeHardPreferenceChangeTool,
+  proposeHardPreferenceChange: proposeHardPreferenceChangeTool,
+  "find-jobs-now": findJobsNowToolEntry,
+  findJobsNow: findJobsNowToolEntry,
+  "get-search-brief": getSearchBriefToolEntry,
+  getSearchBrief: getSearchBriefToolEntry,
   "agent-jobPageExtractor": jobListingPreludeTool,
   jobPageExtractor: jobListingPreludeTool,
   "agent-job-page-extractor": jobListingPreludeTool,

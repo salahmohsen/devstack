@@ -2,11 +2,24 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildHubAgentActivityItems,
+  humanizeHubToolName,
   hubAgentActivityActiveLabel,
   hubAgentActivityStatus,
   isHubListingExtractActive,
   isHubWorkingStripToolName
 } from "./hub-agent-activity";
+
+describe("humanizeHubToolName — search-loop labels", () => {
+  it.each([
+    ["upsert-soft-job-preferences", "Updating job preferences"],
+    ["upsertSoftJobPreferences", "Updating job preferences"],
+    ["find-jobs-now", "Finding jobs"],
+    ["get-search-brief", "Loading search brief"],
+    ["open-entity-form", "Opening experience form"]
+  ] as const)("%s → %s", (name, label) => {
+    expect(humanizeHubToolName(name)).toBe(label);
+  });
+});
 
 describe("isHubWorkingStripToolName", () => {
   it("excludes HITL choice and approval tools", () => {
@@ -15,12 +28,17 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("open-surface")).toBe(false);
     expect(isHubWorkingStripToolName("generateApplyPackage")).toBe(false);
     expect(isHubWorkingStripToolName("create-application")).toBe(false);
+    expect(isHubWorkingStripToolName("propose-hard-preference-change")).toBe(false);
+    expect(isHubWorkingStripToolName("find-jobs-now")).toBe(false);
+    expect(isHubWorkingStripToolName("open-entity-form")).toBe(false);
   });
 
   it("includes extract and other server tools as working-strip steps", () => {
     expect(isHubWorkingStripToolName("jobPageExtractor")).toBe(true);
     expect(isHubWorkingStripToolName("fetch-job-page")).toBe(true);
     expect(isHubWorkingStripToolName("list-new-jobs")).toBe(true);
+    expect(isHubWorkingStripToolName("upsert-soft-job-preferences")).toBe(true);
+    expect(isHubWorkingStripToolName("get-search-brief")).toBe(true);
   });
 });
 

@@ -19,7 +19,8 @@
     "build": "IS_BUILD=true mastra build",
     "start": "node .mastra/output/index.mjs",
     "check": "vp check",
-    "check:fix": "vp check --fix"
+    "check:fix": "vp check --fix",
+    "test:unit": "vp test run"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "catalog:",
@@ -51,6 +52,7 @@
     "@types/node": "catalog:",
     "esbuild": "catalog:",
     "mastra": "catalog:",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vite-plus": "catalog:"
   }
 }
