@@ -12,7 +12,7 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
-import { useEntityFormHostActive } from "@/features/agent-hub";
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { useListApplicationsQuery } from "@/features/applications";
 
 import {
@@ -107,7 +107,7 @@ export function TrackedJobsPage() {
     closeMaterialPreview
   } = useApplicationStore();
   // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
-  const hostOwnsPanel = useEntityFormHostActive();
+  const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && sheetOpen) closeSheet();
 
   // Stable empty fallback so memo deps do not thrash every render.

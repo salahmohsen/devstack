@@ -15,7 +15,8 @@ describe("humanizeHubToolName — search-loop labels", () => {
     ["upsertSoftJobPreferences", "Updating job preferences"],
     ["find-jobs-now", "Finding jobs"],
     ["get-search-brief", "Loading search brief"],
-    ["open-entity-form", "Opening experience form"]
+    ["open-entity-form", "Opening experience form"],
+    ["open-entity-inspect", "Opening project"]
   ] as const)("%s → %s", (name, label) => {
     expect(humanizeHubToolName(name)).toBe(label);
   });
@@ -33,6 +34,7 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("propose-hard-preference-change")).toBe(false);
     expect(isHubWorkingStripToolName("find-jobs-now")).toBe(false);
     expect(isHubWorkingStripToolName("open-entity-form")).toBe(false);
+    expect(isHubWorkingStripToolName("open-entity-inspect")).toBe(false);
     expect(isHubWorkingStripToolName("get-search-brief")).toBe(false);
   });
 

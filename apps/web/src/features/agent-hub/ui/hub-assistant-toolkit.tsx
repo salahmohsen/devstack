@@ -71,6 +71,7 @@ import { HardPreferenceChangeToolUI } from "./hard-preference-change-tool-ui";
 import { JobListingPreludeStatus } from "./job-listing-prelude-status";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
 import { OpenEntityFormToolUI } from "./open-entity-form-tool-ui";
+import { OpenEntityInspectToolUI } from "./open-entity-inspect-tool-ui";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
 import { UpsertSoftJobPreferencesToolUI } from "./upsert-soft-job-preferences-tool-ui";
 
@@ -492,14 +493,27 @@ const openSurfaceToolEntry = {
 
 const OpenEntityFormParametersSchema = z.object({
   kind: z.enum(["experience", "project", "stack"]),
-  id: z.string().min(1).optional().nullable()
+  id: z.string().min(1).optional().nullable(),
+  plan: z.string().min(1)
 });
 
 const openEntityFormToolEntry = {
   type: "human" as const,
-  description: "Open the original experience, project, or stack form on the current route.",
+  description: "Propose an evidence form after the user approves an edit plan.",
   parameters: OpenEntityFormParametersSchema,
   render: OpenEntityFormToolUI
+};
+
+const OpenEntityInspectParametersSchema = z.object({
+  kind: z.enum(["experience", "project", "stack"]),
+  id: z.string().min(1)
+});
+
+const openEntityInspectToolEntry = {
+  type: "human" as const,
+  description: "Open the original experience, project, or stack inspect view on the current route.",
+  parameters: OpenEntityInspectParametersSchema,
+  render: OpenEntityInspectToolUI
 };
 
 const jobListingPreludeTool = {
@@ -581,6 +595,8 @@ export const hubAssistantToolkit = defineToolkit({
   upsertSoftJobPreferences: upsertSoftJobPreferencesToolEntry,
   "open-entity-form": openEntityFormToolEntry,
   openEntityForm: openEntityFormToolEntry,
+  "open-entity-inspect": openEntityInspectToolEntry,
+  openEntityInspect: openEntityInspectToolEntry,
   "agent-jobPageExtractor": jobListingPreludeTool,
   jobPageExtractor: jobListingPreludeTool,
   "agent-job-page-extractor": jobListingPreludeTool,

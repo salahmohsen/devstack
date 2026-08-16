@@ -98,6 +98,8 @@ export const HUB_CLIENT_HITL_TOOL_NAMES = new Set([
   "proposeHardPreferenceChange",
   "open-entity-form",
   "openEntityForm",
+  "open-entity-inspect",
+  "openEntityInspect",
   "find-jobs-now",
   "findJobsNow",
   "get-search-brief",

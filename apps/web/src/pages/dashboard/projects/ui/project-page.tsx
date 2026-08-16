@@ -41,7 +41,7 @@ import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { useEntityFormHostActive } from "@/features/agent-hub";
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
@@ -376,7 +376,7 @@ export function ProjectsPage() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Host wins the panel (any kind). Dirty page form is discarded without confirm.
-  const hostOwnsPanel = useEntityFormHostActive();
+  const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
   const [detectReposProjectId, setDetectReposProjectId] = useState<string | null>(null);

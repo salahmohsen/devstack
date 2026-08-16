@@ -7,10 +7,12 @@ import {
   findOpenEntityFormOutputInMessages,
   findPendingProposeApplicationFromJd,
   isOpenEntityFormToolName,
+  isOpenEntityInspectToolName,
   isOpenSurfaceToolName,
   isProposeNewJobsTriageToolName,
   lastHubHitlKind,
   parseOpenEntityFormInput,
+  parseOpenEntityInspectInput,
   parseOpenSurfaceHref,
   parseProposeNewJobsTriageInput,
   parseProposeNewJobsTriageOutput,
@@ -43,37 +45,67 @@ describe("triage + openSurface name matchers", () => {
   it.each([
     ["open-entity-form", true],
     ["openEntityForm", true],
+    ["open-entity-inspect", false],
     ["open-surface", false]
   ] as const)("openEntityForm %s → %s", (name, expected) => {
     expect(isOpenEntityFormToolName(name)).toBe(expected);
   });
+
+  it.each([
+    ["open-entity-inspect", true],
+    ["openEntityInspect", true],
+    ["open-entity-form", false]
+  ] as const)("openEntityInspect %s → %s", (name, expected) => {
+    expect(isOpenEntityInspectToolName(name)).toBe(expected);
+  });
+});
+
+describe("parseOpenEntityInspectInput", () => {
+  it("requires kind and a real id", () => {
+    expect(parseOpenEntityInspectInput({ kind: "project", id: "p1" })).toEqual({
+      kind: "project",
+      id: "p1"
+    });
+    expect(parseOpenEntityInspectInput({ kind: "project" })).toBeNull();
+    expect(parseOpenEntityInspectInput({ kind: "project", id: "  " })).toBeNull();
+  });
 });
 
 describe("parseOpenEntityFormInput", () => {
-  it("treats omit / null / blank id as create", () => {
-    expect(parseOpenEntityFormInput({ kind: "experience" })).toEqual({
+  it("treats omit / null / blank id as create when plan is present", () => {
+    expect(parseOpenEntityFormInput({ kind: "experience", plan: "Add title X" })).toEqual({
       kind: "experience",
-      id: null
+      id: null,
+      plan: "Add title X"
     });
-    expect(parseOpenEntityFormInput({ kind: "project", id: null })).toEqual({
-      kind: "project",
-      id: null
-    });
-    expect(parseOpenEntityFormInput({ kind: "stack", id: "  " })).toEqual({
+    expect(parseOpenEntityFormInput({ kind: "project", id: null, plan: "Create Dev-Hub" })).toEqual(
+      {
+        kind: "project",
+        id: null,
+        plan: "Create Dev-Hub"
+      }
+    );
+    expect(parseOpenEntityFormInput({ kind: "stack", id: "  ", plan: "Rename React" })).toEqual({
       kind: "stack",
-      id: null
+      id: null,
+      plan: "Rename React"
     });
   });
 
   it("keeps a real id for edit", () => {
-    expect(parseOpenEntityFormInput({ kind: "experience", id: "exp_1" })).toEqual({
+    expect(
+      parseOpenEntityFormInput({ kind: "experience", id: "exp_1", plan: "Retitle to backend" })
+    ).toEqual({
       kind: "experience",
-      id: "exp_1"
+      id: "exp_1",
+      plan: "Retitle to backend"
     });
   });
 
-  it("rejects unknown kinds", () => {
-    expect(parseOpenEntityFormInput({ kind: "application" })).toBeNull();
+  it("rejects missing plan and unknown kinds", () => {
+    expect(parseOpenEntityFormInput({ kind: "experience" })).toBeNull();
+    expect(parseOpenEntityFormInput({ kind: "experience", plan: "  " })).toBeNull();
+    expect(parseOpenEntityFormInput({ kind: "application", plan: "x" })).toBeNull();
     expect(parseOpenEntityFormInput(null)).toBeNull();
   });
 });
@@ -283,6 +315,13 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       resumeAfterOutput: true
     },
     {
+      name: "open-entity-inspect waiting is not a user choice",
+      toolName: "open-entity-inspect",
+      state: "input-available",
+      expected: null,
+      resumeAfterOutput: true
+    },
+    {
       name: "accept package approval",
       toolName: "accept-apply-package",
       state: "approval-requested",
@@ -313,10 +352,12 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
         toolName,
         state,
         input: toolName.includes("entity-form")
-          ? { kind: "experience" }
-          : toolName.includes("open")
-            ? { href: "/dashboard/tracked-jobs" }
-            : { track: [], dismiss: [] }
+          ? { kind: "experience", plan: "Retitle to backend engineer" }
+          : toolName.includes("inspect")
+            ? { kind: "project", id: "p1" }
+            : toolName.includes("open")
+              ? { href: "/dashboard/tracked-jobs" }
+              : { track: [], dismiss: [] }
       } as never
     ]);
     expect(lastHubHitlKind([waiting])).toBe(expected);

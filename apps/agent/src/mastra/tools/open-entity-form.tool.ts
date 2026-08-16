@@ -10,7 +10,7 @@ const EntityFormKindSchema = z.enum(["experience", "project", "stack"]);
 export const openEntityFormTool = createTool({
   id: "open-entity-form",
   description:
-    "Open the original experience, project, or stack form on the current dashboard route (do not navigate). Omit id or pass null to create; pass an existing id to edit. Wait for the user to save or discard. After calling this tool, write no user-facing text — the form is the UI. Never invent an entity without this form.",
+    "Propose opening the original experience, project, or stack form after you discussed the change and have a concrete edit plan. Requires plan (what will change). The confirm card is the approval — do not open the form yourself and write no wrap-up. Omit id to create; pass a real id from list/get to edit. Never call this for preview — use open-entity-inspect. Never invent an entity without this form.",
   inputSchema: z.object({
     kind: EntityFormKindSchema.describe("Evidence form to open: experience | project | stack"),
     id: z
@@ -18,7 +18,13 @@ export const openEntityFormTool = createTool({
       .min(1)
       .optional()
       .nullable()
-      .describe("Existing entity id to edit; omit or null to create")
+      .describe("Existing entity id to edit; omit or null to create"),
+    plan: z
+      .string()
+      .min(1)
+      .describe(
+        "Short edit plan the user is approving (what fields change and why). Shown on the confirm card."
+      )
   }),
   outputSchema: z.object({
     ok: z.boolean(),

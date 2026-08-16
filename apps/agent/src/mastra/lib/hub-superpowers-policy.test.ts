@@ -233,6 +233,8 @@ const URL_IMPORT_TOOL_NAMES = [
   "findJobsNow",
   "open-entity-form",
   "openEntityForm",
+  "open-entity-inspect",
+  "openEntityInspect",
   "propose-hard-preference-change",
   "proposeHardPreferenceChange"
 ] as const;
@@ -245,7 +247,9 @@ const URL_IMPORT_FORBIDDEN = [
   "find-jobs-now",
   "findJobsNow",
   "open-entity-form",
-  "openEntityForm"
+  "openEntityForm",
+  "open-entity-inspect",
+  "openEntityInspect"
 ] as const;
 
 describe("hub job URL import lock", () => {
@@ -314,7 +318,8 @@ describe("search-loop HITL stop matrix", () => {
     "proposeHardPreferenceChange",
     "find-jobs-now",
     "get-search-brief",
-    "open-entity-form"
+    "open-entity-form",
+    "open-entity-inspect"
   ])("stops while %s is waiting", (name) => {
     expect(isHubClientHitlToolName(name)).toBe(true);
     expect(

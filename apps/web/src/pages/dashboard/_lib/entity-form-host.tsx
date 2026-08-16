@@ -1,6 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
+
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 import {
   clearEntityFormRequest,
@@ -48,7 +51,33 @@ function EntityFormHostSession({ request }: { request: EntityFormHostRequest }) 
     }, SHEET_EXIT_MS);
   };
 
-  const initialData = request.id ? { id: request.id } : null;
+  const experienceQuery = useQuery({
+    ...orpcQueryClient.experiences.get.queryOptions({ input: { id: request.id ?? "" } }),
+    enabled: request.kind === "experience" && Boolean(request.id)
+  });
+  const projectQuery = useQuery({
+    ...orpcQueryClient.projects.get.queryOptions({ input: { id: request.id ?? "" } }),
+    enabled: request.kind === "project" && Boolean(request.id)
+  });
+  const stackQuery = useQuery({
+    ...orpcQueryClient.stacks.get.queryOptions({ input: { id: request.id ?? "" } }),
+    enabled: request.kind === "stack" && Boolean(request.id)
+  });
+
+  const initialData =
+    request.kind === "project"
+      ? (projectQuery.data ?? (request.id ? { id: request.id } : null))
+      : request.kind === "stack"
+        ? (stackQuery.data ?? (request.id ? { id: request.id } : null))
+        : (experienceQuery.data ?? (request.id ? { id: request.id } : null));
+
+  const editLoading =
+    Boolean(request.id) &&
+    ((request.kind === "project" && projectQuery.isLoading && !projectQuery.data) ||
+      (request.kind === "stack" && stackQuery.isLoading && !stackQuery.data) ||
+      (request.kind === "experience" && experienceQuery.isLoading && !experienceQuery.data));
+
+  if (editLoading) return null;
 
   const handleSaved = (id: string) => {
     savedIdRef.current = id;
@@ -62,6 +91,12 @@ function EntityFormHostSession({ request }: { request: EntityFormHostRequest }) 
     }
     setOpen(false);
     const savedId = savedIdRef.current;
+    if (request.completeOnClose === false) {
+      window.setTimeout(() => {
+        clearEntityFormRequest(request.requestId);
+      }, SHEET_EXIT_MS);
+      return;
+    }
     if (savedId) {
       complete({
         ok: true,

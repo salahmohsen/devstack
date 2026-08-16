@@ -202,7 +202,7 @@ export function ProjectForm({ initialData, open, onOpenChange, onSaved }: Projec
       return;
     }
     const source = seed ?? project ?? null;
-    if (!source && isEdit) return;
+    if (isEdit && (!source || !source.title)) return;
     if (resetKeyRef.current === projectIdKey) return;
     resetKeyRef.current = projectIdKey;
     if (source) {

@@ -13,11 +13,13 @@ import {
   isHubJobPageExtractToolName,
   isHubToolUiPart,
   isOpenEntityFormToolName,
+  isOpenEntityInspectToolName,
   isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
   isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
   openEntityFormActivityLabel,
+  openEntityInspectActivityLabel,
   parseOpenEntityFormInput,
   type HubToolNamePart
 } from "./hub-tool-names";
@@ -46,6 +48,7 @@ export function isHubChoiceToolName(name: string): boolean {
     isHubApprovalToolName(name) ||
     isProposeHardPreferenceChangeToolName(name) ||
     isOpenEntityFormToolName(name) ||
+    isOpenEntityInspectToolName(name) ||
     isFindJobsNowToolName(name) ||
     isGetSearchBriefToolName(name)
   );
@@ -76,6 +79,15 @@ export function humanizeHubToolName(name: string, input?: unknown): string {
   }
   if (/findJobsNow|find-jobs-now/i.test(bare)) return "Finding jobs";
   if (/getSearchBrief|get-search-brief/i.test(bare)) return "Loading search brief";
+  if (/openEntityInspect|open-entity-inspect/i.test(bare)) {
+    const kind =
+      input && typeof input === "object" && "kind" in input
+        ? (input as { kind?: string }).kind
+        : undefined;
+    return openEntityInspectActivityLabel(
+      kind === "experience" || kind === "stack" || kind === "project" ? kind : "project"
+    );
+  }
   if (/openEntityForm|open-entity-form/i.test(bare)) {
     return openEntityFormActivityLabel(parseOpenEntityFormInput(input)?.kind ?? "experience");
   }

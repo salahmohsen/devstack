@@ -57,7 +57,7 @@ import {
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { ListItem } from "@/shared/ui/list-item";
 
-import { useEntityFormHostActive } from "@/features/agent-hub";
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
   ApplicationMatchScoreBadge,
   ScanJobAlertsButton,
@@ -289,7 +289,7 @@ export function NewJobsPage() {
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const listRef = useRef<HTMLUListElement | null>(null);
   // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
-  const hostOwnsPanel = useEntityFormHostActive();
+  const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && editApp != null) setEditApp(null);
 
   const listQuery = useListApplicationsQuery(filter);

@@ -36,6 +36,7 @@ export {
   HUB_FIND_JOBS_NOW_TOOL_NAMES,
   HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
   HUB_OPEN_ENTITY_FORM_TOOL_NAMES,
+  HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES,
   HUB_OPEN_SURFACE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
   HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES,
@@ -48,6 +49,7 @@ export {
   isFindJobsNowToolName,
   isGetSearchBriefToolName,
   isOpenEntityFormToolName,
+  isOpenEntityInspectToolName,
   isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
   isProposeHardPreferenceChangeToolName,
@@ -56,6 +58,8 @@ export {
   findOpenEntityFormOutputInMessages,
   parseOpenEntityFormInput,
   parseOpenEntityFormOutput,
+  parseOpenEntityInspectInput,
+  parseOpenEntityInspectOutput,
   pendingOpenEntityFormIds,
   shouldRequestEntityFormHost,
   parseOpenSurfaceHref,
@@ -72,6 +76,8 @@ export type {
   OpenEntityFormInput,
   OpenEntityFormKind,
   OpenEntityFormOutput,
+  OpenEntityInspectInput,
+  OpenEntityInspectOutput,
   ProposeNewJobsTriageCardInput
 } from "./lib/hub-tool-names";
 export { NewJobsTriageCard } from "./ui/new-jobs-triage-card";
@@ -115,14 +121,24 @@ export {
   shouldAutoResumeHubChat
 } from "./lib/should-auto-resume-hub-chat";
 export {
+  approveEntityFormCall,
   clearEntityFormRequest,
   dismissEntityFormCalls,
+  isEntityFormCallApproved,
   isEntityFormCallDismissed,
   requestEntityForm,
   useEntityFormHostActive,
   useEntityFormHostSelector
 } from "./lib/entity-form-host-store";
 export type { EntityFormHostRequest, EntityFormKind } from "./lib/entity-form-host-store";
+export {
+  clearEntityInspectRequest,
+  requestEntityInspect,
+  useEntityInspectHostActive,
+  useEntityInspectHostSelector,
+  useEntityPanelHostActive
+} from "./lib/entity-inspect-host-store";
+export type { EntityInspectHostRequest } from "./lib/entity-inspect-host-store";
 export { messagesForMastraMemoryChat } from "./lib/messages-for-mastra-memory";
 export { parseAiError, parseHubChatError, presentAiError } from "@/shared/lib/parse-ai-error";
 export type {

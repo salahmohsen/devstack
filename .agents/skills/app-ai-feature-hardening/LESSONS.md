@@ -17,6 +17,15 @@
 
 ---
 
+## 2026-08-16 — Preview inspect vs edit-plan form
+
+- **Trigger:** Hub “show my latest project” dumped prose instead of the side-panel project view; “make it backend” opened the edit form with no plan and often a stale/empty id
+- **Finding:** Preview and edit are different panel hosts. Preview remounts the original inspect view (`ProjectInfoPanel` / experience / stack). Edit must not skip the confirm card
+- **Finding:** `open-entity-form` needs a non-empty `plan`. The HITL card is the approval; only Confirm remounts the original form. Cancel completes cancelled
+- **Finding:** Mounting `ProjectForm` with `{ id }` only can paint an empty title before `projects.get` lands, and a once-per-id `form.reset` can skip the real row. Prefetch get in the host and pass the full entity as `initialData`
+- **User preference:** Agent discusses the change, summarizes the edit plan, and opens the side-panel form only after the user approves
+- **Evidence class:** Chrome hub — “Show my latest project” opened Dev-Hub inspect (Overview/Analysis); edit request showed “Open project form” + plan + Open form/Cancel; after confirm, Edit Project title “Dev-Hub”
+
 ## 2026-08-16 — Client enqueue tools must not auto-resume while wrap-up streams
 
 - **Trigger:** Search brief + hub operator harden — Settings Jobs fields, hub `get-search-brief` / `find-jobs-now` / hard-stop card / entity form host

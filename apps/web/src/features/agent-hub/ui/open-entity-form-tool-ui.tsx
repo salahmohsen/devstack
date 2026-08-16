@@ -5,7 +5,9 @@ import * as React from "react";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import {
+  approveEntityFormCall,
   dismissEntityFormCalls,
+  isEntityFormCallApproved,
   isEntityFormCallDismissed,
   requestEntityForm
 } from "@/features/agent-hub/lib/entity-form-host-store";
@@ -20,6 +22,7 @@ import {
   type OpenEntityFormKind,
   type OpenEntityFormOutput
 } from "@/features/agent-hub/lib/hub-tool-names";
+import { EntityEditPlanCard } from "@/features/agent-hub/ui/entity-edit-plan-card";
 
 const OPEN_ENTITY_FORM_TOOL_ID = "open-entity-form";
 
@@ -71,8 +74,8 @@ function receiptLabel(output: OpenEntityFormOutput): string {
 }
 
 /**
- * Client complete for openEntityForm: ask the dashboard host to remount the
- * original sheet. Host addToolOutput after save/cancel.
+ * Confirm card first (edit plan). Only after Open form does the dashboard
+ * host remount the original sheet. Host addToolOutput after save/cancel.
  */
 export function OpenEntityFormToolUI({
   args,
@@ -84,6 +87,7 @@ export function OpenEntityFormToolUI({
 }: ToolCallMessagePartProps<OpenEntityFormInput, OpenEntityFormOutput>) {
   const { addToolOutput, messages } = useHubChat();
   const completedRef = React.useRef(false);
+  const [approved, setApproved] = React.useState(() => isEntityFormCallApproved(toolCallId));
 
   const resolvedToolName = isOpenEntityFormToolName(toolName ?? "")
     ? (toolName as string)
@@ -118,15 +122,7 @@ export function OpenEntityFormToolUI({
     if (status?.type === "running") return;
 
     const input = parseOpenEntityFormInput(args);
-    if (!input) {
-      complete({
-        ok: false,
-        kind: "experience",
-        saved: false,
-        cancelled: true
-      });
-      return;
-    }
+    if (!input) return;
 
     if (isEntityFormCallDismissed(toolCallId)) {
       complete({
@@ -152,14 +148,17 @@ export function OpenEntityFormToolUI({
       return;
     }
 
+    if (!approved && !isEntityFormCallApproved(toolCallId)) return;
+
     requestEntityForm({
       requestId: toolCallId,
       kind: input.kind,
       id: input.id,
       toolCallId,
-      toolName: resolvedToolName
+      toolName: resolvedToolName,
+      completeOnClose: true
     });
-  }, [args, complete, completed, messages, resolvedToolName, status?.type, toolCallId]);
+  }, [approved, args, complete, completed, messages, resolvedToolName, status?.type, toolCallId]);
 
   if (completed) {
     return (
@@ -170,9 +169,43 @@ export function OpenEntityFormToolUI({
   }
 
   const kind: OpenEntityFormKind = parsed?.kind ?? "experience";
+  if (approved) {
+    return (
+      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+        {openEntityFormActivityLabel(kind)}
+      </p>
+    );
+  }
+
   return (
-    <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-      {openEntityFormActivityLabel(kind)}
-    </p>
+    <EntityEditPlanCard
+      toolCallId={toolCallId}
+      kind={kind}
+      plan={parsed?.plan ?? null}
+      creating={parsed?.id == null}
+      onSubmit={(action) => {
+        if (action === "cancel" || !parsed) {
+          dismissEntityFormCalls([toolCallId]);
+          complete({
+            ok: true,
+            kind,
+            ...(parsed?.id ? { id: parsed.id } : {}),
+            saved: false,
+            cancelled: true
+          });
+          return;
+        }
+        approveEntityFormCall(toolCallId);
+        setApproved(true);
+        requestEntityForm({
+          requestId: toolCallId,
+          kind: parsed.kind,
+          id: parsed.id,
+          toolCallId,
+          toolName: resolvedToolName,
+          completeOnClose: true
+        });
+      }}
+    />
   );
 }

@@ -39,7 +39,7 @@ import { Icon } from "@/shared/ui/icon";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { useEntityFormHostActive } from "@/features/agent-hub";
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
   cancelOrganizeStacksJob,
@@ -80,7 +80,7 @@ import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
-function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit: () => void }) {
+export function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit?: () => void }) {
   const detailQuery = useQuery({
     ...orpcQueryClient.stacks.get.queryOptions({ input: { id: stack.id } }),
     staleTime: STACKS_LIST_STALE_TIME_MS
@@ -111,7 +111,7 @@ function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit: () =>
           <p>Not used on any project yet</p>
         )
       }
-      actions={<PanelEditButton onClick={onEdit} />}
+      actions={onEdit ? <PanelEditButton onClick={onEdit} /> : null}
       updatedAt={item.updatedAt}
       createdAt={item.createdAt}
     >
@@ -548,7 +548,7 @@ export function StacksPage() {
   const [editingStackId, setEditingStackId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Host wins the panel (any kind). Dirty page form is discarded without confirm.
-  const hostOwnsPanel = useEntityFormHostActive();
+  const hostOwnsPanel = useEntityPanelHostActive();
   if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 

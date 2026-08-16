@@ -60,6 +60,11 @@ export const HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES = new Set([
 
 export const HUB_OPEN_ENTITY_FORM_TOOL_NAMES = new Set(["open-entity-form", "openEntityForm"]);
 
+export const HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES = new Set([
+  "open-entity-inspect",
+  "openEntityInspect"
+]);
+
 export const HUB_FIND_JOBS_NOW_TOOL_NAMES = new Set(["find-jobs-now", "findJobsNow"]);
 
 export const HUB_GET_SEARCH_BRIEF_TOOL_NAMES = new Set(["get-search-brief", "getSearchBrief"]);
@@ -74,6 +79,19 @@ export type OpenEntityFormKind = "experience" | "project" | "stack";
 export type OpenEntityFormInput = {
   kind: OpenEntityFormKind;
   id: string | null;
+  plan: string;
+};
+
+export type OpenEntityInspectInput = {
+  kind: OpenEntityFormKind;
+  id: string;
+};
+
+export type OpenEntityInspectOutput = {
+  ok: boolean;
+  kind: OpenEntityFormKind;
+  id?: string;
+  opened: boolean;
 };
 
 export type OpenEntityFormOutput = {
@@ -189,6 +207,10 @@ export function isOpenEntityFormToolName(name: string): boolean {
   return HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name);
 }
 
+export function isOpenEntityInspectToolName(name: string): boolean {
+  return HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES.has(name);
+}
+
 export function isFindJobsNowToolName(name: string): boolean {
   return HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name);
 }
@@ -207,12 +229,42 @@ export function openEntityFormActivityLabel(kind: OpenEntityFormKind): string {
   return "Opening experience form";
 }
 
+export function openEntityInspectActivityLabel(kind: OpenEntityFormKind): string {
+  if (kind === "project") return "Opening project";
+  if (kind === "stack") return "Opening stack";
+  return "Opening experience";
+}
+
 export function parseOpenEntityFormInput(input: unknown): OpenEntityFormInput | null {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const o = input as { kind?: unknown; id?: unknown; plan?: unknown };
+  if (o.kind !== "experience" && o.kind !== "project" && o.kind !== "stack") return null;
+  const plan = typeof o.plan === "string" ? o.plan.trim() : "";
+  if (!plan) return null;
+  const rawId = typeof o.id === "string" ? o.id.trim() : "";
+  return { kind: o.kind, id: rawId.length > 0 ? rawId : null, plan };
+}
+
+export function parseOpenEntityInspectInput(input: unknown): OpenEntityInspectInput | null {
   if (!input || typeof input !== "object" || Array.isArray(input)) return null;
   const o = input as { kind?: unknown; id?: unknown };
   if (o.kind !== "experience" && o.kind !== "project" && o.kind !== "stack") return null;
-  const rawId = typeof o.id === "string" ? o.id.trim() : "";
-  return { kind: o.kind, id: rawId.length > 0 ? rawId : null };
+  const id = typeof o.id === "string" ? o.id.trim() : "";
+  if (!id) return null;
+  return { kind: o.kind, id };
+}
+
+export function parseOpenEntityInspectOutput(output: unknown): OpenEntityInspectOutput | null {
+  if (!output || typeof output !== "object" || Array.isArray(output)) return null;
+  const o = output as { ok?: unknown; kind?: unknown; id?: unknown; opened?: unknown };
+  if (typeof o.opened !== "boolean") return null;
+  if (o.kind !== "experience" && o.kind !== "project" && o.kind !== "stack") return null;
+  return {
+    ok: o.ok !== false,
+    kind: o.kind,
+    id: typeof o.id === "string" && o.id.length > 0 ? o.id : undefined,
+    opened: o.opened
+  };
 }
 
 /** True when this waiting tool call should own the dashboard form host. */
