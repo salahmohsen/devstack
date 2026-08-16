@@ -11,6 +11,7 @@ import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import {
+  HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
   HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   hubJobUrlImportFeedback,
   shouldForceProposeApplicationFromJd,
@@ -22,7 +23,8 @@ import {
   mastraMessagesHavePendingClientHitl,
   messagesNeedProposeAfterJobExtract,
   messagesNeedProposeAfterJobImport,
-  messagesNeedProposeTriage
+  messagesNeedProposeTriage,
+  messagesNeedSearchBriefAnswer
 } from "#@/mastra/processors/hub-processors";
 import { acceptApplyPackageTool } from "#@/mastra/tools/accept-apply-package.tool";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
@@ -167,6 +169,7 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
 - JD paste, a job listing URL (especially LinkedIn \`/jobs/view/…\`), or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; **full** JD in \`description\` — every section, not a teaser; numeric \`matchScore\` 0–100; \`notes\` = 1–3 sentence agent's take vs the seeker; \`workMode\` / \`salaryRange\` / \`requiredSkills\` / \`preferredSkills\` when the posting states them — never invent pay or mode). **Do not invent CRM rows** without that tool and user confirmation.
 - **URL-only paste (no JD body):** call \`jobPageExtractor\` at most once as a silent prelude — do **not** call \`getJobPreferences\`, \`jobPreferenceMatchScorer\`, \`getSearchBrief\`, \`upsertSoftJobPreferences\`, \`findJobsNow\`, \`proposeHardPreferenceChange\`, or list tools first. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails, returns a teaser, or the page is a login wall, still propose with that \`url\` and an empty (or short) description. Do **not** extract or fetch-job-page again. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
 - After calling \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, or \`proposeEvidenceChange\`, stop with **no text** until the card returns. Hard-stop / evidence confirm already wrote — do not call \`listNewJobs\`, \`proposeNewJobsTriage\`, \`findJobsNow\`, or a second apply this turn.
+- After \`getSearchBrief\` returns: if they asked where a section went, what changed, or why something is missing, answer in 1–2 sentences. Do **not** call \`getSearchBrief\` again. An empty turn after the File Diff is a failure. Identity / rules / "show my brief" need no spoken wrap-up — the File Diff is the UI.
 - After \`findJobsNow\`: report that search is queued (or the reason). Call \`listNewJobs\` / \`proposeNewJobsTriage\` only if the inbox is already non-empty.
 - After JD proposal tool output \`save\` | \`package\` | \`dismiss\`: do **not** call \`propose-application-from-jd\` again for that listing, do **not** call \`create-application\` if \`applicationId\` is already set, and emit **no** second card. Short ack only if you must speak. Otherwise \`save\` without \`applicationId\` → \`create-application\`. \`package\` without \`applicationId\` → \`create-application\` then \`generate-apply-package\`.
 - Do not invent tools or pretend a send/apply/track succeeded without tool results.
@@ -198,6 +201,9 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
         }
         if (messagesNeedProposeTriage(ctx.messages)) {
           return { continue: true, feedback: HUB_TRIAGE_MUST_PROPOSE_FEEDBACK };
+        }
+        if (messagesNeedSearchBriefAnswer(ctx.messages)) {
+          return { continue: true, feedback: HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK };
         }
         const toolCount = ctx.toolCalls?.length ?? 0;
         if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {

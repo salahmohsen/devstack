@@ -137,6 +137,13 @@ export function isListNewJobsToolName(name: string): boolean {
   return name === "list-new-jobs" || name === "listNewJobs";
 }
 
+export function isGetSearchBriefToolName(name: string): boolean {
+  return name === "get-search-brief" || name === "getSearchBrief";
+}
+
+export const HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK =
+  "getSearchBrief already ran. Do NOT call getSearchBrief, listNewJobs, or proposeNewJobsTriage. Answer the user in 1–2 sentences (e.g. where a section went). The File Diff is already on screen.";
+
 export function isHubJobPageExtractToolName(name: string): boolean {
   if (HUB_JOB_PAGE_EXTRACT_TOOL_NAMES.has(name)) return true;
   const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;

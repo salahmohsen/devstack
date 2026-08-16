@@ -5,5 +5,6 @@ export * from "./list-patch";
 export * from "./phrase-match";
 export * from "./salary-compare";
 export * from "./search-brief";
+export * from "./search-brief-follow-up";
 export * from "./types";
 export * from "./utils";

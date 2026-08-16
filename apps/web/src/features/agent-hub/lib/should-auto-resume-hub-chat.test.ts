@@ -11,6 +11,20 @@ function assistant(parts: UIMessage["parts"]): UIMessage {
   return { id: "a1", role: "assistant", parts } as UIMessage;
 }
 
+function user(text: string): UIMessage {
+  return { id: "u1", role: "user", parts: [{ type: "text", text }] } as UIMessage;
+}
+
+function getSearchBriefComplete(): UIMessage["parts"][number] {
+  return {
+    type: "tool-get-search-brief",
+    toolCallId: "b1",
+    toolName: "get-search-brief",
+    state: "output-available",
+    output: { markdown: "## Target jobs", rebuilt: true }
+  } as never;
+}
+
 describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
   it("returns false for text-only answers (capability questions)", () => {
     expect(
@@ -583,7 +597,7 @@ describe("hideHubAssistantTextAfterIndex", () => {
     ).toBeNull();
   });
 
-  it("hides wrap-up after get-search-brief — File Diff / current receipt is the UI", () => {
+  it("hides leftover wrap-up after get-search-brief", () => {
     const parts = [
       {
         type: "tool-get-search-brief",
@@ -594,6 +608,19 @@ describe("hideHubAssistantTextAfterIndex", () => {
       { type: "text", text: "Search brief is current." }
     ];
     expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("shows a real answer after get-search-brief", () => {
+    const parts = [
+      {
+        type: "tool-get-search-brief",
+        toolName: "get-search-brief",
+        state: "output-available",
+        output: { rebuilt: true, markdown: "## Target jobs" }
+      },
+      { type: "text", text: "The intro was dropped in the last rewrite of the skills section." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
   });
 
   it("hides wrap-up after find-jobs-now — the tool UI already reports queued", () => {
@@ -699,6 +726,64 @@ describe("hideHubAssistantTextAfterIndex", () => {
 });
 
 describe("shouldAutoResumeHubChat", () => {
+  it("resumes after get-search-brief only for section / what-changed questions", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("where is the intro?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(true);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [
+          user("what happened to the who paragraph?"),
+          assistant([getSearchBriefComplete()])
+        ]
+      })
+    ).toBe(true);
+  });
+
+  it("does not resume after get-search-brief on identity / rules / show-the-brief", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("what am I looking for?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("show my brief"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("what are my job rules?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("what jobs should I take?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after get-search-brief once an answer streamed", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [
+          user("where is the intro?"),
+          assistant([
+            getSearchBriefComplete(),
+            { type: "step-start" },
+            {
+              type: "text",
+              text: "The intro was removed when the skills section was rewritten.",
+              state: "done"
+            }
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
   it("resumes after evidence confirm via sendAutomaticallyWhen helper", () => {
     expect(
       shouldAutoResumeHubChat({

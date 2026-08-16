@@ -1,5 +1,7 @@
 import { lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
 
+import { searchBriefUserTurnNeedsSpokenAnswer } from "@tsu-stack/core";
+
 import {
   HUB_FIND_JOBS_NOW_TOOL_NAMES,
   HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
@@ -47,6 +49,8 @@ type ToolLikePart = {
 export const PREMATURE_HITL_TEXT_RE =
   /awaiting your confirmation|confirmation is required|no changes made/i;
 
+const SEARCH_BRIEF_WRAPUP_RE = /search brief is current|here(?:'s| is) your (?:search )?brief/i;
+
 const FAILED_CONTINUATION_TEXT_RE =
   /tool-step limit|step limit was reached|couldn.?t run|could not run|couldn.?t execute/i;
 
@@ -70,6 +74,21 @@ function toolNameFromPart(part: ToolLikePart): string {
 function isClientResumeTool(part: ToolLikePart): boolean {
   if (part.providerExecuted === true) return false;
   return HUB_CLIENT_RESUME_TOOL_NAMES.has(toolNameFromPart(part));
+}
+
+function latestUserMessageText(messages: readonly UIMessage[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (!message || message.role !== "user") continue;
+    const chunks: string[] = [];
+    for (const part of message.parts ?? []) {
+      if (part && part.type === "text" && "text" in part && typeof part.text === "string") {
+        chunks.push(part.text);
+      }
+    }
+    return chunks.join("\n");
+  }
+  return "";
 }
 
 function isClientToolComplete(part: ToolLikePart): boolean {
@@ -115,10 +134,20 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
       const completeName = toolNameFromPart(completePart);
       if (
         HUB_FIND_JOBS_NOW_TOOL_NAMES.has(completeName) ||
-        HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(completeName) ||
         HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(completeName)
       ) {
         return lastComplete;
+      }
+      if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(completeName)) {
+        const afterBrief = parts
+          .slice(lastComplete + 1)
+          .filter((p) => p.type === "text" && Boolean(p.text?.trim()))
+          .map((p) => p.text ?? "")
+          .join("\n");
+        if (SEARCH_BRIEF_WRAPUP_RE.test(afterBrief) || PREMATURE_HITL_TEXT_RE.test(afterBrief)) {
+          return lastComplete;
+        }
+        return null;
       }
       if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(completeName)) {
         // After confirm/cancel, show the next interview. Do not hide because
@@ -170,6 +199,8 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
   const message = messages[messages.length - 1];
   if (!message || message.role !== "assistant") return false;
 
+  const latestUserText = latestUserMessageText(messages);
+  const briefNeedsSpokenAnswer = searchBriefUserTurnNeedsSpokenAnswer(latestUserText);
   const parts = message.parts as ToolLikePart[];
 
   const stepStarts: number[] = [];
@@ -224,8 +255,11 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
     const needsMutationContinuation = clientTools.some((p) => {
       if (!isClientToolComplete(p)) return false;
       const name = toolNameFromPart(p);
-      if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) || HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+      if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name)) {
         return false;
+      }
+      if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+        return briefNeedsSpokenAnswer && !hasFinalTextAfter;
       }
       if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
         const evidenceOutput =
@@ -262,8 +296,11 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
     if (!needsMutationContinuation) {
       const terminal = clientTools.some((p) => {
         const name = toolNameFromPart(p);
-        if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) || HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+        if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name)) {
           return true;
+        }
+        if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+          return !briefNeedsSpokenAnswer;
         }
         if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
           return false;

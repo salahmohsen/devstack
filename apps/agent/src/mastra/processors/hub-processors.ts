@@ -5,14 +5,16 @@ import {
   type Processor
 } from "@mastra/core/processors";
 
-import { hubPersonalityById } from "@tsu-stack/core";
+import { hubPersonalityById, searchBriefUserTurnNeedsSpokenAnswer } from "@tsu-stack/core";
 
 import {
   filterHubJobUrlImportActiveTools,
   filterHubPostEvidenceConfirmActiveTools,
   filterHubTriageActiveTools,
+  HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
   HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   hubJobUrlImportFeedback,
+  isGetSearchBriefToolName,
   isHubClientHitlToolName,
   isHubJobPageExtractToolName,
   isListNewJobsToolName,
@@ -51,7 +53,8 @@ export class HubEnsureFinalResponseProcessor implements Processor {
     if (
       mastraMessagesHavePendingClientHitl(messages) ||
       messagesNeedProposeAfterJobImport(messages) ||
-      messagesNeedProposeTriage(messages)
+      messagesNeedProposeTriage(messages) ||
+      messagesNeedSearchBriefAnswer(messages)
     ) {
       return;
     }
@@ -238,6 +241,57 @@ export function messagesNeedProposeTriage(messages: ProcessInputStepArgs["messag
   return state.listHasJobs && !state.sawPropose;
 }
 
+export function latestUserTurnSearchBriefState(messages: ProcessInputStepArgs["messages"]): {
+  sawBrief: boolean;
+  hasTextAfter: boolean;
+} {
+  let afterLatestUser = false;
+  let sawBrief = false;
+  let hasTextAfter = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawBrief = false;
+      hasTextAfter = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isGetSearchBriefToolName(name) && mastraPartHasToolResult(part)) {
+        sawBrief = true;
+        hasTextAfter = false;
+        continue;
+      }
+      if (sawBrief && part.type === "text" && typeof part.text === "string" && part.text.trim()) {
+        hasTextAfter = true;
+      }
+    }
+    const text = mastraMessageText(message).trim();
+    if (sawBrief && text.length > 0) hasTextAfter = true;
+  }
+  return { sawBrief, hasTextAfter };
+}
+
+function latestUserText(messages: ProcessInputStepArgs["messages"]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message?.role !== "user") continue;
+    return mastraMessageText(message);
+  }
+  return "";
+}
+
+/** Brief already loaded this turn — next step must be a spoken answer, not another tool. */
+export function messagesNeedSearchBriefAnswer(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnSearchBriefState(messages);
+  if (!state.sawBrief || state.hasTextAfter) return false;
+  return searchBriefUserTurnNeedsSpokenAnswer(latestUserText(messages));
+}
+
 /** Latest user turn has a completed evidence or hard-stop confirm/cancel result. */
 export function messagesHaveEvidenceOrHardStopResultThisTurn(
   messages: ProcessInputStepArgs["messages"]
@@ -369,6 +423,27 @@ export class HubNewJobsTriageProcessor implements Processor {
 }
 
 /**
+ * After getSearchBrief, the File Diff is on screen. Force a spoken answer
+ * (where did the intro go?) instead of another tool or an empty turn.
+ */
+export class HubSearchBriefAnswerProcessor implements Processor {
+  readonly id = "hub-search-brief-answer";
+
+  async processInputStep({ messages, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedSearchBriefAnswer(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
+      attributes: { reason: "search-brief-must-answer" }
+    });
+
+    return { toolChoice: "none" as const };
+  }
+}
+
+/**
  * After evidence or hard-stop confirm: drop listNewJobs / triage / findJobsNow
  * so auto-resume interviews the next entity instead of reopening the inbox.
  */
@@ -390,6 +465,7 @@ export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_S
     new HubJobUrlImportProcessor(),
     new HubNewJobsTriageProcessor(),
     new HubPostEvidenceConfirmProcessor(),
+    new HubSearchBriefAnswerProcessor(),
     new HubEnsureFinalResponseProcessor(maxSteps),
     // Keep enough recent tool-producing steps for superpowers multi-tool
     // chains (listNewJobs + evidence lists + propose → writes). filterAfter=2

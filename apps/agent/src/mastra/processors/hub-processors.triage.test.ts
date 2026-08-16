@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { messagesNeedProposeTriage } from "./hub-processors";
+import { messagesNeedProposeTriage, messagesNeedSearchBriefAnswer } from "./hub-processors";
 
 function assistantWithParts(parts: Record<string, unknown>[]) {
   return {
@@ -68,6 +68,50 @@ describe("messagesNeedProposeTriage", () => {
           }
         ])
       ] as never)
+    ).toBe(false);
+  });
+});
+
+function searchBriefAfterUser(text: string, extraParts: Record<string, unknown>[] = []) {
+  return [
+    { role: "user", content: { parts: [{ type: "text", text }] } },
+    assistantWithParts([
+      {
+        type: "tool-get-search-brief",
+        toolName: "getSearchBrief",
+        state: "output-available",
+        output: { markdown: "## Target jobs", rebuilt: true }
+      },
+      ...extraParts
+    ])
+  ] as never;
+}
+
+describe("messagesNeedSearchBriefAnswer", () => {
+  it("is true after get-search-brief on a section question with no spoken answer", () => {
+    expect(messagesNeedSearchBriefAnswer(searchBriefAfterUser("where is the intro?"))).toBe(true);
+    expect(messagesNeedSearchBriefAnswer(searchBriefAfterUser("where is the intro part?"))).toBe(
+      true
+    );
+  });
+
+  it("is false after get-search-brief on an identity / rules turn", () => {
+    expect(messagesNeedSearchBriefAnswer(searchBriefAfterUser("what am I looking for?"))).toBe(
+      false
+    );
+    expect(messagesNeedSearchBriefAnswer(searchBriefAfterUser("show my brief"))).toBe(false);
+    expect(messagesNeedSearchBriefAnswer(searchBriefAfterUser("what are my job rules?"))).toBe(
+      false
+    );
+  });
+
+  it("is false once a text answer follows the brief", () => {
+    expect(
+      messagesNeedSearchBriefAnswer(
+        searchBriefAfterUser("where is the intro part?", [
+          { type: "text", text: "The intro was removed in the last rewrite." }
+        ])
+      )
     ).toBe(false);
   });
 });
