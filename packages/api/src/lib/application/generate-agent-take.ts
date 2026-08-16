@@ -39,7 +39,7 @@ export type GenerateAgentTakeResult =
   | { ok: false; code: GenerateAgentTakeErrorCode; message?: string };
 
 export type GenerateAgentTakeTextResult =
-  | { ok: true; text: string }
+  | { ok: true; text: string; hasExclude: boolean; hasBrief: boolean }
   | { ok: false; code: Exclude<GenerateAgentTakeErrorCode, "NOT_FOUND">; message?: string };
 
 export type AgentTakeJobInput = {
@@ -240,7 +240,7 @@ export async function generateAgentTakeText(input: {
       ...byo
     });
     log.emit();
-    return { ok: true, text: take };
+    return { ok: true, text: take, ...injectFlags };
   } catch (err) {
     log.error(err instanceof Error ? err : new Error(String(err)), {
       event: "generate_agent_take_error",
@@ -301,7 +301,9 @@ export async function generateAgentTake(input: {
   log.set({
     event: "generate_agent_take_ok",
     applicationId: input.applicationId,
-    takeLength: text.text.length
+    takeLength: text.text.length,
+    hasExclude: text.hasExclude,
+    hasBrief: text.hasBrief
   });
   log.emit();
 

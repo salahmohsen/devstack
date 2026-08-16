@@ -22,6 +22,7 @@ import {
   mailMessageRepository,
   userJobAiBudgetRepository
 } from "@tsu-stack/db";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { callMailJobHarvestAgent } from "#@/queues/call-mail-job-harvest-agent";
@@ -100,12 +101,6 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
-  const brief = await ensureSearchBrief(row.userId).catch(() => null);
-  const harvestPreference: HarvestJobPreference = {
-    ...prefs,
-    evidence,
-    searchBriefMarkdown: brief?.markdown ?? null
-  };
   const [llm, openInboxBeforeAgent] = await Promise.all([
     resolveRuntimeAiCredentials(row.userId, "classify"),
     applicationRepository.countByUserIdAndTrackingStatus(row.userId, "inbox")
@@ -152,6 +147,14 @@ export async function runMailJobHarvest(input: {
       return empty();
     }
   }
+
+  const canRunAiScore = Boolean(llm.apiKey?.trim()) && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
+  const brief = canRunAiScore ? await ensureSearchBrief(row.userId).catch(() => null) : null;
+  const harvestPreference: HarvestJobPreference = {
+    ...prefs,
+    evidence,
+    searchBriefMarkdown: brief?.markdown ?? null
+  };
 
   const agentResult = await callMailJobHarvestAgent({
     messageId: row.id,
