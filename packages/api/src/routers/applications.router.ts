@@ -15,9 +15,19 @@ import {
   DeleteApplicationsInputSchema,
   DeleteResponseSchema,
   DismissApplicationInputSchema,
+  EmploymentTypeSchema,
+  extractExperienceFromDescription,
+  extractSkillsFromJobDescription,
+  isGarbageCompany,
+  refineWorkModeFromDescription,
+  scoreJobAgainstPreference,
   GenerateApplyPackageInputSchema,
   ListApplicationActivityInputSchema,
   ListApplicationsInputSchema,
+  PreviewListingInputSchema,
+  PreviewListingOutputSchema,
+  PreviewListingTakeInputSchema,
+  PreviewListingTakeOutputSchema,
   PromoteApplicationInputSchema,
   RegenerateAgentTakeInputSchema,
   RefreshApplicationFromUrlInputSchema,
@@ -34,11 +44,13 @@ import {
   applicationRepository,
   jobPostingRepository,
   mailMessageRepository,
-  resumeRepository
+  resumeRepository,
+  stackRepository
 } from "@tsu-stack/db/repositories";
 
 import { acceptApplyPackage } from "#@/lib/application/accept-apply-package";
-import { generateAgentTake } from "#@/lib/application/generate-agent-take";
+import { fetchListingPageText } from "#@/lib/application/fetch-listing-page";
+import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/generate-agent-take";
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
 import { linkJobSkillsForUser } from "#@/lib/application/link-job-skills";
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
@@ -159,6 +171,127 @@ export const applicationsRouter = {
       const status = input?.trackingStatus ?? "tracked";
       const rows = await applicationRepository.findByUserIdAndTrackingStatus(userId, status);
       return toApplicationOutputs(rows);
+    }),
+
+  previewListing: protectedProcedure
+    .route({
+      description: "Fetch a public job listing and return structured fields for the hub card",
+      method: "POST"
+    })
+    .input(PreviewListingInputSchema)
+    .output(PreviewListingOutputSchema)
+    .handler(async ({ input, context }) => {
+      const page = await fetchListingPageText(input.url);
+      const extract = page.extract;
+      const extractedDesc = extract?.description?.trim() ?? "";
+      const description = extractedDesc.length > 0 ? extractedDesc : page.text || null;
+      const stacks = await stackRepository.findAllByUserId(context.session.user.id);
+      const extraNames = stacks.map((stack) => stack.name);
+      const fromText = description
+        ? extractSkillsFromJobDescription(description, extraNames)
+        : null;
+      const requiredSkills =
+        fromText && fromText.required.length > 0 ? fromText.required : (extract?.skills ?? []);
+      const preferredSkills = fromText?.preferred ?? [];
+      const employmentParsed = EmploymentTypeSchema.safeParse(extract?.employmentType);
+      const employmentType =
+        employmentParsed.success && employmentParsed.data !== "unknown"
+          ? employmentParsed.data
+          : null;
+      const statedExperience = extract?.experience?.trim() ?? "";
+      const experience =
+        statedExperience.length > 0
+          ? statedExperience
+          : description
+            ? extractExperienceFromDescription(description)
+            : null;
+      const department = extract?.department?.trim() ?? "";
+      const title = extract?.title ?? page.title ?? null;
+      const companyName = extract?.companyName ?? null;
+      const location = extract?.location ?? null;
+      const workMode = refineWorkModeFromDescription(extract?.workMode, description ?? "");
+      let matchScore: number | null = null;
+      if (title && companyName && !isGarbageCompany(companyName)) {
+        const prefs = await loadJobPreference(context.session.user.id);
+        matchScore = scoreJobAgainstPreference(
+          {
+            title,
+            companyName,
+            location,
+            salaryRange: null,
+            description,
+            listingUrl: input.url,
+            applyUrl: null,
+            applyMethod: extract?.applyMethod ?? "unknown",
+            workMode,
+            source: extract?.source ?? null
+          },
+          prefs
+        ).score;
+      }
+      return {
+        ok: page.ok,
+        title,
+        companyName,
+        location,
+        description,
+        workMode,
+        salaryRange: null,
+        employmentType,
+        department: department.length > 0 ? department : null,
+        datePosted: extract?.datePosted ?? null,
+        experience,
+        requiredSkills,
+        preferredSkills,
+        matchScore,
+        error: page.error
+      };
+    }),
+
+  previewListingTake: protectedProcedure
+    .route({
+      description: "Write an agent take for a hub listing card without creating a CRM row",
+      method: "POST"
+    })
+    .input(PreviewListingTakeInputSchema)
+    .output(PreviewListingTakeOutputSchema)
+    .handler(async ({ input, context }) => {
+      const listingUrl = input.listingUrl
+        ? (canonicalizeJobUrl(input.listingUrl) ?? input.listingUrl)
+        : "https://invalid.local/";
+      const prefs = await loadJobPreference(context.session.user.id);
+      const reasons = scoreJobAgainstPreference(
+        {
+          title: input.title,
+          companyName: input.companyName,
+          location: input.location ?? null,
+          salaryRange: input.salaryRange ?? null,
+          description: input.description ?? null,
+          listingUrl,
+          applyUrl: null,
+          applyMethod: "unknown",
+          workMode: null,
+          source: null
+        },
+        prefs
+      ).reasons;
+      const take = await generateAgentTakeText({
+        userId: context.session.user.id,
+        job: {
+          title: input.title,
+          companyName: input.companyName,
+          location: input.location ?? null,
+          employmentType: input.employmentType ?? null,
+          salaryRange: input.salaryRange ?? null,
+          matchScore: input.matchScore ?? null,
+          description: input.description ?? null
+        },
+        matchReasons: reasons
+      });
+      if (!take.ok) {
+        return { ok: false, text: null, error: take.message ?? take.code };
+      }
+      return { ok: true, text: take.text };
     }),
 
   count: protectedProcedure
@@ -426,6 +559,103 @@ export const applicationsRouter = {
         actorUserId: userId
       });
       return toApplicationOutputWithListing(updated);
+    }),
+
+  /**
+   * Hub JD card Dismiss: persist the listing as dismissed (or archive inbox).
+   * Already-tracked rows stay tracked — only the proposal is closed.
+   */
+  dismissFromHub: protectedProcedure
+    .route({
+      description: "Dismiss a hub JD proposal: create-if-absent as dismissed, or archive inbox",
+      method: "POST"
+    })
+    .input(CreateApplicationInputSchema)
+    .output(ApplicationOutputSchema)
+    .errors({
+      NOT_FOUND: { message: "Resume not found" }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      if (!(await isResumeOwned(input.resumeId, userId))) {
+        throw errors.NOT_FOUND();
+      }
+      const sourceTags =
+        input.sourceTags ??
+        buildApplicationSourceTags({ channel: "hub", platform: input.source ?? null });
+      const trimmedUrl = input.url?.trim();
+      const rawUrl = trimmedUrl && trimmedUrl.length > 0 ? trimmedUrl : null;
+      const listingUrl = rawUrl ? (canonicalizeJobUrl(rawUrl) ?? rawUrl) : null;
+
+      const common = {
+        userId,
+        companyName: input.companyName,
+        title: input.title,
+        applyUrl: input.applyUrl ?? null,
+        applyMethod: input.applyMethod,
+        matchScore: input.matchScore ?? null,
+        source: input.source ?? null,
+        sourceTags,
+        location: input.location ?? null,
+        salaryRange: input.salaryRange ?? null,
+        employmentType: input.employmentType,
+        description: input.description ?? null,
+        notes: input.notes ?? null,
+        trackingStatus: "dismissed" as const,
+        stage: input.stage,
+        hiringUrgency: input.hiringUrgency,
+        resumeId: input.resumeId ?? null
+      };
+
+      if (listingUrl) {
+        const { row, created } = await applicationRepository.createIfAbsentByUrl({
+          ...common,
+          url: listingUrl
+        });
+        if (created) {
+          await applicationActivityRepository.append({
+            userId,
+            applicationId: row.id,
+            kind: "dismissed",
+            actorUserId: userId,
+            metadata: { via: "hub_jd_dismiss" }
+          });
+          return toApplicationOutputWithListing(row);
+        }
+        if (row.trackingStatus === "dismissed") {
+          return toApplicationOutputWithListing(row);
+        }
+        if (row.trackingStatus === "inbox") {
+          const updated = await applicationRepository.setTrackingStatus(
+            row.id,
+            userId,
+            "dismissed"
+          );
+          if (!updated) throw errors.NOT_FOUND();
+          await applicationActivityRepository.append({
+            userId,
+            applicationId: row.id,
+            kind: "dismissed",
+            actorUserId: userId,
+            metadata: { via: "hub_jd_dismiss", from: "inbox" }
+          });
+          return toApplicationOutputWithListing(updated);
+        }
+        return toApplicationOutputWithListing(row);
+      }
+
+      const created = await applicationRepository.create({
+        ...common,
+        url: null
+      });
+      await applicationActivityRepository.append({
+        userId,
+        applicationId: created.id,
+        kind: "dismissed",
+        actorUserId: userId,
+        metadata: { via: "hub_jd_dismiss" }
+      });
+      return toApplicationOutputWithListing(created);
     }),
 
   restore: protectedProcedure

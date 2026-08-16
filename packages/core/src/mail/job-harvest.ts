@@ -7,8 +7,13 @@ import {
   type ApplicationSource
 } from "#@/application/types";
 import {
+  applyInferredListingFields,
+  decodeHtmlEntities,
+  extractGuestJobCriteria,
   extractJobListingFromHtml,
   extractJobListingStructured,
+  isJobBoardCompanyName,
+  parseHiringPageTitle,
   pickBetterListingDescription,
   stripListingChromeFromHtml,
   stripListingChromeFromText,
@@ -296,21 +301,28 @@ const TRACKING_QUERY_KEYS = new Set([
   "mc_eid"
 ]);
 
+function isLinkedInHost(hostname: string): boolean {
+  const host = hostname.replace(/^www\./i, "").toLowerCase();
+  return host === "linkedin.com" || host.endsWith(".linkedin.com");
+}
+
 /**
- * Guest LinkedIn listing URL. Email `/comm/jobs/view/{id}` is an auth wall;
- * `/jobs/view/{id}` is the public page harvest and hub fetch already share.
+ * Guest LinkedIn listing URL. Email `/comm/jobs/view/{id}` and
+ * `/jobs/search-results/?currentJobId={id}` are auth walls;
+ * `/jobs/view/{id}` is the public page harvest and hub fetch share.
  */
 function rewriteLinkedInJobUrl(u: URL): URL {
-  const host = u.hostname.replace(/^www\./i, "").toLowerCase();
-  if (host !== "linkedin.com") return u;
-  const match = u.pathname.match(/\/(?:comm\/)?jobs\/view\/(\d+)/i);
-  if (!match?.[1]) return u;
-  return new URL(`https://www.linkedin.com/jobs/view/${match[1]}`);
+  if (!isLinkedInHost(u.hostname)) return u;
+  const fromPath = u.pathname.match(/\/(?:comm\/)?jobs\/view\/(\d+)/i)?.[1];
+  const fromQuery = u.searchParams.get("currentJobId");
+  const id = fromPath ?? (fromQuery && /^\d+$/.test(fromQuery) ? fromQuery : null);
+  if (!id) return u;
+  return new URL(`https://www.linkedin.com/jobs/view/${id}`);
 }
 
 /**
  * Dedup + fetch hygiene: strip tracking params, and rewrite LinkedIn email
- * `/comm/jobs/view/{id}` to the guest `/jobs/view/{id}` URL.
+ * `/comm/jobs/view/{id}` and search-results `currentJobId` to guest `/jobs/view/{id}`.
  */
 export function canonicalizeJobUrl(raw: string): string | null {
   try {
@@ -564,6 +576,7 @@ export function isGarbageCompany(company: string): boolean {
   const c = company.trim();
   if (c.length < 2 || c.length > 120) return true;
   if (/^unknown company$/i.test(c)) return true;
+  if (isJobBoardCompanyName(c)) return true;
   if (/^apply /i.test(c)) return true;
   if (/^view job/i.test(c)) return true;
   if (/^https?:/i.test(c)) return true;
@@ -877,18 +890,13 @@ export function harvestJobsFromMailBody(input: ExtractJobLinksInput): HarvestedJ
 }
 
 function stripTagsToText(html: string): string {
-  return html
+  const stripped = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|li|h[1-6])>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/<[^>]+>/g, " ");
+  return decodeHtmlEntities(stripped)
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]{2,}/g, " ")
@@ -917,14 +925,7 @@ export function parseLinkedInHiringTitle(pageTitle: string): {
   companyName: string | null;
   location: string | null;
 } {
-  const cleaned = pageTitle.replace(/\s*\|\s*LinkedIn\s*$/i, "").trim();
-  const m = cleaned.match(/^(.+?)\s+hiring\s+(.+?)(?:\s+in\s+(.+))?$/i);
-  if (!m) return { title: null, companyName: null, location: null };
-  return {
-    companyName: m[1]?.trim() || null,
-    title: m[2]?.trim() || null,
-    location: m[3]?.trim() || null
-  };
+  return parseHiringPageTitle(pageTitle);
 }
 
 /**
@@ -999,7 +1000,7 @@ export function extractPublicJobListingFromHtml(
     html.match(/top-card-layout__title[^>]*>([^<]+)/i)?.[1]?.trim() ??
     html.match(/class="[^"]*topcard__title[^"]*"[^>]*>([^<]+)/i)?.[1]?.trim() ??
     html.match(/<h1[^>]*class="[^"]*top-card-layout__title[^"]*"[^>]*>([^<]+)/i)?.[1]?.trim();
-  if (liTitle) out.title = liTitle.slice(0, 300);
+  if (liTitle) out.title = decodeHtmlEntities(liTitle).slice(0, 300);
 
   const liCompany =
     html.match(/topcard__org-name-link[^>]*>([^<]+)/i)?.[1]?.trim() ??
@@ -1007,15 +1008,27 @@ export function extractPublicJobListingFromHtml(
     html
       .match(/data-tracking-control-name="public_jobs_topcard-org-name"[^>]*>([^<]+)/i)?.[1]
       ?.trim();
-  if (liCompany) out.companyName = liCompany.slice(0, 300);
+  if (liCompany && !isJobBoardCompanyName(liCompany)) {
+    out.companyName = decodeHtmlEntities(liCompany).slice(0, 300);
+  }
 
   // Location often in flavor bullet next to company
   const liLocation =
     html.match(/topcard__flavor--bullet[^>]*>\s*([^<]+)/i)?.[1]?.trim() ??
     html.match(/class="[^"]*topcard__flavor[^"]*"[^>]*>\s*([^<]{2,80})/i)?.[1]?.trim();
   if (liLocation && !/ago|applicants|connections/i.test(liLocation)) {
-    out.location = liLocation.slice(0, 300);
+    out.location = decodeHtmlEntities(liLocation).slice(0, 300);
   }
+
+  const criteria = extractGuestJobCriteria(html);
+  if (criteria.employmentType && !out.employmentType) {
+    out.employmentType = criteria.employmentType;
+  }
+  if (criteria.workMode && !out.workMode) {
+    out.workMode = criteria.workMode;
+    out.workModeStated = true;
+  }
+  if (criteria.department && !out.department) out.department = criteria.department;
 
   // Prefer the dedicated posting markup — never the whole page (Similar jobs lives outside).
   const descBlock =
@@ -1083,7 +1096,7 @@ export function extractPublicJobListingFromHtml(
     else if (/\bon-?site\b/i.test(textBlob)) out.workMode = "onsite";
   }
 
-  return out;
+  return applyInferredListingFields(out);
 }
 
 /**
@@ -1099,12 +1112,14 @@ export async function extractPublicJobListingFromHtmlAsync(
   const base = extractPublicJobListingFromHtml(html, listingUrl);
   const full = await extractJobListingFromHtml(html, listingUrl);
   const out: PublicJobListingExtract = { ...base };
-  if (full.title && (!out.title || full.title.length > out.title.length)) {
-    out.title = full.title;
+  if (full.title && !out.title) out.title = full.title;
+  if (full.companyName && !out.companyName && !isJobBoardCompanyName(full.companyName)) {
+    out.companyName = full.companyName;
   }
-  if (full.companyName && !out.companyName) out.companyName = full.companyName;
   if (full.location && !out.location) out.location = full.location;
   if (full.workMode && !out.workMode) out.workMode = full.workMode;
+  if (full.employmentType && !out.employmentType) out.employmentType = full.employmentType;
+  if (full.department && !out.department) out.department = full.department;
   if (full.applyMethod && !out.applyMethod) out.applyMethod = full.applyMethod;
   if (full.listingClosed) out.listingClosed = true;
   const picked = pickBetterListingDescription(out.description, full.description);
@@ -1200,6 +1215,10 @@ export function formatJobPageTextForLlm(input: {
     if (e.location) parts.push(`location: ${e.location}`);
     if (e.applyMethod) parts.push(`applyMethod: ${e.applyMethod}`);
     if (e.workMode) parts.push(`workMode: ${e.workMode}`);
+    if (e.employmentType) parts.push(`employmentType: ${e.employmentType}`);
+    if (e.department) parts.push(`department: ${e.department}`);
+    if (e.experience) parts.push(`experience: ${e.experience}`);
+    if (e.skills && e.skills.length > 0) parts.push(`skills: ${e.skills.join(", ")}`);
     if (e.description) {
       const desc = stripListingChromeFromText(e.description).slice(0, 8_000);
       parts.push(`description:\n${desc}`);

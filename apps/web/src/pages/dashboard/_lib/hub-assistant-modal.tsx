@@ -3,13 +3,18 @@
 import { AssistantModalPrimitive } from "@assistant-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useSyncExternalStore } from "react";
 
 import { hubPersonalityAvatarSeed } from "@tsu-stack/core";
 import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import {
+  consumeOpenHubAssistant,
+  getHubAssistantOpenPending,
+  subscribeHubAssistantOpen
+} from "@/features/agent-hub";
 import { getAiSettingsQueryOptions } from "@/features/ai-settings";
 
 import { useSidePanel } from "@/widgets/layout";
@@ -32,9 +37,21 @@ export function HubAssistantModal({ className }: { className?: string }) {
   const { hasContent } = useSidePanel();
   const aiSettings = useQuery(getAiSettingsQueryOptions());
   const avatarSeed = hubPersonalityAvatarSeed(aiSettings.data?.hubPersonality);
+  const pendingOpen = useSyncExternalStore(
+    subscribeHubAssistantOpen,
+    getHubAssistantOpenPending,
+    getHubAssistantOpenPending
+  );
+  const visible = open || pendingOpen;
 
   return (
-    <AssistantModalPrimitive.Root open={open} onOpenChange={setOpen}>
+    <AssistantModalPrimitive.Root
+      open={visible}
+      onOpenChange={(next) => {
+        if (!next) consumeOpenHubAssistant();
+        setOpen(next);
+      }}
+    >
       <AssistantModalPrimitive.Anchor
         className={cn(
           "fixed z-40",
@@ -55,7 +72,7 @@ export function HubAssistantModal({ className }: { className?: string }) {
             />
           }
         >
-          <AgentAvatar seed={avatarSeed} size={28} animated={open} aria-hidden />
+          <AgentAvatar seed={avatarSeed} size={28} animated={visible} aria-hidden />
         </AssistantModalPrimitive.Trigger>
       </AssistantModalPrimitive.Anchor>
       <AssistantModalPrimitive.Content
@@ -85,7 +102,7 @@ export function HubAssistantModal({ className }: { className?: string }) {
           </AssistantModalPrimitive.Trigger>
         </div>
         <div className="min-h-0 flex-1">
-          {open ? (
+          {visible ? (
             <Suspense fallback={null}>
               <AgentHubThread />
             </Suspense>

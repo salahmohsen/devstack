@@ -230,6 +230,48 @@ export const RefreshApplicationFromUrlInputSchema = z.object({
   url: z.string().url().max(2_000)
 });
 
+/** Hub card: hydrate a listing URL without creating a CRM row. */
+export const PreviewListingInputSchema = z.object({
+  url: z.string().url().max(2_000)
+});
+export const PreviewListingOutputSchema = z.object({
+  ok: z.boolean(),
+  title: z.string().nullable(),
+  companyName: z.string().nullable(),
+  location: z.string().nullable(),
+  description: z.string().nullable(),
+  workMode: WorkModeSchema.nullable(),
+  salaryRange: z.string().nullable(),
+  employmentType: EmploymentTypeSchema.nullable(),
+  department: z.string().nullable(),
+  datePosted: z.string().nullable(),
+  experience: z.string().nullable(),
+  requiredSkills: z.array(z.string()),
+  preferredSkills: z.array(z.string()),
+  matchScore: z.number().min(0).max(100).nullable().optional(),
+  error: z.string().optional()
+});
+export type PreviewListingOutput = z.infer<typeof PreviewListingOutputSchema>;
+
+/** Hub card: write an agent take from hydrated listing fields (no CRM row). */
+export const PreviewListingTakeInputSchema = z.object({
+  title: z.string().min(1).max(300),
+  companyName: z.string().min(1).max(200),
+  location: z.string().max(200).nullable().optional(),
+  employmentType: EmploymentTypeSchema.nullable().optional(),
+  salaryRange: z.string().max(200).nullable().optional(),
+  matchScore: z.number().min(0).max(100).nullable().optional(),
+  description: z.string().max(50_000).nullable().optional(),
+  listingUrl: z.string().url().max(2_000).optional()
+});
+export const PreviewListingTakeOutputSchema = z.object({
+  ok: z.boolean(),
+  text: z.string().nullable(),
+  error: z.string().optional()
+});
+export type PreviewListingTakeInput = z.infer<typeof PreviewListingTakeInputSchema>;
+export type PreviewListingTakeOutput = z.infer<typeof PreviewListingTakeOutputSchema>;
+
 /** Manual “Scan job alerts” — re-harvest recent job_notifier digests. */
 export const ScanJobAlertsInputSchema = z
   .object({

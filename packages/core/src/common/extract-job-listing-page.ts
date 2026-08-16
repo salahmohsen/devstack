@@ -12,6 +12,7 @@
 
 import { extractFromHtml } from "@extractus/article-extractor";
 
+import { extractSkillMentions } from "#@/application/job-skills";
 import { type ApplicationApplyMethod, type ApplicationSource } from "#@/application/types";
 import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
 import { type WorkMode } from "#@/job-preference/types";
@@ -28,6 +29,12 @@ export type ListingPageExtract = {
   workModeStated?: boolean;
   hiringRegion?: string | null;
   employmentType?: string | null;
+  /** Team / function chip from ATS chrome (e.g. Engineering). */
+  department?: string | null;
+  /** ISO date `YYYY-MM-DD` when the posting states a publish day. */
+  datePosted?: string | null;
+  /** Stated experience band, e.g. `4+ years of experience`. */
+  experience?: string | null;
   skills?: string[];
   source?: ApplicationSource;
   listingClosed?: boolean;
@@ -69,9 +76,173 @@ export function normalizeStatedWorkMode(value: unknown): WorkMode | null {
     .toLowerCase()
     .replace(/[_\s-]+/g, "");
   if (compact === "remote" || compact === "telecommute" || compact === "wfh") return "remote";
-  if (compact === "hybrid") return "hybrid";
+  if (compact === "hybrid" || compact === "remotehybrid" || compact === "hybridremote") {
+    return "hybrid";
+  }
   if (compact === "onsite") return "onsite";
   return null;
+}
+
+/** ISO calendar day from schema.org `datePosted` / ATS publish fields. */
+export function normalizeDatePosted(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const match = value.trim().match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? null;
+}
+
+/** First stated experience band (`4+ years`, `at least 5 years of experience`). */
+export function extractExperienceFromDescription(text: string): string | null {
+  const match =
+    text.match(/\b(\d+\s*\+\s*years?(?:\s+of\s+experience)?)\b/i) ??
+    text.match(/\b(at\s+least\s+\d+\s*years?(?:\s+of\s+experience)?)\b/i) ??
+    text.match(/\b(\d+\s*years?\s+of\s+experience)\b/i);
+  if (!match?.[1]) return null;
+  return match[1].replace(/\s+/g, " ");
+}
+
+/** Board chrome mis-read as the employer (`LinkedIn`, `Company unavailable (LinkedIn listing)`). */
+export function isJobBoardCompanyName(company: string): boolean {
+  const c = company.trim();
+  if (/^(linkedin|indeed|glassdoor)(\s+listing)?$/i.test(c)) return true;
+  if (/\b(linkedin|indeed|glassdoor)\s+listing\b/i.test(c)) return true;
+  if (/^company unavailable\b/i.test(c)) return true;
+  return false;
+}
+
+/**
+ * "Yassir hiring Senior Frontend Engineer in Cairo, Egypt | LinkedIn"
+ * (and Indeed / Glassdoor equivalents).
+ */
+export function parseHiringPageTitle(pageTitle: string): {
+  title: string | null;
+  companyName: string | null;
+  location: string | null;
+} {
+  const cleaned = pageTitle.replace(/\s*\|\s*(LinkedIn|Indeed|Glassdoor)\s*$/i, "").trim();
+  const match = cleaned.match(/^(.+?)\s+hiring\s+(.+?)(?:\s+in\s+(.+))?$/i);
+  if (!match) return { title: null, companyName: null, location: null };
+  const companyName = match[1]?.trim() || null;
+  return {
+    companyName: companyName && !isJobBoardCompanyName(companyName) ? companyName : null,
+    title: match[2]?.trim() || null,
+    location: match[3]?.trim() || null
+  };
+}
+
+/** Named + numeric HTML entities (`&apos;`, `&#39;`, `&#x27;`). */
+export function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (raw, hex: string) => {
+      const code = Number.parseInt(hex, 16);
+      if (!Number.isFinite(code) || code < 0 || code > 0x10ffff) return raw;
+      return String.fromCodePoint(code);
+    })
+    .replace(/&#(\d+);/g, (raw, dec: string) => {
+      const code = Number.parseInt(dec, 10);
+      if (!Number.isFinite(code) || code < 0 || code > 0x10ffff) return raw;
+      return String.fromCodePoint(code);
+    });
+}
+
+const JOB_CRITERIA_ITEM =
+  /<h3[^>]*job-criteria-subheader[^>]*>\s*([^<]+?)\s*<\/h3>\s*<span[^>]*job-criteria-text[^>]*>\s*([^<]+?)\s*<\/span>/gi;
+
+/**
+ * LinkedIn guest (and similar) labeled criteria: Employment type, Workplace type.
+ * Does not invent Hybrid when the page never states a workplace type.
+ */
+export function extractGuestJobCriteria(
+  html: string
+): Pick<ListingPageExtract, "employmentType" | "workMode" | "workModeStated" | "department"> {
+  const out: Pick<
+    ListingPageExtract,
+    "employmentType" | "workMode" | "workModeStated" | "department"
+  > = {};
+  for (const match of html.matchAll(JOB_CRITERIA_ITEM)) {
+    const label = decodeHtmlEntities(match[1] ?? "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+    const value = decodeHtmlEntities(match[2] ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!label || !value || /^not applicable$/i.test(value)) continue;
+    if (label === "employment type") {
+      const employmentType = normalizeStatedEmploymentType(value);
+      if (employmentType) out.employmentType = employmentType;
+    } else if (label === "workplace type" || label === "work type") {
+      const workMode = normalizeStatedWorkMode(value);
+      if (workMode) {
+        out.workMode = workMode;
+        out.workModeStated = true;
+      }
+    } else if ((label === "job function" || label === "department") && value.length <= 80) {
+      out.department = value;
+    }
+  }
+  return out;
+}
+
+/**
+ * ATS header chip: `<li class="department">…Engineering…</li>`.
+ * Ignores i18n placeholders such as `%LABEL_POSITION_TYPE_FULL_TIME%`.
+ */
+export function extractDepartmentFromHtml(html: string): string | null {
+  const item = html.match(
+    /<li[^>]*\bclass=["'][^"']*\bdepartment\b[^"']*["'][^>]*>[\s\S]*?<\/li>/i
+  )?.[0];
+  if (!item) return null;
+  const span = item.match(/<span(?![^>]*\bpolygot\b)[^>]*>\s*([^<]+?)\s*<\/span>/i)?.[1];
+  const raw = (span ?? item.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+  if (!raw || raw.length > 80 || /%[A-Z0-9_]+%/.test(raw)) return null;
+  return raw;
+}
+
+/** Catalog mention scan. Extra names are usually this user's stacks. */
+export function extractSkillsFromJobDescription(
+  text: string,
+  extraNames: readonly string[] = []
+): { required: string[]; preferred: string[] } {
+  return extractSkillMentions(text, extraNames);
+}
+
+/** Prefer hybrid when a remote posting also states a hybrid option. */
+export function refineWorkModeFromDescription(
+  workMode: WorkMode | null | undefined,
+  text: string
+): WorkMode | null {
+  const hasHybrid = /\bhybrid\b/i.test(text);
+  const hasRemote = /\bremote\b/i.test(text);
+  if (hasHybrid && (hasRemote || workMode === "remote")) return "hybrid";
+  if (workMode) return workMode;
+  if (hasHybrid) return "hybrid";
+  if (hasRemote) return "remote";
+  if (/\bon[\s-]?site\b/i.test(text)) return "onsite";
+  return null;
+}
+
+export function applyInferredListingFields(extract: ListingPageExtract): ListingPageExtract {
+  const desc = extract.description ?? "";
+  const workMode = refineWorkModeFromDescription(extract.workMode, desc);
+  if (workMode) {
+    extract.workMode = workMode;
+    extract.workModeStated = true;
+  }
+  if (!extract.skills || extract.skills.length === 0) {
+    const skills = extractSkillsFromJobDescription(desc);
+    const names = [...skills.required, ...skills.preferred];
+    if (names.length > 0) extract.skills = names;
+  }
+  if (!extract.experience && desc) {
+    extract.experience = extractExperienceFromDescription(desc);
+  }
+  return extract;
 }
 
 const TITLE_KEYS =
@@ -84,6 +255,8 @@ const LOCATION_KEYS = /^(location|job_?location|city|address|work_?location)$/i;
 const REMOTE_KEYS = /^(remote_?job|is_?remote|remote|work_?remotely|telecommute)$/i;
 const WORKPLACE_KEYS = /^(workplace_?type|work_?mode)$/i;
 const EMPLOYMENT_KEYS = /^(employment_?type)$/i;
+const DEPARTMENT_KEYS = /^(department|team|job_?function|occupational_?category)$/i;
+const DATE_POSTED_KEYS = /^(date_?posted|published_?at|posted_?at|posted_?date)$/i;
 const SKILL_FIELD_KEYS = /^(skills?|skill_?names?|required_?skills?)$/i;
 const CLOSED_KEYS = /^(is_?closed|closed|expired|publish|is_?published|active|is_?active)$/i;
 
@@ -230,19 +403,14 @@ export function decodeJsStringLiteral(content: string): string {
 }
 
 export function stripHtmlToPlainText(html: string): string {
-  return html
+  const stripped = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|li|h[1-6]|tr|section|article)>/gi, "\n")
     .replace(/<li[^>]*>/gi, "\n• ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/<[^>]+>/g, " ");
+  return decodeHtmlEntities(stripped)
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]{2,}/g, " ")
@@ -342,6 +510,9 @@ function scoreExtract(e: ListingPageExtract): number {
   if (e.workMode) s += 3;
   if (e.hiringRegion) s += 2;
   if (e.employmentType) s += 2;
+  if (e.department) s += 1;
+  if (e.datePosted) s += 1;
+  if (e.experience) s += 1;
   if (e.skills && e.skills.length > 0) s += 2;
   return s;
 }
@@ -363,6 +534,9 @@ function mergePreferRicher(
   }
   if (next.hiringRegion && !out.hiringRegion) out.hiringRegion = next.hiringRegion;
   if (next.employmentType && !out.employmentType) out.employmentType = next.employmentType;
+  if (next.department && !out.department) out.department = next.department;
+  if (next.datePosted && !out.datePosted) out.datePosted = next.datePosted;
+  if (next.experience && !out.experience) out.experience = next.experience;
   if (next.skills && next.skills.length > 0 && (!out.skills || out.skills.length === 0)) {
     out.skills = next.skills;
   }
@@ -395,6 +569,8 @@ type WalkHit = {
   remote?: boolean;
   workMode?: WorkMode;
   employmentType?: string;
+  department?: string;
+  datePosted?: string;
   hiringRegion?: string;
   skills?: string[];
   closed?: boolean;
@@ -447,6 +623,11 @@ export function walkJsonForJobFields(root: unknown): WalkHit {
         } else if (EMPLOYMENT_KEYS.test(key)) {
           const employmentType = normalizeStatedEmploymentType(trimmed);
           if (employmentType) hit.employmentType ??= employmentType;
+        } else if (DEPARTMENT_KEYS.test(key) && trimmed.length >= 2 && trimmed.length <= 80) {
+          hit.department ??= trimmed.slice(0, 80);
+        } else if (DATE_POSTED_KEYS.test(key)) {
+          const posted = normalizeDatePosted(trimmed);
+          if (posted) hit.datePosted ??= posted;
         } else if (SKILL_FIELD_KEYS.test(key)) {
           const skills = asSkillList(trimmed);
           if (skills.length > 0) hit.skills ??= skills;
@@ -510,6 +691,8 @@ function hitToExtract(
     out.workModeStated = true;
   }
   if (hit.employmentType) out.employmentType = hit.employmentType;
+  if (hit.department) out.department = hit.department;
+  if (hit.datePosted) out.datePosted = hit.datePosted;
   if (hit.hiringRegion) out.hiringRegion = hit.hiringRegion;
   else if (hit.location) {
     const region = normalizeHiringRegion(hit.location);
@@ -585,11 +768,19 @@ export function extractJsonLdJobPostings(html: string): ListingPageExtract | nul
         }
       }
       if (o.jobLocationType === "TELECOMMUTE" || o.jobLocationType === "remote") {
-        extract.workMode = "remote";
+        extract.workMode =
+          refineWorkModeFromDescription("remote", extract.description ?? "") ?? "remote";
         extract.workModeStated = true;
       }
       const employmentType = normalizeStatedEmploymentType(o.employmentType);
       if (employmentType) extract.employmentType = employmentType;
+      const posted = normalizeDatePosted(o.datePosted);
+      if (posted) extract.datePosted = posted;
+      const occupational =
+        typeof o.occupationalCategory === "string" ? o.occupationalCategory.trim() : "";
+      if (occupational.length >= 2 && occupational.length <= 80) {
+        extract.department = occupational;
+      }
       const requirementText = firstPlaceText(o.applicantLocationRequirements);
       if (!extract.location && requirementText) {
         extract.location = requirementText.slice(0, 200);
@@ -609,7 +800,7 @@ export function extractJsonLdJobPostings(html: string): ListingPageExtract | nul
       const sc = scoreExtract(extract);
       if (sc > bestScore) {
         bestScore = sc;
-        best = extract;
+        best = applyInferredListingFields(extract);
       }
     }
   }
@@ -730,30 +921,41 @@ function extractMetaListing(html: string): ListingPageExtract {
     metaContent(html, "description");
 
   if (ogTitle) {
-    // "Company - Role" / "Role | Company"
-    const dash = ogTitle.match(/^(.+?)\s+[–—-]\s+(.+?)(?:\s+[–—-]\s+.+)?$/);
-    const pipe = ogTitle.match(/^(.+?)\s*\|\s*(.+)$/);
-    if (dash) {
-      // Prefer longer side as title when it looks like a role
-      const a = dash[1]!.trim();
-      const b = dash[2]!.trim();
-      if (/\b(engineer|developer|designer|manager|analyst|lead|intern)\b/i.test(b)) {
-        out.companyName = a.slice(0, 200);
-        out.title = b.slice(0, 300);
-      } else if (/\b(engineer|developer|designer|manager|analyst|lead|intern)\b/i.test(a)) {
-        out.title = a.slice(0, 300);
-        out.companyName = b.slice(0, 200);
+    const hiring = parseHiringPageTitle(ogTitle);
+    if (hiring.title) out.title = hiring.title.slice(0, 300);
+    if (hiring.companyName) out.companyName = hiring.companyName.slice(0, 200);
+    if (hiring.location) out.location = hiring.location.slice(0, 300);
+    if (!out.title) {
+      // "Company - Role" / "Role | Company"
+      const dash = ogTitle.match(/^(.+?)\s+[–—-]\s+(.+?)(?:\s+[–—-]\s+.+)?$/);
+      const pipe = ogTitle.match(/^(.+?)\s*\|\s*(.+)$/);
+      if (dash) {
+        const a = dash[1]!.trim();
+        const b = dash[2]!.trim();
+        if (/\b(engineer|developer|designer|manager|analyst|lead|intern)\b/i.test(b)) {
+          if (!isJobBoardCompanyName(a)) out.companyName = a.slice(0, 200);
+          out.title = b.slice(0, 300);
+        } else if (/\b(engineer|developer|designer|manager|analyst|lead|intern)\b/i.test(a)) {
+          out.title = a.slice(0, 300);
+          if (!isJobBoardCompanyName(b)) out.companyName = b.slice(0, 200);
+        } else {
+          out.title = ogTitle.replace(/\s*\|\s*(LinkedIn|Indeed|Glassdoor)\s*$/i, "").slice(0, 300);
+        }
+      } else if (pipe) {
+        out.title = pipe[1]!.trim().slice(0, 300);
+        const rhs = pipe[2]!.trim();
+        if (!isJobBoardCompanyName(rhs)) out.companyName ??= rhs.slice(0, 200);
       } else {
-        out.title = ogTitle.replace(/\s*\|\s*LinkedIn\s*$/i, "").slice(0, 300);
+        out.title = ogTitle.replace(/\s*\|\s*(LinkedIn|Indeed|Glassdoor)\s*$/i, "").slice(0, 300);
       }
-    } else if (pipe) {
-      out.title = pipe[1]!.trim().slice(0, 300);
-      out.companyName ??= pipe[2]!.trim().slice(0, 200);
-    } else {
-      out.title = ogTitle.replace(/\s*\|\s*LinkedIn\s*$/i, "").slice(0, 300);
     }
   }
-  if (ogSite && !out.companyName) out.companyName = ogSite.slice(0, 200);
+  if (ogSite && !out.companyName && !isJobBoardCompanyName(ogSite)) {
+    out.companyName = ogSite.slice(0, 200);
+  }
+  if (out.companyName && isJobBoardCompanyName(out.companyName)) {
+    delete out.companyName;
+  }
   // Keep short meta teasers too — callers use isThinJobDescription on the string.
   // (Previously length > 40 dropped one-liners and left description undefined.)
   if (ogDesc?.trim()) {
@@ -840,8 +1042,21 @@ export function extractJobListingStructured(
   if (out.description) {
     out.description = stripListingChromeFromText(out.description).slice(0, MAX_DESC_CHARS);
   }
+  if (!out.department) {
+    const department = extractDepartmentFromHtml(html);
+    if (department) out.department = department;
+  }
+  const criteria = extractGuestJobCriteria(html);
+  if (criteria.employmentType && !out.employmentType) {
+    out.employmentType = criteria.employmentType;
+  }
+  if (criteria.workMode && !out.workMode) {
+    out.workMode = criteria.workMode;
+    out.workModeStated = true;
+  }
+  if (criteria.department && !out.department) out.department = criteria.department;
 
-  return out;
+  return applyInferredListingFields(out);
 }
 
 /**

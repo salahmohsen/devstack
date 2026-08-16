@@ -1,7 +1,8 @@
-import { Check, ShieldAlert, X } from "lucide-react";
-
-import { Alert, AlertAction, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { Button } from "@tsu-stack/ui/components/button";
+
+import { summarizeHubApproval } from "@/features/agent-hub/lib/hub-approval-summary";
+
+import { HubHitlFrame } from "./hub-hitl-frame";
 
 type AgentHubToolApprovalProps = {
   toolName: string;
@@ -12,8 +13,8 @@ type AgentHubToolApprovalProps = {
 };
 
 /**
- * HITL approval card for requireToolApproval tools (generate-apply-package).
- * Progressive warning Alert + actions — not a modal.
+ * HITL approval card for requireToolApproval tools.
+ * Progressive warning Alert / confirm via HubHitlFrame — not a modal.
  */
 export function AgentHubToolApproval({
   toolName,
@@ -22,40 +23,24 @@ export function AgentHubToolApproval({
   onDecline,
   isPending = false
 }: AgentHubToolApprovalProps) {
-  const argEntries = Object.entries(args);
-  const hasArgs = argEntries.length > 0;
+  const summary = summarizeHubApproval(toolName, args);
 
   return (
-    <Alert
-      variant="warning"
-      className="mx-auto w-full max-w-3xl"
-      role="alertdialog"
-      aria-label="Tool approval required"
-    >
-      <ShieldAlert aria-hidden />
-      <AlertTitle>Approval required</AlertTitle>
-      <AlertDescription className="gap-2">
-        <p className="m-0">
-          The hub wants to run{" "}
-          <span className="font-mono text-xs font-medium text-foreground">{toolName}</span>. Review
-          the arguments before continuing.
-        </p>
-        {hasArgs ? (
-          <pre className="max-h-28 overflow-auto rounded-lg border border-border/60 bg-background/80 p-2 font-mono text-xs text-muted-foreground">
-            {JSON.stringify(args, null, 2)}
-          </pre>
-        ) : null}
-      </AlertDescription>
-      <AlertAction>
-        <Button size="sm" onClick={onApprove} disabled={isPending} loading={isPending}>
-          <Check className="size-3.5" aria-hidden />
-          Approve
-        </Button>
-        <Button variant="destructive" size="sm" onClick={onDecline} disabled={isPending}>
-          <X className="size-3.5" aria-hidden />
-          Decline
-        </Button>
-      </AlertAction>
-    </Alert>
+    <HubHitlFrame
+      kind={summary.kind}
+      title={summary.title}
+      description={summary.body}
+      submitting={isPending}
+      footer={
+        <>
+          <Button size="sm" onClick={onApprove} disabled={isPending} loading={isPending} autoFocus>
+            {summary.primaryLabel}
+          </Button>
+          <Button variant="destructive" size="sm" onClick={onDecline} disabled={isPending}>
+            {summary.secondaryLabel}
+          </Button>
+        </>
+      }
+    />
   );
 }

@@ -60,7 +60,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("returns true after user completes propose-from-jd via addToolOutput", () => {
+  it("does not resume after the user saves a JD proposal", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -70,12 +70,12 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
               toolCallId: "t2",
               toolName: "propose-application-from-jd",
               state: "output-available",
-              output: { action: "save" }
+              output: { action: "save", applicationId: "app-1" }
             } as never
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("returns true when client tool completed before a later empty step-start (not yet continued)", () => {
@@ -233,6 +233,24 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(true);
   });
 
+  it("does not resume after the user dismisses a JD proposal", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-application-from-jd",
+              toolCallId: "t2",
+              toolName: "propose-application-from-jd",
+              state: "output-available",
+              output: { action: "dismiss" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
   it("ignores providerExecuted client-named tools (server already ran them)", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
@@ -252,7 +270,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("still resumes save when only premature awaiting text followed (create-application not yet run)", () => {
+  it("does not resume save even when premature awaiting text followed", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -269,7 +287,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("stops after create-application already ran following save", () => {
@@ -401,7 +419,7 @@ describe("shouldAutoResumeHubChat", () => {
     ).toBe(false);
   });
 
-  it("auto-resumes after propose card output", () => {
+  it("does not auto-resume after a JD package choice", () => {
     expect(
       shouldAutoResumeHubChat({
         messages: [
@@ -411,11 +429,11 @@ describe("shouldAutoResumeHubChat", () => {
               toolCallId: "p1",
               toolName: "proposeApplicationFromJd",
               state: "output-available",
-              output: { action: "package" }
+              output: { action: "package", applicationId: "app-1" }
             } as never
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 });

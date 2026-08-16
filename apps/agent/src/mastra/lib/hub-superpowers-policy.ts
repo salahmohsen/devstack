@@ -100,6 +100,93 @@ export function isHubClientHitlToolName(name: string): boolean {
   return HUB_CLIENT_HITL_TOOL_NAMES.has(name);
 }
 
+/**
+ * Silent listing prelude: fetch/extract only. Mastra registers supervisor
+ * agents as `agent-<registrationKey>` (screenshot: `agent-jobPageExtractor`).
+ */
+export const HUB_JOB_PAGE_EXTRACT_TOOL_NAMES = new Set([
+  "jobPageExtractor",
+  "job-page-extractor",
+  "agent-jobPageExtractor",
+  "agent-job-page-extractor",
+  "fetch-job-page",
+  "fetchJobPage"
+]);
+
+export function isProposeApplicationFromJdToolName(name: string): boolean {
+  return name === "propose-application-from-jd" || name === "proposeApplicationFromJd";
+}
+
+export function isHubJobPageExtractToolName(name: string): boolean {
+  if (HUB_JOB_PAGE_EXTRACT_TOOL_NAMES.has(name)) return true;
+  const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;
+  return /jobPageExtractor|job-page-extractor|fetch-job-page|fetchJobPage/i.test(bare);
+}
+
+const HTTP_URL_RE = /https?:\/\/[^\s)>\]]+/gi;
+
+/** LinkedIn `/jobs/view/`, ATS boards, and `/jobs|careers|positions/…` listing paths. */
+export function isJobListingUrl(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(raw.trim().replace(/[.,;:]+$/, ""));
+  } catch {
+    return false;
+  }
+  if (!/^https?:$/i.test(url.protocol)) return false;
+  const host = url.hostname.toLowerCase();
+  const path = url.pathname.toLowerCase();
+
+  if (host.includes("linkedin.") && /\/(?:comm\/)?jobs\//.test(path)) return true;
+  if (host.includes("indeed.") && (path.includes("viewjob") || path.includes("/job"))) return true;
+  if (
+    host.includes("greenhouse.io") ||
+    host.includes("lever.co") ||
+    host.includes("ashbyhq.com") ||
+    host.includes("myworkdayjobs.com") ||
+    host.includes("wellfound.com") ||
+    host.includes("angel.co") ||
+    host.includes("otta.com") ||
+    host.includes("glassdoor.") ||
+    host.includes("ziprecruiter.") ||
+    host.includes("smartrecruiters.") ||
+    host.includes("jobvite.") ||
+    host.includes("workable.com") ||
+    host.includes("bamboohr.com")
+  ) {
+    return true;
+  }
+  if (host.includes("github.")) return false;
+  return /\/(jobs?|careers?|positions?)\/.+/.test(path);
+}
+
+export function extractJobListingUrlFromText(text: string): string | null {
+  const matches = text.match(HTTP_URL_RE) ?? [];
+  for (const raw of matches) {
+    const cleaned = raw.replace(/[.,;:]+$/, "");
+    if (isJobListingUrl(cleaned)) return cleaned;
+  }
+  return null;
+}
+
+/** URL-only (or URL + short intent). Full JD paste should skip extract. */
+export function isUrlOnlyJobListingPaste(text: string): boolean {
+  const url = extractJobListingUrlFromText(text);
+  if (!url) return false;
+  const remainder = text.replace(url, "").replace(HTTP_URL_RE, "").replace(/\s+/g, " ").trim();
+  return remainder.length < 120;
+}
+
+export const HUB_JOB_URL_IMPORT_FEEDBACK =
+  "The user pasted a job listing URL. Extract only as a silent prelude if you still need page text (`jobPageExtractor`). Then you MUST call propose-application-from-jd with title, companyName, the FULL job description (all sections from the page — not an 800-char teaser), url (the listing URL), applyUrl, location, numeric matchScore 0–100, notes (1–3 sentence agent's take vs the seeker), and when stated: workMode, salaryRange, requiredSkills[], preferredSkills[]. If extract fails or the page is a login wall, still propose with that url and an empty description. Emit ZERO user-facing text until the proposal card. Never dump extractor JSON or restate the listing as prose.";
+
+/** Extract ran this iteration; the JD card has not been proposed yet. */
+export function shouldForceProposeApplicationFromJd(toolNames: readonly string[]): boolean {
+  const extractCalled = toolNames.some((name) => isHubJobPageExtractToolName(name));
+  const proposeCalled = toolNames.some((name) => isProposeApplicationFromJdToolName(name));
+  return extractCalled && !proposeCalled;
+}
+
 /** Stop the agentic loop while a client confirmation card is still waiting. */
 export function shouldStopHubLoopAfterClientHitl(ctx: {
   toolCalls: Array<{ id: string; name: string }>;

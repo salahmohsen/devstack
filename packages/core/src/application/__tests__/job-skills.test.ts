@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildJobSkillLinkPrompt,
+  extractSkillMentions,
   resolveJobSkillTags,
   sanitizeLinkedJobSkills
 } from "#@/application/job-skills";
@@ -50,6 +51,47 @@ describe("resolveJobSkillTags", () => {
     expect(resolveJobSkillTags([{ name: "REACT", band: "required" }], stacks)).toEqual([
       { name: "REACT", stackId: "stack-react", band: "required" }
     ]);
+  });
+});
+
+describe("extractSkillMentions", () => {
+  it("maps JD spellings onto canonical display names", () => {
+    const skills = extractSkillMentions(
+      "Utilize React.js, Next.js, React Query, Styled Components and Tailwind."
+    );
+    expect(skills.required).toEqual(
+      expect.arrayContaining([
+        "React",
+        "Next.js",
+        "TanStack Query",
+        "Styled Components",
+        "Tailwind CSS"
+      ])
+    );
+    expect(skills.required).not.toEqual(expect.arrayContaining(["React.js", "React Query"]));
+  });
+
+  it("matches caller extras that are outside the product catalog", () => {
+    const skills = extractSkillMentions(
+      "Required: Kafka, Terraform, and React. Nice to have: Figma.",
+      ["Kafka", "Terraform", "Figma"]
+    );
+    expect(skills.required).toEqual(expect.arrayContaining(["Kafka", "Terraform", "React"]));
+    expect(skills.preferred).toEqual(["Figma"]);
+  });
+
+  it("does not invent skills that are not in the catalog", () => {
+    const skills = extractSkillMentions("We use COBOL, Fortran, and a supermarket POS terminal.");
+    expect(skills.required).toEqual([]);
+    expect(skills.preferred).toEqual([]);
+  });
+
+  it("keeps a user stack spelling when it overlaps a canonical alias", () => {
+    const skills = extractSkillMentions("Experience with React Query and Next.js.", [
+      "React Query"
+    ]);
+    expect(skills.required).toEqual(expect.arrayContaining(["React Query", "Next.js"]));
+    expect(skills.required).not.toContain("TanStack Query");
   });
 });
 

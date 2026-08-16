@@ -5,7 +5,8 @@ import * as React from "react";
 import { type ProposeNewJobsTriageOutput, type ProposeNewJobsTriageRow } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
-import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { HubHitlFrame } from "./hub-hitl-frame";
 
 export type NewJobsTriageCardInput = {
   track: ProposeNewJobsTriageRow[];
@@ -141,43 +142,46 @@ export function NewJobsTriageCard({
   }, [locked, onSubmit]);
 
   return (
-    <div
-      className={cn(
-        "w-full max-w-[min(72ch,100%)] space-y-4 rounded-xl border border-border/60 bg-muted/30 p-4",
-        className
-      )}
-      data-tool-call-id={toolCallId}
+    <HubHitlFrame
+      kind="recommendation"
+      title="New jobs triage"
+      description="Uncheck anything you want to skip, then confirm. No jobs change until you confirm."
+      toolCallId={toolCallId}
+      submitting={submitting}
+      className={className}
+      footer={
+        <>
+          <Button type="button" size="sm" disabled={locked} onClick={handleConfirm} autoFocus>
+            Confirm triage
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={locked}
+            onClick={handleCancel}
+          >
+            Cancel
+          </Button>
+        </>
+      }
     >
-      <div>
-        <h3 className="text-sm font-semibold text-foreground">New jobs triage</h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Uncheck anything you want to skip, then confirm. No jobs change until you confirm.
-        </p>
+      <div className="space-y-4">
+        <RowList
+          label="Track"
+          rows={input.track}
+          checked={trackChecked}
+          onToggle={toggleTrack}
+          locked={locked}
+        />
+        <RowList
+          label="Dismiss"
+          rows={input.dismiss}
+          checked={dismissChecked}
+          onToggle={toggleDismiss}
+          locked={locked}
+        />
       </div>
-
-      <RowList
-        label="Track"
-        rows={input.track}
-        checked={trackChecked}
-        onToggle={toggleTrack}
-        locked={locked}
-      />
-      <RowList
-        label="Dismiss"
-        rows={input.dismiss}
-        checked={dismissChecked}
-        onToggle={toggleDismiss}
-        locked={locked}
-      />
-
-      <div className="flex flex-wrap gap-2 pt-1">
-        <Button type="button" size="sm" disabled={locked} onClick={handleConfirm}>
-          Confirm triage
-        </Button>
-        <Button type="button" size="sm" variant="outline" disabled={locked} onClick={handleCancel}>
-          Cancel
-        </Button>
-      </div>
-    </div>
+    </HubHitlFrame>
   );
 }

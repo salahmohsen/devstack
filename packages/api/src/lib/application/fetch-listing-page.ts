@@ -1,4 +1,5 @@
 import {
+  canonicalizeJobUrl,
   extractPublicJobListingFromHtmlAsync,
   fetchPublicHtmlAsText,
   formatJobPageTextForLlm,
@@ -25,14 +26,22 @@ export type FetchListingPageResult = {
  *
  * Uses site-agnostic extract: JSON-LD → embedded SPA JSON → Readability → meta.
  */
+async function fetchListingHtml(listingUrl: string) {
+  const options = { maxChars: MAX_CHARS, includeHtml: true } as const;
+  let result = await fetchPublicHtmlAsText(listingUrl, options);
+  if (!result.ok || (result.html?.length ?? 0) < 200) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    result = await fetchPublicHtmlAsText(listingUrl, options);
+  }
+  return result;
+}
+
 export async function fetchListingPageText(url: string): Promise<FetchListingPageResult> {
-  const result = await fetchPublicHtmlAsText(url, {
-    maxChars: MAX_CHARS,
-    includeHtml: true
-  });
+  const listingUrl = canonicalizeJobUrl(url) ?? url;
+  const result = await fetchListingHtml(listingUrl);
   const extract =
     result.html && result.html.length > 200
-      ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? url)
+      ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? listingUrl)
       : null;
   const text = formatJobPageTextForLlm({
     pageText: result.text,
@@ -43,7 +52,7 @@ export async function fetchListingPageText(url: string): Promise<FetchListingPag
   return {
     ok: result.ok,
     text,
-    finalUrl: result.finalUrl,
+    finalUrl: result.finalUrl ?? listingUrl,
     status: result.status,
     title: result.title ?? extract?.title ?? null,
     extract,

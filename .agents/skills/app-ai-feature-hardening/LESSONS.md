@@ -17,6 +17,29 @@
 
 ---
 
+## 2026-08-16 — JD card save/package must land on Tracked jobs
+
+- **Trigger:** LinkedIn/JD proposal card rendered, but Save / Continue with package did not finish the CRM write or leave the home thread
+- **Finding:** After a client HITL choice the model often re-proposes or never calls `create-application`. The JD card buttons **are** the confirmation — create (and optional generate) on the client, put `applicationId` on `addToolOutput`, and do not auto-resume that save/package
+- **Finding:** Tracked jobs had no inspect deep link. Mirror projects/resumes: `?applicationId=` + `showView`, then `replace` the search. Seed the tracked list cache before navigate so the panel is not waiting on refetch
+- **Finding:** The small hub floater only mounts off `/dashboard`. Request-open **before** navigate (one-shot store). Derive `open || pending` — do not `setState` in an effect to consume the request
+- **Finding:** `features/agent-hub` cannot import `features/applications`. Own the create/generate mutations in the hub slice via oRPC
+- **User preference:** After save or package, go to Tracked jobs, open that job’s side panel, and open the small hub assistant to continue
+- **Evidence class:** Chrome — Save on Verification Flow Designer → `/dashboard/tracked-jobs`, Saved column card, inspect heading + JD, floater dialog “Hub assistant” + “You chose: Save only”
+
+## 2026-08-16 — Hub HITL card family chrome
+
+- **Trigger:** Task 6 harden 3c `HubHitlFrame` on hub Thread (JD proposal, package approval, new-jobs triage) against the worktree `:3000` / `:5200` / `:4111`
+- **Finding:** `requireToolApproval` tools often arrive as `input-available` / `status.type === "requires-action"` with `approval: null`. Gating the product card on `approval != null` falls through to ToolFallback (`Used tool:` + JSON + Allow/Deny). Treat no-result + not-complete as pending for those tools
+- **Finding:** `respondToApproval` is always a function on the part runtime, but it **throws** when `state.approval` is missing. Calling it first and returning leaves `Submitting…` forever. Prefer `addToolApprovalResponse` after lifting the part to `approval-requested` (`runId::toolCallId` from `data-tool-call-approval`). If no id exists, a local `addToolOutput` unsticks the composer
+- **Finding:** Lucide icons default to `aria-hidden="true"`. A bare `<ShieldAlert />` in coss Alert fails the “semantic alert icon” rule — pass `aria-hidden={false}`
+- **Finding:** Native `textarea` fill does not enable assistant-ui Send. Set the prototype value setter and dispatch `input` before clicking Send
+- **Finding:** Isolated Chrome cookie mint: HMAC-SHA256 of the DB `session.token` with `BETTER_AUTH_SECRET`, value `token.base64`, set `document.cookie` on `localhost` (not `127.0.0.1`). Probe `GET /auth/get-session` until the body is a session object, not `null`
+- **Finding:** Client HITL receipts (`You chose:`) live in toolkit UI state. Reload remounts incomplete `input-available` cards (history has no output). Last-message-only composer lock is correct; older live cards in the scrollback are leftover incomplete parts
+- **Finding:** After a client HITL choice the model may re-call `propose-application-from-jd` instead of `create-application` / `generate-apply-package`. Force the approval tool by name + `applicationId` when you need that chrome
+- **User preference:** Pending HITL chrome is inline Alert/Card, not AlertDialog; never dump JSON args
+- **Evidence class:** Chrome hub Thread — JD recommendation `data-hitl-kind=recommendation` + three buttons; generate-apply-package Alert title/body/Approve (no `{applicationId`); composer `Waiting for your choice…` / `Waiting for approval…`; triage Confirm/Cancel + cancel receipt; New jobs list unchanged after cancel; 29 web unit tests
+
 ## 2026-08-15 — Two-axis evaluate-then-insert hardening
 
 - **Trigger:** Task 9 harden Find now after evaluate-then-insert (hybrid-only then hybrid+remote, Settings check, New jobs Details, Dismissed `via: low_match`)

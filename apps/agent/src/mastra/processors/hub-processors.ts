@@ -7,7 +7,13 @@ import {
 
 import { hubPersonalityById } from "@tsu-stack/core";
 
-import { isHubClientHitlToolName } from "#@/mastra/lib/hub-superpowers-policy";
+import {
+  HUB_JOB_URL_IMPORT_FEEDBACK,
+  isHubClientHitlToolName,
+  isHubJobPageExtractToolName,
+  isProposeApplicationFromJdToolName,
+  isUrlOnlyJobListingPaste
+} from "#@/mastra/lib/hub-superpowers-policy";
 
 /** Align with packages/api `HUB_CHAT_MAX_STEPS` and agent defaultOptions. */
 export const HUB_SUPERVISOR_MAX_STEPS = 16 as const;
@@ -33,7 +39,11 @@ export class HubEnsureFinalResponseProcessor implements Processor {
 
     // A pending confirmation card is the user-facing UI. Forcing a last-step
     // "summarize" produces leftover "awaiting your confirmation" prose.
-    if (mastraMessagesHavePendingClientHitl(messages)) {
+    // Same for URL import: the next step must still be propose-application-from-jd.
+    if (
+      mastraMessagesHavePendingClientHitl(messages) ||
+      messagesNeedProposeAfterJobImport(messages)
+    ) {
       return;
     }
 
@@ -91,6 +101,79 @@ function mastraPartHasToolResult(part: Record<string, unknown>): boolean {
   return false;
 }
 
+function mastraMessageText(message: ProcessInputStepArgs["messages"][number]): string {
+  const chunks: string[] = [];
+  const content = message.content;
+  if (typeof content?.content === "string") chunks.push(content.content);
+  const parts = content?.parts;
+  if (Array.isArray(parts)) {
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as { type?: string; text?: unknown };
+      if (part.type === "text" && typeof part.text === "string") chunks.push(part.text);
+    }
+  }
+  return chunks.join("\n");
+}
+
+export function lastUserIsUrlOnlyJobListing(messages: ProcessInputStepArgs["messages"]): boolean {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message?.role !== "user") continue;
+    return isUrlOnlyJobListingPaste(mastraMessageText(message));
+  }
+  return false;
+}
+
+export function latestUserTurnJobImportState(messages: ProcessInputStepArgs["messages"]): {
+  urlOnly: boolean;
+  sawExtract: boolean;
+  sawPropose: boolean;
+} {
+  let afterLatestUser = false;
+  let sawExtract = false;
+  let sawPropose = false;
+  let urlOnly = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawExtract = false;
+      sawPropose = false;
+      urlOnly = isUrlOnlyJobListingPaste(mastraMessageText(message));
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const name = mastraPartToolName(raw as Record<string, unknown>);
+      if (isHubJobPageExtractToolName(name)) sawExtract = true;
+      if (isProposeApplicationFromJdToolName(name)) sawPropose = true;
+    }
+  }
+  return { urlOnly, sawExtract, sawPropose };
+}
+
+/**
+ * After the latest user turn: extractor ran and propose-application-from-jd
+ * has not been called. History from earlier turns is ignored.
+ */
+export function messagesNeedProposeAfterJobExtract(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  const state = latestUserTurnJobImportState(messages);
+  return state.sawExtract && !state.sawPropose;
+}
+
+/** URL-only paste or extract ran this turn, and the JD card has not been proposed. */
+export function messagesNeedProposeAfterJobImport(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  const state = latestUserTurnJobImportState(messages);
+  if (state.sawPropose) return false;
+  return state.sawExtract || state.urlOnly;
+}
+
 /** True when a client HITL tool was called and has not received addToolOutput yet. */
 export function mastraMessagesHavePendingClientHitl(
   messages: ProcessInputStepArgs["messages"]
@@ -113,8 +196,8 @@ export function mastraMessagesHavePendingClientHitl(
 /**
  * Hub supervisor input processors (Mastra @mastra/core/processors).
  *
- * Order: last-step completion, ToolCallFilter (drop bulky historical tool
- * payloads), then TokenLimiter so the final model context stays in budget.
+ * Order: personality, URL-import lock, last-step completion, ToolCallFilter,
+ * then TokenLimiter so the final model context stays in budget.
  *
  * @see https://mastra.ai/docs/agents/processors
  */
@@ -134,9 +217,36 @@ export class HubPersonalityProcessor implements Processor {
   }
 }
 
+/**
+ * URL-only listing paste: extract is a silent prelude; the JD card is the UI.
+ * After extract (or on first step of a listing URL), force the propose tool.
+ */
+export class HubJobUrlImportProcessor implements Processor {
+  readonly id = "hub-job-url-import";
+
+  async processInputStep({ messages, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+
+    const state = latestUserTurnJobImportState(messages);
+    if (state.sawPropose) return;
+    if (!state.sawExtract && !state.urlOnly) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_JOB_URL_IMPORT_FEEDBACK,
+      attributes: {
+        reason: state.sawExtract ? "job-extract-must-propose" : "job-url-import"
+      }
+    });
+
+    return { toolChoice: "required" as const };
+  }
+}
+
 export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_STEPS) {
   return [
     new HubPersonalityProcessor(),
+    new HubJobUrlImportProcessor(),
     new HubEnsureFinalResponseProcessor(maxSteps),
     // Keep enough recent tool-producing steps for superpowers multi-tool
     // chains (listNewJobs + evidence lists + propose → writes). filterAfter=2

@@ -1,10 +1,20 @@
 import { type UIMessage } from "ai";
 
 import {
+  ApplicationApplyMethodSchema,
+  ApplicationSourceSchema,
+  EmploymentTypeSchema,
+  WorkModeSchema,
+  type ApplicationApplyMethod,
+  type ApplicationSource,
+  type EmploymentType,
   type ProposeApplicationFromJdOutput,
   type ProposeNewJobsTriageOutput,
-  type ProposeNewJobsTriageRow
+  type ProposeNewJobsTriageRow,
+  type WorkMode
 } from "@tsu-stack/core";
+
+import { recalledJdCardAction } from "./jd-card-action-memory";
 
 /**
  * Mastra tool id plus the camelCase agent registration key. Stream UI parts
@@ -39,6 +49,16 @@ export const HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES = new Set([
 
 export const HUB_OPEN_SURFACE_TOOL_NAMES = new Set(["open-surface", "openSurface"]);
 
+/** Silent listing prelude (Mastra `agent-<key>` + kebab/camel fetch). */
+export const HUB_JOB_PAGE_EXTRACT_TOOL_NAMES = new Set([
+  "jobPageExtractor",
+  "job-page-extractor",
+  "agent-jobPageExtractor",
+  "agent-job-page-extractor",
+  "fetch-job-page",
+  "fetchJobPage"
+]);
+
 export const HUB_LIST_EXPERIENCES_TOOL_NAMES = new Set(["list-experiences", "listExperiences"]);
 
 export const HUB_GET_EXPERIENCE_TOOL_NAMES = new Set(["get-experience", "getExperience"]);
@@ -59,8 +79,18 @@ export type ProposeApplicationFromJdCardInput = {
   url?: string | null;
   applyUrl?: string | null;
   location?: string | null;
+  salaryRange?: string | null;
+  applyMethod?: ApplicationApplyMethod | null;
+  workMode?: WorkMode | null;
+  employmentType?: EmploymentType | null;
+  department?: string | null;
+  datePosted?: string | null;
+  experience?: string | null;
+  source?: ApplicationSource | null;
   matchScore?: number | null;
   notes?: string | null;
+  requiredSkills?: string[];
+  preferredSkills?: string[];
 };
 
 export type ProposeApplicationFromJdAction = ProposeApplicationFromJdOutput["action"];
@@ -116,6 +146,12 @@ export function isOpenSurfaceToolName(name: string): boolean {
   return HUB_OPEN_SURFACE_TOOL_NAMES.has(name);
 }
 
+export function isHubJobPageExtractToolName(name: string): boolean {
+  if (HUB_JOB_PAGE_EXTRACT_TOOL_NAMES.has(name)) return true;
+  const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;
+  return /jobPageExtractor|job-page-extractor|fetch-job-page|fetchJobPage/i.test(bare);
+}
+
 /** Approval-gated package / send tools (requireToolApproval). */
 export function isHubApprovalToolName(name: string): boolean {
   return (
@@ -129,23 +165,77 @@ export function isHubApprovalToolName(name: string): boolean {
   );
 }
 
+function parseEnum<T extends string>(
+  value: unknown,
+  schema: { safeParse: (v: unknown) => { success: boolean; data?: T } }
+): T | null {
+  const parsed = schema.safeParse(value);
+  return parsed.success ? (parsed.data ?? null) : null;
+}
+
 export function parseProposeApplicationFromJdInput(
   input: unknown
 ): ProposeApplicationFromJdCardInput {
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { title: "", companyName: "", description: "" };
   }
-  const o = input as Partial<ProposeApplicationFromJdCardInput>;
+  const o = input as Record<string, unknown>;
+  const notes =
+    typeof o.notes === "string" ? o.notes : typeof o.agentTake === "string" ? o.agentTake : null;
+  const url =
+    typeof o.url === "string" ? o.url : typeof o.listingUrl === "string" ? o.listingUrl : null;
   return {
     title: typeof o.title === "string" ? o.title : "",
     companyName: typeof o.companyName === "string" ? o.companyName : "",
     description: typeof o.description === "string" ? o.description : "",
-    url: typeof o.url === "string" ? o.url : null,
+    url,
     applyUrl: typeof o.applyUrl === "string" ? o.applyUrl : null,
     location: typeof o.location === "string" ? o.location : null,
-    matchScore: typeof o.matchScore === "number" ? o.matchScore : null,
-    notes: typeof o.notes === "string" ? o.notes : null
+    salaryRange: typeof o.salaryRange === "string" ? o.salaryRange : null,
+    applyMethod: parseEnum(o.applyMethod, ApplicationApplyMethodSchema),
+    workMode: parseEnum(o.workMode, WorkModeSchema),
+    employmentType: parseEnum(o.employmentType, EmploymentTypeSchema),
+    department: typeof o.department === "string" ? o.department.slice(0, 80) : null,
+    datePosted: typeof o.datePosted === "string" ? o.datePosted.slice(0, 40) : null,
+    experience: typeof o.experience === "string" ? o.experience.slice(0, 80) : null,
+    source: parseEnum(o.source, ApplicationSourceSchema),
+    matchScore: coerceMatchScore(o.matchScore),
+    notes,
+    requiredSkills: parseSkillNames(o.requiredSkills),
+    preferredSkills: parseSkillNames(o.preferredSkills)
   };
+}
+
+function parseSkillNames(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    const name =
+      typeof item === "string"
+        ? item.trim()
+        : item && typeof item === "object" && typeof (item as { name?: unknown }).name === "string"
+          ? (item as { name: string }).name.trim()
+          : "";
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name.slice(0, 80));
+    if (out.length >= 24) break;
+  }
+  return out;
+}
+
+function coerceMatchScore(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.min(100, Math.max(0, Math.round(value)));
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value.trim());
+    if (Number.isFinite(parsed)) return Math.min(100, Math.max(0, Math.round(parsed)));
+  }
+  return null;
 }
 
 export function parseProposeApplicationFromJdOutputAction(
@@ -155,6 +245,55 @@ export function parseProposeApplicationFromJdOutputAction(
   const action = (output as { action?: unknown }).action;
   if (action === "package" || action === "save" || action === "dismiss") return action;
   return null;
+}
+
+/** Stable listing identity so /comm/ and /jobs/view/ of the same id match. */
+export function jdListingKey(input: {
+  url?: string | null;
+  applyUrl?: string | null;
+}): string | null {
+  const fromUrl = input.url?.trim() ?? "";
+  const raw = fromUrl.length > 0 ? fromUrl : (input.applyUrl?.trim() ?? "");
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.replace(/^www\./i, "").toLowerCase();
+    const path = url.pathname.replace(/\/+$/, "").toLowerCase();
+    const linkedInId = path.match(/\/(?:comm\/)?jobs\/view\/(\d+)/);
+    if (host.includes("linkedin.") && linkedInId?.[1]) {
+      return `linkedin:${linkedInId[1]}`;
+    }
+    return `${host}${path}`;
+  } catch {
+    return raw.toLowerCase();
+  }
+}
+
+/** True when another propose card for this listing already has save/package/dismiss. */
+export function listingHasResolvedJdProposal(
+  messages: UIMessage[],
+  listingKey: string,
+  exceptToolCallId: string
+): boolean {
+  let lastUserIndex = -1;
+  for (let index = 0; index < messages.length; index += 1) {
+    if (messages[index]?.role === "user") lastUserIndex = index;
+  }
+  const currentTurn = lastUserIndex >= 0 ? messages.slice(lastUserIndex + 1) : messages;
+  for (const msg of currentTurn) {
+    if (msg.role !== "assistant") continue;
+    for (const raw of msg.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      if (!isProposeApplicationFromJdToolName(hubToolNameFromPart(part))) continue;
+      const id = part.toolCallId ?? "";
+      if (!id || id === exceptToolCallId) continue;
+      if (!parseProposeApplicationFromJdOutputAction(part.output)) continue;
+      const key = jdListingKey(parseProposeApplicationFromJdInput(part.input));
+      if (key && key === listingKey) return true;
+    }
+  }
+  return false;
 }
 
 function parseTriageRow(raw: unknown): ProposeNewJobsTriageRow | null {
@@ -216,9 +355,43 @@ export function parseOpenSurfaceHref(args: unknown): string | null {
 
 export type HubHitlKind = "approval" | "client";
 
+function isHubToolWaitingState(state: string | undefined): boolean {
+  return (
+    state === "input-available" ||
+    state === "input-streaming" ||
+    state === "call" ||
+    state === "partial-call"
+  );
+}
+
 /**
- * HITL wait on the last assistant message, from AI SDK part states only
- * (no TAP / assistant-ui thread status).
+ * True when a waiting JD propose still has buttons. Receipts, superseded
+ * cards, and same-listing follow-ups must not lock the composer.
+ */
+export function isActionablePendingJdProposal(
+  messages: UIMessage[],
+  part: HubToolNamePart
+): boolean {
+  const name = hubToolNameFromPart(part);
+  if (!isProposeApplicationFromJdToolName(name)) return false;
+  if (!isHubToolWaitingState(part.state)) return false;
+  if (parseProposeApplicationFromJdOutputAction(part.output)) return false;
+  const toolCallId = part.toolCallId ?? "";
+  if (toolCallId && recalledJdCardAction(toolCallId)) return false;
+  const input = parseProposeApplicationFromJdInput(part.input);
+  const listingKey = jdListingKey(input);
+  if (listingKey && listingHasResolvedJdProposal(messages, listingKey, toolCallId)) {
+    return false;
+  }
+  const latestPending = findPendingProposeApplicationFromJd(messages);
+  if (latestPending && latestPending.toolCallId !== toolCallId) return false;
+  return true;
+}
+
+/**
+ * HITL wait on the last assistant message.
+ * Only lock the composer when a visible approval or a JD/triage choice remains.
+ * `open-surface` auto-completes — it is not a user choice.
  */
 export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
   const last = messages.at(-1);
@@ -229,16 +402,16 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     if (!isHubToolUiPart(part)) continue;
     if (part.state === "approval-requested") return "approval";
     const name = hubToolNameFromPart(part);
-    const waiting =
-      part.state === "input-available" ||
-      part.state === "input-streaming" ||
-      part.state === "call" ||
-      part.state === "partial-call";
-    if (!waiting) continue;
+    if (!isHubToolWaitingState(part.state)) continue;
     if (isHubApprovalToolName(name)) return "approval";
-    if (isProposeApplicationFromJdToolName(name)) return "client";
-    if (isProposeNewJobsTriageToolName(name)) return "client";
-    if (isOpenSurfaceToolName(name)) return "client";
+    if (isProposeApplicationFromJdToolName(name)) {
+      if (isActionablePendingJdProposal(messages, part)) return "client";
+      continue;
+    }
+    if (isProposeNewJobsTriageToolName(name)) {
+      if (parseProposeNewJobsTriageOutput(part.output)) continue;
+      return "client";
+    }
   }
   return null;
 }
@@ -254,9 +427,11 @@ export function findPendingProposeApplicationFromJd(
       if (!isHubToolUiPart(part)) continue;
       const toolName = hubToolNameFromPart(part);
       if (!isProposeApplicationFromJdToolName(toolName)) continue;
-      if (part.state !== "input-available" && part.state !== "input-streaming") continue;
+      if (!isHubToolWaitingState(part.state)) continue;
       const toolCallId = part.toolCallId ?? "";
       if (!toolCallId) continue;
+      if (parseProposeApplicationFromJdOutputAction(part.output)) continue;
+      if (recalledJdCardAction(toolCallId)) continue;
       return {
         toolCallId,
         toolName,

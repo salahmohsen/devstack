@@ -1,16 +1,38 @@
 "use client";
 
-import { useAuiState } from "@assistant-ui/react";
+import { type ToolCallMessagePartProps, useAuiState } from "@assistant-ui/react";
 
-import { AssistantMessage } from "@/shared/ui/assistant-ui/thread";
+import { AssistantMessage, ThreadComponentsContext } from "@/shared/ui/assistant-ui/thread";
+import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 
+import { isHubJobPageExtractToolName } from "@/features/agent-hub/lib/hub-tool-names";
 import { hideHubAssistantTextAfterIndex } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
+import { HubAgentActivity, HubBareToolGroup, HubHiddenReasoningGroup } from "./hub-agent-activity";
+
+function HubToolFallback(props: ToolCallMessagePartProps) {
+  if (isHubJobPageExtractToolName(props.toolName ?? "")) {
+    return null;
+  }
+  return <ToolFallback {...props} />;
+}
+
+const HUB_MESSAGE_THREAD_COMPONENTS = {
+  ToolFallback: HubToolFallback,
+  ToolGroup: HubBareToolGroup,
+  ReasoningGroup: HubHiddenReasoningGroup
+};
+
 /**
- * Hub assistant bubble: the HITL confirmation card is the UI. Do not render
- * wrap-up prose ("awaiting your confirmation") after a pending card.
+ * Hub assistant bubble: working strip is Agent Activity; HITL cards stay
+ * the confirmation UI. Hide wrap-up prose after a pending card.
  */
 export function HubAssistantMessage() {
   const hideTextAfterIndex = useAuiState((s) => hideHubAssistantTextAfterIndex(s.message.parts));
-  return <AssistantMessage hideTextAfterIndex={hideTextAfterIndex} />;
+  return (
+    <ThreadComponentsContext.Provider value={HUB_MESSAGE_THREAD_COMPONENTS}>
+      <HubAgentActivity />
+      <AssistantMessage hideTextAfterIndex={hideTextAfterIndex} />
+    </ThreadComponentsContext.Provider>
+  );
 }

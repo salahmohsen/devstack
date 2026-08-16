@@ -8,6 +8,12 @@ export {
   type HubToolOutputArgs
 } from "./api/use-hub-chat";
 export { HubChatProvider } from "./ui/hub-chat-provider";
+export {
+  consumeOpenHubAssistant,
+  getHubAssistantOpenPending,
+  requestOpenHubAssistant,
+  subscribeHubAssistantOpen
+} from "./lib/hub-assistant-open";
 export { hubAssistantAuiConfig, hubAssistantToolkit } from "./ui/hub-assistant-toolkit";
 export {
   ApplicationFromJdCard,

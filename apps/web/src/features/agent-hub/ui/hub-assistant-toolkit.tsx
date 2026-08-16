@@ -5,36 +5,66 @@ import {
   Tools,
   type ToolCallMessagePartProps
 } from "@assistant-ui/react";
+import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { z } from "zod";
 
 import {
   ProposeApplicationFromJdInputSchema,
   ProposeNewJobsTriageInputSchema,
+  normalizeAgentTakeText,
   type ProposeApplicationFromJdOutput,
   type ProposeNewJobsTriageOutput
 } from "@tsu-stack/core";
 
 import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 
+import { useApplicationsByTrackingQuery } from "@/features/agent-hub/api/applications-by-tracking.query";
+import {
+  useCreateApplicationFromJdMutation,
+  useDismissApplicationFromJdMutation,
+  useGenerateApplyPackageFromJdMutation
+} from "@/features/agent-hub/api/create-from-jd.mutation";
 import { HUB_AUI_SUGGESTIONS } from "@/features/agent-hub/api/hub-suggestions";
+import { usePreviewListingTakeQuery } from "@/features/agent-hub/api/preview-listing-take.query";
+import { usePreviewListingQuery } from "@/features/agent-hub/api/preview-listing.query";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import {
+  createInputFromJdProposal,
+  inferJdCardActionFromCrm,
+  jdProposalOutput,
+  mergeJdProposalWithListingPreview,
+  shouldGenerateJdProposalTake
+} from "@/features/agent-hub/lib/complete-jd-proposal";
+import {
+  findHubApprovalId,
+  withApprovalRequested
+} from "@/features/agent-hub/lib/hub-approval-resume";
+import { isHubApprovalPending } from "@/features/agent-hub/lib/hub-approval-summary";
+import { requestOpenHubAssistant } from "@/features/agent-hub/lib/hub-assistant-open";
+import {
+  findPendingProposeApplicationFromJd,
   isProposeApplicationFromJdToolName,
   isProposeNewJobsTriageToolName,
+  jdListingKey,
+  listingHasResolvedJdProposal,
   parseProposeApplicationFromJdInput,
   parseProposeApplicationFromJdOutputAction,
   parseProposeNewJobsTriageInput,
   parseProposeNewJobsTriageOutput
 } from "@/features/agent-hub/lib/hub-tool-names";
+import {
+  recalledJdCardAction,
+  rememberJdCardAction
+} from "@/features/agent-hub/lib/jd-card-action-memory";
 
 import { AgentHubToolApproval } from "./agent-hub-tool-approval";
 import {
   ApplicationFromJdCard,
-  PROPOSE_FROM_JD_CHOICE_LABELS,
   type ApplicationFromJdCardAction
 } from "./application-from-jd-card";
 import { GetExperienceToolUI, ListExperiencesToolUI } from "./experiences-timeline-tool-ui";
+import { JobListingPreludeStatus } from "./job-listing-prelude-status";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
 
@@ -59,18 +89,86 @@ function ProposeApplicationFromJdToolUI({
   toolCallId,
   toolName
 }: ToolCallMessagePartProps<ProposeArgs, ProposeApplicationFromJdOutput>) {
-  const { addToolOutput } = useHubChat();
-  const action = parseProposeApplicationFromJdOutputAction(result);
-  const input = parseProposeApplicationFromJdInput(args);
+  const { addToolOutput, messages } = useHubChat();
+  const navigate = useNavigate();
+  const createApplication = useCreateApplicationFromJdMutation();
+  const dismissApplication = useDismissApplicationFromJdMutation();
+  const generatePackage = useGenerateApplyPackageFromJdMutation();
+  const dismissedList = useApplicationsByTrackingQuery("dismissed");
+  const [localAction, setLocalAction] = React.useState<ApplicationFromJdCardAction | null>(null);
+  const parsedInput = parseProposeApplicationFromJdInput(args);
+  const listingHref = parsedInput.url ?? parsedInput.applyUrl ?? null;
+  const listingPreview = usePreviewListingQuery(listingHref);
+  const mergedInput = mergeJdProposalWithListingPreview(parsedInput, listingPreview.data);
+  const takeQuery = usePreviewListingTakeQuery(
+    mergedInput,
+    !listingPreview.isLoading && shouldGenerateJdProposalTake(mergedInput)
+  );
+  const generatedTake =
+    takeQuery.data?.ok === true ? normalizeAgentTakeText(takeQuery.data.text ?? "") : "";
+  const input = React.useMemo(
+    () =>
+      generatedTake && generatedTake.length > 0
+        ? { ...mergedInput, notes: generatedTake }
+        : mergedInput,
+    [generatedTake, mergedInput]
+  );
+  const listingKey = jdListingKey(input);
+  const action =
+    parseProposeApplicationFromJdOutputAction(result) ??
+    localAction ??
+    recalledJdCardAction(toolCallId) ??
+    inferJdCardActionFromCrm(input, {
+      dismissed: listingHasResolvedJdProposal(messages, listingKey ?? "", toolCallId)
+        ? dismissedList.data
+        : undefined
+    });
   const resolvedToolName = isProposeApplicationFromJdToolName(toolName)
     ? toolName
     : PROPOSE_FROM_JD_TOOL_ID;
+  const resolvedElsewhere = Boolean(
+    listingKey && listingHasResolvedJdProposal(messages, listingKey, toolCallId)
+  );
+  const latestPending = findPendingProposeApplicationFromJd(messages);
+  const superseded = Boolean(latestPending && latestPending.toolCallId !== toolCallId);
+  const outputAction = parseProposeApplicationFromJdOutputAction(result);
 
-  const handleSubmit = React.useCallback(
-    ({ action: next }: { action: ApplicationFromJdCardAction }) => {
-      const output = { action: next };
-      // Prefer toolkit addResult for UI part state, then Chat.addToolOutput so
-      // sendAutomaticallyWhen re-POSTs (addResult alone does not always resume).
+  const dismissSiblingProposals = React.useCallback(() => {
+    for (const msg of messages) {
+      if (msg.role !== "assistant") continue;
+      for (const raw of msg.parts ?? []) {
+        const part = raw as {
+          type?: string;
+          toolName?: string;
+          toolCallId?: string;
+          state?: string;
+        };
+        const type = part.type ?? "";
+        const isTool = type.startsWith("tool-") || type === "dynamic-tool";
+        if (!isTool) continue;
+        const name = part.toolName ?? (type.startsWith("tool-") ? type.slice("tool-".length) : "");
+        if (!isProposeApplicationFromJdToolName(name)) continue;
+        const id = part.toolCallId ?? "";
+        if (!id || id === toolCallId) continue;
+        if (
+          part.state !== "input-available" &&
+          part.state !== "input-streaming" &&
+          part.state !== "call" &&
+          part.state !== "partial-call"
+        ) {
+          continue;
+        }
+        void addToolOutput({
+          tool: name,
+          toolCallId: id,
+          output: { action: "dismiss" }
+        });
+      }
+    }
+  }, [addToolOutput, messages, toolCallId]);
+
+  const completeProposal = React.useCallback(
+    (output: ProposeApplicationFromJdOutput) => {
       if (typeof addResult === "function") {
         addResult(output);
       }
@@ -83,20 +181,95 @@ function ProposeApplicationFromJdToolUI({
     [addResult, addToolOutput, resolvedToolName, toolCallId]
   );
 
-  if (action) {
-    return (
-      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        You chose:{" "}
-        <span className="font-medium text-foreground">{PROPOSE_FROM_JD_CHOICE_LABELS[action]}</span>
-      </p>
-    );
+  const flushedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (flushedRef.current || !toolCallId) return;
+    if (outputAction) {
+      if (outputAction === "package" || outputAction === "save" || outputAction === "dismiss") {
+        dismissSiblingProposals();
+      }
+      return;
+    }
+    if (resolvedElsewhere || superseded) {
+      flushedRef.current = true;
+      rememberJdCardAction(toolCallId, "dismiss");
+      completeProposal(jdProposalOutput("dismiss"));
+      return;
+    }
+    if (action != null) {
+      flushedRef.current = true;
+      completeProposal(jdProposalOutput(action));
+      dismissSiblingProposals();
+    }
+  }, [
+    action,
+    completeProposal,
+    dismissSiblingProposals,
+    outputAction,
+    resolvedElsewhere,
+    superseded,
+    toolCallId
+  ]);
+
+  const handleSubmit = React.useCallback(
+    async ({ action: next }: { action: ApplicationFromJdCardAction }) => {
+      flushedRef.current = true;
+      dismissSiblingProposals();
+      if (next === "dismiss") {
+        // Close the card first so Dismiss cannot sit on a spinner while CRM runs.
+        setLocalAction("dismiss");
+        rememberJdCardAction(toolCallId, "dismiss");
+        completeProposal(jdProposalOutput("dismiss"));
+        try {
+          await dismissApplication.mutateAsync(createInputFromJdProposal(input));
+        } catch {
+          // Toast already fired; receipt stays so the button is not stuck.
+        }
+        return;
+      }
+
+      const created = await createApplication.mutateAsync(createInputFromJdProposal(input));
+      if (next === "package") {
+        try {
+          await generatePackage.mutateAsync({ applicationId: created.id });
+        } catch {
+          // Job is tracked; package can be retried from the side panel.
+        }
+      }
+
+      setLocalAction(next);
+      rememberJdCardAction(toolCallId, next);
+      completeProposal(jdProposalOutput(next, created.id));
+      requestOpenHubAssistant();
+      await navigate({
+        to: "/dashboard/tracked-jobs",
+        search: { applicationId: created.id }
+      });
+    },
+    [
+      completeProposal,
+      createApplication,
+      dismissApplication,
+      dismissSiblingProposals,
+      generatePackage,
+      input,
+      navigate,
+      toolCallId
+    ]
+  );
+
+  if (resolvedElsewhere) {
+    return null;
   }
 
   return (
     <ApplicationFromJdCard
       toolCallId={toolCallId}
       input={input}
-      disabled={result != null || !toolCallId}
+      completedAction={action}
+      disabled={action != null || !toolCallId || superseded}
+      superseded={superseded && action == null}
+      takePending={takeQuery.isFetching && !input.notes?.trim()}
       onSubmit={handleSubmit}
     />
   );
@@ -193,35 +366,75 @@ function ProposeNewJobsTriageToolUI({
 }
 
 function ApprovalGatedToolUI(props: ToolCallMessagePartProps<Record<string, unknown>, unknown>) {
-  const { args, approval, respondToApproval, toolName } = props;
-  const { addToolApprovalResponse } = useHubChat();
+  const { args, approval, respondToApproval, toolName, toolCallId, status, result } = props;
+  const { addToolApprovalResponse, addToolOutput, messages, setMessages } = useHubChat();
   const [pending, setPending] = React.useState(false);
 
-  const awaitingApproval =
-    approval != null && approval.approved === undefined && approval.resolution === undefined;
+  const awaitingApproval = isHubApprovalPending({ approval, status, result });
 
   const respond = React.useCallback(
     (approved: boolean) => {
       if (pending) return;
       setPending(true);
-      if (typeof respondToApproval === "function") {
-        respondToApproval({ approved });
+
+      const approvalId =
+        (typeof approval?.id === "string" && approval.id.length > 0 ? approval.id : null) ??
+        findHubApprovalId(messages, toolCallId);
+
+      if (approvalId) {
+        setMessages(
+          withApprovalRequested(messages, toolCallId, approvalId) as Parameters<
+            typeof setMessages
+          >[0]
+        );
+        void Promise.resolve(addToolApprovalResponse({ id: approvalId, approved })).finally(() => {
+          setPending(false);
+        });
         return;
       }
-      if (approval?.id) {
+
+      if (
+        approval != null &&
+        approval.approved === undefined &&
+        typeof respondToApproval === "function"
+      ) {
+        try {
+          respondToApproval({ approved });
+        } catch {
+          // Approval runtime throws when the part has no approval id.
+        }
+        setPending(false);
+        return;
+      }
+
+      // Mastra sometimes persists requireToolApproval as input-available with no
+      // approval id. Local output unsticks the card so the composer is not locked.
+      if (toolCallId) {
         void Promise.resolve(
-          addToolApprovalResponse({
-            id: approval.id,
-            approved
+          addToolOutput({
+            tool: toolName,
+            toolCallId,
+            output: { approved, localOnly: true }
           })
         ).finally(() => {
           setPending(false);
         });
         return;
       }
+
       setPending(false);
     },
-    [addToolApprovalResponse, approval, pending, respondToApproval]
+    [
+      addToolApprovalResponse,
+      addToolOutput,
+      approval,
+      messages,
+      pending,
+      respondToApproval,
+      setMessages,
+      toolCallId,
+      toolName
+    ]
   );
 
   if (awaitingApproval) {
@@ -271,6 +484,12 @@ const openSurfaceToolEntry = {
   render: OpenSurfaceToolUI
 };
 
+const jobListingPreludeTool = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: JobListingPreludeStatus
+};
+
 const listExperiencesToolEntry = {
   type: "backend" as const,
   display: "standalone" as const,
@@ -304,6 +523,12 @@ export const hubAssistantToolkit = defineToolkit({
   createApplication: approvalTool,
   "open-surface": openSurfaceToolEntry,
   openSurface: openSurfaceToolEntry,
+  "agent-jobPageExtractor": jobListingPreludeTool,
+  jobPageExtractor: jobListingPreludeTool,
+  "agent-job-page-extractor": jobListingPreludeTool,
+  "job-page-extractor": jobListingPreludeTool,
+  "fetch-job-page": jobListingPreludeTool,
+  fetchJobPage: jobListingPreludeTool,
   "list-experiences": listExperiencesToolEntry,
   listExperiences: listExperiencesToolEntry,
   "get-experience": getExperienceToolEntry,

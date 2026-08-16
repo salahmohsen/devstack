@@ -86,7 +86,8 @@ export default defineConfig({
       ".output",
       ".wrangler",
       ".netlify",
-      "dist"
+      "dist",
+      "**/__tests__/fixtures/**"
     ],
     sortImports: {
       customGroups: [

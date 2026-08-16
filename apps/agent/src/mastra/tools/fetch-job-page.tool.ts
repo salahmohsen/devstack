@@ -2,6 +2,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
 import {
+  canonicalizeJobUrl,
   extractPublicJobListingFromHtmlAsync,
   fetchPublicHtmlAsText,
   formatJobPageTextForLlm,
@@ -29,17 +30,20 @@ export type FetchJobPageResult = {
  * Readability main content → meta tags.
  */
 export async function fetchJobPageContent(url: string): Promise<FetchJobPageResult> {
-  const result = await fetchPublicHtmlAsText(url, {
-    maxChars: MAX_CHARS,
-    includeHtml: true
-  });
+  const listingUrl = canonicalizeJobUrl(url) ?? url;
+  const options = { maxChars: MAX_CHARS, includeHtml: true } as const;
+  let result = await fetchPublicHtmlAsText(listingUrl, options);
+  if (!result.ok || (result.html?.length ?? 0) < 200) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    result = await fetchPublicHtmlAsText(listingUrl, options);
+  }
   // Placeholder only after a real HTML response (incl. non-2xx). SSRF / network keep "".
   const emptyPlaceholder =
     result.status != null && (!result.error || result.error.startsWith("HTTP "));
 
   const extract =
     result.html && result.html.length > 200
-      ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? url)
+      ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? listingUrl)
       : null;
 
   const rawText =
@@ -58,7 +62,7 @@ export async function fetchJobPageContent(url: string): Promise<FetchJobPageResu
 
   return {
     ok: result.ok,
-    finalUrl: result.finalUrl,
+    finalUrl: result.finalUrl ?? listingUrl,
     status: result.status,
     title: result.title ?? extract?.title ?? null,
     text,

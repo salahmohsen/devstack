@@ -86,3 +86,25 @@ export function assessAgentTakeReadiness(listing: AgentTakeListing): AgentTakeRe
 export function canGenerateAgentTake(listing: AgentTakeListing): boolean {
   return assessAgentTakeReadiness(listing).ok;
 }
+
+/** Keep the first 1–3 sentences and drop duplicated candidate takes. */
+export function normalizeAgentTakeText(text: string): string {
+  let oneLine = text.replace(/\s+/g, " ").trim();
+  if (!oneLine) return "";
+  for (let n = 80; n <= 220; n += 10) {
+    const chunk = oneLine.slice(0, n);
+    if (chunk.length < 80) continue;
+    const again = oneLine.indexOf(chunk, Math.floor(n * 0.7));
+    if (again >= n * 0.8) {
+      oneLine = oneLine.slice(0, again).trim();
+      break;
+    }
+  }
+  const protectedText = oneLine.replace(/\b([A-Za-z][\w-]*)\.(js|ts|mjs|cjs)\b/gi, "$1\u2024$2");
+  const sentences = protectedText.match(/[^.!?]+[.!?]+(?:\s+|$)/g);
+  const joined =
+    sentences && sentences.length > 0 ? sentences.slice(0, 3).join("").trim() : oneLine;
+  const restored = joined.replace(/\u2024/g, ".");
+  if (restored.length < 40) return oneLine.slice(0, 1200);
+  return restored.slice(0, 1200);
+}
