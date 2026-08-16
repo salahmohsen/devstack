@@ -117,6 +117,14 @@ export function isProposeApplicationFromJdToolName(name: string): boolean {
   return name === "propose-application-from-jd" || name === "proposeApplicationFromJd";
 }
 
+export function isProposeNewJobsTriageToolName(name: string): boolean {
+  return name === "propose-new-jobs-triage" || name === "proposeNewJobsTriage";
+}
+
+export function isListNewJobsToolName(name: string): boolean {
+  return name === "list-new-jobs" || name === "listNewJobs";
+}
+
 export function isHubJobPageExtractToolName(name: string): boolean {
   if (HUB_JOB_PAGE_EXTRACT_TOOL_NAMES.has(name)) return true;
   const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;
@@ -157,7 +165,10 @@ export function isJobListingUrl(raw: string): boolean {
     return true;
   }
   if (host.includes("github.")) return false;
-  return /\/(jobs?|careers?|positions?)\/.+/.test(path);
+  // BrassRing / Kenexa and regional portals: /careersME/PipelineDetail/…
+  if (/\/(?:pipeline-?detail|job-?detail)\//.test(path)) return true;
+  // /jobs/, /career/, /careers/, /careersME/, /positions/…
+  return /\/(jobs?|careers?[a-z0-9]*|positions?)\/.+/.test(path);
 }
 
 export function extractJobListingUrlFromText(text: string): string | null {
@@ -183,6 +194,9 @@ export const HUB_JOB_URL_IMPORT_FEEDBACK =
 export const HUB_JOB_URL_MUST_PROPOSE_FEEDBACK =
   "Extract already ran. Do NOT call jobPageExtractor, fetch-job-page, or getJobPreferences again. Call propose-application-from-jd NOW with title, companyName, the FULL job description from the extract (or an empty description if the page was a login wall or extract failed), url (the listing URL), applyUrl, location, numeric matchScore 0–100, notes (1–3 sentence agent's take vs the seeker), and when stated: workMode, salaryRange, requiredSkills[], preferredSkills[]. Emit ZERO user-facing text until the proposal card. Never dump extractor JSON or restate the listing as prose.";
 
+export const HUB_TRIAGE_MUST_PROPOSE_FEEDBACK =
+  "listNewJobs already returned inbox rows. Do NOT call jobPreferenceMatchScorer, getJobPreferences, listExperiences, or any other tool. Call propose-new-jobs-triage NOW with track[] / dismiss[] using the real ids, titles, companyNames, matchScores, and a one-sentence reason each. Emit ZERO user-facing text — no markdown tables, no bullet recap. The triage card is the UI.";
+
 export function hubJobUrlImportFeedback(sawExtract: boolean): string {
   return sawExtract ? HUB_JOB_URL_MUST_PROPOSE_FEEDBACK : HUB_JOB_URL_IMPORT_FEEDBACK;
 }
@@ -204,6 +218,18 @@ export function shouldForceProposeApplicationFromJd(toolNames: readonly string[]
   const extractCalled = toolNames.some((name) => isHubJobPageExtractToolName(name));
   const proposeCalled = toolNames.some((name) => isProposeApplicationFromJdToolName(name));
   return extractCalled && !proposeCalled;
+}
+
+/** Tools allowed after listNewJobs returned inbox rows. */
+export function filterHubTriageActiveTools(toolNames: readonly string[]): string[] {
+  return toolNames.filter((name) => isProposeNewJobsTriageToolName(name));
+}
+
+/** listNewJobs ran this iteration; the triage card has not been proposed yet. */
+export function shouldForceProposeNewJobsTriage(toolNames: readonly string[]): boolean {
+  const listed = toolNames.some((name) => isListNewJobsToolName(name));
+  const proposed = toolNames.some((name) => isProposeNewJobsTriageToolName(name));
+  return listed && !proposed;
 }
 
 /** Stop the agentic loop while a client confirmation card is still waiting. */

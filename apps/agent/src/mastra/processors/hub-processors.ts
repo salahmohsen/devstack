@@ -9,10 +9,14 @@ import { hubPersonalityById } from "@tsu-stack/core";
 
 import {
   filterHubJobUrlImportActiveTools,
+  filterHubTriageActiveTools,
+  HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   hubJobUrlImportFeedback,
   isHubClientHitlToolName,
   isHubJobPageExtractToolName,
+  isListNewJobsToolName,
   isProposeApplicationFromJdToolName,
+  isProposeNewJobsTriageToolName,
   isUrlOnlyJobListingPaste
 } from "#@/mastra/lib/hub-superpowers-policy";
 
@@ -43,7 +47,8 @@ export class HubEnsureFinalResponseProcessor implements Processor {
     // Same for URL import: the next step must still be propose-application-from-jd.
     if (
       mastraMessagesHavePendingClientHitl(messages) ||
-      messagesNeedProposeAfterJobImport(messages)
+      messagesNeedProposeAfterJobImport(messages) ||
+      messagesNeedProposeTriage(messages)
     ) {
       return;
     }
@@ -175,6 +180,61 @@ export function messagesNeedProposeAfterJobImport(
   return state.sawExtract || state.urlOnly;
 }
 
+function mastraPartOutput(part: Record<string, unknown>): unknown {
+  if (part.output != null) return part.output;
+  const invocation = part.toolInvocation;
+  if (invocation && typeof invocation === "object" && !Array.isArray(invocation)) {
+    return (invocation as { result?: unknown }).result;
+  }
+  return undefined;
+}
+
+function listNewJobsOutputHasRows(part: Record<string, unknown>): boolean {
+  const output = mastraPartOutput(part);
+  if (!output || typeof output !== "object" || Array.isArray(output)) return false;
+  const jobs = (output as { jobs?: unknown }).jobs;
+  return Array.isArray(jobs) && jobs.length > 0;
+}
+
+export function latestUserTurnTriageState(messages: ProcessInputStepArgs["messages"]): {
+  sawList: boolean;
+  listHasJobs: boolean;
+  sawPropose: boolean;
+} {
+  let afterLatestUser = false;
+  let sawList = false;
+  let listHasJobs = false;
+  let sawPropose = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawList = false;
+      listHasJobs = false;
+      sawPropose = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isListNewJobsToolName(name)) {
+        sawList = true;
+        if (listNewJobsOutputHasRows(part)) listHasJobs = true;
+      }
+      if (isProposeNewJobsTriageToolName(name)) sawPropose = true;
+    }
+  }
+  return { sawList, listHasJobs, sawPropose };
+}
+
+/** listNewJobs returned inbox rows this turn and the triage card is still missing. */
+export function messagesNeedProposeTriage(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnTriageState(messages);
+  return state.listHasJobs && !state.sawPropose;
+}
+
 /** True when a client HITL tool was called and has not received addToolOutput yet. */
 export function mastraMessagesHavePendingClientHitl(
   messages: ProcessInputStepArgs["messages"]
@@ -251,10 +311,36 @@ export class HubJobUrlImportProcessor implements Processor {
   }
 }
 
+/**
+ * After listNewJobs returns inbox rows, the triage card is the UI.
+ * Production models otherwise write a markdown table instead of the HITL tool.
+ */
+export class HubNewJobsTriageProcessor implements Processor {
+  readonly id = "hub-new-jobs-triage";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedProposeTriage(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
+      attributes: { reason: "list-new-jobs-must-triage" }
+    });
+
+    const activeTools = filterHubTriageActiveTools(tools ? Object.keys(tools) : []);
+    return {
+      toolChoice: "required" as const,
+      ...(activeTools.length > 0 ? { activeTools } : {})
+    };
+  }
+}
+
 export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_STEPS) {
   return [
     new HubPersonalityProcessor(),
     new HubJobUrlImportProcessor(),
+    new HubNewJobsTriageProcessor(),
     new HubEnsureFinalResponseProcessor(maxSteps),
     // Keep enough recent tool-producing steps for superpowers multi-tool
     // chains (listNewJobs + evidence lists + propose → writes). filterAfter=2

@@ -11,6 +11,7 @@ import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import {
+  HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   hubJobUrlImportFeedback,
   shouldForceProposeApplicationFromJd,
   shouldStopHubLoopAfterClientHitl
@@ -20,7 +21,8 @@ import {
   HUB_SUPERVISOR_MAX_STEPS,
   mastraMessagesHavePendingClientHitl,
   messagesNeedProposeAfterJobExtract,
-  messagesNeedProposeAfterJobImport
+  messagesNeedProposeAfterJobImport,
+  messagesNeedProposeTriage
 } from "#@/mastra/processors/hub-processors";
 import { acceptApplyPackageTool } from "#@/mastra/tools/accept-apply-package.tool";
 import { createApplicationTool } from "#@/mastra/tools/create-application.tool";
@@ -34,6 +36,14 @@ import { getMailTool } from "#@/mastra/tools/get-mail.tool";
 import { getProjectTool } from "#@/mastra/tools/get-project.tool";
 import { getResumeTool } from "#@/mastra/tools/get-resume.tool";
 import { getStackTool } from "#@/mastra/tools/get-stack.tool";
+import {
+  detectStacksWorkflowTool,
+  mailClassifyWorkflowTool,
+  mailJobHarvestWorkflowTool,
+  mailProcessWorkflowTool,
+  organizeStacksWorkflowTool,
+  resumeImportWorkflowTool
+} from "#@/mastra/tools/hub-background-workflow.tools";
 import { listExperiencesTool } from "#@/mastra/tools/list-experiences.tool";
 import { listMailTool } from "#@/mastra/tools/list-mail.tool";
 import { listNewJobsTool } from "#@/mastra/tools/list-new-jobs.tool";
@@ -50,13 +60,7 @@ import { sendApplyOutreachTool } from "#@/mastra/tools/send-apply-outreach.tool"
 import { sendMailReplyTool } from "#@/mastra/tools/send-mail-reply.tool";
 import { trackJobTool } from "#@/mastra/tools/track-job.tool";
 import { updateApplicationStageTool } from "#@/mastra/tools/update-application-stage.tool";
-import { detectStacksWorkflow } from "#@/mastra/workflows/detect-stacks-workflow";
-import { mailClassifyWorkflow } from "#@/mastra/workflows/mail-classify-workflow";
-import { mailJobHarvestWorkflow } from "#@/mastra/workflows/mail-job-harvest-workflow";
-import { mailProcessWorkflow } from "#@/mastra/workflows/mail-process-workflow";
 import { mailReplyWorkflow } from "#@/mastra/workflows/mail-reply-workflow";
-import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
-import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow";
 
 /**
  * Hub capability inventory (product wiring — no weather demo).
@@ -118,12 +122,12 @@ Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getP
 Get-by-id tools require the real id from the matching list tool. Never call them with \`{}\` or a missing id.
 Portfolio / all-projects summaries: call \`listProjects\` once. Do not call \`getProject\` per project unless asked about one project.
 Some messages may contain \`<system-reminder>...</system-reminder>\` tags. Those are injected by the system, not written by the user. Treat them as authoritative and follow them immediately. Do not mention the reminder or quote the tags.
-Long jobs (detect/organize/import/mail process/harvest) may run as background tasks — acknowledge briefly and wait for results if the stream continues; do not invent completion.
+Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They start in the background and return { runId, status: started }. Acknowledge the start; do not invent completion.
 
 ## Superpowers golden path (New jobs → focus job)
 1. **Always** call \`listNewJobs\` first when the user mentions New jobs / triage / filter / screen / sort / inbox discoveries. "Filter new work" **is** triage — same path as "triage new jobs". Do **not** use \`listOpenApplications\` for New jobs (that is tracked CRM only). If listNewJobs returns rows, you must call \`proposeNewJobsTriage\` before any final answer. Do not only list or describe jobs when they asked to filter.
 2. Evidence: \`listExperiences\`, \`listProjects\`, \`listStacks\` **at most once each** this turn. Cap proposed rows (~10).
-3. As soon as \`listNewJobs\` returns any jobs, call \`proposeNewJobsTriage\` (with track[] / dismiss[] reasons) — do not re-list tools in a loop. **Wait for confirm**. After that tool call, emit **zero** user-facing text — the confirmation card is the UI. Do not write “awaiting your confirmation” or restate the lists. Never track/dismiss before confirm. Never invent “no jobs” without a successful \`listNewJobs\` tool result showing empty \`jobs\`.
+3. As soon as \`listNewJobs\` returns any jobs, call \`proposeNewJobsTriage\` (with track[] / dismiss[] reasons) — do not re-list tools in a loop. **Do not** call \`jobPreferenceMatchScorer\` or write a markdown table. **Wait for confirm**. After that tool call, emit **zero** user-facing text — the confirmation card is the UI. Do not write “awaiting your confirmation” or restate the lists. Never track/dismiss before confirm. Never invent “no jobs” without a successful \`listNewJobs\` tool result showing empty \`jobs\`.
 4. When \`proposeNewJobsTriage\` tool result is \`action: confirm\`: **immediately** call \`trackJob\` for each \`trackIds[]\` and \`dismissJob\` for each \`dismissIds[]\` (one call per id). Do **not** ask the user to confirm again and do **not** re-call propose. Cancel → no writes.
 5. Focus job: named in utterance, else highest matchScore among just-tracked.
 6. Package gate (~400 chars title+company+description): if rich enough, offer \`generateApplyPackage\` → \`acceptApplyPackage\` → if contact exists \`sendApplyOutreach\`. Decline at any step stops that branch.
@@ -144,23 +148,13 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
 - Prefer a workflow over a sub-agent for defined multi-step processes.
 - State which specialist/workflow you invoke (one short sentence) when you do. Exception: never announce \`jobPageExtractor\` / fetch-job-page — those are silent.
 - JD paste, a job listing URL (especially LinkedIn \`/jobs/view/…\`), or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; **full** JD in \`description\` — every section, not a teaser; numeric \`matchScore\` 0–100; \`notes\` = 1–3 sentence agent's take vs the seeker; \`workMode\` / \`salaryRange\` / \`requiredSkills\` / \`preferredSkills\` when the posting states them — never invent pay or mode). **Do not invent CRM rows** without that tool and user confirmation.
-- **URL-only paste (no JD body):** call \`jobPageExtractor\` at most once as a silent prelude — do **not** call \`getJobPreferences\` or list tools first. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails, returns a teaser, or the page is a login wall, still propose with that \`url\` and an empty (or short) description. Do **not** extract or fetch-job-page again. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
+- **URL-only paste (no JD body):** call \`jobPageExtractor\` at most once as a silent prelude — do **not** call \`getJobPreferences\`, \`jobPreferenceMatchScorer\`, or list tools first. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails, returns a teaser, or the page is a login wall, still propose with that \`url\` and an empty (or short) description. Do **not** extract or fetch-job-page again. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
 - After calling \`propose-application-from-jd\` or \`proposeNewJobsTriage\`, stop with **no text** until the card returns. After JD proposal tool output \`save\` | \`package\` | \`dismiss\`: do **not** call \`propose-application-from-jd\` again for that listing, do **not** call \`create-application\` if \`applicationId\` is already set, and emit **no** second card. Short ack only if you must speak. Otherwise \`save\` without \`applicationId\` → \`create-application\`. \`package\` without \`applicationId\` → \`create-application\` then \`generate-apply-package\`.
 - Do not invent tools or pretend a send/apply/track succeeded without tool results.
 - Surface empty/error tool results plainly.
 - Keep responses concise and actionable.`,
     model: byoModelFromRequestContext,
     inputProcessors: createHubInputProcessors(HUB_SUPERVISOR_MAX_STEPS),
-    backgroundTasks: {
-      tools: {
-        detectStacksWorkflow: { enabled: true, timeoutMs: 900_000 },
-        organizeStacksWorkflow: { enabled: true, timeoutMs: 900_000 },
-        resumeImportWorkflow: { enabled: true, timeoutMs: 600_000 },
-        mailProcessWorkflow: { enabled: true, timeoutMs: 600_000 },
-        mailJobHarvestWorkflow: { enabled: true, timeoutMs: 900_000 },
-        mailClassifyWorkflow: { enabled: true, timeoutMs: 300_000 }
-      }
-    },
     defaultOptions: {
       maxSteps: HUB_SUPERVISOR_MAX_STEPS,
       onIterationComplete: async (ctx) => {
@@ -182,6 +176,9 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
                 messagesNeedProposeAfterJobExtract(ctx.messages)
             )
           };
+        }
+        if (messagesNeedProposeTriage(ctx.messages)) {
+          return { continue: true, feedback: HUB_TRIAGE_MUST_PROPOSE_FEEDBACK };
         }
         const toolCount = ctx.toolCalls?.length ?? 0;
         if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
@@ -243,7 +240,13 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
       sendMailReply: sendMailReplyTool,
       listNotifications: listNotificationsTool,
       markNotificationRead: markNotificationReadTool,
-      openSurface: openSurfaceTool
+      openSurface: openSurfaceTool,
+      detectStacksWorkflow: detectStacksWorkflowTool,
+      organizeStacksWorkflow: organizeStacksWorkflowTool,
+      resumeImportWorkflow: resumeImportWorkflowTool,
+      mailProcessWorkflow: mailProcessWorkflowTool,
+      mailClassifyWorkflow: mailClassifyWorkflowTool,
+      mailJobHarvestWorkflow: mailJobHarvestWorkflowTool
     },
     agents: {
       stackCategorizerAgent: createStackCategorizerAgent(),
@@ -256,12 +259,6 @@ Long jobs (detect/organize/import/mail process/harvest) may run as background ta
       crmStageAdvisor: createCrmStageAdvisorAgent()
     },
     workflows: {
-      detectStacksWorkflow,
-      organizeStacksWorkflow,
-      resumeImportWorkflow,
-      mailProcessWorkflow,
-      mailClassifyWorkflow,
-      mailJobHarvestWorkflow,
       mailReplyWorkflow
     },
     memory: new Memory({

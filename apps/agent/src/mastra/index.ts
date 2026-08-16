@@ -16,7 +16,6 @@ import {
 } from "@mastra/observability";
 import { PostgresStore } from "@mastra/pg";
 
-import { createAgentLogger } from "#@/mastra/agent-logger";
 import { createApplyPackageAgent } from "#@/mastra/agents/apply-package-agent";
 import { createCrmApplicationMatcherAgent } from "#@/mastra/agents/crm-application-matcher-agent";
 import { createCrmStageAdvisorAgent } from "#@/mastra/agents/crm-stage-advisor-agent";
@@ -124,8 +123,6 @@ export const mastra = new Mastra({
       chatRoute({
         path: "/chat/:agentId",
         version: "v6",
-        // Keep hub streams open across long workflow bg-task continuations.
-        // No-op when no background tasks are running (closes after normal finish).
         defaultOptions: {
           untilIdle: { maxIdleMs: 10 * 60_000 }
         }
@@ -133,50 +130,12 @@ export const mastra = new Mastra({
     ]
   },
   /**
-   * Persist long tool/workflow runs so hub chat can acknowledge and continue
-   * via untilIdle. Off by default in Mastra — must enable + storage domain
-   * (Postgres `backgroundTasks` on appStorage default of the composite store).
+   * Leave instance `backgroundTasks` off (Mastra default). Enabling the
+   * manager in 1.54 injects `_background` on every tool schema, including
+   * client HITL tools with no `execute`. Detect/organize/resume/mail opt in
+   * on the tool (`background.enabled`) and start via `run.startAsync()`.
    * @see https://mastra.ai/docs/long-running-agents/background-tasks
    */
-  backgroundTasks: {
-    enabled: true,
-    // Monolith agent process: produce + consume in-process.
-    mode: "full",
-    globalConcurrency: 10,
-    perAgentConcurrency: 3,
-    backpressure: "queue",
-    // Detect/organize/harvest can run many minutes.
-    defaultTimeoutMs: 900_000,
-    onTaskComplete: (task) => {
-      const log = createAgentLogger({ operation: "agent__background_task" });
-      log.set({
-        event: "agent_background_task_completed",
-        taskId: task.id,
-        toolName: task.toolName,
-        agentId: task.agentId,
-        runId: task.runId,
-        threadId: task.threadId,
-        resourceId: task.resourceId,
-        retryCount: task.retryCount
-      });
-      log.emit();
-    },
-    onTaskFailed: (task) => {
-      const log = createAgentLogger({ operation: "agent__background_task" });
-      log.error(task.error?.message ?? "Background task failed", {
-        event: "agent_background_task_failed",
-        taskId: task.id,
-        toolName: task.toolName,
-        agentId: task.agentId,
-        runId: task.runId,
-        threadId: task.threadId,
-        resourceId: task.resourceId,
-        retryCount: task.retryCount,
-        errorStack: task.error?.stack
-      });
-      log.emit({ _forceKeep: true });
-    }
-  },
   workflows: {
     detectStacksWorkflow,
     organizeStacksWorkflow,

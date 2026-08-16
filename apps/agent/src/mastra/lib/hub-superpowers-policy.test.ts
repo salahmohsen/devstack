@@ -5,7 +5,9 @@ import {
   descriptionQualityLength,
   filterConfirmedTriageIds,
   filterHubJobUrlImportActiveTools,
+  filterHubTriageActiveTools,
   hubJobUrlImportFeedback,
+  isJobListingUrl,
   isHubClientHitlToolName,
   meetsApplyPackageQualityGate,
   selectFocusJob,
@@ -242,5 +244,33 @@ describe("hub job URL import lock", () => {
     expect(after).toMatch(/jobPageExtractor|fetch-job-page/i);
     expect(after).toMatch(/propose-application-from-jd/);
     expect(hubJobUrlImportFeedback(false)).not.toBe(after);
+  });
+});
+
+describe("isJobListingUrl", () => {
+  it("matches BrassRing / regional career portals", () => {
+    expect(
+      isJobListingUrl(
+        "https://middleeastjobs.deloitte.com/careersME/PipelineDetail/Deloitte-Innovation-Hub-I-Senior-Frontend-Developer-Cairo-Egypt/257322"
+      )
+    ).toBe(true);
+  });
+
+  it("still matches LinkedIn and /jobs/ paths", () => {
+    expect(isJobListingUrl("https://www.linkedin.com/jobs/view/123")).toBe(true);
+    expect(isJobListingUrl("https://example.com/jobs/senior-engineer")).toBe(true);
+  });
+
+  it("rejects github and bare homepages", () => {
+    expect(isJobListingUrl("https://github.com/acme/jobs")).toBe(false);
+    expect(isJobListingUrl("https://deloitte.com/")).toBe(false);
+  });
+});
+
+describe("hub triage lock", () => {
+  it("keeps only propose-new-jobs-triage", () => {
+    expect(
+      filterHubTriageActiveTools(["listNewJobs", "proposeNewJobsTriage", "getJobPreferences"])
+    ).toEqual(["proposeNewJobsTriage"]);
   });
 });
