@@ -3,7 +3,7 @@
 import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -33,7 +33,7 @@ import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { useEntityPanelHostActive } from "@/features/agent-hub";
+import { requestHubCreateInterview, useEntityPanelHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
@@ -55,7 +55,6 @@ import {
   getListExperiencesPageInfiniteQueryKey,
   useListExperiencesPageInfiniteQuery
 } from "./api/list-experiences-page.query";
-import { ExperienceForm } from "./experience-form";
 import { ExperienceInfoPanel } from "./experience-info-panel";
 
 function formatRange(fromDate: string | null, toDate: string | null): string {
@@ -339,23 +338,22 @@ export function ExperiencesPage() {
     clearSelection
   ]);
 
-  const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  // Host wins the panel (any kind). Dirty page form is discarded without confirm.
+  // Hub inspect/form host wins the side panel over the list inspect.
   const hostOwnsPanel = useEntityPanelHostActive();
-  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
-
-  const openDialog = useCallback((id: string | null) => {
-    setEditingExperienceId(id);
-    setDialogOpen(true);
-  }, []);
 
   const emptyState = (
     <ItemsEmpty
       icon={<BriefcaseIcon aria-hidden />}
       title="No experiences yet"
       description="Add a new experience to start tracking your work history."
-      action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Experience" }} />}
+      action={
+        <HeaderActions
+          add={{
+            onAdd: () => requestHubCreateInterview("experience"),
+            label: "Add Experience"
+          }}
+        />
+      }
     />
   );
 
@@ -388,7 +386,6 @@ export function ExperiencesPage() {
                 })
               );
             }}
-            onEdit={() => openDialog(experience.id)}
             onDelete={() => deleteMutation.mutate({ id: experience.id })}
             isDeleting={deleteMutation.isPending}
             onTogglePortfolio={() =>
@@ -449,7 +446,10 @@ export function ExperiencesPage() {
           description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
           actions={
             <HeaderActions
-              add={{ onAdd: () => openDialog(null), label: "Add Experience" }}
+              add={{
+                onAdd: () => requestHubCreateInterview("experience"),
+                label: "Add Experience"
+              }}
               sort={{
                 isSort: isSort,
                 isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
@@ -483,7 +483,7 @@ export function ExperiencesPage() {
         {renderList()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
+          open={isAnyOpen && !hostOwnsPanel}
           item={openedItem}
           title="Experience"
           onOpenChange={(next) => {
@@ -493,25 +493,8 @@ export function ExperiencesPage() {
             }
           }}
         >
-          {(item) =>
-            item ? (
-              <ExperienceInfoPanel experience={item} onEdit={() => openDialog(item.id)} />
-            ) : null
-          }
+          {(item) => (item ? <ExperienceInfoPanel experience={item} /> : null)}
         </ItemsInspectHost>
-
-        {dialogOpen && !hostOwnsPanel ? (
-          <ExperienceForm
-            key={editingExperienceId ?? "new"}
-            initialData={
-              editingExperienceId
-                ? (visibleExperiences.find((exp) => exp.id === editingExperienceId) ?? null)
-                : null
-            }
-            open={dialogOpen}
-            onOpenChange={setDialogOpen}
-          />
-        ) : null}
 
         <AlertDialog
           open={batchDeleteDialogOpen}

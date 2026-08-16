@@ -12,6 +12,12 @@ import {
   type HubToolOutputArgs
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
+  consumeHubCreateIntent,
+  getHubCreateIntent,
+  hubCreateInterviewText,
+  subscribeHubCreateIntent
+} from "@/features/agent-hub/lib/hub-assistant-open";
+import {
   createHubThreadHistoryAdapter,
   hubHistoryHeadPath,
   mapUiMessagesToHistoryItems,
@@ -28,7 +34,12 @@ import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const chat = React.useMemo(() => createHubChat(), []);
   const helpers = useChat({ chat });
-  const { setMessages, messages } = helpers;
+  const { setMessages, messages, sendMessage, status } = helpers;
+  const pendingCreateKind = React.useSyncExternalStore(
+    subscribeHubCreateIntent,
+    getHubCreateIntent,
+    getHubCreateIntent
+  );
 
   const [historyReady, setHistoryReady] = React.useState(false);
   const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
@@ -86,6 +97,18 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
         setHistoryReady(true);
       });
   }, [importHistory]);
+
+  // List `+` starts a spoken create interview. Clear kind only — never
+  // consumeOpenHubAssistant (floater stays open via pendingOpen).
+  React.useEffect(() => {
+    if (!pendingCreateKind) return;
+    ensureHistory();
+    if (!historyReady) return;
+    if (status === "submitted" || status === "streaming") return;
+    const kind = consumeHubCreateIntent();
+    if (!kind) return;
+    void sendMessage({ text: hubCreateInterviewText(kind) });
+  }, [ensureHistory, historyReady, pendingCreateKind, sendMessage, status]);
 
   const loadOlderMessages = React.useCallback(async () => {
     if (!historyReady || !hasMoreHistory || loadingOlderRef.current) return;

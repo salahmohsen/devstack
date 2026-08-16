@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Eye, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { Eye, GripVertical, Trash2 } from "lucide-react";
 import { memo, useState } from "react";
 import { toast } from "sonner";
 
@@ -49,7 +49,6 @@ export type StackItemProps = {
   /** Side-panel open for this card. */
   isOpen: boolean;
   isSort?: boolean;
-  onEdit: (id: string) => void;
   onOpen: (id: string, stack: StackOutput) => void;
   onToggleSelect: (id: string) => void;
   onPrefetch?: (id: string) => void;
@@ -70,7 +69,6 @@ export const StackItem = memo(function StackItem({
   batchSelectActive = false,
   isOpen,
   isSort = false,
-  onEdit,
   onOpen,
   onToggleSelect,
   onPrefetch,
@@ -260,10 +258,6 @@ export const StackItem = memo(function StackItem({
               )}
             >
               <ListItemActionButtons
-                edit={{
-                  onAction: () => onEdit(stack.id),
-                  isLoading: false
-                }}
                 togglePortfolio={{
                   onAction: handleTogglePortfolio,
                   initialValue: !!stack.portfolioEntryId,
@@ -337,15 +331,6 @@ export const StackItem = memo(function StackItem({
           >
             <Eye aria-hidden />
             View
-          </ContextMenuItem>
-          <ContextMenuItem
-            closeOnClick
-            onClick={() => {
-              onEdit(stack.id);
-            }}
-          >
-            <Pencil aria-hidden />
-            Edit
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuSub>

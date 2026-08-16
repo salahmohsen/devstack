@@ -9,11 +9,17 @@ export {
 } from "./api/use-hub-chat";
 export { HubChatProvider } from "./ui/hub-chat-provider";
 export {
+  consumeHubCreateIntent,
   consumeOpenHubAssistant,
   getHubAssistantOpenPending,
+  getHubCreateIntent,
+  hubCreateInterviewText,
+  requestHubCreateInterview,
   requestOpenHubAssistant,
-  subscribeHubAssistantOpen
+  subscribeHubAssistantOpen,
+  subscribeHubCreateIntent
 } from "./lib/hub-assistant-open";
+export type { HubCreateIntent } from "./lib/hub-assistant-open";
 export { hubAssistantAuiConfig, hubAssistantToolkit } from "./ui/hub-assistant-toolkit";
 export {
   ApplicationFromJdCard,
