@@ -297,13 +297,26 @@ const TRACKING_QUERY_KEYS = new Set([
 ]);
 
 /**
- * Dedup hygiene only: strip common tracking query params.
- * Does **not** rewrite hosts/paths for LinkedIn/Indeed — multi-source AI supplies the URL.
+ * Guest LinkedIn listing URL. Email `/comm/jobs/view/{id}` is an auth wall;
+ * `/jobs/view/{id}` is the public page harvest and hub fetch already share.
+ */
+function rewriteLinkedInJobUrl(u: URL): URL {
+  const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+  if (host !== "linkedin.com") return u;
+  const match = u.pathname.match(/\/(?:comm\/)?jobs\/view\/(\d+)/i);
+  if (!match?.[1]) return u;
+  return new URL(`https://www.linkedin.com/jobs/view/${match[1]}`);
+}
+
+/**
+ * Dedup + fetch hygiene: strip tracking params, and rewrite LinkedIn email
+ * `/comm/jobs/view/{id}` to the guest `/jobs/view/{id}` URL.
  */
 export function canonicalizeJobUrl(raw: string): string | null {
   try {
-    const u = new URL(raw.trim());
-    if (!/^https?:$/i.test(u.protocol)) return null;
+    const parsed = new URL(raw.trim());
+    if (!/^https?:$/i.test(parsed.protocol)) return null;
+    const u = rewriteLinkedInJobUrl(parsed);
     for (const key of Array.from(u.searchParams.keys())) {
       if (TRACKING_QUERY_KEYS.has(key.toLowerCase())) {
         u.searchParams.delete(key);

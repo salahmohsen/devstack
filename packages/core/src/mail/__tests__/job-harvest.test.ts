@@ -140,11 +140,22 @@ const JACK_AND_JILL_DIGEST = {
 };
 
 describe("canonicalizeJobUrl", () => {
-  it("strips tracking query params without rewriting host or path", () => {
-    // Dedup hygiene only — does not rewrite /comm/ or other listing paths.
+  it("rewrites LinkedIn /comm/jobs/view/{id} to the guest jobs/view URL", () => {
     const raw =
       "https://www.linkedin.com/comm/jobs/view/4443683970/?trackingId=abc&refId=xyz&lipi=foo";
-    expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/comm/jobs/view/4443683970");
+    expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/jobs/view/4443683970");
+  });
+
+  it("normalizes an already-guest LinkedIn listing URL", () => {
+    expect(canonicalizeJobUrl("https://linkedin.com/jobs/view/4452452790/")).toBe(
+      "https://www.linkedin.com/jobs/view/4452452790"
+    );
+  });
+
+  it("still strips tracking params on non-LinkedIn hosts", () => {
+    expect(
+      canonicalizeJobUrl("https://app.jackandjill.ai/jobs/abc?utm_source=email&utm_medium=digest")
+    ).toBe("https://app.jackandjill.ai/jobs/abc");
   });
 });
 
