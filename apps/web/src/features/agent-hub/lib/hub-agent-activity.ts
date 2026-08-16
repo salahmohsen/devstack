@@ -16,6 +16,7 @@ import {
   isOpenEntityInspectToolName,
   isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
+  isProposeEvidenceChangeToolName,
   isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
   openEntityFormActivityLabel,
@@ -44,6 +45,7 @@ export function isHubChoiceToolName(name: string): boolean {
   return (
     isProposeApplicationFromJdToolName(name) ||
     isProposeNewJobsTriageToolName(name) ||
+    isProposeEvidenceChangeToolName(name) ||
     isOpenSurfaceToolName(name) ||
     isHubApprovalToolName(name) ||
     isProposeHardPreferenceChangeToolName(name) ||

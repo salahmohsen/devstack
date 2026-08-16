@@ -32,6 +32,8 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("generateApplyPackage")).toBe(false);
     expect(isHubWorkingStripToolName("create-application")).toBe(false);
     expect(isHubWorkingStripToolName("propose-hard-preference-change")).toBe(false);
+    expect(isHubWorkingStripToolName("propose-evidence-change")).toBe(false);
+    expect(isHubWorkingStripToolName("proposeEvidenceChange")).toBe(false);
     expect(isHubWorkingStripToolName("find-jobs-now")).toBe(false);
     expect(isHubWorkingStripToolName("open-entity-form")).toBe(false);
     expect(isHubWorkingStripToolName("open-entity-inspect")).toBe(false);
@@ -47,6 +49,31 @@ describe("isHubWorkingStripToolName", () => {
 });
 
 describe("buildHubAgentActivityItems", () => {
+  it("omits propose-evidence-change — ApprovalCard is the thread surface", () => {
+    const items = buildHubAgentActivityItems([
+      {
+        type: "tool-propose-evidence-change",
+        toolName: "propose-evidence-change",
+        toolCallId: "ev1",
+        state: "input-available"
+      },
+      {
+        type: "tool-upsert-soft-job-preferences",
+        toolName: "upsert-soft-job-preferences",
+        toolCallId: "soft1",
+        state: "output-available"
+      }
+    ]);
+    expect(items).toEqual([
+      {
+        id: "soft1",
+        type: "step",
+        label: "Updating job preferences",
+        status: "complete"
+      }
+    ]);
+  });
+
   it("omits get-search-brief — File Diff is the thread surface", () => {
     const items = buildHubAgentActivityItems([
       {

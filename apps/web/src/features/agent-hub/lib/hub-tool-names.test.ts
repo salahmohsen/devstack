@@ -7,10 +7,13 @@ import {
   isGenerateApplyPackageToolName,
   isHubToolUiPart,
   isProposeApplicationFromJdToolName,
+  isProposeEvidenceChangeToolName,
   jdListingKey,
   listingHasResolvedJdProposal,
   parseProposeApplicationFromJdInput,
-  parseProposeApplicationFromJdOutputAction
+  parseProposeApplicationFromJdOutputAction,
+  parseProposeEvidenceChangeInput,
+  parseProposeEvidenceChangeOutput
 } from "./hub-tool-names";
 
 function assistant(parts: UIMessage["parts"]): UIMessage {
@@ -57,6 +60,75 @@ describe("isProposeApplicationFromJdToolName / isGenerateApplyPackageToolName", 
     ["propose-application-from-jd", false]
   ] as const)("package name %s → %s", (name, expected) => {
     expect(isGenerateApplyPackageToolName(name)).toBe(expected);
+  });
+});
+
+describe("isProposeEvidenceChangeToolName", () => {
+  it.each([
+    ["propose-evidence-change", true],
+    ["proposeEvidenceChange", true],
+    ["propose-hard-preference-change", false],
+    ["propose-application-from-jd", false],
+    ["tool", false]
+  ] as const)("name %s → %s", (name, expected) => {
+    expect(isProposeEvidenceChangeToolName(name)).toBe(expected);
+  });
+});
+
+const evidenceCreateInput = {
+  kind: "project" as const,
+  patch: { title: "Dev-Hub" },
+  currentMarkdown: "",
+  proposedMarkdown: "# Project: Dev-Hub"
+};
+
+describe("parseProposeEvidenceChangeInput", () => {
+  it("parses a create input without id via core schema", () => {
+    expect(parseProposeEvidenceChangeInput(evidenceCreateInput)).toEqual(evidenceCreateInput);
+  });
+
+  it("parses an edit input with id", () => {
+    expect(
+      parseProposeEvidenceChangeInput({
+        ...evidenceCreateInput,
+        kind: "experience",
+        id: "exp_1"
+      })
+    ).toEqual({
+      ...evidenceCreateInput,
+      kind: "experience",
+      id: "exp_1"
+    });
+  });
+
+  it("returns null for invalid shapes", () => {
+    expect(parseProposeEvidenceChangeInput(null)).toBeNull();
+    expect(parseProposeEvidenceChangeInput({ kind: "project" })).toBeNull();
+    expect(
+      parseProposeEvidenceChangeInput({ ...evidenceCreateInput, proposedMarkdown: "" })
+    ).toBeNull();
+  });
+});
+
+describe("parseProposeEvidenceChangeOutput", () => {
+  it("parses confirm and cancel with kind and optional id", () => {
+    expect(parseProposeEvidenceChangeOutput({ action: "confirm", kind: "project" })).toEqual({
+      action: "confirm",
+      kind: "project"
+    });
+    expect(
+      parseProposeEvidenceChangeOutput({ action: "cancel", kind: "stack", id: "stk_1" })
+    ).toEqual({
+      action: "cancel",
+      kind: "stack",
+      id: "stk_1"
+    });
+  });
+
+  it("rejects unknown shapes", () => {
+    expect(parseProposeEvidenceChangeOutput({ action: "maybe", kind: "project" })).toBeNull();
+    expect(parseProposeEvidenceChangeOutput({ action: "confirm" })).toBeNull();
+    expect(parseProposeEvidenceChangeOutput(null)).toBeNull();
   });
 });
 

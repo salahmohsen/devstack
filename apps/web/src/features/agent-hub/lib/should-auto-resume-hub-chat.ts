@@ -7,6 +7,7 @@ import {
   HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES,
   HUB_OPEN_SURFACE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
+  HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES,
   HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES,
   HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES
 } from "./hub-tool-names";
@@ -25,7 +26,8 @@ export const HUB_CLIENT_RESUME_TOOL_NAMES = new Set([
   ...HUB_OPEN_ENTITY_FORM_TOOL_NAMES,
   ...HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES,
   ...HUB_FIND_JOBS_NOW_TOOL_NAMES,
-  ...HUB_GET_SEARCH_BRIEF_TOOL_NAMES
+  ...HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
+  ...HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES
 ]);
 
 type ToolLikePart = {
@@ -113,9 +115,15 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
       const completeName = toolNameFromPart(completePart);
       if (
         HUB_FIND_JOBS_NOW_TOOL_NAMES.has(completeName) ||
-        HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(completeName)
+        HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(completeName) ||
+        HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(completeName)
       ) {
         return lastComplete;
+      }
+      if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(completeName)) {
+        // After confirm/cancel, show the next interview. Do not hide because
+        // of PREMATURE_HITL_TEXT (that would swallow "Next, RAYA…").
+        return null;
       }
     }
     const after = parts.slice(lastComplete + 1);
@@ -219,6 +227,13 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
       if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) || HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
         return false;
       }
+      if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
+        const evidenceOutput =
+          p.output && typeof p.output === "object" && !Array.isArray(p.output)
+            ? (p.output as { action?: unknown })
+            : undefined;
+        return evidenceOutput?.action === "confirm" || evidenceOutput?.action === "cancel";
+      }
       if (
         HUB_OPEN_SURFACE_TOOL_NAMES.has(name) ||
         HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name) ||
@@ -249,6 +264,9 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
         const name = toolNameFromPart(p);
         if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) || HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
           return true;
+        }
+        if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
+          return false;
         }
         const output =
           p.output && typeof p.output === "object" && !Array.isArray(p.output)

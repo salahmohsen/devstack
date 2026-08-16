@@ -308,6 +308,13 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       resumeAfterOutput: false
     },
     {
+      name: "evidence change waiting locks composer",
+      toolName: "propose-evidence-change",
+      state: "input-available",
+      expected: "client",
+      resumeAfterOutput: true
+    },
+    {
       name: "open-entity-form waiting locks composer",
       toolName: "open-entity-form",
       state: "input-available",
@@ -376,6 +383,39 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       } as never
     ]);
     expect(shouldAutoResumeHubChat({ messages: [done] })).toBe(resumeAfterOutput);
+  });
+
+  it("locks a second evidence card after confirm this turn (next entity)", () => {
+    const thread = [
+      {
+        id: "u1",
+        role: "user" as const,
+        parts: [{ type: "text" as const, text: "edit Dev-Hub and RAYA" }]
+      },
+      assistant([
+        {
+          type: "tool-propose-evidence-change",
+          toolCallId: "e1",
+          toolName: "propose-evidence-change",
+          state: "output-available",
+          output: { action: "confirm", kind: "project", id: "prj_1" }
+        } as never,
+        {
+          type: "tool-proposeEvidenceChange",
+          toolCallId: "e2",
+          toolName: "proposeEvidenceChange",
+          state: "input-available",
+          input: {
+            kind: "experience",
+            id: "exp_raya",
+            patch: { title: "Frontend" },
+            currentMarkdown: "# Experience: RAYA",
+            proposedMarkdown: "# Experience: Senior Frontend @ RAYA"
+          }
+        } as never
+      ])
+    ];
+    expect(lastHubHitlKind(thread)).toBe("client");
   });
 
   it("does not lock the composer on a JD receipt still marked waiting", () => {

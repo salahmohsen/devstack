@@ -4,6 +4,8 @@ import {
   ApplicationApplyMethodSchema,
   ApplicationSourceSchema,
   EmploymentTypeSchema,
+  ProposeEvidenceChangeInputSchema,
+  ProposeEvidenceChangeOutputSchema,
   ProposeHardPreferenceChangeInputSchema,
   ProposeHardPreferenceChangeOutputSchema,
   WorkModeSchema,
@@ -11,6 +13,8 @@ import {
   type ApplicationSource,
   type EmploymentType,
   type ProposeApplicationFromJdOutput,
+  type ProposeEvidenceChangeInput,
+  type ProposeEvidenceChangeOutput,
   type ProposeHardPreferenceChangeInput,
   type ProposeHardPreferenceChangeOutput,
   type ProposeNewJobsTriageOutput,
@@ -68,6 +72,11 @@ export const HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES = new Set([
 export const HUB_FIND_JOBS_NOW_TOOL_NAMES = new Set(["find-jobs-now", "findJobsNow"]);
 
 export const HUB_GET_SEARCH_BRIEF_TOOL_NAMES = new Set(["get-search-brief", "getSearchBrief"]);
+
+export const HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES = new Set([
+  "propose-evidence-change",
+  "proposeEvidenceChange"
+]);
 
 export const HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES = new Set([
   "upsert-soft-job-preferences",
@@ -217,6 +226,10 @@ export function isFindJobsNowToolName(name: string): boolean {
 
 export function isGetSearchBriefToolName(name: string): boolean {
   return HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name);
+}
+
+export function isProposeEvidenceChangeToolName(name: string): boolean {
+  return HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name);
 }
 
 export function isUpsertSoftJobPreferencesToolName(name: string): boolean {
@@ -572,6 +585,18 @@ export function parseProposeHardPreferenceChangeOutput(
   return parsed.success ? parsed.data : null;
 }
 
+export function parseProposeEvidenceChangeInput(input: unknown): ProposeEvidenceChangeInput | null {
+  const parsed = ProposeEvidenceChangeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeEvidenceChangeOutput(
+  output: unknown
+): ProposeEvidenceChangeOutput | null {
+  const parsed = ProposeEvidenceChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
 export function parseOpenSurfaceHref(args: unknown): string | null {
   if (!args || typeof args !== "object" || Array.isArray(args)) return null;
   const href = (args as { href?: unknown }).href;
@@ -618,7 +643,7 @@ export function isActionablePendingJdProposal(
 /**
  * HITL wait on the last assistant message.
  * Only lock the composer when a visible approval or a JD/triage/hard-stop/form
- * choice remains. `open-surface`, `find-jobs-now`, and `get-search-brief`
+ * /evidence choice remains. `open-surface`, `find-jobs-now`, and `get-search-brief`
  * auto-complete — they are not user choices.
  */
 export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
@@ -646,6 +671,12 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
       // Unparseable streaming leftovers must not lock; finished args show Cancel.
       if (part.state === "input-available" || part.state === "call") return "client";
       continue;
+    }
+    if (isProposeEvidenceChangeToolName(name)) {
+      if (parseProposeEvidenceChangeOutput(part.output)) continue;
+      // A later card after Confirm is the next entity — still lock. Do not
+      // skip with an isLaterEvidenceAfterConfirm helper (that would hide RAYA).
+      return "client";
     }
     if (isOpenEntityFormToolName(name)) {
       if (parseOpenEntityFormOutput(part.output)) continue;
