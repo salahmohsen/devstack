@@ -105,6 +105,29 @@ describe("inferJdCardActionFromCrm", () => {
     ).toBe(false);
   });
 
+  it("prefers a heuristic 0 over an LLM score of 82", () => {
+    const merged = mergeJdProposalWithListingPreview(
+      { ...input, matchScore: 82 },
+      {
+        ok: true,
+        title: "Senior React Native Engineer",
+        companyName: "Acme",
+        location: "Remote",
+        description: "Build React Native apps.",
+        workMode: "remote",
+        salaryRange: null,
+        employmentType: null,
+        department: null,
+        datePosted: null,
+        experience: null,
+        requiredSkills: [],
+        preferredSkills: [],
+        matchScore: 0
+      }
+    );
+    expect(merged.matchScore).toBe(0);
+  });
+
   it("returns null when no dismissed listing matches", () => {
     expect(
       inferJdCardActionFromCrm(input, {

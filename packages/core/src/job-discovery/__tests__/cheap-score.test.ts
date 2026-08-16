@@ -58,4 +58,53 @@ describe("scoreCatalogAgainstPreference", () => {
     expect(r.score).toBeGreaterThan(0);
     expect(r.reasons.join(" ")).not.toMatch(/work mode|location match|location mismatch/i);
   });
+
+  it("kills exclude react native on Senior React Native Engineer", () => {
+    const r = scoreCatalogAgainstPreference(
+      {
+        ...listing,
+        title: "Senior React Native Engineer",
+        skills: ["react native", "typescript"]
+      },
+      { ...defaultJobPreference(), roleKeywords: ["engineer"], excludeKeywords: ["react native"] }
+    );
+    expect(r.passed).toBe(false);
+    expect(r.score).toBe(0);
+  });
+
+  it("does not kill Senior React Native Engineer when exclude is react", () => {
+    const r = scoreCatalogAgainstPreference(
+      {
+        ...listing,
+        title: "Senior React Native Engineer",
+        skills: ["react native", "typescript"]
+      },
+      { ...defaultJobPreference(), roleKeywords: ["engineer"], excludeKeywords: ["react"] }
+    );
+    expect(r.passed).toBe(true);
+  });
+
+  it("does not title-hit React Native on role keyword react", () => {
+    const r = scoreCatalogAgainstPreference(
+      {
+        ...listing,
+        title: "Senior React Native Engineer",
+        skills: ["react native"]
+      },
+      { ...defaultJobPreference(), roleKeywords: ["react"] }
+    );
+    expect(r.passed).toBe(false);
+    expect(r.reasons).toContain("no role keyword in title");
+  });
+
+  it("title-hits Senior React Engineer and React.js Developer on role keyword react", () => {
+    const reactOnly = { ...defaultJobPreference(), roleKeywords: ["react"] };
+    expect(
+      scoreCatalogAgainstPreference({ ...listing, title: "Senior React Engineer" }, reactOnly)
+        .passed
+    ).toBe(true);
+    expect(
+      scoreCatalogAgainstPreference({ ...listing, title: "React.js Developer" }, reactOnly).passed
+    ).toBe(true);
+  });
 });

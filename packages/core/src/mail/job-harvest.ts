@@ -20,10 +20,14 @@ import {
   type ListingPageExtract
 } from "#@/common/extract-job-listing-page";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
+import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
+import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
+import { type SalaryPeriod } from "#@/job-preference/salary-compare";
 import {
   SeekerMatchEvidenceSchema,
   WorkModeSchema,
   type JobPreference,
+  type LevelFloor,
   type SeekerMatchEvidence,
   type WorkMode
 } from "#@/job-preference/types";
@@ -1431,6 +1435,13 @@ export type ScoreJobPreferenceInput = Pick<
 > & {
   salaryMin?: number | null;
   salaryCurrency?: string | null;
+  levelFloor?: LevelFloor | null;
+};
+
+export type ScoreJobPayFields = {
+  salaryMin?: number | null;
+  salaryCurrency?: string | null;
+  salaryPeriod?: SalaryPeriod | null;
 };
 
 /**
@@ -1440,7 +1451,7 @@ export type ScoreJobPreferenceInput = Pick<
  * When preferences are open and evidence exists, require a profile fit.
  */
 export function scoreJobAgainstPreference(
-  job: HarvestedJob,
+  job: HarvestedJob & ScoreJobPayFields,
   prefs: ScoreJobPreferenceInput | null | undefined,
   evidence?: SeekerMatchEvidence | null
 ): JobMatchScoreResult {
@@ -1448,7 +1459,6 @@ export function scoreJobAgainstPreference(
   const reasons: string[] = [];
   let score = 40;
 
-  const titleBlob = job.title.toLowerCase();
   const blob = [job.title, job.companyName, job.location ?? "", job.description ?? ""]
     .join("\n")
     .toLowerCase();
@@ -1457,13 +1467,26 @@ export function scoreJobAgainstPreference(
     return { score: 0, passed: false, reasons: ["invalid title/company"] };
   }
 
-  if (p.excludeKeywords.length > 0 && includesAny(blob, p.excludeKeywords)) {
-    return { score: 0, passed: false, reasons: ["excluded keyword match"] };
+  const hard = applyPreferenceHardFails(
+    {
+      title: job.title,
+      companyName: job.companyName,
+      location: job.location,
+      description: job.description,
+      salaryRange: job.salaryRange,
+      salaryMin: job.salaryMin,
+      salaryCurrency: job.salaryCurrency,
+      salaryPeriod: job.salaryPeriod
+    },
+    p
+  );
+  if (hard.failed) {
+    return { score: 0, passed: false, reasons: hard.reasons };
   }
 
   if (p.roleKeywords.length > 0) {
     // Title-only — never score from fetched HTML description noise
-    const titleHits = p.roleKeywords.filter((k) => titleBlob.includes(k.toLowerCase()));
+    const titleHits = p.roleKeywords.filter((k) => matchesKeywordPhrase(job.title, k));
     if (titleHits.length > 0) {
       score += Math.min(40, 15 + titleHits.length * 10);
       reasons.push(`title keywords: ${titleHits.slice(0, 3).join(", ")}`);

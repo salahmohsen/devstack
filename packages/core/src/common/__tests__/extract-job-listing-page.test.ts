@@ -59,6 +59,32 @@ describe("extractJobListingStructured JSON-LD workplace fields", () => {
     expect(e.hiringRegion).toBe("latam");
     expect(e.employmentType).toBe("full_time");
   });
+
+  it("maps JSON-LD baseSalary to salaryMin, currency, and period", () => {
+    const e = extractJobListingStructured(
+      jsonLdHtml({
+        baseSalary: {
+          "@type": "MonetaryAmount",
+          currency: "usd",
+          value: {
+            "@type": "QuantitativeValue",
+            minValue: 4000,
+            unitText: "MONTH"
+          }
+        }
+      })
+    );
+    expect(e.salaryMin).toBe(4000);
+    expect(e.salaryCurrency).toBe("USD");
+    expect(e.salaryPeriod).toBe("month");
+  });
+
+  it("leaves salary fields null when JSON-LD has no baseSalary", () => {
+    const e = extractJobListingStructured(jsonLdHtml({}));
+    expect(e.salaryMin ?? null).toBeNull();
+    expect(e.salaryCurrency ?? null).toBeNull();
+    expect(e.salaryPeriod ?? null).toBeNull();
+  });
 });
 
 describe("LinkedIn guest criteria and entities", () => {

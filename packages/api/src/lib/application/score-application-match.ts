@@ -1,5 +1,6 @@
 import {
   AiJobMatchBatchSchema,
+  applyPreferenceHardFails,
   formatJobMatchScorePrompt,
   SCORER_JOB_DESCRIPTION_CHARS,
   scoreJobAgainstPreference,
@@ -102,6 +103,16 @@ export async function scoreApplicationMatch(input: {
   const harvested = toHarvestedJob(input.job);
   const minScore = prefs.minMatchScore ?? 60;
   const passAll = shouldPassAllHarvestJobs(prefs, evidence);
+
+  const hard = applyPreferenceHardFails(harvested, prefs);
+  if (hard.failed) {
+    return {
+      score: 0,
+      passed: false,
+      reasons: hard.reasons,
+      source: "heuristic"
+    };
+  }
 
   const heuristic = scoreJobAgainstPreference(harvested, prefs, evidence);
 

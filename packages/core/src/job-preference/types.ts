@@ -12,6 +12,9 @@ import { refineCustomDiscoveryTitle } from "#@/job-discovery/title-packs";
 export const WorkModeSchema = z.enum(["remote", "hybrid", "onsite"]);
 export type WorkMode = z.infer<typeof WorkModeSchema>;
 
+export const LevelFloorSchema = z.enum(["junior", "mid", "senior", "staff"]);
+export type LevelFloor = z.infer<typeof LevelFloorSchema>;
+
 const preferenceString = z.string().trim().min(1).max(120);
 
 const preferenceStringList = z.array(preferenceString).max(50);

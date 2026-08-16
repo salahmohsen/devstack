@@ -18,6 +18,7 @@ import {
   EmploymentTypeSchema,
   extractExperienceFromDescription,
   extractSkillsFromJobDescription,
+  formatSalaryRangeDisplay,
   isGarbageCompany,
   refineWorkModeFromDescription,
   scoreJobAgainstPreference,
@@ -54,6 +55,7 @@ import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/gen
 import { generateApplyPackage } from "#@/lib/application/generate-apply-package";
 import { linkJobSkillsForUser } from "#@/lib/application/link-job-skills";
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
+import { loadSeekerMatchEvidence } from "#@/lib/application/load-seeker-match-evidence";
 import { refreshApplicationFromListingUrl } from "#@/lib/application/refresh-from-listing-url";
 import { sendApplicationOutreach } from "#@/lib/application/send-application-outreach";
 import { requestMailJobHarvest } from "#@/lib/mail/harvest-enqueue-hook";
@@ -210,15 +212,27 @@ export const applicationsRouter = {
       const companyName = extract?.companyName ?? null;
       const location = extract?.location ?? null;
       const workMode = refineWorkModeFromDescription(extract?.workMode, description ?? "");
+      const salaryRange = formatSalaryRangeDisplay({
+        salaryRange: extract?.salaryRange,
+        salaryMin: extract?.salaryMin,
+        salaryCurrency: extract?.salaryCurrency,
+        salaryPeriod: extract?.salaryPeriod
+      });
       let matchScore: number | null = null;
       if (title && companyName && !isGarbageCompany(companyName)) {
-        const prefs = await loadJobPreference(context.session.user.id);
+        const [prefs, evidence] = await Promise.all([
+          loadJobPreference(context.session.user.id),
+          loadSeekerMatchEvidence(context.session.user.id)
+        ]);
         matchScore = scoreJobAgainstPreference(
           {
             title,
             companyName,
             location,
-            salaryRange: null,
+            salaryRange,
+            salaryMin: extract?.salaryMin ?? null,
+            salaryCurrency: extract?.salaryCurrency ?? null,
+            salaryPeriod: extract?.salaryPeriod ?? null,
             description,
             listingUrl: input.url,
             applyUrl: null,
@@ -226,7 +240,8 @@ export const applicationsRouter = {
             workMode,
             source: extract?.source ?? null
           },
-          prefs
+          prefs,
+          evidence
         ).score;
       }
       return {
@@ -236,7 +251,7 @@ export const applicationsRouter = {
         location,
         description,
         workMode,
-        salaryRange: null,
+        salaryRange,
         employmentType,
         department: department.length > 0 ? department : null,
         datePosted: extract?.datePosted ?? null,

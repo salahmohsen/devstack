@@ -171,9 +171,8 @@ export function mergeJdProposalWithListingPreview(
     !isGarbageCompany(previewCompany) &&
     previewDesc.length > 200;
   const inputScore = typeof input.matchScore === "number" ? input.matchScore : null;
-  const previewScore = typeof preview?.matchScore === "number" ? preview.matchScore : null;
-  const matchScore =
-    inputScore != null && inputScore > 0 ? inputScore : (previewScore ?? inputScore);
+  const heuristic = typeof preview?.matchScore === "number" ? preview.matchScore : null;
+  const matchScore = heuristic ?? inputScore;
   const notes =
     previewLooksReal && isStaleFetchFailureNote(input.notes) ? null : (input.notes ?? null);
   const url = canonicalizeJobUrl(input.url ?? "") ?? input.url;

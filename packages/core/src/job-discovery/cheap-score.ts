@@ -1,3 +1,5 @@
+import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
+import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
 import { type JobPreference } from "#@/job-preference/types";
 import { isGarbageCompany, isGarbageJobTitle } from "#@/mail/job-harvest";
 
@@ -17,12 +19,6 @@ function includesAny(haystack: string, needles: readonly string[]): boolean {
   });
 }
 
-function structuredBlob(listing: CheapListing): string {
-  return [listing.title, listing.companyName, listing.location ?? "", listing.skills.join(" ")]
-    .join(" ")
-    .toLowerCase();
-}
-
 /**
  * Catalog cheap score on structured fields only (no description / JD HTML).
  * `passed` means eligible to land/rank — never gated on minMatchScore.
@@ -38,17 +34,26 @@ export function scoreCatalogAgainstPreference(
     return { score: 0, passed: false, reasons: ["invalid title/company"] };
   }
 
-  const excludeBlob = structuredBlob(listing);
-  if (prefs.excludeKeywords.length > 0 && includesAny(excludeBlob, prefs.excludeKeywords)) {
-    return { score: 0, passed: false, reasons: ["excluded keyword match"] };
+  const hard = applyPreferenceHardFails(
+    {
+      title: listing.title,
+      companyName: listing.companyName,
+      location: listing.location,
+      description: listing.skills.join(" "),
+      salaryMin: listing.salaryMin,
+      salaryCurrency: listing.salaryCurrency
+    },
+    prefs
+  );
+  if (hard.failed) {
+    return { score: 0, passed: false, reasons: hard.reasons };
   }
 
   const roleKeywords = effectiveRoleKeywords({
     titleId: prefs.titleId,
     roleKeywords: prefs.roleKeywords
   });
-  const titleBlob = listing.title.toLowerCase();
-  const titleHits = roleKeywords.filter((k) => titleBlob.includes(k.toLowerCase()));
+  const titleHits = roleKeywords.filter((k) => matchesKeywordPhrase(listing.title, k));
 
   if (titleHits.length === 0) {
     return { score: 15, passed: false, reasons: ["no role keyword in title"] };

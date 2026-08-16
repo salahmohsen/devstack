@@ -15,6 +15,7 @@ import { extractFromHtml } from "@extractus/article-extractor";
 import { extractSkillMentions } from "#@/application/job-skills";
 import { type ApplicationApplyMethod, type ApplicationSource } from "#@/application/types";
 import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
+import { type SalaryPeriod } from "#@/job-preference/salary-compare";
 import { type WorkMode } from "#@/job-preference/types";
 
 export type ListingPageExtract = {
@@ -35,6 +36,10 @@ export type ListingPageExtract = {
   datePosted?: string | null;
   /** Stated experience band, e.g. `4+ years of experience`. */
   experience?: string | null;
+  salaryRange?: string | null;
+  salaryMin?: number | null;
+  salaryCurrency?: string | null;
+  salaryPeriod?: SalaryPeriod | null;
   skills?: string[];
   source?: ApplicationSource;
   listingClosed?: boolean;
@@ -513,6 +518,7 @@ function scoreExtract(e: ListingPageExtract): number {
   if (e.department) s += 1;
   if (e.datePosted) s += 1;
   if (e.experience) s += 1;
+  if (e.salaryMin != null || e.salaryRange) s += 2;
   if (e.skills && e.skills.length > 0) s += 2;
   return s;
 }
@@ -537,6 +543,10 @@ function mergePreferRicher(
   if (next.department && !out.department) out.department = next.department;
   if (next.datePosted && !out.datePosted) out.datePosted = next.datePosted;
   if (next.experience && !out.experience) out.experience = next.experience;
+  if (next.salaryRange && !out.salaryRange) out.salaryRange = next.salaryRange;
+  if (next.salaryMin != null && out.salaryMin == null) out.salaryMin = next.salaryMin;
+  if (next.salaryCurrency && !out.salaryCurrency) out.salaryCurrency = next.salaryCurrency;
+  if (next.salaryPeriod && !out.salaryPeriod) out.salaryPeriod = next.salaryPeriod;
   if (next.skills && next.skills.length > 0 && (!out.skills || out.skills.length === 0)) {
     out.skills = next.skills;
   }
@@ -703,6 +713,75 @@ function hitToExtract(
   return out;
 }
 
+function asFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value.replace(/,/g, "").trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function salaryPeriodFromUnit(value: unknown): SalaryPeriod | null {
+  if (typeof value !== "string") return null;
+  const compact = value
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s-]+/g, "");
+  if (
+    compact === "year" ||
+    compact === "yr" ||
+    compact === "annum" ||
+    compact === "annual" ||
+    compact === "ann" ||
+    compact === "years" ||
+    compact === "p1y"
+  ) {
+    return "year";
+  }
+  if (
+    compact === "month" ||
+    compact === "mo" ||
+    compact === "monthly" ||
+    compact === "months" ||
+    compact === "p1m"
+  ) {
+    return "month";
+  }
+  return null;
+}
+
+function applyJsonLdBaseSalary(extract: ListingPageExtract, raw: unknown): void {
+  if (raw == null) return;
+  if (typeof raw === "string") {
+    const salaryRange = raw.trim();
+    if (salaryRange) extract.salaryRange = salaryRange.slice(0, 200);
+    return;
+  }
+  if (typeof raw !== "object") return;
+  const amount = raw as Record<string, unknown>;
+  const nested =
+    amount.value && typeof amount.value === "object" && !Array.isArray(amount.value)
+      ? (amount.value as Record<string, unknown>)
+      : null;
+  const salaryMin =
+    asFiniteNumber(nested?.minValue) ??
+    asFiniteNumber(nested?.value) ??
+    asFiniteNumber(amount.minValue) ??
+    asFiniteNumber(amount.value);
+  const currencyRaw = amount.currency ?? nested?.currency;
+  const currency =
+    typeof currencyRaw === "string" && currencyRaw.trim() ? currencyRaw.trim().toUpperCase() : null;
+  const period =
+    salaryPeriodFromUnit(nested?.unitText) ??
+    salaryPeriodFromUnit(nested?.duration) ??
+    salaryPeriodFromUnit(amount.unitText) ??
+    salaryPeriodFromUnit(amount.duration);
+  if (salaryMin != null) extract.salaryMin = salaryMin;
+  if (currency) extract.salaryCurrency = currency;
+  if (period) extract.salaryPeriod = period;
+}
+
 /** Parse schema.org JobPosting blocks from application/ld+json scripts. */
 export function extractJsonLdJobPostings(html: string): ListingPageExtract | null {
   const blocks = [
@@ -796,6 +875,7 @@ export function extractJsonLdJobPostings(html: string): ListingPageExtract | nul
         if (!Number.isNaN(through) && through < Date.now()) extract.listingClosed = true;
       }
       if (o.directApply === true) extract.applyMethod = "external";
+      applyJsonLdBaseSalary(extract, o.baseSalary);
 
       const sc = scoreExtract(extract);
       if (sc > bestScore) {
