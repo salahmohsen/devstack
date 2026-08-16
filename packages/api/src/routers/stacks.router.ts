@@ -16,6 +16,10 @@ import {
 } from "@tsu-stack/core";
 import { stackDependencyRepository, stackRepository } from "@tsu-stack/db/repositories";
 
+import {
+  invalidateSearchBrief,
+  shouldInvalidateSearchBriefForEntityPatch
+} from "#@/lib/application/search-brief";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { toStackOutput } from "#@/routers/portfolio.mappers";
 
@@ -169,6 +173,7 @@ export const stacksRouter = {
           projectIds
         }
       );
+      await invalidateSearchBrief(userId, "form");
       return toStackOutput({
         ...created!,
         projects: (created!.projects ?? [])
@@ -219,6 +224,9 @@ export const stacksRouter = {
           projectIds
         }
       );
+      if (updated && shouldInvalidateSearchBriefForEntityPatch(input.data)) {
+        await invalidateSearchBrief(userId, "form");
+      }
       return updated ? toStackOutput(updated) : null;
     }),
   reorder: protectedProcedure
@@ -243,6 +251,9 @@ export const stacksRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const deleted = await stackRepository.delete(input.id, userId);
+      if (deleted !== null) {
+        await invalidateSearchBrief(userId, "form");
+      }
       return { success: deleted !== null };
     }),
   merge: protectedProcedure

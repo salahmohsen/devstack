@@ -14,6 +14,10 @@ import {
 } from "@tsu-stack/core";
 import { experienceRepository } from "@tsu-stack/db/repositories";
 
+import {
+  invalidateSearchBrief,
+  shouldInvalidateSearchBriefForEntityPatch
+} from "#@/lib/application/search-brief";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toExperienceListOutput, toExperienceOutput } from "#@/routers/portfolio.mappers";
 
@@ -84,6 +88,7 @@ export const experiencesRouter = {
         { ...createData, userId },
         { includedInPortfolio }
       );
+      await invalidateSearchBrief(userId, "form");
       return toExperienceOutput(exp!);
     }),
   update: protectedProcedure
@@ -99,6 +104,9 @@ export const experiencesRouter = {
       const exp = await experienceRepository.update(input.id, userId, updateData, {
         includedInPortfolio
       });
+      if (exp && shouldInvalidateSearchBriefForEntityPatch(input.data)) {
+        await invalidateSearchBrief(userId, "form");
+      }
       return exp ? toExperienceOutput(exp) : null;
     }),
   reorder: protectedProcedure
@@ -123,6 +131,9 @@ export const experiencesRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const deleted = await experienceRepository.delete(input.id, userId);
+      if (deleted !== null) {
+        await invalidateSearchBrief(userId, "form");
+      }
       return { success: deleted !== null };
     })
 };

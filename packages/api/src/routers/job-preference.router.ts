@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import {
   defaultJobPreference,
   defaultJobPreferenceOutput,
+  GetSearchBriefOutputSchema,
   JobPreferenceOutputSchema,
   mergeJobPreference,
   normalizeLocations,
@@ -18,6 +19,7 @@ import {
 import { jobPreferenceRepository } from "@tsu-stack/db";
 import { type StoredLevelFloor, type StoredWorkMode } from "@tsu-stack/db/schema";
 
+import { ensureSearchBrief, invalidateSearchBrief } from "#@/lib/application/search-brief";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toOutput(
@@ -108,6 +110,24 @@ export const jobPreferenceRouter = {
         importFromEmail: merged.importFromEmail
       });
 
+      await invalidateSearchBrief(userId, "settings");
       return toOutput(row);
+    }),
+
+  ensureBrief: protectedProcedure
+    .route({
+      description: "Rebuild the search brief cache if stale and return markdown",
+      method: "POST"
+    })
+    .output(GetSearchBriefOutputSchema)
+    .handler(async ({ context }) => {
+      const result = await ensureSearchBrief(context.session.user.id);
+      return {
+        markdown: result.markdown,
+        hash: result.hash,
+        structured: result.structured,
+        proseSkipped: result.proseSkipped,
+        previousMarkdown: result.previousMarkdown
+      };
     })
 };

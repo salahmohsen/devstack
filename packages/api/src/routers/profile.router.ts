@@ -14,6 +14,7 @@ import {
 import { contactRepository, usernameSlugAliasRepository, userRepository } from "@tsu-stack/db";
 import { type UserSchemaSelect } from "@tsu-stack/db/types";
 
+import { invalidateSearchBrief } from "#@/lib/application/search-brief";
 import { protectedProcedure, publicProcedure } from "#@/lib/procedures/factory";
 import { resolvePublicPortfolioContext } from "#@/lib/public-portfolio/resolve-context";
 import { toContactOutput } from "#@/routers/portfolio.mappers";
@@ -115,6 +116,12 @@ export const profileRouter = {
       });
       if (!updatedUser) {
         throw new Error("Profile update did not affect any row");
+      }
+
+      const nameChanged = current.name !== updatedUser.name;
+      const summaryChanged = (current.summary ?? "") !== (updatedUser.summary ?? "");
+      if (nameChanged || summaryChanged) {
+        await invalidateSearchBrief(userId, "profile");
       }
 
       const contacts =

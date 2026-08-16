@@ -96,11 +96,14 @@ export const jobPreferenceRepository = {
   },
 
   /** Null brief cache only. No-op when the user has no preference row. */
-  async clearSearchBrief(userId: string): Promise<void> {
+  async clearSearchBrief(userId: string, previousMarkdown?: string | null): Promise<void> {
     const existing = await this.findByUserId(userId);
     if (!existing) return;
 
-    const previous = existing.searchBriefMarkdown ?? existing.searchBriefPreviousMarkdown;
+    const previous =
+      previousMarkdown !== undefined
+        ? previousMarkdown
+        : (existing.searchBriefMarkdown ?? existing.searchBriefPreviousMarkdown);
     const [row] = await getDb()
       .update(jobPreference)
       .set({
@@ -113,5 +116,26 @@ export const jobPreferenceRepository = {
       .where(eq(jobPreference.userId, userId))
       .returning({ id: jobPreference.id });
     if (!row) throw new Error("Failed to clear job_preference search brief");
+  },
+
+  async saveSearchBrief(
+    userId: string,
+    data: { markdown: string; hash: string; builtAt: Date }
+  ): Promise<boolean> {
+    const existing = await this.findByUserId(userId);
+    if (!existing) return false;
+
+    const [row] = await getDb()
+      .update(jobPreference)
+      .set({
+        searchBriefMarkdown: data.markdown,
+        searchBriefHash: data.hash,
+        searchBriefBuiltAt: data.builtAt,
+        updatedAt: new Date()
+      })
+      .where(eq(jobPreference.userId, userId))
+      .returning({ id: jobPreference.id });
+    if (!row) throw new Error("Failed to save job_preference search brief");
+    return true;
   }
 };
