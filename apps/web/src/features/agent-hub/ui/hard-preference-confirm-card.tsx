@@ -5,13 +5,16 @@ import * as React from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
+  applyHardJobPreferencePatch,
   describeHardPreferenceDelta,
+  renderSearchBriefMarkdown,
+  searchBriefPrefsFromPreference,
   type ProposeHardPreferenceChangeInput
 } from "@tsu-stack/core";
 import { Badge } from "@tsu-stack/ui/components/badge";
-import { Button } from "@tsu-stack/ui/components/button";
 
-import { HubHitlFrame } from "./hub-hitl-frame";
+import { ApprovalCard } from "@/shared/ui/agents/approval-card";
+import { FileDiff, lineDiff } from "@/shared/ui/agents/file-diff";
 
 export function HardPreferenceConfirmCard({
   toolCallId,
@@ -35,19 +38,38 @@ export function HardPreferenceConfirmCard({
   });
   const [submitting, setSubmitting] = React.useState<"confirm" | "cancel" | null>(null);
   const current = prefs.data;
-  const view =
-    patch && current
-      ? describeHardPreferenceDelta(
-          {
-            excludeKeywords: current.excludeKeywords,
-            salaryMin: current.salaryMin ?? null,
-            salaryCurrency: current.salaryCurrency ?? null,
-            levelFloor: current.levelFloor ?? null
-          },
-          patch
-        )
-      : null;
-  const confirmLocked = patch == null || disabled || submitting != null || prefs.isLoading || !view;
+  const preview = React.useMemo(() => {
+    if (!patch || !current) return null;
+    const hardCurrent = {
+      excludeKeywords: current.excludeKeywords,
+      salaryMin: current.salaryMin ?? null,
+      salaryCurrency: current.salaryCurrency ?? null,
+      levelFloor: current.levelFloor ?? null
+    };
+    const currentPrefs = searchBriefPrefsFromPreference(current);
+    const currentMd = renderSearchBriefMarkdown({ prefs: currentPrefs });
+    const nextPrefs = applyHardJobPreferencePatch(hardCurrent, patch);
+    const proposedMd = renderSearchBriefMarkdown({
+      prefs: {
+        ...currentPrefs,
+        excludeKeywords: nextPrefs.excludeKeywords ?? currentPrefs.excludeKeywords,
+        salaryMin: nextPrefs.salaryMin !== undefined ? nextPrefs.salaryMin : currentPrefs.salaryMin,
+        salaryCurrency:
+          nextPrefs.salaryCurrency !== undefined
+            ? nextPrefs.salaryCurrency
+            : currentPrefs.salaryCurrency,
+        levelFloor:
+          nextPrefs.levelFloor !== undefined ? nextPrefs.levelFloor : currentPrefs.levelFloor
+      }
+    });
+    return {
+      proposedMd,
+      lines: lineDiff(currentMd, proposedMd),
+      view: describeHardPreferenceDelta(hardCurrent, patch)
+    };
+  }, [current, patch]);
+  const confirmLocked =
+    patch == null || disabled || submitting != null || prefs.isLoading || !preview;
 
   const handle = React.useCallback(
     (action: "confirm" | "cancel") => {
@@ -62,52 +84,51 @@ export function HardPreferenceConfirmCard({
   );
 
   return (
-    <HubHitlFrame
-      kind="confirm"
+    <ApprovalCard
       title="Confirm preference change"
       description={
         patch == null
           ? "This preference proposal could not be read. Cancel to unlock the composer."
-          : (view?.summary ??
-            (prefs.isLoading
-              ? "Loading current preferences…"
-              : "Hard-stop change needs confirmation."))
+          : prefs.isLoading
+            ? "Loading current preferences…"
+            : undefined
       }
-      toolCallId={toolCallId}
-      submitting={submitting != null}
-      footer={
-        <>
-          {patch ? (
-            <Button
-              type="button"
-              size="sm"
-              disabled={confirmLocked}
-              onClick={() => handle("confirm")}
-            >
-              Confirm
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={disabled || submitting != null}
-            onClick={() => handle("cancel")}
-          >
-            Cancel
-          </Button>
-        </>
-      }
+      status={submitting != null ? "submitting" : "pending"}
+      approveLabel="Confirm"
+      rejectLabel="Cancel"
+      onApprove={patch ? () => handle("confirm") : undefined}
+      onReject={() => handle("cancel")}
+      approveDisabled={confirmLocked}
+      rejectDisabled={disabled || submitting != null}
+      className="w-full max-w-[min(72ch,100%)]"
+      data-tool-call-id={toolCallId}
+      data-hitl-kind="confirm"
     >
-      {view && view.chips.length > 0 ? (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {view.chips.map((chip) => (
-            <Badge key={chip} variant="secondary" size="sm" className="font-normal">
-              {chip}
-            </Badge>
-          ))}
-        </div>
+      {preview ? (
+        <>
+          <FileDiff
+            file="search-brief.md"
+            lines={preview.lines}
+            status="complete"
+            defaultOpen
+            collapseOnComplete={false}
+            language="text"
+            copyText={preview.proposedMd}
+            copyLabel="Copy proposed"
+            maxHeight={420}
+            className="w-full min-w-0"
+          />
+          {preview.view.chips.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {preview.view.chips.map((chip) => (
+                <Badge key={chip} variant="secondary" size="sm" className="font-normal">
+                  {chip}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
+        </>
       ) : null}
-    </HubHitlFrame>
+    </ApprovalCard>
   );
 }

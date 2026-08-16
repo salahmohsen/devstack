@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyHardJobPreferencePatch,
+  ProposeHardPreferenceChangeInputSchema
+} from "#@/job-preference/list-patch";
+import {
   buildSearchBriefSource,
   previousMarkdownAfterInvalidate,
   renderSearchBriefMarkdown,
@@ -140,6 +144,61 @@ describe("lists-only search brief renderer", () => {
     expect(markdown).toContain("- Remote regions: mena");
     expect(markdown).toContain("- Minimum monthly: 4000 USD");
     expect(markdown.startsWith("## Target jobs")).toBe(true);
+  });
+
+  it("changes when levelFloor, salary, or exclude is patched", () => {
+    const current = {
+      ...defaultJobPreference(),
+      excludeKeywords: ["php"],
+      salaryMin: 3000,
+      salaryCurrency: "USD",
+      levelFloor: "mid" as const
+    };
+    const currentPrefs = searchBriefPrefsFromPreference(current);
+    const currentMd = renderSearchBriefMarkdown({ prefs: currentPrefs });
+    const hardCurrent = {
+      excludeKeywords: current.excludeKeywords,
+      salaryMin: current.salaryMin ?? null,
+      salaryCurrency: current.salaryCurrency ?? null,
+      levelFloor: current.levelFloor ?? null
+    };
+
+    const proposed = (patch: unknown) => {
+      const nextPrefs = applyHardJobPreferencePatch(
+        hardCurrent,
+        ProposeHardPreferenceChangeInputSchema.parse(patch)
+      );
+      return renderSearchBriefMarkdown({
+        prefs: {
+          ...currentPrefs,
+          excludeKeywords: nextPrefs.excludeKeywords ?? currentPrefs.excludeKeywords,
+          salaryMin:
+            nextPrefs.salaryMin !== undefined ? nextPrefs.salaryMin : currentPrefs.salaryMin,
+          salaryCurrency:
+            nextPrefs.salaryCurrency !== undefined
+              ? nextPrefs.salaryCurrency
+              : currentPrefs.salaryCurrency,
+          levelFloor:
+            nextPrefs.levelFloor !== undefined ? nextPrefs.levelFloor : currentPrefs.levelFloor
+        }
+      });
+    };
+
+    const levelMd = proposed({ levelFloor: "senior" });
+    const salaryMd = proposed({ salaryMin: 4000, salaryCurrency: "usd" });
+    const excludeMd = proposed({ excludeKeywords: { op: "add", values: ["cobol"] } });
+
+    expect(levelMd).not.toBe(currentMd);
+    expect(currentMd).toContain("- Level floor: mid");
+    expect(levelMd).toContain("- Level floor: senior");
+
+    expect(salaryMd).not.toBe(currentMd);
+    expect(currentMd).toContain("- Minimum monthly: 3000 USD");
+    expect(salaryMd).toContain("- Minimum monthly: 4000 USD");
+
+    expect(excludeMd).not.toBe(currentMd);
+    expect(currentMd).toContain("- Exclusions: php");
+    expect(excludeMd).toContain("- Exclusions: php, cobol");
   });
 });
 
