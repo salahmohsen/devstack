@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import {
   ProposeApplicationFromJdInputSchema,
+  ProposeEvidenceChangeInputSchema,
   ProposeHardPreferenceChangeInputSchema,
   ProposeNewJobsTriageInputSchema,
   normalizeAgentTakeText,
@@ -64,6 +65,7 @@ import {
   ApplicationFromJdCard,
   type ApplicationFromJdCardAction
 } from "./application-from-jd-card";
+import { EvidenceChangeToolUI } from "./evidence-change-tool-ui";
 import { GetExperienceToolUI, ListExperiencesToolUI } from "./experiences-timeline-tool-ui";
 import { FindJobsNowToolUI } from "./find-jobs-now-tool-ui";
 import { GetSearchBriefToolUI } from "./get-search-brief-tool-ui";
@@ -536,6 +538,14 @@ const proposeHardPreferenceChangeTool = {
   render: HardPreferenceChangeToolUI
 };
 
+const proposeEvidenceChangeTool = {
+  type: "human" as const,
+  description:
+    "Propose an evidence create/edit. Wait for Confirm/Cancel. The card writes on confirm.",
+  parameters: ProposeEvidenceChangeInputSchema,
+  render: EvidenceChangeToolUI
+};
+
 const EmptyToolArgsSchema = z.object({});
 
 const findJobsNowToolEntry = {
@@ -587,6 +597,8 @@ export const hubAssistantToolkit = defineToolkit({
   openSurface: openSurfaceToolEntry,
   "propose-hard-preference-change": proposeHardPreferenceChangeTool,
   proposeHardPreferenceChange: proposeHardPreferenceChangeTool,
+  "propose-evidence-change": proposeEvidenceChangeTool,
+  proposeEvidenceChange: proposeEvidenceChangeTool,
   "find-jobs-now": findJobsNowToolEntry,
   findJobsNow: findJobsNowToolEntry,
   "get-search-brief": getSearchBriefToolEntry,
