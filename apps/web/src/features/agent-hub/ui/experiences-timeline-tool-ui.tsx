@@ -2,6 +2,7 @@
 
 import { type ToolCallMessagePartProps } from "@assistant-ui/react";
 
+import { RichHtml } from "@/shared/ui/rich-html";
 import { Timeline } from "@/shared/ui/timeline";
 
 import {
@@ -53,6 +54,21 @@ function ExperienceTimelineFrame({
   if (rows.length === 0) {
     return <p className="text-xs text-muted-foreground">{empty}</p>;
   }
-  const events = experiencesToTimelineEvents(rows);
+  const events = experiencesToTimelineEvents(rows).map((event) => {
+    const meta = event.detail;
+    const summaryHtml = event.summaryHtml;
+    return {
+      ...event,
+      detail:
+        meta || summaryHtml ? (
+          <>
+            {meta ? <span>{meta}</span> : null}
+            {summaryHtml ? (
+              <RichHtml html={summaryHtml} className="max-w-none text-xs text-foreground/45" />
+            ) : null}
+          </>
+        ) : undefined
+    };
+  });
   return <Timeline events={events} visibleCount={events.length} className="max-w-none" />;
 }

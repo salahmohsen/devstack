@@ -30,30 +30,40 @@ function whenFor(row: HubExperienceRow): TimelineWhen {
   return "past";
 }
 
-function detailFor(row: HubExperienceRow): string | undefined {
+function metaFor(row: HubExperienceRow): string | undefined {
   const bits = [row.organization];
   if (row.projectCount && row.projectCount > 0) {
     bits.push(`${row.projectCount} project${row.projectCount === 1 ? "" : "s"}`);
   }
-  if (row.summary?.trim()) bits.push(row.summary.trim());
   return bits.length > 0 ? bits.join(" · ") : undefined;
 }
 
-function compareExperiences(a: HubExperienceRow, b: HubExperienceRow): number {
-  if (a.isPresent !== b.isPresent) return a.isPresent ? 1 : -1;
-  const aKey = a.fromDate ?? "";
-  const bKey = b.fromDate ?? "";
-  return aKey.localeCompare(bKey);
+/** Newest first: current role, then later start dates. */
+function compareExperiencesNewestFirst(a: HubExperienceRow, b: HubExperienceRow): number {
+  if (a.isPresent !== b.isPresent) return a.isPresent ? -1 : 1;
+  const aEnd = a.isPresent ? "9999" : (a.toDate ?? a.fromDate ?? "");
+  const bEnd = b.isPresent ? "9999" : (b.toDate ?? b.fromDate ?? "");
+  const byEnd = bEnd.localeCompare(aEnd);
+  if (byEnd !== 0) return byEnd;
+  return (b.fromDate ?? "").localeCompare(a.fromDate ?? "");
 }
 
-export function experiencesToTimelineEvents(rows: readonly HubExperienceRow[]): TimelineEvent[] {
-  return [...rows].toSorted(compareExperiences).map((row) => {
+export type ExperienceTimelineEvent = TimelineEvent & {
+  summaryHtml?: string;
+};
+
+export function experiencesToTimelineEvents(
+  rows: readonly HubExperienceRow[]
+): ExperienceTimelineEvent[] {
+  return [...rows].toSorted(compareExperiencesNewestFirst).map((row) => {
+    const summary = row.summary?.trim();
     return {
       id: row.id,
       when: whenFor(row),
       time: row.isPresent ? "Now" : yearLabel(row.fromDate),
       title: row.title,
-      detail: detailFor(row)
+      detail: metaFor(row),
+      summaryHtml: summary && summary.length > 0 ? summary : undefined
     };
   });
 }

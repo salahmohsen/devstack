@@ -55,8 +55,7 @@ export const listExperiencesTool = createTool({
           fromDate: r.fromDate ?? null,
           toDate: r.toDate ?? null,
           isPresent: r.isPresent ?? false,
-          // Short text only — omit large HTML bodies.
-          summary: r.description ? r.description.slice(0, 200) : null,
+          summary: r.description ?? null,
           projectCount: r.projects?.length ?? 0
         };
       })

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentProps } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -14,7 +14,7 @@ export type TimelineEvent = {
   when: TimelineWhen;
   time: string;
   title: string;
-  detail?: string;
+  detail?: ReactNode;
 };
 
 export function Timeline({
@@ -77,11 +77,11 @@ export function Timeline({
             >
               {event.title}
             </span>
-            {event.detail && (
-              <span className="text-xs leading-relaxed wrap-break-word text-foreground/45">
+            {event.detail ? (
+              <div className="text-xs leading-relaxed wrap-break-word text-foreground/45">
                 {event.detail}
-              </span>
-            )}
+              </div>
+            ) : null}
           </div>
         </div>
       ))}

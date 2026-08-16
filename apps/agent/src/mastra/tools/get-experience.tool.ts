@@ -57,8 +57,7 @@ export const getExperienceTool = createTool({
         fromDate: row.fromDate ?? null,
         toDate: row.toDate ?? null,
         isPresent: row.isPresent ?? false,
-        // Short text only — omit large HTML bodies.
-        summary: row.description ? row.description.slice(0, 400) : null,
+        summary: row.description ?? null,
         projects: (row.projects ?? []).slice(0, 20).map((p) => {
           return { id: p.id, title: p.title };
         })
