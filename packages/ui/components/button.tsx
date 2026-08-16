@@ -75,8 +75,9 @@ export const buttonVariants = cva(
         destructive: glassTone("destructive", "text-destructive-foreground"),
         "destructive-outline": glassTone("error", "text-destructive-foreground"),
         ghost: cn(
-          BADGE_GLOW_VARS.outline,
-          "border-transparent text-foreground hover:bg-accent data-pressed:bg-accent *:data-[slot=button-loading-indicator]:text-foreground"
+          "[--btn-glow-line:transparent] [--btn-glow:transparent]",
+          "border-transparent bg-transparent text-foreground shadow-none",
+          "hover:bg-accent data-pressed:bg-accent *:data-[slot=button-loading-indicator]:text-foreground"
         ),
         link: cn(
           "[--btn-glow-line:transparent] [--btn-glow:transparent]",
@@ -125,6 +126,7 @@ export function buttonGlowVariant(variant: ButtonProps["variant"]): BadgeGlowVar
     case "error":
       return "error";
     case "ghost":
+      return null;
     case "outline":
       return "outline";
     case "secondary":
