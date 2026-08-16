@@ -142,12 +142,28 @@ export function ComposerMenu({
     <div
       data-slot="composer-menu"
       data-open={open || undefined}
+      inert={!open || undefined}
       className={cn(
         floating,
-        "absolute bottom-full z-10 mb-2 flex w-72 flex-col gap-0.5 rounded-2xl p-1.5",
+        "absolute bottom-full z-10 flex w-72 max-w-[min(18rem,calc(100vw-1.5rem))] flex-col gap-0.5 overscroll-contain rounded-2xl",
         align === "start" ? "inset-s-0 origin-bottom-left" : "inset-e-0 origin-bottom-right",
         "transition-[opacity,scale] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
-        open ? "scale-100 opacity-100" : "pointer-events-none scale-[0.97] opacity-0",
+        open
+          ? "mb-2 max-h-[min(23rem,calc(100dvh-8rem))] scale-100 overflow-y-auto p-1.5 opacity-100"
+          : "pointer-events-none mb-0 max-h-0 scale-[0.97] overflow-hidden p-0 opacity-0",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ComposerMenuLabel({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="composer-menu-label"
+      className={cn(
+        "px-2.5 pt-1.5 pb-0.5 text-[11px] font-medium text-foreground/40 first:pt-0.5",
         className
       )}
       {...props}
@@ -166,7 +182,7 @@ export function ComposerMenuItem({
       data-slot="composer-menu-item"
       data-active={active || undefined}
       className={cn(
-        "flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-[13.5px] transition-colors",
+        "flex w-full min-w-0 items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-[13.5px] transition-colors",
         active ? field : "hover:bg-foreground/4",
         className
       )}
@@ -377,7 +393,7 @@ export function ComposerActions({ className, ...props }: ComponentProps<"div">) 
   return (
     <div
       data-slot="composer-actions"
-      className={cn("flex items-center gap-1.5", className)}
+      className={cn("flex min-w-0 items-center gap-1.5", className)}
       {...props}
     />
   );
@@ -420,13 +436,13 @@ export function ComposerModelTrigger({
       aria-expanded={open}
       data-slot="composer-model-trigger"
       className={cn(
-        "flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] text-foreground/55 transition-colors hover:bg-foreground/6 hover:text-foreground/90 hover:dark:bg-foreground/9",
+        "flex h-8 max-w-full min-w-0 items-center gap-1.5 rounded-full px-3 text-[12.5px] text-foreground/55 transition-colors hover:bg-foreground/6 hover:text-foreground/90 hover:dark:bg-foreground/9",
         className
       )}
       {...props}
     >
-      {model}
-      <ChevronDownIcon className="size-3 opacity-60" />
+      <span className="truncate">{model}</span>
+      <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
     </button>
   );
 }
@@ -441,9 +457,13 @@ export function ComposerModelItem({
 }) {
   return (
     <ComposerMenuItem active={selected} {...props}>
-      <span className="flex-1 text-start">{entry.name}</span>
-      <span className={cn(mono, "text-foreground/35 tabular-nums")}>{entry.meta}</span>
-      <span className="flex w-4 justify-end">
+      <span className="min-w-0 flex-1 truncate text-start">{entry.name}</span>
+      {entry.meta ? (
+        <span className={cn(mono, "max-w-[42%] shrink-0 truncate text-foreground/35 tabular-nums")}>
+          {entry.meta}
+        </span>
+      ) : null}
+      <span className="flex w-4 shrink-0 justify-end">
         {selected && <CheckIcon className="size-3.5 animate-in duration-200 zoom-in-90 fade-in" />}
       </span>
     </ComposerMenuItem>
