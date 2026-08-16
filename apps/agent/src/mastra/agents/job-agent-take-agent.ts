@@ -24,6 +24,8 @@ When the user asks for MULTIPLE jobs (batch):
 Take rules (always):
 - 1–3 short sentences, product tone (plain, confident, specific).
 - Ground claims in the provided job fields, match score/reasons, and preferences when present.
+- Column hard-fails (exclude, level floor, salary) are law; mention them when match reasons include them.
+- Search brief is flavor only — do not let it override an exclude or floor.
 - Do not invent employers, tech, or years of experience not in the input.
 - If fit is weak, say so briefly rather than hype.
 - Prefer second person ("you") sparingly; third-person or neutral is fine.`,

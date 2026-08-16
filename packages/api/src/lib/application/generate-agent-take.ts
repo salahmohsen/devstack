@@ -1,13 +1,16 @@
 import {
   assessAgentTakeReadiness,
+  formatSearchBriefForPrompt,
+  formatSeekerEvidenceForPrompt,
   llmLogFields,
   normalizeAgentTakeText,
-  type RuntimeLlmConfig
+  type JobPreference,
+  type RuntimeLlmConfig,
+  type SeekerMatchEvidence
 } from "@tsu-stack/core";
 import {
   applicationActivityRepository,
   applicationRepository,
-  jobPreferenceRepository,
   type ApplicationEntity
 } from "@tsu-stack/db";
 import { ENV_SERVER } from "@tsu-stack/env/server/env";
@@ -17,6 +20,9 @@ import { agentFetch } from "#@/lib/agent/agent-fetch";
 import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
 import { extractTextFromAgentBody } from "#@/lib/agent/parse-agent-generate";
 import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
+import { loadJobPreference } from "#@/lib/application/load-job-preference";
+import { loadSeekerMatchEvidence } from "#@/lib/application/load-seeker-match-evidence";
+import { ensureSearchBrief } from "#@/lib/application/search-brief";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
 const AGENT_ID = "job-agent-take";
@@ -62,6 +68,8 @@ function buildPrompt(
   };
   return `Write the agent take for this job.
 
+Column hard-fails (exclude phrase, level floor, salary floor) are law. Phrase identity: "react" is not "react native". Search brief is narrative flavor only. Two-axis (workModes / locations / remoteRegions) is land-only — not a harvest/inbox hard-fail.
+
 Job (JSON):
 ${JSON.stringify(listing, null, 2)}
 
@@ -74,23 +82,60 @@ ${prefsSummary ?? "(not set)"}
 Reply with 1–3 sentences only.`;
 }
 
-function prefsSummaryFromRow(
-  prefs: {
-    roleKeywords: string[] | null;
-    locations: string[] | null;
-    workModes: string[] | null;
-    minMatchScore: number | null;
-    salaryMin: number | null;
-  } | null
+type TakePrefsColumns = Pick<
+  JobPreference,
+  | "roleKeywords"
+  | "locations"
+  | "remoteRegions"
+  | "workModes"
+  | "excludeKeywords"
+  | "levelFloor"
+  | "salaryMin"
+  | "salaryCurrency"
+  | "minMatchScore"
+>;
+
+export function prefsSummaryFromRow(
+  prefs: TakePrefsColumns | null,
+  evidence?: SeekerMatchEvidence | null,
+  searchBriefMarkdown?: string | null
 ): string | null {
-  if (!prefs) return null;
-  return JSON.stringify({
-    roleKeywords: prefs.roleKeywords,
-    locations: prefs.locations,
-    workModes: prefs.workModes,
-    minMatchScore: prefs.minMatchScore,
-    salaryMin: prefs.salaryMin
-  });
+  if (!prefs && !evidence && !searchBriefMarkdown?.trim()) return null;
+  const columns = {
+    roleKeywords: prefs?.roleKeywords ?? [],
+    locations: prefs?.locations ?? [],
+    remoteRegions: prefs?.remoteRegions ?? [],
+    workModes: prefs?.workModes ?? [],
+    excludeKeywords: prefs?.excludeKeywords ?? [],
+    levelFloor: prefs?.levelFloor ?? null,
+    salaryMin: prefs?.salaryMin ?? null,
+    salaryCurrency: prefs?.salaryCurrency ?? null,
+    minMatchScore: prefs?.minMatchScore ?? null
+  };
+  return [
+    `JobPreference columns (law):
+${JSON.stringify(columns, null, 2)}`,
+    formatSeekerEvidenceForPrompt(evidence),
+    formatSearchBriefForPrompt(searchBriefMarkdown)
+  ].join("\n\n");
+}
+
+async function loadTakePromptContext(userId: string): Promise<{
+  prefsSummary: string | null;
+  hasExclude: boolean;
+  hasBrief: boolean;
+}> {
+  const [prefs, evidence, brief] = await Promise.all([
+    loadJobPreference(userId),
+    loadSeekerMatchEvidence(userId),
+    ensureSearchBrief(userId).catch(() => null)
+  ]);
+  const searchBriefMarkdown = brief?.markdown ?? null;
+  return {
+    prefsSummary: prefsSummaryFromRow(prefs, evidence, searchBriefMarkdown),
+    hasExclude: prefs.excludeKeywords.length > 0,
+    hasBrief: Boolean(searchBriefMarkdown?.trim())
+  };
 }
 
 /**
@@ -125,12 +170,13 @@ export async function generateAgentTakeText(input: {
     };
   }
 
-  const prefsSummary =
+  const takeCtx =
     input.prefsSummary !== undefined
-      ? input.prefsSummary
-      : prefsSummaryFromRow(await jobPreferenceRepository.findByUserId(input.userId));
-  const prompt = buildPrompt(input.job, prefsSummary, input.matchReasons);
+      ? { prefsSummary: input.prefsSummary, hasExclude: false, hasBrief: false }
+      : await loadTakePromptContext(input.userId);
+  const prompt = buildPrompt(input.job, takeCtx.prefsSummary, input.matchReasons);
   const byo = llmLogFields(llm);
+  const injectFlags = { hasExclude: takeCtx.hasExclude, hasBrief: takeCtx.hasBrief };
 
   try {
     const sessionToken = await ensureSessionTokenForUser(input.userId);
@@ -152,6 +198,7 @@ export async function generateAgentTakeText(input: {
     if (!response) {
       log.error(new Error("agent take unreachable"), {
         event: "generate_agent_take_unreachable",
+        ...injectFlags,
         ...byo
       });
       log.emit({ _forceKeep: true });
@@ -164,6 +211,7 @@ export async function generateAgentTakeText(input: {
         event: "generate_agent_take_failed",
         status: response.status,
         bodyPreview: bodyText.slice(0, 200),
+        ...injectFlags,
         ...byo
       });
       log.emit({ _forceKeep: true });
@@ -188,6 +236,7 @@ export async function generateAgentTakeText(input: {
     log.set({
       event: "generate_agent_take_text_ok",
       takeLength: take.length,
+      ...injectFlags,
       ...byo
     });
     log.emit();
@@ -195,6 +244,7 @@ export async function generateAgentTakeText(input: {
   } catch (err) {
     log.error(err instanceof Error ? err : new Error(String(err)), {
       event: "generate_agent_take_error",
+      ...injectFlags,
       ...byo
     });
     log.emit({ _forceKeep: true });

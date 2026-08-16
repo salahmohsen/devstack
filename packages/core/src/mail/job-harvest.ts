@@ -34,6 +34,7 @@ import {
 } from "#@/job-preference/types";
 import {
   defaultJobPreference,
+  formatSearchBriefForPrompt,
   formatSeekerEvidenceForPrompt,
   isOpenJobPreference,
   seekerEvidenceHasSignal
@@ -187,7 +188,9 @@ export const HarvestJobPreferenceSchema = z.object({
   levelFloor: LevelFloorSchema.nullable().optional(),
   minMatchScore: z.number().int().min(0).max(100).default(60),
   /** Career-profile signal (experiences / stacks / projects) for fit scoring. */
-  evidence: SeekerMatchEvidenceSchema.optional()
+  evidence: SeekerMatchEvidenceSchema.optional(),
+  /** Narrative search brief — flavor only; never a cheap-rank input. */
+  searchBriefMarkdown: z.string().max(50_000).nullable().optional()
 });
 export type HarvestJobPreference = z.infer<typeof HarvestJobPreferenceSchema>;
 
@@ -1558,10 +1561,16 @@ export function formatJobMatchScorePrompt(input: {
   evidence?: SeekerMatchEvidence | null;
   jobs: unknown[];
   minScore: number;
+  searchBriefMarkdown?: string | null;
 }): string {
   const evidence =
     input.evidence ?? ("evidence" in input.prefs ? (input.prefs.evidence ?? null) : null);
+  const searchBriefMarkdown =
+    input.searchBriefMarkdown ??
+    ("searchBriefMarkdown" in input.prefs ? (input.prefs.searchBriefMarkdown ?? null) : null);
   return `Score these jobs for the seeker.
+
+Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity: "react" is not "react native". Search brief is narrative flavor only and cannot pass a column hard-fail. Two-axis (workModes / locations / remoteRegions) is a land/evaluate gate — do not hard-fail harvest or inbox solely for unknown work mode or location.
 
 JobPreference (JSON):
 ${JSON.stringify(
@@ -1582,12 +1591,14 @@ ${JSON.stringify(
 
 ${formatSeekerEvidenceForPrompt(evidence)}
 
+${formatSearchBriefForPrompt(searchBriefMarkdown)}
+
 Jobs (JSON array):
 ${JSON.stringify(input.jobs, null, 2)}
 
-Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${input.minScore} and not excluded), and reasons.
+Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${input.minScore} and not excluded by a column hard-fail), and reasons.
 Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.
-workModes is multi-select (OR): empty array = any mode; boost when job.workMode is any preferred mode; soft-penalize only when job mode is known and outside the preferred set.
+workModes is multi-select (OR): empty array = any mode; boost when job.workMode is any preferred mode; soft-penalize only when job mode is known and outside the preferred set. Unknown/null job workMode is ranking-neutral — not a harvest/inbox fail.
 When roleKeywords are empty, infer fit from SeekerProfileEvidence (experience titles, featured stacks, project stacks). Fail jobs that are orthogonal to this career (nursing, sales SDR, graphic design vs a frontend engineer, etc.).
-A job should pass only if it reasonably matches the seeker's craft or explicit preferences.`;
+A job should pass only if it reasonably matches the seeker's craft or explicit preferences and has no column hard-fail.`;
 }

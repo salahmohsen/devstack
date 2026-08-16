@@ -1,6 +1,7 @@
 import { linkJobSkillsForUser } from "@tsu-stack/api/lib/application/link-job-skills";
 import { loadJobPreference } from "@tsu-stack/api/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "@tsu-stack/api/lib/application/load-seeker-match-evidence";
+import { ensureSearchBrief } from "@tsu-stack/api/lib/application/search-brief";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
@@ -99,7 +100,12 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
-  const harvestPreference: HarvestJobPreference = { ...prefs, evidence };
+  const brief = await ensureSearchBrief(row.userId).catch(() => null);
+  const harvestPreference: HarvestJobPreference = {
+    ...prefs,
+    evidence,
+    searchBriefMarkdown: brief?.markdown ?? null
+  };
   const [llm, openInboxBeforeAgent] = await Promise.all([
     resolveRuntimeAiCredentials(row.userId, "classify"),
     applicationRepository.countByUserIdAndTrackingStatus(row.userId, "inbox")

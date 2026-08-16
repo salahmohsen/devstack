@@ -274,7 +274,10 @@ export const applicationsRouter = {
       const listingUrl = input.listingUrl
         ? (canonicalizeJobUrl(input.listingUrl) ?? input.listingUrl)
         : "https://invalid.local/";
-      const prefs = await loadJobPreference(context.session.user.id);
+      const [prefs, evidence] = await Promise.all([
+        loadJobPreference(context.session.user.id),
+        loadSeekerMatchEvidence(context.session.user.id)
+      ]);
       const reasons = scoreJobAgainstPreference(
         {
           title: input.title,
@@ -288,7 +291,8 @@ export const applicationsRouter = {
           workMode: null,
           source: null
         },
-        prefs
+        prefs,
+        evidence
       ).reasons;
       const take = await generateAgentTakeText({
         userId: context.session.user.id,

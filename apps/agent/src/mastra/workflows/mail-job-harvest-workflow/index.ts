@@ -8,6 +8,8 @@ import {
   canGenerateAgentTake,
   canonicalizeJobUrl,
   formatJobMatchScorePrompt,
+  formatSearchBriefForPrompt,
+  formatSeekerEvidenceForPrompt,
   HarvestedJobSchema,
   HarvestJobPreferenceSchema,
   inferApplicationSource,
@@ -606,19 +608,27 @@ const generateAgentTakesAi = createStep({
 
     const prompt = `Write a short agent take for EACH match-passed job.
 
+Column hard-fails (exclude phrase, level floor, salary floor) are law. Phrase identity: "react" is not "react native". Search brief is narrative flavor only. Two-axis is land-only — not a harvest/inbox hard-fail.
+
 Seeker preferences (JSON):
 ${JSON.stringify(
   {
     workModes: prefs.workModes,
     locations: prefs.locations,
+    remoteRegions: prefs.remoteRegions,
     roleKeywords: prefs.roleKeywords,
     excludeKeywords: prefs.excludeKeywords,
     salaryMin: prefs.salaryMin,
-    salaryCurrency: prefs.salaryCurrency
+    salaryCurrency: prefs.salaryCurrency,
+    levelFloor: prefs.levelFloor
   },
   null,
   2
 )}
+
+${formatSeekerEvidenceForPrompt(prefs.evidence)}
+
+${formatSearchBriefForPrompt(prefs.searchBriefMarkdown)}
 
 Jobs (JSON array):
 ${JSON.stringify(jobsJson, null, 2)}

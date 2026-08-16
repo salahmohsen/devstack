@@ -669,14 +669,7 @@ async function runInboxAiForPosting(input: {
           matchScore: match.score,
           description
         },
-        matchReasons: match.reasons,
-        prefsSummary: JSON.stringify({
-          roleKeywords: prefs.roleKeywords,
-          locations: prefs.locations,
-          workModes: prefs.workModes,
-          minMatchScore: prefs.minMatchScore,
-          salaryMin: prefs.salaryMin
-        })
+        matchReasons: match.reasons
       });
       takeText = take.ok ? take.text : null;
     } catch {

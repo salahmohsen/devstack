@@ -298,3 +298,11 @@ ${JSON.stringify(
   2
 )}`;
 }
+
+/** Brief is flavor only — never a cheap-rank or column hard-fail input. */
+export function formatSearchBriefForPrompt(markdown: string | null | undefined): string {
+  const text = markdown?.trim();
+  if (!text) return "Search brief (narrative only): (none)";
+  return `Search brief (narrative only — flavor, not law):
+${text}`;
+}
