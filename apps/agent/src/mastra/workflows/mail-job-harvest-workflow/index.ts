@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   AiJobAgentTakeBatchSchema,
   AiJobMatchBatchSchema,
+  applyPreferenceHardFails,
   canGenerateAgentTake,
   canonicalizeJobUrl,
   formatJobMatchScorePrompt,
@@ -478,6 +479,17 @@ const scoreJobsAgainstPreferenceAi = createStep({
         if (!hit) {
           unmatchedScoreRows += 1;
           scored.push(heuristicScore(job, ["score_row_missing"]));
+          continue;
+        }
+        const hard = applyPreferenceHardFails(job, prefs);
+        if (hard.failed) {
+          scored.push({
+            ...job,
+            matchScore: 0,
+            matchPassed: false,
+            matchReasons: hard.reasons,
+            agentTake: null
+          });
           continue;
         }
         const score = Math.max(0, Math.min(100, Math.round(hit.score)));
