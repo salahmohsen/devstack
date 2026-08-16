@@ -17,6 +17,45 @@
 
 ---
 
+## 2026-08-16 — Evidence interview: identity brief does not resume; list + needs live agent
+
+- **Trigger:** Conversational evidence Tasks 1–10 then hardening (home Thread + floater + list `+`)
+- **Finding:** After `get-search-brief`, auto-resume is only for a _section_ question (`searchBriefUserTurnNeedsSpokenAnswer`). A matrix case with no user text is identity/preview — `resumeAfterOutput` must be false. Stale `true` fails after Task 8
+- **Finding:** List `+` lazy-mounts the hub floater (`widgets/agent-hub`). If Vite or `:5200` drops mid-import, CatchBoundary shows a generic 500 — that is not “form still opened”
+- **Finding:** Live interview / Confirm persist cannot be proven when `:4111` is down. Unit seams (goals, rank, payload, resume, post-evidence `activeTools`) are not a substitute
+- **User preference:** Everyday language; no form door; File Diff ApprovalCard writes on Confirm
+- **Evidence class:** Web 254 unit (after matrix fix); agent 68 policy/processor/mapper; Playwright `/dashboard/projects` Add Project while `:3000`/`:5200` died; `:4111` refused
+
+## 2026-08-16 — AgentCore harden/debug is inspiration, not a runner
+
+- **Trigger:** Asked whether AWS `agents-harden` / `agents-debug` / `agents-optimize` can harden the Mastra hub agent
+- **Finding:** Those skills require `agentcore` ≥ 0.9 and `agentcore.json` (Bedrock IAM, JWT/SigV4, Secrets Manager, Gateway, X-Ray, `maxVms`). This repo is session-only Better Auth, BYO LLM, oRPC, and `@tsu-stack/logger`. Do not install the plugin or run `agentcore`
+- **Finding:** Steal the _classes_ of check: inbound auth fail-closed, no secrets in agent env/logs, Zod + payload size, tenant `resourceId`, safe product errors, read traces yourself, scorer sampling as eval baseline. Product HITL / dual-entry / browser stays in this skill
+- **Finding:** Local translations: unauthenticated `:4111` `/chat` → 401; `memory: { thread, resource }` not top-level ids; one hub thread per user; Mastra `createScorer` + `sampling`, not `agentcore run eval`
+- **User preference:** Update the existing harden + testing docs; do not vendor the AWS skill tree
+- **Evidence class:** AWS skill sources vs `apps/agent/AGENTS.md` + `MastraAuthBetterAuth` / `hubChatMemoryOptions`
+
+## 2026-08-16 — Hard-stop confirm must not resume into triage
+
+- **Trigger:** “make it 45000 EGP” → confirm card → card again → Generating → New jobs triage; “Updated hard-stop preferences” missing from the steps strip
+- **Finding:** Hard-stop was a “choice” tool so it never became an Agent Activity step. After confirm the strip had zero items and fell back to “Working through it…”. Put completed hard-stop in the working strip with label “Updating hard-stop preferences”
+- **Finding:** Confirm + addToolOutput still auto-resumed when output/action was not visible yet, or a second propose sat in the same turn. Treat hard-stop complete as terminal by tool name; cancel sibling cards; drop later proposes after confirm this turn
+- **Finding:** After a salary/exclude/level write the client should show File Diff (ensureBrief). Do not let the model listNewJobs / triage
+- **User preference:** Confirm is the write; the next surface is the brief, not a new jobs card
+- **Evidence class:** Chrome screenshots — two receipts, Generating, then New jobs triage on a salary-only turn
+
+## 2026-08-16 — Search brief File Diff + triage confirm writes
+
+- **Trigger:** Keep the beUI File Diff lock; empty New jobs card; confirm loop (two receipts + Generating); card must appear on everyday wording about rules / what they want
+- **Finding:** File Diff gated on `searchBriefChanged` hid cache hits and first builds (`previousMarkdown == null`). Show the card whenever markdown exists; `previousMarkdown ?? ""`; keep it open (`defaultOpen`, no collapse)
+- **Finding:** DeepSeek thinking 400s on `toolChoice: "required"` after listNewJobs. Steer with `activeTools` + feedback only
+- **Finding:** Empty `propose-new-jobs-triage` args are not an empty inbox. Hydrate Track from the last `listNewJobs` result or `applications.list` inbox. Auto-complete only when inbox is actually empty
+- **Finding:** Streaming HITL args mount the card before rows exist, so checkboxes init empty. Key the card on proposed ids so it remounts when ids arrive
+- **Finding:** After Confirm, auto-resume often re-proposes instead of `trackJob`/`dismissJob` (Mastra memory may not see the client output). Write promote/dismiss on the Confirm button and treat confirm as terminal — same lesson as JD save/package
+- **Finding:** A later propose after confirm this turn must not lock or show a second receipt. Scope that guard to the latest user turn so a new ask can triage again
+- **User preference:** Keep jal-co / side-panel brief save out. Test with everyday language; do not coach product steps
+- **Evidence class:** Chrome hub — “what am I looking for?” / “what are my job rules?” opened `search-brief.md` +18; “can you show me the jobs that came in?” filled triage; Confirm track 7 → inbox 0, tracked 13, one receipt, no second card
+
 ## 2026-08-16 — Preview inspect vs edit-plan form
 
 - **Trigger:** Hub “show my latest project” dumped prose instead of the side-panel project view; “make it backend” opened the edit form with no plan and often a stale/empty id

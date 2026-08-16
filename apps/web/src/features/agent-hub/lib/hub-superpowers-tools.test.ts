@@ -6,11 +6,15 @@ import { isHubApprovalPending, summarizeHubApproval } from "./hub-approval-summa
 import {
   findOpenEntityFormOutputInMessages,
   findPendingProposeApplicationFromJd,
+  hydrateProposeNewJobsTriageInput,
+  isLaterHardStopAfterConfirm,
+  isLaterTriageAfterConfirm,
   isOpenEntityFormToolName,
   isOpenEntityInspectToolName,
   isOpenSurfaceToolName,
   isProposeNewJobsTriageToolName,
   lastHubHitlKind,
+  listNewJobsFromMessages,
   parseOpenEntityFormInput,
   parseOpenEntityInspectInput,
   parseOpenSurfaceHref,
@@ -235,6 +239,170 @@ describe("parseProposeNewJobsTriageInput — multi-variable", () => {
   });
 });
 
+describe("hydrateProposeNewJobsTriageInput", () => {
+  it("keeps a model-filled split", () => {
+    const parsed = {
+      track: [{ id: "1", title: "Eng", companyName: "A", matchScore: 80, reason: "fit" }],
+      dismiss: [{ id: "2", title: "Ops", companyName: "B", matchScore: null, reason: "no" }]
+    };
+    expect(
+      hydrateProposeNewJobsTriageInput(parsed, [{ id: "9", title: "Other", companyName: "Z" }])
+    ).toEqual(parsed);
+  });
+
+  it("fills Track from inbox when both arrays are empty", () => {
+    const hydrated = hydrateProposeNewJobsTriageInput({ track: [], dismiss: [] }, [
+      { id: "a", title: "Eng", companyName: "Acme", matchScore: 70 },
+      { id: "b", title: "Ops", companyName: "Beta", matchScore: null }
+    ]);
+    expect(hydrated.dismiss).toEqual([]);
+    expect(hydrated.track.map((row) => row.id)).toEqual(["a", "b"]);
+    expect(hydrated.track[0]?.title).toBe("Eng");
+  });
+
+  it("caps hydrate at 15", () => {
+    const jobs = Array.from({ length: 20 }, (_, i) => {
+      return { id: `j${i}`, title: `T${i}`, companyName: "C" };
+    });
+    expect(hydrateProposeNewJobsTriageInput({ track: [], dismiss: [] }, jobs).track).toHaveLength(
+      15
+    );
+  });
+});
+
+describe("listNewJobsFromMessages", () => {
+  it("reads the latest listNewJobs jobs", () => {
+    expect(
+      listNewJobsFromMessages([
+        { id: "u1", role: "user", parts: [{ type: "text", text: "show my new jobs" }] },
+        assistant([
+          {
+            type: "tool-listNewJobs",
+            toolName: "listNewJobs",
+            toolCallId: "l1",
+            state: "output-available",
+            output: { jobs: [{ id: "old", title: "Old", companyName: "X" }] }
+          } as never
+        ]),
+        { id: "u2", role: "user", parts: [{ type: "text", text: "again" }] },
+        assistant([
+          {
+            type: "tool-list-new-jobs",
+            toolName: "list-new-jobs",
+            toolCallId: "l2",
+            state: "output-available",
+            output: { jobs: [{ id: "new", title: "New", companyName: "Y", matchScore: 88 }] }
+          } as never
+        ])
+      ])
+    ).toEqual([{ id: "new", title: "New", companyName: "Y", matchScore: 88 }]);
+  });
+});
+
+describe("isLaterTriageAfterConfirm", () => {
+  it("is false for the first propose this turn", () => {
+    expect(
+      isLaterTriageAfterConfirm(
+        [
+          { id: "u1", role: "user", parts: [{ type: "text", text: "show my new jobs" }] },
+          assistant([
+            {
+              type: "tool-propose-new-jobs-triage",
+              toolName: "propose-new-jobs-triage",
+              toolCallId: "t1",
+              state: "input-available"
+            } as never
+          ])
+        ],
+        "t1"
+      )
+    ).toBe(false);
+  });
+
+  it("is true for a second propose after confirm this turn", () => {
+    expect(
+      isLaterTriageAfterConfirm(
+        [
+          { id: "u1", role: "user", parts: [{ type: "text", text: "show my new jobs" }] },
+          assistant([
+            {
+              type: "tool-propose-new-jobs-triage",
+              toolName: "propose-new-jobs-triage",
+              toolCallId: "t1",
+              state: "output-available",
+              output: { action: "confirm", trackIds: ["a"], dismissIds: [] }
+            } as never,
+            {
+              type: "tool-propose-new-jobs-triage",
+              toolName: "propose-new-jobs-triage",
+              toolCallId: "t2",
+              state: "input-available"
+            } as never
+          ])
+        ],
+        "t2"
+      )
+    ).toBe(true);
+  });
+
+  it("resets on a new user turn", () => {
+    expect(
+      isLaterTriageAfterConfirm(
+        [
+          { id: "u1", role: "user", parts: [{ type: "text", text: "show my new jobs" }] },
+          assistant([
+            {
+              type: "tool-propose-new-jobs-triage",
+              toolName: "propose-new-jobs-triage",
+              toolCallId: "t1",
+              state: "output-available",
+              output: { action: "confirm", trackIds: ["a"], dismissIds: [] }
+            } as never
+          ]),
+          { id: "u2", role: "user", parts: [{ type: "text", text: "show them again" }] },
+          assistant([
+            {
+              type: "tool-propose-new-jobs-triage",
+              toolName: "propose-new-jobs-triage",
+              toolCallId: "t3",
+              state: "input-available"
+            } as never
+          ])
+        ],
+        "t3"
+      )
+    ).toBe(false);
+  });
+});
+
+describe("isLaterHardStopAfterConfirm", () => {
+  it("is true for a second hard-stop after confirm this turn", () => {
+    expect(
+      isLaterHardStopAfterConfirm(
+        [
+          { id: "u1", role: "user", parts: [{ type: "text", text: "make it 45000 EGP" }] },
+          assistant([
+            {
+              type: "tool-propose-hard-preference-change",
+              toolName: "propose-hard-preference-change",
+              toolCallId: "h1",
+              state: "output-available",
+              output: { action: "confirm", patch: { salaryMin: 45000 } }
+            } as never,
+            {
+              type: "tool-propose-hard-preference-change",
+              toolName: "propose-hard-preference-change",
+              toolCallId: "h2",
+              state: "input-available"
+            } as never
+          ])
+        ],
+        "h2"
+      )
+    ).toBe(true);
+  });
+});
+
 describe("parseProposeNewJobsTriageOutput", () => {
   it("accepts confirm/cancel shapes", () => {
     expect(
@@ -277,7 +445,7 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       toolName: "propose-new-jobs-triage",
       state: "input-available",
       expected: "client",
-      resumeAfterOutput: true
+      resumeAfterOutput: false
     },
     {
       name: "openSurface waiting is not a user choice",
@@ -291,7 +459,7 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       toolName: "propose-hard-preference-change",
       state: "input-available",
       expected: "client",
-      resumeAfterOutput: true
+      resumeAfterOutput: false
     },
     {
       name: "find-jobs-now waiting is not a user choice",
@@ -305,6 +473,7 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       toolName: "get-search-brief",
       state: "input-available",
       expected: null,
+      // No user text → identity/preview only; section questions resume in dedicated tests
       resumeAfterOutput: false
     },
     {
@@ -385,6 +554,25 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
     expect(shouldAutoResumeHubChat({ messages: [done] })).toBe(resumeAfterOutput);
   });
 
+  it("does not lock the composer on a JD receipt still marked waiting", () => {
+    const receipt = assistant([
+      {
+        type: "tool-propose-application-from-jd",
+        toolCallId: "jd1",
+        toolName: "propose-application-from-jd",
+        state: "input-available",
+        input: {
+          title: "Senior Front-End Engineer",
+          companyName: "Exequt",
+          description: "Build UIs",
+          url: "https://www.careers-page.com/exequt/job/3W3V947V"
+        },
+        output: { action: "package", applicationId: "app_1" }
+      } as never
+    ]);
+    expect(lastHubHitlKind([receipt])).toBeNull();
+  });
+
   it("locks a second evidence card after confirm this turn (next entity)", () => {
     const thread = [
       {
@@ -418,23 +606,31 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
     expect(lastHubHitlKind(thread)).toBe("client");
   });
 
-  it("does not lock the composer on a JD receipt still marked waiting", () => {
-    const receipt = assistant([
+  it("does not lock a later triage propose after confirm this turn", () => {
+    const thread = [
       {
-        type: "tool-propose-application-from-jd",
-        toolCallId: "jd1",
-        toolName: "propose-application-from-jd",
-        state: "input-available",
-        input: {
-          title: "Senior Front-End Engineer",
-          companyName: "Exequt",
-          description: "Build UIs",
-          url: "https://www.careers-page.com/exequt/job/3W3V947V"
-        },
-        output: { action: "package", applicationId: "app_1" }
-      } as never
-    ]);
-    expect(lastHubHitlKind([receipt])).toBeNull();
+        id: "u1",
+        role: "user" as const,
+        parts: [{ type: "text" as const, text: "show my new jobs" }]
+      },
+      assistant([
+        {
+          type: "tool-propose-new-jobs-triage",
+          toolCallId: "t1",
+          toolName: "propose-new-jobs-triage",
+          state: "output-available",
+          output: { action: "confirm", trackIds: ["a"], dismissIds: [] }
+        } as never,
+        {
+          type: "tool-propose-new-jobs-triage",
+          toolCallId: "t2",
+          toolName: "propose-new-jobs-triage",
+          state: "input-available",
+          input: { track: [], dismiss: [] }
+        } as never
+      ])
+    ];
+    expect(lastHubHitlKind(thread)).toBeNull();
   });
 
   it("does not lock when a newer JD card superseded this waiting one", () => {
