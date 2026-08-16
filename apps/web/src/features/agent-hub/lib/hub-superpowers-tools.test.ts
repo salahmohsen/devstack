@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { findHubApprovalId, withApprovalRequested } from "./hub-approval-resume";
 import { isHubApprovalPending, summarizeHubApproval } from "./hub-approval-summary";
 import {
+  findOpenEntityFormOutputInMessages,
   findPendingProposeApplicationFromJd,
   isOpenEntityFormToolName,
   isOpenSurfaceToolName,
@@ -12,7 +13,8 @@ import {
   parseOpenEntityFormInput,
   parseOpenSurfaceHref,
   parseProposeNewJobsTriageInput,
-  parseProposeNewJobsTriageOutput
+  parseProposeNewJobsTriageOutput,
+  shouldRequestEntityFormHost
 } from "./hub-tool-names";
 import { rememberJdCardAction } from "./jd-card-action-memory";
 import { shouldAutoResumeHubChat } from "./should-auto-resume-hub-chat";
@@ -73,6 +75,87 @@ describe("parseOpenEntityFormInput", () => {
   it("rejects unknown kinds", () => {
     expect(parseOpenEntityFormInput({ kind: "application" })).toBeNull();
     expect(parseOpenEntityFormInput(null)).toBeNull();
+  });
+});
+
+describe("shouldRequestEntityFormHost", () => {
+  it("requests only when this call is the latest pending owner", () => {
+    expect(
+      shouldRequestEntityFormHost({
+        completed: false,
+        latestPendingId: "tc1",
+        toolCallId: "tc1"
+      })
+    ).toBe(true);
+    expect(
+      shouldRequestEntityFormHost({
+        completed: false,
+        latestPendingId: "tc2",
+        toolCallId: "tc1"
+      })
+    ).toBe(false);
+    expect(
+      shouldRequestEntityFormHost({
+        completed: false,
+        latestPendingId: null,
+        toolCallId: "tc1"
+      })
+    ).toBe(false);
+  });
+
+  it("does not request after this tool already completed", () => {
+    expect(
+      shouldRequestEntityFormHost({
+        completed: true,
+        latestPendingId: null,
+        toolCallId: "tc1"
+      })
+    ).toBe(false);
+    expect(
+      shouldRequestEntityFormHost({
+        completed: true,
+        latestPendingId: "tc1",
+        toolCallId: "tc1"
+      })
+    ).toBe(false);
+  });
+});
+
+describe("findOpenEntityFormOutputInMessages", () => {
+  it("reads host addToolOutput off the matching part", () => {
+    expect(
+      findOpenEntityFormOutputInMessages(
+        [
+          assistant([
+            {
+              type: "tool-open-entity-form",
+              toolCallId: "tc1",
+              toolName: "open-entity-form",
+              state: "output-available",
+              output: { ok: true, kind: "experience", saved: true, id: "exp_1" }
+            } as never
+          ])
+        ],
+        "tc1"
+      )
+    ).toEqual({ ok: true, kind: "experience", saved: true, id: "exp_1" });
+  });
+
+  it("ignores other tool calls", () => {
+    expect(
+      findOpenEntityFormOutputInMessages(
+        [
+          assistant([
+            {
+              type: "tool-open-entity-form",
+              toolCallId: "other",
+              output: { ok: true, kind: "project", saved: false, cancelled: true }
+            } as never
+          ])
+        ],
+        "tc1"
+      )
+    ).toBeNull();
   });
 });
 

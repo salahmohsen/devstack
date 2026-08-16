@@ -6,10 +6,12 @@ import * as React from "react";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import { requestEntityForm } from "@/features/agent-hub/lib/entity-form-host-store";
 import {
+  findOpenEntityFormOutputInMessages,
   isOpenEntityFormToolName,
   openEntityFormActivityLabel,
   parseOpenEntityFormInput,
   parseOpenEntityFormOutput,
+  shouldRequestEntityFormHost,
   type OpenEntityFormInput,
   type OpenEntityFormKind,
   type OpenEntityFormOutput
@@ -81,7 +83,8 @@ export function OpenEntityFormToolUI({
     : OPEN_ENTITY_FORM_TOOL_ID;
 
   const parsed = parseOpenEntityFormInput(args);
-  const completed = parseOpenEntityFormOutput(result);
+  const completed =
+    parseOpenEntityFormOutput(result) ?? findOpenEntityFormOutputInMessages(messages, toolCallId);
 
   const complete = React.useCallback(
     (output: OpenEntityFormOutput) => {
@@ -104,8 +107,7 @@ export function OpenEntityFormToolUI({
   }, [completed]);
 
   React.useEffect(() => {
-    if (result != null) return;
-    if (completedRef.current) return;
+    if (completed || completedRef.current) return;
     if (status?.type === "running") return;
 
     const input = parseOpenEntityFormInput(args);
@@ -120,14 +122,16 @@ export function OpenEntityFormToolUI({
     }
 
     const latestId = latestPendingOpenEntityFormId(messages);
-    if (latestId && latestId !== toolCallId) {
-      complete({
-        ok: true,
-        kind: input.kind,
-        ...(input.id ? { id: input.id } : {}),
-        saved: false,
-        cancelled: true
-      });
+    if (!shouldRequestEntityFormHost({ completed: false, latestPendingId: latestId, toolCallId })) {
+      if (latestId && latestId !== toolCallId) {
+        complete({
+          ok: true,
+          kind: input.kind,
+          ...(input.id ? { id: input.id } : {}),
+          saved: false,
+          cancelled: true
+        });
+      }
       return;
     }
 
@@ -138,37 +142,7 @@ export function OpenEntityFormToolUI({
       toolCallId,
       toolName: resolvedToolName
     });
-
-    for (const msg of messages) {
-      if (msg.role !== "assistant") continue;
-      for (const raw of msg.parts ?? []) {
-        const part = raw as {
-          type?: string;
-          toolName?: string;
-          toolCallId?: string;
-          state?: string;
-        };
-        const type = part.type ?? "";
-        const isTool = type.startsWith("tool-") || type === "dynamic-tool";
-        if (!isTool) continue;
-        const name = part.toolName ?? (type.startsWith("tool-") ? type.slice("tool-".length) : "");
-        if (!isOpenEntityFormToolName(name)) continue;
-        const id = part.toolCallId ?? "";
-        if (!id || id === toolCallId) continue;
-        if (!isWaitingToolState(part.state)) continue;
-        void addToolOutput({
-          tool: name,
-          toolCallId: id,
-          output: {
-            ok: true,
-            kind: input.kind,
-            saved: false,
-            cancelled: true
-          }
-        });
-      }
-    }
-  }, [addToolOutput, args, complete, messages, result, resolvedToolName, status?.type, toolCallId]);
+  }, [args, complete, completed, messages, resolvedToolName, status?.type, toolCallId]);
 
   if (completed) {
     return (

@@ -12,6 +12,7 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
 import { DefaultLoader } from "@/shared/ui/default-loader";
 
+import { useEntityFormHostActive } from "@/features/agent-hub";
 import { useListApplicationsQuery } from "@/features/applications";
 
 import {
@@ -105,6 +106,9 @@ export function TrackedJobsPage() {
     materialPreview,
     closeMaterialPreview
   } = useApplicationStore();
+  // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
+  const hostOwnsPanel = useEntityFormHostActive();
+  if (hostOwnsPanel && sheetOpen) closeSheet();
 
   // Stable empty fallback so memo deps do not thrash every render.
   const applications = listQuery.data ?? EMPTY_APPLICATIONS;
@@ -271,7 +275,7 @@ export function TrackedJobsPage() {
 
         <Suspense fallback={null}>
           <ItemsInspectHost
-            open={isAnyOpen && !sheetOpen}
+            open={isAnyOpen && !sheetOpen && !hostOwnsPanel}
             item={liveViewItem}
             title="Application"
             onOpenChange={(next) => {
@@ -281,7 +285,7 @@ export function TrackedJobsPage() {
             {(item) => <ApplicationInfoPanel item={item} onEdit={() => openEdit(item)} />}
           </ItemsInspectHost>
 
-          {sheetOpen ? (
+          {sheetOpen && !hostOwnsPanel ? (
             <ApplicationFormSheet
               key={editItem?.id ?? "new"}
               open={sheetOpen}

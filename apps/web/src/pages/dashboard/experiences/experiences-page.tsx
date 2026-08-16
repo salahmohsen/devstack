@@ -34,7 +34,7 @@ import { ListItem } from "@/shared/ui/list-item";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { useEntityFormHostOwnsKind } from "@/features/agent-hub";
+import { useEntityFormHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
@@ -353,8 +353,9 @@ export function ExperiencesPage() {
 
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const hostOwnsKind = useEntityFormHostOwnsKind("experience");
-  if (hostOwnsKind && dialogOpen) setDialogOpen(false);
+  // Host wins the panel (any kind). Dirty page form is discarded without confirm.
+  const hostOwnsPanel = useEntityFormHostActive();
+  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
 
   const openDialog = useCallback((id: string | null) => {
     setEditingExperienceId(id);
@@ -494,7 +495,7 @@ export function ExperiencesPage() {
         {renderList()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !dialogOpen && !hostOwnsKind}
+          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
           title="Experience"
           onOpenChange={(next) => {
@@ -555,7 +556,7 @@ export function ExperiencesPage() {
           }}
         </ItemsInspectHost>
 
-        {dialogOpen && !hostOwnsKind ? (
+        {dialogOpen && !hostOwnsPanel ? (
           <ExperienceForm
             key={editingExperienceId ?? "new"}
             initialData={

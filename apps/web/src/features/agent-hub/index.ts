@@ -53,8 +53,10 @@ export {
   isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
   isSendApplyOutreachToolName,
+  findOpenEntityFormOutputInMessages,
   parseOpenEntityFormInput,
   parseOpenEntityFormOutput,
+  shouldRequestEntityFormHost,
   parseOpenSurfaceHref,
   parseProposeApplicationFromJdInput,
   parseProposeApplicationFromJdOutputAction,
@@ -114,7 +116,7 @@ export {
 export {
   clearEntityFormRequest,
   requestEntityForm,
-  useEntityFormHostOwnsKind,
+  useEntityFormHostActive,
   useEntityFormHostSelector
 } from "./lib/entity-form-host-store";
 export type { EntityFormHostRequest, EntityFormKind } from "./lib/entity-form-host-store";

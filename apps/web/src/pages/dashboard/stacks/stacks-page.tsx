@@ -39,7 +39,7 @@ import { Icon } from "@/shared/ui/icon";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { useEntityFormHostOwnsKind } from "@/features/agent-hub";
+import { useEntityFormHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
   cancelOrganizeStacksJob,
@@ -547,8 +547,9 @@ export function StacksPage() {
 
   const [editingStackId, setEditingStackId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const hostOwnsKind = useEntityFormHostOwnsKind("stack");
-  if (hostOwnsKind && dialogOpen) setDialogOpen(false);
+  // Host wins the panel (any kind). Dirty page form is discarded without confirm.
+  const hostOwnsPanel = useEntityFormHostActive();
+  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 
   const openDialog = useCallback((id: string | null) => {
@@ -760,7 +761,7 @@ export function StacksPage() {
         {renderGrid()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !dialogOpen && !hostOwnsKind}
+          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
           title="Stack"
           onOpenChange={(next) => {
@@ -776,7 +777,7 @@ export function StacksPage() {
           }}
         </ItemsInspectHost>
 
-        {dialogOpen && !hostOwnsKind ? (
+        {dialogOpen && !hostOwnsPanel ? (
           <StackForm
             key={editingStackId ?? "new"}
             initialData={

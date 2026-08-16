@@ -215,6 +215,34 @@ export function parseOpenEntityFormInput(input: unknown): OpenEntityFormInput | 
   return { kind: o.kind, id: rawId.length > 0 ? rawId : null };
 }
 
+/** True when this waiting tool call should own the dashboard form host. */
+export function shouldRequestEntityFormHost(input: {
+  completed: boolean;
+  latestPendingId: string | null;
+  toolCallId: string;
+}): boolean {
+  if (input.completed) return false;
+  if (!input.toolCallId) return false;
+  return input.latestPendingId === input.toolCallId;
+}
+
+export function findOpenEntityFormOutputInMessages(
+  messages: ReadonlyArray<{ role?: string; parts?: readonly unknown[] }>,
+  toolCallId: string
+): OpenEntityFormOutput | null {
+  if (!toolCallId) return null;
+  for (const msg of messages) {
+    if (msg.role !== "assistant") continue;
+    for (const raw of msg.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if ((part.toolCallId ?? "") !== toolCallId) continue;
+      const parsed = parseOpenEntityFormOutput(part.output);
+      if (parsed) return parsed;
+    }
+  }
+  return null;
+}
+
 export function parseOpenEntityFormOutput(output: unknown): OpenEntityFormOutput | null {
   if (!output || typeof output !== "object" || Array.isArray(output)) return null;
   const o = output as {

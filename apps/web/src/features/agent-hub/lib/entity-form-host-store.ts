@@ -52,7 +52,7 @@ export function useEntityFormHostSelector<S>(selector: (state: EntityFormHostSta
   );
 }
 
-/** True when the chat host owns this kind — page-local sheets must close. */
-export function useEntityFormHostOwnsKind(kind: EntityFormKind): boolean {
-  return useEntityFormHostSelector((state) => state.request?.kind === kind);
+/** True when chat owns the side panel — any page-local EntityFormSheet must close. */
+export function useEntityFormHostActive(): boolean {
+  return useEntityFormHostSelector((state) => state.request != null);
 }

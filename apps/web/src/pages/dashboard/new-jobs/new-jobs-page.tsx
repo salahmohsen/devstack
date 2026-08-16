@@ -57,6 +57,7 @@ import {
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { ListItem } from "@/shared/ui/list-item";
 
+import { useEntityFormHostActive } from "@/features/agent-hub";
 import {
   ApplicationMatchScoreBadge,
   ScanJobAlertsButton,
@@ -287,6 +288,9 @@ export function NewJobsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
   const listRef = useRef<HTMLUListElement | null>(null);
+  // Host wins the panel (any kind). Dirty application sheet is discarded without confirm.
+  const hostOwnsPanel = useEntityFormHostActive();
+  if (hostOwnsPanel && editApp != null) setEditApp(null);
 
   const listQuery = useListApplicationsQuery(filter);
   const inboxCountQuery = useCountApplicationsQuery("inbox");
@@ -678,7 +682,7 @@ export function NewJobsPage() {
 
         <Suspense fallback={null}>
           <ItemsInspectHost
-            open={isAnyOpen && editApp == null}
+            open={isAnyOpen && editApp == null && !hostOwnsPanel}
             item={liveViewItem}
             title="Job"
             onOpenChange={(next) => {
@@ -704,7 +708,7 @@ export function NewJobsPage() {
             />
           ) : null}
 
-          {editApp != null ? (
+          {editApp != null && !hostOwnsPanel ? (
             <ApplicationFormSheet
               key={editApp.id ?? "new-jobs-edit"}
               open

@@ -41,7 +41,7 @@ import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { useEntityFormHostOwnsKind } from "@/features/agent-hub";
+import { useEntityFormHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
@@ -375,8 +375,9 @@ export function ProjectsPage() {
 
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const hostOwnsKind = useEntityFormHostOwnsKind("project");
-  if (hostOwnsKind && dialogOpen) setDialogOpen(false);
+  // Host wins the panel (any kind). Dirty page form is discarded without confirm.
+  const hostOwnsPanel = useEntityFormHostActive();
+  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
   const [detectReposProjectId, setDetectReposProjectId] = useState<string | null>(null);
   const [detectReposDialogOpen, setDetectReposDialogOpen] = useState(false);
@@ -564,7 +565,7 @@ export function ProjectsPage() {
         {renderList()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !dialogOpen && !hostOwnsKind}
+          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
           title="Project"
           onOpenChange={(next) => {
@@ -579,7 +580,7 @@ export function ProjectsPage() {
           }
         </ItemsInspectHost>
 
-        {dialogOpen && !hostOwnsKind ? (
+        {dialogOpen && !hostOwnsPanel ? (
           <ProjectForm
             key={editingProjectId ?? "new"}
             initialData={

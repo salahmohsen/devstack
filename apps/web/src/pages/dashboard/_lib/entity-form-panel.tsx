@@ -132,7 +132,7 @@ export function EntityFormSheet({
     </AlertDialog>
   );
 
-  if (!open) return dirtyAlert;
+  if (!open && !useSheet) return dirtyAlert;
 
   if (useSheet) {
     return (
