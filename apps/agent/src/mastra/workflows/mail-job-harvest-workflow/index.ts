@@ -369,10 +369,12 @@ const scoreJobsAgainstPreferenceAi = createStep({
     const prefs: HarvestJobPreference = inputData.preference ?? {
       workModes: [],
       locations: [],
+      remoteRegions: [],
       roleKeywords: [],
       excludeKeywords: [],
       salaryMin: null,
       salaryCurrency: null,
+      levelFloor: null,
       minMatchScore: 60
     };
     const minScore = prefs.minMatchScore ?? 60;
@@ -580,10 +582,12 @@ const generateAgentTakesAi = createStep({
     const prefs: HarvestJobPreference = inputData.preference ?? {
       workModes: [],
       locations: [],
+      remoteRegions: [],
       roleKeywords: [],
       excludeKeywords: [],
       salaryMin: null,
       salaryCurrency: null,
+      levelFloor: null,
       minMatchScore: 60
     };
 

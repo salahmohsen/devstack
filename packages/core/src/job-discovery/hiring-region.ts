@@ -169,21 +169,27 @@ function resolveListingSlug(
   return null;
 }
 
+export type HiringRegionsOverlapOptions = {
+  /** Onsite/hybrid must pass `false` so a leftover user worldwide token cannot match. */
+  allowUserWorldwide?: boolean;
+};
+
 /**
  * True when user location tokens share a country or ancestor region with the listing.
- * `worldwide` on either side overlaps everyone (when the listing side is known).
+ * A worldwide *listing* still overlaps everyone. User worldwide only passes when allowed.
  */
 export function hiringRegionsOverlap(
   userLocations: string[],
   listingRegion: string | null,
-  listingLocation: string | null
+  listingLocation: string | null,
+  options?: HiringRegionsOverlapOptions
 ): boolean {
   const resolvedListing = resolveListingSlug(listingRegion, listingLocation);
   if (resolvedListing == null) return false;
   if (resolvedListing === "worldwide") return true;
 
   const user = regionSetsForTokens(userLocations);
-  if (user.hasWorldwide) return true;
+  if ((options?.allowUserWorldwide ?? false) && user.hasWorldwide) return true;
   if (user.regions.size === 0) return false;
 
   const listingSet = expandRegionAncestors(resolvedListing);

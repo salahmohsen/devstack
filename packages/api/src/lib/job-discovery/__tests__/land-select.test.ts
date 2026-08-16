@@ -36,7 +36,8 @@ describe("extraPassCreateLimit", () => {
 describe("decideLandCandidate", () => {
   const egyptRemote = {
     workModes: ["remote"] as Array<"remote" | "hybrid" | "onsite">,
-    locations: ["egypt"]
+    locations: [] as string[],
+    remoteRegions: ["egypt"]
   };
 
   it("does not return created=true without a two-axis pass", () => {

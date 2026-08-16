@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { decideTwoAxis } from "#@/job-discovery/two-axis";
+import { decideTwoAxis, type TwoAxisPrefs } from "#@/job-discovery/two-axis";
 
-const egyptRemotePrefs = {
-  workModes: ["remote"] as Array<"remote" | "hybrid" | "onsite">,
-  locations: ["egypt"]
+const egyptRemotePrefs: TwoAxisPrefs = {
+  workModes: ["remote"],
+  locations: [],
+  remoteRegions: ["egypt"]
 };
 
 describe("decideTwoAxis", () => {
@@ -14,7 +15,7 @@ describe("decideTwoAxis", () => {
         workMode: null,
         hiringRegion: "worldwide",
         location: null,
-        prefs: { workModes: ["remote"], locations: ["egypt"] }
+        prefs: egyptRemotePrefs
       }).action
     ).toBe("drop");
   });
@@ -59,13 +60,22 @@ describe("decideTwoAxis", () => {
     ).toBe("drop");
   });
 
-  it("remote + no hiringRegion treats as worldwide (pass) when remote selected", () => {
+  it("remote + unknown listing drops when remoteRegions is set; empty remoteRegions keeps it", () => {
     expect(
       decideTwoAxis({
         workMode: "remote",
         hiringRegion: null,
         location: null,
         prefs: egyptRemotePrefs
+      }).action
+    ).toBe("drop");
+
+    expect(
+      decideTwoAxis({
+        workMode: "remote",
+        hiringRegion: null,
+        location: null,
+        prefs: { ...egyptRemotePrefs, remoteRegions: [] }
       }).action
     ).toBe("pass");
   });
@@ -82,13 +92,15 @@ describe("decideTwoAxis", () => {
   });
 
   it("all three work modes skips mode filter (same as empty)", () => {
-    const allThree = {
-      workModes: ["remote", "hybrid", "onsite"] as Array<"remote" | "hybrid" | "onsite">,
-      locations: ["egypt"]
+    const allThree: TwoAxisPrefs = {
+      workModes: ["remote", "hybrid", "onsite"],
+      locations: ["egypt"],
+      remoteRegions: ["egypt"]
     };
-    const emptyModes = {
-      workModes: [] as Array<"remote" | "hybrid" | "onsite">,
-      locations: ["egypt"]
+    const emptyModes: TwoAxisPrefs = {
+      workModes: [],
+      locations: ["egypt"],
+      remoteRegions: ["egypt"]
     };
 
     for (const prefs of [allThree, emptyModes]) {
@@ -117,7 +129,7 @@ describe("decideTwoAxis", () => {
         workMode: "onsite",
         hiringRegion: "egypt",
         location: "Cairo",
-        prefs: { workModes: ["onsite"], locations: [] }
+        prefs: { workModes: ["onsite"], locations: [], remoteRegions: [] }
       }).action
     ).toBe("drop");
 
@@ -126,7 +138,7 @@ describe("decideTwoAxis", () => {
         workMode: "hybrid",
         hiringRegion: "egypt",
         location: "Cairo",
-        prefs: { workModes: ["hybrid"], locations: [] }
+        prefs: { workModes: ["hybrid"], locations: [], remoteRegions: [] }
       }).action
     ).toBe("drop");
   });
@@ -137,7 +149,7 @@ describe("decideTwoAxis", () => {
         workMode: "onsite",
         hiringRegion: "us",
         location: "New York",
-        prefs: { workModes: ["onsite"], locations: ["egypt"] }
+        prefs: { workModes: ["onsite"], locations: ["egypt"], remoteRegions: [] }
       }).action
     ).toBe("drop");
 
@@ -146,7 +158,7 @@ describe("decideTwoAxis", () => {
         workMode: "hybrid",
         hiringRegion: "egypt",
         location: "Cairo",
-        prefs: { workModes: ["hybrid"], locations: ["egypt"] }
+        prefs: { workModes: ["hybrid"], locations: ["egypt"], remoteRegions: [] }
       }).action
     ).toBe("pass");
   });
@@ -157,7 +169,57 @@ describe("decideTwoAxis", () => {
         workMode: "remote",
         hiringRegion: "latam",
         location: "LatAm",
-        prefs: { workModes: ["hybrid"], locations: ["egypt"] }
+        prefs: { workModes: ["hybrid"], locations: ["egypt"], remoteRegions: ["egypt"] }
+      }).action
+    ).toBe("drop");
+  });
+
+  it("remote+hybrid egypt prefs drop remote+latam unless remoteRegions is worldwide", () => {
+    const remoteHybridEgypt: TwoAxisPrefs = {
+      workModes: ["remote", "hybrid"],
+      locations: ["egypt"],
+      remoteRegions: ["egypt"]
+    };
+
+    expect(
+      decideTwoAxis({
+        workMode: "remote",
+        hiringRegion: "latam",
+        location: "LatAm",
+        prefs: remoteHybridEgypt
+      }).action
+    ).toBe("drop");
+
+    expect(
+      decideTwoAxis({
+        workMode: "remote",
+        hiringRegion: "latam",
+        location: "LatAm",
+        prefs: { ...remoteHybridEgypt, remoteRegions: [] }
+      }).action
+    ).toBe("pass");
+  });
+
+  it("hybrid-only drops remotes regardless of remoteRegions", () => {
+    for (const remoteRegions of [["egypt"], ["eu"], []] as const) {
+      expect(
+        decideTwoAxis({
+          workMode: "remote",
+          hiringRegion: "egypt",
+          location: "Cairo",
+          prefs: { workModes: ["hybrid"], locations: ["egypt"], remoteRegions: [...remoteRegions] }
+        }).action
+      ).toBe("drop");
+    }
+  });
+
+  it("does not pass hybrid because leftover worldwide sits on locations", () => {
+    expect(
+      decideTwoAxis({
+        workMode: "hybrid",
+        hiringRegion: "latam",
+        location: "LatAm",
+        prefs: { workModes: ["hybrid"], locations: ["worldwide"], remoteRegions: [] }
       }).action
     ).toBe("drop");
   });

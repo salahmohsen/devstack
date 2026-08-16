@@ -5,15 +5,18 @@ import {
   defaultJobPreferenceOutput,
   JobPreferenceOutputSchema,
   mergeJobPreference,
+  normalizeLocations,
+  normalizeRemoteRegions,
   normalizeWorkModes,
   refineJobsPerRun,
   UpsertJobPreferenceInputSchema,
   type JobPreference,
   type JobTitleId,
+  type LevelFloor,
   type WorkMode
 } from "@tsu-stack/core";
 import { jobPreferenceRepository } from "@tsu-stack/db";
-import { type StoredWorkMode } from "@tsu-stack/db/schema";
+import { type StoredLevelFloor, type StoredWorkMode } from "@tsu-stack/db/schema";
 
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
@@ -23,10 +26,12 @@ function toOutput(
   return JobPreferenceOutputSchema.parse({
     workModes: row.workModes,
     locations: row.locations,
+    remoteRegions: row.remoteRegions ?? [],
     roleKeywords: row.roleKeywords,
     excludeKeywords: row.excludeKeywords,
     salaryMin: row.salaryMin ?? null,
     salaryCurrency: row.salaryCurrency ?? null,
+    levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore,
     titleId: (row.titleId as JobTitleId | null) ?? null,
     customTitle: row.customTitle ?? null,
@@ -42,10 +47,12 @@ function rowToPreference(
   return {
     workModes: row.workModes as WorkMode[],
     locations: row.locations,
+    remoteRegions: row.remoteRegions ?? [],
     roleKeywords: row.roleKeywords,
     excludeKeywords: row.excludeKeywords,
     salaryMin: row.salaryMin ?? null,
     salaryCurrency: row.salaryCurrency ?? null,
+    levelFloor: (row.levelFloor as LevelFloor | null) ?? null,
     minMatchScore: row.minMatchScore,
     titleId: (row.titleId as JobTitleId | null) ?? null,
     customTitle: row.customTitle ?? null,
@@ -80,16 +87,20 @@ export const jobPreferenceRouter = {
       const base = existing ? rowToPreference(existing) : defaultJobPreference();
       const merged = mergeJobPreference(base, input);
       const workModes = normalizeWorkModes(merged.workModes);
+      const locations = normalizeLocations(merged.locations);
+      const remoteRegions = normalizeRemoteRegions(merged.remoteRegions);
 
       const row = await jobPreferenceRepository.upsert({
         id: existing?.id ?? randomUUID(),
         userId,
         workModes: workModes as StoredWorkMode[],
-        locations: merged.locations,
+        locations,
+        remoteRegions,
         roleKeywords: merged.roleKeywords,
         excludeKeywords: merged.excludeKeywords,
         salaryMin: merged.salaryMin,
         salaryCurrency: merged.salaryCurrency,
+        levelFloor: merged.levelFloor as StoredLevelFloor | null,
         minMatchScore: merged.minMatchScore,
         titleId: merged.titleId,
         customTitle: merged.customTitle,

@@ -26,6 +26,7 @@ import { type SalaryPeriod } from "#@/job-preference/salary-compare";
 import {
   SeekerMatchEvidenceSchema,
   WorkModeSchema,
+  LevelFloorSchema,
   type JobPreference,
   type LevelFloor,
   type SeekerMatchEvidence,
@@ -178,10 +179,12 @@ export type MailNotifierExtract = z.infer<typeof MailNotifierExtractSchema>;
 export const HarvestJobPreferenceSchema = z.object({
   workModes: z.array(WorkModeSchema).default([]),
   locations: z.array(z.string()).default([]),
+  remoteRegions: z.array(z.string()).default([]),
   roleKeywords: z.array(z.string()).default([]),
   excludeKeywords: z.array(z.string()).default([]),
   salaryMin: z.number().nullable().optional(),
   salaryCurrency: z.string().nullable().optional(),
+  levelFloor: LevelFloorSchema.nullable().optional(),
   minMatchScore: z.number().int().min(0).max(100).default(60),
   /** Career-profile signal (experiences / stacks / projects) for fit scoring. */
   evidence: SeekerMatchEvidenceSchema.optional()
@@ -1433,6 +1436,7 @@ export type ScoreJobPreferenceInput = Pick<
   JobPreference,
   "workModes" | "locations" | "roleKeywords" | "excludeKeywords" | "minMatchScore"
 > & {
+  remoteRegions?: readonly string[] | null;
   salaryMin?: number | null;
   salaryCurrency?: string | null;
   levelFloor?: LevelFloor | null;
@@ -1564,10 +1568,12 @@ ${JSON.stringify(
   {
     workModes: input.prefs.workModes ?? [],
     locations: input.prefs.locations ?? [],
+    remoteRegions: input.prefs.remoteRegions ?? [],
     roleKeywords: input.prefs.roleKeywords ?? [],
     excludeKeywords: input.prefs.excludeKeywords ?? [],
     salaryMin: input.prefs.salaryMin ?? null,
     salaryCurrency: input.prefs.salaryCurrency ?? null,
+    levelFloor: input.prefs.levelFloor ?? null,
     minMatchScore: input.minScore
   },
   null,

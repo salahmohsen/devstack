@@ -78,8 +78,11 @@ describe("hiringRegionsOverlap", () => {
     expect(hiringRegionsOverlap([], "mena", null)).toBe(false);
   });
 
-  it("user worldwide overlaps any listing region", () => {
-    expect(hiringRegionsOverlap(["worldwide"], "latam", null)).toBe(true);
-    expect(hiringRegionsOverlap(["anywhere"], "us", null)).toBe(true);
+  it("user worldwide does not overlap unless allowUserWorldwide", () => {
+    expect(hiringRegionsOverlap(["worldwide"], "latam", null)).toBe(false);
+    expect(hiringRegionsOverlap(["anywhere"], "us", null)).toBe(false);
+    expect(hiringRegionsOverlap(["worldwide"], "latam", null, { allowUserWorldwide: true })).toBe(
+      true
+    );
   });
 });

@@ -45,10 +45,12 @@ const customTitleField = z.string().trim().max(120).nullable();
 export const JobPreferenceFieldsSchema = z.object({
   workModes: z.array(WorkModeSchema).max(3),
   locations: preferenceStringList,
+  remoteRegions: preferenceStringList,
   roleKeywords: preferenceStringList,
   excludeKeywords: preferenceStringList,
   salaryMin: z.number().nonnegative().nullable(),
   salaryCurrency: z.string().nullable(),
+  levelFloor: LevelFloorSchema.nullable(),
   minMatchScore: z.number().int().min(0).max(100),
   titleId: JobTitleIdSchema.nullable(),
   customTitle: customTitleField,
@@ -64,10 +66,12 @@ export type JobPreference = z.infer<typeof JobPreferenceFieldsSchema>;
 export const JobPreferenceSchema = z.object({
   workModes: z.array(WorkModeSchema).max(3).default([]),
   locations: preferenceStringList.default([]),
+  remoteRegions: preferenceStringList.default([]),
   roleKeywords: preferenceStringList.default([]),
   excludeKeywords: preferenceStringList.default([]),
   salaryMin: z.number().nonnegative().nullable().optional(),
   salaryCurrency: salaryCurrencyField.optional(),
+  levelFloor: LevelFloorSchema.nullable().default(null),
   minMatchScore: z.number().int().min(0).max(100).default(60),
   titleId: JobTitleIdSchema.nullable().default(null),
   customTitle: customTitleField.default(null),
@@ -86,9 +90,11 @@ export const UpsertJobPreferenceInputSchema = z
   .object({
     workModes: z.array(WorkModeSchema).max(3).optional(),
     locations: preferenceStringList.optional(),
+    remoteRegions: preferenceStringList.optional(),
     roleKeywords: preferenceStringList.optional(),
     excludeKeywords: preferenceStringList.optional(),
     salaryMin: z.number().nonnegative().nullable().optional(),
+    levelFloor: LevelFloorSchema.nullable().optional(),
     salaryCurrency: z
       .string()
       .trim()

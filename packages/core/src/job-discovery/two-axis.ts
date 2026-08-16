@@ -8,6 +8,7 @@ export type TwoAxisWorkMode = WorkMode | null;
 export type TwoAxisPrefs = {
   workModes: Array<"remote" | "hybrid" | "onsite">;
   locations: string[];
+  remoteRegions: string[];
 };
 
 export type TwoAxisInput = {
@@ -33,7 +34,7 @@ function effectiveWorkModes(workModes: readonly string[]): string[] {
 /**
  * Hard filter: work mode + hiring region. Unknown mode always drops.
  * Empty / all-three workModes = no mode filter.
- * Remote + missing hiringRegion → worldwide (pass) when remote is allowed.
+ * Empty remoteRegions = worldwide remote. Onsite/hybrid never reads remoteRegions.
  */
 export function decideTwoAxis(input: TwoAxisInput): TwoAxisDecision {
   const { workMode, hiringRegion, location, prefs } = input;
@@ -51,30 +52,35 @@ export function decideTwoAxis(input: TwoAxisInput): TwoAxisDecision {
     if (prefs.locations.length === 0) {
       return { action: "drop", reason: "onsite/hybrid requires preferred locations" };
     }
-    if (!hiringRegionsOverlap(prefs.locations, hiringRegion, location)) {
+    if (
+      !hiringRegionsOverlap(prefs.locations, hiringRegion, location, {
+        allowUserWorldwide: false
+      })
+    ) {
       return { action: "drop", reason: "place does not overlap preferred locations" };
     }
     return { action: "pass", reason: `${workMode} place overlaps` };
   }
 
-  // remote — mode already allowed (empty/all-three, or remote in prefs)
-  const region =
-    hiringRegion != null && hiringRegion.trim().length > 0 ? hiringRegion.trim() : null;
-
-  // Unknown region: location may still encode a hiring region (e.g. LatAm)
-  if (region == null) {
-    const locSlug = normalizeHiringRegion(location);
-    if (locSlug != null && locSlug !== "worldwide") {
-      if (!hiringRegionsOverlap(prefs.locations, locSlug, location)) {
-        return { action: "drop", reason: "remote hiring region does not overlap" };
-      }
-      return { action: "pass", reason: "remote region overlaps" };
-    }
-    // No region + no known region in location → worldwide
-    return { action: "pass", reason: "remote with unknown region (worldwide)" };
+  if (modes.length > 0 && !modes.includes("remote")) {
+    return { action: "drop", reason: "work mode remote not preferred" };
+  }
+  if (prefs.remoteRegions.length === 0) {
+    return { action: "pass", reason: "remote worldwide" };
   }
 
-  if (!hiringRegionsOverlap(prefs.locations, region, location)) {
+  const region =
+    hiringRegion != null && hiringRegion.trim().length > 0 ? hiringRegion.trim() : null;
+  const locSlug = normalizeHiringRegion(location);
+  const listingSlug = region != null ? (normalizeHiringRegion(region) ?? locSlug) : locSlug;
+
+  if (listingSlug == null) {
+    return { action: "drop", reason: "remote listing region unknown" };
+  }
+  if (listingSlug === "worldwide") {
+    return { action: "pass", reason: "remote worldwide listing" };
+  }
+  if (!hiringRegionsOverlap(prefs.remoteRegions, hiringRegion, location)) {
     return { action: "drop", reason: "remote hiring region does not overlap" };
   }
 

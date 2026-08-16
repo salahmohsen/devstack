@@ -61,7 +61,11 @@ export function countTwoAxisPassedUnseen(
       workMode: candidate.workMode,
       hiringRegion: candidate.hiringRegion,
       location: candidate.location,
-      prefs: { workModes: prefs.workModes, locations: prefs.locations }
+      prefs: {
+        workModes: prefs.workModes,
+        locations: prefs.locations,
+        remoteRegions: prefs.remoteRegions
+      }
     });
     if (twoAxis.action !== "pass") continue;
 

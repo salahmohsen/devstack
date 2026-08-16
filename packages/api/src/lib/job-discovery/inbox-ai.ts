@@ -501,7 +501,11 @@ async function runInboxAiForPosting(input: {
     workMode,
     hiringRegion: leftover.hiringRegion,
     location: leftover.location,
-    prefs: { workModes: prefs.workModes, locations: prefs.locations }
+    prefs: {
+      workModes: prefs.workModes,
+      locations: prefs.locations,
+      remoteRegions: prefs.remoteRegions
+    }
   });
   if (twoAxis.action === "drop" || workMode == null) {
     return { outcome: "skipped" };
