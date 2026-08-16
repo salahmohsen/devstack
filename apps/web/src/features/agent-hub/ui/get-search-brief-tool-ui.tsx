@@ -6,8 +6,16 @@ import * as React from "react";
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type GetSearchBriefOutput } from "@tsu-stack/core";
 
+import { searchBriefChanged } from "@/shared/ui/agents/file-diff/line-diff";
+
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import { isGetSearchBriefToolName } from "@/features/agent-hub/lib/hub-tool-names";
+
+const SearchBriefFileDiff = React.lazy(() =>
+  import("./search-brief-file-diff").then((module) => {
+    return { default: module.SearchBriefFileDiff };
+  })
+);
 
 const GET_SEARCH_BRIEF_TOOL_ID = "get-search-brief";
 
@@ -69,5 +77,24 @@ export function GetSearchBriefToolUI({
     });
   }, [complete, result, status?.type]);
 
-  return null;
+  if (result == null) {
+    return (
+      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+        Loading search brief…
+      </p>
+    );
+  }
+
+  if (!searchBriefChanged(result.previousMarkdown, result.markdown)) {
+    return null;
+  }
+
+  return (
+    <React.Suspense fallback={null}>
+      <SearchBriefFileDiff
+        previousMarkdown={result.previousMarkdown ?? ""}
+        markdown={result.markdown ?? ""}
+      />
+    </React.Suspense>
+  );
 }

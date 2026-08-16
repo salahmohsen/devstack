@@ -33,6 +33,7 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("propose-hard-preference-change")).toBe(false);
     expect(isHubWorkingStripToolName("find-jobs-now")).toBe(false);
     expect(isHubWorkingStripToolName("open-entity-form")).toBe(false);
+    expect(isHubWorkingStripToolName("get-search-brief")).toBe(false);
   });
 
   it("includes extract and other server tools as working-strip steps", () => {
@@ -40,11 +41,35 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("fetch-job-page")).toBe(true);
     expect(isHubWorkingStripToolName("list-new-jobs")).toBe(true);
     expect(isHubWorkingStripToolName("upsert-soft-job-preferences")).toBe(true);
-    expect(isHubWorkingStripToolName("get-search-brief")).toBe(true);
   });
 });
 
 describe("buildHubAgentActivityItems", () => {
+  it("omits get-search-brief — File Diff is the thread surface", () => {
+    const items = buildHubAgentActivityItems([
+      {
+        type: "tool-get-search-brief",
+        toolName: "get-search-brief",
+        toolCallId: "brief1",
+        state: "call"
+      },
+      {
+        type: "tool-upsert-soft-job-preferences",
+        toolName: "upsert-soft-job-preferences",
+        toolCallId: "soft1",
+        state: "output-available"
+      }
+    ]);
+    expect(items).toEqual([
+      {
+        id: "soft1",
+        type: "step",
+        label: "Updating job preferences",
+        status: "complete"
+      }
+    ]);
+  });
+
   it("maps extract + reasoning and skips the JD card tool", () => {
     const items = buildHubAgentActivityItems([
       { type: "reasoning", text: "Need the listing body first." },

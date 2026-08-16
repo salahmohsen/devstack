@@ -8,6 +8,7 @@ import { hubSubagentListShouldShow, isHubSubagentWorkerName } from "./hub-subage
 import {
   hubToolNameFromPart,
   isFindJobsNowToolName,
+  isGetSearchBriefToolName,
   isHubApprovalToolName,
   isHubJobPageExtractToolName,
   isHubToolUiPart,
@@ -36,7 +37,7 @@ function isCompleteState(state: string | undefined, statusType: string | undefin
   return state === "output-available" || state === "output-error";
 }
 
-/** Tools that render their own HITL UI — never a compact activity row. */
+/** Tools that render their own thread UI — never a compact activity row. */
 export function isHubChoiceToolName(name: string): boolean {
   return (
     isProposeApplicationFromJdToolName(name) ||
@@ -45,7 +46,8 @@ export function isHubChoiceToolName(name: string): boolean {
     isHubApprovalToolName(name) ||
     isProposeHardPreferenceChangeToolName(name) ||
     isOpenEntityFormToolName(name) ||
-    isFindJobsNowToolName(name)
+    isFindJobsNowToolName(name) ||
+    isGetSearchBriefToolName(name)
   );
 }
 
