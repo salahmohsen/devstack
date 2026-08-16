@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSearchBriefSource,
-  hashSearchBriefSource,
   previousMarkdownAfterInvalidate,
   renderSearchBriefMarkdown,
   searchBriefPrefsFromPreference,
+  stableSearchBriefSourceJson,
   type SearchBriefSource
 } from "#@/job-preference/search-brief";
 import { defaultJobPreference, emptySeekerMatchEvidence } from "#@/job-preference/utils";
@@ -20,7 +20,7 @@ function sourceWith(prefs = defaultJobPreference()): SearchBriefSource {
   });
 }
 
-describe("search brief source hash", () => {
+describe("search brief source payload", () => {
   it("ignores jobsPerRun, minMatchScore, and importFromEmail", () => {
     const base = sourceWith(defaultJobPreference());
     const ignored = sourceWith({
@@ -29,7 +29,7 @@ describe("search brief source hash", () => {
       minMatchScore: 99,
       importFromEmail: true
     });
-    expect(hashSearchBriefSource(base)).toBe(hashSearchBriefSource(ignored));
+    expect(stableSearchBriefSourceJson(base)).toBe(stableSearchBriefSourceJson(ignored));
   });
 
   it("is stable across object key order", () => {
@@ -54,16 +54,18 @@ describe("search brief source hash", () => {
         levelFloor: source.prefs.levelFloor
       }
     } satisfies SearchBriefSource;
-    expect(hashSearchBriefSource(source)).toBe(hashSearchBriefSource(shuffled));
+    expect(stableSearchBriefSourceJson(source)).toBe(stableSearchBriefSourceJson(shuffled));
   });
 
   it("changes when prefs, evidence, or profile change", () => {
-    const base = hashSearchBriefSource(sourceWith());
+    const base = stableSearchBriefSourceJson(sourceWith());
     expect(
-      hashSearchBriefSource(sourceWith({ ...defaultJobPreference(), excludeKeywords: ["php"] }))
+      stableSearchBriefSourceJson(
+        sourceWith({ ...defaultJobPreference(), excludeKeywords: ["php"] })
+      )
     ).not.toBe(base);
     expect(
-      hashSearchBriefSource(
+      stableSearchBriefSourceJson(
         buildSearchBriefSource({
           prefs: defaultJobPreference(),
           evidence: { ...emptySeekerMatchEvidence(), projectTitles: ["Hub"] },
@@ -72,7 +74,7 @@ describe("search brief source hash", () => {
       )
     ).not.toBe(base);
     expect(
-      hashSearchBriefSource(
+      stableSearchBriefSourceJson(
         buildSearchBriefSource({
           prefs: defaultJobPreference(),
           evidence: emptySeekerMatchEvidence(),
@@ -80,6 +82,21 @@ describe("search brief source hash", () => {
         })
       )
     ).not.toBe(base);
+  });
+
+  it("does not change when evidence arrays are reordered", () => {
+    const empty = emptySeekerMatchEvidence();
+    const a = buildSearchBriefSource({
+      prefs: defaultJobPreference(),
+      evidence: { ...empty, roleTitles: ["Backend", "Frontend"], projectTitles: ["Hub", "Mail"] },
+      profile
+    });
+    const b = buildSearchBriefSource({
+      prefs: defaultJobPreference(),
+      evidence: { ...empty, roleTitles: ["Frontend", "Backend"], projectTitles: ["Mail", "Hub"] },
+      profile
+    });
+    expect(stableSearchBriefSourceJson(a)).toBe(stableSearchBriefSourceJson(b));
   });
 });
 

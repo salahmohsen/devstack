@@ -1,14 +1,17 @@
+import { createHash } from "node:crypto";
+
 import { z } from "zod";
 
 import {
   buildSearchBriefSource,
   defaultJobPreference,
   emptySeekerMatchEvidence,
-  hashSearchBriefSource,
   previousMarkdownAfterInvalidate,
   renderSearchBriefMarkdown,
   searchBriefPrefsFromPreference,
+  stableSearchBriefSourceJson,
   type JobPreference,
+  type SearchBriefSource,
   type SearchBriefStructured
 } from "@tsu-stack/core";
 import { jobPreferenceRepository, userRepository } from "@tsu-stack/db";
@@ -31,7 +34,24 @@ const SearchBriefProseSchema = z.object({
   skills: z.string()
 });
 
-export type SearchBriefInvalidateSource = "settings" | "hub" | "form" | "profile";
+export const SearchBriefInvalidateSourceSchema = z.enum(["settings", "hub", "form", "profile"]);
+export type SearchBriefInvalidateSource = z.infer<typeof SearchBriefInvalidateSourceSchema>;
+
+export const BriefWriteInvalidateSourceSchema = z.enum(["settings", "hub"]);
+export type BriefWriteInvalidateSource = z.infer<typeof BriefWriteInvalidateSourceSchema>;
+
+export function hashSearchBriefSource(source: SearchBriefSource): string {
+  return createHash("sha256").update(stableSearchBriefSourceJson(source)).digest("hex");
+}
+
+type ProseSkipReason =
+  | "no_key"
+  | "no_worker"
+  | "credentials"
+  | "unreachable"
+  | "http"
+  | "parse"
+  | "empty";
 
 export type EnsureSearchBriefResult = {
   markdown: string;
@@ -59,8 +79,8 @@ function structuredFrom(prefs: JobPreference, profile: { name: string; summary: 
   };
 }
 
-function inferProseSkipped(markdown: string): boolean {
-  return markdown.trimStart().startsWith("##");
+function isListsOnlyBrief(markdown: string, prefs: JobPreference): boolean {
+  return markdown === renderSearchBriefMarkdown({ prefs: searchBriefPrefsFromPreference(prefs) });
 }
 
 export function shouldInvalidateSearchBriefForEntityPatch(patch: Record<string, unknown>): boolean {
@@ -99,10 +119,17 @@ async function generateSearchBriefProse(input: {
   prefs: ReturnType<typeof searchBriefPrefsFromPreference>;
   evidence: ReturnType<typeof emptySeekerMatchEvidence>;
   profile: { name: string; summary: string };
-}): Promise<{ opening: string; skills: string } | null> {
-  const llm = await resolveRuntimeAiCredentials(input.userId, "scorer");
-  if (!llm.apiKey) return null;
-  if (!ENV_SERVER.AGENT_WORKER_URL?.trim()) return null;
+}): Promise<
+  { ok: true; opening: string; skills: string } | { ok: false; reason: ProseSkipReason }
+> {
+  let llm;
+  try {
+    llm = await resolveRuntimeAiCredentials(input.userId, "scorer");
+  } catch {
+    return { ok: false, reason: "credentials" };
+  }
+  if (!llm.apiKey) return { ok: false, reason: "no_key" };
+  if (!ENV_SERVER.AGENT_WORKER_URL?.trim()) return { ok: false, reason: "no_worker" };
 
   const prompt = `Write the search-brief paragraphs for this seeker.
 
@@ -141,7 +168,8 @@ ${JSON.stringify(input.prefs)}`;
       sessionToken,
       retry: true
     });
-    if (!response?.ok) return null;
+    if (!response) return { ok: false, reason: "unreachable" };
+    if (!response.ok) return { ok: false, reason: "http" };
 
     const bodyText = await response.text().catch(() => "");
     let parsed: unknown = null;
@@ -153,13 +181,13 @@ ${JSON.stringify(input.prefs)}`;
     const text = extractTextFromAgentBody(parsed) ?? bodyText;
     const json = extractJsonObject(text);
     const prose = SearchBriefProseSchema.safeParse(json);
-    if (!prose.success) return null;
+    if (!prose.success) return { ok: false, reason: "parse" };
     const opening = prose.data.opening.trim();
     const skills = prose.data.skills.trim();
-    if (!opening && !skills) return null;
-    return { opening, skills };
+    if (!opening && !skills) return { ok: false, reason: "empty" };
+    return { ok: true, opening, skills };
   } catch {
-    return null;
+    return { ok: false, reason: "unreachable" };
   }
 }
 
@@ -200,25 +228,25 @@ export async function ensureSearchBrief(userId: string): Promise<EnsureSearchBri
       hash,
       rebuilt: false,
       previousMarkdown,
-      proseSkipped: inferProseSkipped(row.searchBriefMarkdown),
+      proseSkipped: isListsOnlyBrief(row.searchBriefMarkdown, prefs),
       structured
     };
   }
 
   const lists = renderSearchBriefMarkdown({ prefs: source.prefs });
-  const prose = await generateSearchBriefProse({
+  const generated = await generateSearchBriefProse({
     userId,
     lists,
     prefs: source.prefs,
     evidence,
     profile
   });
-  const proseSkipped = prose == null;
-  const markdown = prose
+  const proseSkipped = !generated.ok;
+  const markdown = generated.ok
     ? renderSearchBriefMarkdown({
         prefs: source.prefs,
-        opening: prose.opening,
-        skillsParagraph: prose.skills
+        opening: generated.opening,
+        skillsParagraph: generated.skills
       })
     : lists;
 
@@ -233,7 +261,8 @@ export async function ensureSearchBrief(userId: string): Promise<EnsureSearchBri
     event: "search_brief_rebuilt",
     userId,
     hash,
-    proseSkipped
+    proseSkipped,
+    ...(generated.ok ? {} : { proseSkipReason: generated.reason })
   });
   log.emit();
 

@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 
+import { z } from "zod";
+
 import {
   defaultJobPreference,
   defaultJobPreferenceOutput,
@@ -19,7 +21,11 @@ import {
 import { jobPreferenceRepository } from "@tsu-stack/db";
 import { type StoredLevelFloor, type StoredWorkMode } from "@tsu-stack/db/schema";
 
-import { ensureSearchBrief, invalidateSearchBrief } from "#@/lib/application/search-brief";
+import {
+  BriefWriteInvalidateSourceSchema,
+  ensureSearchBrief,
+  invalidateSearchBrief
+} from "#@/lib/application/search-brief";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 
 function toOutput(
@@ -81,7 +87,13 @@ export const jobPreferenceRouter = {
       description: "Create or update job preferences for mail harvest match filtering",
       method: "POST"
     })
-    .input(UpsertJobPreferenceInputSchema)
+    .input(
+      UpsertJobPreferenceInputSchema.and(
+        z.object({
+          briefInvalidateSource: BriefWriteInvalidateSourceSchema.optional()
+        })
+      )
+    )
     .output(JobPreferenceOutputSchema)
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
@@ -110,7 +122,7 @@ export const jobPreferenceRouter = {
         importFromEmail: merged.importFromEmail
       });
 
-      await invalidateSearchBrief(userId, "settings");
+      await invalidateSearchBrief(userId, input.briefInvalidateSource ?? "settings");
       return toOutput(row);
     }),
 

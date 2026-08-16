@@ -28,6 +28,7 @@ import { createMailClassifierAgent } from "#@/mastra/agents/mail-classifier-agen
 import { createMailReplyAgent } from "#@/mastra/agents/mail-reply-agent";
 import { createProviderPingAgent } from "#@/mastra/agents/provider-ping-agent";
 import { createResumeImportExtractorAgent } from "#@/mastra/agents/resume-import-extractor-agent";
+import { createSearchBriefWriterAgent } from "#@/mastra/agents/search-brief-writer-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
 import "#@/mastra/logger-bootstrap";
 import { agentSessionAuth } from "#@/mastra/session-auth";
@@ -156,6 +157,7 @@ export const mastra = new Mastra({
     jobPageExtractor: createJobPageExtractorAgent(),
     jobPreferenceMatchScorer: createJobPreferenceMatchScorerAgent(),
     jobAgentTake: createJobAgentTakeAgent(),
+    searchBriefWriter: createSearchBriefWriterAgent(),
     crmApplicationMatcher: createCrmApplicationMatcherAgent(),
     crmStageAdvisor: createCrmStageAdvisorAgent(),
     providerPingAgent: createProviderPingAgent(),

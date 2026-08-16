@@ -1,6 +1,14 @@
+import { createHash } from "node:crypto";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { defaultJobPreference, searchBriefPrefsFromPreference } from "@tsu-stack/core";
+import {
+  buildSearchBriefSource,
+  defaultJobPreference,
+  emptySeekerMatchEvidence,
+  searchBriefPrefsFromPreference,
+  stableSearchBriefSourceJson
+} from "@tsu-stack/core";
 
 const { findByUserId, upsert, clearSearchBrief, saveSearchBrief, findUserById } = vi.hoisted(() => {
   return {
@@ -38,10 +46,27 @@ vi.mock("@tsu-stack/logger/server", () => {
   };
 });
 
-import { ensureSearchBrief, invalidateSearchBrief } from "#@/lib/application/search-brief";
+import {
+  ensureSearchBrief,
+  hashSearchBriefSource,
+  invalidateSearchBrief
+} from "#@/lib/application/search-brief";
 
 afterEach(() => {
   vi.clearAllMocks();
+});
+
+describe("hashSearchBriefSource", () => {
+  it("is SHA-256 of the stable source JSON", () => {
+    const source = buildSearchBriefSource({
+      prefs: defaultJobPreference(),
+      evidence: emptySeekerMatchEvidence(),
+      profile: { name: "Ada", summary: "Builds tools" }
+    });
+    expect(hashSearchBriefSource(source)).toBe(
+      createHash("sha256").update(stableSearchBriefSourceJson(source)).digest("hex")
+    );
+  });
 });
 
 describe("ensureSearchBrief no row", () => {

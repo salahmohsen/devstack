@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import { z } from "zod";
 
 import { TITLE_PACKS } from "#@/job-discovery/constants";
@@ -67,6 +65,20 @@ export function searchBriefPrefsFromPreference(
   };
 }
 
+function fingerprintStrings(values: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of values) {
+    const value = raw.trim();
+    if (!value) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+  }
+  return out.toSorted((a, b) => a.localeCompare(b));
+}
+
 export function buildSearchBriefSource(input: {
   prefs: Pick<JobPreference, keyof SearchBriefPrefs>;
   evidence: SeekerMatchEvidence;
@@ -75,11 +87,11 @@ export function buildSearchBriefSource(input: {
   return {
     prefs: searchBriefPrefsFromPreference(input.prefs),
     evidence: {
-      roleTitles: input.evidence.roleTitles,
-      organizations: input.evidence.organizations,
-      stackNames: input.evidence.stackNames,
-      featuredStackNames: input.evidence.featuredStackNames,
-      projectTitles: input.evidence.projectTitles
+      roleTitles: fingerprintStrings(input.evidence.roleTitles),
+      organizations: fingerprintStrings(input.evidence.organizations),
+      stackNames: fingerprintStrings(input.evidence.stackNames),
+      featuredStackNames: fingerprintStrings(input.evidence.featuredStackNames),
+      projectTitles: fingerprintStrings(input.evidence.projectTitles)
     },
     profile: {
       name: input.profile.name,
@@ -101,10 +113,6 @@ function stableValue(value: unknown): unknown {
 
 export function stableSearchBriefSourceJson(source: SearchBriefSource): string {
   return JSON.stringify(stableValue(source));
-}
-
-export function hashSearchBriefSource(source: SearchBriefSource): string {
-  return createHash("sha256").update(stableSearchBriefSourceJson(source)).digest("hex");
 }
 
 export function previousMarkdownAfterInvalidate(

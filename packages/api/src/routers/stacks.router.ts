@@ -266,7 +266,9 @@ export const stacksRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       try {
-        return await stackRepository.merge(userId, input.survivorId, input.victimId);
+        const merged = await stackRepository.merge(userId, input.survivorId, input.victimId);
+        await invalidateSearchBrief(userId, "form");
+        return merged;
       } catch (error) {
         throw new Error(error instanceof Error ? error.message : "Failed to merge stacks");
       }
@@ -281,7 +283,11 @@ export const stacksRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       try {
-        return await stackRepository.batchMerge(userId, input.items);
+        const merged = await stackRepository.batchMerge(userId, input.items);
+        if (input.items.length > 0) {
+          await invalidateSearchBrief(userId, "form");
+        }
+        return merged;
       } catch (error) {
         throw new Error(error instanceof Error ? error.message : "Failed to batch merge stacks");
       }
@@ -327,7 +333,7 @@ export const stacksRouter = {
         }
       }
 
-      return stackRepository.batchUpdate(
+      const updated = await stackRepository.batchUpdate(
         userId,
         input.items.map((item) => {
           const { includedInPortfolio, isFeatured, ...updateData } = item.data;
@@ -346,6 +352,10 @@ export const stacksRouter = {
           };
         })
       );
+      if (input.items.some((item) => shouldInvalidateSearchBriefForEntityPatch(item.data))) {
+        await invalidateSearchBrief(userId, "form");
+      }
+      return updated;
     }),
   searchNpm: publicProcedure
     .route({
@@ -516,6 +526,7 @@ export const stacksRouter = {
       }> = [];
 
       const seenKeys = new Set<string>();
+      let wroteStack = false;
       for (const s of input.stacks) {
         const dedupeKey = s.existingStackId ?? (s.npmPackage || s.name);
         if (seenKeys.has(dedupeKey)) continue;
@@ -545,6 +556,7 @@ export const stacksRouter = {
               },
               { includedInPortfolio: false }
             );
+            if (stack) wroteStack = true;
           } catch {
             // Race / unique name: re-fetch by name or npm alias.
             stack =
@@ -569,6 +581,7 @@ export const stacksRouter = {
           if (!stack.confidence && s.confidence) patch.confidence = s.confidence;
           if (Object.keys(patch).length > 0) {
             stack = (await stackRepository.update(stack.id, userId, patch)) ?? stack;
+            wroteStack = true;
           }
         }
 
@@ -589,6 +602,9 @@ export const stacksRouter = {
         }
       }
 
+      if (wroteStack) {
+        await invalidateSearchBrief(userId, "form");
+      }
       return results;
     })
 };
