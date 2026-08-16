@@ -9,6 +9,7 @@ import { hubPersonalityById } from "@tsu-stack/core";
 
 import {
   filterHubJobUrlImportActiveTools,
+  filterHubPostEvidenceConfirmActiveTools,
   filterHubTriageActiveTools,
   HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   hubJobUrlImportFeedback,
@@ -16,6 +17,8 @@ import {
   isHubJobPageExtractToolName,
   isListNewJobsToolName,
   isProposeApplicationFromJdToolName,
+  isProposeEvidenceChangeToolName,
+  isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
   isUrlOnlyJobListingPaste
 } from "#@/mastra/lib/hub-superpowers-policy";
@@ -235,6 +238,35 @@ export function messagesNeedProposeTriage(messages: ProcessInputStepArgs["messag
   return state.listHasJobs && !state.sawPropose;
 }
 
+/** Latest user turn has a completed evidence or hard-stop confirm/cancel result. */
+export function messagesHaveEvidenceOrHardStopResultThisTurn(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  let afterLatestUser = false;
+  let sawResult = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawResult = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (
+        (isProposeEvidenceChangeToolName(name) || isProposeHardPreferenceChangeToolName(name)) &&
+        mastraPartHasToolResult(part)
+      ) {
+        sawResult = true;
+      }
+    }
+  }
+  return sawResult;
+}
+
 /** True when a client HITL tool was called and has not received addToolOutput yet. */
 export function mastraMessagesHavePendingClientHitl(
   messages: ProcessInputStepArgs["messages"]
@@ -336,11 +368,28 @@ export class HubNewJobsTriageProcessor implements Processor {
   }
 }
 
+/**
+ * After evidence or hard-stop confirm: drop listNewJobs / triage / findJobsNow
+ * so auto-resume interviews the next entity instead of reopening the inbox.
+ */
+export class HubPostEvidenceConfirmProcessor implements Processor {
+  readonly id = "hub-post-evidence-confirm";
+
+  async processInputStep({ messages, tools }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesHaveEvidenceOrHardStopResultThisTurn(messages)) return;
+
+    const activeTools = filterHubPostEvidenceConfirmActiveTools(tools ? Object.keys(tools) : []);
+    return activeTools.length > 0 ? { activeTools } : {};
+  }
+}
+
 export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_STEPS) {
   return [
     new HubPersonalityProcessor(),
     new HubJobUrlImportProcessor(),
     new HubNewJobsTriageProcessor(),
+    new HubPostEvidenceConfirmProcessor(),
     new HubEnsureFinalResponseProcessor(maxSteps),
     // Keep enough recent tool-producing steps for superpowers multi-tool
     // chains (listNewJobs + evidence lists + propose → writes). filterAfter=2

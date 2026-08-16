@@ -5,6 +5,7 @@ import {
   descriptionQualityLength,
   filterConfirmedTriageIds,
   filterHubJobUrlImportActiveTools,
+  filterHubPostEvidenceConfirmActiveTools,
   filterHubTriageActiveTools,
   hubJobUrlImportFeedback,
   isJobListingUrl,
@@ -190,7 +191,9 @@ describe("shouldStopHubLoopAfterClientHitl", () => {
     "propose-new-jobs-triage",
     "propose-application-from-jd",
     "open-entity-form",
-    "openEntityForm"
+    "openEntityForm",
+    "propose-evidence-change",
+    "proposeEvidenceChange"
   ])("stops while %s is waiting", (name) => {
     expect(
       shouldStopHubLoopAfterClientHitl({
@@ -236,7 +239,9 @@ const URL_IMPORT_TOOL_NAMES = [
   "open-entity-inspect",
   "openEntityInspect",
   "propose-hard-preference-change",
-  "proposeHardPreferenceChange"
+  "proposeHardPreferenceChange",
+  "propose-evidence-change",
+  "proposeEvidenceChange"
 ] as const;
 
 const URL_IMPORT_FORBIDDEN = [
@@ -249,7 +254,9 @@ const URL_IMPORT_FORBIDDEN = [
   "open-entity-form",
   "openEntityForm",
   "open-entity-inspect",
-  "openEntityInspect"
+  "openEntityInspect",
+  "propose-evidence-change",
+  "proposeEvidenceChange"
 ] as const;
 
 describe("hub job URL import lock", () => {
@@ -319,7 +326,9 @@ describe("search-loop HITL stop matrix", () => {
     "find-jobs-now",
     "get-search-brief",
     "open-entity-form",
-    "open-entity-inspect"
+    "open-entity-inspect",
+    "propose-evidence-change",
+    "proposeEvidenceChange"
   ])("stops while %s is waiting", (name) => {
     expect(isHubClientHitlToolName(name)).toBe(true);
     expect(
@@ -348,5 +357,57 @@ describe("search-loop HITL stop matrix", () => {
         toolResults: []
       })
     ).toBe(false);
+  });
+});
+
+describe("filterHubPostEvidenceConfirmActiveTools", () => {
+  const toolNames = [
+    "listNewJobs",
+    "list-new-jobs",
+    "proposeNewJobsTriage",
+    "propose-new-jobs-triage",
+    "findJobsNow",
+    "find-jobs-now",
+    "searchEvidence",
+    "getProject",
+    "getExperience",
+    "getStack",
+    "listProjects",
+    "listExperiences",
+    "listStacks",
+    "proposeEvidenceChange",
+    "propose-evidence-change",
+    "openEntityInspect",
+    "getSearchBrief"
+  ] as const;
+
+  it("drops listNewJobs, proposeNewJobsTriage, and findJobsNow in kebab and camel", () => {
+    const kept = filterHubPostEvidenceConfirmActiveTools(toolNames);
+    for (const name of [
+      "listNewJobs",
+      "list-new-jobs",
+      "proposeNewJobsTriage",
+      "propose-new-jobs-triage",
+      "findJobsNow",
+      "find-jobs-now"
+    ]) {
+      expect(kept).not.toContain(name);
+    }
+  });
+
+  it("keeps search, get, list, propose-evidence, inspect, and brief tools", () => {
+    expect(filterHubPostEvidenceConfirmActiveTools(toolNames)).toEqual([
+      "searchEvidence",
+      "getProject",
+      "getExperience",
+      "getStack",
+      "listProjects",
+      "listExperiences",
+      "listStacks",
+      "proposeEvidenceChange",
+      "propose-evidence-change",
+      "openEntityInspect",
+      "getSearchBrief"
+    ]);
   });
 });

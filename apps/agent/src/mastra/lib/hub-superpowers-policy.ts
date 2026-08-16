@@ -103,7 +103,9 @@ export const HUB_CLIENT_HITL_TOOL_NAMES = new Set([
   "find-jobs-now",
   "findJobsNow",
   "get-search-brief",
-  "getSearchBrief"
+  "getSearchBrief",
+  "propose-evidence-change",
+  "proposeEvidenceChange"
 ]);
 
 export function isHubClientHitlToolName(name: string): boolean {
@@ -250,5 +252,30 @@ export function shouldStopHubLoopAfterClientHitl(ctx: {
   const completed = new Set(ctx.toolResults.map((result) => result.id));
   return ctx.toolCalls.some(
     (call) => isHubClientHitlToolName(call.name) && !completed.has(call.id)
+  );
+}
+
+export function isFindJobsNowToolName(name: string): boolean {
+  return name === "find-jobs-now" || name === "findJobsNow";
+}
+
+export function isProposeEvidenceChangeToolName(name: string): boolean {
+  return name === "propose-evidence-change" || name === "proposeEvidenceChange";
+}
+
+export function isProposeHardPreferenceChangeToolName(name: string): boolean {
+  return name === "propose-hard-preference-change" || name === "proposeHardPreferenceChange";
+}
+
+/**
+ * After evidence or hard-stop confirm: keep interview/search/get tools, but
+ * drop inbox triage and find-now so auto-resume cannot re-open that path.
+ */
+export function filterHubPostEvidenceConfirmActiveTools(toolNames: readonly string[]): string[] {
+  return toolNames.filter(
+    (name) =>
+      !isListNewJobsToolName(name) &&
+      !isProposeNewJobsTriageToolName(name) &&
+      !isFindJobsNowToolName(name)
   );
 }

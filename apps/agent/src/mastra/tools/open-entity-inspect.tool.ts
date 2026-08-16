@@ -10,7 +10,7 @@ const EntityInspectKindSchema = z.enum(["experience", "project", "stack"]);
 export const openEntityInspectTool = createTool({
   id: "open-entity-inspect",
   description:
-    "Show the original experience, project, or stack inspect view in the dashboard side panel (do not navigate). Requires a real id from listExperiences / listProjects / listStacks. Use for preview / “show my latest project” / “what am I working on”. Do not use this to edit — editing requires open-entity-form after the user approves an edit plan. After calling, a short summary is OK; the side panel is the full view.",
+    "Show the original experience, project, or stack inspect view in the dashboard side panel (do not navigate). Requires a real id from listExperiences / listProjects / listStacks / searchEvidence. Use for preview / “show my latest project” / “what am I working on”. Do not use this to edit — edits go through chat interview + proposeEvidenceChange. After calling, a short summary is OK; the side panel is the full view.",
   inputSchema: z.object({
     kind: EntityInspectKindSchema.describe("Evidence inspect: experience | project | stack"),
     id: z.string().min(1).describe("Existing entity id from the matching list tool")

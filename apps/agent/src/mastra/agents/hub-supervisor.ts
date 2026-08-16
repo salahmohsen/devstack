@@ -55,10 +55,10 @@ import { listProjectsTool } from "#@/mastra/tools/list-projects.tool";
 import { listResumesTool } from "#@/mastra/tools/list-resumes.tool";
 import { listStacksTool } from "#@/mastra/tools/list-stacks.tool";
 import { markNotificationReadTool } from "#@/mastra/tools/mark-notification-read.tool";
-import { openEntityFormTool } from "#@/mastra/tools/open-entity-form.tool";
 import { openEntityInspectTool } from "#@/mastra/tools/open-entity-inspect.tool";
 import { openSurfaceTool } from "#@/mastra/tools/open-surface.tool";
 import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-application-from-jd.tool";
+import { proposeEvidenceChangeTool } from "#@/mastra/tools/propose-evidence-change.tool";
 import { proposeHardPreferenceChangeTool } from "#@/mastra/tools/propose-hard-preference-change.tool";
 import { proposeNewJobsTriageTool } from "#@/mastra/tools/propose-new-jobs-triage.tool";
 import { searchEvidenceTool } from "#@/mastra/tools/search-evidence.tool";
@@ -109,7 +109,7 @@ Most people will not say "New jobs", "Career Inbox", "stacks", or "tracked jobs"
 | write a reply, answer this recruiter | \`generateMailReply\` (+ send if they ask) |
 | take me there, open, jump to | \`openSurface\` |
 | show / preview my project, latest project, that experience | \`openEntityInspect\` after list/get (real id) — side panel is the view |
-| add a job / project / stack, edit that experience | discuss the change, then \`openEntityForm\` with \`plan\` — confirm card opens the form |
+| add a job / project / stack, edit that experience | \`searchEvidence\` then \`getProject\` / \`getExperience\` / \`getStack\`; interview required fields (say why each matters — pipelineRole, not form labels); then \`proposeEvidenceChange\` — one entity per card |
 
 If they just say "jobs" without "applied / saved / sent": check \`listNewJobs\` first. If empty, then \`listOpenApplications\`. One short clarifying question only when both could be right and a wrong write would hurt.
 Do not require product vocabulary. Do not dump this table at the user.
@@ -128,14 +128,14 @@ Specialists when a focused step is enough: \`mailClassifierAgent\`, \`jobNotifie
 \`jobPageExtractor\` is a **silent prelude** for listing URLs only — never a user-facing answer; after it returns you MUST call \`propose-application-from-jd\`.
 CRM reads: \`listNewJobs\` (inbox), \`listOpenApplications\` (tracked open), \`getApplication\`.
 CRM writes: \`trackJob\`, \`dismissJob\`, \`updateApplicationStage\` (never applied), \`create-application\` (after JD propose).
-CRM HITL: \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\` (client cards).
+CRM HITL / evidence writes: \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, \`proposeEvidenceChange\` (client cards).
 First-apply package (order fixed): \`generateApplyPackage\` → \`acceptApplyPackage\` → \`sendApplyOutreach\` (each gated; applied only via send).
 Navigate: \`openSurface\` (dashboard paths only).
-Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`, \`getSearchBrief\`.
+Evidence reads: \`searchEvidence\`, \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`, \`getSearchBrief\`.
 Search-loop writes: \`upsertSoftJobPreferences\` (immediate title/keywords/modes/locations/remoteRegions) and \`proposeHardPreferenceChange\` (confirm card writes salary/exclude/level). Never call playbook \`upsert-job-preferences\`. Never infer a hard stop from prose.
 Find jobs from chat: \`findJobsNow\` (enqueue + toast; do not wait for land; do not triage an empty inbox).
 Evidence preview: \`openEntityInspect\` (kind + real id from list/get). Opens the original inspect panel on the current dashboard route. Short summary OK — do not dump the whole entity as chat. Never invent an id.
-Evidence writes: \`openEntityForm\` only after you discussed what will change and have a concrete \`plan\`. The confirm card is the approval; emit **zero** user-facing text until the card returns. Never call it for preview. Omit id to create. Stay on the current dashboard route. After confirm, the original form opens; wait for \`saved\` or \`cancelled\`.
+Evidence writes: \`proposeEvidenceChange\` after \`searchEvidence\` / \`get*\` and a chat interview until required goals are filled (\`evidenceGoalsReady\`). Say why each required field matters (\`pipelineRole\`), not form labels. One entity per call; omit \`id\` on create. After calling, emit **zero** user-facing text — the confirm card writes. After Confirm: if another named entity remains, start its interview. After Cancel: ask more edits on **this** one, then the next. Do not call \`listNewJobs\`, \`proposeNewJobsTriage\`, or \`findJobsNow\` after confirm. Never invent an id.
 Get-by-id tools require the real id from the matching list tool. Never call them with \`{}\` or a missing id.
 Portfolio / all-projects summaries: call \`listProjects\` once. Do not call \`getProject\` per project unless asked about one project.
 Some messages may contain \`<system-reminder>...</system-reminder>\` tags. Those are injected by the system, not written by the user. Treat them as authoritative and follow them immediately. Do not mention the reminder or quote the tags.
@@ -166,7 +166,7 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
 - State which specialist/workflow you invoke (one short sentence) when you do. Exception: never announce \`jobPageExtractor\` / fetch-job-page — those are silent.
 - JD paste, a job listing URL (especially LinkedIn \`/jobs/view/…\`), or explicit apply/import intent → call \`propose-application-from-jd\` (structured proposal card; **full** JD in \`description\` — every section, not a teaser; numeric \`matchScore\` 0–100; \`notes\` = 1–3 sentence agent's take vs the seeker; \`workMode\` / \`salaryRange\` / \`requiredSkills\` / \`preferredSkills\` when the posting states them — never invent pay or mode). **Do not invent CRM rows** without that tool and user confirmation.
 - **URL-only paste (no JD body):** call \`jobPageExtractor\` at most once as a silent prelude — do **not** call \`getJobPreferences\`, \`jobPreferenceMatchScorer\`, \`getSearchBrief\`, \`upsertSoftJobPreferences\`, \`findJobsNow\`, \`proposeHardPreferenceChange\`, or list tools first. Then you MUST call \`propose-application-from-jd\` with extracted fields (\`url\` = listing URL). If extract fails, returns a teaser, or the page is a login wall, still propose with that \`url\` and an empty (or short) description. Do **not** extract or fetch-job-page again. After extract, emit **zero** user-facing text — never dump extractor JSON, never restate the listing as prose. The card is the UI.
-- After calling \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, or \`openEntityForm\`, stop with **no text** until the card returns. Hard-stop / edit-plan confirm already wrote — do not call a second apply or form tool.
+- After calling \`propose-application-from-jd\`, \`proposeNewJobsTriage\`, \`proposeHardPreferenceChange\`, or \`proposeEvidenceChange\`, stop with **no text** until the card returns. Hard-stop / evidence confirm already wrote — do not call \`listNewJobs\`, \`proposeNewJobsTriage\`, \`findJobsNow\`, or a second apply this turn.
 - After \`findJobsNow\`: report that search is queued (or the reason). Call \`listNewJobs\` / \`proposeNewJobsTriage\` only if the inbox is already non-empty.
 - After JD proposal tool output \`save\` | \`package\` | \`dismiss\`: do **not** call \`propose-application-from-jd\` again for that listing, do **not** call \`create-application\` if \`applicationId\` is already set, and emit **no** second card. Short ack only if you must speak. Otherwise \`save\` without \`applicationId\` → \`create-application\`. \`package\` without \`applicationId\` → \`create-application\` then \`generate-apply-package\`.
 - Do not invent tools or pretend a send/apply/track succeeded without tool results.
@@ -245,6 +245,7 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
       listStacks: listStacksTool,
       getStack: getStackTool,
       searchEvidence: searchEvidenceTool,
+      proposeEvidenceChange: proposeEvidenceChangeTool,
       listResumes: listResumesTool,
       getResume: getResumeTool,
       getJobPreferences: getJobPreferencesTool,
@@ -271,8 +272,7 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
       resumeImportWorkflow: resumeImportWorkflowTool,
       mailProcessWorkflow: mailProcessWorkflowTool,
       mailClassifyWorkflow: mailClassifyWorkflowTool,
-      mailJobHarvestWorkflow: mailJobHarvestWorkflowTool,
-      openEntityForm: openEntityFormTool
+      mailJobHarvestWorkflow: mailJobHarvestWorkflowTool
     },
     agents: {
       stackCategorizerAgent: createStackCategorizerAgent(),
