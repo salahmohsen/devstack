@@ -48,6 +48,7 @@ describe("isOpenJobPreference", () => {
   it("treats default empty remoteRegions as open and a set list as closed", () => {
     expect(isOpenJobPreference({ ...defaultJobPreference(), remoteRegions: [] })).toBe(true);
     expect(isOpenJobPreference({ ...defaultJobPreference(), remoteRegions: ["eu"] })).toBe(false);
+    expect(isOpenJobPreference({ ...defaultJobPreference(), levelFloor: "senior" })).toBe(false);
   });
 });
 

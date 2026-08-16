@@ -3,12 +3,9 @@ ALTER TABLE "job_preference" ADD COLUMN "level_floor" text;--> statement-breakpo
 ALTER TABLE "job_preference" ADD COLUMN "search_brief_markdown" text;--> statement-breakpoint
 ALTER TABLE "job_preference" ADD COLUMN "search_brief_hash" text;--> statement-breakpoint
 ALTER TABLE "job_preference" ADD COLUMN "search_brief_previous_markdown" text;--> statement-breakpoint
-ALTER TABLE "job_preference" ADD COLUMN "search_brief_built_at" timestamptz;
+ALTER TABLE "job_preference" ADD COLUMN "search_brief_built_at" timestamptz;--> statement-breakpoint
 
--- Copy non-worldwide hiring-region slugs from locations onto remote_regions, then
--- strip worldwide tokens from locations. Mapping mirrors
--- packages/core/src/job-discovery/hiring-region.ts SYNONYM_TO_SLUG (live dictionary
--- stays in TS — see backfill.ts next to this file).
+-- Copy non-worldwide location slugs onto remote_regions; strip worldwide tokens from locations.
 WITH map(raw, slug) AS (
   VALUES
     ('latam', 'latam'),

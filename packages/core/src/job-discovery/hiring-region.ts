@@ -15,7 +15,7 @@ const REGION_PARENT: Readonly<Record<string, string>> = {
 /**
  * Raw phrase → slug. Keys are lowercase, punctuation-normalized.
  */
-const SYNONYM_TO_SLUG: Readonly<Record<string, string>> = {
+export const HIRING_REGION_SYNONYM_TO_SLUG: Readonly<Record<string, string>> = {
   worldwide: "worldwide",
   anywhere: "worldwide",
   global: "worldwide",
@@ -69,11 +69,13 @@ const CLOSED_SLUGS = new Set<string>([
   "saudi_arabia",
   "de",
   "br",
-  ...Object.values(SYNONYM_TO_SLUG)
+  ...Object.values(HIRING_REGION_SYNONYM_TO_SLUG)
 ]);
 
 /** Multi-word / longer phrases first for containment matching. */
-const SYNONYM_PHRASES: readonly { phrase: string; slug: string }[] = Object.entries(SYNONYM_TO_SLUG)
+const SYNONYM_PHRASES: readonly { phrase: string; slug: string }[] = Object.entries(
+  HIRING_REGION_SYNONYM_TO_SLUG
+)
   .map(([phrase, slug]) => {
     return { phrase, slug };
   })
@@ -102,7 +104,8 @@ export function normalizeHiringRegion(raw: string | null): string | null {
   const key = normalizeKey(raw);
   if (key.length === 0) return null;
 
-  const exact = SYNONYM_TO_SLUG[key] ?? SYNONYM_TO_SLUG[compactKey(key)];
+  const exact =
+    HIRING_REGION_SYNONYM_TO_SLUG[key] ?? HIRING_REGION_SYNONYM_TO_SLUG[compactKey(key)];
   if (exact) return exact;
 
   // Already-closed slug (`saudi_arabia`, `latam`)
