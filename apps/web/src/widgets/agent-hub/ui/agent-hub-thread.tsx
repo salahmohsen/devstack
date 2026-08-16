@@ -6,19 +6,19 @@ import {
   ThreadPrimitive,
   unstable_useThreadMessageIds
 } from "@assistant-ui/react";
-import { Sparkles } from "lucide-react";
+import { ArrowDownIcon, Sparkles } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { MessageScroller } from "@/shared/ui/agents/message-scroller";
 import { DaySeparatorRule, DaySeparatorTime } from "@/shared/ui/assistant-ui/day-separator";
 import {
   Composer,
   EditComposer,
   threadRootStyle,
-  ThreadScrollToBottom,
   UserMessage
 } from "@/shared/ui/assistant-ui/thread";
 
@@ -61,7 +61,8 @@ export function AgentHubThread() {
   React.useEffect(() => {
     ensureHistory();
   }, [ensureHistory]);
-  const [viewportEl, setViewportEl] = React.useState<HTMLDivElement | null>(null);
+  const [viewportEl, setViewportEl] = React.useState<HTMLElement | null>(null);
+  const [following, setFollowing] = React.useState(true);
   const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
     enabled: historyReady && messages.length > 0,
     hasMore: hasMoreHistory,
@@ -85,20 +86,27 @@ export function AgentHubThread() {
       style={threadRootStyle}
     >
       <ThreadPrimitive.Viewport
-        ref={setViewportEl}
         turnAnchor="bottom"
-        scrollToBottomOnInitialize
+        scrollToBottomOnInitialize={false}
         data-slot="aui_thread-viewport"
-        className="relative flex min-h-0 flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
+        className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
       >
-        <div
-          className={cn(
-            "mx-auto flex w-full max-w-(--thread-max-width) flex-1 flex-col px-4 pt-4",
-            isEmpty && "justify-center"
+        <MessageScroller
+          followOutput
+          busy={isRunning}
+          navigation={historyReady && !isEmpty ? "rail" : undefined}
+          label="Hub conversation"
+          viewportRef={setViewportEl}
+          onFollowChange={setFollowing}
+          className="min-h-0 flex-1"
+          viewportClassName="px-4 pt-4"
+          contentClassName={cn(
+            "mx-auto flex w-full max-w-(--thread-max-width) flex-col",
+            isEmpty && "min-h-full justify-center"
           )}
         >
           {!historyReady ? (
-            <div className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex flex-1 items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
               <Spinner className="size-4" aria-hidden />
               Loading conversation…
             </div>
@@ -116,47 +124,61 @@ export function AgentHubThread() {
           {isEmpty ? <HubWelcome /> : null}
 
           {historyReady && !isEmpty ? <HubDayMessages dayById={dayById} /> : null}
+        </MessageScroller>
 
-          <ThreadPrimitive.ViewportFooter
-            className={cn(
-              "aui-thread-viewport-footer relative flex flex-col gap-4 overflow-visible bg-background pb-4 md:pb-6",
-              !isEmpty && "sticky bottom-0 mt-auto rounded-t-(--composer-radius)"
-            )}
-          >
-            <ThreadScrollToBottom />
-            <HubStreamErrorCard
-              errorMessage={error?.message ?? null}
-              hasUserMessage={messages.some((message) => message.role === "user")}
-              onClearError={clearError}
-              onRegenerate={() => {
-                void regenerate();
+        <ThreadPrimitive.ViewportFooter
+          className={cn(
+            "aui-thread-viewport-footer relative shrink-0 bg-background px-4 pb-4 md:pb-6",
+            !isEmpty && "rounded-t-(--composer-radius)"
+          )}
+        >
+          {!following && !isEmpty ? (
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="outline"
+              className="absolute inset-x-0 -top-12 z-10 mx-auto w-fit rounded-full"
+              onClick={() => {
+                setFollowing(true);
+                viewportEl?.scrollTo({ top: viewportEl.scrollHeight, behavior: "smooth" });
               }}
-            />
-            <Composer
-              attachments={false}
-              disabled={!historyReady || hitl !== null}
-              placeholder={
-                hitl === "approval"
-                  ? "Waiting for approval…"
-                  : hitl === "client"
-                    ? "Waiting for your choice…"
-                    : isRunning
-                      ? "Generating a response…"
-                      : "Ask the hub anything…"
-              }
-            />
-            <AuiIf
-              condition={(s) =>
-                historyReady &&
-                s.thread.messages.length === 0 &&
-                !s.thread.isRunning &&
-                s.composer.isEmpty
-              }
             >
-              <HubSuggestions />
-            </AuiIf>
-          </ThreadPrimitive.ViewportFooter>
-        </div>
+              <ArrowDownIcon className="size-4" strokeWidth={1.5} />
+              <span className="sr-only">Scroll to latest</span>
+            </Button>
+          ) : null}
+          <HubStreamErrorCard
+            errorMessage={error?.message ?? null}
+            hasUserMessage={messages.some((message) => message.role === "user")}
+            onClearError={clearError}
+            onRegenerate={() => {
+              void regenerate();
+            }}
+          />
+          <Composer
+            attachments={false}
+            disabled={!historyReady || hitl !== null}
+            placeholder={
+              hitl === "approval"
+                ? "Waiting for approval…"
+                : hitl === "client"
+                  ? "Waiting for your choice…"
+                  : isRunning
+                    ? "Generating a response…"
+                    : "Ask the hub anything…"
+            }
+          />
+          <AuiIf
+            condition={(s) =>
+              historyReady &&
+              s.thread.messages.length === 0 &&
+              !s.thread.isRunning &&
+              s.composer.isEmpty
+            }
+          >
+            <HubSuggestions />
+          </AuiIf>
+        </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
   );
@@ -202,27 +224,34 @@ function HubDayMessages({ dayById }: { dayById: Map<string, HubDayRow> }) {
   if (ids.length === 0) return null;
 
   return (
-    <div data-slot="aui_message-group" className="mb-14 flex flex-col gap-y-6">
+    <div data-slot="aui_message-group" className="mb-6 flex flex-col gap-y-6">
       {ids.map((id) => {
         const row = dayById.get(id);
+        const from = row?.role === "user" ? "user" : "assistant";
         return (
           <div key={id} className="group relative flex flex-col gap-2">
             {row?.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
-            <div className="relative">
+            <div
+              data-slot="message"
+              data-from={from}
+              className={cn("relative", from === "user" ? "ps-12" : "pe-12")}
+            >
               {row?.timeLabel ? (
                 <DaySeparatorTime
                   className={cn(
                     "pointer-events-none absolute top-3 z-10",
-                    row.role === "user" ? "inset-s-0" : "inset-e-0"
+                    from === "user" ? "inset-s-0" : "inset-e-0"
                   )}
                 >
                   {row.timeLabel}
                 </DaySeparatorTime>
               ) : null}
-              <ThreadPrimitive.Unstable_MessageById
-                messageId={id}
-                components={HUB_MESSAGE_COMPONENTS}
-              />
+              <div data-slot="message-content">
+                <ThreadPrimitive.Unstable_MessageById
+                  messageId={id}
+                  components={HUB_MESSAGE_COMPONENTS}
+                />
+              </div>
             </div>
           </div>
         );
