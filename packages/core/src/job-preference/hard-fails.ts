@@ -32,7 +32,6 @@ function excludeHaystack(job: PreferenceHardFailJob): string {
     .trim();
 }
 
-/** Column hard-fails only. Do not call decideTwoAxis from here. */
 export function applyPreferenceHardFails(
   job: PreferenceHardFailJob,
   prefs: PreferenceHardFailPrefs

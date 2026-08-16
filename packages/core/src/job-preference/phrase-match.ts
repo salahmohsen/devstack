@@ -1,8 +1,4 @@
-/**
- * Product compounds: a shorter token is a different product if it only
- * appears as the prefix of this span. v1 incident fixture only.
- * Do not list `.js` suffixes — those must still match the short keyword.
- */
+/** Occupied product spans. Do not list `.js` suffixes — those still match the short keyword. */
 export const KEYWORD_COMPOUNDS = ["react native"] as const;
 
 const PUNCT_TO_SPACE = /[._/-]+/g;

@@ -25,11 +25,12 @@ function upperCurrency(value: string | null | undefined): string | null {
 }
 
 function currencyFromRange(range: string): string | null {
+  const iso = range.match(ISO_CURRENCY)?.[1];
+  if (iso) return iso.toUpperCase();
   if (range.includes("$")) return "USD";
   if (range.includes("€")) return "EUR";
   if (range.includes("£")) return "GBP";
-  const iso = range.match(ISO_CURRENCY)?.[1];
-  return iso ? iso.toUpperCase() : null;
+  return null;
 }
 
 function periodFromRange(range: string): SalaryPeriod | null {

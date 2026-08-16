@@ -67,4 +67,11 @@ describe("comparableMonthlyPay §6.4", () => {
   it("does not invent a monthly amount when currency is missing", () => {
     expect(comparableMonthlyPay({ salaryMin: 60_000, salaryPeriod: "year" })).toBeNull();
   });
+
+  it("prefers an ISO currency token over a $ decorator", () => {
+    expect(comparableMonthlyPay({ salaryRange: "$20k EUR" })).toEqual({
+      monthly: 20_000 / 12,
+      currency: "EUR"
+    });
+  });
 });
