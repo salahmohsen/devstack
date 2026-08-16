@@ -262,7 +262,6 @@ export const agentRouter = {
             agentGenerateBody({
               messages,
               llm,
-              modelId: llm.modelId,
               maxSteps: HUB_CHAT_MAX_STEPS,
               memory: hubChatMemoryOptions(userId).memory,
               requestContext: await hubChatRequestContext(userId),
