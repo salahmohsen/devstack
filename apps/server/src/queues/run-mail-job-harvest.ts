@@ -1,3 +1,4 @@
+import { linkJobSkillsForUser } from "@tsu-stack/api/lib/application/link-job-skills";
 import { loadJobPreference } from "@tsu-stack/api/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "@tsu-stack/api/lib/application/load-seeker-match-evidence";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
@@ -224,6 +225,13 @@ export async function runMailJobHarvest(input: {
         modelSourceLabel: job.sourceLabel ?? null
       });
       const sourceTags = buildApplicationSourceTags({ channel: "mail", platform });
+      const linked = await linkJobSkillsForUser({
+        userId: row.userId,
+        title: job.title,
+        companyName: job.companyName,
+        description: job.description ?? null,
+        listingUrl
+      });
 
       // Race-safe: unique (userId, url) + onConflictDoNothing. No discoveryRunId / adapter N.
       const { row: app, created: wasCreated } = await applicationRepository.createIfAbsentByUrl({
@@ -238,6 +246,9 @@ export async function runMailJobHarvest(input: {
         sourceLabel,
         sourceTags,
         location: job.location ?? null,
+        workMode: job.workMode ?? null,
+        requiredSkills: linked.requiredSkills,
+        preferredSkills: linked.preferredSkills,
         salaryRange: job.salaryRange ?? null,
         description: job.description ?? null,
         notes: null,

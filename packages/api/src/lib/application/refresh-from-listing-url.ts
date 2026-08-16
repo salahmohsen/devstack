@@ -21,6 +21,7 @@ import { extractJsonObject, extractTextFromAgentBody } from "#@/lib/agent/parse-
 import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 import { fetchListingPageText } from "#@/lib/application/fetch-listing-page";
 import { generateAgentTake } from "#@/lib/application/generate-agent-take";
+import { linkJobSkillsForUser } from "#@/lib/application/link-job-skills";
 import { scoreApplicationMatch } from "#@/lib/application/score-application-match";
 import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai";
 
@@ -311,6 +312,15 @@ export async function refreshApplicationFromListingUrl(input: {
       }
     });
 
+    const linked = await linkJobSkillsForUser({
+      userId: input.userId,
+      title: nextTitle,
+      companyName: nextCompany,
+      description: nextDescription,
+      listingUrl: job.listingUrl,
+      llm
+    });
+
     const updated = await applicationRepository.update(input.applicationId, input.userId, {
       url: job.listingUrl,
       applyUrl: job.applyUrl ?? owned.applyUrl,
@@ -320,6 +330,11 @@ export async function refreshApplicationFromListingUrl(input: {
       location: nextLocation,
       salaryRange: nextSalary,
       description: nextDescription,
+      workMode: job.workMode ?? owned.workMode,
+      requiredSkills:
+        linked.requiredSkills.length > 0 ? linked.requiredSkills : owned.requiredSkills,
+      preferredSkills:
+        linked.preferredSkills.length > 0 ? linked.preferredSkills : owned.preferredSkills,
       matchScore: match.score,
       source,
       sourceLabel,

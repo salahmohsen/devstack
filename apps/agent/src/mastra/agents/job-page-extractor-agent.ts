@@ -18,7 +18,7 @@ You usually receive pre-fetched page text from fetch-job-page (workflow injects 
 
 Fields (exact JSON keys):
 - title, companyName (required key name is companyName — never "company"; never "Unknown" when page or card has a real value)
-- location, salaryRange, description (short, max ~800 chars)
+- location, salaryRange, description (full posting body — every section, not an 800-char teaser)
 - listingUrl: the canonical board URL (LinkedIn jobs/view/ID when possible)
 - applyUrl: external company/ATS apply URL if present; null for Easy Apply only
 - applyMethod: easy_apply | external | email | unknown (lowercase snake_case only — not "Unknown" or "Easy Apply")
