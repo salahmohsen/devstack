@@ -14,7 +14,14 @@ export const listProjectsTool = createTool({
   description:
     "List things the user built (title, year, summary, stackNames). Use when they say side projects, portfolio projects, or things I built. Do not follow with getProject unless they asked about one project.",
   inputSchema: z.object({
-    limit: z.number().int().min(1).max(20).optional().default(20)
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .optional()
+      .default(20)
+      .describe("Max projects to return (1–20, default 20)")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

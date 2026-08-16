@@ -11,7 +11,7 @@ export const generateMailReplyTool = createTool({
   description:
     "Draft a Career Inbox reply (subject + body only). No send, no PDF attachments. Use real messageId from listMail/getMail. Follow-up path after first-apply.",
   inputSchema: z.object({
-    messageId: z.string().min(1)
+    messageId: z.string().min(1).describe("Career Inbox message id from listMail / getMail")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

@@ -11,7 +11,14 @@ export const listNewJobsTool = createTool({
   description:
     "List jobs that came in from email alerts (New jobs inbox, trackingStatus=inbox). Use when the user says new jobs, filter new work, filter jobs, screen/sort/narrow new jobs, roles from email, opportunities, listings, or 'any jobs for me'. Not the same as listOpenApplications (jobs they already saved/applied). Call this before proposeNewJobsTriage. After a non-empty list you must call proposeNewJobsTriage (filter = triage). Never invent ids or claim empty without calling this tool.",
   inputSchema: z.object({
-    limit: z.number().int().min(1).max(30).optional().default(15)
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(30)
+      .optional()
+      .default(15)
+      .describe("Max inbox jobs to return (1–30, default 15)")
   }),
   outputSchema: z.object({
     jobs: z.array(

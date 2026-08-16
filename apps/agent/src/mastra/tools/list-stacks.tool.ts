@@ -14,7 +14,14 @@ export const listStacksTool = createTool({
   description:
     "List the user's skills / tools / tech (name, type, project count). Use when they say skills, tools I use, tech I know, or what I work with.",
   inputSchema: z.object({
-    limit: z.number().int().min(1).max(20).optional().default(20)
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .optional()
+      .default(20)
+      .describe("Max stacks to return (1–20, default 20)")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

@@ -183,7 +183,7 @@ export const ApplyPackageWorkflowInputSchema = z.object({
 export type ApplyPackageWorkflowInput = z.infer<typeof ApplyPackageWorkflowInputSchema>;
 
 export const GenerateApplyPackageInputSchema = z.object({
-  applicationId: z.string().min(1)
+  applicationId: z.string().min(1).describe("Tracked application id to draft a package for")
 });
 export type GenerateApplyPackageInput = z.infer<typeof GenerateApplyPackageInputSchema>;
 
@@ -192,13 +192,15 @@ export type GenerateApplyPackageInput = z.infer<typeof GenerateApplyPackageInput
  * Prefer client-edited `draft`; server falls back to stored draft when omitted.
  */
 export const AcceptApplyPackageInputSchema = z.object({
-  applicationId: z.string().min(1),
-  draft: ApplyPackageDraftSchema.optional()
+  applicationId: z.string().min(1).describe("Application id whose draft should become PDFs"),
+  draft: ApplyPackageDraftSchema.optional().describe(
+    "Optional client-edited draft; omit to use the stored draft"
+  )
 });
 export type AcceptApplyPackageInput = z.infer<typeof AcceptApplyPackageInputSchema>;
 
 export const SendOutreachInputSchema = z.object({
-  applicationId: z.string().min(1)
+  applicationId: z.string().min(1).describe("Application id to send first-apply outreach for")
 });
 export type SendOutreachInput = z.infer<typeof SendOutreachInputSchema>;
 
@@ -220,8 +222,10 @@ export function chunkArray<T>(items: readonly T[], size: number): T[][] {
  * validation still succeeds (Mastra validates with Zod before returning).
  */
 export const ApplyPackageExperienceRewriteItemSchema = z.object({
-  experienceId: z.string().min(1),
-  rewrittenBullets: z.array(z.string())
+  experienceId: z.string().min(1).describe("Existing experience id from the portfolio snapshot"),
+  rewrittenBullets: z
+    .array(z.string())
+    .describe("3–6 JD-aligned bullets; keep facts, do not invent employers")
 });
 export const ApplyPackageExperienceRewriteChunkSchema = z.preprocess(
   (val) => (Array.isArray(val) ? { items: val } : val),
@@ -238,9 +242,12 @@ export type ApplyPackageExperienceRewriteChunk = z.infer<
  * Same bare-array coercion as experience chunks.
  */
 export const ApplyPackageProjectRewriteItemSchema = z.object({
-  projectId: z.string().min(1),
-  rewrittenSummary: z.string(),
-  rewrittenBullets: z.array(z.string()).optional()
+  projectId: z.string().min(1).describe("Existing project id from the portfolio snapshot"),
+  rewrittenSummary: z.string().describe("One tight paragraph tailored to the JD"),
+  rewrittenBullets: z
+    .array(z.string())
+    .optional()
+    .describe("Optional extra bullets for the project")
 });
 export const ApplyPackageProjectRewriteChunkSchema = z.preprocess(
   (val) => (Array.isArray(val) ? { items: val } : val),
@@ -252,12 +259,17 @@ export type ApplyPackageProjectRewriteChunk = z.infer<typeof ApplyPackageProject
 
 /** Intermediate LLM output for summary + cover letter + outreach. */
 export const ApplyPackageSummaryAndLettersSchema = z.object({
-  professionalSummary: z.string().nullable(),
-  coverLetterBody: z.string(),
-  outreachSubject: z.string(),
-  outreachBody: z.string(),
-  proposedRecruiterEmail: optionalNullableEmail.nullable(),
-  notes: z.string().optional()
+  professionalSummary: z
+    .string()
+    .nullable()
+    .describe("Resume summary tailored to this JD, or null if none"),
+  coverLetterBody: z.string().describe("Full cover letter body, no greeting/sign-off extras"),
+  outreachSubject: z.string().describe("Short email subject for first-apply outreach"),
+  outreachBody: z.string().describe("Plain-text outreach email body"),
+  proposedRecruiterEmail: optionalNullableEmail
+    .nullable()
+    .describe("Recruiter email only if present in the JD; otherwise null"),
+  notes: z.string().optional().describe("Internal note for the seeker, not sent")
 });
 export type ApplyPackageSummaryAndLetters = z.infer<typeof ApplyPackageSummaryAndLettersSchema>;
 

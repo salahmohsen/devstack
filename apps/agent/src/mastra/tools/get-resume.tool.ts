@@ -14,7 +14,7 @@ export const getResumeTool = createTool({
   description:
     "Fetch one resume's metadata by id (filename, default flag, dates) for the current user only. No file bytes.",
   inputSchema: z.object({
-    resumeId: z.string().min(1)
+    resumeId: z.string().min(1).describe("Resume id from listResumes. Required.")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

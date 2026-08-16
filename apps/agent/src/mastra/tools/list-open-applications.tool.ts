@@ -14,7 +14,14 @@ export const listOpenApplicationsTool = createTool({
   description:
     "List jobs the user already saved or is pursuing (tracked pipeline, no outcome): company, title, stage. Use for 'applications', 'jobs I saved', 'where I applied', 'my pipeline'. Does not include new roles from email (use listNewJobs).",
   inputSchema: z.object({
-    limit: z.number().int().min(1).max(20).optional().default(8)
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .optional()
+      .default(8)
+      .describe("Max tracked applications to return (1–20, default 8)")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

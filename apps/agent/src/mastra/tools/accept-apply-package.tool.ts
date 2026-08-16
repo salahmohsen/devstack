@@ -11,7 +11,7 @@ export const acceptApplyPackageTool = createTool({
   description:
     "Accept apply package draft for an application (writes resume + cover PDFs). Requires prior generateApplyPackage. Requires approval. Must succeed before sendApplyOutreach.",
   inputSchema: z.object({
-    applicationId: z.string().min(1)
+    applicationId: z.string().min(1).describe("Application id after generateApplyPackage succeeded")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

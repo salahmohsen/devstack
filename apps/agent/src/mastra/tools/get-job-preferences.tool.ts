@@ -13,9 +13,9 @@ export const getJobPreferencesTool = createTool({
   id: "get-job-preferences",
   description:
     "Fetch what the user is looking for (job preferences). workModes is a multi-select array (remote|hybrid|onsite; empty = any mode). Also returns locations, role/exclude keywords, salary floor, min match score. Use for 'what jobs do I want', fit questions, or JD propose. If role keywords are empty, also call listExperiences + listStacks + listProjects — New jobs are filtered by that profile, not only this row.",
-  inputSchema: z.object({
-    // Intentionally empty — tenant is requestContext only; one prefs row per user.
-  }),
+  inputSchema: z
+    .object({})
+    .describe("No arguments. Tenant is the session user — do not pass userId."),
   outputSchema: z.object({
     found: z.boolean(),
     preferences: z

@@ -21,11 +21,17 @@ import { USER_SMART_FILTERS_CTX } from "#@/mastra/agents/mail-classifier-agent";
 import { applyLlmToRequestContext, generateModelOption } from "#@/mastra/byo-model";
 
 const LlmLabelSchema = z.object({
-  systemLabel: MailSystemLabelSchema.nullable(),
+  systemLabel: MailSystemLabelSchema.nullable().describe(
+    "One Career Inbox system label, or null if none apply"
+  ),
   /** Slugs from user smart filters (with or without rule: prefix). */
-  smartRuleSlugs: z.array(z.string()).optional().default([]),
-  confidence: z.number().min(0).max(1).optional(),
-  reason: z.string().optional()
+  smartRuleSlugs: z
+    .array(z.string())
+    .optional()
+    .default([])
+    .describe("Matching user smart-filter slugs, with or without rule: prefix"),
+  confidence: z.number().min(0).max(1).optional().describe("0–1 confidence in this assignment"),
+  reason: z.string().optional().describe("One short sentence why these labels")
 });
 
 const LLM_TIMEOUT_MS = 45_000;

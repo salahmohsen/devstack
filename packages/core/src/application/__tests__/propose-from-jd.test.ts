@@ -39,6 +39,16 @@ describe("ProposeApplicationFromJdInputSchema", () => {
     });
     expect(parsed.success).toBe(false);
   });
+
+  it("accepts an empty description when a listing url is present", () => {
+    const parsed = ProposeApplicationFromJdInputSchema.safeParse({
+      title: "Role",
+      companyName: "Acme",
+      description: "",
+      url: "https://www.linkedin.com/jobs/view/4410142951/"
+    });
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("ProposeApplicationFromJdOutputSchema", () => {

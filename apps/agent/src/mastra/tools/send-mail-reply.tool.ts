@@ -13,9 +13,9 @@ export const sendMailReplyTool = createTool({
   description:
     "Send a Career Inbox reply (no PDF attachments). Recipient is the message fromEmail. Requires approval. Prefer generateMailReply first. Follow-up only — first apply uses sendApplyOutreach.",
   inputSchema: z.object({
-    messageId: z.string().min(1),
-    subject: z.string().min(1).max(500),
-    bodyText: z.string().min(1).max(20_000)
+    messageId: z.string().min(1).describe("Message being replied to (listMail / getMail id)"),
+    subject: z.string().min(1).max(500).describe("Reply subject line"),
+    bodyText: z.string().min(1).max(20_000).describe("Plain-text reply body, no PDF")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

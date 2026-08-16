@@ -17,7 +17,7 @@ export const dismissJobTool = createTool({
   description:
     "Dismiss a New jobs inbox application (soft archive). Pass real applicationId. Do not call before user confirms triage card. Only inbox rows can be dismissed.",
   inputSchema: z.object({
-    applicationId: z.string().min(1)
+    applicationId: z.string().min(1).describe("Inbox application id from listNewJobs / triage")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

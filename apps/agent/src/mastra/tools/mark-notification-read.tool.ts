@@ -11,7 +11,7 @@ export const markNotificationReadTool = createTool({
   description:
     "Mark one notification as read by id. Only mark notifs related to this turn's focus job or mail (never mark-all). Use listNotifications first.",
   inputSchema: z.object({
-    notificationId: z.string().min(1)
+    notificationId: z.string().min(1).describe("Notification id from listNotifications")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

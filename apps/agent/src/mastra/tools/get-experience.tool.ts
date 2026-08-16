@@ -14,7 +14,7 @@ export const getExperienceTool = createTool({
   description:
     "Fetch one experience by id (role, org, dates, summary, linked project titles) for the current user only.",
   inputSchema: z.object({
-    experienceId: z.string().min(1)
+    experienceId: z.string().min(1).describe("Experience id from listExperiences. Required.")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

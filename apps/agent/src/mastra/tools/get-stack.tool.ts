@@ -14,7 +14,7 @@ export const getStackTool = createTool({
   description:
     "Fetch one stack by id (name, type, summary, linked project titles) for the current user only.",
   inputSchema: z.object({
-    stackId: z.string().min(1)
+    stackId: z.string().min(1).describe("Stack id from listStacks. Required.")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

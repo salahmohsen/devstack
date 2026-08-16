@@ -14,7 +14,10 @@ export const getApplicationTool = createTool({
   description:
     "Fetch one application by id (company, title, stage, location, notes snippet) for the current user only.",
   inputSchema: z.object({
-    applicationId: z.string().min(1)
+    applicationId: z
+      .string()
+      .min(1)
+      .describe("Application id from listNewJobs or listOpenApplications")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

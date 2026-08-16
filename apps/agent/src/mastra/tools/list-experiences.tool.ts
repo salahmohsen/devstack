@@ -14,7 +14,14 @@ export const listExperiencesTool = createTool({
   description:
     "List the user's work history (title, organization, dates). Use when they say past jobs, companies I worked at, resume jobs, or work history.",
   inputSchema: z.object({
-    limit: z.number().int().min(1).max(20).optional().default(20)
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .optional()
+      .default(20)
+      .describe("Max experiences to return (1–20, default 20)")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

@@ -11,7 +11,7 @@ export const getMailTool = createTool({
   description:
     "Get one Career Inbox message by id (full body). Use listMail first for real ids. Never call with empty id.",
   inputSchema: z.object({
-    messageId: z.string().min(1)
+    messageId: z.string().min(1).describe("Mail message id from listMail")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

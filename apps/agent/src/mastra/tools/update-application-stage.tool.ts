@@ -19,8 +19,8 @@ export const updateApplicationStageTool = createTool({
   description:
     "Move a tracked open application to saved|screening|interview|offer. Never use for applied — applied only via sendApplyOutreach after accept. Requires real applicationId.",
   inputSchema: z.object({
-    applicationId: z.string().min(1),
-    stage: z.string().min(1)
+    applicationId: z.string().min(1).describe("Tracked application id"),
+    stage: z.string().min(1).describe("saved | screening | interview | offer — never applied")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

@@ -11,8 +11,15 @@ export const listNotificationsTool = createTool({
   description:
     "List in-app notifications: id, kind, title, href, applicationId, messageId, readAt, createdAt. Optional unreadOnly. Use before markNotificationRead for related focus-job notifs only.",
   inputSchema: z.object({
-    unreadOnly: z.boolean().optional().default(false),
-    limit: z.number().int().min(1).max(50).optional().default(20)
+    unreadOnly: z.boolean().optional().default(false).describe("true = unread only; false = all"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .optional()
+      .default(20)
+      .describe("Max notifications to return (1–50, default 20)")
   }),
   outputSchema: z.object({
     notifications: z.array(

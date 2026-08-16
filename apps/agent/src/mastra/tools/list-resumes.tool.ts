@@ -14,7 +14,14 @@ export const listResumesTool = createTool({
   description:
     "List resume metadata (id, filename, default flag, dates) for linking packages or CRM. No file bytes.",
   inputSchema: z.object({
-    limit: z.number().int().min(1).max(20).optional().default(20)
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .optional()
+      .default(20)
+      .describe("Max resumes to return (1–20, default 20)")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

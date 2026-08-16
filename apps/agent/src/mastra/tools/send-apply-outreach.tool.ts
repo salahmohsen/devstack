@@ -11,7 +11,7 @@ export const sendApplyOutreachTool = createTool({
   description:
     "Send first-apply outreach email with resume PDF attachment. Requires prior acceptApplyPackage (resumeId + outreach body). Requires approval. On success sets stage applied. Do not call without accept.",
   inputSchema: z.object({
-    applicationId: z.string().min(1)
+    applicationId: z.string().min(1).describe("Application id after acceptApplyPackage succeeded")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

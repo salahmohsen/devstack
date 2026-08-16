@@ -17,7 +17,7 @@ export const trackJobTool = createTool({
   description:
     "Track a New jobs inbox (or dismissed) application: set trackingStatus=tracked. Pass real applicationId from listNewJobs / triage. Do not call before user confirms triage card.",
   inputSchema: z.object({
-    applicationId: z.string().min(1)
+    applicationId: z.string().min(1).describe("Inbox/dismissed application id confirmed in triage")
   }),
   outputSchema: z.object({
     ok: z.boolean(),

@@ -39,14 +39,20 @@ export const createApplicationTool = createTool({
   description:
     "Create a job application in CRM (stage saved). Prefer after propose-application-from-jd save|package. Pass full description. With url uses create-if-absent; without url always inserts. Requires HITL approval.",
   inputSchema: z.object({
-    title: z.string().min(1).max(300),
-    companyName: z.string().min(1).max(200),
-    description: z.string().min(1).max(50_000),
-    url: z.string().url().optional().nullable(),
-    applyUrl: z.string().url().optional().nullable(),
-    location: z.string().max(200).optional().nullable(),
-    matchScore: z.number().min(0).max(100).optional().nullable(),
-    notes: z.string().max(2000).optional().nullable()
+    title: z.string().min(1).max(300).describe("Job title to save"),
+    companyName: z.string().min(1).max(200).describe("Employer name to save"),
+    description: z.string().min(1).max(50_000).describe("Full JD body to store on the CRM row"),
+    url: z.string().url().optional().nullable().describe("Listing URL when known"),
+    applyUrl: z.string().url().optional().nullable().describe("External apply URL when known"),
+    location: z.string().max(200).optional().nullable().describe("Location text, or null"),
+    matchScore: z
+      .number()
+      .min(0)
+      .max(100)
+      .optional()
+      .nullable()
+      .describe("0–100 fit score from the proposal"),
+    notes: z.string().max(2000).optional().nullable().describe("Short agent take to store")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({

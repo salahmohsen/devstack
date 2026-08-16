@@ -11,8 +11,19 @@ export const listMailTool = createTool({
   description:
     "List the user's emails (Career Inbox): id, subject, from, category/labels, receivedAt. Use when they say emails, inbox, mail, messages, or recruiter emails. Excludes system notifications. Optional category filter. Use before getMail or generateMailReply.",
   inputSchema: z.object({
-    category: z.string().optional().nullable(),
-    limit: z.number().int().min(1).max(50).optional().default(20)
+    category: z
+      .string()
+      .optional()
+      .nullable()
+      .describe("Optional Career Inbox label/category to filter, e.g. job_notifier"),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .optional()
+      .default(20)
+      .describe("Max messages to return (1–50, default 20)")
   }),
   outputSchema: z.object({
     messages: z.array(

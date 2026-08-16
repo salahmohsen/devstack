@@ -19,7 +19,7 @@ export const generateApplyPackageTool = createTool({
   description:
     "Generate apply package draft for an application the user already has (id only). Requires approval. Expensive.",
   inputSchema: z.object({
-    applicationId: z.string().min(1)
+    applicationId: z.string().min(1).describe("Tracked application id to generate a package for")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
