@@ -17,6 +17,16 @@
 
 ---
 
+## 2026-08-16 — JD card save/package must land on Tracked jobs
+
+- **Trigger:** LinkedIn/JD proposal card rendered, but Save / Continue with package did not finish the CRM write or leave the home thread
+- **Finding:** After a client HITL choice the model often re-proposes or never calls `create-application`. The JD card buttons **are** the confirmation — create (and optional generate) on the client, put `applicationId` on `addToolOutput`, and do not auto-resume that save/package
+- **Finding:** Tracked jobs had no inspect deep link. Mirror projects/resumes: `?applicationId=` + `showView`, then `replace` the search. Seed the tracked list cache before navigate so the panel is not waiting on refetch
+- **Finding:** The small hub floater only mounts off `/dashboard`. Request-open **before** navigate (one-shot store). Derive `open || pending` — do not `setState` in an effect to consume the request
+- **Finding:** `features/agent-hub` cannot import `features/applications`. Own the create/generate mutations in the hub slice via oRPC
+- **User preference:** After save or package, go to Tracked jobs, open that job’s side panel, and open the small hub assistant to continue
+- **Evidence class:** Chrome — Save on Verification Flow Designer → `/dashboard/tracked-jobs`, Saved column card, inspect heading + JD, floater dialog “Hub assistant” + “You chose: Save only”
+
 ## 2026-08-16 — Hub HITL card family chrome
 
 - **Trigger:** Task 6 harden 3c `HubHitlFrame` on hub Thread (JD proposal, package approval, new-jobs triage) against the worktree `:3000` / `:5200` / `:4111`
