@@ -106,10 +106,13 @@ function ProposeApplicationFromJdToolUI({
   );
   const generatedTake =
     takeQuery.data?.ok === true ? normalizeAgentTakeText(takeQuery.data.text ?? "") : "";
-  const input =
-    generatedTake && generatedTake.length > 0
-      ? { ...mergedInput, notes: generatedTake }
-      : mergedInput;
+  const input = React.useMemo(
+    () =>
+      generatedTake && generatedTake.length > 0
+        ? { ...mergedInput, notes: generatedTake }
+        : mergedInput,
+    [generatedTake, mergedInput]
+  );
   const listingKey = jdListingKey(input);
   const action =
     parseProposeApplicationFromJdOutputAction(result) ??

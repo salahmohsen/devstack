@@ -230,49 +230,42 @@ export function PreviewRail({
                 isHorizontal ? "justify-center" : undefined
               )}
             >
-              {item.id === displayedId ? (
-                <div
-                  className={cn(
-                    isHorizontal
-                      ? "absolute bottom-12 left-1/2 w-72 -translate-x-1/2"
-                      : cn("w-full max-w-sm", previewSide === "before" && "ml-auto"),
-                    previewClassName
-                  )}
-                >
+              <AnimatePresence mode="wait" initial={false}>
+                {item.id === displayedId ? (
                   <motion.div
-                    layoutId={`preview-rail-card-${uid}`}
-                    transition={reduce ? { duration: 0 } : SPRING_LAYOUT}
+                    key={item.id}
+                    className={cn(
+                      isHorizontal
+                        ? "absolute bottom-12 left-1/2 w-72 -translate-x-1/2"
+                        : cn("w-full max-w-sm", previewSide === "before" && "ml-auto"),
+                      previewClassName
+                    )}
+                    initial={reduce ? { opacity: 0 } : { opacity: 0, y: 4, filter: "blur(6px)" }}
+                    animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={
+                      reduce
+                        ? { opacity: 0 }
+                        : {
+                            opacity: 0,
+                            y: -2,
+                            filter: "blur(4px)",
+                            transition: { duration: 0.12, ease: EASE_OUT }
+                          }
+                    }
+                    transition={{
+                      duration: reduce ? 0 : 0.18,
+                      ease: EASE_OUT
+                    }}
                   >
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.div
-                        key={item.id}
-                        initial={
-                          reduce ? { opacity: 0 } : { opacity: 0, y: 4, filter: "blur(6px)" }
-                        }
-                        animate={
-                          reduce ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }
-                        }
-                        exit={
-                          reduce
-                            ? { opacity: 0 }
-                            : {
-                                opacity: 0,
-                                y: -2,
-                                filter: "blur(4px)",
-                                transition: { duration: 0.12, ease: EASE_OUT }
-                              }
-                        }
-                        transition={{
-                          duration: reduce ? 0 : 0.18,
-                          ease: EASE_OUT
-                        }}
-                      >
-                        {renderPreview ? renderPreview(item) : <DefaultPreview item={item} />}
-                      </motion.div>
-                    </AnimatePresence>
+                    <motion.div
+                      layoutId={`preview-rail-card-${uid}`}
+                      transition={reduce ? { duration: 0 } : SPRING_LAYOUT}
+                    >
+                      {renderPreview ? renderPreview(item) : <DefaultPreview item={item} />}
+                    </motion.div>
                   </motion.div>
-                </div>
-              ) : null}
+                ) : null}
+              </AnimatePresence>
             </div>
           ))}
         </div>

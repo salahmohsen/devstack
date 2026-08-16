@@ -118,24 +118,22 @@ function SearchRow({ item }: { item: AgentActivitySearch }) {
         <Search aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.7} />
         <span className="min-w-0 truncate">{item.query}</span>
       </div>
-      {item.results?.length ? (
-        <div className="space-y-0.5 pl-4">
-          <AnimatePresence initial mode="popLayout">
-            {item.results.map((result) => (
-              <motion.div
-                layout="position"
-                key={result.id}
-                initial={enter}
-                animate={visible}
-                exit={exit}
-                transition={transition}
-              >
-                <SearchResultRow result={result} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      ) : null}
+      <div className="space-y-0.5 pl-4">
+        <AnimatePresence initial mode="popLayout">
+          {item.results?.map((result) => (
+            <motion.div
+              layout="position"
+              key={result.id}
+              initial={enter}
+              animate={visible}
+              exit={exit}
+              transition={transition}
+            >
+              <SearchResultRow result={result} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
