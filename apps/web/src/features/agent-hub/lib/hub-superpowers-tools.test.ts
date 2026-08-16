@@ -293,6 +293,38 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
     expect(findPendingProposeApplicationFromJd([waiting])).toBeNull();
     vi.unstubAllGlobals();
   });
+
+  it("does not lock on an unparseable hard-stop while args are still streaming", () => {
+    expect(
+      lastHubHitlKind([
+        assistant([
+          {
+            type: "tool-propose-hard-preference-change",
+            toolCallId: "h1",
+            toolName: "propose-hard-preference-change",
+            state: "input-streaming",
+            input: {}
+          } as never
+        ])
+      ])
+    ).toBeNull();
+  });
+
+  it("locks an unparseable finished hard-stop so Cancel can unstick the composer", () => {
+    expect(
+      lastHubHitlKind([
+        assistant([
+          {
+            type: "tool-propose-hard-preference-change",
+            toolCallId: "h1",
+            toolName: "propose-hard-preference-change",
+            state: "input-available",
+            input: {}
+          } as never
+        ])
+      ])
+    ).toBe("client");
+  });
 });
 
 describe("summarizeHubApproval", () => {

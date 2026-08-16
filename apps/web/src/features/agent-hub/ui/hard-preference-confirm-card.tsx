@@ -20,31 +20,34 @@ export function HardPreferenceConfirmCard({
   disabled = false
 }: {
   toolCallId: string;
-  patch: ProposeHardPreferenceChangeInput;
+  patch: ProposeHardPreferenceChangeInput | null;
   onSubmit: (action: "confirm" | "cancel") => void | Promise<void>;
   disabled?: boolean;
 }) {
-  const prefs = useQuery(
-    orpcQueryClient.jobPreference.get.queryOptions({
-      staleTime: 60_000,
+  const prefs = useQuery({
+    ...orpcQueryClient.jobPreference.get.queryOptions({
+      staleTime: 0,
+      refetchOnMount: "always",
       refetchOnWindowFocus: false,
       refetchOnReconnect: false
-    })
-  );
+    }),
+    enabled: patch != null
+  });
   const [submitting, setSubmitting] = React.useState<"confirm" | "cancel" | null>(null);
   const current = prefs.data;
-  const view = current
-    ? describeHardPreferenceDelta(
-        {
-          excludeKeywords: current.excludeKeywords,
-          salaryMin: current.salaryMin ?? null,
-          salaryCurrency: current.salaryCurrency ?? null,
-          levelFloor: current.levelFloor ?? null
-        },
-        patch
-      )
-    : null;
-  const confirmLocked = disabled || submitting != null || prefs.isLoading || !view;
+  const view =
+    patch && current
+      ? describeHardPreferenceDelta(
+          {
+            excludeKeywords: current.excludeKeywords,
+            salaryMin: current.salaryMin ?? null,
+            salaryCurrency: current.salaryCurrency ?? null,
+            levelFloor: current.levelFloor ?? null
+          },
+          patch
+        )
+      : null;
+  const confirmLocked = patch == null || disabled || submitting != null || prefs.isLoading || !view;
 
   const handle = React.useCallback(
     (action: "confirm" | "cancel") => {
@@ -63,21 +66,27 @@ export function HardPreferenceConfirmCard({
       kind="confirm"
       title="Confirm preference change"
       description={
-        view?.summary ??
-        (prefs.isLoading ? "Loading current preferences…" : "Hard-stop change needs confirmation.")
+        patch == null
+          ? "This preference proposal could not be read. Cancel to unlock the composer."
+          : (view?.summary ??
+            (prefs.isLoading
+              ? "Loading current preferences…"
+              : "Hard-stop change needs confirmation."))
       }
       toolCallId={toolCallId}
       submitting={submitting != null}
       footer={
         <>
-          <Button
-            type="button"
-            size="sm"
-            disabled={confirmLocked}
-            onClick={() => handle("confirm")}
-          >
-            Confirm
-          </Button>
+          {patch ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={confirmLocked}
+              onClick={() => handle("confirm")}
+            >
+              Confirm
+            </Button>
+          ) : null}
           <Button
             type="button"
             size="sm"

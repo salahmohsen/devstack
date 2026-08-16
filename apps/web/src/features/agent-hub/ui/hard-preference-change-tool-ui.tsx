@@ -27,13 +27,15 @@ export function HardPreferenceChangeToolUI({
   result,
   addResult,
   toolCallId,
-  toolName
+  toolName,
+  status
 }: ToolCallMessagePartProps<ProposeHardPreferenceChangeInput, ProposeHardPreferenceChangeOutput>) {
   const { addToolOutput } = useHubChat();
   const queryClient = useQueryClient();
   const prefs = useQuery(
     orpcQueryClient.jobPreference.get.queryOptions({
-      staleTime: 60_000,
+      staleTime: 0,
+      refetchOnMount: "always",
       refetchOnWindowFocus: false,
       refetchOnReconnect: false
     })
@@ -105,10 +107,20 @@ export function HardPreferenceChangeToolUI({
   }
 
   if (!patch) {
+    if (status?.type === "running") {
+      return (
+        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+          Waiting for a hard-stop proposal…
+        </p>
+      );
+    }
     return (
-      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        Waiting for a hard-stop proposal…
-      </p>
+      <HardPreferenceConfirmCard
+        toolCallId={toolCallId}
+        patch={null}
+        disabled={result != null || !toolCallId}
+        onSubmit={handleSubmit}
+      />
     );
   }
 

@@ -94,9 +94,9 @@ Most people will not say "New jobs", "Career Inbox", "stacks", or "tracked jobs"
 | my skills, tools I use, tech I know, what I work with | \`listStacks\` |
 | work history, past jobs, companies I worked at, resume jobs | \`listExperiences\` |
 | side projects, things I built, portfolio projects | \`listProjects\` |
-| what I'm looking for, job prefs, remote only, salary floor | \`getJobPreferences\` |
+| what I'm looking for, job prefs, show my salary floor | \`getJobPreferences\` |
 | who am I, my identity, career brief, search brief | \`getSearchBrief\` |
-| looking for remote EU, add keyword X, switch to frontend pack | \`upsertSoftJobPreferences\` (delta; remote EU only → remoteRegions set) |
+| looking for remote EU, remote only, add keyword X, switch to frontend pack | \`upsertSoftJobPreferences\` (delta; remote only → workModes set; remote EU only → remoteRegions set) |
 | exclude RN, salary floor, nothing below senior | \`proposeHardPreferenceChange\` (card writes; never infer hard stops from prose) |
 | find jobs, search now | \`findJobsNow\`; triage only if inbox already has rows |
 | a LinkedIn / Indeed / Greenhouse / job URL, "this listing", "import this job" | extract (optional silent prelude) then \`propose-application-from-jd\` |

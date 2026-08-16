@@ -5,6 +5,7 @@ import { createTool } from "@mastra/core/tools";
 import {
   applySoftJobPreferencePatch,
   defaultJobPreference,
+  jobPreferencesEqual,
   JobPreferenceFieldsSchema,
   normalizeLocations,
   normalizeRemoteRegions,
@@ -22,6 +23,8 @@ import {
   runWithDb,
   type JobPreferenceEntity
 } from "@tsu-stack/db";
+
+import { createAgentLogger } from "#@/mastra/agent-logger";
 
 function rowToPreference(row: JobPreferenceEntity): JobPreference {
   return {
@@ -76,10 +79,16 @@ export const upsertSoftJobPreferencesTool = createTool({
       if (next.titleId === "custom") {
         const title = next.customTitle?.trim() ?? "";
         if (title.length === 0 || next.roleKeywords.length < 2) {
-          return { ok: false, preferences: toOutputPreferences(current) };
+          return { ok: false, preferences: existing ? toOutputPreferences(current) : null };
         }
       }
 
+      if (jobPreferencesEqual(next, current)) {
+        if (!existing) return { ok: false, preferences: null };
+        return { ok: true, preferences: toOutputPreferences(current) };
+      }
+
+      const hadMarkdown = Boolean(existing?.searchBriefMarkdown);
       const row = await jobPreferenceRepository.upsert({
         id: existing?.id ?? randomUUID(),
         userId,
@@ -98,6 +107,14 @@ export const upsertSoftJobPreferencesTool = createTool({
         importFromEmail: next.importFromEmail
       });
       await jobPreferenceRepository.clearSearchBrief(userId);
+      const log = createAgentLogger({ operation: "agent__search_brief" });
+      log.set({
+        event: "search_brief_invalidated",
+        userId,
+        source: "hub",
+        hadMarkdown
+      });
+      log.emit();
       return { ok: true, preferences: toOutputPreferences(rowToPreference(row)) };
     });
   }

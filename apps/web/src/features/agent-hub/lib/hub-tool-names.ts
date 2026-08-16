@@ -469,7 +469,10 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     }
     if (isProposeHardPreferenceChangeToolName(name)) {
       if (parseProposeHardPreferenceChangeOutput(part.output)) continue;
-      return "client";
+      if (parseProposeHardPreferenceChangeInput(part.input)) return "client";
+      // Unparseable streaming leftovers must not lock; finished args show Cancel.
+      if (part.state === "input-available" || part.state === "call") return "client";
+      continue;
     }
     if (isOpenEntityFormToolName(name)) {
       if (part.output != null) continue;

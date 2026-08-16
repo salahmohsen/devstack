@@ -5,6 +5,7 @@ import {
   applyPreferenceListPatch,
   applySoftJobPreferencePatch,
   describeHardPreferenceDelta,
+  jobPreferencesEqual,
   PreferenceListPatchSchema,
   ProposeHardPreferenceChangeInputSchema,
   UpsertSoftJobPreferencesInputSchema
@@ -141,6 +142,28 @@ describe("UpsertSoftJobPreferencesInputSchema", () => {
         remoteRegions: { op: "set", values: ["eu"] }
       }).success
     ).toBe(true);
+  });
+
+  it("rejects an empty patch", () => {
+    expect(UpsertSoftJobPreferencesInputSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("jobPreferencesEqual", () => {
+  it("is true for identical bodies and false after a list change", () => {
+    const base = defaultJobPreference();
+    expect(jobPreferencesEqual(base, { ...base })).toBe(true);
+    expect(
+      jobPreferencesEqual(base, applySoftJobPreferencePatch(base, { workModes: ["remote"] }))
+    ).toBe(false);
+  });
+
+  it("treats add of an existing keyword as a no-op", () => {
+    const current = { ...defaultJobPreference(), roleKeywords: ["react"] };
+    const next = applySoftJobPreferencePatch(current, {
+      roleKeywords: { op: "add", values: ["React"] }
+    });
+    expect(jobPreferencesEqual(current, next)).toBe(true);
   });
 });
 

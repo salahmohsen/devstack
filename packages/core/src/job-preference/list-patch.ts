@@ -61,7 +61,17 @@ export const UpsertSoftJobPreferencesInputSchema = z
     locations: PreferenceListPatchSchema.optional(),
     remoteRegions: PreferenceListPatchSchema.optional()
   })
-  .strict();
+  .strict()
+  .refine(
+    (value) =>
+      value.titleId !== undefined ||
+      value.customTitle !== undefined ||
+      value.roleKeywords !== undefined ||
+      value.workModes !== undefined ||
+      value.locations !== undefined ||
+      value.remoteRegions !== undefined,
+    { message: "Provide at least one soft preference field" }
+  );
 export type UpsertSoftJobPreferencesInput = z.infer<typeof UpsertSoftJobPreferencesInputSchema>;
 
 export const UpsertSoftJobPreferencesOutputSchema = z.object({
@@ -104,6 +114,28 @@ export const ProposeHardPreferenceChangeOutputSchema = z.object({
 export type ProposeHardPreferenceChangeOutput = z.infer<
   typeof ProposeHardPreferenceChangeOutputSchema
 >;
+
+function sameStringList(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+export function jobPreferencesEqual(left: JobPreference, right: JobPreference): boolean {
+  return (
+    left.titleId === right.titleId &&
+    left.customTitle === right.customTitle &&
+    left.salaryMin === right.salaryMin &&
+    left.salaryCurrency === right.salaryCurrency &&
+    left.levelFloor === right.levelFloor &&
+    left.minMatchScore === right.minMatchScore &&
+    left.jobsPerRun === right.jobsPerRun &&
+    left.importFromEmail === right.importFromEmail &&
+    sameStringList(left.workModes, right.workModes) &&
+    sameStringList(left.locations, right.locations) &&
+    sameStringList(left.remoteRegions, right.remoteRegions) &&
+    sameStringList(left.roleKeywords, right.roleKeywords) &&
+    sameStringList(left.excludeKeywords, right.excludeKeywords)
+  );
+}
 
 export function applySoftJobPreferencePatch(
   current: JobPreference,

@@ -71,6 +71,7 @@ import { HardPreferenceChangeToolUI } from "./hard-preference-change-tool-ui";
 import { JobListingPreludeStatus } from "./job-listing-prelude-status";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
+import { UpsertSoftJobPreferencesToolUI } from "./upsert-soft-job-preferences-tool-ui";
 
 const PROPOSE_FROM_JD_TOOL_ID = "propose-application-from-jd";
 const PROPOSE_TRIAGE_TOOL_ID = "propose-new-jobs-triage";
@@ -524,6 +525,12 @@ const getSearchBriefToolEntry = {
   render: GetSearchBriefToolUI
 };
 
+const upsertSoftJobPreferencesToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: UpsertSoftJobPreferencesToolUI
+};
+
 const getExperienceToolEntry = {
   type: "backend" as const,
   display: "standalone" as const,
@@ -557,6 +564,8 @@ export const hubAssistantToolkit = defineToolkit({
   findJobsNow: findJobsNowToolEntry,
   "get-search-brief": getSearchBriefToolEntry,
   getSearchBrief: getSearchBriefToolEntry,
+  "upsert-soft-job-preferences": upsertSoftJobPreferencesToolEntry,
+  upsertSoftJobPreferences: upsertSoftJobPreferencesToolEntry,
   "agent-jobPageExtractor": jobListingPreludeTool,
   jobPageExtractor: jobListingPreludeTool,
   "agent-job-page-extractor": jobListingPreludeTool,
