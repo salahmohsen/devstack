@@ -70,6 +70,7 @@ import { GetSearchBriefToolUI } from "./get-search-brief-tool-ui";
 import { HardPreferenceChangeToolUI } from "./hard-preference-change-tool-ui";
 import { JobListingPreludeStatus } from "./job-listing-prelude-status";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
+import { OpenEntityFormToolUI } from "./open-entity-form-tool-ui";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
 import { UpsertSoftJobPreferencesToolUI } from "./upsert-soft-job-preferences-tool-ui";
 
@@ -489,6 +490,18 @@ const openSurfaceToolEntry = {
   render: OpenSurfaceToolUI
 };
 
+const OpenEntityFormParametersSchema = z.object({
+  kind: z.enum(["experience", "project", "stack"]),
+  id: z.string().min(1).optional().nullable()
+});
+
+const openEntityFormToolEntry = {
+  type: "human" as const,
+  description: "Open the original experience, project, or stack form on the current route.",
+  parameters: OpenEntityFormParametersSchema,
+  render: OpenEntityFormToolUI
+};
+
 const jobListingPreludeTool = {
   type: "backend" as const,
   display: "standalone" as const,
@@ -566,6 +579,8 @@ export const hubAssistantToolkit = defineToolkit({
   getSearchBrief: getSearchBriefToolEntry,
   "upsert-soft-job-preferences": upsertSoftJobPreferencesToolEntry,
   upsertSoftJobPreferences: upsertSoftJobPreferencesToolEntry,
+  "open-entity-form": openEntityFormToolEntry,
+  openEntityForm: openEntityFormToolEntry,
   "agent-jobPageExtractor": jobListingPreludeTool,
   jobPageExtractor: jobListingPreludeTool,
   "agent-job-page-extractor": jobListingPreludeTool,

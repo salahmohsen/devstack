@@ -185,17 +185,20 @@ describe("filterConfirmedTriageIds — multi-variable stress", () => {
 });
 
 describe("shouldStopHubLoopAfterClientHitl", () => {
-  it.each(["proposeNewJobsTriage", "propose-new-jobs-triage", "propose-application-from-jd"])(
-    "stops while %s is waiting",
-    (name) => {
-      expect(
-        shouldStopHubLoopAfterClientHitl({
-          toolCalls: [{ id: "c1", name }],
-          toolResults: []
-        })
-      ).toBe(true);
-    }
-  );
+  it.each([
+    "proposeNewJobsTriage",
+    "propose-new-jobs-triage",
+    "propose-application-from-jd",
+    "open-entity-form",
+    "openEntityForm"
+  ])("stops while %s is waiting", (name) => {
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name }],
+        toolResults: []
+      })
+    ).toBe(true);
+  });
 
   it("does not stop after the card has a result", () => {
     expect(

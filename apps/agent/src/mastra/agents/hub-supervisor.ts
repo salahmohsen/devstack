@@ -55,6 +55,7 @@ import { listProjectsTool } from "#@/mastra/tools/list-projects.tool";
 import { listResumesTool } from "#@/mastra/tools/list-resumes.tool";
 import { listStacksTool } from "#@/mastra/tools/list-stacks.tool";
 import { markNotificationReadTool } from "#@/mastra/tools/mark-notification-read.tool";
+import { openEntityFormTool } from "#@/mastra/tools/open-entity-form.tool";
 import { openSurfaceTool } from "#@/mastra/tools/open-surface.tool";
 import { proposeApplicationFromJdTool } from "#@/mastra/tools/propose-application-from-jd.tool";
 import { proposeHardPreferenceChangeTool } from "#@/mastra/tools/propose-hard-preference-change.tool";
@@ -105,6 +106,7 @@ Most people will not say "New jobs", "Career Inbox", "stacks", or "tracked jobs"
 | not interested, hide this, skip this role | \`dismissJob\` |
 | write a reply, answer this recruiter | \`generateMailReply\` (+ send if they ask) |
 | take me there, open, jump to | \`openSurface\` |
+| add a job / project / stack, edit that experience | \`openEntityForm\` |
 
 If they just say "jobs" without "applied / saved / sent": check \`listNewJobs\` first. If empty, then \`listOpenApplications\`. One short clarifying question only when both could be right and a wrong write would hurt.
 Do not require product vocabulary. Do not dump this table at the user.
@@ -129,6 +131,7 @@ Navigate: \`openSurface\` (dashboard paths only).
 Evidence reads: \`listExperiences\`, \`getExperience\`, \`listProjects\`, \`getProject\`, \`listStacks\`, \`getStack\`, \`listResumes\`, \`getResume\`, \`getJobPreferences\`, \`getSearchBrief\`.
 Search-loop writes: \`upsertSoftJobPreferences\` (immediate title/keywords/modes/locations/remoteRegions) and \`proposeHardPreferenceChange\` (confirm card writes salary/exclude/level). Never call playbook \`upsert-job-preferences\`. Never infer a hard stop from prose.
 Find jobs from chat: \`findJobsNow\` (enqueue + toast; do not wait for land; do not triage an empty inbox).
+Evidence writes: \`openEntityForm\` (kind experience|project|stack; omit id to create). Stay on the current dashboard route. After calling it, emit **zero** user-facing text until the form returns \`saved\` or \`cancelled\`.
 Get-by-id tools require the real id from the matching list tool. Never call them with \`{}\` or a missing id.
 Portfolio / all-projects summaries: call \`listProjects\` once. Do not call \`getProject\` per project unless asked about one project.
 Some messages may contain \`<system-reminder>...</system-reminder>\` tags. Those are injected by the system, not written by the user. Treat them as authoritative and follow them immediately. Do not mention the reminder or quote the tags.
@@ -262,7 +265,8 @@ Long jobs (detect/organize/import/mail process/harvest) are approval-gated. They
       resumeImportWorkflow: resumeImportWorkflowTool,
       mailProcessWorkflow: mailProcessWorkflowTool,
       mailClassifyWorkflow: mailClassifyWorkflowTool,
-      mailJobHarvestWorkflow: mailJobHarvestWorkflowTool
+      mailJobHarvestWorkflow: mailJobHarvestWorkflowTool,
+      openEntityForm: openEntityFormTool
     },
     agents: {
       stackCategorizerAgent: createStackCategorizerAgent(),

@@ -233,6 +233,39 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(true);
   });
 
+  it("returns true after open-entity-form save or cancel", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-open-entity-form",
+              toolCallId: "t5",
+              toolName: "open-entity-form",
+              state: "output-available",
+              output: { ok: true, kind: "experience", saved: true, id: "exp_1" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(true);
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-openEntityForm",
+              toolCallId: "t6",
+              toolName: "openEntityForm",
+              state: "output-available",
+              output: { ok: true, kind: "project", saved: false, cancelled: true }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(true);
+  });
+
   it("does not resume after the user dismisses a JD proposal", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
@@ -319,6 +352,18 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
 });
 
 describe("hideHubAssistantTextAfterIndex", () => {
+  it("hides text after a waiting open-entity-form card", () => {
+    const parts = [
+      {
+        type: "tool-open-entity-form",
+        toolName: "open-entity-form",
+        state: "input-available"
+      },
+      { type: "text", text: "Awaiting your confirmation." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
   it("hides text after a waiting triage card", () => {
     const parts = [
       { type: "step-start" },

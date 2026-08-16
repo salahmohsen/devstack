@@ -5,9 +5,11 @@ import { findHubApprovalId, withApprovalRequested } from "./hub-approval-resume"
 import { isHubApprovalPending, summarizeHubApproval } from "./hub-approval-summary";
 import {
   findPendingProposeApplicationFromJd,
+  isOpenEntityFormToolName,
   isOpenSurfaceToolName,
   isProposeNewJobsTriageToolName,
   lastHubHitlKind,
+  parseOpenEntityFormInput,
   parseOpenSurfaceHref,
   parseProposeNewJobsTriageInput,
   parseProposeNewJobsTriageOutput
@@ -34,6 +36,43 @@ describe("triage + openSurface name matchers", () => {
     ["list-new-jobs", false]
   ] as const)("openSurface %s → %s", (name, expected) => {
     expect(isOpenSurfaceToolName(name)).toBe(expected);
+  });
+
+  it.each([
+    ["open-entity-form", true],
+    ["openEntityForm", true],
+    ["open-surface", false]
+  ] as const)("openEntityForm %s → %s", (name, expected) => {
+    expect(isOpenEntityFormToolName(name)).toBe(expected);
+  });
+});
+
+describe("parseOpenEntityFormInput", () => {
+  it("treats omit / null / blank id as create", () => {
+    expect(parseOpenEntityFormInput({ kind: "experience" })).toEqual({
+      kind: "experience",
+      id: null
+    });
+    expect(parseOpenEntityFormInput({ kind: "project", id: null })).toEqual({
+      kind: "project",
+      id: null
+    });
+    expect(parseOpenEntityFormInput({ kind: "stack", id: "  " })).toEqual({
+      kind: "stack",
+      id: null
+    });
+  });
+
+  it("keeps a real id for edit", () => {
+    expect(parseOpenEntityFormInput({ kind: "experience", id: "exp_1" })).toEqual({
+      kind: "experience",
+      id: "exp_1"
+    });
+  });
+
+  it("rejects unknown kinds", () => {
+    expect(parseOpenEntityFormInput({ kind: "application" })).toBeNull();
+    expect(parseOpenEntityFormInput(null)).toBeNull();
   });
 });
 
@@ -190,9 +229,11 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
         toolCallId: "c1",
         toolName,
         state,
-        input: toolName.includes("open")
-          ? { href: "/dashboard/tracked-jobs" }
-          : { track: [], dismiss: [] }
+        input: toolName.includes("entity-form")
+          ? { kind: "experience" }
+          : toolName.includes("open")
+            ? { href: "/dashboard/tracked-jobs" }
+            : { track: [], dismiss: [] }
       } as never
     ]);
     expect(lastHubHitlKind([waiting])).toBe(expected);
@@ -203,9 +244,11 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
         toolCallId: "c1",
         toolName,
         state: "output-available",
-        output: toolName.includes("open")
-          ? { ok: true, href: "/dashboard/tracked-jobs" }
-          : { action: "confirm", trackIds: ["x"], dismissIds: [] }
+        output: toolName.includes("entity-form")
+          ? { ok: true, kind: "experience", saved: true, id: "exp_1" }
+          : toolName.includes("open")
+            ? { ok: true, href: "/dashboard/tracked-jobs" }
+            : { action: "confirm", trackIds: ["x"], dismissIds: [] }
       } as never
     ]);
     expect(shouldAutoResumeHubChat({ messages: [done] })).toBe(resumeAfterOutput);

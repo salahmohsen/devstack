@@ -26,6 +26,8 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("propose-application-from-jd")).toBe(false);
     expect(isHubWorkingStripToolName("proposeNewJobsTriage")).toBe(false);
     expect(isHubWorkingStripToolName("open-surface")).toBe(false);
+    expect(isHubWorkingStripToolName("open-entity-form")).toBe(false);
+    expect(isHubWorkingStripToolName("openEntityForm")).toBe(false);
     expect(isHubWorkingStripToolName("generateApplyPackage")).toBe(false);
     expect(isHubWorkingStripToolName("create-application")).toBe(false);
     expect(isHubWorkingStripToolName("propose-hard-preference-change")).toBe(false);

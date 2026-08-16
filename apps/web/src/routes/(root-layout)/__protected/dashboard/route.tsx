@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 
-import { HubChatProvider } from "@/features/agent-hub";
+import { HubChatProvider, useEntityFormHostSelector } from "@/features/agent-hub";
 import { useDetectStacksJobSelector } from "@/features/stacks";
 
 import { HubApplicationsSync } from "@/pages/dashboard/_lib/hub-applications-sync";
@@ -11,6 +11,14 @@ const DetectStacksResultsHost = lazy(() =>
   import("@/pages/dashboard/projects/ui/detect-stacks-dialog").then((m) => {
     return {
       default: m.DetectStacksResultsHost
+    };
+  })
+);
+
+const EntityFormHost = lazy(() =>
+  import("@/pages/dashboard/_lib/entity-form-host").then((m) => {
+    return {
+      default: m.EntityFormHost
     };
   })
 );
@@ -40,6 +48,16 @@ function DeferredDetectStacksHost() {
   );
 }
 
+function DeferredEntityFormHost() {
+  const mount = useEntityFormHostSelector((state) => state.request != null);
+  if (!mount) return null;
+  return (
+    <Suspense fallback={null}>
+      <EntityFormHost />
+    </Suspense>
+  );
+}
+
 function DashboardLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const showFloater = !isDashboardHomePath(pathname);
@@ -50,6 +68,8 @@ function DashboardLayout() {
       <HubApplicationsSync />
       {/* Detect review survives project form close / in-dashboard navigation */}
       <DeferredDetectStacksHost />
+      {/* Chat-opened evidence forms stay on the current dashboard route */}
+      <DeferredEntityFormHost />
       <Outlet />
       {showFloater ? <HubAssistantModal /> : null}
     </HubChatProvider>

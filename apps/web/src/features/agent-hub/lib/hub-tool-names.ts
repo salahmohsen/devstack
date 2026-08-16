@@ -69,6 +69,21 @@ export const HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES = new Set([
   "upsertSoftJobPreferences"
 ]);
 
+export type OpenEntityFormKind = "experience" | "project" | "stack";
+
+export type OpenEntityFormInput = {
+  kind: OpenEntityFormKind;
+  id: string | null;
+};
+
+export type OpenEntityFormOutput = {
+  ok: boolean;
+  kind: OpenEntityFormKind;
+  id?: string;
+  saved: boolean;
+  cancelled?: boolean;
+};
+
 /** Silent listing prelude (Mastra `agent-<key>` + kebab/camel fetch). */
 export const HUB_JOB_PAGE_EXTRACT_TOOL_NAMES = new Set([
   "jobPageExtractor",
@@ -184,6 +199,40 @@ export function isGetSearchBriefToolName(name: string): boolean {
 
 export function isUpsertSoftJobPreferencesToolName(name: string): boolean {
   return HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES.has(name);
+}
+
+export function openEntityFormActivityLabel(kind: OpenEntityFormKind): string {
+  if (kind === "project") return "Opening project form";
+  if (kind === "stack") return "Opening stack form";
+  return "Opening experience form";
+}
+
+export function parseOpenEntityFormInput(input: unknown): OpenEntityFormInput | null {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const o = input as { kind?: unknown; id?: unknown };
+  if (o.kind !== "experience" && o.kind !== "project" && o.kind !== "stack") return null;
+  const rawId = typeof o.id === "string" ? o.id.trim() : "";
+  return { kind: o.kind, id: rawId.length > 0 ? rawId : null };
+}
+
+export function parseOpenEntityFormOutput(output: unknown): OpenEntityFormOutput | null {
+  if (!output || typeof output !== "object" || Array.isArray(output)) return null;
+  const o = output as {
+    ok?: unknown;
+    kind?: unknown;
+    id?: unknown;
+    saved?: unknown;
+    cancelled?: unknown;
+  };
+  if (typeof o.saved !== "boolean") return null;
+  if (o.kind !== "experience" && o.kind !== "project" && o.kind !== "stack") return null;
+  return {
+    ok: o.ok !== false,
+    kind: o.kind,
+    id: typeof o.id === "string" && o.id.length > 0 ? o.id : undefined,
+    saved: o.saved,
+    ...(o.cancelled === true ? { cancelled: true } : {})
+  };
 }
 
 export function isHubJobPageExtractToolName(name: string): boolean {
@@ -475,7 +524,7 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
       continue;
     }
     if (isOpenEntityFormToolName(name)) {
-      if (part.output != null) continue;
+      if (parseOpenEntityFormOutput(part.output)) continue;
       return "client";
     }
   }

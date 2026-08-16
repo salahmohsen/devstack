@@ -41,6 +41,7 @@ import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
 import { SortableList } from "@/shared/ui/sortable-list";
 
+import { useEntityFormHostOwnsKind } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
@@ -374,6 +375,8 @@ export function ProjectsPage() {
 
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const hostOwnsKind = useEntityFormHostOwnsKind("project");
+  if (hostOwnsKind && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
   const [detectReposProjectId, setDetectReposProjectId] = useState<string | null>(null);
   const [detectReposDialogOpen, setDetectReposDialogOpen] = useState(false);
@@ -561,7 +564,7 @@ export function ProjectsPage() {
         {renderList()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !dialogOpen}
+          open={isAnyOpen && !dialogOpen && !hostOwnsKind}
           item={openedItem}
           title="Project"
           onOpenChange={(next) => {
@@ -576,7 +579,7 @@ export function ProjectsPage() {
           }
         </ItemsInspectHost>
 
-        {dialogOpen ? (
+        {dialogOpen && !hostOwnsKind ? (
           <ProjectForm
             key={editingProjectId ?? "new"}
             initialData={

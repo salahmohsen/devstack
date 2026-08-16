@@ -53,6 +53,8 @@ export {
   isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
   isSendApplyOutreachToolName,
+  parseOpenEntityFormInput,
+  parseOpenEntityFormOutput,
   parseOpenSurfaceHref,
   parseProposeApplicationFromJdInput,
   parseProposeApplicationFromJdOutputAction,
@@ -64,6 +66,9 @@ export type {
   PendingProposeApplicationFromJd,
   ProposeApplicationFromJdAction,
   ProposeApplicationFromJdCardInput,
+  OpenEntityFormInput,
+  OpenEntityFormKind,
+  OpenEntityFormOutput,
   ProposeNewJobsTriageCardInput
 } from "./lib/hub-tool-names";
 export { NewJobsTriageCard } from "./ui/new-jobs-triage-card";
@@ -106,6 +111,13 @@ export {
   lastAssistantMessageIsCompleteWithClientResumeTools,
   shouldAutoResumeHubChat
 } from "./lib/should-auto-resume-hub-chat";
+export {
+  clearEntityFormRequest,
+  requestEntityForm,
+  useEntityFormHostOwnsKind,
+  useEntityFormHostSelector
+} from "./lib/entity-form-host-store";
+export type { EntityFormHostRequest, EntityFormKind } from "./lib/entity-form-host-store";
 export { messagesForMastraMemoryChat } from "./lib/messages-for-mastra-memory";
 export { parseAiError, parseHubChatError, presentAiError } from "@/shared/lib/parse-ai-error";
 export type {

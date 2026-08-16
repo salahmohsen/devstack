@@ -16,6 +16,8 @@ import {
   isProposeApplicationFromJdToolName,
   isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
+  openEntityFormActivityLabel,
+  parseOpenEntityFormInput,
   type HubToolNamePart
 } from "./hub-tool-names";
 
@@ -63,7 +65,7 @@ export function isHubListingExtractActive(parts: readonly unknown[]): boolean {
   return false;
 }
 
-export function humanizeHubToolName(name: string): string {
+export function humanizeHubToolName(name: string, input?: unknown): string {
   const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;
   if (/jobPageExtractor|fetch-job-page|fetchJobPage/i.test(bare)) return "Reading listing";
   if (/getJobPreferences|get-job-preferences/i.test(bare)) return "Checking job preferences";
@@ -72,7 +74,9 @@ export function humanizeHubToolName(name: string): string {
   }
   if (/findJobsNow|find-jobs-now/i.test(bare)) return "Finding jobs";
   if (/getSearchBrief|get-search-brief/i.test(bare)) return "Loading search brief";
-  if (/openEntityForm|open-entity-form/i.test(bare)) return "Opening experience form";
+  if (/openEntityForm|open-entity-form/i.test(bare)) {
+    return openEntityFormActivityLabel(parseOpenEntityFormInput(input)?.kind ?? "experience");
+  }
   return bare
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/[-_]/g, " ")
