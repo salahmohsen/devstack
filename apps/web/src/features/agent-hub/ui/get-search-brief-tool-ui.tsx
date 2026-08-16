@@ -46,8 +46,7 @@ export function GetSearchBriefToolUI({
   result,
   addResult,
   toolCallId,
-  toolName,
-  status
+  toolName
 }: ToolCallMessagePartProps<Record<string, never>, GetSearchBriefOutput>) {
   const { addToolOutput } = useHubChat();
   const completedRef = React.useRef(false);
@@ -71,12 +70,11 @@ export function GetSearchBriefToolUI({
   React.useEffect(() => {
     if (result != null) return;
     if (completedRef.current) return;
-    if (status?.type === "running") return;
     completedRef.current = true;
     void orpcClient.jobPreference.ensureBrief().then(complete, () => {
       complete(EMPTY_BRIEF);
     });
-  }, [complete, result, status?.type]);
+  }, [complete, result]);
 
   if (result == null) {
     return (
@@ -87,7 +85,11 @@ export function GetSearchBriefToolUI({
   }
 
   if (!searchBriefChanged(result.previousMarkdown, result.markdown, result.rebuilt)) {
-    return null;
+    return (
+      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+        Search brief is current.
+      </p>
+    );
   }
 
   return (

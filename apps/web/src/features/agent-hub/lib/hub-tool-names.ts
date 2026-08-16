@@ -226,6 +226,50 @@ export function shouldRequestEntityFormHost(input: {
   return input.latestPendingId === input.toolCallId;
 }
 
+function isWaitingOpenEntityFormPart(part: {
+  type?: string;
+  toolName?: string;
+  toolCallId?: string;
+  state?: string;
+  output?: unknown;
+}): boolean {
+  const type = part.type ?? "";
+  const isTool = type.startsWith("tool-") || type === "dynamic-tool";
+  if (!isTool) return false;
+  const name = part.toolName ?? (type.startsWith("tool-") ? type.slice("tool-".length) : "");
+  if (!isOpenEntityFormToolName(name)) return false;
+  if (parseOpenEntityFormOutput(part.output)) return false;
+  return (
+    part.state === "input-available" ||
+    part.state === "input-streaming" ||
+    part.state === "call" ||
+    part.state === "partial-call"
+  );
+}
+
+/** Every incomplete open-entity-form call in the thread (oldest first). */
+export function pendingOpenEntityFormIds(
+  messages: ReadonlyArray<{ role?: string; parts?: readonly unknown[] }>
+): string[] {
+  const ids: string[] = [];
+  for (const msg of messages) {
+    if (msg.role !== "assistant") continue;
+    for (const raw of msg.parts ?? []) {
+      const part = raw as {
+        type?: string;
+        toolName?: string;
+        toolCallId?: string;
+        state?: string;
+        output?: unknown;
+      };
+      if (!isWaitingOpenEntityFormPart(part)) continue;
+      const id = part.toolCallId ?? "";
+      if (id && !ids.includes(id)) ids.push(id);
+    }
+  }
+  return ids;
+}
+
 export function findOpenEntityFormOutputInMessages(
   messages: ReadonlyArray<{ role?: string; parts?: readonly unknown[] }>,
   toolCallId: string

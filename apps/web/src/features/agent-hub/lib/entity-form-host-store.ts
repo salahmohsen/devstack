@@ -17,12 +17,28 @@ type EntityFormHostState = {
 };
 
 const store = createExternalStore<EntityFormHostState>({ request: null });
+const dismissedToolCallIds = new Set<string>();
 
 export function getEntityFormHostState() {
   return store.getState();
 }
 
+export function isEntityFormCallDismissed(toolCallId: string): boolean {
+  return toolCallId.length > 0 && dismissedToolCallIds.has(toolCallId);
+}
+
+export function dismissEntityFormCalls(toolCallIds: readonly string[]) {
+  for (const id of toolCallIds) {
+    if (id) dismissedToolCallIds.add(id);
+  }
+  const current = store.getState().request;
+  if (current && dismissedToolCallIds.has(current.toolCallId)) {
+    store.setState({ request: null });
+  }
+}
+
 export function requestEntityForm(request: EntityFormHostRequest) {
+  if (isEntityFormCallDismissed(request.toolCallId)) return;
   store.setState({ request });
 }
 
@@ -30,6 +46,11 @@ export function clearEntityFormRequest(requestId?: string) {
   const current = store.getState().request;
   if (!current) return;
   if (requestId && current.requestId !== requestId) return;
+  store.setState({ request: null });
+}
+
+export function resetEntityFormHostForTests() {
+  dismissedToolCallIds.clear();
   store.setState({ request: null });
 }
 

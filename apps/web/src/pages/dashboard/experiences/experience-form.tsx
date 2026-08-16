@@ -149,7 +149,9 @@ export function ExperienceForm({ initialData, open, onOpenChange, onSaved }: Exp
     }
   }, [open, experience, isEdit, form]);
 
-  const isDirty = useEntityFormDirty(form, open);
+  const dirty = useEntityFormDirty(form, open);
+  const missingEdit = isEdit && !experienceQuery.isLoading && !experience;
+  const isDirty = missingEdit ? false : dirty;
 
   const body =
     isEdit && experienceQuery.isLoading && !experience ? (

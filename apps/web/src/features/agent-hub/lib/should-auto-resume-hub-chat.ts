@@ -106,6 +106,16 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
   if (lastWaiting >= 0) return lastWaiting;
 
   if (lastComplete >= 0) {
+    const completePart = parts[lastComplete];
+    if (completePart) {
+      const completeName = toolNameFromPart(completePart);
+      if (
+        HUB_FIND_JOBS_NOW_TOOL_NAMES.has(completeName) ||
+        HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(completeName)
+      ) {
+        return lastComplete;
+      }
+    }
     const after = parts.slice(lastComplete + 1);
     const hasServerAfter = after.some((p) => {
       if (!isToolUiPart(p) || isClientResumeTool(p)) return false;
@@ -187,6 +197,12 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
     // Already ran track/dismiss/etc. after HITL — do not re-submit.
     if (hasServerAfter) return false;
 
+    const hasStreamingTextAfter = after.some(
+      (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state === "streaming"
+    );
+    // Re-POST while wrap-up is streaming loops the same sentence (find-jobs-now).
+    if (hasStreamingTextAfter) return false;
+
     const hasFinalTextAfter = after.some(
       (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state !== "streaming"
     );
@@ -198,12 +214,10 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
     const needsMutationContinuation = clientTools.some((p) => {
       if (!isClientToolComplete(p)) return false;
       const name = toolNameFromPart(p);
-      if (
-        HUB_OPEN_SURFACE_TOOL_NAMES.has(name) ||
-        HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) ||
-        HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name) ||
-        HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name)
-      ) {
+      if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) || HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_OPEN_SURFACE_TOOL_NAMES.has(name) || HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name)) {
         return true;
       }
       const output =
@@ -226,6 +240,10 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
 
     if (!needsMutationContinuation) {
       const terminal = clientTools.some((p) => {
+        const name = toolNameFromPart(p);
+        if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name) || HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+          return true;
+        }
         const output =
           p.output && typeof p.output === "object" && !Array.isArray(p.output)
             ? (p.output as { action?: unknown })
@@ -274,6 +292,10 @@ function lastStepNeedsApprovalContinuation({ messages }: { messages: UIMessage[]
     -1
   );
   const lastStep = parts.slice(lastStepStartIndex + 1);
+  const hasStreamingText = lastStep.some(
+    (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state === "streaming"
+  );
+  if (hasStreamingText) return false;
   // Final text already present in last step → stream finished; do not re-submit.
   const hasFinalText = lastStep.some(
     (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state !== "streaming"

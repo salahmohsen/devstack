@@ -17,6 +17,19 @@
 
 ---
 
+## 2026-08-16 — Client enqueue tools must not auto-resume while wrap-up streams
+
+- **Trigger:** Search brief + hub operator harden — Settings Jobs fields, hub `get-search-brief` / `find-jobs-now` / hard-stop card / entity form host
+- **Finding:** `sendAutomaticallyWhen` that treats `text.state === "streaming"` as “no final text yet → resume now” re-POSTs the same turn. The model then repeats the tool UI line (`Search is queued · N seats`, `Search brief is current`) dozens of times and stacks `findNow` toasts
+- **Finding:** `find-jobs-now` and `get-search-brief` already render the user-visible report. After `addToolOutput` they are terminal — do not put them on the mutation-continuation list. Hide assistant text after those completed parts
+- **Finding:** History hydrate remounts every incomplete client tool. A no-arg enqueue tool must claim once per `toolCallId` and skip extra calls while the job store is `running`, or each leftover part fires `enqueueFindJobsNow` → “already running” toast spam
+- **Finding:** `open-entity-form` from scrollback remounts the side panel on every `/dashboard` visit (often `Experience not found` with a stale id). Only the last assistant message may own the host; older waiting calls complete as cancelled. Persist a dismissed-id set so Cancel does not remount siblings
+- **Finding:** Do not call `useX()` behind a ternary in not-found entity forms (`missing ? false : useEntityFormDirty`). That drops a hook and 500s the dashboard (`Rendered fewer hooks than expected`)
+- **Finding:** oRPC procedures with no `.input()` reject `POST {"json":{}}` (400, empty body). Call with no JSON wrapper or `{}`. `jobPreference.get` still uses `{"json":{}}`
+- **Finding:** TanStack Devtools can swallow the first click on `Open hub assistant`. Close the overlay or `element.click()` the real button
+- **User preference:** Hard-stop writes stay on the confirm card (Confirm/Cancel); no model-callable apply tool
+- **Evidence class:** Chrome hub Thread + floater — 48× queued / 70× Finding jobs; Settings salary 3000 USD + Senior + leftover worldwide hint; oRPC `ensureBrief` rebuilt + `findNow` `{ok, seats:50}` then New jobs tab `New 8`; floater card `Add exclude: Salesforce` → persist `php, react native, Salesforce`; 79 web unit tests
+
 ## 2026-08-16 — JD card save/package must land on Tracked jobs
 
 - **Trigger:** LinkedIn/JD proposal card rendered, but Save / Continue with package did not finish the CRM write or leave the home thread

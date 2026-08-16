@@ -4,7 +4,11 @@ import { type ToolCallMessagePartProps } from "@assistant-ui/react";
 import * as React from "react";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
-import { requestEntityForm } from "@/features/agent-hub/lib/entity-form-host-store";
+import {
+  dismissEntityFormCalls,
+  isEntityFormCallDismissed,
+  requestEntityForm
+} from "@/features/agent-hub/lib/entity-form-host-store";
 import {
   findOpenEntityFormOutputInMessages,
   isOpenEntityFormToolName,
@@ -33,6 +37,8 @@ function latestPendingOpenEntityFormId(
 ): string | null {
   for (const msg of [...messages].toReversed()) {
     if (msg.role !== "assistant") continue;
+    // Only the current turn may own the side panel. Scrollback incomplete
+    // calls remount "not found" sheets on every dashboard visit.
     for (const raw of [...(msg.parts ?? [])].toReversed()) {
       const part = raw as {
         type?: string;
@@ -51,6 +57,7 @@ function latestPendingOpenEntityFormId(
       const id = part.toolCallId ?? "";
       if (id) return id;
     }
+    return null;
   }
   return null;
 }
@@ -121,17 +128,27 @@ export function OpenEntityFormToolUI({
       return;
     }
 
+    if (isEntityFormCallDismissed(toolCallId)) {
+      complete({
+        ok: true,
+        kind: input.kind,
+        ...(input.id ? { id: input.id } : {}),
+        saved: false,
+        cancelled: true
+      });
+      return;
+    }
+
     const latestId = latestPendingOpenEntityFormId(messages);
     if (!shouldRequestEntityFormHost({ completed: false, latestPendingId: latestId, toolCallId })) {
-      if (latestId && latestId !== toolCallId) {
-        complete({
-          ok: true,
-          kind: input.kind,
-          ...(input.id ? { id: input.id } : {}),
-          saved: false,
-          cancelled: true
-        });
-      }
+      dismissEntityFormCalls([toolCallId]);
+      complete({
+        ok: true,
+        kind: input.kind,
+        ...(input.id ? { id: input.id } : {}),
+        saved: false,
+        cancelled: true
+      });
       return;
     }
 

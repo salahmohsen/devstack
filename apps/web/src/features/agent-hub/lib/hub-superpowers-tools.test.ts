@@ -266,14 +266,14 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       toolName: "find-jobs-now",
       state: "input-available",
       expected: null,
-      resumeAfterOutput: true
+      resumeAfterOutput: false
     },
     {
       name: "get-search-brief waiting is not a user choice",
       toolName: "get-search-brief",
       state: "input-available",
       expected: null,
-      resumeAfterOutput: true
+      resumeAfterOutput: false
     },
     {
       name: "open-entity-form waiting locks composer",

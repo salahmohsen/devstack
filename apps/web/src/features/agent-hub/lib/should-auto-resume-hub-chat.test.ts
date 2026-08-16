@@ -233,6 +233,50 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(true);
   });
 
+  it("does not resume while wrap-up text after find-jobs-now is still streaming", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-find-jobs-now",
+              toolCallId: "f1",
+              toolName: "find-jobs-now",
+              state: "output-available",
+              output: { enqueued: true, ingestTriggered: true, seats: 42, reason: "ok" }
+            } as never,
+            { type: "step-start" },
+            {
+              type: "text",
+              text: "Search is queued · 42 seats.",
+              state: "streaming"
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after find-jobs-now already wrote wrap-up text", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-find-jobs-now",
+              toolCallId: "f1",
+              toolName: "find-jobs-now",
+              state: "output-available",
+              output: { enqueued: true, ingestTriggered: true, seats: 42, reason: "ok" }
+            } as never,
+            { type: "step-start" },
+            { type: "text", text: "Search is queued · 42 seats." }
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
   it("returns true after open-entity-form save or cancel", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
@@ -434,6 +478,32 @@ describe("hideHubAssistantTextAfterIndex", () => {
     expect(
       hideHubAssistantTextAfterIndex([{ type: "text", text: "I can help with stacks." }])
     ).toBeNull();
+  });
+
+  it("hides wrap-up after get-search-brief — File Diff / current receipt is the UI", () => {
+    const parts = [
+      {
+        type: "tool-get-search-brief",
+        toolName: "get-search-brief",
+        state: "output-available",
+        output: { rebuilt: false, markdown: "## Target jobs" }
+      },
+      { type: "text", text: "Search brief is current." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("hides wrap-up after find-jobs-now — the tool UI already reports queued", () => {
+    const parts = [
+      {
+        type: "tool-find-jobs-now",
+        toolName: "find-jobs-now",
+        state: "output-available",
+        output: { enqueued: true, seats: 42, reason: "ok" }
+      },
+      { type: "text", text: "Search is queued · 42 seats." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
   });
 
   it("hides text after a waiting hard-stop confirm card", () => {

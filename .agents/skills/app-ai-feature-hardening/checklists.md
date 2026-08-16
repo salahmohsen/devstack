@@ -40,6 +40,8 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] get-by-id tools never called with `{}` (list first)
 - [ ] maxSteps / final-response processor still produces a user-visible answer
 - [ ] Floater vs home Thread share one provider/thread id when designed that way
+- [ ] Client enqueue tools (`find-jobs-now`, `get-search-brief`) do not auto-resume while wrap-up text is streaming, and remounts do not re-enqueue
+- [ ] `open-entity-form` only hosts the last assistant turn; history hydrate does not remount scrollback sheets
 
 ## E. Unsaved / discard UX
 

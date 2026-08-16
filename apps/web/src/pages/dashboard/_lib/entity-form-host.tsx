@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 
 import {
   clearEntityFormRequest,
+  dismissEntityFormCalls,
+  pendingOpenEntityFormIds,
   useEntityFormHostSelector,
   useHubChat,
   type EntityFormHostRequest,
@@ -28,7 +30,7 @@ export function EntityFormHost() {
 }
 
 function EntityFormHostSession({ request }: { request: EntityFormHostRequest }) {
-  const { addToolOutput } = useHubChat();
+  const { addToolOutput, messages } = useHubChat();
   const [open, setOpen] = useState(true);
   const savedIdRef = useRef<string | null>(null);
   const completedRef = useRef(false);
@@ -69,6 +71,7 @@ function EntityFormHostSession({ request }: { request: EntityFormHostRequest }) 
       });
       return;
     }
+    dismissEntityFormCalls([...pendingOpenEntityFormIds(messages), request.toolCallId]);
     complete({
       ok: true,
       kind: request.kind,

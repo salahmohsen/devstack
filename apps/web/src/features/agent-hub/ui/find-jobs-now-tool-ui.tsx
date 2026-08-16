@@ -9,6 +9,7 @@ import { type FindJobsNowOutput } from "@tsu-stack/core";
 import { enqueueFindJobsNow } from "@/shared/lib/find-jobs-now-job";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
+import { claimFindJobsNowEnqueue } from "@/features/agent-hub/lib/find-jobs-now-client";
 import { isFindJobsNowToolName } from "@/features/agent-hub/lib/hub-tool-names";
 
 const FIND_JOBS_NOW_TOOL_ID = "find-jobs-now";
@@ -23,6 +24,7 @@ export function FindJobsNowToolUI({
   const queryClient = useQueryClient();
   const { addToolOutput } = useHubChat();
   const completedRef = React.useRef(false);
+  const [skipped, setSkipped] = React.useState(false);
 
   const resolvedToolName = isFindJobsNowToolName(toolName ?? "")
     ? (toolName as string)
@@ -44,6 +46,10 @@ export function FindJobsNowToolUI({
     if (result != null) return;
     if (completedRef.current) return;
     if (status?.type === "running") return;
+    if (!claimFindJobsNowEnqueue(toolCallId)) {
+      setSkipped(true);
+      return;
+    }
     completedRef.current = true;
     void enqueueFindJobsNow(queryClient).then(complete, () => {
       complete({
@@ -53,7 +59,7 @@ export function FindJobsNowToolUI({
         reason: "queue_unavailable"
       });
     });
-  }, [complete, queryClient, result, status?.type]);
+  }, [complete, queryClient, result, status?.type, toolCallId]);
 
   if (result && typeof result === "object" && "reason" in result) {
     if (result.reason === "ok" && result.enqueued) {
@@ -66,6 +72,14 @@ export function FindJobsNowToolUI({
     return (
       <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
         Could not start search ({result.reason}).
+      </p>
+    );
+  }
+
+  if (skipped) {
+    return (
+      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+        Search is queued.
       </p>
     );
   }

@@ -56,6 +56,7 @@ export {
   findOpenEntityFormOutputInMessages,
   parseOpenEntityFormInput,
   parseOpenEntityFormOutput,
+  pendingOpenEntityFormIds,
   shouldRequestEntityFormHost,
   parseOpenSurfaceHref,
   parseProposeApplicationFromJdInput,
@@ -115,6 +116,8 @@ export {
 } from "./lib/should-auto-resume-hub-chat";
 export {
   clearEntityFormRequest,
+  dismissEntityFormCalls,
+  isEntityFormCallDismissed,
   requestEntityForm,
   useEntityFormHostActive,
   useEntityFormHostSelector
