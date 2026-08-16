@@ -1,22 +1,28 @@
 "use client";
 
 import { useStore } from "@tanstack/react-form";
+import { InfoIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import {
   applyTitlePack,
-  isOpenJobPreference,
   JOBS_PER_RUN_STEP,
   MAX_JOBS_PER_RUN,
   MIN_JOBS_PER_RUN,
   type JobTitleId
 } from "@tsu-stack/core";
+import { Alert, AlertDescription, AlertTitle } from "@tsu-stack/ui/components/alert";
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 
 import { withForm } from "@/shared/form";
 
 import {
   emptyJobPreferenceForm,
+  isOpenJobPreferenceForm,
+  leftoverRemoteRegionLocationTokens,
+  leftoverRemoteRegionsHint,
+  salaryCurrencyOptions,
+  JOB_PREFERENCE_LEVEL_FLOOR_OPTIONS,
   JOB_PREFERENCE_WORK_MODE_OPTIONS,
   JOB_TITLE_PACK_OPTIONS
 } from "@/features/job-preference/lib/job-preference-form";
@@ -40,7 +46,7 @@ export const JobPreferenceFields = withForm({
       <>
         <form.Subscribe selector={(state) => state.values}>
           {(values) =>
-            isOpenJobPreference(values) ? (
+            isOpenJobPreferenceForm(values) ? (
               <p className="rounded-xl border border-dashed border-border/80 px-3 py-3 text-sm text-muted-foreground">
                 {emptyHint}
               </p>
@@ -94,6 +100,18 @@ export const JobPreferenceFields = withForm({
             }
           </form.Subscribe>
 
+          <form.AppField name="levelFloor">
+            {(field) => (
+              <field.ComboboxField
+                label="Level floor"
+                description="Optional. Jobs below this seniority fail the match. Leave empty for no floor."
+                placeholder="No floor"
+                emptyMessage="No levels match."
+                items={JOB_PREFERENCE_LEVEL_FLOOR_OPTIONS}
+              />
+            )}
+          </form.AppField>
+
           <form.AppField name="workModes">
             {(field) => (
               <field.ToggleGroupField
@@ -111,8 +129,34 @@ export const JobPreferenceFields = withForm({
             {(field) => (
               <field.TagsField
                 label="Locations"
-                description="On-site and hybrid must match these places. Remote uses hiring-region overlap (MENA/worldwide), not any remote role on earth. Press Enter or comma to add."
-                placeholder="e.g. Berlin, Remote EU"
+                description="On-site and hybrid must match these places. Do not add Worldwide here."
+                placeholder="e.g. Cairo, Berlin"
+                maxItems={50}
+                maxItemLength={120}
+              />
+            )}
+          </form.AppField>
+
+          <form.Subscribe selector={(state) => state.values.locations}>
+            {(locations) => {
+              const leftover = leftoverRemoteRegionLocationTokens(locations);
+              if (leftover.length === 0) return null;
+              return (
+                <Alert variant="info">
+                  <InfoIcon />
+                  <AlertTitle>Move remote regions</AlertTitle>
+                  <AlertDescription>{leftoverRemoteRegionsHint(leftover)}</AlertDescription>
+                </Alert>
+              );
+            }}
+          </form.Subscribe>
+
+          <form.AppField name="remoteRegions">
+            {(field) => (
+              <field.TagsField
+                label="Remote regions"
+                description="Empty = anywhere remote. Add MENA / EU / US only to restrict."
+                placeholder="e.g. MENA, EU, US"
                 maxItems={50}
                 maxItemLength={120}
               />
@@ -142,6 +186,31 @@ export const JobPreferenceFields = withForm({
               />
             )}
           </form.AppField>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <form.AppField name="salaryMin">
+              {(field) => (
+                <field.InputField
+                  type="number"
+                  label="Minimum monthly"
+                  description="Optional monthly floor. Leave empty for no salary filter."
+                  placeholder="e.g. 4000"
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="salaryCurrency">
+              {(field) => (
+                <field.ComboboxField
+                  label="Currency"
+                  description="ISO code for the monthly floor (USD, EUR, EGP…)."
+                  placeholder="USD"
+                  emptyMessage="No currencies match."
+                  items={salaryCurrencyOptions(field.state.value)}
+                />
+              )}
+            </form.AppField>
+          </div>
 
           <form.AppField name="jobsPerRun">
             {(field) => (
