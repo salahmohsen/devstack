@@ -101,16 +101,69 @@ _Avoid_: modeling outcomes as extra kanban stages in v1.
 
 **Hiring urgency**:
 Per-application hiring pressure: `unknown | immediate | soon | flexible`.
-Not the user’s global job preference profile.
-_Avoid_: conflating with `job_preference` (future).
+Not the tenant’s job preference.
+_Avoid_: conflating with job preference.
+
+## Job search
+
+**Job preference**:
+The tenant’s structured search settings: title pack, level floor, work modes,
+onsite/hybrid locations, remote regions (empty = worldwide remote), role
+keywords, exclude keywords, monthly salary floor plus currency, minimum match
+score, jobs per run, and the mail-import toggle. Source of truth for what they
+want next.
+_Avoid_: identity, search brief, hiring urgency (that is per application).
+
+**Remote regions**:
+Preferred hiring regions for remote jobs. Empty means worldwide remote.
+Distinct from onsite/hybrid locations.
+_Avoid_: putting worldwide on the hybrid locations list.
+
+**Level floor**:
+The lowest IC seniority the tenant will consider: `junior | mid | senior |
+staff`. Roles below it are out.
+_Avoid_: hiring urgency, application stage, title pack.
+
+**Search brief**:
+A per-tenant generated markdown document for AI layers. One artifact: opening
+and skills paragraphs describe who the seeker is (from experiences, stacks,
+projects, profile); lists restate job preference. Settings fields are source
+of truth. Persisted per tenant next to job preference (markdown plus that
+hash). Any successful write to job preference or evidence (Settings, hub
+speech, entity form) eagerly clears that cache. The next AI layer rebuilds lazily. Never score against the previous markdown after invalidate. Spoken hub
+edits write job preference, then invalidate the brief. “What is my
+identity?” reads this brief. Paragraphs are never hard stops — only
+Exclusions, compensation Minimum, and Level floor are law. Evidence
+changes refresh prose and skill lists only.
+_Avoid_: a second identity file, treating the markdown as the editable
+source, scoring from prose.
+
+**Search brief change**:
+After a rebuild, the hub thread shows a compact file-diff disclosure
+(previous snapshot vs new markdown). No side panel. The snapshot is for
+that disclosure only. The entity form panel stays for evidence forms.
+_Avoid_: scoring the snapshot; opening the side panel for the brief.
+
+**Hub operator**:
+The hub supervisor runs the seeker loop on the same objects as the dashboard:
+job preference, search brief, Find jobs now, New jobs, applications. Chat is
+another door,
+not a second product and not a replacement for Settings or the board.
+Spoken soft preference fields write immediately. Hard stops (exclude,
+salary floor, level floor) confirm on a small hub card. Evidence
+create/edit confirm in the entity form panel.
+_Avoid_: career-coach clone, chat-only Career OS.
 
 **Entity form panel**:
 Dashboard create/edit for applications, experiences, projects, and stacks
 uses the inspect side panel (inset Sheet below `xl`), not a centered Dialog.
-Save is in the header; the footer is prev/next + timestamps. Short tools and
-delete confirms stay Dialog/AlertDialog. ADR:
-`docs/adr/0025-entity-form-sheet.md`.
-_Avoid_: long multi-field entity forms in modals that cover the list/board.
+Hub evidence confirms open that same panel on the current dashboard route
+via a host that remounts the original experience / project / stack form.
+On successful save the panel closes. Save is in the header; the footer is
+prev/next + timestamps. Short tools and delete confirms stay
+Dialog/AlertDialog. ADR: `docs/adr/0025-entity-form-sheet.md`.
+_Avoid_: long multi-field entity forms in modals that cover the list/board;
+a second hub-only experience form; moving these forms into `packages/ui`.
 
 ## Career Inbox and AI platform
 
