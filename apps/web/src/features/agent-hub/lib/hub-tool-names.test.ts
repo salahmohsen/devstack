@@ -7,6 +7,8 @@ import {
   isGenerateApplyPackageToolName,
   isHubToolUiPart,
   isProposeApplicationFromJdToolName,
+  jdListingKey,
+  listingHasResolvedJdProposal,
   parseProposeApplicationFromJdInput,
   parseProposeApplicationFromJdOutputAction
 } from "./hub-tool-names";
@@ -81,6 +83,18 @@ describe("parseProposeApplicationFromJdInput", () => {
     });
   });
 
+  it("reads required and preferred skill names", () => {
+    expect(
+      parseProposeApplicationFromJdInput({
+        title: "Eng",
+        companyName: "Acme",
+        description: "Build",
+        requiredSkills: ["React", { name: "TypeScript" }, "react", ""],
+        preferredSkills: ["Vitest"]
+      }).requiredSkills
+    ).toEqual(["React", "TypeScript"]);
+  });
+
   it("coerces string matchScore into 0–100", () => {
     expect(parseProposeApplicationFromJdInput({ matchScore: "87.4" }).matchScore).toBe(87);
     expect(parseProposeApplicationFromJdInput({ matchScore: "n/a" }).matchScore).toBeNull();
@@ -103,8 +117,18 @@ describe("parseProposeApplicationFromJdInput", () => {
       url: "https://jobs.example/1",
       applyUrl: null,
       location: null,
+      salaryRange: null,
+      applyMethod: null,
+      workMode: null,
+      employmentType: null,
+      department: null,
+      datePosted: null,
+      experience: null,
+      source: null,
       matchScore: 82,
-      notes: null
+      notes: null,
+      requiredSkills: [],
+      preferredSkills: []
     });
   });
 });
@@ -151,8 +175,18 @@ describe("findPendingProposeApplicationFromJd", () => {
         url: null,
         applyUrl: null,
         location: null,
+        salaryRange: null,
+        applyMethod: null,
+        workMode: null,
+        employmentType: null,
+        department: null,
+        datePosted: null,
+        experience: null,
+        source: null,
         matchScore: null,
-        notes: null
+        notes: null,
+        requiredSkills: [],
+        preferredSkills: []
       }
     });
   });
@@ -186,5 +220,86 @@ describe("findPendingProposeApplicationFromJd", () => {
         ])
       ])
     ).toBeNull();
+  });
+});
+
+describe("jdListingKey", () => {
+  it("treats LinkedIn comm and guest view URLs as the same listing", () => {
+    expect(jdListingKey({ url: "https://www.linkedin.com/comm/jobs/view/4452452790" })).toBe(
+      "linkedin:4452452790"
+    );
+    expect(jdListingKey({ url: "https://www.linkedin.com/jobs/view/4452452790/" })).toBe(
+      "linkedin:4452452790"
+    );
+  });
+});
+
+describe("listingHasResolvedJdProposal", () => {
+  it("finds a save on the same listing from another tool call", () => {
+    expect(
+      listingHasResolvedJdProposal(
+        [
+          assistant([
+            {
+              type: "tool-propose-application-from-jd",
+              toolCallId: "saved",
+              toolName: "propose-application-from-jd",
+              state: "output-available",
+              input: { url: "https://www.linkedin.com/jobs/view/4452452790" },
+              output: { action: "save", applicationId: "a1" }
+            } as never,
+            {
+              type: "tool-propose-application-from-jd",
+              toolCallId: "again",
+              toolName: "propose-application-from-jd",
+              state: "input-available",
+              input: { url: "https://www.linkedin.com/comm/jobs/view/4452452790" }
+            } as never
+          ])
+        ],
+        "linkedin:4452452790",
+        "again"
+      )
+    ).toBe(true);
+  });
+
+  it("does not treat a prior-turn dismiss as resolved after a new paste", () => {
+    expect(
+      listingHasResolvedJdProposal(
+        [
+          {
+            id: "u1",
+            role: "user",
+            parts: [{ type: "text", text: "https://www.linkedin.com/jobs/view/4440801290/" }]
+          },
+          assistant([
+            {
+              type: "tool-propose-application-from-jd",
+              toolCallId: "old",
+              toolName: "propose-application-from-jd",
+              state: "output-available",
+              input: { url: "https://www.linkedin.com/jobs/view/4440801290/" },
+              output: { action: "dismiss" }
+            } as never
+          ]),
+          {
+            id: "u2",
+            role: "user",
+            parts: [{ type: "text", text: "https://www.linkedin.com/jobs/view/4440801290/" }]
+          },
+          assistant([
+            {
+              type: "tool-propose-application-from-jd",
+              toolCallId: "fresh",
+              toolName: "propose-application-from-jd",
+              state: "input-available",
+              input: { url: "https://www.linkedin.com/jobs/view/4440801290/" }
+            } as never
+          ])
+        ],
+        "linkedin:4440801290",
+        "fresh"
+      )
+    ).toBe(false);
   });
 });

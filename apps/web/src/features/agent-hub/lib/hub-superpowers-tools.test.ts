@@ -1,9 +1,10 @@
 import { type UIMessage } from "ai";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { findHubApprovalId, withApprovalRequested } from "./hub-approval-resume";
 import { isHubApprovalPending, summarizeHubApproval } from "./hub-approval-summary";
 import {
+  findPendingProposeApplicationFromJd,
   isOpenSurfaceToolName,
   isProposeNewJobsTriageToolName,
   lastHubHitlKind,
@@ -11,6 +12,7 @@ import {
   parseProposeNewJobsTriageInput,
   parseProposeNewJobsTriageOutput
 } from "./hub-tool-names";
+import { rememberJdCardAction } from "./jd-card-action-memory";
 import { shouldAutoResumeHubChat } from "./should-auto-resume-hub-chat";
 
 function assistant(parts: UIMessage["parts"]): UIMessage {
@@ -124,10 +126,10 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       resumeAfterOutput: true
     },
     {
-      name: "openSurface waiting",
+      name: "openSurface waiting is not a user choice",
       toolName: "open-surface",
       state: "input-available",
-      expected: "client",
+      expected: null,
       resumeAfterOutput: true
     },
     {
@@ -179,6 +181,89 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       } as never
     ]);
     expect(shouldAutoResumeHubChat({ messages: [done] })).toBe(resumeAfterOutput);
+  });
+
+  it("does not lock the composer on a JD receipt still marked waiting", () => {
+    const receipt = assistant([
+      {
+        type: "tool-propose-application-from-jd",
+        toolCallId: "jd1",
+        toolName: "propose-application-from-jd",
+        state: "input-available",
+        input: {
+          title: "Senior Front-End Engineer",
+          companyName: "Exequt",
+          description: "Build UIs",
+          url: "https://www.careers-page.com/exequt/job/3W3V947V"
+        },
+        output: { action: "package", applicationId: "app_1" }
+      } as never
+    ]);
+    expect(lastHubHitlKind([receipt])).toBeNull();
+  });
+
+  it("does not lock when a newer JD card superseded this waiting one", () => {
+    const thread = [
+      assistant([
+        {
+          type: "tool-propose-application-from-jd",
+          toolCallId: "old",
+          toolName: "propose-application-from-jd",
+          state: "input-available",
+          input: {
+            title: "Senior Frontend Engineer",
+            companyName: "Zeal",
+            description: "About Zeal",
+            url: "https://zeal.breezy.hr/p/5ef2a1d2ba3a"
+          }
+        } as never,
+        {
+          type: "tool-propose-application-from-jd",
+          toolCallId: "new",
+          toolName: "propose-application-from-jd",
+          state: "input-available",
+          input: {
+            title: "Senior Front-End Engineer",
+            companyName: "Exequt",
+            description: "Build UIs",
+            url: "https://www.careers-page.com/exequt/job/3W3V947V"
+          }
+        } as never
+      ])
+    ];
+    expect(lastHubHitlKind(thread)).toBe("client");
+    expect(findPendingProposeApplicationFromJd(thread)?.toolCallId).toBe("new");
+  });
+
+  it("does not lock when the waiting JD card already has a recalled receipt", () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      }
+    });
+    rememberJdCardAction("jd-recalled", "package");
+    const waiting = assistant([
+      {
+        type: "tool-propose-application-from-jd",
+        toolCallId: "jd-recalled",
+        toolName: "propose-application-from-jd",
+        state: "input-available",
+        input: {
+          title: "Senior Front-End Engineer",
+          companyName: "Exequt",
+          description: "Build UIs",
+          url: "https://www.careers-page.com/exequt/job/3W3V947V"
+        }
+      } as never
+    ]);
+    expect(lastHubHitlKind([waiting])).toBeNull();
+    expect(findPendingProposeApplicationFromJd([waiting])).toBeNull();
+    vi.unstubAllGlobals();
   });
 });
 

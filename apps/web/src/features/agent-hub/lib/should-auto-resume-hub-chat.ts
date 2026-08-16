@@ -191,14 +191,38 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
       if (!isClientToolComplete(p)) return false;
       const name = toolNameFromPart(p);
       if (HUB_OPEN_SURFACE_TOOL_NAMES.has(name)) return true;
-      const action =
+      const output =
         p.output && typeof p.output === "object" && !Array.isArray(p.output)
-          ? (p.output as { action?: unknown }).action
+          ? (p.output as { action?: unknown; applicationId?: unknown })
           : undefined;
-      return action === "confirm" || action === "package" || action === "save";
+      const action = output?.action;
+      // JD card buttons finish CRM on the client. Do not re-POST — that
+      // re-runs URL import and renders a second card for the same listing.
+      if (
+        action === "dismiss" ||
+        action === "cancel" ||
+        action === "package" ||
+        action === "save"
+      ) {
+        return false;
+      }
+      return action === "confirm";
     });
 
     if (!needsMutationContinuation) {
+      const terminal = clientTools.some((p) => {
+        const output =
+          p.output && typeof p.output === "object" && !Array.isArray(p.output)
+            ? (p.output as { action?: unknown })
+            : undefined;
+        return (
+          output?.action === "dismiss" ||
+          output?.action === "cancel" ||
+          output?.action === "package" ||
+          output?.action === "save"
+        );
+      });
+      if (terminal) return false;
       return !hasFinalTextAfter;
     }
 

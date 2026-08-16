@@ -1,8 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { FileTextIcon, LayoutGridIcon, ListIcon, PlusIcon } from "lucide-react";
-import { lazy, Suspense, useCallback, useMemo, useRef } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
@@ -70,8 +73,13 @@ const SendOutreachDialog = lazy(() =>
 
 const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 
+const trackedJobsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/tracked-jobs/");
+
 export function TrackedJobsPage() {
   const { view, setView } = useApplicationsView();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { applicationId: deepLinkApplicationId } = trackedJobsRouteApi.useSearch();
   /** Tracked jobs only — pipeline CRM. */
   const listQuery = useListApplicationsQuery("tracked");
   // Hub tool invalidation lives on HubChatProvider (dashboard layout).
@@ -106,6 +114,35 @@ export function TrackedJobsPage() {
     if (listFilter === "closed") return applications.filter((a) => a.outcome != null);
     return applications;
   }, [applications, listFilter]);
+
+  // Hub JD save/package lands here with ?applicationId= — open the inspect panel.
+  useEffect(() => {
+    if (!deepLinkApplicationId) return;
+
+    const fromList = applications.find((application) => application.id === deepLinkApplicationId);
+    if (fromList) {
+      showView(fromList);
+      void navigate({ to: "/dashboard/tracked-jobs", search: {}, replace: true });
+      return;
+    }
+
+    if (listQuery.isLoading) return;
+
+    let cancelled = false;
+    void queryClient
+      .fetchQuery(
+        orpcQueryClient.applications.get.queryOptions({ input: { id: deepLinkApplicationId } })
+      )
+      .then((row) => {
+        if (cancelled) return;
+        if (row) showView(row);
+        void navigate({ to: "/dashboard/tracked-jobs", search: {}, replace: true });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applications, deepLinkApplicationId, listQuery.isLoading, navigate, queryClient, showView]);
 
   // Prefer live list row so stage/outcome/edit/package changes refresh the side panel.
   const liveViewItem = useMemo(() => {
