@@ -16,6 +16,21 @@ export const CANONICAL_STACK_NAMES_LIST = [
   "TipTap, Payload CMS, Radix UI, Base UI, HeroUI"
 ].join("\n");
 
+/** Product names from {@link CANONICAL_STACK_NAMES_LIST}, one entry each. */
+export function parseCanonicalStackNames(list: string = CANONICAL_STACK_NAMES_LIST): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const part of list.split(/[\n,]/)) {
+    const name = part.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
 /** Prompt fragment shared by detect canonicalize-names and organize find-renames. */
 export function buildCanonicalRenameRulesBlock(): string {
   return `CANONICAL NAMES (use these exact spellings when applicable):

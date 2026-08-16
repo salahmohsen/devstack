@@ -140,11 +140,22 @@ const JACK_AND_JILL_DIGEST = {
 };
 
 describe("canonicalizeJobUrl", () => {
-  it("strips tracking query params without rewriting host or path", () => {
-    // Dedup hygiene only — does not rewrite /comm/ or other listing paths.
+  it("rewrites LinkedIn /comm/jobs/view/{id} to the guest jobs/view URL", () => {
     const raw =
       "https://www.linkedin.com/comm/jobs/view/4443683970/?trackingId=abc&refId=xyz&lipi=foo";
-    expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/comm/jobs/view/4443683970");
+    expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/jobs/view/4443683970");
+  });
+
+  it("rewrites LinkedIn search-results currentJobId to the guest jobs/view URL", () => {
+    const raw =
+      "https://www.linkedin.com/jobs/search-results/?currentJobId=4440801290&origin=QUALIFICATION_LANDING";
+    expect(canonicalizeJobUrl(raw)).toBe("https://www.linkedin.com/jobs/view/4440801290");
+  });
+
+  it("normalizes an already-guest LinkedIn listing URL", () => {
+    expect(canonicalizeJobUrl("https://linkedin.com/jobs/view/4452452790/")).toBe(
+      "https://www.linkedin.com/jobs/view/4452452790"
+    );
   });
 });
 
@@ -513,6 +524,47 @@ describe("LinkedIn guest page extract", () => {
     expect(e.description).toMatch(/ABOUT US/);
     expect(e.source).toBe("linkedin");
     expect(e.workMode).toBe("remote");
+  });
+
+  it("reads Yassir guest criteria (Full-time) and decodes apostrophes without inventing Hybrid", () => {
+    const html = `
+      <html><head>
+        <title>Yassir hiring Senior Frontend Engineer in Cairo, Cairo, Egypt | LinkedIn</title>
+        <meta property="og:title" content="Yassir hiring Senior Frontend Engineer in Cairo, Cairo, Egypt | LinkedIn">
+        <meta property="og:site_name" content="LinkedIn">
+      </head><body>
+        <h1 class="top-card-layout__title">Senior Frontend Engineer</h1>
+        <a class="topcard__org-name-link topcard__flavor--black-link">Yassir</a>
+        <span class="topcard__flavor--bullet">Cairo, Cairo, Egypt</span>
+        <div class="show-more-less-html__markup">
+          <p>About Your Role As Frontend Developer. Design and build web applications using React.js</p>
+          <p>Must have technical skills with at least 5 years of experience. Language: Javascript. Framework: React.JS</p>
+          <p>Nice to have technical skills. Caching, Redis server.</p>
+          <p>Don&apos;t just apply for a job, come and be a part of our journey.</p>
+        </div>
+        <ul class="description__job-criteria-list">
+          <li class="description__job-criteria-item">
+            <h3 class="description__job-criteria-subheader">Employment type</h3>
+            <span class="description__job-criteria-text">Full-time</span>
+          </li>
+          <li class="description__job-criteria-item">
+            <h3 class="description__job-criteria-subheader">Job function</h3>
+            <span class="description__job-criteria-text">Engineering and Information Technology</span>
+          </li>
+        </ul>
+      </body></html>`;
+    const e = extractPublicJobListingFromHtml(
+      html,
+      "https://www.linkedin.com/jobs/view/4440801290/"
+    );
+    expect(e.companyName).toBe("Yassir");
+    expect(e.title).toBe("Senior Frontend Engineer");
+    expect(e.employmentType).toBe("full_time");
+    expect(e.department).toMatch(/Engineering/);
+    expect(e.workMode ?? null).toBeNull();
+    expect(e.description).toMatch(/Don't just apply/);
+    expect(e.description).not.toMatch(/&apos;/);
+    expect(e.experience).toMatch(/5 years/i);
   });
 
   it("does not keep Similar jobs carousel text in the description", () => {

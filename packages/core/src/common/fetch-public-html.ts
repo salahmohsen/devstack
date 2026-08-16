@@ -1,3 +1,4 @@
+import { decodeHtmlEntities } from "#@/common/extract-job-listing-page";
 import { assertPublicHttpUrl, assertPublicHttpUrlResolved } from "#@/common/public-http-url";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -36,19 +37,12 @@ export type FetchPublicHtmlResult = {
 
 /** Strip scripts/styles/tags and decode common entities for LLM-friendly plain text. */
 export function htmlToText(html: string): string {
-  return html
+  const stripped = html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/<[^>]+>/g, " ");
+  return decodeHtmlEntities(stripped).replace(/\s+/g, " ").trim();
 }
 
 function metaContent(html: string, propertyOrName: string): string | null {

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { extractJobListingStructured } from "#@/common/extract-job-listing-page";
+import {
+  decodeHtmlEntities,
+  extractExperienceFromDescription,
+  extractGuestJobCriteria,
+  extractJobListingStructured,
+  parseHiringPageTitle,
+  stripHtmlToPlainText
+} from "#@/common/extract-job-listing-page";
 
 const JSON_LD_JD =
   "<p>We need a senior frontend engineer with React, TypeScript, and system design experience across large product surfaces.</p><p>Remote-friendly team with strong design partnership.</p><p>You will own complex UI systems, mentor other engineers, partner with product, and ship high-quality experiences used by thousands of customers every day.</p>";
@@ -51,5 +58,66 @@ describe("extractJobListingStructured JSON-LD workplace fields", () => {
     expect(e.workMode).toBe("remote");
     expect(e.hiringRegion).toBe("latam");
     expect(e.employmentType).toBe("full_time");
+  });
+});
+
+describe("LinkedIn guest criteria and entities", () => {
+  it("decodes &apos; and numeric entities", () => {
+    expect(decodeHtmlEntities("Don&apos;t just apply")).toBe("Don't just apply");
+    expect(stripHtmlToPlainText("<p>Don&apos;t just apply</p>")).toBe("Don't just apply");
+  });
+
+  it("parses hiring titles without treating LinkedIn as the company", () => {
+    expect(
+      parseHiringPageTitle(
+        "Yassir hiring Senior Frontend Engineer in Cairo, Cairo, Egypt | LinkedIn"
+      )
+    ).toEqual({
+      companyName: "Yassir",
+      title: "Senior Frontend Engineer",
+      location: "Cairo, Cairo, Egypt"
+    });
+  });
+
+  it("reads Full-time from job-criteria and does not invent Hybrid", () => {
+    const html = `
+      <ul class="description__job-criteria-list">
+        <li class="description__job-criteria-item">
+          <h3 class="description__job-criteria-subheader">Employment type</h3>
+          <span class="description__job-criteria-text">Full-time</span>
+        </li>
+        <li class="description__job-criteria-item">
+          <h3 class="description__job-criteria-subheader">Job function</h3>
+          <span class="description__job-criteria-text">Engineering and Information Technology</span>
+        </li>
+      </ul>`;
+    const criteria = extractGuestJobCriteria(html);
+    expect(criteria.employmentType).toBe("full_time");
+    expect(criteria.workMode).toBeUndefined();
+    expect(criteria.department).toMatch(/Engineering/);
+    const structured = extractJobListingStructured(`<html><body>${html}</body></html>`);
+    expect(structured.employmentType).toBe("full_time");
+    expect(structured.workMode).toBeUndefined();
+  });
+
+  it("reads Hybrid only when workplace type is stated", () => {
+    const html = `
+      <h3 class="description__job-criteria-subheader">Workplace type</h3>
+      <span class="description__job-criteria-text">Hybrid</span>
+      <h3 class="description__job-criteria-subheader">Employment type</h3>
+      <span class="description__job-criteria-text">Full-time</span>`;
+    expect(extractGuestJobCriteria(html)).toMatchObject({
+      workMode: "hybrid",
+      workModeStated: true,
+      employmentType: "full_time"
+    });
+  });
+
+  it("extracts at least N years of experience", () => {
+    expect(
+      extractExperienceFromDescription(
+        "Must have technical skills with at least 5 years of experience"
+      )
+    ).toMatch(/5 years/i);
   });
 });

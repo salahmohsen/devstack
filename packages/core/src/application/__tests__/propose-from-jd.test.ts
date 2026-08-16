@@ -15,6 +15,22 @@ describe("ProposeApplicationFromJdInputSchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("accepts required and preferred skill names", () => {
+    const parsed = ProposeApplicationFromJdInputSchema.safeParse({
+      title: "Senior Frontend",
+      companyName: "Acme",
+      description: "Build React apps",
+      workMode: "hybrid",
+      salaryRange: "EGP 80k–120k",
+      requiredSkills: ["React", "TypeScript"],
+      preferredSkills: ["Vitest"]
+    });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.requiredSkills).toEqual(["React", "TypeScript"]);
+    expect(parsed.data?.preferredSkills).toEqual(["Vitest"]);
+    expect(parsed.data?.workMode).toBe("hybrid");
+  });
+
   it("rejects empty title", () => {
     const parsed = ProposeApplicationFromJdInputSchema.safeParse({
       title: "",
