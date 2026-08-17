@@ -13,6 +13,7 @@ export type AiErrorKind =
   | "missing_byo"
   | "unauthorized"
   | "unavailable"
+  | "provider_error"
   | "unknown";
 
 /** Surface that produced the error — only changes generic titles/copy. */
@@ -35,8 +36,13 @@ export type AiErrorPresentation = {
   title: string;
   /** Instruction: how to recover */
   description: string;
-  /** External recovery URL when the provider embeds one (e.g. billing). */
+  /**
+   * External recovery URL when the provider embeds one
+   * (billing, model opt-in, workspace settings, etc.).
+   */
   billingUrl: string | null;
+  /** Label for the external recovery button when {@link billingUrl} is set. */
+  externalActionLabel: string | null;
   /** Deep-link to app Settings → AI when the fix lives in BYO settings. */
   showAiSettings: boolean;
   /** Whether Retry is a sensible recovery. */
@@ -104,12 +110,46 @@ function preferBillingUrl(urls: string[]): string | null {
   return billing ?? urls[0] ?? null;
 }
 
+function preferProviderActionUrl(urls: string[]): string | null {
+  const optIn = urls.find((u) =>
+    /\/go\b|opt.?in|workspace|billing|checkout|portal|settings/i.test(u)
+  );
+  return optIn ?? urls[0] ?? null;
+}
+
+/** AI SDK / Mastra provider failure payloads (not our app session). */
+function isAiProviderApiError(json: Record<string, unknown> | null, technical: string): boolean {
+  if (json?.name === "AI_APICallError") return true;
+  if (/\bAI_APICallError\b/.test(technical)) return true;
+  const url = typeof json?.url === "string" ? json.url : "";
+  if (
+    /opencode\.ai|openai\.com|api\.anthropic\.com|api\.x\.ai|generativelanguage\.googleapis|\/v1\/chat\/completions/i.test(
+      url
+    )
+  ) {
+    return true;
+  }
+  // OpenCode / zen path often appears only in the stack or message body
+  if (/opencode\.ai\/zen|opencode\.ai\/workspace/i.test(technical)) return true;
+  return false;
+}
+
 function firstUsefulLine(text: string): string | null {
   const firstLine = text.split("\n")[0]?.trim() ?? "";
   if (!firstLine) return null;
   if (/^\s*at\s+/.test(firstLine) || firstLine.includes("file:///")) return null;
   if (firstLine.length > 200) return firstLine.slice(0, 197) + "…";
   return firstLine;
+}
+
+/** Drop bare recovery URLs from user-facing copy when a dedicated action button has them. */
+function descriptionWithoutRecoveryUrls(text: string): string {
+  return text
+    .replace(BILLING_URL_RE, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .replace(/:\s*$/g, ".")
+    .trim();
 }
 
 function mergeTechnicalDetails(primary: string | null, notes: string[] | undefined): string | null {
@@ -196,6 +236,7 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
       title: "Request failed",
       description: "Something went wrong. Try again in a moment.",
       billingUrl: null,
+      externalActionLabel: null,
       showAiSettings: false,
       retryable: true,
       technicalDetails: null
@@ -219,6 +260,7 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
       title: "Provider out of credits",
       description: "Add credits with your AI provider, or switch model and key in AI settings.",
       billingUrl: preferBillingUrl(urls),
+      externalActionLabel: "Open billing",
       showAiSettings: true,
       retryable: true,
       technicalDetails: technical
@@ -236,19 +278,69 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
       title: "AI provider not set up",
       description: "Add a provider API key and model in AI settings, then try again.",
       billingUrl: null,
+      externalActionLabel: null,
       showAiSettings: true,
       retryable: false,
       technicalDetails: technical
     };
   }
 
-  if (/unauthorized|401\b|session expired|not authenticated|forbidden|403\b/i.test(haystack)) {
+  // AI provider rejected the call (region/opt-in, model, policy). Must run
+  // before the session-expired branch — OpenCode uses HTTP 401/403 for these.
+  if (isAiProviderApiError(json, technical)) {
+    const providerMessage =
+      typeof json?.message === "string" ? firstUsefulLine(json.message) : null;
+    const actionUrl = preferProviderActionUrl(urls);
+    const needsOptIn = /opt.?in|hosted in china|region|not available in|explicit opt/i.test(
+      haystack
+    );
+
+    if (needsOptIn) {
+      const raw =
+        providerMessage ??
+        "This model requires opt-in with your AI provider, or pick another model in AI settings.";
+      return {
+        kind: "provider_error",
+        variant: "warning",
+        title: "Model needs opt-in",
+        // URL lives on the Open provider button — keep description scannable.
+        description: actionUrl ? descriptionWithoutRecoveryUrls(raw) : raw,
+        billingUrl: actionUrl,
+        externalActionLabel: actionUrl ? "Open provider" : null,
+        showAiSettings: true,
+        retryable: true,
+        technicalDetails: technical
+      };
+    }
+
+    const rawProvider =
+      providerMessage ??
+      "The AI provider rejected this request. Try another model or check AI settings.";
+    return {
+      kind: "provider_error",
+      variant: "error",
+      title: "Provider rejected the request",
+      description: actionUrl ? descriptionWithoutRecoveryUrls(rawProvider) : rawProvider,
+      billingUrl: actionUrl,
+      externalActionLabel: actionUrl ? "Open provider" : null,
+      showAiSettings: true,
+      retryable: true,
+      technicalDetails: technical
+    };
+  }
+
+  // App auth only — do not match provider HTTP status codes in error JSON.
+  if (
+    /session expired|not authenticated/i.test(haystack) ||
+    /unauthorized|401\b|forbidden|403\b/i.test(haystack)
+  ) {
     return {
       kind: "unauthorized",
       variant: "error",
       title: "Session expired",
       description: "Sign in again, then retry.",
       billingUrl: null,
+      externalActionLabel: null,
       showAiSettings: false,
       retryable: true,
       technicalDetails: technical
@@ -266,6 +358,7 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
       title: "Assistant is offline",
       description: "Try again in a moment.",
       billingUrl: null,
+      externalActionLabel: null,
       showAiSettings: false,
       retryable: true,
       technicalDetails: technical
@@ -291,6 +384,7 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
     title: "Request failed",
     description,
     billingUrl: null,
+    externalActionLabel: null,
     showAiSettings: false,
     retryable: true,
     technicalDetails: technical
@@ -336,6 +430,7 @@ export function presentAiError(
       title: partialUnknownTitle(feature),
       description: partialUnknownDescription(feature),
       billingUrl: null,
+      externalActionLabel: null,
       showAiSettings: true,
       retryable: true,
       technicalDetails
@@ -356,6 +451,7 @@ export function presentAiError(
     title: hardUnknownTitle(feature),
     description,
     billingUrl: null,
+    externalActionLabel: null,
     showAiSettings: false,
     retryable: true,
     technicalDetails

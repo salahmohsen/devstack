@@ -4,6 +4,8 @@ import { parseAiError, presentAiError } from "./parse-ai-error";
 
 const OPENCODE_BALANCE = `Hub agent error (500): {"message":"Insufficient balance. Manage your billing here: https://opencode.ai/workspace/wrk_x/billing","name":"AI_APICallError","stack":"AI_APICallError: Insufficient balance\\n    at file:///app/...","url":"https://opencode.ai/zen/go/v1/chat/completions","statusCode":401}`;
 
+const OPENCODE_CHINA_OPT_IN = `{"message":"The latest version of this model is only available hosted in China and requires explicit opt in: https://opencode.ai/workspace/wrk_01KW1NZSR76GWDSCKXRE4YSTCN/go","name":"AI_APICallError","stack":"AI_APICallError: The latest version of this model is only available hosted in China and requires explicit opt in: https://opencode.ai/workspace/wrk_01KW1NZSR76GWDSCKXRE4YSTCN/go\\n    at file:///Users/salah/Developer/personal-hub/node_modules/...","url":"https://opencode.ai/zen/go/v1/chat/completions","statusCode":403,"isRetryable":false}`;
+
 describe("parseAiError", () => {
   it("classifies OpenCode insufficient balance with billing URL", () => {
     const p = parseAiError(OPENCODE_BALANCE);
@@ -12,9 +14,26 @@ describe("parseAiError", () => {
     expect(p.title).toBe("Provider out of credits");
     expect(p.billingUrl).toContain("opencode.ai");
     expect(p.billingUrl).toContain("/billing");
+    expect(p.externalActionLabel).toBe("Open billing");
     expect(p.showAiSettings).toBe(true);
     expect(p.description).not.toMatch(/file:\/\//);
     expect(p.description).not.toMatch(/AI_APICallError/);
+  });
+
+  it("classifies OpenCode China opt-in 403 as provider error, not session expired", () => {
+    const p = parseAiError(OPENCODE_CHINA_OPT_IN);
+    expect(p.kind).toBe("provider_error");
+    expect(p.title).toBe("Model needs opt-in");
+    expect(p.description).toMatch(/hosted in China|opt in/i);
+    expect(p.description).not.toMatch(/Session expired|Sign in again/i);
+    // Recovery URL is on the action button, not the body copy
+    expect(p.description).not.toMatch(/https?:\/\//);
+    expect(p.billingUrl).toContain("opencode.ai/workspace");
+    expect(p.billingUrl).toContain("/go");
+    expect(p.externalActionLabel).toBe("Open provider");
+    expect(p.showAiSettings).toBe(true);
+    expect(p.retryable).toBe(true);
+    expect(p.technicalDetails).toContain("statusCode");
   });
 
   it("classifies missing BYO key", () => {
@@ -41,6 +60,12 @@ describe("parseAiError", () => {
     expect(p.showAiSettings).toBe(false);
     expect(p.retryable).toBe(true);
     expect(p.description).toBe("Try again in a moment.");
+  });
+
+  it("classifies real app session failures as unauthorized", () => {
+    const p = parseAiError("Unauthorized: session expired");
+    expect(p.kind).toBe("unauthorized");
+    expect(p.title).toBe("Session expired");
   });
 
   it("keeps stacks only under technicalDetails", () => {

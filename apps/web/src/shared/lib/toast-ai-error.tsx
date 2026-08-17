@@ -51,7 +51,7 @@ export function toastAiError(
     </Link>
   ) : presentation.billingUrl ? (
     <a href={presentation.billingUrl} target="_blank" rel="noopener noreferrer" data-button>
-      Billing
+      {presentation.externalActionLabel ?? "Open link"}
     </a>
   ) : undefined;
 
