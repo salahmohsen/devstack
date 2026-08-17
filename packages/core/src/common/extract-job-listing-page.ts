@@ -269,6 +269,58 @@ const MAX_WALK_NODES = 4_000;
 const MIN_DESC_CHARS = 80;
 const MAX_DESC_CHARS = 12_000;
 
+const LINK_TAG_RE = /<link\b[^>]*>/gi;
+const ALTERNATE_MARKDOWN_TYPES = new Set(["text/markdown", "text/x-markdown"]);
+
+function htmlTagAttr(tag: string, name: string): string | null {
+  const re = new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i");
+  const match = tag.match(re);
+  const value = (match?.[1] ?? match?.[2] ?? match?.[3] ?? "").trim();
+  return value.length > 0 ? value : null;
+}
+
+function sameHttpHost(left: URL, right: URL): boolean {
+  if (left.protocol !== "http:" && left.protocol !== "https:") return false;
+  if (right.protocol !== "http:" && right.protocol !== "https:") return false;
+  return (
+    left.hostname.replace(/\.$/, "").toLowerCase() ===
+    right.hostname.replace(/\.$/, "").toLowerCase()
+  );
+}
+
+/**
+ * Same-host `rel="alternate"` markdown URL (Workable and any ATS that advertises one).
+ * Does not follow `text/plain` (often a company llms.txt, not the job).
+ */
+export function listingAlternateTextUrl(html: string, pageUrl: string): string | null {
+  if (!html || !pageUrl) return null;
+  let base: URL;
+  try {
+    base = new URL(pageUrl);
+  } catch {
+    return null;
+  }
+  if (base.protocol !== "http:" && base.protocol !== "https:") return null;
+
+  for (const match of html.matchAll(LINK_TAG_RE)) {
+    const tag = match[0] ?? "";
+    const rel = (htmlTagAttr(tag, "rel") ?? "").toLowerCase().split(/\s+/);
+    if (!rel.includes("alternate")) continue;
+    const type = (htmlTagAttr(tag, "type") ?? "").toLowerCase().split(";")[0]?.trim() ?? "";
+    if (!ALTERNATE_MARKDOWN_TYPES.has(type)) continue;
+    const href = htmlTagAttr(tag, "href");
+    if (!href) continue;
+    try {
+      const resolved = new URL(href, base);
+      if (!sameHttpHost(base, resolved)) continue;
+      return resolved.href;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 /**
  * Job-board chrome that often pollutes main-content extractors (Readability)
  * and full-page text. Cut description text at the first hit (when enough body
@@ -343,6 +395,8 @@ export function scoreListingDescription(text: string | null | undefined): number
   if (!text?.trim()) return 0;
   const cleaned = stripListingChromeFromText(text);
   let score = Math.min(cleaned.length, MAX_DESC_CHARS);
+  // og:description / meta teasers end with an ellipsis — never beat a real body.
+  if (/(?:\.{3}|…)\s*$/u.test(cleaned)) score -= 2_000;
   const lower = text.toLowerCase();
   if (lower.includes("similar jobs")) score -= 5_000;
   if (lower.includes("people also viewed")) score -= 4_000;

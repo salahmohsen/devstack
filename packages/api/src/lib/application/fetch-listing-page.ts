@@ -1,8 +1,10 @@
 import {
   canonicalizeJobUrl,
   extractPublicJobListingFromHtmlAsync,
+  fetchListingAlternateText,
   fetchPublicHtmlAsText,
   formatJobPageTextForLlm,
+  pickBetterListingDescription,
   type PublicJobListingExtract
 } from "@tsu-stack/core";
 
@@ -39,10 +41,16 @@ async function fetchListingHtml(listingUrl: string) {
 export async function fetchListingPageText(url: string): Promise<FetchListingPageResult> {
   const listingUrl = canonicalizeJobUrl(url) ?? url;
   const result = await fetchListingHtml(listingUrl);
+  const pageUrl = result.finalUrl ?? listingUrl;
   const extract =
     result.html && result.html.length > 200
-      ? await extractPublicJobListingFromHtmlAsync(result.html, result.finalUrl ?? listingUrl)
+      ? await extractPublicJobListingFromHtmlAsync(result.html, pageUrl)
       : null;
+  if (extract && result.html) {
+    const alternate = await fetchListingAlternateText(result.html, pageUrl);
+    const picked = pickBetterListingDescription(extract.description, alternate);
+    if (picked) extract.description = picked;
+  }
   const text = formatJobPageTextForLlm({
     pageText: result.text,
     extract,

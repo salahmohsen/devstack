@@ -5,7 +5,9 @@ import {
   extractExperienceFromDescription,
   extractGuestJobCriteria,
   extractJobListingStructured,
+  listingAlternateTextUrl,
   parseHiringPageTitle,
+  pickBetterListingDescription,
   stripHtmlToPlainText
 } from "#@/common/extract-job-listing-page";
 
@@ -145,5 +147,46 @@ describe("LinkedIn guest criteria and entities", () => {
         "Must have technical skills with at least 5 years of experience"
       )
     ).toMatch(/5 years/i);
+  });
+});
+
+describe("listingAlternateTextUrl", () => {
+  const pageUrl = "https://apply.workable.com/eventogy/j/1F0306BC0A";
+
+  it("reads same-host rel=alternate markdown (any attribute order)", () => {
+    const html = `<html><head>
+      <link rel="alternate" type="text/plain" title="LLMs" href="https://apply.workable.com/eventogy/llms.txt"/>
+      <link href="https://apply.workable.com/eventogy/jobs/view/1F0306BC0A.md" type="text/markdown" title="Markdown version" rel="alternate"/>
+    </head></html>`;
+    expect(listingAlternateTextUrl(html, pageUrl)).toBe(
+      "https://apply.workable.com/eventogy/jobs/view/1F0306BC0A.md"
+    );
+  });
+
+  it("resolves a relative markdown href against the listing URL", () => {
+    const html = `<link rel="alternate" type="text/markdown" href="/eventogy/jobs/view/1F0306BC0A.md">`;
+    expect(listingAlternateTextUrl(html, pageUrl)).toBe(
+      "https://apply.workable.com/eventogy/jobs/view/1F0306BC0A.md"
+    );
+  });
+
+  it("drops a different-host alternate and ignores company llms.txt", () => {
+    const html = `<html><head>
+      <link rel="alternate" type="text/plain" href="https://apply.workable.com/eventogy/llms.txt"/>
+      <link rel="alternate" type="text/markdown" href="https://evil.example/job.md"/>
+    </head></html>`;
+    expect(listingAlternateTextUrl(html, pageUrl)).toBeNull();
+  });
+});
+
+describe("pickBetterListingDescription", () => {
+  it("keeps a longer stored JD over an og:description teaser", () => {
+    const stored =
+      "<p>We are a highly successful UK based Events Management SaaS company looking for an ambitious Next.js Product Developer to help oversee the next phase of development of our suite of products.</p>";
+    const teaser =
+      "STRICTLY NO AGENCIES: We are only accepting direct applications for this role. Any unsolicited CVs sent will be treated as a gift and will not be subject to any terms or fees.RECRUITERS: DO NOT CALL OR EMAIL US REGARDING THESE ROLESTHIS IS A HYBRID ROL...";
+    const picked = pickBetterListingDescription(stored, teaser);
+    expect(picked).toMatch(/Next\.js Product Developer/);
+    expect(picked).not.toMatch(/HYBRID ROL\.\.\./);
   });
 });

@@ -143,6 +143,12 @@ describe("isThinJobDescription", () => {
     expect(padded.trim().length).toBeGreaterThanOrEqual(THIN_JD_DESCRIPTION_CHARS);
     expect(isThinJobDescription(padded)).toBe(true);
   });
+
+  it("treats an og:description ellipsis teaser as thin even when long", () => {
+    const teaser = `${"Senior Front-End Developer. ".repeat(20)}THIS IS A HYBRID ROL...`;
+    expect(teaser.length).toBeGreaterThan(THIN_JD_DESCRIPTION_CHARS);
+    expect(isThinJobDescription(teaser)).toBe(true);
+  });
 });
 
 describe("chunkArray", () => {

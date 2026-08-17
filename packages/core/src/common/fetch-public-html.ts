@@ -1,4 +1,8 @@
-import { decodeHtmlEntities } from "#@/common/extract-job-listing-page";
+import {
+  decodeHtmlEntities,
+  listingAlternateTextUrl,
+  stripListingChromeFromText
+} from "#@/common/extract-job-listing-page";
 import { assertPublicHttpUrl, assertPublicHttpUrlResolved } from "#@/common/public-http-url";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -222,4 +226,94 @@ export async function fetchPublicHttpStatus(
       error: err instanceof Error ? err.message : String(err)
     };
   }
+}
+
+const ALTERNATE_TEXT_HEADERS = {
+  "User-Agent": DEFAULT_HEADERS["User-Agent"],
+  Accept: "text/markdown, text/x-markdown, text/plain;q=0.9, */*;q=0.1",
+  "Accept-Language": DEFAULT_HEADERS["Accept-Language"],
+  "Cache-Control": "no-cache"
+} as const;
+
+const MIN_ALTERNATE_TEXT_CHARS = 80;
+const MAX_ALTERNATE_TEXT_CHARS = 12_000;
+
+/**
+ * SSRF-safe public text fetch (markdown / plain). Does not wrap HTML chrome.
+ */
+export async function fetchPublicText(
+  url: string,
+  options?: { maxChars?: number; timeoutMs?: number }
+): Promise<Omit<FetchPublicHtmlResult, "html" | "title" | "description">> {
+  const maxChars = options?.maxChars ?? MAX_ALTERNATE_TEXT_CHARS;
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+  try {
+    await assertPublicHttpUrlResolved(url);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        signal: controller.signal,
+        redirect: "follow",
+        headers: { ...ALTERNATE_TEXT_HEADERS }
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+
+    const finalUrl = res.url || url;
+    try {
+      assertPublicHttpUrl(finalUrl);
+      if (hostKey(finalUrl) !== hostKey(url)) {
+        await assertPublicHttpUrlResolved(finalUrl);
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        finalUrl,
+        status: res.status,
+        text: "",
+        error: err instanceof Error ? err.message : String(err)
+      };
+    }
+
+    const text = (await res.text()).slice(0, maxChars);
+    return {
+      ok: res.ok,
+      finalUrl,
+      status: res.status,
+      text,
+      error: res.ok ? undefined : `HTTP ${res.status}`
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      text: "",
+      error: err instanceof Error ? err.message : String(err)
+    };
+  }
+}
+
+/**
+ * Follow a same-host `rel="alternate" type="text/markdown"` link when the HTML
+ * page is a JS shell. Returns cleaned markdown, or null when missing/thin.
+ */
+export async function fetchListingAlternateText(
+  html: string,
+  pageUrl: string,
+  options?: { maxChars?: number; timeoutMs?: number }
+): Promise<string | null> {
+  const url = listingAlternateTextUrl(html, pageUrl);
+  if (!url) return null;
+  if (hostKey(url) !== hostKey(pageUrl)) return null;
+
+  const fetched = await fetchPublicText(url, options);
+  if (!fetched.ok) return null;
+  if (hostKey(fetched.finalUrl ?? url) !== hostKey(pageUrl)) return null;
+
+  const cleaned = stripListingChromeFromText(fetched.text.trim());
+  if (cleaned.length < MIN_ALTERNATE_TEXT_CHARS) return null;
+  return cleaned.slice(0, options?.maxChars ?? MAX_ALTERNATE_TEXT_CHARS);
 }

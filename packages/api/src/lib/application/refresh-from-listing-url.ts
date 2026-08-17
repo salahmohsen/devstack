@@ -4,6 +4,7 @@ import {
   HarvestedJobSchema,
   llmLogFields,
   mergeJobListingExtract,
+  pickBetterListingDescription,
   resolveApplicationSourceFields,
   type HarvestedJob
 } from "@tsu-stack/core";
@@ -293,7 +294,8 @@ export async function refreshApplicationFromListingUrl(input: {
     const nextCompany = job.companyName || owned.companyName;
     const nextLocation = job.location ?? owned.location;
     const nextSalary = job.salaryRange ?? owned.salaryRange;
-    const nextDescription = job.description?.trim() ? job.description.trim() : owned.description;
+    const nextDescription =
+      pickBetterListingDescription(owned.description, job.description) ?? owned.description;
     const nextApplyMethod = job.applyMethod ?? owned.applyMethod;
 
     // Re-score against Job preferences from the refreshed fields (AI + heuristic fallback).
