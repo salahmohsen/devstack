@@ -31,7 +31,7 @@ const jobController = createDetachedJobController({
 /** Live toast body — step text from session store so shimmer is not remounted each step */
 function ExtractRunningToastBody() {
   const { extractStepLabel } = useOnboardingSession();
-  return <AiJobRunningToastBody title="Analyzing resume…" stepLabel={extractStepLabel} />;
+  return <AiJobRunningToastBody title="Analyzing resume" stepLabel={extractStepLabel} />;
 }
 
 function showRunningToast() {
@@ -83,7 +83,7 @@ export function startExtractResumeJob(input?: { objectKey?: string; filename?: s
     filename: filename ?? null,
     step: "analyzing",
     extractStatus: "running",
-    extractStepLabel: "Starting analysis…",
+    extractStepLabel: "Starting analysis",
     extractError: null,
     extractRunId: null,
     extractStartedAt: Date.now(),
