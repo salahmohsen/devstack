@@ -738,7 +738,8 @@ const TRIAGE_PROCESSOR_LEAK_RE =
 /**
  * Recover a triage card when listNewJobs ran but the HITL tool never
  * mounted (leaked processor, cancelled stream, remount with no output).
- * Spoken status-only answers keep the card off.
+ * Spoken status-only answers, Today, and search-brief turns keep the card off.
+ * Inbox fallback is only for leak text on this message — never a silent turn.
  */
 export function cancelledTriageCardInputFromParts(
   parts: readonly unknown[],
@@ -746,23 +747,34 @@ export function cancelledTriageCardInputFromParts(
 ): ProposeNewJobsTriageCardInput | null {
   let hasSpoken = false;
   let hasTriageTool = false;
+  let hasLeakText = false;
   const jobs: TriageHydrateJob[] = [];
   for (const raw of parts) {
     if (!raw || typeof raw !== "object") continue;
     const part = raw as HubToolNamePart & { text?: string };
     if (part.type === "text") {
       const text = part.text?.trim() ?? "";
-      if (text.length > 0 && !TRIAGE_PROCESSOR_LEAK_RE.test(text)) hasSpoken = true;
+      if (text.length > 0 && TRIAGE_PROCESSOR_LEAK_RE.test(text)) {
+        hasLeakText = true;
+      } else if (text.length > 0) {
+        hasSpoken = true;
+      }
     }
     if (!isHubToolUiPart(part)) continue;
     const name = hubToolNameFromPart(part);
-    if (isGetDailyBriefToolName(name) || isOpenDailyBriefToolName(name)) return null;
+    if (
+      isGetDailyBriefToolName(name) ||
+      isOpenDailyBriefToolName(name) ||
+      isGetSearchBriefToolName(name)
+    ) {
+      return null;
+    }
     if (isProposeNewJobsTriageToolName(name)) hasTriageTool = true;
     if (!isListNewJobsToolName(name)) continue;
     const rows = parseListNewJobsOutput(part.output);
     if (rows.length > 0) jobs.push(...rows);
   }
-  const source = jobs.length > 0 ? jobs : fallbackJobs;
+  const source = jobs.length > 0 ? jobs : hasLeakText ? fallbackJobs : [];
   if (hasTriageTool || hasSpoken || source.length === 0) return null;
   return hydrateProposeNewJobsTriageInput({ track: [], dismiss: [] }, source);
 }

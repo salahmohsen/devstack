@@ -32,6 +32,7 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] Related lists (New/Tracked/Dismissed) refresh via existing sync hooks
 - [ ] Toolkit registration name matches stream tool name
 - [ ] No assistant wrap-up text after a pending confirmation card (card is the UI; hide leftover “awaiting confirmation” if the model still writes it)
+- [ ] Silent card-only turns (Today, search brief, no `listNewJobs` / leak text) must not invent a New jobs receipt from inbox
 - [ ] Evidence: one waiting File Diff; same kind+id after Confirm is hidden (next _named_ entity still locks)
 - [ ] Agent never promises a card without calling the propose tool this step
 

@@ -406,6 +406,30 @@ describe("cancelledTriageCardInputFromParts", () => {
     ).toBeNull();
   });
 
+  it("does not invent a card on a search-brief turn", () => {
+    expect(
+      cancelledTriageCardInputFromParts(
+        [
+          {
+            type: "tool-get-search-brief",
+            toolName: "getSearchBrief",
+            state: "input-available"
+          }
+        ],
+        [{ id: "fb1", title: "Fallback", companyName: "Co", matchScore: 70 }]
+      )
+    ).toBeNull();
+  });
+
+  it("does not invent a card from inbox when this turn never listed jobs", () => {
+    expect(
+      cancelledTriageCardInputFromParts(
+        [],
+        [{ id: "fb1", title: "Fallback", companyName: "Co", matchScore: 70 }]
+      )
+    ).toBeNull();
+  });
+
   it("does not invent a card when the triage tool already owns the turn", () => {
     expect(
       cancelledTriageCardInputFromParts([

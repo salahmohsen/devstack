@@ -17,6 +17,15 @@
 
 ---
 
+## 2026-08-17 — Silent search-brief turn invented Cancelled New jobs triage
+
+- **Trigger:** “what are my jobs goals?” showed `search-brief.md` plus a Cancelled New jobs card (inbox rows)
+- **Finding:** `listHubMessages` on that turn has only `getSearchBrief`. A card in the DOM with no matching tool part is a **client receipt**, not a model call. Diff `uiMessages` vs DOM before blaming the supervisor
+- **Finding:** `HubCancelledTriageReceipt` runs on every assistant bubble. `cancelledTriageCardInputFromParts` recovers a leak when `listNewJobs` never mounted HITL. On a silent card-only turn it used **current inbox** as fallback. Today already returns null; search brief did not
+- **Finding:** Inbox fallback is only valid when **this** message has triage-processor leak text. Empty parts + inbox is not a leak. History remount then stamps the fake card `cancel` / “No longer pending”
+- **User preference:** Everyday phrasing; File Diff is the UI for job goals/rules; do not invent triage
+- **Evidence class:** Local `uiMessages` (`tool-getSearchBrief` only); Chrome after fix — File Diff, zero “New jobs triage”; unit helper RED then GREEN
+
 ## 2026-08-17 — Production hub: promised tools, collapsed strip, API cookie host
 
 - **Trigger:** First systematic prod debug of hub chat (dashboard + `listHubMessages` + Axiom `devhub` + Dokploy `devhub-agent`/`web`/`server`)
