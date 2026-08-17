@@ -4,29 +4,30 @@ export type HubSuggestion = {
   prompt: string;
 };
 
+/**
+ * Empty-state chips. Only everyday asks the supervisor already handles
+ * (Today, search brief, pile, mail). No detect/organize/catalog dumps.
+ */
 export const HUB_SUGGESTIONS: HubSuggestion[] = [
   {
     id: "today",
-    label: "What do you have for me today?",
+    label: "What do you have today?",
     prompt: "What do you have for me today?"
   },
   {
-    id: "paste-jd",
-    label: "Paste a job description…",
-    prompt:
-      "I want to track a job from a description. Call propose-application-from-jd with the job text I paste next (or extract from this message if I already included the JD)."
-  },
-  { id: "scan-repos", label: "Scan repos", prompt: "Scan my repos and detect tech stacks" },
-  { id: "organize", label: "Organize stacks", prompt: "Organize and deduplicate my stack catalog" },
-  {
-    id: "find-deps",
-    label: "Find dependencies",
-    prompt: "What are the most common dependencies across my projects?"
+    id: "looking-for",
+    label: "What am I looking for?",
+    prompt: "What am I looking for?"
   },
   {
-    id: "summary",
-    label: "Project summary",
-    prompt: "Give me a summary of all my projects and their tech stacks"
+    id: "pile",
+    label: "Anything in the pile?",
+    prompt: "Anything new in the pile? Don't file anything."
+  },
+  {
+    id: "mail",
+    label: "Any mail that matters?",
+    prompt: "Any important mail, or just noise?"
   }
 ];
 

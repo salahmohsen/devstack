@@ -24,20 +24,23 @@ export function HubUserMessage() {
   const image = session?.user?.image ?? undefined;
 
   return (
-    <MessagePrimitive.Root data-role="user" className="flex w-full flex-col items-end gap-2 px-2">
+    <MessagePrimitive.Root
+      data-role="user"
+      className="flex w-full min-w-0 flex-col items-end gap-1.5"
+    >
       <UserMessageAttachments />
-      <Message align="end" className="w-auto max-w-full items-center">
-        <MessageAvatar className="self-center">
-          <Avatar className="size-7">
+      <Message align="end" className="w-full max-w-full items-start">
+        <MessageAvatar className="mt-0.5 self-start">
+          <Avatar className="size-7 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
             {image ? <AvatarImage alt={name} src={image} /> : null}
             <AvatarFallback className="text-[10px] font-medium">
               {initialsFromName(name)}
             </AvatarFallback>
           </Avatar>
         </MessageAvatar>
-        <MessageContent className="flex-none">
-          <div className="relative min-w-0">
-            <div className="peer rounded-2xl bg-muted px-3.5 py-2 text-[15px] leading-5 wrap-break-word text-foreground empty:hidden">
+        <MessageContent className="max-w-[min(36rem,calc(100%-2.25rem))] min-w-0 items-end">
+          <div className="relative ms-auto w-fit max-w-full min-w-0">
+            <div className="peer max-w-full rounded-2xl bg-muted px-3.5 py-2 text-[15px] leading-5 wrap-anywhere whitespace-pre-wrap text-foreground empty:hidden">
               <MessagePrimitive.Parts />
             </div>
             <div className="absolute inset-s-0 top-1/2 -translate-x-full -translate-y-1/2 pe-2 peer-empty:hidden rtl:translate-x-full">

@@ -28,6 +28,7 @@ type ItemInfoPanelProps = {
   description?: string | React.ReactNode;
   /** Top-left mark, like the review-card glyph. */
   eyebrow?: React.ReactNode;
+  eyebrowClassName?: string;
   /** Header trailing actions (Save, status, open). */
   actions?: React.ReactNode;
   /** Optional nav under the header (tabs). Stays out of the scroll body. */
@@ -47,6 +48,7 @@ export function ItemInfoPanel({
   title,
   description,
   eyebrow,
+  eyebrowClassName,
   actions,
   nav,
   headerClassName,
@@ -59,11 +61,16 @@ export function ItemInfoPanel({
     <div className="flex h-full min-h-0 flex-col bg-background">
       <header className={cn("shrink-0 px-6 pt-5 pb-5 max-xl:pe-12", headerClassName)}>
         <div className="flex items-center justify-between gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/70 text-muted-foreground [&_img]:size-full [&_img]:object-contain [&_svg]:size-4">
+          <div
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/70 text-muted-foreground [&_img]:size-full [&_img]:object-contain [&_svg]:size-4",
+              eyebrowClassName
+            )}
+          >
             {eyebrow ?? <span className="size-1.5 rounded-full bg-foreground/40" aria-hidden />}
           </div>
           {actions ? (
-            <div className="hidden shrink-0 flex-wrap items-center justify-end gap-1.5 xl:flex">
+            <div className="hidden shrink-0 items-center justify-end gap-1.5 xl:flex">
               {actions}
             </div>
           ) : null}

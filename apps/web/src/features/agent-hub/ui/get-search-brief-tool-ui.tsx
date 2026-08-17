@@ -77,11 +77,7 @@ export function GetSearchBriefToolUI({
   }, [complete, result]);
 
   if (result == null) {
-    return (
-      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        Loading search brief…
-      </p>
-    );
+    return null;
   }
 
   if (!shouldRenderSearchBriefFileDiff(result.markdown)) {

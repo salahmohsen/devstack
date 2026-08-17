@@ -9,6 +9,7 @@ import {
   FileTextIcon,
   Loader2Icon,
   MicIcon,
+  PauseIcon,
   PlusIcon,
   SquareIcon,
   XIcon,
@@ -634,7 +635,7 @@ export function ComposerSend({
           className={cn(iconSwap, "size-4", showSend ? iconSwapIn : iconSwapOut)}
         />
         <span className={cn(iconSwap, showLoad ? iconSwapIn : iconSwapOut)}>
-          <StatusStateIcon state="pending" reduceMotion={reduceMotion} />
+          <PauseIcon aria-hidden="true" className="size-3.5 fill-current" />
         </span>
         <span className={cn(iconSwap, error ? iconSwapIn : iconSwapOut)}>
           <StatusStateIcon state="failed" reduceMotion={reduceMotion} />

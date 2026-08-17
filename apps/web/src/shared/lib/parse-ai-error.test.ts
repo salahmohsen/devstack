@@ -34,6 +34,15 @@ describe("parseAiError", () => {
     expect(p.showAiSettings).toBe(true);
   });
 
+  it("treats a dead agent as offline, not a settings problem", () => {
+    const p = parseAiError("fetch failed: ECONNREFUSED 127.0.0.1:4111");
+    expect(p.kind).toBe("unavailable");
+    expect(p.title).toBe("Assistant is offline");
+    expect(p.showAiSettings).toBe(false);
+    expect(p.retryable).toBe(true);
+    expect(p.description).toBe("Try again in a moment.");
+  });
+
   it("keeps stacks only under technicalDetails", () => {
     const p = parseAiError(OPENCODE_BALANCE);
     expect(p.technicalDetails).toContain("file:///app");

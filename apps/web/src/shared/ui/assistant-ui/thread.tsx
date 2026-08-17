@@ -363,11 +363,13 @@ export type AssistantMessageProps = {
   hideTextAfterIndex?: number | null;
   /** Hide a text part regardless of index (processor leaks, wrap-up). */
   shouldHideTextPart?: (text: string) => boolean;
+  className?: string;
 };
 
 export const AssistantMessage: FC<AssistantMessageProps> = ({
   hideTextAfterIndex = null,
-  shouldHideTextPart
+  shouldHideTextPart,
+  className
 }) => {
   const {
     ToolFallback: ToolFallbackComponent = ToolFallback,
@@ -384,11 +386,14 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({
     <MessagePrimitive.Root
       data-slot="aui_assistant-message-root"
       data-role="assistant"
-      className="relative -mb-7.5 animate-in pb-7.5 duration-150 [contain-intrinsic-size:auto_200px] [content-visibility:auto] fade-in slide-in-from-bottom-1"
+      className={cn(
+        "relative -mb-7.5 animate-in pb-7.5 duration-150 fade-in slide-in-from-bottom-1",
+        className
+      )}
     >
       <div
         data-slot="aui_assistant-message-content"
-        className="px-2 leading-relaxed wrap-break-word text-foreground"
+        className="leading-relaxed wrap-break-word text-foreground"
       >
         <MessagePrimitive.GroupedParts
           groupBy={groupPartByType({

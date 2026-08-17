@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   AlignLeftIcon,
-  BriefcaseIcon,
   DownloadIcon,
   ExternalLinkIcon,
   FileTextIcon,
@@ -28,6 +27,7 @@ import {
   type ApplicationSourceTag,
   type JobSkillTag
 } from "@tsu-stack/core";
+import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -233,10 +233,18 @@ export function ApplicationInfoPanel({
   return (
     <>
       <ItemInfoPanel
-        eyebrow={<BriefcaseIcon strokeWidth={1.75} />}
+        eyebrow={
+          <AgentAvatar
+            seed={item.companyName}
+            size={44}
+            className="size-11 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+            aria-label={item.companyName}
+          />
+        }
+        eyebrowClassName="size-11 rounded-2xl bg-transparent"
         title={item.title}
         description={
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span>{item.companyName}</span>
               {locationLine ? (
@@ -271,35 +279,34 @@ export function ApplicationInfoPanel({
                 This posting is no longer on the board.
               </p>
             ) : null}
-            {(item.sourceTags ?? []).length > 0 ? (
-              <span className="flex flex-wrap items-center gap-1.5">
-                {(item.sourceTags ?? []).map((tag) => (
-                  <Badge key={tag} variant="secondary" size="sm">
-                    {tag in APPLICATION_SOURCE_TAG_LABELS
-                      ? APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag]
-                      : tag}
-                  </Badge>
-                ))}
-              </span>
-            ) : null}
+            <span className="flex flex-wrap items-center gap-1.5">
+              {item.matchScore != null ? (
+                <ApplicationMatchScoreBadge matchScore={item.matchScore} />
+              ) : null}
+              {!isDiscovery ? <ApplicationStageBadge stage={item.stage} /> : null}
+              {!isDiscovery ? <ApplicationStatusBadge outcome={item.outcome} /> : null}
+              {!isDiscovery && item.hiringUrgency !== "unknown" ? (
+                <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
+              ) : null}
+              {(item.sourceTags ?? []).map((tag) => (
+                <Badge key={tag} variant="secondary" size="sm">
+                  {tag in APPLICATION_SOURCE_TAG_LABELS
+                    ? APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag]
+                    : tag}
+                </Badge>
+              ))}
+            </span>
           </div>
         }
         actions={
           <>
             {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
-            {!isDiscovery ? <ApplicationStageBadge stage={item.stage} /> : null}
-            {!isDiscovery ? <ApplicationStatusBadge outcome={item.outcome} /> : null}
-            {item.matchScore != null ? (
-              <ApplicationMatchScoreBadge matchScore={item.matchScore} />
-            ) : null}
-            {!isDiscovery && item.hiringUrgency !== "unknown" ? (
-              <Badge variant="outline">{HIRING_URGENCY_LABELS[item.hiringUrgency]}</Badge>
-            ) : null}
             {item.url ? (
               <Button
                 type="button"
                 size="icon-sm"
-                variant="ghost"
+                variant="outline"
+                className="active:scale-[0.96]"
                 render={
                   <a
                     href={item.url}
@@ -309,7 +316,7 @@ export function ApplicationInfoPanel({
                   />
                 }
               >
-                <ExternalLinkIcon strokeWidth={2} />
+                <ExternalLinkIcon strokeWidth={1.75} />
               </Button>
             ) : null}
           </>

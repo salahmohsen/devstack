@@ -5,6 +5,7 @@ import {
   humanizeHubToolName,
   hubAgentActivityActiveLabel,
   hubAgentActivityStatus,
+  isHubChoiceToolName,
   isHubListingExtractActive,
   isHubWorkingStripToolName
 } from "./hub-agent-activity";
@@ -41,8 +42,10 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("proposeEvidenceChange")).toBe(false);
     expect(isHubWorkingStripToolName("find-jobs-now")).toBe(false);
     expect(isHubWorkingStripToolName("open-entity-form")).toBe(false);
-    expect(isHubWorkingStripToolName("open-entity-inspect")).toBe(false);
-    expect(isHubWorkingStripToolName("get-search-brief")).toBe(false);
+    expect(isHubWorkingStripToolName("open-entity-inspect")).toBe(true);
+    expect(isHubWorkingStripToolName("get-search-brief")).toBe(true);
+    expect(isHubChoiceToolName("open-entity-inspect")).toBe(false);
+    expect(isHubChoiceToolName("get-search-brief")).toBe(false);
     expect(isHubWorkingStripToolName("get-daily-brief")).toBe(false);
     expect(isHubWorkingStripToolName("open-daily-brief")).toBe(false);
     expect(isHubWorkingStripToolName("propose-mail-crm-change")).toBe(false);
@@ -58,6 +61,38 @@ describe("isHubWorkingStripToolName", () => {
 });
 
 describe("buildHubAgentActivityItems", () => {
+  it("puts inspect and search brief in the activity strip", () => {
+    const items = buildHubAgentActivityItems([
+      {
+        type: "tool-open-entity-inspect",
+        toolName: "open-entity-inspect",
+        toolCallId: "ins1",
+        state: "output-available",
+        input: { kind: "experience", id: "e1" }
+      },
+      {
+        type: "tool-get-search-brief",
+        toolName: "get-search-brief",
+        toolCallId: "br1",
+        state: "output-available"
+      }
+    ]);
+    expect(items).toEqual([
+      {
+        id: "ins1",
+        type: "step",
+        label: "Opening experience",
+        status: "complete"
+      },
+      {
+        id: "br1",
+        type: "step",
+        label: "Loading search brief",
+        status: "complete"
+      }
+    ]);
+  });
+
   it("includes hard-stop as a step so history is not empty after confirm", () => {
     const items = buildHubAgentActivityItems([
       {
@@ -103,7 +138,7 @@ describe("buildHubAgentActivityItems", () => {
     ]);
   });
 
-  it("omits get-search-brief — File Diff is the thread surface", () => {
+  it("keeps search brief in the strip next to other working steps", () => {
     const items = buildHubAgentActivityItems([
       {
         type: "tool-get-search-brief",
@@ -119,6 +154,12 @@ describe("buildHubAgentActivityItems", () => {
       }
     ]);
     expect(items).toEqual([
+      {
+        id: "brief1",
+        type: "step",
+        label: "Loading search brief",
+        status: "active"
+      },
       {
         id: "soft1",
         type: "step",

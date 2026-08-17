@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuiState } from "@assistant-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
@@ -21,6 +22,7 @@ import {
 } from "@/features/agent-hub/lib/hub-composer-personality";
 
 export function HubComposerPersonalityPicker({ disabled = false }: { disabled?: boolean }) {
+  const threadRunning = useAuiState((s) => s.thread.isRunning);
   const settings = useQuery(
     orpcQueryClient.aiSettings.get.queryOptions({
       staleTime: 60_000,
@@ -69,7 +71,12 @@ export function HubComposerPersonalityPicker({ disabled = false }: { disabled?: 
         }}
         className="flex h-8 max-w-40 items-center gap-1.5 rounded-full px-1.5 text-[12.5px] text-foreground/70 outline-none hover:bg-muted/70 disabled:opacity-50"
       >
-        <AgentAvatar seed={hubPersonalityAvatarSeed(selected.id)} size={22} aria-hidden />
+        <AgentAvatar
+          seed={hubPersonalityAvatarSeed(selected.id)}
+          size={22}
+          animated={threadRunning}
+          aria-hidden
+        />
         <span className="truncate font-medium">{selected.label}</span>
       </button>
       <ComposerMenu open={open} align="start">
@@ -81,7 +88,12 @@ export function HubComposerPersonalityPicker({ disabled = false }: { disabled?: 
               pick(preset.id);
             }}
           >
-            <AgentAvatar seed={hubPersonalityAvatarSeed(preset.id)} size={24} aria-hidden />
+            <AgentAvatar
+              seed={hubPersonalityAvatarSeed(preset.id)}
+              size={24}
+              animated={false}
+              aria-hidden
+            />
             <span className="min-w-0 flex-1 truncate text-start">
               <span className="block truncate font-medium">{preset.label}</span>
               <span className="block truncate text-[11px] text-foreground/45">

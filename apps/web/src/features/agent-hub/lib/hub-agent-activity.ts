@@ -9,14 +9,12 @@ import {
   hubToolNameFromPart,
   isFindJobsNowToolName,
   isGetDailyBriefToolName,
-  isGetSearchBriefToolName,
   isOpenDailyBriefToolName,
   isProposeMailCrmChangeToolName,
   isHubApprovalToolName,
   isHubJobPageExtractToolName,
   isHubToolUiPart,
   isOpenEntityFormToolName,
-  isOpenEntityInspectToolName,
   isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
   isProposeEvidenceChangeToolName,
@@ -51,9 +49,7 @@ export function isHubChoiceToolName(name: string): boolean {
     isOpenSurfaceToolName(name) ||
     isHubApprovalToolName(name) ||
     isOpenEntityFormToolName(name) ||
-    isOpenEntityInspectToolName(name) ||
     isFindJobsNowToolName(name) ||
-    isGetSearchBriefToolName(name) ||
     isGetDailyBriefToolName(name) ||
     isOpenDailyBriefToolName(name) ||
     isProposeMailCrmChangeToolName(name)
@@ -137,7 +133,7 @@ export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActi
     const complete = isCompleteState(part.state, statusType);
     const id = part.toolCallId && part.toolCallId.length > 0 ? part.toolCallId : `tool-${index}`;
     const status: AgentStepStatus = running ? "active" : complete ? "complete" : "pending";
-    const label = humanizeHubToolName(name);
+    const label = humanizeHubToolName(name, part.input);
 
     if (isHubJobPageExtractToolName(name)) {
       const existing = items.find(

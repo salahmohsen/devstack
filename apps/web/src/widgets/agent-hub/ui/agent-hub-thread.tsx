@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  AuiIf,
   SuggestionPrimitive,
   ThreadPrimitive,
   unstable_useThreadMessageIds
@@ -165,16 +164,6 @@ export function AgentHubThread() {
                       : "Ask the hub anything…"
               }
             />
-            <AuiIf
-              condition={(s) =>
-                historyReady &&
-                s.thread.messages.length === 0 &&
-                !s.thread.isRunning &&
-                s.composer.isEmpty
-              }
-            >
-              <HubSuggestions />
-            </AuiIf>
           </div>
         </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
@@ -222,23 +211,19 @@ function HubDayMessages({ dayById }: { dayById: Map<string, HubDayRow> }) {
   if (ids.length === 0) return null;
 
   return (
-    <div data-slot="aui_message-group" className="mb-6 flex flex-col gap-y-6">
+    <div data-slot="aui_message-group" className="mb-4 flex flex-col gap-y-3">
       {ids.map((id) => {
         const row = dayById.get(id);
         const from = row?.role === "user" ? "user" : "assistant";
         return (
-          <div key={id} className="group relative flex flex-col gap-2">
+          <div key={id} className="group relative flex flex-col gap-1.5">
             {row?.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
-            <div
-              data-slot="message"
-              data-from={from}
-              className={cn("relative", from === "user" ? "ps-12" : "pe-12")}
-            >
+            <div data-slot="message" data-from={from} className="relative">
               {row?.timeLabel ? (
                 <DaySeparatorTime
                   className={cn(
-                    "pointer-events-none absolute top-3 z-10",
-                    from === "user" ? "inset-s-0" : "inset-e-0"
+                    "pointer-events-none absolute top-1.5 z-10",
+                    from === "user" ? "inset-e-full pe-2" : "inset-s-full ps-2"
                   )}
                 >
                   {row.timeLabel}
@@ -303,8 +288,9 @@ function HubWelcome() {
         Welcome back. What can I do for you?
       </h1>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">
-        Ask about projects, detect stacks, organize your library, or plan the next move.
+        Today's jobs, mail, or what you're looking for.
       </p>
+      <HubSuggestions />
     </div>
   );
 }
@@ -312,7 +298,7 @@ function HubWelcome() {
 function HubSuggestions() {
   return (
     <div
-      className="aui-thread-welcome-suggestions flex w-full flex-wrap items-center justify-center gap-2 px-1"
+      className="aui-thread-welcome-suggestions mt-8 grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-2"
       aria-label="Suggestions"
     >
       <ThreadPrimitive.Suggestions>{() => <HubSuggestionItem />}</ThreadPrimitive.Suggestions>
@@ -322,18 +308,24 @@ function HubSuggestions() {
 
 function HubSuggestionItem() {
   return (
-    <div className="aui-thread-welcome-suggestion-display animate-in duration-200 fill-mode-both fade-in slide-in-from-bottom-2">
+    <div className="aui-thread-welcome-suggestion-display min-w-0">
       <SuggestionPrimitive.Trigger
         send
         render={
           <Button
             type="button"
             variant="ghost"
-            className="aui-thread-welcome-suggestion h-auto gap-1.5 rounded-full border border-border/60 px-3.5 py-1.5 text-sm font-normal whitespace-nowrap text-foreground transition-colors hover:bg-muted"
+            className={cn(
+              "aui-thread-welcome-suggestion h-9 w-full justify-center rounded-full border border-border/50 bg-muted/35 px-3 text-[13px] font-normal text-foreground/85",
+              "transition-[color,background-color,transform,border-color] duration-150 ease-out",
+              "hover:border-border hover:bg-muted hover:text-foreground",
+              "active:scale-[0.96]",
+              "motion-reduce:transition-none active:motion-reduce:scale-100"
+            )}
           />
         }
       >
-        <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1" />
+        <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1 truncate" />
       </SuggestionPrimitive.Trigger>
     </div>
   );

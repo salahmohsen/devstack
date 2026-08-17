@@ -9,10 +9,8 @@ import { clearDailyBriefRequest } from "@/features/agent-hub/lib/daily-brief-hos
 import { requestEntityInspect } from "@/features/agent-hub/lib/entity-inspect-host-store";
 import {
   isOpenEntityInspectToolName,
-  openEntityInspectActivityLabel,
   parseOpenEntityInspectInput,
   parseOpenEntityInspectOutput,
-  type OpenEntityFormKind,
   type OpenEntityInspectInput,
   type OpenEntityInspectOutput
 } from "@/features/agent-hub/lib/hub-tool-names";
@@ -35,7 +33,6 @@ export function OpenEntityInspectToolUI({
     ? (toolName as string)
     : OPEN_ENTITY_INSPECT_TOOL_ID;
 
-  const parsed = parseOpenEntityInspectInput(args);
   const completed = parseOpenEntityInspectOutput(result);
 
   const complete = React.useCallback(
@@ -96,24 +93,13 @@ export function OpenEntityInspectToolUI({
     });
   }, [args, complete, completed, onLatest, resolvedToolName, status?.type, toolCallId]);
 
-  if (completed) {
-    const noun =
-      completed.kind === "project"
-        ? "project"
-        : completed.kind === "stack"
-          ? "stack"
-          : "experience";
+  if (completed?.opened === false && completed.ok === false) {
     return (
       <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        {completed.opened ? `Opened ${noun} in the side panel.` : `Could not open ${noun}.`}
+        Could not open that record.
       </p>
     );
   }
 
-  const kind: OpenEntityFormKind = parsed?.kind ?? "project";
-  return (
-    <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-      {openEntityInspectActivityLabel(kind)}
-    </p>
-  );
+  return null;
 }
