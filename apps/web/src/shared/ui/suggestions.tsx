@@ -1,6 +1,6 @@
 "use client";
 
-import  { type ComponentProps } from "react";
+import { type ComponentProps } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -12,7 +12,7 @@ export type SuggestionsProps = {
   cycle: number;
   onSuggestion: (suggestion: string) => void;
   variant?: "pills" | "list";
-} & Omit<ComponentProps<"div">, "children">
+} & Omit<ComponentProps<"div">, "children">;
 
 export function Suggestions({
   suggestions,
