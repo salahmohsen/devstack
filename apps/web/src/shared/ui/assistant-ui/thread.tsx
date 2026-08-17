@@ -361,9 +361,14 @@ export type AssistantMessageProps = {
    * the confirmation UI). `null` / omit shows every text part.
    */
   hideTextAfterIndex?: number | null;
+  /** Hide a text part regardless of index (processor leaks, wrap-up). */
+  shouldHideTextPart?: (text: string) => boolean;
 };
 
-export const AssistantMessage: FC<AssistantMessageProps> = ({ hideTextAfterIndex = null }) => {
+export const AssistantMessage: FC<AssistantMessageProps> = ({
+  hideTextAfterIndex = null,
+  shouldHideTextPart
+}) => {
   const {
     ToolFallback: ToolFallbackComponent = ToolFallback,
     ToolGroup,
@@ -424,7 +429,8 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({ hideTextAfterIndex
                 );
               }
               case "text":
-                if (hideTextAfterIndex != null && part.type === "text") {
+                if (shouldHideTextPart?.(part.text ?? "")) return null;
+                if (hideTextAfterIndex != null) {
                   const first = parts.findIndex(
                     (candidate) => candidate.type === "text" && candidate.text === part.text
                   );

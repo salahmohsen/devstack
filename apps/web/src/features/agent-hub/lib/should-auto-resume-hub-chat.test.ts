@@ -92,7 +92,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("returns true when client tool completed before a later empty step-start (not yet continued)", () => {
+  it("does not resume after triage confirm — the card already wrote track/dismiss", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -109,7 +109,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("returns false once server tools already ran after client confirm", () => {
@@ -140,7 +140,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("returns true for confirm even when premature final text followed the card", () => {
+  it("does not resume after confirm even when premature final text followed the card", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -162,7 +162,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("does not re-resume after a failed continuation that already hit tool-step limit", () => {
@@ -211,7 +211,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("returns true after user completes propose-new-jobs-triage", () => {
+  it("does not resume after user completes propose-new-jobs-triage", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -226,7 +226,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("returns true after open-surface client complete", () => {
@@ -340,6 +340,86 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
                 currentMarkdown: "",
                 proposedMarkdown: "# Project: Dev-Hub"
               }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after a same-entity leftover following a user cancel", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          user("tweak Dev-Hub"),
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend"
+              },
+              output: { action: "cancel", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e2",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+              },
+              output: { action: "cancel", kind: "project", id: "prj_1" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after a same-entity evidence re-propose is auto-cancelled", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          user("tweak Dev-Hub"),
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend"
+              },
+              output: { action: "confirm", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e2",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+              },
+              output: { action: "cancel", kind: "project", id: "prj_1" }
             } as never
           ])
         ]
@@ -723,6 +803,49 @@ describe("hideHubAssistantTextAfterIndex", () => {
     ];
     expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
   });
+
+  it("hides the Today letter after openDailyBrief", () => {
+    const parts = [
+      {
+        type: "tool-open-daily-brief",
+        toolName: "open-daily-brief",
+        state: "output-available",
+        output: { opened: true, markdown: "# Today\n\nHello" }
+      },
+      { type: "text", text: "# Today\n\nHello" }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("shows inspect / CRM speech after a packed Today letter", () => {
+    const parts = [
+      {
+        type: "tool-open-daily-brief",
+        toolName: "open-daily-brief",
+        state: "output-available",
+        output: { opened: true, markdown: "# Today\n\nHello" }
+      },
+      {
+        type: "tool-open-entity-inspect",
+        toolName: "open-entity-inspect",
+        state: "output-available",
+        output: { ok: true, kind: "experience", opened: true }
+      },
+      { type: "text", text: "Ment'ech is open on the right. Trivelta is still applied — quiet." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
+  });
+
+  it("hides processor feedback that leaked into chat", () => {
+    expect(
+      hideHubAssistantTextAfterIndex([
+        {
+          type: "text",
+          text: "getDailyBrief already returned facts. Write the Today letter in the current voice from those facts, then call openDailyBrief({ markdown })."
+        }
+      ])
+    ).toBe(-1);
+  });
 });
 
 describe("shouldAutoResumeHubChat", () => {
@@ -800,6 +923,24 @@ describe("shouldAutoResumeHubChat", () => {
         ]
       })
     ).toBe(true);
+  });
+
+  it("does not resume after hard-stop confirm — card already wrote", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-hard-preference-change",
+              toolCallId: "h1",
+              toolName: "propose-hard-preference-change",
+              state: "output-available",
+              output: { action: "confirm", patch: { salaryMin: 45000 } }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
   });
 
   it("does not auto-resume after a plain capability answer", () => {

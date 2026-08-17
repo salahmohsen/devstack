@@ -12,11 +12,17 @@ import {
   type HubToolOutputArgs
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
+  cancelOutputForHubHitl,
+  staleWaitingHubConfirmCards
+} from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
+import {
   consumeHubCreateIntent,
   getHubCreateIntent,
   hubCreateInterviewText,
   subscribeHubCreateIntent
 } from "@/features/agent-hub/lib/hub-assistant-open";
+import { getHubComposerPersonality } from "@/features/agent-hub/lib/hub-composer-personality";
+import { rememberHubMessagePersonality } from "@/features/agent-hub/lib/hub-message-personality";
 import {
   createHubThreadHistoryAdapter,
   hubHistoryHeadPath,
@@ -47,6 +53,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const nextHistoryPageRef = React.useRef(1);
   const loadingOlderRef = React.useRef(false);
   const historyLoadRef = React.useRef<Promise<void> | null>(null);
+  const cancelledStaleIdsRef = React.useRef(new Set<string>());
   const allMessagesRef = React.useRef<typeof messages>([]);
   const setMessagesRef = React.useRef(setMessages);
   const messagesRef = React.useRef(messages);
@@ -110,6 +117,28 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     void sendMessage({ text: hubCreateInterviewText(kind) });
   }, [ensureHistory, historyReady, pendingCreateKind, sendMessage, status]);
 
+  React.useEffect(() => {
+    if (status !== "submitted" && status !== "streaming") return;
+    const last = messages.at(-1);
+    if (!last || last.role !== "assistant") return;
+    const personality = getHubComposerPersonality();
+    rememberHubMessagePersonality(last.id, personality);
+    const existing = (last.metadata as { hubPersonality?: unknown } | undefined)?.hubPersonality;
+    if (existing === personality) return;
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (message.id !== last.id) return message;
+        return {
+          ...message,
+          metadata: {
+            ...(message.metadata && typeof message.metadata === "object" ? message.metadata : {}),
+            hubPersonality: personality
+          }
+        };
+      })
+    );
+  }, [messages, setMessages, status]);
+
   const loadOlderMessages = React.useCallback(async () => {
     if (!historyReady || !hasMoreHistory || loadingOlderRef.current) return;
     loadingOlderRef.current = true;
@@ -150,6 +179,24 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     },
     [chat]
   );
+
+  React.useEffect(() => {
+    if (!historyReady || messages.length === 0) return;
+    const stale = staleWaitingHubConfirmCards(messages);
+    for (const card of stale) {
+      if (cancelledStaleIdsRef.current.has(card.toolCallId)) continue;
+      cancelledStaleIdsRef.current.add(card.toolCallId);
+      void Promise.resolve(
+        addToolOutput({
+          tool: card.toolName,
+          toolCallId: card.toolCallId,
+          output: cancelOutputForHubHitl(card.toolName)
+        })
+      ).catch(() => {
+        cancelledStaleIdsRef.current.delete(card.toolCallId);
+      });
+    }
+  }, [addToolOutput, historyReady, messages]);
 
   const value: HubChatContextValue = {
     ...helpers,

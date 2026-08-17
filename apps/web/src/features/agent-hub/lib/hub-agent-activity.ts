@@ -8,7 +8,10 @@ import { hubSubagentListShouldShow, isHubSubagentWorkerName } from "./hub-subage
 import {
   hubToolNameFromPart,
   isFindJobsNowToolName,
+  isGetDailyBriefToolName,
   isGetSearchBriefToolName,
+  isOpenDailyBriefToolName,
+  isProposeMailCrmChangeToolName,
   isHubApprovalToolName,
   isHubJobPageExtractToolName,
   isHubToolUiPart,
@@ -17,7 +20,6 @@ import {
   isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
   isProposeEvidenceChangeToolName,
-  isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
   openEntityFormActivityLabel,
   openEntityInspectActivityLabel,
@@ -48,11 +50,13 @@ export function isHubChoiceToolName(name: string): boolean {
     isProposeEvidenceChangeToolName(name) ||
     isOpenSurfaceToolName(name) ||
     isHubApprovalToolName(name) ||
-    isProposeHardPreferenceChangeToolName(name) ||
     isOpenEntityFormToolName(name) ||
     isOpenEntityInspectToolName(name) ||
     isFindJobsNowToolName(name) ||
-    isGetSearchBriefToolName(name)
+    isGetSearchBriefToolName(name) ||
+    isGetDailyBriefToolName(name) ||
+    isOpenDailyBriefToolName(name) ||
+    isProposeMailCrmChangeToolName(name)
   );
 }
 
@@ -79,8 +83,16 @@ export function humanizeHubToolName(name: string, input?: unknown): string {
   if (/upsertSoftJobPreferences|upsert-soft-job-preferences/i.test(bare)) {
     return "Updating job preferences";
   }
+  if (/proposeHardPreferenceChange|propose-hard-preference-change/i.test(bare)) {
+    return "Updating hard-stop preferences";
+  }
   if (/findJobsNow|find-jobs-now/i.test(bare)) return "Finding jobs";
   if (/getSearchBrief|get-search-brief/i.test(bare)) return "Loading search brief";
+  if (/getDailyBrief|get-daily-brief/i.test(bare)) return "Gathering today";
+  if (/openDailyBrief|open-daily-brief/i.test(bare)) return "Opening today";
+  if (/classifyMail|classify-mail/i.test(bare)) return "Reading that mail";
+  if (/searchMail|search-mail/i.test(bare)) return "Searching mail";
+  if (/proposeMailCrmChange|propose-mail-crm-change/i.test(bare)) return "Checking the board";
   if (/openEntityInspect|open-entity-inspect/i.test(bare)) {
     const kind =
       input && typeof input === "object" && "kind" in input
@@ -100,23 +112,8 @@ export function humanizeHubToolName(name: string, input?: unknown): string {
     .trim();
 }
 
-function reasoningText(part: { type?: string; text?: unknown }): string {
-  return typeof part.text === "string" ? part.text : "";
-}
-
-function reasoningLines(text: string): string[] {
-  const lines = text
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines.length > 0) return lines;
-  const trimmed = text.trim();
-  return trimmed.length > 0 ? [trimmed] : [];
-}
-
 export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActivityItem[] {
   const items: AgentActivityItem[] = [];
-  let reasoningIndex = 0;
 
   for (let index = 0; index < parts.length; index += 1) {
     const raw = parts[index];
@@ -124,15 +121,9 @@ export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActi
     const part = raw as HubToolNamePart & { text?: string; status?: { type?: string } };
 
     if (part.type === "reasoning") {
-      const lines = reasoningLines(reasoningText(part));
-      for (const [lineIndex, content] of lines.entries()) {
-        items.push({
-          id: `reasoning-${reasoningIndex}-${lineIndex}`,
-          type: "text",
-          content
-        });
-      }
-      if (lines.length > 0) reasoningIndex += 1;
+      // Reasoning stays off-screen (HubHiddenReasoningGroup). Do not dump
+      // thought lists into the working strip — users saw maxSteps/tool-name
+      // monologues as chat bullets.
       continue;
     }
 

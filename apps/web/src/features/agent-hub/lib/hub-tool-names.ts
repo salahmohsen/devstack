@@ -8,6 +8,8 @@ import {
   ProposeEvidenceChangeOutputSchema,
   ProposeHardPreferenceChangeInputSchema,
   ProposeHardPreferenceChangeOutputSchema,
+  ProposeMailCrmChangeInputSchema,
+  ProposeMailCrmChangeOutputSchema,
   WorkModeSchema,
   type ApplicationApplyMethod,
   type ApplicationSource,
@@ -17,11 +19,14 @@ import {
   type ProposeEvidenceChangeOutput,
   type ProposeHardPreferenceChangeInput,
   type ProposeHardPreferenceChangeOutput,
+  type ProposeMailCrmChangeInput,
+  type ProposeMailCrmChangeOutput,
   type ProposeNewJobsTriageOutput,
   type ProposeNewJobsTriageRow,
   type WorkMode
 } from "@tsu-stack/core";
 
+import { parseDailyBriefFacts, type DailyBriefFacts } from "./format-daily-brief";
 import { recalledJdCardAction } from "./jd-card-action-memory";
 
 /**
@@ -73,10 +78,97 @@ export const HUB_FIND_JOBS_NOW_TOOL_NAMES = new Set(["find-jobs-now", "findJobsN
 
 export const HUB_GET_SEARCH_BRIEF_TOOL_NAMES = new Set(["get-search-brief", "getSearchBrief"]);
 
+export const HUB_GET_DAILY_BRIEF_TOOL_NAMES = new Set(["get-daily-brief", "getDailyBrief"]);
+
+export const HUB_OPEN_DAILY_BRIEF_TOOL_NAMES = new Set(["open-daily-brief", "openDailyBrief"]);
+
+export const HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES = new Set([
+  "propose-mail-crm-change",
+  "proposeMailCrmChange"
+]);
+
+export const HUB_CLASSIFY_MAIL_TOOL_NAMES = new Set(["classify-mail", "classifyMail"]);
+
+export const HUB_SEARCH_MAIL_TOOL_NAMES = new Set(["search-mail", "searchMail"]);
+
+export function isGetDailyBriefToolName(name: string): boolean {
+  return HUB_GET_DAILY_BRIEF_TOOL_NAMES.has(name);
+}
+
+export function parseGetDailyBriefCounts(output: unknown): {
+  inboxCount: number;
+  mailCount: number;
+  trackedCount: number;
+} | null {
+  if (!output || typeof output !== "object" || Array.isArray(output)) return null;
+  const row = output as Record<string, unknown>;
+  const inboxCount = typeof row.inboxCount === "number" ? row.inboxCount : null;
+  const mailCount = typeof row.mailCount === "number" ? row.mailCount : null;
+  const trackedCount = typeof row.trackedCount === "number" ? row.trackedCount : null;
+  if (inboxCount == null && mailCount == null && trackedCount == null) return null;
+  return {
+    inboxCount: inboxCount ?? 0,
+    mailCount: mailCount ?? 0,
+    trackedCount: trackedCount ?? 0
+  };
+}
+
+export function latestDailyBriefFactsFromMessages(
+  messages: readonly { role?: string; parts?: readonly unknown[] }[]
+): DailyBriefFacts | null {
+  for (const message of [...messages].toReversed()) {
+    if (message.role !== "assistant") continue;
+    for (const raw of [...(message.parts ?? [])].toReversed()) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as { type?: string; toolName?: string; output?: unknown };
+      const name =
+        part.toolName ??
+        (typeof part.type === "string" && part.type.startsWith("tool-") ? part.type.slice(5) : "");
+      if (!isGetDailyBriefToolName(name)) continue;
+      const facts = parseDailyBriefFacts(part.output);
+      if (facts) return facts;
+    }
+  }
+  return null;
+}
+
+export function latestDailyBriefCountsFromMessages(
+  messages: readonly { role?: string; parts?: readonly unknown[] }[]
+): { inboxCount: number; mailCount: number; trackedCount: number } | null {
+  for (const message of [...messages].toReversed()) {
+    if (message.role !== "assistant") continue;
+    for (const raw of [...(message.parts ?? [])].toReversed()) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as { type?: string; toolName?: string; output?: unknown };
+      const name =
+        part.toolName ??
+        (typeof part.type === "string" && part.type.startsWith("tool-") ? part.type.slice(5) : "");
+      if (!isGetDailyBriefToolName(name)) continue;
+      const counts = parseGetDailyBriefCounts(part.output);
+      if (counts) return counts;
+    }
+  }
+  return null;
+}
+
+export function isOpenDailyBriefToolName(name: string): boolean {
+  return HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(name);
+}
+
+export function isProposeMailCrmChangeToolName(name: string): boolean {
+  return HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES.has(name);
+}
+
+export function isClassifyMailToolName(name: string): boolean {
+  return HUB_CLASSIFY_MAIL_TOOL_NAMES.has(name);
+}
+
 export const HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES = new Set([
   "propose-evidence-change",
   "proposeEvidenceChange"
 ]);
+
+export const HUB_LIST_NEW_JOBS_TOOL_NAMES = new Set(["list-new-jobs", "listNewJobs"]);
 
 export const HUB_UPSERT_SOFT_JOB_PREFERENCES_TOOL_NAMES = new Set([
   "upsert-soft-job-preferences",
@@ -202,6 +294,10 @@ export function isSendApplyOutreachToolName(name: string): boolean {
 
 export function isProposeNewJobsTriageToolName(name: string): boolean {
   return HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES.has(name);
+}
+
+export function isListNewJobsToolName(name: string): boolean {
+  return HUB_LIST_NEW_JOBS_TOOL_NAMES.has(name);
 }
 
 export function isOpenSurfaceToolName(name: string): boolean {
@@ -550,6 +646,202 @@ export function parseProposeNewJobsTriageInput(input: unknown): ProposeNewJobsTr
   return { track, dismiss };
 }
 
+export type TriageHydrateJob = {
+  id: string;
+  title?: string | null;
+  companyName?: string | null;
+  matchScore?: number | null;
+};
+
+const TRIAGE_HYDRATE_CAP = 15;
+
+function nonemptyOr(value: string | null | undefined, fallback: string): string {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : fallback;
+}
+
+export function parseListNewJobsOutput(output: unknown): TriageHydrateJob[] {
+  if (!output || typeof output !== "object" || Array.isArray(output)) return [];
+  const jobs = (output as { jobs?: unknown }).jobs;
+  if (!Array.isArray(jobs)) return [];
+  const rows: TriageHydrateJob[] = [];
+  for (const raw of jobs) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const row = raw as Record<string, unknown>;
+    const id = typeof row.id === "string" ? row.id.trim() : "";
+    if (!id) continue;
+    rows.push({
+      id,
+      title: typeof row.title === "string" ? row.title : "",
+      companyName: typeof row.companyName === "string" ? row.companyName : "",
+      matchScore: typeof row.matchScore === "number" ? row.matchScore : null
+    });
+  }
+  return rows;
+}
+
+/** Latest non-empty listNewJobs result in the thread (any turn). */
+export function listNewJobsFromMessages(messages: UIMessage[]): TriageHydrateJob[] {
+  let latest: TriageHydrateJob[] = [];
+  for (const message of messages) {
+    if (message.role !== "assistant") continue;
+    for (const raw of message.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      if (!isListNewJobsToolName(hubToolNameFromPart(part))) continue;
+      const rows = parseListNewJobsOutput(part.output);
+      if (rows.length > 0) latest = rows;
+    }
+  }
+  return latest;
+}
+
+/**
+ * When the model called propose with empty arrays, fill Track from inbox rows.
+ * Never invent a Dismiss split.
+ */
+export function hydrateProposeNewJobsTriageInput(
+  parsed: ProposeNewJobsTriageCardInput,
+  fallbackJobs: readonly TriageHydrateJob[]
+): ProposeNewJobsTriageCardInput {
+  if (parsed.track.length > 0 || parsed.dismiss.length > 0) return parsed;
+  return {
+    track: fallbackJobs.slice(0, TRIAGE_HYDRATE_CAP).map((job) => {
+      return {
+        id: job.id,
+        title: nonemptyOr(job.title, "Untitled role"),
+        companyName: nonemptyOr(job.companyName, "Unknown company"),
+        matchScore: typeof job.matchScore === "number" ? job.matchScore : null,
+        reason: null
+      };
+    }),
+    dismiss: []
+  };
+}
+
+/**
+ * True when this hard-stop card arrived after a confirm on the same user turn.
+ */
+export function isLaterHardStopAfterConfirm(messages: UIMessage[], toolCallId: string): boolean {
+  let afterLatestUser = false;
+  let sawConfirm = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawConfirm = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    for (const raw of message.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      if (!isProposeHardPreferenceChangeToolName(hubToolNameFromPart(part))) continue;
+      const id = part.toolCallId ?? "";
+      const output = parseProposeHardPreferenceChangeOutput(part.output);
+      if (id && id === toolCallId) return sawConfirm;
+      if (output?.action === "confirm") sawConfirm = true;
+    }
+  }
+  return sawConfirm;
+}
+
+export function evidenceEntityKey(kind: string | undefined, id: string | undefined): string | null {
+  if (kind !== "project" && kind !== "experience" && kind !== "stack") return null;
+  const trimmed = id?.trim() ?? "";
+  return trimmed.length > 0 ? `${kind}:${trimmed}` : `${kind}:__create__`;
+}
+
+/**
+ * True when this evidence card re-proposes the same kind+id after Confirm
+ * *or* Cancel this turn. A later card for a *different* entity (RAYA after
+ * Dev-Hub) must stay — do not clone the hard-stop/triage hide-all helper.
+ */
+export function isLaterEvidenceAfterSameEntityConfirm(
+  messages: UIMessage[],
+  toolCallId: string
+): boolean {
+  let afterLatestUser = false;
+  const settled = new Set<string>();
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      settled.clear();
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    for (const raw of message.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      if (!isProposeEvidenceChangeToolName(hubToolNameFromPart(part))) continue;
+      const id = part.toolCallId ?? "";
+      const input = parseProposeEvidenceChangeInput(part.input);
+      const output = parseProposeEvidenceChangeOutput(part.output);
+      if (id && id === toolCallId) {
+        const key =
+          evidenceEntityKey(input?.kind, input?.id) ?? evidenceEntityKey(output?.kind, output?.id);
+        return key != null && settled.has(key);
+      }
+      if (output?.action !== "confirm" && output?.action !== "cancel") continue;
+      const fromOut = evidenceEntityKey(output.kind, output.id);
+      if (fromOut) settled.add(fromOut);
+      const fromIn = evidenceEntityKey(input?.kind, input?.id);
+      if (fromIn && !fromIn.endsWith(":__create__")) settled.add(fromIn);
+    }
+  }
+  return false;
+}
+
+/**
+ * True when an earlier evidence card this turn is still waiting. Keep the
+ * first File Diff; parallel siblings (six stack cards) must not lock or show.
+ */
+export function isExtraWaitingEvidenceCard(messages: UIMessage[], toolCallId: string): boolean {
+  let afterLatestUser = false;
+  let sawEarlierWaiting = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawEarlierWaiting = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    for (const raw of message.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      if (!isProposeEvidenceChangeToolName(hubToolNameFromPart(part))) continue;
+      if (parseProposeEvidenceChangeOutput(part.output)) continue;
+      if (!isHubToolWaitingState(part.state)) continue;
+      const id = part.toolCallId ?? "";
+      if (id && id === toolCallId) return sawEarlierWaiting;
+      if (id) sawEarlierWaiting = true;
+    }
+  }
+  return false;
+}
+
+export function isLaterTriageAfterConfirm(messages: UIMessage[], toolCallId: string): boolean {
+  let afterLatestUser = false;
+  let sawConfirm = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawConfirm = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    for (const raw of message.parts ?? []) {
+      const part = raw as HubToolNamePart;
+      if (!isHubToolUiPart(part)) continue;
+      if (!isProposeNewJobsTriageToolName(hubToolNameFromPart(part))) continue;
+      const id = part.toolCallId ?? "";
+      const output = parseProposeNewJobsTriageOutput(part.output);
+      if (id && id === toolCallId) return sawConfirm;
+      if (output?.action === "confirm") sawConfirm = true;
+    }
+  }
+  return sawConfirm;
+}
+
 export function parseProposeNewJobsTriageOutput(
   output: unknown
 ): ProposeNewJobsTriageOutput | null {
@@ -594,6 +886,18 @@ export function parseProposeEvidenceChangeOutput(
   output: unknown
 ): ProposeEvidenceChangeOutput | null {
   const parsed = ProposeEvidenceChangeOutputSchema.safeParse(output);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeMailCrmChangeInput(input: unknown): ProposeMailCrmChangeInput | null {
+  const parsed = ProposeMailCrmChangeInputSchema.safeParse(input);
+  return parsed.success ? parsed.data : null;
+}
+
+export function parseProposeMailCrmChangeOutput(
+  output: unknown
+): ProposeMailCrmChangeOutput | null {
+  const parsed = ProposeMailCrmChangeOutputSchema.safeParse(output);
   return parsed.success ? parsed.data : null;
 }
 
@@ -663,10 +967,12 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     }
     if (isProposeNewJobsTriageToolName(name)) {
       if (parseProposeNewJobsTriageOutput(part.output)) continue;
+      if (isLaterTriageAfterConfirm(messages, part.toolCallId ?? "")) continue;
       return "client";
     }
     if (isProposeHardPreferenceChangeToolName(name)) {
       if (parseProposeHardPreferenceChangeOutput(part.output)) continue;
+      if (isLaterHardStopAfterConfirm(messages, part.toolCallId ?? "")) continue;
       if (parseProposeHardPreferenceChangeInput(part.input)) return "client";
       // Unparseable streaming leftovers must not lock; finished args show Cancel.
       if (part.state === "input-available" || part.state === "call") return "client";
@@ -674,12 +980,19 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     }
     if (isProposeEvidenceChangeToolName(name)) {
       if (parseProposeEvidenceChangeOutput(part.output)) continue;
-      // A later card after Confirm is the next entity — still lock. Do not
-      // skip with an isLaterEvidenceAfterConfirm helper (that would hide RAYA).
+      const id = part.toolCallId ?? "";
+      // Same kind+id after Confirm is a leftover, not the next entity.
+      if (isLaterEvidenceAfterSameEntityConfirm(messages, id)) continue;
+      // Parallel extras this turn — first waiting card owns the composer.
+      if (isExtraWaitingEvidenceCard(messages, id)) continue;
       return "client";
     }
     if (isOpenEntityFormToolName(name)) {
       if (parseOpenEntityFormOutput(part.output)) continue;
+      return "client";
+    }
+    if (isProposeMailCrmChangeToolName(name)) {
+      if (parseProposeMailCrmChangeOutput(part.output)) continue;
       return "client";
     }
   }

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { lineDiff, searchBriefChanged } from "./line-diff";
+import {
+  lineDiff,
+  previewFileLines,
+  searchBriefChanged,
+  shouldRenderSearchBriefFileDiff
+} from "./line-diff";
 
 describe("searchBriefChanged", () => {
   it("is false when both sides are missing", () => {
@@ -26,6 +31,20 @@ describe("searchBriefChanged", () => {
     expect(searchBriefChanged("# old", "# new")).toBe(true);
     expect(searchBriefChanged("# old", "# new", true)).toBe(true);
     expect(searchBriefChanged("# old", null, true)).toBe(true);
+  });
+});
+
+describe("shouldRenderSearchBriefFileDiff", () => {
+  it("is true whenever markdown exists — cache hit and first build included", () => {
+    expect(shouldRenderSearchBriefFileDiff("# brief")).toBe(true);
+    expect(shouldRenderSearchBriefFileDiff("  rules  ")).toBe(true);
+  });
+
+  it("is false when there is nothing to show", () => {
+    expect(shouldRenderSearchBriefFileDiff(null)).toBe(false);
+    expect(shouldRenderSearchBriefFileDiff(undefined)).toBe(false);
+    expect(shouldRenderSearchBriefFileDiff("")).toBe(false);
+    expect(shouldRenderSearchBriefFileDiff("   ")).toBe(false);
   });
 });
 
@@ -59,6 +78,15 @@ describe("lineDiff", () => {
   it("treats an empty previous as all additions", () => {
     expect(lineDiff("", "hello")).toEqual([
       { id: "1", type: "added", newLine: 1, content: "hello" }
+    ]);
+  });
+});
+
+describe("previewFileLines", () => {
+  it("marks every line as context with no added/removed gutter", () => {
+    expect(previewFileLines("a\nb")).toEqual([
+      { id: "1", type: "context", newLine: 1, content: "a" },
+      { id: "2", type: "context", newLine: 2, content: "b" }
     ]);
   });
 });

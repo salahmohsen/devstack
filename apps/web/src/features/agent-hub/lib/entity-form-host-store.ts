@@ -1,6 +1,7 @@
 import { useRef, useSyncExternalStore } from "react";
 
 import { createExternalStore } from "@/shared/lib/ai-job";
+import { subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
 
 export type EntityFormKind = "experience" | "project" | "stack";
 
@@ -19,6 +20,10 @@ type EntityFormHostState = {
 };
 
 const store = createExternalStore<EntityFormHostState>({ request: null });
+
+subscribeSidePanelClose(() => {
+  if (store.getState().request) store.setState({ request: null });
+});
 const dismissedToolCallIds = new Set<string>();
 const approvedToolCallIds = new Set<string>();
 

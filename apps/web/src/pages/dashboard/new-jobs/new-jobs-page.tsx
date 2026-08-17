@@ -54,6 +54,7 @@ import {
   isBatchSelectActive,
   selectedIdsFromState
 } from "@/shared/lib/batch-selection";
+import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { ListItem } from "@/shared/ui/list-item";
 
@@ -87,6 +88,7 @@ import {
   isAnyOpened,
   useItemsNavigation
 } from "@/widgets/items-page";
+import { useSidePanelClose } from "@/widgets/layout";
 
 import { ItemsInspectHost } from "@/pages/dashboard/_lib/items-inspect-host";
 import { FixPostingUrlDialog } from "@/pages/dashboard/new-jobs/ui/fix-posting-url-dialog";
@@ -279,6 +281,7 @@ function NewJobRowActions({
 export function NewJobsPage() {
   const [filter, setFilter] = useState<InboxFilter>("inbox");
   const [viewItem, setViewItem] = useState<ApplicationOutput | null>(null);
+  useSidePanelClose(useCallback(() => setViewItem(null), []));
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [packageApplication, setPackageApplication] = useState<ApplicationOutput | null>(null);
   const [descriptionApp, setDescriptionApp] = useState<ApplicationOutput | null>(null);
@@ -322,6 +325,7 @@ export function NewJobsPage() {
     if (!job) return;
     // oxlint-disable-next-line react-hooks-js/set-state-in-effect -- open panel from external job toast
     setFilter("inbox");
+    expandDashboardSidePanel();
     setViewItem(job);
     clearPendingOpenApplicationId();
   }, [pendingOpenApplicationId, jobs]);
@@ -344,6 +348,7 @@ export function NewJobsPage() {
   const isAnyOpen = isAnyOpened(isItemOpen);
 
   const setOpenedItem = useCallback((item: ApplicationOutput | null) => {
+    if (item) expandDashboardSidePanel();
     setViewItem(item);
   }, []);
 
@@ -559,7 +564,11 @@ export function NewJobsPage() {
                       <ListItem
                         selected={selected}
                         onSelect={() =>
-                          setViewItem((current) => (current?.id === job.id ? null : job))
+                          setViewItem((current) => {
+                            if (current?.id === job.id) return null;
+                            expandDashboardSidePanel();
+                            return job;
+                          })
                         }
                         isBatchSelected={batchSelected}
                         batchSelectActive={isBatchSelectActive(selectedIds)}

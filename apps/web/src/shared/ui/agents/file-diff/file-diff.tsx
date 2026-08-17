@@ -85,6 +85,7 @@ export function FileDiff({
   const streaming = status === "streaming";
   const additions = lines.filter((line) => line.type === "added").length;
   const deletions = lines.filter((line) => line.type === "removed").length;
+  const hasEdits = additions > 0 || deletions > 0;
   const canCopy = copyText != null || onCopy != null;
   const code = lines.map((line) => line.content).join("\n");
   const tokens = useAgentCodeTokens(code, language);
@@ -116,21 +117,31 @@ export function FileDiff({
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current;
-    if (!viewport || !currentOpen || !streaming) return;
+    if (!viewport || !currentOpen) return;
 
     const frame = requestAnimationFrame(() => {
-      if (viewport.scrollHeight <= viewport.clientHeight) return;
-      if (typeof viewport.scrollTo === "function") {
-        viewport.scrollTo({
-          top: viewport.scrollHeight,
-          behavior: reduce ? "auto" : "smooth"
-        });
-      } else {
-        viewport.scrollTop = viewport.scrollHeight;
+      if (streaming) {
+        if (viewport.scrollHeight <= viewport.clientHeight) return;
+        if (typeof viewport.scrollTo === "function") {
+          viewport.scrollTo({
+            top: viewport.scrollHeight,
+            behavior: reduce ? "auto" : "smooth"
+          });
+        } else {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+        return;
+      }
+      const firstChange =
+        viewport.querySelector("[data-diff-line=added]") ??
+        viewport.querySelector("[data-diff-line=removed]");
+      if (firstChange instanceof HTMLElement) {
+        const top = firstChange.offsetTop - viewport.clientHeight / 3;
+        viewport.scrollTop = Math.max(0, top);
       }
     });
     return () => cancelAnimationFrame(frame);
-  });
+  }, [currentOpen, lines, reduce, streaming]);
 
   const handleCopy = useCallback(async () => {
     if (onCopy) await onCopy();
@@ -142,7 +153,11 @@ export function FileDiff({
   }, [copyText, onCopy]);
 
   return (
-    <div data-state={status} aria-busy={streaming} className={cn("w-full text-sm", className)}>
+    <div
+      data-state={status}
+      aria-busy={streaming}
+      className={cn("w-full min-w-0 text-sm", className)}
+    >
       <button
         id={triggerId}
         type="button"
@@ -153,20 +168,24 @@ export function FileDiff({
       >
         <FileCode2 aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate font-mono text-xs text-foreground/80">{file}</span>
-        <span className="flex shrink-0 items-center gap-2">
-          <ChangeCount value={additions} type="added" />
-          <ChangeCount value={deletions} type="removed" />
-        </span>
-        <span className="grid size-4 shrink-0 place-items-center text-muted-foreground/60">
-          {streaming ? (
-            <LoaderCircle
-              aria-label="Applying changes"
-              className={cn("size-3.5", !reduce && "animate-spin")}
-            />
-          ) : (
-            <Check aria-label="Changes applied" className="size-3.5" />
-          )}
-        </span>
+        {hasEdits || streaming ? (
+          <>
+            <span className="flex shrink-0 items-center gap-2">
+              <ChangeCount value={additions} type="added" />
+              <ChangeCount value={deletions} type="removed" />
+            </span>
+            <span className="grid size-4 shrink-0 place-items-center text-muted-foreground/60">
+              {streaming ? (
+                <LoaderCircle
+                  aria-label="Applying changes"
+                  className={cn("size-3.5", !reduce && "animate-spin")}
+                />
+              ) : (
+                <Check aria-label="Changes applied" className="size-3.5" />
+              )}
+            </span>
+          </>
+        ) : null}
         <motion.span
           aria-hidden="true"
           animate={{ rotate: currentOpen ? 180 : 0 }}
@@ -184,18 +203,19 @@ export function FileDiff({
               ref={viewportRef}
               data-slot="file-diff-viewport"
               aria-live="polite"
-              className="scrollbar-none overflow-auto [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="overflow-x-hidden overflow-y-auto"
               style={{ maxHeight }}
             >
               <div className="font-mono text-xs leading-5">
-                <span className="sr-only">File changes</span>
+                <span className="sr-only">{hasEdits ? "File changes" : "File"}</span>
                 {lines.map((line, index) => {
                   const type = line.type ?? "context";
                   return (
                     <div
                       key={line.id}
+                      data-diff-line={type}
                       className={cn(
-                        "grid grid-cols-[2.25rem_2.25rem_1rem_minmax(0,1fr)]",
+                        "grid grid-cols-[2.25rem_2.25rem_1rem_minmax(0,1fr)] items-start",
                         type === "added" && "bg-emerald-500/[0.07]",
                         type === "removed" && "bg-rose-500/[0.07]"
                       )}
@@ -218,7 +238,7 @@ export function FileDiff({
                       <AgentCodeLine
                         code={line.content}
                         tokens={tokens?.[index]}
-                        className="min-w-0 px-1.5 whitespace-pre"
+                        className="min-w-0 px-1.5 wrap-anywhere whitespace-pre-wrap"
                       />
                     </div>
                   );

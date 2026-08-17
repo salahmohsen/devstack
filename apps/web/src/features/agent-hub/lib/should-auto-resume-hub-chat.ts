@@ -4,14 +4,18 @@ import { searchBriefUserTurnNeedsSpokenAnswer } from "@tsu-stack/core";
 
 import {
   HUB_FIND_JOBS_NOW_TOOL_NAMES,
+  HUB_GET_DAILY_BRIEF_TOOL_NAMES,
   HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
+  HUB_OPEN_DAILY_BRIEF_TOOL_NAMES,
+  HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES,
   HUB_OPEN_ENTITY_FORM_TOOL_NAMES,
   HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES,
   HUB_OPEN_SURFACE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
   HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES,
   HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES,
-  HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES
+  HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES,
+  isLaterEvidenceAfterSameEntityConfirm
 } from "./hub-tool-names";
 
 /**
@@ -29,7 +33,9 @@ export const HUB_CLIENT_RESUME_TOOL_NAMES = new Set([
   ...HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES,
   ...HUB_FIND_JOBS_NOW_TOOL_NAMES,
   ...HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
-  ...HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES
+  ...HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES,
+  ...HUB_OPEN_DAILY_BRIEF_TOOL_NAMES,
+  ...HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES
 ]);
 
 type ToolLikePart = {
@@ -51,8 +57,24 @@ export const PREMATURE_HITL_TEXT_RE =
 
 const SEARCH_BRIEF_WRAPUP_RE = /search brief is current|here(?:'s| is) your (?:search )?brief/i;
 
+const DAILY_BRIEF_WRAPUP_RE = /today is open in the side panel|^#\s*today\b|^\*\*new in/im;
+
 const FAILED_CONTINUATION_TEXT_RE =
   /tool-step limit|step limit was reached|couldn.?t run|could not run|couldn.?t execute/i;
+
+const PROCESSOR_LEAK_RE =
+  /<system-reminder>|Call getDailyBrief now|call openDailyBrief|already returned facts\. Write the Today letter|Do NOT call getSearchBrief|Extract already ran\. Do NOT call jobPageExtractor|Call getDailyBrief now for facts/i;
+
+export function isHubProcessorLeakText(text: string): boolean {
+  return PROCESSOR_LEAK_RE.test(text);
+}
+
+function looksLikeDailyBriefLetter(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (DAILY_BRIEF_WRAPUP_RE.test(t)) return true;
+  return /^#{1,3}\s/m.test(t) && /\b(new jobs|tracked|mail)\b/i.test(t);
+}
 
 function isToolUiPart(part: { type: string }): boolean {
   return (
@@ -119,11 +141,35 @@ function isClientToolWaiting(part: ToolLikePart): boolean {
 export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): number | null {
   let lastWaiting = -1;
   let lastComplete = -1;
+  let lastDailyBrief = -1;
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
-    if (!part || !isToolUiPart(part) || !isClientResumeTool(part)) continue;
+    if (!part || !isToolUiPart(part)) continue;
+    if (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(toolNameFromPart(part)) && isClientToolComplete(part)) {
+      lastDailyBrief = i;
+    }
+    if (!isClientResumeTool(part)) continue;
     if (isClientToolWaiting(part)) lastWaiting = i;
     else if (isClientToolComplete(part)) lastComplete = i;
+  }
+
+  if (lastDailyBrief >= 0 && lastWaiting < 0) {
+    const after = parts.slice(lastDailyBrief + 1);
+    const laterTool = after.some((part) => isToolUiPart(part));
+    if (laterTool) return null;
+    const afterText = after
+      .filter(
+        (part) =>
+          part.type === "text" &&
+          Boolean(part.text?.trim()) &&
+          !isHubProcessorLeakText(part.text ?? "")
+      )
+      .map((part) => part.text ?? "")
+      .join("\n");
+    if (!afterText.trim() || looksLikeDailyBriefLetter(afterText)) {
+      return lastDailyBrief;
+    }
+    return null;
   }
 
   if (lastWaiting >= 0) return lastWaiting;
@@ -132,11 +178,19 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
     const completePart = parts[lastComplete];
     if (completePart) {
       const completeName = toolNameFromPart(completePart);
-      if (
-        HUB_FIND_JOBS_NOW_TOOL_NAMES.has(completeName) ||
-        HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(completeName)
-      ) {
+      if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(completeName)) {
         return lastComplete;
+      }
+      if (HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES.has(completeName)) {
+        return lastComplete;
+      }
+      if (HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(completeName)) {
+        return lastComplete;
+      }
+      if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(completeName)) {
+        // After confirm/cancel, show the next interview. Do not hide because
+        // of PREMATURE_HITL_TEXT (that would swallow "Next, RAYA…").
+        return null;
       }
       if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(completeName)) {
         const afterBrief = parts
@@ -147,11 +201,6 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
         if (SEARCH_BRIEF_WRAPUP_RE.test(afterBrief) || PREMATURE_HITL_TEXT_RE.test(afterBrief)) {
           return lastComplete;
         }
-        return null;
-      }
-      if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(completeName)) {
-        // After confirm/cancel, show the next interview. Do not hide because
-        // of PREMATURE_HITL_TEXT (that would swallow "Next, RAYA…").
         return null;
       }
     }
@@ -175,6 +224,11 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
     if (FAILED_CONTINUATION_TEXT_RE.test(afterText)) return null;
     if (PREMATURE_HITL_TEXT_RE.test(afterText)) return lastComplete;
   }
+
+  const leakIdx = parts.findIndex(
+    (part) => part.type === "text" && isHubProcessorLeakText(part.text ?? "")
+  );
+  if (leakIdx >= 0) return leakIdx - 1;
 
   return null;
 }
@@ -258,21 +312,54 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
       if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name)) {
         return false;
       }
+      if (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES.has(name)) {
+        return false;
+      }
       if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
         return briefNeedsSpokenAnswer && !hasFinalTextAfter;
+      }
+      if (HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES.has(name)) {
+        return false;
       }
       if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
         const evidenceOutput =
           p.output && typeof p.output === "object" && !Array.isArray(p.output)
             ? (p.output as { action?: unknown })
             : undefined;
-        return evidenceOutput?.action === "confirm" || evidenceOutput?.action === "cancel";
+        if (evidenceOutput?.action === "confirm") {
+          // A later sibling in this step (same-entity leftover or next card)
+          // owns continuation. Resume only when this confirm is the latest.
+          const laterEvidence = clientTools.some((other, otherIndex) => {
+            if (otherIndex <= clientTools.indexOf(p)) return false;
+            return HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(toolNameFromPart(other));
+          });
+          return !laterEvidence;
+        }
+        if (evidenceOutput?.action === "cancel") {
+          // Auto-cancel of a same-id leftover must not restart the loop.
+          if (isLaterEvidenceAfterSameEntityConfirm(messages, p.toolCallId ?? "")) {
+            return false;
+          }
+          const laterEvidence = clientTools.some((other, otherIndex) => {
+            if (otherIndex <= clientTools.indexOf(p)) return false;
+            return HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(toolNameFromPart(other));
+          });
+          // A later sibling (usually the same entity again) owns continuation.
+          return !laterEvidence;
+        }
+        return false;
       }
-      if (
-        HUB_OPEN_SURFACE_TOOL_NAMES.has(name) ||
-        HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name) ||
-        HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES.has(name)
-      ) {
+      if (HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES.has(name)) {
+        // Side panel already opened. Re-POSTing restacks "Opened project…"
+        return false;
+      }
+      if (HUB_OPEN_SURFACE_TOOL_NAMES.has(name) || HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name)) {
         return true;
       }
       const output =
@@ -280,17 +367,18 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
           ? (p.output as { action?: unknown; applicationId?: unknown })
           : undefined;
       const action = output?.action;
-      // JD card buttons finish CRM on the client. Do not re-POST — that
-      // re-runs URL import and renders a second card for the same listing.
+      // JD card buttons and triage Confirm finish CRM on the client.
+      // Re-POSTing after triage confirm re-proposed a second card.
       if (
         action === "dismiss" ||
         action === "cancel" ||
         action === "package" ||
-        action === "save"
+        action === "save" ||
+        action === "confirm"
       ) {
         return false;
       }
-      return action === "confirm";
+      return false;
     });
 
     if (!needsMutationContinuation) {
@@ -299,11 +387,29 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
         if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name)) {
           return true;
         }
+        if (HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES.has(name)) {
+          return true;
+        }
         if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
           return !briefNeedsSpokenAnswer;
         }
+        if (HUB_GET_DAILY_BRIEF_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (
+          HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(name) ||
+          HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES.has(name)
+        ) {
+          return true;
+        }
         if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
-          return false;
+          return isLaterEvidenceAfterSameEntityConfirm(messages, p.toolCallId ?? "");
         }
         const output =
           p.output && typeof p.output === "object" && !Array.isArray(p.output)
@@ -313,7 +419,8 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
           output?.action === "dismiss" ||
           output?.action === "cancel" ||
           output?.action === "package" ||
-          output?.action === "save"
+          output?.action === "save" ||
+          output?.action === "confirm"
         );
       });
       if (terminal) return false;

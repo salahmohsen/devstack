@@ -4,6 +4,8 @@ import { type ToolCallMessagePartProps } from "@assistant-ui/react";
 import * as React from "react";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
+import { toolCallIsOnLatestAssistant } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
+import { clearDailyBriefRequest } from "@/features/agent-hub/lib/daily-brief-host-store";
 import { requestEntityInspect } from "@/features/agent-hub/lib/entity-inspect-host-store";
 import {
   isOpenEntityInspectToolName,
@@ -25,8 +27,9 @@ export function OpenEntityInspectToolUI({
   toolName,
   status
 }: ToolCallMessagePartProps<OpenEntityInspectInput, OpenEntityInspectOutput>) {
-  const { addToolOutput } = useHubChat();
+  const { addToolOutput, messages } = useHubChat();
   const completedRef = React.useRef(false);
+  const onLatest = toolCallIsOnLatestAssistant(messages, toolCallId);
 
   const resolvedToolName = isOpenEntityInspectToolName(toolName ?? "")
     ? (toolName as string)
@@ -67,6 +70,17 @@ export function OpenEntityInspectToolUI({
       return;
     }
 
+    if (!onLatest) {
+      complete({
+        ok: true,
+        kind: input.kind,
+        id: input.id,
+        opened: false
+      });
+      return;
+    }
+
+    clearDailyBriefRequest();
     requestEntityInspect({
       requestId: toolCallId,
       kind: input.kind,
@@ -80,7 +94,7 @@ export function OpenEntityInspectToolUI({
       id: input.id,
       opened: true
     });
-  }, [args, complete, completed, resolvedToolName, status?.type, toolCallId]);
+  }, [args, complete, completed, onLatest, resolvedToolName, status?.type, toolCallId]);
 
   if (completed) {
     const noun =

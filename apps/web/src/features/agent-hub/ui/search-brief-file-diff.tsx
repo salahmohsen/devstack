@@ -3,18 +3,25 @@
 import * as React from "react";
 
 import { FileDiff } from "@/shared/ui/agents/file-diff/file-diff";
-import { lineDiff } from "@/shared/ui/agents/file-diff/line-diff";
+import {
+  lineDiff,
+  previewFileLines,
+  searchBriefChanged
+} from "@/shared/ui/agents/file-diff/line-diff";
 
 export function SearchBriefFileDiff({
   previousMarkdown,
-  markdown
+  markdown,
+  rebuilt
 }: {
-  previousMarkdown: string;
+  previousMarkdown: string | null;
   markdown: string;
+  rebuilt?: boolean;
 }) {
+  const editing = searchBriefChanged(previousMarkdown, markdown, rebuilt);
   const lines = React.useMemo(
-    () => lineDiff(previousMarkdown, markdown),
-    [markdown, previousMarkdown]
+    () => (editing ? lineDiff(previousMarkdown ?? "", markdown) : previewFileLines(markdown)),
+    [editing, markdown, previousMarkdown]
   );
 
   return (
@@ -22,12 +29,13 @@ export function SearchBriefFileDiff({
       file="search-brief.md"
       lines={lines}
       status="complete"
-      defaultOpen={false}
-      collapseOnComplete
+      defaultOpen
+      collapseOnComplete={false}
       language="text"
       copyText={markdown}
       copyLabel="Copy brief"
-      className="w-full max-w-[min(72ch,100%)]"
+      maxHeight={420}
+      className="w-full max-w-[min(72ch,100%)] min-w-0"
     />
   );
 }

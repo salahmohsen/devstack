@@ -18,6 +18,24 @@ export function searchBriefChanged(
   return previousMarkdown !== (markdown ?? null);
 }
 
+/** Show the brief card whenever markdown exists — cache hit and first build included. */
+export function shouldRenderSearchBriefFileDiff(markdown: string | null | undefined): boolean {
+  return typeof markdown === "string" && markdown.trim().length > 0;
+}
+
+/** Plain file view: every line is context (no + / −). */
+export function previewFileLines(markdown: string): FileDiffLine[] {
+  const rows = markdown.length === 0 ? [""] : markdown.replaceAll("\r\n", "\n").split("\n");
+  return rows.map((content, index) => {
+    return {
+      id: String(index + 1),
+      type: "context" as const,
+      newLine: index + 1,
+      content
+    };
+  });
+}
+
 function toLines(value: string): string[] {
   if (value.length === 0) return [];
   return value.replaceAll("\r\n", "\n").split("\n");

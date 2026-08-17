@@ -112,27 +112,21 @@ function toastMissingAiKey() {
 
 function stepForPoll(index: number, ingestTriggered: boolean, newJobsFound: number): string {
   if (newJobsFound > 0) {
-    return newJobsFound === 1
-      ? "1 keeper under New jobs so far…"
-      : `${newJobsFound} keepers under New jobs so far…`;
+    return newJobsFound === 1 ? "1 new job so far…" : `${newJobsFound} new jobs so far…`;
   }
   if (index <= 0) {
-    return ingestTriggered
-      ? "Refreshing public boards, then scoring matches…"
-      : "Scoring matches, then adding keepers…";
+    return ingestTriggered ? "Refreshing boards…" : "Scoring matches…";
   }
   if (index === 1) {
-    return ingestTriggered
-      ? "Fetching board listings & scoring matches…"
-      : "Scoring catalog listings, then adding keepers…";
+    return ingestTriggered ? "Scoring board listings…" : "Scoring catalog listings…";
   }
   if (index === 2) {
-    return "Still scoring — keepers appear under New jobs when they pass…";
+    return "Still scoring…";
   }
   if (index === 3) {
-    return "Duplicates are skipped; waiting for remaining evaluations…";
+    return "Skipping duplicates…";
   }
-  return "Finishing remaining evaluations…";
+  return "Finishing up…";
 }
 
 /**
@@ -168,7 +162,7 @@ export async function enqueueFindJobsNow(
   queryClient: QueryClient,
   input?: FindJobsNowInput
 ): Promise<FindJobsNowOutput> {
-  return runFindJobsNow(queryClient, input, false);
+  return runFindJobsNow(queryClient, input, { awaitPoll: false, showToast: false });
 }
 
 /**
@@ -179,25 +173,28 @@ export async function startFindJobsNow(
   queryClient: QueryClient,
   input?: FindJobsNowInput
 ): Promise<void> {
-  await runFindJobsNow(queryClient, input, true);
+  await runFindJobsNow(queryClient, input, { awaitPoll: true, showToast: true });
 }
 
 async function runFindJobsNow(
   queryClient: QueryClient,
   input: FindJobsNowInput | undefined,
-  awaitPoll: boolean
+  options: { awaitPoll: boolean; showToast: boolean }
 ): Promise<FindJobsNowOutput> {
+  const { awaitPoll, showToast } = options;
   const existing = getFindJobsNowState();
   if (existing.status === "running") {
-    toast.info("Find jobs now already running", {
-      description: existing.stepLabel ?? "Search continues in the background.",
-      action: (
-        <Link to="/dashboard/new-jobs" data-button>
-          New jobs
-        </Link>
-      )
-    });
-    showRunningToast();
+    if (showToast) {
+      toast.info("Find jobs now already running", {
+        description: existing.stepLabel ?? "Search continues in the background.",
+        action: (
+          <Link to="/dashboard/new-jobs" data-button>
+            New jobs
+          </Link>
+        )
+      });
+      showRunningToast();
+    }
     return {
       ...ALREADY_RUNNING,
       ingestTriggered: existing.ingestTriggered,
@@ -210,14 +207,14 @@ async function runFindJobsNow(
 
   setFindJobsNowState({
     status: "running",
-    stepLabel: "Checking your title and inbox…",
+    stepLabel: "Checking title and inbox…",
     ingestTriggered: false,
     seats: 0,
     newJobsFound: 0,
     error: null,
     startedAt: Date.now()
   });
-  showRunningToast();
+  if (showToast) showRunningToast();
 
   let handedOffPoll = false;
   try {
@@ -226,7 +223,7 @@ async function runFindJobsNow(
     if (!jobController.isCurrent(generation)) return data;
 
     if (data.reason === "title_required") {
-      toast.dismiss(FIND_TOAST_ID);
+      if (showToast) toast.dismiss(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "ready",
         stepLabel: null,
@@ -246,7 +243,7 @@ async function runFindJobsNow(
     }
 
     if (data.reason === "inbox_full") {
-      toast.dismiss(FIND_TOAST_ID);
+      if (showToast) toast.dismiss(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "ready",
         stepLabel: null,
@@ -258,7 +255,7 @@ async function runFindJobsNow(
     }
 
     if (data.reason === "ai_budget") {
-      toast.dismiss(FIND_TOAST_ID);
+      if (showToast) toast.dismiss(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "ready",
         stepLabel: null,
@@ -272,7 +269,7 @@ async function runFindJobsNow(
     }
 
     if (data.reason === "queue_unavailable" || !data.enqueued) {
-      toast.dismiss(FIND_TOAST_ID);
+      if (showToast) toast.dismiss(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "failed",
         stepLabel: null,
@@ -293,9 +290,7 @@ async function runFindJobsNow(
     setFindJobsNowState({
       ingestTriggered: data.ingestTriggered,
       seats: data.seats,
-      stepLabel: data.ingestTriggered
-        ? "Queued a board refresh — scoring runs after ingest…"
-        : "Queued scoring — keepers appear as they pass…"
+      stepLabel: data.ingestTriggered ? "Queued board refresh…" : "Queued scoring…"
     });
 
     const poll = () =>

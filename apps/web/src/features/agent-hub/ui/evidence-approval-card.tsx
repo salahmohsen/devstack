@@ -18,6 +18,7 @@ export function EvidenceApprovalCard({
   confirmDisabled,
   disabled = false,
   loading = false,
+  hint,
   onSubmit
 }: {
   toolCallId: string;
@@ -28,6 +29,7 @@ export function EvidenceApprovalCard({
   confirmDisabled: boolean;
   disabled?: boolean;
   loading?: boolean;
+  hint?: string;
   onSubmit: (action: "confirm" | "cancel") => void | Promise<void>;
 }) {
   const [submitting, setSubmitting] = React.useState<"confirm" | "cancel" | null>(null);
@@ -57,7 +59,7 @@ export function EvidenceApprovalCard({
           ? "This evidence proposal could not be read. Cancel to unlock the composer."
           : loading
             ? `Loading current ${kind}…`
-            : undefined
+            : hint
       }
       status={submitting != null ? "submitting" : "pending"}
       approveLabel="Confirm"

@@ -7,6 +7,8 @@ import {
   findOpenEntityFormOutputInMessages,
   findPendingProposeApplicationFromJd,
   hydrateProposeNewJobsTriageInput,
+  isExtraWaitingEvidenceCard,
+  isLaterEvidenceAfterSameEntityConfirm,
   isLaterHardStopAfterConfirm,
   isLaterTriageAfterConfirm,
   isOpenEntityFormToolName,
@@ -375,6 +377,226 @@ describe("isLaterTriageAfterConfirm", () => {
   });
 });
 
+describe("isLaterEvidenceAfterSameEntityConfirm", () => {
+  const userAsk = {
+    id: "u1",
+    role: "user" as const,
+    parts: [{ type: "text" as const, text: "tweak Dev-Hub then RAYA" }]
+  };
+
+  it("is false for the first evidence card this turn", () => {
+    expect(
+      isLaterEvidenceAfterSameEntityConfirm(
+        [
+          userAsk,
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolName: "propose-evidence-change",
+              toolCallId: "e1",
+              state: "input-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+              }
+            } as never
+          ])
+        ],
+        "e1"
+      )
+    ).toBe(false);
+  });
+
+  it("is true for a second propose of the same kind+id after cancel", () => {
+    expect(
+      isLaterEvidenceAfterSameEntityConfirm(
+        [
+          userAsk,
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolName: "propose-evidence-change",
+              toolCallId: "e1",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+              },
+              output: { action: "cancel", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-proposeEvidenceChange",
+              toolName: "proposeEvidenceChange",
+              toolCallId: "e2",
+              state: "input-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first platform" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first platform"
+              }
+            } as never
+          ])
+        ],
+        "e2"
+      )
+    ).toBe(true);
+  });
+
+  it("is true for a second propose of the same kind+id after confirm", () => {
+    expect(
+      isLaterEvidenceAfterSameEntityConfirm(
+        [
+          userAsk,
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolName: "propose-evidence-change",
+              toolCallId: "e1",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+              },
+              output: { action: "confirm", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-proposeEvidenceChange",
+              toolName: "proposeEvidenceChange",
+              toolCallId: "e2",
+              state: "input-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first platform" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first platform"
+              }
+            } as never
+          ])
+        ],
+        "e2"
+      )
+    ).toBe(true);
+  });
+
+  it("is false for a later card on a different entity (next interview)", () => {
+    expect(
+      isLaterEvidenceAfterSameEntityConfirm(
+        [
+          userAsk,
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolName: "propose-evidence-change",
+              toolCallId: "e1",
+              state: "output-available",
+              output: { action: "confirm", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-propose-evidence-change",
+              toolName: "propose-evidence-change",
+              toolCallId: "e2",
+              state: "input-available",
+              input: {
+                kind: "experience",
+                id: "exp_raya",
+                patch: { title: "Frontend" },
+                currentMarkdown: "# Experience: RAYA",
+                proposedMarkdown: "# Experience: Senior Frontend @ RAYA"
+              }
+            } as never
+          ])
+        ],
+        "e2"
+      )
+    ).toBe(false);
+  });
+});
+
+describe("isExtraWaitingEvidenceCard", () => {
+  it("keeps the first waiting card and marks later siblings extra", () => {
+    const thread = [
+      {
+        id: "u1",
+        role: "user" as const,
+        parts: [{ type: "text" as const, text: "add my stacks" }]
+      },
+      assistant([
+        {
+          type: "tool-propose-evidence-change",
+          toolName: "propose-evidence-change",
+          toolCallId: "s1",
+          state: "input-available",
+          input: {
+            kind: "stack",
+            patch: { name: "React" },
+            currentMarkdown: "",
+            proposedMarkdown: "# Stack: React"
+          }
+        } as never,
+        {
+          type: "tool-propose-evidence-change",
+          toolName: "propose-evidence-change",
+          toolCallId: "s2",
+          state: "input-available",
+          input: {
+            kind: "stack",
+            patch: { name: "Node" },
+            currentMarkdown: "",
+            proposedMarkdown: "# Stack: Node"
+          }
+        } as never
+      ])
+    ];
+    expect(isExtraWaitingEvidenceCard(thread, "s1")).toBe(false);
+    expect(isExtraWaitingEvidenceCard(thread, "s2")).toBe(true);
+  });
+
+  it("does not treat a later next-entity card as extra after confirm", () => {
+    expect(
+      isExtraWaitingEvidenceCard(
+        [
+          { id: "u1", role: "user" as const, parts: [{ type: "text" as const, text: "both" }] },
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolName: "propose-evidence-change",
+              toolCallId: "e1",
+              state: "output-available",
+              output: { action: "confirm", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-propose-evidence-change",
+              toolName: "propose-evidence-change",
+              toolCallId: "e2",
+              state: "input-available",
+              input: {
+                kind: "experience",
+                id: "exp_raya",
+                patch: { title: "Frontend" },
+                currentMarkdown: "# Experience: RAYA",
+                proposedMarkdown: "# Experience: Senior Frontend @ RAYA"
+              }
+            } as never
+          ])
+        ],
+        "e2"
+      )
+    ).toBe(false);
+  });
+});
+
 describe("isLaterHardStopAfterConfirm", () => {
   it("is true for a second hard-stop after confirm this turn", () => {
     expect(
@@ -495,7 +717,7 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       toolName: "open-entity-inspect",
       state: "input-available",
       expected: null,
-      resumeAfterOutput: true
+      resumeAfterOutput: false
     },
     {
       name: "accept package approval",
@@ -509,6 +731,13 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       toolName: "sendApplyOutreach",
       state: "approval-requested",
       expected: "approval",
+      resumeAfterOutput: false
+    },
+    {
+      name: "mail CRM confirm waiting locks composer",
+      toolName: "propose-mail-crm-change",
+      state: "input-available",
+      expected: "client",
       resumeAfterOutput: false
     },
     {
@@ -571,6 +800,46 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
       } as never
     ]);
     expect(lastHubHitlKind([receipt])).toBeNull();
+  });
+
+  it("does not lock a same-entity evidence re-propose after confirm", () => {
+    const thread = [
+      {
+        id: "u1",
+        role: "user" as const,
+        parts: [{ type: "text" as const, text: "tweak Dev-Hub" }]
+      },
+      assistant([
+        {
+          type: "tool-propose-evidence-change",
+          toolCallId: "e1",
+          toolName: "propose-evidence-change",
+          state: "output-available",
+          input: {
+            kind: "project",
+            id: "prj_1",
+            patch: { summary: "Backend" },
+            currentMarkdown: "# Project: Dev-Hub",
+            proposedMarkdown: "# Project: Dev-Hub\nBackend"
+          },
+          output: { action: "confirm", kind: "project", id: "prj_1" }
+        } as never,
+        {
+          type: "tool-proposeEvidenceChange",
+          toolCallId: "e2",
+          toolName: "proposeEvidenceChange",
+          state: "input-available",
+          input: {
+            kind: "project",
+            id: "prj_1",
+            patch: { summary: "Backend-first" },
+            currentMarkdown: "# Project: Dev-Hub",
+            proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+          }
+        } as never
+      ])
+    ];
+    expect(lastHubHitlKind(thread)).toBeNull();
   });
 
   it("locks a second evidence card after confirm this turn (next entity)", () => {

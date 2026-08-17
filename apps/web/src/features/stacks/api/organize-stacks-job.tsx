@@ -34,13 +34,13 @@ const ORGANIZE_WORKFLOW_ID = "organize-stacks-workflow";
 const ORGANIZE_TOAST_ID = "organize-stacks-job";
 
 const STEP_LABELS: Record<string, string> = {
-  "find-merges": "Finding duplicate stacks",
-  "find-renames": "Checking naming conventions",
-  "find-enrichments": "Analyzing metadata",
-  "fetch-missing-icons": "Fetching icons",
-  "sort-stacks": "Sorting by importance",
-  "pick-profile-stacks": "Picking profile stacks",
-  "format-output": "Preparing results"
+  "find-merges": "Finding duplicate stacks…",
+  "find-renames": "Checking names…",
+  "find-enrichments": "Checking metadata…",
+  "fetch-missing-icons": "Fetching icons…",
+  "sort-stacks": "Sorting stacks…",
+  "pick-profile-stacks": "Picking profile stacks…",
+  "format-output": "Preparing results…"
 };
 
 const jobController = createDetachedJobController({
@@ -77,7 +77,7 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
   };
   signal.addEventListener("abort", onAbort, { once: true });
 
-  setOrganizeJobState({ stepLabel: "Initializing" });
+  setOrganizeJobState({ stepLabel: "Starting…" });
 
   try {
     if (signal.aborted) {
@@ -194,7 +194,7 @@ export function startOrganizeStacksJob() {
 
   setOrganizeJobState({
     status: "running",
-    stepLabel: "Initializing",
+    stepLabel: "Starting…",
     runId: null,
     actions: [],
     sortOrder: [],

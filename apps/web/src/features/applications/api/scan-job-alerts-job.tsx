@@ -86,25 +86,21 @@ async function invalidateInbox(queryClient: QueryClient) {
 
 function stepForPoll(index: number, enqueued: number, newJobsFound: number): string {
   if (newJobsFound > 0) {
-    return newJobsFound === 1
-      ? "1 new match under New jobs so far…"
-      : `${newJobsFound} new matches under New jobs so far…`;
+    return newJobsFound === 1 ? "1 new job so far…" : `${newJobsFound} new jobs so far…`;
   }
   if (index <= 0) {
-    return enqueued === 1
-      ? "Harvesting 1 digest (extract listings, score, write matches)…"
-      : `Harvesting ${enqueued} digests (extract listings, score, write matches)…`;
+    return enqueued === 1 ? "Harvesting 1 digest…" : `Harvesting ${enqueued} digests…`;
   }
   if (index === 1) {
-    return "Fetching listing pages & scoring against Job preferences…";
+    return "Scoring listings…";
   }
   if (index === 2) {
-    return "Still working — only listings above your min match score appear…";
+    return "Still scoring…";
   }
   if (index === 3) {
-    return "Duplicates are skipped; waiting for remaining digests…";
+    return "Skipping duplicates…";
   }
-  return "Finishing remaining digests…";
+  return "Finishing up…";
 }
 
 /**
@@ -153,7 +149,7 @@ export async function startScanJobAlerts(
 
   setScanJobAlertsState({
     status: "running",
-    stepLabel: "Looking up recent job-alert digests…",
+    stepLabel: "Looking up digests…",
     digestsFound: 0,
     enqueued: 0,
     newJobsFound: 0,
@@ -199,10 +195,7 @@ export async function startScanJobAlerts(
     setScanJobAlertsState({
       digestsFound: data.digestsFound,
       enqueued: data.enqueued,
-      stepLabel:
-        data.enqueued === 1
-          ? "Queued 1 digest — harvest runs in the background…"
-          : `Queued ${data.enqueued} digests — harvest runs in the background…`
+      stepLabel: data.enqueued === 1 ? "Queued 1 digest…" : `Queued ${data.enqueued} digests…`
     });
 
     await invalidateInbox(queryClient);

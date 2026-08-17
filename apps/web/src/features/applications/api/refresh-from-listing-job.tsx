@@ -29,12 +29,12 @@ const REFRESH_TOAST_ID = "refresh-from-listing-job";
 
 /** Client-side step labels while the single RPC runs (server has no stream yet). */
 const STEP_SCHEDULE_MS: AiJobStepSchedule = [
-  { at: 0, label: "Validating posting URL…" },
-  { at: 500, label: "Fetching listing page…" },
-  { at: 2_200, label: "Extracting title, company & description…" },
-  { at: 7_500, label: "Rescoring match percentage…" },
-  { at: 14_000, label: "Regenerating agent take…" },
-  { at: 22_000, label: "Saving updated job details…" }
+  { at: 0, label: "Checking listing URL…" },
+  { at: 500, label: "Fetching listing…" },
+  { at: 2_200, label: "Reading listing…" },
+  { at: 7_500, label: "Rescoring match…" },
+  { at: 14_000, label: "Rewriting agent take…" },
+  { at: 22_000, label: "Saving details…" }
 ];
 
 const jobController = createDetachedJobController({
@@ -42,15 +42,8 @@ const jobController = createDetachedJobController({
 });
 
 function RefreshRunningToastBody() {
-  const { stepLabel, title, companyName } = useRefreshFromListingJob();
-  const subtitle =
-    title && companyName ? `${title} · ${companyName}` : (title ?? companyName ?? null);
-  return (
-    <AiJobRunningToastBody
-      title={subtitle ? `Updating job details — ${subtitle}` : "Updating job details…"}
-      stepLabel={stepLabel}
-    />
-  );
+  const { stepLabel } = useRefreshFromListingJob();
+  return <AiJobRunningToastBody title="Updating job details…" stepLabel={stepLabel} />;
 }
 
 function showRunningToast() {

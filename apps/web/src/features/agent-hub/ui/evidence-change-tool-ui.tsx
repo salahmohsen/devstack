@@ -7,6 +7,7 @@ import * as React from "react";
 import { orpcClient, orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
   evidenceGoalsReady,
+  projectPatchGroundedInAnalysis,
   type EvidenceKind,
   type ProposeEvidenceChangeInput,
   type ProposeEvidenceChangeOutput
@@ -24,6 +25,8 @@ import {
   type EvidenceWrite
 } from "@/features/agent-hub/lib/evidence-change-payload";
 import {
+  isExtraWaitingEvidenceCard,
+  isLaterEvidenceAfterSameEntityConfirm,
   isProposeEvidenceChangeToolName,
   parseProposeEvidenceChangeInput,
   parseProposeEvidenceChangeOutput
@@ -54,6 +57,9 @@ export function EvidenceChangeToolUI({
   const completed = parseProposeEvidenceChangeOutput(result);
   const kind = proposal?.kind;
   const id = proposal?.id;
+  const hideAsSuperseded =
+    isLaterEvidenceAfterSameEntityConfirm(messages, toolCallId) ||
+    isExtraWaitingEvidenceCard(messages, toolCallId);
   const resolvedToolName = isProposeEvidenceChangeToolName(toolName ?? "")
     ? (toolName as string)
     : EVIDENCE_CHANGE_TOOL_ID;
@@ -89,12 +95,26 @@ export function EvidenceChangeToolUI({
         : mergeEvidenceRecord(null, proposal.patch);
   const markdownEmpty = !proposal || proposal.proposedMarkdown.trim().length === 0;
   const ready = Boolean(kind && record && evidenceGoalsReady(kind, record));
+  const analysisGrounding =
+    kind === "project" && proposal
+      ? projectPatchGroundedInAnalysis({
+          mode: id ? "update" : "create",
+          analysis:
+            typeof currentRow?.analysis === "string"
+              ? currentRow.analysis
+              : typeof record?.analysis === "string"
+                ? record.analysis
+                : null,
+          patch: proposal.patch
+        })
+      : { ok: true as const };
   const confirmDisabled =
     proposal == null ||
     !ready ||
     markdownEmpty ||
     currentLoading ||
-    (Boolean(id) && currentMissing);
+    (Boolean(id) && currentMissing) ||
+    !analysisGrounding.ok;
 
   const complete = React.useCallback(
     (output: ProposeEvidenceChangeOutput) => {
@@ -179,7 +199,18 @@ export function EvidenceChangeToolUI({
     [cancelSiblingCards, complete, currentRow, id, kind, proposal, queryClient, record]
   );
 
+  React.useEffect(() => {
+    if (completed || !toolCallId) return;
+    if (!hideAsSuperseded) return;
+    complete({
+      action: "cancel",
+      kind: kind ?? "project",
+      ...(id ? { id } : {})
+    });
+  }, [complete, completed, hideAsSuperseded, id, kind, toolCallId]);
+
   if (completed) {
+    if (hideAsSuperseded) return null;
     if (completed.action === "cancel") {
       return (
         <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
@@ -193,6 +224,8 @@ export function EvidenceChangeToolUI({
       </p>
     );
   }
+
+  if (hideAsSuperseded) return null;
 
   if (!proposal) {
     if (status?.type === "running") {
@@ -224,6 +257,13 @@ export function EvidenceChangeToolUI({
       proposedMarkdown={proposal.proposedMarkdown}
       confirmDisabled={confirmDisabled}
       loading={currentLoading}
+      hint={
+        !analysisGrounding.ok
+          ? analysisGrounding.reason === "missing_analysis"
+            ? "This rewrite needs the project analysis notes (or facts you just added)."
+            : "This rewrite is not backed by the project analysis notes."
+          : undefined
+      }
       disabled={result != null || !toolCallId}
       onSubmit={handleSubmit}
     />

@@ -6,7 +6,7 @@ import * as React from "react";
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type GetSearchBriefOutput } from "@tsu-stack/core";
 
-import { searchBriefChanged } from "@/shared/ui/agents/file-diff/line-diff";
+import { shouldRenderSearchBriefFileDiff } from "@/shared/ui/agents/file-diff/line-diff";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import { isGetSearchBriefToolName } from "@/features/agent-hub/lib/hub-tool-names";
@@ -84,10 +84,10 @@ export function GetSearchBriefToolUI({
     );
   }
 
-  if (!searchBriefChanged(result.previousMarkdown, result.markdown, result.rebuilt)) {
+  if (!shouldRenderSearchBriefFileDiff(result.markdown)) {
     return (
       <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        Search brief is current.
+        No search brief yet.
       </p>
     );
   }
@@ -95,8 +95,9 @@ export function GetSearchBriefToolUI({
   return (
     <React.Suspense fallback={null}>
       <SearchBriefFileDiff
-        previousMarkdown={result.previousMarkdown ?? ""}
+        previousMarkdown={result.previousMarkdown ?? null}
         markdown={result.markdown ?? ""}
+        rebuilt={result.rebuilt}
       />
     </React.Suspense>
   );

@@ -13,8 +13,13 @@ describe("humanizeHubToolName — search-loop labels", () => {
   it.each([
     ["upsert-soft-job-preferences", "Updating job preferences"],
     ["upsertSoftJobPreferences", "Updating job preferences"],
+    ["propose-hard-preference-change", "Updating hard-stop preferences"],
+    ["proposeHardPreferenceChange", "Updating hard-stop preferences"],
     ["find-jobs-now", "Finding jobs"],
     ["get-search-brief", "Loading search brief"],
+    ["get-daily-brief", "Gathering today"],
+    ["open-daily-brief", "Opening today"],
+    ["classify-mail", "Reading that mail"],
     ["open-entity-form", "Opening experience form"],
     ["open-entity-inspect", "Opening project"]
   ] as const)("%s → %s", (name, label) => {
@@ -31,13 +36,17 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("openEntityForm")).toBe(false);
     expect(isHubWorkingStripToolName("generateApplyPackage")).toBe(false);
     expect(isHubWorkingStripToolName("create-application")).toBe(false);
-    expect(isHubWorkingStripToolName("propose-hard-preference-change")).toBe(false);
+    expect(isHubWorkingStripToolName("propose-hard-preference-change")).toBe(true);
     expect(isHubWorkingStripToolName("propose-evidence-change")).toBe(false);
     expect(isHubWorkingStripToolName("proposeEvidenceChange")).toBe(false);
     expect(isHubWorkingStripToolName("find-jobs-now")).toBe(false);
     expect(isHubWorkingStripToolName("open-entity-form")).toBe(false);
     expect(isHubWorkingStripToolName("open-entity-inspect")).toBe(false);
     expect(isHubWorkingStripToolName("get-search-brief")).toBe(false);
+    expect(isHubWorkingStripToolName("get-daily-brief")).toBe(false);
+    expect(isHubWorkingStripToolName("open-daily-brief")).toBe(false);
+    expect(isHubWorkingStripToolName("propose-mail-crm-change")).toBe(false);
+    expect(isHubWorkingStripToolName("classify-mail")).toBe(true);
   });
 
   it("includes extract and other server tools as working-strip steps", () => {
@@ -49,6 +58,26 @@ describe("isHubWorkingStripToolName", () => {
 });
 
 describe("buildHubAgentActivityItems", () => {
+  it("includes hard-stop as a step so history is not empty after confirm", () => {
+    const items = buildHubAgentActivityItems([
+      {
+        type: "tool-propose-hard-preference-change",
+        toolName: "propose-hard-preference-change",
+        toolCallId: "hard1",
+        state: "output-available",
+        output: { action: "confirm" }
+      }
+    ]);
+    expect(items).toEqual([
+      {
+        id: "hard1",
+        type: "step",
+        label: "Updating hard-stop preferences",
+        status: "complete"
+      }
+    ]);
+  });
+
   it("omits propose-evidence-change — ApprovalCard is the thread surface", () => {
     const items = buildHubAgentActivityItems([
       {
@@ -99,9 +128,9 @@ describe("buildHubAgentActivityItems", () => {
     ]);
   });
 
-  it("maps extract + reasoning and skips the JD card tool", () => {
+  it("maps extract and skips reasoning plus the JD card tool", () => {
     const items = buildHubAgentActivityItems([
-      { type: "reasoning", text: "Need the listing body first." },
+      { type: "reasoning", text: "Need the listing body first. Wait — maxSteps 16." },
       {
         type: "tool-jobPageExtractor",
         toolName: "jobPageExtractor",
@@ -116,26 +145,18 @@ describe("buildHubAgentActivityItems", () => {
       }
     ]);
     expect(items).toEqual([
-      { id: "reasoning-0-0", type: "text", content: "Need the listing body first." },
       { id: "ex1", type: "step", label: "Reading listing", status: "complete" }
     ]);
   });
 
-  it("splits streamed reasoning into text rows", () => {
+  it("does not dump reasoning lines into the working strip", () => {
     const items = buildHubAgentActivityItems([
       {
         type: "reasoning",
         text: "Reading the request.\nSeparating content from presentation."
       }
     ]);
-    expect(items).toEqual([
-      { id: "reasoning-0-0", type: "text", content: "Reading the request." },
-      {
-        id: "reasoning-0-1",
-        type: "text",
-        content: "Separating content from presentation."
-      }
-    ]);
+    expect(items).toEqual([]);
   });
 
   it("marks a running extract as an active step", () => {

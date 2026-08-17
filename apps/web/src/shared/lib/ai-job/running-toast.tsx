@@ -15,9 +15,9 @@ export function AiJobRunningToastBody({
   stepLabel: string | null;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <span className="text-sm leading-snug font-medium">{title}</span>
-      <span className="shimmer text-sm leading-snug font-medium text-foreground">
+    <div className="flex w-full min-w-0 flex-col gap-0.5">
+      <span className="truncate text-sm leading-snug font-medium">{title}</span>
+      <span className="shimmer truncate text-sm leading-snug font-medium text-foreground">
         {stepLabel ?? "Working…"}
       </span>
     </div>
@@ -44,7 +44,7 @@ export function showAiJobRunningToast(options: {
     id,
     icon: <WorkflowSolvingOrb size="toast" />,
     className:
-      "w-[368px]! items-center! [&_[data-content]]:min-w-0! [&_[data-icon]]:size-[calc((2*0.875rem*1.375+0.125rem)/0.82)]! [&_[data-icon]]:min-h-[calc((2*0.875rem*1.375+0.125rem)/0.82)]! [&_[data-icon]]:min-w-[calc((2*0.875rem*1.375+0.125rem)/0.82)]!",
+      "w-[min(26.5rem,calc(100vw-2rem))]! items-center! [&_[data-content]]:min-w-0! [&_[data-content]]:flex-1! [&_[data-icon]]:size-[calc((2*0.875rem*1.375+0.125rem)/0.82)]! [&_[data-icon]]:min-h-[calc((2*0.875rem*1.375+0.125rem)/0.82)]! [&_[data-icon]]:min-w-[calc((2*0.875rem*1.375+0.125rem)/0.82)]!",
     duration: Infinity,
     action: {
       label: cancelLabel,

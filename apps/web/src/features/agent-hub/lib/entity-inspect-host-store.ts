@@ -1,7 +1,9 @@
 import { useRef, useSyncExternalStore } from "react";
 
 import { createExternalStore } from "@/shared/lib/ai-job";
+import { subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
 
+import { useDailyBriefHostActive } from "./daily-brief-host-store";
 import { type EntityFormKind, useEntityFormHostActive } from "./entity-form-host-store";
 
 export type EntityInspectHostRequest = {
@@ -17,6 +19,10 @@ type EntityInspectHostState = {
 };
 
 const store = createExternalStore<EntityInspectHostState>({ request: null });
+
+subscribeSidePanelClose(() => {
+  if (store.getState().request) store.setState({ request: null });
+});
 
 export function getEntityInspectHostState() {
   return store.getState();
@@ -60,5 +66,6 @@ export function useEntityInspectHostActive(): boolean {
 export function useEntityPanelHostActive(): boolean {
   const form = useEntityFormHostActive();
   const inspect = useEntityInspectHostActive();
-  return form || inspect;
+  const brief = useDailyBriefHostActive();
+  return form || inspect || brief;
 }

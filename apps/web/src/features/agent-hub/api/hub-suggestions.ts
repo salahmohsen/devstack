@@ -6,6 +6,11 @@ export type HubSuggestion = {
 
 export const HUB_SUGGESTIONS: HubSuggestion[] = [
   {
+    id: "today",
+    label: "What do you have for me today?",
+    prompt: "What do you have for me today?"
+  },
+  {
     id: "paste-jd",
     label: "Paste a job description…",
     prompt:

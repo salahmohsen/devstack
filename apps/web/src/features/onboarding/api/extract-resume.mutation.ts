@@ -17,12 +17,12 @@ export const RESUME_IMPORT_WORKFLOW_ID = "resume-import-workflow";
 
 /** Maps Mastra step ids (+ local synthetic phases) to UI copy. */
 export const RESUME_EXTRACT_STEP_LABELS: Record<string, string> = {
-  download: "Downloading resume",
-  "pdf-text": "Preparing resume text",
-  prepare: "Preparing resume text",
-  extract: "Extracting experience and skills",
-  normalize: "Normalizing fields",
-  format: "Building review draft"
+  download: "Downloading resume…",
+  "pdf-text": "Preparing resume text…",
+  prepare: "Preparing resume text…",
+  extract: "Extracting experience…",
+  normalize: "Normalizing fields…",
+  format: "Building review draft…"
 };
 
 function isResumeImportDraft(output: Record<string, unknown>): output is ResumeImportDraft {

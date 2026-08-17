@@ -16,7 +16,7 @@ export type NewJobsTriageCardInput = {
 export type NewJobsTriageCardProps = {
   toolCallId: string;
   input: NewJobsTriageCardInput;
-  onSubmit: (output: ProposeNewJobsTriageOutput) => void;
+  onSubmit: (output: ProposeNewJobsTriageOutput) => void | Promise<void>;
   disabled?: boolean;
   className?: string;
 };
@@ -128,17 +128,23 @@ export function NewJobsTriageCard({
   const handleConfirm = React.useCallback(() => {
     if (locked) return;
     setSubmitting(true);
-    onSubmit({
-      action: "confirm",
-      trackIds: input.track.map((r) => r.id).filter((id) => trackChecked.has(id)),
-      dismissIds: input.dismiss.map((r) => r.id).filter((id) => dismissChecked.has(id))
+    void Promise.resolve(
+      onSubmit({
+        action: "confirm",
+        trackIds: input.track.map((r) => r.id).filter((id) => trackChecked.has(id)),
+        dismissIds: input.dismiss.map((r) => r.id).filter((id) => dismissChecked.has(id))
+      })
+    ).catch(() => {
+      setSubmitting(false);
     });
   }, [dismissChecked, input.dismiss, input.track, locked, onSubmit, trackChecked]);
 
   const handleCancel = React.useCallback(() => {
     if (locked) return;
     setSubmitting(true);
-    onSubmit({ action: "cancel", trackIds: [], dismissIds: [] });
+    void Promise.resolve(onSubmit({ action: "cancel", trackIds: [], dismissIds: [] })).catch(() => {
+      setSubmitting(false);
+    });
   }, [locked, onSubmit]);
 
   return (
@@ -147,7 +153,7 @@ export function NewJobsTriageCard({
       title="New jobs triage"
       description="Uncheck anything you want to skip, then confirm. No jobs change until you confirm."
       toolCallId={toolCallId}
-      submitting={submitting}
+      submitting={submitting && !disabled}
       className={className}
       footer={
         <>

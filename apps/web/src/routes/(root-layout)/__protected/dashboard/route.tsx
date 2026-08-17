@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 
 import {
   HubChatProvider,
+  useDailyBriefHostSelector,
   useEntityFormHostSelector,
   useEntityInspectHostSelector
 } from "@/features/agent-hub";
@@ -31,6 +32,14 @@ const EntityInspectHost = lazy(() =>
   import("@/pages/dashboard/_lib/entity-inspect-host").then((m) => {
     return {
       default: m.EntityInspectHost
+    };
+  })
+);
+
+const DailyBriefHost = lazy(() =>
+  import("@/pages/dashboard/_lib/daily-brief-host").then((m) => {
+    return {
+      default: m.DailyBriefHost
     };
   })
 );
@@ -80,6 +89,16 @@ function DeferredEntityInspectHost() {
   );
 }
 
+function DeferredDailyBriefHost() {
+  const mount = useDailyBriefHostSelector((state) => state.request != null);
+  if (!mount) return null;
+  return (
+    <Suspense fallback={null}>
+      <DailyBriefHost />
+    </Suspense>
+  );
+}
+
 function DashboardLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const showFloater = !isDashboardHomePath(pathname);
@@ -93,6 +112,7 @@ function DashboardLayout() {
       {/* Chat-opened evidence forms stay on the current dashboard route */}
       <DeferredEntityFormHost />
       <DeferredEntityInspectHost />
+      <DeferredDailyBriefHost />
       <Outlet />
       {showFloater ? <HubAssistantModal /> : null}
     </HubChatProvider>

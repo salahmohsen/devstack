@@ -13,6 +13,7 @@ import {
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import {
+  isLaterHardStopAfterConfirm,
   isProposeHardPreferenceChangeToolName,
   parseProposeHardPreferenceChangeInput,
   parseProposeHardPreferenceChangeOutput
@@ -30,8 +31,9 @@ export function HardPreferenceChangeToolUI({
   toolName,
   status
 }: ToolCallMessagePartProps<ProposeHardPreferenceChangeInput, ProposeHardPreferenceChangeOutput>) {
-  const { addToolOutput } = useHubChat();
+  const { addToolOutput, messages } = useHubChat();
   const queryClient = useQueryClient();
+  const duplicateAfterConfirm = isLaterHardStopAfterConfirm(messages, toolCallId);
   const prefs = useQuery(
     orpcQueryClient.jobPreference.get.queryOptions({
       staleTime: 0,
@@ -68,6 +70,40 @@ export function HardPreferenceChangeToolUI({
     [addResult, addToolOutput, resolvedToolName, toolCallId]
   );
 
+  const cancelSiblingCards = React.useCallback(() => {
+    for (const msg of messages) {
+      if (msg.role !== "assistant") continue;
+      for (const raw of msg.parts ?? []) {
+        const part = raw as {
+          type?: string;
+          toolName?: string;
+          toolCallId?: string;
+          state?: string;
+        };
+        const type = part.type ?? "";
+        const isTool = type.startsWith("tool-") || type === "dynamic-tool";
+        if (!isTool) continue;
+        const name = part.toolName ?? (type.startsWith("tool-") ? type.slice("tool-".length) : "");
+        if (!isProposeHardPreferenceChangeToolName(name)) continue;
+        const id = part.toolCallId ?? "";
+        if (!id || id === toolCallId) continue;
+        if (
+          part.state !== "input-available" &&
+          part.state !== "input-streaming" &&
+          part.state !== "call" &&
+          part.state !== "partial-call"
+        ) {
+          continue;
+        }
+        void addToolOutput({
+          tool: name,
+          toolCallId: id,
+          output: { action: "cancel", patch: undefined }
+        });
+      }
+    }
+  }, [addToolOutput, messages, toolCallId]);
+
   const handleSubmit = React.useCallback(
     async (action: "confirm" | "cancel") => {
       if (action === "cancel" || !patch) {
@@ -91,20 +127,35 @@ export function HardPreferenceChangeToolUI({
         ...upsertInput,
         briefInvalidateSource: "hub"
       });
+      cancelSiblingCards();
       complete({ action: "confirm", patch });
     },
-    [complete, patch, prefs.data, upsertPreferences]
+    [cancelSiblingCards, complete, patch, prefs.data, upsertPreferences]
   );
 
+  React.useEffect(() => {
+    if (completed || !toolCallId) return;
+    if (!duplicateAfterConfirm) return;
+    complete({ action: "cancel", patch: patch ?? undefined });
+  }, [complete, completed, duplicateAfterConfirm, patch, toolCallId]);
+
   if (completed) {
+    if (duplicateAfterConfirm) return null;
+    if (completed.action === "cancel") {
+      return (
+        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+          You cancelled — no preference changes.
+        </p>
+      );
+    }
     return (
       <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        {completed.action === "confirm"
-          ? "Updated hard-stop preferences."
-          : "You cancelled — no preference changes."}
+        Updated hard-stop preferences.
       </p>
     );
   }
+
+  if (duplicateAfterConfirm) return null;
 
   if (!patch) {
     if (status?.type === "running") {

@@ -33,6 +33,48 @@ export function useCreateApplicationFromJdMutation() {
   );
 }
 
+export function usePromoteInboxJobMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    orpcQueryClient.applications.promote.mutationOptions({
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.applications.list.queryKey({
+              input: { trackingStatus: "inbox" }
+            })
+          }),
+          queryClient.invalidateQueries({ queryKey: trackedListKey() })
+        ]);
+      }
+    })
+  );
+}
+
+export function useDismissInboxJobMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    orpcQueryClient.applications.dismiss.mutationOptions({
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.applications.list.queryKey({
+              input: { trackingStatus: "dismissed" }
+            })
+          }),
+          queryClient.invalidateQueries({
+            queryKey: orpcQueryClient.applications.list.queryKey({
+              input: { trackingStatus: "inbox" }
+            })
+          })
+        ]);
+      }
+    })
+  );
+}
+
 export function useDismissApplicationFromJdMutation() {
   const queryClient = useQueryClient();
 
