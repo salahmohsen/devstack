@@ -11,6 +11,11 @@ import {
 } from "@tsu-stack/core";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
+import { toolCallIsOnLatestAssistant } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
+import {
+  isHubHitlAbandonedOnRemount,
+  subscribeHubHitlRemount
+} from "@/features/agent-hub/lib/hub-hitl-remount";
 import { isProposeMailCrmChangeToolName } from "@/features/agent-hub/lib/hub-tool-names";
 
 import { MailCrmChangeCard } from "./mail-crm-change-card";
@@ -89,7 +94,13 @@ export function MailCrmChangeToolUI({
   toolCallId,
   toolName
 }: ToolCallMessagePartProps<ProposeMailCrmChangeInput, ProposeMailCrmChangeOutput>) {
-  const { addToolOutput } = useHubChat();
+  const { addToolOutput, messages } = useHubChat();
+  const onLatest = toolCallIsOnLatestAssistant(messages, toolCallId);
+  const abandoned = React.useSyncExternalStore(
+    subscribeHubHitlRemount,
+    () => isHubHitlAbandonedOnRemount(toolCallId),
+    () => false
+  );
   const input = parseInput(args);
   const completed = parseOutput(result);
   const resolvedToolName = isProposeMailCrmChangeToolName(toolName ?? "")
@@ -124,18 +135,30 @@ export function MailCrmChangeToolUI({
     [finish, input]
   );
 
-  if (completed) {
-    if (completed.action === "cancel") {
+  React.useEffect(() => {
+    if (completed || !toolCallId) return;
+    if (onLatest && !abandoned) return;
+    finish({ action: "cancel" });
+  }, [abandoned, completed, finish, onLatest, toolCallId]);
+
+  const receiptAction = completed?.action ?? (abandoned || !onLatest ? "cancel" : null);
+
+  if (receiptAction) {
+    if (!input) {
       return (
         <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-          Cancelled — no CRM change.
+          {receiptAction === "confirm" ? "Updated from mail." : "No longer pending."}
         </p>
       );
     }
     return (
-      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        Updated from mail.
-      </p>
+      <MailCrmChangeCard
+        toolCallId={toolCallId}
+        input={input}
+        completedAction={receiptAction}
+        disabled
+        onSubmit={() => undefined}
+      />
     );
   }
 

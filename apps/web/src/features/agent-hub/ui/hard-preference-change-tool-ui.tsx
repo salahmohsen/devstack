@@ -12,6 +12,11 @@ import {
 } from "@tsu-stack/core";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
+import { toolCallIsOnLatestAssistant } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
+import {
+  isHubHitlAbandonedOnRemount,
+  subscribeHubHitlRemount
+} from "@/features/agent-hub/lib/hub-hitl-remount";
 import {
   isLaterHardStopAfterConfirm,
   isProposeHardPreferenceChangeToolName,
@@ -33,6 +38,12 @@ export function HardPreferenceChangeToolUI({
 }: ToolCallMessagePartProps<ProposeHardPreferenceChangeInput, ProposeHardPreferenceChangeOutput>) {
   const { addToolOutput, messages } = useHubChat();
   const queryClient = useQueryClient();
+  const onLatest = toolCallIsOnLatestAssistant(messages, toolCallId);
+  const abandoned = React.useSyncExternalStore(
+    subscribeHubHitlRemount,
+    () => isHubHitlAbandonedOnRemount(toolCallId),
+    () => false
+  );
   const duplicateAfterConfirm = isLaterHardStopAfterConfirm(messages, toolCallId);
   const prefs = useQuery(
     orpcQueryClient.jobPreference.get.queryOptions({
@@ -139,23 +150,34 @@ export function HardPreferenceChangeToolUI({
     complete({ action: "cancel", patch: patch ?? undefined });
   }, [complete, completed, duplicateAfterConfirm, patch, toolCallId]);
 
-  if (completed) {
-    if (duplicateAfterConfirm) return null;
-    if (completed.action === "cancel") {
+  React.useEffect(() => {
+    if (completed || !toolCallId) return;
+    if (onLatest && !abandoned) return;
+    complete({ action: "cancel", patch: patch ?? undefined });
+  }, [abandoned, complete, completed, onLatest, patch, toolCallId]);
+
+  const receiptAction = completed?.action ?? (abandoned || !onLatest ? "cancel" : null);
+
+  if (duplicateAfterConfirm) return null;
+
+  if (receiptAction) {
+    if (!patch) {
       return (
         <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-          You cancelled — no preference changes.
+          {receiptAction === "confirm" ? "Updated hard-stop preferences." : "No longer pending."}
         </p>
       );
     }
     return (
-      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        Updated hard-stop preferences.
-      </p>
+      <HardPreferenceConfirmCard
+        toolCallId={toolCallId}
+        patch={patch}
+        completedAction={receiptAction}
+        disabled
+        onSubmit={() => undefined}
+      />
     );
   }
-
-  if (duplicateAfterConfirm) return null;
 
   if (!patch) {
     if (status?.type === "running") {

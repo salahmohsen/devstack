@@ -155,7 +155,7 @@ export function NewJobsTriageCard({
 
   const receipt =
     completedAction === "cancel"
-      ? "Cancelled."
+      ? "No longer pending."
       : completedAction === "confirm"
         ? "Confirmed."
         : null;

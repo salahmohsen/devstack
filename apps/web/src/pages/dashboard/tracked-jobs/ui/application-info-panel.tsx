@@ -17,6 +17,7 @@ import { useState } from "react";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
+  APPLICATION_APPLY_METHOD_LABELS,
   APPLICATION_SOURCE_LABELS,
   APPLICATION_SOURCE_TAG_LABELS,
   assessAgentTakeReadiness,
@@ -43,6 +44,7 @@ import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
 
 import {
   ApplicationActivitySection,
+  ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
@@ -283,6 +285,7 @@ export function ApplicationInfoPanel({
               {item.matchScore != null ? (
                 <ApplicationMatchScoreBadge matchScore={item.matchScore} />
               ) : null}
+              <ApplicationApplyMethodBadge applyMethod={item.applyMethod} />
               {!isDiscovery ? <ApplicationStageBadge stage={item.stage} /> : null}
               {!isDiscovery ? <ApplicationStatusBadge outcome={item.outcome} /> : null}
               {!isDiscovery && item.hiringUrgency !== "unknown" ? (
@@ -472,6 +475,11 @@ export function ApplicationInfoPanel({
                 <SkillChips skills={item.preferredSkills ?? []} />
               </DetailRow>
               <DetailRow label="Source">{sourceDisplay ?? "—"}</DetailRow>
+              <DetailRow label="Apply method">
+                {item.applyMethod === "unknown"
+                  ? "—"
+                  : APPLICATION_APPLY_METHOD_LABELS[item.applyMethod]}
+              </DetailRow>
               <DetailRow label="Posting">
                 {item.url ? (
                   <Button
@@ -543,7 +551,7 @@ export function ApplicationInfoPanel({
             </ItemInfoSection>
           ) : null}
 
-          <ItemInfoSection title="Activity" icon={<HistoryIcon />}>
+          <ItemInfoSection title="Activity" icon={<HistoryIcon />} bodyClassName="mt-3.5 ps-0">
             <ApplicationActivitySection applicationId={item.id} hideHeading />
           </ItemInfoSection>
         </div>

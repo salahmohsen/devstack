@@ -107,10 +107,17 @@ type ItemInfoSectionProps = {
   icon?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  bodyClassName?: string;
 };
 
 /** Section heading + body, matching the review-card Summary / Highlights blocks. */
-export function ItemInfoSection({ title, icon, children, className }: ItemInfoSectionProps) {
+export function ItemInfoSection({
+  title,
+  icon,
+  children,
+  className,
+  bodyClassName
+}: ItemInfoSectionProps) {
   return (
     <section className={cn("min-w-0", className)}>
       <div className="flex items-center gap-2.5">
@@ -124,7 +131,13 @@ export function ItemInfoSection({ title, icon, children, className }: ItemInfoSe
         ) : null}
         <h3 className="text-[15px] font-semibold tracking-tight text-foreground">{title}</h3>
       </div>
-      <div className={cn("mt-2.5 text-sm leading-relaxed text-muted-foreground", icon && "pl-7")}>
+      <div
+        className={cn(
+          "mt-2.5 text-sm leading-relaxed text-muted-foreground",
+          icon && "ps-7",
+          bodyClassName
+        )}
+      >
         {children}
       </div>
     </section>

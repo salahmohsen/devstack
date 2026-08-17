@@ -19,7 +19,8 @@ export function EvidenceApprovalCard({
   disabled = false,
   loading = false,
   hint,
-  onSubmit
+  onSubmit,
+  completedAction = null
 }: {
   toolCallId: string;
   kind: EvidenceKind | null;
@@ -31,24 +32,26 @@ export function EvidenceApprovalCard({
   loading?: boolean;
   hint?: string;
   onSubmit: (action: "confirm" | "cancel") => void | Promise<void>;
+  completedAction?: "confirm" | "cancel" | null;
 }) {
   const [submitting, setSubmitting] = React.useState<"confirm" | "cancel" | null>(null);
   const lines = React.useMemo(
     () => lineDiff(currentMarkdown, proposedMarkdown),
     [currentMarkdown, proposedMarkdown]
   );
-  const confirmLocked = confirmDisabled || disabled || submitting != null;
+  const locked = disabled || completedAction != null;
+  const confirmLocked = confirmDisabled || locked || submitting != null;
 
   const handle = React.useCallback(
     (action: "confirm" | "cancel") => {
-      if (disabled || submitting != null) return;
+      if (locked || submitting != null) return;
       if (action === "confirm" && confirmLocked) return;
       setSubmitting(action);
       void Promise.resolve(onSubmit(action)).catch(() => {
         setSubmitting(null);
       });
     },
-    [confirmLocked, disabled, onSubmit, submitting]
+    [confirmLocked, locked, onSubmit, submitting]
   );
 
   return (
@@ -61,13 +64,28 @@ export function EvidenceApprovalCard({
             ? `Loading current ${kind}…`
             : hint
       }
-      status={submitting != null ? "submitting" : "pending"}
+      status={
+        completedAction === "confirm"
+          ? "approved"
+          : completedAction === "cancel"
+            ? "rejected"
+            : submitting != null
+              ? "submitting"
+              : "pending"
+      }
       approveLabel="Confirm"
       rejectLabel="Cancel"
-      onApprove={kind ? () => handle("confirm") : undefined}
-      onReject={() => handle("cancel")}
+      onApprove={completedAction || !kind ? undefined : () => handle("confirm")}
+      onReject={completedAction ? undefined : () => handle("cancel")}
       approveDisabled={confirmLocked}
-      rejectDisabled={disabled || submitting != null}
+      rejectDisabled={locked || submitting != null}
+      result={
+        completedAction === "confirm"
+          ? "Saved."
+          : completedAction === "cancel"
+            ? "No longer pending."
+            : undefined
+      }
       className="w-full max-w-[min(72ch,100%)]"
       data-tool-call-id={toolCallId}
       data-hitl-kind="confirm"

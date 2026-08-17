@@ -20,12 +20,14 @@ export function HardPreferenceConfirmCard({
   toolCallId,
   patch,
   onSubmit,
-  disabled = false
+  disabled = false,
+  completedAction = null
 }: {
   toolCallId: string;
   patch: ProposeHardPreferenceChangeInput | null;
   onSubmit: (action: "confirm" | "cancel") => void | Promise<void>;
   disabled?: boolean;
+  completedAction?: "confirm" | "cancel" | null;
 }) {
   const prefs = useQuery({
     ...orpcQueryClient.jobPreference.get.queryOptions({
@@ -68,19 +70,20 @@ export function HardPreferenceConfirmCard({
       view: describeHardPreferenceDelta(hardCurrent, patch)
     };
   }, [current, patch]);
+  const locked = disabled || completedAction != null;
   const confirmLocked =
-    patch == null || disabled || submitting != null || prefs.isLoading || !preview;
+    patch == null || locked || submitting != null || prefs.isLoading || !preview;
 
   const handle = React.useCallback(
     (action: "confirm" | "cancel") => {
-      if (disabled || submitting != null) return;
+      if (locked || submitting != null) return;
       if (action === "confirm" && confirmLocked) return;
       setSubmitting(action);
       void Promise.resolve(onSubmit(action)).catch(() => {
         setSubmitting(null);
       });
     },
-    [confirmLocked, disabled, onSubmit, submitting]
+    [confirmLocked, locked, onSubmit, submitting]
   );
 
   return (
@@ -93,13 +96,28 @@ export function HardPreferenceConfirmCard({
             ? "Loading current preferences…"
             : undefined
       }
-      status={submitting != null ? "submitting" : "pending"}
+      status={
+        completedAction === "confirm"
+          ? "approved"
+          : completedAction === "cancel"
+            ? "rejected"
+            : submitting != null
+              ? "submitting"
+              : "pending"
+      }
       approveLabel="Confirm"
       rejectLabel="Cancel"
-      onApprove={patch ? () => handle("confirm") : undefined}
-      onReject={() => handle("cancel")}
+      onApprove={completedAction || !patch ? undefined : () => handle("confirm")}
+      onReject={completedAction ? undefined : () => handle("cancel")}
       approveDisabled={confirmLocked}
-      rejectDisabled={disabled || submitting != null}
+      rejectDisabled={locked || submitting != null}
+      result={
+        completedAction === "confirm"
+          ? "Updated hard-stop preferences."
+          : completedAction === "cancel"
+            ? "No longer pending."
+            : undefined
+      }
       className="w-full max-w-[min(72ch,100%)]"
       data-tool-call-id={toolCallId}
       data-hitl-kind="confirm"

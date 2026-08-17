@@ -197,7 +197,7 @@ export function FileDiff({
       </button>
 
       <AgentDisclosure id={contentId} open={currentOpen}>
-        <section aria-labelledby={triggerId} className="pt-1.5 pl-6">
+        <section aria-labelledby={triggerId} className="pt-1.5">
           <div className="overflow-hidden rounded-xl bg-muted/80">
             <div
               ref={viewportRef}
@@ -215,15 +215,15 @@ export function FileDiff({
                       key={line.id}
                       data-diff-line={type}
                       className={cn(
-                        "grid grid-cols-[2.25rem_2.25rem_1rem_minmax(0,1fr)] items-start",
+                        "grid grid-cols-[2.25rem_2.25rem_1rem_minmax(0,1fr)] items-start ps-3",
                         type === "added" && "bg-emerald-500/[0.07]",
                         type === "removed" && "bg-rose-500/[0.07]"
                       )}
                     >
-                      <span className="pr-2 text-right text-muted-foreground/40 tabular-nums select-none">
+                      <span className="pe-2 text-end text-muted-foreground/40 tabular-nums select-none">
                         {line.oldLine}
                       </span>
-                      <span className="pr-2 text-right text-muted-foreground/40 tabular-nums select-none">
+                      <span className="pe-2 text-end text-muted-foreground/40 tabular-nums select-none">
                         {line.newLine}
                       </span>
                       <span

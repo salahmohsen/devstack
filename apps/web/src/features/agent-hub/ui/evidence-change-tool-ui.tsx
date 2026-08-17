@@ -18,12 +18,17 @@ import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
+import { toolCallIsOnLatestAssistant } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import {
   buildEvidenceWrite,
   mergeEvidenceRecord,
   rowToRecord,
   type EvidenceWrite
 } from "@/features/agent-hub/lib/evidence-change-payload";
+import {
+  isHubHitlAbandonedOnRemount,
+  subscribeHubHitlRemount
+} from "@/features/agent-hub/lib/hub-hitl-remount";
 import {
   isExtraWaitingEvidenceCard,
   isLaterEvidenceAfterSameEntityConfirm,
@@ -53,6 +58,12 @@ export function EvidenceChangeToolUI({
 }: ToolCallMessagePartProps<ProposeEvidenceChangeInput, ProposeEvidenceChangeOutput>) {
   const { addToolOutput, messages } = useHubChat();
   const queryClient = useQueryClient();
+  const onLatest = toolCallIsOnLatestAssistant(messages, toolCallId);
+  const abandoned = React.useSyncExternalStore(
+    subscribeHubHitlRemount,
+    () => isHubHitlAbandonedOnRemount(toolCallId),
+    () => false
+  );
   const proposal = parseProposeEvidenceChangeInput(args);
   const completed = parseProposeEvidenceChangeOutput(result);
   const kind = proposal?.kind;
@@ -209,23 +220,42 @@ export function EvidenceChangeToolUI({
     });
   }, [complete, completed, hideAsSuperseded, id, kind, toolCallId]);
 
-  if (completed) {
-    if (hideAsSuperseded) return null;
-    if (completed.action === "cancel") {
+  React.useEffect(() => {
+    if (completed || !toolCallId) return;
+    if (onLatest && !abandoned) return;
+    complete({
+      action: "cancel",
+      kind: kind ?? "project",
+      ...(id ? { id } : {})
+    });
+  }, [abandoned, complete, completed, id, kind, onLatest, toolCallId]);
+
+  if (hideAsSuperseded) return null;
+
+  const receiptAction = completed?.action ?? (abandoned || !onLatest ? "cancel" : null);
+
+  if (receiptAction) {
+    if (!proposal) {
       return (
         <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-          You cancelled — no {completed.kind} changes.
+          {receiptAction === "confirm" ? "Saved evidence change." : "No longer pending."}
         </p>
       );
     }
     return (
-      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        {proposal?.id ? "Updated" : "Created"} {completed.kind}.
-      </p>
+      <EvidenceApprovalCard
+        toolCallId={toolCallId}
+        kind={proposal.kind}
+        id={proposal.id}
+        currentMarkdown={proposal.currentMarkdown}
+        proposedMarkdown={proposal.proposedMarkdown}
+        confirmDisabled
+        completedAction={receiptAction}
+        disabled
+        onSubmit={() => undefined}
+      />
     );
   }
-
-  if (hideAsSuperseded) return null;
 
   if (!proposal) {
     if (status?.type === "running") {

@@ -6,12 +6,13 @@ import { type ComponentProps, type MouseEventHandler, type ReactNode } from "rea
 
 import {
   BADGE_GLOW,
+  BADGE_GLOW_VARS,
   BadgeAnimatedLabel,
-  BadgeTopGlow
+  BadgeTopGlow,
+  type BadgeGlowVariant
 } from "@tsu-stack/ui/components/badge-effects";
 import {
   buttonGlowSize,
-  buttonGlowVariant,
   buttonVariants,
   useButtonAnimateDefault,
   type ButtonProps
@@ -36,7 +37,7 @@ export type StatusSubmitButtonProps = {
   onClick?: MouseEventHandler<HTMLButtonElement>;
   /** Shown in the idle state (status states use the built-in status icon). */
   icon?: ReactNode;
-  /** Button chrome while idle. Status states still map to warning/error/success. */
+  /** Idle glass tone. Pending / fail / success still use warning / error / success glow. */
   idleVariant?: ButtonProps["variant"];
   /** Convenience alias: when true, visual state is `pending`. */
   loading?: boolean;
@@ -49,14 +50,34 @@ export type StatusSubmitButtonProps = {
 
 const MotionButton = motion.button;
 
-const STATE_VARIANT = {
-  idle: "default",
-  pending: "warning",
-  warning: "warning",
-  failed: "error",
-  success: "success",
-  unavailable: "destructive"
-} as const;
+function glowFor(
+  visual: StatusSubmitVisual,
+  idleVariant: ButtonProps["variant"]
+): BadgeGlowVariant {
+  if (visual === "pending" || visual === "warning") return "warning";
+  if (visual === "failed") return "error";
+  if (visual === "success") return "success";
+  if (visual === "unavailable") return "destructive";
+  if (idleVariant === "outline" || idleVariant === "ghost") return "outline";
+  if (idleVariant === "destructive" || idleVariant === "destructive-outline") return "error";
+  if (idleVariant === "secondary") return "secondary";
+  if (idleVariant === "brand") return "brand";
+  if (idleVariant === "success") return "success";
+  if (idleVariant === "warning") return "warning";
+  if (idleVariant === "error") return "error";
+  if (idleVariant === "info") return "info";
+  return "default";
+}
+
+function glowText(glow: BadgeGlowVariant) {
+  if (glow === "destructive" || glow === "error") return "text-destructive-foreground";
+  if (glow === "warning") return "text-warning-foreground";
+  if (glow === "success") return "text-success-foreground";
+  if (glow === "brand") return "text-brand";
+  if (glow === "info") return "text-info-foreground";
+  if (glow === "secondary") return "text-secondary-foreground";
+  return "text-foreground";
+}
 
 function StatusSubmitButton({
   state = "idle",
@@ -75,8 +96,7 @@ function StatusSubmitButton({
   const reduceMotion = Boolean(useReducedMotion());
   const animateDefault = useButtonAnimateDefault();
   const visual: StatusSubmitVisual = loading ? "pending" : state;
-  const variant = visual === "idle" ? idleVariant : STATE_VARIANT[visual];
-  const glow = buttonGlowVariant(variant);
+  const glow = glowFor(visual, idleVariant);
   const isPending = visual === "pending";
   const isDisabled = disabled === true || isPending;
   const flipHover = (animate ?? animateDefault) && visual === "idle" && !reduceMotion;
@@ -138,12 +158,12 @@ function StatusSubmitButton({
       whileHover={flipHover ? "hover" : undefined}
       whileFocus={flipHover ? "hover" : undefined}
       className={cn(
-        buttonVariants({ size, variant }),
-        "transition-[color,background-color,border-color,box-shadow,opacity] duration-300 ease-out",
-        // buttonVariants hides label at data-loading (spinner overlay). This
-        // control shows the pending icon + label instead.
-        "data-loading:text-current data-loading:select-auto",
-        flipHover && "overflow-hidden",
+        buttonVariants({ size, variant: "glass" }),
+        BADGE_GLOW_VARS[glow],
+        BADGE_GLOW[glow].border,
+        glowText(glow),
+        "overflow-visible transition-[color,background-color,border-color,box-shadow,opacity] duration-300 ease-out",
+        isPending && "disabled:opacity-100",
         className
       )}
       {...props}

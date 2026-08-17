@@ -76,13 +76,13 @@ export function ApprovalCard({
       data-tool-call-id={toolCallId}
       data-hitl-kind={hitlKind}
       aria-busy={busy}
-      className={cn("w-full overflow-hidden rounded-2xl bg-muted p-4 text-sm", className)}
+      className={cn("w-full overflow-hidden rounded-2xl bg-muted px-5 py-4 text-sm", className)}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         <span
           aria-hidden="true"
           className={cn(
-            "grid size-5 shrink-0 place-items-center text-muted-foreground",
+            "mt-0.5 grid size-5 shrink-0 place-items-center text-muted-foreground",
             getStatusClass(status)
           )}
         >
@@ -97,82 +97,76 @@ export function ApprovalCard({
           )}
         </span>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-start gap-3">
-            <h3 className="min-w-0 flex-1 text-base leading-5 font-medium text-foreground">
-              <ActionSwapRollText value={titleKey}>{title}</ActionSwapRollText>
-            </h3>
-            <span
-              className={cn(
-                "shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
-                getStatusBadgeClass(status)
-              )}
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <h3 className="min-w-0 flex-1 text-base leading-5 font-medium text-foreground">
+            <ActionSwapRollText value={titleKey}>{title}</ActionSwapRollText>
+          </h3>
+          <span
+            className={cn(
+              "shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium transition-colors",
+              getStatusBadgeClass(status)
+            )}
+          >
+            {statusLabel}
+          </span>
+          {onDismiss ? (
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={onDismiss}
+              className="grid size-5 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {statusLabel}
-            </span>
-            {onDismiss ? (
-              <button
-                type="button"
-                aria-label="Dismiss"
-                onClick={onDismiss}
-                className="grid size-5 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X className="size-4" />
-              </button>
-            ) : null}
-          </div>
-
-          <AgentDisclosure open={interactive}>
-            <div>
-              {description ? (
-                <p className="mt-1 leading-5 text-muted-foreground">{description}</p>
-              ) : null}
-              {children ? <div className="mt-3">{children}</div> : null}
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {onApprove ? (
-                <Button
-                  size="sm"
-                  animate={false}
-                  disabled={busy || approveDisabled}
-                  loading={busy}
-                  onClick={onApprove}
-                >
-                  {approveLabel}
-                </Button>
-              ) : null}
-              {onRequestChanges ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  animate={false}
-                  disabled={busy}
-                  onClick={onRequestChanges}
-                >
-                  Request changes
-                </Button>
-              ) : null}
-              {onReject ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  animate={false}
-                  disabled={busy || rejectDisabled}
-                  onClick={onReject}
-                  className="text-muted-foreground hover:text-rose-600 hover:dark:text-rose-400"
-                >
-                  {rejectLabel}
-                </Button>
-              ) : null}
-            </div>
-          </AgentDisclosure>
-
-          {!interactive ? (
-            <p className="mt-1 text-sm text-muted-foreground">{result ?? statusLabel}</p>
+              <X className="size-4" />
+            </button>
           ) : null}
         </div>
       </div>
+
+      {description ? <p className="mt-2 leading-5 text-muted-foreground">{description}</p> : null}
+      {children ? <div className="mt-3">{children}</div> : null}
+
+      <AgentDisclosure open={interactive}>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {onApprove ? (
+            <Button
+              size="sm"
+              animate={false}
+              disabled={busy || approveDisabled}
+              loading={busy}
+              onClick={onApprove}
+            >
+              {approveLabel}
+            </Button>
+          ) : null}
+          {onRequestChanges ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              animate={false}
+              disabled={busy}
+              onClick={onRequestChanges}
+            >
+              Request changes
+            </Button>
+          ) : null}
+          {onReject ? (
+            <Button
+              variant="outline"
+              size="sm"
+              animate={false}
+              disabled={busy || rejectDisabled}
+              onClick={onReject}
+              className="text-muted-foreground hover:text-rose-600 hover:dark:text-rose-400"
+            >
+              {rejectLabel}
+            </Button>
+          ) : null}
+        </div>
+      </AgentDisclosure>
+
+      {!interactive && result ? (
+        <p className="mt-2 text-sm text-muted-foreground">{result}</p>
+      ) : null}
     </div>
   );
 }

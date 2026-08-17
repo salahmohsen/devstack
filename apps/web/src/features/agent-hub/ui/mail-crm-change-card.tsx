@@ -38,12 +38,14 @@ export function MailCrmChangeCard({
   toolCallId,
   input,
   onSubmit,
-  disabled = false
+  disabled = false,
+  completedAction = null
 }: {
   toolCallId: string;
   input: ProposeMailCrmChangeInput;
   onSubmit: (output: ProposeMailCrmChangeOutput) => void | Promise<void>;
   disabled?: boolean;
+  completedAction?: "confirm" | "cancel" | null;
 }) {
   const [busy, setBusy] = React.useState(false);
   const copy = confirmCopy(input);
@@ -55,39 +57,45 @@ export function MailCrmChangeCard({
       toolCallId={toolCallId}
       title={copy.title}
       description={copy.body}
-      submitting={busy}
+      submitting={busy && completedAction == null}
       footer={
-        <>
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled || busy}
-            onClick={() => {
-              setBusy(true);
-              void Promise.resolve(
-                onSubmit({ action: "confirm", applicationId: input.applicationId })
-              ).catch(() => {
-                setBusy(false);
-              });
-            }}
-          >
-            Confirm
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={disabled || busy}
-            onClick={() => {
-              setBusy(true);
-              void Promise.resolve(onSubmit({ action: "cancel" })).catch(() => {
-                setBusy(false);
-              });
-            }}
-          >
-            Cancel
-          </Button>
-        </>
+        completedAction ? (
+          <p className="m-0 text-xs text-muted-foreground">
+            {completedAction === "confirm" ? "Updated from mail." : "No longer pending."}
+          </p>
+        ) : (
+          <>
+            <Button
+              type="button"
+              size="sm"
+              disabled={disabled || busy}
+              onClick={() => {
+                setBusy(true);
+                void Promise.resolve(
+                  onSubmit({ action: "confirm", applicationId: input.applicationId })
+                ).catch(() => {
+                  setBusy(false);
+                });
+              }}
+            >
+              Confirm
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={disabled || busy}
+              onClick={() => {
+                setBusy(true);
+                void Promise.resolve(onSubmit({ action: "cancel" })).catch(() => {
+                  setBusy(false);
+                });
+              }}
+            >
+              Cancel
+            </Button>
+          </>
+        )
       }
     >
       {subject ? <p className="mt-2 text-xs text-muted-foreground">Mail: {subject}</p> : null}

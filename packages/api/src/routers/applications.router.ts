@@ -4,6 +4,7 @@ import {
   AcceptApplyPackageInputSchema,
   AddApplicationNoteInputSchema,
   ApplicationActivityOutputSchema,
+  DeleteApplicationNoteInputSchema,
   ApplicationListOutputSchema,
   ApplicationOutputSchema,
   BatchDismissApplicationsInputSchema,
@@ -791,6 +792,27 @@ export const applicationsRouter = {
         actorUserId: userId
       });
       return toActivityOutput(row);
+    }),
+
+  deleteNote: protectedProcedure
+    .route({
+      description: "Delete a user-authored note from an application timeline",
+      method: "POST"
+    })
+    .input(DeleteApplicationNoteInputSchema)
+    .output(DeleteResponseSchema)
+    .errors({
+      NOT_FOUND: { message: "Note not found" },
+      FORBIDDEN: { message: "Only notes can be deleted" }
+    })
+    .handler(async ({ input, context, errors }) => {
+      const userId = context.session.user.id;
+      const row = await applicationActivityRepository.findByIdForUser(input.id, userId);
+      if (!row || row.applicationId !== input.applicationId) throw errors.NOT_FOUND();
+      if (row.kind !== "note") throw errors.FORBIDDEN();
+      const deleted = await applicationActivityRepository.deleteByIdForUser(row.id, userId);
+      if (!deleted) throw errors.NOT_FOUND();
+      return { success: true };
     }),
 
   update: protectedProcedure

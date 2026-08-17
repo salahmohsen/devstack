@@ -9,12 +9,11 @@ import * as React from "react";
 import {
   BADGE_GLOW,
   BADGE_GLOW_VARS,
-  BadgeAnimatedLabel,
   BadgeTopGlow,
   type BadgeGlowVariant
 } from "@tsu-stack/ui/components/badge-effects";
 import { FlipHoverLayers } from "@tsu-stack/ui/components/flip-hover";
-import { StatusStateIcon } from "@tsu-stack/ui/components/status-badge";
+import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 const ButtonAnimateContext = React.createContext(false);
@@ -106,20 +105,10 @@ export type ButtonProps = {
   loading?: boolean;
   /**
    * Navbar flip on hover/focus-visible. Defaults true inside `ButtonAnimateScope`.
-   * Ignored while `loading` — pending icon + label animation stay the default.
+   * Ignored while `loading` — coss overlay spinner stays the loading chrome.
    */
   animate?: boolean;
 } & useRender.ComponentProps<"button">;
-
-function collectButtonLabel(node: React.ReactNode): string {
-  if (node == null || typeof node === "boolean") return "";
-  if (typeof node === "string" || typeof node === "number") return String(node);
-  if (Array.isArray(node)) return node.map(collectButtonLabel).join("");
-  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
-    return collectButtonLabel(node.props.children);
-  }
-  return "";
-}
 
 export function buttonGlowVariant(variant: ButtonProps["variant"]): BadgeGlowVariant | null {
   return variant === "glass" ? "default" : null;
@@ -166,51 +155,22 @@ export function Button({
   const animateDefault = useButtonAnimateDefault();
   const flipHover = (animate ?? animateDefault) && !loading && !reduceMotion;
   const isDisabled: boolean = Boolean(loading || disabledProp);
-  const isIconSize = typeof size === "string" && size.startsWith("icon");
-  const resolvedVariant = loading && isIconSize ? "warning" : variant;
   const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>["type"] = render
     ? undefined
     : "button";
-  const glow = buttonGlowVariant(resolvedVariant);
-  const loadingLabel = loading ? collectButtonLabel(children).trim() : "";
+  const glow = buttonGlowVariant(variant);
 
   const defaultProps = {
     children: (
       <>
         {glow ? <BadgeTopGlow variant={glow} size={buttonGlowSize(size)} /> : null}
+        {flipHover ? <FlipHoverLayers hovered={hovered}>{children}</FlipHoverLayers> : children}
         {loading ? (
-          <>
-            <span className="relative flex size-3.5 shrink-0 items-center justify-center">
-              <StatusStateIcon state="pending" reduceMotion={reduceMotion} />
-            </span>
-            {loadingLabel ? (
-              <span className="flex leading-none">
-                <BadgeAnimatedLabel
-                  key={loadingLabel}
-                  text={loadingLabel}
-                  id={loadingLabel}
-                  reduceMotion={reduceMotion}
-                  animateOnMount
-                />
-              </span>
-            ) : null}
-          </>
-        ) : flipHover ? (
-          <FlipHoverLayers hovered={hovered}>{children}</FlipHoverLayers>
-        ) : (
-          children
-        )}
+          <Spinner className="pointer-events-none absolute" data-slot="button-loading-indicator" />
+        ) : null}
       </>
     ),
-    className: cn(
-      buttonVariants({ size, variant: resolvedVariant }),
-      className,
-      loading && "data-loading:text-current data-loading:select-auto",
-      loading &&
-        isIconSize &&
-        "border-amber-500/40 bg-amber-500/15 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400",
-      flipHover && "overflow-hidden"
-    ),
+    className: cn(buttonVariants({ size, variant }), className, flipHover && "overflow-hidden"),
     "aria-disabled": loading || undefined,
     "data-loading": loading ? "" : undefined,
     "data-hovered": hovered ? "" : undefined,

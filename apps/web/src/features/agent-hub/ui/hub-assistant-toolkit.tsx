@@ -49,6 +49,10 @@ import {
 import { isHubApprovalPending } from "@/features/agent-hub/lib/hub-approval-summary";
 import { requestOpenHubAssistant } from "@/features/agent-hub/lib/hub-assistant-open";
 import {
+  isHubHitlAbandonedOnRemount,
+  subscribeHubHitlRemount
+} from "@/features/agent-hub/lib/hub-hitl-remount";
+import {
   findPendingProposeApplicationFromJd,
   hydrateProposeNewJobsTriageInput,
   isLaterTriageAfterConfirm,
@@ -94,10 +98,14 @@ import { UpsertSoftJobPreferencesToolUI } from "./upsert-soft-job-preferences-to
 const PROPOSE_FROM_JD_TOOL_ID = "propose-application-from-jd";
 const PROPOSE_TRIAGE_TOOL_ID = "propose-new-jobs-triage";
 
-function triageCompleteVia(result: unknown): "empty-inbox" | "duplicate" | "stale" | null {
+function triageCompleteVia(
+  result: unknown
+): "empty-inbox" | "duplicate" | "stale" | "remount" | null {
   if (!result || typeof result !== "object" || Array.isArray(result)) return null;
   const via = (result as { via?: unknown }).via;
-  if (via === "empty-inbox" || via === "duplicate" || via === "stale") return via;
+  if (via === "empty-inbox" || via === "duplicate" || via === "stale" || via === "remount") {
+    return via;
+  }
   return null;
 }
 
@@ -316,6 +324,11 @@ function ProposeNewJobsTriageToolUI({
   const promoteInboxJob = usePromoteInboxJobMutation();
   const dismissInboxJob = useDismissInboxJobMutation();
   const onLatest = toolCallIsOnLatestAssistant(messages, toolCallId);
+  const abandoned = React.useSyncExternalStore(
+    subscribeHubHitlRemount,
+    () => isHubHitlAbandonedOnRemount(toolCallId),
+    () => false
+  );
   const completed =
     parseProposeNewJobsTriageOutput(result) ??
     (() => {
@@ -356,7 +369,11 @@ function ProposeNewJobsTriageToolUI({
   const completedVia = triageCompleteVia(result);
 
   const completeLocal = React.useCallback(
-    (output: ProposeNewJobsTriageOutput & { via?: "empty-inbox" | "duplicate" | "stale" }) => {
+    (
+      output: ProposeNewJobsTriageOutput & {
+        via?: "empty-inbox" | "duplicate" | "stale" | "remount";
+      }
+    ) => {
       if (typeof addResult === "function") addResult(output);
       void addToolOutput({
         tool: resolvedToolName,
@@ -385,6 +402,11 @@ function ProposeNewJobsTriageToolUI({
     if (completed || !toolCallId || onLatest) return;
     completeLocal({ action: "cancel", trackIds: [], dismissIds: [], via: "stale" });
   }, [completeLocal, completed, onLatest, toolCallId]);
+
+  React.useEffect(() => {
+    if (completed || !toolCallId || !abandoned) return;
+    completeLocal({ action: "cancel", trackIds: [], dismissIds: [], via: "remount" });
+  }, [abandoned, completeLocal, completed, toolCallId]);
 
   React.useEffect(() => {
     if (completed || !toolCallId || duplicateAfterConfirm) return;
@@ -443,7 +465,10 @@ function ProposeNewJobsTriageToolUI({
 
   const receiptInput = input.track.length > 0 || input.dismiss.length > 0 ? input : null;
 
-  if (!onLatest && (!completed || completedVia === "stale")) {
+  if (
+    (!onLatest || abandoned) &&
+    (!completed || completedVia === "stale" || completedVia === "remount")
+  ) {
     if (!receiptInput) return null;
     return (
       <NewJobsTriageCard
@@ -459,7 +484,7 @@ function ProposeNewJobsTriageToolUI({
     if (completedVia === "duplicate" || duplicateAfterConfirm) {
       return null;
     }
-    if (completedVia === "stale") {
+    if (completedVia === "stale" || completedVia === "remount") {
       if (!receiptInput) return null;
       return (
         <NewJobsTriageCard

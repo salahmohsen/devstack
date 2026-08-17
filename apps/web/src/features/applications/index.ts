@@ -21,6 +21,7 @@ export {
   useListApplicationActivityQuery
 } from "@/features/applications/api/list-application-activity.query";
 export { useAddApplicationNoteMutation } from "@/features/applications/api/add-application-note.mutation";
+export { useDeleteApplicationNoteMutation } from "@/features/applications/api/delete-application-note.mutation";
 export {
   applicationCountQueryKeys,
   getCountApplicationsQueryOptions,
