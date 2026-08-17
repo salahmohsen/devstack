@@ -27,6 +27,7 @@ import {
 } from "@tsu-stack/core";
 
 import { parseDailyBriefFacts, type DailyBriefFacts } from "./format-daily-brief";
+import { isHubHitlAbandonedOnRemount } from "./hub-hitl-remount";
 import { recalledTriageAction } from "./hub-triage-action-memory";
 import { recalledJdCardAction } from "./jd-card-action-memory";
 
@@ -114,18 +115,32 @@ export function parseGetDailyBriefCounts(output: unknown): {
   };
 }
 
+function messagesAfterLatestUser(
+  messages: readonly { role?: string; parts?: readonly unknown[] }[]
+): readonly { role?: string; parts?: readonly unknown[] }[] {
+  let start = 0;
+  for (let i = 0; i < messages.length; i++) {
+    if (messages[i]?.role === "user") start = i + 1;
+  }
+  return messages.slice(start);
+}
+
+function toolNameFromPart(part: { type?: string; toolName?: string }): string {
+  return (
+    part.toolName ??
+    (typeof part.type === "string" && part.type.startsWith("tool-") ? part.type.slice(5) : "")
+  );
+}
+
 export function latestDailyBriefFactsFromMessages(
   messages: readonly { role?: string; parts?: readonly unknown[] }[]
 ): DailyBriefFacts | null {
-  for (const message of [...messages].toReversed()) {
+  for (const message of [...messagesAfterLatestUser(messages)].toReversed()) {
     if (message.role !== "assistant") continue;
     for (const raw of [...(message.parts ?? [])].toReversed()) {
       if (!raw || typeof raw !== "object") continue;
       const part = raw as { type?: string; toolName?: string; output?: unknown };
-      const name =
-        part.toolName ??
-        (typeof part.type === "string" && part.type.startsWith("tool-") ? part.type.slice(5) : "");
-      if (!isGetDailyBriefToolName(name)) continue;
+      if (!isGetDailyBriefToolName(toolNameFromPart(part))) continue;
       const facts = parseDailyBriefFacts(part.output);
       if (facts) return facts;
     }
@@ -136,15 +151,12 @@ export function latestDailyBriefFactsFromMessages(
 export function latestDailyBriefCountsFromMessages(
   messages: readonly { role?: string; parts?: readonly unknown[] }[]
 ): { inboxCount: number; mailCount: number; trackedCount: number } | null {
-  for (const message of [...messages].toReversed()) {
+  for (const message of [...messagesAfterLatestUser(messages)].toReversed()) {
     if (message.role !== "assistant") continue;
     for (const raw of [...(message.parts ?? [])].toReversed()) {
       if (!raw || typeof raw !== "object") continue;
       const part = raw as { type?: string; toolName?: string; output?: unknown };
-      const name =
-        part.toolName ??
-        (typeof part.type === "string" && part.type.startsWith("tool-") ? part.type.slice(5) : "");
-      if (!isGetDailyBriefToolName(name)) continue;
+      if (!isGetDailyBriefToolName(toolNameFromPart(part))) continue;
       const counts = parseGetDailyBriefCounts(part.output);
       if (counts) return counts;
     }
@@ -744,6 +756,7 @@ export function cancelledTriageCardInputFromParts(
     }
     if (!isHubToolUiPart(part)) continue;
     const name = hubToolNameFromPart(part);
+    if (isGetDailyBriefToolName(name) || isOpenDailyBriefToolName(name)) return null;
     if (isProposeNewJobsTriageToolName(name)) hasTriageTool = true;
     if (!isListNewJobsToolName(name)) continue;
     const rows = parseListNewJobsOutput(part.output);
@@ -993,6 +1006,7 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     const part = raw as HubToolNamePart;
     if (!isHubToolUiPart(part)) continue;
     if (part.state === "approval-requested") return "approval";
+    if (isHubHitlAbandonedOnRemount(part.toolCallId ?? "")) continue;
     const name = hubToolNameFromPart(part);
     if (!isHubToolWaitingState(part.state)) continue;
     if (isHubApprovalToolName(name)) return "approval";

@@ -72,6 +72,48 @@ export function isHubListingExtractActive(parts: readonly unknown[]): boolean {
   return false;
 }
 
+function findGetDailyBriefPart(
+  parts: readonly unknown[]
+): (HubToolNamePart & { status?: { type?: string } }) | null {
+  for (const raw of parts) {
+    if (!raw || typeof raw !== "object") continue;
+    const part = raw as HubToolNamePart & { status?: { type?: string } };
+    if (!isHubToolUiPart(part)) continue;
+    if (isGetDailyBriefToolName(hubToolNameFromPart(part))) return part;
+  }
+  return null;
+}
+
+/**
+ * Today workflow as Agent Activity steps (gather → write). The inner Mastra
+ * run does not stream step events into chat, so we map getDailyBrief state.
+ */
+export function buildTodayLetterActivityItems(input: {
+  parts: readonly unknown[];
+  planWhileWaiting: boolean;
+}): AgentActivityItem[] {
+  const brief = findGetDailyBriefPart(input.parts);
+  if (!brief && !input.planWhileWaiting) return [];
+
+  const waiting = brief ? isWaitingState(brief.state, brief.status?.type) : input.planWhileWaiting;
+  const complete = brief ? isCompleteState(brief.state, brief.status?.type) : false;
+
+  return [
+    {
+      id: "today-gather",
+      type: "step",
+      label: "Gathering today",
+      status: complete ? "complete" : waiting ? "active" : "pending"
+    },
+    {
+      id: "today-write",
+      type: "step",
+      label: "Writing today",
+      status: complete ? "complete" : "pending"
+    }
+  ];
+}
+
 export function humanizeHubToolName(name: string, input?: unknown): string {
   const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;
   if (/jobPageExtractor|fetch-job-page|fetchJobPage/i.test(bare)) return "Reading listing";
@@ -188,6 +230,10 @@ export function hubAgentActivityActiveLabel(
   parts: readonly unknown[] = []
 ): string {
   if (isHubListingExtractActive(parts)) return "Reading listing…";
+  const today = items.find(
+    (item) => item.type === "step" && item.status === "active" && item.id === "today-gather"
+  );
+  if (today) return "Gathering today…";
   if (items.some((item) => item.type === "tool")) return "Running tools…";
   if (items.some((item) => item.type === "step")) return "Thinking…";
   if (items.some((item) => item.type === "text")) return "Thinking…";

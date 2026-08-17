@@ -5,9 +5,17 @@ import {
   ThreadPrimitive,
   unstable_useThreadMessageIds
 } from "@assistant-ui/react";
-import { ArrowDownIcon, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowDownIcon } from "lucide-react";
 import * as React from "react";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  hubPersonalityAvatarSeed,
+  hubPersonalityById,
+  userTurnAsksDailyBrief
+} from "@tsu-stack/core";
+import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -18,10 +26,14 @@ import { EditComposer, threadRootStyle } from "@/shared/ui/assistant-ui/thread";
 
 import {
   buildHubDayRows,
+  getHubComposerPersonality,
   HubAssistantMessage,
+  HubFollowupSuggestions,
   HubUserMessage,
   lastHubHitlKind,
+  subscribeHubComposerPersonality,
   useHubChat,
+  clearDailyBriefRequest,
   type HubDayRow
 } from "@/features/agent-hub";
 
@@ -57,6 +69,31 @@ export function AgentHubThread() {
   React.useEffect(() => {
     ensureHistory();
   }, [ensureHistory]);
+
+  const clearedTodayAskRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    let latestUserId = "";
+    let latestUser = "";
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i] as {
+        id?: string;
+        role?: string;
+        parts?: readonly { type?: string; text?: string }[];
+      };
+      if (message?.role !== "user") continue;
+      latestUserId = message.id ?? `idx:${i}`;
+      latestUser = (message.parts ?? [])
+        .filter((part) => part.type === "text" && typeof part.text === "string")
+        .map((part) => part.text ?? "")
+        .join("\n")
+        .trim();
+      break;
+    }
+    if (!latestUserId || !userTurnAsksDailyBrief(latestUser)) return;
+    if (clearedTodayAskRef.current === latestUserId) return;
+    clearedTodayAskRef.current = latestUserId;
+    clearDailyBriefRequest();
+  }, [messages]);
   const [viewportEl, setViewportEl] = React.useState<HTMLElement | null>(null);
   const [following, setFollowing] = React.useState(true);
   const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
@@ -95,7 +132,7 @@ export function AgentHubThread() {
           viewportRef={setViewportEl}
           onFollowChange={setFollowing}
           className="min-h-0 flex-1"
-          viewportClassName="px-4 pt-4"
+          viewportClassName="px-5 pt-4"
           contentClassName={cn(
             "mx-auto flex w-full max-w-(--thread-max-width) flex-col",
             isEmpty && "min-h-full justify-center"
@@ -124,7 +161,7 @@ export function AgentHubThread() {
 
         <ThreadPrimitive.ViewportFooter
           className={cn(
-            "aui-thread-viewport-footer relative shrink-0 bg-background px-4 pb-4 md:pb-6",
+            "aui-thread-viewport-footer relative shrink-0 bg-background px-5 pb-4 md:pb-6",
             !isEmpty && "rounded-t-(--composer-radius)"
           )}
         >
@@ -146,22 +183,22 @@ export function AgentHubThread() {
           <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-col">
             <HubStreamErrorCard
               errorMessage={error?.message ?? null}
+              lastMessageRole={messages.at(-1)?.role}
               hasUserMessage={messages.some((message) => message.role === "user")}
               onClearError={clearError}
               onRegenerate={() => {
                 void regenerate();
               }}
             />
+            <HubFollowupSuggestions />
             <HubElementsComposer
-              disabled={!historyReady || hitl !== null}
+              disabled={!historyReady || hitl === "approval"}
               placeholder={
                 hitl === "approval"
                   ? "Waiting for approval…"
-                  : hitl === "client"
-                    ? "Waiting for your choice…"
-                    : isRunning
-                      ? "Generating a response…"
-                      : "Ask the hub anything…"
+                  : isRunning
+                    ? "Generating a response…"
+                    : "Ask the hub anything…"
               }
             />
           </div>
@@ -173,16 +210,20 @@ export function AgentHubThread() {
 
 function HubStreamErrorCard({
   errorMessage,
+  lastMessageRole,
   hasUserMessage,
   onClearError,
   onRegenerate
 }: {
   errorMessage: string | null;
+  lastMessageRole?: string;
   hasUserMessage: boolean;
   onClearError: () => void;
   onRegenerate: () => void;
 }) {
   const [dismissedError, setDismissedError] = React.useState<string | null>(null);
+  // In-thread banner owns recovery when the last turn is an assistant bubble.
+  if (lastMessageRole === "assistant") return null;
   const showError = Boolean(errorMessage) && errorMessage !== dismissedError;
   if (!showError) return null;
 
@@ -211,12 +252,18 @@ function HubDayMessages({ dayById }: { dayById: Map<string, HubDayRow> }) {
   if (ids.length === 0) return null;
 
   return (
-    <div data-slot="aui_message-group" className="mb-4 flex flex-col gap-y-3">
+    <div data-slot="aui_message-group" className="mb-10 flex flex-col gap-y-6">
       {ids.map((id) => {
         const row = dayById.get(id);
         const from = row?.role === "user" ? "user" : "assistant";
         return (
-          <div key={id} className="group relative flex flex-col gap-1.5">
+          <div
+            key={id}
+            className={cn(
+              "group relative flex flex-col",
+              row?.showDay ? "gap-3 pt-2 first:pt-0" : "gap-1.5"
+            )}
+          >
             {row?.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
             <div data-slot="message" data-from={from} className="relative">
               {row?.timeLabel ? (
@@ -279,10 +326,24 @@ function HubLoadOlderHeader({
 }
 
 function HubWelcome() {
+  const settings = useQuery(
+    orpcQueryClient.aiSettings.get.queryOptions({
+      staleTime: 60_000,
+      refetchOnWindowFocus: false
+    })
+  );
+  const sessionPersonality = React.useSyncExternalStore(
+    subscribeHubComposerPersonality,
+    getHubComposerPersonality,
+    getHubComposerPersonality
+  );
+  const personality = hubPersonalityById(sessionPersonality ?? settings.data?.hubPersonality);
+  const seed = hubPersonalityAvatarSeed(personality.id);
+
   return (
     <div className="aui-thread-welcome-root mb-6 flex flex-col items-center px-4 text-center">
-      <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <Sparkles className="size-4" aria-hidden />
+      <div className="mb-3 size-10 overflow-hidden rounded-full bg-muted">
+        <AgentAvatar seed={seed} size={40} animated className="size-10" aria-hidden />
       </div>
       <h1 className="aui-thread-welcome-message-inner animate-in text-2xl font-semibold duration-200 fill-mode-both fade-in slide-in-from-bottom-1">
         Welcome back. What can I do for you?

@@ -17,6 +17,30 @@
 
 ---
 
+## 2026-08-17 — Today ask anytime: rolling 24h + stop the self-prompt loop
+
+- **Trigger:** Harden Today so “what’s up / what is new today” always gathers until _now_, and the supervisor stops chatting “Still here / Hey / That’s the whole plot” until the panel finally opens
+- **Finding:** Forcing `openDailyBrief` after `getDailyBrief` is an infinite continue loop. The model writes idle greetings instead of the tool. Open the panel from `getDailyBrief` on the client and **stop** the supervisor once facts land (unless the same turn also asked inspect/CRM)
+- **Finding:** `onIterationComplete` `continue: true` whenever `toolCount > 0` adds an extra idle step after a successful Today gather. Treat Today-only + facts as terminal
+- **Finding:** A cursor-shrunk window reads as a stale dated letter (“Nothing new since 17 August”). Always gather last 24h ending at ask time. Reuse the last letter only when the facts hash matches (in-process Map). Empty → “Nothing new right now.” — do not replay yesterday’s story
+- **Finding:** Writer timeout / fat fact JSON returns “Could not write Today.” Slim the writer payload and fall back to a short facts letter so the panel still has the current window
+- **Finding:** Hide-after that only cuts _after_ `openDailyBrief` misses letter paste and idle text _before_ the tool. On a Today-only latest turn, hide all spoken parts. After `getDailyBrief`, hide everything after that tool unless a later inspect/CRM tool exists
+- **Finding:** `cancelledTriageCardInputFromParts` hydrates a leftover New jobs card onto a silent Today turn (no spoken text, fallback inbox rows). Skip recovery when the message already has `getDailyBrief` / `openDailyBrief`
+- **Finding:** History remount + “clear panel on every message change” wipes a just-opened letter. Clear once per user message id on a Today ask
+- **User preference:** Test in the user’s Chrome tab. Everyday phrasing (`what's up`, `what's new today`). No `deleteMail`. Do not coach tool names
+- **Evidence class:** Chrome hub Thread — first `what's up` opened Today (`0 new jobs · 40 mail · 9 tracked`) with no idle loop after the gather/stop fix; second `what's new today` ~30s writer; third `what's up` ~11s same letter (facts-hash cache); unauth `:4111/chat/hub-supervisor` 401; `markDailyBriefOpened` 200
+
+## 2026-08-17 — Today letter workflow + db ESM cache + stale API stamp
+
+- **Trigger:** Finish the Today-letter-as-story plan (classify summary, land take, `today-letter-workflow`, cursor stamp, no inventory fallback)
+- **Finding:** New `@tsu-stack/db` exports crash the agent the same way as new core exports (`does not provide an export named 'userHubStateRepository'`). Rebuild `packages/db/node_modules/.cache/@tsu-stack__db.mjs` from the agent `dev` script (`rebuild:db-cache`), not only `rebuild:core-cache`
+- **Finding:** New Mastra files imported via `#@/mastra/…` from `index.ts` can emit undefined `#@/` specifiers. Import new workflows/agents with **relative** paths from `index.ts`; keep `#@/` only for already-bundled modules
+- **Finding:** vite-node `--watch` on `apps/server` does not pick up a new oRPC procedure (`agent.markDailyBriefOpened` stayed 404 until process restart). Probe the new route after adding it
+- **Finding:** `formatDailyBriefMarkdown` stub `# date\n\nHere is what landed.` is not a letter. If `getDailyBrief` returns counts without `markdown`, the panel paints that stub. Do not `requestDailyBrief` on the placeholder; wait for workflow markdown. Empty window must stay the short “Nothing new” letter
+- **Finding:** A leftover Confirm card Cancel can sit on Submitting… and still let Today complete. First Today (no cursor) used ~24h (39 mail / 0 inbox takes / 9 moves). After stamp, second Today opened **Nothing new** — inventory fallback is dead
+- **User preference:** Test in the user's Chrome tab. Everyday phrasing. No `deleteMail` in this change
+- **Evidence class:** Agent boot `userHubStateRepository` after db cache rebuild; curl unauth `:4111/chat/hub-supervisor` 401; oRPC `markDailyBriefOpened` 404 then 200 after API restart; Chrome hub Today panel `0 new jobs · 39 mail · 9 tracked` then `Nothing new` / `Nothing new since 17 August.`
+
 ## 2026-08-17 — Packed Today hide-after + remounted Confirm + pile status-only
 
 - **Trigger:** Cycle 9 pre-PR harden — everyday packed ask then leftover HITL

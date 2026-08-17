@@ -9,17 +9,20 @@ import {
   FileTextIcon,
   Loader2Icon,
   MicIcon,
-  PauseIcon,
   PlusIcon,
   SquareIcon,
   XIcon,
   type LucideIcon
 } from "lucide-react";
-import { useReducedMotion } from "motion/react";
 import { type ComponentProps, useMemo } from "react";
 
-import { Button } from "@tsu-stack/ui/components/button";
-import { StatusStateIcon } from "@tsu-stack/ui/components/status-badge";
+import {
+  BADGE_GLOW,
+  BADGE_GLOW_VARS,
+  BadgeTopGlow,
+  type BadgeGlowVariant
+} from "@tsu-stack/ui/components/badge-effects";
+import { Button, buttonVariants } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { clamp, pct } from "./range";
@@ -601,6 +604,20 @@ export function ComposerVoiceButton({
   );
 }
 
+function composerSendGlow(streaming: boolean, error: boolean, idle: boolean): BadgeGlowVariant {
+  if (streaming) return "warning";
+  if (error) return "error";
+  if (idle) return "secondary";
+  return "default";
+}
+
+function composerSendGlowText(glow: BadgeGlowVariant) {
+  if (glow === "error") return "text-destructive-foreground";
+  if (glow === "warning") return "text-warning-foreground";
+  if (glow === "secondary") return "text-secondary-foreground";
+  return "text-foreground";
+}
+
 export function ComposerSend({
   streaming,
   idle,
@@ -612,35 +629,42 @@ export function ComposerSend({
   idle: boolean;
   error?: boolean;
 }) {
-  const reduceMotion = Boolean(useReducedMotion());
   const showSend = !streaming && !error;
-  const showLoad = streaming && !error;
-  const variant = error ? "destructive" : streaming ? "warning" : idle ? "secondary" : "default";
+  const showStop = streaming;
+  const showError = error && !streaming;
+  const glow = composerSendGlow(streaming, error, idle);
 
   return (
-    <Button
+    <button
       type="button"
-      size="icon-sm"
-      variant={variant}
-      animate={false}
-      aria-label={error ? "Generation failed" : streaming ? "Stop generating" : "Send message"}
-      aria-invalid={error || undefined}
+      aria-label={showError ? "Generation failed" : showStop ? "Stop generating" : "Send message"}
       data-slot="composer-send"
-      className={cn("rounded-full", className)}
+      data-cuelume-press=""
+      data-cuelume-release=""
+      className={cn(
+        buttonVariants({ size: "icon-sm", variant: "glass" }),
+        BADGE_GLOW_VARS[glow],
+        BADGE_GLOW[glow].border,
+        composerSendGlowText(glow),
+        "overflow-visible rounded-full transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-300 ease-out",
+        "active:scale-[0.96] motion-reduce:transition-none active:motion-reduce:scale-100",
+        className
+      )}
       {...props}
     >
+      <BadgeTopGlow variant={glow} size="sm" />
       <span className="grid size-4 place-items-center">
         <ArrowUpIcon
           aria-hidden="true"
           className={cn(iconSwap, "size-4", showSend ? iconSwapIn : iconSwapOut)}
         />
-        <span className={cn(iconSwap, showLoad ? iconSwapIn : iconSwapOut)}>
-          <PauseIcon aria-hidden="true" className="size-3.5 fill-current" />
+        <span className={cn(iconSwap, showStop ? iconSwapIn : iconSwapOut)}>
+          <SquareIcon aria-hidden="true" className="size-3.5 fill-current" />
         </span>
-        <span className={cn(iconSwap, error ? iconSwapIn : iconSwapOut)}>
-          <StatusStateIcon state="failed" reduceMotion={reduceMotion} />
+        <span className={cn(iconSwap, showError ? iconSwapIn : iconSwapOut)}>
+          <XIcon aria-hidden="true" className="size-3.5" />
         </span>
       </span>
-    </Button>
+    </button>
   );
 }

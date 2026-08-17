@@ -13,7 +13,8 @@ import {
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
   cancelOutputForHubHitl,
-  staleWaitingHubConfirmCards
+  staleWaitingHubConfirmCards,
+  waitingHubConfirmCards
 } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import {
   consumeHubCreateIntent,
@@ -22,6 +23,10 @@ import {
   subscribeHubCreateIntent
 } from "@/features/agent-hub/lib/hub-assistant-open";
 import { getHubComposerPersonality } from "@/features/agent-hub/lib/hub-composer-personality";
+import {
+  markHubHitlAbandonedOnRemount,
+  markHubHitlRemountSeen
+} from "@/features/agent-hub/lib/hub-hitl-remount";
 import { rememberHubMessagePersonality } from "@/features/agent-hub/lib/hub-message-personality";
 import {
   createHubThreadHistoryAdapter,
@@ -54,6 +59,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const loadingOlderRef = React.useRef(false);
   const historyLoadRef = React.useRef<Promise<void> | null>(null);
   const cancelledStaleIdsRef = React.useRef(new Set<string>());
+  const remountCancelDoneRef = React.useRef(false);
   const allMessagesRef = React.useRef<typeof messages>([]);
   const setMessagesRef = React.useRef(setMessages);
   const messagesRef = React.useRef(messages);
@@ -95,6 +101,13 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     if (historyLoadRef.current) return;
     historyLoadRef.current = fetchHubMessagesPage(0)
       .then((page) => {
+        const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(page.uiMessages));
+        markHubHitlRemountSeen();
+        markHubHitlAbandonedOnRemount(
+          waitingHubConfirmCards(linear.length > 0 ? linear : page.uiMessages).map(
+            (card) => card.toolCallId
+          )
+        );
         importHistory(page.uiMessages, false);
         setHasMoreHistory(page.hasMore);
         nextHistoryPageRef.current = 1;
@@ -179,6 +192,25 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     },
     [chat]
   );
+
+  React.useEffect(() => {
+    if (!historyReady || remountCancelDoneRef.current) return;
+    remountCancelDoneRef.current = true;
+    const waiting = waitingHubConfirmCards(messages);
+    markHubHitlAbandonedOnRemount(waiting.map((card) => card.toolCallId));
+    for (const card of waiting) {
+      cancelledStaleIdsRef.current.add(card.toolCallId);
+      void Promise.resolve(
+        addToolOutput({
+          tool: card.toolName,
+          toolCallId: card.toolCallId,
+          output: cancelOutputForHubHitl(card.toolName)
+        })
+      ).catch(() => {
+        cancelledStaleIdsRef.current.delete(card.toolCallId);
+      });
+    }
+  }, [addToolOutput, historyReady, messages]);
 
   React.useEffect(() => {
     if (!historyReady || messages.length === 0) return;

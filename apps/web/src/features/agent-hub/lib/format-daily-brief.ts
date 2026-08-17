@@ -3,11 +3,14 @@ export type DailyBriefJob = {
   companyName: string;
   matchScore?: number | null;
   stage?: string;
+  agentTake?: string;
 };
 
 export type DailyBriefMail = {
   subject: string;
   labels: string[];
+  fromName?: string;
+  summary?: string | null;
 };
 
 export type DailyBriefFacts = {
@@ -18,6 +21,9 @@ export type DailyBriefFacts = {
   inboxCount: number;
   mailCount: number;
   trackedCount: number;
+  markdown?: string;
+  empty?: boolean;
+  since?: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -44,7 +50,15 @@ function asMail(value: unknown): DailyBriefMail | null {
     ? value.labels.filter((item): item is string => typeof item === "string")
     : [];
   if (!subject && labels.length === 0) return null;
-  return { subject: subject || "(no subject)", labels };
+  const fromName = typeof value.fromName === "string" ? value.fromName.trim() : "";
+  const summary =
+    typeof value.summary === "string" && value.summary.trim() ? value.summary.trim() : null;
+  return {
+    subject: subject || "(no subject)",
+    labels,
+    fromName: fromName || undefined,
+    summary
+  };
 }
 
 export function parseDailyBriefFacts(output: unknown): DailyBriefFacts | null {
@@ -59,7 +73,10 @@ export function parseDailyBriefFacts(output: unknown): DailyBriefFacts | null {
   const trackedCount =
     typeof output.trackedCount === "number" ? output.trackedCount : tracked.length;
   const dateLabel = typeof output.dateLabel === "string" ? output.dateLabel.trim() : "";
-  if (!dateLabel && inbox.length === 0 && mail.length === 0 && tracked.length === 0) return null;
+  const markdown = typeof output.markdown === "string" ? output.markdown.trim() : "";
+  if (!dateLabel && !markdown && inbox.length === 0 && mail.length === 0 && tracked.length === 0) {
+    return null;
+  }
   return {
     dateLabel: dateLabel || "Today",
     inbox,
@@ -67,68 +84,32 @@ export function parseDailyBriefFacts(output: unknown): DailyBriefFacts | null {
     tracked,
     inboxCount,
     mailCount,
-    trackedCount
+    trackedCount,
+    markdown: markdown || undefined,
+    empty: output.empty === true,
+    since: typeof output.since === "string" ? output.since : undefined
   };
 }
 
 export function isTruncatedDailyBriefMarkdown(text: string): boolean {
   const t = text.trim();
-  if (t.length < 80) return true;
+  if (t.length === 0) return true;
   if (/[—–-]\s*$/.test(t)) return true;
   if (/\*\*[^*]*$/.test(t)) return true;
-  if (!t.includes("\n") && t.split(/\s+/).length < 16) return true;
   return false;
 }
 
-function scoreLine(score: number | null | undefined): string {
-  if (typeof score !== "number" || !Number.isFinite(score)) return "";
-  return ` · ${Math.round(score)}%`;
+/** Client stub used when the workflow letter is missing — not a real letter. */
+export function isPlaceholderDailyBriefMarkdown(text: string): boolean {
+  return /^# .+\n\nHere is what landed\.\s*$/m.test(text.trim());
 }
 
 export function formatDailyBriefMarkdown(facts: DailyBriefFacts, intro?: string): string {
-  const lines: string[] = [];
   const cleanIntro = intro?.trim() ?? "";
-  if (cleanIntro && !isTruncatedDailyBriefMarkdown(cleanIntro) && cleanIntro.includes("\n")) {
-    return cleanIntro;
-  }
-  if (cleanIntro && !isTruncatedDailyBriefMarkdown(cleanIntro)) {
-    lines.push(cleanIntro, "");
-  } else {
-    lines.push(`# ${facts.dateLabel}`, "");
-  }
-
-  lines.push(`## New jobs (${facts.inboxCount})`);
-  if (facts.inbox.length === 0) {
-    lines.push("- None.");
-  } else {
-    for (const job of facts.inbox) {
-      lines.push(`- **${job.companyName}** — ${job.title}${scoreLine(job.matchScore)}`);
-    }
-  }
-  lines.push("");
-
-  lines.push(`## Mail (${facts.mailCount})`);
-  if (facts.mail.length === 0) {
-    lines.push("- None.");
-  } else {
-    for (const row of facts.mail) {
-      const labels = row.labels.length > 0 ? ` · ${row.labels.join(", ")}` : "";
-      lines.push(`- ${row.subject}${labels}`);
-    }
-  }
-  lines.push("");
-
-  lines.push(`## Tracked (${facts.trackedCount})`);
-  if (facts.tracked.length === 0) {
-    lines.push("- None.");
-  } else {
-    for (const job of facts.tracked) {
-      const stage = job.stage ? ` · ${job.stage}` : "";
-      lines.push(`- **${job.companyName}** — ${job.title}${stage}`);
-    }
-  }
-
-  return `${lines.join("\n").trim()}\n`;
+  if (cleanIntro && !isTruncatedDailyBriefMarkdown(cleanIntro)) return cleanIntro;
+  if (facts.markdown && !isTruncatedDailyBriefMarkdown(facts.markdown)) return facts.markdown;
+  if (facts.empty) return `# ${facts.dateLabel}\n\nNothing new right now.`;
+  return `# ${facts.dateLabel}\n\nHere is what landed.`;
 }
 
 export function resolveDailyBriefMarkdown(
@@ -136,7 +117,16 @@ export function resolveDailyBriefMarkdown(
   facts: DailyBriefFacts | null
 ): string {
   const model = modelMarkdown.trim();
-  if (model && !isTruncatedDailyBriefMarkdown(model)) return model;
-  if (facts) return formatDailyBriefMarkdown(facts, model);
+  if (model && !isTruncatedDailyBriefMarkdown(model) && !isPlaceholderDailyBriefMarkdown(model)) {
+    return model;
+  }
+  if (
+    facts?.markdown &&
+    !isTruncatedDailyBriefMarkdown(facts.markdown) &&
+    !isPlaceholderDailyBriefMarkdown(facts.markdown)
+  ) {
+    return facts.markdown;
+  }
+  if (facts?.empty) return formatDailyBriefMarkdown(facts, model);
   return model;
 }

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   hideHubAssistantTextAfterIndex,
+  isHubTodayFillerText,
   isHubProcessorLeakText,
   lastAssistantMessageIsCompleteWithClientResumeTools,
   shouldAutoResumeHubChat
@@ -818,6 +819,44 @@ describe("hideHubAssistantTextAfterIndex", () => {
     expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
   });
 
+  it("hides the letter and idle loop after getDailyBrief", () => {
+    const letter = [
+      "# Monday 17 August",
+      "",
+      "Look, not much moved today. But Trivelta did.",
+      "",
+      "The pile: 33 noise/marketing emails."
+    ].join("\n");
+    const parts = [
+      {
+        type: "tool-get-daily-brief",
+        toolName: "getDailyBrief",
+        state: "output-available",
+        output: { markdown: letter, mailCount: 33, inboxCount: 0, trackedCount: 9 }
+      },
+      { type: "text", text: letter },
+      { type: "text", text: "That's the whole plot." },
+      { type: "text", text: "Still here." },
+      { type: "text", text: "Hey." }
+    ];
+    expect(isHubTodayFillerText(letter)).toBe(true);
+    expect(isHubTodayFillerText("That's the whole plot.")).toBe(true);
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+    expect(
+      hideHubAssistantTextAfterIndex([
+        {
+          type: "tool-get-daily-brief",
+          toolName: "getDailyBrief",
+          state: "output-available",
+          output: { markdown: letter }
+        },
+        { type: "text", text: "Hey. Same as before — Trivelta applied." },
+        { type: "text", text: "Still here." },
+        { type: "text", text: "Ready." }
+      ])
+    ).toBe(0);
+  });
+
   it("shows inspect / CRM speech after a packed Today letter", () => {
     const parts = [
       {
@@ -842,7 +881,7 @@ describe("hideHubAssistantTextAfterIndex", () => {
       hideHubAssistantTextAfterIndex([
         {
           type: "text",
-          text: "getDailyBrief already returned facts. Write the Today letter in the current voice from those facts, then call openDailyBrief({ markdown })."
+          text: "getDailyBrief already returned markdown. Call openDailyBrief({ markdown }) with that markdown."
         }
       ])
     ).toBe(-1);

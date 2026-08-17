@@ -59,11 +59,14 @@ const SEARCH_BRIEF_WRAPUP_RE = /search brief is current|here(?:'s| is) your (?:s
 
 const DAILY_BRIEF_WRAPUP_RE = /today is open in the side panel|^#\s*today\b|^\*\*new in/im;
 
+const TODAY_IDLE_LINE_RE =
+  /^(hey|ready|still here|that's the whole plot|thats the whole plot|no sequel yet|checking|working through it)\.?\s*$/i;
+
 const FAILED_CONTINUATION_TEXT_RE =
   /tool-step limit|step limit was reached|couldn.?t run|could not run|couldn.?t execute/i;
 
 const PROCESSOR_LEAK_RE =
-  /<system-reminder>|Call getDailyBrief now|call openDailyBrief|already returned facts\. Write the Today letter|Do NOT call getSearchBrief|Extract already ran\. Do NOT call jobPageExtractor|Call getDailyBrief now for facts|listNewJobs already returned|Call propose-new-jobs-triage NOW|The triage card is the UI|Emit ZERO user-facing text/i;
+  /<system-reminder>|Call getDailyBrief now|call openDailyBrief|already returned facts\. Write the Today letter|already returned markdown|Do NOT call getSearchBrief|Extract already ran\. Do NOT call jobPageExtractor|Call getDailyBrief now for facts|listNewJobs already returned|Call propose-new-jobs-triage NOW|The triage card is the UI|Emit ZERO user-facing text/i;
 
 export function isHubProcessorLeakText(text: string): boolean {
   return PROCESSOR_LEAK_RE.test(text);
@@ -73,7 +76,27 @@ function looksLikeDailyBriefLetter(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
   if (DAILY_BRIEF_WRAPUP_RE.test(t)) return true;
-  return /^#{1,3}\s/m.test(t) && /\b(new jobs|tracked|mail)\b/i.test(t);
+  if (/^#{1,3}\s/m.test(t) && /\b(new jobs|tracked|mail|the pile)\b/i.test(t)) return true;
+  return /^#\s+\w+day\s+\d{1,2}\s+\w+/im.test(t) && t.length > 80;
+}
+
+/** Letter paste (safe to hide in any bubble — not a greeting). */
+export function isHubTodayLetterPaste(text: string): boolean {
+  return looksLikeDailyBriefLetter(text.trim());
+}
+
+/** Letter paste or the supervisor idle loop after Today. */
+export function isHubTodayFillerText(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (isHubProcessorLeakText(t)) return true;
+  if (looksLikeDailyBriefLetter(t)) return true;
+  if (TODAY_IDLE_LINE_RE.test(t)) return true;
+  const lines = t
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.length > 0 && lines.every((line) => TODAY_IDLE_LINE_RE.test(line));
 }
 
 function isToolUiPart(part: { type: string }): boolean {
@@ -145,7 +168,14 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
     if (!part || !isToolUiPart(part)) continue;
-    if (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(toolNameFromPart(part)) && isClientToolComplete(part)) {
+    const name = toolNameFromPart(part);
+    const todayToolDone =
+      isClientToolComplete(part) ||
+      (HUB_GET_DAILY_BRIEF_TOOL_NAMES.has(name) && part.output != null);
+    if (
+      (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(name) || HUB_GET_DAILY_BRIEF_TOOL_NAMES.has(name)) &&
+      todayToolDone
+    ) {
       lastDailyBrief = i;
     }
     if (!isClientResumeTool(part)) continue;
@@ -156,20 +186,10 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
   if (lastDailyBrief >= 0 && lastWaiting < 0) {
     const after = parts.slice(lastDailyBrief + 1);
     const laterTool = after.some((part) => isToolUiPart(part));
+    // Packed inspect / CRM after the letter may speak. Today-only: the panel
+    // is the letter — hide the supervisor idle loop.
     if (laterTool) return null;
-    const afterText = after
-      .filter(
-        (part) =>
-          part.type === "text" &&
-          Boolean(part.text?.trim()) &&
-          !isHubProcessorLeakText(part.text ?? "")
-      )
-      .map((part) => part.text ?? "")
-      .join("\n");
-    if (!afterText.trim() || looksLikeDailyBriefLetter(afterText)) {
-      return lastDailyBrief;
-    }
-    return null;
+    return lastDailyBrief;
   }
 
   if (lastWaiting >= 0) return lastWaiting;

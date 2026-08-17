@@ -26,11 +26,14 @@ export function DailyBriefHost() {
 
 function DailyBriefHostSession({ request }: { request: DailyBriefHostRequest }) {
   const item = { id: request.requestId };
-  const summary = [
-    request.inboxCount === 1 ? "1 new job" : `${request.inboxCount} new jobs`,
-    request.mailCount === 1 ? "1 mail" : `${request.mailCount} mail`,
-    request.trackedCount === 1 ? "1 tracked" : `${request.trackedCount} tracked`
-  ].join(" · ");
+  const empty = request.inboxCount === 0 && request.mailCount === 0 && request.trackedCount === 0;
+  const summary = empty
+    ? "Nothing new"
+    : [
+        request.inboxCount === 1 ? "1 new job" : `${request.inboxCount} new jobs`,
+        request.mailCount === 1 ? "1 mail" : `${request.mailCount} mail`,
+        request.trackedCount === 1 ? "1 tracked" : `${request.trackedCount} tracked`
+      ].join(" · ");
 
   return (
     <ItemsInspectHost

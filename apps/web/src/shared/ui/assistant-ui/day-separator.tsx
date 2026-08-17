@@ -27,7 +27,7 @@ export function DaySeparatorRule({
     <div
       data-slot="day-separator-rule"
       aria-label={label}
-      className={cn("flex w-full items-center gap-2.5 py-1", className)}
+      className={cn("flex w-full items-center gap-2.5 py-0.5", className)}
       {...props}
     >
       <span className="h-px flex-1 bg-foreground/8" />

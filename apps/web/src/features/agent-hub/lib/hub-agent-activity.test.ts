@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildHubAgentActivityItems,
+  buildTodayLetterActivityItems,
   humanizeHubToolName,
   hubAgentActivityActiveLabel,
   hubAgentActivityStatus,
@@ -57,6 +58,58 @@ describe("isHubWorkingStripToolName", () => {
     expect(isHubWorkingStripToolName("fetch-job-page")).toBe(true);
     expect(isHubWorkingStripToolName("list-new-jobs")).toBe(true);
     expect(isHubWorkingStripToolName("upsert-soft-job-preferences")).toBe(true);
+  });
+});
+
+describe("buildTodayLetterActivityItems", () => {
+  it("plans gather then write while a Today ask is waiting", () => {
+    expect(buildTodayLetterActivityItems({ parts: [], planWhileWaiting: true })).toEqual([
+      { id: "today-gather", type: "step", label: "Gathering today", status: "active" },
+      { id: "today-write", type: "step", label: "Writing today", status: "pending" }
+    ]);
+  });
+
+  it("keeps gather active while getDailyBrief is in flight", () => {
+    expect(
+      buildTodayLetterActivityItems({
+        parts: [
+          {
+            type: "tool-get-daily-brief",
+            toolName: "getDailyBrief",
+            toolCallId: "tb1",
+            state: "call"
+          }
+        ],
+        planWhileWaiting: true
+      })
+    ).toEqual([
+      { id: "today-gather", type: "step", label: "Gathering today", status: "active" },
+      { id: "today-write", type: "step", label: "Writing today", status: "pending" }
+    ]);
+  });
+
+  it("completes both steps when the letter is back", () => {
+    expect(
+      buildTodayLetterActivityItems({
+        parts: [
+          {
+            type: "tool-get-daily-brief",
+            toolName: "getDailyBrief",
+            toolCallId: "tb1",
+            state: "output-available",
+            output: { markdown: "# Monday\n\nNothing new right now." }
+          }
+        ],
+        planWhileWaiting: false
+      })
+    ).toEqual([
+      { id: "today-gather", type: "step", label: "Gathering today", status: "complete" },
+      { id: "today-write", type: "step", label: "Writing today", status: "complete" }
+    ]);
+  });
+
+  it("stays empty when this turn is not Today", () => {
+    expect(buildTodayLetterActivityItems({ parts: [], planWhileWaiting: false })).toEqual([]);
   });
 });
 

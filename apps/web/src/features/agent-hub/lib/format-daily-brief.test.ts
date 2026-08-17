@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatDailyBriefMarkdown,
+  isPlaceholderDailyBriefMarkdown,
   isTruncatedDailyBriefMarkdown,
   parseDailyBriefFacts,
   resolveDailyBriefMarkdown
@@ -18,39 +19,46 @@ const facts = {
 };
 
 describe("formatDailyBriefMarkdown", () => {
-  it("builds headed sections from facts", () => {
+  it("does not rebuild an inventory from facts", () => {
     const md = formatDailyBriefMarkdown(facts);
     expect(md).toMatch(/^# Monday, 17 August/m);
-    expect(md).toMatch(/## New jobs \(1\)/);
-    expect(md).toContain("**Eventogy** — Senior Front-End Developer · 88%");
-    expect(md).toMatch(/## Mail \(8\)/);
-    expect(md).toContain("Thank you for applying · application");
-    expect(md).toMatch(/## Tracked \(13\)/);
-    expect(md).toContain("**Trivelta** — Engineer · applied");
+    expect(md).not.toMatch(/## New jobs \(1\)/);
+    expect(md).toContain("Here is what landed");
   });
 
-  it("treats a cut-off opener as truncated", () => {
-    expect(isTruncatedDailyBriefMarkdown("Monday, 17 August — the")).toBe(true);
+  it("keeps a short nothing-new letter", () => {
+    expect(isTruncatedDailyBriefMarkdown("# Monday\n\nNothing new right now.")).toBe(false);
+    expect(isTruncatedDailyBriefMarkdown("Monday, 17 August —")).toBe(true);
     expect(isTruncatedDailyBriefMarkdown("**New in")).toBe(true);
+    expect(isPlaceholderDailyBriefMarkdown("# Monday, 17 August\n\nHere is what landed.")).toBe(
+      true
+    );
+    expect(
+      resolveDailyBriefMarkdown("# Monday, 17 August\n\nHere is what landed.", {
+        ...facts,
+        markdown: "# Monday\n\nNothing new right now.",
+        empty: true
+      })
+    ).toBe("# Monday\n\nNothing new right now.");
   });
 
-  it("keeps a full model letter and replaces a stub with facts", () => {
+  it("keeps a full model letter and does not replace a cut-off with an inventory", () => {
     const full = [
       "# Monday, 17 August — the quiet kind.",
       "",
-      "## New jobs",
-      "- Eventogy, 88%.",
+      "Mahmoud asked to book Degla Maadi.",
       "",
       "That's the whole plot."
     ].join("\n");
     expect(resolveDailyBriefMarkdown(full, facts)).toBe(full);
-    expect(resolveDailyBriefMarkdown("Monday, 17 August — the", facts)).toMatch(
+    expect(resolveDailyBriefMarkdown("Monday, 17 August —", facts)).not.toMatch(
       /## New jobs \(1\)/
     );
   });
 
-  it("parses tool output", () => {
+  it("parses tool output including markdown", () => {
     expect(parseDailyBriefFacts(facts)?.inbox[0]?.companyName).toBe("Eventogy");
+    expect(parseDailyBriefFacts({ markdown: "# Hi", dateLabel: "Today" })?.markdown).toBe("# Hi");
     expect(parseDailyBriefFacts({})).toBeNull();
   });
 });

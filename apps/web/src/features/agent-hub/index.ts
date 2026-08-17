@@ -124,10 +124,16 @@ export {
   unionHubMessages
 } from "./lib/hub-thread-history-adapter";
 export type { HubHistoryPage, HubHistoryItem } from "./lib/hub-thread-history-adapter";
+export { HubFollowupSuggestions } from "./ui/hub-follow-up-suggestions";
 export { HubAssistantMessage } from "./ui/hub-assistant-message";
 export { HubUserMessage } from "./ui/hub-user-message";
 export { HubComposerModelPicker } from "./ui/hub-composer-model-picker";
 export { HubComposerPersonalityPicker } from "./ui/hub-composer-personality-picker";
+export {
+  getHubComposerPersonality,
+  setHubComposerPersonality,
+  subscribeHubComposerPersonality
+} from "./lib/hub-composer-personality";
 export {
   HUB_CLIENT_RESUME_TOOL_NAMES,
   hideHubAssistantTextAfterIndex,

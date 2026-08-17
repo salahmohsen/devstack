@@ -390,6 +390,22 @@ describe("cancelledTriageCardInputFromParts", () => {
     });
   });
 
+  it("does not invent a card on a Today letter turn", () => {
+    expect(
+      cancelledTriageCardInputFromParts(
+        [
+          {
+            type: "tool-get-daily-brief",
+            toolName: "getDailyBrief",
+            state: "output-available",
+            output: { markdown: "# Monday\n\nNothing new right now.", mailCount: 40 }
+          }
+        ],
+        [{ id: "fb1", title: "Fallback", companyName: "Co", matchScore: 70 }]
+      )
+    ).toBeNull();
+  });
+
   it("does not invent a card when the triage tool already owns the turn", () => {
     expect(
       cancelledTriageCardInputFromParts([

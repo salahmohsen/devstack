@@ -3,11 +3,15 @@
 import { type ToolCallMessagePartProps } from "@assistant-ui/react";
 import * as React from "react";
 
+import { useMarkDailyBriefOpenedMutation } from "@/features/agent-hub/api/mark-daily-brief-opened.mutation";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import { toolCallIsOnLatestAssistant } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import { requestDailyBrief } from "@/features/agent-hub/lib/daily-brief-host-store";
 import { clearEntityInspectRequest } from "@/features/agent-hub/lib/entity-inspect-host-store";
-import { resolveDailyBriefMarkdown } from "@/features/agent-hub/lib/format-daily-brief";
+import {
+  isPlaceholderDailyBriefMarkdown,
+  resolveDailyBriefMarkdown
+} from "@/features/agent-hub/lib/format-daily-brief";
 import {
   isOpenDailyBriefToolName,
   latestDailyBriefCountsFromMessages,
@@ -51,6 +55,8 @@ export function OpenDailyBriefToolUI({
 }: ToolCallMessagePartProps<OpenDailyBriefInput, OpenDailyBriefOutput>) {
   const { addToolOutput, messages } = useHubChat();
   const completedRef = React.useRef(false);
+  const stampedRef = React.useRef(false);
+  const markOpened = useMarkDailyBriefOpenedMutation();
   const rawMarkdown = parseMarkdown(args, result);
   const facts = latestDailyBriefFactsFromMessages(messages);
   const markdown = resolveDailyBriefMarkdown(rawMarkdown, facts);
@@ -75,7 +81,7 @@ export function OpenDailyBriefToolUI({
       return;
     }
 
-    if (!markdown) return;
+    if (!markdown || isPlaceholderDailyBriefMarkdown(markdown)) return;
     const counts = latestDailyBriefCountsFromMessages(messages) ?? {
       inboxCount: facts?.inboxCount ?? 0,
       mailCount: facts?.mailCount ?? 0,
@@ -100,10 +106,15 @@ export function OpenDailyBriefToolUI({
       toolCallId,
       output
     });
+    if (!stampedRef.current) {
+      stampedRef.current = true;
+      markOpened.mutate({});
+    }
   }, [
     addResult,
     addToolOutput,
     facts,
+    markOpened,
     markdown,
     messages,
     onLatest,

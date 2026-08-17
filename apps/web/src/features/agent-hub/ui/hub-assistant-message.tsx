@@ -1,8 +1,9 @@
 "use client";
 
 import { type ToolCallMessagePartProps, useAuiState } from "@assistant-ui/react";
+import { useSyncExternalStore } from "react";
 
-import { hubPersonalityAvatarSeed } from "@tsu-stack/core";
+import { hubPersonalityAvatarSeed, userTurnAsksDailyBrief } from "@tsu-stack/core";
 import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 
 import { AssistantMessage, ThreadComponentsContext } from "@/shared/ui/assistant-ui/thread";
@@ -13,16 +14,26 @@ import {
   useDismissInboxJobMutation,
   usePromoteInboxJobMutation
 } from "@/features/agent-hub/api/create-from-jd.mutation";
+import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
 import { isHubWorkingStripToolName } from "@/features/agent-hub/lib/hub-agent-activity";
+import {
+  didHubHitlRemount,
+  subscribeHubHitlRemount
+} from "@/features/agent-hub/lib/hub-hitl-remount";
 import { hubMessagePersonality } from "@/features/agent-hub/lib/hub-message-personality";
-import { cancelledTriageCardInputFromParts } from "@/features/agent-hub/lib/hub-tool-names";
+import {
+  cancelledTriageCardInputFromParts,
+  isGetDailyBriefToolName,
+  isOpenDailyBriefToolName
+} from "@/features/agent-hub/lib/hub-tool-names";
 import {
   recalledTriageAction,
   rememberTriageAction
 } from "@/features/agent-hub/lib/hub-triage-action-memory";
 import {
   hideHubAssistantTextAfterIndex,
-  isHubProcessorLeakText
+  isHubProcessorLeakText,
+  isHubTodayLetterPaste
 } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
 import { HubAgentActivity, HubBareToolGroup, HubHiddenReasoningGroup } from "./hub-agent-activity";
@@ -41,7 +52,7 @@ const HUB_MESSAGE_THREAD_COMPONENTS = {
   ReasoningGroup: HubHiddenReasoningGroup
 };
 
-function HubCancelledTriageReceipt({ hidden }: { hidden: boolean }) {
+function HubCancelledTriageReceipt({ hidden, className }: { hidden: boolean; className?: string }) {
   const parts = useAuiState((s) => s.message.parts ?? []);
   const messageId = useAuiState((s) => s.message.id);
   const isLastMessage = useAuiState((s) => s.thread.messages.at(-1)?.id === s.message.id);
@@ -58,13 +69,15 @@ function HubCancelledTriageReceipt({ hidden }: { hidden: boolean }) {
   });
   const input = cancelledTriageCardInputFromParts(parts, inboxJobs);
   const recalled = recalledTriageAction(messageId);
+  const remounted = useSyncExternalStore(subscribeHubHitlRemount, didHubHitlRemount, () => false);
   if (hidden || !input) return null;
-  const completedAction = recalled ?? (isLastMessage ? null : "cancel");
+  const completedAction = recalled ?? (isLastMessage && !remounted ? null : "cancel");
   return (
     <NewJobsTriageCard
       toolCallId={messageId}
       input={input}
       completedAction={completedAction}
+      className={className}
       onSubmit={async (output) => {
         rememberTriageAction(messageId, output.action);
         if (output.action !== "confirm") return;
@@ -85,11 +98,40 @@ export function HubAssistantMessage() {
   const hideTextAfterIndex = useAuiState((s) => hideHubAssistantTextAfterIndex(s.message.parts));
   const messageId = useAuiState((s) => s.message.id);
   const isLastMessage = useAuiState((s) => s.thread.messages.at(-1)?.id === s.message.id);
+  const hideTodayChat = useAuiState((s) => {
+    if (s.thread.messages.at(-1)?.id !== s.message.id) return false;
+    let latestUser = "";
+    for (let i = s.thread.messages.length - 1; i >= 0; i--) {
+      const message = s.thread.messages[i];
+      if (message?.role !== "user") continue;
+      latestUser = (message.parts ?? [])
+        .filter((part) => part.type === "text" && typeof part.text === "string")
+        .map((part) => ("text" in part && typeof part.text === "string" ? part.text : ""))
+        .join("\n")
+        .trim();
+      break;
+    }
+    if (!userTurnAsksDailyBrief(latestUser)) return false;
+    const hasPackedFollowUp = (s.message.parts ?? []).some((part) => {
+      const name =
+        "toolName" in part && typeof part.toolName === "string"
+          ? part.toolName
+          : typeof part.type === "string" && part.type.startsWith("tool-")
+            ? part.type.slice(5)
+            : "";
+      if (!name || isGetDailyBriefToolName(name) || isOpenDailyBriefToolName(name)) return false;
+      return /inspect|searchApplications|search-applications|searchMail|search-mail|getExperience|get-experience|getProject|get-project|listNewJobs|list-new-jobs/i.test(
+        name
+      );
+    });
+    return !hasPackedFollowUp;
+  });
   const threadRunning = useAuiState((s) => s.thread.isRunning);
   const messageRunning = useAuiState((s) => s.message.status?.type === "running");
   const metadata = useAuiState((s) => s.message.metadata);
   const personality = hubMessagePersonality(messageId, metadata);
   const animated = Boolean(messageRunning || (threadRunning && isLastMessage));
+  const { clearError, regenerate } = useHubChat();
   return (
     <ThreadComponentsContext.Provider value={HUB_MESSAGE_THREAD_COMPONENTS}>
       <div className="flex w-full max-w-[min(72ch,100%)] items-start gap-2.5">
@@ -100,13 +142,22 @@ export function HubAssistantMessage() {
           className="mt-0.5 shrink-0"
           aria-label={personality}
         />
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
           <HubAgentActivity />
           <AssistantMessage
             hideTextAfterIndex={hideTextAfterIndex}
-            shouldHideTextPart={isHubProcessorLeakText}
+            shouldHideTextPart={(text) =>
+              isHubProcessorLeakText(text) ||
+              isHubTodayLetterPaste(text) ||
+              (hideTodayChat && Boolean(text.trim()))
+            }
+            errorFeature="hub"
+            onErrorRetry={() => {
+              clearError();
+              void regenerate();
+            }}
           />
-          <HubCancelledTriageReceipt hidden={animated} />
+          <HubCancelledTriageReceipt hidden={animated} className="mt-6" />
         </div>
       </div>
     </ThreadComponentsContext.Provider>
