@@ -27,6 +27,7 @@ import {
 } from "@tsu-stack/core";
 
 import { parseDailyBriefFacts, type DailyBriefFacts } from "./format-daily-brief";
+import { recalledTriageAction } from "./hub-triage-action-memory";
 import { recalledJdCardAction } from "./jd-card-action-memory";
 
 /**
@@ -719,6 +720,40 @@ export function hydrateProposeNewJobsTriageInput(
   };
 }
 
+const TRIAGE_PROCESSOR_LEAK_RE =
+  /listNewJobs already returned|Call propose-new-jobs-triage NOW|The triage card is the UI|Emit ZERO user-facing text/i;
+
+/**
+ * Recover a triage card when listNewJobs ran but the HITL tool never
+ * mounted (leaked processor, cancelled stream, remount with no output).
+ * Spoken status-only answers keep the card off.
+ */
+export function cancelledTriageCardInputFromParts(
+  parts: readonly unknown[],
+  fallbackJobs: readonly TriageHydrateJob[] = []
+): ProposeNewJobsTriageCardInput | null {
+  let hasSpoken = false;
+  let hasTriageTool = false;
+  const jobs: TriageHydrateJob[] = [];
+  for (const raw of parts) {
+    if (!raw || typeof raw !== "object") continue;
+    const part = raw as HubToolNamePart & { text?: string };
+    if (part.type === "text") {
+      const text = part.text?.trim() ?? "";
+      if (text.length > 0 && !TRIAGE_PROCESSOR_LEAK_RE.test(text)) hasSpoken = true;
+    }
+    if (!isHubToolUiPart(part)) continue;
+    const name = hubToolNameFromPart(part);
+    if (isProposeNewJobsTriageToolName(name)) hasTriageTool = true;
+    if (!isListNewJobsToolName(name)) continue;
+    const rows = parseListNewJobsOutput(part.output);
+    if (rows.length > 0) jobs.push(...rows);
+  }
+  const source = jobs.length > 0 ? jobs : fallbackJobs;
+  if (hasTriageTool || hasSpoken || source.length === 0) return null;
+  return hydrateProposeNewJobsTriageInput({ track: [], dismiss: [] }, source);
+}
+
 /**
  * True when this hard-stop card arrived after a confirm on the same user turn.
  */
@@ -967,6 +1002,7 @@ export function lastHubHitlKind(messages: UIMessage[]): HubHitlKind | null {
     }
     if (isProposeNewJobsTriageToolName(name)) {
       if (parseProposeNewJobsTriageOutput(part.output)) continue;
+      if (recalledTriageAction(part.toolCallId ?? "")) continue;
       if (isLaterTriageAfterConfirm(messages, part.toolCallId ?? "")) continue;
       return "client";
     }

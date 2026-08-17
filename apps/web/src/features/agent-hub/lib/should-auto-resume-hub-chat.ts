@@ -63,7 +63,7 @@ const FAILED_CONTINUATION_TEXT_RE =
   /tool-step limit|step limit was reached|couldn.?t run|could not run|couldn.?t execute/i;
 
 const PROCESSOR_LEAK_RE =
-  /<system-reminder>|Call getDailyBrief now|call openDailyBrief|already returned facts\. Write the Today letter|Do NOT call getSearchBrief|Extract already ran\. Do NOT call jobPageExtractor|Call getDailyBrief now for facts/i;
+  /<system-reminder>|Call getDailyBrief now|call openDailyBrief|already returned facts\. Write the Today letter|Do NOT call getSearchBrief|Extract already ran\. Do NOT call jobPageExtractor|Call getDailyBrief now for facts|listNewJobs already returned|Call propose-new-jobs-triage NOW|The triage card is the UI|Emit ZERO user-facing text/i;
 
 export function isHubProcessorLeakText(text: string): boolean {
   return PROCESSOR_LEAK_RE.test(text);

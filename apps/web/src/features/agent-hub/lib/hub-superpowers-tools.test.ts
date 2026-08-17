@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { findHubApprovalId, withApprovalRequested } from "./hub-approval-resume";
 import { isHubApprovalPending, summarizeHubApproval } from "./hub-approval-summary";
 import {
+  cancelledTriageCardInputFromParts,
   findOpenEntityFormOutputInMessages,
   findPendingProposeApplicationFromJd,
   hydrateProposeNewJobsTriageInput,
@@ -24,6 +25,7 @@ import {
   parseProposeNewJobsTriageOutput,
   shouldRequestEntityFormHost
 } from "./hub-tool-names";
+import { rememberTriageAction } from "./hub-triage-action-memory";
 import { rememberJdCardAction } from "./jd-card-action-memory";
 import { shouldAutoResumeHubChat } from "./should-auto-resume-hub-chat";
 
@@ -298,6 +300,112 @@ describe("listNewJobsFromMessages", () => {
         ])
       ])
     ).toEqual([{ id: "new", title: "New", companyName: "Y", matchScore: 88 }]);
+  });
+});
+
+describe("cancelledTriageCardInputFromParts", () => {
+  const leak =
+    "listNewJobs already returned inbox rows. Do NOT call jobPreferenceMatchScorer. Call propose-new-jobs-triage NOW. The triage card is the UI.";
+
+  it("hydrates a cancelled card from listNewJobs when the processor leaked", () => {
+    expect(
+      cancelledTriageCardInputFromParts([
+        {
+          type: "tool-list-new-jobs",
+          toolName: "list-new-jobs",
+          toolCallId: "l1",
+          output: {
+            jobs: [{ id: "j1", title: "Senior Front-End", companyName: "Eventogy", matchScore: 88 }]
+          }
+        },
+        { type: "text", text: leak }
+      ])
+    ).toEqual({
+      track: [
+        {
+          id: "j1",
+          title: "Senior Front-End",
+          companyName: "Eventogy",
+          matchScore: 88,
+          reason: null
+        }
+      ],
+      dismiss: []
+    });
+  });
+
+  it("hydrates from listNewJobs even when the processor leak is missing", () => {
+    expect(
+      cancelledTriageCardInputFromParts([
+        {
+          type: "tool-list-new-jobs",
+          toolName: "list-new-jobs",
+          output: { jobs: [{ id: "j1", title: "FE", companyName: "Eventogy", matchScore: 88 }] }
+        }
+      ])
+    ).toEqual({
+      track: [
+        {
+          id: "j1",
+          title: "FE",
+          companyName: "Eventogy",
+          matchScore: 88,
+          reason: null
+        }
+      ],
+      dismiss: []
+    });
+  });
+
+  it("does not invent a card after a spoken pile status", () => {
+    expect(
+      cancelledTriageCardInputFromParts([
+        {
+          type: "tool-list-new-jobs",
+          toolName: "list-new-jobs",
+          output: { jobs: [{ id: "j1", title: "FE", companyName: "Eventogy" }] }
+        },
+        { type: "text", text: "Pile still just that one. Nothing filed." }
+      ])
+    ).toBeNull();
+  });
+
+  it("uses fallback jobs when listNewJobs output is missing", () => {
+    expect(
+      cancelledTriageCardInputFromParts(
+        [{ type: "text", text: leak }],
+        [{ id: "fb1", title: "Fallback", companyName: "Co", matchScore: 70 }]
+      )
+    ).toEqual({
+      track: [
+        {
+          id: "fb1",
+          title: "Fallback",
+          companyName: "Co",
+          matchScore: 70,
+          reason: null
+        }
+      ],
+      dismiss: []
+    });
+  });
+
+  it("does not invent a card when the triage tool already owns the turn", () => {
+    expect(
+      cancelledTriageCardInputFromParts([
+        {
+          type: "tool-list-new-jobs",
+          toolName: "list-new-jobs",
+          output: { jobs: [{ id: "j1", title: "A", companyName: "B" }] }
+        },
+        {
+          type: "tool-propose-new-jobs-triage",
+          toolName: "propose-new-jobs-triage",
+          state: "input-available"
+        },
+        { type: "text", text: leak }
+      ])
+    ).toBeNull();
   });
 });
 
@@ -963,6 +1071,34 @@ describe("lastHubHitlKind + auto-resume — multi tool matrix", () => {
     ]);
     expect(lastHubHitlKind([waiting])).toBeNull();
     expect(findPendingProposeApplicationFromJd([waiting])).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it("does not lock when the waiting triage card already has a recalled cancel", () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      }
+    });
+    rememberTriageAction("triage-recalled", "cancel");
+    const waiting = assistant([
+      {
+        type: "tool-propose-new-jobs-triage",
+        toolCallId: "triage-recalled",
+        toolName: "propose-new-jobs-triage",
+        state: "input-available",
+        input: {
+          track: [{ id: "j1", title: "FE", companyName: "Eventogy", matchScore: 88 }],
+          dismiss: []
+        }
+      } as never
+    ]);
+    expect(lastHubHitlKind([waiting])).toBeNull();
     vi.unstubAllGlobals();
   });
 

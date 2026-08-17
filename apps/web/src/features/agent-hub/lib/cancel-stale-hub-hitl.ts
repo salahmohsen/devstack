@@ -20,6 +20,7 @@ import {
   parseOpenEntityInspectOutput,
   type HubToolNamePart
 } from "./hub-tool-names";
+import { recalledTriageAction } from "./hub-triage-action-memory";
 
 function isWaitingState(state: string | undefined): boolean {
   return (
@@ -69,7 +70,10 @@ function alreadyCompleted(part: HubToolNamePart): boolean {
     return parseProposeApplicationFromJdOutputAction(part.output) != null;
   }
   if (isProposeNewJobsTriageToolName(name)) {
-    return parseProposeNewJobsTriageOutput(part.output) != null;
+    return (
+      parseProposeNewJobsTriageOutput(part.output) != null ||
+      recalledTriageAction(part.toolCallId ?? "") != null
+    );
   }
   if (isProposeHardPreferenceChangeToolName(name)) {
     return parseProposeHardPreferenceChangeOutput(part.output) != null;

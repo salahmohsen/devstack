@@ -1,5 +1,5 @@
 import { type UIMessage } from "ai";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   cancelOutputForHubHitl,
@@ -7,6 +7,7 @@ import {
   toolCallIsOnLatestAssistant,
   waitingHubConfirmCards
 } from "./cancel-stale-hub-hitl";
+import { rememberTriageAction } from "./hub-triage-action-memory";
 
 function message(id: string, parts: UIMessage["parts"]): UIMessage {
   return { id, role: "assistant", parts } as UIMessage;
@@ -71,5 +72,22 @@ describe("cancel stale hub HITL", () => {
     });
     expect(toolCallIsOnLatestAssistant(messages, "old-inspect")).toBe(false);
     expect(toolCallIsOnLatestAssistant(messages, "latest")).toBe(true);
+  });
+
+  it("does not treat a recalled cancelled triage as waiting", () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      }
+    });
+    rememberTriageAction("old", "cancel");
+    const messages = [message("a1", [waitingTriage])];
+    expect(waitingHubConfirmCards(messages)).toEqual([]);
+    vi.unstubAllGlobals();
   });
 });

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   hideHubAssistantTextAfterIndex,
+  isHubProcessorLeakText,
   lastAssistantMessageIsCompleteWithClientResumeTools,
   shouldAutoResumeHubChat
 } from "./should-auto-resume-hub-chat";
@@ -845,6 +846,22 @@ describe("hideHubAssistantTextAfterIndex", () => {
         }
       ])
     ).toBe(-1);
+  });
+
+  it("hides a leaked new-jobs triage processor", () => {
+    const leak =
+      "listNewJobs already returned inbox rows. Do NOT call jobPreferenceMatchScorer, getJobPreferences, listExperiences, or any other tool. Call propose-new-jobs-triage NOW with track[] / dismiss[]. The triage card is the UI.";
+    expect(isHubProcessorLeakText(leak)).toBe(true);
+    expect(
+      hideHubAssistantTextAfterIndex([
+        {
+          type: "tool-list-new-jobs",
+          toolName: "list-new-jobs",
+          state: "output-available"
+        },
+        { type: "text", text: leak }
+      ])
+    ).toBe(0);
   });
 });
 

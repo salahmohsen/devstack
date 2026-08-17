@@ -63,6 +63,10 @@ import {
   parseProposeNewJobsTriageOutput
 } from "@/features/agent-hub/lib/hub-tool-names";
 import {
+  recalledTriageAction,
+  rememberTriageAction
+} from "@/features/agent-hub/lib/hub-triage-action-memory";
+import {
   recalledJdCardAction,
   rememberJdCardAction
 } from "@/features/agent-hub/lib/jd-card-action-memory";
@@ -312,7 +316,12 @@ function ProposeNewJobsTriageToolUI({
   const promoteInboxJob = usePromoteInboxJobMutation();
   const dismissInboxJob = useDismissInboxJobMutation();
   const onLatest = toolCallIsOnLatestAssistant(messages, toolCallId);
-  const completed = parseProposeNewJobsTriageOutput(result);
+  const completed =
+    parseProposeNewJobsTriageOutput(result) ??
+    (() => {
+      const recalled = recalledTriageAction(toolCallId);
+      return recalled ? { action: recalled, trackIds: [], dismissIds: [] } : null;
+    })();
   const parsed = parseProposeNewJobsTriageInput(args);
   const resolvedToolName = isProposeNewJobsTriageToolName(toolName)
     ? toolName
@@ -359,6 +368,13 @@ function ProposeNewJobsTriageToolUI({
   );
 
   React.useEffect(() => {
+    if (parseProposeNewJobsTriageOutput(result) || !toolCallId) return;
+    const recalled = recalledTriageAction(toolCallId);
+    if (!recalled) return;
+    completeLocal({ action: recalled, trackIds: [], dismissIds: [] });
+  }, [completeLocal, result, toolCallId]);
+
+  React.useEffect(() => {
     if (completed || !toolCallId) return;
     if (duplicateAfterConfirm) {
       completeLocal({ action: "cancel", trackIds: [], dismissIds: [], via: "duplicate" });
@@ -378,6 +394,7 @@ function ProposeNewJobsTriageToolUI({
 
   const handleSubmit = React.useCallback(
     async (output: ProposeNewJobsTriageOutput) => {
+      rememberTriageAction(toolCallId, output.action);
       // Cancel sibling open triage cards so auto-resume is not blocked by other
       // pending client tools in the same thread (model sometimes proposes twice).
       if (output.action === "confirm") {
@@ -424,13 +441,34 @@ function ProposeNewJobsTriageToolUI({
     [addToolOutput, completeLocal, dismissInboxJob, messages, promoteInboxJob, toolCallId]
   );
 
+  const receiptInput = input.track.length > 0 || input.dismiss.length > 0 ? input : null;
+
   if (!onLatest && (!completed || completedVia === "stale")) {
-    return null;
+    if (!receiptInput) return null;
+    return (
+      <NewJobsTriageCard
+        toolCallId={toolCallId}
+        input={receiptInput}
+        completedAction="cancel"
+        onSubmit={() => undefined}
+      />
+    );
   }
 
   if (completed) {
-    if (completedVia === "duplicate" || completedVia === "stale" || duplicateAfterConfirm) {
+    if (completedVia === "duplicate" || duplicateAfterConfirm) {
       return null;
+    }
+    if (completedVia === "stale") {
+      if (!receiptInput) return null;
+      return (
+        <NewJobsTriageCard
+          toolCallId={toolCallId}
+          input={receiptInput}
+          completedAction="cancel"
+          onSubmit={() => undefined}
+        />
+      );
     }
     if (completed.action === "cancel") {
       if (completedVia === "empty-inbox") {
@@ -440,16 +478,32 @@ function ProposeNewJobsTriageToolUI({
           </p>
         );
       }
+      if (input.track.length === 0 && input.dismiss.length === 0) {
+        return (
+          <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">Cancelled.</p>
+        );
+      }
       return (
-        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-          You cancelled triage — no track/dismiss changes.
-        </p>
+        <NewJobsTriageCard
+          toolCallId={toolCallId}
+          input={input}
+          completedAction="cancel"
+          onSubmit={() => undefined}
+        />
+      );
+    }
+    if (input.track.length === 0 && input.dismiss.length === 0) {
+      return (
+        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">Confirmed.</p>
       );
     }
     return (
-      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        Confirmed triage: track {completed.trackIds.length}, dismiss {completed.dismissIds.length}.
-      </p>
+      <NewJobsTriageCard
+        toolCallId={toolCallId}
+        input={input}
+        completedAction="confirm"
+        onSubmit={() => undefined}
+      />
     );
   }
 
