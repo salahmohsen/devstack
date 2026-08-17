@@ -31,6 +31,20 @@ Better Auth cookie: `better-auth.session_token=<token>.<hmac-sha256-base64(secre
 
 Never commit real cookies or tokens. Prefer user-provided session for browser; regenerate from DB only in local dev.
 
+### Production (custom domain)
+
+- Browser origin (`VITE_WEB_URL`, e.g. `https://hub.…`) is **not** the cookie jar for oRPC. Session is `__Secure-better-auth.session_token` on `VITE_SERVER_URL` (e.g. `https://api.…`).
+- Playwright `addCookies` on the web host SSRs a signed-in shell and still 401s `/rpc/agent/listHubMessages`. Set the cookie on the API host (and decode `%2B` / `%3D` in the HMAC).
+- Probe: `POST {VITE_SERVER_URL}/rpc/agent/listHubMessages` with `{ json: { page: 0 } }`. Compare `uiMessages[].parts` (`tool-*` vs `reasoning`+`text` only) to the painted thread.
+
+### Prod logs (read yourself)
+
+| Source                                                     | What it shows                                                                            |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Axiom dataset `devhub`                                     | `environment=production`, `agent_hub_chat_stream_started`, `error.message`               |
+| Dokploy apps `devhub-agent`, `devhub-web`, `devhub-server` | Deploy SHA in the title; `application-readLogs` for `Error in agent stream`              |
+| Evlog `version`                                            | May lag the Dokploy SHA when `autoDeploy` is off — do not treat it as the running commit |
+
 ## GitHub (private repos / detect stacks)
 
 - Private package.json reads need working OAuth on the session user (`account` provider `github`).

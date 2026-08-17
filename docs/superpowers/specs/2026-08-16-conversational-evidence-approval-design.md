@@ -4,7 +4,7 @@
 **Author:** Salah  
 **Status:** Implemented (Tasks 1–9). Plan: [2026-08-16-conversational-evidence-approval.md](../plans/2026-08-16-conversational-evidence-approval.md). Hardening (Task 11) still required.  
 **Surfaces:** Hub chat (`/dashboard` + floater), evidence inspect side panel, list `+`, hard-stop / search-brief File Diff  
-**Verification skill:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) (required after implement; living lessons in that skill’s `LESSONS.md`)  
+**Verification skill:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) (required after implement; living lessons in that skill’s `LESSONS.md`)  
 **Glossary:** [CONTEXT.md](../../../CONTEXT.md)  
 **Related:**
 
@@ -228,7 +228,7 @@ Agent: get-search-brief (preview or last edit)
 - Confirm persist: create has no row until Confirm; edit Cancel leaves row; inbox/triage not opened.
 - Multi-entity queue: Confirm then second interview; Cancel then “more on this?”
 - get-search-brief follow-up is not an empty 3s turn.
-- Fresh [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) loop + `LESSONS.md` before claiming done. Natural language only.
+- Fresh [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) loop + `LESSONS.md` before claiming done. Natural language only.
 
 ---
 

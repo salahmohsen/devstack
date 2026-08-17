@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-14-job-discovery-adapters-design.md`
 
-**Skills after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) (Task 17) — required before claiming done.
+**Skills after implementation:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) (Task 17) — required before claiming done.
 
 **Workspace:** Start a feature branch / worktree. Do **not** mix this epic with the unrelated dirty web/UI/PDF/hub tree on `main`.
 
@@ -32,7 +32,7 @@
 - Attribution: show source name + original listing URL. Do not republish listings.
 - Adapters live in `packages/api` (HTTP). Types, packs, cheap score, land-budget math live in `packages/core` (no network).
 - Hydrate catalog `description` **before** enqueueing personal AI.
-- After implementation, run app-ai-feature-hardening (fresh loop, report, append `LESSONS.md`). Do not claim done on unit tests alone.
+- After implementation, run ai-feature-harness (fresh loop, report, append `LESSONS.md`). Do not claim done on unit tests alone.
 - Commits: conventional commits. Subject ≤72 chars. Do not commit unrelated dirty files.
 - Tests: colocate `src/**/__tests__/*.test.ts`. Run with `vp test run <file>` from the package. Prefer fixtures over live HTTP.
 
@@ -1400,7 +1400,7 @@ git commit -m "docs: link job-discovery spec and fix mail-first copy"
 
 ### Task 17: App + AI feature hardening
 
-**Files:** none new. Follow `.agents/skills/app-ai-feature-hardening/SKILL.md` end to end.
+**Files:** none new. Follow `.agents/skills/ai-feature-harness/SKILL.md` end to end.
 
 **Contract to write in the hardening reply:**
 
@@ -1429,7 +1429,7 @@ Then: fix root causes, re-run the failing loop, append `LESSONS.md`, write the h
 - [ ] **Step 4: Commit hardening fixes + LESSONS.md only**
 
 ```bash
-git add .agents/skills/app-ai-feature-hardening/LESSONS.md
+git add .agents/skills/ai-feature-harness/LESSONS.md
 git commit -m "test: harden job discovery adapters"
 ```
 

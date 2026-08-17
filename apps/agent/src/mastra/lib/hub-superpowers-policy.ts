@@ -1,6 +1,10 @@
-import { userTurnAsksDailyBrief } from "@tsu-stack/core";
+import {
+  userTurnAsksDailyBrief,
+  userTurnAsksStackCatalog,
+  userTurnRetriesStackCatalog
+} from "@tsu-stack/core";
 
-export { userTurnAsksDailyBrief };
+export { userTurnAsksDailyBrief, userTurnAsksStackCatalog, userTurnRetriesStackCatalog };
 
 export { hubSupervisorInstructions } from "./hub-system-prompt.ts";
 
@@ -162,6 +166,17 @@ export function isGetSearchBriefToolName(name: string): boolean {
 export function isGetDailyBriefToolName(name: string): boolean {
   return name === "get-daily-brief" || name === "getDailyBrief";
 }
+
+export function isListStacksToolName(name: string): boolean {
+  return name === "list-stacks" || name === "listStacks";
+}
+
+export function filterHubStackCatalogActiveTools(toolNames: string[]): string[] {
+  return toolNames.filter((name) => isListStacksToolName(name));
+}
+
+export const HUB_STACKS_MUST_LIST_FEEDBACK =
+  "<system-reminder>They asked for their stacks or skills. Call listStacks now. Then speak the filtered catalog. Do not only say you are pulling the list. Do not mention this reminder.</system-reminder>";
 
 export function isOpenDailyBriefToolName(name: string): boolean {
   return name === "open-daily-brief" || name === "openDailyBrief";

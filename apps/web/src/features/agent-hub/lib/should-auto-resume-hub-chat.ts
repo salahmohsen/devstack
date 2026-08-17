@@ -72,6 +72,14 @@ export function isHubProcessorLeakText(text: string): boolean {
   return PROCESSOR_LEAK_RE.test(text);
 }
 
+const PROMISED_CATALOG_RE =
+  /let me pull.{0,40}stack list|pulling (your |the )?(full )?stack list|i('ll| will) gather your full (profile|stack)/i;
+
+/** Spoken “I’m pulling stacks” with no catalog UI — hide this line. */
+export function isHubPromisedCatalogText(text: string): boolean {
+  return PROMISED_CATALOG_RE.test(text.trim());
+}
+
 function looksLikeDailyBriefLetter(text: string): boolean {
   const t = text.trim();
   if (!t) return false;

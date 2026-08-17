@@ -4,7 +4,7 @@
 **Author:** Salah  
 **Status:** Accepted (grill complete; ready for implementation plan)  
 **Surfaces:** Settings → Jobs, evidence inspect (view-only) + hub interview, hub chat (`/dashboard` + floater), New jobs / Find jobs now, harvest + inbox-AI + hub JD card  
-**Verification skill:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) (required after implement; living lessons in that skill’s `LESSONS.md`)  
+**Verification skill:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) (required after implement; living lessons in that skill’s `LESSONS.md`)  
 **Glossary:** [CONTEXT.md](../../../CONTEXT.md) — Job search section is source of terms (`job preference`, `search brief`, `level floor`, `remote regions`, `hub operator`, `entity inspect panel`). Human evidence writes: conversational evidence spec.  
 **Related:**
 
@@ -1077,7 +1077,7 @@ Ordered so the RN 82% fix ships before brief persist, and every schema change in
 
 ### After PRs 1 and 5–8
 
-Run [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md). Fresh report + append `LESSONS.md`. PR 1 can harden the RN URL path before later PRs land.
+Run [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md). Fresh report + append `LESSONS.md`. PR 1 can harden the RN URL path before later PRs land.
 
 **Entry paths that share state:** Settings save, hub soft write, hub hard confirm, entity form save, featured-stack flip, profile save, Find now (button + chat), URL paste JD card, harvest/inbox-AI, cheap land.
 
@@ -1134,7 +1134,7 @@ Wipe discovery rows for this tenant before claiming land-path correctness (two-a
 ## 18. References
 
 - [CONTEXT.md](../../../CONTEXT.md) — Job search glossary
-- [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md)
+- [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md)
 - [Two-axis matching](./2026-08-15-job-preference-two-axis-extraction-design.md)
 - [Discovery adapters](./2026-08-14-job-discovery-adapters-design.md)
 - [Hub superpowers](./2026-08-13-hub-agent-superpowers-tools-design.md)

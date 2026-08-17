@@ -93,6 +93,7 @@ import { OpenDailyBriefToolUI } from "./open-daily-brief-tool-ui";
 import { OpenEntityFormToolUI } from "./open-entity-form-tool-ui";
 import { OpenEntityInspectToolUI } from "./open-entity-inspect-tool-ui";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
+import { ListStacksToolUI } from "./stack-catalog-tool-ui";
 import { UpsertSoftJobPreferencesToolUI } from "./upsert-soft-job-preferences-tool-ui";
 
 const PROPOSE_FROM_JD_TOOL_ID = "propose-application-from-jd";
@@ -783,6 +784,12 @@ const getExperienceToolEntry = {
   render: GetExperienceToolUI
 };
 
+const listStacksToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: ListStacksToolUI
+};
+
 /**
  * Hub HITL tool UIs. Keys cover Mastra ids (kebab) and agent registration
  * names (camel) — `part.toolName` lookup is exact.
@@ -833,7 +840,9 @@ export const hubAssistantToolkit = defineToolkit({
   "list-experiences": listExperiencesToolEntry,
   listExperiences: listExperiencesToolEntry,
   "get-experience": getExperienceToolEntry,
-  getExperience: getExperienceToolEntry
+  getExperience: getExperienceToolEntry,
+  "list-stacks": listStacksToolEntry,
+  listStacks: listStacksToolEntry
 });
 
 export const hubAssistantAuiConfig = AuiConfig({

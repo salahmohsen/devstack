@@ -4,7 +4,7 @@
 **Status:** Accepted (implemented; golden-path track/dismiss after HITL confirm still needs resume/model follow-through hardening)  
 **Plan:** [`docs/superpowers/plans/2026-08-13-hub-agent-superpowers-tools.md`](../plans/2026-08-13-hub-agent-superpowers-tools.md)  
 **Surfaces:** Dashboard hub chat (`/dashboard` home + floating chat on other dashboard routes)  
-**Verification skill:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) (required after implement; living lessons in that skill’s `LESSONS.md`)  
+**Verification skill:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) (required after implement; living lessons in that skill’s `LESSONS.md`)  
 **Related:**
 
 - [Hub agent tools + HITL](./2026-08-11-hub-agent-tools-hitl-design.md)

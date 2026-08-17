@@ -46,6 +46,10 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] `open-entity-form` only hosts the last assistant turn; history hydrate does not remount scrollback sheets
 - [ ] Chat body sends `memory: { thread, resource }` (`hubChatMemoryOptions`). One thread per user — not a new thread per message
 - [ ] After a long everyday conversation: score the cycle 1–100 in [conversation-cycles.md](conversation-cycles.md) and adjust before the next persona
+- [ ] A spoken “I’ll pull / list / open X” this turn has the matching tool part (not text-only). Hide the prelude if the tool exists
+- [ ] Catalog list tools the product treats as UI (`listExperiences`, `listStacks`, …) have a standalone toolkit renderer. Do not rely on collapsed Agent Activity
+- [ ] Working-strip-only tools still leave a readable completed row (not just `Thought for 0s` on the latest turn)
+- [ ] On prod/hydrate: `listHubMessages.uiMessages` tool parts vs painted DOM (`data-hitl-kind`, timeline, stack catalog, Agent Activity). Mapper-ok + empty DOM is a render bug
 
 ## E. Unsaved / discard UX
 
@@ -74,6 +78,8 @@ Use when the change touches Mastra HTTP, tools, memory, BYO, or agent auth. Full
 - [ ] You read Studio / `:4111` / evlog for the failing turn (do not ask the user to paste)
 - [ ] Scorers (if this flow has them) are registered with explicit `sampling` — not AgentCore evals
 - [ ] After new `@tsu-stack/core` exports: core cache rebuilt / package `dev` restarted
+- [ ] Prod: evlog `version` is not proof of the running image — match Dokploy deploy SHA. `autoDeploy: false` means you must deploy
+- [ ] Structured-output Zod for LLM payloads is **loose** (optional/coerced enums). Strict sanitize after parse — a missing `band` must not 500 the stream
 
 ## H. After hardening (always)
 

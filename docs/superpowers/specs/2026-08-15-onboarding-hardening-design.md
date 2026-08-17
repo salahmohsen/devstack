@@ -13,13 +13,13 @@
 
 **Design skills (implementation)**
 
-| Skill                        | Role                                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **impeccable**               | Operate + onboard: first-run scanability, empty/partial/error                                                                  |
-| **coss**                     | Stepper host, review panes, forms, dialogs, Accordions on mobile cards                                                         |
-| **transitions.dev**          | Step change (page side-by-side), panel reveal for desktop editor, Failed/Save text swap, success check on Done before confetti |
-| **coss-particles**           | Prefer existing particles over new chrome                                                                                      |
-| **app-ai-feature-hardening** | Required after ship (resume extract, apply, AI step)                                                                           |
+| Skill                  | Role                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **impeccable**         | Operate + onboard: first-run scanability, empty/partial/error                                                                  |
+| **coss**               | Stepper host, review panes, forms, dialogs, Accordions on mobile cards                                                         |
+| **transitions.dev**    | Step change (page side-by-side), panel reveal for desktop editor, Failed/Save text swap, success check on Done before confetti |
+| **coss-particles**     | Prefer existing particles over new chrome                                                                                      |
+| **ai-feature-harness** | Required after ship (resume extract, apply, AI step)                                                                           |
 
 **UI kit adds (this spec only)**
 
@@ -284,7 +284,7 @@ If AI/Connect are omitted, the stepper has fewer marks — do not leave disabled
 - Connect skip when catalog empty; show Resend when no tenant key.
 - AI step omitted when valid; Analyze disabled when invalid.
 - Desktop vs mobile review: not the same component tree; both can Apply.
-- After implementation: **app-ai-feature-hardening** on extract → review → apply → reopen → second import (no duplicates). Append lessons.
+- After implementation: **ai-feature-harness** on extract → review → apply → reopen → second import (no duplicates). Append lessons.
 
 ---
 

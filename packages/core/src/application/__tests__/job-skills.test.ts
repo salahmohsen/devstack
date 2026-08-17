@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildJobSkillLinkPrompt,
   extractSkillMentions,
+  LinkedJobSkillsPayloadSchema,
   resolveJobSkillTags,
   sanitizeLinkedJobSkills
 } from "#@/application/job-skills";
@@ -139,5 +140,21 @@ describe("sanitizeLinkedJobSkills", () => {
         stacks
       )
     ).toEqual([{ name: "React", stackId: "stack-react", band: "required" }]);
+  });
+
+  it("parses LLM payloads that omit band or use aliases", () => {
+    const parsed = LinkedJobSkillsPayloadSchema.parse({
+      skills: [
+        { name: "React", stackId: null },
+        { name: "TypeScript", band: "must-have", stackId: "stack-ts" },
+        { name: "Figma", band: "nice-to-have", stackId: null }
+      ]
+    });
+    expect(parsed.skills).toHaveLength(3);
+    expect(sanitizeLinkedJobSkills(parsed, stacks)).toEqual([
+      { name: "React", stackId: null, band: "required" },
+      { name: "TypeScript", stackId: "stack-ts", band: "required" },
+      { name: "Figma", stackId: null, band: "preferred" }
+    ]);
   });
 });

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **REQUIRED after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) — load the skill, read `LESSONS.md`, run a **fresh** loop (hub Thread **and** floater), include [runtime-hardening.md](../../../.agents/skills/app-ai-feature-hardening/runtime-hardening.md) / checklist **§G**, append lessons, write the report. Do not claim done from unit tests or a screenshot. Natural language only (do not coach product steps).
+> **REQUIRED after implementation:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) — load the skill, read `LESSONS.md`, run a **fresh** loop (hub Thread **and** floater), include [runtime-hardening.md](../../../.agents/skills/ai-feature-harness/runtime-hardening.md) / checklist **§G**, append lessons, write the report. Do not claim done from unit tests or a screenshot. Natural language only (do not coach product steps).
 
 **Goal:** Human create/edit of project, experience, and stack happens only in hub chat: interview until required goals are filled, then one ApprovalCard whose body is a beUI File Diff; Confirm writes on the client. Hard-stop / prefs use the same card with a proposed-vs-current `search-brief.md` File Diff.
 
@@ -12,7 +12,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-16-conversational-evidence-approval-design.md` (Accepted; frozen table is lock).
 
-**Skills:** `mastra` before Mastra API edits; `@assistant-ui` `tools` + `app-ai-feature-hardening` after ship (product + [runtime-hardening.md](../../../.agents/skills/app-ai-feature-hardening/runtime-hardening.md)). Testing policy: seam tests in this plan are requested. After new `@tsu-stack/core` exports: `pnpm --filter @tsu-stack/agent rebuild:core-cache`.
+**Skills:** `mastra` before Mastra API edits; `@assistant-ui` `tools` + `ai-feature-harness` after ship (product + [runtime-hardening.md](../../../.agents/skills/ai-feature-harness/runtime-hardening.md)). Testing policy: seam tests in this plan are requested. After new `@tsu-stack/core` exports: `pnpm --filter @tsu-stack/agent rebuild:core-cache`.
 
 ---
 
@@ -476,7 +476,7 @@ git commit -m "docs: link conversational evidence implementation plan"
 
 ### Task 11: App + AI feature hardening (required — not optional)
 
-**Files:** none new unless the loop finds a root-cause fix. Follow [SKILL.md](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) end to end.
+**Files:** none new unless the loop finds a root-cause fix. Follow [SKILL.md](../../../.agents/skills/ai-feature-harness/SKILL.md) end to end.
 
 - [ ] **Step 1: Load memory**
 
@@ -520,7 +520,7 @@ git commit -m "docs: link conversational evidence implementation plan"
 - [ ] **Step 7: Commit** only if the loop produced code or lesson fixes
 
 ```bash
-git add .agents/skills/app-ai-feature-hardening/LESSONS.md
+git add .agents/skills/ai-feature-harness/LESSONS.md
 git commit -m "docs(hardening): conversational evidence approval loop"
 ```
 

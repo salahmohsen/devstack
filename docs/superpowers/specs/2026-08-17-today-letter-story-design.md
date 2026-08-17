@@ -5,7 +5,7 @@
 **Status:** Implemented  
 **Plan:** `docs/superpowers/plans/2026-08-17-today-letter-story.md`  
 **Surfaces:** Hub Today (`getDailyBrief` → letter → `openDailyBrief` panel), mail classify, New jobs land / inbox-AI take  
-**Verification skill:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) (required after implement; append `LESSONS.md`)  
+**Verification skill:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) (required after implement; append `LESSONS.md`)  
 **Glossary:** [CONTEXT.md](../../../CONTEXT.md)  
 **Related:**
 

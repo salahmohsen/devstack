@@ -60,6 +60,11 @@ export function isHubWorkingStripToolName(name: string): boolean {
   return name.length > 0 && !isHubChoiceToolName(name);
 }
 
+/** History can collapse; the latest turn must stay open so list/get tools stay readable. */
+export function hubAgentActivityCollapseOnComplete(isLastMessage: boolean): boolean {
+  return !isLastMessage;
+}
+
 export function isHubListingExtractActive(parts: readonly unknown[]): boolean {
   for (const raw of parts) {
     if (!raw || typeof raw !== "object") continue;

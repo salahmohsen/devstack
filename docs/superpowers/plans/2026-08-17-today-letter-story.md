@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps are the work list.
 >
-> **REQUIRED after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) — fresh loop on hub Today (first open, second open same morning, mail lead vs group, inbox take-less omit, tracked move-only, empty letter). Append `LESSONS.md`. Do not claim done from a screenshot of the old inventory.
+> **REQUIRED after implementation:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) — fresh loop on hub Today (first open, second open same morning, mail lead vs group, inbox take-less omit, tracked move-only, empty letter). Append `LESSONS.md`. Do not claim done from a screenshot of the old inventory.
 
 **Goal:** Today stays the same door (`getDailyBrief` → `openDailyBrief` panel) but the letter is a **story of deltas**, written by a **Mastra workflow**, not the hub supervisor.
 
@@ -12,7 +12,7 @@
 
 **Spec:** [2026-08-17-today-letter-story-design.md](../specs/2026-08-17-today-letter-story-design.md)
 
-**Skills:** `mastra` (classify + tools), [end-to-end features](../../../.agents/end-to-end-features.md), [workflow](../../../.agents/workflow.md) (migrations), [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) after ship.
+**Skills:** `mastra` (classify + tools), [end-to-end features](../../../.agents/end-to-end-features.md), [workflow](../../../.agents/workflow.md) (migrations), [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) after ship.
 
 **Do not:** `deleteMail`, swipe, pin, triage on Today, catalog/`findJobsNow` on Today, generate summaries or takes inside `getDailyBrief`, stamp the cursor on `getDailyBrief`, put the cursor on Better Auth `user`.
 

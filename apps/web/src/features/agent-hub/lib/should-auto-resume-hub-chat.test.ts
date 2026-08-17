@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   hideHubAssistantTextAfterIndex,
   isHubTodayFillerText,
+  isHubPromisedCatalogText,
   isHubProcessorLeakText,
   lastAssistantMessageIsCompleteWithClientResumeTools,
   shouldAutoResumeHubChat
@@ -901,6 +902,20 @@ describe("hideHubAssistantTextAfterIndex", () => {
         { type: "text", text: leak }
       ])
     ).toBe(0);
+  });
+
+  it("flags promised stack-list prelude as hideable", () => {
+    expect(
+      isHubPromisedCatalogText(
+        "Let me pull your full stack list to answer from your actual recorded stacks."
+      )
+    ).toBe(true);
+    expect(
+      isHubPromisedCatalogText(
+        "Pulling the stack list now, then I'll generate the structured answer."
+      )
+    ).toBe(true);
+    expect(isHubPromisedCatalogText("Here is the filtered catalog.")).toBe(false);
   });
 });
 

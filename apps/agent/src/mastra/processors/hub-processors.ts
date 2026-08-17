@@ -18,12 +18,17 @@ import {
   hubJobUrlImportFeedback,
   HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
   HUB_TODAY_MUST_GATHER_FEEDBACK,
+  HUB_STACKS_MUST_LIST_FEEDBACK,
   filterHubTodayGatherActiveTools,
+  filterHubStackCatalogActiveTools,
   isDismissJobToolName,
   isGetDailyBriefToolName,
+  isListStacksToolName,
   isOpenDailyBriefToolName,
   isGetSearchBriefToolName,
   userTurnAsksDailyBrief,
+  userTurnAsksStackCatalog,
+  userTurnRetriesStackCatalog,
   userTurnAsksPileStatusOnly,
   userTurnAsksCompanyStatus,
   userTurnAsksEntityInspect,
@@ -76,7 +81,8 @@ export class HubEnsureFinalResponseProcessor implements Processor {
       messagesNeedTriageWrites(messages) ||
       messagesNeedSearchBriefAnswer(messages) ||
       messagesNeedDailyBriefFacts(messages) ||
-      messagesNeedDailyBriefOpen(messages)
+      messagesNeedDailyBriefOpen(messages) ||
+      messagesNeedListStacks(messages)
     ) {
       return;
     }
@@ -451,6 +457,68 @@ export function messagesNeedDailyBriefFacts(messages: ProcessInputStepArgs["mess
   return state.asked && !state.sawFacts && !state.sawOpen;
 }
 
+function recentUserAskedStackCatalog(messages: ProcessInputStepArgs["messages"]): boolean {
+  let seenUsers = 0;
+  for (let i = messages.length - 1; i >= 0 && seenUsers < 5; i--) {
+    const message = messages[i];
+    if (message?.role !== "user") continue;
+    seenUsers += 1;
+    const text = mastraMessageText(message);
+    if (userTurnAsksStackCatalog(text)) return true;
+    if (!userTurnRetriesStackCatalog(text)) return false;
+  }
+  return false;
+}
+
+export function latestUserTurnStackCatalogState(messages: ProcessInputStepArgs["messages"]): {
+  asked: boolean;
+  sawList: boolean;
+  hasSpokenAfter: boolean;
+} {
+  const latest = latestUserText(messages);
+  const asked =
+    userTurnAsksStackCatalog(latest) ||
+    (userTurnRetriesStackCatalog(latest) && recentUserAskedStackCatalog(messages));
+  let afterLatestUser = false;
+  let sawList = false;
+  let hasSpokenAfter = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawList = false;
+      hasSpokenAfter = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isListStacksToolName(name)) {
+        sawList = true;
+        continue;
+      }
+      if (sawList && part.type === "text" && typeof part.text === "string" && part.text.trim()) {
+        hasSpokenAfter = true;
+      }
+    }
+  }
+  return { asked, sawList, hasSpokenAfter };
+}
+
+export function messagesNeedListStacks(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnStackCatalogState(messages);
+  return state.asked && !state.sawList;
+}
+
+export function shouldStopAfterStackCatalog(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnStackCatalogState(messages);
+  if (!state.asked || !state.sawList) return false;
+  if (messagesNeedDailyBriefFacts(messages) || messagesNeedEntityInspect(messages)) return false;
+  return state.hasSpokenAfter;
+}
+
 export function messagesNeedDailyBriefOpen(messages: ProcessInputStepArgs["messages"]): boolean {
   // Panel opens from getDailyBrief on the client. Do not keep the supervisor
   // looping on openDailyBrief ("Still here" / "Hey" until the tool finally runs).
@@ -688,6 +756,26 @@ export class HubInspectProcessor implements Processor {
   }
 }
 
+export class HubStackCatalogProcessor implements Processor {
+  readonly id = "hub-stack-catalog";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedListStacks(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_STACKS_MUST_LIST_FEEDBACK,
+      attributes: { reason: "stacks-must-list" }
+    });
+    const activeTools = filterHubStackCatalogActiveTools(tools ? Object.keys(tools) : []);
+    return {
+      toolChoice: "required" as const,
+      ...(activeTools.length > 0 ? { activeTools } : {})
+    };
+  }
+}
+
 export class HubTodayProcessor implements Processor {
   readonly id = "hub-today";
 
@@ -797,6 +885,7 @@ export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_S
   return [
     new HubPersonalityProcessor(),
     new HubTodayProcessor(),
+    new HubStackCatalogProcessor(),
     new HubCompanyStatusProcessor(),
     new HubInspectProcessor(),
     new HubJobUrlImportProcessor(),

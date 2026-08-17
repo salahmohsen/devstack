@@ -13,6 +13,7 @@ import {
   buildHubAgentActivityItems,
   buildTodayLetterActivityItems,
   hubAgentActivityActiveLabel,
+  hubAgentActivityCollapseOnComplete,
   hubAgentActivityStatus,
   isHubListingExtractActive
 } from "@/features/agent-hub/lib/hub-agent-activity";
@@ -83,7 +84,7 @@ export function HubAgentActivity() {
         items={items}
         status={status}
         duration={durationSec}
-        collapseOnComplete
+        collapseOnComplete={hubAgentActivityCollapseOnComplete(messageId === lastMessageId)}
         maxHeight={208}
         activeLabel={hubAgentActivityActiveLabel(items, messageParts)}
         className="max-w-[min(72ch,100%)]"
