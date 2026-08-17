@@ -206,7 +206,11 @@ export const classifyMailTool = createTool({
 
     const output = result.result as MailClassifyOutput;
     const labels = output.labels ?? existing;
-    await runWithDb(db, () => mailMessageRepository.applyClassification(row.id, userId, labels));
+    await runWithDb(db, () =>
+      mailMessageRepository.applyClassification(row.id, userId, labels, {
+        summary: output.summary
+      })
+    );
 
     return {
       ok: true,

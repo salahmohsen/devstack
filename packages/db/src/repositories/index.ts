@@ -17,6 +17,7 @@ export {
 export {
   applicationActivityRepository,
   type ApplicationActivityEntity,
+  type ApplicationMoveSince,
   type CreateApplicationActivityData
 } from "./application-activity.repository.ts";
 export {
@@ -62,6 +63,7 @@ export {
   type MailCrmApplyEntity
 } from "./mail-crm-apply.repository.ts";
 export {
+  MAIL_SUMMARY_MAX_CHARS,
   mailMessageRepository,
   type CreateMailAttachmentData,
   type CreateMailMessageData,
@@ -100,6 +102,7 @@ export {
   type UpsertUserGmailSyncInput,
   type UserGmailSyncEntity
 } from "./user-gmail-sync.repository.ts";
+export { userHubStateRepository, type UserHubStateEntity } from "./user-hub-state.repository.ts";
 export {
   userMailSettingsRepository,
   type UpsertUserMailSettingsInput,

@@ -3,11 +3,13 @@ import {
   asc,
   desc,
   eq,
+  gte,
   inArray,
   isNotNull,
   isNull,
   lte,
   lt,
+  ne,
   or,
   sql,
   type InferInsertModel,
@@ -186,6 +188,41 @@ export const applicationRepository = {
       .from(application)
       .where(and(eq(application.userId, userId), eq(application.trackingStatus, trackingStatus)))
       .orderBy(desc(application.updatedAt));
+  },
+
+  /** Inbox rows that landed in the Today window and already have a take. */
+  async findInboxWithTakeSince(input: { userId: string; since: Date; limit?: number }) {
+    const limit = input.limit ?? 20;
+    return getDb()
+      .select()
+      .from(application)
+      .where(
+        and(
+          eq(application.userId, input.userId),
+          eq(application.trackingStatus, "inbox"),
+          gte(application.createdAt, input.since),
+          isNotNull(application.agentTake),
+          ne(application.agentTake, "")
+        )
+      )
+      .orderBy(desc(application.createdAt))
+      .limit(limit);
+  },
+
+  async countInboxWithTakeSince(input: { userId: string; since: Date }): Promise<number> {
+    const [row] = await getDb()
+      .select({ n: sql<number>`count(*)::int` })
+      .from(application)
+      .where(
+        and(
+          eq(application.userId, input.userId),
+          eq(application.trackingStatus, "inbox"),
+          gte(application.createdAt, input.since),
+          isNotNull(application.agentTake),
+          ne(application.agentTake, "")
+        )
+      );
+    return row?.n ?? 0;
   },
 
   async countByUserIdAndTrackingStatus(

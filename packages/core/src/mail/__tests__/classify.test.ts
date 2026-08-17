@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyJobAlertDigestGuard,
+  clipMailClassifySummary,
   heuristicClassifyMail,
   isJobAlertDigestMail,
   suppressCareerLabelsForJobAlertDigest,
@@ -117,6 +118,7 @@ describe("heuristicClassifyMail", () => {
       );
       expect(result.systemLabels).toEqual(fixture.expectedSystemLabels);
       expect(result.source).toBe("heuristic");
+      expect(result.summary).toBeNull();
       for (const label of fixture.expectedSystemLabels) {
         expect(result.labels).toContain(label);
         expect(result.notes).toMatch(new RegExp(label));
@@ -133,6 +135,16 @@ describe("heuristicClassifyMail", () => {
       })
     );
     expect(result.systemLabels).toEqual(["interview"]);
+    expect(result.summary).toBeNull();
+  });
+});
+
+describe("clipMailClassifySummary", () => {
+  it("returns null for blank and clips long lines", () => {
+    expect(clipMailClassifySummary("  ")).toBeNull();
+    expect(clipMailClassifySummary(null)).toBeNull();
+    const long = "x".repeat(400);
+    expect(clipMailClassifySummary(long)?.length).toBe(280);
   });
 });
 

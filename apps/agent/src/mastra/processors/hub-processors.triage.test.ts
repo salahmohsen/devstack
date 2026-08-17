@@ -7,6 +7,7 @@ import {
   messagesNeedDailyBriefFacts,
   messagesNeedDailyBriefOpen,
   messagesNeedEntityInspect,
+  shouldStopAfterTodayLetter,
   messagesNeedProposeTriage,
   messagesNeedSearchBriefAnswer,
   messagesNeedTriageWrites
@@ -252,7 +253,7 @@ describe("messagesNeedDailyBrief", () => {
     ).toBe(false);
   });
 
-  it("needs open after facts land", () => {
+  it("does not keep prompting openDailyBrief after facts land", () => {
     const messages = [
       { role: "user", content: { parts: [{ type: "text", text: "catch me up" }] } },
       assistantWithParts([
@@ -260,12 +261,18 @@ describe("messagesNeedDailyBrief", () => {
           type: "tool-get-daily-brief",
           toolName: "getDailyBrief",
           state: "output-available",
-          output: { inboxCount: 0, mailCount: 1, trackedCount: 2 }
+          output: {
+            inboxCount: 0,
+            mailCount: 1,
+            trackedCount: 2,
+            markdown: "# Monday 17 August\n\nNothing new right now."
+          }
         }
       ])
     ] as never;
     expect(messagesNeedDailyBriefFacts(messages)).toBe(false);
-    expect(messagesNeedDailyBriefOpen(messages)).toBe(true);
+    expect(messagesNeedDailyBriefOpen(messages)).toBe(false);
+    expect(shouldStopAfterTodayLetter(messages)).toBe(true);
   });
 
   it("treats try-again after a Today ask as still Today", () => {
@@ -329,6 +336,7 @@ describe("messagesNeedDailyBrief", () => {
     ] as never;
     expect(messagesNeedDailyBriefFacts(afterOpen)).toBe(false);
     expect(messagesNeedDailyBriefOpen(afterOpen)).toBe(false);
+    expect(shouldStopAfterTodayLetter(afterOpen)).toBe(false);
     expect(messagesNeedCompanyRead(afterOpen)).toBe(true);
     expect(messagesNeedEntityInspect(afterOpen)).toBe(true);
   });

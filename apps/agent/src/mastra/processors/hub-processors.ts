@@ -18,9 +18,7 @@ import {
   hubJobUrlImportFeedback,
   HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
   HUB_TODAY_MUST_GATHER_FEEDBACK,
-  HUB_TODAY_MUST_OPEN_FEEDBACK,
   filterHubTodayGatherActiveTools,
-  filterHubTodayOpenActiveTools,
   isDismissJobToolName,
   isGetDailyBriefToolName,
   isOpenDailyBriefToolName,
@@ -454,8 +452,18 @@ export function messagesNeedDailyBriefFacts(messages: ProcessInputStepArgs["mess
 }
 
 export function messagesNeedDailyBriefOpen(messages: ProcessInputStepArgs["messages"]): boolean {
+  // Panel opens from getDailyBrief on the client. Do not keep the supervisor
+  // looping on openDailyBrief ("Still here" / "Hey" until the tool finally runs).
+  void messages;
+  return false;
+}
+
+/** Today-only ask already has the letter — stop instead of another idle step. */
+export function shouldStopAfterTodayLetter(messages: ProcessInputStepArgs["messages"]): boolean {
   const state = latestUserTurnTodayState(messages);
-  return state.asked && state.sawFacts && !state.sawOpen;
+  if (!state.asked || !state.sawFacts) return false;
+  if (messagesNeedEntityInspect(messages) || messagesNeedCompanyRead(messages)) return false;
+  return true;
 }
 
 export function messagesNeedCompanyRead(messages: ProcessInputStepArgs["messages"]): boolean {
@@ -693,17 +701,10 @@ export class HubTodayProcessor implements Processor {
         attributes: { reason: "today-must-gather" }
       });
       const activeTools = filterHubTodayGatherActiveTools(tools ? Object.keys(tools) : []);
-      return activeTools.length > 0 ? { activeTools } : {};
-    }
-
-    if (messagesNeedDailyBriefOpen(messages)) {
-      await sendSignal?.({
-        type: "reactive",
-        contents: HUB_TODAY_MUST_OPEN_FEEDBACK,
-        attributes: { reason: "today-must-open" }
-      });
-      const activeTools = filterHubTodayOpenActiveTools(tools ? Object.keys(tools) : []);
-      return activeTools.length > 0 ? { activeTools } : {};
+      return {
+        toolChoice: "required" as const,
+        ...(activeTools.length > 0 ? { activeTools } : {})
+      };
     }
   }
 }

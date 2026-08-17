@@ -1,43 +1,23 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 
-export { openDailyBriefTool } from "./open-daily-brief.tool.ts";
+export { openDailyBriefTool } from "#@/mastra/tools/open-daily-brief.tool";
 
-import { applicationRepository, createDb, mailMessageRepository, runWithDb } from "@tsu-stack/db";
+import { TodayLetterWorkflowOutputSchema } from "@tsu-stack/core";
 
-const BriefJobSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  companyName: z.string(),
-  matchScore: z.number().nullable().optional(),
-  stage: z.string().optional()
-});
-
-const BriefMailSchema = z.object({
-  id: z.string(),
-  subject: z.string(),
-  labels: z.array(z.string()),
-  receivedAt: z.string().nullable()
-});
+import { resolveRuntimeAiCredentials } from "#@/mastra/lib/resolve-runtime-ai";
+import { runtimeLlmFromRequestContext } from "#@/mastra/runtime-llm";
+import { todayLetterWorkflow } from "#@/mastra/workflows/today-letter-workflow";
 
 /**
- * Structured facts for “what do you have for me today”.
- * The supervisor writes the letter and opens it with openDailyBrief.
+ * Runs today-letter-workflow (facts + letter). Supervisor must not rewrite the markdown.
  */
 export const getDailyBriefTool = createTool({
   id: "get-daily-brief",
   description:
-    "Load today's facts (New jobs, recent mail, open tracked). JSON only — do not write the letter here. After this returns, write the letter in the current voice and call openDailyBrief. Use when they ask what you have for them today, a daily recap, what's new, or a briefing.",
+    "Run the Today letter workflow for the last 24 hours ending now and return markdown plus facts. The side panel opens from this tool — do not call openDailyBrief, do not rewrite or paste the letter. Use when they ask what you have today, what's up, what's new, or catch me up.",
   inputSchema: z.object({}).describe("No arguments. Tenant is the session user."),
-  outputSchema: z.object({
-    dateLabel: z.string(),
-    inbox: z.array(BriefJobSchema),
-    mail: z.array(BriefMailSchema),
-    tracked: z.array(BriefJobSchema),
-    inboxCount: z.number().int(),
-    trackedCount: z.number().int(),
-    mailCount: z.number().int()
-  }),
+  outputSchema: TodayLetterWorkflowOutputSchema,
   execute: async (_input, context) => {
     const userId = context.requestContext?.get?.("userId") as string | undefined;
     const dateLabel = new Date().toLocaleDateString("en-GB", {
@@ -45,63 +25,53 @@ export const getDailyBriefTool = createTool({
       day: "numeric",
       month: "long"
     });
-    if (!userId) {
-      return {
-        dateLabel,
-        inbox: [],
-        mail: [],
-        tracked: [],
-        inboxCount: 0,
-        trackedCount: 0,
-        mailCount: 0
-      };
-    }
+    const empty = {
+      dateLabel,
+      since: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      window: "rolling24h" as const,
+      empty: true,
+      mail: [],
+      inbox: [],
+      tracked: [],
+      mailCount: 0,
+      inboxCount: 0,
+      trackedCount: 0,
+      markdown: `# ${dateLabel}\n\nNothing new right now.`
+    };
+    if (!userId) return empty;
 
-    const db = createDb();
-    const { inbox, tracked, mail } = await runWithDb(db, async () => {
-      const [inboxRows, trackedRows, mailRows] = await Promise.all([
-        applicationRepository.findByUserIdAndTrackingStatus(userId, "inbox"),
-        applicationRepository.findByUserIdAndTrackingStatus(userId, "tracked"),
-        mailMessageRepository.findByUserId({
-          userId,
-          includeSystem: false,
-          limit: 8
-        })
-      ]);
-      return { inbox: inboxRows, tracked: trackedRows, mail: mailRows };
+    const fromContext = runtimeLlmFromRequestContext((key) => context.requestContext?.get?.(key));
+    const llm = fromContext?.apiKey
+      ? fromContext
+      : await resolveRuntimeAiCredentials(userId, "hubChat");
+    const hubPersonality = context.requestContext?.get?.("hubPersonality") as string | undefined;
+
+    const run = await todayLetterWorkflow.createRun();
+    const result = await run.start({
+      inputData: { userId, llm, hubPersonality },
+      requestContext: context.requestContext
     });
 
-    const openTracked = tracked.filter((row) => row.outcome == null);
-
-    return {
-      dateLabel,
-      inbox: inbox.slice(0, 8).map((row) => {
-        return {
-          id: row.id,
-          title: row.title,
-          companyName: row.companyName,
-          matchScore: typeof row.matchScore === "number" ? row.matchScore : null
-        };
-      }),
-      mail: mail.map((row) => {
-        return {
-          id: row.id,
-          subject: row.subject?.trim() || "(no subject)",
-          labels: row.labels ?? [],
-          receivedAt: row.receivedAt ? row.receivedAt.toISOString() : null
-        };
-      }),
-      tracked: openTracked.slice(0, 8).map((row) => {
-        return {
-          id: row.id,
-          title: row.title,
-          companyName: row.companyName,
-          stage: row.stage
-        };
-      }),
-      inboxCount: inbox.length,
-      trackedCount: openTracked.length,
-      mailCount: mail.length
+    const fail = {
+      ...empty,
+      empty: false,
+      markdown: `# ${dateLabel}\n\nCould not write Today. Try again.`
     };
+    if (result.status !== "success") return fail;
+
+    const parsed = TodayLetterWorkflowOutputSchema.safeParse(result.result);
+    if (parsed.success && parsed.data.markdown.trim().length > 0) return parsed.data;
+
+    const raw = result.result as { markdown?: unknown } | undefined;
+    const markdown = typeof raw?.markdown === "string" ? raw.markdown.trim() : "";
+    if (markdown.length > 0) {
+      return {
+        ...empty,
+        ...raw,
+        markdown,
+        empty: raw && "empty" in raw ? Boolean((raw as { empty?: unknown }).empty) : empty.empty
+      };
+    }
+    return fail;
   }
 });

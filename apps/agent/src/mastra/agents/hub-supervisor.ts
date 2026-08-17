@@ -15,7 +15,6 @@ import {
   HUB_COMPANY_MUST_READ_FEEDBACK,
   HUB_INSPECT_MUST_OPEN_FEEDBACK,
   HUB_TODAY_MUST_GATHER_FEEDBACK,
-  HUB_TODAY_MUST_OPEN_FEEDBACK,
   HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   HUB_TRIAGE_MUST_WRITE_FEEDBACK,
   hubJobUrlImportFeedback,
@@ -30,8 +29,8 @@ import {
   mastraMessagesHavePendingClientHitl,
   messagesNeedCompanyRead,
   messagesNeedDailyBriefFacts,
-  messagesNeedDailyBriefOpen,
   messagesNeedEntityInspect,
+  shouldStopAfterTodayLetter,
   messagesNeedProposeAfterJobExtract,
   messagesNeedProposeAfterJobImport,
   messagesNeedProposeTriage,
@@ -138,14 +137,14 @@ export function createHubSupervisor() {
         if (messagesNeedDailyBriefFacts(ctx.messages)) {
           return { continue: true, feedback: HUB_TODAY_MUST_GATHER_FEEDBACK };
         }
-        if (messagesNeedDailyBriefOpen(ctx.messages)) {
-          return { continue: true, feedback: HUB_TODAY_MUST_OPEN_FEEDBACK };
-        }
         if (messagesNeedEntityInspect(ctx.messages)) {
           return { continue: true, feedback: HUB_INSPECT_MUST_OPEN_FEEDBACK };
         }
         if (messagesNeedCompanyRead(ctx.messages)) {
           return { continue: true, feedback: HUB_COMPANY_MUST_READ_FEEDBACK };
+        }
+        if (shouldStopAfterTodayLetter(ctx.messages)) {
+          return { continue: false };
         }
         const toolCount = ctx.toolCalls?.length ?? 0;
         if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {

@@ -215,6 +215,12 @@ export const appRelationPart = defineRelationsPart(schema, (r) => {
         from: r.userMailSettings.userId,
         to: r.user.id
       })
+    },
+    userHubState: {
+      user: r.one.user({
+        from: r.userHubState.userId,
+        to: r.user.id
+      })
     }
   };
 });

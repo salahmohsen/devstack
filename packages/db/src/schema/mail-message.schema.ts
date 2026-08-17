@@ -38,6 +38,8 @@ export const mailMessage = pgTable(
     toEmail: text("to_email"),
     subject: text("subject").notNull().default(""),
     preview: text("preview").notNull().default(""),
+    /** Neutral one-liner from classify (who + ask). Today reads this, not the body. */
+    summary: text("summary"),
     bodyText: text("body_text").notNull().default(""),
     bodyHtml: text("body_html"),
     receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),

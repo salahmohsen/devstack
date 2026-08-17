@@ -3,6 +3,7 @@ import {
   arrayContains,
   desc,
   eq,
+  gte,
   sql,
   type InferInsertModel,
   type InferSelectModel
@@ -33,6 +34,9 @@ export type CreateMailAttachmentData = Omit<
 > & {
   id?: string;
 };
+
+/** Classify one-liner cap — Today facts, not a letter. */
+export const MAIL_SUMMARY_MAX_CHARS = 280;
 
 export type MailListFilter = {
   userId: string;
@@ -171,6 +175,41 @@ export const mailMessageRepository = {
     });
   },
 
+  /** Career mail received at or after `since`, newest first. */
+  async findReceivedSince(input: {
+    userId: string;
+    since: Date;
+    limit?: number;
+  }): Promise<MailMessageEntity[]> {
+    const limit = input.limit ?? 50;
+    return getDb()
+      .select()
+      .from(mailMessage)
+      .where(
+        and(
+          eq(mailMessage.userId, input.userId),
+          eq(mailMessage.purpose, "career"),
+          gte(mailMessage.receivedAt, input.since)
+        )
+      )
+      .orderBy(desc(mailMessage.receivedAt))
+      .limit(limit);
+  },
+
+  async countReceivedSince(input: { userId: string; since: Date }): Promise<number> {
+    const [row] = await getDb()
+      .select({ n: sql<number>`count(*)::int` })
+      .from(mailMessage)
+      .where(
+        and(
+          eq(mailMessage.userId, input.userId),
+          eq(mailMessage.purpose, "career"),
+          gte(mailMessage.receivedAt, input.since)
+        )
+      );
+    return row?.n ?? 0;
+  },
+
   async findByIdForUser(
     id: string,
     userId: string,
@@ -305,8 +344,15 @@ export const mailMessageRepository = {
     meta?: {
       mastraClassifyRunId?: string | null;
       mastraClassifyTraceId?: string | null;
+      summary?: string | null;
     }
   ): Promise<MailMessageEntity | null> {
+    const incoming = meta?.summary?.trim() ?? "";
+    const clipped =
+      incoming.length > MAIL_SUMMARY_MAX_CHARS
+        ? incoming.slice(0, MAIL_SUMMARY_MAX_CHARS)
+        : incoming;
+
     const [updated] = await getDb()
       .update(mailMessage)
       .set({
@@ -317,6 +363,16 @@ export const mailMessageRepository = {
           : {}),
         ...(meta?.mastraClassifyTraceId !== undefined
           ? { mastraClassifyTraceId: meta.mastraClassifyTraceId }
+          : {}),
+        ...(clipped.length > 0
+          ? {
+              summary: sql<string>`
+                case
+                  when coalesce(btrim(${mailMessage.summary}), '') = '' then ${clipped}
+                  else ${mailMessage.summary}
+                end
+              `
+            }
           : {})
       })
       .where(and(eq(mailMessage.id, id), eq(mailMessage.userId, userId)))

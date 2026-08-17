@@ -70,6 +70,8 @@ One thread (`dashboard-home:{userId}`).
 - No triage card. No catalog search.
 - If inspect is open, **Today replaces it** (same slot).
 
+**Amended 2026-08-17:** facts and writing are no longer “last 8 of each list.” See [Today letter as a story](../specs/2026-08-17-today-letter-story-design.md) and [implementation plan](./2026-08-17-today-letter-story.md). Door above is unchanged. Delete mail is still out (program 5).
+
 ### Characters / avatars
 
 - Composer shows the character (Cairo / Dry / Coach / Quiet) next to the model. Can change it there.

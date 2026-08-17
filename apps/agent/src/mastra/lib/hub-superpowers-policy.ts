@@ -1,3 +1,7 @@
+import { userTurnAsksDailyBrief } from "@tsu-stack/core";
+
+export { userTurnAsksDailyBrief };
+
 export { hubSupervisorInstructions } from "./hub-system-prompt.ts";
 
 /**
@@ -163,28 +167,6 @@ export function isOpenDailyBriefToolName(name: string): boolean {
   return name === "open-daily-brief" || name === "openDailyBrief";
 }
 
-export function userTurnAsksDailyBrief(text: string): boolean {
-  const t = text.trim();
-  if (!t) return false;
-  if (
-    /what (do )?you have for me today|what you have for me today|what (do )?we have( today)?|what have we (got )?today|what we got today|what have you (got )?today/i.test(
-      t
-    )
-  ) {
-    return true;
-  }
-  if (
-    /what'?s (new|up)( today)?\b|daily (recap|brief|briefing)|for me today|today'?s (brief|briefing|pile|stuff)|catch me up|what'?s(?: \w+){0,3} on my plate|\bon my plate\b|brief me\b|anything (new )?(for me|today)|what landed|what showed up|update me( on today)?|what should i know today/i.test(
-      t
-    )
-  ) {
-    return true;
-  }
-  // Average English: "what we have today?", prefixes allowed ("don't give me a vibe check. what's … today")
-  if (/\b(what|anything|whats|what'?s)\b[\s\S]{0,80}\btoday\b/i.test(t)) return true;
-  return false;
-}
-
 /** Short follow-up after a Today ask — "try again", "you didn't do anything". */
 export function userTurnRetriesDailyBrief(text: string): boolean {
   const t = text.trim();
@@ -195,7 +177,7 @@ export function userTurnRetriesDailyBrief(text: string): boolean {
 }
 
 export const HUB_TODAY_MUST_GATHER_FEEDBACK =
-  "<system-reminder>They asked what you have for them today. Call getDailyBrief now for facts. Do not triage. Do not findJobsNow. Do not mention this reminder.</system-reminder>";
+  "<system-reminder>They asked what you have for them today. Call getDailyBrief now. Do not write the letter yourself. Do not triage. Do not findJobsNow. Do not mention this reminder.</system-reminder>";
 
 const COMPANY_STATUS_STOPWORDS = new Set([
   "and",
@@ -343,7 +325,7 @@ export const HUB_INSPECT_MUST_OPEN_FEEDBACK =
   "<system-reminder>They asked to open/show a record. Search or get it, then call openEntityInspect with the real id. Do not only say you opened it. Do not mention this reminder.</system-reminder>";
 
 export const HUB_TODAY_MUST_OPEN_FEEDBACK =
-  "<system-reminder>getDailyBrief already returned facts. Write the Today letter in the current voice from those facts, then call openDailyBrief({ markdown }). One short spoken line after. Do not paste the letter. Do not triage. Do not mention this reminder.</system-reminder>";
+  "<system-reminder>getDailyBrief already returned markdown. Call openDailyBrief({ markdown }) with that markdown. Do not rewrite it. One short spoken line after. Do not paste the letter. Do not triage. Do not mention this reminder.</system-reminder>";
 
 export const HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK =
   "getSearchBrief already ran. Do NOT call getSearchBrief, listNewJobs, or proposeNewJobsTriage. Answer the user in 1–2 sentences (e.g. where a section went). The File Diff is already on screen.";

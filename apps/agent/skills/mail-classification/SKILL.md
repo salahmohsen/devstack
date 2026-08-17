@@ -88,6 +88,7 @@ When no user-smart-filters skill is injected, leave smartRuleSlugs empty.
 - Zero or more `smartRuleSlugs` from the injected user filters.
 - `confidence` 0–1 reflecting certainty.
 - Short `reason` in plain language (no chain-of-thought dump).
+- `summary`: one **neutral** sentence — who + what they want (e.g. “Mahmoud Abbass Balde asked to book 18–29 Aug in Degla Maadi.”). No personality, no Today headings, no “consider delete.” English unless the mail is not. Null / empty if there is nothing to say (empty marketing blasts can be one factual line or null).
 - Never invent `rule:…` labels that are not in the user’s filter list.
 
 ## Few-shot corrections

@@ -9,7 +9,8 @@ describe("hubSupervisorInstructions", () => {
     expect(text).toMatch(/## What this app is/);
     expect(text).toMatch(/## Path: Today/);
     expect(text).toMatch(/## Path: company \/ stage/);
-    expect(text).toMatch(/openDailyBrief/);
+    expect(text).toMatch(/getDailyBrief/);
+    expect(text).toMatch(/Do not call `openDailyBrief`/);
     expect(text).toMatch(/classifyMail/);
     expect(text).toMatch(/proposeMailCrmChange/);
     expect(text).toMatch(/listNewJobs` first/);

@@ -7,7 +7,7 @@ import {
   hubPersonalityById,
   llmLogFields
 } from "@tsu-stack/core";
-import { userAiSettingsRepository } from "@tsu-stack/db";
+import { userAiSettingsRepository, userHubStateRepository } from "@tsu-stack/db";
 import {
   projectStackScanRepository,
   stackDependencyRepository,
@@ -494,6 +494,26 @@ export const agentRouter = {
         hasMore: data.hasMore,
         total: data.total
       });
+    }),
+
+  markDailyBriefOpened: protectedProcedure
+    .route({
+      description: "Stamp the Today letter cursor after a successful panel open",
+      method: "POST"
+    })
+    .input(z.object({}))
+    .output(
+      z.object({
+        ok: z.literal(true),
+        openedAt: z.string()
+      })
+    )
+    .handler(async ({ context }) => {
+      const row = await userHubStateRepository.markDailyBriefOpened(context.session.user.id);
+      return {
+        ok: true as const,
+        openedAt: (row.dailyBriefOpenedAt ?? new Date()).toISOString()
+      };
     }),
 
   /**

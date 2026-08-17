@@ -30,6 +30,7 @@ import { createProviderPingAgent } from "#@/mastra/agents/provider-ping-agent";
 import { createResumeImportExtractorAgent } from "#@/mastra/agents/resume-import-extractor-agent";
 import { createSearchBriefWriterAgent } from "#@/mastra/agents/search-brief-writer-agent";
 import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-agent";
+import { createTodayLetterWriterAgent } from "#@/mastra/agents/today-letter-writer-agent";
 import "#@/mastra/logger-bootstrap";
 import { agentSessionAuth } from "#@/mastra/session-auth";
 import { applyPackageWorkflow } from "#@/mastra/workflows/apply-package-workflow";
@@ -40,6 +41,7 @@ import { mailProcessWorkflow } from "#@/mastra/workflows/mail-process-workflow";
 import { mailReplyWorkflow } from "#@/mastra/workflows/mail-reply-workflow";
 import { organizeStacksWorkflow } from "#@/mastra/workflows/organize-stacks-workflow";
 import { resumeImportWorkflow } from "#@/mastra/workflows/resume-import-workflow";
+import { todayLetterWorkflow } from "#@/mastra/workflows/today-letter-workflow";
 
 // Product LLM: Settings BYO only (workflow input.llm / requestContext). No provider env keys.
 
@@ -145,7 +147,8 @@ export const mastra = new Mastra({
     mailClassifyWorkflow,
     mailReplyWorkflow,
     mailJobHarvestWorkflow,
-    applyPackageWorkflow
+    applyPackageWorkflow,
+    todayLetterWorkflow
   },
   agents: {
     stackCategorizerAgent: createStackCategorizerAgent(),
@@ -158,6 +161,7 @@ export const mastra = new Mastra({
     jobPreferenceMatchScorer: createJobPreferenceMatchScorerAgent(),
     jobAgentTake: createJobAgentTakeAgent(),
     searchBriefWriter: createSearchBriefWriterAgent(),
+    todayLetterWriter: createTodayLetterWriterAgent(),
     crmApplicationMatcher: createCrmApplicationMatcherAgent(),
     crmStageAdvisor: createCrmStageAdvisorAgent(),
     providerPingAgent: createProviderPingAgent(),

@@ -199,6 +199,10 @@ describe("userTurnAsksDailyBrief", () => {
     expect(userTurnAsksDailyBrief("what we have today?")).toBe(true);
     expect(userTurnAsksDailyBrief("what do we have today")).toBe(true);
     expect(userTurnAsksDailyBrief("what's new today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's up")).toBe(true);
+    expect(userTurnAsksDailyBrief("whats up?")).toBe(true);
+    expect(userTurnAsksDailyBrief("what is new today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's up with Trivelta")).toBe(false);
     expect(userTurnAsksDailyBrief("catch me up")).toBe(true);
     expect(userTurnAsksDailyBrief("what's on my plate")).toBe(true);
     expect(

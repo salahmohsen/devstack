@@ -7,6 +7,7 @@ export * from "#@/evidence/index";
 export * from "#@/experience/index";
 export * from "#@/github-config/index";
 export * from "#@/health/index";
+export * from "#@/hub/index";
 export * from "#@/invite/index";
 export * from "#@/job-discovery/index";
 export * from "#@/job-preference/index";
