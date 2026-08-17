@@ -130,7 +130,7 @@ and skills paragraphs describe who the seeker is (from experiences, stacks,
 projects, profile); lists restate job preference. Settings fields are source
 of truth. Persisted per tenant next to job preference (markdown plus that
 hash). Any successful write to job preference or evidence (Settings, hub
-speech, entity form) eagerly clears that cache. The next AI layer rebuilds lazily. Never score against the previous markdown after invalidate. Spoken hub
+speech, conversational evidence confirm) eagerly clears that cache. The next AI layer rebuilds lazily. Never score against the previous markdown after invalidate. Spoken hub
 edits write job preference, then invalidate the brief. “What is my
 identity?” reads this brief. Paragraphs are never hard stops — only
 Exclusions, compensation Minimum, and Level floor are law. Evidence
@@ -141,7 +141,8 @@ source, scoring from prose.
 **Search brief change**:
 After a rebuild, the hub thread shows a compact file-diff disclosure
 (previous snapshot vs new markdown). No side panel. The snapshot is for
-that disclosure only. The entity form panel stays for evidence forms.
+that disclosure only. Hub chat evidence writes stay File Diff Confirm.
+List `+` and inspect Edit still remount the original entity forms.
 _Avoid_: scoring the snapshot; opening the side panel for the brief.
 
 **Hub operator**:
@@ -150,20 +151,23 @@ job preference, search brief, Find jobs now, New jobs, applications. Chat is
 another door,
 not a second product and not a replacement for Settings or the board.
 Spoken soft preference fields write immediately. Hard stops (exclude,
-salary floor, level floor) confirm on a small hub card. Evidence
-create/edit confirm in the entity form panel.
-_Avoid_: career-coach clone, chat-only Career OS.
+salary floor, level floor) confirm on a hub ApprovalCard whose body is a
+File Diff of the proposed search brief vs current. Evidence in **chat** is
+the same pattern (interview, then File Diff + Confirm). Dual entry: list `+`
+and inspect Edit remount `ExperienceForm` / `ProjectForm` / `StackForm`.
+Hub inspect Edit uses `EntityFormHost` (`completeOnClose: false`) and does
+not re-register `open-entity-form` as a model tool. Spec:
+`docs/superpowers/specs/2026-08-16-conversational-evidence-approval-design.md`.
+_Avoid_: career-coach clone; a second identity markdown file.
 
-**Entity form panel**:
-Dashboard create/edit for applications, experiences, projects, and stacks
-uses the inspect side panel (inset Sheet below `xl`), not a centered Dialog.
-Hub evidence confirms open that same panel on the current dashboard route
-via a host that remounts the original experience / project / stack form.
-On successful save the panel closes. Save is in the header; the footer is
-prev/next + timestamps. Short tools and delete confirms stay
-Dialog/AlertDialog. ADR: `docs/adr/0025-entity-form-sheet.md`.
-_Avoid_: long multi-field entity forms in modals that cover the list/board;
-a second hub-only experience form; moving these forms into `packages/ui`.
+**Entity inspect panel**:
+Dashboard **view** for applications, experiences, projects, and stacks uses
+the inspect side panel (inset Sheet below `xl`). Shared shell; kind-specific
+body. Inspect stays view-only until the user hits Edit. List `+` and inspect
+Edit remount the original form sheets. Hub hosts (inspect / form / Today)
+win the side panel (`hostOwnsPanel`). ADR 0025 still describes that chrome.
+_Avoid_: long multi-field entity forms in modals; a second identity markdown
+file.
 
 ## Career Inbox and AI platform
 

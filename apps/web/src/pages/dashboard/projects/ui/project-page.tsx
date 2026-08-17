@@ -41,7 +41,7 @@ import { Icon } from "@/shared/ui/icon";
 import { ListItem } from "@/shared/ui/list-item";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { requestHubCreateInterview, useEntityPanelHostActive } from "@/features/agent-hub";
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import { getDetectJobState, startDetectStacksJob } from "@/features/stacks";
 
@@ -65,6 +65,7 @@ import {
   useListProjectsPageInfiniteQuery
 } from "@/pages/dashboard/projects/api/list-projects-page.query";
 import { DetectStacksReposDialog } from "@/pages/dashboard/projects/ui/detect-stacks-repos-dialog";
+import { ProjectForm } from "@/pages/dashboard/projects/ui/project-form";
 
 const projectsRouteApi = getRouteApi("/(root-layout)/__protected/dashboard/projects/");
 
@@ -372,8 +373,11 @@ export function ProjectsPage() {
     clearSelection
   ]);
 
-  // Hub inspect/form host wins the side panel over the list inspect.
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  // Hub inspect/form host wins the side panel. Dirty page form is discarded without confirm.
   const hostOwnsPanel = useEntityPanelHostActive();
+  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
   const [detectReposProjectId, setDetectReposProjectId] = useState<string | null>(null);
   const [detectReposDialogOpen, setDetectReposDialogOpen] = useState(false);
@@ -382,6 +386,11 @@ export function ProjectsPage() {
   const detectReposProject = detectReposProjectId
     ? (projects.find((p) => p.id === detectReposProjectId) ?? null)
     : null;
+
+  function openDialog(id: string | null) {
+    setEditingProjectId(id);
+    setDialogOpen(true);
+  }
 
   /**
    * Existing list rows only. If a job is already running → toast;
@@ -406,11 +415,7 @@ export function ProjectsPage() {
       icon={<FolderKanbanIcon aria-hidden />}
       title="No projects yet"
       description="Add your first project to showcase your work."
-      action={
-        <HeaderActions
-          add={{ onAdd: () => requestHubCreateInterview("project"), label: "Add Project" }}
-        />
-      }
+      action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Project" }} />}
     />
   );
 
@@ -441,6 +446,7 @@ export function ProjectsPage() {
                 orpcQueryClient.projects.get.queryOptions({ input: { id: project.id } })
               );
             }}
+            onEdit={() => openDialog(project.id)}
             onDelete={() => deleteMutation.mutate({ id: project.id })}
             isDeleting={deleteMutation.isPending}
             onTogglePortfolio={() => handleTogglePortfolio(project.id, !project.portfolioEntryId)}
@@ -525,7 +531,7 @@ export function ProjectsPage() {
           description="Drag the handle to reorder. Use ← → to navigate, click to inspect."
           actions={
             <HeaderActions
-              add={{ onAdd: () => requestHubCreateInterview("project"), label: "Add Project" }}
+              add={{ onAdd: () => openDialog(null), label: "Add Project" }}
               sort={{
                 isSort,
                 isSortPending: reorderMutation.isPending || isLoadingFullListForSort,
@@ -559,7 +565,7 @@ export function ProjectsPage() {
         {renderList()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !hostOwnsPanel}
+          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
           title="Project"
           onOpenChange={(next) => {
@@ -569,8 +575,21 @@ export function ProjectsPage() {
             }
           }}
         >
-          {(item: ProjectOutput | null) => (item ? <ProjectInfoPanel project={item} /> : null)}
+          {(item: ProjectOutput | null) =>
+            item ? <ProjectInfoPanel project={item} onEdit={() => openDialog(item.id)} /> : null
+          }
         </ItemsInspectHost>
+
+        {dialogOpen && !hostOwnsPanel ? (
+          <ProjectForm
+            key={editingProjectId ?? "new"}
+            initialData={
+              editingProjectId ? (projects.find((p) => p.id === editingProjectId) ?? null) : null
+            }
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+          />
+        ) : null}
 
         {detectReposProject ? (
           <DetectStacksReposDialog

@@ -6,6 +6,7 @@ import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 import {
   clearEntityInspectRequest,
+  requestEntityForm,
   useEntityFormHostActive,
   useEntityInspectHostSelector,
   type EntityInspectHostRequest
@@ -42,6 +43,18 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
     clearEntityInspectRequest(request.requestId);
   };
 
+  const openEdit = () => {
+    clearEntityInspectRequest(request.requestId);
+    requestEntityForm({
+      requestId: `inspect-edit-${request.id}`,
+      kind: request.kind,
+      id: request.id,
+      toolCallId: `inspect-edit-${request.id}`,
+      toolName: "open-entity-form",
+      completeOnClose: false
+    });
+  };
+
   if (request.kind === "project") {
     const project = projectQuery.data;
     if (projectQuery.isLoading && !project) return null;
@@ -68,7 +81,7 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
           if (!open) close();
         }}
       >
-        {(item) => (item ? <ProjectInfoPanel project={item} /> : null)}
+        {(item) => (item ? <ProjectInfoPanel project={item} onEdit={openEdit} /> : null)}
       </ItemsInspectHost>
     );
   }
@@ -99,7 +112,7 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
           if (!open) close();
         }}
       >
-        {(item) => (item ? <StackDetailPanel stack={item} /> : null)}
+        {(item) => (item ? <StackDetailPanel stack={item} onEdit={openEdit} /> : null)}
       </ItemsInspectHost>
     );
   }
@@ -129,7 +142,7 @@ function EntityInspectHostSession({ request }: { request: EntityInspectHostReque
         if (!open) close();
       }}
     >
-      {(item) => (item ? <ExperienceInfoPanel experience={item} /> : null)}
+      {(item) => (item ? <ExperienceInfoPanel experience={item} onEdit={openEdit} /> : null)}
     </ItemsInspectHost>
   );
 }

@@ -39,7 +39,7 @@ import { Icon } from "@/shared/ui/icon";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
-import { requestHubCreateInterview, useEntityPanelHostActive } from "@/features/agent-hub";
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
   cancelOrganizeStacksJob,
@@ -75,6 +75,7 @@ import {
   OrganizeDialog,
   type OrganizeConfirmPayload
 } from "@/pages/dashboard/stacks/ui/organize-dialog";
+import { StackForm } from "@/pages/dashboard/stacks/ui/stack-form";
 import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
@@ -544,9 +545,17 @@ export function StacksPage() {
     clearSelection
   ]);
 
-  // Hub inspect/form host wins the side panel over the list inspect.
+  const [editingStackId, setEditingStackId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  // Hub inspect/form host wins the side panel. Dirty page form is discarded without confirm.
   const hostOwnsPanel = useEntityPanelHostActive();
+  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+
+  const openDialog = useCallback((id: string | null) => {
+    setEditingStackId(id);
+    setDialogOpen(true);
+  }, []);
 
   const prefetchStack = useCallback(
     (id: string) => {
@@ -620,11 +629,7 @@ export function StacksPage() {
       icon={<Package aria-hidden />}
       title="No stacks configured"
       description="Add a stack to reuse it across multiple projects."
-      action={
-        <HeaderActions
-          add={{ onAdd: () => requestHubCreateInterview("stack"), label: "Add Stack" }}
-        />
-      }
+      action={<HeaderActions add={{ onAdd: () => openDialog(null), label: "Add Stack" }} />}
     />
   );
 
@@ -650,6 +655,7 @@ export function StacksPage() {
                   isChecked={Boolean(selectedIds?.[stack.id])}
                   batchSelectActive={batchSelectActive}
                   isOpen={Boolean(isItemOpen?.[stack.id])}
+                  onEdit={openDialog}
                   onOpen={openItem}
                   onToggleSelect={toggleSelect}
                   onPrefetch={prefetchStack}
@@ -694,6 +700,7 @@ export function StacksPage() {
               isChecked={Boolean(selectedIds?.[stack.id])}
               batchSelectActive={batchSelectActive}
               isOpen={Boolean(isItemOpen?.[stack.id])}
+              onEdit={openDialog}
               onOpen={openItem}
               onToggleSelect={toggleSelect}
               dragHandleProps={dragHandleProps}
@@ -713,7 +720,7 @@ export function StacksPage() {
           description="Select a stack to inspect its details. Use ← → to move between stacks."
           actions={
             <HeaderActions
-              add={{ onAdd: () => requestHubCreateInterview("stack"), label: "Add Stack" }}
+              add={{ onAdd: () => openDialog(null), label: "Add Stack" }}
               organize={{
                 isRunning: organizeStatus === "running",
                 currentStep: organizeStepLabel,
@@ -754,7 +761,7 @@ export function StacksPage() {
         {renderGrid()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !hostOwnsPanel}
+          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
           title="Stack"
           onOpenChange={(next) => {
@@ -764,8 +771,22 @@ export function StacksPage() {
             }
           }}
         >
-          {(item) => (item ? <StackDetailPanel stack={item} /> : null)}
+          {(item) => {
+            if (!item) return null;
+            return <StackDetailPanel stack={item} onEdit={() => openDialog(item.id)} />;
+          }}
         </ItemsInspectHost>
+
+        {dialogOpen && !hostOwnsPanel ? (
+          <StackForm
+            key={editingStackId ?? "new"}
+            initialData={
+              editingStackId ? (stacks.find((s) => s.id === editingStackId) ?? null) : null
+            }
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+          />
+        ) : null}
 
         {/* ── Batch delete dialog ─────────────────────────────────── */}
         <AlertDialog

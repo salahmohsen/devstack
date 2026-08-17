@@ -100,6 +100,8 @@ Each goal: `id`, `column`, `required`, `pipelineRole` (one sentence; agent says 
 
 Create: collect required (and optionals once). Edit: only the delta + empty required.
 
+**Project copy lock:** `summary` / `description` edits must be grounded in `project.analysis` (private notes). `getProject` returns analysis. Confirm is blocked if analysis is empty or the proposed copy does not share analysis facts. New user-stated facts go on `patch.analysis` as well. Do not put analysis in the File Diff. Title / year / links / portfolio flags do not need analysis.
+
 ### Experience
 
 | Goal                   | Required | Pipeline role                                          |
