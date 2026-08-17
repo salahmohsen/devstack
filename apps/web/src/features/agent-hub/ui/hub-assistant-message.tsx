@@ -7,6 +7,7 @@ import { hubPersonalityAvatarSeed, userTurnAsksDailyBrief } from "@tsu-stack/cor
 import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 
 import { AssistantMessage, ThreadComponentsContext } from "@/shared/ui/assistant-ui/thread";
+import { HubTraceToolCall } from "@/shared/ui/assistant-ui/tool-call";
 import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 
 import { useApplicationsByTrackingQuery } from "@/features/agent-hub/api/applications-by-tracking.query";
@@ -15,7 +16,10 @@ import {
   usePromoteInboxJobMutation
 } from "@/features/agent-hub/api/create-from-jd.mutation";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
-import { isHubWorkingStripToolName } from "@/features/agent-hub/lib/hub-agent-activity";
+import {
+  humanizeHubToolName,
+  isHubWorkingStripToolName
+} from "@/features/agent-hub/lib/hub-agent-activity";
 import {
   didHubHitlRemount,
   subscribeHubHitlRemount
@@ -41,10 +45,25 @@ import { HubAgentActivity, HubBareToolGroup } from "./hub-agent-activity";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
 
 function HubToolFallback(props: ToolCallMessagePartProps) {
-  if (isHubWorkingStripToolName(props.toolName ?? "")) {
-    return null;
+  const name = props.toolName ?? "";
+  if (!isHubWorkingStripToolName(name)) {
+    return <ToolFallback {...props} />;
   }
-  return <ToolFallback {...props} />;
+  const part = props as ToolCallMessagePartProps & {
+    input?: unknown;
+    output?: unknown;
+    state?: string;
+  };
+  const args = part.args ?? part.input;
+  return (
+    <HubTraceToolCall
+      toolName={humanizeHubToolName(name, args)}
+      args={args}
+      result={part.result ?? part.output}
+      status={part.status}
+      state={part.state}
+    />
+  );
 }
 
 const HUB_MESSAGE_THREAD_COMPONENTS = {

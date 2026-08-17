@@ -10,7 +10,6 @@ import { ThinkingShimmer } from "@/shared/ui/agents/thinking-shimmer";
 import { SubagentList } from "@/shared/ui/subagent-list";
 
 import {
-  buildHubAgentActivityItems,
   buildTodayLetterActivityItems,
   hubAgentActivityActiveLabel,
   hubAgentActivityCollapseOnComplete,
@@ -21,10 +20,8 @@ import { getHubComposerModel } from "@/features/agent-hub/lib/hub-composer-model
 import { buildHubSubagentListModel } from "@/features/agent-hub/lib/hub-subagent-workers";
 
 function messageHasReasoning(parts: readonly unknown[]): boolean {
-  return parts.some((raw) => 
-    Boolean(
-      raw && typeof raw === "object" && (raw as { type?: string }).type === "reasoning"
-    )
+  return parts.some((raw) =>
+    Boolean(raw && typeof raw === "object" && (raw as { type?: string }).type === "reasoning")
   );
 }
 
@@ -58,7 +55,7 @@ export function HubAgentActivity() {
     parts: messageParts,
     planWhileWaiting: isRunning && askedToday
   });
-  const items = [...todayItems, ...buildHubAgentActivityItems(messageParts)];
+  const items = todayItems;
   const status = hubAgentActivityStatus({ items, parts: messageParts, isRunning });
   const durationSec =
     timing?.totalStreamTime != null && Number.isFinite(timing.totalStreamTime)
@@ -72,7 +69,7 @@ export function HubAgentActivity() {
     : modelId || "BYO";
   const workers = buildHubSubagentListModel(messageParts, { modelLabel, isRunning });
 
-  const reasoningOwnsChrome = messageHasReasoning(messageParts) && items.length === 0;
+  const reasoningOwnsChrome = messageHasReasoning(messageParts);
   const activity = reasoningOwnsChrome ? null : items.length === 0 || extractOnly ? (
     status !== "working" && !extractOnly ? null : (
       <output
