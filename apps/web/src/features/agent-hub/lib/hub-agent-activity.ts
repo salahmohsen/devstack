@@ -164,9 +164,8 @@ export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActi
     const part = raw as HubToolNamePart & { text?: string; status?: { type?: string } };
 
     if (part.type === "reasoning") {
-      // Reasoning stays off-screen (HubHiddenReasoningGroup). Do not dump
-      // thought lists into the working strip — users saw maxSteps/tool-name
-      // monologues as chat bullets.
+      // The reasoning panel owns thought text. Do not dump it into the
+      // working strip as tool-style steps.
       continue;
     }
 

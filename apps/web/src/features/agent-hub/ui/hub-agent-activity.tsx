@@ -20,9 +20,12 @@ import {
 import { getHubComposerModel } from "@/features/agent-hub/lib/hub-composer-model";
 import { buildHubSubagentListModel } from "@/features/agent-hub/lib/hub-subagent-workers";
 
-/** Drop assistant-ui reasoning chrome — the activity strip owns that text. */
-export function HubHiddenReasoningGroup(_props: PropsWithChildren) {
-  return null;
+function messageHasReasoning(parts: readonly unknown[]): boolean {
+  return parts.some((raw) => 
+    Boolean(
+      raw && typeof raw === "object" && (raw as { type?: string }).type === "reasoning"
+    )
+  );
 }
 
 /** Keep HITL cards; drop the "N tools" chrome around them. */
@@ -69,27 +72,27 @@ export function HubAgentActivity() {
     : modelId || "BYO";
   const workers = buildHubSubagentListModel(messageParts, { modelLabel, isRunning });
 
-  const activity =
-    items.length === 0 || extractOnly ? (
-      status !== "working" && !extractOnly ? null : (
-        <output
-          className="flex h-7 w-full max-w-[min(72ch,100%)] items-center text-sm text-muted-foreground"
-          aria-live="polite"
-        >
-          <ThinkingShimmer>{hubAgentActivityActiveLabel(items, messageParts)}</ThinkingShimmer>
-        </output>
-      )
-    ) : (
-      <AgentActivity
-        items={items}
-        status={status}
-        duration={durationSec}
-        collapseOnComplete={hubAgentActivityCollapseOnComplete(messageId === lastMessageId)}
-        maxHeight={208}
-        activeLabel={hubAgentActivityActiveLabel(items, messageParts)}
-        className="max-w-[min(72ch,100%)]"
-      />
-    );
+  const reasoningOwnsChrome = messageHasReasoning(messageParts) && items.length === 0;
+  const activity = reasoningOwnsChrome ? null : items.length === 0 || extractOnly ? (
+    status !== "working" && !extractOnly ? null : (
+      <output
+        className="flex h-7 w-full max-w-[min(72ch,100%)] items-center text-sm text-muted-foreground"
+        aria-live="polite"
+      >
+        <ThinkingShimmer>{hubAgentActivityActiveLabel(items, messageParts)}</ThinkingShimmer>
+      </output>
+    )
+  ) : (
+    <AgentActivity
+      items={items}
+      status={status}
+      duration={durationSec}
+      collapseOnComplete={hubAgentActivityCollapseOnComplete(messageId === lastMessageId)}
+      maxHeight={208}
+      activeLabel={hubAgentActivityActiveLabel(items, messageParts)}
+      className="max-w-[min(72ch,100%)]"
+    />
+  );
 
   if (!workers) return activity;
 

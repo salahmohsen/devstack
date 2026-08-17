@@ -37,7 +37,7 @@ import {
   isHubTodayLetterPaste
 } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
-import { HubAgentActivity, HubBareToolGroup, HubHiddenReasoningGroup } from "./hub-agent-activity";
+import { HubAgentActivity, HubBareToolGroup } from "./hub-agent-activity";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
 
 function HubToolFallback(props: ToolCallMessagePartProps) {
@@ -49,8 +49,7 @@ function HubToolFallback(props: ToolCallMessagePartProps) {
 
 const HUB_MESSAGE_THREAD_COMPONENTS = {
   ToolFallback: HubToolFallback,
-  ToolGroup: HubBareToolGroup,
-  ReasoningGroup: HubHiddenReasoningGroup
+  ToolGroup: HubBareToolGroup
 };
 
 function HubCancelledTriageReceipt({ hidden, className }: { hidden: boolean; className?: string }) {

@@ -50,13 +50,8 @@ import { ThreadFollowupSuggestions } from "@/shared/ui/assistant-ui/follow-up-su
 import { MarkdownText } from "@/shared/ui/assistant-ui/markdown-text";
 import { MessageError, messageHasErrorStatus } from "@/shared/ui/assistant-ui/message-error";
 import { MessageStreamDuration } from "@/shared/ui/assistant-ui/message-timing";
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningRoot,
-  ReasoningText,
-  ReasoningTrigger
-} from "@/shared/ui/assistant-ui/reasoning";
+import { Reasoning } from "@/shared/ui/assistant-ui/reasoning";
+import { ReasoningPanelGroup } from "@/shared/ui/assistant-ui/reasoning-panel";
 import { ToolFallback } from "@/shared/ui/assistant-ui/tool-fallback";
 import {
   ToolGroupContent,
@@ -414,20 +409,12 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({
                     <ToolGroupContent>{children}</ToolGroupContent>
                   </ToolGroupRoot>
                 );
-              case "group-reasoning": {
+              case "group-reasoning": 
                 if (ReasoningGroup) {
                   return <ReasoningGroup group={part}>{children}</ReasoningGroup>;
                 }
-                const running = part.status.type === "running";
-                return (
-                  <ReasoningRoot streaming={running}>
-                    <ReasoningTrigger active={running} />
-                    <ReasoningContent aria-busy={running}>
-                      <ReasoningText>{children}</ReasoningText>
-                    </ReasoningContent>
-                  </ReasoningRoot>
-                );
-              }
+                return <ReasoningPanelGroup group={part} />;
+              
               case "text":
                 if (shouldHideTextPart?.(part.text ?? "")) return null;
                 if (hideTextAfterIndex != null) {
