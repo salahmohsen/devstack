@@ -84,3 +84,19 @@ Prefer:
 - fixtures and builders to reduce duplication
 - adding regression tests for bug fixes
 - mirroring nearby test structure
+
+## Agent and AI surfaces
+
+Still do not add tests unless the user, a plan, or an [app-ai-feature-hardening](./skills/app-ai-feature-hardening/SKILL.md) loop explicitly needs a seam test. When that happens, prefer contracts from [runtime-hardening.md](./skills/app-ai-feature-hardening/runtime-hardening.md) over UI snapshots or AgentCore evals:
+
+- Unauthenticated agent HTTP and oRPC chat fail closed
+- `memory: { thread, resource }` is required; `resource` is the session user (`mapUserToResourceId`)
+- Tool Zod schemas reject empty `{}` on get-by-id
+- Chat/generate payloads cap array length and string size
+- No provider API keys in agent env; BYO missing is a product error
+- Foreign `userId` cannot appear in Memory, prompts, or few-shot
+- Tool / model / worker-down errors stay product-shaped
+
+Prefer table-driven unit tests at `packages/core` / agent-pure / API router seams, plus one live stream smoke when the loop requires it. Register Mastra scorers with explicit `sampling` when adding a quality baseline — do not add `agentcore run eval`, CloudWatch online-eval, or `agentcore.json`.
+
+UI / HITL / dual-entry proof stays in the hardening skill (browser + shared-state matrix), not in this policy.

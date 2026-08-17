@@ -17,6 +17,113 @@
 
 ---
 
+## 2026-08-17 — Packed Today hide-after + remounted Confirm + pile status-only
+
+- **Trigger:** Cycle 9 pre-PR harden — everyday packed ask then leftover HITL
+- **Finding:** `hideHubAssistantTextAfterIndex` treated completed `openDailyBrief` as a hard cut (and leak-before-brief as hide-all). Packed inspect / brief / CRM speech after the letter vanished; the bubble looked empty while the Today panel opened
+- **Finding:** Hide-after can only cut after an index. Hide processor leaks per text part (`shouldHideTextPart`). After Today, hide letter paste / “Today is open…” only when there is no later tool or real spoken answer
+- **Finding:** Stale Confirm cancel that runs once on `historyReady` misses cards that hydrate later. Deduplicate by `toolCallId` and cancel whenever messages change. Waiting triage that is not on the latest assistant must complete `via: stale` and render nothing — Cancel mid-flight can sit on Submitting… forever
+- **Finding:** Yes/no pile (“still just that one”, “don’t file”) must list and speak. `messagesNeedProposeTriage` is false for `userTurnAsksPileStatusOnly`
+- **Finding:** Packed “catch me up + company + show X” is Today first, then company/inspect after the letter is open. Do not early-return company/inspect just because the same utterance also asked Today
+- **Finding:** “Bells I missed” is `listNotifications`, not another mail search. The header unread count is a different surface
+- **Finding:** After a status-only pile answer the model can loop “holding / nothing filed” until Stop. Treat a spoken status as terminal
+- **User preference:** Everyday language; do not coach tool names; do not Confirm leftover cards; test in the user's Chrome tab
+- **Evidence class:** Chrome hub Thread — first packed ask opened Today and hid later speech; leftover Eventogy triage remounted Submitting…; after the cut, inspect Ment’ech + `search-brief.md` + `listNewJobs`/`searchMail` with no triage; `listNotifications` + prefs on the bell/floor ask; unauth `:4111/chat/hub-supervisor` 401
+
+## 2026-08-17 — Evidence list + / Edit form doors restored (dual entry)
+
+- **Trigger:** User asked to restore experience/project/stack forms after `4c096d39` sent list `+` to hub interview
+- **Finding:** Those doors were an intentional conversational-evidence lock, not a delete. Restoring them is dual entry: list `+` and inspect Edit mount the original sheets; hub chat still interviews and writes via File Diff Confirm
+- **Finding:** Hub inspect Edit must use `EntityFormHost` with `completeOnClose: false`. Do not re-register `open-entity-form` as a model tool or leftover history remounts forms
+- **Finding:** Hub inspect/form/Today hosts still win the side panel (`hostOwnsPanel` closes the page form)
+- **User preference:** Keep detect stacks, organize, inspect, delete, portfolio
+- **Evidence class:** Code restore on experiences/projects/stacks pages + stack card + hub inspect host
+
+## 2026-08-17 — Packed "on my plate" skipped Today; yes/no pile opened triage
+
+- **Trigger:** Cycle 8 skeptical senior — packed plate + Trivelta + pile, then leftover-letter poke, Ment'ech vs One Solution, RAYA source
+- **Finding:** `userTurnAsksDailyBrief` start-anchors `^(what|…)\btoday` and requires the exact phrase `what's on my plate`. `"don't give me a vibe check. what's actually on my plate today"` is not Today, so the company processor runs and the letter is leftover
+- **Finding:** `listNewJobs` on “pile empty or not” still trips `HubNewJobsTriageProcessor`. A yes/no pile question must list and speak, not open Confirm
+- **Finding:** Company-status processor is live: same-turn `searchApplications` + `searchMail` + spoken Applied / Greenhouse Aug 16 without a poke
+- **Finding:** Inspect still yields Today (`Ment’ech` / Senior Frontend Engineer). Prefs stay a forward filter on already-applied rows
+- **Finding:** Naming `getProject` / `getExperience` in the spoken answer is a voice leak even when the facts are grounded
+- **User preference:** Test in the user's Chrome tab. Everyday language. Do not coach tool names
+- **Evidence class:** Chrome hub Thread — chatStream tools `searchApplications`/`searchMail`/`listNewJobs`; Cancel triage left New jobs at 1; inspect Ment’ech; unauth `:4111/chat/hub-supervisor` 401
+
+## 2026-08-17 — "what we have today?" never counted as Today
+
+- **Trigger:** Live ask `what we have today?` then `you didn't make any thing` — status lines only, no panel
+- **Finding:** Today detectors that require "you" + "for me" miss average English (`what we have today`, `what do we have`). Expand the ask regex. Treat `you didn't make any thing` / `still nothing` as retries and walk back through retry turns to find the original Today ask
+- **Finding:** A status line with zero tools is `onIterationComplete` stopping because `asked` was false. Once `asked` is true, gather/open feedback can continue
+- **Finding:** `openDailyBrief` with `min(1)` lets the model open a stub letter (`**New in`). Require a real letter length
+- **Finding:** Company/pile asks still die as "Checking…" unless the user pokes. Same class as Today: force `searchApplications`+`searchMail` / `listNewJobs`
+- **User preference:** Test in the user's Chrome tab so they can watch. Everyday phrasing, not product names
+- **Evidence class:** Chrome hub — after the phrase fix, `what we have today?` ran getDailyBrief + openDailyBrief and opened Today (`1 new job · 8 mail · 13 tracked`). Trivelta/pile needed a poke for a spoken answer
+
+## 2026-08-17 — Today letter, leftover HITL, smartRules, Cairo
+
+- **Trigger:** Last 20 hub messages failed Today (status/empty) and remounted One Solution inspect; user asked to harden + restore smartRules + make Cairo actually funny
+- **Finding:** `mastraMessagesHavePendingClientHitl` that scans the **whole thread** stops Today. Old waiting `openEntityInspect` makes `onIterationComplete` return `continue: false`. Scope pending HITL to **this user turn**
+- **Finding:** Inspect tool UI remounts any incomplete inspect and calls `requestEntityInspect`. Only the latest assistant message may own the host; older remounts complete `opened: false`
+- **Finding:** `DailyBriefHost` stayed mounted over inspect. Opening a record must `clearDailyBriefRequest`, and Today must yield when inspect is active
+- **Finding:** Saying "Opening Ment'ech" without `openEntityInspect` is the same promised-card class. Force search/get + inspect with a processor
+- **Finding:** Packed "catch me up + company + mail" opens Today and drops the spoken CRM clauses. Today `activeTools` is greedy
+- **Finding:** `sendSignal` / `onIterationComplete` feedback can appear as a visible assistant bubble. Wrap in `<system-reminder>` and hide leak text in the thread
+- **Finding:** Chat `classifyMail` passed `smartRules: []` after `mailSmartRuleRepository` vanished from the db ESM cache. Inbox `run-mail-classify` was never stripped. Load rules with SQL (or rebuild the db cache) — do not drop the field
+- **User preference:** Cairo is talkative short-line humor, not emoji-smile and not paragraph chit-chat. Everyday English; do not coach product names
+- **Evidence class:** Chrome hub Thread — Today letter opened (Eventogy 88%, Trivelta scenic route); remount header `1 new job · 8 mail · 13 tracked`; poke "Applied… they went quiet"; second `open mentech` showed Ment'ech not One Solution; unauth `:4111/chat` 401
+
+## 2026-08-17 — Hub Today + mail CRM + Mastra new-file bundle
+
+- **Trigger:** Implement the locked Today / voices / CRM-from-mail plan, then live hub Thread
+- **Finding:** Mastra incremental bundle emits `#@/mastra/…` specifiers for **new** files and crashes with `ERR_PACKAGE_IMPORT_NOT_DEFINED`. Re-export new tools from an already-bundled file (list-mail / get-mail / get-daily-brief / propose-triage) and use **relative** imports inside the new file
+- **Finding:** A new `@tsu-stack/db` repository import from a freshly chunked tool fails the same way as a new core export: the db ESM cache does not have `mailSmartRuleRepository`. Either rebuild that cache or skip the unused repo
+- **Finding:** `chatStream` 200 with only `start-step` / `finish-step` is an empty model turn, not a UI hide bug. Observational memory can already sit at ~21k message tokens; a longer role + voice overlay can produce a 4s empty bubble. Check the SSE, not just the thread
+- **Finding:** Unauthenticated `POST :4111/chat/hub-supervisor` is still 401
+- **User preference:** GitHub MCP parked; no second login
+- **Evidence class:** Agent log `ERR_PACKAGE_IMPORT_NOT_DEFINED` then `mailSmartRuleRepository` missing; Chrome `chatStream` 200 empty; curl 401
+
+## 2026-08-17 — Side panel close vs hide; jobs tools
+
+- **Trigger:** Chevron on the inspect slot; route change; new/tracked jobs conversation
+- **Finding:** `collapsed` only hid the slot. `openedItem` stayed set, so the next click on the same experience toggled it closed. Chevron must `dismiss` (clear item + inspect/form hosts + reset collapse)
+- **Finding:** Agent inspect lives on the dashboard layout route, so it survives child navigation. Close the panel on `pathname` change
+- **Finding:** `searchApplications` + `explainApplicationVsPrefs` let a packed “pile + Trivelta remote vs hybrid” ask land without listing the whole pipeline
+- **Finding:** `find-jobs-now` is terminal and hides later text. Pairing it with “tell me the stage” drops the spoken answer; history remount can show “Search is queued” again
+- **User preference:** Chevron closes; experience click still opens; test new/tracked jobs
+- **Evidence class:** Chrome experiences — open → Close details panel unmounts chevron → reopen; New jobs after nav has no leftover inspect; hub Thread used listNewJobs + explainApplicationVsPrefs
+
+## 2026-08-17 — Project copy must come from analysis
+
+- **Trigger:** User lock: any project change depends on `project.analysis`. Live ask: “is RAYA backend? fix the summary from the notes only”
+- **Finding:** `getProject` used to omit `analysis`. The model then invented “backend-first” copy. Confirm must run `projectPatchGroundedInAnalysis` against the full analysis (plus any `patch.analysis` user facts)
+- **Finding:** Dumping 8–16k analysis into a tool result can stall the turn (“pulling the record…” then 4–9s and stop). Return `analysisExcerpt` + `analysisHeadings`. Client Confirm still sees full analysis via `projects.get`
+- **Finding:** New `@tsu-stack/core` exports crash the agent (`does not provide an export named '…'`) until `rebuild:core-cache`. Prefer a local outline helper in the tool over importing a brand-new core export mid-session
+- **Finding:** Accept `id` as an alias for `projectId` — the model often passes `id`
+- **User preference:** Project rewrites stay inside analysis facts; no invented stack/employers
+- **Evidence class:** Chrome — get Project then “RAYA مش backend… bookings, payments, door access”; File Diff `+` summary leads with bookings/door access; Confirm enabled (grounded); ungrounded invented copy unit-blocked
+
+## 2026-08-16 — Conversation cycles 2–3: 87 then 91
+
+- **Trigger:** Cycle 2 skeptical senior (persist + Trivelta + no rewrite; why remote still applied; Ment’ech title-only plan; one-sentence check). Cycle 3 Franco-Arabic (RAYA + mail + hybrid; show Ment’ech no card; empty pile leave it; one card tomorrow?)
+- **Finding:** After inspect-is-terminal, “show me it / show me it” opened the experience panel **once** (“Opened experience…” ×1)
+- **Finding:** `listExperiences` still pasted the whole catalog when asked about one title. Named-row get + short delta, never a list dump
+- **Finding:** Franco-Arabic (`ya3ni`, `lsa`, `fel mail`, `matghayarsh`, `fi 7aga new fel pile`) mapped without quizzing. Empty pile → `listNewJobs` only, no triage card
+- **Finding:** Prefs write is a **forward filter**, not a retroactive dismiss of already-applied rows. The skeptical poke (“why is Trivelta still there”) should stay a spoken answer, not a write
+- **User preference:** New persona each long conversation; score 1–100 so prompt/code changes can be compared
+- **Evidence class:** Chrome hub Thread; cycle log 77 → 87 → 91
+
+## 2026-08-16 — Conversation cycle 1 (overwhelmed seeker) = 77/100
+
+- **Trigger:** Four everyday turns after leftover HITL cancel: hybrid Cairo + peek last project + job emails; poke for dropped clauses; open the project; “is RAYA still frontend?”
+- **Finding:** Same kind+id File Diff after **Cancel** re-POSTs like after Confirm. Treat cancel as settled for that entity this turn; do not resume the leftover
+- **Finding:** `open-entity-inspect` on the client-resume list restacks “Opened project…” until Stop. Make inspect terminal (panel is the UI); call once
+- **Finding:** A packed ask that writes prefs then `getSearchBrief` often never speaks the other clauses. Answer mail/project **after** (or before) the brief — the File Diff is not the whole turn
+- **Finding:** History hydrate remounts incomplete HITL (hard-stop / stack / project) from earlier today. Cancel leftovers before scoring a cycle; one thread per user is not a clean slate
+- **Finding:** Workplace “RAYA” as a **project** under Ment’ech was found without “no experiences yet” once the model searched/read instead of listExperiences-only
+- **User preference:** Change persona each cycle; score 1–100; adjust before looping
+- **Evidence class:** Chrome hub Thread (4 turns); `jobPreference.get` `workModes: [hybrid]`, locations include Cairo; inspect dialog Dev-Hub Overview; cycle log
+
 ## 2026-08-16 — Everyday multi-ask: promised card, then re-proposed after Confirm
 
 - **Trigger:** Casual hub chat: “what am I looking for / RAYA still says frontend / Dev-Hub is backend / don’t want RN / anything new in the pile”

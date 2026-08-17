@@ -78,6 +78,35 @@ Product dialogs: coss **AlertDialog** (`AlertDialogContent` / Cancel / Action) �
 - Register tools/workflows in `apps/agent/src/mastra/index.ts` when adding resources.
 - Prefer unit tests for pure steps (package-families, merge rules) + one live stream smoke for the golden path.
 - Soft AI failures: verify deterministic fallbacks (families, allowlists) still produce usable UI (confidence, icons, names).
+- Chat/generate bodies must include `memory: { thread, resource }` from `hubChatMemoryOptions` — not top-level `threadId` / `resourceId`.
+- Production probes (auth, secrets, tenant): [runtime-hardening.md](runtime-hardening.md).
+
+### Fail-closed HTTP (local)
+
+Public allowlist is health/OpenAPI only. Chat and generate must reject a missing session:
+
+```bash
+# Expect 401/403 — not a model invocation
+curl -sS -o /tmp/agent-unauth.txt -w "%{http_code}\n" \
+  -X POST http://127.0.0.1:4111/chat/hub-supervisor \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","parts":[{"type":"text","text":"ping"}]}]}'
+```
+
+Dashboard chat still goes through oRPC (`POST /rpc/agent/chatStream`) with the Better Auth cookie. API injects `Authorization: Bearer <session>` toward `:4111`.
+
+### Read traces yourself
+
+Do not ask the user to paste agent logs. Use:
+
+| Source                                                      | What it shows                                                    |
+| ----------------------------------------------------------- | ---------------------------------------------------------------- |
+| Mastra Studio (agent `:4111` UI)                            | Tool calls, step results, memory on a turn                       |
+| Agent process stdout (`pnpm --filter @tsu-stack/agent dev`) | Boot, auth, core-cache export errors                             |
+| `@tsu-stack/logger` / evlog (API + agent jobs)              | `agent_hub_chat_*`, workflow outcomes. One `emit()` per lifetime |
+| Browser → `agent.chatStream`                                | SSE / oRPC iterator; abort must cancel upstream                  |
+
+Worker down mid-stream is not success. Restart with the package `dev` script (rebuilds `@tsu-stack/core` cache).
 
 ## Evidence to keep
 
