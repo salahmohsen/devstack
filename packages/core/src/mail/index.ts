@@ -5,6 +5,7 @@ export * from "./corrections";
 export * from "./crm-ai";
 export * from "./crm-effects";
 export * from "./harvest-queue";
+export * from "./hub-mail-crm";
 export * from "./job-harvest";
 export * from "./match-application";
 export * from "./reply-draft";

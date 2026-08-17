@@ -4,6 +4,7 @@ export * from "#@/application/constants";
 export * from "#@/application/job-skills";
 export * from "#@/application/mastra-workflow-stream-error";
 export * from "#@/application/propose-from-jd";
+export * from "#@/application/propose-mail-crm-change";
 export * from "#@/application/propose-new-jobs-triage";
 export * from "#@/application/types";
 export * from "#@/application/utils";

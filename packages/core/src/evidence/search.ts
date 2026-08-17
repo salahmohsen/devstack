@@ -2,6 +2,7 @@ export type EvidenceSearchRow = {
   id: string;
   title: string;
   oneLiner: string;
+  kind?: "project" | "experience" | "stack";
 };
 
 const DEFAULT_LIMIT = 8;
