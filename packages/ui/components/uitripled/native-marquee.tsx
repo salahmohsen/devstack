@@ -188,8 +188,8 @@ function NativeMarquee({
     <div
       ref={containerRef}
       className={cn(
-        "flex shrink-0 grow-0 basis-auto overflow-hidden",
-        isVertical ? "h-full flex-col" : "w-full",
+        "flex overflow-hidden",
+        isVertical ? "h-full shrink-0 grow-0 flex-col" : "w-full max-w-full min-w-0",
         className
       )}
       {...hoverProps}

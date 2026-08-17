@@ -68,13 +68,15 @@ export function FeaturedStacksSection({ username }: { username: string }) {
       className="screen-line-bottom"
       aria-label="Featured stacks"
     >
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-2.5">
+      <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 overflow-x-clip px-4 py-2.5">
         {groups.map((group, index) => (
           <Fragment key={group.type}>
             <p className="font-mono text-[0.65rem] leading-none font-medium tracking-wide whitespace-nowrap text-muted-foreground uppercase">
               {group.label}
             </p>
-            <StackChipMarqueeRow stacks={group.stacks} reverse={index % 2 === 1} />
+            <div className="min-w-0 overflow-hidden contain-inline-size">
+              <StackChipMarqueeRow stacks={group.stacks} reverse={index % 2 === 1} />
+            </div>
           </Fragment>
         ))}
       </div>
