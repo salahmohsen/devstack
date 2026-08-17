@@ -19,7 +19,7 @@ import "@assistant-ui/react-markdown/styles/dot.css";
 const MarkdownTextImpl = () => (
   <MarkdownTextPrimitive
     remarkPlugins={[remarkGfm]}
-    className="aui-md"
+    className="aui-md text-[15px] leading-relaxed"
     components={defaultComponents}
     defer
   />
@@ -121,12 +121,18 @@ const defaultComponents = memoizeMarkdownComponents({
     />
   ),
   p: ({ className, ...props }) => (
-    <p className={cn("aui-md-p my-3 leading-relaxed first:mt-0 last:mb-0", className)} {...props} />
+    <p
+      className={cn(
+        "aui-md-p my-3 text-[15px] leading-relaxed text-pretty first:mt-0 last:mb-0",
+        className
+      )}
+      {...props}
+    />
   ),
   a: ({ className, ...props }) => (
     <a
       className={cn(
-        "aui-md-a text-primary underline underline-offset-2 hover:text-primary/80",
+        "aui-md-a text-primary underline decoration-from-font underline-offset-2 hover:text-primary/80",
         className
       )}
       {...props}
@@ -144,7 +150,7 @@ const defaultComponents = memoizeMarkdownComponents({
   ul: ({ className, ...props }) => (
     <ul
       className={cn(
-        "aui-md-ul my-3 ms-5 list-disc marker:text-muted-foreground [&>li]:mt-1",
+        "aui-md-ul my-3.5 list-disc space-y-2.5 ps-5 text-[15px] leading-relaxed marker:text-foreground/45 [&>li]:ps-1.5",
         className
       )}
       {...props}
@@ -153,7 +159,7 @@ const defaultComponents = memoizeMarkdownComponents({
   ol: ({ className, ...props }) => (
     <ol
       className={cn(
-        "aui-md-ol my-3 ms-5 list-decimal marker:text-muted-foreground [&>li]:mt-1",
+        "aui-md-ol my-3.5 list-decimal space-y-2.5 ps-5 text-[15px] leading-relaxed marker:font-medium marker:text-foreground/50 marker:tabular-nums [&>li]:ps-1.5",
         className
       )}
       {...props}
@@ -199,7 +205,10 @@ const defaultComponents = memoizeMarkdownComponents({
     />
   ),
   li: ({ className, ...props }) => (
-    <li className={cn("aui-md-li leading-relaxed", className)} {...props} />
+    <li
+      className={cn("aui-md-li text-[15px] leading-relaxed wrap-break-word", className)}
+      {...props}
+    />
   ),
   strong: ({ className, ...props }) => (
     <strong className={cn("aui-md-strong font-semibold", className)} {...props} />
@@ -222,7 +231,7 @@ const defaultComponents = memoizeMarkdownComponents({
       <code
         className={cn(
           !isCodeBlock &&
-            "aui-md-inline-code rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.85em]",
+            "aui-md-inline-code rounded-lg bg-foreground/6 px-1 py-px font-mono text-[0.8125em] text-foreground dark:bg-white/8",
           className
         )}
         {...props}

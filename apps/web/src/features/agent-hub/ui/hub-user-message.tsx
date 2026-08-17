@@ -29,7 +29,7 @@ export function HubUserMessage() {
       className="flex w-full min-w-0 flex-col items-end gap-1.5"
     >
       <UserMessageAttachments />
-      <Message align="end" className="w-full max-w-full items-start">
+      <Message align="end" className="w-full max-w-full items-start text-[15px]">
         <MessageAvatar className="mt-0.5 self-start">
           <Avatar className="size-7 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
             {image ? <AvatarImage alt={name} src={image} /> : null}

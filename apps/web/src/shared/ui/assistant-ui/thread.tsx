@@ -388,7 +388,7 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({
     >
       <div
         data-slot="aui_assistant-message-content"
-        className="flex flex-col gap-3 leading-relaxed wrap-break-word text-foreground"
+        className="flex flex-col gap-3 text-[15px] leading-relaxed wrap-break-word text-foreground"
       >
         <MessagePrimitive.GroupedParts
           groupBy={groupPartByType({
