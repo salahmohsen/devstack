@@ -53,4 +53,12 @@ describe("messagesForMastraMemoryChat", () => {
     expect(out).toHaveLength(1);
     expect(out[0]?.id).toBe("u2");
   });
+
+  it("expands hub-tool directive chips to everyday prompts for the model", () => {
+    const messages = [msg("user", "u1", ":hub-tool[Job rules]{name=job-rules} please")];
+    const out = messagesForMastraMemoryChat(messages, "submit-message");
+    expect(out).toHaveLength(1);
+    const text = (out[0]?.parts?.[0] as { text?: string })?.text;
+    expect(text).toBe("show me my job rules please");
+  });
 });

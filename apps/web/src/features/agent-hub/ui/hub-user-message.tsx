@@ -10,6 +10,8 @@ import { Message, MessageAvatar, MessageContent } from "@tsu-stack/ui/components
 import { UserMessageAttachments } from "@/shared/ui/assistant-ui/attachment";
 import { TooltipIconButton } from "@/shared/ui/assistant-ui/tooltip-icon-button";
 
+import { HubDirectiveText } from "@/features/agent-hub/ui/hub-directive-text";
+
 function initialsFromName(name: string | null | undefined): string {
   const trimmed = name?.trim() ?? "";
   if (!trimmed) return "You";
@@ -41,7 +43,7 @@ export function HubUserMessage() {
         <MessageContent className="max-w-[min(36rem,calc(100%-2.25rem))] min-w-0 items-end">
           <div className="relative ms-auto w-fit max-w-full min-w-0">
             <div className="peer max-w-full rounded-2xl bg-muted px-3.5 py-2 text-[15px] leading-5 wrap-anywhere whitespace-pre-wrap text-foreground empty:hidden">
-              <MessagePrimitive.Parts />
+              <MessagePrimitive.Parts components={{ Text: HubDirectiveText }} />
             </div>
             <div className="absolute inset-s-0 top-1/2 -translate-x-full -translate-y-1/2 pe-2 peer-empty:hidden rtl:translate-x-full">
               <ActionBarPrimitive.Root

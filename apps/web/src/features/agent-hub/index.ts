@@ -129,11 +129,15 @@ export { HubAssistantMessage } from "./ui/hub-assistant-message";
 export { HubUserMessage } from "./ui/hub-user-message";
 export { HubComposerModelPicker } from "./ui/hub-composer-model-picker";
 export { HubComposerPersonalityPicker } from "./ui/hub-composer-personality-picker";
+export { HubComposerDirectiveChip } from "./ui/hub-composer-directive-chip";
 export {
   getHubComposerPersonality,
   setHubComposerPersonality,
   subscribeHubComposerPersonality
 } from "./lib/hub-composer-personality";
+export { HUB_SLASH_COMMAND_META, HUB_TOOL_MENTIONS } from "./lib/hub-composer-triggers";
+export type { HubSlashCommandId, HubToolMention } from "./lib/hub-composer-triggers";
+export { useStartNewHubChatMutation } from "./api/start-new-hub-chat.mutation";
 export {
   HUB_CLIENT_RESUME_TOOL_NAMES,
   hideHubAssistantTextAfterIndex,

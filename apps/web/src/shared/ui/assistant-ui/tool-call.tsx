@@ -52,9 +52,7 @@ export function ToolCall({
           <span className="text-start">{label}</span>
         )}
         {query ? (
-          <span
-            className={cn(mono, "rounded-md bg-foreground/6 px-1.5 py-0.5 text-foreground/70")}
-          >
+          <span className={cn(mono, "rounded-md bg-foreground/6 px-1.5 py-0.5 text-foreground/70")}>
             {query}
           </span>
         ) : null}

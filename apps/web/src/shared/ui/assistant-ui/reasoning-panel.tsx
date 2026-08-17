@@ -144,7 +144,10 @@ export function ReasoningPanelGroup({
       : 0;
   const [clock, setClock] = useState(0);
   const startedAt = useRef<number | null>(null);
-  const [open, setOpen] = useState(true);
+  // Open while streaming (live trace); collapse when done — matches assistant-ui
+  // ReasoningRoot defaultOpen=false after stream end.
+  const [open, setOpen] = useState(false);
+  const userToggled = useRef(false);
 
   useEffect(() => {
     if (!streaming) return;
@@ -153,6 +156,11 @@ export function ReasoningPanelGroup({
     tick();
     const id = window.setInterval(tick, 250);
     return () => window.clearInterval(id);
+  }, [streaming]);
+
+  useEffect(() => {
+    if (userToggled.current) return;
+    setOpen(streaming);
   }, [streaming]);
 
   const seconds = Math.max(timed, clock);
@@ -165,7 +173,10 @@ export function ReasoningPanelGroup({
       visibleSteps={Math.max(steps.length, streaming ? 1 : 0)}
       streaming={streaming}
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={(next) => {
+        userToggled.current = true;
+        setOpen(next);
+      }}
       restingLabel={seconds > 0 ? `Thought for ${formatReasoningDuration(seconds)}` : "Thought"}
       elapsed={streaming ? formatReasoningDuration(seconds) : undefined}
       className={className}

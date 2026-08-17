@@ -41,6 +41,11 @@ export type HubChatContextValue = Omit<HubChatHelpers, "addToolOutput"> & {
   /** Load Mastra history once — call when a thread is actually on screen. */
   ensureHistory: () => void;
   /**
+   * Start a fresh hub memory thread (server epoch bump) and clear the UI.
+   * Cancels waiting HITL cards first. Used by `/new` slash command.
+   */
+  startNewChat: () => Promise<{ epoch: number; threadId: string }>;
+  /**
    * Composite approval id from the tool part (`runId::toolCallId`).
    * Runtime: `Chat` extends `AbstractChat` which defines this method;
    * some `@ai-sdk/react` type versions omit it on the subclass.

@@ -19,8 +19,8 @@ import {
   HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
   HUB_TODAY_MUST_GATHER_FEEDBACK,
   HUB_STACKS_MUST_LIST_FEEDBACK,
-  filterHubTodayGatherActiveTools,
-  filterHubStackCatalogActiveTools,
+  filterHubUnionForcedReadActiveTools,
+  type HubForcedReadFlags,
   isDismissJobToolName,
   isGetDailyBriefToolName,
   isListStacksToolName,
@@ -28,16 +28,16 @@ import {
   isGetSearchBriefToolName,
   userTurnAsksDailyBrief,
   userTurnAsksStackCatalog,
+  userTurnAsksSearchBrief,
   userTurnRetriesStackCatalog,
   userTurnAsksPileStatusOnly,
   userTurnAsksCompanyStatus,
   userTurnAsksEntityInspect,
   userTurnRetriesDailyBrief,
-  filterHubCompanyStatusActiveTools,
   HUB_COMPANY_MUST_READ_FEEDBACK,
+  HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
   isHubClientHitlToolName,
   isOpenEntityInspectToolName,
-  filterHubInspectActiveTools,
   HUB_INSPECT_MUST_OPEN_FEEDBACK,
   isHubJobPageExtractToolName,
   isListNewJobsToolName,
@@ -80,6 +80,7 @@ export class HubEnsureFinalResponseProcessor implements Processor {
       messagesNeedProposeTriage(messages) ||
       messagesNeedTriageWrites(messages) ||
       messagesNeedSearchBriefAnswer(messages) ||
+      messagesNeedGetSearchBrief(messages) ||
       messagesNeedDailyBriefFacts(messages) ||
       messagesNeedDailyBriefOpen(messages) ||
       messagesNeedListStacks(messages)
@@ -139,6 +140,47 @@ function mastraPartHasToolResult(part: Record<string, unknown>): boolean {
     return (invocation as { result?: unknown }).result != null;
   }
   return false;
+}
+
+/** ActiveTools exclusive filters return "Tool X not found" as a string result. */
+function mastraPartToolResultValue(part: Record<string, unknown>): unknown {
+  if (part.output != null) return part.output;
+  const invocation = part.toolInvocation;
+  if (invocation && typeof invocation === "object" && !Array.isArray(invocation)) {
+    return (invocation as { result?: unknown }).result;
+  }
+  return undefined;
+}
+
+export function mastraPartHasSuccessfulToolResult(part: Record<string, unknown>): boolean {
+  if (!mastraPartHasToolResult(part)) return false;
+  if (typeof part.state === "string" && part.state === "output-error") return false;
+  const value = mastraPartToolResultValue(part);
+  if (typeof value === "string" && /tool\s+["']?[\w-]+["']?\s+not found/i.test(value)) {
+    return false;
+  }
+  if (typeof value === "string" && /available tools:/i.test(value) && /not found/i.test(value)) {
+    return false;
+  }
+  return true;
+}
+
+function hubForcedReadFlags(messages: ProcessInputStepArgs["messages"]): HubForcedReadFlags {
+  return {
+    today: messagesNeedDailyBriefFacts(messages),
+    stacks: messagesNeedListStacks(messages),
+    searchBrief: messagesNeedGetSearchBrief(messages),
+    company: messagesNeedCompanyRead(messages),
+    inspect: messagesNeedEntityInspect(messages)
+  };
+}
+
+function hubForcedReadActiveTools(
+  tools: ProcessInputStepArgs["tools"],
+  messages: ProcessInputStepArgs["messages"]
+): string[] {
+  const names = tools ? Object.keys(tools) : [];
+  return filterHubUnionForcedReadActiveTools(names, hubForcedReadFlags(messages));
 }
 
 function mastraMessageText(message: ProcessInputStepArgs["messages"][number]): string {
@@ -375,7 +417,7 @@ export function latestUserTurnSearchBriefState(messages: ProcessInputStepArgs["m
       if (!raw || typeof raw !== "object") continue;
       const part = raw as Record<string, unknown>;
       const name = mastraPartToolName(part);
-      if (isGetSearchBriefToolName(name) && mastraPartHasToolResult(part)) {
+      if (isGetSearchBriefToolName(name) && mastraPartHasSuccessfulToolResult(part)) {
         sawBrief = true;
         hasTextAfter = false;
         continue;
@@ -445,7 +487,7 @@ export function latestUserTurnTodayState(messages: ProcessInputStepArgs["message
       if (!raw || typeof raw !== "object") continue;
       const part = raw as Record<string, unknown>;
       const name = mastraPartToolName(part);
-      if (isGetDailyBriefToolName(name) && mastraPartHasToolResult(part)) sawFacts = true;
+      if (isGetDailyBriefToolName(name) && mastraPartHasSuccessfulToolResult(part)) sawFacts = true;
       if (isOpenDailyBriefToolName(name)) sawOpen = true;
     }
   }
@@ -495,7 +537,7 @@ export function latestUserTurnStackCatalogState(messages: ProcessInputStepArgs["
       if (!raw || typeof raw !== "object") continue;
       const part = raw as Record<string, unknown>;
       const name = mastraPartToolName(part);
-      if (isListStacksToolName(name)) {
+      if (isListStacksToolName(name) && mastraPartHasSuccessfulToolResult(part)) {
         sawList = true;
         continue;
       }
@@ -515,8 +557,21 @@ export function messagesNeedListStacks(messages: ProcessInputStepArgs["messages"
 export function shouldStopAfterStackCatalog(messages: ProcessInputStepArgs["messages"]): boolean {
   const state = latestUserTurnStackCatalogState(messages);
   if (!state.asked || !state.sawList) return false;
-  if (messagesNeedDailyBriefFacts(messages) || messagesNeedEntityInspect(messages)) return false;
+  if (
+    messagesNeedDailyBriefFacts(messages) ||
+    messagesNeedEntityInspect(messages) ||
+    messagesNeedGetSearchBrief(messages) ||
+    messagesNeedCompanyRead(messages)
+  ) {
+    return false;
+  }
   return state.hasSpokenAfter;
+}
+
+/** Search brief not loaded yet this turn for a rules / looking-for ask. */
+export function messagesNeedGetSearchBrief(messages: ProcessInputStepArgs["messages"]): boolean {
+  if (!userTurnAsksSearchBrief(latestUserText(messages))) return false;
+  return !latestUserTurnSearchBriefState(messages).sawBrief;
 }
 
 export function messagesNeedDailyBriefOpen(messages: ProcessInputStepArgs["messages"]): boolean {
@@ -530,7 +585,14 @@ export function messagesNeedDailyBriefOpen(messages: ProcessInputStepArgs["messa
 export function shouldStopAfterTodayLetter(messages: ProcessInputStepArgs["messages"]): boolean {
   const state = latestUserTurnTodayState(messages);
   if (!state.asked || !state.sawFacts) return false;
-  if (messagesNeedEntityInspect(messages) || messagesNeedCompanyRead(messages)) return false;
+  if (
+    messagesNeedEntityInspect(messages) ||
+    messagesNeedCompanyRead(messages) ||
+    messagesNeedListStacks(messages) ||
+    messagesNeedGetSearchBrief(messages)
+  ) {
+    return false;
+  }
   return true;
 }
 
@@ -734,7 +796,7 @@ export class HubCompanyStatusProcessor implements Processor {
       contents: HUB_COMPANY_MUST_READ_FEEDBACK,
       attributes: { reason: "company-must-read" }
     });
-    const activeTools = filterHubCompanyStatusActiveTools(tools ? Object.keys(tools) : []);
+    const activeTools = hubForcedReadActiveTools(tools, messages);
     return activeTools.length > 0 ? { activeTools } : {};
   }
 }
@@ -751,7 +813,7 @@ export class HubInspectProcessor implements Processor {
       contents: HUB_INSPECT_MUST_OPEN_FEEDBACK,
       attributes: { reason: "inspect-must-open" }
     });
-    const activeTools = filterHubInspectActiveTools(tools ? Object.keys(tools) : []);
+    const activeTools = hubForcedReadActiveTools(tools, messages);
     return activeTools.length > 0 ? { activeTools } : {};
   }
 }
@@ -768,7 +830,7 @@ export class HubStackCatalogProcessor implements Processor {
       contents: HUB_STACKS_MUST_LIST_FEEDBACK,
       attributes: { reason: "stacks-must-list" }
     });
-    const activeTools = filterHubStackCatalogActiveTools(tools ? Object.keys(tools) : []);
+    const activeTools = hubForcedReadActiveTools(tools, messages);
     return {
       toolChoice: "required" as const,
       ...(activeTools.length > 0 ? { activeTools } : {})
@@ -788,12 +850,32 @@ export class HubTodayProcessor implements Processor {
         contents: HUB_TODAY_MUST_GATHER_FEEDBACK,
         attributes: { reason: "today-must-gather" }
       });
-      const activeTools = filterHubTodayGatherActiveTools(tools ? Object.keys(tools) : []);
+      const activeTools = hubForcedReadActiveTools(tools, messages);
       return {
         toolChoice: "required" as const,
         ...(activeTools.length > 0 ? { activeTools } : {})
       };
     }
+  }
+}
+
+export class HubSearchBriefGatherProcessor implements Processor {
+  readonly id = "hub-search-brief-gather";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedGetSearchBrief(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
+      attributes: { reason: "search-brief-must-load" }
+    });
+    const activeTools = hubForcedReadActiveTools(tools, messages);
+    return {
+      toolChoice: "required" as const,
+      ...(activeTools.length > 0 ? { activeTools } : {})
+    };
   }
 }
 
@@ -886,6 +968,7 @@ export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_S
     new HubPersonalityProcessor(),
     new HubTodayProcessor(),
     new HubStackCatalogProcessor(),
+    new HubSearchBriefGatherProcessor(),
     new HubCompanyStatusProcessor(),
     new HubInspectProcessor(),
     new HubJobUrlImportProcessor(),

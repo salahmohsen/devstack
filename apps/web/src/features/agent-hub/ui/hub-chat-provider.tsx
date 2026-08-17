@@ -3,6 +3,8 @@ import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import { useAISDKRuntime } from "@assistant-ui/react-ai-sdk";
 import * as React from "react";
 
+import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+
 import { fetchHubMessagesPage } from "@/features/agent-hub/api/list-hub-messages.query";
 import {
   createHubChat,
@@ -193,6 +195,45 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     [chat]
   );
 
+  const startNewChat = React.useCallback(async () => {
+    // Cancel leftover HITL so composer is free on the new thread.
+    for (const card of waitingHubConfirmCards(messagesRef.current)) {
+      try {
+        await Promise.resolve(
+          addToolOutput({
+            tool: card.toolName,
+            toolCallId: card.toolCallId,
+            output: cancelOutputForHubHitl(card.toolName)
+          })
+        );
+      } catch {
+        // Best-effort cancel; new epoch still proceeds.
+      }
+    }
+    const result = await orpcClient.agent.startNewHubChat({});
+    historyLoadRef.current = null;
+    remountCancelDoneRef.current = false;
+    cancelledStaleIdsRef.current.clear();
+    allMessagesRef.current = [];
+    setMessagesRef.current([]);
+    setHasMoreHistory(false);
+    nextHistoryPageRef.current = 1;
+    setHistoryReady(false);
+    // Re-hydrate empty history for the new epoch thread.
+    historyLoadRef.current = fetchHubMessagesPage(0)
+      .then((page) => {
+        importHistory(page.uiMessages, true);
+        setHasMoreHistory(page.hasMore);
+        nextHistoryPageRef.current = 1;
+        setHistoryReady(true);
+      })
+      .catch(() => {
+        setHistoryReady(true);
+      });
+    await historyLoadRef.current;
+    return { epoch: result.epoch, threadId: result.threadId };
+  }, [addToolOutput, importHistory]);
+
   React.useEffect(() => {
     if (!historyReady || remountCancelDoneRef.current) return;
     remountCancelDoneRef.current = true;
@@ -238,6 +279,7 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     isLoadingOlder,
     loadOlderMessages,
     ensureHistory,
+    startNewChat,
     addToolApprovalResponse,
     addToolOutput
   };

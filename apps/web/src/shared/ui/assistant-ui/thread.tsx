@@ -409,12 +409,12 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({
                     <ToolGroupContent>{children}</ToolGroupContent>
                   </ToolGroupRoot>
                 );
-              case "group-reasoning": 
+              case "group-reasoning":
                 if (ReasoningGroup) {
                   return <ReasoningGroup group={part}>{children}</ReasoningGroup>;
                 }
                 return <ReasoningPanelGroup group={part} />;
-              
+
               case "text":
                 if (shouldHideTextPart?.(part.text ?? "")) return null;
                 if (hideTextAfterIndex != null) {

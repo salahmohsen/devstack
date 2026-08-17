@@ -8,6 +8,7 @@ import {
   filterHubPostEvidenceConfirmActiveTools,
   filterHubPostTriageConfirmActiveTools,
   filterHubTriageActiveTools,
+  filterHubUnionForcedReadActiveTools,
   hubJobUrlImportFeedback,
   isJobListingUrl,
   isHubClientHitlToolName,
@@ -19,6 +20,7 @@ import {
   userTurnAsksEntityInspect,
   userTurnAsksNewJobsTriage,
   userTurnAsksPileStatusOnly,
+  userTurnAsksSearchBrief,
   userTurnRetriesDailyBrief,
   type JobScoreRow
 } from "./hub-superpowers-policy";
@@ -448,6 +450,56 @@ describe("search-loop HITL stop matrix", () => {
         toolResults: []
       })
     ).toBe(false);
+  });
+});
+
+describe("filterHubUnionForcedReadActiveTools", () => {
+  const toolNames = [
+    "getDailyBrief",
+    "listStacks",
+    "getSearchBrief",
+    "searchApplications",
+    "searchMail",
+    "openEntityInspect",
+    "listExperiences",
+    "findJobsNow",
+    "listNewJobs"
+  ];
+
+  it("unions Today + stacks + brief so exclusive filters cannot orphan tools", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: true,
+        stacks: true,
+        searchBrief: true,
+        company: false,
+        inspect: false
+      })
+    ).toEqual(["getDailyBrief", "listStacks", "getSearchBrief"]);
+  });
+
+  it("returns empty when no forced reads are pending", () => {
+    expect(
+      filterHubUnionForcedReadActiveTools(toolNames, {
+        today: false,
+        stacks: false,
+        searchBrief: false,
+        company: false,
+        inspect: false
+      })
+    ).toEqual([]);
+  });
+});
+
+describe("userTurnAsksSearchBrief", () => {
+  it("matches everyday job-rules wording", () => {
+    expect(userTurnAsksSearchBrief("what am I looking for?")).toBe(true);
+    expect(userTurnAsksSearchBrief("what I'm looking for job-wise")).toBe(true);
+    expect(userTurnAsksSearchBrief("what are my job rules?")).toBe(true);
+    expect(userTurnAsksSearchBrief("looking for in jobs")).toBe(true);
+    expect(userTurnAsksSearchBrief("show me the brief")).toBe(true);
+    expect(userTurnAsksSearchBrief("what do you have today?")).toBe(false);
+    expect(userTurnAsksSearchBrief("open mentech")).toBe(false);
   });
 });
 

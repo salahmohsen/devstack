@@ -12,6 +12,7 @@ import { createStackCategorizerAgent } from "#@/mastra/agents/stack-categorizer-
 import { byoModelFromRequestContext } from "#@/mastra/byo-model";
 import {
   HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
+  HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK,
   HUB_COMPANY_MUST_READ_FEEDBACK,
   HUB_INSPECT_MUST_OPEN_FEEDBACK,
   HUB_TODAY_MUST_GATHER_FEEDBACK,
@@ -31,6 +32,7 @@ import {
   messagesNeedCompanyRead,
   messagesNeedDailyBriefFacts,
   messagesNeedEntityInspect,
+  messagesNeedGetSearchBrief,
   messagesNeedListStacks,
   shouldStopAfterStackCatalog,
   shouldStopAfterTodayLetter,
@@ -137,16 +139,39 @@ export function createHubSupervisor() {
         if (messagesNeedSearchBriefAnswer(ctx.messages)) {
           return { continue: true, feedback: HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK };
         }
+        const toolCount = ctx.toolCalls?.length ?? 0;
+        const textOnly = toolCount === 0 && Boolean(ctx.text?.trim());
+        // iteration is 1-based. Allow one force-feedback retry, then stop so
+        // text-only "pulling it now" history contamination cannot maxSteps-spam.
+        const pastFirstForceRetry = ctx.iteration >= 2;
         if (messagesNeedDailyBriefFacts(ctx.messages)) {
+          if (textOnly && pastFirstForceRetry) {
+            return { continue: false };
+          }
           return { continue: true, feedback: HUB_TODAY_MUST_GATHER_FEEDBACK };
         }
         if (messagesNeedListStacks(ctx.messages)) {
+          if (textOnly && pastFirstForceRetry) {
+            return { continue: false };
+          }
           return { continue: true, feedback: HUB_STACKS_MUST_LIST_FEEDBACK };
         }
+        if (messagesNeedGetSearchBrief(ctx.messages)) {
+          if (textOnly && pastFirstForceRetry) {
+            return { continue: false };
+          }
+          return { continue: true, feedback: HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK };
+        }
         if (messagesNeedEntityInspect(ctx.messages)) {
+          if (textOnly && pastFirstForceRetry) {
+            return { continue: false };
+          }
           return { continue: true, feedback: HUB_INSPECT_MUST_OPEN_FEEDBACK };
         }
         if (messagesNeedCompanyRead(ctx.messages)) {
+          if (textOnly && pastFirstForceRetry) {
+            return { continue: false };
+          }
           return { continue: true, feedback: HUB_COMPANY_MUST_READ_FEEDBACK };
         }
         if (shouldStopAfterTodayLetter(ctx.messages)) {
@@ -155,7 +180,6 @@ export function createHubSupervisor() {
         if (shouldStopAfterStackCatalog(ctx.messages)) {
           return { continue: false };
         }
-        const toolCount = ctx.toolCalls?.length ?? 0;
         if (toolCount === 0 && (ctx.finishReason === "stop" || Boolean(ctx.text?.trim()))) {
           return { continue: false };
         }

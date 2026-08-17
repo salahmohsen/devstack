@@ -7,6 +7,8 @@ describe("userTurnAsksStackCatalog", () => {
     expect(userTurnAsksStackCatalog("pull my stack list")).toBe(true);
     expect(userTurnAsksStackCatalog("filter all my stacks in a structured way")).toBe(true);
     expect(userTurnAsksStackCatalog("what skills do I use")).toBe(true);
+    expect(userTurnAsksStackCatalog("pull my skills list")).toBe(true);
+    expect(userTurnAsksStackCatalog("skills I have on file")).toBe(true);
     expect(userTurnAsksStackCatalog("tools I use")).toBe(true);
     expect(
       userTurnAsksStackCatalog("other technologies/languages you are most experienced in")

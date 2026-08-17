@@ -1,5 +1,7 @@
 import { type UIMessage } from "ai";
 
+import { expandHubDirectiveText } from "@/features/agent-hub/lib/hub-directive-expand";
+
 /**
  * Build the `messages` body for hub → Mastra chat when Memory is enabled.
  *
@@ -26,7 +28,7 @@ export function messagesForMastraMemoryChat(
     const withoutTrailingAssistant =
       messages[messages.length - 1]?.role === "assistant" ? messages.slice(0, -1) : messages;
     const lastUser = [...withoutTrailingAssistant].toReversed().find((m) => m.role === "user");
-    return lastUser ? [lastUser] : withoutTrailingAssistant.slice(-1);
+    return lastUser ? [expandUserDirectives(lastUser)] : withoutTrailingAssistant.slice(-1);
   }
 
   const last = messages[messages.length - 1];
@@ -38,10 +40,25 @@ export function messagesForMastraMemoryChat(
     return [last];
   }
 
-  // Normal turn: newest user message only.
+  // Normal turn: newest user message only (directives expanded for the model).
   if (last.role === "user") {
-    return [last];
+    return [expandUserDirectives(last)];
   }
 
   return [last];
+}
+
+function expandUserDirectives(message: UIMessage): UIMessage {
+  const parts = message.parts;
+  if (!parts?.length) return message;
+  let changed = false;
+  const nextParts = parts.map((part) => {
+    if (part.type !== "text" || typeof part.text !== "string") return part;
+    const expanded = expandHubDirectiveText(part.text);
+    if (expanded === part.text) return part;
+    changed = true;
+    return { ...part, text: expanded };
+  });
+  if (!changed) return message;
+  return { ...message, parts: nextParts };
 }

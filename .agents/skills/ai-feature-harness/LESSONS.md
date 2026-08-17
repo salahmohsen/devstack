@@ -17,6 +17,29 @@
 
 ---
 
+## 2026-08-18 — New hub session + slash/mention composer
+
+- **Trigger:** Fix sticky “tools dead” thread, File Diff gaps, one-thread forever; add assistant-ui slash commands and @ tool mentions
+- **Finding:** Hub memory was hard-coded `dashboard-home:{userId}`. Rotating `user_hub_state.hub_chat_epoch` and thread id `…:e{n}` (epoch 0 keeps the original id) is the clean “new session” for Mastra memory without deleting history
+- **Finding:** `startNewHubChat` must clear client messages, reset history load refs, and re-fetch page 0 for the new epoch — server-only epoch bump leaves the old UI transcript painted
+- **Finding:** assistant-ui slash/mention need `ComposerTriggerPopover` + `Unstable_TriggerPopoverRoot`. `unstable_defaultDirectiveFormatter` is `{ serialize, parse }`, not a bare function. Mention insert text belongs in `metadata.insertText` + custom `serialize`
+- **Finding:** Clean epoch + force processors: File Diff (`search-brief.md`) and Today panel + stack catalog all painted on the same thread without “tool not found” exclusivity
+- **User preference:** `/new` for fresh chat; `@` to pick tools (everyday insert text); `/today` `/rules` `/skills` etc.
+- **Evidence class:** Chrome listbox `/new`…`/mail` and `@Today`…`@Find jobs`; File Diff after “show me my job rules”; Today dialog + stack badges on packed ask; oRPC startNewHubChat epoch 1→2; unauth chat 401
+
+## 2026-08-17 — Packed multi-ask exclusive activeTools + text-only force spam
+
+- **Trigger:** Average-user hub UI cycle on main — packed “catch me up + skills + looking for”, job rules, stack catalog, Today, reasoning chrome
+- **Finding:** Concurrent force processors (Today / stacks / company / inspect) each set an **exclusive** `activeTools` list. Later processors overwrite earlier ones. Live proof: `tool-getDailyBrief` output was the string `Tool "getDailyBrief" not found. Available tools: listStacks` while `listStacks` succeeded and the stack catalog UI painted
+- **Finding:** Treat “Tool … not found / Available tools:” string outputs as **failed** tool results. `mastraPartHasToolResult` alone marks sawFacts/sawList true and stops the force loop while the panel never opens
+- **Finding:** Union forced reads into one allowlist (`filterHubUnionForcedReadActiveTools`) and share it from every force processor. Add `HubSearchBriefGatherProcessor` for everyday job-rules / looking-for asks so File Diff is forced the same way as Today
+- **Finding:** `onIterationComplete` that always `continue: true` while `messagesNeedDailyBriefFacts` (with no tool call) maxSteps-spams “Only getDailyBrief works / Still here” when the model ignores `toolChoice`. Cap: text-only after step ≥1 → stop
+- **Finding:** Reasoning panel `useState(true)` left every Thought expanded forever. Match assistant-ui ReasoningRoot: open while streaming, collapse when done (user toggle wins)
+- **Finding:** Detectors must accept contracted English: `what I'm looking for` ≠ `what am i looking for`; `pull my skills list` / `skills on file` need stack-catalog coverage
+- **Finding:** After “tools are dead” history lands in Observational Memory, the model **narrates** “only getDailyBrief is callable” even when other tools are registered. Diff `uiMessages` tool parts vs spoken claims before changing tool registration. One-thread-per-user makes this sticky until OM rolls off
+- **User preference:** Everyday multi-ask; File Diff for job rules; stack catalog UI not prose dumps; Thought collapsed by default after stream
+- **Evidence class:** Chrome hub Thread (stack catalog `data-slot=stack-catalog`; Thought collapsed; File Diff missing while model text-only); `listHubMessages` `tool-getDailyBrief` NOTFOUND + `tool-listStacks` ok; unauth `:4111/chat` 401; agent unit 84 + core stack-ask 3
+
 ## 2026-08-17 — Silent search-brief turn invented Cancelled New jobs triage
 
 - **Trigger:** “what are my jobs goals?” showed `search-brief.md` plus a Cancelled New jobs card (inbox rows)

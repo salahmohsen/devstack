@@ -9,6 +9,8 @@
  * @see https://mastra.ai/docs (chatRoute memory body)
  */
 
+import { userHubStateRepository } from "@tsu-stack/db";
+
 /** Registered agent id for the dashboard hub supervisor. */
 export const HUB_CHAT_AGENT_ID = "hub-supervisor" as const;
 
@@ -32,19 +34,43 @@ export type ChatAllowedAgentId = (typeof CHAT_ALLOWED_AGENT_IDS)[number];
  */
 export const HUB_CHAT_MAX_STEPS = 16 as const;
 
-export function hubChatThreadId(userId: string): string {
-  return `dashboard-home:${userId}`;
+/**
+ * Mastra memory thread for hub chat.
+ * Epoch 0 keeps the original `dashboard-home:{userId}` id for existing threads.
+ * `/new` bumps epoch so the next session is `dashboard-home:{userId}:e{n}`.
+ */
+export function hubChatThreadId(userId: string, epoch: number = 0): string {
+  const n = Number.isFinite(epoch) && epoch > 0 ? Math.floor(epoch) : 0;
+  if (n <= 0) return `dashboard-home:${userId}`;
+  return `dashboard-home:${userId}:e${n}`;
 }
 
 /** Body fragment for `/chat/:agentId` and `/agents/:id/generate`. */
-export function hubChatMemoryOptions(userId: string): {
+export function hubChatMemoryOptions(
+  userId: string,
+  epoch: number = 0
+): {
   memory: { thread: string; resource: string };
 } {
   return {
     memory: {
-      thread: hubChatThreadId(userId),
+      thread: hubChatThreadId(userId, epoch),
       resource: userId
     }
+  };
+}
+
+/** Load current hub chat epoch + thread keys for this session user. */
+export async function resolveHubChatMemory(userId: string): Promise<{
+  epoch: number;
+  threadId: string;
+  memory: { thread: string; resource: string };
+}> {
+  const epoch = await userHubStateRepository.getHubChatEpoch(userId);
+  return {
+    epoch,
+    threadId: hubChatThreadId(userId, epoch),
+    memory: hubChatMemoryOptions(userId, epoch).memory
   };
 }
 

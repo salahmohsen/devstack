@@ -20,9 +20,8 @@ import {
   CHAT_ALLOWED_AGENT_IDS,
   HUB_CHAT_AGENT_ID,
   HUB_CHAT_MAX_STEPS,
-  hubChatMemoryOptions,
-  hubChatThreadId,
   isChatAllowedAgentId,
+  resolveHubChatMemory,
   slimMessagesForHubMemory
 } from "#@/lib/agent/hub-memory";
 import { parseConcatenatedJsonStream } from "#@/lib/agent/parse-workflow-json-stream";
@@ -125,7 +124,8 @@ export const agentRouter = {
       }
 
       const userId = context.session.user.id;
-      const threadId = hubChatThreadId(userId);
+      const hubMemory = await resolveHubChatMemory(userId);
+      const threadId = hubMemory.threadId;
       let response: Response;
       try {
         // Built-in Mastra routes mount under default apiPrefix `/api`.
@@ -137,7 +137,7 @@ export const agentRouter = {
               messages: input.messages,
               llm,
               maxSteps: HUB_CHAT_MAX_STEPS,
-              memory: hubChatMemoryOptions(userId).memory,
+              memory: hubMemory.memory,
               requestContext: await hubChatRequestContext(userId)
             })
           )
@@ -247,7 +247,8 @@ export const agentRouter = {
       }
 
       const userId = context.session.user.id;
-      const threadId = hubChatThreadId(userId);
+      const hubMemory = await resolveHubChatMemory(userId);
+      const threadId = hubMemory.threadId;
       const trigger = input.trigger ?? "submit-message";
       // Defense-in-depth: Memory owns history — never forward full UI transcript.
       const messages = slimMessagesForHubMemory(input.messages as unknown[], trigger);
@@ -265,7 +266,7 @@ export const agentRouter = {
               messages,
               llm,
               maxSteps: HUB_CHAT_MAX_STEPS,
-              memory: hubChatMemoryOptions(userId).memory,
+              memory: hubMemory.memory,
               requestContext: await hubChatRequestContext(userId, input.hubPersonality),
               extras: { trigger }
             })
@@ -369,7 +370,8 @@ export const agentRouter = {
       if (!isChatAllowedAgentId(agentId)) {
         throw new ORPCError("BAD_REQUEST", { message: "Invalid agentId" });
       }
-      const threadId = hubChatThreadId(userId);
+      const hubMemory = await resolveHubChatMemory(userId);
+      const threadId = hubMemory.threadId;
       const resourceId = userId;
 
       // Built-in Mastra route (apiPrefix `/api`). Without it, Studio SPA returns HTML 200.
@@ -444,7 +446,8 @@ export const agentRouter = {
       }
       const page = input.page ?? 0;
       const perPage = input.limit ?? 40;
-      const threadId = hubChatThreadId(userId);
+      const hubMemory = await resolveHubChatMemory(userId);
+      const threadId = hubMemory.threadId;
       const qs = new URLSearchParams({
         agentId,
         resourceId: userId,
@@ -513,6 +516,51 @@ export const agentRouter = {
       return {
         ok: true as const,
         openedAt: (row.dailyBriefOpenedAt ?? new Date()).toISOString()
+      };
+    }),
+
+  getHubChatSession: protectedProcedure
+    .route({
+      description: "Current hub chat memory epoch and thread id",
+      method: "GET"
+    })
+    .output(
+      z.object({
+        epoch: z.number().int().min(0),
+        threadId: z.string().min(1)
+      })
+    )
+    .handler(async ({ context }) => {
+      const hubMemory = await resolveHubChatMemory(context.session.user.id);
+      return { epoch: hubMemory.epoch, threadId: hubMemory.threadId };
+    }),
+
+  startNewHubChat: protectedProcedure
+    .route({
+      description: "Start a fresh hub chat session (new Mastra memory thread)",
+      method: "POST"
+    })
+    .input(z.object({}))
+    .output(
+      z.object({
+        ok: z.literal(true),
+        epoch: z.number().int().min(0),
+        threadId: z.string().min(1)
+      })
+    )
+    .handler(async ({ context }) => {
+      const userId = context.session.user.id;
+      const row = await userHubStateRepository.startHubChatSession(userId);
+      const hubMemory = await resolveHubChatMemory(userId);
+      context.logger.set({
+        event: "agent_hub_chat_new_session",
+        epoch: row.hubChatEpoch,
+        threadId: hubMemory.threadId
+      });
+      return {
+        ok: true as const,
+        epoch: hubMemory.epoch,
+        threadId: hubMemory.threadId
       };
     }),
 

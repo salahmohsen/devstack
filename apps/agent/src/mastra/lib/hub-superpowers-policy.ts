@@ -135,6 +135,75 @@ export function filterHubTodayOpenActiveTools(toolNames: string[]): string[] {
 }
 
 /**
+ * Concurrent forced reads (Today + stacks + brief + company + inspect) must
+ * share one activeTools allowlist. Exclusive filters overwrite each other in
+ * processInputStep order and surface "Tool X not found. Available tools: Y".
+ */
+export type HubForcedReadFlags = {
+  today: boolean;
+  stacks: boolean;
+  searchBrief: boolean;
+  company: boolean;
+  inspect: boolean;
+};
+
+export function anyHubForcedRead(flags: HubForcedReadFlags): boolean {
+  return flags.today || flags.stacks || flags.searchBrief || flags.company || flags.inspect;
+}
+
+export function filterHubUnionForcedReadActiveTools(
+  toolNames: string[],
+  flags: HubForcedReadFlags
+): string[] {
+  if (!anyHubForcedRead(flags)) return [];
+  return toolNames.filter((name) => {
+    if (flags.today && isGetDailyBriefToolName(name)) return true;
+    if (flags.stacks && isListStacksToolName(name)) return true;
+    if (flags.searchBrief && isGetSearchBriefToolName(name)) return true;
+    if (
+      flags.company &&
+      /searchApplications|search-applications|getApplication|get-application|searchMail|search-mail|getMail|get-mail|listNewJobs|list-new-jobs|classifyMail|classify-mail|explainApplicationVsPrefs|explain-application-vs-prefs/i.test(
+        name
+      )
+    ) {
+      return true;
+    }
+    if (
+      flags.inspect &&
+      /openEntityInspect|open-entity-inspect|searchEvidence|search-evidence|getExperience|get-experience|getProject|get-project|listExperiences|list-experiences|listProjects|list-projects/i.test(
+        name
+      )
+    ) {
+      return true;
+    }
+    return false;
+  });
+}
+
+/** Everyday “what am I looking for / job rules / show the brief”. */
+export function userTurnAsksSearchBrief(text: string): boolean {
+  const t = text
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02BC]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t) return false;
+  // "what am I looking for" and contracted "what I'm looking for"
+  if (/\bwhat (am i|i'?m) looking for\b/.test(t)) return true;
+  if (/\blooking for (in )?jobs?\b/.test(t)) return true;
+  if (/\blooking for job-wise\b/.test(t)) return true;
+  if (/\bwhat are my job (rules|goals|preferences|prefs)\b/.test(t)) return true;
+  if (/\bwhat('?s| is) my (job )?(search )?brief\b/.test(t)) return true;
+  if (/\bshow (me )?(my )?(the )?(search |job )?brief\b/.test(t)) return true;
+  if (/\bmy job rules\b/.test(t)) return true;
+  if (/\bwhat do i want\b/.test(t) && /\b(job|work|role)/.test(t)) return true;
+  return false;
+}
+
+export const HUB_SEARCH_BRIEF_MUST_LOAD_FEEDBACK =
+  "<system-reminder>They asked what they want / job rules / the search brief. Call getSearchBrief now. The File Diff is the UI. Do not invent rules from memory. Do not mention this reminder.</system-reminder>";
+
+/**
  * Silent listing prelude: fetch/extract only. Mastra registers supervisor
  * agents as `agent-<registrationKey>` (screenshot: `agent-jobPageExtractor`).
  */
@@ -173,6 +242,11 @@ export function isListStacksToolName(name: string): boolean {
 
 export function filterHubStackCatalogActiveTools(toolNames: string[]): string[] {
   return toolNames.filter((name) => isListStacksToolName(name));
+}
+
+/** Prefer union filter for packed multi-asks; keep single-tool helper for tests. */
+export function filterHubSearchBriefGatherActiveTools(toolNames: string[]): string[] {
+  return toolNames.filter((name) => isGetSearchBriefToolName(name));
 }
 
 export const HUB_STACKS_MUST_LIST_FEEDBACK =

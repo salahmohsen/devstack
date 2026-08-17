@@ -8,6 +8,7 @@ import {
   messagesNeedDailyBriefOpen,
   messagesNeedEntityInspect,
   messagesNeedListStacks,
+  messagesNeedGetSearchBrief,
   shouldStopAfterStackCatalog,
   shouldStopAfterTodayLetter,
   messagesNeedProposeTriage,
@@ -445,6 +446,77 @@ describe("messagesNeedDailyBrief", () => {
     const ids = createHubInputProcessors().map((processor) => processor.id);
     expect(ids.indexOf("hub-stack-catalog")).toBeGreaterThan(-1);
     expect(ids.indexOf("hub-stack-catalog")).toBeLessThan(ids.indexOf("hub-job-url-import"));
+  });
+
+  it("registers hub-search-brief-gather with the force processors", () => {
+    const ids = createHubInputProcessors().map((processor) => processor.id);
+    expect(ids.indexOf("hub-search-brief-gather")).toBeGreaterThan(-1);
+    expect(ids.indexOf("hub-search-brief-gather")).toBeLessThan(ids.indexOf("hub-job-url-import"));
+  });
+
+  it("needs getSearchBrief on job-rules asks until the brief loads", () => {
+    expect(
+      messagesNeedGetSearchBrief([
+        { role: "user", content: { parts: [{ type: "text", text: "what am I looking for?" }] } }
+      ] as never)
+    ).toBe(true);
+    expect(
+      messagesNeedGetSearchBrief([
+        { role: "user", content: { parts: [{ type: "text", text: "what am I looking for?" }] } },
+        assistantWithParts([
+          {
+            type: "tool-getSearchBrief",
+            toolName: "getSearchBrief",
+            state: "output-available",
+            output: { markdown: "# brief", hash: "h" }
+          }
+        ])
+      ] as never)
+    ).toBe(false);
+  });
+
+  it("does not treat Tool-not-found string as a successful getDailyBrief", () => {
+    expect(
+      messagesNeedDailyBriefFacts([
+        { role: "user", content: { parts: [{ type: "text", text: "what do you have today?" }] } },
+        assistantWithParts([
+          {
+            type: "tool-getDailyBrief",
+            toolName: "getDailyBrief",
+            state: "output-available",
+            output:
+              'Tool "getDailyBrief" not found. Available tools: listStacks. Call tools by their exact name only.'
+          }
+        ])
+      ] as never)
+    ).toBe(true);
+  });
+
+  it("does not stop stack catalog when a packed Today ask is still missing facts", () => {
+    expect(
+      shouldStopAfterStackCatalog([
+        {
+          role: "user",
+          content: {
+            parts: [
+              {
+                type: "text",
+                text: "catch me up on today, show me what skills I have on file"
+              }
+            ]
+          }
+        },
+        assistantWithParts([
+          {
+            type: "tool-listStacks",
+            toolName: "listStacks",
+            state: "output-available",
+            output: { stacks: [{ id: "s1", name: "React" }] }
+          },
+          { type: "text", text: "Here are your skills." }
+        ])
+      ] as never)
+    ).toBe(false);
   });
 });
 

@@ -22,6 +22,10 @@ export function userTurnAsksStackCatalog(text: string): boolean {
   ) {
     return true;
   }
+  // "pull my skills list" / "skills I have on file"
+  if (/\bskills?\b/i.test(t) && /\b(list|pull|filter|what|have|on file)\b/i.test(t)) {
+    return true;
+  }
   return /\b(skills|stacks|tech stack)\b/i.test(t) && /\b(list|pull|filter|what)\b/i.test(t);
 }
 
