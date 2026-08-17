@@ -12,7 +12,7 @@ import { createDb, projectRepository, runWithDb } from "@tsu-stack/db";
 export const listProjectsTool = createTool({
   id: "list-projects",
   description:
-    "List things the user built (title, year, summary, stackNames). Use when they say side projects, portfolio projects, or things I built. Do not follow with getProject unless they asked about one project.",
+    "List things the user built (title, year, summary, hasAnalysis, stackNames). Use when they say side projects, portfolio projects, or things I built. Call getProject before rewriting one — analysis lives there. Do not getProject every row.",
   inputSchema: z.object({
     limit: z
       .number()
@@ -31,6 +31,7 @@ export const listProjectsTool = createTool({
         title: z.string(),
         year: z.number().int(),
         summary: z.string().nullable(),
+        hasAnalysis: z.boolean(),
         isArchived: z.boolean(),
         isPresent: z.boolean(),
         experienceId: z.string().nullable(),
@@ -54,6 +55,7 @@ export const listProjectsTool = createTool({
           year: r.year,
           // Prefer short summary; never return full HTML description.
           summary: r.summary ? r.summary.slice(0, 200) : null,
+          hasAnalysis: Boolean(r.analysis?.trim()),
           isArchived: r.isArchived ?? false,
           isPresent: r.isPresent ?? false,
           experienceId: r.experienceId ?? null,

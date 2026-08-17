@@ -12,7 +12,7 @@ import {
 export const proposeHardPreferenceChangeTool = createTool({
   id: "propose-hard-preference-change",
   description:
-    "Propose a hard-stop preference change for user confirm: salary floor (salaryMin + salaryCurrency), exclude keywords (list patch add|remove|set), or level floor (junior|mid|senior|staff). Never infer these from prose — always call this tool. After calling, write no user-facing text; the confirm card is the UI and performs the write. Do not call upsert-soft-job-preferences or upsert-job-preferences for hard stops.",
+    "Propose a hard-stop preference change for user confirm: salary floor (salaryMin + salaryCurrency), exclude keywords (list patch add|remove|set), or level floor (junior|mid|senior|staff). Never infer these from prose — always call this tool. After calling, write no user-facing text; the confirm card is the UI and performs the write. After confirm, do NOT call this tool again, listNewJobs, or proposeNewJobsTriage — the File Diff is the UI. Do not call upsert-soft-job-preferences or upsert-job-preferences for hard stops.",
   inputSchema: ProposeHardPreferenceChangeInputSchema,
   outputSchema: ProposeHardPreferenceChangeOutputSchema
 });

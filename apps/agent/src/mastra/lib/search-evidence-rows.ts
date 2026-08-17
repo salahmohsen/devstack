@@ -32,19 +32,22 @@ export function toEvidenceSearchRow(
       return {
         id: row.id,
         title: row.title ?? "",
-        oneLiner: snippet(row.summary)
+        oneLiner: snippet(row.summary),
+        kind
       };
     case "experience":
       return {
         id: row.id,
         title: `${row.title ?? ""} @ ${row.organization ?? ""}`,
-        oneLiner: snippet(row.description)
+        oneLiner: snippet(row.description),
+        kind
       };
     case "stack":
       return {
         id: row.id,
         title: row.name ?? "",
-        oneLiner: snippet(row.description) || (row.type ?? "")
+        oneLiner: snippet(row.description) || (row.type ?? ""),
+        kind
       };
   }
 }

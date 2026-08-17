@@ -31,7 +31,7 @@ export function buildDetectCategorizeLabel(
   rangeEnd: number,
   unknownTotal: number
 ): string {
-  return `Categorizing packages ${rangeStart}–${rangeEnd} of ${unknownTotal}…`;
+  return `Categorizing ${rangeStart}-${rangeEnd} of ${unknownTotal}…`;
 }
 
 /** 1-based "n/total" label for organize sort/rename/enrich chunk work. */
@@ -47,7 +47,7 @@ export function buildOrganizeChunkLabel(
     case "rename":
       return `Checking names ${chunkNumber}/${chunkTotal}…`;
     case "enrich":
-      return `Analyzing metadata ${chunkNumber}/${chunkTotal}…`;
+      return `Checking metadata ${chunkNumber}/${chunkTotal}…`;
     case "profile":
       return `Picking profile stacks ${chunkNumber}/${chunkTotal}…`;
   }

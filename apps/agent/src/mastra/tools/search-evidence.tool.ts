@@ -21,9 +21,9 @@ import { toEvidenceSearchRows } from "#@/mastra/lib/search-evidence-rows";
 export const searchEvidenceTool = createTool({
   id: "search-evidence",
   description:
-    "Ranked short hits. Then getProject / getExperience / getStack. Close hits → ask which. Never invent an id.",
+    "Ranked short hits. Omit kind to search projects, experiences, and stacks together (workplace names). Then getProject / getExperience / getStack. Close hits → ask which. Never invent an id.",
   inputSchema: z.object({
-    kind: EvidenceKindSchema,
+    kind: EvidenceKindSchema.optional().describe("Omit to search all three kinds."),
     query: z.string().min(1).describe("Title, org, or name fragment to rank against.")
     // Intentionally no userId — tenant is requestContext only.
   }),
@@ -32,7 +32,8 @@ export const searchEvidenceTool = createTool({
       z.object({
         id: z.string(),
         title: z.string(),
-        oneLiner: z.string()
+        oneLiner: z.string(),
+        kind: EvidenceKindSchema
       })
     )
   }),
@@ -44,18 +45,38 @@ export const searchEvidenceTool = createTool({
     }
     const db = createDb();
     const rows = await runWithDb(db, async () => {
-      switch (kind) {
-        case "project":
-          return toEvidenceSearchRows("project", await projectRepository.findAllByUserId(userId));
-        case "experience":
-          return toEvidenceSearchRows(
-            "experience",
-            await experienceRepository.findAllByUserId(userId)
-          );
-        case "stack":
-          return toEvidenceSearchRows("stack", await stackRepository.findAllByUserId(userId));
+      if (kind === "project") {
+        return toEvidenceSearchRows("project", await projectRepository.findAllByUserId(userId));
       }
+      if (kind === "experience") {
+        return toEvidenceSearchRows(
+          "experience",
+          await experienceRepository.findAllByUserId(userId)
+        );
+      }
+      if (kind === "stack") {
+        return toEvidenceSearchRows("stack", await stackRepository.findAllByUserId(userId));
+      }
+      const [projects, experiences, stacks] = await Promise.all([
+        projectRepository.findAllByUserId(userId),
+        experienceRepository.findAllByUserId(userId),
+        stackRepository.findAllByUserId(userId)
+      ]);
+      return [
+        ...toEvidenceSearchRows("project", projects),
+        ...toEvidenceSearchRows("experience", experiences),
+        ...toEvidenceSearchRows("stack", stacks)
+      ];
     });
-    return { hits: rankEvidenceHits({ query, rows }) };
+    return {
+      hits: rankEvidenceHits({ query, rows }).map((hit) => {
+        return {
+          id: hit.id,
+          title: hit.title,
+          oneLiner: hit.oneLiner,
+          kind: hit.kind ?? kind ?? "project"
+        };
+      })
+    };
   }
 });

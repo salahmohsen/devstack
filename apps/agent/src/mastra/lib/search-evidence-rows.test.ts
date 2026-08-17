@@ -13,6 +13,7 @@ describe("toEvidenceSearchRow", () => {
 
     expect(hit.title).toBe("Senior Frontend @ RAYA");
     expect(hit.id).toBe("exp_raya");
+    expect(hit.kind).toBe("experience");
     expect(hit.oneLiner).toBe("Led the web platform.");
     expect(hit.oneLiner).not.toContain("Long body");
   });
@@ -20,7 +21,7 @@ describe("toEvidenceSearchRow", () => {
   it("maps project title and summary, stack name and description-or-type", () => {
     expect(
       toEvidenceSearchRows("project", [{ id: "p1", title: "Dev-Hub", summary: "Personal hub" }])
-    ).toEqual([{ id: "p1", title: "Dev-Hub", oneLiner: "Personal hub" }]);
+    ).toEqual([{ id: "p1", title: "Dev-Hub", oneLiner: "Personal hub", kind: "project" }]);
 
     expect(
       toEvidenceSearchRow("stack", {
@@ -29,6 +30,6 @@ describe("toEvidenceSearchRow", () => {
         description: null,
         type: "language"
       })
-    ).toEqual({ id: "s1", title: "TypeScript", oneLiner: "language" });
+    ).toEqual({ id: "s1", title: "TypeScript", oneLiner: "language", kind: "stack" });
   });
 });

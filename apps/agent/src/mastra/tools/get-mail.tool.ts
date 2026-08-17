@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { createDb, mailMessageRepository, runWithDb } from "@tsu-stack/db";
 
+export { classifyMailTool } from "./classify-mail.tool.ts";
+
 /**
  * Career Inbox message detail by id.
  */

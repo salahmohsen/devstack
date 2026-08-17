@@ -6,6 +6,7 @@ import {
   filterConfirmedTriageIds,
   filterHubJobUrlImportActiveTools,
   filterHubPostEvidenceConfirmActiveTools,
+  filterHubPostTriageConfirmActiveTools,
   filterHubTriageActiveTools,
   hubJobUrlImportFeedback,
   isJobListingUrl,
@@ -13,6 +14,12 @@ import {
   meetsApplyPackageQualityGate,
   selectFocusJob,
   shouldStopHubLoopAfterClientHitl,
+  userTurnAsksCompanyStatus,
+  userTurnAsksDailyBrief,
+  userTurnAsksEntityInspect,
+  userTurnAsksNewJobsTriage,
+  userTurnAsksPileStatusOnly,
+  userTurnRetriesDailyBrief,
   type JobScoreRow
 } from "./hub-superpowers-policy";
 
@@ -185,6 +192,72 @@ describe("filterConfirmedTriageIds — multi-variable stress", () => {
   });
 });
 
+describe("userTurnAsksDailyBrief", () => {
+  it("catches everyday today asks", () => {
+    expect(userTurnAsksDailyBrief("what do you have for me today?")).toBe(true);
+    expect(userTurnAsksDailyBrief("what you have for me today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what we have today?")).toBe(true);
+    expect(userTurnAsksDailyBrief("what do we have today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's new today")).toBe(true);
+    expect(userTurnAsksDailyBrief("catch me up")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's on my plate")).toBe(true);
+    expect(
+      userTurnAsksDailyBrief("don't give me a vibe check. what's actually on my plate today")
+    ).toBe(true);
+    expect(userTurnAsksDailyBrief("open mentech experience")).toBe(false);
+    expect(userTurnAsksDailyBrief("I applied today to Trivelta")).toBe(false);
+  });
+});
+
+describe("userTurnAsksCompanyStatus", () => {
+  it("catches a named company plus mail/stage", () => {
+    expect(userTurnAsksCompanyStatus("and trivelta? they email me or just quiet")).toBe(true);
+    expect(userTurnAsksCompanyStatus("what's trivelta's stage")).toBe(true);
+    expect(userTurnAsksCompanyStatus("what we have today?")).toBe(false);
+    expect(userTurnAsksCompanyStatus("open mentech")).toBe(false);
+    expect(
+      userTurnAsksCompanyStatus(
+        "ya3ni catch me up — what we have today? trivelta they write or just quiet. show mentech."
+      )
+    ).toBe(true);
+  });
+});
+
+describe("userTurnAsksEntityInspect", () => {
+  it("catches open/show and ignores Today", () => {
+    expect(userTurnAsksEntityInspect("open mentech")).toBe(true);
+    expect(userTurnAsksEntityInspect("show my latest company i worked for")).toBe(true);
+    expect(userTurnAsksEntityInspect("what do you have for me today?")).toBe(false);
+    expect(userTurnAsksEntityInspect("open the side panel")).toBe(false);
+    expect(
+      userTurnAsksEntityInspect(
+        "ya3ni catch me up — what we have today? trivelta they write or just quiet. show mentech."
+      )
+    ).toBe(true);
+  });
+});
+
+describe("userTurnAsksPileStatusOnly", () => {
+  it("treats yes/no pile questions as status, not triage", () => {
+    expect(userTurnAsksPileStatusOnly("pile empty or not")).toBe(true);
+    expect(userTurnAsksPileStatusOnly("anything new in the pile")).toBe(true);
+    expect(userTurnAsksNewJobsTriage("pile empty or not")).toBe(false);
+    expect(userTurnAsksNewJobsTriage("triage the pile")).toBe(true);
+    expect(userTurnAsksPileStatusOnly("triage the pile")).toBe(false);
+  });
+});
+
+describe("userTurnRetriesDailyBrief", () => {
+  it("catches try-again and open-the-panel follow-ups", () => {
+    expect(userTurnRetriesDailyBrief("try to open the side panel")).toBe(true);
+    expect(userTurnRetriesDailyBrief("try again")).toBe(true);
+    expect(userTurnRetriesDailyBrief("open the panel")).toBe(true);
+    expect(userTurnRetriesDailyBrief("you didn't make any thing")).toBe(true);
+    expect(userTurnRetriesDailyBrief("still nothing")).toBe(true);
+    expect(userTurnRetriesDailyBrief("what's Trivelta's stage")).toBe(false);
+  });
+});
+
 describe("shouldStopHubLoopAfterClientHitl", () => {
   it.each([
     "proposeNewJobsTriage",
@@ -193,7 +266,9 @@ describe("shouldStopHubLoopAfterClientHitl", () => {
     "open-entity-form",
     "openEntityForm",
     "propose-evidence-change",
-    "proposeEvidenceChange"
+    "proposeEvidenceChange",
+    "open-daily-brief",
+    "propose-mail-crm-change"
   ])("stops while %s is waiting", (name) => {
     expect(
       shouldStopHubLoopAfterClientHitl({
@@ -316,6 +391,18 @@ describe("hub triage lock", () => {
     expect(
       filterHubTriageActiveTools(["listNewJobs", "proposeNewJobsTriage", "getJobPreferences"])
     ).toEqual(["proposeNewJobsTriage"]);
+  });
+
+  it("after confirm keeps only track and dismiss", () => {
+    expect(
+      filterHubPostTriageConfirmActiveTools([
+        "listNewJobs",
+        "proposeNewJobsTriage",
+        "trackJob",
+        "dismissJob",
+        "getSearchBrief"
+      ])
+    ).toEqual(["trackJob", "dismissJob"]);
   });
 });
 
