@@ -23,33 +23,42 @@ import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import { EntityFormSheet } from "@/pages/dashboard/_lib/entity-form-panel";
 
+type ExperienceFormSeed = { id: string } | ExperienceOutput;
+
 type ExperienceFormProps = {
-  initialData?: ExperienceOutput | null;
+  initialData?: ExperienceFormSeed | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaved?: (id: string) => void;
 };
 
-export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFormProps) {
+function isExperienceOutput(data: ExperienceFormSeed): data is ExperienceOutput {
+  return "title" in data;
+}
+
+export function ExperienceForm({ initialData, open, onOpenChange, onSaved }: ExperienceFormProps) {
   const queryClient = useQueryClient();
-  const isEdit = !!initialData;
+  const isEdit = Boolean(initialData?.id);
   const id = initialData?.id;
+  const seed = initialData && isExperienceOutput(initialData) ? initialData : undefined;
 
   const experienceQuery = useQuery({
     ...orpcQueryClient.experiences.get.queryOptions({
       input: { id: id! }
     }),
     enabled: isEdit && open,
-    placeholderData: initialData ?? undefined
+    placeholderData: seed
   });
 
   const createMutation = useMutation(
     orpcQueryClient.experiences.create.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (created) => {
         await invalidateExperiencesListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
         toast.success("Experience created.");
+        onSaved?.(created.id);
         onOpenChange(false);
       },
       onError: (error) => {
@@ -60,7 +69,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
 
   const updateMutation = useMutation(
     orpcQueryClient.experiences.update.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (updated) => {
         await invalidateExperiencesListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.experiences.get.queryKey({
@@ -71,6 +80,7 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
           queryKey: getPortfolioListQueryKey()
         });
         toast.success("Experience updated.");
+        onSaved?.(updated?.id ?? id!);
         onOpenChange(false);
       },
       onError: (error) => {
@@ -139,7 +149,9 @@ export function ExperienceForm({ initialData, open, onOpenChange }: ExperienceFo
     }
   }, [open, experience, isEdit, form]);
 
-  const isDirty = useEntityFormDirty(form, open);
+  const dirty = useEntityFormDirty(form, open);
+  const missingEdit = isEdit && !experienceQuery.isLoading && !experience;
+  const isDirty = missingEdit ? false : dirty;
 
   const body =
     isEdit && experienceQuery.isLoading && !experience ? (

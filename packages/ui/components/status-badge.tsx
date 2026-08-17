@@ -45,12 +45,14 @@ export const ICON_VARIANTS = BADGE_ICON_VARIANTS;
 
 export function StatusStateIcon({
   state,
-  reduceMotion
+  reduceMotion,
+  className
 }: {
   state: StatusState;
   reduceMotion: boolean;
+  className?: string;
 }) {
-  const cls = STATE_CLASSES[state].icon;
+  const cls = cn(STATE_CLASSES[state].icon, className);
   if (state === "pending") {
     return (
       <motion.span

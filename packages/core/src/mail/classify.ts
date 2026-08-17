@@ -49,15 +49,28 @@ export const MailClassifyInputSchema = z.object({
 });
 export type MailClassifyInput = z.infer<typeof MailClassifyInputSchema>;
 
+/** Neutral classify one-liner cap (Today facts). */
+export const MAIL_CLASSIFY_SUMMARY_MAX = 280;
+
 export const MailClassifyOutputSchema = z.object({
   labels: z.array(z.string()),
   systemLabels: z.array(MailSystemLabelSchema),
   /** How classification was produced. */
   source: z.enum(["skip_already_classified", "heuristic", "llm"]),
   confidence: z.number().min(0).max(1).optional(),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  /** Who + what they want. Neutral. Null when heuristic / nothing to say. */
+  summary: z.string().max(MAIL_CLASSIFY_SUMMARY_MAX).nullable().optional()
 });
 export type MailClassifyOutput = z.infer<typeof MailClassifyOutputSchema>;
+
+export function clipMailClassifySummary(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return null;
+  return trimmed.length > MAIL_CLASSIFY_SUMMARY_MAX
+    ? trimmed.slice(0, MAIL_CLASSIFY_SUMMARY_MAX)
+    : trimmed;
+}
 
 const OFFER_RE =
   /\b(offer\s+letter|compensation\s+package|salary\s+offer|we\s+are\s+pleased\s+to\s+offer|job\s+offer)\b/i;
@@ -224,7 +237,8 @@ export function heuristicClassifyMail(input: MailClassifyInput): MailClassifyOut
     systemLabels,
     source: "heuristic",
     confidence: smartRuleLabels.length > 0 && !system ? 0.7 : confidence,
-    notes: [notes, ruleNote].filter(Boolean).join(";")
+    notes: [notes, ruleNote].filter(Boolean).join(";"),
+    summary: null
   };
 }
 

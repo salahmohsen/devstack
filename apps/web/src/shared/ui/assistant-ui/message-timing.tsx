@@ -5,6 +5,8 @@ import { type FC } from "react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { daySeparatorMono } from "@/shared/ui/assistant-ui/day-separator";
+
 function formatStreamDuration(ms: number): string {
   if (ms < 1000) return `${Math.round(ms)}ms`;
   const seconds = ms / 1000;
@@ -27,7 +29,12 @@ export const MessageStreamDuration: FC<{ className?: string }> = ({ className })
   return (
     <span
       data-slot="aui_message-stream-duration"
-      className={cn("px-1 text-xs text-muted-foreground/80 tabular-nums", className)}
+      className={cn(
+        daySeparatorMono,
+        "ms-2 inline-flex h-6 items-center leading-none text-muted-foreground/70 tabular-nums",
+        "translate-y-px whitespace-nowrap",
+        className
+      )}
       title="Response time"
       aria-label={`Response time ${label}`}
     >

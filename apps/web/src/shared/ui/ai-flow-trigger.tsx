@@ -95,8 +95,8 @@ export function WorkflowSolvingOrb({
 }
 
 /**
- * Glossy AI job trigger: idle glass button, running solving orb + step + cancel.
- * Shared by Scan job alerts, Detect stacks, and Organize.
+ * Page-level start trigger (glass). Idle glass button; running orb + step + cancel.
+ * Shared by Find jobs now, Scan job alerts, Detect stacks, and Organize.
  */
 export function AiFlowTrigger({
   idleLabel,
@@ -132,6 +132,7 @@ export function AiFlowTrigger({
         <Button
           type="button"
           size={size}
+          variant="glass"
           disabled
           className={cn(
             "pointer-events-none h-full justify-start",
@@ -174,6 +175,7 @@ export function AiFlowTrigger({
     <Button
       type="button"
       size={size}
+      variant="glass"
       disabled={disabled}
       onClick={onStart}
       className={cn(stretch && cn("w-full", flush), pill && "rounded-full", className)}

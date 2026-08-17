@@ -1,5 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 
+import { expandDashboardSidePanel, subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
+
 import {
   type ItemsUIConfig,
   type ItemsUIState,
@@ -85,15 +87,25 @@ export function createItemsUIStore<
 
   const openItem = (id: string, item: T) => {
     const wasOpen = state.isItemOpen?.[id] ?? false;
+    if (wasOpen) {
+      setState({
+        isItemOpen: null,
+        openedItem: null
+      });
+      return;
+    }
+    expandDashboardSidePanel();
     setState({
-      isItemOpen: { [id]: !wasOpen },
-      openedItem: wasOpen ? null : item
+      isItemOpen: { [id]: true },
+      openedItem: item
     });
   };
 
   const closePanel = () => {
     setState({ isItemOpen: null, openedItem: null });
   };
+
+  subscribeSidePanelClose(closePanel);
 
   const toggleSelect = (id: string) => {
     const current = state.selectedIds ?? {};

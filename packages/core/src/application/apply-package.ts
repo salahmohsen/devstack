@@ -43,6 +43,8 @@ export function isThinJobDescription(description: string | null | undefined): bo
   const trimmed = description.trim();
   if (trimmed.length === 0) return true;
   if (trimmed.length < THIN_JD_DESCRIPTION_CHARS) return true;
+  // SEO / og:description teasers end with an ellipsis even when they clear 400 chars.
+  if (/(?:\.{3}|…)\s*$/u.test(trimmed)) return true;
   const lower = trimmed.toLowerCase();
   return THIN_JD_STUB_MARKERS.some((marker) => lower.includes(marker));
 }

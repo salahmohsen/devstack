@@ -16,6 +16,10 @@ import {
 } from "@tsu-stack/core";
 import { projectRepository } from "@tsu-stack/db/repositories";
 
+import {
+  invalidateSearchBrief,
+  shouldInvalidateSearchBriefForEntityPatch
+} from "#@/lib/application/search-brief";
 import { protectedProcedure } from "#@/lib/procedures/factory";
 import { toProjectOutput } from "#@/routers/portfolio.mappers";
 
@@ -86,6 +90,7 @@ export const projectsRouter = {
         { ...createData, userId },
         { includedInPortfolio }
       );
+      await invalidateSearchBrief(userId, "form");
       return toProjectOutput(proj!);
     }),
   update: protectedProcedure
@@ -101,6 +106,9 @@ export const projectsRouter = {
       const proj = await projectRepository.update(input.id, userId, updateData, {
         includedInPortfolio
       });
+      if (proj && shouldInvalidateSearchBriefForEntityPatch(input.data)) {
+        await invalidateSearchBrief(userId, "form");
+      }
       return proj ? toProjectOutput(proj) : null;
     }),
   reorder: protectedProcedure
@@ -140,6 +148,9 @@ export const projectsRouter = {
     .handler(async ({ input, context }) => {
       const userId = context.session.user.id;
       const deleted = await projectRepository.delete(input.id, userId);
+      if (deleted !== null) {
+        await invalidateSearchBrief(userId, "form");
+      }
       return { success: deleted !== null };
     })
 };

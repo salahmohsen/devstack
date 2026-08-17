@@ -19,6 +19,11 @@ Always activate the **job-preference-match** skill before scoring.
 Score EVERY job; never invent listingUrls.
 Return structured output only via the schema.
 
+Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity:
+"react" is not "react native". Search brief is narrative flavor only and cannot pass a
+column hard-fail. Two-axis (workModes / locations / remoteRegions) is land-only — do not
+hard-fail harvest or inbox solely for unknown work mode or location.
+
 JobPreference.workModes is a multi-select array (OR semantics): empty = no mode filter;
 match when the job's single workMode is any of the preferred modes. Soft-penalize only when
 the job mode is known and outside the preferred set. Never use only workModes[0].

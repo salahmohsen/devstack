@@ -212,6 +212,10 @@ export const AddApplicationNoteInputSchema = z.object({
   applicationId: z.string().min(1),
   body: z.string().min(1).max(10_000)
 });
+export const DeleteApplicationNoteInputSchema = z.object({
+  id: z.string().min(1),
+  applicationId: z.string().min(1)
+});
 export const ListApplicationsInputSchema = z.object({
   trackingStatus: ApplicationTrackingStatusSchema.optional()
 });
@@ -351,6 +355,7 @@ export type BatchDismissApplicationsInput = z.infer<typeof BatchDismissApplicati
 export type BatchRestoreApplicationsInput = z.infer<typeof BatchRestoreApplicationsInputSchema>;
 export type ListApplicationActivityInput = z.infer<typeof ListApplicationActivityInputSchema>;
 export type AddApplicationNoteInput = z.infer<typeof AddApplicationNoteInputSchema>;
+export type DeleteApplicationNoteInput = z.infer<typeof DeleteApplicationNoteInputSchema>;
 export type ListApplicationsInput = z.infer<typeof ListApplicationsInputSchema>;
 export type CountApplicationsInput = z.infer<typeof CountApplicationsInputSchema>;
 export type RegenerateAgentTakeInput = z.infer<typeof RegenerateAgentTakeInputSchema>;

@@ -1,4 +1,4 @@
-import { type WorkMode } from "./types";
+import { type LevelFloor, type WorkMode } from "./types";
 
 export const WORK_MODES = ["remote", "hybrid", "onsite"] as const satisfies readonly WorkMode[];
 
@@ -6,6 +6,20 @@ export const WORK_MODE_LABELS: Record<WorkMode, string> = {
   remote: "Remote",
   hybrid: "Hybrid",
   onsite: "On-site"
+};
+
+export const LEVEL_FLOORS = [
+  "junior",
+  "mid",
+  "senior",
+  "staff"
+] as const satisfies readonly LevelFloor[];
+
+export const LEVEL_FLOOR_LABELS: Record<LevelFloor, string> = {
+  junior: "Junior",
+  mid: "Mid",
+  senior: "Senior",
+  staff: "Staff"
 };
 
 /** Default hard-skip threshold for auto job harvest → Application. */

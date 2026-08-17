@@ -2,7 +2,7 @@
 
 import { type InfiniteData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { AlignLeftIcon, BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
+import { BriefcaseIcon, Building2Icon, CalendarIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -31,16 +31,12 @@ import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experi
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
 import { ListItem } from "@/shared/ui/list-item";
-import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
-  ItemInfoPanel,
-  PanelEditButton,
-  ItemInfoRow,
-  ItemInfoSection,
   ItemsEmpty,
   ItemsNavProvider,
   ListSkeleton,
@@ -60,20 +56,13 @@ import {
   useListExperiencesPageInfiniteQuery
 } from "./api/list-experiences-page.query";
 import { ExperienceForm } from "./experience-form";
+import { ExperienceInfoPanel } from "./experience-info-panel";
 
 function formatRange(fromDate: string | null, toDate: string | null): string {
   if (!fromDate) return "Ongoing";
   const start = safeFormat(fromDate, "MMM yyyy");
   if (!toDate) return `${start} — Present`;
   const end = safeFormat(toDate, "MMM yyyy");
-  return `${start} — ${end}`;
-}
-
-function formatRangeFull(fromDate: string | null, toDate: string | null): string {
-  if (!fromDate) return "Ongoing";
-  const start = safeFormat(fromDate, "dd MMMM yyyy");
-  if (!toDate) return `${start} — Present`;
-  const end = safeFormat(toDate, "dd MMMM yyyy");
   return `${start} — ${end}`;
 }
 
@@ -352,6 +341,9 @@ export function ExperiencesPage() {
 
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  // Hub inspect/form host wins the side panel. Dirty page form is discarded without confirm.
+  const hostOwnsPanel = useEntityPanelHostActive();
+  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
 
   const openDialog = useCallback((id: string | null) => {
     setEditingExperienceId(id);
@@ -491,7 +483,7 @@ export function ExperiencesPage() {
         {renderList()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !dialogOpen}
+          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
           title="Experience"
           onOpenChange={(next) => {
@@ -501,58 +493,14 @@ export function ExperiencesPage() {
             }
           }}
         >
-          {(item) => {
-            if (!item) return null;
-            return (
-              <ItemInfoPanel
-                eyebrow={<BriefcaseIcon strokeWidth={1.75} />}
-                title={item.title}
-                description={
-                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span>{item.organization}</span>
-                    <span aria-hidden className="text-border">
-                      ·
-                    </span>
-                    <span>{formatRangeFull(item.fromDate, item.toDate)}</span>
-                  </p>
-                }
-                actions={<PanelEditButton onClick={() => openDialog(item.id)} />}
-                updatedAt={item.updatedAt}
-                createdAt={item.createdAt}
-              >
-                <div className="space-y-8">
-                  <ItemInfoSection title="Summary" icon={<AlignLeftIcon />}>
-                    {item.description ? (
-                      <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                        {item.description}
-                      </Markdown>
-                    ) : (
-                      <p>No description.</p>
-                    )}
-                  </ItemInfoSection>
-                  {item.projects.length > 0 ? (
-                    <ItemInfoSection title="Projects" icon={<Building2Icon />}>
-                      <ul className="space-y-2.5">
-                        {item.projects.map((project) => (
-                          <ItemInfoRow key={project.id}>
-                            <div className="flex items-baseline justify-between gap-3">
-                              <span className="font-medium text-foreground">{project.title}</span>
-                              <span className="text-xs text-muted-foreground tabular-nums">
-                                {project.year}
-                              </span>
-                            </div>
-                          </ItemInfoRow>
-                        ))}
-                      </ul>
-                    </ItemInfoSection>
-                  ) : null}
-                </div>
-              </ItemInfoPanel>
-            );
-          }}
+          {(item) =>
+            item ? (
+              <ExperienceInfoPanel experience={item} onEdit={() => openDialog(item.id)} />
+            ) : null
+          }
         </ItemsInspectHost>
 
-        {dialogOpen ? (
+        {dialogOpen && !hostOwnsPanel ? (
           <ExperienceForm
             key={editingExperienceId ?? "new"}
             initialData={

@@ -7,7 +7,6 @@ import {
   type AssistantState,
   BranchPickerPrimitive,
   ComposerPrimitive,
-  ErrorPrimitive,
   groupPartByType,
   MessagePrimitive,
   SuggestionPrimitive,
@@ -41,6 +40,7 @@ import {
 import { Button } from "@tsu-stack/ui/components/button";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { type AiErrorFeature } from "@/shared/lib/parse-ai-error";
 import {
   ComposerAddAttachment,
   ComposerAttachments,
@@ -48,6 +48,7 @@ import {
 } from "@/shared/ui/assistant-ui/attachment";
 import { ThreadFollowupSuggestions } from "@/shared/ui/assistant-ui/follow-up-suggestions";
 import { MarkdownText } from "@/shared/ui/assistant-ui/markdown-text";
+import { MessageError, messageHasErrorStatus } from "@/shared/ui/assistant-ui/message-error";
 import { MessageStreamDuration } from "@/shared/ui/assistant-ui/message-timing";
 import {
   Reasoning,
@@ -347,23 +348,28 @@ const ComposerAction: FC<{ attachments?: boolean }> = ({ attachments = true }) =
   </div>
 );
 
-const MessageError: FC = () => (
-  <MessagePrimitive.Error>
-    <ErrorPrimitive.Root className="aui-message-error-root mt-2 rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive dark:bg-destructive/5 dark:text-red-200">
-      <ErrorPrimitive.Message className="aui-message-error-message line-clamp-2" />
-    </ErrorPrimitive.Root>
-  </MessagePrimitive.Error>
-);
-
 export type AssistantMessageProps = {
   /**
    * Hide text parts whose first occurrence is after this index (HITL card is
    * the confirmation UI). `null` / omit shows every text part.
    */
   hideTextAfterIndex?: number | null;
+  /** Hide a text part regardless of index (processor leaks, wrap-up). */
+  shouldHideTextPart?: (text: string) => boolean;
+  className?: string;
+  /** Feature copy for the in-thread error banner. */
+  errorFeature?: AiErrorFeature;
+  /** Hub clears transport error before regenerate. */
+  onErrorRetry?: () => void;
 };
 
-export const AssistantMessage: FC<AssistantMessageProps> = ({ hideTextAfterIndex = null }) => {
+export const AssistantMessage: FC<AssistantMessageProps> = ({
+  hideTextAfterIndex = null,
+  shouldHideTextPart,
+  className,
+  errorFeature = "generic",
+  onErrorRetry
+}) => {
   const {
     ToolFallback: ToolFallbackComponent = ToolFallback,
     ToolGroup,
@@ -371,19 +377,18 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({ hideTextAfterIndex
   } = useContext(ThreadComponentsContext);
   const parts = useAuiState((s) => s.message.parts);
 
-  const ACTION_BAR_PT = "pt-1.5";
-  // Keep the action bar inside the contained root's paint box, then cancel its reserved space in flow.
-  const ACTION_BAR_HEIGHT = `min-h-7.5 ${ACTION_BAR_PT}`;
-
   return (
     <MessagePrimitive.Root
       data-slot="aui_assistant-message-root"
       data-role="assistant"
-      className="relative -mb-7.5 animate-in pb-7.5 duration-150 [contain-intrinsic-size:auto_200px] [content-visibility:auto] fade-in slide-in-from-bottom-1"
+      className={cn(
+        "relative -mb-8 animate-in pb-8 duration-150 fade-in slide-in-from-bottom-1",
+        className
+      )}
     >
       <div
         data-slot="aui_assistant-message-content"
-        className="px-2 leading-relaxed wrap-break-word text-foreground"
+        className="flex flex-col gap-3 leading-relaxed wrap-break-word text-foreground"
       >
         <MessagePrimitive.GroupedParts
           groupBy={groupPartByType({
@@ -424,7 +429,8 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({ hideTextAfterIndex
                 );
               }
               case "text":
-                if (hideTextAfterIndex != null && part.type === "text") {
+                if (shouldHideTextPart?.(part.text ?? "")) return null;
+                if (hideTextAfterIndex != null) {
                   const first = parts.findIndex(
                     (candidate) => candidate.type === "text" && candidate.text === part.text
                   );
@@ -458,12 +464,12 @@ export const AssistantMessage: FC<AssistantMessageProps> = ({ hideTextAfterIndex
             }
           }}
         </MessagePrimitive.GroupedParts>
-        <MessageError />
+        <MessageError feature={errorFeature} onRetry={onErrorRetry} />
       </div>
 
       <div
         data-slot="aui_assistant-message-footer"
-        className={cn("ms-2 flex items-center", ACTION_BAR_HEIGHT)}
+        className="ms-2 flex h-8 shrink-0 items-center overflow-hidden"
       >
         <BranchPicker />
         <AssistantActionBar />
@@ -486,10 +492,11 @@ const AssistantActionBar: FC = () => (
         <CopyIcon className="animate-in duration-150 zoom-in-75 fade-in" />
       </AuiIf>
     </ActionBarPrimitive.Copy>
-    <ActionBarPrimitive.Reload render={<TooltipIconButton tooltip="Refresh" />}>
-      <RefreshCwIcon />
-    </ActionBarPrimitive.Reload>
-    <MessageStreamDuration />
+    <AuiIf condition={(s) => !messageHasErrorStatus(s)}>
+      <ActionBarPrimitive.Reload render={<TooltipIconButton tooltip="Refresh" />}>
+        <RefreshCwIcon />
+      </ActionBarPrimitive.Reload>
+    </AuiIf>
     <ActionBarMorePrimitive.Root>
       <ActionBarMorePrimitive.Trigger
         render={<TooltipIconButton tooltip="More" className="data-[state=open]:bg-accent" />}
@@ -512,6 +519,7 @@ const AssistantActionBar: FC = () => (
         </ActionBarPrimitive.ExportMarkdown>
       </ActionBarMorePrimitive.Content>
     </ActionBarMorePrimitive.Root>
+    <MessageStreamDuration />
   </ActionBarPrimitive.Root>
 );
 

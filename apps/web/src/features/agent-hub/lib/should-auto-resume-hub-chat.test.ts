@@ -3,12 +3,28 @@ import { describe, expect, it } from "vitest";
 
 import {
   hideHubAssistantTextAfterIndex,
+  isHubTodayFillerText,
+  isHubProcessorLeakText,
   lastAssistantMessageIsCompleteWithClientResumeTools,
   shouldAutoResumeHubChat
 } from "./should-auto-resume-hub-chat";
 
 function assistant(parts: UIMessage["parts"]): UIMessage {
   return { id: "a1", role: "assistant", parts } as UIMessage;
+}
+
+function user(text: string): UIMessage {
+  return { id: "u1", role: "user", parts: [{ type: "text", text }] } as UIMessage;
+}
+
+function getSearchBriefComplete(): UIMessage["parts"][number] {
+  return {
+    type: "tool-get-search-brief",
+    toolCallId: "b1",
+    toolName: "get-search-brief",
+    state: "output-available",
+    output: { markdown: "## Target jobs", rebuilt: true }
+  } as never;
 }
 
 describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
@@ -78,7 +94,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("returns true when client tool completed before a later empty step-start (not yet continued)", () => {
+  it("does not resume after triage confirm — the card already wrote track/dismiss", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -95,7 +111,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("returns false once server tools already ran after client confirm", () => {
@@ -126,7 +142,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("returns true for confirm even when premature final text followed the card", () => {
+  it("does not resume after confirm even when premature final text followed the card", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -148,7 +164,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("does not re-resume after a failed continuation that already hit tool-step limit", () => {
@@ -197,7 +213,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
     ).toBe(false);
   });
 
-  it("returns true after user completes propose-new-jobs-triage", () => {
+  it("does not resume after user completes propose-new-jobs-triage", () => {
     expect(
       lastAssistantMessageIsCompleteWithClientResumeTools({
         messages: [
@@ -212,7 +228,7 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
           ])
         ]
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("returns true after open-surface client complete", () => {
@@ -231,6 +247,266 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
         ]
       })
     ).toBe(true);
+  });
+
+  it("does not resume while wrap-up text after find-jobs-now is still streaming", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-find-jobs-now",
+              toolCallId: "f1",
+              toolName: "find-jobs-now",
+              state: "output-available",
+              output: { enqueued: true, ingestTriggered: true, seats: 42, reason: "ok" }
+            } as never,
+            { type: "step-start" },
+            {
+              type: "text",
+              text: "Search is queued · 42 seats.",
+              state: "streaming"
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after find-jobs-now already wrote wrap-up text", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-find-jobs-now",
+              toolCallId: "f1",
+              toolName: "find-jobs-now",
+              state: "output-available",
+              output: { enqueued: true, ingestTriggered: true, seats: 42, reason: "ok" }
+            } as never,
+            { type: "step-start" },
+            { type: "text", text: "Search is queued · 42 seats." }
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("returns true after open-entity-form save or cancel", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-open-entity-form",
+              toolCallId: "t5",
+              toolName: "open-entity-form",
+              state: "output-available",
+              output: { ok: true, kind: "experience", saved: true, id: "exp_1" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(true);
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-openEntityForm",
+              toolCallId: "t6",
+              toolName: "openEntityForm",
+              state: "output-available",
+              output: { ok: true, kind: "project", saved: false, cancelled: true }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(true);
+  });
+
+  it("does not resume while an evidence card is pending", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "input-available",
+              input: {
+                kind: "project",
+                patch: { title: "Dev-Hub" },
+                currentMarkdown: "",
+                proposedMarkdown: "# Project: Dev-Hub"
+              }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after a same-entity leftover following a user cancel", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          user("tweak Dev-Hub"),
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend"
+              },
+              output: { action: "cancel", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e2",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+              },
+              output: { action: "cancel", kind: "project", id: "prj_1" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after a same-entity evidence re-propose is auto-cancelled", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          user("tweak Dev-Hub"),
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend"
+              },
+              output: { action: "confirm", kind: "project", id: "prj_1" }
+            } as never,
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e2",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              input: {
+                kind: "project",
+                id: "prj_1",
+                patch: { summary: "Backend-first" },
+                currentMarkdown: "# Project: Dev-Hub",
+                proposedMarkdown: "# Project: Dev-Hub\nBackend-first"
+              },
+              output: { action: "cancel", kind: "project", id: "prj_1" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("resumes after evidence confirm so the next interview can run", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              output: { action: "confirm", kind: "project", id: "prj_1" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(true);
+  });
+
+  it("resumes after evidence cancel so the agent can ask about more edits", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-proposeEvidenceChange",
+              toolCallId: "e2",
+              toolName: "proposeEvidenceChange",
+              state: "output-available",
+              output: { action: "cancel", kind: "experience", id: "exp_raya" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(true);
+  });
+
+  it("does not resume while wrap-up text after evidence confirm is still streaming", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              output: { action: "confirm", kind: "project" }
+            } as never,
+            { type: "step-start" },
+            {
+              type: "text",
+              text: "Next, the RAYA experience.",
+              state: "streaming"
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after evidence confirm once interview text already streamed", () => {
+    expect(
+      lastAssistantMessageIsCompleteWithClientResumeTools({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              output: { action: "confirm", kind: "project" }
+            } as never,
+            { type: "step-start" },
+            { type: "text", text: "Next, the RAYA experience.", state: "done" }
+          ])
+        ]
+      })
+    ).toBe(false);
   });
 
   it("does not resume after the user dismisses a JD proposal", () => {
@@ -319,6 +595,18 @@ describe("lastAssistantMessageIsCompleteWithClientResumeTools", () => {
 });
 
 describe("hideHubAssistantTextAfterIndex", () => {
+  it("hides text after a waiting open-entity-form card", () => {
+    const parts = [
+      {
+        type: "tool-open-entity-form",
+        toolName: "open-entity-form",
+        state: "input-available"
+      },
+      { type: "text", text: "Awaiting your confirmation." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
   it("hides text after a waiting triage card", () => {
     const parts = [
       { type: "step-start" },
@@ -390,9 +678,327 @@ describe("hideHubAssistantTextAfterIndex", () => {
       hideHubAssistantTextAfterIndex([{ type: "text", text: "I can help with stacks." }])
     ).toBeNull();
   });
+
+  it("hides leftover wrap-up after get-search-brief", () => {
+    const parts = [
+      {
+        type: "tool-get-search-brief",
+        toolName: "get-search-brief",
+        state: "output-available",
+        output: { rebuilt: false, markdown: "## Target jobs" }
+      },
+      { type: "text", text: "Search brief is current." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("shows a real answer after get-search-brief", () => {
+    const parts = [
+      {
+        type: "tool-get-search-brief",
+        toolName: "get-search-brief",
+        state: "output-available",
+        output: { rebuilt: true, markdown: "## Target jobs" }
+      },
+      { type: "text", text: "The intro was dropped in the last rewrite of the skills section." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
+  });
+
+  it("hides wrap-up after find-jobs-now — the tool UI already reports queued", () => {
+    const parts = [
+      {
+        type: "tool-find-jobs-now",
+        toolName: "find-jobs-now",
+        state: "output-available",
+        output: { enqueued: true, seats: 42, reason: "ok" }
+      },
+      { type: "text", text: "Search is queued · 42 seats." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("hides text after a waiting hard-stop confirm card", () => {
+    const parts = [
+      {
+        type: "tool-propose-hard-preference-change",
+        toolName: "propose-hard-preference-change",
+        state: "input-available"
+      },
+      { type: "text", text: "Awaiting your confirmation." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("still hides after a completed hard-stop card", () => {
+    const parts = [
+      {
+        type: "tool-propose-hard-preference-change",
+        toolName: "propose-hard-preference-change",
+        state: "output-available",
+        output: { action: "confirm", patch: { salaryMin: 45000 } }
+      },
+      { type: "text", text: "Hard-stops updated." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("hides text after a waiting evidence card", () => {
+    const parts = [
+      {
+        type: "tool-propose-evidence-change",
+        toolName: "propose-evidence-change",
+        state: "input-available"
+      },
+      { type: "text", text: "Awaiting your confirmation." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("hides text after a waiting camelCase evidence card", () => {
+    const parts = [
+      {
+        type: "tool-proposeEvidenceChange",
+        toolName: "proposeEvidenceChange",
+        state: "input-available"
+      },
+      { type: "text", text: "Awaiting your confirmation." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("does not hide later interview prose after evidence confirm", () => {
+    const parts = [
+      {
+        type: "tool-propose-evidence-change",
+        toolName: "propose-evidence-change",
+        state: "output-available",
+        output: { action: "confirm", kind: "project", id: "prj_1" }
+      },
+      { type: "text", text: "Next, let's talk about the RAYA experience." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
+  });
+
+  it("does not hide interview text after evidence cancel", () => {
+    const parts = [
+      {
+        type: "tool-propose-evidence-change",
+        toolName: "propose-evidence-change",
+        state: "output-available",
+        output: { action: "cancel", kind: "project" }
+      },
+      { type: "text", text: "Want more edits on Dev-Hub before we do RAYA?" }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
+  });
+
+  it("does not hide later prose after evidence confirm even if premature HITL copy appears", () => {
+    const parts = [
+      {
+        type: "tool-propose-evidence-change",
+        toolName: "propose-evidence-change",
+        state: "output-available",
+        output: { action: "confirm", kind: "project" }
+      },
+      { type: "text", text: "No changes made. Awaiting your confirmation." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
+  });
+
+  it("hides the Today letter after openDailyBrief", () => {
+    const parts = [
+      {
+        type: "tool-open-daily-brief",
+        toolName: "open-daily-brief",
+        state: "output-available",
+        output: { opened: true, markdown: "# Today\n\nHello" }
+      },
+      { type: "text", text: "# Today\n\nHello" }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+  });
+
+  it("hides the letter and idle loop after getDailyBrief", () => {
+    const letter = [
+      "# Monday 17 August",
+      "",
+      "Look, not much moved today. But Trivelta did.",
+      "",
+      "The pile: 33 noise/marketing emails."
+    ].join("\n");
+    const parts = [
+      {
+        type: "tool-get-daily-brief",
+        toolName: "getDailyBrief",
+        state: "output-available",
+        output: { markdown: letter, mailCount: 33, inboxCount: 0, trackedCount: 9 }
+      },
+      { type: "text", text: letter },
+      { type: "text", text: "That's the whole plot." },
+      { type: "text", text: "Still here." },
+      { type: "text", text: "Hey." }
+    ];
+    expect(isHubTodayFillerText(letter)).toBe(true);
+    expect(isHubTodayFillerText("That's the whole plot.")).toBe(true);
+    expect(hideHubAssistantTextAfterIndex(parts)).toBe(0);
+    expect(
+      hideHubAssistantTextAfterIndex([
+        {
+          type: "tool-get-daily-brief",
+          toolName: "getDailyBrief",
+          state: "output-available",
+          output: { markdown: letter }
+        },
+        { type: "text", text: "Hey. Same as before — Trivelta applied." },
+        { type: "text", text: "Still here." },
+        { type: "text", text: "Ready." }
+      ])
+    ).toBe(0);
+  });
+
+  it("shows inspect / CRM speech after a packed Today letter", () => {
+    const parts = [
+      {
+        type: "tool-open-daily-brief",
+        toolName: "open-daily-brief",
+        state: "output-available",
+        output: { opened: true, markdown: "# Today\n\nHello" }
+      },
+      {
+        type: "tool-open-entity-inspect",
+        toolName: "open-entity-inspect",
+        state: "output-available",
+        output: { ok: true, kind: "experience", opened: true }
+      },
+      { type: "text", text: "Ment'ech is open on the right. Trivelta is still applied — quiet." }
+    ];
+    expect(hideHubAssistantTextAfterIndex(parts)).toBeNull();
+  });
+
+  it("hides processor feedback that leaked into chat", () => {
+    expect(
+      hideHubAssistantTextAfterIndex([
+        {
+          type: "text",
+          text: "getDailyBrief already returned markdown. Call openDailyBrief({ markdown }) with that markdown."
+        }
+      ])
+    ).toBe(-1);
+  });
+
+  it("hides a leaked new-jobs triage processor", () => {
+    const leak =
+      "listNewJobs already returned inbox rows. Do NOT call jobPreferenceMatchScorer, getJobPreferences, listExperiences, or any other tool. Call propose-new-jobs-triage NOW with track[] / dismiss[]. The triage card is the UI.";
+    expect(isHubProcessorLeakText(leak)).toBe(true);
+    expect(
+      hideHubAssistantTextAfterIndex([
+        {
+          type: "tool-list-new-jobs",
+          toolName: "list-new-jobs",
+          state: "output-available"
+        },
+        { type: "text", text: leak }
+      ])
+    ).toBe(0);
+  });
 });
 
 describe("shouldAutoResumeHubChat", () => {
+  it("resumes after get-search-brief only for section / what-changed questions", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("where is the intro?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(true);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [
+          user("what happened to the who paragraph?"),
+          assistant([getSearchBriefComplete()])
+        ]
+      })
+    ).toBe(true);
+  });
+
+  it("does not resume after get-search-brief on identity / rules / show-the-brief", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("what am I looking for?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("show my brief"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("what are my job rules?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [user("what jobs should I take?"), assistant([getSearchBriefComplete()])]
+      })
+    ).toBe(false);
+  });
+
+  it("does not resume after get-search-brief once an answer streamed", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [
+          user("where is the intro?"),
+          assistant([
+            getSearchBriefComplete(),
+            { type: "step-start" },
+            {
+              type: "text",
+              text: "The intro was removed when the skills section was rewritten.",
+              state: "done"
+            }
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
+  it("resumes after evidence confirm via sendAutomaticallyWhen helper", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-evidence-change",
+              toolCallId: "e1",
+              toolName: "propose-evidence-change",
+              state: "output-available",
+              output: { action: "confirm", kind: "project" }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(true);
+  });
+
+  it("does not resume after hard-stop confirm — card already wrote", () => {
+    expect(
+      shouldAutoResumeHubChat({
+        messages: [
+          assistant([
+            {
+              type: "tool-propose-hard-preference-change",
+              toolCallId: "h1",
+              toolName: "propose-hard-preference-change",
+              state: "output-available",
+              output: { action: "confirm", patch: { salaryMin: 45000 } }
+            } as never
+          ])
+        ]
+      })
+    ).toBe(false);
+  });
+
   it("does not auto-resume after a plain capability answer", () => {
     expect(
       shouldAutoResumeHubChat({

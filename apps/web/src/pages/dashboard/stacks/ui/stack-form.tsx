@@ -26,23 +26,31 @@ import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import { EntityFormSheet } from "@/pages/dashboard/_lib/entity-form-panel";
 
+type StackFormSeed = { id: string } | StackOutput;
+
 type StackFormProps = {
-  initialData?: StackOutput | null;
+  initialData?: StackFormSeed | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaved?: (id: string) => void;
 };
 
-export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
+function isStackOutput(data: StackFormSeed): data is StackOutput {
+  return "name" in data;
+}
+
+export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFormProps) {
   const queryClient = useQueryClient();
-  const isEdit = !!initialData;
+  const isEdit = Boolean(initialData?.id);
   const id = initialData?.id;
+  const seed = initialData && isStackOutput(initialData) ? initialData : undefined;
 
   const stackQuery = useQuery({
     ...orpcQueryClient.stacks.get.queryOptions({
       input: { id: id! }
     }),
     enabled: isEdit && open,
-    placeholderData: initialData ?? undefined
+    placeholderData: seed
   });
 
   const projectsQuery = useQuery({
@@ -52,13 +60,14 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
 
   const createMutation = useMutation(
     orpcQueryClient.stacks.create.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (created) => {
         await invalidateStacksListQueries(queryClient);
         await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
         toast.success("Stack created.");
+        onSaved?.(created.id);
         onOpenChange(false);
       },
       onError: (error) => {
@@ -69,7 +78,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
 
   const updateMutation = useMutation(
     orpcQueryClient.stacks.update.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (updated) => {
         await invalidateStacksListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.stacks.get.queryKey({
@@ -81,6 +90,7 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           queryKey: getPortfolioListQueryKey()
         });
         toast.success("Stack updated.");
+        onSaved?.(updated?.id ?? id!);
         onOpenChange(false);
       },
       onError: (error) => {
@@ -298,8 +308,8 @@ export function StackForm({ initialData, open, onOpenChange }: StackFormProps) {
           ? "Update the name or icon. Changes apply to every project using this stack."
           : "Add a shared tech stack that can be attached to any project."
       }
-      updatedAt={initialData?.updatedAt}
-      createdAt={initialData?.createdAt}
+      updatedAt={stack?.updatedAt}
+      createdAt={stack?.createdAt}
       actions={
         <form.AppForm>
           <SubmitButton

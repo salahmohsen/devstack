@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -9,6 +9,11 @@ import {
   useState
 } from "react";
 import { createPortal } from "react-dom";
+
+import {
+  dismissDashboardSidePanel,
+  subscribeSidePanelExpand
+} from "@/shared/lib/side-panel-control";
 
 // w-72 (288px) + pl-2 (8px)
 export const PUBLIC_SIDE_PANEL_WIDTH = 320;
@@ -22,7 +27,10 @@ type SidePanelState = {
   inspectOpen: boolean;
   requestInspectOpen: () => void;
   releaseInspectOpen: () => void;
+  /** Hide-only (legacy). Prefer `close` so inspect state unmounts. */
   toggle: () => void;
+  /** Unmount inspect content and reset collapse. */
+  close: () => void;
 };
 
 const SidePanelContext = createContext<SidePanelState>({
@@ -32,7 +40,8 @@ const SidePanelContext = createContext<SidePanelState>({
   inspectOpen: false,
   requestInspectOpen: () => {},
   releaseInspectOpen: () => {},
-  toggle: () => {}
+  toggle: () => {},
+  close: () => {}
 });
 
 export function useSidePanelSlot() {
@@ -45,11 +54,19 @@ export function useSidePanelSlot() {
   const requestInspectOpen = useCallback(() => {
     inspectCountRef.current += 1;
     setInspectOpen(true);
+    setCollapsed(false);
   }, []);
   const releaseInspectOpen = useCallback(() => {
     inspectCountRef.current = Math.max(0, inspectCountRef.current - 1);
     if (inspectCountRef.current === 0) setInspectOpen(false);
   }, []);
+  const close = useCallback(() => {
+    setCollapsed(false);
+    inspectCountRef.current = 0;
+    setInspectOpen(false);
+    dismissDashboardSidePanel();
+  }, []);
+  useEffect(() => subscribeSidePanelExpand(() => setCollapsed(false)), []);
   return {
     node,
     setNode,
@@ -59,7 +76,8 @@ export function useSidePanelSlot() {
     inspectOpen,
     requestInspectOpen,
     releaseInspectOpen,
-    toggle
+    toggle,
+    close
   } as const;
 }
 
@@ -159,22 +177,17 @@ export function SidePanelSlot({
 }
 
 export function SidePanelToggle() {
-  const { collapsed, toggle, hasContent } = useContext(SidePanelContext);
-  if (!hasContent) return null;
+  const { close, hasContent, inspectOpen } = useContext(SidePanelContext);
+  if (!hasContent && !inspectOpen) return null;
 
   return (
     <button
       type="button"
-      onClick={toggle}
-      aria-label={collapsed ? "Expand details panel" : "Collapse details panel"}
-      aria-expanded={!collapsed}
+      onClick={close}
+      aria-label="Close details panel"
       className="absolute top-14 right-0 hidden -translate-y-1/2 items-center justify-center rounded-l-md border border-r-0 bg-background py-2.5 pr-1 pl-0.5 text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground xl:flex"
     >
-      {collapsed ? (
-        <ChevronLeft size={12} strokeWidth={2} />
-      ) : (
-        <ChevronRight size={12} strokeWidth={2} />
-      )}
+      <ChevronRight size={12} strokeWidth={2} />
     </button>
   );
 }

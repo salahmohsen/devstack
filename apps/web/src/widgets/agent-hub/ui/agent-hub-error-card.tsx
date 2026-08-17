@@ -20,7 +20,7 @@ export function AgentHubErrorCard({ message, onRetry, onDismiss }: AgentHubError
       severity="hard"
       onRetry={onRetry}
       onDismiss={onDismiss}
-      className="mx-auto max-w-3xl"
+      className="mb-3 w-full"
     />
   );
 }

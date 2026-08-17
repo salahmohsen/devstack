@@ -50,8 +50,8 @@ export function ThemeSwitcher({ variant = "ghost", size = "icon", className }: T
       <IconMorph
         active={isDark}
         aria-hidden
-        iconA={<Sun size={18} strokeWidth={2} />}
-        iconB={<Moon size={18} strokeWidth={2} />}
+        iconA={<Sun className="size-4" strokeWidth={2} />}
+        iconB={<Moon className="size-4" strokeWidth={2} />}
       />
     </Button>
   );

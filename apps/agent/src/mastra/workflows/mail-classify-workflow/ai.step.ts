@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   applyJobAlertDigestGuard,
   assembleClassifyLabelsFromAi,
+  clipMailClassifySummary,
   enabledSmartRulesForClassify,
   formatCorrectionsFewShot,
   formatUserSmartFiltersSkillInstructions,
@@ -31,7 +32,12 @@ const LlmLabelSchema = z.object({
     .default([])
     .describe("Matching user smart-filter slugs, with or without rule: prefix"),
   confidence: z.number().min(0).max(1).optional().describe("0–1 confidence in this assignment"),
-  reason: z.string().optional().describe("One short sentence why these labels")
+  reason: z.string().optional().describe("One short sentence why these labels"),
+  summary: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("One neutral sentence: who + what they want. Null if nothing to say.")
 });
 
 const LLM_TIMEOUT_MS = 45_000;
@@ -110,6 +116,7 @@ ${filtersBlock}
 Return:
 - systemLabel: one of ${MAIL_SYSTEM_LABELS.join(", ")} — or null
 - smartRuleSlugs: zero or more slugs from the user filters list (e.g. ["airbnb"] not invented names)
+- summary: one neutral sentence (who + what they want). No voice, no Today headings, no "consider delete". Null if nothing to say.
 ${fewShot ? `\n${fewShot}` : ""}`;
 
     const requestContext = new RequestContext();
@@ -176,6 +183,7 @@ ${fewShot ? `\n${fewShot}` : ""}`;
         systemLabels,
         source: "llm" as const,
         confidence: parsed.data.confidence,
+        summary: clipMailClassifySummary(parsed.data.summary),
         notes: [
           parsed.data.reason ? `llm:${parsed.data.reason}` : system ? `llm:${system}` : "llm:none",
           smartApplied.length > 0 ? `smart:${smartApplied.join(",")}` : null

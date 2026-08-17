@@ -1,27 +1,39 @@
 "use client";
 
 import {
-  AuiIf,
   SuggestionPrimitive,
   ThreadPrimitive,
   unstable_useThreadMessageIds
 } from "@assistant-ui/react";
-import { ArrowDownIcon, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowDownIcon } from "lucide-react";
 import * as React from "react";
 
+import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
+import {
+  hubPersonalityAvatarSeed,
+  hubPersonalityById,
+  userTurnAsksDailyBrief
+} from "@tsu-stack/core";
+import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Spinner } from "@tsu-stack/ui/components/spinner";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { MessageScroller } from "@/shared/ui/agents/message-scroller";
 import { DaySeparatorRule, DaySeparatorTime } from "@/shared/ui/assistant-ui/day-separator";
-import { EditComposer, threadRootStyle, UserMessage } from "@/shared/ui/assistant-ui/thread";
+import { EditComposer, threadRootStyle } from "@/shared/ui/assistant-ui/thread";
 
 import {
   buildHubDayRows,
+  getHubComposerPersonality,
   HubAssistantMessage,
+  HubFollowupSuggestions,
+  HubUserMessage,
   lastHubHitlKind,
+  subscribeHubComposerPersonality,
   useHubChat,
+  clearDailyBriefRequest,
   type HubDayRow
 } from "@/features/agent-hub";
 
@@ -31,7 +43,7 @@ import { HubElementsComposer } from "@/widgets/agent-hub/ui/hub-elements-compose
 import { AgentHubErrorCard } from "./agent-hub-error-card";
 
 const HUB_MESSAGE_COMPONENTS = {
-  UserMessage,
+  UserMessage: HubUserMessage,
   AssistantMessage: HubAssistantMessage,
   EditComposer
 };
@@ -57,6 +69,31 @@ export function AgentHubThread() {
   React.useEffect(() => {
     ensureHistory();
   }, [ensureHistory]);
+
+  const clearedTodayAskRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    let latestUserId = "";
+    let latestUser = "";
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i] as {
+        id?: string;
+        role?: string;
+        parts?: readonly { type?: string; text?: string }[];
+      };
+      if (message?.role !== "user") continue;
+      latestUserId = message.id ?? `idx:${i}`;
+      latestUser = (message.parts ?? [])
+        .filter((part) => part.type === "text" && typeof part.text === "string")
+        .map((part) => part.text ?? "")
+        .join("\n")
+        .trim();
+      break;
+    }
+    if (!latestUserId || !userTurnAsksDailyBrief(latestUser)) return;
+    if (clearedTodayAskRef.current === latestUserId) return;
+    clearedTodayAskRef.current = latestUserId;
+    clearDailyBriefRequest();
+  }, [messages]);
   const [viewportEl, setViewportEl] = React.useState<HTMLElement | null>(null);
   const [following, setFollowing] = React.useState(true);
   const { sentinelRef, loadError, retry } = useLoadOlderOnScrollTop({
@@ -95,7 +132,7 @@ export function AgentHubThread() {
           viewportRef={setViewportEl}
           onFollowChange={setFollowing}
           className="min-h-0 flex-1"
-          viewportClassName="px-4 pt-4"
+          viewportClassName="px-5 pt-4"
           contentClassName={cn(
             "mx-auto flex w-full max-w-(--thread-max-width) flex-col",
             isEmpty && "min-h-full justify-center"
@@ -124,7 +161,7 @@ export function AgentHubThread() {
 
         <ThreadPrimitive.ViewportFooter
           className={cn(
-            "aui-thread-viewport-footer relative shrink-0 bg-background px-4 pb-4 md:pb-6",
+            "aui-thread-viewport-footer relative shrink-0 bg-background px-5 pb-4 md:pb-6",
             !isEmpty && "rounded-t-(--composer-radius)"
           )}
         >
@@ -146,34 +183,24 @@ export function AgentHubThread() {
           <div className="mx-auto flex w-full max-w-(--thread-max-width) flex-col">
             <HubStreamErrorCard
               errorMessage={error?.message ?? null}
+              lastMessageRole={messages.at(-1)?.role}
               hasUserMessage={messages.some((message) => message.role === "user")}
               onClearError={clearError}
               onRegenerate={() => {
                 void regenerate();
               }}
             />
+            <HubFollowupSuggestions />
             <HubElementsComposer
-              disabled={!historyReady || hitl !== null}
+              disabled={!historyReady || hitl === "approval"}
               placeholder={
                 hitl === "approval"
                   ? "Waiting for approval…"
-                  : hitl === "client"
-                    ? "Waiting for your choice…"
-                    : isRunning
-                      ? "Generating a response…"
-                      : "Ask the hub anything…"
+                  : isRunning
+                    ? "Generating a response…"
+                    : "Ask the hub anything…"
               }
             />
-            <AuiIf
-              condition={(s) =>
-                historyReady &&
-                s.thread.messages.length === 0 &&
-                !s.thread.isRunning &&
-                s.composer.isEmpty
-              }
-            >
-              <HubSuggestions />
-            </AuiIf>
           </div>
         </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
@@ -183,16 +210,20 @@ export function AgentHubThread() {
 
 function HubStreamErrorCard({
   errorMessage,
+  lastMessageRole,
   hasUserMessage,
   onClearError,
   onRegenerate
 }: {
   errorMessage: string | null;
+  lastMessageRole?: string;
   hasUserMessage: boolean;
   onClearError: () => void;
   onRegenerate: () => void;
 }) {
   const [dismissedError, setDismissedError] = React.useState<string | null>(null);
+  // In-thread banner owns recovery when the last turn is an assistant bubble.
+  if (lastMessageRole === "assistant") return null;
   const showError = Boolean(errorMessage) && errorMessage !== dismissedError;
   if (!showError) return null;
 
@@ -221,23 +252,25 @@ function HubDayMessages({ dayById }: { dayById: Map<string, HubDayRow> }) {
   if (ids.length === 0) return null;
 
   return (
-    <div data-slot="aui_message-group" className="mb-6 flex flex-col gap-y-6">
+    <div data-slot="aui_message-group" className="mb-10 flex flex-col gap-y-6">
       {ids.map((id) => {
         const row = dayById.get(id);
         const from = row?.role === "user" ? "user" : "assistant";
         return (
-          <div key={id} className="group relative flex flex-col gap-2">
+          <div
+            key={id}
+            className={cn(
+              "group relative flex flex-col",
+              row?.showDay ? "gap-3 pt-2 first:pt-0" : "gap-1.5"
+            )}
+          >
             {row?.showDay && row.dayLabel ? <DaySeparatorRule label={row.dayLabel} /> : null}
-            <div
-              data-slot="message"
-              data-from={from}
-              className={cn("relative", from === "user" ? "ps-12" : "pe-12")}
-            >
+            <div data-slot="message" data-from={from} className="relative">
               {row?.timeLabel ? (
                 <DaySeparatorTime
                   className={cn(
-                    "pointer-events-none absolute top-3 z-10",
-                    from === "user" ? "inset-s-0" : "inset-e-0"
+                    "pointer-events-none absolute top-1.5 z-10",
+                    from === "user" ? "inset-e-full pe-2" : "inset-s-full ps-2"
                   )}
                 >
                   {row.timeLabel}
@@ -293,17 +326,32 @@ function HubLoadOlderHeader({
 }
 
 function HubWelcome() {
+  const settings = useQuery(
+    orpcQueryClient.aiSettings.get.queryOptions({
+      staleTime: 60_000,
+      refetchOnWindowFocus: false
+    })
+  );
+  const sessionPersonality = React.useSyncExternalStore(
+    subscribeHubComposerPersonality,
+    getHubComposerPersonality,
+    getHubComposerPersonality
+  );
+  const personality = hubPersonalityById(sessionPersonality ?? settings.data?.hubPersonality);
+  const seed = hubPersonalityAvatarSeed(personality.id);
+
   return (
     <div className="aui-thread-welcome-root mb-6 flex flex-col items-center px-4 text-center">
-      <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <Sparkles className="size-4" aria-hidden />
+      <div className="mb-3 size-10 overflow-hidden rounded-full bg-muted">
+        <AgentAvatar seed={seed} size={40} animated className="size-10" aria-hidden />
       </div>
       <h1 className="aui-thread-welcome-message-inner animate-in text-2xl font-semibold duration-200 fill-mode-both fade-in slide-in-from-bottom-1">
         Welcome back. What can I do for you?
       </h1>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">
-        Ask about projects, detect stacks, organize your library, or plan the next move.
+        Today's jobs, mail, or what you're looking for.
       </p>
+      <HubSuggestions />
     </div>
   );
 }
@@ -311,7 +359,7 @@ function HubWelcome() {
 function HubSuggestions() {
   return (
     <div
-      className="aui-thread-welcome-suggestions flex w-full flex-wrap items-center justify-center gap-2 px-1"
+      className="aui-thread-welcome-suggestions mt-8 grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-2"
       aria-label="Suggestions"
     >
       <ThreadPrimitive.Suggestions>{() => <HubSuggestionItem />}</ThreadPrimitive.Suggestions>
@@ -321,18 +369,24 @@ function HubSuggestions() {
 
 function HubSuggestionItem() {
   return (
-    <div className="aui-thread-welcome-suggestion-display animate-in duration-200 fill-mode-both fade-in slide-in-from-bottom-2">
+    <div className="aui-thread-welcome-suggestion-display min-w-0">
       <SuggestionPrimitive.Trigger
         send
         render={
           <Button
             type="button"
             variant="ghost"
-            className="aui-thread-welcome-suggestion h-auto gap-1.5 rounded-full border border-border/60 px-3.5 py-1.5 text-sm font-normal whitespace-nowrap text-foreground transition-colors hover:bg-muted"
+            className={cn(
+              "aui-thread-welcome-suggestion h-9 w-full justify-center rounded-full border border-border/50 bg-muted/35 px-3 text-[13px] font-normal text-foreground/85",
+              "transition-[color,background-color,transform,border-color] duration-150 ease-out",
+              "hover:border-border hover:bg-muted hover:text-foreground",
+              "active:scale-[0.96]",
+              "motion-reduce:transition-none active:motion-reduce:scale-100"
+            )}
           />
         }
       >
-        <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1" />
+        <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1 truncate" />
       </SuggestionPrimitive.Trigger>
     </div>
   );

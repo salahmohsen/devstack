@@ -12,6 +12,7 @@ function Toaster({ ...props }: ToasterProps) {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="group"
+      position="bottom-left"
       icons={{
         error: <ToastStateGlyph tone="error" />,
         info: <ToastStateGlyph tone="info" />,

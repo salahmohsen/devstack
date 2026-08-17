@@ -1,5 +1,6 @@
 import {
   AiJobMatchBatchSchema,
+  applyPreferenceHardFails,
   formatJobMatchScorePrompt,
   SCORER_JOB_DESCRIPTION_CHARS,
   scoreJobAgainstPreference,
@@ -16,6 +17,7 @@ import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
 import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "#@/lib/application/load-seeker-match-evidence";
+import { ensureSearchBrief } from "#@/lib/application/search-brief";
 
 const SCORER_AGENT_ID = "job-preference-match-scorer";
 const TIMEOUT_MS = 60_000;
@@ -103,6 +105,16 @@ export async function scoreApplicationMatch(input: {
   const minScore = prefs.minMatchScore ?? 60;
   const passAll = shouldPassAllHarvestJobs(prefs, evidence);
 
+  const hard = applyPreferenceHardFails(harvested, prefs);
+  if (hard.failed) {
+    return {
+      score: 0,
+      passed: false,
+      reasons: hard.reasons,
+      source: "heuristic"
+    };
+  }
+
   const heuristic = scoreJobAgainstPreference(harvested, prefs, evidence);
 
   if (!ENV_SERVER.AGENT_WORKER_URL?.trim() || !input.llm.apiKey?.trim()) {
@@ -127,11 +139,13 @@ export async function scoreApplicationMatch(input: {
     }
   ];
 
+  const brief = await ensureSearchBrief(input.userId).catch(() => null);
   const prompt = formatJobMatchScorePrompt({
     prefs,
     evidence,
     jobs: jobsJson,
-    minScore
+    minScore,
+    searchBriefMarkdown: brief?.markdown ?? null
   });
 
   try {

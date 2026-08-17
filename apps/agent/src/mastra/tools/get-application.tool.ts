@@ -17,7 +17,9 @@ export const getApplicationTool = createTool({
     applicationId: z
       .string()
       .min(1)
-      .describe("Application id from listNewJobs or listOpenApplications")
+      .optional()
+      .describe("Application id from searchApplications, listNewJobs, or listOpenApplications"),
+    id: z.string().min(1).optional().describe("Alias for applicationId.")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
@@ -33,15 +35,16 @@ export const getApplicationTool = createTool({
       })
       .nullable()
   }),
-  execute: async ({ applicationId }, context) => {
+  execute: async ({ applicationId, id }, context) => {
     // Force tenant from requestContext — ignore any model-supplied identity.
+    const resolvedId = (applicationId ?? id ?? "").trim();
     const userId = context.requestContext?.get?.("userId") as string | undefined;
-    if (!userId) {
+    if (!userId || !resolvedId) {
       return { found: false, application: null };
     }
     const db = createDb();
     const row = await runWithDb(db, () =>
-      applicationRepository.findByIdForUser(applicationId, userId)
+      applicationRepository.findByIdForUser(resolvedId, userId)
     );
     if (!row) return { found: false, application: null };
     return {

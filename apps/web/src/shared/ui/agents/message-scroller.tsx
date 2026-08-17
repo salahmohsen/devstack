@@ -294,13 +294,15 @@ export function MessageScroller({
 
     const observer = new ResizeObserver(() => {
       scheduleRailSync();
-      if (!followOutput || !followingRef.current) return;
+      // Only chase the live edge while a turn is streaming. Expanding the
+      // thought panel after the turn must not jump the column to the top.
+      if (!busy || !followOutput || !followingRef.current) return;
       scrollToEnd(reduce || !smooth ? "auto" : "smooth");
     });
     observer.observe(content);
 
     return () => observer.disconnect();
-  }, [followOutput, reduce, scheduleRailSync, scrollToEnd, smooth]);
+  }, [busy, followOutput, reduce, scheduleRailSync, scrollToEnd, smooth]);
 
   useEffect(() => {
     if (navigation !== "rail") {
@@ -413,7 +415,7 @@ export function MessageScroller({
           ? "scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           : "scrollbar-gutter-stable",
         viewportClassName,
-        navigation === "rail" && railOverflowing && "pr-10"
+        navigation === "rail" && "pr-10"
       )}
     >
       <div
@@ -431,7 +433,11 @@ export function MessageScroller({
   );
 
   return (
-    <div data-slot="message-scroller" className={cn("min-h-0", className)} {...props}>
+    <div
+      data-slot="message-scroller"
+      className={cn("relative min-h-0 overflow-hidden", className)}
+      {...props}
+    >
       {navigation === "rail" ? (
         <PreviewRail
           items={railOverflowing ? railItems : []}

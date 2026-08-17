@@ -33,6 +33,7 @@ export function computeHubMessagesHasMore(input: {
 /**
  * AI SDK UIMessage has no required createdAt. Mastra DB rows do.
  * Copy onto `metadata.createdAt` (ISO) so day separators can read one field.
+ * Also copy `hubPersonality` from Mastra content.metadata when present.
  */
 export function attachCreatedAtToUiMessages(
   uiMessages: unknown[] | null,
@@ -41,10 +42,13 @@ export function attachCreatedAtToUiMessages(
   if (uiMessages == null) return null;
 
   const createdAtById = new Map<string, string>();
+  const personalityById = new Map<string, string>();
   for (const raw of rawMessages) {
     const id = readMessageId(raw);
     const createdAt = readCreatedAtIso(raw);
     if (id && createdAt) createdAtById.set(id, createdAt);
+    const personality = readHubPersonality(raw);
+    if (id && personality) personalityById.set(id, personality);
   }
 
   return uiMessages.map((ui) => {
@@ -53,14 +57,27 @@ export function attachCreatedAtToUiMessages(
     const existing = readCreatedAtIso(ui);
     const id = readMessageId(ui);
     const createdAt = existing ?? (id ? (createdAtById.get(id) ?? null) : null);
-    if (!createdAt) return ui;
+    const existingPersonality = readHubPersonality(ui);
+    const personality = existingPersonality ?? (id ? (personalityById.get(id) ?? null) : null);
+    if (!createdAt && !personality) return ui;
 
     const metadata = isRecord(ui.metadata) ? ui.metadata : {};
-    if (metadata.createdAt === createdAt) return ui;
+    const nextCreatedAt =
+      createdAt ?? (typeof metadata.createdAt === "string" ? metadata.createdAt : undefined);
+    const nextPersonality =
+      personality ??
+      (typeof metadata.hubPersonality === "string" ? metadata.hubPersonality : undefined);
+    if (metadata.createdAt === nextCreatedAt && metadata.hubPersonality === nextPersonality) {
+      return ui;
+    }
 
     return {
       ...ui,
-      metadata: { ...metadata, createdAt }
+      metadata: {
+        ...metadata,
+        ...(nextCreatedAt ? { createdAt: nextCreatedAt } : {}),
+        ...(nextPersonality ? { hubPersonality: nextPersonality } : {})
+      }
     };
   });
 }
@@ -288,6 +305,21 @@ function readMessageId(value: unknown): string | null {
     return null;
   }
   return value.id;
+}
+
+function readHubPersonality(value: unknown): string | null {
+  if (!isRecord(value)) return null;
+  if (typeof value.hubPersonality === "string" && value.hubPersonality.length > 0) {
+    return value.hubPersonality;
+  }
+  if (isRecord(value.metadata) && typeof value.metadata.hubPersonality === "string") {
+    return value.metadata.hubPersonality;
+  }
+  if (isRecord(value.content) && isRecord(value.content.metadata)) {
+    const personality = value.content.metadata.hubPersonality;
+    if (typeof personality === "string" && personality.length > 0) return personality;
+  }
+  return null;
 }
 
 function readCreatedAtIso(value: unknown): string | null {

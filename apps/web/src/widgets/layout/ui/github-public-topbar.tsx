@@ -374,25 +374,28 @@ export function Topbar() {
         <Tabs tabsReady={isClient} routerRef={routerRef} />
       </div>
 
-      {/* shrink-0 + no overflow here so avatar/actions never get clipped by tabs */}
-      <div className="relative z-10 flex shrink-0 items-center gap-1">
-        {/* Bell stays visible below md on dashboard. */}
+      {/* Find → signal → prefs → identity. Inter-group gap is 2× intra-group. */}
+      <div className="relative z-10 flex shrink-0 items-center gap-2">
+        <Button
+          variant="outline"
+          className="hidden md:inline-flex"
+          onClick={() => setCommandPaletteOpen(true)}
+          aria-label="Search"
+        >
+          <SearchIcon />
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <Kbd>K</Kbd>
+          </KbdGroup>
+        </Button>
+
         {admin && pathname.includes("dashboard") ? <NotificationsBell /> : null}
-        <SoundMuteButton />
 
-        <div className="hidden items-center gap-1 md:flex">
-          <ThemeSwitcher variant="ghost" />
-
-          <Button variant="outline" onClick={() => setCommandPaletteOpen(true)} aria-label="Search">
-            <SearchIcon />
-            <KbdGroup>
-              <Kbd>⌘</Kbd>
-              <Kbd>K</Kbd>
-            </KbdGroup>
-          </Button>
+        <div className="flex items-center gap-1">
+          <ThemeSwitcher variant="ghost" className="hidden size-8 md:inline-flex" />
+          <SoundMuteButton />
         </div>
 
-        {/* Always top-right: avatar when signed in, sign-in CTA otherwise (all routes). */}
         {accountControl}
       </div>
     </nav>

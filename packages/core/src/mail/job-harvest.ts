@@ -20,15 +20,21 @@ import {
   type ListingPageExtract
 } from "#@/common/extract-job-listing-page";
 import { DEFAULT_MIN_MATCH_SCORE } from "#@/job-preference/constants";
+import { applyPreferenceHardFails } from "#@/job-preference/hard-fails";
+import { matchesKeywordPhrase } from "#@/job-preference/phrase-match";
+import { type SalaryPeriod } from "#@/job-preference/salary-compare";
 import {
   SeekerMatchEvidenceSchema,
   WorkModeSchema,
+  LevelFloorSchema,
   type JobPreference,
+  type LevelFloor,
   type SeekerMatchEvidence,
   type WorkMode
 } from "#@/job-preference/types";
 import {
   defaultJobPreference,
+  formatSearchBriefForPrompt,
   formatSeekerEvidenceForPrompt,
   isOpenJobPreference,
   seekerEvidenceHasSignal
@@ -174,13 +180,17 @@ export type MailNotifierExtract = z.infer<typeof MailNotifierExtractSchema>;
 export const HarvestJobPreferenceSchema = z.object({
   workModes: z.array(WorkModeSchema).default([]),
   locations: z.array(z.string()).default([]),
+  remoteRegions: z.array(z.string()).default([]),
   roleKeywords: z.array(z.string()).default([]),
   excludeKeywords: z.array(z.string()).default([]),
   salaryMin: z.number().nullable().optional(),
   salaryCurrency: z.string().nullable().optional(),
+  levelFloor: LevelFloorSchema.nullable().optional(),
   minMatchScore: z.number().int().min(0).max(100).default(60),
   /** Career-profile signal (experiences / stacks / projects) for fit scoring. */
-  evidence: SeekerMatchEvidenceSchema.optional()
+  evidence: SeekerMatchEvidenceSchema.optional(),
+  /** Narrative search brief — flavor only; never a cheap-rank input. */
+  searchBriefMarkdown: z.string().max(50_000).nullable().optional()
 });
 export type HarvestJobPreference = z.infer<typeof HarvestJobPreferenceSchema>;
 
@@ -1429,8 +1439,16 @@ export type ScoreJobPreferenceInput = Pick<
   JobPreference,
   "workModes" | "locations" | "roleKeywords" | "excludeKeywords" | "minMatchScore"
 > & {
+  remoteRegions?: readonly string[] | null;
   salaryMin?: number | null;
   salaryCurrency?: string | null;
+  levelFloor?: LevelFloor | null;
+};
+
+export type ScoreJobPayFields = {
+  salaryMin?: number | null;
+  salaryCurrency?: string | null;
+  salaryPeriod?: SalaryPeriod | null;
 };
 
 /**
@@ -1440,7 +1458,7 @@ export type ScoreJobPreferenceInput = Pick<
  * When preferences are open and evidence exists, require a profile fit.
  */
 export function scoreJobAgainstPreference(
-  job: HarvestedJob,
+  job: HarvestedJob & ScoreJobPayFields,
   prefs: ScoreJobPreferenceInput | null | undefined,
   evidence?: SeekerMatchEvidence | null
 ): JobMatchScoreResult {
@@ -1448,7 +1466,6 @@ export function scoreJobAgainstPreference(
   const reasons: string[] = [];
   let score = 40;
 
-  const titleBlob = job.title.toLowerCase();
   const blob = [job.title, job.companyName, job.location ?? "", job.description ?? ""]
     .join("\n")
     .toLowerCase();
@@ -1457,13 +1474,26 @@ export function scoreJobAgainstPreference(
     return { score: 0, passed: false, reasons: ["invalid title/company"] };
   }
 
-  if (p.excludeKeywords.length > 0 && includesAny(blob, p.excludeKeywords)) {
-    return { score: 0, passed: false, reasons: ["excluded keyword match"] };
+  const hard = applyPreferenceHardFails(
+    {
+      title: job.title,
+      companyName: job.companyName,
+      location: job.location,
+      description: job.description,
+      salaryRange: job.salaryRange,
+      salaryMin: job.salaryMin,
+      salaryCurrency: job.salaryCurrency,
+      salaryPeriod: job.salaryPeriod
+    },
+    p
+  );
+  if (hard.failed) {
+    return { score: 0, passed: false, reasons: hard.reasons };
   }
 
   if (p.roleKeywords.length > 0) {
     // Title-only — never score from fetched HTML description noise
-    const titleHits = p.roleKeywords.filter((k) => titleBlob.includes(k.toLowerCase()));
+    const titleHits = p.roleKeywords.filter((k) => matchesKeywordPhrase(job.title, k));
     if (titleHits.length > 0) {
       score += Math.min(40, 15 + titleHits.length * 10);
       reasons.push(`title keywords: ${titleHits.slice(0, 3).join(", ")}`);
@@ -1531,20 +1561,28 @@ export function formatJobMatchScorePrompt(input: {
   evidence?: SeekerMatchEvidence | null;
   jobs: unknown[];
   minScore: number;
+  searchBriefMarkdown?: string | null;
 }): string {
   const evidence =
     input.evidence ?? ("evidence" in input.prefs ? (input.prefs.evidence ?? null) : null);
+  const searchBriefMarkdown =
+    input.searchBriefMarkdown ??
+    ("searchBriefMarkdown" in input.prefs ? (input.prefs.searchBriefMarkdown ?? null) : null);
   return `Score these jobs for the seeker.
+
+Column hard-fails are law: exclude phrase, level floor, salary floor. Phrase identity: "react" is not "react native". Search brief is narrative flavor only and cannot pass a column hard-fail. Two-axis (workModes / locations / remoteRegions) is a land/evaluate gate — do not hard-fail harvest or inbox solely for unknown work mode or location.
 
 JobPreference (JSON):
 ${JSON.stringify(
   {
     workModes: input.prefs.workModes ?? [],
     locations: input.prefs.locations ?? [],
+    remoteRegions: input.prefs.remoteRegions ?? [],
     roleKeywords: input.prefs.roleKeywords ?? [],
     excludeKeywords: input.prefs.excludeKeywords ?? [],
     salaryMin: input.prefs.salaryMin ?? null,
     salaryCurrency: input.prefs.salaryCurrency ?? null,
+    levelFloor: input.prefs.levelFloor ?? null,
     minMatchScore: input.minScore
   },
   null,
@@ -1553,12 +1591,14 @@ ${JSON.stringify(
 
 ${formatSeekerEvidenceForPrompt(evidence)}
 
+${formatSearchBriefForPrompt(searchBriefMarkdown)}
+
 Jobs (JSON array):
 ${JSON.stringify(input.jobs, null, 2)}
 
-Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${input.minScore} and not excluded), and reasons.
+Return matches[] with listingUrl, score 0-100, passed (true only if score >= minMatchScore ${input.minScore} and not excluded by a column hard-fail), and reasons.
 Use semantic role fit — do not treat generic words like "engineer" or "developer" as a strong frontend/react match.
-workModes is multi-select (OR): empty array = any mode; boost when job.workMode is any preferred mode; soft-penalize only when job mode is known and outside the preferred set.
+workModes is multi-select (OR): empty array = any mode; boost when job.workMode is any preferred mode; soft-penalize only when job mode is known and outside the preferred set. Unknown/null job workMode is ranking-neutral — not a harvest/inbox fail.
 When roleKeywords are empty, infer fit from SeekerProfileEvidence (experience titles, featured stacks, project stacks). Fail jobs that are orthogonal to this career (nursing, sales SDR, graphic design vs a frontend engineer, etc.).
-A job should pass only if it reasonably matches the seeker's craft or explicit preferences.`;
+A job should pass only if it reasonably matches the seeker's craft or explicit preferences and has no column hard-fail.`;
 }

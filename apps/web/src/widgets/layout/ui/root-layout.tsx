@@ -1,5 +1,5 @@
 import { useLocation } from "@tanstack/react-router";
-import { type PropsWithChildren } from "react";
+import { type PropsWithChildren, useEffect } from "react";
 
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area.js";
 import { cn } from "@tsu-stack/ui/lib/utils";
@@ -29,6 +29,9 @@ export function RootLayout({ children }: PropsWithChildren) {
   const isXl = useMediaQuery("(min-width: 1280px)");
   const showPanel = isXl && (sidePanel.hasContent || sidePanel.inspectOpen) && !sidePanel.collapsed;
   const pathname = useLocation().pathname;
+  useEffect(() => {
+    sidePanel.close();
+  }, [pathname, sidePanel.close]);
   const isDashboard = pathname.startsWith("/dashboard");
   // Public repos list inspects portfolio projects with the same chrome as dashboard.
   const isPublicReposList = /(?:^|\/)repos\/?$/.test(pathname);
@@ -41,7 +44,7 @@ export function RootLayout({ children }: PropsWithChildren) {
         // Fixed viewport height + overflow-hidden: only the main Card ScrollArea scrolls
         // (no second browser/document scrollbar beside the shell).
         "relative isolate flex h-dvh max-h-dvh flex-col overflow-hidden",
-        "bg-container text-primary selection:bg-[#C0E7C8] selection:text-primary!",
+        "bg-container text-primary selection:bg-brand selection:text-black!",
         // Instant open/close when the user prefers reduced motion.
         "motion-reduce:[&_[data-dashboard-nav-shell]]:transition-none motion-reduce:[&_[data-side-panel-shell]]:transition-none"
       )}
@@ -56,7 +59,8 @@ export function RootLayout({ children }: PropsWithChildren) {
           inspectOpen: sidePanel.inspectOpen,
           requestInspectOpen: sidePanel.requestInspectOpen,
           releaseInspectOpen: sidePanel.releaseInspectOpen,
-          toggle: sidePanel.toggle
+          toggle: sidePanel.toggle,
+          close: sidePanel.close
         }}
       >
         <div className="flex min-h-0 flex-1 flex-row overflow-hidden p-2 pt-0">

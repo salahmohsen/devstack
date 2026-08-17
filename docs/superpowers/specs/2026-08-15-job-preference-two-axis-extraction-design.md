@@ -10,6 +10,8 @@
 
 **Related:** discovery spec; [New jobs + Tracked](./2026-08-11-new-jobs-tracked-jobs-design.md).
 
+**Superseded (remote branch only, 2026-08-16):** [Search brief + hub operator](./2026-08-16-search-brief-hub-operator-design.md) owns remote overlap. `locations` stay onsite/hybrid places. Remote uses `remoteRegions` (empty = worldwide). Do not treat user `worldwide` on `locations` as a hybrid pass. **Land still drops unknown mode** (this file’s grill **#9**). Remote + unknown listing region is worldwide **only when `remoteRegions` is empty**; non-empty `remoteRegions` + unknown region = **drop** (this file’s grill **#2** does **not** apply unchanged). Cheap / harvest / hub preview still do not run two-axis. Do not rewrite the rest of this grill.
+
 ---
 
 ## Problem

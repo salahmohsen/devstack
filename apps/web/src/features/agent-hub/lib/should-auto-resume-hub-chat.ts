@@ -1,9 +1,21 @@
 import { lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from "ai";
 
+import { searchBriefUserTurnNeedsSpokenAnswer } from "@tsu-stack/core";
+
 import {
+  HUB_FIND_JOBS_NOW_TOOL_NAMES,
+  HUB_GET_DAILY_BRIEF_TOOL_NAMES,
+  HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
+  HUB_OPEN_DAILY_BRIEF_TOOL_NAMES,
+  HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES,
+  HUB_OPEN_ENTITY_FORM_TOOL_NAMES,
+  HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES,
   HUB_OPEN_SURFACE_TOOL_NAMES,
   HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
-  HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES
+  HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES,
+  HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES,
+  HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES,
+  isLaterEvidenceAfterSameEntityConfirm
 } from "./hub-tool-names";
 
 /**
@@ -15,7 +27,15 @@ import {
 export const HUB_CLIENT_RESUME_TOOL_NAMES = new Set([
   ...HUB_PROPOSE_APPLICATION_FROM_JD_TOOL_NAMES,
   ...HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES,
-  ...HUB_OPEN_SURFACE_TOOL_NAMES
+  ...HUB_OPEN_SURFACE_TOOL_NAMES,
+  ...HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES,
+  ...HUB_OPEN_ENTITY_FORM_TOOL_NAMES,
+  ...HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES,
+  ...HUB_FIND_JOBS_NOW_TOOL_NAMES,
+  ...HUB_GET_SEARCH_BRIEF_TOOL_NAMES,
+  ...HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES,
+  ...HUB_OPEN_DAILY_BRIEF_TOOL_NAMES,
+  ...HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES
 ]);
 
 type ToolLikePart = {
@@ -35,8 +55,49 @@ type ToolLikePart = {
 export const PREMATURE_HITL_TEXT_RE =
   /awaiting your confirmation|confirmation is required|no changes made/i;
 
+const SEARCH_BRIEF_WRAPUP_RE = /search brief is current|here(?:'s| is) your (?:search )?brief/i;
+
+const DAILY_BRIEF_WRAPUP_RE = /today is open in the side panel|^#\s*today\b|^\*\*new in/im;
+
+const TODAY_IDLE_LINE_RE =
+  /^(hey|ready|still here|that's the whole plot|thats the whole plot|no sequel yet|checking|working through it)\.?\s*$/i;
+
 const FAILED_CONTINUATION_TEXT_RE =
   /tool-step limit|step limit was reached|couldn.?t run|could not run|couldn.?t execute/i;
+
+const PROCESSOR_LEAK_RE =
+  /<system-reminder>|Call getDailyBrief now|call openDailyBrief|already returned facts\. Write the Today letter|already returned markdown|Do NOT call getSearchBrief|Extract already ran\. Do NOT call jobPageExtractor|Call getDailyBrief now for facts|listNewJobs already returned|Call propose-new-jobs-triage NOW|The triage card is the UI|Emit ZERO user-facing text/i;
+
+export function isHubProcessorLeakText(text: string): boolean {
+  return PROCESSOR_LEAK_RE.test(text);
+}
+
+function looksLikeDailyBriefLetter(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (DAILY_BRIEF_WRAPUP_RE.test(t)) return true;
+  if (/^#{1,3}\s/m.test(t) && /\b(new jobs|tracked|mail|the pile)\b/i.test(t)) return true;
+  return /^#\s+\w+day\s+\d{1,2}\s+\w+/im.test(t) && t.length > 80;
+}
+
+/** Letter paste (safe to hide in any bubble — not a greeting). */
+export function isHubTodayLetterPaste(text: string): boolean {
+  return looksLikeDailyBriefLetter(text.trim());
+}
+
+/** Letter paste or the supervisor idle loop after Today. */
+export function isHubTodayFillerText(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (isHubProcessorLeakText(t)) return true;
+  if (looksLikeDailyBriefLetter(t)) return true;
+  if (TODAY_IDLE_LINE_RE.test(t)) return true;
+  const lines = t
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.length > 0 && lines.every((line) => TODAY_IDLE_LINE_RE.test(line));
+}
 
 function isToolUiPart(part: { type: string }): boolean {
   return (
@@ -58,6 +119,21 @@ function toolNameFromPart(part: ToolLikePart): string {
 function isClientResumeTool(part: ToolLikePart): boolean {
   if (part.providerExecuted === true) return false;
   return HUB_CLIENT_RESUME_TOOL_NAMES.has(toolNameFromPart(part));
+}
+
+function latestUserMessageText(messages: readonly UIMessage[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (!message || message.role !== "user") continue;
+    const chunks: string[] = [];
+    for (const part of message.parts ?? []) {
+      if (part && part.type === "text" && "text" in part && typeof part.text === "string") {
+        chunks.push(part.text);
+      }
+    }
+    return chunks.join("\n");
+  }
+  return "";
 }
 
 function isClientToolComplete(part: ToolLikePart): boolean {
@@ -88,16 +164,66 @@ function isClientToolWaiting(part: ToolLikePart): boolean {
 export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): number | null {
   let lastWaiting = -1;
   let lastComplete = -1;
+  let lastDailyBrief = -1;
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
-    if (!part || !isToolUiPart(part) || !isClientResumeTool(part)) continue;
+    if (!part || !isToolUiPart(part)) continue;
+    const name = toolNameFromPart(part);
+    const todayToolDone =
+      isClientToolComplete(part) ||
+      (HUB_GET_DAILY_BRIEF_TOOL_NAMES.has(name) && part.output != null);
+    if (
+      (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(name) || HUB_GET_DAILY_BRIEF_TOOL_NAMES.has(name)) &&
+      todayToolDone
+    ) {
+      lastDailyBrief = i;
+    }
+    if (!isClientResumeTool(part)) continue;
     if (isClientToolWaiting(part)) lastWaiting = i;
     else if (isClientToolComplete(part)) lastComplete = i;
+  }
+
+  if (lastDailyBrief >= 0 && lastWaiting < 0) {
+    const after = parts.slice(lastDailyBrief + 1);
+    const laterTool = after.some((part) => isToolUiPart(part));
+    // Packed inspect / CRM after the letter may speak. Today-only: the panel
+    // is the letter — hide the supervisor idle loop.
+    if (laterTool) return null;
+    return lastDailyBrief;
   }
 
   if (lastWaiting >= 0) return lastWaiting;
 
   if (lastComplete >= 0) {
+    const completePart = parts[lastComplete];
+    if (completePart) {
+      const completeName = toolNameFromPart(completePart);
+      if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(completeName)) {
+        return lastComplete;
+      }
+      if (HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES.has(completeName)) {
+        return lastComplete;
+      }
+      if (HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(completeName)) {
+        return lastComplete;
+      }
+      if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(completeName)) {
+        // After confirm/cancel, show the next interview. Do not hide because
+        // of PREMATURE_HITL_TEXT (that would swallow "Next, RAYA…").
+        return null;
+      }
+      if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(completeName)) {
+        const afterBrief = parts
+          .slice(lastComplete + 1)
+          .filter((p) => p.type === "text" && Boolean(p.text?.trim()))
+          .map((p) => p.text ?? "")
+          .join("\n");
+        if (SEARCH_BRIEF_WRAPUP_RE.test(afterBrief) || PREMATURE_HITL_TEXT_RE.test(afterBrief)) {
+          return lastComplete;
+        }
+        return null;
+      }
+    }
     const after = parts.slice(lastComplete + 1);
     const hasServerAfter = after.some((p) => {
       if (!isToolUiPart(p) || isClientResumeTool(p)) return false;
@@ -118,6 +244,11 @@ export function hideHubAssistantTextAfterIndex(parts: readonly ToolLikePart[]): 
     if (FAILED_CONTINUATION_TEXT_RE.test(afterText)) return null;
     if (PREMATURE_HITL_TEXT_RE.test(afterText)) return lastComplete;
   }
+
+  const leakIdx = parts.findIndex(
+    (part) => part.type === "text" && isHubProcessorLeakText(part.text ?? "")
+  );
+  if (leakIdx >= 0) return leakIdx - 1;
 
   return null;
 }
@@ -142,6 +273,8 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
   const message = messages[messages.length - 1];
   if (!message || message.role !== "assistant") return false;
 
+  const latestUserText = latestUserMessageText(messages);
+  const briefNeedsSpokenAnswer = searchBriefUserTurnNeedsSpokenAnswer(latestUserText);
   const parts = message.parts as ToolLikePart[];
 
   const stepStarts: number[] = [];
@@ -179,6 +312,12 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
     // Already ran track/dismiss/etc. after HITL — do not re-submit.
     if (hasServerAfter) return false;
 
+    const hasStreamingTextAfter = after.some(
+      (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state === "streaming"
+    );
+    // Re-POST while wrap-up is streaming loops the same sentence (find-jobs-now).
+    if (hasStreamingTextAfter) return false;
+
     const hasFinalTextAfter = after.some(
       (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state !== "streaming"
     );
@@ -190,27 +329,108 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
     const needsMutationContinuation = clientTools.some((p) => {
       if (!isClientToolComplete(p)) return false;
       const name = toolNameFromPart(p);
-      if (HUB_OPEN_SURFACE_TOOL_NAMES.has(name)) return true;
+      if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+        return briefNeedsSpokenAnswer && !hasFinalTextAfter;
+      }
+      if (HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES.has(name)) {
+        return false;
+      }
+      if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
+        const evidenceOutput =
+          p.output && typeof p.output === "object" && !Array.isArray(p.output)
+            ? (p.output as { action?: unknown })
+            : undefined;
+        if (evidenceOutput?.action === "confirm") {
+          // A later sibling in this step (same-entity leftover or next card)
+          // owns continuation. Resume only when this confirm is the latest.
+          const laterEvidence = clientTools.some((other, otherIndex) => {
+            if (otherIndex <= clientTools.indexOf(p)) return false;
+            return HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(toolNameFromPart(other));
+          });
+          return !laterEvidence;
+        }
+        if (evidenceOutput?.action === "cancel") {
+          // Auto-cancel of a same-id leftover must not restart the loop.
+          if (isLaterEvidenceAfterSameEntityConfirm(messages, p.toolCallId ?? "")) {
+            return false;
+          }
+          const laterEvidence = clientTools.some((other, otherIndex) => {
+            if (otherIndex <= clientTools.indexOf(p)) return false;
+            return HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(toolNameFromPart(other));
+          });
+          // A later sibling (usually the same entity again) owns continuation.
+          return !laterEvidence;
+        }
+        return false;
+      }
+      if (HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES.has(name)) {
+        // Side panel already opened. Re-POSTing restacks "Opened project…"
+        return false;
+      }
+      if (HUB_OPEN_SURFACE_TOOL_NAMES.has(name) || HUB_OPEN_ENTITY_FORM_TOOL_NAMES.has(name)) {
+        return true;
+      }
       const output =
         p.output && typeof p.output === "object" && !Array.isArray(p.output)
           ? (p.output as { action?: unknown; applicationId?: unknown })
           : undefined;
       const action = output?.action;
-      // JD card buttons finish CRM on the client. Do not re-POST — that
-      // re-runs URL import and renders a second card for the same listing.
+      // JD card buttons and triage Confirm finish CRM on the client.
+      // Re-POSTing after triage confirm re-proposed a second card.
       if (
         action === "dismiss" ||
         action === "cancel" ||
         action === "package" ||
-        action === "save"
+        action === "save" ||
+        action === "confirm"
       ) {
         return false;
       }
-      return action === "confirm";
+      return false;
     });
 
     if (!needsMutationContinuation) {
       const terminal = clientTools.some((p) => {
+        const name = toolNameFromPart(p);
+        if (HUB_FIND_JOBS_NOW_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (HUB_OPEN_ENTITY_INSPECT_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (HUB_GET_SEARCH_BRIEF_TOOL_NAMES.has(name)) {
+          return !briefNeedsSpokenAnswer;
+        }
+        if (HUB_GET_DAILY_BRIEF_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (HUB_OPEN_DAILY_BRIEF_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (HUB_PROPOSE_MAIL_CRM_CHANGE_TOOL_NAMES.has(name)) {
+          return true;
+        }
+        if (
+          HUB_PROPOSE_HARD_PREFERENCE_CHANGE_TOOL_NAMES.has(name) ||
+          HUB_PROPOSE_NEW_JOBS_TRIAGE_TOOL_NAMES.has(name)
+        ) {
+          return true;
+        }
+        if (HUB_PROPOSE_EVIDENCE_CHANGE_TOOL_NAMES.has(name)) {
+          return isLaterEvidenceAfterSameEntityConfirm(messages, p.toolCallId ?? "");
+        }
         const output =
           p.output && typeof p.output === "object" && !Array.isArray(p.output)
             ? (p.output as { action?: unknown })
@@ -219,7 +439,8 @@ export function lastAssistantMessageIsCompleteWithClientResumeTools({
           output?.action === "dismiss" ||
           output?.action === "cancel" ||
           output?.action === "package" ||
-          output?.action === "save"
+          output?.action === "save" ||
+          output?.action === "confirm"
         );
       });
       if (terminal) return false;
@@ -259,6 +480,10 @@ function lastStepNeedsApprovalContinuation({ messages }: { messages: UIMessage[]
     -1
   );
   const lastStep = parts.slice(lastStepStartIndex + 1);
+  const hasStreamingText = lastStep.some(
+    (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state === "streaming"
+  );
+  if (hasStreamingText) return false;
   // Final text already present in last step → stream finished; do not re-submit.
   const hasFinalText = lastStep.some(
     (p) => p.type === "text" && Boolean(p.text?.trim()) && p.state !== "streaming"

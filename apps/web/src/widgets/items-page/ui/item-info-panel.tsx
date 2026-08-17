@@ -28,6 +28,7 @@ type ItemInfoPanelProps = {
   description?: string | React.ReactNode;
   /** Top-left mark, like the review-card glyph. */
   eyebrow?: React.ReactNode;
+  eyebrowClassName?: string;
   /** Header trailing actions (Save, status, open). */
   actions?: React.ReactNode;
   /** Optional nav under the header (tabs). Stays out of the scroll body. */
@@ -47,6 +48,7 @@ export function ItemInfoPanel({
   title,
   description,
   eyebrow,
+  eyebrowClassName,
   actions,
   nav,
   headerClassName,
@@ -59,11 +61,16 @@ export function ItemInfoPanel({
     <div className="flex h-full min-h-0 flex-col bg-background">
       <header className={cn("shrink-0 px-6 pt-5 pb-5 max-xl:pe-12", headerClassName)}>
         <div className="flex items-center justify-between gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/70 text-muted-foreground [&_img]:size-full [&_img]:object-contain [&_svg]:size-4">
+          <div
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-muted/70 text-muted-foreground [&_img]:size-full [&_img]:object-contain [&_svg]:size-4",
+              eyebrowClassName
+            )}
+          >
             {eyebrow ?? <span className="size-1.5 rounded-full bg-foreground/40" aria-hidden />}
           </div>
           {actions ? (
-            <div className="hidden shrink-0 flex-wrap items-center justify-end gap-1.5 xl:flex">
+            <div className="hidden shrink-0 items-center justify-end gap-1.5 xl:flex">
               {actions}
             </div>
           ) : null}
@@ -100,10 +107,17 @@ type ItemInfoSectionProps = {
   icon?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  bodyClassName?: string;
 };
 
 /** Section heading + body, matching the review-card Summary / Highlights blocks. */
-export function ItemInfoSection({ title, icon, children, className }: ItemInfoSectionProps) {
+export function ItemInfoSection({
+  title,
+  icon,
+  children,
+  className,
+  bodyClassName
+}: ItemInfoSectionProps) {
   return (
     <section className={cn("min-w-0", className)}>
       <div className="flex items-center gap-2.5">
@@ -117,7 +131,13 @@ export function ItemInfoSection({ title, icon, children, className }: ItemInfoSe
         ) : null}
         <h3 className="text-[15px] font-semibold tracking-tight text-foreground">{title}</h3>
       </div>
-      <div className={cn("mt-2.5 text-sm leading-relaxed text-muted-foreground", icon && "pl-7")}>
+      <div
+        className={cn(
+          "mt-2.5 text-sm leading-relaxed text-muted-foreground",
+          icon && "ps-7",
+          bodyClassName
+        )}
+      >
         {children}
       </div>
     </section>

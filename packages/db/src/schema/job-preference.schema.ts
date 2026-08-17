@@ -12,6 +12,8 @@ import { user } from "./auth.schema.ts";
 
 export type StoredWorkMode = "remote" | "hybrid" | "onsite";
 
+export type StoredLevelFloor = "junior" | "mid" | "senior" | "staff";
+
 /**
  * Per-user job preferences for mail harvest / match scoring.
  * One active profile per user (unique on user_id).
@@ -25,10 +27,16 @@ export const jobPreference = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     workModes: jsonb("work_modes").$type<StoredWorkMode[]>().notNull().default([]),
     locations: jsonb("locations").$type<string[]>().notNull().default([]),
+    remoteRegions: jsonb("remote_regions").$type<string[]>().notNull().default([]),
     roleKeywords: jsonb("role_keywords").$type<string[]>().notNull().default([]),
     excludeKeywords: jsonb("exclude_keywords").$type<string[]>().notNull().default([]),
     salaryMin: integer("salary_min"),
     salaryCurrency: text("salary_currency"),
+    levelFloor: text("level_floor").$type<StoredLevelFloor>(),
+    searchBriefMarkdown: text("search_brief_markdown"),
+    searchBriefHash: text("search_brief_hash"),
+    searchBriefPreviousMarkdown: text("search_brief_previous_markdown"),
+    searchBriefBuiltAt: timestamp("search_brief_built_at", { withTimezone: true }),
     minMatchScore: integer("min_match_score").notNull().default(60),
     titleId: text("title_id"),
     customTitle: text("custom_title"),

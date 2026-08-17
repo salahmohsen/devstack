@@ -1,6 +1,7 @@
 import { linkJobSkillsForUser } from "@tsu-stack/api/lib/application/link-job-skills";
 import { loadJobPreference } from "@tsu-stack/api/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "@tsu-stack/api/lib/application/load-seeker-match-evidence";
+import { ensureSearchBrief } from "@tsu-stack/api/lib/application/search-brief";
 import { emitAppNotification } from "@tsu-stack/api/lib/notification/emit-app-notification";
 import { resolveRuntimeAiCredentials } from "@tsu-stack/api/lib/settings/resolve-runtime-ai";
 import {
@@ -21,6 +22,7 @@ import {
   mailMessageRepository,
   userJobAiBudgetRepository
 } from "@tsu-stack/db";
+import { ENV_SERVER } from "@tsu-stack/env/server/env";
 import { createLogger } from "@tsu-stack/logger/server";
 
 import { callMailJobHarvestAgent } from "#@/queues/call-mail-job-harvest-agent";
@@ -99,7 +101,6 @@ export async function runMailJobHarvest(input: {
     return empty();
   }
 
-  const harvestPreference: HarvestJobPreference = { ...prefs, evidence };
   const [llm, openInboxBeforeAgent] = await Promise.all([
     resolveRuntimeAiCredentials(row.userId, "classify"),
     applicationRepository.countByUserIdAndTrackingStatus(row.userId, "inbox")
@@ -146,6 +147,14 @@ export async function runMailJobHarvest(input: {
       return empty();
     }
   }
+
+  const canRunAiScore = Boolean(llm.apiKey?.trim()) && Boolean(ENV_SERVER.AGENT_WORKER_URL?.trim());
+  const brief = canRunAiScore ? await ensureSearchBrief(row.userId).catch(() => null) : null;
+  const harvestPreference: HarvestJobPreference = {
+    ...prefs,
+    evidence,
+    searchBriefMarkdown: brief?.markdown ?? null
+  };
 
   const agentResult = await callMailJobHarvestAgent({
     messageId: row.id,

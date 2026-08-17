@@ -253,7 +253,8 @@ export async function runMailClassify(input: {
 
   await mailMessageRepository.applyClassification(row.id, row.userId, result.labels, {
     mastraClassifyRunId,
-    mastraClassifyTraceId
+    mastraClassifyTraceId,
+    summary: result.summary
   });
 
   const crm = await applyMailCrmEffectFromClassify({

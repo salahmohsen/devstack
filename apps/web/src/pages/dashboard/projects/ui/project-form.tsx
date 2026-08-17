@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImageIcon, SparklesIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -18,6 +18,7 @@ import { SubmitButton, useAppForm } from "@/shared/form";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { AiFlowTrigger } from "@/shared/ui/ai-flow-trigger";
+import { DefaultLoader } from "@/shared/ui/default-loader";
 import { Icon } from "@/shared/ui/icon";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
@@ -32,11 +33,18 @@ import {
 import { EntityFormSheet } from "@/pages/dashboard/_lib/entity-form-panel";
 import { setDetectStacksFormMergeHandler } from "@/pages/dashboard/projects/_lib/detect-stacks-form-bridge";
 
+type ProjectFormSeed = { id: string } | ProjectOutput;
+
 type ProjectFormProps = {
-  initialData?: ProjectOutput | null;
+  initialData?: ProjectFormSeed | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSaved?: (id: string) => void;
 };
+
+function isProjectOutput(data: ProjectFormSeed): data is ProjectOutput {
+  return "title" in data;
+}
 
 const PROJECT_LOGO_UPLOAD_LABELS = {
   empty: "Upload logo",
@@ -47,10 +55,20 @@ const PROJECT_LOGO_UPLOAD_LABELS = {
   uploadError: "Could not upload project logo"
 } as const;
 
-export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProps) {
+export function ProjectForm({ initialData, open, onOpenChange, onSaved }: ProjectFormProps) {
   const queryClient = useQueryClient();
-  const isEdit = !!initialData;
+  const isEdit = Boolean(initialData?.id);
   const id = initialData?.id;
+  const seed = initialData && isProjectOutput(initialData) ? initialData : undefined;
+
+  const projectQuery = useQuery({
+    ...orpcQueryClient.projects.get.queryOptions({
+      input: { id: id! }
+    }),
+    enabled: isEdit && open,
+    placeholderData: seed
+  });
+  const project = projectQuery.data;
 
   const experiencesQuery = useQuery({
     ...orpcQueryClient.experiences.list.queryOptions(),
@@ -75,12 +93,13 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   const createMutation = useMutation(
     orpcQueryClient.projects.create.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (created) => {
         await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: getPortfolioListQueryKey()
         });
         toast.success("Project created.");
+        onSaved?.(created.id);
         onOpenChange(false);
       },
       onError: (error) => {
@@ -91,7 +110,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   const updateMutation = useMutation(
     orpcQueryClient.projects.update.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (updated) => {
         await invalidateProjectsListQueries(queryClient);
         await queryClient.invalidateQueries({
           queryKey: orpcQueryClient.projects.get.queryKey({
@@ -102,6 +121,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
           queryKey: getPortfolioListQueryKey()
         });
         toast.success("Project updated.");
+        onSaved?.(updated?.id ?? id!);
         onOpenChange(false);
       },
       onError: (error) => {
@@ -112,17 +132,17 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   const form = useAppForm({
     defaultValues: {
-      title: initialData?.title ?? "",
-      year: initialData?.year ?? new Date().getFullYear(),
-      summary: initialData?.summary ?? "",
-      description: initialData?.description ?? "",
-      analysis: initialData?.analysis ?? "",
-      logo: initialData?.logo ?? "",
-      repos: (initialData?.repos ?? []) as string[],
-      demoUrl: initialData?.demoUrl ?? "",
-      isPresent: initialData?.isPresent ?? false,
-      stackIds: (initialData?.stacks.map((s) => s.id) ?? []) as string[],
-      includedInPortfolio: !!initialData?.portfolioEntryId
+      title: seed?.title ?? "",
+      year: seed?.year ?? new Date().getFullYear(),
+      summary: seed?.summary ?? "",
+      description: seed?.description ?? "",
+      analysis: seed?.analysis ?? "",
+      logo: seed?.logo ?? "",
+      repos: (seed?.repos ?? []) as string[],
+      demoUrl: seed?.demoUrl ?? "",
+      isPresent: seed?.isPresent ?? false,
+      stackIds: (seed?.stacks.map((s) => s.id) ?? []) as string[],
+      includedInPortfolio: !!seed?.portfolioEntryId
     },
     validators: {
       onChange: createZodFormValidator(isEdit ? UpdateProjectInputSchema : CreateProjectInputSchema)
@@ -172,26 +192,34 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
     startDetectStacksJob({ projectId: id, repos: selectedRepos });
   };
 
-  // Reset only when the sheet opens or the edited project id changes.
-  const projectIdKey = initialData?.id ?? "new";
+  // Reset once per open/id. Skip later `project` identity changes so detect-stacks keeps stackIds.
+  const projectIdKey = id ?? "new";
+  const resetKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!open) return;
-    if (initialData) {
+    if (!open) {
+      resetKeyRef.current = null;
+      return;
+    }
+    const source = seed ?? project ?? null;
+    if (isEdit && (!source || !source.title)) return;
+    if (resetKeyRef.current === projectIdKey) return;
+    resetKeyRef.current = projectIdKey;
+    if (source) {
       form.reset({
-        title: initialData.title,
-        year: initialData.year,
-        summary: initialData.summary ?? "",
-        description: initialData.description ?? "",
-        analysis: initialData.analysis ?? "",
-        logo: initialData.logo ?? "",
-        repos: initialData.repos ?? [],
-        demoUrl: initialData.demoUrl ?? "",
-        isPresent: initialData.isPresent,
-        stackIds: initialData.stacks.map((s) => s.id),
-        includedInPortfolio: !!initialData.portfolioEntryId
+        title: source.title,
+        year: source.year,
+        summary: source.summary ?? "",
+        description: source.description ?? "",
+        analysis: source.analysis ?? "",
+        logo: source.logo ?? "",
+        repos: source.repos ?? [],
+        demoUrl: source.demoUrl ?? "",
+        isPresent: source.isPresent,
+        stackIds: source.stacks.map((s) => s.id),
+        includedInPortfolio: !!source.portfolioEntryId
       });
-      setSelectedExperienceId(initialData.experienceId ?? null);
+      setSelectedExperienceId(source.experienceId ?? null);
     } else {
       form.reset({
         title: "",
@@ -208,9 +236,7 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       });
       setSelectedExperienceId(null);
     }
-    // Reset only when the sheet opens or project id changes (not every
-    // projects.list identity change), so detect-stacks can keep stackIds.
-  }, [open, projectIdKey, form]);
+  }, [open, projectIdKey, isEdit, form, seed, project]);
 
   // Register form merge handler so the global results host can update stackIds
   // when the form is still open for the same project after apply.
@@ -232,6 +258,9 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
 
   const isDirty = useEntityFormDirty(form, open);
 
+  const showLoader = isEdit && projectQuery.isLoading && !project;
+  const showMissing = isEdit && !projectQuery.isLoading && !project;
+
   return (
     <EntityFormSheet
       open={open}
@@ -239,8 +268,8 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
       isDirty={isDirty}
       title={isEdit ? "Edit Project" : "New Project"}
       description={isEdit ? "Update your project details." : "Add a new project to your portfolio."}
-      updatedAt={initialData?.updatedAt}
-      createdAt={initialData?.createdAt}
+      updatedAt={project?.updatedAt}
+      createdAt={project?.createdAt}
       actions={
         <form.AppForm>
           <SubmitButton
@@ -255,185 +284,191 @@ export function ProjectForm({ initialData, open, onOpenChange }: ProjectFormProp
         </form.AppForm>
       }
     >
-      <Form
-        className="contents"
-        onSubmit={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          void form.handleSubmit();
-        }}
-      >
-        <div className="space-y-4">
-          <form.AppField name="logo">
-            {(field) => (
-              <field.AvatarUploadField
-                key={`${open}:${projectIdKey}`}
-                label="Project logo"
-                description="Shown next to the project title on your public portfolio."
-                shape="rounded"
-                emptyIcon={ImageIcon}
-                labels={PROJECT_LOGO_UPLOAD_LABELS}
-              />
+      {showLoader ? (
+        <DefaultLoader />
+      ) : showMissing ? (
+        <div className="py-8 text-center text-muted-foreground">Project not found.</div>
+      ) : (
+        <Form
+          className="contents"
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void form.handleSubmit();
+          }}
+        >
+          <div className="space-y-4">
+            <form.AppField name="logo">
+              {(field) => (
+                <field.AvatarUploadField
+                  key={`${open}:${projectIdKey}`}
+                  label="Project logo"
+                  description="Shown next to the project title on your public portfolio."
+                  shape="rounded"
+                  emptyIcon={ImageIcon}
+                  labels={PROJECT_LOGO_UPLOAD_LABELS}
+                />
+              )}
+            </form.AppField>
+
+            <form.AppField name="title">
+              {(field) => <field.InputField label="Title" placeholder="e.g. My Awesome Project" />}
+            </form.AppField>
+
+            <form.AppField name="year">{(field) => <field.YearField label="Year" />}</form.AppField>
+
+            {experiencesQuery.data && experiencesQuery.data.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="project-experience" className="text-sm font-medium text-foreground">
+                  Associated Experience
+                </label>
+                <select
+                  id="project-experience"
+                  className="flex h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
+                  value={selectedExperienceId ?? ""}
+                  onChange={(e) => setSelectedExperienceId(e.target.value || null)}
+                >
+                  <option value="">None</option>
+                  {experiencesQuery.data.map((exp) => (
+                    <option key={exp.id} value={exp.id}>
+                      {exp.title} — {exp.organization}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
-          </form.AppField>
 
-          <form.AppField name="title">
-            {(field) => <field.InputField label="Title" placeholder="e.g. My Awesome Project" />}
-          </form.AppField>
+            <form.AppField name="summary">
+              {(field) => (
+                <field.RichTextField label="Summary" placeholder="Brief overview of the project" />
+              )}
+            </form.AppField>
 
-          <form.AppField name="year">{(field) => <field.YearField label="Year" />}</form.AppField>
+            <form.AppField name="description">
+              {(field) => (
+                <field.RichTextField
+                  label="Description"
+                  placeholder="Brief description of the project"
+                />
+              )}
+            </form.AppField>
 
-          {experiencesQuery.data && experiencesQuery.data.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="project-experience" className="text-sm font-medium text-foreground">
-                Associated Experience
-              </label>
-              <select
-                id="project-experience"
-                className="flex h-8 w-full rounded-lg border border-border bg-background px-2.5 text-sm"
-                value={selectedExperienceId ?? ""}
-                onChange={(e) => setSelectedExperienceId(e.target.value || null)}
-              >
-                <option value="">None</option>
-                {experiencesQuery.data.map((exp) => (
-                  <option key={exp.id} value={exp.id}>
-                    {exp.title} — {exp.organization}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+            <form.AppField name="analysis">
+              {(field) => (
+                <field.MarkdownField
+                  label="Analysis"
+                  description="Private markdown notes for the resume agent. Not shown on the public portfolio."
+                  placeholder="What you did, why, trade-offs, metrics, lessons…"
+                />
+              )}
+            </form.AppField>
 
-          <form.AppField name="summary">
-            {(field) => (
-              <field.RichTextField label="Summary" placeholder="Brief overview of the project" />
-            )}
-          </form.AppField>
+            <form.AppField name="demoUrl">
+              {(field) => <field.UrlField label="Demo URL" placeholder="example.com" />}
+            </form.AppField>
 
-          <form.AppField name="description">
-            {(field) => (
-              <field.RichTextField
-                label="Description"
-                placeholder="Brief description of the project"
-              />
-            )}
-          </form.AppField>
+            <form.AppField name="repos">
+              {(field) => (
+                <field.ComboboxMultipleField
+                  items={repos.map((repo) => {
+                    return { label: repo.fullName, value: repo.url };
+                  })}
+                  label="Repositories"
+                  placeholder="Select repositories..."
+                  emptyMessage="No repositories found."
+                  classNames={{
+                    content: "max-h-48 [&_[data-slot=scroll-area-viewport]]:max-h-44",
+                    chips: "max-h-24"
+                  }}
+                />
+              )}
+            </form.AppField>
 
-          <form.AppField name="analysis">
-            {(field) => (
-              <field.MarkdownField
-                label="Analysis"
-                description="Private markdown notes for the resume agent. Not shown on the public portfolio."
-                placeholder="What you did, why, trade-offs, metrics, lessons…"
-              />
-            )}
-          </form.AppField>
-
-          <form.AppField name="demoUrl">
-            {(field) => <field.UrlField label="Demo URL" placeholder="example.com" />}
-          </form.AppField>
-
-          <form.AppField name="repos">
-            {(field) => (
-              <field.ComboboxMultipleField
-                items={repos.map((repo) => {
-                  return { label: repo.fullName, value: repo.url };
-                })}
-                label="Repositories"
-                placeholder="Select repositories..."
-                emptyMessage="No repositories found."
-                classNames={{
-                  content: "max-h-48 [&_[data-slot=scroll-area-viewport]]:max-h-44",
-                  chips: "max-h-24"
-                }}
-              />
-            )}
-          </form.AppField>
-
-          <form.AppField name="stackIds">
-            {(field) => (
-              <form.Subscribe selector={(state) => state.values.repos}>
-                {(selectedRepos) => {
-                  // Ready job can reopen review without repos; new runs need id + repos.
-                  const canDetect = detectStatus === "ready" || (!!id && !!selectedRepos?.length);
-                  return (
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor={field.name}>Stack</Label>
-                      {/*
+            <form.AppField name="stackIds">
+              {(field) => (
+                <form.Subscribe selector={(state) => state.values.repos}>
+                  {(selectedRepos) => {
+                    // Ready job can reopen review without repos; new runs need id + repos.
+                    const canDetect = detectStatus === "ready" || (!!id && !!selectedRepos?.length);
+                    return (
+                      <div className="flex flex-col gap-2">
+                        <Label htmlFor={field.name}>Stack</Label>
+                        {/*
                         Chips sit in a rounded frame. Detect stacks bleeds over that
                         frame (no clip, no radius) so the footer is square and full-bleed.
                       */}
-                      <div
-                        role="group"
-                        aria-label="Project stacks"
-                        className="relative flex w-full min-w-0 flex-col"
-                      >
-                        <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-input bg-background shadow-xs/5 not-dark:bg-clip-padding dark:bg-input/32">
-                          <field.ComboboxMultipleField
-                            items={stacks.map((stack) => {
-                              return {
-                                label: stack.name,
-                                value: stack.id,
-                                icon: stack.icon ? <Icon icon={stack.icon} /> : undefined
-                              };
-                            })}
-                            classNames={{
-                              field: "contents",
-                              chips:
-                                "rounded-none border-0 bg-transparent shadow-none before:hidden focus-within:border-transparent focus-within:ring-0 dark:bg-transparent"
-                            }}
-                            placeholder="Select stacks..."
-                            emptyMessage="No stacks found."
+                        <div
+                          role="group"
+                          aria-label="Project stacks"
+                          className="relative flex w-full min-w-0 flex-col"
+                        >
+                          <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-input bg-background shadow-xs/5 not-dark:bg-clip-padding dark:bg-input/32">
+                            <field.ComboboxMultipleField
+                              items={stacks.map((stack) => {
+                                return {
+                                  label: stack.name,
+                                  value: stack.id,
+                                  icon: stack.icon ? <Icon icon={stack.icon} /> : undefined
+                                };
+                              })}
+                              classNames={{
+                                field: "contents",
+                                chips:
+                                  "rounded-none border-0 bg-transparent shadow-none before:hidden focus-within:border-transparent focus-within:ring-0 dark:bg-transparent"
+                              }}
+                              placeholder="Select stacks..."
+                              emptyMessage="No stacks found."
+                            />
+                          </div>
+                          <AiFlowTrigger
+                            idleLabel="Detect stacks"
+                            icon={<SparklesIcon aria-hidden />}
+                            running={isDetectRunningForThis}
+                            stepLabel={detectStepLabel}
+                            runningFallback="Detecting…"
+                            onStart={handleStartDetect}
+                            onCancel={() => cancelDetectStacksJob()}
+                            disabled={!canDetect}
+                            layout="stretch"
+                            className="relative z-10 -mx-px -mt-px w-[calc(100%+2px)]"
                           />
                         </div>
-                        <AiFlowTrigger
-                          idleLabel="Detect stacks"
-                          icon={<SparklesIcon aria-hidden />}
-                          running={isDetectRunningForThis}
-                          stepLabel={detectStepLabel}
-                          runningFallback="Detecting…"
-                          onStart={handleStartDetect}
-                          onCancel={() => cancelDetectStacksJob()}
-                          disabled={!canDetect}
-                          layout="stretch"
-                          className="relative z-10 -mx-px -mt-px w-[calc(100%+2px)]"
-                        />
+                        {!id ? (
+                          <p className="text-xs text-muted-foreground">
+                            Save the project first to enable automatic stack detection.
+                          </p>
+                        ) : !selectedRepos?.length ? (
+                          <p className="text-xs text-muted-foreground">
+                            Select repositories above to enable automatic stack detection.
+                          </p>
+                        ) : null}
                       </div>
-                      {!id ? (
-                        <p className="text-xs text-muted-foreground">
-                          Save the project first to enable automatic stack detection.
-                        </p>
-                      ) : !selectedRepos?.length ? (
-                        <p className="text-xs text-muted-foreground">
-                          Select repositories above to enable automatic stack detection.
-                        </p>
-                      ) : null}
-                    </div>
-                  );
-                }}
-              </form.Subscribe>
-            )}
-          </form.AppField>
+                    );
+                  }}
+                </form.Subscribe>
+              )}
+            </form.AppField>
 
-          <form.AppField name="isPresent">
-            {(field) => (
-              <field.SwitchField
-                label="Currently present"
-                description="Mark this project as ongoing."
-              />
-            )}
-          </form.AppField>
+            <form.AppField name="isPresent">
+              {(field) => (
+                <field.SwitchField
+                  label="Currently present"
+                  description="Mark this project as ongoing."
+                />
+              )}
+            </form.AppField>
 
-          <form.AppField name="includedInPortfolio">
-            {(field) => (
-              <field.SwitchField
-                label="In portfolio"
-                description="Include this project in your public portfolio."
-              />
-            )}
-          </form.AppField>
-        </div>
-      </Form>
+            <form.AppField name="includedInPortfolio">
+              {(field) => (
+                <field.SwitchField
+                  label="In portfolio"
+                  description="Include this project in your public portfolio."
+                />
+              )}
+            </form.AppField>
+          </div>
+        </Form>
+      )}
     </EntityFormSheet>
   );
 }

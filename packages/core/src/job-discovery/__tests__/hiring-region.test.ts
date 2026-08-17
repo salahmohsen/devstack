@@ -1,6 +1,13 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
-import { hiringRegionsOverlap, normalizeHiringRegion } from "#@/job-discovery/hiring-region";
+import {
+  HIRING_REGION_SYNONYM_TO_SLUG,
+  hiringRegionsOverlap,
+  normalizeHiringRegion
+} from "#@/job-discovery/hiring-region";
 
 describe("normalizeHiringRegion", () => {
   it("maps LatAm to latam", () => {
@@ -78,8 +85,30 @@ describe("hiringRegionsOverlap", () => {
     expect(hiringRegionsOverlap([], "mena", null)).toBe(false);
   });
 
-  it("user worldwide overlaps any listing region", () => {
-    expect(hiringRegionsOverlap(["worldwide"], "latam", null)).toBe(true);
-    expect(hiringRegionsOverlap(["anywhere"], "us", null)).toBe(true);
+  it("user worldwide does not overlap unless allowUserWorldwide", () => {
+    expect(hiringRegionsOverlap(["worldwide"], "latam", null)).toBe(false);
+    expect(hiringRegionsOverlap(["anywhere"], "us", null)).toBe(false);
+    expect(hiringRegionsOverlap(["worldwide"], "latam", null, { allowUserWorldwide: true })).toBe(
+      true
+    );
+  });
+});
+
+describe("remoteRegions SQL backfill map", () => {
+  it("includes every non-worldwide synonym key in the migration VALUES list", () => {
+    const sql = readFileSync(
+      join(
+        import.meta.dirname,
+        "../../../../db/migrations/20260816120000_job_preference_level_remote_brief/migration.sql"
+      ),
+      "utf8"
+    );
+    const values = sql.match(/WITH map\(raw, slug\) AS \(\s*VALUES([\s\S]*?)\n\),/)?.[1] ?? "";
+    const keys = [...values.matchAll(/\('((?:\\'|[^'])*)'/g)].map((match) => match[1]);
+    const missing = Object.entries(HIRING_REGION_SYNONYM_TO_SLUG)
+      .filter(([, slug]) => slug !== "worldwide")
+      .map(([key]) => key)
+      .filter((key) => !keys.includes(key));
+    expect(missing).toEqual([]);
   });
 });

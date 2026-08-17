@@ -7,7 +7,7 @@ import {
   hubPersonalityById,
   llmLogFields
 } from "@tsu-stack/core";
-import { userAiSettingsRepository } from "@tsu-stack/db";
+import { userAiSettingsRepository, userHubStateRepository } from "@tsu-stack/db";
 import {
   projectStackScanRepository,
   stackDependencyRepository,
@@ -29,11 +29,11 @@ import { parseConcatenatedJsonStream } from "#@/lib/agent/parse-workflow-json-st
 import { sseByteStreamToUIMessageChunkStream } from "#@/lib/agent/sse-to-ui-message-stream";
 import { assertWorkflowRunOwner } from "#@/lib/agent/workflow-run-registry";
 
-async function hubChatRequestContext(userId: string) {
+async function hubChatRequestContext(userId: string, personalityOverride?: string) {
   const row = await userAiSettingsRepository.findByUserId(userId);
   return {
     userId,
-    hubPersonality: hubPersonalityById(row?.hubPersonality).id,
+    hubPersonality: hubPersonalityById(personalityOverride ?? row?.hubPersonality).id,
     hubAvatar: hubAvatarById(row?.hubAvatar).id
   };
 }
@@ -218,7 +218,9 @@ export const agentRouter = {
         /** Composer override — Mastra `provider/model`. */
         modelId: z.string().min(1).max(200).optional(),
         /** Settings provider row that supplies the BYO key. */
-        providerId: z.string().min(1).max(64).optional()
+        providerId: z.string().min(1).max(64).optional(),
+        /** Composer character override for this turn. */
+        hubPersonality: z.string().min(1).max(32).optional()
       })
     )
     .handler(async ({ input, context, signal }) => {
@@ -264,7 +266,7 @@ export const agentRouter = {
               llm,
               maxSteps: HUB_CHAT_MAX_STEPS,
               memory: hubChatMemoryOptions(userId).memory,
-              requestContext: await hubChatRequestContext(userId),
+              requestContext: await hubChatRequestContext(userId, input.hubPersonality),
               extras: { trigger }
             })
           ),
@@ -492,6 +494,26 @@ export const agentRouter = {
         hasMore: data.hasMore,
         total: data.total
       });
+    }),
+
+  markDailyBriefOpened: protectedProcedure
+    .route({
+      description: "Stamp the Today letter cursor after a successful panel open",
+      method: "POST"
+    })
+    .input(z.object({}))
+    .output(
+      z.object({
+        ok: z.literal(true),
+        openedAt: z.string()
+      })
+    )
+    .handler(async ({ context }) => {
+      const row = await userHubStateRepository.markDailyBriefOpened(context.session.user.id);
+      return {
+        ok: true as const,
+        openedAt: (row.dailyBriefOpenedAt ?? new Date()).toISOString()
+      };
     }),
 
   /**

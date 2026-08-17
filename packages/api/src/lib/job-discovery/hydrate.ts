@@ -1,8 +1,10 @@
 import {
   extractJobListingFromHtml,
+  fetchListingAlternateText,
   fetchPublicHtmlAsText,
   isThinJobDescription,
-  normalizeHiringRegion
+  normalizeHiringRegion,
+  pickBetterListingDescription
 } from "@tsu-stack/core";
 import {
   jobPostingRepository,
@@ -197,9 +199,17 @@ async function persistStated(
     .catch(() => null);
 }
 
+/** Adapter HTML previews (Freehire) are often a partial JD even above the thin bar. */
+function looksLikeHtmlPreview(description: string | null | undefined): boolean {
+  const trimmed = description?.trim() ?? "";
+  if (trimmed.length === 0 || trimmed.length >= 2_500) return false;
+  return /<[a-z][\s\S]*>/i.test(trimmed);
+}
+
 function needsHttpHydrate(posting: JobPostingEntity): boolean {
   return (
     isThinJobDescription(posting.description) ||
+    looksLikeHtmlPreview(posting.description) ||
     posting.workMode == null ||
     isBlank(posting.location)
   );
@@ -229,7 +239,14 @@ export async function hydratePostingIfNeeded(postingId: string): Promise<Hydrate
     }
 
     const extract = await extractJobListingFromHtml(fetched.html, posting.listingUrl);
-    const extractedDescription = extract.description?.trim() ?? "";
+    const alternate = await fetchListingAlternateText(
+      fetched.html,
+      fetched.finalUrl ?? posting.listingUrl
+    );
+    const extractedDescription =
+      pickBetterListingDescription(extract.description, alternate) ??
+      extract.description?.trim() ??
+      "";
     const description = preferLongerJobDescription(
       extractedDescription.length > 0 ? extractedDescription : null,
       posting.description

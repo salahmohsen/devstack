@@ -7,6 +7,7 @@ import {
 } from "@tsu-stack/api/client/tanstack-start/orpc";
 
 import { getHubComposerModel } from "@/features/agent-hub/lib/hub-composer-model";
+import { getHubComposerPersonality } from "@/features/agent-hub/lib/hub-composer-personality";
 import { messagesForMastraMemoryChat } from "@/features/agent-hub/lib/messages-for-mastra-memory";
 import { shouldAutoResumeHubChat } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
@@ -81,12 +82,14 @@ export function createHubChat(): Chat<UIMessage> {
         const trigger = sendOptions.trigger ?? "submit-message";
         const messages = messagesForMastraMemoryChat(sendOptions.messages as UIMessage[], trigger);
         const composerModel = getHubComposerModel();
+        const hubPersonality = getHubComposerPersonality();
         return eventIteratorToUnproxiedDataStream(
           await orpcClient.agent.chatStream(
             {
               agentId: HUB_AGENT_ID,
               messages: messages as never,
               trigger,
+              hubPersonality,
               ...(composerModel
                 ? { modelId: composerModel.modelId, providerId: composerModel.providerId }
                 : {})

@@ -47,6 +47,8 @@ Swipeable list, sticky header, collapsible mail nav, flush list chrome, custom-r
 
 Pin, delete, retag, link mail ↔ job, AI activity titles, monotonic stage moves, ghosted SLA from job preferences, harden after ship. Must not invent a second preference surface.
 
+Today letter **story** (deltas, classify summaries, takes on land) is specified in [2026-08-17-today-letter-story-design.md](./2026-08-17-today-letter-story-design.md). That spec does **not** ship delete.
+
 ### 6 — Notifications + logos
 
 Per-landed-job notifications (kill `mail.job_alerts_ready` batch), toast layout, stack popover, kind icons, `companyLogoUrl` on the application row. Contracts already frozen in spec 1.

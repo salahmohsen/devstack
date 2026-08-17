@@ -39,6 +39,7 @@ import { Icon } from "@/shared/ui/icon";
 import { Markdown } from "@/shared/ui/markdown";
 import { SortableList } from "@/shared/ui/sortable-list";
 
+import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 import {
   cancelOrganizeStacksJob,
@@ -79,7 +80,7 @@ import { StackItem } from "@/pages/dashboard/stacks/ui/stack-item";
 import { StackIdentityBadges } from "@/pages/dashboard/stacks/ui/stack-type-badge";
 
 /** Side panel: hydrate deps/projects via stacks.get (list is intentionally slim). */
-function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit: () => void }) {
+export function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit?: () => void }) {
   const detailQuery = useQuery({
     ...orpcQueryClient.stacks.get.queryOptions({ input: { id: stack.id } }),
     staleTime: STACKS_LIST_STALE_TIME_MS
@@ -110,7 +111,7 @@ function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit: () =>
           <p>Not used on any project yet</p>
         )
       }
-      actions={<PanelEditButton onClick={onEdit} />}
+      actions={onEdit ? <PanelEditButton onClick={onEdit} /> : null}
       updatedAt={item.updatedAt}
       createdAt={item.createdAt}
     >
@@ -546,6 +547,9 @@ export function StacksPage() {
 
   const [editingStackId, setEditingStackId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  // Hub inspect/form host wins the side panel. Dirty page form is discarded without confirm.
+  const hostOwnsPanel = useEntityPanelHostActive();
+  if (hostOwnsPanel && dialogOpen) setDialogOpen(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 
   const openDialog = useCallback((id: string | null) => {
@@ -757,7 +761,7 @@ export function StacksPage() {
         {renderGrid()}
 
         <ItemsInspectHost
-          open={isAnyOpen && !dialogOpen}
+          open={isAnyOpen && !dialogOpen && !hostOwnsPanel}
           item={openedItem}
           title="Stack"
           onOpenChange={(next) => {
@@ -773,7 +777,7 @@ export function StacksPage() {
           }}
         </ItemsInspectHost>
 
-        {dialogOpen ? (
+        {dialogOpen && !hostOwnsPanel ? (
           <StackForm
             key={editingStackId ?? "new"}
             initialData={

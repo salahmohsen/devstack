@@ -237,6 +237,27 @@ describe("shapeListHubMessagesPage", () => {
     ]);
   });
 
+  it("copies hubPersonality from Mastra content metadata", () => {
+    const ui = attachCreatedAtToUiMessages(
+      [{ id: "a1", role: "assistant", parts: [] }],
+      [
+        {
+          id: "a1",
+          createdAt: "2026-08-17T12:00:00.000Z",
+          content: { format: 2, parts: [], metadata: { hubPersonality: "dry" } }
+        }
+      ]
+    );
+    expect(ui).toEqual([
+      {
+        id: "a1",
+        role: "assistant",
+        parts: [],
+        metadata: { createdAt: "2026-08-17T12:00:00.000Z", hubPersonality: "dry" }
+      }
+    ]);
+  });
+
   it("maps tool-invocation parts so hydrated HITL stays renderable", () => {
     const page = shapeListHubMessagesPage({
       page: 0,

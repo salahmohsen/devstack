@@ -3,12 +3,15 @@
 import { useAuiState, useMessageTiming } from "@assistant-ui/react";
 import { type PropsWithChildren } from "react";
 
+import { userTurnAsksDailyBrief } from "@tsu-stack/core";
+
 import { AgentActivity } from "@/shared/ui/agents/agent-activity";
 import { ThinkingShimmer } from "@/shared/ui/agents/thinking-shimmer";
 import { SubagentList } from "@/shared/ui/subagent-list";
 
 import {
   buildHubAgentActivityItems,
+  buildTodayLetterActivityItems,
   hubAgentActivityActiveLabel,
   hubAgentActivityStatus,
   isHubListingExtractActive
@@ -33,8 +36,25 @@ export function HubAgentActivity() {
   const threadRunning = useAuiState((s) => s.thread.isRunning);
   const timing = useMessageTiming();
   const isRunning = Boolean(threadRunning && messageId === lastMessageId);
+  const askedToday = useAuiState((s) => {
+    for (let i = s.thread.messages.length - 1; i >= 0; i--) {
+      const message = s.thread.messages[i];
+      if (message?.role !== "user") continue;
+      const text = (message.parts ?? [])
+        .filter((part) => part.type === "text" && "text" in part && typeof part.text === "string")
+        .map((part) => ("text" in part && typeof part.text === "string" ? part.text : ""))
+        .join("\n")
+        .trim();
+      return userTurnAsksDailyBrief(text);
+    }
+    return false;
+  });
   const messageParts = parts ?? [];
-  const items = buildHubAgentActivityItems(messageParts);
+  const todayItems = buildTodayLetterActivityItems({
+    parts: messageParts,
+    planWhileWaiting: isRunning && askedToday
+  });
+  const items = [...todayItems, ...buildHubAgentActivityItems(messageParts)];
   const status = hubAgentActivityStatus({ items, parts: messageParts, isRunning });
   const durationSec =
     timing?.totalStreamTime != null && Number.isFinite(timing.totalStreamTime)
@@ -52,7 +72,7 @@ export function HubAgentActivity() {
     items.length === 0 || extractOnly ? (
       status !== "working" && !extractOnly ? null : (
         <output
-          className="mb-2 flex h-7 w-full max-w-[min(72ch,100%)] items-center text-sm text-muted-foreground"
+          className="flex h-7 w-full max-w-[min(72ch,100%)] items-center text-sm text-muted-foreground"
           aria-live="polite"
         >
           <ThinkingShimmer>{hubAgentActivityActiveLabel(items, messageParts)}</ThinkingShimmer>
@@ -66,14 +86,14 @@ export function HubAgentActivity() {
         collapseOnComplete
         maxHeight={208}
         activeLabel={hubAgentActivityActiveLabel(items, messageParts)}
-        className="mb-2 max-w-[min(72ch,100%)]"
+        className="max-w-[min(72ch,100%)]"
       />
     );
 
   if (!workers) return activity;
 
   return (
-    <div className="mb-2 flex max-w-[min(72ch,100%)] flex-col gap-2">
+    <div className="flex max-w-[min(72ch,100%)] flex-col gap-2">
       <SubagentList
         agents={workers.agents}
         completedCount={workers.completedCount}

@@ -12,6 +12,23 @@ import {
   type HubToolOutputArgs
 } from "@/features/agent-hub/api/use-hub-chat";
 import {
+  cancelOutputForHubHitl,
+  staleWaitingHubConfirmCards,
+  waitingHubConfirmCards
+} from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
+import {
+  consumeHubCreateIntent,
+  getHubCreateIntent,
+  hubCreateInterviewText,
+  subscribeHubCreateIntent
+} from "@/features/agent-hub/lib/hub-assistant-open";
+import { getHubComposerPersonality } from "@/features/agent-hub/lib/hub-composer-personality";
+import {
+  markHubHitlAbandonedOnRemount,
+  markHubHitlRemountSeen
+} from "@/features/agent-hub/lib/hub-hitl-remount";
+import { rememberHubMessagePersonality } from "@/features/agent-hub/lib/hub-message-personality";
+import {
   createHubThreadHistoryAdapter,
   hubHistoryHeadPath,
   mapUiMessagesToHistoryItems,
@@ -28,7 +45,12 @@ import { hubAssistantAuiConfig } from "./hub-assistant-toolkit";
 export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const chat = React.useMemo(() => createHubChat(), []);
   const helpers = useChat({ chat });
-  const { setMessages, messages } = helpers;
+  const { setMessages, messages, sendMessage, status } = helpers;
+  const pendingCreateKind = React.useSyncExternalStore(
+    subscribeHubCreateIntent,
+    getHubCreateIntent,
+    getHubCreateIntent
+  );
 
   const [historyReady, setHistoryReady] = React.useState(false);
   const [hasMoreHistory, setHasMoreHistory] = React.useState(false);
@@ -36,6 +58,8 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
   const nextHistoryPageRef = React.useRef(1);
   const loadingOlderRef = React.useRef(false);
   const historyLoadRef = React.useRef<Promise<void> | null>(null);
+  const cancelledStaleIdsRef = React.useRef(new Set<string>());
+  const remountCancelDoneRef = React.useRef(false);
   const allMessagesRef = React.useRef<typeof messages>([]);
   const setMessagesRef = React.useRef(setMessages);
   const messagesRef = React.useRef(messages);
@@ -77,6 +101,13 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     if (historyLoadRef.current) return;
     historyLoadRef.current = fetchHubMessagesPage(0)
       .then((page) => {
+        const linear = hubHistoryHeadPath(mapUiMessagesToHistoryItems(page.uiMessages));
+        markHubHitlRemountSeen();
+        markHubHitlAbandonedOnRemount(
+          waitingHubConfirmCards(linear.length > 0 ? linear : page.uiMessages).map(
+            (card) => card.toolCallId
+          )
+        );
         importHistory(page.uiMessages, false);
         setHasMoreHistory(page.hasMore);
         nextHistoryPageRef.current = 1;
@@ -86,6 +117,40 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
         setHistoryReady(true);
       });
   }, [importHistory]);
+
+  // List `+` starts a spoken create interview. Clear kind only — never
+  // consumeOpenHubAssistant (floater stays open via pendingOpen).
+  React.useEffect(() => {
+    if (!pendingCreateKind) return;
+    ensureHistory();
+    if (!historyReady) return;
+    if (status === "submitted" || status === "streaming") return;
+    const kind = consumeHubCreateIntent();
+    if (!kind) return;
+    void sendMessage({ text: hubCreateInterviewText(kind) });
+  }, [ensureHistory, historyReady, pendingCreateKind, sendMessage, status]);
+
+  React.useEffect(() => {
+    if (status !== "submitted" && status !== "streaming") return;
+    const last = messages.at(-1);
+    if (!last || last.role !== "assistant") return;
+    const personality = getHubComposerPersonality();
+    rememberHubMessagePersonality(last.id, personality);
+    const existing = (last.metadata as { hubPersonality?: unknown } | undefined)?.hubPersonality;
+    if (existing === personality) return;
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (message.id !== last.id) return message;
+        return {
+          ...message,
+          metadata: {
+            ...(message.metadata && typeof message.metadata === "object" ? message.metadata : {}),
+            hubPersonality: personality
+          }
+        };
+      })
+    );
+  }, [messages, setMessages, status]);
 
   const loadOlderMessages = React.useCallback(async () => {
     if (!historyReady || !hasMoreHistory || loadingOlderRef.current) return;
@@ -127,6 +192,43 @@ export function HubChatProvider({ children }: { children: React.ReactNode }) {
     },
     [chat]
   );
+
+  React.useEffect(() => {
+    if (!historyReady || remountCancelDoneRef.current) return;
+    remountCancelDoneRef.current = true;
+    const waiting = waitingHubConfirmCards(messages);
+    markHubHitlAbandonedOnRemount(waiting.map((card) => card.toolCallId));
+    for (const card of waiting) {
+      cancelledStaleIdsRef.current.add(card.toolCallId);
+      void Promise.resolve(
+        addToolOutput({
+          tool: card.toolName,
+          toolCallId: card.toolCallId,
+          output: cancelOutputForHubHitl(card.toolName)
+        })
+      ).catch(() => {
+        cancelledStaleIdsRef.current.delete(card.toolCallId);
+      });
+    }
+  }, [addToolOutput, historyReady, messages]);
+
+  React.useEffect(() => {
+    if (!historyReady || messages.length === 0) return;
+    const stale = staleWaitingHubConfirmCards(messages);
+    for (const card of stale) {
+      if (cancelledStaleIdsRef.current.has(card.toolCallId)) continue;
+      cancelledStaleIdsRef.current.add(card.toolCallId);
+      void Promise.resolve(
+        addToolOutput({
+          tool: card.toolName,
+          toolCallId: card.toolCallId,
+          output: cancelOutputForHubHitl(card.toolName)
+        })
+      ).catch(() => {
+        cancelledStaleIdsRef.current.delete(card.toolCallId);
+      });
+    }
+  }, [addToolOutput, historyReady, messages]);
 
   const value: HubChatContextValue = {
     ...helpers,

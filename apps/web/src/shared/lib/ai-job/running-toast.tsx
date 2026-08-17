@@ -3,6 +3,10 @@ import { toast } from "sonner";
 
 import { WorkflowSolvingOrb } from "@/shared/ui/ai-flow-trigger";
 
+function stripTrailingDots(text: string) {
+  return text.replace(/(?:\.{2,}|…)+$/u, "").trimEnd();
+}
+
 /**
  * AI job toast body — step line uses the shared shadcn `shimmer` utility.
  * Mount once per job; drive `stepLabel` from a store so the animation is not remounted.
@@ -16,9 +20,9 @@ export function AiJobRunningToastBody({
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      <span className="text-sm leading-snug font-medium">{title}</span>
+      <span className="text-sm leading-snug font-medium">{stripTrailingDots(title)}</span>
       <span className="shimmer text-sm leading-snug font-medium text-foreground">
-        {stepLabel ?? "Working…"}
+        {stripTrailingDots(stepLabel ?? "Working")}
       </span>
     </div>
   );

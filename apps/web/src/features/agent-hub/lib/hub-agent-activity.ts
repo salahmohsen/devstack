@@ -7,12 +7,21 @@ import {
 import { hubSubagentListShouldShow, isHubSubagentWorkerName } from "./hub-subagent-workers";
 import {
   hubToolNameFromPart,
+  isFindJobsNowToolName,
+  isGetDailyBriefToolName,
+  isOpenDailyBriefToolName,
+  isProposeMailCrmChangeToolName,
   isHubApprovalToolName,
   isHubJobPageExtractToolName,
   isHubToolUiPart,
+  isOpenEntityFormToolName,
   isOpenSurfaceToolName,
   isProposeApplicationFromJdToolName,
+  isProposeEvidenceChangeToolName,
   isProposeNewJobsTriageToolName,
+  openEntityFormActivityLabel,
+  openEntityInspectActivityLabel,
+  parseOpenEntityFormInput,
   type HubToolNamePart
 } from "./hub-tool-names";
 
@@ -31,13 +40,19 @@ function isCompleteState(state: string | undefined, statusType: string | undefin
   return state === "output-available" || state === "output-error";
 }
 
-/** Tools that render their own HITL UI — never a compact activity row. */
+/** Tools that render their own thread UI — never a compact activity row. */
 export function isHubChoiceToolName(name: string): boolean {
   return (
     isProposeApplicationFromJdToolName(name) ||
     isProposeNewJobsTriageToolName(name) ||
+    isProposeEvidenceChangeToolName(name) ||
     isOpenSurfaceToolName(name) ||
-    isHubApprovalToolName(name)
+    isHubApprovalToolName(name) ||
+    isOpenEntityFormToolName(name) ||
+    isFindJobsNowToolName(name) ||
+    isGetDailyBriefToolName(name) ||
+    isOpenDailyBriefToolName(name) ||
+    isProposeMailCrmChangeToolName(name)
   );
 }
 
@@ -57,10 +72,77 @@ export function isHubListingExtractActive(parts: readonly unknown[]): boolean {
   return false;
 }
 
-export function humanizeHubToolName(name: string): string {
+function findGetDailyBriefPart(
+  parts: readonly unknown[]
+): (HubToolNamePart & { status?: { type?: string } }) | null {
+  for (const raw of parts) {
+    if (!raw || typeof raw !== "object") continue;
+    const part = raw as HubToolNamePart & { status?: { type?: string } };
+    if (!isHubToolUiPart(part)) continue;
+    if (isGetDailyBriefToolName(hubToolNameFromPart(part))) return part;
+  }
+  return null;
+}
+
+/**
+ * Today workflow as Agent Activity steps (gather → write). The inner Mastra
+ * run does not stream step events into chat, so we map getDailyBrief state.
+ */
+export function buildTodayLetterActivityItems(input: {
+  parts: readonly unknown[];
+  planWhileWaiting: boolean;
+}): AgentActivityItem[] {
+  const brief = findGetDailyBriefPart(input.parts);
+  if (!brief && !input.planWhileWaiting) return [];
+
+  const waiting = brief ? isWaitingState(brief.state, brief.status?.type) : input.planWhileWaiting;
+  const complete = brief ? isCompleteState(brief.state, brief.status?.type) : false;
+
+  return [
+    {
+      id: "today-gather",
+      type: "step",
+      label: "Gathering today",
+      status: complete ? "complete" : waiting ? "active" : "pending"
+    },
+    {
+      id: "today-write",
+      type: "step",
+      label: "Writing today",
+      status: complete ? "complete" : "pending"
+    }
+  ];
+}
+
+export function humanizeHubToolName(name: string, input?: unknown): string {
   const bare = name.startsWith("agent-") ? name.slice("agent-".length) : name;
   if (/jobPageExtractor|fetch-job-page|fetchJobPage/i.test(bare)) return "Reading listing";
   if (/getJobPreferences|get-job-preferences/i.test(bare)) return "Checking job preferences";
+  if (/upsertSoftJobPreferences|upsert-soft-job-preferences/i.test(bare)) {
+    return "Updating job preferences";
+  }
+  if (/proposeHardPreferenceChange|propose-hard-preference-change/i.test(bare)) {
+    return "Updating hard-stop preferences";
+  }
+  if (/findJobsNow|find-jobs-now/i.test(bare)) return "Finding jobs";
+  if (/getSearchBrief|get-search-brief/i.test(bare)) return "Loading search brief";
+  if (/getDailyBrief|get-daily-brief/i.test(bare)) return "Gathering today";
+  if (/openDailyBrief|open-daily-brief/i.test(bare)) return "Opening today";
+  if (/classifyMail|classify-mail/i.test(bare)) return "Reading that mail";
+  if (/searchMail|search-mail/i.test(bare)) return "Searching mail";
+  if (/proposeMailCrmChange|propose-mail-crm-change/i.test(bare)) return "Checking the board";
+  if (/openEntityInspect|open-entity-inspect/i.test(bare)) {
+    const kind =
+      input && typeof input === "object" && "kind" in input
+        ? (input as { kind?: string }).kind
+        : undefined;
+    return openEntityInspectActivityLabel(
+      kind === "experience" || kind === "stack" || kind === "project" ? kind : "project"
+    );
+  }
+  if (/openEntityForm|open-entity-form/i.test(bare)) {
+    return openEntityFormActivityLabel(parseOpenEntityFormInput(input)?.kind ?? "experience");
+  }
   return bare
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/[-_]/g, " ")
@@ -68,23 +150,8 @@ export function humanizeHubToolName(name: string): string {
     .trim();
 }
 
-function reasoningText(part: { type?: string; text?: unknown }): string {
-  return typeof part.text === "string" ? part.text : "";
-}
-
-function reasoningLines(text: string): string[] {
-  const lines = text
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines.length > 0) return lines;
-  const trimmed = text.trim();
-  return trimmed.length > 0 ? [trimmed] : [];
-}
-
 export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActivityItem[] {
   const items: AgentActivityItem[] = [];
-  let reasoningIndex = 0;
 
   for (let index = 0; index < parts.length; index += 1) {
     const raw = parts[index];
@@ -92,15 +159,9 @@ export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActi
     const part = raw as HubToolNamePart & { text?: string; status?: { type?: string } };
 
     if (part.type === "reasoning") {
-      const lines = reasoningLines(reasoningText(part));
-      for (const [lineIndex, content] of lines.entries()) {
-        items.push({
-          id: `reasoning-${reasoningIndex}-${lineIndex}`,
-          type: "text",
-          content
-        });
-      }
-      if (lines.length > 0) reasoningIndex += 1;
+      // Reasoning stays off-screen (HubHiddenReasoningGroup). Do not dump
+      // thought lists into the working strip — users saw maxSteps/tool-name
+      // monologues as chat bullets.
       continue;
     }
 
@@ -114,7 +175,7 @@ export function buildHubAgentActivityItems(parts: readonly unknown[]): AgentActi
     const complete = isCompleteState(part.state, statusType);
     const id = part.toolCallId && part.toolCallId.length > 0 ? part.toolCallId : `tool-${index}`;
     const status: AgentStepStatus = running ? "active" : complete ? "complete" : "pending";
-    const label = humanizeHubToolName(name);
+    const label = humanizeHubToolName(name, part.input);
 
     if (isHubJobPageExtractToolName(name)) {
       const existing = items.find(
@@ -169,6 +230,10 @@ export function hubAgentActivityActiveLabel(
   parts: readonly unknown[] = []
 ): string {
   if (isHubListingExtractActive(parts)) return "Reading listing…";
+  const today = items.find(
+    (item) => item.type === "step" && item.status === "active" && item.id === "today-gather"
+  );
+  if (today) return "Gathering today…";
   if (items.some((item) => item.type === "tool")) return "Running tools…";
   if (items.some((item) => item.type === "step")) return "Thinking…";
   if (items.some((item) => item.type === "text")) return "Thinking…";

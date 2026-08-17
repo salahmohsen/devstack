@@ -1,10 +1,12 @@
 import { DEFAULT_JOBS_PER_RUN, refineJobsPerRun } from "#@/job-discovery/constants";
+import { normalizeHiringRegion } from "#@/job-discovery/hiring-region";
 
 import { DEFAULT_IMPORT_FROM_EMAIL, DEFAULT_MIN_MATCH_SCORE, WORK_MODES } from "./constants";
 import {
   SeekerMatchEvidenceSchema,
   type JobPreference,
   type JobPreferenceOutput,
+  type LevelFloor,
   type SeekerMatchEvidence,
   type UpsertJobPreferenceInput,
   type WorkMode
@@ -14,10 +16,12 @@ export function defaultJobPreference(): JobPreference {
   return {
     workModes: [],
     locations: [],
+    remoteRegions: [],
     roleKeywords: [],
     excludeKeywords: [],
     salaryMin: null,
     salaryCurrency: null,
+    levelFloor: null,
     minMatchScore: DEFAULT_MIN_MATCH_SCORE,
     titleId: null,
     customTitle: null,
@@ -34,15 +38,19 @@ export function defaultJobPreference(): JobPreference {
 export function isOpenJobPreference(prefs: {
   workModes?: readonly string[] | null;
   locations?: readonly string[] | null;
+  remoteRegions?: readonly string[] | null;
   roleKeywords?: readonly string[] | null;
   excludeKeywords?: readonly string[] | null;
   salaryMin?: number | null;
+  levelFloor?: LevelFloor | null;
 }): boolean {
   return (
     (prefs.roleKeywords?.length ?? 0) === 0 &&
     (prefs.excludeKeywords?.length ?? 0) === 0 &&
     (prefs.workModes?.length ?? 0) === 0 &&
     (prefs.locations?.length ?? 0) === 0 &&
+    (prefs.remoteRegions?.length ?? 0) === 0 &&
+    prefs.levelFloor == null &&
     (prefs.salaryMin == null || prefs.salaryMin === undefined)
   );
 }
@@ -67,11 +75,13 @@ export function mergeJobPreference(
   return {
     workModes: patch.workModes ?? current.workModes,
     locations: patch.locations ?? current.locations,
+    remoteRegions: patch.remoteRegions ?? current.remoteRegions,
     roleKeywords: patch.roleKeywords ?? current.roleKeywords,
     excludeKeywords: patch.excludeKeywords ?? current.excludeKeywords,
     salaryMin: patch.salaryMin !== undefined ? patch.salaryMin : current.salaryMin,
     salaryCurrency:
       patch.salaryCurrency !== undefined ? patch.salaryCurrency : current.salaryCurrency,
+    levelFloor: patch.levelFloor !== undefined ? patch.levelFloor : current.levelFloor,
     minMatchScore: patch.minMatchScore ?? current.minMatchScore,
     titleId: patch.titleId !== undefined ? patch.titleId : current.titleId,
     customTitle: patch.customTitle !== undefined ? patch.customTitle : current.customTitle,
@@ -85,6 +95,66 @@ export function mergeJobPreference(
 export function normalizeWorkModes(modes: WorkMode[]): WorkMode[] {
   const set = new Set(modes);
   return WORK_MODES.filter((m) => set.has(m));
+}
+
+const PREFERENCE_LIST_MAX = 50;
+
+function isWorldwideHiringRegionToken(token: string): boolean {
+  return normalizeHiringRegion(token) === "worldwide";
+}
+
+/** Drop empty and worldwide tokens. City/place strings stay as written. */
+export function normalizeLocations(tokens: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of tokens) {
+    const value = raw.trim();
+    if (!value || isWorldwideHiringRegionToken(value)) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+    if (out.length >= PREFERENCE_LIST_MAX) break;
+  }
+  return out;
+}
+
+/** Map known synonyms to slugs; drop worldwide tokens so `[]` means worldwide remote. */
+export function normalizeRemoteRegions(tokens: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of tokens) {
+    const value = raw.trim();
+    if (!value) continue;
+    const slug = normalizeHiringRegion(value);
+    if (slug === "worldwide") continue;
+    const mapped = slug ?? value;
+    const key = mapped.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(mapped);
+    if (out.length >= PREFERENCE_LIST_MAX) break;
+  }
+  return out;
+}
+
+/** Copy non-worldwide location slugs onto remoteRegions; strip worldwide tokens from locations. */
+export function backfillRemoteRegionsFromLocations(locations: string[]): {
+  locations: string[];
+  remoteRegions: string[];
+} {
+  const seen = new Set<string>();
+  const remoteRegions: string[] = [];
+  for (const token of locations) {
+    const slug = normalizeHiringRegion(token);
+    if (slug == null || slug === "worldwide" || seen.has(slug)) continue;
+    seen.add(slug);
+    remoteRegions.push(slug);
+  }
+  return {
+    locations: normalizeLocations(locations),
+    remoteRegions
+  };
 }
 
 export function emptySeekerMatchEvidence(): SeekerMatchEvidence {
@@ -115,9 +185,11 @@ export function shouldPassAllHarvestJobs(
   prefs: {
     workModes?: readonly string[] | null;
     locations?: readonly string[] | null;
+    remoteRegions?: readonly string[] | null;
     roleKeywords?: readonly string[] | null;
     excludeKeywords?: readonly string[] | null;
     salaryMin?: number | null;
+    levelFloor?: LevelFloor | null;
   },
   evidence?: SeekerMatchEvidence | null
 ): boolean {
@@ -225,4 +297,12 @@ ${JSON.stringify(
   null,
   2
 )}`;
+}
+
+/** Brief is flavor only — never a cheap-rank or column hard-fail input. */
+export function formatSearchBriefForPrompt(markdown: string | null | undefined): string {
+  const text = markdown?.trim();
+  if (!text) return "Search brief (narrative only): (none)";
+  return `Search brief (narrative only — flavor, not law):
+${text}`;
 }

@@ -7,7 +7,7 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] Job starts from each documented entry path
 - [ ] Progress UI/toast updates without remount thrash
 - [ ] Cancel aborts remote run (no orphan success toast)
-- [ ] Failure surfaces product error (not raw provider dump)
+- [ ] Failure (tool, model, worker-down) surfaces a product error, not a raw provider dump
 - [ ] Soft AI failure still yields reviewable output where designed
 - [ ] Intermediate steps do not **drop** earlier good data (match → dedupe → format)
 - [ ] Final payload schema matches web consumer
@@ -32,6 +32,8 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] Related lists (New/Tracked/Dismissed) refresh via existing sync hooks
 - [ ] Toolkit registration name matches stream tool name
 - [ ] No assistant wrap-up text after a pending confirmation card (card is the UI; hide leftover “awaiting confirmation” if the model still writes it)
+- [ ] Evidence: one waiting File Diff; same kind+id after Confirm is hidden (next _named_ entity still locks)
+- [ ] Agent never promises a card without calling the propose tool this step
 
 ## D. Hub chat / assistant-ui
 
@@ -40,6 +42,10 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] get-by-id tools never called with `{}` (list first)
 - [ ] maxSteps / final-response processor still produces a user-visible answer
 - [ ] Floater vs home Thread share one provider/thread id when designed that way
+- [ ] Client enqueue tools (`find-jobs-now`, `get-search-brief`) do not auto-resume while wrap-up text is streaming, and remounts do not re-enqueue
+- [ ] `open-entity-form` only hosts the last assistant turn; history hydrate does not remount scrollback sheets
+- [ ] Chat body sends `memory: { thread, resource }` (`hubChatMemoryOptions`). One thread per user — not a new thread per message
+- [ ] After a long everyday conversation: score the cycle 1–100 in [conversation-cycles.md](conversation-cycles.md) and adjust before the next persona
 
 ## E. Unsaved / discard UX
 
@@ -54,7 +60,22 @@ Use the sections that match the change. Skip irrelevant sections explicitly in t
 - [ ] GitHub private features tested with working OAuth (or blocked with message)
 - [ ] BYO AI missing soft-fails as designed (no hard crash)
 
-## G. After hardening (always)
+## G. Agent runtime readiness
+
+Use when the change touches Mastra HTTP, tools, memory, BYO, or agent auth. Full probes: [runtime-hardening.md](runtime-hardening.md). Skip in the report when the change is UI-only.
+
+- [ ] Unauthenticated agent `/chat` and generate are 401/403 (not a model call)
+- [ ] Agent `public:` routes stay health/OpenAPI; `:4111` is not exposed without auth
+- [ ] No provider API keys in agent env; BYO via Settings → `requestContext` / `input.llm`
+- [ ] No session tokens or BYO keys in logs / `LESSONS.md`
+- [ ] Tool inputs are Zod-validated; get-by-id never runs on `{}`
+- [ ] Chat/generate payloads cap size (count + string length)
+- [ ] `mapUserToResourceId` owns `resource`; foreign session cannot read this thread
+- [ ] You read Studio / `:4111` / evlog for the failing turn (do not ask the user to paste)
+- [ ] Scorers (if this flow has them) are registered with explicit `sampling` — not AgentCore evals
+- [ ] After new `@tsu-stack/core` exports: core cache rebuilt / package `dev` restarted
+
+## H. After hardening (always)
 
 - [ ] Feedback loop re-run green on original failure
 - [ ] LESSONS.md entry appended

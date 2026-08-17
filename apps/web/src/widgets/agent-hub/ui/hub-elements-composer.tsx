@@ -2,6 +2,8 @@
 
 import { AuiIf, ComposerPrimitive, useAuiState } from "@assistant-ui/react";
 
+import { Button } from "@tsu-stack/ui/components/button";
+
 import {
   Composer,
   ComposerActions,
@@ -10,7 +12,14 @@ import {
   ComposerToolbar
 } from "@/shared/ui/composer";
 
-import { HubComposerModelPicker, useHubChat } from "@/features/agent-hub";
+import {
+  cancelOutputForHubHitl,
+  HubComposerModelPicker,
+  HubComposerPersonalityPicker,
+  lastHubHitlKind,
+  useHubChat,
+  waitingHubConfirmCards
+} from "@/features/agent-hub";
 
 export function HubElementsComposer({
   placeholder,
@@ -34,6 +43,8 @@ export function HubElementsComposer({
           />
           <ComposerToolbar>
             <ComposerActions>
+              <HubClearPending />
+              <HubComposerPersonalityPicker disabled={disabled} />
               <HubComposerModelPicker disabled={disabled} />
             </ComposerActions>
             <ComposerActions>
@@ -43,6 +54,32 @@ export function HubElementsComposer({
         </ComposerBar>
       </Composer>
     </ComposerPrimitive.Root>
+  );
+}
+
+function HubClearPending() {
+  const { messages, addToolOutput } = useHubChat();
+  const hitl = lastHubHitlKind(messages);
+  if (hitl !== "client") return null;
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="ghost"
+      className="h-7 rounded-full px-2.5 text-xs"
+      onClick={() => {
+        for (const card of waitingHubConfirmCards(messages)) {
+          void addToolOutput({
+            tool: card.toolName,
+            toolCallId: card.toolCallId,
+            output: cancelOutputForHubHitl(card.toolName)
+          });
+        }
+      }}
+    >
+      Clear pending
+    </Button>
   );
 }
 

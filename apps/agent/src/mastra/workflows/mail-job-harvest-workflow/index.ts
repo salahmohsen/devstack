@@ -5,9 +5,12 @@ import { z } from "zod";
 import {
   AiJobAgentTakeBatchSchema,
   AiJobMatchBatchSchema,
+  applyPreferenceHardFails,
   canGenerateAgentTake,
   canonicalizeJobUrl,
   formatJobMatchScorePrompt,
+  formatSearchBriefForPrompt,
+  formatSeekerEvidenceForPrompt,
   HarvestedJobSchema,
   HarvestJobPreferenceSchema,
   inferApplicationSource,
@@ -369,10 +372,12 @@ const scoreJobsAgainstPreferenceAi = createStep({
     const prefs: HarvestJobPreference = inputData.preference ?? {
       workModes: [],
       locations: [],
+      remoteRegions: [],
       roleKeywords: [],
       excludeKeywords: [],
       salaryMin: null,
       salaryCurrency: null,
+      levelFloor: null,
       minMatchScore: 60
     };
     const minScore = prefs.minMatchScore ?? 60;
@@ -474,6 +479,17 @@ const scoreJobsAgainstPreferenceAi = createStep({
         if (!hit) {
           unmatchedScoreRows += 1;
           scored.push(heuristicScore(job, ["score_row_missing"]));
+          continue;
+        }
+        const hard = applyPreferenceHardFails(job, prefs);
+        if (hard.failed) {
+          scored.push({
+            ...job,
+            matchScore: 0,
+            matchPassed: false,
+            matchReasons: hard.reasons,
+            agentTake: null
+          });
           continue;
         }
         const score = Math.max(0, Math.min(100, Math.round(hit.score)));
@@ -580,10 +596,12 @@ const generateAgentTakesAi = createStep({
     const prefs: HarvestJobPreference = inputData.preference ?? {
       workModes: [],
       locations: [],
+      remoteRegions: [],
       roleKeywords: [],
       excludeKeywords: [],
       salaryMin: null,
       salaryCurrency: null,
+      levelFloor: null,
       minMatchScore: 60
     };
 
@@ -602,19 +620,27 @@ const generateAgentTakesAi = createStep({
 
     const prompt = `Write a short agent take for EACH match-passed job.
 
+Column hard-fails (exclude phrase, level floor, salary floor) are law. Phrase identity: "react" is not "react native". Search brief is narrative flavor only. Two-axis is land-only — not a harvest/inbox hard-fail.
+
 Seeker preferences (JSON):
 ${JSON.stringify(
   {
     workModes: prefs.workModes,
     locations: prefs.locations,
+    remoteRegions: prefs.remoteRegions,
     roleKeywords: prefs.roleKeywords,
     excludeKeywords: prefs.excludeKeywords,
     salaryMin: prefs.salaryMin,
-    salaryCurrency: prefs.salaryCurrency
+    salaryCurrency: prefs.salaryCurrency,
+    levelFloor: prefs.levelFloor
   },
   null,
   2
 )}
+
+${formatSeekerEvidenceForPrompt(prefs.evidence)}
+
+${formatSearchBriefForPrompt(prefs.searchBriefMarkdown)}
 
 Jobs (JSON array):
 ${JSON.stringify(jobsJson, null, 2)}

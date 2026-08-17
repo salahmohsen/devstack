@@ -441,6 +441,150 @@ describe("scoreJobAgainstPreference", () => {
     expect(r.passed).toBe(false);
     expect(r.reasons).toContain("no role keyword in title");
   });
+
+  it("kills exclude react native on Senior React Native Engineer", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Senior React Native Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/30",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      { ...defaultJobPreference(), excludeKeywords: ["react native"] }
+    );
+    expect(r.passed).toBe(false);
+    expect(r.score).toBe(0);
+    expect(r.reasons).toContain("excluded keyword match");
+  });
+
+  it("does not kill Senior React Native Engineer when exclude is react", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Senior React Native Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/31",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      { ...defaultJobPreference(), roleKeywords: ["engineer"], excludeKeywords: ["react"] }
+    );
+    expect(r.reasons).not.toContain("excluded keyword match");
+    expect(r.passed).toBe(true);
+  });
+
+  it("does not title-hit React Native on role keyword react", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Senior React Native Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/32",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      { ...defaultJobPreference(), roleKeywords: ["react"] }
+    );
+    expect(r.passed).toBe(false);
+    expect(r.reasons).toContain("no role keyword in title");
+  });
+
+  it("title-hits Senior React Engineer and React.js Developer on role keyword react", () => {
+    const reactOnly = { ...defaultJobPreference(), roleKeywords: ["react"] };
+    const senior = scoreJobAgainstPreference(
+      {
+        title: "Senior React Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/33",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      reactOnly
+    );
+    const reactJs = scoreJobAgainstPreference(
+      {
+        title: "React.js Developer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/34",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      reactOnly
+    );
+    expect(senior.passed).toBe(true);
+    expect(reactJs.passed).toBe(true);
+  });
+
+  it("does not kill unknown pay or unstructured amount under 15_000", () => {
+    const floor = { ...defaultJobPreference(), salaryMin: 4_000, salaryCurrency: "USD" };
+    const unknown = scoreJobAgainstPreference(
+      {
+        title: "Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/35",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin"
+      },
+      floor
+    );
+    const under = scoreJobAgainstPreference(
+      {
+        title: "Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/36",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin",
+        salaryMin: 8_000,
+        salaryCurrency: "USD"
+      },
+      floor
+    );
+    expect(unknown.reasons).not.toContain("below salary floor");
+    expect(under.reasons).not.toContain("below salary floor");
+  });
+
+  it("kills explicit monthly below floor", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/37",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin",
+        salaryRange: "2000 USD/mo"
+      },
+      { ...defaultJobPreference(), salaryMin: 4_000, salaryCurrency: "USD" }
+    );
+    expect(r.passed).toBe(false);
+    expect(r.score).toBe(0);
+    expect(r.reasons).toContain("below salary floor");
+  });
+
+  it("preview: same-currency monthly below floor is 0 when extract pay is present", () => {
+    const r = scoreJobAgainstPreference(
+      {
+        title: "Engineer",
+        companyName: "Acme",
+        listingUrl: "https://www.linkedin.com/jobs/view/38",
+        applyUrl: null,
+        applyMethod: "unknown",
+        source: "linkedin",
+        salaryMin: 2_000,
+        salaryCurrency: "USD",
+        salaryPeriod: "month"
+      },
+      { ...defaultJobPreference(), salaryMin: 4_000, salaryCurrency: "USD" }
+    );
+    expect(r.score).toBe(0);
+    expect(r.passed).toBe(false);
+  });
 });
 
 describe("HarvestedJobSchema source coerce", () => {

@@ -29,16 +29,16 @@ const DETECT_WORKFLOW_ID = "detect-stacks-workflow";
 const DETECT_TOAST_ID = "detect-stacks-job";
 
 const STEP_LABELS: Record<string, string> = {
-  "fetch-repo-package-jsons": "Fetching repository files",
-  "extract-dependencies": "Extracting dependencies",
-  "programmatic-match": "Matching known stacks",
-  "ai-categorize": "Categorizing unknown packages",
-  "deduplicate-groups": "Deduplicating stacks",
-  "merge-families": "Merging related packages",
-  "canonicalize-names": "Standardizing names",
-  "enrich-npm": "Loading npm descriptions",
-  "resolve-icons": "Resolving icons",
-  format: "Processing results"
+  "fetch-repo-package-jsons": "Fetching repo files…",
+  "extract-dependencies": "Extracting dependencies…",
+  "programmatic-match": "Matching known stacks…",
+  "ai-categorize": "Categorizing packages…",
+  "deduplicate-groups": "Deduplicating stacks…",
+  "merge-families": "Merging packages…",
+  "canonicalize-names": "Standardizing names…",
+  "enrich-npm": "Loading npm info…",
+  "resolve-icons": "Resolving icons…",
+  format: "Processing results…"
 };
 
 const jobController = createDetachedJobController({
@@ -104,7 +104,7 @@ async function runDetectWorkflow(
   };
   signal.addEventListener("abort", onAbort, { once: true });
 
-  setDetectJobState({ stepLabel: "Initializing" });
+  setDetectJobState({ stepLabel: "Starting…" });
 
   try {
     if (signal.aborted) {
@@ -245,7 +245,7 @@ export function startDetectStacksJob(input: StartDetectStacksJobInput) {
 
   setDetectJobState({
     status: "running",
-    stepLabel: "Initializing",
+    stepLabel: "Starting…",
     runId: null,
     results: null,
     error: null,

@@ -62,32 +62,40 @@ export function StackChipMarqueeRow({
   if (stacks.length === 0) return null;
 
   return (
-    <div ref={trackRef} className="relative min-h-5 min-w-0">
+    <div
+      ref={trackRef}
+      className={cn(
+        "relative min-h-5 w-full max-w-full min-w-0 overflow-hidden",
+        !useMarquee && overflows && reduceMotion && "overflow-x-auto"
+      )}
+    >
+      {/* Off-layout copy for overflow measurement — never participate in width. */}
       <div
         ref={measureRef}
-        className={cn(
-          "flex w-max items-center gap-1.5",
-          useMarquee && "pointer-events-none invisible absolute inset-y-0 inset-s-0"
-        )}
-        aria-hidden={useMarquee}
+        className="pointer-events-none invisible absolute inset-y-0 inset-s-0 flex w-max items-center gap-1.5"
+        aria-hidden
       >
         {stacks.map((stack) => (
           <StackChip key={stack.id} stack={stack} />
         ))}
       </div>
       {useMarquee ? (
-        <>
-          <NativeMarquee
-            items={items}
-            speed={4}
-            gap={8}
-            reverse={reverse}
-            pauseOnHover
-            pauseOnTouch
-          />
-          <SideFadeGradients sizeClassName="w-6" fromClassName={fadeFromClassName} />
-        </>
-      ) : null}
+        <NativeMarquee
+          items={items}
+          speed={4}
+          gap={8}
+          reverse={reverse}
+          pauseOnHover
+          pauseOnTouch
+        />
+      ) : (
+        <div className="flex w-full min-w-0 items-center gap-1.5">
+          {stacks.map((stack) => (
+            <StackChip key={stack.id} stack={stack} />
+          ))}
+        </div>
+      )}
+      <SideFadeGradients sizeClassName="w-6" fromClassName={fadeFromClassName} />
     </div>
   );
 }

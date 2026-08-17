@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { createDb, mailMessageRepository, runWithDb } from "@tsu-stack/db";
 
+export { searchMailTool } from "./search-mail.tool.ts";
+
 /**
  * Career Inbox list (excludes system notifications by default).
  */

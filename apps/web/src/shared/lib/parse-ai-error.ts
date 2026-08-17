@@ -263,11 +263,10 @@ export function parseAiError(raw: string | null | undefined): AiErrorPresentatio
     return {
       kind: "unavailable",
       variant: "error",
-      title: "AI temporarily unavailable",
-      description:
-        "Try again in a moment. If it keeps failing, check AI settings or switch provider.",
+      title: "Assistant is offline",
+      description: "Try again in a moment.",
       billingUrl: null,
-      showAiSettings: true,
+      showAiSettings: false,
       retryable: true,
       technicalDetails: technical
     };

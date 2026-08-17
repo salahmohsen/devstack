@@ -26,6 +26,7 @@ import {
   applicationActivityRepository,
   applicationRepository,
   jobPostingRepository,
+  preferLongerJobDescription,
   stackRepository,
   userJobAiBudgetRepository,
   type ApplicationEntity,
@@ -37,7 +38,7 @@ import { generateAgentTake, generateAgentTakeText } from "#@/lib/application/gen
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { scoreApplicationMatch } from "#@/lib/application/score-application-match";
 import { requestJobDiscoveryLand } from "#@/lib/job-discovery/enqueue";
-import { formatCatalogSalaryRange } from "#@/lib/job-discovery/hydrate";
+import { formatCatalogSalaryRange, hydratePostingIfNeeded } from "#@/lib/job-discovery/hydrate";
 import {
   leftoverExtractFromListing,
   leftoverExtractIfNeeded,
@@ -367,16 +368,29 @@ async function insertDiscoveryApplication(input: {
   return row;
 }
 
+/** If the inbox JD is a teaser, hydrate the posting and copy a longer description onto the app. */
+async function hydrateInboxApplicationIfThin(owned: ApplicationEntity): Promise<ApplicationEntity> {
+  if (!isThinJobDescription(owned.description) || !owned.postingId) return owned;
+  const hydrate = await hydratePostingIfNeeded(owned.postingId);
+  const nextDescription = preferLongerJobDescription(hydrate.description, owned.description);
+  if (!nextDescription || nextDescription === owned.description) return owned;
+  const updated = await applicationRepository.update(owned.id, owned.userId, {
+    description: nextDescription
+  });
+  return updated ?? { ...owned, description: nextDescription };
+}
+
 /** Harvest / score-error path: application already exists. */
 async function runInboxAiForApplication(input: {
   userId: string;
   applicationId: string;
   runId: string;
 }): Promise<{ outcome: InboxAiOutcome }> {
-  const owned = await applicationRepository.findByIdForUser(input.applicationId, input.userId);
-  if (!owned || owned.trackingStatus !== "inbox") {
+  const found = await applicationRepository.findByIdForUser(input.applicationId, input.userId);
+  if (!found || found.trackingStatus !== "inbox") {
     return { outcome: "skipped" };
   }
+  const owned = await hydrateInboxApplicationIfThin(found);
 
   const [prefs, llm, posting] = await Promise.all([
     loadJobPreference(input.userId),
@@ -384,7 +398,7 @@ async function runInboxAiForApplication(input: {
     owned.postingId ? jobPostingRepository.findById(owned.postingId) : Promise.resolve(null)
   ]);
 
-  // No key or thin JD: keep the cheap-landed stub. Do not consume daily AI budget.
+  // No key: keep the cheap-landed stub. Still-thin JD: no score budget, no take.
   if (!llm.apiKey?.trim() || isThinJobDescription(owned.description)) {
     return { outcome: "heuristic" };
   }
@@ -473,13 +487,23 @@ async function runInboxAiForPosting(input: {
   postingId: string;
   runId: string;
 }): Promise<{ outcome: InboxAiOutcome }> {
-  const [prefs, llm, posting] = await Promise.all([
+  const [prefs, llm, found] = await Promise.all([
     loadJobPreference(input.userId),
     resolveRuntimeAiCredentials(input.userId, "scorer"),
     jobPostingRepository.findById(input.postingId)
   ]);
-  if (!posting || posting.closedAt != null) {
+  if (!found || found.closedAt != null) {
     return { outcome: "skipped" };
+  }
+
+  let posting = found;
+  if (isThinJobDescription(posting.description)) {
+    const hydrate = await hydratePostingIfNeeded(posting.id);
+    if (hydrate.listingClosed) return { outcome: "skipped" };
+    const nextDescription = preferLongerJobDescription(hydrate.description, posting.description);
+    if (nextDescription && nextDescription !== posting.description) {
+      posting = { ...posting, description: nextDescription };
+    }
   }
 
   const listingUrl = canonicalizeJobUrl(posting.listingUrl);
@@ -501,7 +525,11 @@ async function runInboxAiForPosting(input: {
     workMode,
     hiringRegion: leftover.hiringRegion,
     location: leftover.location,
-    prefs: { workModes: prefs.workModes, locations: prefs.locations }
+    prefs: {
+      workModes: prefs.workModes,
+      locations: prefs.locations,
+      remoteRegions: prefs.remoteRegions
+    }
   });
   if (twoAxis.action === "drop" || workMode == null) {
     return { outcome: "skipped" };
@@ -665,14 +693,7 @@ async function runInboxAiForPosting(input: {
           matchScore: match.score,
           description
         },
-        matchReasons: match.reasons,
-        prefsSummary: JSON.stringify({
-          roleKeywords: prefs.roleKeywords,
-          locations: prefs.locations,
-          workModes: prefs.workModes,
-          minMatchScore: prefs.minMatchScore,
-          salaryMin: prefs.salaryMin
-        })
+        matchReasons: match.reasons
       });
       takeText = take.ok ? take.text : null;
     } catch {

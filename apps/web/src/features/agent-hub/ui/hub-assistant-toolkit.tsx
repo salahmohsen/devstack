@@ -11,6 +11,9 @@ import { z } from "zod";
 
 import {
   ProposeApplicationFromJdInputSchema,
+  ProposeEvidenceChangeInputSchema,
+  ProposeHardPreferenceChangeInputSchema,
+  ProposeMailCrmChangeInputSchema,
   ProposeNewJobsTriageInputSchema,
   normalizeAgentTakeText,
   type ProposeApplicationFromJdOutput,
@@ -23,12 +26,15 @@ import { useApplicationsByTrackingQuery } from "@/features/agent-hub/api/applica
 import {
   useCreateApplicationFromJdMutation,
   useDismissApplicationFromJdMutation,
-  useGenerateApplyPackageFromJdMutation
+  useDismissInboxJobMutation,
+  useGenerateApplyPackageFromJdMutation,
+  usePromoteInboxJobMutation
 } from "@/features/agent-hub/api/create-from-jd.mutation";
 import { HUB_AUI_SUGGESTIONS } from "@/features/agent-hub/api/hub-suggestions";
 import { usePreviewListingTakeQuery } from "@/features/agent-hub/api/preview-listing-take.query";
 import { usePreviewListingQuery } from "@/features/agent-hub/api/preview-listing.query";
 import { useHubChat } from "@/features/agent-hub/api/use-hub-chat";
+import { toolCallIsOnLatestAssistant } from "@/features/agent-hub/lib/cancel-stale-hub-hitl";
 import {
   createInputFromJdProposal,
   inferJdCardActionFromCrm,
@@ -43,16 +49,27 @@ import {
 import { isHubApprovalPending } from "@/features/agent-hub/lib/hub-approval-summary";
 import { requestOpenHubAssistant } from "@/features/agent-hub/lib/hub-assistant-open";
 import {
+  isHubHitlAbandonedOnRemount,
+  subscribeHubHitlRemount
+} from "@/features/agent-hub/lib/hub-hitl-remount";
+import {
   findPendingProposeApplicationFromJd,
+  hydrateProposeNewJobsTriageInput,
+  isLaterTriageAfterConfirm,
   isProposeApplicationFromJdToolName,
   isProposeNewJobsTriageToolName,
   jdListingKey,
   listingHasResolvedJdProposal,
+  listNewJobsFromMessages,
   parseProposeApplicationFromJdInput,
   parseProposeApplicationFromJdOutputAction,
   parseProposeNewJobsTriageInput,
   parseProposeNewJobsTriageOutput
 } from "@/features/agent-hub/lib/hub-tool-names";
+import {
+  recalledTriageAction,
+  rememberTriageAction
+} from "@/features/agent-hub/lib/hub-triage-action-memory";
 import {
   recalledJdCardAction,
   rememberJdCardAction
@@ -63,13 +80,34 @@ import {
   ApplicationFromJdCard,
   type ApplicationFromJdCardAction
 } from "./application-from-jd-card";
+import { EvidenceChangeToolUI } from "./evidence-change-tool-ui";
 import { GetExperienceToolUI, ListExperiencesToolUI } from "./experiences-timeline-tool-ui";
+import { FindJobsNowToolUI } from "./find-jobs-now-tool-ui";
+import { GetDailyBriefToolUI } from "./get-daily-brief-tool-ui";
+import { GetSearchBriefToolUI } from "./get-search-brief-tool-ui";
+import { HardPreferenceChangeToolUI } from "./hard-preference-change-tool-ui";
 import { JobListingPreludeStatus } from "./job-listing-prelude-status";
+import { MailCrmChangeToolUI } from "./mail-crm-change-tool-ui";
 import { NewJobsTriageCard } from "./new-jobs-triage-card";
+import { OpenDailyBriefToolUI } from "./open-daily-brief-tool-ui";
+import { OpenEntityFormToolUI } from "./open-entity-form-tool-ui";
+import { OpenEntityInspectToolUI } from "./open-entity-inspect-tool-ui";
 import { OpenSurfaceToolUI } from "./open-surface-tool-ui";
+import { UpsertSoftJobPreferencesToolUI } from "./upsert-soft-job-preferences-tool-ui";
 
 const PROPOSE_FROM_JD_TOOL_ID = "propose-application-from-jd";
 const PROPOSE_TRIAGE_TOOL_ID = "propose-new-jobs-triage";
+
+function triageCompleteVia(
+  result: unknown
+): "empty-inbox" | "duplicate" | "stale" | "remount" | null {
+  if (!result || typeof result !== "object" || Array.isArray(result)) return null;
+  const via = (result as { via?: unknown }).via;
+  if (via === "empty-inbox" || via === "duplicate" || via === "stale" || via === "remount") {
+    return via;
+  }
+  return null;
+}
 
 type ProposeArgs = {
   title?: string;
@@ -283,17 +321,109 @@ function ProposeNewJobsTriageToolUI({
   toolName
 }: ToolCallMessagePartProps<Record<string, unknown>, ProposeNewJobsTriageOutput>) {
   const { addToolOutput, messages } = useHubChat();
-  const completed = parseProposeNewJobsTriageOutput(result);
-  const input = parseProposeNewJobsTriageInput(args);
+  const promoteInboxJob = usePromoteInboxJobMutation();
+  const dismissInboxJob = useDismissInboxJobMutation();
+  const onLatest = toolCallIsOnLatestAssistant(messages, toolCallId);
+  const abandoned = React.useSyncExternalStore(
+    subscribeHubHitlRemount,
+    () => isHubHitlAbandonedOnRemount(toolCallId),
+    () => false
+  );
+  const completed =
+    parseProposeNewJobsTriageOutput(result) ??
+    (() => {
+      const recalled = recalledTriageAction(toolCallId);
+      return recalled ? { action: recalled, trackIds: [], dismissIds: [] } : null;
+    })();
+  const parsed = parseProposeNewJobsTriageInput(args);
   const resolvedToolName = isProposeNewJobsTriageToolName(toolName)
     ? toolName
     : PROPOSE_TRIAGE_TOOL_ID;
+  const duplicateAfterConfirm = isLaterTriageAfterConfirm(messages, toolCallId);
+  const listJobs = listNewJobsFromMessages(messages);
+  const inboxQuery = useApplicationsByTrackingQuery("inbox");
+  const inboxJobs = (inboxQuery.data ?? []).map((row) => {
+    return {
+      id: row.id,
+      title: row.title,
+      companyName: row.companyName,
+      matchScore: row.matchScore ?? null
+    };
+  });
+  const fallbackJobs = listJobs.length > 0 ? listJobs : inboxJobs;
+  const input = hydrateProposeNewJobsTriageInput(parsed, fallbackJobs);
+  const modelSentEmpty = parsed.track.length === 0 && parsed.dismiss.length === 0;
+  const waitingForInbox =
+    !completed &&
+    !duplicateAfterConfirm &&
+    modelSentEmpty &&
+    listJobs.length === 0 &&
+    inboxQuery.isPending;
+  const emptyInboxSettled =
+    !completed &&
+    !duplicateAfterConfirm &&
+    modelSentEmpty &&
+    listJobs.length === 0 &&
+    !inboxQuery.isPending &&
+    inboxJobs.length === 0;
+  const completedVia = triageCompleteVia(result);
+
+  const completeLocal = React.useCallback(
+    (
+      output: ProposeNewJobsTriageOutput & {
+        via?: "empty-inbox" | "duplicate" | "stale" | "remount";
+      }
+    ) => {
+      if (typeof addResult === "function") addResult(output);
+      void addToolOutput({
+        tool: resolvedToolName,
+        toolCallId,
+        output
+      });
+    },
+    [addResult, addToolOutput, resolvedToolName, toolCallId]
+  );
+
+  React.useEffect(() => {
+    if (parseProposeNewJobsTriageOutput(result) || !toolCallId) return;
+    const recalled = recalledTriageAction(toolCallId);
+    if (!recalled) return;
+    completeLocal({ action: recalled, trackIds: [], dismissIds: [] });
+  }, [completeLocal, result, toolCallId]);
+
+  React.useEffect(() => {
+    if (completed || !toolCallId) return;
+    if (duplicateAfterConfirm) {
+      completeLocal({ action: "cancel", trackIds: [], dismissIds: [], via: "duplicate" });
+    }
+  }, [completeLocal, completed, duplicateAfterConfirm, toolCallId]);
+
+  React.useEffect(() => {
+    if (completed || !toolCallId || onLatest) return;
+    completeLocal({ action: "cancel", trackIds: [], dismissIds: [], via: "stale" });
+  }, [completeLocal, completed, onLatest, toolCallId]);
+
+  React.useEffect(() => {
+    if (completed || !toolCallId || !abandoned) return;
+    completeLocal({ action: "cancel", trackIds: [], dismissIds: [], via: "remount" });
+  }, [abandoned, completeLocal, completed, toolCallId]);
+
+  React.useEffect(() => {
+    if (completed || !toolCallId || duplicateAfterConfirm) return;
+    if (!emptyInboxSettled) return;
+    completeLocal({ action: "cancel", trackIds: [], dismissIds: [], via: "empty-inbox" });
+  }, [completeLocal, completed, duplicateAfterConfirm, emptyInboxSettled, toolCallId]);
 
   const handleSubmit = React.useCallback(
-    (output: ProposeNewJobsTriageOutput) => {
+    async (output: ProposeNewJobsTriageOutput) => {
+      rememberTriageAction(toolCallId, output.action);
       // Cancel sibling open triage cards so auto-resume is not blocked by other
       // pending client tools in the same thread (model sometimes proposes twice).
       if (output.action === "confirm") {
+        await Promise.all([
+          ...output.trackIds.map((id) => promoteInboxJob.mutateAsync({ id })),
+          ...output.dismissIds.map((id) => dismissInboxJob.mutateAsync({ id }))
+        ]);
         for (const msg of messages) {
           if (msg.role !== "assistant") continue;
           for (const raw of msg.parts ?? []) {
@@ -328,35 +458,103 @@ function ProposeNewJobsTriageToolUI({
         }
       }
 
-      if (typeof addResult === "function") {
-        addResult(output);
-      }
-      void addToolOutput({
-        tool: resolvedToolName,
-        toolCallId,
-        output
-      });
+      completeLocal(output);
     },
-    [addResult, addToolOutput, messages, resolvedToolName, toolCallId]
+    [addToolOutput, completeLocal, dismissInboxJob, messages, promoteInboxJob, toolCallId]
   );
 
+  const receiptInput = input.track.length > 0 || input.dismiss.length > 0 ? input : null;
+
+  if (
+    (!onLatest || abandoned) &&
+    (!completed || completedVia === "stale" || completedVia === "remount")
+  ) {
+    if (!receiptInput) return null;
+    return (
+      <NewJobsTriageCard
+        toolCallId={toolCallId}
+        input={receiptInput}
+        completedAction="cancel"
+        onSubmit={() => undefined}
+      />
+    );
+  }
+
   if (completed) {
-    if (completed.action === "cancel") {
+    if (completedVia === "duplicate" || duplicateAfterConfirm) {
+      return null;
+    }
+    if (completedVia === "stale" || completedVia === "remount") {
+      if (!receiptInput) return null;
       return (
-        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-          You cancelled triage — no track/dismiss changes.
-        </p>
+        <NewJobsTriageCard
+          toolCallId={toolCallId}
+          input={receiptInput}
+          completedAction="cancel"
+          onSubmit={() => undefined}
+        />
+      );
+    }
+    if (completed.action === "cancel") {
+      if (completedVia === "empty-inbox") {
+        return (
+          <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+            No new jobs right now.
+          </p>
+        );
+      }
+      if (input.track.length === 0 && input.dismiss.length === 0) {
+        return (
+          <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">Cancelled.</p>
+        );
+      }
+      return (
+        <NewJobsTriageCard
+          toolCallId={toolCallId}
+          input={input}
+          completedAction="cancel"
+          onSubmit={() => undefined}
+        />
+      );
+    }
+    if (input.track.length === 0 && input.dismiss.length === 0) {
+      return (
+        <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">Confirmed.</p>
       );
     }
     return (
+      <NewJobsTriageCard
+        toolCallId={toolCallId}
+        input={input}
+        completedAction="confirm"
+        onSubmit={() => undefined}
+      />
+    );
+  }
+
+  if (duplicateAfterConfirm) return null;
+
+  if (waitingForInbox) {
+    return (
       <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
-        Confirmed triage: track {completed.trackIds.length}, dismiss {completed.dismissIds.length}.
+        Loading new jobs…
       </p>
     );
   }
 
+  if (emptyInboxSettled || (modelSentEmpty && input.track.length === 0)) {
+    return (
+      <p className="w-full max-w-[min(72ch,100%)] text-xs text-muted-foreground">
+        No new jobs right now.
+      </p>
+    );
+  }
+
+  const hydrateKey = [...input.track, ...input.dismiss].map((row) => row.id).join(",");
+
   return (
     <NewJobsTriageCard
+      key={hydrateKey || toolCallId}
       toolCallId={toolCallId}
       input={input}
       disabled={result != null || !toolCallId}
@@ -484,6 +682,31 @@ const openSurfaceToolEntry = {
   render: OpenSurfaceToolUI
 };
 
+const OpenEntityFormParametersSchema = z.object({
+  kind: z.enum(["experience", "project", "stack"]),
+  id: z.string().min(1).optional().nullable(),
+  plan: z.string().min(1)
+});
+
+const openEntityFormToolEntry = {
+  type: "human" as const,
+  description: "Propose an evidence form after the user approves an edit plan.",
+  parameters: OpenEntityFormParametersSchema,
+  render: OpenEntityFormToolUI
+};
+
+const OpenEntityInspectParametersSchema = z.object({
+  kind: z.enum(["experience", "project", "stack"]),
+  id: z.string().min(1)
+});
+
+const openEntityInspectToolEntry = {
+  type: "human" as const,
+  description: "Open the original experience, project, or stack inspect view on the current route.",
+  parameters: OpenEntityInspectParametersSchema,
+  render: OpenEntityInspectToolUI
+};
+
 const jobListingPreludeTool = {
   type: "backend" as const,
   display: "standalone" as const,
@@ -494,6 +717,64 @@ const listExperiencesToolEntry = {
   type: "backend" as const,
   display: "standalone" as const,
   render: ListExperiencesToolUI
+};
+
+const proposeHardPreferenceChangeTool = {
+  type: "human" as const,
+  description:
+    "Propose a hard-stop preference change. Wait for Confirm/Cancel. The card writes on confirm.",
+  parameters: ProposeHardPreferenceChangeInputSchema,
+  render: HardPreferenceChangeToolUI
+};
+
+const proposeEvidenceChangeTool = {
+  type: "human" as const,
+  description:
+    "Propose an evidence create/edit. Wait for Confirm/Cancel. The card writes on confirm.",
+  parameters: ProposeEvidenceChangeInputSchema,
+  render: EvidenceChangeToolUI
+};
+
+const EmptyToolArgsSchema = z.object({});
+
+const findJobsNowToolEntry = {
+  type: "human" as const,
+  description: "Enqueue Find jobs now. Completes with enqueued/seats/reason.",
+  parameters: EmptyToolArgsSchema,
+  render: FindJobsNowToolUI
+};
+
+const getSearchBriefToolEntry = {
+  type: "human" as const,
+  description: "Load the search brief via ensureBrief.",
+  parameters: EmptyToolArgsSchema,
+  render: GetSearchBriefToolUI
+};
+
+const getDailyBriefToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: GetDailyBriefToolUI
+};
+
+const openDailyBriefToolEntry = {
+  type: "human" as const,
+  description: "Open today's letter in the side panel.",
+  parameters: z.object({ markdown: z.string().min(1) }),
+  render: OpenDailyBriefToolUI
+};
+
+const proposeMailCrmChangeTool = {
+  type: "human" as const,
+  description: "Propose a CRM write from mail. Wait for Confirm.",
+  parameters: ProposeMailCrmChangeInputSchema,
+  render: MailCrmChangeToolUI
+};
+
+const upsertSoftJobPreferencesToolEntry = {
+  type: "backend" as const,
+  display: "standalone" as const,
+  render: UpsertSoftJobPreferencesToolUI
 };
 
 const getExperienceToolEntry = {
@@ -523,6 +804,26 @@ export const hubAssistantToolkit = defineToolkit({
   createApplication: approvalTool,
   "open-surface": openSurfaceToolEntry,
   openSurface: openSurfaceToolEntry,
+  "propose-hard-preference-change": proposeHardPreferenceChangeTool,
+  proposeHardPreferenceChange: proposeHardPreferenceChangeTool,
+  "propose-evidence-change": proposeEvidenceChangeTool,
+  proposeEvidenceChange: proposeEvidenceChangeTool,
+  "find-jobs-now": findJobsNowToolEntry,
+  findJobsNow: findJobsNowToolEntry,
+  "get-search-brief": getSearchBriefToolEntry,
+  getSearchBrief: getSearchBriefToolEntry,
+  "get-daily-brief": getDailyBriefToolEntry,
+  getDailyBrief: getDailyBriefToolEntry,
+  "open-daily-brief": openDailyBriefToolEntry,
+  openDailyBrief: openDailyBriefToolEntry,
+  "propose-mail-crm-change": proposeMailCrmChangeTool,
+  proposeMailCrmChange: proposeMailCrmChangeTool,
+  "upsert-soft-job-preferences": upsertSoftJobPreferencesToolEntry,
+  upsertSoftJobPreferences: upsertSoftJobPreferencesToolEntry,
+  "open-entity-form": openEntityFormToolEntry,
+  openEntityForm: openEntityFormToolEntry,
+  "open-entity-inspect": openEntityInspectToolEntry,
+  openEntityInspect: openEntityInspectToolEntry,
   "agent-jobPageExtractor": jobListingPreludeTool,
   jobPageExtractor: jobListingPreludeTool,
   "agent-job-page-extractor": jobListingPreludeTool,

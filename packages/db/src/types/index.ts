@@ -22,6 +22,7 @@ export type * from "./stack.schema.ts";
 export type * from "./user-ai-settings.schema.ts";
 export type * from "./user-custom-domain.schema.ts";
 export type * from "./user-gmail-sync.schema.ts";
+export type * from "./user-hub-state.schema.ts";
 export type * from "./user-job-ai-budget.schema.ts";
 export type * from "./user-mail-settings.schema.ts";
 export type * from "./user-notification-settings.schema.ts";

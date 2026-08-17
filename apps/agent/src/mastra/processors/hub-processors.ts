@@ -2,21 +2,45 @@ import {
   TokenLimiter,
   ToolCallFilter,
   type ProcessInputStepArgs,
+  type ProcessOutputResultArgs,
   type Processor
 } from "@mastra/core/processors";
 
-import { hubPersonalityById } from "@tsu-stack/core";
+import { hubPersonalityById, searchBriefUserTurnNeedsSpokenAnswer } from "@tsu-stack/core";
 
 import {
   filterHubJobUrlImportActiveTools,
+  filterHubPostEvidenceConfirmActiveTools,
+  filterHubPostTriageConfirmActiveTools,
   filterHubTriageActiveTools,
   HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
+  HUB_TRIAGE_MUST_WRITE_FEEDBACK,
   hubJobUrlImportFeedback,
+  HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
+  HUB_TODAY_MUST_GATHER_FEEDBACK,
+  filterHubTodayGatherActiveTools,
+  isDismissJobToolName,
+  isGetDailyBriefToolName,
+  isOpenDailyBriefToolName,
+  isGetSearchBriefToolName,
+  userTurnAsksDailyBrief,
+  userTurnAsksPileStatusOnly,
+  userTurnAsksCompanyStatus,
+  userTurnAsksEntityInspect,
+  userTurnRetriesDailyBrief,
+  filterHubCompanyStatusActiveTools,
+  HUB_COMPANY_MUST_READ_FEEDBACK,
   isHubClientHitlToolName,
+  isOpenEntityInspectToolName,
+  filterHubInspectActiveTools,
+  HUB_INSPECT_MUST_OPEN_FEEDBACK,
   isHubJobPageExtractToolName,
   isListNewJobsToolName,
   isProposeApplicationFromJdToolName,
+  isProposeEvidenceChangeToolName,
+  isProposeHardPreferenceChangeToolName,
   isProposeNewJobsTriageToolName,
+  isTrackJobToolName,
   isUrlOnlyJobListingPaste
 } from "#@/mastra/lib/hub-superpowers-policy";
 
@@ -48,7 +72,11 @@ export class HubEnsureFinalResponseProcessor implements Processor {
     if (
       mastraMessagesHavePendingClientHitl(messages) ||
       messagesNeedProposeAfterJobImport(messages) ||
-      messagesNeedProposeTriage(messages)
+      messagesNeedProposeTriage(messages) ||
+      messagesNeedTriageWrites(messages) ||
+      messagesNeedSearchBriefAnswer(messages) ||
+      messagesNeedDailyBriefFacts(messages) ||
+      messagesNeedDailyBriefOpen(messages)
     ) {
       return;
     }
@@ -196,21 +224,81 @@ function listNewJobsOutputHasRows(part: Record<string, unknown>): boolean {
   return Array.isArray(jobs) && jobs.length > 0;
 }
 
+function mastraPartInput(part: Record<string, unknown>): unknown {
+  if (part.input != null) return part.input;
+  if (part.args != null) return part.args;
+  const invocation = part.toolInvocation;
+  if (invocation && typeof invocation === "object" && !Array.isArray(invocation)) {
+    const inv = invocation as { args?: unknown; input?: unknown };
+    return inv.args ?? inv.input;
+  }
+  return undefined;
+}
+
+function applicationIdFromPart(part: Record<string, unknown>): string | null {
+  const input = mastraPartInput(part);
+  if (input && typeof input === "object" && !Array.isArray(input)) {
+    const id = (input as { applicationId?: unknown }).applicationId;
+    if (typeof id === "string" && id.length > 0) return id;
+  }
+  const output = mastraPartOutput(part);
+  if (output && typeof output === "object" && !Array.isArray(output)) {
+    const id = (output as { applicationId?: unknown }).applicationId;
+    if (typeof id === "string" && id.length > 0) return id;
+  }
+  return null;
+}
+
+function proposeTriageOutput(part: Record<string, unknown>): {
+  action: "confirm" | "cancel";
+  trackIds: string[];
+  dismissIds: string[];
+} | null {
+  const output = mastraPartOutput(part);
+  if (!output || typeof output !== "object" || Array.isArray(output)) return null;
+  const o = output as { action?: unknown; trackIds?: unknown; dismissIds?: unknown };
+  if (o.action !== "confirm" && o.action !== "cancel") return null;
+  return {
+    action: o.action,
+    trackIds: Array.isArray(o.trackIds)
+      ? o.trackIds.filter((id): id is string => typeof id === "string")
+      : [],
+    dismissIds: Array.isArray(o.dismissIds)
+      ? o.dismissIds.filter((id): id is string => typeof id === "string")
+      : []
+  };
+}
+
 export function latestUserTurnTriageState(messages: ProcessInputStepArgs["messages"]): {
   sawList: boolean;
   listHasJobs: boolean;
   sawPropose: boolean;
+  confirmAction: "confirm" | "cancel" | null;
+  confirmTrackIds: string[];
+  confirmDismissIds: string[];
+  writtenTrackIds: string[];
+  writtenDismissIds: string[];
 } {
   let afterLatestUser = false;
   let sawList = false;
   let listHasJobs = false;
   let sawPropose = false;
+  let confirmAction: "confirm" | "cancel" | null = null;
+  let confirmTrackIds: string[] = [];
+  let confirmDismissIds: string[] = [];
+  const writtenTrack = new Set<string>();
+  const writtenDismiss = new Set<string>();
   for (const message of messages) {
     if (message.role === "user") {
       afterLatestUser = true;
       sawList = false;
       listHasJobs = false;
       sawPropose = false;
+      confirmAction = null;
+      confirmTrackIds = [];
+      confirmDismissIds = [];
+      writtenTrack.clear();
+      writtenDismiss.clear();
       continue;
     }
     if (!afterLatestUser || message.role !== "assistant") continue;
@@ -223,23 +311,246 @@ export function latestUserTurnTriageState(messages: ProcessInputStepArgs["messag
         sawList = true;
         if (listNewJobsOutputHasRows(part)) listHasJobs = true;
       }
-      if (isProposeNewJobsTriageToolName(name)) sawPropose = true;
+      if (isProposeNewJobsTriageToolName(name)) {
+        sawPropose = true;
+        const output = proposeTriageOutput(part);
+        if (output && confirmAction == null) {
+          confirmAction = output.action;
+          confirmTrackIds = output.trackIds;
+          confirmDismissIds = output.dismissIds;
+        }
+      }
+      if (isTrackJobToolName(name)) {
+        const id = applicationIdFromPart(part);
+        if (id) writtenTrack.add(id);
+      }
+      if (isDismissJobToolName(name)) {
+        const id = applicationIdFromPart(part);
+        if (id) writtenDismiss.add(id);
+      }
     }
   }
-  return { sawList, listHasJobs, sawPropose };
+  return {
+    sawList,
+    listHasJobs,
+    sawPropose,
+    confirmAction,
+    confirmTrackIds,
+    confirmDismissIds,
+    writtenTrackIds: [...writtenTrack],
+    writtenDismissIds: [...writtenDismiss]
+  };
 }
 
 /** listNewJobs returned inbox rows this turn and the triage card is still missing. */
 export function messagesNeedProposeTriage(messages: ProcessInputStepArgs["messages"]): boolean {
+  if (userTurnAsksPileStatusOnly(latestUserText(messages))) return false;
   const state = latestUserTurnTriageState(messages);
   return state.listHasJobs && !state.sawPropose;
 }
 
-/** True when a client HITL tool was called and has not received addToolOutput yet. */
+export function latestUserTurnSearchBriefState(messages: ProcessInputStepArgs["messages"]): {
+  sawBrief: boolean;
+  hasTextAfter: boolean;
+} {
+  let afterLatestUser = false;
+  let sawBrief = false;
+  let hasTextAfter = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawBrief = false;
+      hasTextAfter = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isGetSearchBriefToolName(name) && mastraPartHasToolResult(part)) {
+        sawBrief = true;
+        hasTextAfter = false;
+        continue;
+      }
+      if (sawBrief && part.type === "text" && typeof part.text === "string" && part.text.trim()) {
+        hasTextAfter = true;
+      }
+    }
+    const text = mastraMessageText(message).trim();
+    if (sawBrief && text.length > 0) hasTextAfter = true;
+  }
+  return { sawBrief, hasTextAfter };
+}
+
+function latestUserText(messages: ProcessInputStepArgs["messages"]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message?.role !== "user") continue;
+    return mastraMessageText(message);
+  }
+  return "";
+}
+
+function recentUserAskedDailyBrief(messages: ProcessInputStepArgs["messages"]): boolean {
+  let seenUsers = 0;
+  for (let i = messages.length - 1; i >= 0 && seenUsers < 5; i--) {
+    const message = messages[i];
+    if (message?.role !== "user") continue;
+    seenUsers += 1;
+    const text = mastraMessageText(message);
+    if (userTurnAsksDailyBrief(text)) return true;
+    if (!userTurnRetriesDailyBrief(text)) return false;
+  }
+  return false;
+}
+
+function messagesAfterLatestUser(messages: ProcessInputStepArgs["messages"]) {
+  let start = 0;
+  for (let i = 0; i < messages.length; i++) {
+    if (messages[i]?.role === "user") start = i + 1;
+  }
+  return messages.slice(start);
+}
+
+export function latestUserTurnTodayState(messages: ProcessInputStepArgs["messages"]): {
+  asked: boolean;
+  sawFacts: boolean;
+  sawOpen: boolean;
+} {
+  const latest = latestUserText(messages);
+  const asked =
+    userTurnAsksDailyBrief(latest) ||
+    (userTurnRetriesDailyBrief(latest) && recentUserAskedDailyBrief(messages));
+  let afterLatestUser = false;
+  let sawFacts = false;
+  let sawOpen = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawFacts = false;
+      sawOpen = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (isGetDailyBriefToolName(name) && mastraPartHasToolResult(part)) sawFacts = true;
+      if (isOpenDailyBriefToolName(name)) sawOpen = true;
+    }
+  }
+  return { asked, sawFacts, sawOpen };
+}
+
+export function messagesNeedDailyBriefFacts(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnTodayState(messages);
+  return state.asked && !state.sawFacts && !state.sawOpen;
+}
+
+export function messagesNeedDailyBriefOpen(messages: ProcessInputStepArgs["messages"]): boolean {
+  // Panel opens from getDailyBrief on the client. Do not keep the supervisor
+  // looping on openDailyBrief ("Still here" / "Hey" until the tool finally runs).
+  void messages;
+  return false;
+}
+
+/** Today-only ask already has the letter — stop instead of another idle step. */
+export function shouldStopAfterTodayLetter(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnTodayState(messages);
+  if (!state.asked || !state.sawFacts) return false;
+  if (messagesNeedEntityInspect(messages) || messagesNeedCompanyRead(messages)) return false;
+  return true;
+}
+
+export function messagesNeedCompanyRead(messages: ProcessInputStepArgs["messages"]): boolean {
+  if (!userTurnAsksCompanyStatus(latestUserText(messages))) return false;
+  for (const message of messagesAfterLatestUser(messages)) {
+    if (message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const name = mastraPartToolName(raw as Record<string, unknown>);
+      if (/searchApplications|search-applications|searchMail|search-mail/i.test(name)) return false;
+    }
+  }
+  return true;
+}
+
+export function messagesNeedEntityInspect(messages: ProcessInputStepArgs["messages"]): boolean {
+  if (!userTurnAsksEntityInspect(latestUserText(messages))) return false;
+  let afterLatestUser = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const name = mastraPartToolName(raw as Record<string, unknown>);
+      if (isOpenEntityInspectToolName(name)) return false;
+    }
+  }
+  return true;
+}
+
+/** Brief already loaded this turn — next step must be a spoken answer, not another tool. */
+export function messagesNeedSearchBriefAnswer(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnSearchBriefState(messages);
+  if (!state.sawBrief || state.hasTextAfter) return false;
+  return searchBriefUserTurnNeedsSpokenAnswer(latestUserText(messages));
+}
+
+/** Confirm already landed this turn and track/dismiss writes are still outstanding. */
+export function messagesNeedTriageWrites(messages: ProcessInputStepArgs["messages"]): boolean {
+  const state = latestUserTurnTriageState(messages);
+  if (state.confirmAction !== "confirm") return false;
+  const writtenTrack = new Set(state.writtenTrackIds);
+  const writtenDismiss = new Set(state.writtenDismissIds);
+  const remainingTrack = state.confirmTrackIds.some((id) => !writtenTrack.has(id));
+  const remainingDismiss = state.confirmDismissIds.some((id) => !writtenDismiss.has(id));
+  return remainingTrack || remainingDismiss;
+}
+
+/** Latest user turn has a completed evidence or hard-stop confirm/cancel result. */
+export function messagesHaveEvidenceOrHardStopResultThisTurn(
+  messages: ProcessInputStepArgs["messages"]
+): boolean {
+  let afterLatestUser = false;
+  let sawResult = false;
+  for (const message of messages) {
+    if (message.role === "user") {
+      afterLatestUser = true;
+      sawResult = false;
+      continue;
+    }
+    if (!afterLatestUser || message.role !== "assistant") continue;
+    const parts = message.content?.parts ?? [];
+    for (const raw of parts) {
+      if (!raw || typeof raw !== "object") continue;
+      const part = raw as Record<string, unknown>;
+      const name = mastraPartToolName(part);
+      if (
+        (isProposeEvidenceChangeToolName(name) || isProposeHardPreferenceChangeToolName(name)) &&
+        mastraPartHasToolResult(part)
+      ) {
+        sawResult = true;
+      }
+    }
+  }
+  return sawResult;
+}
+
+/** True when a client HITL tool on **this** user turn still lacks addToolOutput. */
 export function mastraMessagesHavePendingClientHitl(
   messages: ProcessInputStepArgs["messages"]
 ): boolean {
-  for (const message of messages) {
+  for (const message of messagesAfterLatestUser(messages)) {
     if (message.role !== "assistant") continue;
     const parts = message.content?.parts ?? [];
     for (const raw of parts) {
@@ -329,18 +640,170 @@ export class HubNewJobsTriageProcessor implements Processor {
     });
 
     const activeTools = filterHubTriageActiveTools(tools ? Object.keys(tools) : []);
-    return {
-      toolChoice: "required" as const,
-      ...(activeTools.length > 0 ? { activeTools } : {})
-    };
+    // Do not set toolChoice "required" — DeepSeek thinking models 400
+    // ("Thinking mode does not support this tool_choice").
+    return activeTools.length > 0 ? { activeTools } : {};
   }
+}
+
+/**
+ * After Confirm: only trackJob / dismissJob. A second propose this turn is the
+ * confirm-loop bug (two receipts + Generating).
+ */
+/**
+ * After getSearchBrief, the File Diff is on screen. Force a spoken answer
+ * (where did the intro go?) instead of another tool or an empty turn.
+ */
+export class HubCompanyStatusProcessor implements Processor {
+  readonly id = "hub-company-status";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedCompanyRead(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_COMPANY_MUST_READ_FEEDBACK,
+      attributes: { reason: "company-must-read" }
+    });
+    const activeTools = filterHubCompanyStatusActiveTools(tools ? Object.keys(tools) : []);
+    return activeTools.length > 0 ? { activeTools } : {};
+  }
+}
+
+export class HubInspectProcessor implements Processor {
+  readonly id = "hub-inspect";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedEntityInspect(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_INSPECT_MUST_OPEN_FEEDBACK,
+      attributes: { reason: "inspect-must-open" }
+    });
+    const activeTools = filterHubInspectActiveTools(tools ? Object.keys(tools) : []);
+    return activeTools.length > 0 ? { activeTools } : {};
+  }
+}
+
+export class HubTodayProcessor implements Processor {
+  readonly id = "hub-today";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+
+    if (messagesNeedDailyBriefFacts(messages)) {
+      await sendSignal?.({
+        type: "reactive",
+        contents: HUB_TODAY_MUST_GATHER_FEEDBACK,
+        attributes: { reason: "today-must-gather" }
+      });
+      const activeTools = filterHubTodayGatherActiveTools(tools ? Object.keys(tools) : []);
+      return {
+        toolChoice: "required" as const,
+        ...(activeTools.length > 0 ? { activeTools } : {})
+      };
+    }
+  }
+}
+
+export class HubSearchBriefAnswerProcessor implements Processor {
+  readonly id = "hub-search-brief-answer";
+
+  async processInputStep({ messages, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedSearchBriefAnswer(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_SEARCH_BRIEF_MUST_ANSWER_FEEDBACK,
+      attributes: { reason: "search-brief-must-answer" }
+    });
+
+    return { toolChoice: "none" as const };
+  }
+}
+
+export class HubPostTriageConfirmProcessor implements Processor {
+  readonly id = "hub-post-triage-confirm";
+
+  async processInputStep({ messages, tools, sendSignal }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesNeedTriageWrites(messages)) return;
+
+    await sendSignal?.({
+      type: "reactive",
+      contents: HUB_TRIAGE_MUST_WRITE_FEEDBACK,
+      attributes: { reason: "triage-confirm-must-write" }
+    });
+
+    const activeTools = filterHubPostTriageConfirmActiveTools(tools ? Object.keys(tools) : []);
+    return activeTools.length > 0 ? { activeTools } : {};
+  }
+}
+
+/**
+ * After evidence or hard-stop confirm: drop listNewJobs / triage / findJobsNow
+ * so auto-resume interviews the next entity instead of reopening the inbox.
+ */
+export class HubPostEvidenceConfirmProcessor implements Processor {
+  readonly id = "hub-post-evidence-confirm";
+
+  async processInputStep({ messages, tools }: ProcessInputStepArgs) {
+    if (mastraMessagesHavePendingClientHitl(messages)) return;
+    if (!messagesHaveEvidenceOrHardStopResultThisTurn(messages)) return;
+
+    const activeTools = filterHubPostEvidenceConfirmActiveTools(tools ? Object.keys(tools) : []);
+    return activeTools.length > 0 ? { activeTools } : {};
+  }
+}
+
+/** Stamp the active voice onto persisted assistant messages. */
+export class HubPersonalityPersistProcessor implements Processor {
+  readonly id = "hub-personality-persist";
+
+  async processOutputResult({ messages, requestContext }: ProcessOutputResultArgs) {
+    const raw = requestContext?.get?.("hubPersonality");
+    const personality = hubPersonalityById(typeof raw === "string" ? raw : undefined).id;
+    return messages.map((message) => {
+      if (message.role !== "assistant") return message;
+      const content = message.content;
+      if (!content || typeof content !== "object" || Array.isArray(content)) {
+        return message;
+      }
+      const existing =
+        "metadata" in content && content.metadata && typeof content.metadata === "object"
+          ? (content.metadata as Record<string, unknown>)
+          : {};
+      if (existing.hubPersonality === personality) return message;
+      return {
+        ...message,
+        content: {
+          ...content,
+          metadata: { ...existing, hubPersonality: personality }
+        }
+      };
+    });
+  }
+}
+
+export function createHubOutputProcessors() {
+  return [new HubPersonalityPersistProcessor()];
 }
 
 export function createHubInputProcessors(maxSteps: number = HUB_SUPERVISOR_MAX_STEPS) {
   return [
     new HubPersonalityProcessor(),
+    new HubTodayProcessor(),
+    new HubCompanyStatusProcessor(),
+    new HubInspectProcessor(),
     new HubJobUrlImportProcessor(),
     new HubNewJobsTriageProcessor(),
+    new HubPostTriageConfirmProcessor(),
+    new HubPostEvidenceConfirmProcessor(),
+    new HubSearchBriefAnswerProcessor(),
     new HubEnsureFinalResponseProcessor(maxSteps),
     // Keep enough recent tool-producing steps for superpowers multi-tool
     // chains (listNewJobs + evidence lists + propose → writes). filterAfter=2

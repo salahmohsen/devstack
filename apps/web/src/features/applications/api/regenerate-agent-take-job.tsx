@@ -31,7 +31,7 @@ const TAKE_TOAST_ID = "regenerate-agent-take-job";
 const STEP_SCHEDULE_MS: AiJobStepSchedule = [
   { at: 0, label: "Gathering job context…" },
   { at: 800, label: "Writing agent take…" },
-  { at: 6_000, label: "Polishing fit narrative…" }
+  { at: 6_000, label: "Polishing the take…" }
 ];
 
 const jobController = createDetachedJobController({
@@ -39,15 +39,8 @@ const jobController = createDetachedJobController({
 });
 
 function TakeRunningToastBody() {
-  const { stepLabel, title, companyName } = useAgentTakeJob();
-  const subtitle =
-    title && companyName ? `${title} · ${companyName}` : (title ?? companyName ?? null);
-  return (
-    <AiJobRunningToastBody
-      title={subtitle ? `Agent take — ${subtitle}` : "Generating agent take…"}
-      stepLabel={stepLabel}
-    />
-  );
+  const { stepLabel } = useAgentTakeJob();
+  return <AiJobRunningToastBody title="Writing agent take…" stepLabel={stepLabel} />;
 }
 
 function showRunningToast() {

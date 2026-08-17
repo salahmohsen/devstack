@@ -2,6 +2,8 @@ import { useMemo, useSyncExternalStore } from "react";
 
 import { type ApplicationOutput } from "@tsu-stack/core";
 
+import { expandDashboardSidePanel, subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
+
 type SheetMode = "create" | "edit";
 type ListFilter = "open" | "closed" | "all";
 
@@ -86,11 +88,18 @@ const actions: ApplicationUIActions = {
   openEdit: (item) => setState({ sheetOpen: true, sheetMode: "edit", editItem: item }),
   closeSheet: () => setState({ sheetOpen: false, editItem: null }),
   /** Toggle side panel: same item closes, different item switches. */
-  openView: (item) =>
-    setState({
-      viewItem: state.viewItem?.id === item.id ? null : item
-    }),
-  showView: (item) => setState({ viewItem: item }),
+  openView: (item) => {
+    if (state.viewItem?.id === item.id) {
+      setState({ viewItem: null });
+      return;
+    }
+    expandDashboardSidePanel();
+    setState({ viewItem: item });
+  },
+  showView: (item) => {
+    expandDashboardSidePanel();
+    setState({ viewItem: item });
+  },
   closeView: () => setState({ viewItem: null }),
   setListFilter: (listFilter) => setState({ listFilter }),
   toggleSelect: (id) =>
@@ -117,6 +126,10 @@ const actions: ApplicationUIActions = {
     setState({ materialPreview: { applicationId, kind } }),
   closeMaterialPreview: () => setState({ materialPreview: null })
 };
+
+subscribeSidePanelClose(() => {
+  if (state.viewItem != null) setState({ viewItem: null });
+});
 
 function subscribe(listener: () => void) {
   listeners.add(listener);

@@ -3,6 +3,25 @@ import { z } from "zod";
 
 import { createDb, projectRepository, runWithDb } from "@tsu-stack/db";
 
+function outlineFromAnalysis(analysis: string): {
+  headings: string[];
+  excerpt: string;
+  truncated: boolean;
+} {
+  const headings: string[] = [];
+  for (const match of analysis.matchAll(/^#{1,3}\s+(.+)$/gm)) {
+    const heading = match[1]?.trim() ?? "";
+    if (!heading) continue;
+    headings.push(heading);
+    if (headings.length >= 16) break;
+  }
+  return {
+    headings,
+    excerpt: analysis.slice(0, 2400),
+    truncated: analysis.length > 2400
+  };
+}
+
 /**
  * Evidence graph read — single project by id for the current tenant.
  *
@@ -12,13 +31,14 @@ import { createDb, projectRepository, runWithDb } from "@tsu-stack/db";
 export const getProjectTool = createTool({
   id: "get-project",
   description:
-    "Fetch one project by id (title, year, summary, stacks, links) for the current user only. Required: projectId from listProjects. Never call with {} or a missing id — list first, then pass that id.",
+    "Fetch one project by id (title, year, summary, analysisExcerpt, analysisHeadings, stacks, links). Required: projectId or id from listProjects / searchEvidence. Read analysisExcerpt before rewriting summary or description — do not invent copy. Never dump the full analysis in chat. Never call with {} or a missing id.",
   inputSchema: z.object({
     projectId: z
       .string()
       .min(1)
       .optional()
-      .describe("Project id from listProjects. Required; do not omit.")
+      .describe("Project id from listProjects / searchEvidence."),
+    id: z.string().min(1).optional().describe("Alias for projectId.")
     // Intentionally no userId — tenant is requestContext only.
   }),
   outputSchema: z.object({
@@ -31,6 +51,10 @@ export const getProjectTool = createTool({
         year: z.number().int(),
         summary: z.string().nullable(),
         descriptionSnippet: z.string().nullable(),
+        hasAnalysis: z.boolean(),
+        analysisHeadings: z.array(z.string()),
+        analysisExcerpt: z.string().nullable(),
+        analysisTruncated: z.boolean(),
         isArchived: z.boolean(),
         isPresent: z.boolean(),
         experienceId: z.string().nullable(),
@@ -40,8 +64,9 @@ export const getProjectTool = createTool({
       })
       .nullable()
   }),
-  execute: async ({ projectId }, context) => {
-    if (!projectId) {
+  execute: async ({ projectId, id }, context) => {
+    const resolvedId = (projectId ?? id ?? "").trim();
+    if (!resolvedId) {
       return {
         found: false,
         project: null,
@@ -54,8 +79,10 @@ export const getProjectTool = createTool({
       return { found: false, project: null };
     }
     const db = createDb();
-    const row = await runWithDb(db, () => projectRepository.findByIdForUser(projectId, userId));
+    const row = await runWithDb(db, () => projectRepository.findByIdForUser(resolvedId, userId));
     if (!row) return { found: false, project: null };
+    const analysisRaw = row.analysis?.trim() ?? "";
+    const outline = analysisRaw.length > 0 ? outlineFromAnalysis(analysisRaw) : null;
     return {
       found: true,
       project: {
@@ -65,6 +92,10 @@ export const getProjectTool = createTool({
         summary: row.summary ? row.summary.slice(0, 400) : null,
         // Short snippet only — omit large HTML bodies.
         descriptionSnippet: row.description ? row.description.slice(0, 400) : null,
+        hasAnalysis: Boolean(outline),
+        analysisHeadings: outline?.headings ?? [],
+        analysisExcerpt: outline?.excerpt ?? null,
+        analysisTruncated: outline?.truncated ?? false,
         isArchived: row.isArchived ?? false,
         isPresent: row.isPresent ?? false,
         experienceId: row.experienceId ?? null,

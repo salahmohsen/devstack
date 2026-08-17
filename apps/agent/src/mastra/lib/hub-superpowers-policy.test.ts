@@ -5,6 +5,8 @@ import {
   descriptionQualityLength,
   filterConfirmedTriageIds,
   filterHubJobUrlImportActiveTools,
+  filterHubPostEvidenceConfirmActiveTools,
+  filterHubPostTriageConfirmActiveTools,
   filterHubTriageActiveTools,
   hubJobUrlImportFeedback,
   isJobListingUrl,
@@ -12,6 +14,12 @@ import {
   meetsApplyPackageQualityGate,
   selectFocusJob,
   shouldStopHubLoopAfterClientHitl,
+  userTurnAsksCompanyStatus,
+  userTurnAsksDailyBrief,
+  userTurnAsksEntityInspect,
+  userTurnAsksNewJobsTriage,
+  userTurnAsksPileStatusOnly,
+  userTurnRetriesDailyBrief,
   type JobScoreRow
 } from "./hub-superpowers-policy";
 
@@ -184,18 +192,95 @@ describe("filterConfirmedTriageIds — multi-variable stress", () => {
   });
 });
 
+describe("userTurnAsksDailyBrief", () => {
+  it("catches everyday today asks", () => {
+    expect(userTurnAsksDailyBrief("what do you have for me today?")).toBe(true);
+    expect(userTurnAsksDailyBrief("what you have for me today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what we have today?")).toBe(true);
+    expect(userTurnAsksDailyBrief("what do we have today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's new today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's up")).toBe(true);
+    expect(userTurnAsksDailyBrief("whats up?")).toBe(true);
+    expect(userTurnAsksDailyBrief("what is new today")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's up with Trivelta")).toBe(false);
+    expect(userTurnAsksDailyBrief("catch me up")).toBe(true);
+    expect(userTurnAsksDailyBrief("what's on my plate")).toBe(true);
+    expect(
+      userTurnAsksDailyBrief("don't give me a vibe check. what's actually on my plate today")
+    ).toBe(true);
+    expect(userTurnAsksDailyBrief("open mentech experience")).toBe(false);
+    expect(userTurnAsksDailyBrief("I applied today to Trivelta")).toBe(false);
+  });
+});
+
+describe("userTurnAsksCompanyStatus", () => {
+  it("catches a named company plus mail/stage", () => {
+    expect(userTurnAsksCompanyStatus("and trivelta? they email me or just quiet")).toBe(true);
+    expect(userTurnAsksCompanyStatus("what's trivelta's stage")).toBe(true);
+    expect(userTurnAsksCompanyStatus("what we have today?")).toBe(false);
+    expect(userTurnAsksCompanyStatus("open mentech")).toBe(false);
+    expect(
+      userTurnAsksCompanyStatus(
+        "ya3ni catch me up — what we have today? trivelta they write or just quiet. show mentech."
+      )
+    ).toBe(true);
+  });
+});
+
+describe("userTurnAsksEntityInspect", () => {
+  it("catches open/show and ignores Today", () => {
+    expect(userTurnAsksEntityInspect("open mentech")).toBe(true);
+    expect(userTurnAsksEntityInspect("show my latest company i worked for")).toBe(true);
+    expect(userTurnAsksEntityInspect("what do you have for me today?")).toBe(false);
+    expect(userTurnAsksEntityInspect("open the side panel")).toBe(false);
+    expect(
+      userTurnAsksEntityInspect(
+        "ya3ni catch me up — what we have today? trivelta they write or just quiet. show mentech."
+      )
+    ).toBe(true);
+  });
+});
+
+describe("userTurnAsksPileStatusOnly", () => {
+  it("treats yes/no pile questions as status, not triage", () => {
+    expect(userTurnAsksPileStatusOnly("pile empty or not")).toBe(true);
+    expect(userTurnAsksPileStatusOnly("anything new in the pile")).toBe(true);
+    expect(userTurnAsksNewJobsTriage("pile empty or not")).toBe(false);
+    expect(userTurnAsksNewJobsTriage("triage the pile")).toBe(true);
+    expect(userTurnAsksPileStatusOnly("triage the pile")).toBe(false);
+  });
+});
+
+describe("userTurnRetriesDailyBrief", () => {
+  it("catches try-again and open-the-panel follow-ups", () => {
+    expect(userTurnRetriesDailyBrief("try to open the side panel")).toBe(true);
+    expect(userTurnRetriesDailyBrief("try again")).toBe(true);
+    expect(userTurnRetriesDailyBrief("open the panel")).toBe(true);
+    expect(userTurnRetriesDailyBrief("you didn't make any thing")).toBe(true);
+    expect(userTurnRetriesDailyBrief("still nothing")).toBe(true);
+    expect(userTurnRetriesDailyBrief("what's Trivelta's stage")).toBe(false);
+  });
+});
+
 describe("shouldStopHubLoopAfterClientHitl", () => {
-  it.each(["proposeNewJobsTriage", "propose-new-jobs-triage", "propose-application-from-jd"])(
-    "stops while %s is waiting",
-    (name) => {
-      expect(
-        shouldStopHubLoopAfterClientHitl({
-          toolCalls: [{ id: "c1", name }],
-          toolResults: []
-        })
-      ).toBe(true);
-    }
-  );
+  it.each([
+    "proposeNewJobsTriage",
+    "propose-new-jobs-triage",
+    "propose-application-from-jd",
+    "open-entity-form",
+    "openEntityForm",
+    "propose-evidence-change",
+    "proposeEvidenceChange",
+    "open-daily-brief",
+    "propose-mail-crm-change"
+  ])("stops while %s is waiting", (name) => {
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name }],
+        toolResults: []
+      })
+    ).toBe(true);
+  });
 
   it("does not stop after the card has a result", () => {
     expect(
@@ -221,7 +306,36 @@ const URL_IMPORT_TOOL_NAMES = [
   "getJobPreferences",
   "listNewJobs",
   "agent-jobPageExtractor",
-  "proposeApplicationFromJd"
+  "proposeApplicationFromJd",
+  "get-search-brief",
+  "getSearchBrief",
+  "upsert-soft-job-preferences",
+  "upsertSoftJobPreferences",
+  "find-jobs-now",
+  "findJobsNow",
+  "open-entity-form",
+  "openEntityForm",
+  "open-entity-inspect",
+  "openEntityInspect",
+  "propose-hard-preference-change",
+  "proposeHardPreferenceChange",
+  "propose-evidence-change",
+  "proposeEvidenceChange"
+] as const;
+
+const URL_IMPORT_FORBIDDEN = [
+  "get-search-brief",
+  "getSearchBrief",
+  "upsert-soft-job-preferences",
+  "upsertSoftJobPreferences",
+  "find-jobs-now",
+  "findJobsNow",
+  "open-entity-form",
+  "openEntityForm",
+  "open-entity-inspect",
+  "openEntityInspect",
+  "propose-evidence-change",
+  "proposeEvidenceChange"
 ] as const;
 
 describe("hub job URL import lock", () => {
@@ -236,6 +350,15 @@ describe("hub job URL import lock", () => {
     expect(filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, true)).toEqual([
       "proposeApplicationFromJd"
     ]);
+  });
+
+  it("cannot call get-search-brief / upsert / find-jobs-now / open-entity-form during import", () => {
+    const before = filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, false);
+    const after = filterHubJobUrlImportActiveTools(URL_IMPORT_TOOL_NAMES, true);
+    for (const name of URL_IMPORT_FORBIDDEN) {
+      expect(before).not.toContain(name);
+      expect(after).not.toContain(name);
+    }
   });
 
   it("tells the model not to extract again once extract ran", () => {
@@ -272,5 +395,110 @@ describe("hub triage lock", () => {
     expect(
       filterHubTriageActiveTools(["listNewJobs", "proposeNewJobsTriage", "getJobPreferences"])
     ).toEqual(["proposeNewJobsTriage"]);
+  });
+
+  it("after confirm keeps only track and dismiss", () => {
+    expect(
+      filterHubPostTriageConfirmActiveTools([
+        "listNewJobs",
+        "proposeNewJobsTriage",
+        "trackJob",
+        "dismissJob",
+        "getSearchBrief"
+      ])
+    ).toEqual(["trackJob", "dismissJob"]);
+  });
+});
+
+describe("search-loop HITL stop matrix", () => {
+  it.each([
+    "propose-hard-preference-change",
+    "proposeHardPreferenceChange",
+    "find-jobs-now",
+    "get-search-brief",
+    "open-entity-form",
+    "open-entity-inspect",
+    "propose-evidence-change",
+    "proposeEvidenceChange"
+  ])("stops while %s is waiting", (name) => {
+    expect(isHubClientHitlToolName(name)).toBe(true);
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name }],
+        toolResults: []
+      })
+    ).toBe(true);
+  });
+
+  it("does not stop after the hard-stop card has a result", () => {
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name: "propose-hard-preference-change" }],
+        toolResults: [{ id: "c1" }]
+      })
+    ).toBe(false);
+  });
+
+  it("does not treat soft upsert as client HITL", () => {
+    expect(isHubClientHitlToolName("upsert-soft-job-preferences")).toBe(false);
+    expect(isHubClientHitlToolName("upsertSoftJobPreferences")).toBe(false);
+    expect(
+      shouldStopHubLoopAfterClientHitl({
+        toolCalls: [{ id: "c1", name: "upsert-soft-job-preferences" }],
+        toolResults: []
+      })
+    ).toBe(false);
+  });
+});
+
+describe("filterHubPostEvidenceConfirmActiveTools", () => {
+  const toolNames = [
+    "listNewJobs",
+    "list-new-jobs",
+    "proposeNewJobsTriage",
+    "propose-new-jobs-triage",
+    "findJobsNow",
+    "find-jobs-now",
+    "searchEvidence",
+    "getProject",
+    "getExperience",
+    "getStack",
+    "listProjects",
+    "listExperiences",
+    "listStacks",
+    "proposeEvidenceChange",
+    "propose-evidence-change",
+    "openEntityInspect",
+    "getSearchBrief"
+  ] as const;
+
+  it("drops listNewJobs, proposeNewJobsTriage, and findJobsNow in kebab and camel", () => {
+    const kept = filterHubPostEvidenceConfirmActiveTools(toolNames);
+    for (const name of [
+      "listNewJobs",
+      "list-new-jobs",
+      "proposeNewJobsTriage",
+      "propose-new-jobs-triage",
+      "findJobsNow",
+      "find-jobs-now"
+    ]) {
+      expect(kept).not.toContain(name);
+    }
+  });
+
+  it("keeps search, get, list, propose-evidence, inspect, and brief tools", () => {
+    expect(filterHubPostEvidenceConfirmActiveTools(toolNames)).toEqual([
+      "searchEvidence",
+      "getProject",
+      "getExperience",
+      "getStack",
+      "listProjects",
+      "listExperiences",
+      "listStacks",
+      "proposeEvidenceChange",
+      "propose-evidence-change",
+      "openEntityInspect",
+      "getSearchBrief"
+    ]);
   });
 });
