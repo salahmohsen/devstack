@@ -87,7 +87,7 @@ Prefer:
 
 ## Agent and AI surfaces
 
-Still do not add tests unless the user, a plan, or an [app-ai-feature-hardening](./skills/app-ai-feature-hardening/SKILL.md) loop explicitly needs a seam test. When that happens, prefer contracts from [runtime-hardening.md](./skills/app-ai-feature-hardening/runtime-hardening.md) over UI snapshots or AgentCore evals:
+Still do not add tests unless the user, a plan, or an [ai-feature-harness](./skills/ai-feature-harness/SKILL.md) loop explicitly needs a seam test. When that happens, prefer contracts from [runtime-hardening.md](./skills/ai-feature-harness/runtime-hardening.md) over UI snapshots or AgentCore evals:
 
 - Unauthenticated agent HTTP and oRPC chat fail closed
 - `memory: { thread, resource }` is required; `resource` is the session user (`mapUserToResourceId`)

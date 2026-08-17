@@ -79,14 +79,16 @@ Run the items that match the change. Cite evidence (status code, log line, test 
 
 ## Debug (read, do not wait)
 
-| Symptom                       | Look here first                                                                                |
-| ----------------------------- | ---------------------------------------------------------------------------------------------- |
-| 401 / "not authorized" on hub | Session cookie vs `127.0.0.1`/`localhost`; API `protectedProcedure`; agent `public:` allowlist |
-| `threadId "undefined"`        | Body missing `memory: { thread, resource }` (`hubChatMemoryOptions`)                           |
-| Tool called with `{}`         | Schema + list-before-get; empty HITL args (see LESSONS)                                        |
-| "AI temporarily unavailable"  | Core ESM cache stale; restart package `dev`                                                    |
-| Wrong user's memories / brief | `mapUserToResourceId` vs client-supplied resource; thread id formula                           |
-| Stream dies mid-tool          | API abort signal forwarded; workflow `startAsync` vs chat timeout                              |
-| Model / BYO errors            | Settings key present; `resolveRuntimeAiCredentials`; product error not raw dump                |
+| Symptom                       | Look here first                                                                                                                              |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 401 / "not authorized" on hub | Session cookie vs `127.0.0.1`/`localhost`; **prod: cookie host is API origin, not web**; API `protectedProcedure`; agent `public:` allowlist |
+| Prod tools “don’t render”     | `listHubMessages.uiMessages` has `tool-*`? Yes → toolkit/Agent Activity. No → model never called; check OM token window + force processors   |
+| `Error in agent stream` + Zod | Structured-output schema too strict (e.g. `skills.n.band`). Loose LLM schema + sanitize                                                      |
+| `threadId "undefined"`        | Body missing `memory: { thread, resource }` (`hubChatMemoryOptions`)                                                                         |
+| Tool called with `{}`         | Schema + list-before-get; empty HITL args (see LESSONS)                                                                                      |
+| "AI temporarily unavailable"  | Core ESM cache stale; restart package `dev`                                                                                                  |
+| Wrong user's memories / brief | `mapUserToResourceId` vs client-supplied resource; thread id formula                                                                         |
+| Stream dies mid-tool          | API abort signal forwarded; workflow `startAsync` vs chat timeout                                                                            |
+| Model / BYO errors            | Settings key present; `resolveRuntimeAiCredentials`; product error not raw dump                                                              |
 
 **REQUIRED BACKGROUND** for hard bugs: diagnose / superpowers:systematic-debugging. Still read logs yourself.

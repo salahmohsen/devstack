@@ -4,7 +4,7 @@
 **Status:** Accepted (grilled lock; ready for implementation plan)  
 **Goal:** Fill **New jobs** from **free, high-quality public job APIs** via one adapter contract, a **shared posting catalog**, cheap preference ranking, then **per-user BYO AI** (score, agent take, fill/fix). Mail harvest becomes **opt-in**.
 
-**Hardening:** After implementation, run [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) before claiming done. Fresh report + lessons in that skill’s `LESSONS.md`.
+**Hardening:** After implementation, run [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) before claiming done. Fresh report + lessons in that skill’s `LESSONS.md`.
 
 **Amended (2026-08-15):** Land-then-AI stubs, cheap ± location/mode, and post-insert fill/fix are superseded by [two-axis matching + evaluate-then-insert](./2026-08-15-job-preference-two-axis-extraction-design.md).
 
@@ -361,7 +361,7 @@ Place shared types and packs in `packages/core` (`job-preference` + new `job-dis
 5. Settings + Find jobs now UI.
 6. TTL + liveness.
 7. Mail harvest toggle (default off).
-8. [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md).
+8. [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md).
 
 ---
 

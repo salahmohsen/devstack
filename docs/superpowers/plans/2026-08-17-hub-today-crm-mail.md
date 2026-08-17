@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Checkbox steps are the work list.
 >
-> **REQUIRED after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) — fresh loop on hub Thread + floater, append `LESSONS.md`, write the report. Everyday language only.
+> **REQUIRED after implementation:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) — fresh loop on hub Thread + floater, append `LESSONS.md`, write the report. Everyday language only.
 
 **Grill date:** 2026-08-17. This file is the single lock for two sessions: CRM/mail/find-jobs, then Today + characters.
 

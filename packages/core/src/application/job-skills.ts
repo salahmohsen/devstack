@@ -173,12 +173,43 @@ export const LinkedJobSkillInputSchema = z.object({
 });
 export type LinkedJobSkillInput = z.infer<typeof LinkedJobSkillInputSchema>;
 
+/** Loose enough for structured output — sanitize is the gate. */
+export const LinkedJobSkillLlmSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  band: z.string().optional(),
+  stackId: z.union([z.string().min(1), z.null()]).optional()
+});
+
 export const LinkedJobSkillsPayloadSchema = z.object({
-  skills: z.array(LinkedJobSkillInputSchema).max(40)
+  skills: z.array(LinkedJobSkillLlmSchema).max(40)
 });
 export type LinkedJobSkillsPayload = z.infer<typeof LinkedJobSkillsPayloadSchema>;
 
 const MAX_LINKED_SKILLS = 24;
+
+function coerceJobSkillBand(raw: unknown): JobSkillBand | null {
+  if (raw == null || raw === "") return "required";
+  if (typeof raw !== "string") return null;
+  const value = raw.trim().toLowerCase();
+  if (
+    value === "preferred" ||
+    value === "nice-to-have" ||
+    value === "nice to have" ||
+    value === "optional"
+  ) {
+    return "preferred";
+  }
+  if (
+    value === "required" ||
+    value === "must" ||
+    value === "must-have" ||
+    value === "must have" ||
+    value === "core"
+  ) {
+    return "required";
+  }
+  return null;
+}
 
 function asSkillList(raw: unknown): unknown[] {
   if (Array.isArray(raw)) return raw;
@@ -204,8 +235,7 @@ export function sanitizeLinkedJobSkills(
     const rec = item as { name?: unknown; band?: unknown; stackId?: unknown };
     const name = typeof rec.name === "string" ? rec.name.trim().slice(0, 80) : "";
     if (!name) continue;
-    const band =
-      rec.band === "preferred" ? "preferred" : rec.band === "required" ? "required" : null;
+    const band = coerceJobSkillBand(rec.band);
     if (!band) continue;
     const key = `${band}:${normalizeJobSkillName(name)}`;
     if (seen.has(key)) continue;

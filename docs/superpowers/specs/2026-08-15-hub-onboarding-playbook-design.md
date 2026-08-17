@@ -26,7 +26,7 @@
 | `requireApproval` on form tools                   | **No**                                                                                                   |
 | `@mastra/client-js` `createTool`                  | **No**                                                                                                   |
 
-**UI skills:** coss, impeccable (operate), existing hub HITL cards, [assistant-ui tools](../../../.agents/skills/tools/SKILL.md). Reuse catalog / job-preference / upload modules. Mount playbook cards on the 3c HITL frame. **app-ai-feature-hardening** after ship.
+**UI skills:** coss, impeccable (operate), existing hub HITL cards, [assistant-ui tools](../../../.agents/skills/tools/SKILL.md). Reuse catalog / job-preference / upload modules. Mount playbook cards on the 3c HITL frame. **ai-feature-harness** after ship.
 
 ---
 
@@ -180,4 +180,4 @@ Use shared predicates from spec 1 (`catalogItemState` / catalog hide column) and
 - Extract card upload → workflow → confirm → apply writes only selected kinds.
 - Gmail card in chat is the same component as Settings.
 - Processor does not force a summary while a config/confirm card is pending.
-- After ship: **app-ai-feature-hardening** (playbook + slice + missing-config). Append `LESSONS.md`.
+- After ship: **ai-feature-harness** (playbook + slice + missing-config). Append `LESSONS.md`.

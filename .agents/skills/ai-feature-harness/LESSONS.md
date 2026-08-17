@@ -1,6 +1,6 @@
 # Living lessons
 
-**Agents:** Read this file at the start of every `app-ai-feature-hardening` run.  
+**Agents:** Read this file at the start of every `ai-feature-harness` run.  
 **After every run:** prepend a new entry (newest first) using the template.  
 **Style:** Durable and generic — another agent next month should benefit. No secrets, no one-off repo names unless the lesson is about that product surface.
 
@@ -16,6 +16,19 @@
 ```
 
 ---
+
+## 2026-08-17 — Production hub: promised tools, collapsed strip, API cookie host
+
+- **Trigger:** First systematic prod debug of hub chat (dashboard + `listHubMessages` + Axiom `devhub` + Dokploy `devhub-agent`/`web`/`server`)
+- **Finding:** “Tools don’t render in prod” is three layers. (1) The model wrote “Let me pull the stack list” with **no** `listStacks` part. (2) When the tool did run, `HubToolFallback` returns null for working-strip names and Agent Activity `collapseOnComplete` leaves a 28px `Thought for 0s` row. (3) `listExperiences` has a standalone timeline; `listStacks` does not — a successful call has no catalog UI
+- **Finding:** `listHubMessages` `uiMessages` already maps Mastra `tool-invocation` → `tool-<name>` with `toolCallId`. Empty chrome with a tool part is a **client render** bug. Empty chrome with only `reasoning`+`text` is a **missing call**. Always diff those two before changing the mapper
+- **Finding:** `onIterationComplete` treats “spoken text + zero tools” as terminal. Over-threshold Observational Memory (`messages.tokens` ≥ 30k) makes DeepSeek narrate a tool and stop. Force the catalog tool (same class as Today / inspect); hide the prelude line
+- **Finding:** `shouldStopAfter*` must only count spoken text **after** the tool. Whole-message `mastraMessageText` treats “Let me pull the stack list” as a finished answer and stops the force loop
+- **Finding:** Production Better Auth `__Secure-*` cookies are on the **API** host (`api.…`), not the web host. Extra `Cookie` on `hub.…` SSRs the shell and still 401s `listHubMessages`. Decode `%2B`/`%3D` in the token
+- **Finding:** Dokploy `application-one` / deploy title is the running SHA. Agent evlog `version` can be an older CI stamp. `autoDeploy` may be off — a green local HEAD is not proof prod is that commit
+- **Finding:** `LinkedJobSkillsPayloadSchema` as structured output crashes the stream when the model omits `band` or uses “must-have”. Sanitize already drops bad rows — the **LLM schema** must be loose; crash is `Error in agent stream`
+- **User preference:** Everyday phrasing; do not coach tool names; read Axiom + Dokploy yourself
+- **Evidence class:** Prod `uiMessages` (text-only vs `tool-listStacks`); Chrome collapsed Agent Activity; Axiom `agent_hub_chat_stream_started`; Dokploy agent `skills.*.band` validation errors
 
 ## 2026-08-17 — Today ask anytime: rolling 24h + stop the self-prompt loop
 

@@ -7,6 +7,8 @@ import {
   messagesNeedDailyBriefFacts,
   messagesNeedDailyBriefOpen,
   messagesNeedEntityInspect,
+  messagesNeedListStacks,
+  shouldStopAfterStackCatalog,
   shouldStopAfterTodayLetter,
   messagesNeedProposeTriage,
   messagesNeedSearchBriefAnswer,
@@ -370,6 +372,79 @@ describe("messagesNeedDailyBrief", () => {
     const ids = createHubInputProcessors().map((processor) => processor.id);
     expect(ids.indexOf("hub-today")).toBeGreaterThan(-1);
     expect(ids.indexOf("hub-today")).toBeLessThan(ids.indexOf("hub-job-url-import"));
+  });
+
+  it("needs listStacks on a stack-catalog ask until the tool runs", () => {
+    expect(
+      messagesNeedListStacks([
+        { role: "user", content: { parts: [{ type: "text", text: "filter all my stacks" }] } }
+      ] as never)
+    ).toBe(true);
+    expect(
+      messagesNeedListStacks([
+        { role: "user", content: { parts: [{ type: "text", text: "filter all my stacks" }] } },
+        assistantWithParts([
+          {
+            type: "tool-listStacks",
+            toolName: "listStacks",
+            state: "output-available",
+            output: { stacks: [{ id: "s1", name: "React" }] }
+          }
+        ])
+      ] as never)
+    ).toBe(false);
+  });
+
+  it("walks back through you-didn't-pull retries to the original stack ask", () => {
+    expect(
+      messagesNeedListStacks([
+        { role: "user", content: { parts: [{ type: "text", text: "pull my stack list" }] } },
+        assistantWithParts([{ type: "text", text: "Let me pull your full stack list." }]),
+        {
+          role: "user",
+          content: { parts: [{ type: "text", text: "you didn't pull the stack list" }] }
+        }
+      ] as never)
+    ).toBe(true);
+  });
+
+  it("does not stop when only a prelude sits before listStacks", () => {
+    expect(
+      shouldStopAfterStackCatalog([
+        { role: "user", content: { parts: [{ type: "text", text: "filter all my stacks" }] } },
+        assistantWithParts([
+          { type: "text", text: "Let me pull your full stack list." },
+          {
+            type: "tool-listStacks",
+            toolName: "listStacks",
+            state: "output-available",
+            output: { stacks: [{ id: "s1", name: "React" }] }
+          }
+        ])
+      ] as never)
+    ).toBe(false);
+  });
+
+  it("stops after listStacks plus a spoken answer", () => {
+    const messages = [
+      { role: "user", content: { parts: [{ type: "text", text: "filter all my stacks" }] } },
+      assistantWithParts([
+        {
+          type: "tool-listStacks",
+          toolName: "listStacks",
+          state: "output-available",
+          output: { stacks: [{ id: "s1", name: "React" }] }
+        },
+        { type: "text", text: "Here is the filtered catalog." }
+      ])
+    ] as never;
+    expect(shouldStopAfterStackCatalog(messages)).toBe(true);
+  });
+
+  it("registers hub-stack-catalog with the other force processors", () => {
+    const ids = createHubInputProcessors().map((processor) => processor.id);
+    expect(ids.indexOf("hub-stack-catalog")).toBeGreaterThan(-1);
+    expect(ids.indexOf("hub-stack-catalog")).toBeLessThan(ids.indexOf("hub-job-url-import"));
   });
 });
 

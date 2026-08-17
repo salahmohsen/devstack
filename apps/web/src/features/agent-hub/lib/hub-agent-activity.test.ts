@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildHubAgentActivityItems,
+  hubAgentActivityCollapseOnComplete,
   buildTodayLetterActivityItems,
   humanizeHubToolName,
   hubAgentActivityActiveLabel,
@@ -328,5 +329,12 @@ describe("buildHubAgentActivityItems", () => {
       },
       { id: "ex1", type: "step", label: "Reading listing", status: "active" }
     ]);
+  });
+});
+
+describe("hubAgentActivityCollapseOnComplete", () => {
+  it("keeps the latest assistant strip open after tools complete", () => {
+    expect(hubAgentActivityCollapseOnComplete(true)).toBe(false);
+    expect(hubAgentActivityCollapseOnComplete(false)).toBe(true);
   });
 });

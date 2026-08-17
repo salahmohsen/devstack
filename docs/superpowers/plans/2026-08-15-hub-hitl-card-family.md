@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **REQUIRED after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) — load the skill, read `LESSONS.md`, run a fresh loop on hub Thread HITL cards (JD, triage, package/send approval), and append lessons. Do not claim done from a visual screenshot.
+> **REQUIRED after implementation:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) — load the skill, read `LESSONS.md`, run a fresh loop on hub Thread HITL cards (JD, triage, package/send approval), and append lessons. Do not claim done from a visual screenshot.
 
 **Goal:** One `HubHitlFrame` and four kinds so existing hub pause cards share chrome; kill the JSON approval dump; leave playbook tools to 3b.
 
@@ -12,7 +12,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-15-hub-hitl-card-family-design.md`
 
-**Skills:** `@coss`, `@assistant-ui` `tools` (HITL resume only), `@impeccable` (operate), `@app-ai-feature-hardening` after ship.
+**Skills:** `@coss`, `@assistant-ui` `tools` (HITL resume only), `@impeccable` (operate), `@ai-feature-harness` after ship.
 
 ---
 
@@ -360,7 +360,7 @@ export function AgentHubToolApproval({
 
 ### Task 6: Verify + harden
 
-**Files:** none new. Follow `.agents/skills/app-ai-feature-hardening/SKILL.md`.
+**Files:** none new. Follow `.agents/skills/ai-feature-harness/SKILL.md`.
 
 - [ ] **Step 1:** Browser, desktop + a narrow width (~390). Hub Thread:
 
@@ -376,7 +376,7 @@ export function AgentHubToolApproval({
 
 - [ ] **Step 2:** Hunt regressions: Tracked-jobs / Import JD floater if it renders the same toolkit; history reload of a completed JD card still shows the receipt, not a live card.
 
-- [ ] **Step 3:** Append lessons to `.agents/skills/app-ai-feature-hardening/LESSONS.md`. Write a hardening report. Do not claim done without the loop.
+- [ ] **Step 3:** Append lessons to `.agents/skills/ai-feature-harness/LESSONS.md`. Write a hardening report. Do not claim done without the loop.
 
 ---
 

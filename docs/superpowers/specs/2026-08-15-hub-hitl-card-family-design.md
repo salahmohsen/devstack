@@ -12,7 +12,7 @@
 - Hub chat rebuild — `2026-08-13-hub-chat-assistant-ui-rebuild-design.md` (toolkit, not `present`)
 - Playbook — `2026-08-15-hub-onboarding-playbook-design.md` (cards + resume handshake)
 - Shared contracts — `2026-08-15-shared-integration-contracts-design.md` (catalog / AI cards)
-- Skills: [assistant-ui](../../../.agents/skills/assistant-ui/SKILL.md), [tools](../../../.agents/skills/tools/SKILL.md) (`references/human-in-loop.md`), [primitives](../../../.agents/skills/primitives/SKILL.md), coss, impeccable (operate), [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md)
+- Skills: [assistant-ui](../../../.agents/skills/assistant-ui/SKILL.md), [tools](../../../.agents/skills/tools/SKILL.md) (`references/human-in-loop.md`), [primitives](../../../.agents/skills/primitives/SKILL.md), coss, impeccable (operate), [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md)
 
 ---
 
@@ -157,7 +157,7 @@ No new `packages/ui` primitive until a second app needs the frame.
 
 ## Verification
 
-After implement: [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md). Fresh report + `LESSONS.md`.
+After implement: [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md). Fresh report + `LESSONS.md`.
 
 Must cover:
 

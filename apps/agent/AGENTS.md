@@ -10,8 +10,8 @@ Load the `mastra` skill BEFORE any Mastra work. Never rely on cached knowledge â
 - Monorepo index: [Agents.md](../../Agents.md)
 - Logging facade: [Logging](../../.agents/logging.md) â€” use `@tsu-stack/logger` only; never import `evlog` directly from this app
 - Product glossary: [CONTEXT.md](../../CONTEXT.md)
-- After shipping hub tools / workflows / HITL: [app-ai-feature-hardening](../../.agents/skills/app-ai-feature-hardening/SKILL.md) (required verification + living `LESSONS.md`)
-- Production/runtime checks (auth, secrets, tenant, validation, traces): [runtime-hardening.md](../../.agents/skills/app-ai-feature-hardening/runtime-hardening.md). Do not run AWS AgentCore skills (`agentcore`, `agentcore.json`).
+- After shipping hub tools / workflows / HITL: [ai-feature-harness](../../.agents/skills/ai-feature-harness/SKILL.md) (required verification + living `LESSONS.md`)
+- Production/runtime checks (auth, secrets, tenant, validation, traces): [runtime-hardening.md](../../.agents/skills/ai-feature-harness/runtime-hardening.md). Do not run AWS AgentCore skills (`agentcore`, `agentcore.json`).
 
 ## Rules
 

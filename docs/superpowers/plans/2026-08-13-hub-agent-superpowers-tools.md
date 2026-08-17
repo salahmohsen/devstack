@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **REQUIRED after implementation (each slice + golden path):** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) — load the skill, read its `LESSONS.md`, build a feedback loop, verify hub Thread + floater entry paths, HITL cards, list invalidation, and append lessons. Do not claim the golden utterance works without a fresh hardening report.
+> **REQUIRED after implementation (each slice + golden path):** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) — load the skill, read its `LESSONS.md`, build a feedback loop, verify hub Thread + floater entry paths, HITL cards, list invalidation, and append lessons. Do not claim the golden utterance works without a fresh hardening report.
 
 **Goal:** Ship mini hub tools + New jobs triage HITL + first-apply generate→accept→send + related notifs + home/floater chrome so one golden utterance can triage New jobs against portfolio evidence and follow up on the focus job.
 
@@ -332,7 +332,7 @@ git commit -m "feat(web): hub Assistant Modal floater off dashboard home"
 
 - [ ] **Step 1:** On tool completion for track/dismiss/stage/package/send → invalidate applications list/count queries. Extend `isSuccessfulMutatingToolOutput` (or equivalent) to treat `{ ok: true }` as success — name-only matching is not enough.
 
-- [ ] **Step 2:** Run [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) for this plan (not a one-off checklist). Contract must include:
+- [ ] **Step 2:** Run [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) for this plan (not a one-off checklist). Contract must include:
 
   1. Home Thread: triage utterance → HITL card
   2. Confirm → DB track/dismiss + list invalidation

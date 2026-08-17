@@ -33,6 +33,7 @@ import {
 import {
   hideHubAssistantTextAfterIndex,
   isHubProcessorLeakText,
+  isHubPromisedCatalogText,
   isHubTodayLetterPaste
 } from "@/features/agent-hub/lib/should-auto-resume-hub-chat";
 
@@ -149,6 +150,7 @@ export function HubAssistantMessage() {
             shouldHideTextPart={(text) =>
               isHubProcessorLeakText(text) ||
               isHubTodayLetterPaste(text) ||
+              isHubPromisedCatalogText(text) ||
               (hideTodayChat && Boolean(text.trim()))
             }
             errorFeature="hub"

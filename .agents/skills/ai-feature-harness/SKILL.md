@@ -1,9 +1,9 @@
 ---
-name: app-ai-feature-hardening
-description: Use when testing or hardening dashboard/AI product features after implementation, before claiming a feature works or is done, when validating hub chat tools HITL cards detect/organize stacks multi-entry UI flows Mastra workflows, when a plan says to run app-ai-feature-hardening, when the user asks to test/harden/secure the app or AI, or on production readiness (inbound auth, secrets, tenant isolation, eval baseline, agent 401, missing traces).
+name: ai-feature-harness
+description: Use when testing or hardening dashboard/AI product features after implementation, before claiming a feature works or is done, when validating hub chat tools HITL cards detect/organize stacks multi-entry UI flows Mastra workflows, when a plan says to run ai-feature-harness or the former name app-ai-feature-hardening, when the user asks to test/harden/secure the app or AI, or on production readiness (inbound auth, secrets, tenant isolation, eval baseline, agent 401, missing traces).
 ---
 
-# App + AI feature hardening
+# AI feature harness
 
 ## Overview
 
@@ -24,7 +24,7 @@ Runtime/auth/tenant/eval checks: [runtime-hardening.md](runtime-hardening.md). D
 - When the user says test / harden / smoke / verify / secure the app or AI
 - When executing a plan that links this skill (e.g. hub agent superpowers)
 - Production readiness for the hub agent: inbound auth, secrets, tenant isolation, payload limits, traces, eval baseline
-- Agent looks broken (401, empty tools, wrong memory, missing traces) — read local logs first ([harness.md](harness.md))
+- Agent looks broken (401, empty tools, wrong memory, missing traces, prod ≠ local) — read local logs first, then prod Axiom + Dokploy + `listHubMessages` ([harness.md](harness.md))
 
 **When not to use:** Pure docs/types refactors with no runtime behavior; unit-only library changes that never touch UI or agent streams (use package tests instead). Not a substitute: AWS `agents-harden` / `agents-debug` / `agents-optimize`.
 
@@ -69,7 +69,7 @@ If the user stated preferences (e.g. "use coss dialogs"), record them in the con
 3. Browser exercise of the changed UI (required when layout/dialog/HITL/chrome changed)
 4. **Conversation cycles** for hub chat: new persona, long everyday multi-ask, score 1–100, adjust, loop — [conversation-cycles.md](conversation-cycles.md)
 5. Stream/workflow event inspection (Mastra step results, not just final toast)
-6. **Read traces/logs yourself** (Studio, `:4111`, evlog). Do not ask the user to paste agent logs.
+6. **Read traces/logs yourself** (Studio, `:4111`, evlog; prod: Axiom + Dokploy). Do not ask the user to paste agent logs.
 
 Harness recipes for this monorepo: [harness.md](harness.md). Runtime probes: [runtime-hardening.md](runtime-hardening.md).
 
@@ -125,17 +125,18 @@ Update [checklists.md](checklists.md) only when a **new class** of check appears
 
 ## Rationalizations (forbidden)
 
-| Excuse                              | Reality                                  |
-| ----------------------------------- | ---------------------------------------- |
-| "API returned 200"                  | Prove the UI and persisted state         |
-| "Worked once in my head"            | Re-run the loop                          |
-| "Menu path works, form is the same" | Dual entry paths diverge constantly      |
-| "window.confirm is fine"            | Product uses coss AlertDialog — match it |
-| "I'll learn later"                  | Append LESSONS.md before done            |
-| "Private GitHub / session is hard"  | Document blocker; don't fake pass        |
-| "AWS harden/debug will cover it"    | Those skills need AgentCore. Use §G here |
-| "No agentcore.json, skip auth"      | Probe unauthenticated `/chat` → 401      |
-| "Ask the user for logs"             | Read Studio / `:4111` / evlog yourself   |
+| Excuse                                   | Reality                                                  |
+| ---------------------------------------- | -------------------------------------------------------- |
+| "API returned 200"                       | Prove the UI and persisted state                         |
+| "Worked once in my head"                 | Re-run the loop                                          |
+| "Menu path works, form is the same"      | Dual entry paths diverge constantly                      |
+| "window.confirm is fine"                 | Product uses coss AlertDialog — match it                 |
+| "I'll learn later"                       | Append LESSONS.md before done                            |
+| "Private GitHub / session is hard"       | Document blocker; don't fake pass                        |
+| "AWS harden/debug will cover it"         | Those skills need AgentCore. Use §G here                 |
+| "No agentcore.json, skip auth"           | Probe unauthenticated `/chat` → 401                      |
+| "Ask the user for logs"                  | Read Studio / `:4111` / evlog / Axiom / Dokploy yourself |
+| "Prod tools broken — rewrite the mapper" | Diff `uiMessages` parts vs DOM first                     |
 
 ## Red flags — STOP
 
@@ -148,6 +149,8 @@ Update [checklists.md](checklists.md) only when a **new class** of check appears
 - About to add a provider API key to agent env
 - Claiming the agent is "secured" without an unauthenticated 401 probe
 - Asking the user to paste agent logs instead of reading them
+- Treating “no tool UI in prod” as a mapper bug without checking `uiMessages` for `tool-*` vs text-only
+- Setting the session cookie on the web host when oRPC lives on a different API origin
 
 ## Related
 

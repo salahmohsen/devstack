@@ -15,6 +15,7 @@ import {
   HUB_COMPANY_MUST_READ_FEEDBACK,
   HUB_INSPECT_MUST_OPEN_FEEDBACK,
   HUB_TODAY_MUST_GATHER_FEEDBACK,
+  HUB_STACKS_MUST_LIST_FEEDBACK,
   HUB_TRIAGE_MUST_PROPOSE_FEEDBACK,
   HUB_TRIAGE_MUST_WRITE_FEEDBACK,
   hubJobUrlImportFeedback,
@@ -30,6 +31,8 @@ import {
   messagesNeedCompanyRead,
   messagesNeedDailyBriefFacts,
   messagesNeedEntityInspect,
+  messagesNeedListStacks,
+  shouldStopAfterStackCatalog,
   shouldStopAfterTodayLetter,
   messagesNeedProposeAfterJobExtract,
   messagesNeedProposeAfterJobImport,
@@ -137,6 +140,9 @@ export function createHubSupervisor() {
         if (messagesNeedDailyBriefFacts(ctx.messages)) {
           return { continue: true, feedback: HUB_TODAY_MUST_GATHER_FEEDBACK };
         }
+        if (messagesNeedListStacks(ctx.messages)) {
+          return { continue: true, feedback: HUB_STACKS_MUST_LIST_FEEDBACK };
+        }
         if (messagesNeedEntityInspect(ctx.messages)) {
           return { continue: true, feedback: HUB_INSPECT_MUST_OPEN_FEEDBACK };
         }
@@ -144,6 +150,9 @@ export function createHubSupervisor() {
           return { continue: true, feedback: HUB_COMPANY_MUST_READ_FEEDBACK };
         }
         if (shouldStopAfterTodayLetter(ctx.messages)) {
+          return { continue: false };
+        }
+        if (shouldStopAfterStackCatalog(ctx.messages)) {
           return { continue: false };
         }
         const toolCount = ctx.toolCalls?.length ?? 0;

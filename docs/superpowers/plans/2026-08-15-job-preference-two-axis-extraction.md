@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-15-job-preference-two-axis-extraction-design.md`
 
-**Skills after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) (Task 8) — required. Include tenant discovery wipe (Task 7) **before** that loop.
+**Skills after implementation:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) (Task 8) — required. Include tenant discovery wipe (Task 7) **before** that loop.
 
 **Workspace:** Continue on `feature/job-discovery-adapters` worktree. Do not mix unrelated main dirt.
 
@@ -231,7 +231,7 @@ Wipe:
 
 ### Task 9: Harden + optimize (required)
 
-Follow [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) + verification-before-completion.
+Follow [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) + verification-before-completion.
 
 **Contract:** Settings check + two-axis copy; Find now inserts only keepers with take; LatAm remote absent for Egypt/KSA; Dismissed has score fails only; Scan still gated; inbox ≤ 50; Details show work mode.
 

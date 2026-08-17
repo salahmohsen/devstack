@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
-> **REQUIRED after implementation:** [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) — live hub Thread conversation cycle, score 1–100, append `LESSONS.md` + `tool-gaps.md`, write the report. Everyday language only. Do not coach the agent with tool names.
+> **REQUIRED after implementation:** [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) — live hub Thread conversation cycle, score 1–100, append `LESSONS.md` + `tool-gaps.md`, write the report. Everyday language only. Do not coach the agent with tool names.
 
 **Goal:** On a packed everyday ask (“what we have today + Trivelta + pile”), the hub finishes Today, then actually reads that company (tracked + mail + labels), then lists the pile — without replacing the hub supervisor, without silent CRM writes, and without “Checking…” as the whole answer.
 
@@ -1200,13 +1200,13 @@ EOF
 
 **Files:**
 
-- Modify: `.agents/skills/app-ai-feature-hardening/LESSONS.md` (prepend)
-- Modify: `.agents/skills/app-ai-feature-hardening/conversation-cycles.md` (new row at top)
-- Modify: `.agents/skills/app-ai-feature-hardening/tool-gaps.md` (only if a new gap appears twice)
+- Modify: `.agents/skills/ai-feature-harness/LESSONS.md` (prepend)
+- Modify: `.agents/skills/ai-feature-harness/conversation-cycles.md` (new row at top)
+- Modify: `.agents/skills/ai-feature-harness/tool-gaps.md` (only if a new gap appears twice)
 
 **Interfaces:** none. This task produces a report, not a feature.
 
-Follow [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md) and [conversation-cycles.md](../../../.agents/skills/app-ai-feature-hardening/conversation-cycles.md).
+Follow [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md) and [conversation-cycles.md](../../../.agents/skills/ai-feature-harness/conversation-cycles.md).
 
 - [ ] **Step 1: Contract (write it in the reply before chatting)**
 
@@ -1240,9 +1240,9 @@ Pass bar: 70+ and no axis at 0. Below 70 → fix the owning layer from Tasks 1�
 - [ ] **Step 7: Commit docs only if the cycle found a durable lesson**
 
 ```bash
-git add .agents/skills/app-ai-feature-hardening/LESSONS.md \
-  .agents/skills/app-ai-feature-hardening/conversation-cycles.md \
-  .agents/skills/app-ai-feature-hardening/tool-gaps.md
+git add .agents/skills/ai-feature-harness/LESSONS.md \
+  .agents/skills/ai-feature-harness/conversation-cycles.md \
+  .agents/skills/ai-feature-harness/tool-gaps.md
 git commit -m "$(cat <<'EOF'
 docs(hardening): hub obey same-turn cycle
 

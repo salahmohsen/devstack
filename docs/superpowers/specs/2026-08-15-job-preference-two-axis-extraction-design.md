@@ -4,7 +4,7 @@
 **Status:** Accepted (grilled lock; ready for implementation plan)  
 **Goal:** New jobs only keep listings that match the seeker’s work mode + hiring region, with truthful Details (mode, employment, skills) and an agent take **before** the card appears.
 
-**Hardening:** After implementation, **wipe this tenant’s discovery rows**, then run [app-ai-feature-hardening](../../../.agents/skills/app-ai-feature-hardening/SKILL.md). Fresh report + lessons. Do not claim done on a polluted inbox from the land-then-AI era.
+**Hardening:** After implementation, **wipe this tenant’s discovery rows**, then run [ai-feature-harness](../../../.agents/skills/ai-feature-harness/SKILL.md). Fresh report + lessons. Do not claim done on a polluted inbox from the land-then-AI era.
 
 **Amends:** [Job discovery adapters](./2026-08-14-job-discovery-adapters-design.md) — **supersedes** cheap location/work-mode rank, land-then-AI insert, and “fill/fix after stub.” Ingest, adapters, catalog, N slider, 50-cap, 2×N, TTL, Scan gate, no communal LLM are unchanged.
 
@@ -190,7 +190,7 @@ Before claiming the new flow works:
 1. Wipe **this tenant** (`salah` / session user): discovery `application` rows (inbox + dismissed with `sourceTags` including `discovery`) + their activity; `user_job_ai_budget` for that user. Do **not** wipe other tenants, mail, or the shared `job_posting` shelf (Find now will ingest/evaluate against the catalog).
 2. Confirm prefs: title pack, work modes, locations, N, minMatchScore, importFromEmail off.
 3. Find jobs now → only two-axis survivors in New jobs; score fails only in Dismissed; take present on keepers; Details show Remote on Ashby remotes; LatAm remote must **not** appear if locations are Egypt/KSA and region is `latam`.
-4. app-ai-feature-hardening report + `LESSONS.md`.
+4. ai-feature-harness report + `LESSONS.md`.
 
 ---
 
