@@ -18,7 +18,10 @@ import { createLogger } from "@tsu-stack/logger/server";
 
 import { agentFetch } from "#@/lib/agent/agent-fetch";
 import { agentGenerateBody } from "#@/lib/agent/agent-generate-body";
-import { extractTextFromAgentBody } from "#@/lib/agent/parse-agent-generate";
+import {
+  agentGenerateFinishReason,
+  extractTextFromAgentBody
+} from "#@/lib/agent/parse-agent-generate";
 import { ensureSessionTokenForUser } from "#@/lib/agent/resolve-session-token";
 import { loadJobPreference } from "#@/lib/application/load-job-preference";
 import { loadSeekerMatchEvidence } from "#@/lib/application/load-seeker-match-evidence";
@@ -27,6 +30,8 @@ import { resolveRuntimeAiCredentials } from "#@/lib/settings/resolve-runtime-ai"
 
 const AGENT_ID = "job-agent-take";
 const TIMEOUT_MS = 45_000;
+/** Thinking models (MiniMax, DeepSeek-R1) spend this budget on reasoning first. */
+const TAKE_MAX_OUTPUT_TOKENS = 1_200;
 
 export type GenerateAgentTakeErrorCode =
   | "NOT_FOUND"
@@ -186,7 +191,7 @@ export async function generateAgentTakeText(input: {
         agentGenerateBody({
           messages: [{ role: "user", content: prompt }],
           llm,
-          modelSettings: { maxOutputTokens: 220, temperature: 0.4 },
+          modelSettings: { maxOutputTokens: TAKE_MAX_OUTPUT_TOKENS, temperature: 0.4 },
           requestContext: { userId: input.userId }
         })
       ),
@@ -230,7 +235,25 @@ export async function generateAgentTakeText(input: {
     }
     const take = normalizeAgentTakeText(extractTextFromAgentBody(parsed) ?? "");
     if (!take) {
-      return { ok: false, code: "AGENT_FAILED", message: "Empty agent take response" };
+      const finishReason = agentGenerateFinishReason(parsed);
+      log.error(new Error("agent take empty"), {
+        event: "generate_agent_take_empty",
+        finishReason,
+        bodyKeys:
+          parsed && typeof parsed === "object" ? Object.keys(parsed as object).slice(0, 16) : [],
+        bodyPreview: bodyText.slice(0, 280),
+        ...injectFlags,
+        ...byo
+      });
+      log.emit({ _forceKeep: true });
+      return {
+        ok: false,
+        code: "AGENT_FAILED",
+        message:
+          finishReason === "length"
+            ? "The model used its output budget on thinking and returned no take. Try again."
+            : "Empty agent take response"
+      };
     }
 
     log.set({
