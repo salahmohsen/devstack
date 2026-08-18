@@ -393,7 +393,7 @@ type ApplyPackagePanelActionsProps = {
 
 /**
  * Primary CTAs for the application info panel (Prepare / Review / Send).
- * Joined coss Group — all segments share filled `default` with GroupSeparator bg-primary/72 (coss p-group-6).
+ * Joined coss Group of filled `default` buttons — separators use bg-primary/72 (coss p-group-6).
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
   const { openPackageSheet, openSendOutreach, openEdit, openMaterialPreview } =
@@ -526,13 +526,13 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         <Group aria-label="Apply package actions" className="w-full max-w-full items-stretch">
           {segments.map((segment, index) => (
             <Fragment key={index}>
-              {index > 0 ? <GroupSeparator /> : null}
+              {index > 0 ? <GroupSeparator className="bg-primary/72" /> : null}
               {segment}
             </Fragment>
           ))}
           {showChevron ? (
             <>
-              <GroupSeparator />
+              <GroupSeparator className="bg-primary/72" />
               <Menu>
                 <MenuTrigger
                   render={

@@ -71,7 +71,7 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
           className={isBoard ? "min-w-0 flex-1" : "min-w-0"}
         />
       ) : null}
-      {primary ? <GroupSeparator className="bg-input" /> : null}
+      {primary ? <GroupSeparator /> : null}
       {showEdit ? (
         <>
           <Button
@@ -84,7 +84,7 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
             <PencilIcon strokeWidth={1.75} aria-hidden />
             Edit
           </Button>
-          <GroupSeparator className="bg-input" />
+          <GroupSeparator />
         </>
       ) : null}
       {showListingInGroup && listingUrl ? (
@@ -104,7 +104,7 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
             <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
             {isBoard ? null : APPLICATION_PRIMARY_ACTION_LABELS.openListing}
           </Button>
-          <GroupSeparator className="bg-input" />
+          <GroupSeparator />
         </>
       ) : null}
       <Menu>
