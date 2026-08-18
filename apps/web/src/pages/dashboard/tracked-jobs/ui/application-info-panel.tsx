@@ -3,17 +3,21 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   AlignLeftIcon,
+  CopyIcon,
   DownloadIcon,
   ExternalLinkIcon,
+  EyeIcon,
   FileTextIcon,
   HistoryIcon,
   InfoIcon,
+  MailIcon,
   PackageIcon,
   RefreshCwIcon,
   SparklesIcon,
   StickyNoteIcon
 } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
+import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import {
@@ -38,6 +42,7 @@ import {
   DialogPopup,
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
@@ -48,13 +53,21 @@ import {
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
+  actionsFor,
   coverLetterDownloadUrl,
+  formatCoverLetterCopy,
+  formatOutreachCopy,
+  materialsFor,
   resumeDownloadUrl,
-  useRegenerateAgentTakeMutation
+  useRegenerateAgentTakeMutation,
+  writeClipboardText,
+  type ApplicationMaterialKind,
+  type MaterialActionId
 } from "@/features/applications";
 
 import { ItemInfoPanel, ItemInfoSection, PanelEditButton } from "@/widgets/items-page";
 
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
 function formatWhen(value: Date | string | null | undefined) {
@@ -185,6 +198,122 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
     <div className="flex items-start justify-between gap-3 text-sm">
       <dt className="shrink-0 pt-0.5 text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-right text-foreground">{children}</dd>
+    </div>
+  );
+}
+
+async function copyText(label: string, value: string | null) {
+  if (!value) {
+    toast.error(`Nothing to copy for ${label}`);
+    return;
+  }
+  const ok = await writeClipboardText(value);
+  if (ok) toast.success("Copied");
+  else toast.error("Could not copy");
+}
+
+function triggerDownload(href: string) {
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = "";
+  a.rel = "noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function runPanelMaterialAction(
+  app: ApplicationOutput,
+  kind: ApplicationMaterialKind,
+  actionId: MaterialActionId,
+  openMaterialPreview: (applicationId: string, kind: ApplicationMaterialKind) => void
+) {
+  if (actionId === "preview") {
+    openMaterialPreview(app.id, kind);
+    return;
+  }
+  if (actionId === "download") {
+    if (kind === "resume" && app.resumeId) {
+      triggerDownload(resumeDownloadUrl(app.resumeId));
+      return;
+    }
+    if (kind === "cover-letter" && app.coverLetterR2Key) {
+      triggerDownload(coverLetterDownloadUrl(app.id));
+      return;
+    }
+    toast.error("Download unavailable");
+    return;
+  }
+  if (actionId === "copy") {
+    if (kind === "cover-letter") {
+      void copyText("cover letter", formatCoverLetterCopy(app));
+      return;
+    }
+    if (kind === "outreach") {
+      void copyText("outreach email", formatOutreachCopy(app));
+    }
+  }
+}
+
+function MaterialsActionCards({ item }: { item: ApplicationOutput }) {
+  const { openMaterialPreview } = useApplicationStore();
+
+  return (
+    <div className="space-y-2.5">
+      {materialsFor(item).map((material) => {
+        const actions = actionsFor(material.kind, item);
+        const Icon = material.kind === "outreach" ? MailIcon : FileTextIcon;
+        return (
+          <div
+            key={material.kind}
+            className="rounded-xl border border-border/80 bg-muted/20 p-3 dark:bg-muted/10"
+          >
+            <div className="mb-2.5 flex items-center gap-2.5">
+              <span className="inline-flex size-8 items-center justify-center rounded-lg bg-muted/60">
+                <Icon className="size-4" strokeWidth={1.75} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">{material.label}</p>
+                <p className="text-xs text-muted-foreground">{material.meta}</p>
+              </div>
+            </div>
+            <Group aria-label={`${material.label} actions`}>
+              {actions.map((action, index) => (
+                <Fragment key={action.id}>
+                  {index > 0 ? <GroupSeparator /> : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="active:scale-[0.96]"
+                    onClick={() =>
+                      runPanelMaterialAction(item, material.kind, action.id, openMaterialPreview)
+                    }
+                  >
+                    {action.id === "preview" ? <EyeIcon className="size-3.5" aria-hidden /> : null}
+                    {action.id === "download" ? (
+                      <DownloadIcon className="size-3.5" aria-hidden />
+                    ) : null}
+                    {action.id === "copy" ? <CopyIcon className="size-3.5" aria-hidden /> : null}
+                    {action.label}
+                  </Button>
+                </Fragment>
+              ))}
+            </Group>
+          </div>
+        );
+      })}
+
+      {item.recruiterEmail || item.outreachSentAt ? (
+        <dl className="space-y-2.5 pt-1">
+          {item.recruiterEmail ? (
+            <DetailRow label="Recruiter">{item.recruiterEmail}</DetailRow>
+          ) : null}
+          {item.outreachSentAt ? (
+            <DetailRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</DetailRow>
+          ) : null}
+        </dl>
+      ) : null}
     </div>
   );
 }
@@ -371,89 +500,7 @@ export function ApplicationInfoPanel({
 
           {!isDiscovery && hasMaterials ? (
             <ItemInfoSection title="Materials" icon={<FileTextIcon />}>
-              <dl className="space-y-2.5">
-                {item.resumeId ? (
-                  <DetailRow label="Resume">
-                    <span className="inline-flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
-                        onClick={() => setResumePreviewOpen(true)}
-                      >
-                        <FileTextIcon className="size-3.5" aria-hidden />
-                        Preview
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="text-foreground hover:text-foreground"
-                        render={
-                          <a
-                            href={resumeDownloadUrl(item.resumeId)}
-                            download
-                            aria-label="Download resume PDF"
-                          >
-                            Download
-                          </a>
-                        }
-                      >
-                        <DownloadIcon className="size-3.5" aria-hidden />
-                      </Button>
-                    </span>
-                  </DetailRow>
-                ) : null}
-                {item.coverLetterR2Key ? (
-                  <DetailRow label="Cover letter">
-                    <span className="inline-flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 gap-1.5 px-2 text-foreground hover:text-foreground"
-                        render={
-                          <a
-                            href={coverLetterDownloadUrl(item.id, true)}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label="Preview cover letter PDF"
-                          >
-                            Preview
-                          </a>
-                        }
-                      >
-                        <FileTextIcon className="size-3.5" aria-hidden />
-                        Preview
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="text-foreground hover:text-foreground"
-                        render={
-                          <a
-                            href={coverLetterDownloadUrl(item.id)}
-                            download
-                            aria-label="Download cover letter PDF"
-                          >
-                            Download
-                          </a>
-                        }
-                      >
-                        <DownloadIcon className="size-3.5" aria-hidden />
-                      </Button>
-                    </span>
-                  </DetailRow>
-                ) : null}
-                {item.recruiterEmail ? (
-                  <DetailRow label="Recruiter">{item.recruiterEmail}</DetailRow>
-                ) : null}
-                {item.outreachSentAt ? (
-                  <DetailRow label="Outreach sent">{formatWhen(item.outreachSentAt)}</DetailRow>
-                ) : null}
-              </dl>
+              <MaterialsActionCards item={item} />
             </ItemInfoSection>
           ) : null}
 
