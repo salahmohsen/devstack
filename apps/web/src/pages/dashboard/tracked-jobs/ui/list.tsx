@@ -1,6 +1,6 @@
 "use client";
 
-import { BriefcaseIcon, FileTextIcon, MapPinIcon, PlusIcon } from "lucide-react";
+import { BriefcaseIcon, Building2Icon, FileTextIcon, MapPinIcon, PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
@@ -226,11 +226,19 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           <div className="min-w-0 flex-1">
                             <h3 className="min-w-0 truncate text-sm font-medium">{app.title}</h3>
                             <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
-                              <TruncatedText>{app.companyName}</TruncatedText>
+                              <span className="inline-flex max-w-full min-w-0 items-center gap-1.5">
+                                <Building2Icon
+                                  className="size-3.5 shrink-0 text-muted-foreground"
+                                  strokeWidth={1.75}
+                                  aria-hidden
+                                />
+                                <TruncatedText>{app.companyName}</TruncatedText>
+                              </span>
                               {app.location ? (
                                 <span className="inline-flex max-w-[min(100%,16rem)] min-w-0 items-center gap-1">
                                   <MapPinIcon
-                                    className="size-3.5 shrink-0 opacity-80"
+                                    className="size-3.5 shrink-0 text-muted-foreground"
+                                    strokeWidth={1.75}
                                     aria-hidden
                                   />
                                   <TruncatedText>{app.location}</TruncatedText>
