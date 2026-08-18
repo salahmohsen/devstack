@@ -33,9 +33,8 @@ export type ApplicationActionGroupProps = {
   className?: string;
 };
 
-/** Structural divider (better-ui: borders for structure). */
 function ActionGroupSeparator() {
-  return <GroupSeparator className="bg-border" />;
+  return <GroupSeparator />;
 }
 
 /**

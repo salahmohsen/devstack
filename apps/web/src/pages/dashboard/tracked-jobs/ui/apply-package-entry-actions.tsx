@@ -526,13 +526,13 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         <Group aria-label="Apply package actions" className="w-full max-w-full items-stretch">
           {segments.map((segment, index) => (
             <Fragment key={index}>
-              {index > 0 ? <GroupSeparator className="bg-border" /> : null}
+              {index > 0 ? <GroupSeparator /> : null}
               {segment}
             </Fragment>
           ))}
           {showChevron ? (
             <>
-              <GroupSeparator className="bg-border" />
+              <GroupSeparator />
               <Menu>
                 <MenuTrigger
                   render={
