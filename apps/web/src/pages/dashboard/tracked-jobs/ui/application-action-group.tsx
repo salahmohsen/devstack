@@ -25,21 +25,17 @@ import { ApplicationPrimaryActionButton } from "@/pages/dashboard/tracked-jobs/u
 export type ApplicationActionGroupProps = {
   app: ApplicationOutput;
   /**
-   * - `board`: [Magic | ▾]
-   * - `list`: [Magic | Open listing? | ▾] — no Edit
-   * - `panel`: [Magic | Edit | Open listing? | ▾]
+   * - `board`: bordered [Magic | Open listing? | ▾]
+   * - `list`: filled [Magic | Open listing? | ▾] — no Edit
+   * - `panel`: filled [Magic | Edit | Open listing? | ▾]
    */
   variant: "board" | "list" | "panel";
   className?: string;
 };
 
-function ActionGroupSeparator() {
-  return <GroupSeparator />;
-}
-
 /**
  * coss Group for tracked-jobs magic CTA + overflow chevron.
- * All segments share `variant="default"` for a single joined primary surface.
+ * Board uses outline (bordered); list/panel use default (filled primary).
  */
 export function ApplicationActionGroup({ app, variant, className }: ApplicationActionGroupProps) {
   const { openEdit } = useApplicationStore();
@@ -47,16 +43,19 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
   const listingUrl = listingUrlFor(app);
   const isBoard = variant === "board";
   const showEdit = variant === "panel";
+  const buttonVariant = isBoard ? "outline" : "default";
   const slots = isBoard ? applicationMenuSlots : applicationListMenuSlots;
   // Skip Edit in the menu only when Edit is already a Group segment (panel).
   const density = showEdit ? "list-overflow" : "full";
   /** Listing segment unless magic CTA is already Open listing. */
-  const showListingInGroup = !isBoard && Boolean(listingUrl) && primary?.kind !== "open-listing";
+  const showListingInGroup = Boolean(listingUrl) && primary?.kind !== "open-listing";
   const hidePrimaryKind = primary?.kind ?? null;
   const hideOpenListingInMenu = showListingInGroup || hidePrimaryKind === "open-listing";
 
   const segmentSize = isBoard ? "sm" : "default";
   const chevronSize = isBoard ? "icon-sm" : "icon";
+  // Outline groups use muted input dividers; filled primary groups keep bg-primary/72 default.
+  const separatorClassName = isBoard ? "bg-input" : undefined;
 
   return (
     <Group
@@ -70,23 +69,24 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
           app={app}
           layout={isBoard ? "card" : "inline"}
           grouped
+          buttonVariant={buttonVariant}
           className={isBoard ? "min-w-0 flex-1" : "min-w-0"}
         />
       ) : null}
-      {primary ? <ActionGroupSeparator /> : null}
+      {primary ? <GroupSeparator className={separatorClassName} /> : null}
       {showEdit ? (
         <>
           <Button
             type="button"
             size={segmentSize}
-            variant="default"
+            variant={buttonVariant}
             className="shrink-0 active:scale-[0.96]"
             onClick={() => openEdit(app)}
           >
             <PencilIcon strokeWidth={1.75} aria-hidden />
             Edit
           </Button>
-          <ActionGroupSeparator />
+          <GroupSeparator className={separatorClassName} />
         </>
       ) : null}
       {showListingInGroup && listingUrl ? (
@@ -94,14 +94,14 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
           <Button
             type="button"
             size={segmentSize}
-            variant="default"
+            variant={buttonVariant}
             className="shrink-0 active:scale-[0.96]"
             render={<a href={listingUrl} target="_blank" rel="noreferrer" />}
           >
             <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
             {APPLICATION_PRIMARY_ACTION_LABELS.openListing}
           </Button>
-          <ActionGroupSeparator />
+          <GroupSeparator className={separatorClassName} />
         </>
       ) : null}
       <Menu>
@@ -110,7 +110,7 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
             <Button
               type="button"
               size={chevronSize}
-              variant="default"
+              variant={buttonVariant}
               aria-label="More actions"
               className={cn("shrink-0 active:scale-[0.96]", isBoard && "size-8 sm:size-7")}
             />

@@ -40,6 +40,8 @@ type ApplicationPrimaryActionButtonProps = {
    * (joined corners / flex growth).
    */
   grouped?: boolean;
+  /** Force button chrome when nested in an action Group (board = outline). */
+  buttonVariant?: "default" | "outline";
   className?: string;
 };
 
@@ -51,6 +53,7 @@ export function ApplicationPrimaryActionButton({
   app,
   layout = "card",
   grouped = false,
+  buttonVariant,
   className
 }: ApplicationPrimaryActionButtonProps) {
   const primary = getApplicationPrimaryAction(app);
@@ -63,6 +66,8 @@ export function ApplicationPrimaryActionButton({
   const Icon = PRIMARY_ACTION_ICONS[primary.kind];
   const generating = generateMutation.isPending && primary.kind === "prepare";
   const disabled = !open || generating;
+  const resolvedVariant =
+    buttonVariant ?? (primary.kind === "open-listing" && !grouped ? "outline" : "default");
 
   function runPrimary() {
     switch (primary!.kind) {
@@ -97,7 +102,7 @@ export function ApplicationPrimaryActionButton({
     <Button
       type="button"
       size={layout === "inline" ? "default" : "sm"}
-      variant={primary.kind === "open-listing" && !grouped ? "outline" : "default"}
+      variant={resolvedVariant}
       className={cn(
         "active:scale-[0.96]",
         layout === "card" && !grouped && "mt-2.5 w-full",
