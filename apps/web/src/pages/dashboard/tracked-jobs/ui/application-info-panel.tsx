@@ -432,31 +432,31 @@ export function ApplicationInfoPanel({
           </div>
         }
         actions={
-          <>
-            {!isDiscovery ? (
-              <ApplicationActionGroup app={item} variant="with-edit" />
-            ) : onEdit ? (
-              <PanelEditButton onClick={onEdit} />
-            ) : null}
-            {item.url ? (
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="outline"
-                className="active:scale-[0.96]"
-                render={
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`Open job posting (${postingHost(item.url)})`}
-                  />
-                }
-              >
-                <ExternalLinkIcon strokeWidth={1.75} />
-              </Button>
-            ) : null}
-          </>
+          !isDiscovery ? (
+            <ApplicationActionGroup app={item} variant="with-edit" />
+          ) : (
+            <>
+              {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
+              {item.url ? (
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="outline"
+                  className="active:scale-[0.96]"
+                  render={
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Open job posting (${postingHost(item.url)})`}
+                    />
+                  }
+                >
+                  <ExternalLinkIcon strokeWidth={1.75} />
+                </Button>
+              ) : null}
+            </>
+          )
         }
         updatedAt={item.updatedAt}
         createdAt={item.createdAt}

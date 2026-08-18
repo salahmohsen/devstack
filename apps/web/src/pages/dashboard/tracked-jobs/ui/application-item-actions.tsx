@@ -80,13 +80,16 @@ export function ApplicationItemActions({
   app,
   slots,
   density = "full",
-  hidePrimaryKind = null
+  hidePrimaryKind = null,
+  hideOpenListing = false
 }: {
   app: ApplicationOutput;
   slots: ApplicationActionSlots;
   density?: "full" | "list-overflow";
   /** Omit the overflow entry that matches the visible magic CTA. */
   hidePrimaryKind?: ApplicationPrimaryActionKind | null;
+  /** Omit Open listing when it already appears as a Group segment. */
+  hideOpenListing?: boolean;
 }) {
   const { openEdit, openView, selectedIds, toggleSelect, openDeleteConfirm } =
     useApplicationStore();
@@ -101,7 +104,8 @@ export function ApplicationItemActions({
       }
     : undefined;
   const isBatchSelected = selectedIds.includes(app.id);
-  const showOpenListing = Boolean(openListing) && hidePrimaryKind !== "open-listing";
+  const showOpenListing =
+    Boolean(openListing) && hidePrimaryKind !== "open-listing" && !hideOpenListing;
 
   return (
     <>

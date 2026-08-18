@@ -100,8 +100,9 @@ export function ApplicationPrimaryActionButton({
       variant={primary.kind === "open-listing" ? "outline" : "default"}
       className={cn(
         "active:scale-[0.96]",
-        layout === "card" && !grouped && "mt-2.5 h-7 w-full",
-        grouped && layout === "card" && "h-7 min-w-0 flex-1",
+        layout === "card" && !grouped && "mt-2.5 w-full",
+        // Match Group chevron `icon-sm` (size-8 / sm:size-7) — do not force h-7 alone.
+        grouped && layout === "card" && "min-w-0 flex-1",
         grouped && layout === "inline" && "min-w-0",
         className
       )}
