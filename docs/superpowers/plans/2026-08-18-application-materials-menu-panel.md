@@ -108,6 +108,16 @@ export function formatOutreachCopy(app: ApplicationOutput): string | null {
   if (!subject && !body) return null;
   return `Subject: ${subject || "(no subject)"}\n\n${body}`;
 }
+
+/** Clipboard only — UI owns toast. Always ship this in Task 1. */
+export async function writeClipboardText(value: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
 ```
 
 Keep `ApplicationMaterialKind` in sync with `application.slice.ts` — either re-export the slice type from the helper and update the slice to import from the feature lib, **or** leave the slice type and import `ApplicationMaterialKind` from the slice inside the helper. Prefer: define the kind union in `material-actions.ts` and change `application.slice.ts` to `export type { ApplicationMaterialKind } from "@/features/applications/lib/material-actions"` (or from the barrel) so there is one source of truth.
@@ -122,6 +132,7 @@ export {
   actionsFor,
   formatCoverLetterCopy,
   formatOutreachCopy,
+  writeClipboardText,
   type ApplicationMaterialKind,
   type MaterialAction,
   type MaterialActionId,
@@ -169,8 +180,11 @@ import {
   actionsFor,
   formatCoverLetterCopy,
   formatOutreachCopy,
+  writeClipboardText,
   coverLetterDownloadUrl,
-  resumeDownloadUrl
+  resumeDownloadUrl,
+  type ApplicationMaterialKind,
+  type MaterialActionId
 } from "@/features/applications";
 ```
 
@@ -182,12 +196,9 @@ async function copyText(label: string, value: string | null) {
     toast.error(`Nothing to copy for ${label}`);
     return;
   }
-  try {
-    await navigator.clipboard.writeText(value);
-    toast.success("Copied");
-  } catch {
-    toast.error("Could not copy");
-  }
+  const ok = await writeClipboardText(value);
+  if (ok) toast.success("Copied");
+  else toast.error("Could not copy");
 }
 
 function triggerDownload(href: string) {
@@ -322,7 +333,7 @@ import {
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 ```
 
-Use store `openMaterialPreview` for Preview (same dialog host as menu). Prefer extracting a small local `MaterialsActionCards` component in the same file to keep the panel readable.
+Use store `openMaterialPreview` for Preview on Materials cards (same dialog host as menu). Keep the panel’s existing local `resumePreviewOpen` dialog for the Details-section `!hasMaterials` fallback resume row — do not delete it when wiring Materials Preview. Prefer extracting a small local `MaterialsActionCards` component in the same file to keep the panel readable.
 
 - [ ] **Step 2: Replace Materials `dl` / DetailRows with cards**
 
@@ -387,22 +398,9 @@ Spec visibility: `!isDiscovery && hasMaterials` (unchanged). Inside the section:
 
 **better-ui:** outer card `rounded-xl` + `p-3` → Group buttons use default `rounded-lg` so corners stay concentric. Icon stroke `1.75` beside regular labels. Press scale on Group buttons.
 
-Reuse the same `runMaterialAction` / clipboard logic as the menu — extract a tiny shared `runApplicationMaterialAction` into `material-actions.ts` **only if** duplication is awkward; otherwise duplicate the thin click wiring in both files to avoid forcing `"use client"` / toast into the pure helper. Prefer a small `copyMaterialToClipboard` async helper next to formatters that returns `{ ok: boolean }` and let UI toast — keeps helper free of sonner.
+Reuse the same `runMaterialAction` / `writeClipboardText` pattern as the menu. Duplicate the thin click wiring in the panel (toast stays in UI); do not import sonner into the helper.
 
-Recommended clipboard helper addition in Task 1 if not already done:
-
-```ts
-export async function writeClipboardText(value: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-```
-
-- [ ] **Step 3: Remove obsolete resume/cover DetailRow Preview/Download markup** from Materials; leave Details-section fallback resume row for `!hasMaterials` as today.
+- [ ] **Step 3: Remove obsolete resume/cover DetailRow Preview/Download markup** from Materials; leave Details-section fallback resume row for `!hasMaterials` as today (still uses local `resumePreviewOpen`).
 
 - [ ] **Step 4: Commit**
 
