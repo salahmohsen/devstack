@@ -393,7 +393,7 @@ type ApplyPackagePanelActionsProps = {
 
 /**
  * Primary CTAs for the application info panel (Prepare / Review / Send).
- * Joined coss Group — all segments share bordered `outline` (match board/list/panel).
+ * Joined coss Group — all segments share filled `default` with GroupSeparator bg-primary/72 (coss p-group-6).
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
   const { openPackageSheet, openSendOutreach, openEdit, openMaterialPreview } =
@@ -427,7 +427,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           key="prepare"
           type="button"
           size="sm"
-          variant="outline"
+          variant="default"
           disabled={!open || generating}
           loading={generating}
           className="min-w-0 flex-1 active:scale-[0.96]"
@@ -443,7 +443,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           key="add-jd"
           type="button"
           size="sm"
-          variant="outline"
+          variant="default"
           disabled={!open}
           className="min-w-0 flex-1 active:scale-[0.96]"
           onClick={() => openEdit(app)}
@@ -461,7 +461,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         key="review"
         type="button"
         size="sm"
-        variant="outline"
+        variant="default"
         className="min-w-0 flex-1 active:scale-[0.96]"
         onClick={() => openPackageSheet(app.id)}
       >
@@ -474,7 +474,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         key="regenerate"
         type="button"
         size="sm"
-        variant="outline"
+        variant="default"
         disabled={!open || generating}
         className="min-w-0 flex-1 active:scale-[0.96]"
         onClick={() => setRegenerateOpen(true)}
@@ -491,7 +491,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
         key="prepare-again"
         type="button"
         size="sm"
-        variant="outline"
+        variant="default"
         disabled={!open || generating}
         loading={generating}
         className="min-w-0 flex-1 active:scale-[0.96]"
@@ -507,7 +507,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           key="send"
           type="button"
           size="sm"
-          variant="outline"
+          variant="default"
           className="min-w-0 flex-1 active:scale-[0.96]"
           onClick={() => openSendOutreach(app.id)}
         >
@@ -539,7 +539,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
                     <Button
                       type="button"
                       size="icon-sm"
-                      variant="outline"
+                      variant="default"
                       aria-label="Package materials"
                       className="size-8 shrink-0 active:scale-[0.96] sm:size-7"
                     />
