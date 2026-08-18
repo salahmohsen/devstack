@@ -34,6 +34,7 @@ import {
   type ApplicationOutput,
   type ApplicationStage
 } from "@tsu-stack/core";
+import { AgentAvatar } from "@tsu-stack/ui/components/agent-avatar";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
@@ -81,7 +82,7 @@ function ApplicationCard({
   isOverlay?: boolean;
   disabled?: boolean;
 }) {
-  const { openView } = useApplicationStore();
+  const { openView, viewItem } = useApplicationStore();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: app.id,
     data: { stage: app.stage, app },
@@ -89,6 +90,8 @@ function ApplicationCard({
   });
 
   const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
+  // Animate only while this card is the open side-panel selection (better-ui: motion restraint).
+  const avatarAnimated = viewItem?.id === app.id;
 
   const cardBody = (
     <div
@@ -96,21 +99,31 @@ function ApplicationCard({
         "group rounded-lg border border-border bg-card p-2.5 shadow-xs",
         isDragging && "opacity-40",
         isOverlay && "rotate-1 opacity-100 shadow-md",
-        disabled && "pointer-events-none opacity-60"
+        disabled && "pointer-events-none opacity-60",
+        avatarAnimated && "border-primary/40"
       )}
     >
       <div className="flex items-start justify-between gap-1.5">
         <button
           type="button"
-          className="min-w-0 flex-1 cursor-grab text-left active:cursor-grabbing"
+          className="flex min-w-0 flex-1 cursor-grab items-start gap-2 text-left active:cursor-grabbing"
           {...listeners}
           {...attributes}
           onClick={() => {
             if (!isDragging) openView(app);
           }}
         >
-          <div className="truncate text-sm font-medium">{app.companyName}</div>
-          <div className="truncate text-xs text-muted-foreground">{app.title}</div>
+          <AgentAvatar
+            seed={app.companyName}
+            size={28}
+            animated={avatarAnimated}
+            className="mt-0.5 size-7 shrink-0 rounded-lg outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+            aria-label={app.companyName}
+          />
+          <span className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium">{app.companyName}</div>
+            <div className="truncate text-xs text-muted-foreground">{app.title}</div>
+          </span>
         </button>
       </div>
       {(app.listingClosed ||
