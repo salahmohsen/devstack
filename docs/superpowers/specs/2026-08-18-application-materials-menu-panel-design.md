@@ -1,7 +1,7 @@
 # Application materials menu + side panel
 
 **Date:** 2026-08-18  
-**Status:** Draft (design approved in brainstorm; awaiting spec review)
+**Status:** Approved for implementation
 
 ## Goals
 
@@ -55,14 +55,26 @@ Materials
 
 ## Side panel Materials
 
+**Visibility (unchanged gate):** show the Materials section when `!isDiscovery` and at least one material exists (`resumeId` / cover letter / outreach body). Do **not** require apply-package `accepted` for the panel — that gate applies only to the menu Materials submenu. Shared helpers unify _actions_, not section visibility.
+
 Replace the current DetailRow Preview/Download strip with **action cards**:
 
-- One card per available material: icon, title, short meta (e.g. PDF, PDF + text, Subject + body).
+- One card per available material: icon, title, short meta (table below).
 - Actions in a coss `Group` / `ButtonGroup` of labeled outline `size="sm"` buttons separated by `GroupSeparator` (same pattern as `p-group-1` and tracked-jobs list actions).
 - Include Outreach email (panel today largely omits outreach content).
 - Recruiter email and outreach-sent timestamps stay as status detail rows, not action cards.
 - Reuse the same preview dialog host and download URLs as the menu.
 - Copy feedback: existing app toast (`toast.success` / `toast.error`).
+
+### Card meta labels
+
+| Material       | Condition           | Meta             |
+| -------------- | ------------------- | ---------------- |
+| Resume         | `resumeId`          | `PDF`            |
+| Cover letter   | R2 + body           | `PDF + text`     |
+| Cover letter   | R2 only             | `PDF`            |
+| Cover letter   | body only           | `Text`           |
+| Outreach email | subject and/or body | `Subject + body` |
 
 ### better-ui constraints
 
@@ -73,9 +85,9 @@ Replace the current DetailRow Preview/Download strip with **action cards**:
 
 ## Shared helper (implementation seam)
 
-Place a small pure module under applications feature lib (e.g. `apps/web/src/features/applications/lib/material-actions.ts` or colocated under tracked-jobs if preferred for UI-only types):
+Place a small pure module at `apps/web/src/features/applications/lib/material-actions.ts` and re-export from `features/applications` as needed:
 
-- `materialsFor(app)` → list of available materials with labels/kinds.
+- `materialsFor(app)` → list of available materials with labels/kinds/meta.
 - `actionsFor(material, app)` → ordered actions `{ id: "preview" | "download" | "copy", label }`.
 - `formatCoverLetterCopy(app)` → body string or null.
 - `formatOutreachCopy(app)` → full-email string or null.
