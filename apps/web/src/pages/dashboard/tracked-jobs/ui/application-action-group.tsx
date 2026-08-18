@@ -93,13 +93,18 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
         <>
           <Button
             type="button"
-            size={segmentSize}
+            size={isBoard ? chevronSize : segmentSize}
             variant={buttonVariant}
-            className="shrink-0 active:scale-[0.96]"
+            className={cn(
+              "shrink-0 active:scale-[0.96]",
+              // Board: icon-only next to magic CTA to save width (better-ui optical density).
+              isBoard && "size-8 sm:size-7"
+            )}
+            aria-label={APPLICATION_PRIMARY_ACTION_LABELS.openListing}
             render={<a href={listingUrl} target="_blank" rel="noreferrer" />}
           >
             <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
-            {APPLICATION_PRIMARY_ACTION_LABELS.openListing}
+            {isBoard ? null : APPLICATION_PRIMARY_ACTION_LABELS.openListing}
           </Button>
           <GroupSeparator className={separatorClassName} />
         </>
