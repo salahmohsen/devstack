@@ -17,16 +17,18 @@ import { GitHubAccessDialog } from "./github-access-dialog";
 import { MobileNav } from "./github-public-mobile-nav";
 import { Topbar } from "./github-public-topbar";
 import {
-  DASHBOARD_SIDE_PANEL_WIDTH,
   PUBLIC_SIDE_PANEL_WIDTH,
   SidePanelProvider,
+  SidePanelResizeHandle,
   SidePanelSlot,
   SidePanelToggle,
+  useDashboardSidePanelWidth,
   useSidePanelSlot
 } from "./side-panel";
 
 export function RootLayout({ children }: PropsWithChildren) {
   const sidePanel = useSidePanelSlot();
+  const dashboardPanelWidth = useDashboardSidePanelWidth();
   const isXl = useMediaQuery("(min-width: 1280px)");
   const showPanel = isXl && (sidePanel.hasContent || sidePanel.inspectOpen) && !sidePanel.collapsed;
   const pathname = useLocation().pathname;
@@ -36,8 +38,8 @@ export function RootLayout({ children }: PropsWithChildren) {
   const isDashboard = pathname.startsWith("/dashboard");
   // Public repos list inspects portfolio projects with the same chrome as dashboard.
   const isPublicReposList = /(?:^|\/)repos\/?$/.test(pathname);
-  const panelWidth =
-    isDashboard || isPublicReposList ? DASHBOARD_SIDE_PANEL_WIDTH : PUBLIC_SIDE_PANEL_WIDTH;
+  const resizablePanel = isDashboard || isPublicReposList;
+  const panelWidth = resizablePanel ? dashboardPanelWidth.width : PUBLIC_SIDE_PANEL_WIDTH;
 
   return (
     <DashboardMobileNavProvider>
@@ -109,12 +111,20 @@ export function RootLayout({ children }: PropsWithChildren) {
                   open={showPanel}
                   contentWidth={panelWidth}
                   overlay
+                  unlockWhenOpen={resizablePanel}
                   data-side-panel-shell=""
                   className="hidden h-full xl:flex"
                 >
-                  <div className="flex h-full min-h-0">
+                  <div className="relative flex h-full min-h-0">
                     <div aria-hidden className="w-px shrink-0 self-stretch bg-border" />
-                    <div className="h-full min-h-0 min-w-0 flex-1 overflow-hidden">
+                    <div className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden">
+                      {resizablePanel ? (
+                        <SidePanelResizeHandle
+                          width={dashboardPanelWidth.width}
+                          onWidthChange={dashboardPanelWidth.setLiveWidth}
+                          onWidthCommit={dashboardPanelWidth.commitWidth}
+                        />
+                      ) : null}
                       <SidePanelSlot
                         slotRef={sidePanel.setNode}
                         collapsed={sidePanel.collapsed}

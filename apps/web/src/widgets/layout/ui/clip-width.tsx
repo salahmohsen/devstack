@@ -211,12 +211,15 @@ export function ClipWidth({
   if (overlay) {
     const motionMs = open ? CLIP_WIDTH_OPEN_MS : CLIP_WIDTH_CLOSE_MS;
     const motion = `${motionMs}ms ${CLIP_WIDTH_EASE}`;
+    // After open, drop transitions so a drag-resize can update `contentWidth` live
+    // (same idea as non-overlay `unlockWhenOpen` for the left nav).
+    const live = open && unlocked;
     return (
       <div
         className={cn("relative h-full min-h-0 shrink-0 overflow-hidden", className)}
         style={{
           width: open ? contentWidth : 0,
-          transition: `width ${motion}`,
+          transition: live ? undefined : `width ${motion}`,
           ...style
         }}
         {...shellProps}
@@ -227,8 +230,8 @@ export function ClipWidth({
           style={{
             width: contentWidth,
             transform: open ? "translateX(0)" : "translateX(100%)",
-            transition: `transform ${motion}`,
-            willChange: "transform",
+            transition: live ? undefined : `transform ${motion}`,
+            willChange: live ? undefined : "transform",
             contain: "layout paint"
           }}
           onTransitionEnd={(event) => {

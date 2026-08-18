@@ -15,9 +15,22 @@ import {
   subscribeSidePanelExpand
 } from "@/shared/lib/side-panel-control";
 
+import {
+  clampDashboardSidePanelWidth,
+  DASHBOARD_SIDE_PANEL_MAX_WIDTH,
+  DASHBOARD_SIDE_PANEL_MIN_WIDTH,
+  DASHBOARD_SIDE_PANEL_WIDTH,
+  readStoredDashboardSidePanelWidth,
+  writeStoredDashboardSidePanelWidth
+} from "@/widgets/layout/lib/side-panel-width";
+
 // w-72 (288px) + pl-2 (8px)
 export const PUBLIC_SIDE_PANEL_WIDTH = 320;
-export const DASHBOARD_SIDE_PANEL_WIDTH = 560;
+export {
+  DASHBOARD_SIDE_PANEL_MAX_WIDTH,
+  DASHBOARD_SIDE_PANEL_MIN_WIDTH,
+  DASHBOARD_SIDE_PANEL_WIDTH
+};
 
 type SidePanelState = {
   node: HTMLDivElement | null;
@@ -189,5 +202,94 @@ export function SidePanelToggle() {
     >
       <ChevronRight size={12} strokeWidth={2} />
     </button>
+  );
+}
+
+/** Remembered width for the xl+ dashboard / public-repos inspect column. */
+export function useDashboardSidePanelWidth() {
+  const [width, setWidth] = useState(DASHBOARD_SIDE_PANEL_WIDTH);
+
+  useEffect(() => {
+    setWidth(readStoredDashboardSidePanelWidth());
+  }, []);
+
+  const setLiveWidth = useCallback((px: number) => {
+    setWidth(clampDashboardSidePanelWidth(px));
+  }, []);
+
+  const commitWidth = useCallback((px: number) => {
+    const next = clampDashboardSidePanelWidth(px);
+    setWidth(next);
+    writeStoredDashboardSidePanelWidth(next);
+  }, []);
+
+  return { width, setLiveWidth, commitWidth } as const;
+}
+
+/**
+ * Left-edge drag handle (panel sits on the right). Drag left to widen —
+ * same pointer pattern as `Sidebar001`, mirrored.
+ */
+export function SidePanelResizeHandle({
+  width,
+  onWidthChange,
+  onWidthCommit
+}: {
+  width: number;
+  onWidthChange: (px: number) => void;
+  onWidthCommit: (px: number) => void;
+}) {
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const startW = useRef(0);
+  const widthRef = useRef(width);
+
+  useEffect(() => {
+    widthRef.current = width;
+  }, [width]);
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      dragging.current = true;
+      startX.current = e.clientX;
+      startW.current = width;
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    [width]
+  );
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!dragging.current) return;
+      // Handle is on the left edge: moving left increases width.
+      const next = clampDashboardSidePanelWidth(startW.current + (startX.current - e.clientX));
+      onWidthChange(next);
+    },
+    [onWidthChange]
+  );
+
+  const onPointerUp = useCallback(() => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    onWidthCommit(widthRef.current);
+  }, [onWidthCommit]);
+
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Resize details panel"
+      aria-valuemin={DASHBOARD_SIDE_PANEL_MIN_WIDTH}
+      aria-valuemax={DASHBOARD_SIDE_PANEL_MAX_WIDTH}
+      aria-valuenow={width}
+      className="group/handle absolute top-0 left-0 z-20 h-full w-1 cursor-col-resize"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
+      <div className="absolute top-0 left-0 h-full w-px bg-transparent transition-colors duration-150 group-hover/handle:bg-border" />
+    </div>
   );
 }
