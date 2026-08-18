@@ -53,6 +53,12 @@ export type StatusMorphToggleProps = {
    * Morph scales proportionally (taller/narrower on hover).
    */
   size?: "sm" | "md";
+  /**
+   * Controlled hover from the parent pressable (preferred).
+   * When set, do **not** attach mouse handlers on the morph — parent Button
+   * owns hover so IconSwap’s hidden layer cannot steal events.
+   */
+  hovered?: boolean;
 };
 
 const SIZE = {
@@ -64,18 +70,21 @@ const SIZE = {
  * Presentational status morph (SmoothUI Dot Morph–inspired).
  * Not a button — parent owns press / aria-pressed / disabled.
  *
- * **Hover hit-area:** outer span should fill the parent icon button
- * (consumer passes `className="absolute inset-0 size-full"`) so morph +
- * opposite-color preview fire on whole-control hover, not only the 8px dot.
+ * Prefer controlled `hovered` from the parent Button (same idea as icon-motion:
+ * never depend on the icon hit box). Internal mouse handlers are only a
+ * fallback when `hovered` is omitted.
  */
 export function StatusMorphToggle({
   active,
   className,
-  size = "sm"
+  size = "sm",
+  hovered: hoveredProp
 }: StatusMorphToggleProps): React.ReactElement {
   const shouldReduceMotion = useReducedMotion();
   const isHoverDevice = useMediaQuery("(hover: hover) and (pointer: fine)");
-  const [isHovered, setIsHovered] = useState(false);
+  const [uncontrolledHovered, setUncontrolledHovered] = useState(false);
+  const controlled = hoveredProp !== undefined;
+  const isHovered = controlled ? Boolean(hoveredProp) : uncontrolledHovered;
   const dims = SIZE[size];
 
   const morph =
@@ -91,10 +100,14 @@ export function StatusMorphToggle({
       className={cn("inline-flex items-center justify-center", className)}
       data-slot="status-morph-toggle"
       data-active={active ? "" : undefined}
-      onMouseEnter={() => {
-        if (isHoverDevice) setIsHovered(true);
-      }}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={
+        controlled
+          ? undefined
+          : () => {
+              if (isHoverDevice) setUncontrolledHovered(true);
+            }
+      }
+      onMouseLeave={controlled ? undefined : () => setUncontrolledHovered(false)}
     >
       <motion.span
         aria-hidden
@@ -117,7 +130,8 @@ Notes:
 - Do **not** render `<button>` or accept `onClick`.
 - Do **not** import SmoothUI / SmoothButton.
 - Keep `"use client"` because of hooks + motion.
-- Prefer `useMediaQuery` from `packages/ui/hooks/use-media-query.ts` (confirm the package export path; raw `matchMedia` only if the hook cannot take a freeform query).
+- Prefer `useMediaQuery` from `@tsu-stack/ui/hooks/use-media-query` (freeform `(hover: hover) and (pointer: fine)` is supported when the query starts with `(`).
+- Import a React type for the return annotation (`import type * as React from "react"` or `import type { ReactElement }`).
 
 - [ ] **Step 2: Typecheck ui package**
 
@@ -168,6 +182,7 @@ function PortfolioStatusButton({
   className?: string;
 }) {
   const [active, setActive] = useState(inPortfolio);
+  const [hovered, setHovered] = useState(false);
   useEffect(() => {
     setActive(inPortfolio);
   }, [inPortfolio]);
@@ -187,21 +202,19 @@ function PortfolioStatusButton({
               setActive((v) => !v);
               onToggle();
             }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
             aria-label={hint}
             aria-pressed={active}
             data-slot="button"
-            className={cn("relative", className)}
+            className={className}
           />
         }
       >
         <IconSwap
           state={isLoading ? "b" : "a"}
           aria-hidden
-          className="relative size-full"
-          iconClassName="relative size-full"
-          iconA={
-            <StatusMorphToggle active={active} size="sm" className="absolute inset-0 size-full" />
-          }
+          iconA={<StatusMorphToggle active={active} size="sm" hovered={hovered} />}
           iconB={<Loader2 className="size-4 animate-spin" />}
         />
       </TooltipTrigger>
@@ -211,7 +224,7 @@ function PortfolioStatusButton({
 }
 ```
 
-**Hover hit-area lock:** `StatusMorphToggle` must fill the icon button (`absolute inset-0` / `size-full` through `IconSwap`) so morph + opposite-color preview run when the pointer is anywhere on the outline button — not only when it touches the 8px dot.
+**Hover ownership lock:** drive `hovered` from the outline **`Button`** `onMouseEnter` / `onMouseLeave` (same idea as icon-motion: never depend on the icon hit box). Do **not** rely on `absolute inset-0` on the morph alone — `IconSwap`’s hidden layer can steal pointer events. Pass controlled `hovered` into `StatusMorphToggle`.
 
 **Behavior locks:**
 
