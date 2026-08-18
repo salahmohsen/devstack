@@ -8,7 +8,11 @@ import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { getApplicationPrimaryAction, listingUrlFor } from "@/features/applications";
+import {
+  APPLICATION_PRIMARY_ACTION_LABELS,
+  getApplicationPrimaryAction,
+  listingUrlFor
+} from "@/features/applications";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import {
@@ -20,41 +24,40 @@ import { ApplicationPrimaryActionButton } from "@/pages/dashboard/tracked-jobs/u
 
 export type ApplicationActionGroupProps = {
   app: ApplicationOutput;
-  /** Board: magic + chevron. with-edit: magic + Edit (+ listing) + chevron. */
-  variant: "board" | "with-edit";
+  /**
+   * - `board`: [Magic | ▾]
+   * - `list`: [Magic | Open listing? | ▾] — no Edit
+   * - `panel`: [Magic | Edit | Open listing? | ▾]
+   */
+  variant: "board" | "list" | "panel";
   className?: string;
 };
 
-function postingHost(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-}
-
-/** Structural divider between joined Group segments (better-ui: border for structure). */
+/** Structural divider (better-ui: borders for structure). */
 function ActionGroupSeparator() {
   return <GroupSeparator className="bg-border" />;
 }
 
 /**
  * coss Group for tracked-jobs magic CTA + overflow chevron.
- * Hides the menu entry that matches the visible primary action.
+ * All segments share `variant="default"` for a single joined primary surface.
  */
 export function ApplicationActionGroup({ app, variant, className }: ApplicationActionGroupProps) {
   const { openEdit } = useApplicationStore();
   const primary = getApplicationPrimaryAction(app);
   const listingUrl = listingUrlFor(app);
-  const slots = variant === "board" ? applicationMenuSlots : applicationListMenuSlots;
-  const density = variant === "with-edit" ? "list-overflow" : "full";
   const isBoard = variant === "board";
-  /** Listing sits in the Group on list/panel unless magic CTA is already Open listing. */
-  const showListingInGroup =
-    variant === "with-edit" && Boolean(listingUrl) && primary?.kind !== "open-listing";
+  const showEdit = variant === "panel";
+  const slots = isBoard ? applicationMenuSlots : applicationListMenuSlots;
+  // Skip Edit in the menu only when Edit is already a Group segment (panel).
+  const density = showEdit ? "list-overflow" : "full";
+  /** Listing segment unless magic CTA is already Open listing. */
+  const showListingInGroup = !isBoard && Boolean(listingUrl) && primary?.kind !== "open-listing";
   const hidePrimaryKind = primary?.kind ?? null;
-  /** When listing is a Group segment, also omit it from the overflow menu. */
   const hideOpenListingInMenu = showListingInGroup || hidePrimaryKind === "open-listing";
+
+  const segmentSize = isBoard ? "sm" : "default";
+  const chevronSize = isBoard ? "icon-sm" : "icon";
 
   return (
     <Group
@@ -72,11 +75,11 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
         />
       ) : null}
       {primary ? <ActionGroupSeparator /> : null}
-      {variant === "with-edit" ? (
+      {showEdit ? (
         <>
           <Button
             type="button"
-            size="default"
+            size={segmentSize}
             variant="default"
             className="shrink-0 active:scale-[0.96]"
             onClick={() => openEdit(app)}
@@ -91,19 +94,13 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
         <>
           <Button
             type="button"
-            size="icon"
-            variant="outline"
+            size={segmentSize}
+            variant="default"
             className="shrink-0 active:scale-[0.96]"
-            render={
-              <a
-                href={listingUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open job posting (${postingHost(listingUrl)})`}
-              />
-            }
+            render={<a href={listingUrl} target="_blank" rel="noreferrer" />}
           >
             <ExternalLinkIcon strokeWidth={1.75} aria-hidden />
+            {APPLICATION_PRIMARY_ACTION_LABELS.openListing}
           </Button>
           <ActionGroupSeparator />
         </>
@@ -113,10 +110,10 @@ export function ApplicationActionGroup({ app, variant, className }: ApplicationA
           render={
             <Button
               type="button"
-              size={isBoard ? "icon-sm" : "icon"}
-              variant="outline"
+              size={chevronSize}
+              variant="default"
               aria-label="More actions"
-              className={cn("shrink-0", isBoard && "size-8 sm:size-7")}
+              className={cn("shrink-0 active:scale-[0.96]", isBoard && "size-8 sm:size-7")}
             />
           }
         >

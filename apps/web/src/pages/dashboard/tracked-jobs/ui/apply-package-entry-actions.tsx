@@ -1,7 +1,14 @@
 "use client";
 
-import { FileTextIcon, MailIcon, PackageIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  ChevronDownIcon,
+  FileTextIcon,
+  MailIcon,
+  PackageIcon,
+  RefreshCwIcon,
+  SparklesIcon
+} from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { type ApplicationOutput, isApplicationOpen } from "@tsu-stack/core";
@@ -23,6 +30,16 @@ import {
   DialogPopup,
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
+import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSub,
+  MenuSubPopup,
+  MenuSubTrigger,
+  MenuTrigger
+} from "@tsu-stack/ui/components/menu";
 
 import {
   APPLICATION_PRIMARY_ACTION_LABELS,
@@ -376,15 +393,18 @@ type ApplyPackagePanelActionsProps = {
 
 /**
  * Primary CTAs for the application info panel (Prepare / Review / Send).
+ * Joined coss Group — all segments share `variant="default"` (better-ui consistency).
  */
 export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelActionsProps) {
-  const { openPackageSheet, openSendOutreach, openEdit } = useApplicationStore();
+  const { openPackageSheet, openSendOutreach, openEdit, openMaterialPreview } =
+    useApplicationStore();
   const generateMutation = useGenerateApplyPackageMutation();
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   const entryState = getApplyPackageEntryState(app);
   const open = isApplicationOpen(app.outcome);
   const generating = generateMutation.isPending;
   const hasDescription = hasJobDescription(app);
+  const materials = useMemo(() => materialsFor(app), [app]);
 
   function runGenerate() {
     generateMutation.mutate(
@@ -398,78 +418,187 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
     );
   }
 
+  const segments: React.ReactNode[] = [];
+
+  if (entryState === "none") {
+    if (hasDescription) {
+      segments.push(
+        <Button
+          key="prepare"
+          type="button"
+          size="sm"
+          variant="default"
+          disabled={!open || generating}
+          loading={generating}
+          className="min-w-0 flex-1 active:scale-[0.96]"
+          onClick={() => runGenerate()}
+        >
+          <SparklesIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
+          {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
+        </Button>
+      );
+    } else {
+      segments.push(
+        <Button
+          key="add-jd"
+          type="button"
+          size="sm"
+          variant="default"
+          disabled={!open}
+          className="min-w-0 flex-1 active:scale-[0.96]"
+          onClick={() => openEdit(app)}
+        >
+          <FileTextIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
+          {APPLICATION_PRIMARY_ACTION_LABELS.addJd}
+        </Button>
+      );
+    }
+  }
+
+  if (entryState === "draft") {
+    segments.push(
+      <Button
+        key="review"
+        type="button"
+        size="sm"
+        variant="default"
+        className="min-w-0 flex-1 active:scale-[0.96]"
+        onClick={() => openPackageSheet(app.id)}
+      >
+        <PackageIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
+        {APPLICATION_PRIMARY_ACTION_LABELS.review}
+      </Button>
+    );
+    segments.push(
+      <Button
+        key="regenerate"
+        type="button"
+        size="sm"
+        variant="default"
+        disabled={!open || generating}
+        className="min-w-0 flex-1 active:scale-[0.96]"
+        onClick={() => setRegenerateOpen(true)}
+      >
+        <RefreshCwIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
+        Regenerate
+      </Button>
+    );
+  }
+
+  if (entryState === "accepted") {
+    segments.push(
+      <Button
+        key="prepare-again"
+        type="button"
+        size="sm"
+        variant="default"
+        disabled={!open || generating}
+        loading={generating}
+        className="min-w-0 flex-1 active:scale-[0.96]"
+        onClick={() => setRegenerateOpen(true)}
+      >
+        <SparklesIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
+        Prepare again
+      </Button>
+    );
+    if (canSendOutreach(app)) {
+      segments.push(
+        <Button
+          key="send"
+          type="button"
+          size="sm"
+          variant="default"
+          className="min-w-0 flex-1 active:scale-[0.96]"
+          onClick={() => openSendOutreach(app.id)}
+        >
+          <MailIcon className="size-3.5" strokeWidth={1.75} aria-hidden />
+          Send outreach
+        </Button>
+      );
+    }
+  }
+
+  const showChevron = materials.length > 0 || entryState !== "none";
+
   return (
     <div className={className}>
-      <div className="flex flex-wrap gap-2">
-        {entryState === "none" ? (
-          hasDescription ? (
-            <Button
-              type="button"
-              size="sm"
-              disabled={!open || generating}
-              loading={generating}
-              onClick={() => runGenerate()}
-            >
-              <SparklesIcon className="size-3.5" aria-hidden />
-              {APPLICATION_PRIMARY_ACTION_LABELS.prepare}
-            </Button>
-          ) : (
-            <Button type="button" size="sm" disabled={!open} onClick={() => openEdit(app)}>
-              <FileTextIcon className="size-3.5" aria-hidden />
-              {APPLICATION_PRIMARY_ACTION_LABELS.addJd}
-            </Button>
-          )
-        ) : null}
+      {segments.length > 0 ? (
+        <Group aria-label="Apply package actions" className="w-full max-w-full items-stretch">
+          {segments.map((segment, index) => (
+            <Fragment key={index}>
+              {index > 0 ? <GroupSeparator className="bg-border" /> : null}
+              {segment}
+            </Fragment>
+          ))}
+          {showChevron ? (
+            <>
+              <GroupSeparator className="bg-border" />
+              <Menu>
+                <MenuTrigger
+                  render={
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="default"
+                      aria-label="Package materials"
+                      className="size-8 shrink-0 active:scale-[0.96] sm:size-7"
+                    />
+                  }
+                >
+                  <ChevronDownIcon className="size-4" strokeWidth={1.75} aria-hidden />
+                </MenuTrigger>
+                <MenuPopup align="end" className="min-w-44">
+                  {materials.length > 0 ? (
+                    materials.map((material) => (
+                      <MenuSub key={material.kind}>
+                        <MenuSubTrigger>
+                          {material.kind === "outreach" ? (
+                            <MailIcon aria-hidden="true" />
+                          ) : (
+                            <FileTextIcon aria-hidden="true" />
+                          )}
+                          {material.label}
+                        </MenuSubTrigger>
+                        <MenuSubPopup>
+                          {actionsFor(material.kind, app).map((action) => (
+                            <MenuItem
+                              key={action.id}
+                              onClick={() =>
+                                runMaterialAction(
+                                  app,
+                                  material.kind,
+                                  action.id,
+                                  openMaterialPreview
+                                )
+                              }
+                            >
+                              {action.label}
+                            </MenuItem>
+                          ))}
+                        </MenuSubPopup>
+                      </MenuSub>
+                    ))
+                  ) : (
+                    <MenuItem disabled>No materials yet</MenuItem>
+                  )}
+                </MenuPopup>
+              </Menu>
+            </>
+          ) : null}
+        </Group>
+      ) : null}
 
-        {entryState === "draft" ? (
-          <>
-            <Button type="button" size="sm" onClick={() => openPackageSheet(app.id)}>
-              <PackageIcon className="size-3.5" aria-hidden />
-              {APPLICATION_PRIMARY_ACTION_LABELS.review}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={!open || generating}
-              onClick={() => setRegenerateOpen(true)}
-            >
-              <RefreshCwIcon className="size-3.5" aria-hidden />
-              Regenerate
-            </Button>
-          </>
-        ) : null}
-
-        {entryState === "accepted" ? (
-          <>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={!open || generating}
-              loading={generating}
-              onClick={() => setRegenerateOpen(true)}
-            >
-              <SparklesIcon className="size-3.5" aria-hidden />
-              Prepare again
-            </Button>
-            {canSendOutreach(app) ? (
-              <Button type="button" size="sm" onClick={() => openSendOutreach(app.id)}>
-                <MailIcon className="size-3.5" aria-hidden />
-                {APPLICATION_PRIMARY_ACTION_LABELS.send}
-              </Button>
-            ) : app.outreachSentAt ? (
-              <span className="inline-flex items-center text-xs text-muted-foreground">
-                Outreach sent {new Date(app.outreachSentAt).toLocaleDateString()}
-              </span>
-            ) : open ? (
-              <span className="inline-flex items-center text-xs text-muted-foreground">
-                Set recruiter email (Edit) and accept outreach copy to send
-              </span>
-            ) : null}
-          </>
-        ) : null}
-      </div>
+      {entryState === "accepted" && !canSendOutreach(app) ? (
+        app.outreachSentAt ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Outreach sent {new Date(app.outreachSentAt).toLocaleDateString()}
+          </p>
+        ) : open ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Set recruiter email (Edit) and accept outreach copy to send
+          </p>
+        ) : null
+      ) : null}
 
       <AlertDialog open={regenerateOpen} onOpenChange={setRegenerateOpen}>
         <AlertDialogContent>

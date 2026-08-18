@@ -433,7 +433,7 @@ export function ApplicationInfoPanel({
         }
         actions={
           !isDiscovery ? (
-            <ApplicationActionGroup app={item} variant="with-edit" />
+            <ApplicationActionGroup app={item} variant="panel" />
           ) : (
             <>
               {onEdit ? <PanelEditButton onClick={onEdit} /> : null}

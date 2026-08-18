@@ -188,7 +188,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       actions={
                         <ApplicationActionGroup
                           app={app}
-                          variant="with-edit"
+                          variant="list"
                           className="hidden md:flex"
                         />
                       }
@@ -231,11 +231,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           onPointerDown={(event) => event.stopPropagation()}
                           onKeyDown={(event) => event.stopPropagation()}
                         >
-                          <ApplicationActionGroup
-                            app={app}
-                            variant="with-edit"
-                            className="w-full"
-                          />
+                          <ApplicationActionGroup app={app} variant="list" className="w-full" />
                         </div>
                       </div>
                     </ListItem>
