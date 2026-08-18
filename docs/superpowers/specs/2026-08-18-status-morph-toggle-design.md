@@ -49,12 +49,13 @@ App-agnostic **presentational** morph (not a button). Export:
 - `active: boolean` — which idle color to use (and which opposite color to preview on hover).
 - `className?` — optional layout hooks.
 - Optional `size?: "sm" | "md"` (or fixed px) so idle circle fits the icon button (~`size-2` / 8–10px idle, morph proportionally). Defaults sized for icon-sm buttons.
+- Optional controlled `hovered?: boolean` from the parent pressable (preferred for icon buttons inside `IconSwap`). When set, the morph does not attach its own mouse handlers.
 
 **Motion / color:**
 
 - `motion/react` spring morph adapted from SmoothUI: full `borderRadius`, idle square→circle, hover taller/narrower pill; `useReducedMotion`; enable morph only when `(hover: hover) and (pointer: fine)`.
 - Solid fills: `bg-success` when active, `bg-destructive` when inactive (and the inverse while hovering). Do **not** use Lucide `Circle` + `fill-*`; do **not** use SmoothUI `--color-brand`.
-- Internal hover flag only; `active` is controlled by the parent.
+- `active` is controlled by the parent. Hover preview prefers parent-driven `hovered` (whole button hit area); uncontrolled self-hover is only a fallback.
 
 ### `apps/web` — `PortfolioStatusButton`
 
