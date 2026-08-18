@@ -2,6 +2,7 @@
 
 import { FileTextIcon, MailIcon, PackageIcon, RefreshCwIcon, SparklesIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { type ApplicationOutput, isApplicationOpen } from "@tsu-stack/core";
 import {
@@ -25,29 +26,28 @@ import {
 
 import {
   APPLICATION_PRIMARY_ACTION_LABELS,
+  actionsFor,
   canSendOutreach,
   coverLetterDownloadUrl,
+  formatCoverLetterCopy,
+  formatOutreachCopy,
   getApplyPackageEntryState,
   hasJobDescription,
+  materialsFor,
   resumeDownloadUrl,
-  useGenerateApplyPackageMutation
+  useGenerateApplyPackageMutation,
+  writeClipboardText,
+  type ApplicationMaterialKind,
+  type MaterialActionId
 } from "@/features/applications";
 
-import {
-  useApplicationStore,
-  type ApplicationMaterialKind
-} from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { type ApplicationActionSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 
 type ApplyPackageMenuItemsProps = {
   app: ApplicationOutput;
-  /** Full slots so Review materials can open a Sub. */
+  /** Full slots so Materials can open a Sub. */
   slots: ApplicationActionSlots;
-};
-
-type MaterialOption = {
-  kind: ApplicationMaterialKind;
-  label: string;
 };
 
 /**
@@ -55,18 +55,58 @@ type MaterialOption = {
  * Regenerate always confirms (cost + overwrite).
  */
 
-function materialsFor(app: ApplicationOutput): MaterialOption[] {
-  const items: MaterialOption[] = [];
-  if (app.resumeId) {
-    items.push({ kind: "resume", label: "Resume" });
+async function copyText(label: string, value: string | null) {
+  if (!value) {
+    toast.error(`Nothing to copy for ${label}`);
+    return;
   }
-  if (app.coverLetterR2Key || app.coverLetterBody?.trim()) {
-    items.push({ kind: "cover-letter", label: "Cover letter" });
+  const ok = await writeClipboardText(value);
+  if (ok) toast.success("Copied");
+  else toast.error("Could not copy");
+}
+
+function triggerDownload(href: string) {
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = "";
+  a.rel = "noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function runMaterialAction(
+  app: ApplicationOutput,
+  kind: ApplicationMaterialKind,
+  actionId: MaterialActionId,
+  openMaterialPreview: (applicationId: string, kind: ApplicationMaterialKind) => void
+) {
+  if (actionId === "preview") {
+    openMaterialPreview(app.id, kind);
+    return;
   }
-  if (app.outreachSubject?.trim() || app.outreachBody?.trim()) {
-    items.push({ kind: "outreach", label: "Outreach email" });
+  if (actionId === "download") {
+    if (kind === "resume" && app.resumeId) {
+      triggerDownload(resumeDownloadUrl(app.resumeId));
+      return;
+    }
+    if (kind === "cover-letter" && app.coverLetterR2Key) {
+      triggerDownload(coverLetterDownloadUrl(app.id));
+      return;
+    }
+    toast.error("Download unavailable");
+    return;
   }
-  return items;
+  if (actionId === "copy") {
+    if (kind === "cover-letter") {
+      void copyText("cover letter", formatCoverLetterCopy(app));
+      return;
+    }
+    if (kind === "outreach") {
+      void copyText("outreach email", formatOutreachCopy(app));
+      return;
+    }
+  }
 }
 
 /** Page-level host — do not mount inside Menu/ContextMenu (unmount closes dialog). */
@@ -246,21 +286,32 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
             <Sub>
               <SubTrigger>
                 <FileTextIcon aria-hidden="true" />
-                Review materials
+                Materials
               </SubTrigger>
               <SubPopup>
                 {materials.map((material) => (
-                  <Item
-                    key={material.kind}
-                    onClick={() => openMaterialPreview(app.id, material.kind)}
-                  >
-                    {material.kind === "outreach" ? (
-                      <MailIcon aria-hidden="true" />
-                    ) : (
-                      <FileTextIcon aria-hidden="true" />
-                    )}
-                    {material.label}
-                  </Item>
+                  <Sub key={material.kind}>
+                    <SubTrigger>
+                      {material.kind === "outreach" ? (
+                        <MailIcon aria-hidden="true" />
+                      ) : (
+                        <FileTextIcon aria-hidden="true" />
+                      )}
+                      {material.label}
+                    </SubTrigger>
+                    <SubPopup>
+                      {actionsFor(material.kind, app).map((action) => (
+                        <Item
+                          key={action.id}
+                          onClick={() =>
+                            runMaterialAction(app, material.kind, action.id, openMaterialPreview)
+                          }
+                        >
+                          {action.label}
+                        </Item>
+                      ))}
+                    </SubPopup>
+                  </Sub>
                 ))}
               </SubPopup>
             </Sub>
