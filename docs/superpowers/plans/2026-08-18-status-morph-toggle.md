@@ -39,8 +39,9 @@ No package.json export map change needed (`./components/*` already covers the ne
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
+import { useMediaQuery } from "@tsu-stack/ui/hooks/use-media-query";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 export type StatusMorphToggleProps = {
@@ -62,6 +63,10 @@ const SIZE = {
 /**
  * Presentational status morph (SmoothUI Dot Morph–inspired).
  * Not a button — parent owns press / aria-pressed / disabled.
+ *
+ * **Hover hit-area:** outer span should fill the parent icon button
+ * (consumer passes `className="absolute inset-0 size-full"`) so morph +
+ * opposite-color preview fire on whole-control hover, not only the 8px dot.
  */
 export function StatusMorphToggle({
   active,
@@ -69,17 +74,9 @@ export function StatusMorphToggle({
   size = "sm"
 }: StatusMorphToggleProps): React.ReactElement {
   const shouldReduceMotion = useReducedMotion();
-  const [isHoverDevice, setIsHoverDevice] = useState(false);
+  const isHoverDevice = useMediaQuery("(hover: hover) and (pointer: fine)");
   const [isHovered, setIsHovered] = useState(false);
   const dims = SIZE[size];
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
-    setIsHoverDevice(mediaQuery.matches);
-    const onChange = (e: MediaQueryListEvent) => setIsHoverDevice(e.matches);
-    mediaQuery.addEventListener("change", onChange);
-    return () => mediaQuery.removeEventListener("change", onChange);
-  }, []);
 
   const morph =
     !shouldReduceMotion && isHoverDevice && isHovered
@@ -120,6 +117,7 @@ Notes:
 - Do **not** render `<button>` or accept `onClick`.
 - Do **not** import SmoothUI / SmoothButton.
 - Keep `"use client"` because of hooks + motion.
+- Prefer `useMediaQuery` from `packages/ui/hooks/use-media-query.ts` (confirm the package export path; raw `matchMedia` only if the hook cannot take a freeform query).
 
 - [ ] **Step 2: Typecheck ui package**
 
@@ -149,10 +147,9 @@ git commit -m "feat(ui): add StatusMorphToggle presentational morph"
 ```ts
 import { useEffect, useState } from "react";
 import { StatusMorphToggle } from "@tsu-stack/ui/components/status-morph-toggle";
-// remove Circle from lucide imports if unused
 ```
 
-Delete the private `LiveStatusDot` function.
+Delete the private `LiveStatusDot` function. Drop `Circle` from the lucide-react import (it is only used by `LiveStatusDot` today).
 
 - [ ] **Step 2: Optimistic PortfolioStatusButton**
 
@@ -193,14 +190,18 @@ function PortfolioStatusButton({
             aria-label={hint}
             aria-pressed={active}
             data-slot="button"
-            className={className}
+            className={cn("relative", className)}
           />
         }
       >
         <IconSwap
           state={isLoading ? "b" : "a"}
           aria-hidden
-          iconA={<StatusMorphToggle active={active} size="sm" />}
+          className="relative size-full"
+          iconClassName="relative size-full"
+          iconA={
+            <StatusMorphToggle active={active} size="sm" className="absolute inset-0 size-full" />
+          }
           iconB={<Loader2 className="size-4 animate-spin" />}
         />
       </TooltipTrigger>
@@ -210,11 +211,14 @@ function PortfolioStatusButton({
 }
 ```
 
+**Hover hit-area lock:** `StatusMorphToggle` must fill the icon button (`absolute inset-0` / `size-full` through `IconSwap`) so morph + opposite-color preview run when the pointer is anywhere on the outline button — not only when it touches the 8px dot.
+
 **Behavior locks:**
 
 - Tooltip + `aria-pressed` / `aria-label` track **optimistic** `active` (not stale `inPortfolio` mid-flight).
 - Parent mutation still via `onToggle()`; when query cache / error rolls `inPortfolio`, `useEffect` resyncs.
 - Overflow menu Switch rows unchanged.
+- After click while still hovering, the control may remain morphing with the _new_ opposite preview until mouse leave; “settles to circle” applies once hover ends (or on touch / reduced motion).
 
 - [ ] **Step 3: Typecheck web**
 
@@ -244,9 +248,11 @@ git commit -m "feat(web): optimistic StatusMorphToggle on portfolio status"
 
 - [ ] **Step 3: Hover (desktop pointer)**
 
-1. Hover green → morph taller/narrower + turn red (preview).
-2. Hover red → morph + turn green.
-3. Leave without click → back to idle circle + original color.
+1. Hover **anywhere on the outline icon button** (not only the 8px dot) → morph + opposite color.
+2. Hover green → morph taller/narrower + turn red (preview).
+3. Hover red → morph + turn green.
+4. Leave without click → back to idle circle + original color.
+5. Click while still hovering → optimistic state flips; may stay morphing with the _new_ opposite preview until mouse leave; circle settles when hover ends.
 
 - [ ] **Step 4: Optimistic click**
 
