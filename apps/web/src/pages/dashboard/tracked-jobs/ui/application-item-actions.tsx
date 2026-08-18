@@ -18,7 +18,7 @@ import {
   Trash2Icon,
   XCircleIcon
 } from "lucide-react";
-import { useState, type ComponentType } from "react";
+import { type ComponentType } from "react";
 
 import {
   APPLICATION_OUTCOME_LABELS,
@@ -28,21 +28,10 @@ import {
   type ApplicationOutput,
   type ApplicationStage
 } from "@tsu-stack/core";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@tsu-stack/ui/components/alert-dialog";
 
 import {
   APPLICATION_PRIMARY_ACTION_LABELS,
   listingUrlFor,
-  useDeleteApplicationsMutation,
   useSetOutcomeMutation,
   useUpdateStageMutation
 } from "@/features/applications";
@@ -95,12 +84,10 @@ export function ApplicationItemActions({
   slots: ApplicationActionSlots;
   density?: "full" | "list-overflow";
 }) {
-  const { openEdit, openView, closeView, viewItem, selectedIds, toggleSelect } =
+  const { openEdit, openView, selectedIds, toggleSelect, openDeleteConfirm } =
     useApplicationStore();
   const updateStage = useUpdateStageMutation();
   const setOutcome = useSetOutcomeMutation();
-  const deleteMutation = useDeleteApplicationsMutation();
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
 
   const listingUrl = listingUrlFor(app);
@@ -110,18 +97,6 @@ export function ApplicationItemActions({
       }
     : undefined;
   const isBatchSelected = selectedIds.includes(app.id);
-
-  function confirmDelete() {
-    deleteMutation.mutate(
-      { ids: [app.id] },
-      {
-        onSuccess: () => {
-          setDeleteOpen(false);
-          if (viewItem?.id === app.id) closeView();
-        }
-      }
-    );
-  }
 
   return (
     <>
@@ -198,39 +173,10 @@ export function ApplicationItemActions({
 
       <Separator />
 
-      <Item
-        variant="destructive"
-        disabled={deleteMutation.isPending}
-        onClick={() => setDeleteOpen(true)}
-      >
+      <Item variant="destructive" onClick={() => openDeleteConfirm(app.id)}>
         <Trash2Icon aria-hidden="true" />
         Delete
       </Item>
-
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this application?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently removes the application from your pipeline. Prefer Close as for roles
-              that ended — only use delete for mistakes or test data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              loading={deleteMutation.isPending}
-              disabled={deleteMutation.isPending}
-              onClick={() => {
-                confirmDelete();
-              }}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

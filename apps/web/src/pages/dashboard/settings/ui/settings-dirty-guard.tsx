@@ -3,16 +3,7 @@
 import { useBlocker } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@tsu-stack/ui/components/alert-dialog";
+import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 
 export type UseSettingsDirtyGuardOptions = {
   /**
@@ -50,39 +41,21 @@ export function useSettingsDirtyGuard(dirty: boolean, options?: UseSettingsDirty
   });
 
   const alertDialog = (
-    <AlertDialog
+    <ConfirmDialog
       open={status === "blocked"}
       onOpenChange={(open) => {
         if (!open) reset?.();
       }}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
-          <AlertDialogDescription>
-            You have unsaved changes. Are you sure you want to discard them?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel
-            onClick={() => {
-              reset?.();
-            }}
-          >
-            Keep editing
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => {
-              // Clear draft before proceed so remount/return is not dirty.
-              onDiscardRef.current?.();
-              proceed?.();
-            }}
-          >
-            Discard
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      title="Unsaved changes"
+      description="You have unsaved changes. Are you sure you want to discard them?"
+      cancelLabel="Keep editing"
+      confirmLabel="Discard"
+      onConfirm={() => {
+        // Clear draft before proceed so remount/return is not dirty.
+        onDiscardRef.current?.();
+        proceed?.();
+      }}
+    />
   );
 
   return { alertDialog } as const;

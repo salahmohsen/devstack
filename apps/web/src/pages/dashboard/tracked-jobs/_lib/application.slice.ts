@@ -24,6 +24,12 @@ type ApplicationUIState = {
   packageSheetAppId: string | null;
   /** Send outreach confirm dialog (application id). */
   sendOutreachAppId: string | null;
+  /**
+   * Delete confirm dialog (application id).
+   * Page-level host — Menu/ContextMenu unmount on item click and would
+   * dismiss an in-menu AlertDialog immediately.
+   */
+  deleteConfirmAppId: string | null;
   /** Import JD via shared hub chat sheet. */
   importJdSheetOpen: boolean;
   /**
@@ -52,6 +58,8 @@ type ApplicationUIActions = {
   closePackageSheet: () => void;
   openSendOutreach: (applicationId: string) => void;
   closeSendOutreach: () => void;
+  openDeleteConfirm: (applicationId: string) => void;
+  closeDeleteConfirm: () => void;
   openImportJdSheet: () => void;
   closeImportJdSheet: () => void;
   openMaterialPreview: (applicationId: string, kind: ApplicationMaterialKind) => void;
@@ -68,6 +76,7 @@ let state: ApplicationUIState = {
   stageInFlightIds: {},
   packageSheetAppId: null,
   sendOutreachAppId: null,
+  deleteConfirmAppId: null,
   importJdSheetOpen: false,
   materialPreview: null
 };
@@ -120,6 +129,8 @@ const actions: ApplicationUIActions = {
   closePackageSheet: () => setState({ packageSheetAppId: null }),
   openSendOutreach: (applicationId) => setState({ sendOutreachAppId: applicationId }),
   closeSendOutreach: () => setState({ sendOutreachAppId: null }),
+  openDeleteConfirm: (applicationId) => setState({ deleteConfirmAppId: applicationId }),
+  closeDeleteConfirm: () => setState({ deleteConfirmAppId: null }),
   openImportJdSheet: () => setState({ importJdSheetOpen: true }),
   closeImportJdSheet: () => setState({ importJdSheetOpen: false }),
   openMaterialPreview: (applicationId, kind) =>

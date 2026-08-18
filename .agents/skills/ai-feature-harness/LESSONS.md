@@ -17,6 +17,14 @@
 
 ---
 
+## 2026-08-18 — Confirm dialogs must host outside Menu/ContextMenu
+
+- **Trigger:** Tracked jobs list/board Delete confirm flashed then vanished
+- **Finding:** `AlertDialog` state mounted inside `MenuPopup` / `ContextMenuPopup` unmounts when the menu closes after the Delete item click — dialog opens for one frame then disappears
+- **Finding:** Same class as material preview / send outreach: keep confirm `open` in page/card store and render `ConfirmDialog` at that host. Menu item only calls `openDeleteConfirm(id)`
+- **Finding:** Prefer shared `@tsu-stack/ui` `ConfirmDialog` (coss AlertDialog) for yes/no destroy/discard/send; keep `PromptDialog` for collect-a-value
+- **Evidence class:** Playwright list + board — dialog stayed visible ~1.5s after Delete; Cancel closed it
+
 ## 2026-08-18 — Agent Docker boot needs explicit files-sdk AWS peers
 
 - **Trigger:** Redeployed `devhub-agent` crashed on boot after DB ensure

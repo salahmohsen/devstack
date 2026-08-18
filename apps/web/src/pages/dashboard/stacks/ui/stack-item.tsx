@@ -5,18 +5,9 @@ import { toast } from "sonner";
 
 import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type StackOutput } from "@tsu-stack/core";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogPopup,
-  AlertDialogTitle
-} from "@tsu-stack/ui/components/alert-dialog";
 import { Card, CardContent } from "@tsu-stack/ui/components/card";
 import { Checkbox } from "@tsu-stack/ui/components/checkbox";
+import { ConfirmDialog } from "@tsu-stack/ui/components/confirm-dialog";
 import {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -287,32 +278,16 @@ export const StackItem = memo(function StackItem({
   );
 
   const deleteDialog = (
-    <AlertDialog
+    <ConfirmDialog
       open={deleteDialogOpen}
-      onOpenChange={(open) => {
-        if (!open && deleteMutation.isPending) return;
-        setDeleteDialogOpen(open);
-      }}
-    >
-      <AlertDialogPopup>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete this stack?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {`"${stack.name}" will be removed from all projects that use it.`}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            loading={deleteMutation.isPending}
-            onClick={handleDelete}
-          >
-            Delete stack
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogPopup>
-    </AlertDialog>
+      onOpenChange={setDeleteDialogOpen}
+      title="Delete this stack?"
+      description={`"${stack.name}" will be removed from all projects that use it.`}
+      confirmLabel="Delete stack"
+      confirmVariant="destructive"
+      confirmLoading={deleteMutation.isPending}
+      onConfirm={handleDelete}
+    />
   );
 
   if (isSort) {

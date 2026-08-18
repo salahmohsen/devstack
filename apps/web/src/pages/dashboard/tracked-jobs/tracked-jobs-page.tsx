@@ -71,6 +71,13 @@ const SendOutreachDialog = lazy(() =>
     };
   })
 );
+const DeleteApplicationDialog = lazy(() =>
+  import("@/pages/dashboard/tracked-jobs/ui/delete-application-dialog").then((m) => {
+    return {
+      default: m.DeleteApplicationDialog
+    };
+  })
+);
 
 const EMPTY_APPLICATIONS: ApplicationOutput[] = [];
 
@@ -100,6 +107,8 @@ export function TrackedJobsPage() {
     closePackageSheet,
     sendOutreachAppId,
     closeSendOutreach,
+    deleteConfirmAppId,
+    closeDeleteConfirm,
     importJdSheetOpen,
     openImportJdSheet,
     closeImportJdSheet,
@@ -163,6 +172,11 @@ export function TrackedJobsPage() {
     if (!sendOutreachAppId) return null;
     return applications.find((a) => a.id === sendOutreachAppId) ?? null;
   }, [sendOutreachAppId, applications]);
+
+  const deleteApplication = useMemo(() => {
+    if (!deleteConfirmAppId) return null;
+    return applications.find((a) => a.id === deleteConfirmAppId) ?? null;
+  }, [deleteConfirmAppId, applications]);
 
   const materialPreviewApplication = useMemo(() => {
     if (!materialPreview) return null;
@@ -314,6 +328,16 @@ export function TrackedJobsPage() {
               application={sendApplication}
               onOpenChange={(open) => {
                 if (!open) closeSendOutreach();
+              }}
+            />
+          ) : null}
+
+          {deleteConfirmAppId != null ? (
+            <DeleteApplicationDialog
+              open
+              application={deleteApplication}
+              onOpenChange={(open) => {
+                if (!open) closeDeleteConfirm();
               }}
             />
           ) : null}
