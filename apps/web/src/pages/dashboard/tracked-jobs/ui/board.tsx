@@ -20,7 +20,6 @@ import {
   CircleDotIcon,
   CircleIcon,
   FileTextIcon,
-  MoreHorizontalIcon,
   PhoneIcon,
   PlusIcon,
   SparklesIcon
@@ -43,7 +42,6 @@ import {
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
-import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
@@ -57,12 +55,9 @@ import {
 import { ItemsEmpty } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
-import {
-  applicationContextSlots,
-  applicationMenuSlots
-} from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
+import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
+import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
-import { ApplicationPrimaryActionButton } from "@/pages/dashboard/tracked-jobs/ui/application-primary-action-button";
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
@@ -116,28 +111,6 @@ function ApplicationCard({
           <div className="truncate text-sm font-medium">{app.companyName}</div>
           <div className="truncate text-xs text-muted-foreground">{app.title}</div>
         </button>
-
-        {/* coss Menu — 3-dot trigger (click) */}
-        <Menu>
-          <MenuTrigger
-            render={
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="size-6 shrink-0 opacity-60 transition-opacity group-hover:opacity-100"
-                aria-label="Open application menu"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-              />
-            }
-          >
-            <MoreHorizontalIcon className="size-3.5" aria-hidden="true" />
-          </MenuTrigger>
-          <MenuPopup align="end" side="bottom" className="min-w-44">
-            <ApplicationItemActions app={app} slots={applicationMenuSlots} />
-          </MenuPopup>
-        </Menu>
       </div>
       {(app.listingClosed ||
         app.matchScore != null ||
@@ -163,7 +136,7 @@ function ApplicationCard({
           ) : null}
         </div>
       )}
-      {!isOverlay ? <ApplicationPrimaryActionButton app={app} layout="card" /> : null}
+      {!isOverlay ? <ApplicationActionGroup app={app} variant="board" /> : null}
     </div>
   );
 

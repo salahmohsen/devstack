@@ -68,6 +68,7 @@ import {
 import { ItemInfoPanel, ItemInfoSection, PanelEditButton } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
+import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
 
 function formatWhen(value: Date | string | null | undefined) {
@@ -432,7 +433,11 @@ export function ApplicationInfoPanel({
         }
         actions={
           <>
-            {onEdit ? <PanelEditButton onClick={onEdit} /> : null}
+            {!isDiscovery ? (
+              <ApplicationActionGroup app={item} variant="with-edit" />
+            ) : onEdit ? (
+              <PanelEditButton onClick={onEdit} />
+            ) : null}
             {item.url ? (
               <Button
                 type="button"

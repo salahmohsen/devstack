@@ -33,7 +33,8 @@ import {
   APPLICATION_PRIMARY_ACTION_LABELS,
   listingUrlFor,
   useSetOutcomeMutation,
-  useUpdateStageMutation
+  useUpdateStageMutation,
+  type ApplicationPrimaryActionKind
 } from "@/features/applications";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
@@ -78,11 +79,14 @@ const OUTCOME_ICONS: Record<ApplicationOutcome, ComponentType<{ className?: stri
 export function ApplicationItemActions({
   app,
   slots,
-  density = "full"
+  density = "full",
+  hidePrimaryKind = null
 }: {
   app: ApplicationOutput;
   slots: ApplicationActionSlots;
   density?: "full" | "list-overflow";
+  /** Omit the overflow entry that matches the visible magic CTA. */
+  hidePrimaryKind?: ApplicationPrimaryActionKind | null;
 }) {
   const { openEdit, openView, selectedIds, toggleSelect, openDeleteConfirm } =
     useApplicationStore();
@@ -97,6 +101,7 @@ export function ApplicationItemActions({
       }
     : undefined;
   const isBatchSelected = selectedIds.includes(app.id);
+  const showOpenListing = Boolean(openListing) && hidePrimaryKind !== "open-listing";
 
   return (
     <>
@@ -104,7 +109,7 @@ export function ApplicationItemActions({
         <EyeIcon aria-hidden="true" />
         View
       </Item>
-      {openListing ? (
+      {showOpenListing ? (
         <Item onClick={openListing}>
           <ExternalLinkIcon aria-hidden="true" />
           {APPLICATION_PRIMARY_ACTION_LABELS.openListing}
@@ -145,7 +150,11 @@ export function ApplicationItemActions({
         </SubPopup>
       </Sub>
 
-      <ApplyPackageMenuItems app={app} slots={{ Item, Separator, Sub, SubTrigger, SubPopup }} />
+      <ApplyPackageMenuItems
+        app={app}
+        slots={{ Item, Separator, Sub, SubTrigger, SubPopup }}
+        hidePrimaryKind={hidePrimaryKind}
+      />
 
       <Sub>
         <SubTrigger>

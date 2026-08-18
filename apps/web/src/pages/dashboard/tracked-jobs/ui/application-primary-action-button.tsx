@@ -35,6 +35,11 @@ type ApplicationPrimaryActionButtonProps = {
   app: ApplicationOutput;
   /** `card`: full-width under board card content. `inline`: list action strip. */
   layout?: "card" | "inline";
+  /**
+   * When true, drop card margin/full-width so a parent coss Group owns layout
+   * (joined corners / flex growth).
+   */
+  grouped?: boolean;
   className?: string;
 };
 
@@ -45,6 +50,7 @@ type ApplicationPrimaryActionButtonProps = {
 export function ApplicationPrimaryActionButton({
   app,
   layout = "card",
+  grouped = false,
   className
 }: ApplicationPrimaryActionButtonProps) {
   const primary = getApplicationPrimaryAction(app);
@@ -92,7 +98,13 @@ export function ApplicationPrimaryActionButton({
       type="button"
       size={layout === "inline" ? "default" : "sm"}
       variant={primary.kind === "open-listing" ? "outline" : "default"}
-      className={cn("active:scale-[0.96]", layout === "card" && "mt-2.5 h-7 w-full", className)}
+      className={cn(
+        "active:scale-[0.96]",
+        layout === "card" && !grouped && "mt-2.5 h-7 w-full",
+        grouped && layout === "card" && "h-7 min-w-0 flex-1",
+        grouped && layout === "inline" && "min-w-0",
+        className
+      )}
       disabled={disabled}
       loading={generating}
       onPointerDown={stopRowActivation}

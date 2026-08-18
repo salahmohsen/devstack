@@ -38,6 +38,7 @@ import {
   useGenerateApplyPackageMutation,
   writeClipboardText,
   type ApplicationMaterialKind,
+  type ApplicationPrimaryActionKind,
   type MaterialActionId
 } from "@/features/applications";
 
@@ -48,6 +49,8 @@ type ApplyPackageMenuItemsProps = {
   app: ApplicationOutput;
   /** Full slots so Materials can open a Sub. */
   slots: ApplicationActionSlots;
+  /** Omit the menu entry that matches the visible magic CTA. */
+  hidePrimaryKind?: ApplicationPrimaryActionKind | null;
 };
 
 /**
@@ -228,7 +231,11 @@ export function ApplicationMaterialPreviewDialog({
   return null;
 }
 
-export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps) {
+export function ApplyPackageMenuItems({
+  app,
+  slots,
+  hidePrimaryKind = null
+}: ApplyPackageMenuItemsProps) {
   const { Item, Separator, Sub, SubTrigger, SubPopup } = slots;
   const { openPackageSheet, openSendOutreach, openEdit, openMaterialPreview } =
     useApplicationStore();
@@ -257,11 +264,13 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
       <Separator />
       {entryState === "none" ? (
         hasDescription ? (
-          <Item disabled={!open || generating} onClick={() => open && runGenerate()}>
-            <SparklesIcon aria-hidden="true" />
-            {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
-          </Item>
-        ) : (
+          hidePrimaryKind === "prepare" ? null : (
+            <Item disabled={!open || generating} onClick={() => open && runGenerate()}>
+              <SparklesIcon aria-hidden="true" />
+              {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
+            </Item>
+          )
+        ) : hidePrimaryKind === "add-jd" ? null : (
           <Item disabled={!open} onClick={() => openEdit(app)}>
             <FileTextIcon aria-hidden="true" />
             {APPLICATION_PRIMARY_ACTION_LABELS.addJd}
@@ -270,10 +279,12 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
       ) : null}
       {entryState === "draft" ? (
         <>
-          <Item disabled={generating} onClick={() => openPackageSheet(app.id)}>
-            <PackageIcon aria-hidden="true" />
-            {APPLICATION_PRIMARY_ACTION_LABELS.review}
-          </Item>
+          {hidePrimaryKind === "review" ? null : (
+            <Item disabled={generating} onClick={() => openPackageSheet(app.id)}>
+              <PackageIcon aria-hidden="true" />
+              {APPLICATION_PRIMARY_ACTION_LABELS.review}
+            </Item>
+          )}
           <Item disabled={!open || generating} onClick={() => open && setRegenerateOpen(true)}>
             <RefreshCwIcon aria-hidden="true" />
             Regenerate
@@ -320,7 +331,7 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
             <SparklesIcon aria-hidden="true" />
             {generating ? "Preparing…" : "Prepare again"}
           </Item>
-          {canSendOutreach(app) ? (
+          {canSendOutreach(app) && hidePrimaryKind !== "send" ? (
             <Item onClick={() => openSendOutreach(app.id)}>
               <MailIcon aria-hidden="true" />
               {APPLICATION_PRIMARY_ACTION_LABELS.send}

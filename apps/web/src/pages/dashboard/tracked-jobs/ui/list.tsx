@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Building2Icon,
-  BriefcaseIcon,
-  ChevronDownIcon,
-  FileTextIcon,
-  MapPinIcon,
-  PlusIcon
-} from "lucide-react";
+import { Building2Icon, BriefcaseIcon, FileTextIcon, MapPinIcon, PlusIcon } from "lucide-react";
 import { useMemo } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
@@ -19,7 +12,6 @@ import {
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
-import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
@@ -31,19 +23,15 @@ import {
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
-  getApplicationPrimaryAction,
   useDeleteApplicationsMutation
 } from "@/features/applications";
 
 import { ItemsEmpty, ListSkeleton } from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
-import {
-  applicationContextSlots,
-  applicationListMenuSlots
-} from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
+import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
+import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
-import { ApplicationPrimaryActionButton } from "@/pages/dashboard/tracked-jobs/ui/application-primary-action-button";
 
 const LIST_FILTERS = [
   { value: "open", label: "Open" },
@@ -66,7 +54,6 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
     selectAll,
     clearSelection,
     openView,
-    openEdit,
     openCreate,
     openImportJdSheet,
     viewItem,
@@ -186,7 +173,6 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
           {filtered.map((app) => {
             const selected = viewItem?.id === app.id;
             const batchSelected = selectedIds.includes(app.id);
-            const primary = getApplicationPrimaryAction(app);
             return (
               <li key={app.id}>
                 <ContextMenu>
@@ -198,23 +184,15 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       batchSelectActive={batchSelectActive}
                       batchCheckboxVisibility="active-only"
                       onToggleSelect={() => toggleSelect(app.id)}
-                      viewSlot={
-                        primary ? (
-                          <ApplicationPrimaryActionButton app={app} layout="inline" />
-                        ) : undefined
-                      }
-                      onEdit={() => openEdit(app)}
-                      // Full board parity lives in the ⋮ menu (and right-click).
-                      // Delete is in ApplicationItemActions with confirm dialog.
-                      extraMenuItems={
-                        <ApplicationItemActions
+                      actions={
+                        <ApplicationActionGroup
                           app={app}
-                          slots={applicationListMenuSlots}
-                          density="list-overflow"
+                          variant="with-edit"
+                          className="hidden md:flex"
                         />
                       }
                     >
-                      {/* Tags → title → meta; mobile ends with Prepare|⋮ Group. */}
+                      {/* Tags → title → meta; mobile ends with Magic|Edit|▾ Group. */}
                       <div className="flex min-w-0 flex-col gap-1.5">
                         <div className="no-scrollbar flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain">
                           {app.listingClosed ? (
@@ -252,38 +230,11 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           onPointerDown={(event) => event.stopPropagation()}
                           onKeyDown={(event) => event.stopPropagation()}
                         >
-                          <Group aria-label="Item actions" className="w-full">
-                            {primary ? (
-                              <ApplicationPrimaryActionButton
-                                app={app}
-                                layout="inline"
-                                className="min-w-0 flex-1"
-                              />
-                            ) : null}
-                            {primary ? <GroupSeparator /> : null}
-                            <Menu>
-                              <MenuTrigger
-                                render={
-                                  <Button
-                                    type="button"
-                                    size="icon"
-                                    variant="outline"
-                                    aria-label="More actions"
-                                    className="shrink-0"
-                                  />
-                                }
-                              >
-                                <ChevronDownIcon className="size-4" aria-hidden />
-                              </MenuTrigger>
-                              <MenuPopup align="end" className="min-w-44">
-                                <ApplicationItemActions
-                                  app={app}
-                                  slots={applicationListMenuSlots}
-                                  density="list-overflow"
-                                />
-                              </MenuPopup>
-                            </Menu>
-                          </Group>
+                          <ApplicationActionGroup
+                            app={app}
+                            variant="with-edit"
+                            className="w-full"
+                          />
                         </div>
                       </div>
                     </ListItem>
