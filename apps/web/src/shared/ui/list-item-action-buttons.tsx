@@ -1,12 +1,11 @@
 "use client";
 
-import { Check, ChevronDown, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Edit, ExternalLink, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { IconMorph, IconShake } from "@tsu-stack/ui/components/icon-motion";
-import { IconSwap } from "@tsu-stack/ui/components/icon-swap";
 import {
   Menu,
   MenuItem,
@@ -80,11 +79,11 @@ function PortfolioStatusButton({
           />
         }
       >
-        <IconSwap
-          state={isLoading ? "b" : "a"}
-          aria-hidden
-          iconA={<StatusMorphToggle active={active} size="sm" hovered={hovered} />}
-          iconB={<Loader2 className="size-4 animate-spin" />}
+        <StatusMorphToggle
+          active={active}
+          size="sm"
+          hovered={hovered}
+          pending={Boolean(isLoading)}
         />
       </TooltipTrigger>
       <TooltipPopup>{hint}</TooltipPopup>

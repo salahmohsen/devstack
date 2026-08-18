@@ -21,6 +21,11 @@ export type StatusMorphToggleProps = {
    * owns hover so IconSwap’s hidden layer cannot steal events.
    */
   hovered?: boolean;
+  /**
+   * Keep the morph shape expanded (e.g. while a mutation is in flight)
+   * even when not hovered. Color follows `active` (no opposite preview).
+   */
+  pending?: boolean;
 };
 
 const SIZE = {
@@ -40,7 +45,8 @@ export function StatusMorphToggle({
   active,
   className,
   size = "sm",
-  hovered: hoveredProp
+  hovered: hoveredProp,
+  pending = false
 }: StatusMorphToggleProps): ReactElement {
   const shouldReduceMotion = useReducedMotion();
   const isHoverDevice = useMediaQuery("(hover: hover) and (pointer: fine)");
@@ -49,12 +55,15 @@ export function StatusMorphToggle({
   const isHovered = controlled ? Boolean(hoveredProp) : uncontrolledHovered;
   const dims = SIZE[size];
 
-  const morph =
-    !shouldReduceMotion && isHoverDevice && isHovered
-      ? { borderRadius: 999, width: dims.hoverW, height: dims.hoverH }
-      : { borderRadius: 999, width: dims.idle, height: dims.idle };
+  const showMorph = pending || (!shouldReduceMotion && isHoverDevice && isHovered);
 
-  const previewActive = isHovered && isHoverDevice && !shouldReduceMotion ? !active : active;
+  const morph = showMorph
+    ? { borderRadius: 999, width: dims.hoverW, height: dims.hoverH }
+    : { borderRadius: 999, width: dims.idle, height: dims.idle };
+
+  // Pending uses committed/optimistic `active` color; hover-only previews the opposite.
+  const previewActive =
+    pending || !(isHovered && isHoverDevice && !shouldReduceMotion) ? active : !active;
 
   return (
     <span
