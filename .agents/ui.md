@@ -61,6 +61,17 @@ For a title + one (or few) fields + Cancel / Continue, use `PromptDialog` from `
 - Let the dialog focus the first field. Skip a field tooltip when the header description already explains the value.
 - Size `sm` (`sm:max-w-sm`) for a single input; `md` for URL or slightly longer copy.
 
+## Confirm dialogs
+
+For yes/no destroy, discard, send, or regenerate confirms, use `ConfirmDialog` from `@tsu-stack/ui/components/confirm-dialog` (coss `AlertDialog`).
+
+- Prefer `ConfirmDialog` over hand-rolled `AlertDialog` + header/footer boilerplate.
+- `confirmVariant="destructive"` for delete/remove; default for discard/send when not destructive.
+- `confirmLoading` + default `blockDismissWhileLoading` block Escape/outside dismiss while pending.
+- Optional `children` for extra body rows (e.g. To / Subject). Optional `icon` for a leading mark.
+- Caller owns `open` / close after success — `onConfirm` does not auto-close.
+- **Never mount confirm state inside `Menu` / `ContextMenu` popups** — those unmount on item click and the dialog vanishes. Host at page/card level (see tracked-jobs `deleteConfirmAppId` / material preview).
+
 ## Extraction Rule
 
 - Extract a component to `packages/ui` when it is reusable, app-agnostic, and the shared package can own its styling and accessibility.
