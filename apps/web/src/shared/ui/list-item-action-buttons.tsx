@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, ChevronDown, Circle, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Edit, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
@@ -16,9 +17,9 @@ import {
   MenuSubTrigger,
   MenuTrigger
 } from "@tsu-stack/ui/components/menu";
+import { StatusMorphToggle } from "@tsu-stack/ui/components/status-morph-toggle";
 import { Switch } from "@tsu-stack/ui/components/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "@tsu-stack/ui/components/tooltip";
-import { cn } from "@tsu-stack/ui/lib/utils";
 
 type ActionButtonConfig = {
   onAction: () => void;
@@ -35,17 +36,6 @@ type ToggleConfig = {
   initialValue: boolean;
 };
 
-function LiveStatusDot({ live }: { live: boolean }) {
-  return (
-    <Circle
-      className={cn(
-        "size-2 opacity-100",
-        live ? "fill-success text-success" : "fill-destructive text-destructive"
-      )}
-    />
-  );
-}
-
 function PortfolioStatusButton({
   inPortfolio,
   isLoading,
@@ -57,7 +47,16 @@ function PortfolioStatusButton({
   onToggle: () => void;
   className?: string;
 }) {
-  const hint = inPortfolio ? "On your public profile" : "Not on your public profile";
+  const [active, setActive] = useState(inPortfolio);
+  const [prevInPortfolio, setPrevInPortfolio] = useState(inPortfolio);
+  const [hovered, setHovered] = useState(false);
+
+  if (prevInPortfolio !== inPortfolio) {
+    setPrevInPortfolio(inPortfolio);
+    setActive(inPortfolio);
+  }
+
+  const hint = active ? "On your public profile" : "Not on your public profile";
 
   return (
     <Tooltip>
@@ -69,10 +68,13 @@ function PortfolioStatusButton({
             disabled={isLoading}
             onClick={(event) => {
               event.stopPropagation();
+              setActive((value) => !value);
               onToggle();
             }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
             aria-label={hint}
-            aria-pressed={inPortfolio}
+            aria-pressed={active}
             data-slot="button"
             className={className}
           />
@@ -81,7 +83,7 @@ function PortfolioStatusButton({
         <IconSwap
           state={isLoading ? "b" : "a"}
           aria-hidden
-          iconA={<LiveStatusDot live={inPortfolio} />}
+          iconA={<StatusMorphToggle active={active} size="sm" hovered={hovered} />}
           iconB={<Loader2 className="size-4 animate-spin" />}
         />
       </TooltipTrigger>
