@@ -75,7 +75,7 @@ catalog:
   lucide-react: ^1.22.0
   next-themes: ^0.4.6
 
-  # Align with vite-plus 0.2.7 (depends on oxlint-tsgolint@=7.0.2001 / TS7-native tsgolint)
+  # Align with vite-plus 0.2.9 (depends on oxlint-tsgolint@=7.0.2001 / TS7-native tsgolint)
   oxlint-tsgolint: 7.0.2001
   radix-ui: ^1.6.1
   react: ^19.2.7
@@ -96,8 +96,8 @@ catalog:
   # to @voidzero-dev/vite-plus-test — that 0.1.x wrapper was removed in vite-plus
   # 0.2.x; it has no `bin`, so `vp test` fails with "Could not find 'vitest' bin entry".
   # @see https://github.com/voidzero-dev/vite-plus/releases/tag/v0.2.1
-  vite: npm:@voidzero-dev/vite-plus-core@0.2.7
-  vite-plus: 0.2.7
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.9
+  vite-plus: 0.2.9
   vitest: 4.1.10
   zod: ^4.4.3
   "@better-auth/passkey": ^1.6.23
