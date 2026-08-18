@@ -49,6 +49,7 @@ import {
   APPLICATION_STAGE_BADGE_VARIANT,
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
+  getApplicationPrimaryAction,
   useUpdateStageMutation
 } from "@/features/applications";
 
@@ -154,7 +155,11 @@ function ApplicationCard({
       <ContextMenu>
         <ContextMenuTrigger className="block w-full outline-none">{cardBody}</ContextMenuTrigger>
         <ContextMenuPopup className="min-w-44">
-          <ApplicationItemActions app={app} slots={applicationContextSlots} />
+          <ApplicationItemActions
+            app={app}
+            slots={applicationContextSlots}
+            hidePrimaryKind={getApplicationPrimaryAction(app)?.kind ?? null}
+          />
         </ContextMenuPopup>
       </ContextMenu>
     </div>

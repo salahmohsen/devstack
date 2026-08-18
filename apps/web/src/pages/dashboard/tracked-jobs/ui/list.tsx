@@ -23,6 +23,7 @@ import {
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
+  getApplicationPrimaryAction,
   useDeleteApplicationsMutation
 } from "@/features/applications";
 
@@ -240,7 +241,11 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                     </ListItem>
                   </ContextMenuTrigger>
                   <ContextMenuPopup className="min-w-44">
-                    <ApplicationItemActions app={app} slots={applicationContextSlots} />
+                    <ApplicationItemActions
+                      app={app}
+                      slots={applicationContextSlots}
+                      hidePrimaryKind={getApplicationPrimaryAction(app)?.kind ?? null}
+                    />
                   </ContextMenuPopup>
                 </ContextMenu>
               </li>
