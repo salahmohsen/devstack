@@ -19,11 +19,14 @@ This guide should stay aligned with:
 | ----------------- | ----------------------------------------------------------------------------- |
 | Library           | `files-sdk` + `files-sdk/s3`                                                  |
 | Configured client | `packages/api/src/lib/storage/index.ts` → `createFiles()`                     |
+| Agent client      | `apps/agent/src/mastra/lib/media-bucket.ts` → `createAgentMediaBucket()`      |
 | oRPC context      | `context.mediaBucket` is the same `Files` instance (`put` / `get` / `delete`) |
 | Browser gateway   | `apps/web/src/server/files-gateway.ts` mounted at `/api/files`                |
 | Gateway route     | `apps/web/src/routes/api/files/index.ts`                                      |
 | Progress UI       | `apps/web/src/components/files-sdk/upload-progress.tsx`                       |
 | Env validation    | `packages/env/src/web/env.server.ts` (`ENV_WEB_SERVER`)                       |
+
+`files-sdk/s3` peers (`@aws-sdk/client-s3`, `lib-storage`, `s3-presigned-post`, `s3-request-presigner`) are optional. Declare them as **runtime** deps on every consumer that imports `files-sdk/s3` — especially `apps/agent`, whose Mastra Docker image runs a nested install under `.mastra/output` and will not pull optional peers from the monorepo hoist.
 
 ```ts
 // packages/api/src/lib/storage/index.ts

@@ -17,6 +17,26 @@
 
 ---
 
+## 2026-08-18 — Agent Docker boot needs explicit files-sdk AWS peers
+
+- **Trigger:** Redeployed `devhub-agent` crashed on boot after DB ensure
+- **Finding:** `files-sdk/s3` imports `@aws-sdk/client-s3`, but those AWS packages are **optional peers**. Mastra’s nested `.mastra/output` install (path like `files-sdk@…_hono@…_zod@…` with **no** aws peer hash) does not install them unless the agent package declares them
+- **Finding:** Local `mastra dev` can still resolve via monorepo hoist from `apps/web`’s AWS deps. Prod `node .mastra/output/index.mjs` cannot. Add `@aws-sdk/client-s3`, `lib-storage`, `s3-presigned-post`, `s3-request-presigner` as **dependencies** on `@tsu-stack/agent` (not only web `devDependencies`)
+- **Evidence class:** Dokploy agent stdout `ERR_MODULE_NOT_FOUND @aws-sdk/client-s3` from `files-sdk/dist/chunk-*.js`
+
+## 2026-08-18 — Prod hub “no inbox” is missing tool calls + stale agent roll
+
+- **Trigger:** Prod reply “I have no inbox access / mail tools only work on a message id”; tools and side panels fail while local works
+- **Finding:** Diff `listHubMessages.uiMessages` first. The mail turn was `reasoning`+`text` only — **no** `tool-listMail` / `tool-searchMail`. Side panel never opens when `getSearchBrief` / `getDailyBrief` / `openEntityInspect` are never called
+- **Finding:** Same DeepSeek BYO locally on a clean epoch: `what's up` → `getDailyBrief`; `any mail that matters?` → `listMail`/`searchMail`; `what are my job rules?` → `getSearchBrief`. Prod fresh epoch: all three were text-only or wrong tool (`getJobPreferences`). Force processors are not winning in the running prod agent path
+- **Finding:** Agent evlog `version` can stay stuck on an old SHA (`2201e003`) while Dokploy deploy titles show newer builds (`06f677cb`). `encode-db-url.sh` only reads `/etc/tsu-source-commit` when `SOURCE_COMMIT` is empty/`unknown` — a sticky Dokploy env `SOURCE_COMMIT` masks the baked image SHA forever
+- **Finding:** Dokploy `application.deploy` / `redeploy` can return success without creating a new deployment row. Treat “MCP said ok” as non-evidence. Confirm a new deployment id + post-roll `version` + a live tool call
+- **Finding:** Stopping `devhub-agent` makes prod `chatStream` 500 — that Dokploy app is the live worker. Start/reload can 502/timeout after stop; recover from the Dokploy UI Deploy/Start, not only MCP
+- **Finding:** CI `mark_deployed` runs when `application.deploy` is _accepted_, not when the container is healthy. Path-skip cache can then skip agent on later pushes even if the roll never actually served new code
+- **Finding:** There is still no force processor for generic inbox asks (`any mail that matters?` / `list my emails`). Even on current code, DeepSeek can narrate “no list tool” among ~57 tools unless `listMail`/`searchMail` are forced
+- **User preference:** Redeploy agent from Dokploy UI; check/remove sticky `SOURCE_COMMIT` in agent env
+- **Evidence class:** Prod `listHubMessages` + live `chatStream` SSE; local clean-epoch SSE; Axiom agent `version`; Dokploy deploy log ends at build; stop→500 proof
+
 ## 2026-08-18 — New hub session + slash/mention composer
 
 - **Trigger:** Fix sticky “tools dead” thread, File Diff gaps, one-thread forever; add assistant-ui slash commands and @ tool mentions
