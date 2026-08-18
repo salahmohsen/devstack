@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   AlignLeftIcon,
+  Building2Icon,
   CopyIcon,
   DownloadIcon,
   ExternalLinkIcon,
@@ -11,6 +12,7 @@ import {
   HistoryIcon,
   InfoIcon,
   MailIcon,
+  MapPinIcon,
   PackageIcon,
   RefreshCwIcon,
   SparklesIcon,
@@ -43,6 +45,7 @@ import {
   DialogTitle
 } from "@tsu-stack/ui/components/dialog";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 
 import { Markdown } from "@/shared/ui/markdown";
 import { isEmptyRichHtml, RichHtml } from "@/shared/ui/rich-html";
@@ -378,18 +381,32 @@ export function ApplicationInfoPanel({
             aria-label={item.companyName}
           />
         }
-        eyebrowClassName="size-11 rounded-2xl bg-transparent"
+        eyebrowClassName="size-11 rounded-full bg-transparent"
         title={item.title}
         description={
           <div className="space-y-2.5">
-            <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span>{item.companyName}</span>
+            <p className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
+              <span className="inline-flex max-w-full min-w-0 items-center gap-1.5">
+                <Building2Icon
+                  className="size-3.5 shrink-0 text-muted-foreground"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+                <TruncatedText>{item.companyName}</TruncatedText>
+              </span>
               {locationLine ? (
                 <>
                   <span aria-hidden className="text-border">
                     ·
                   </span>
-                  <span>{locationLine}</span>
+                  <span className="inline-flex max-w-[min(100%,16rem)] min-w-0 items-center gap-1 sm:max-w-[20rem]">
+                    <MapPinIcon
+                      className="size-3.5 shrink-0 text-muted-foreground"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                    <TruncatedText>{locationLine}</TruncatedText>
+                  </span>
                 </>
               ) : null}
               {!isDiscovery && item.employmentType !== "unknown" ? (
@@ -397,7 +414,7 @@ export function ApplicationInfoPanel({
                   <span aria-hidden className="text-border">
                     ·
                   </span>
-                  <span>{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</span>
+                  <span className="shrink-0">{EMPLOYMENT_TYPE_LABELS[item.employmentType]}</span>
                 </>
               ) : null}
               {item.listingClosed ? (

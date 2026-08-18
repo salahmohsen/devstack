@@ -14,6 +14,7 @@ import {
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
+import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
@@ -219,20 +220,20 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                             seed={app.companyName}
                             size={32}
                             animated={selected}
-                            className="mt-0.5 size-8 shrink-0 rounded-lg outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                            className="mt-0.5 size-8 shrink-0 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                             aria-label={app.companyName}
                           />
                           <div className="min-w-0 flex-1">
                             <h3 className="min-w-0 truncate text-sm font-medium">{app.title}</h3>
                             <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
-                              <span className="truncate">{app.companyName}</span>
+                              <TruncatedText>{app.companyName}</TruncatedText>
                               {app.location ? (
-                                <span className="inline-flex min-w-0 items-center gap-1">
+                                <span className="inline-flex max-w-[min(100%,16rem)] min-w-0 items-center gap-1">
                                   <MapPinIcon
                                     className="size-3.5 shrink-0 opacity-80"
                                     aria-hidden
                                   />
-                                  <span className="truncate">{app.location}</span>
+                                  <TruncatedText>{app.location}</TruncatedText>
                                 </span>
                               ) : null}
                             </div>

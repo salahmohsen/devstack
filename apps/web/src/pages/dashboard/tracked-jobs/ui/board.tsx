@@ -117,7 +117,7 @@ function ApplicationCard({
             seed={app.companyName}
             size={28}
             animated={avatarAnimated}
-            className="mt-0.5 size-7 shrink-0 rounded-lg outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+            className="mt-0.5 size-7 shrink-0 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             aria-label={app.companyName}
           />
           <span className="min-w-0 flex-1">
