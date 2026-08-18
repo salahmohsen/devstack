@@ -55,14 +55,13 @@ export function DashboardMobileNavProvider({ children }: { children: ReactNode }
     [pathname]
   );
 
-  const value = useMemo(
-    () => {return {
+  const value = useMemo(() => {
+    return {
       open,
       setOpen,
       isDashboard
-    }},
-    [open, setOpen, isDashboard]
-  );
+    };
+  }, [open, setOpen, isDashboard]);
 
   return (
     <DashboardMobileNavContext.Provider value={value}>

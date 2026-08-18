@@ -40,11 +40,22 @@ type ClipWidthProps = {
   children: ReactNode;
 } & Omit<HTMLAttributes<HTMLDivElement>, "children">;
 
+function readShellWidth(el: HTMLElement | null, fallback: number): number {
+  if (!el) return fallback;
+  const rect = el.getBoundingClientRect().width;
+  if (rect > 0.5) return rect;
+  if (el.offsetWidth > 0) return el.offsetWidth;
+  return fallback;
+}
+
 /**
  * Clip a column to `contentWidth` and tween the shell width.
  *
  * CSS width only — no Motion `layout` / `animate={{ width }}` (those scale-
  * distort children). Open 400ms / close 350ms, `--ease-smooth-out`.
+ *
+ * Close always re-locks a measured pixel width before collapsing so the main
+ * card can expand when leaving routes that show a nav (dashboard → public).
  */
 export function ClipWidth({
   open,
@@ -67,6 +78,7 @@ export function ClipWidth({
   const contentWidthRef = useRef(contentWidth);
   const lastWidthRef = useRef(open ? contentWidth : 0);
   const widthRef = useRef(0);
+  const openRef = useRef(open);
 
   useEffect(() => {
     contentWidthRef.current = contentWidth;
@@ -75,6 +87,10 @@ export function ClipWidth({
   useEffect(() => {
     widthRef.current = width;
   }, [width]);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   useEffect(() => {
     const el = shellRef.current;
@@ -87,21 +103,20 @@ export function ClipWidth({
     return () => observer.disconnect();
   }, [mounted]);
 
-  if (open && !unlocked && lockWidth !== contentWidth) {
-    setLockWidth(contentWidth);
-    setWidth(contentWidth);
-  }
-
+  // Enter: mount, lock, tween 0 → contentWidth, optionally unlock for resize.
   useLayoutEffect(() => {
     if (!open) return;
     let cancelled = false;
     let timeout = 0;
     let frame = 0;
     const target = contentWidthRef.current;
+
     setMounted(true);
     setUnlocked(false);
     setLockWidth(target);
     setDurationMs(CLIP_WIDTH_OPEN_MS);
+    lastWidthRef.current = target;
+
     if (widthRef.current <= 0) {
       setWidth(0);
       frame = requestAnimationFrame(() => {
@@ -110,9 +125,11 @@ export function ClipWidth({
     } else {
       setWidth(target);
     }
+
     timeout = window.setTimeout(() => {
       if (!cancelled && unlockWhenOpen) setUnlocked(true);
     }, CLIP_WIDTH_OPEN_MS);
+
     return () => {
       cancelled = true;
       cancelAnimationFrame(frame);
@@ -120,35 +137,74 @@ export function ClipWidth({
     };
   }, [open, unlockWhenOpen]);
 
-  useEffect(() => {
+  // Leave: re-lock measured pixel width (handles unlocked/auto), then tween → 0.
+  // useLayoutEffect so the lock lands before paint — browsers can't transition from `auto`.
+  useLayoutEffect(() => {
     if (open) return;
-    let cancelled = false;
-    let timeout = 0;
-    let frame = 0;
-    const target = contentWidthRef.current;
 
-    if (unmountClosed && !shellRef.current) return;
-    if (widthRef.current <= 0 && lastWidthRef.current <= 0) return;
+    const el = shellRef.current;
+    if (!el) {
+      // Never mounted (e.g. first paint on a public route with unmountClosed).
+      return;
+    }
 
-    const measured = lastWidthRef.current;
-    const current = measured > 0 ? measured : widthRef.current > 0 ? widthRef.current : target;
-    setUnlocked(false);
-    setLockWidth(current);
-    setDurationMs(CLIP_WIDTH_CLOSE_MS);
-    setWidth(current);
-    frame = requestAnimationFrame(() => {
-      if (cancelled) return;
+    const fallback =
+      lastWidthRef.current > 0
+        ? lastWidthRef.current
+        : widthRef.current > 0
+          ? widthRef.current
+          : contentWidthRef.current;
+    const measured = readShellWidth(el, fallback);
+
+    if (measured <= 0.5) {
+      setUnlocked(false);
       setWidth(0);
+      if (unmountClosed) setMounted(false);
+      return;
+    }
+
+    let cancelled = false;
+    let frame1 = 0;
+    let frame2 = 0;
+    let timeout = 0;
+
+    setUnlocked(false);
+    setLockWidth(measured);
+    setDurationMs(CLIP_WIDTH_CLOSE_MS);
+    setWidth(measured);
+    lastWidthRef.current = measured;
+
+    // Double rAF: commit the locked pixel width, then collapse so the
+    // width transition actually runs (and the main card grows with it).
+    frame1 = requestAnimationFrame(() => {
+      if (cancelled) return;
+      frame2 = requestAnimationFrame(() => {
+        if (cancelled) return;
+        setWidth(0);
+        timeout = window.setTimeout(() => {
+          if (!cancelled && unmountClosed && !openRef.current) {
+            setMounted(false);
+          }
+        }, CLIP_WIDTH_CLOSE_MS);
+      });
     });
-    timeout = window.setTimeout(() => {
-      if (!cancelled && unmountClosed) setMounted(false);
-    }, CLIP_WIDTH_CLOSE_MS);
+
     return () => {
       cancelled = true;
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(frame1);
+      cancelAnimationFrame(frame2);
       window.clearTimeout(timeout);
     };
-  }, [open, unlockWhenOpen, unmountClosed]);
+  }, [open, unmountClosed]);
+
+  // Keep lockWidth in sync if contentWidth changes while open and locked.
+  useLayoutEffect(() => {
+    if (!open || unlocked) return;
+    if (lockWidth === contentWidth) return;
+    setLockWidth(contentWidth);
+    setWidth(contentWidth);
+    lastWidthRef.current = contentWidth;
+  }, [open, unlocked, contentWidth, lockWidth]);
 
   if (!mounted) return null;
 

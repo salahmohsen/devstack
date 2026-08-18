@@ -67,11 +67,12 @@ function useCopyToClipboard(copiedDuration = 2000) {
   const [isCopied, setIsCopied] = React.useState(false);
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  React.useEffect(() => 
-    () => {
+  React.useEffect(
+    () => () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-    }
-  , []);
+    },
+    []
+  );
 
   const copyToClipboard = React.useCallback(
     (value: string) => {
@@ -263,18 +264,14 @@ export function AiErrorBanner({
                   <CopyIcon
                     className={cn(
                       "absolute inset-0 size-3.5 transition-[opacity,transform,filter] duration-150 ease-out",
-                      isCopied
-                        ? "scale-[0.25] opacity-0 blur-xs"
-                        : "blur-0 scale-100 opacity-100"
+                      isCopied ? "scale-[0.25] opacity-0 blur-xs" : "blur-0 scale-100 opacity-100"
                     )}
                     aria-hidden
                   />
                   <CheckIcon
                     className={cn(
                       "absolute inset-0 size-3.5 transition-[opacity,transform,filter] duration-150 ease-out",
-                      isCopied
-                        ? "blur-0 scale-100 opacity-100"
-                        : "scale-[0.25] opacity-0 blur-xs"
+                      isCopied ? "blur-0 scale-100 opacity-100" : "scale-[0.25] opacity-0 blur-xs"
                     )}
                     aria-hidden
                   />

@@ -29,7 +29,9 @@ export type DockProps = {
 
 export function Dock({ children, size = 44, className }: DockProps) {
   const pillLayoutId = useId();
-  const ctx = useMemo<DockContextValue>(() => {return { size, pillLayoutId }}, [size, pillLayoutId]);
+  const ctx = useMemo<DockContextValue>(() => {
+    return { size, pillLayoutId };
+  }, [size, pillLayoutId]);
 
   return (
     <DockContext.Provider value={ctx}>
