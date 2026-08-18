@@ -16,7 +16,7 @@ export function parseApplyPackageDraft(
 export type ApplyPackageEntryState = "none" | "draft" | "accepted";
 
 /**
- * CTA state for Prepare / Review package / Review materials.
+ * CTA state for Prepare / Review package / Materials.
  * Draft wins over accepted materials (in-progress regenerate draft).
  */
 export function getApplyPackageEntryState(app: ApplicationOutput): ApplyPackageEntryState {

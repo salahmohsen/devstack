@@ -4,11 +4,12 @@ import { type ApplicationOutput } from "@tsu-stack/core";
 
 import { expandDashboardSidePanel, subscribeSidePanelClose } from "@/shared/lib/side-panel-control";
 
+import { type ApplicationMaterialKind } from "@/features/applications";
+
+export type { ApplicationMaterialKind };
+
 type SheetMode = "create" | "edit";
 type ListFilter = "open" | "closed" | "all";
-
-/** Accepted package material previewed from Review materials submenu. */
-export type ApplicationMaterialKind = "resume" | "cover-letter" | "outreach";
 
 type ApplicationUIState = {
   sheetOpen: boolean;

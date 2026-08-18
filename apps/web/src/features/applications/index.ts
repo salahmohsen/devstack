@@ -71,6 +71,17 @@ export {
   type ApplyPackageEntryState
 } from "@/features/applications/lib/apply-package";
 export {
+  materialsFor,
+  actionsFor,
+  formatCoverLetterCopy,
+  formatOutreachCopy,
+  writeClipboardText,
+  type ApplicationMaterialKind,
+  type MaterialAction,
+  type MaterialActionId,
+  type MaterialDescriptor
+} from "@/features/applications/lib/material-actions";
+export {
   APPLICATION_PRIMARY_ACTION_LABELS,
   getApplicationPrimaryAction,
   hasJobDescription,
