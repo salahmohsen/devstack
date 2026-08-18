@@ -34,14 +34,21 @@ type ListItemProps = {
   isBatchSelected?: boolean;
   onToggleSelect?: () => void;
   /**
-   * When true, always show the batch checkbox (e.g. at least one row is selected).
-   * When false, the checkbox is hover-revealed unless the row is selected.
+   * When true, batch edit mode is on (at least one row selected).
+   * Checkbox column is reserved only while this is true.
    */
   batchSelectActive?: boolean;
+  /**
+   * `hover-or-active` (default): overlay checkbox on hover before batch mode.
+   * `active-only`: checkbox only after batch mode starts (e.g. via a Select menu item).
+   */
+  batchCheckboxVisibility?: "hover-or-active" | "active-only";
   onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
   onView?: () => void;
   /** Override default “View” label on the action strip (e.g. “View listing”). */
   viewLabel?: string;
+  /** Custom control replacing the default View button in the action strip. */
+  viewSlot?: React.ReactNode;
   onEdit?: () => void;
   /** When set, replaces default view/edit/delete action strip. */
   actions?: React.ReactNode;
@@ -84,9 +91,11 @@ export function ListItem({
   isBatchSelected,
   onToggleSelect,
   batchSelectActive = false,
+  batchCheckboxVisibility = "hover-or-active",
   onMouseEnter,
   onView,
   viewLabel,
+  viewSlot,
   onEdit,
   actions,
   extraMenuItems,
@@ -104,12 +113,17 @@ export function ListItem({
 }: ListItemProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const showDefaultActions = actions === undefined;
+  const showBatchColumn = Boolean(onToggleSelect && batchSelectActive);
+  const showHoverCheckbox =
+    Boolean(onToggleSelect) && !batchSelectActive && batchCheckboxVisibility === "hover-or-active";
 
   function handleDelete() {
     onDelete?.();
   }
 
-  const bodyContent = children ?? (
+  const bodyContent = children ? (
+    <div className="min-w-0">{children}</div>
+  ) : (
     <div className={cn("grid min-w-0 gap-5 md:max-w-3/4", meta && "md:grid-cols-[20rem_1fr]")}>
       <CardTitle className="flex min-w-0 flex-col gap-1.5 self-center text-sm">
         <div className="flex min-w-0 items-center gap-2">
@@ -164,15 +178,40 @@ export function ListItem({
       >
         <CardHeader
           className={cn(
-            "grid-cols-[auto_1fr] items-center py-3",
+            // Override card-header’s default two-row template; keep actions in a
+            // trailing column so mobile does not full-bleed them under content.
+            // Checkbox column only while batch mode is active — no idle left gap.
+            "relative grid-rows-[auto] items-center gap-x-2 px-3 py-3 md:gap-x-3 md:px-6",
             isSort
-              ? "md:grid-cols-[auto_auto_1fr_auto]"
-              : onToggleSelect
-                ? "md:grid-cols-[auto_1fr_auto]"
-                : "md:grid-cols-[1fr_auto]"
+              ? showBatchColumn
+                ? "grid-cols-[auto_auto_minmax(0,1fr)_auto]"
+                : "grid-cols-[auto_minmax(0,1fr)_auto]"
+              : showBatchColumn
+                ? "grid-cols-[auto_minmax(0,1fr)_auto]"
+                : "grid-cols-[minmax(0,1fr)_auto]"
           )}
         >
-          {onToggleSelect ? (
+          {showHoverCheckbox ? (
+            // Overlay — does not reserve layout space before batch mode.
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- stopPropagation shell
+            <div
+              data-batch-select
+              role="presentation"
+              className="absolute top-1/2 left-3 z-10 flex -translate-y-1/2 items-center opacity-0 transition-opacity group-hover:opacity-100 has-focus-visible:opacity-100 md:left-6"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            >
+              <Checkbox
+                checked={isBatchSelected ?? false}
+                onCheckedChange={() => {
+                  onToggleSelect?.();
+                }}
+              />
+            </div>
+          ) : null}
+          {showBatchColumn ? (
             // role=presentation: stopPropagation only; checkbox is the control
             // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- stopPropagation shell
             <div
@@ -187,14 +226,8 @@ export function ListItem({
               <Checkbox
                 checked={isBatchSelected ?? false}
                 onCheckedChange={() => {
-                  onToggleSelect();
+                  onToggleSelect?.();
                 }}
-                className={cn(
-                  "transition-opacity",
-                  isBatchSelected || batchSelectActive
-                    ? "opacity-100"
-                    : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                )}
               />
             </div>
           ) : null}
@@ -212,9 +245,9 @@ export function ListItem({
           {bodyContent}
           {showDefaultActions ? (
             <ListItemActionButtons
-              classNames={{ wrapper: "col-span-full md:col-span-1 ms-auto" }}
+              classNames={{ wrapper: "ms-auto hidden shrink-0 self-start md:flex" }}
               view={
-                onView
+                !viewSlot && onView
                   ? {
                       onAction: onView,
                       isLoading: false,
@@ -223,6 +256,7 @@ export function ListItem({
                     }
                   : undefined
               }
+              viewSlot={viewSlot}
               edit={onEdit ? { onAction: onEdit, isLoading: false } : undefined}
               extraMenuItems={extraMenuItems}
               togglePortfolio={
@@ -246,7 +280,7 @@ export function ListItem({
           ) : (
             <div
               role="presentation"
-              className="col-span-full ms-auto flex shrink-0 items-center gap-1.5 md:col-span-1"
+              className="ms-auto flex shrink-0 items-center gap-1.5 self-start"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             >

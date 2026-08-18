@@ -59,7 +59,11 @@ export function PublicScopeNav({ className }: { className?: string }) {
   return (
     <nav
       aria-label="Portfolio"
-      className={cn("flex h-8 shrink-0 items-center rounded-lg bg-muted/80 p-0.5", className)}
+      className={cn(
+        // Mobile uses the floating dock for Profile / Repos / Dashboard.
+        "hidden h-8 shrink-0 items-center rounded-lg bg-muted/80 p-0.5 md:flex",
+        className
+      )}
     >
       <ul className="flex min-h-7 items-center gap-0.5">
         <MorphNavItem

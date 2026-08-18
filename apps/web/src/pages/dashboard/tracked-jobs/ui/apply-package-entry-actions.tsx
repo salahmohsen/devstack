@@ -24,9 +24,11 @@ import {
 } from "@tsu-stack/ui/components/dialog";
 
 import {
+  APPLICATION_PRIMARY_ACTION_LABELS,
   canSendOutreach,
   coverLetterDownloadUrl,
   getApplyPackageEntryState,
+  hasJobDescription,
   resumeDownloadUrl,
   useGenerateApplyPackageMutation
 } from "@/features/applications";
@@ -52,9 +54,6 @@ type MaterialOption = {
  * Board / context menu items for apply package entry actions.
  * Regenerate always confirms (cost + overwrite).
  */
-function hasJobDescription(app: ApplicationOutput): boolean {
-  return Boolean(app.description?.trim());
-}
 
 function materialsFor(app: ApplicationOutput): MaterialOption[] {
   const items: MaterialOption[] = [];
@@ -220,12 +219,12 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
         hasDescription ? (
           <Item disabled={!open || generating} onClick={() => open && runGenerate()}>
             <SparklesIcon aria-hidden="true" />
-            {generating ? "Preparing…" : "Prepare application"}
+            {generating ? "Preparing…" : APPLICATION_PRIMARY_ACTION_LABELS.prepare}
           </Item>
         ) : (
           <Item disabled={!open} onClick={() => openEdit(app)}>
             <FileTextIcon aria-hidden="true" />
-            Add job description
+            {APPLICATION_PRIMARY_ACTION_LABELS.addJd}
           </Item>
         )
       ) : null}
@@ -233,7 +232,7 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
         <>
           <Item disabled={generating} onClick={() => openPackageSheet(app.id)}>
             <PackageIcon aria-hidden="true" />
-            Review package
+            {APPLICATION_PRIMARY_ACTION_LABELS.review}
           </Item>
           <Item disabled={!open || generating} onClick={() => open && setRegenerateOpen(true)}>
             <RefreshCwIcon aria-hidden="true" />
@@ -273,7 +272,7 @@ export function ApplyPackageMenuItems({ app, slots }: ApplyPackageMenuItemsProps
           {canSendOutreach(app) ? (
             <Item onClick={() => openSendOutreach(app.id)}>
               <MailIcon aria-hidden="true" />
-              Send outreach
+              {APPLICATION_PRIMARY_ACTION_LABELS.send}
             </Item>
           ) : null}
         </>
@@ -350,12 +349,12 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
               onClick={() => runGenerate()}
             >
               <SparklesIcon className="size-3.5" aria-hidden />
-              Prepare application
+              {APPLICATION_PRIMARY_ACTION_LABELS.prepare}
             </Button>
           ) : (
             <Button type="button" size="sm" disabled={!open} onClick={() => openEdit(app)}>
               <FileTextIcon className="size-3.5" aria-hidden />
-              Add job description
+              {APPLICATION_PRIMARY_ACTION_LABELS.addJd}
             </Button>
           )
         ) : null}
@@ -364,7 +363,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
           <>
             <Button type="button" size="sm" onClick={() => openPackageSheet(app.id)}>
               <PackageIcon className="size-3.5" aria-hidden />
-              Review package
+              {APPLICATION_PRIMARY_ACTION_LABELS.review}
             </Button>
             <Button
               type="button"
@@ -395,7 +394,7 @@ export function ApplyPackagePanelActions({ app, className }: ApplyPackagePanelAc
             {canSendOutreach(app) ? (
               <Button type="button" size="sm" onClick={() => openSendOutreach(app.id)}>
                 <MailIcon className="size-3.5" aria-hidden />
-                Send outreach
+                {APPLICATION_PRIMARY_ACTION_LABELS.send}
               </Button>
             ) : app.outreachSentAt ? (
               <span className="inline-flex items-center text-xs text-muted-foreground">

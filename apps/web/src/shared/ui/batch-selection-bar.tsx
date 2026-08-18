@@ -10,11 +10,14 @@ import {
   XIcon
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect } from "react";
 
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { IconShake } from "@tsu-stack/ui/components/icon-motion";
 import { cn } from "@tsu-stack/ui/lib/utils";
+
+import { setMobileDockHidden } from "@/shared/lib/mobile-dock-visibility";
 
 const FLOAT_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -89,6 +92,15 @@ export function BatchSelectionBar({
 }: BatchSelectionBarProps) {
   const reduceMotion = useReducedMotion();
   const open = selectedCount > 0;
+
+  // Floating batch bar and mobile dock share the bottom — hide the dock while selecting.
+  useEffect(() => {
+    const hideDock = variant === "floating" && open;
+    setMobileDockHidden(hideDock);
+    return () => {
+      setMobileDockHidden(false);
+    };
+  }, [variant, open]);
 
   const busy = isLoading || isDeleting || isAddingToPortfolio || isRestoring;
   const DeleteIcon = deleteUsesBanIcon ? BanIcon : Trash2Icon;

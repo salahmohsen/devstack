@@ -97,6 +97,11 @@ type classNames = {
 
 type ListItemActionButtonsProps = {
   view?: ActionButtonConfig;
+  /**
+   * Custom control replacing the default View / Open listing button
+   * (e.g. tracked-jobs smart Prepare / Review / Send CTA).
+   */
+  viewSlot?: React.ReactNode;
   edit?: ActionButtonConfig;
   togglePortfolio?: ToggleConfig;
   toggleFeatured?: ToggleConfig;
@@ -111,6 +116,7 @@ type ListItemActionButtonsProps = {
 
 export function ListItemActionButtons({
   view,
+  viewSlot,
   edit,
   togglePortfolio,
   toggleFeatured,
@@ -118,11 +124,12 @@ export function ListItemActionButtons({
   extraMenuItems,
   classNames
 }: ListItemActionButtonsProps) {
+  const hasView = viewSlot != null || view != null;
   const hasOverflowMenu = !!togglePortfolio || !!toggleFeatured || !!extraMenuItems;
   const showDeleteInGroup = !!deleteConfig && !hasOverflowMenu;
   const hasMenu = hasOverflowMenu;
 
-  if (!view && !edit && !hasMenu && !showDeleteInGroup) {
+  if (!hasView && !edit && !hasMenu && !showDeleteInGroup) {
     return null;
   }
 
@@ -142,6 +149,20 @@ export function ListItemActionButtons({
         <ChevronDown className="size-4" aria-hidden />
       </MenuTrigger>
       <MenuPopup align="end">
+        {/* Edit stays in the strip from md+; on mobile it lives here to save width. */}
+        {edit && hasOverflowMenu ? (
+          <MenuItem
+            className="md:hidden"
+            onClick={(event: React.MouseEvent) => {
+              event.stopPropagation();
+              edit.onAction();
+            }}
+            disabled={edit.isLoading}
+          >
+            <Edit />
+            {edit.label ?? "Edit"}
+          </MenuItem>
+        ) : null}
         {extraMenuItems}
         {togglePortfolio || toggleFeatured ? (
           toggleFeatured ? (
@@ -216,7 +237,26 @@ export function ListItemActionButtons({
     </Menu>
   );
 
-  if ((view || edit || showDeleteInGroup) && (hasMenu || showDeleteInGroup || (view && edit))) {
+  const defaultViewButton = view ? (
+    <Button
+      onClick={(event: React.MouseEvent) => {
+        event.stopPropagation();
+        view.onAction();
+      }}
+      loading={view.isLoading}
+      variant="outline"
+      aria-label={view.ariaLabel ?? view.label ?? "View"}
+    >
+      <ExternalLink />
+      {view.label ?? "View"}
+    </Button>
+  ) : null;
+  const viewControl = viewSlot ?? defaultViewButton;
+
+  if (
+    (hasView || edit || showDeleteInGroup) &&
+    (hasMenu || showDeleteInGroup || (hasView && edit))
+  ) {
     return (
       <Group aria-label="Item actions" className={classNames?.wrapper}>
         {togglePortfolio ? (
@@ -230,23 +270,13 @@ export function ListItemActionButtons({
             <GroupSeparator />
           </>
         ) : null}
-        {view ? (
-          <Button
-            onClick={(event: React.MouseEvent) => {
-              event.stopPropagation();
-              view.onAction();
-            }}
-            loading={view.isLoading}
-            variant="outline"
-            aria-label={view.ariaLabel ?? view.label ?? "View"}
-          >
-            <ExternalLink />
-            {view.label ?? "View"}
-          </Button>
+        {viewControl}
+        {hasView && edit ? (
+          <GroupSeparator className={hasOverflowMenu ? "max-md:hidden" : undefined} />
         ) : null}
-        {view && edit ? <GroupSeparator /> : null}
         {edit ? (
           <Button
+            className={hasOverflowMenu ? "max-md:hidden" : undefined}
             onClick={(event: React.MouseEvent) => {
               event.stopPropagation();
               edit.onAction();
@@ -261,7 +291,7 @@ export function ListItemActionButtons({
         ) : null}
         {showDeleteInGroup ? (
           <>
-            {view || edit ? <GroupSeparator /> : null}
+            {hasView || edit ? <GroupSeparator /> : null}
             <Button
               onClick={(event: React.MouseEvent) => {
                 event.stopPropagation();
@@ -278,7 +308,7 @@ export function ListItemActionButtons({
         ) : null}
         {hasMenu ? (
           <>
-            {view || edit || showDeleteInGroup ? <GroupSeparator /> : null}
+            {hasView || edit || showDeleteInGroup ? <GroupSeparator /> : null}
             {menuContent}
           </>
         ) : null}
@@ -302,6 +332,10 @@ export function ListItemActionButtons({
         {deleteConfig.label ?? "Delete"}
       </Button>
     );
+  }
+
+  if (viewSlot) {
+    return <div className={classNames?.wrapper}>{viewSlot}</div>;
   }
 
   if (view) {

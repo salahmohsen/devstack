@@ -43,7 +43,7 @@ type StageBadgeProps = {
   className?: string;
 };
 
-export function ApplicationStageBadge({ stage, size = "sm", className }: StageBadgeProps) {
+export function ApplicationStageBadge({ stage, size = "xs", className }: StageBadgeProps) {
   return (
     <Badge
       variant={APPLICATION_STAGE_BADGE_VARIANT[stage]}
@@ -62,7 +62,7 @@ type StatusBadgeProps = {
 };
 
 /** Open (no outcome) or closed outcome label. */
-export function ApplicationStatusBadge({ outcome, size = "sm", className }: StatusBadgeProps) {
+export function ApplicationStatusBadge({ outcome, size = "xs", className }: StatusBadgeProps) {
   if (outcome == null) {
     return (
       <Badge
@@ -95,7 +95,7 @@ type MatchScoreBadgeProps = {
 /** `87% match` when score is known (0–100). */
 export function ApplicationMatchScoreBadge({
   matchScore,
-  size = "sm",
+  size = "xs",
   className
 }: MatchScoreBadgeProps) {
   if (matchScore == null) return null;
@@ -116,7 +116,7 @@ type ApplyMethodBadgeProps = {
 /** Easy Apply / External / Email — hidden when unknown. */
 export function ApplicationApplyMethodBadge({
   applyMethod,
-  size = "sm",
+  size = "xs",
   className
 }: ApplyMethodBadgeProps) {
   if (applyMethod === "unknown") return null;
@@ -133,7 +133,7 @@ type ApplyLinksProps = {
   url: string | null | undefined;
   /** Used when only the listing `url` is present (e.g. Easy Apply without a separate apply link). */
   applyMethod?: ApplicationApplyMethod | null;
-  /** When true, omit the secondary “View listing” text (row action button already covers it). */
+  /** When true, omit the secondary “Open listing” text (row action button already covers it). */
   hideListingLink?: boolean;
   className?: string;
 };
@@ -144,7 +144,7 @@ function stopCardActivation(event: React.SyntheticEvent) {
 
 /**
  * External apply destination + listing URL.
- * Prefer `applyUrl` for Apply; when it is missing, fall back to `url` (Easy Apply / View listing).
+ * Prefer `applyUrl` for Apply; when it is missing, fall back to `url` (Easy Apply / Open listing).
  */
 export function ApplicationApplyLinks({
   applyUrl,
@@ -155,7 +155,7 @@ export function ApplicationApplyLinks({
 }: ApplyLinksProps) {
   if (!applyUrl && !url) return null;
 
-  // When listing is only shown via the action button, skip pure “View listing” primary text.
+  // When listing is only shown via the action button, skip pure “Open listing” primary text.
   if (hideListingLink && !applyUrl) return null;
 
   const primaryHref = applyUrl ?? url!;
@@ -163,7 +163,7 @@ export function ApplicationApplyLinks({
     ? "Apply"
     : applyMethod === "easy_apply"
       ? "Easy Apply"
-      : "View listing";
+      : "Open listing";
   const showListing = Boolean(!hideListingLink && url && applyUrl && url !== applyUrl);
 
   return (
@@ -187,7 +187,7 @@ export function ApplicationApplyLinks({
           onClick={stopCardActivation}
           onPointerDown={stopCardActivation}
         >
-          View listing
+          Open listing
         </a>
       ) : null}
     </div>

@@ -279,8 +279,9 @@ export function Sidebar001Separator({
   children?: React.ReactNode;
   className?: string;
 }) {
+  // Align with rail tick start (item container left-0), not the label text.
   return (
-    <div className={cn("mt-2 px-0 py-3.5 text-sm font-medium text-foreground/40", className)}>
+    <div className={cn("mt-2 px-0 py-2 text-sm font-medium text-foreground/40", className)}>
       {children}
     </div>
   );
@@ -417,9 +418,10 @@ export function Sidebar001Content({
 
   return (
     <div
-      className={cn("flex-1 overflow-x-hidden overflow-y-auto py-4", className)}
+      className={cn("flex-1 overflow-x-hidden overflow-y-auto py-2", className)}
       data-scroll-viewport
     >
+      {/* Same inset as header so ticks and “Dashboard” share one leading edge. */}
       <div ref={setContainerNode} className="relative px-1">
         <HoverHighlight />
         {children}
@@ -515,7 +517,8 @@ export function Sidebar001Header({
   children?: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn("shrink-0 px-3 pt-4 pb-2", className)}>{children}</div>;
+  // px-1 matches content list inset so the title lines up with tick starts.
+  return <div className={cn("shrink-0 px-1 pt-3 pb-2", className)}>{children}</div>;
 }
 
 // ─── Sidebar001Footer ─────────────────────────────────────────────────────────

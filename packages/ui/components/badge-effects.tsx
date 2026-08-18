@@ -141,10 +141,10 @@ export function BadgeTopGlow({
   size = "default"
 }: {
   variant: BadgeGlowVariant;
-  size?: "sm" | "default" | "lg";
+  size?: "xs" | "sm" | "default" | "lg";
 }) {
   const g = BADGE_GLOW[variant];
-  const compact = size === "sm";
+  const compact = size === "sm" || size === "xs";
   return (
     <>
       <span

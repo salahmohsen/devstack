@@ -1,6 +1,13 @@
 "use client";
 
-import { Building2Icon, BriefcaseIcon, FileTextIcon, MapPinIcon, PlusIcon } from "lucide-react";
+import {
+  Building2Icon,
+  BriefcaseIcon,
+  ChevronDownIcon,
+  FileTextIcon,
+  MapPinIcon,
+  PlusIcon
+} from "lucide-react";
 import { useMemo } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
@@ -12,6 +19,7 @@ import {
   ContextMenuTrigger
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
+import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
 
 import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
@@ -19,11 +27,11 @@ import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { ListItem } from "@/shared/ui/list-item";
 
 import {
-  ApplicationApplyLinks,
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
+  getApplicationPrimaryAction,
   useDeleteApplicationsMutation
 } from "@/features/applications";
 
@@ -35,6 +43,7 @@ import {
   applicationListMenuSlots
 } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
+import { ApplicationPrimaryActionButton } from "@/pages/dashboard/tracked-jobs/ui/application-primary-action-button";
 
 const LIST_FILTERS = [
   { value: "open", label: "Open" },
@@ -95,14 +104,14 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
         description="Track a discovery from New jobs, add a role manually, or import a job description."
         action={
           <Group>
-            <Button type="button" variant="outline" onClick={openImportJdSheet}>
-              <FileTextIcon aria-hidden />
-              Import from JD
-            </Button>
-            <GroupSeparator />
             <Button type="button" onClick={openCreate}>
               <PlusIcon aria-hidden />
-              Add job
+              New
+            </Button>
+            <GroupSeparator />
+            <Button type="button" variant="outline" onClick={openImportJdSheet}>
+              <FileTextIcon aria-hidden />
+              Import
             </Button>
           </Group>
         }
@@ -177,12 +186,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
           {filtered.map((app) => {
             const selected = viewItem?.id === app.id;
             const batchSelected = selectedIds.includes(app.id);
-            const listingUrl = app.url ?? app.applyUrl ?? null;
-            const openListing = listingUrl
-              ? () => {
-                  window.open(listingUrl, "_blank", "noopener,noreferrer");
-                }
-              : undefined;
+            const primary = getApplicationPrimaryAction(app);
             return (
               <li key={app.id}>
                 <ContextMenu>
@@ -192,9 +196,13 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                       onSelect={() => openView(app)}
                       isBatchSelected={batchSelected}
                       batchSelectActive={batchSelectActive}
+                      batchCheckboxVisibility="active-only"
                       onToggleSelect={() => toggleSelect(app.id)}
-                      onView={openListing}
-                      viewLabel="View listing"
+                      viewSlot={
+                        primary ? (
+                          <ApplicationPrimaryActionButton app={app} layout="inline" />
+                        ) : undefined
+                      }
                       onEdit={() => openEdit(app)}
                       // Full board parity lives in the ⋮ menu (and right-click).
                       // Delete is in ApplicationItemActions with confirm dialog.
@@ -205,14 +213,15 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           density="list-overflow"
                         />
                       }
-                      title={app.title}
-                      titleEnd={
-                        <>
+                    >
+                      {/* Tags → title → meta; mobile ends with Prepare|⋮ Group. */}
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <div className="no-scrollbar flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain">
                           {app.listingClosed ? (
                             <Badge
                               variant="secondary"
-                              size="sm"
-                              className="font-normal tracking-normal text-muted-foreground normal-case"
+                              size="xs"
+                              className="shrink-0 font-normal tracking-normal text-muted-foreground normal-case"
                               title="This posting is no longer on the board."
                             >
                               Listing closed
@@ -222,30 +231,62 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
                           <ApplicationStageBadge stage={app.stage} />
                           {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
-                        </>
-                      }
-                      meta={
-                        <>
-                          <p className="flex items-center gap-1">
-                            <Building2Icon size={14} />
-                            <span>{app.companyName}</span>
-                          </p>
+                        </div>
+                        <h3 className="min-w-0 truncate text-sm font-medium">{app.title}</h3>
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+                          <span className="inline-flex min-w-0 items-center gap-1">
+                            <Building2Icon className="size-3.5 shrink-0 opacity-80" aria-hidden />
+                            <span className="truncate">{app.companyName}</span>
+                          </span>
                           {app.location ? (
-                            <p className="flex items-center gap-1">
-                              <MapPinIcon size={14} />
-                              <span>{app.location}</span>
-                            </p>
+                            <span className="inline-flex min-w-0 items-center gap-1">
+                              <MapPinIcon className="size-3.5 shrink-0 opacity-80" aria-hidden />
+                              <span className="truncate">{app.location}</span>
+                            </span>
                           ) : null}
-                          <ApplicationApplyLinks
-                            applyUrl={app.applyUrl}
-                            url={app.url}
-                            applyMethod={app.applyMethod}
-                            hideListingLink={Boolean(listingUrl)}
-                            className="mt-1"
-                          />
-                        </>
-                      }
-                    />
+                        </div>
+                        <div
+                          role="presentation"
+                          className="mt-0.5 md:hidden"
+                          onClick={(event) => event.stopPropagation()}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                        >
+                          <Group aria-label="Item actions" className="w-full">
+                            {primary ? (
+                              <ApplicationPrimaryActionButton
+                                app={app}
+                                layout="inline"
+                                className="min-w-0 flex-1"
+                              />
+                            ) : null}
+                            {primary ? <GroupSeparator /> : null}
+                            <Menu>
+                              <MenuTrigger
+                                render={
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    aria-label="More actions"
+                                    className="shrink-0"
+                                  />
+                                }
+                              >
+                                <ChevronDownIcon className="size-4" aria-hidden />
+                              </MenuTrigger>
+                              <MenuPopup align="end" className="min-w-44">
+                                <ApplicationItemActions
+                                  app={app}
+                                  slots={applicationListMenuSlots}
+                                  density="list-overflow"
+                                />
+                              </MenuPopup>
+                            </Menu>
+                          </Group>
+                        </div>
+                      </div>
+                    </ListItem>
                   </ContextMenuTrigger>
                   <ContextMenuPopup className="min-w-44">
                     <ApplicationItemActions app={app} slots={applicationContextSlots} />

@@ -1,143 +1,57 @@
-import { useQuery } from "@tanstack/react-query";
-import { useLocation, useParams } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 
-import { orpcQueryClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { useAuthSuspense } from "@tsu-stack/auth/react";
 import { Badge } from "@tsu-stack/ui/components/badge";
 import {
   Sidebar001,
   Sidebar001Content,
+  Sidebar001Header,
   Sidebar001Item,
   Sidebar001Section
 } from "@tsu-stack/ui/components/unlumen-ui/sidebar-001";
 
-import { isCustomDomainHost } from "@/shared/lib/primary-app-url";
-import {
-  createPublicSurface,
-  portfolioHomePath,
-  publicReposListPath
-} from "@/shared/lib/public-surface";
-import { sessionUsernameFromUser } from "@/shared/lib/session-username";
-
 import { useCountApplicationsQuery } from "@/features/applications";
 
-const PublicItems = [{ href: "/", label: "Home" }] as const;
-
-/** True when the URL is a public `/{username}` (or nested) portfolio surface. */
-function isPublicProfilePath(pathname: string, pathUsername: string | undefined): boolean {
-  if (!pathUsername?.trim()) return false;
-  // Dashboard / auth / playground must never treat a param as a public slug.
-  if (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/sign-in") ||
-    pathname.startsWith("/playground") ||
-    pathname.startsWith("/repos")
-  ) {
-    return false;
-  }
-  return true;
-}
-
+/**
+ * Dashboard-only nav. Product home lives on the brand + account menu;
+ * Profile / Repos / Dashboard live in the topbar scope cluster.
+ */
 const DashboardItems = [
-  { href: "/dashboard", label: "Agent", group: "Dashboard" },
-  { href: "/dashboard/onboarding", label: "Onboarding", group: "Dashboard" },
-  { href: "/dashboard/experiences", label: "Experiences", group: "Dashboard" },
-  { href: "/dashboard/projects", label: "Projects", group: "Dashboard" },
-  { href: "/dashboard/stacks", label: "Stacks", group: "Dashboard" },
-  { href: "/dashboard/resumes", label: "Resumes", group: "Dashboard" },
-  { href: "/dashboard/new-jobs", label: "New jobs", group: "Dashboard" },
-  { href: "/dashboard/tracked-jobs", label: "Tracked jobs", group: "Dashboard" },
+  { href: "/dashboard", label: "Agent" },
+  { href: "/dashboard/onboarding", label: "Onboarding" },
+  { href: "/dashboard/experiences", label: "Experiences" },
+  { href: "/dashboard/projects", label: "Projects" },
+  { href: "/dashboard/stacks", label: "Stacks" },
+  { href: "/dashboard/resumes", label: "Resumes" },
+  { href: "/dashboard/new-jobs", label: "New jobs" },
+  { href: "/dashboard/tracked-jobs", label: "Tracked jobs" },
   {
     href: "/dashboard/mail/applications",
     label: "Mail",
-    group: "Dashboard",
     matchPrefix: "/dashboard/mail"
   },
   {
     href: "/dashboard/settings/profile",
     label: "Settings",
-    group: "Dashboard",
     /** Keep Settings active across profile/account/invites/domain tabs. */
     matchPrefix: "/dashboard/settings"
   }
 ] as const;
 
-/** Initial nav width — keep in sync with `Sidebar001 defaultWidth`. */
-export const DASHBOARD_NAV_DEFAULT_WIDTH = 150;
+/**
+ * In-flow nav column width. Keep in sync with `Sidebar001` props below.
+ * Sized so “Tracked jobs” + badge fit without horizontal clip.
+ */
+export const DASHBOARD_NAV_DEFAULT_WIDTH = 168;
 
-type NavItem = { href: string; label: string; group?: string; matchPrefix?: string };
+type NavItem = { href: string; label: string; matchPrefix?: string };
 
-type Section = { label?: string; items: NavItem[] };
-
-function groupBySection(items: readonly NavItem[]): Section[] {
-  const grouped = new Map<string, NavItem[]>();
-  const ungrouped: NavItem[] = [];
-
-  for (const item of items) {
-    if (item.group) {
-      const list = grouped.get(item.group) ?? [];
-      list.push(item);
-      grouped.set(item.group, list);
-    } else {
-      ungrouped.push(item);
-    }
-  }
-
-  const sections: Section[] = [];
-  if (ungrouped.length > 0) sections.push({ items: ungrouped });
-  for (const [label, list] of grouped) sections.push({ label, items: list });
-  return sections;
-}
-
-export function PublicSidebar() {
-  const location = useLocation();
-  const pathname = location.pathname;
-  const params = useParams({ strict: false }) as { username?: string };
+/** Left nav for `/dashboard/*` only (mounted via ClipWidth when on dashboard). */
+export function DashboardSidebar() {
+  const pathname = useLocation().pathname;
   const { user } = useAuthSuspense();
   const isSignedIn = !!user;
 
-  // Session may omit additionalFields depending on client plugins; profile.get is authoritative.
-  const ownProfileQuery = useQuery({
-    ...orpcQueryClient.profile.get.queryOptions({ input: { disableContacts: true } }),
-    enabled: isSignedIn
-  });
-
-  const pathUsername = params.username;
-  const onPublicProfile = isPublicProfilePath(pathname, pathUsername);
-  const ownUsername = sessionUsernameFromUser(user) ?? ownProfileQuery.data?.username ?? undefined;
-
-  // Nav links: public page slug, else own slug for "Portfolio" / "Repositories".
-  const username = (onPublicProfile ? pathUsername : ownUsername) ?? "";
-  const onCustomDomainPublic =
-    typeof window !== "undefined" &&
-    isCustomDomainHost(window.location.hostname) &&
-    (pathname === "/" || pathname.startsWith("/repos"));
-
-  const tenantForSurface = username.length > 0 ? username : (ownUsername ?? "");
-  const publicSurface =
-    tenantForSurface.length > 0 || onCustomDomainPublic
-      ? createPublicSurface({
-          tenantUsername: tenantForSurface.length > 0 ? tenantForSurface : "unknown",
-          mode: onCustomDomainPublic ? "custom_domain" : "path"
-        })
-      : null;
-
-  const publicItems: NavItem[] = [
-    ...PublicItems,
-    ...(publicSurface && publicSurface.tenantUsername !== "unknown"
-      ? ([
-          { href: portfolioHomePath(publicSurface), label: "Portfolio" },
-          { href: publicReposListPath(publicSurface), label: "Repositories" }
-        ] satisfies NavItem[])
-      : [])
-  ];
-
-  const sections = [
-    ...groupBySection(publicItems),
-    ...(isSignedIn ? groupBySection(DashboardItems) : [])
-  ];
-
-  // Inbox-only badge for New jobs (not dismissed).
   const inboxCountQuery = useCountApplicationsQuery("inbox", {
     enabled: isSignedIn,
     refetchInterval: 60_000
@@ -145,38 +59,54 @@ export function PublicSidebar() {
   const inboxCount = inboxCountQuery.data?.count ?? 0;
   const inboxBadgeLabel = inboxCount > 99 ? "99+" : String(inboxCount);
 
+  if (!isSignedIn) return null;
+
   return (
-    <Sidebar001 defaultWidth={DASHBOARD_NAV_DEFAULT_WIDTH}>
-      <Sidebar001Content>
-        {sections.map((section, index) => (
-          <Sidebar001Section key={section.label ?? `ungrouped-${index}`} label={section.label}>
-            {section.items.map((item) => {
-              const isNewJobs = item.href === "/dashboard/new-jobs";
-              const showInboxBadge = isNewJobs && inboxCount > 0;
-              return (
-                <Sidebar001Item
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  // Count badge already signals attention — no green "isNew" dot.
-                  badge={
-                    showInboxBadge ? (
-                      <Badge size="sm" variant="brand" className="tabular-nums">
-                        {inboxBadgeLabel}
-                      </Badge>
-                    ) : undefined
-                  }
-                  isActive={
-                    item.matchPrefix
-                      ? pathname === item.matchPrefix || pathname.startsWith(`${item.matchPrefix}/`)
-                      : pathname === item.href || pathname === `${item.href}/`
-                  }
-                />
-              );
-            })}
-          </Sidebar001Section>
-        ))}
+    <Sidebar001
+      defaultWidth={DASHBOARD_NAV_DEFAULT_WIDTH}
+      minWidth={140}
+      maxWidth={240}
+      className="h-full"
+    >
+      {/*
+        Title starts on the same edge as the item rail ticks (header/content px-1).
+        pt-3 matches the main card’s top optical start beside the rounded shell.
+      */}
+      <Sidebar001Header className="pt-3 pb-1">
+        <p className="m-0 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
+          Dashboard
+        </p>
+      </Sidebar001Header>
+      <Sidebar001Content className="pt-0 pb-3">
+        <Sidebar001Section>
+          {DashboardItems.map((item: NavItem) => {
+            const isNewJobs = item.href === "/dashboard/new-jobs";
+            const showInboxBadge = isNewJobs && inboxCount > 0;
+            return (
+              <Sidebar001Item
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                badge={
+                  showInboxBadge ? (
+                    <Badge size="sm" variant="brand" className="tabular-nums">
+                      {inboxBadgeLabel}
+                    </Badge>
+                  ) : undefined
+                }
+                isActive={
+                  item.matchPrefix
+                    ? pathname === item.matchPrefix || pathname.startsWith(`${item.matchPrefix}/`)
+                    : pathname === item.href || pathname === `${item.href}/`
+                }
+              />
+            );
+          })}
+        </Sidebar001Section>
       </Sidebar001Content>
     </Sidebar001>
   );
 }
+
+/** @deprecated Use {@link DashboardSidebar} — sidebar is dashboard-only. */
+export const PublicSidebar = DashboardSidebar;

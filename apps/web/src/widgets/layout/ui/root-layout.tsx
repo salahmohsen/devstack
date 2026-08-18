@@ -8,7 +8,7 @@ import { useMediaQuery } from "@/shared/lib/use-media-query";
 import { IntersectionProvider } from "@/shared/providers/intersection.provider";
 
 import { ClipWidth } from "@/widgets/layout/ui/clip-width";
-import { DASHBOARD_NAV_DEFAULT_WIDTH, PublicSidebar } from "@/widgets/layout/ui/sidebar";
+import { DASHBOARD_NAV_DEFAULT_WIDTH, DashboardSidebar } from "@/widgets/layout/ui/sidebar";
 
 import { CommandPalette } from "./command-palette";
 import { DashboardBottomBar } from "./dashboard-bottombar";
@@ -46,7 +46,7 @@ export function RootLayout({ children }: PropsWithChildren) {
         "relative isolate flex h-dvh max-h-dvh flex-col overflow-hidden",
         "bg-container text-primary selection:bg-brand selection:text-black!",
         // Instant open/close when the user prefers reduced motion.
-        "motion-reduce:[&_[data-dashboard-nav-shell]]:transition-none motion-reduce:[&_[data-side-panel-shell]]:transition-none"
+        "motion-reduce:**:data-dashboard-nav-shell:transition-none motion-reduce:**:data-side-panel-shell:transition-none"
       )}
     >
       <Topbar />
@@ -63,7 +63,7 @@ export function RootLayout({ children }: PropsWithChildren) {
           close: sidePanel.close
         }}
       >
-        <div className="flex min-h-0 flex-1 flex-row overflow-hidden p-2 pt-0">
+        <div className="flex min-h-0 flex-1 flex-row gap-2 overflow-hidden p-2 pt-0">
           <IntersectionProvider>
             <ClipWidth
               open={isDashboard}
@@ -71,9 +71,10 @@ export function RootLayout({ children }: PropsWithChildren) {
               unlockWhenOpen
               unmountClosed
               data-dashboard-nav-shell=""
+              // Align shell height with the main card; pe is on the aside.
               className="hidden h-full xl:block"
             >
-              <PublicSidebar />
+              <DashboardSidebar />
             </ClipWidth>
             {/*
               One surface: main + panel share the same rounded-2xl shell.
@@ -88,7 +89,13 @@ export function RootLayout({ children }: PropsWithChildren) {
               <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                 <main className="relative flex min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-background">
                   <div className="size-full min-h-0 min-w-0">
-                    <ScrollArea scrollFade fill clampContentMinWidth={true}>
+                    {/* Bottom pad on mobile so lists clear the floating dock without shrinking the card shell. */}
+                    <ScrollArea
+                      scrollFade
+                      fill
+                      clampContentMinWidth={true}
+                      className="max-md:**:data-[slot=scroll-area-content]:pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+                    >
                       {children}
                     </ScrollArea>
                   </div>

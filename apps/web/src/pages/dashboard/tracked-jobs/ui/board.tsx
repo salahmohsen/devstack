@@ -44,11 +44,11 @@ import {
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Menu, MenuPopup, MenuTrigger } from "@tsu-stack/ui/components/menu";
+import { ScrollArea } from "@tsu-stack/ui/components/scroll-area";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
 import {
   APPLICATION_STAGE_BADGE_VARIANT,
-  ApplicationApplyLinks,
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
   useUpdateStageMutation
@@ -62,6 +62,7 @@ import {
   applicationMenuSlots
 } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
+import { ApplicationPrimaryActionButton } from "@/pages/dashboard/tracked-jobs/ui/application-primary-action-button";
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
@@ -96,13 +97,13 @@ function ApplicationCard({
   const cardBody = (
     <div
       className={cn(
-        "group rounded-lg border border-border bg-card p-3 shadow-xs",
+        "group rounded-lg border border-border bg-card p-2.5 shadow-xs",
         isDragging && "opacity-40",
         isOverlay && "rotate-1 opacity-100 shadow-md",
         disabled && "pointer-events-none opacity-60"
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-1.5">
         <button
           type="button"
           className="min-w-0 flex-1 cursor-grab text-left active:cursor-grabbing"
@@ -112,8 +113,8 @@ function ApplicationCard({
             if (!isDragging) openView(app);
           }}
         >
-          <div className="truncate font-medium">{app.companyName}</div>
-          <div className="truncate text-sm text-muted-foreground">{app.title}</div>
+          <div className="truncate text-sm font-medium">{app.companyName}</div>
+          <div className="truncate text-xs text-muted-foreground">{app.title}</div>
         </button>
 
         {/* coss Menu — 3-dot trigger (click) */}
@@ -124,14 +125,14 @@ function ApplicationCard({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="size-7 shrink-0"
+                className="size-6 shrink-0 opacity-60 transition-opacity group-hover:opacity-100"
                 aria-label="Open application menu"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
               />
             }
           >
-            <MoreHorizontalIcon className="size-4" aria-hidden="true" />
+            <MoreHorizontalIcon className="size-3.5" aria-hidden="true" />
           </MenuTrigger>
           <MenuPopup align="end" side="bottom" className="min-w-44">
             <ApplicationItemActions app={app} slots={applicationMenuSlots} />
@@ -142,11 +143,11 @@ function ApplicationCard({
         app.matchScore != null ||
         app.applyMethod !== "unknown" ||
         app.hiringUrgency !== "unknown") && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-1.5 flex flex-wrap gap-1">
           {app.listingClosed ? (
             <Badge
               variant="secondary"
-              size="sm"
+              size="xs"
               className="font-normal tracking-normal text-muted-foreground normal-case"
               title="This posting is no longer on the board."
             >
@@ -156,19 +157,13 @@ function ApplicationCard({
           <ApplicationMatchScoreBadge matchScore={app.matchScore} />
           <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
           {app.hiringUrgency !== "unknown" ? (
-            <Badge variant="secondary">{HIRING_URGENCY_LABELS[app.hiringUrgency]}</Badge>
+            <Badge variant="secondary" size="xs">
+              {HIRING_URGENCY_LABELS[app.hiringUrgency]}
+            </Badge>
           ) : null}
         </div>
       )}
-      <ApplicationApplyLinks
-        applyUrl={app.applyUrl}
-        url={app.url}
-        applyMethod={app.applyMethod}
-        className="mt-2"
-      />
-      {app.resumeId ? (
-        <div className="mt-2 text-xs text-muted-foreground">Resume linked</div>
-      ) : null}
+      {!isOverlay ? <ApplicationPrimaryActionButton app={app} layout="card" /> : null}
     </div>
   );
 
@@ -210,29 +205,31 @@ function StageColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex h-full min-h-0 min-w-56 flex-1 flex-col rounded-xl border border-border bg-muted/30",
+        "flex h-full min-h-0 min-w-60 flex-1 flex-col rounded-xl border border-border bg-muted/30",
         (isOver || overId === stage) && "border-primary/50 bg-primary/5"
       )}
     >
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <span className="flex min-w-0 items-center gap-2 text-sm font-medium">
-          <StageIcon className="size-4 shrink-0 opacity-80" aria-hidden="true" />
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2.5 py-1.5">
+        <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+          <StageIcon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
           <span className="truncate">{APPLICATION_STAGE_LABELS[stage]}</span>
         </span>
         <Badge
           variant={APPLICATION_STAGE_BADGE_VARIANT[stage]}
-          size="sm"
+          size="xs"
           className="tabular-nums"
           aria-label={`${items.length} applications in ${APPLICATION_STAGE_LABELS[stage]}`}
         >
           {items.length}
         </Badge>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
-        {items.map((app) => (
-          <ApplicationCard key={app.id} app={app} disabled={Boolean(inFlight[app.id])} />
-        ))}
-      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="flex flex-col gap-1.5 p-1.5">
+          {items.map((app) => (
+            <ApplicationCard key={app.id} app={app} disabled={Boolean(inFlight[app.id])} />
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -270,14 +267,14 @@ export function ApplicationsBoard({ applications }: ApplicationsBoardProps) {
         description="Track a discovery from New jobs, add a role manually, or import a job description."
         action={
           <Group>
-            <Button type="button" variant="outline" onClick={openImportJdSheet}>
-              <FileTextIcon aria-hidden />
-              Import from JD
-            </Button>
-            <GroupSeparator />
             <Button type="button" onClick={openCreate}>
               <PlusIcon aria-hidden />
-              Add job
+              New
+            </Button>
+            <GroupSeparator />
+            <Button type="button" variant="outline" onClick={openImportJdSheet}>
+              <FileTextIcon aria-hidden />
+              Import
             </Button>
           </Group>
         }

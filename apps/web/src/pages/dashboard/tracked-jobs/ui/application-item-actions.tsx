@@ -13,6 +13,8 @@ import {
   PencilIcon,
   PhoneIcon,
   SparklesIcon,
+  SquareCheckIcon,
+  SquareIcon,
   Trash2Icon,
   XCircleIcon
 } from "lucide-react";
@@ -38,6 +40,8 @@ import {
 } from "@tsu-stack/ui/components/alert-dialog";
 
 import {
+  APPLICATION_PRIMARY_ACTION_LABELS,
+  listingUrlFor,
   useDeleteApplicationsMutation,
   useSetOutcomeMutation,
   useUpdateStageMutation
@@ -75,17 +79,12 @@ const OUTCOME_ICONS: Record<ApplicationOutcome, ComponentType<{ className?: stri
   accepted: CheckCircle2Icon
 };
 
-function listingUrlFor(app: ApplicationOutput): string | null {
-  const listing = app.url?.trim() ? app.url.trim() : (app.applyUrl?.trim() ?? "");
-  return listing.length > 0 ? listing : null;
-}
-
 /**
  * Shared overflow / context menu for a tracked application (board card + list).
  * View, listing, edit, stage move, apply package, close outcome, delete.
  *
- * `density="list-overflow"`: skip View listing / Edit (already on the list
- * action strip); still includes View (detail), pipeline actions, and delete.
+ * `density="list-overflow"`: skip Edit (already on the list action strip).
+ * Open listing stays in the menu when the strip primary is Prepare/Review/Send.
  */
 export function ApplicationItemActions({
   app,
@@ -96,7 +95,8 @@ export function ApplicationItemActions({
   slots: ApplicationActionSlots;
   density?: "full" | "list-overflow";
 }) {
-  const { openEdit, openView, closeView, viewItem } = useApplicationStore();
+  const { openEdit, openView, closeView, viewItem, selectedIds, toggleSelect } =
+    useApplicationStore();
   const updateStage = useUpdateStageMutation();
   const setOutcome = useSetOutcomeMutation();
   const deleteMutation = useDeleteApplicationsMutation();
@@ -109,6 +109,7 @@ export function ApplicationItemActions({
         window.open(listingUrl, "_blank", "noopener,noreferrer");
       }
     : undefined;
+  const isBatchSelected = selectedIds.includes(app.id);
 
   function confirmDelete() {
     deleteMutation.mutate(
@@ -128,10 +129,10 @@ export function ApplicationItemActions({
         <EyeIcon aria-hidden="true" />
         View
       </Item>
-      {density === "full" && openListing ? (
+      {openListing ? (
         <Item onClick={openListing}>
           <ExternalLinkIcon aria-hidden="true" />
-          View listing
+          {APPLICATION_PRIMARY_ACTION_LABELS.openListing}
         </Item>
       ) : null}
       {density === "full" ? (
@@ -140,6 +141,14 @@ export function ApplicationItemActions({
           Edit
         </Item>
       ) : null}
+      <Item onClick={() => toggleSelect(app.id)}>
+        {isBatchSelected ? (
+          <SquareCheckIcon aria-hidden="true" />
+        ) : (
+          <SquareIcon aria-hidden="true" />
+        )}
+        {isBatchSelected ? "Deselect" : "Select"}
+      </Item>
 
       <Separator />
 

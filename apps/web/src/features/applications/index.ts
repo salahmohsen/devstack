@@ -71,6 +71,14 @@ export {
   type ApplyPackageEntryState
 } from "@/features/applications/lib/apply-package";
 export {
+  APPLICATION_PRIMARY_ACTION_LABELS,
+  getApplicationPrimaryAction,
+  hasJobDescription,
+  listingUrlFor,
+  type ApplicationPrimaryAction,
+  type ApplicationPrimaryActionKind
+} from "@/features/applications/lib/application-primary-action";
+export {
   APPLICATION_OPEN_BADGE_VARIANT,
   APPLICATION_OUTCOME_BADGE_VARIANT,
   APPLICATION_STAGE_BADGE_VARIANT,

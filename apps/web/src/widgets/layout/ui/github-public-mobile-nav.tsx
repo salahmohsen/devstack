@@ -1,7 +1,9 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { Archive, House, LogOut, Monitor, Moon, Settings, Sun, UserCircle } from "lucide-react";
-import { useTheme } from "next-themes";
+"use client";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useParams, useRouter, useRouterState } from "@tanstack/react-router";
+import { Archive, Bell, LayoutDashboard, LogOut, Settings, UserCircle } from "lucide-react";
+import { useMemo } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
 import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
@@ -18,32 +20,56 @@ import {
   MenuSeparator,
   MenuTrigger
 } from "@tsu-stack/ui/components/menu";
+import { Dock, DockItem, DockSeparator } from "@tsu-stack/ui/components/motion/dock";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { useMobileDockHidden } from "@/shared/lib/mobile-dock-visibility";
+import { isCustomDomainHost, primaryAppUrl } from "@/shared/lib/primary-app-url";
 import {
   publicPortfolioHomeLocation,
   publicReposListLocation,
   usePublicSurface
 } from "@/shared/lib/public-surface";
+import { getRequestHostname } from "@/shared/lib/request-host";
+import { resolvePublicScopeNav } from "@/shared/lib/resolve-public-scope-nav";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { PrimaryAppMenuLink } from "@/shared/ui/primary-app-menu-link";
 
+import { getResolvePublicPortfolioQueryOptions } from "@/features/domain";
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
-const themeOptions = [
-  { value: "light", icon: Sun, label: "Light" },
-  { value: "dark", icon: Moon, label: "Dark" },
-  { value: "system", icon: Monitor, label: "System" }
-] as const;
-
+/**
+ * Floating mobile dock: Profile · Repos · Dashboard · Account.
+ * Replaces the old full-width bottom bar so content gains vertical space.
+ */
 export function MobileNav() {
   const router = useRouter();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const params = useParams({ strict: false }) as { username?: string };
   const sessionUsername = sessionUsernameFromUser(user) ?? undefined;
   const ownSurface = usePublicSurface(sessionUsername ?? "");
-  const { theme, setTheme } = useTheme();
+
+  const hostname = getRequestHostname();
+  const customHost = isCustomDomainHost(hostname);
+  const customDomainQuery = useQuery({
+    ...getResolvePublicPortfolioQueryOptions({ host: hostname ?? undefined }),
+    enabled: customHost
+  });
+
+  const nav = useMemo(
+    () =>
+      resolvePublicScopeNav({
+        pathname,
+        hostname,
+        pathUsername: params.username,
+        customDomainUsername: customDomainQuery.data?.username ?? null,
+        sessionUsername
+      }),
+    [pathname, hostname, params.username, customDomainQuery.data?.username, sessionUsername]
+  );
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -51,7 +77,6 @@ export function MobileNav() {
         credentials: "include"
       }
     });
-    // Drop cached session immediately (query staleTime is 5m).
     queryClient.setQueryData(getAuthUserQueryOptions().queryKey, null);
     await queryClient.invalidateQueries({
       queryKey: getGithubSetupStatusQueryOptions(sessionUsername).queryKey
@@ -60,7 +85,7 @@ export function MobileNav() {
     await navigate({ to: "/" });
   };
 
-  const displayName = user?.name ?? user?.email ?? "GitHub";
+  const displayName = user?.name ?? user?.email ?? "Account";
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
@@ -68,138 +93,120 @@ export function MobileNav() {
     .slice(0, 2)
     .toUpperCase();
 
-  const itemClass = cn(
-    "relative flex min-h-11 flex-1 items-center justify-center py-2.5 text-accent-foreground transition-colors",
-    "[&.active]:bg-white/8"
-  );
+  const profile = sessionUsername
+    ? publicPortfolioHomeLocation(nav.surface ?? ownSurface)
+    : ({ to: "/sign-in" as const } as const);
+  const repos = sessionUsername
+    ? publicReposListLocation(nav.surface ?? ownSurface)
+    : ({ to: "/repos" as const } as const);
+
+  const profileActive = nav.active === "profile";
+  const reposActive = nav.active === "repos";
+  const dashboardActive = nav.active === "dashboard" || pathname.startsWith("/dashboard");
+  const dockHidden = useMobileDockHidden();
+
+  if (dockHidden) return null;
 
   return (
-    // Bottom padding must live on the nav (not a flex sibling) so icons sit above
-    // the home indicator / Safari bottom chrome on iPhone.
-    <nav
+    <div
       className={cn(
-        "z-40 shrink-0 border-t border-border bg-container md:hidden",
-        "pb-[env(safe-area-inset-bottom,0px)]"
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center md:hidden",
+        "pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
       )}
-      aria-label="Mobile"
     >
-      <div className="flex items-stretch">
-        <Link
-          to="/"
-          preload={false}
-          activeOptions={{ exact: true }}
-          activeProps={{ className: "active" }}
-          className={itemClass}
-        >
-          <House size={22} strokeWidth={1.8} />
-        </Link>
-        {(() => {
-          const loc = sessionUsername
-            ? publicReposListLocation(ownSurface)
-            : ({ to: "/repos" as const } as const);
-          return (
-            <Link
-              to={loc.to}
-              params={"params" in loc ? loc.params : undefined}
-              preload={false}
-              activeOptions={{ exact: true }}
-              activeProps={{ className: "active" }}
-              className={itemClass}
+      <Dock size={48} className="pointer-events-auto">
+        <DockItem active={profileActive} aria-label="Profile">
+          <Link
+            to={profile.to}
+            params={"params" in profile ? profile.params : undefined}
+            preload={false}
+            className="flex size-full items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Profile"
+          >
+            <UserCircle size={22} strokeWidth={1.8} aria-hidden />
+          </Link>
+        </DockItem>
+
+        <DockItem active={reposActive} aria-label="Repositories">
+          <Link
+            to={repos.to}
+            params={"params" in repos ? repos.params : undefined}
+            preload={false}
+            className="flex size-full items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Repositories"
+          >
+            <Archive size={22} strokeWidth={1.8} aria-hidden />
+          </Link>
+        </DockItem>
+
+        <DockItem active={dashboardActive} aria-label="Dashboard">
+          {customHost ? (
+            <a
+              href={primaryAppUrl("/dashboard")}
+              className="flex size-full items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Dashboard"
             >
-              <Archive size={22} strokeWidth={1.8} />
+              <LayoutDashboard size={22} strokeWidth={1.8} aria-hidden />
+            </a>
+          ) : (
+            <Link
+              to="/dashboard"
+              preload={false}
+              className="flex size-full items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="Dashboard"
+            >
+              <LayoutDashboard size={22} strokeWidth={1.8} aria-hidden />
             </Link>
-          );
-        })()}
+          )}
+        </DockItem>
+
+        <DockSeparator />
+
         <Menu>
           <MenuTrigger
             render={
               <button
                 type="button"
                 aria-label="Open account menu"
-                className={cn(
-                  "flex min-h-11 flex-1 items-center justify-center py-2.5 text-accent-foreground transition-colors"
-                )}
+                className="relative flex size-12 shrink-0 items-center justify-center rounded-full transition-transform outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.96]"
               />
             }
           >
-            <Avatar className="size-6 border border-white/10">
+            <Avatar className="size-7 border border-border">
               <AvatarImage alt={displayName} src={user?.image ?? undefined} />
-              <AvatarFallback className="text-[8px]">{initials}</AvatarFallback>
+              <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
             </Avatar>
           </MenuTrigger>
-          <MenuPopup align="end" side="top" className="w-56">
+          <MenuPopup align="center" side="top" className="w-56">
             <MenuGroup>
-              <MenuGroupLabel className="flex items-center justify-between">
-                <div>
-                  <p>{displayName}</p>
-                  <p className="font-normal text-muted-foreground">{user?.email}</p>
-                </div>
-                <div className="flex items-center gap-0.5 rounded-md border border-white/10 p-0.5">
-                  {themeOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setTheme(opt.value)}
-                      className={cn(
-                        "flex size-6 items-center justify-center rounded-sm transition-colors",
-                        theme === opt.value ? "bg-white/8" : "hover:text-muted-foreground"
-                      )}
-                      aria-label={opt.label}
-                      title={opt.label}
-                    >
-                      <opt.icon size={13} strokeWidth={2} />
-                    </button>
-                  ))}
+              <MenuGroupLabel className="flex items-center gap-3 py-2">
+                <Avatar className="size-8 border border-border">
+                  <AvatarImage alt={displayName} src={user?.image ?? undefined} />
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {displayName}
+                  </span>
+                  {user?.email ? (
+                    <span className="truncate text-xs font-normal text-muted-foreground">
+                      {user.email}
+                    </span>
+                  ) : null}
                 </div>
               </MenuGroupLabel>
             </MenuGroup>
             <MenuSeparator />
             <MenuGroup>
-              {sessionUsername ? (
-                <MenuLinkItem
-                  render={(() => {
-                    const loc = publicPortfolioHomeLocation(ownSurface);
-                    return "params" in loc ? (
-                      <Link to={loc.to} params={loc.params} />
-                    ) : (
-                      <Link to={loc.to} />
-                    );
-                  })()}
-                >
-                  <UserCircle className="size-4" />
-                  Profile
-                </MenuLinkItem>
-              ) : (
-                <MenuItem disabled>
-                  <UserCircle className="size-4" />
-                  Profile
-                </MenuItem>
-              )}
-              {sessionUsername ? (
-                <MenuLinkItem
-                  render={(() => {
-                    const loc = publicReposListLocation(ownSurface);
-                    return "params" in loc ? (
-                      <Link to={loc.to} params={loc.params} />
-                    ) : (
-                      <Link to={loc.to} />
-                    );
-                  })()}
-                >
-                  <Archive className="size-4" />
-                  Repositories
-                </MenuLinkItem>
-              ) : (
-                <MenuItem disabled>
-                  <Archive className="size-4" />
-                  Repositories
-                </MenuItem>
-              )}
-              <PrimaryAppMenuLink path="/dashboard" label="Settings">
+              <PrimaryAppMenuLink path="/dashboard/settings/profile" label="Settings">
                 <IconRotate mode="hover">
                   <Settings className="size-4" />
                 </IconRotate>
                 Settings
+              </PrimaryAppMenuLink>
+              <PrimaryAppMenuLink path="/dashboard/settings/notifications" label="Notifications">
+                <Bell className="size-4" />
+                Notifications
               </PrimaryAppMenuLink>
             </MenuGroup>
             {user ? (
@@ -218,10 +225,20 @@ export function MobileNav() {
                   </MenuItem>
                 </MenuGroup>
               </>
-            ) : null}
+            ) : (
+              <>
+                <MenuSeparator />
+                <MenuGroup>
+                  <MenuLinkItem render={<Link to="/sign-in" />}>
+                    <UserCircle className="size-4" />
+                    Sign in
+                  </MenuLinkItem>
+                </MenuGroup>
+              </>
+            )}
           </MenuPopup>
         </Menu>
-      </div>
-    </nav>
+      </Dock>
+    </div>
   );
 }

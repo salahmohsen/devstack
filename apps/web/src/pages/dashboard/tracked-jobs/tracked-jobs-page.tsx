@@ -219,7 +219,7 @@ export function TrackedJobsPage() {
           title="Tracked jobs"
           description="Pipeline board and list for roles you are actively tracking."
           actions={
-            <div className="flex items-center gap-2">
+            <>
               <Group>
                 <Button
                   type="button"
@@ -230,7 +230,7 @@ export function TrackedJobsPage() {
                     setView("board");
                   }}
                 >
-                  <LayoutGridIcon className="size-4" />
+                  <LayoutGridIcon />
                   Board
                 </Button>
                 <GroupSeparator />
@@ -240,22 +240,22 @@ export function TrackedJobsPage() {
                   variant={view === "list" ? "default" : "outline"}
                   onClick={() => setView("list")}
                 >
-                  <ListIcon className="size-4" />
+                  <ListIcon />
                   List
                 </Button>
               </Group>
               <Group>
-                <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
-                  <FileTextIcon className="size-4" />
-                  Import from JD
+                <Button type="button" size="sm" onClick={openCreate}>
+                  <PlusIcon />
+                  New
                 </Button>
                 <GroupSeparator />
-                <Button type="button" size="sm" onClick={openCreate}>
-                  <PlusIcon className="size-4" />
-                  Add job
+                <Button type="button" size="sm" variant="outline" onClick={openImportJdSheet}>
+                  <FileTextIcon />
+                  Import
                 </Button>
               </Group>
-            </div>
+            </>
           }
         />
 

@@ -19,7 +19,8 @@ export const badgeVariants = cva(
       size: {
         default: "h-6 min-w-6 px-2.5 text-xs sm:h-5.5 sm:min-w-5.5 sm:px-2",
         lg: "h-7 min-w-7 px-3 text-sm sm:h-6.5 sm:min-w-6.5 sm:px-2.5 sm:text-xs",
-        sm: "h-5.5 min-w-5.5 px-2 text-xs leading-none sm:h-5 sm:min-w-5 sm:px-1.5 sm:text-[.6875rem]"
+        sm: "h-5.5 min-w-5.5 px-2 text-xs leading-none sm:h-5 sm:min-w-5 sm:px-1.5 sm:text-[.6875rem]",
+        xs: "h-5 min-w-5 gap-1 px-1.5 text-[0.625rem] leading-none sm:h-4.5 sm:min-w-4.5 sm:px-1 [&_svg:not([class*='size-'])]:size-3"
       },
       variant: {
         default: cn("text-foreground", BADGE_GLOW.default.border),

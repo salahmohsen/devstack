@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useRouter } from "@tanstack/react-router";
-import { Archive, LayoutDashboard, LogOut, SearchIcon, UserCircle } from "lucide-react";
+import { Bell, LogOut, SearchIcon, Settings, UserCircle } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { authClient } from "@tsu-stack/auth/react/auth-client";
@@ -8,16 +8,15 @@ import { useAuth } from "@tsu-stack/auth/react/tanstack-start/hooks";
 import { getAuthUserQueryOptions } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { Avatar, AvatarFallback, AvatarImage } from "@tsu-stack/ui/components/avatar";
 import { Button } from "@tsu-stack/ui/components/button";
+import { IconRotate } from "@tsu-stack/ui/components/icon-motion";
 import { Kbd, KbdGroup } from "@tsu-stack/ui/components/kbd";
 import {
   Menu,
   MenuGroup,
   MenuGroupLabel,
   MenuItem,
-  MenuLinkItem,
   MenuPopup,
   MenuSeparator,
-  MenuShortcut,
   MenuTrigger
 } from "@tsu-stack/ui/components/menu";
 import { TextAnimate } from "@tsu-stack/ui/components/text-animate";
@@ -43,7 +42,6 @@ import { getGithubSetupStatusQueryOptions } from "@/features/github";
 import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
 import { NotificationsBell } from "@/widgets/layout/ui/notifications-bell";
 import { PublicScopeNav } from "@/widgets/layout/ui/public-scope-nav";
-import { SoundMuteButton } from "@/widgets/layout/ui/sound-mute-button";
 
 const MAX_TAB_SHORTCUTS = 9;
 
@@ -274,57 +272,15 @@ export function Topbar() {
         </MenuGroup>
         <MenuSeparator />
         <MenuGroup>
-          {sessionUsername ? (
-            <MenuLinkItem
-              render={(() => {
-                const loc = publicPortfolioHomeLocation(ownSurface);
-                return "params" in loc ? (
-                  <Link to={loc.to} params={loc.params} />
-                ) : (
-                  <Link to={loc.to} />
-                );
-              })()}
-            >
-              <UserCircle size={16} strokeWidth={2} />
-              Profile
-              <MenuShortcut>D F</MenuShortcut>
-            </MenuLinkItem>
-          ) : (
-            <MenuItem disabled>
-              <UserCircle size={16} strokeWidth={2} />
-              Profile
-              <MenuShortcut>D F</MenuShortcut>
-            </MenuItem>
-          )}
-          {sessionUsername ? (
-            <MenuLinkItem
-              render={(() => {
-                const loc = publicReposListLocation(ownSurface);
-                return "params" in loc ? (
-                  <Link to={loc.to} params={loc.params} />
-                ) : (
-                  <Link to={loc.to} />
-                );
-              })()}
-            >
-              <Archive size={16} strokeWidth={2} />
-              Repositories
-              <MenuShortcut>D R</MenuShortcut>
-            </MenuLinkItem>
-          ) : (
-            <MenuItem disabled>
-              <Archive size={16} strokeWidth={2} />
-              Repositories
-              <MenuShortcut>D R</MenuShortcut>
-            </MenuItem>
-          )}
-          <PrimaryAppMenuLink
-            path="/dashboard"
-            label="Dashboard"
-            shortcut={<MenuShortcut>D D</MenuShortcut>}
-          >
-            <LayoutDashboard size={16} strokeWidth={2} />
-            Dashboard
+          <PrimaryAppMenuLink path="/dashboard/settings/profile" label="Settings">
+            <IconRotate mode="hover">
+              <Settings size={16} strokeWidth={2} />
+            </IconRotate>
+            Settings
+          </PrimaryAppMenuLink>
+          <PrimaryAppMenuLink path="/dashboard/settings/notifications" label="Notifications">
+            <Bell size={16} strokeWidth={2} />
+            Notifications
           </PrimaryAppMenuLink>
         </MenuGroup>
         <MenuSeparator />
@@ -362,7 +318,12 @@ export function Topbar() {
 
   return (
     <nav className="flex min-h-(--navbar-height) min-w-0 shrink-0 items-center gap-3 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top,0px))] md:h-(--navbar-height) md:pt-2">
-      <Link to="/" className="shrink-0">
+      <Link
+        to="/"
+        className="shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Home"
+        title="Home"
+      >
         <TextAnimate animation="slideLeft" by="character">
           DEV-STACK
         </TextAnimate>
@@ -374,7 +335,7 @@ export function Topbar() {
         <Tabs tabsReady={isClient} routerRef={routerRef} />
       </div>
 
-      {/* Find → signal → prefs → identity. Inter-group gap is 2× intra-group. */}
+      {/* Find → signal → prefs → identity. Avatar lives in the mobile dock. */}
       <div className="relative z-10 flex shrink-0 items-center gap-2">
         <Button
           variant="outline"
@@ -389,14 +350,15 @@ export function Topbar() {
           </KbdGroup>
         </Button>
 
-        {admin && pathname.includes("dashboard") ? <NotificationsBell /> : null}
+        {admin && pathname.includes("dashboard") ? (
+          <div className="hidden md:block">
+            <NotificationsBell />
+          </div>
+        ) : null}
 
-        <div className="flex items-center gap-1">
-          <ThemeSwitcher variant="ghost" className="hidden size-8 md:inline-flex" />
-          <SoundMuteButton />
-        </div>
+        <ThemeSwitcher variant="ghost" className="size-8" />
 
-        {accountControl}
+        <div className="hidden md:contents">{accountControl}</div>
       </div>
     </nav>
   );
