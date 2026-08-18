@@ -196,7 +196,7 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                         />
                       }
                     >
-                      {/* Tags → title → meta; mobile ends with Magic|▾ Group. */}
+                      {/* Tags → avatar + title/meta; mobile ends with Magic|▾ Group. */}
                       <div className="flex min-w-0 flex-col gap-1.5">
                         <div className="no-scrollbar flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain">
                           {app.listingClosed ? (
@@ -214,24 +214,29 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           <ApplicationStageBadge stage={app.stage} />
                           {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
                         </div>
-                        <h3 className="min-w-0 truncate text-sm font-medium">{app.title}</h3>
-                        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
-                          <span className="inline-flex min-w-0 items-center gap-1.5">
-                            <AgentAvatar
-                              seed={app.companyName}
-                              size={18}
-                              animated={selected}
-                              className="size-4.5 shrink-0 rounded-md outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-                              aria-label={app.companyName}
-                            />
-                            <span className="truncate">{app.companyName}</span>
-                          </span>
-                          {app.location ? (
-                            <span className="inline-flex min-w-0 items-center gap-1">
-                              <MapPinIcon className="size-3.5 shrink-0 opacity-80" aria-hidden />
-                              <span className="truncate">{app.location}</span>
-                            </span>
-                          ) : null}
+                        <div className="flex min-w-0 items-start gap-2.5">
+                          <AgentAvatar
+                            seed={app.companyName}
+                            size={32}
+                            animated={selected}
+                            className="mt-0.5 size-8 shrink-0 rounded-lg outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                            aria-label={app.companyName}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <h3 className="min-w-0 truncate text-sm font-medium">{app.title}</h3>
+                            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
+                              <span className="truncate">{app.companyName}</span>
+                              {app.location ? (
+                                <span className="inline-flex min-w-0 items-center gap-1">
+                                  <MapPinIcon
+                                    className="size-3.5 shrink-0 opacity-80"
+                                    aria-hidden
+                                  />
+                                  <span className="truncate">{app.location}</span>
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
                         </div>
                         <div
                           role="presentation"
