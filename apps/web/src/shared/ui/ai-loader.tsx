@@ -1,7 +1,7 @@
 import { Dotm3x3_11 } from "@tsu-stack/ui/components/dotm-3x3-11";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-export const DefaultLoader = ({
+export const AiLoader = ({
   className,
   variant = "inline",
   size = "md"

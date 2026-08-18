@@ -23,7 +23,7 @@ import {
 import { FieldGroup } from "@tsu-stack/ui/components/field";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 import { LogoIcon } from "@/shared/ui/logo";
 
 import { appConfig } from "@/config/app.config";
@@ -110,7 +110,7 @@ export function CreateAnAccountForm({
   const isPending = signUpWithSocialMutation.isPending;
 
   if (authPending) {
-    return <DefaultLoader />;
+    return <AiLoader />;
   }
 
   return (

@@ -16,7 +16,7 @@ import { Form } from "@tsu-stack/ui/components/form";
 import { SubmitButton, useAppForm } from "@/shared/form";
 import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
 import { getPortfolioListQueryKey } from "@/features/portfolio";
@@ -155,7 +155,7 @@ export function ExperienceForm({ initialData, open, onOpenChange, onSaved }: Exp
 
   const body =
     isEdit && experienceQuery.isLoading && !experience ? (
-      <DefaultLoader />
+      <AiLoader />
     ) : isEdit && !experienceQuery.isLoading && !experience ? (
       <div className="py-8 text-center text-muted-foreground">Experience not found.</div>
     ) : (

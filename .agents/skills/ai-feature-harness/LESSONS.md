@@ -17,6 +17,16 @@
 
 ---
 
+## 2026-08-19 — AI job Dynamic Island: subscription, shimmer, springs
+
+- **Trigger:** Replace AI running Sonner toast with bottom-left beUI Dynamic Island; polish expand steps / result / glass toast
+- **Finding:** `useSyncExternalStore` / `useAiJobIsland()` must **read** the returned snapshot. Assigning to a discarded binding lets React Compiler drop the subscription — the island never paints until something else re-renders
+- **Finding:** Official `shimmer` sets `-webkit-text-fill-color: transparent` + background-clip text. On an inverted island (`bg-foreground text-background`) active steps can look empty. Prefer spinner/markers + solid text on inverted chrome; keep shimmer for normal light surfaces (toasts on `bg-background`)
+- **Finding:** Stock beUI shell springs (`duration: 0.8`) feel slow for a dashboard live activity. Snappier springs (~0.45–0.5s, low bounce) keep the morph language without molasses
+- **Finding:** Expand must always render the step plan (seeded map or accumulating labels). Header = title + live `activeStepLabel` + Cancel; list = done/active/pending with glyphs. Result = orb + copy + full-width action, not a cramped single row
+- **User preference:** Snappier than stock beUI; glass Sonner; step list must show on expand
+- **Evidence class:** Playwright organize — compact island → expand listed all steps; `vp check` 0 errors; commits through `9d0d5f17`
+
 ## 2026-08-18 — Confirm dialogs must host outside Menu/ContextMenu
 
 - **Trigger:** Tracked jobs list/board Delete confirm flashed then vanished

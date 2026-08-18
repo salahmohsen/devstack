@@ -10,13 +10,14 @@ import {
   type AuthQueryResult
 } from "@tsu-stack/auth/react/tanstack-start/queries";
 import { ENV_WEB_ISOMORPHIC } from "@tsu-stack/env/web/env.isomorphic";
-import { Toaster } from "@tsu-stack/ui/components/sonner";
 import { ThemeProvider } from "@tsu-stack/ui/components/theme-switcher";
 import { TooltipProvider } from "@tsu-stack/ui/components/tooltip";
 
 import { generateAppSeo } from "@/shared/lib/seo";
 import { ProgressProvider } from "@/shared/providers/progress.provider";
 import appCss from "@/shared/styles/app.css?url";
+import { AiJobIslandHost } from "@/shared/ui/ai-job-island-host";
+import { AppToaster } from "@/shared/ui/app-toaster";
 import { CuelumeProvider } from "@/shared/ui/cuelume-provider";
 
 import { DefaultErrorPage } from "@/pages/default-error";
@@ -101,7 +102,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               <NuqsAdapter>
                 <CuelumeProvider />
                 {children}
-                <Toaster />
+                <AppToaster />
+                <AiJobIslandHost />
               </NuqsAdapter>
               {import.meta.env.DEV ? (
                 <Suspense fallback={null}>

@@ -6,25 +6,26 @@ import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ApplicationOutput, isThinJobDescription } from "@tsu-stack/core";
 
 import {
-  AiJobRunningToastBody,
+  appendIslandStep,
   clearStepTimers,
+  completeAiJobIsland,
   createDetachedJobController,
+  dismissAiJobIsland,
   isAbortError,
   scheduleStepLabels,
-  showAiJobRunningToast,
+  upsertAiJobIsland,
   type AiJobStepSchedule
 } from "@/shared/lib/ai-job";
-import { toastAiError } from "@/shared/lib/toast-ai-error";
+import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 import { patchApplicationInLists } from "@/features/applications/lib/application-list-cache";
 import {
   getRefreshFromListingState,
   requestOpenApplicationPanel,
-  setRefreshFromListingState,
-  useRefreshFromListingJob
+  setRefreshFromListingState
 } from "@/features/applications/lib/refresh-from-listing-store";
 
-/** Stable sonner id so step updates + dismiss work across navigations. */
+/** Stable island id so step updates + dismiss work across navigations. */
 const REFRESH_TOAST_ID = "refresh-from-listing-job";
 
 /** Client-side step labels while the single RPC runs (server has no stream yet). */
@@ -41,22 +42,19 @@ const jobController = createDetachedJobController({
   cancelRemoteRun: () => undefined
 });
 
-function RefreshRunningToastBody() {
-  const { stepLabel } = useRefreshFromListingJob();
-  return <AiJobRunningToastBody title="Updating job details…" stepLabel={stepLabel} />;
-}
-
-function showRunningToast() {
-  showAiJobRunningToast({
-    id: REFRESH_TOAST_ID,
-    cancelLabel: "Dismiss",
-    onCancel: dismissRefreshFromListingTracking,
-    body: <RefreshRunningToastBody />
-  });
-}
-
 function writeApplicationCache(queryClient: QueryClient, data: ApplicationOutput) {
   patchApplicationInLists(queryClient, data);
+}
+
+function showRunningIsland(activeStepLabel: string) {
+  upsertAiJobIsland({
+    id: REFRESH_TOAST_ID,
+    title: "Updating job details…",
+    cancelLabel: "Dismiss",
+    onCancel: dismissRefreshFromListingTracking,
+    steps: [{ id: "step-0", label: activeStepLabel, state: "active" }],
+    activeStepLabel
+  });
 }
 
 /**
@@ -66,11 +64,11 @@ function writeApplicationCache(queryClient: QueryClient, data: ApplicationOutput
 export function dismissRefreshFromListingTracking() {
   const state = getRefreshFromListingState();
   if (state.status !== "running") {
-    toast.dismiss(REFRESH_TOAST_ID);
+    dismissAiJobIsland(REFRESH_TOAST_ID);
     return;
   }
   jobController.cancel(null);
-  toast.dismiss(REFRESH_TOAST_ID);
+  dismissAiJobIsland(REFRESH_TOAST_ID);
   setRefreshFromListingState({
     status: "canceled",
     stepLabel: null,
@@ -86,7 +84,7 @@ export type StartRefreshFromListingInput = {
 };
 
 /**
- * Re-fetch + AI extract job details as a detached job with a sticky progress toast.
+ * Re-fetch + AI extract job details as a detached job with sticky island progress.
  * Survives route changes (same pattern as Scan job alerts / resume extract).
  */
 export async function startRefreshFromListingUrl(
@@ -111,30 +109,40 @@ export async function startRefreshFromListingUrl(
         </Link>
       )
     });
-    showRunningToast();
+    upsertAiJobIsland({
+      id: REFRESH_TOAST_ID,
+      title: "Updating job details…",
+      cancelLabel: "Dismiss",
+      onCancel: dismissRefreshFromListingTracking,
+      activeStepLabel: existing.stepLabel
+    });
     return;
   }
 
   const { generation, controller, signal } = jobController.begin();
   const stepTimers: number[] = [];
+  const initialLabel = STEP_SCHEDULE_MS[0]!.label;
 
   setRefreshFromListingState({
     status: "running",
-    stepLabel: STEP_SCHEDULE_MS[0]!.label,
+    stepLabel: initialLabel,
     applicationId: input.id,
     title: input.title,
     companyName: input.companyName,
     error: null,
     startedAt: Date.now()
   });
+  showRunningIsland(initialLabel);
   scheduleStepLabels({
     generation,
     controller: jobController,
     schedule: STEP_SCHEDULE_MS,
     timers: stepTimers,
-    setStepLabel: (label) => setRefreshFromListingState({ stepLabel: label })
+    setStepLabel: (label) => {
+      setRefreshFromListingState({ stepLabel: label });
+      appendIslandStep(REFRESH_TOAST_ID, label);
+    }
   });
-  showRunningToast();
 
   try {
     const data = await orpcClient.applications.refreshFromListingUrl(
@@ -149,7 +157,6 @@ export async function startRefreshFromListingUrl(
 
     if (!jobController.isCurrent(generation)) return;
 
-    toast.dismiss(REFRESH_TOAST_ID);
     setRefreshFromListingState({
       status: "ready",
       stepLabel: null,
@@ -160,32 +167,24 @@ export async function startRefreshFromListingUrl(
     });
 
     const usable = !isThinJobDescription(data.description);
-    const viewAction = (
-      <Link
-        to="/dashboard/new-jobs"
-        data-button
-        onClick={() => requestOpenApplicationPanel(data.id)}
-      >
-        View job
-      </Link>
-    );
-
     const matchNote =
       data.matchScore != null ? `${data.matchScore}% match` : "match score unchanged";
     const takeNote = data.agentTake?.trim() ? "agent take refreshed" : "agent take not updated";
 
     if (usable) {
-      toast.success("Job details updated", {
-        description: `${data.title} · ${data.companyName} · ${matchNote}; ${takeNote}.`,
-        action: viewAction,
-        duration: 14_000
+      completeAiJobIsland(REFRESH_TOAST_ID, {
+        status: "success",
+        resultTitle: "Job details updated",
+        errorMessage: `${data.title} · ${data.companyName} · ${matchNote}; ${takeNote}.`,
+        requiresAction: false
       });
     } else {
-      toast.message("URL saved — description still thin", {
-        description:
+      completeAiJobIsland(REFRESH_TOAST_ID, {
+        status: "success",
+        resultTitle: "URL saved — description still thin",
+        errorMessage:
           "We saved the posting URL, but the page still looks incomplete. Try another link or add the description manually.",
-        action: viewAction,
-        duration: 14_000
+        requiresAction: false
       });
     }
   } catch (error) {
@@ -197,7 +196,6 @@ export async function startRefreshFromListingUrl(
       return;
     }
 
-    toast.dismiss(REFRESH_TOAST_ID);
     const orpcError = error as { code?: string; message?: string } | null;
     const code = orpcError && typeof orpcError === "object" ? orpcError.code : undefined;
     const message =
@@ -211,16 +209,21 @@ export async function startRefreshFromListingUrl(
       error: message
     });
 
-    if (code === "AI_NOT_CONFIGURED") {
-      toastAiError(message ?? "Configure a BYO API key under Settings → AI", {
-        feature: "generic",
-        severity: "hard",
-        action: { label: "AI settings", to: "/dashboard/settings/ai" }
-      });
-      return;
-    }
+    const presentation = presentAiError(message ?? "Configure a BYO API key under Settings → AI", {
+      feature: "generic",
+      severity: "hard"
+    });
+    const needsSettings = code === "AI_NOT_CONFIGURED" || presentation.showAiSettings;
 
-    toast.error(message);
+    completeAiJobIsland(REFRESH_TOAST_ID, {
+      status: "error",
+      resultTitle: presentation.title,
+      errorMessage: presentation.description,
+      requiresAction: needsSettings,
+      resultAction: needsSettings
+        ? { label: "Settings → AI", to: "/dashboard/settings/ai" }
+        : undefined
+    });
   } finally {
     clearStepTimers(stepTimers);
     jobController.clearIf(controller);

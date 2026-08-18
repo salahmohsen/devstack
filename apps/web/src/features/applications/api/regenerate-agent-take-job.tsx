@@ -6,26 +6,27 @@ import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ApplicationOutput, type ApplicationTrackingStatus } from "@tsu-stack/core";
 
 import {
-  AiJobRunningToastBody,
+  appendIslandStep,
   clearStepTimers,
+  completeAiJobIsland,
   createDetachedJobController,
+  dismissAiJobIsland,
   isAbortError,
   scheduleStepLabels,
-  showAiJobRunningToast,
+  upsertAiJobIsland,
   type AiJobStepSchedule
 } from "@/shared/lib/ai-job";
-import { toastAiError } from "@/shared/lib/toast-ai-error";
+import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 import {
   getAgentTakeJobState,
   requestOpenApplicationPanelFromTake,
-  setAgentTakeJobState,
-  useAgentTakeJob
+  setAgentTakeJobState
 } from "@/features/applications/lib/agent-take-store";
 import { patchApplicationInLists } from "@/features/applications/lib/application-list-cache";
 import { requestOpenApplicationPanel } from "@/features/applications/lib/refresh-from-listing-store";
 
-/** Stable sonner id so step updates + dismiss work across navigations. */
+/** Stable island id so step updates + dismiss work across navigations. */
 const TAKE_TOAST_ID = "regenerate-agent-take-job";
 
 const STEP_SCHEDULE_MS: AiJobStepSchedule = [
@@ -38,22 +39,19 @@ const jobController = createDetachedJobController({
   cancelRemoteRun: () => undefined
 });
 
-function TakeRunningToastBody() {
-  const { stepLabel } = useAgentTakeJob();
-  return <AiJobRunningToastBody title="Writing agent take…" stepLabel={stepLabel} />;
-}
-
-function showRunningToast() {
-  showAiJobRunningToast({
-    id: TAKE_TOAST_ID,
-    cancelLabel: "Dismiss",
-    onCancel: dismissAgentTakeTracking,
-    body: <TakeRunningToastBody />
-  });
-}
-
 function writeApplicationCache(queryClient: QueryClient, data: ApplicationOutput) {
   patchApplicationInLists(queryClient, data);
+}
+
+function showRunningIsland(activeStepLabel: string) {
+  upsertAiJobIsland({
+    id: TAKE_TOAST_ID,
+    title: "Writing agent take…",
+    cancelLabel: "Dismiss",
+    onCancel: dismissAgentTakeTracking,
+    steps: [{ id: "step-0", label: activeStepLabel, state: "active" }],
+    activeStepLabel
+  });
 }
 
 /**
@@ -63,11 +61,11 @@ function writeApplicationCache(queryClient: QueryClient, data: ApplicationOutput
 export function dismissAgentTakeTracking() {
   const state = getAgentTakeJobState();
   if (state.status !== "running") {
-    toast.dismiss(TAKE_TOAST_ID);
+    dismissAiJobIsland(TAKE_TOAST_ID);
     return;
   }
   jobController.cancel(null);
-  toast.dismiss(TAKE_TOAST_ID);
+  dismissAiJobIsland(TAKE_TOAST_ID);
   setAgentTakeJobState({
     status: "canceled",
     stepLabel: null,
@@ -84,7 +82,7 @@ export type StartRegenerateAgentTakeInput = {
 };
 
 /**
- * Generate/regenerate agent take as a detached job with sticky progress toast.
+ * Generate/regenerate agent take as a detached job with sticky island progress.
  * Survives route changes (same pattern as Fix posting URL / Scan job alerts).
  */
 export async function startRegenerateAgentTake(
@@ -112,16 +110,23 @@ export async function startRegenerateAgentTake(
         </Link>
       )
     });
-    showRunningToast();
+    upsertAiJobIsland({
+      id: TAKE_TOAST_ID,
+      title: "Writing agent take…",
+      cancelLabel: "Dismiss",
+      onCancel: dismissAgentTakeTracking,
+      activeStepLabel: existing.stepLabel
+    });
     return;
   }
 
   const { generation, controller, signal } = jobController.begin();
   const stepTimers: number[] = [];
+  const initialLabel = STEP_SCHEDULE_MS[0]!.label;
 
   setAgentTakeJobState({
     status: "running",
-    stepLabel: STEP_SCHEDULE_MS[0]!.label,
+    stepLabel: initialLabel,
     applicationId: input.id,
     title: input.title,
     companyName: input.companyName,
@@ -129,14 +134,17 @@ export async function startRegenerateAgentTake(
     error: null,
     startedAt: Date.now()
   });
+  showRunningIsland(initialLabel);
   scheduleStepLabels({
     generation,
     controller: jobController,
     schedule: STEP_SCHEDULE_MS,
     timers: stepTimers,
-    setStepLabel: (label) => setAgentTakeJobState({ stepLabel: label })
+    setStepLabel: (label) => {
+      setAgentTakeJobState({ stepLabel: label });
+      appendIslandStep(TAKE_TOAST_ID, label);
+    }
   });
-  showRunningToast();
 
   try {
     const data = await orpcClient.applications.regenerateAgentTake({ id: input.id }, { signal });
@@ -148,7 +156,6 @@ export async function startRegenerateAgentTake(
 
     if (!jobController.isCurrent(generation)) return;
 
-    toast.dismiss(TAKE_TOAST_ID);
     setAgentTakeJobState({
       status: "ready",
       stepLabel: null,
@@ -158,26 +165,11 @@ export async function startRegenerateAgentTake(
       error: null
     });
 
-    const isInbox = (input.trackingStatus ?? data.trackingStatus) === "inbox";
-    toast.success("Agent take updated", {
-      description: `${data.title} · ${data.companyName}`,
-      action: isInbox ? (
-        <Link
-          to="/dashboard/new-jobs"
-          data-button
-          onClick={() => {
-            requestOpenApplicationPanelFromTake(data.id);
-            requestOpenApplicationPanel(data.id);
-          }}
-        >
-          View job
-        </Link>
-      ) : (
-        <Link to="/dashboard/tracked-jobs" data-button>
-          Tracked jobs
-        </Link>
-      ),
-      duration: 12_000
+    completeAiJobIsland(TAKE_TOAST_ID, {
+      status: "success",
+      resultTitle: "Agent take updated",
+      errorMessage: `${data.title} · ${data.companyName}`,
+      requiresAction: false
     });
   } catch (error) {
     if (!jobController.isCurrent(generation)) return;
@@ -188,7 +180,6 @@ export async function startRegenerateAgentTake(
       return;
     }
 
-    toast.dismiss(TAKE_TOAST_ID);
     const orpcError = error as { code?: string; message?: string } | null;
     const code = orpcError && typeof orpcError === "object" ? orpcError.code : undefined;
     const message =
@@ -203,20 +194,31 @@ export async function startRegenerateAgentTake(
     });
 
     if (code === "INSUFFICIENT_LISTING") {
-      toast.error(message);
-      return;
-    }
-
-    if (code === "AI_NOT_CONFIGURED" || code === "AGENT_FAILED") {
-      toastAiError(message ?? "Could not generate agent take", {
-        feature: "generic",
-        severity: "hard",
-        action: { label: "AI settings", to: "/dashboard/settings/ai" }
+      completeAiJobIsland(TAKE_TOAST_ID, {
+        status: "error",
+        resultTitle: "Could not generate agent take",
+        errorMessage: message,
+        requiresAction: false
       });
       return;
     }
 
-    toast.error(message);
+    const presentation = presentAiError(message ?? "Could not generate agent take", {
+      feature: "generic",
+      severity: "hard"
+    });
+    const needsSettings =
+      code === "AI_NOT_CONFIGURED" || code === "AGENT_FAILED" || presentation.showAiSettings;
+
+    completeAiJobIsland(TAKE_TOAST_ID, {
+      status: "error",
+      resultTitle: presentation.title,
+      errorMessage: presentation.description,
+      requiresAction: needsSettings,
+      resultAction: needsSettings
+        ? { label: "Settings → AI", to: "/dashboard/settings/ai" }
+        : undefined
+    });
   } finally {
     clearStepTimers(stepTimers);
     jobController.clearIf(controller);

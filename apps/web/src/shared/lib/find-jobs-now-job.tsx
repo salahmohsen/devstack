@@ -11,16 +11,15 @@ import {
 } from "@tsu-stack/core";
 
 import {
-  AiJobRunningToastBody,
+  appendIslandStep,
+  completeAiJobIsland,
   createDetachedJobController,
+  dismissAiJobIsland,
   isAbortError,
-  showAiJobRunningToast
+  upsertAiJobIsland
 } from "@/shared/lib/ai-job";
-import {
-  getFindJobsNowState,
-  setFindJobsNowState,
-  useFindJobsNowJob
-} from "@/shared/lib/find-jobs-now-store";
+import { getFindJobsNowState, setFindJobsNowState } from "@/shared/lib/find-jobs-now-store";
+import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 const inboxListQueryKey = orpcQueryClient.applications.list.queryKey({
   input: { trackingStatus: "inbox" }
@@ -29,7 +28,7 @@ const inboxCountQueryKey = orpcQueryClient.applications.count.queryKey({
   input: { trackingStatus: "inbox" }
 });
 
-/** Stable sonner id so step updates + dismiss work across navigations. */
+/** Stable island id so step updates + dismiss work across navigations. */
 const FIND_TOAST_ID = "find-jobs-now-job";
 
 /**
@@ -44,20 +43,6 @@ const jobController = createDetachedJobController({
   // Ingest/land run on the server queue; UI “Dismiss” only stops client tracking.
   cancelRemoteRun: () => undefined
 });
-
-function FindRunningToastBody() {
-  const { stepLabel } = useFindJobsNowJob();
-  return <AiJobRunningToastBody title="Finding jobs…" stepLabel={stepLabel} />;
-}
-
-function showRunningToast() {
-  showAiJobRunningToast({
-    id: FIND_TOAST_ID,
-    cancelLabel: "Dismiss",
-    onCancel: dismissFindJobsNowTracking,
-    body: <FindRunningToastBody />
-  });
-}
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -129,17 +114,33 @@ function stepForPoll(index: number, ingestTriggered: boolean, newJobsFound: numb
   return "Finishing up…";
 }
 
+function setFindStepLabel(label: string) {
+  setFindJobsNowState({ stepLabel: label });
+  appendIslandStep(FIND_TOAST_ID, label);
+}
+
+function showRunningIsland() {
+  upsertAiJobIsland({
+    id: FIND_TOAST_ID,
+    title: "Finding jobs…",
+    cancelLabel: "Dismiss",
+    onCancel: dismissFindJobsNowTracking,
+    steps: [{ id: "step-0", label: "Checking title and inbox…", state: "active" }],
+    activeStepLabel: "Checking title and inbox…"
+  });
+}
+
 /**
  * Stop tracking UI only. Server ingest/land jobs already enqueued keep running.
  */
 export function dismissFindJobsNowTracking() {
   const state = getFindJobsNowState();
   if (state.status !== "running") {
-    toast.dismiss(FIND_TOAST_ID);
+    dismissAiJobIsland(FIND_TOAST_ID);
     return;
   }
   jobController.cancel(null);
-  toast.dismiss(FIND_TOAST_ID);
+  dismissAiJobIsland(FIND_TOAST_ID);
   setFindJobsNowState({
     status: "canceled",
     stepLabel: null,
@@ -193,7 +194,14 @@ async function runFindJobsNow(
           </Link>
         )
       });
-      showRunningToast();
+      // Re-upsert while running must not rewind steps (store preserves them).
+      upsertAiJobIsland({
+        id: FIND_TOAST_ID,
+        title: "Finding jobs…",
+        cancelLabel: "Dismiss",
+        onCancel: dismissFindJobsNowTracking,
+        activeStepLabel: existing.stepLabel
+      });
     }
     return {
       ...ALREADY_RUNNING,
@@ -214,7 +222,7 @@ async function runFindJobsNow(
     error: null,
     startedAt: Date.now()
   });
-  if (showToast) showRunningToast();
+  if (showToast) showRunningIsland();
 
   let handedOffPoll = false;
   try {
@@ -223,7 +231,7 @@ async function runFindJobsNow(
     if (!jobController.isCurrent(generation)) return data;
 
     if (data.reason === "title_required") {
-      if (showToast) toast.dismiss(FIND_TOAST_ID);
+      if (showToast) dismissAiJobIsland(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "ready",
         stepLabel: null,
@@ -243,7 +251,7 @@ async function runFindJobsNow(
     }
 
     if (data.reason === "inbox_full") {
-      if (showToast) toast.dismiss(FIND_TOAST_ID);
+      if (showToast) dismissAiJobIsland(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "ready",
         stepLabel: null,
@@ -255,7 +263,7 @@ async function runFindJobsNow(
     }
 
     if (data.reason === "ai_budget") {
-      if (showToast) toast.dismiss(FIND_TOAST_ID);
+      if (showToast) dismissAiJobIsland(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "ready",
         stepLabel: null,
@@ -269,7 +277,7 @@ async function runFindJobsNow(
     }
 
     if (data.reason === "queue_unavailable" || !data.enqueued) {
-      if (showToast) toast.dismiss(FIND_TOAST_ID);
+      if (showToast) dismissAiJobIsland(FIND_TOAST_ID);
       setFindJobsNowState({
         status: "failed",
         stepLabel: null,
@@ -289,9 +297,9 @@ async function runFindJobsNow(
 
     setFindJobsNowState({
       ingestTriggered: data.ingestTriggered,
-      seats: data.seats,
-      stepLabel: data.ingestTriggered ? "Queued board refresh…" : "Queued scoring…"
+      seats: data.seats
     });
+    setFindStepLabel(data.ingestTriggered ? "Queued board refresh…" : "Queued scoring…");
 
     const poll = () =>
       pollFindJobsNow({
@@ -299,7 +307,8 @@ async function runFindJobsNow(
         data,
         baselineInbox,
         generation,
-        signal
+        signal,
+        showToast
       });
 
     if (!awaitPoll) {
@@ -331,14 +340,31 @@ async function runFindJobsNow(
       };
     }
 
-    toast.dismiss(FIND_TOAST_ID);
     const message = error instanceof Error ? error.message : "Could not find jobs.";
     setFindJobsNowState({
       status: "failed",
       stepLabel: null,
       error: message
     });
-    toast.error(message);
+
+    if (showToast) {
+      const presentation = presentAiError(message, {
+        feature: "generic",
+        severity: "hard"
+      });
+      completeAiJobIsland(FIND_TOAST_ID, {
+        status: "error",
+        resultTitle: presentation.title,
+        errorMessage: presentation.description,
+        requiresAction: presentation.showAiSettings,
+        resultAction: presentation.showAiSettings
+          ? { label: "Settings → AI", to: "/dashboard/settings/ai" }
+          : undefined
+      });
+    } else {
+      toast.error(message);
+    }
+
     return {
       enqueued: false,
       ingestTriggered: false,
@@ -356,15 +382,14 @@ async function pollFindJobsNow(input: {
   baselineInbox: number;
   generation: number;
   signal: AbortSignal;
+  showToast: boolean;
 }): Promise<void> {
-  const { queryClient, data, baselineInbox, generation, signal } = input;
+  const { queryClient, data, baselineInbox, generation, signal, showToast } = input;
   await invalidateInbox(queryClient);
 
   let newJobsFound = Math.max(0, inboxCountFromCache(queryClient) - baselineInbox);
-  setFindJobsNowState({
-    newJobsFound,
-    stepLabel: stepForPoll(0, data.ingestTriggered, newJobsFound)
-  });
+  setFindJobsNowState({ newJobsFound });
+  setFindStepLabel(stepForPoll(0, data.ingestTriggered, newJobsFound));
 
   const pollStartedAt = Date.now();
   let lastSeenCount = newJobsFound;
@@ -379,15 +404,12 @@ async function pollFindJobsNow(input: {
     grewOnLastPoll = latest > lastSeenCount;
     lastSeenCount = latest;
     newJobsFound = Math.max(newJobsFound, latest);
-    setFindJobsNowState({
-      newJobsFound,
-      stepLabel: stepForPoll(i + 1, data.ingestTriggered, newJobsFound)
-    });
+    setFindJobsNowState({ newJobsFound });
+    setFindStepLabel(stepForPoll(i + 1, data.ingestTriggered, newJobsFound));
   }
 
   if (!jobController.isCurrent(generation)) return;
 
-  toast.dismiss(FIND_TOAST_ID);
   setFindJobsNowState({
     status: "ready",
     stepLabel: null,
@@ -396,53 +418,98 @@ async function pollFindJobsNow(input: {
 
   const hasAiKey = cachedHasAiKey(queryClient);
 
+  // Hub tool path never mounts the island — keep Sonner completions there.
+  if (!showToast) {
+    if (grewOnLastPoll) {
+      toast.message("Still scoring in the background", {
+        description:
+          newJobsFound > 0
+            ? `${newJobsFound} already under New jobs. More keepers may appear as evaluate finishes.`
+            : "Board refresh and scoring are still running. Check New jobs shortly.",
+        action: (
+          <Link to="/dashboard/new-jobs" data-button>
+            New jobs
+          </Link>
+        ),
+        duration: 14_000
+      });
+    } else if (newJobsFound > 0) {
+      toast.success(newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`, {
+        description:
+          hasAiKey === true
+            ? "They're under New jobs. Score-fails go to Dismissed; more keepers may still arrive."
+            : "Matches that passed your Job preferences are under New jobs.",
+        action: (
+          <Link to="/dashboard/new-jobs" data-button>
+            Open New jobs
+          </Link>
+        ),
+        duration: 12_000
+      });
+    } else if (data.ingestTriggered) {
+      toast.message("No new inbox jobs yet", {
+        description:
+          "Board refresh and scoring can take several minutes. Keepers appear under New jobs as they pass.",
+        action: (
+          <Link to="/dashboard/new-jobs" data-button>
+            New jobs
+          </Link>
+        ),
+        duration: 14_000
+      });
+    } else {
+      toast.message("No new inbox jobs", {
+        description:
+          "Every URL is already on a tracked job (or did not match your title). Deleting New jobs does not free URLs still on Tracked jobs.",
+        action: (
+          <Link to="/dashboard/tracked-jobs" data-button>
+            Tracked jobs
+          </Link>
+        ),
+        duration: 14_000
+      });
+    }
+    return;
+  }
+
   if (grewOnLastPoll) {
-    toast.message("Still scoring in the background", {
-      description:
+    completeAiJobIsland(FIND_TOAST_ID, {
+      status: "success",
+      resultTitle: "Still scoring in the background",
+      errorMessage:
         newJobsFound > 0
           ? `${newJobsFound} already under New jobs. More keepers may appear as evaluate finishes.`
           : "Board refresh and scoring are still running. Check New jobs shortly.",
-      action: (
-        <Link to="/dashboard/new-jobs" data-button>
-          New jobs
-        </Link>
-      ),
-      duration: 14_000
+      requiresAction: true,
+      resultAction: { label: "New jobs", to: "/dashboard/new-jobs" }
     });
   } else if (newJobsFound > 0) {
-    toast.success(newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`, {
-      description:
+    completeAiJobIsland(FIND_TOAST_ID, {
+      status: "success",
+      resultTitle: newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`,
+      errorMessage:
         hasAiKey === true
           ? "They're under New jobs. Score-fails go to Dismissed; more keepers may still arrive."
           : "Matches that passed your Job preferences are under New jobs.",
-      action: (
-        <Link to="/dashboard/new-jobs" data-button>
-          Open New jobs
-        </Link>
-      ),
-      duration: 12_000
+      requiresAction: true,
+      resultAction: { label: "Open New jobs", to: "/dashboard/new-jobs" }
     });
   } else if (data.ingestTriggered) {
-    toast.message("No new inbox jobs yet", {
-      description:
+    completeAiJobIsland(FIND_TOAST_ID, {
+      status: "success",
+      resultTitle: "No new inbox jobs yet",
+      errorMessage:
         "Board refresh and scoring can take several minutes. Keepers appear under New jobs as they pass.",
-      action: (
-        <Link to="/dashboard/new-jobs" data-button>
-          New jobs
-        </Link>
-      ),
-      duration: 14_000
+      requiresAction: true,
+      resultAction: { label: "New jobs", to: "/dashboard/new-jobs" }
     });
   } else {
-    toast.message("No new inbox jobs", {
-      description:
+    completeAiJobIsland(FIND_TOAST_ID, {
+      status: "success",
+      resultTitle: "No new inbox jobs",
+      errorMessage:
         "Every URL is already on a tracked job (or did not match your title). Deleting New jobs does not free URLs still on Tracked jobs.",
-      action: (
-        <Link to="/dashboard/tracked-jobs" data-button>
-          Tracked jobs
-        </Link>
-      ),
-      duration: 14_000
+      requiresAction: false
     });
   }
 }

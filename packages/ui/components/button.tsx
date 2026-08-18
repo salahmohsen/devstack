@@ -85,6 +85,11 @@ export const buttonVariants = cva(
           "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90 data-pressed:bg-secondary/90 *:data-[slot=button-loading-indicator]:text-secondary-foreground [:active,[data-pressed]]:bg-secondary/80",
         /** Page-level start actions only (Find jobs now, Scan, Detect, Organize). */
         glass: glassTone("default", "text-foreground"),
+        /** Glass cancel / stop chrome (AI flow trigger X). Same frost as `glass`, destructive glow. */
+        "glass-destructive": cn(
+          glassTone("destructive", "text-destructive-foreground"),
+          "hover:bg-destructive/8 data-pressed:bg-destructive/12"
+        ),
         brand:
           "border-brand/35 bg-background text-brand shadow-xs/5 hover:bg-brand/8 data-pressed:bg-brand/12 *:data-[slot=button-loading-indicator]:text-brand",
         success:
@@ -111,7 +116,9 @@ export type ButtonProps = {
 } & useRender.ComponentProps<"button">;
 
 export function buttonGlowVariant(variant: ButtonProps["variant"]): BadgeGlowVariant | null {
-  return variant === "glass" ? "default" : null;
+  if (variant === "glass") return "default";
+  if (variant === "glass-destructive") return "destructive";
+  return null;
 }
 
 export function buttonGlowSize(size: ButtonProps["size"]): "sm" | "default" | "lg" {

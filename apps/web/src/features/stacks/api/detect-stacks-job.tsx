@@ -4,28 +4,31 @@ import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type DetectedStack, type DetectStacksResult } from "@tsu-stack/core";
 
 import {
-  AiJobRunningToastBody,
+  advanceIslandMapStep,
   cancelMastraWorkflowRun,
+  completeAiJobIsland,
   createDetachedJobController,
+  dismissAiJobIsland,
   extractRunId,
   getWorkflowErrorMessage,
+  islandStepsFromMap,
   isAbortError,
-  showAiJobRunningToast,
+  patchIslandActiveLabel,
   unwrapWorkflowEvent,
+  upsertAiJobIsland,
   workflowFailedMessage,
   workflowStepErrorMessage
 } from "@/shared/lib/ai-job";
-import { toastAiError } from "@/shared/lib/toast-ai-error";
+import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 import {
   getDetectJobState,
   resetDetectJobState,
-  setDetectJobState,
-  useDetectStacksJob
+  setDetectJobState
 } from "@/features/stacks/lib/detect-stacks-job-store";
 
 const DETECT_WORKFLOW_ID = "detect-stacks-workflow";
-/** Stable sonner id so step updates + dismiss work across navigations */
+/** Stable island id so step updates + dismiss work across navigations */
 const DETECT_TOAST_ID = "detect-stacks-job";
 
 const STEP_LABELS: Record<string, string> = {
@@ -44,20 +47,6 @@ const STEP_LABELS: Record<string, string> = {
 const jobController = createDetachedJobController({
   cancelRemoteRun: (runId) => cancelMastraWorkflowRun(DETECT_WORKFLOW_ID, runId)
 });
-
-/** Live toast body — step text from store so shimmer is not remounted each step */
-function DetectRunningToastBody() {
-  const { stepLabel } = useDetectStacksJob();
-  return <AiJobRunningToastBody title="Detecting stacks…" stepLabel={stepLabel} />;
-}
-
-function showRunningToast() {
-  showAiJobRunningToast({
-    id: DETECT_TOAST_ID,
-    onCancel: cancelDetectStacksJob,
-    body: <DetectRunningToastBody />
-  });
-}
 
 function hasReviewableResults(result: DetectStacksResult): boolean {
   return result.detectedStacks.length > 0 || result.hasChanges;
@@ -136,8 +125,8 @@ async function runDetectWorkflow(
       if (eventType === "workflow-step-start") {
         const stepName = (payload?.stepName as string) ?? null;
         const stepLabel = stepName ? (STEP_LABELS[stepName] ?? stepName) : null;
-        // Store only — toast body is store-subscribed; re-showing would remount shimmer
         setDetectJobState({ stepLabel });
+        if (stepName) advanceIslandMapStep(DETECT_TOAST_ID, stepName, stepLabel ?? stepName);
         result.currentStep = stepName;
       }
 
@@ -146,6 +135,7 @@ async function runDetectWorkflow(
         const label = extractDetectProgressLabel(event, payload);
         if (label) {
           setDetectJobState({ stepLabel: label });
+          patchIslandActiveLabel(DETECT_TOAST_ID, label);
         }
       }
 
@@ -154,13 +144,14 @@ async function runDetectWorkflow(
         const label = extractDetectProgressLabel(event, payload);
         if (label) {
           setDetectJobState({ stepLabel: label });
+          patchIslandActiveLabel(DETECT_TOAST_ID, label);
         } else {
           const completed = payload?.completedCount ?? event.completedCount;
           const total = payload?.totalCount ?? event.totalCount;
           if (typeof completed === "number" && typeof total === "number" && total > 0) {
-            setDetectJobState({
-              stepLabel: `Processing ${completed}/${total}…`
-            });
+            const progressLabel = `Processing ${completed}/${total}…`;
+            setDetectJobState({ stepLabel: progressLabel });
+            patchIslandActiveLabel(DETECT_TOAST_ID, progressLabel);
           }
         }
       }
@@ -254,20 +245,26 @@ export function startDetectStacksJob(input: StartDetectStacksJobInput) {
     startedAt: Date.now()
   });
 
-  showRunningToast();
+  upsertAiJobIsland({
+    id: DETECT_TOAST_ID,
+    title: "Detecting stacks…",
+    onCancel: cancelDetectStacksJob,
+    steps: islandStepsFromMap(STEP_LABELS),
+    activeStepLabel: "Starting…"
+  });
 
   void (async () => {
     try {
       const result = await runDetectWorkflow({ projectId, repos }, signal);
       if (!jobController.isCurrent(generation)) return;
 
-      toast.dismiss(DETECT_TOAST_ID);
-
       if (!hasReviewableResults(result)) {
-        resetDetectJobState();
-        toast.success("No new stacks detected", {
-          description: "Everything already matches your last scan."
+        completeAiJobIsland(DETECT_TOAST_ID, {
+          status: "success",
+          resultTitle: "No new stacks detected",
+          requiresAction: false
         });
+        resetDetectJobState();
         return;
       }
 
@@ -281,36 +278,30 @@ export function startDetectStacksJob(input: StartDetectStacksJobInput) {
         projectId
       });
 
-      const count = result.detectedStacks.length;
-      toast.success("Detection ready", {
-        description:
-          count > 0
-            ? `${count} stack${count === 1 ? "" : "s"} to review.`
-            : "Changes found — review the results.",
-        action: {
+      completeAiJobIsland(DETECT_TOAST_ID, {
+        status: "success",
+        resultTitle: "Detection ready",
+        requiresAction: true,
+        resultAction: {
           label: "Review",
           onClick: () => {
-            // Defer so sonner focus/dismiss does not race Base UI dialog open.
             queueMicrotask(() => {
               setDetectReviewOpen(true);
             });
           }
-        },
-        duration: 12_000
+        }
       });
     } catch (error) {
       if (!jobController.isCurrent(generation)) return;
 
-      toast.dismiss(DETECT_TOAST_ID);
-
       if (isAbortError(error) || controller.signal.aborted) {
+        dismissAiJobIsland(DETECT_TOAST_ID);
         setDetectJobState({
           status: "canceled",
           stepLabel: null,
           runId: null,
           dialogOpen: false
         });
-        // Explicit cancel already toasts from cancelDetectStacksJob
         return;
       }
 
@@ -321,9 +312,19 @@ export function startDetectStacksJob(input: StartDetectStacksJobInput) {
         error: message,
         dialogOpen: false
       });
-      toastAiError(message, {
+
+      const presentation = presentAiError(message, {
         feature: "generic",
         severity: "hard"
+      });
+      completeAiJobIsland(DETECT_TOAST_ID, {
+        status: "error",
+        resultTitle: presentation.title,
+        errorMessage: presentation.description,
+        requiresAction: presentation.showAiSettings,
+        resultAction: presentation.showAiSettings
+          ? { label: "Settings → AI", to: "/dashboard/settings/ai" }
+          : undefined
       });
     } finally {
       jobController.clearIf(controller);
@@ -342,14 +343,13 @@ export function cancelDetectStacksJob() {
   }
 
   jobController.cancel(current.runId);
-  toast.dismiss(DETECT_TOAST_ID);
+  dismissAiJobIsland(DETECT_TOAST_ID);
   setDetectJobState({
     status: "canceled",
     stepLabel: null,
     runId: null,
     dialogOpen: false
   });
-  toast.info("Stack detection cancelled.");
 }
 
 /** Clear ready results after apply or dismiss. */

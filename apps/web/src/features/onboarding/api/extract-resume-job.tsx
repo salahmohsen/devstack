@@ -2,45 +2,35 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import {
-  AiJobRunningToastBody,
+  advanceIslandMapStep,
   cancelMastraWorkflowRun,
+  completeAiJobIsland,
   createDetachedJobController,
+  dismissAiJobIsland,
   getWorkflowErrorMessage,
+  islandStepsFromMap,
   isAbortError,
-  showAiJobRunningToast
+  patchIslandActiveLabel,
+  upsertAiJobIsland
 } from "@/shared/lib/ai-job";
-import { toastAiError } from "@/shared/lib/toast-ai-error";
+import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 import {
+  RESUME_EXTRACT_STEP_LABELS,
   RESUME_IMPORT_WORKFLOW_ID,
   runExtractResume
 } from "@/features/onboarding/api/extract-resume.mutation";
 import {
   getOnboardingSessionState,
-  setOnboardingSessionState,
-  useOnboardingSession
+  setOnboardingSessionState
 } from "@/features/onboarding/lib/onboarding-session-store";
 
-/** Stable sonner id so step updates + dismiss work across navigations */
+/** Stable island id so step updates + dismiss work across navigations */
 const EXTRACT_TOAST_ID = "onboarding-extract-job";
 
 const jobController = createDetachedJobController({
   cancelRemoteRun: (runId) => cancelMastraWorkflowRun(RESUME_IMPORT_WORKFLOW_ID, runId)
 });
-
-/** Live toast body — step text from session store so shimmer is not remounted each step */
-function ExtractRunningToastBody() {
-  const { extractStepLabel } = useOnboardingSession();
-  return <AiJobRunningToastBody title="Analyzing resume" stepLabel={extractStepLabel} />;
-}
-
-function showRunningToast() {
-  showAiJobRunningToast({
-    id: EXTRACT_TOAST_ID,
-    onCancel: cancelExtractResumeJob,
-    body: <ExtractRunningToastBody />
-  });
-}
 
 /**
  * Start resume extract as a detached job (survives route changes).
@@ -90,7 +80,13 @@ export function startExtractResumeJob(input?: { objectKey?: string; filename?: s
     draft: null
   });
 
-  showRunningToast();
+  upsertAiJobIsland({
+    id: EXTRACT_TOAST_ID,
+    title: "Analyzing resume",
+    onCancel: cancelExtractResumeJob,
+    steps: islandStepsFromMap(RESUME_EXTRACT_STEP_LABELS),
+    activeStepLabel: "Starting analysis"
+  });
 
   void (async () => {
     try {
@@ -102,16 +98,18 @@ export function startExtractResumeJob(input?: { objectKey?: string; filename?: s
           if (!jobController.isCurrent(generation)) return;
           setOnboardingSessionState({ extractRunId: runId });
         },
-        onStepChange: (stepLabel) => {
+        onStepChange: ({ stepName, label }) => {
           if (!jobController.isCurrent(generation)) return;
-          // Store only — toast body is store-subscribed; re-showing would remount shimmer
-          setOnboardingSessionState({ extractStepLabel: stepLabel });
+          setOnboardingSessionState({ extractStepLabel: label });
+          if (stepName) {
+            advanceIslandMapStep(EXTRACT_TOAST_ID, stepName, label ?? stepName);
+          } else if (label) {
+            patchIslandActiveLabel(EXTRACT_TOAST_ID, label);
+          }
         }
       });
 
       if (!jobController.isCurrent(generation)) return;
-
-      toast.dismiss(EXTRACT_TOAST_ID);
 
       setOnboardingSessionState({
         step: "review",
@@ -122,21 +120,20 @@ export function startExtractResumeJob(input?: { objectKey?: string; filename?: s
         extractRunId: null
       });
 
-      toast.success("Resume ready to review", {
-        description: "Check the draft before importing.",
-        action: (
-          <Link to="/dashboard/onboarding" data-button>
-            Review
-          </Link>
-        ),
-        duration: 12_000
+      completeAiJobIsland(EXTRACT_TOAST_ID, {
+        status: "success",
+        resultTitle: "Resume ready to review",
+        requiresAction: true,
+        resultAction: {
+          label: "Review",
+          to: "/dashboard/onboarding"
+        }
       });
     } catch (error) {
       if (!jobController.isCurrent(generation)) return;
 
-      toast.dismiss(EXTRACT_TOAST_ID);
-
       if (isAbortError(error) || controller.signal.aborted) {
+        dismissAiJobIsland(EXTRACT_TOAST_ID);
         setOnboardingSessionState({
           step: "upload",
           extractStatus: "canceled",
@@ -144,7 +141,6 @@ export function startExtractResumeJob(input?: { objectKey?: string; filename?: s
           extractRunId: null,
           extractError: null
         });
-        // Explicit cancel already toasts from cancelExtractResumeJob
         return;
       }
 
@@ -156,10 +152,17 @@ export function startExtractResumeJob(input?: { objectKey?: string; filename?: s
         extractError: message,
         extractRunId: null
       });
-      toastAiError(message, {
+
+      const presentation = presentAiError(message, {
         feature: "resume",
-        severity: "hard",
-        action: {
+        severity: "hard"
+      });
+      completeAiJobIsland(EXTRACT_TOAST_ID, {
+        status: "error",
+        resultTitle: presentation.title,
+        errorMessage: presentation.description,
+        requiresAction: true,
+        resultAction: {
           label: "Open onboarding",
           to: "/dashboard/onboarding"
         }
@@ -181,7 +184,7 @@ export function cancelExtractResumeJob() {
   }
 
   jobController.cancel(session.extractRunId);
-  toast.dismiss(EXTRACT_TOAST_ID);
+  dismissAiJobIsland(EXTRACT_TOAST_ID);
   setOnboardingSessionState({
     step: "upload",
     extractStatus: "canceled",
@@ -189,7 +192,6 @@ export function cancelExtractResumeJob() {
     extractRunId: null,
     extractError: null
   });
-  toast.info("Resume analysis cancelled.");
 }
 
 /** Clear extract error so UI can retry cleanly. */

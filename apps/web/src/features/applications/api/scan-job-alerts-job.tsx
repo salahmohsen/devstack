@@ -6,21 +6,23 @@ import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
 import { type ApplicationOutput, type ScanJobAlertsInput } from "@tsu-stack/core";
 
 import {
-  AiJobRunningToastBody,
+  appendIslandStep,
+  completeAiJobIsland,
   createDetachedJobController,
+  dismissAiJobIsland,
   isAbortError,
-  showAiJobRunningToast
+  upsertAiJobIsland
 } from "@/shared/lib/ai-job";
+import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 import { applicationCountQueryKeys } from "@/features/applications/api/count-applications.query";
 import { applicationsQueryKeys } from "@/features/applications/api/list-applications.query";
 import {
   getScanJobAlertsState,
-  setScanJobAlertsState,
-  useScanJobAlertsJob
+  setScanJobAlertsState
 } from "@/features/applications/lib/scan-job-alerts-store";
 
-/** Stable sonner id so step updates + dismiss work across navigations. */
+/** Stable island id so step updates + dismiss work across navigations. */
 const SCAN_TOAST_ID = "scan-job-alerts-job";
 
 /**
@@ -33,20 +35,6 @@ const jobController = createDetachedJobController({
   // Harvest runs on the server queue; UI “Dismiss” only stops client tracking.
   cancelRemoteRun: () => undefined
 });
-
-function ScanRunningToastBody() {
-  const { stepLabel } = useScanJobAlertsJob();
-  return <AiJobRunningToastBody title="Scanning job alerts…" stepLabel={stepLabel} />;
-}
-
-function showRunningToast() {
-  showAiJobRunningToast({
-    id: SCAN_TOAST_ID,
-    cancelLabel: "Dismiss",
-    onCancel: dismissScanJobAlertsTracking,
-    body: <ScanRunningToastBody />
-  });
-}
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -103,17 +91,33 @@ function stepForPoll(index: number, enqueued: number, newJobsFound: number): str
   return "Finishing up…";
 }
 
+function setScanStepLabel(label: string) {
+  setScanJobAlertsState({ stepLabel: label });
+  appendIslandStep(SCAN_TOAST_ID, label);
+}
+
+function showRunningIsland() {
+  upsertAiJobIsland({
+    id: SCAN_TOAST_ID,
+    title: "Scanning job alerts…",
+    cancelLabel: "Dismiss",
+    onCancel: dismissScanJobAlertsTracking,
+    steps: [{ id: "step-0", label: "Looking up digests…", state: "active" }],
+    activeStepLabel: "Looking up digests…"
+  });
+}
+
 /**
  * Stop tracking UI only. Server harvest jobs already enqueued keep running.
  */
 export function dismissScanJobAlertsTracking() {
   const state = getScanJobAlertsState();
   if (state.status !== "running") {
-    toast.dismiss(SCAN_TOAST_ID);
+    dismissAiJobIsland(SCAN_TOAST_ID);
     return;
   }
   jobController.cancel(null);
-  toast.dismiss(SCAN_TOAST_ID);
+  dismissAiJobIsland(SCAN_TOAST_ID);
   setScanJobAlertsState({
     status: "canceled",
     stepLabel: null,
@@ -122,7 +126,7 @@ export function dismissScanJobAlertsTracking() {
 }
 
 /**
- * Enqueue harvest for recent job-alert digests and show a sticky progress toast
+ * Enqueue harvest for recent job-alert digests and show sticky island progress
  * that survives route changes while workers process in the background.
  */
 export async function startScanJobAlerts(
@@ -139,8 +143,14 @@ export async function startScanJobAlerts(
         </Link>
       )
     });
-    // Ensure toast is visible if user dismissed it earlier in the same run.
-    showRunningToast();
+    // Ensure island is visible if user dismissed it earlier in the same run.
+    upsertAiJobIsland({
+      id: SCAN_TOAST_ID,
+      title: "Scanning job alerts…",
+      cancelLabel: "Dismiss",
+      onCancel: dismissScanJobAlertsTracking,
+      activeStepLabel: existing.stepLabel
+    });
     return;
   }
 
@@ -156,7 +166,7 @@ export async function startScanJobAlerts(
     error: null,
     startedAt: Date.now()
   });
-  showRunningToast();
+  showRunningIsland();
 
   try {
     const data = await orpcClient.applications.scanJobAlerts(input ?? {}, { signal });
@@ -164,21 +174,22 @@ export async function startScanJobAlerts(
     if (!jobController.isCurrent(generation)) return;
 
     if (data.digestsFound === 0) {
-      toast.dismiss(SCAN_TOAST_ID);
       setScanJobAlertsState({
         status: "ready",
         stepLabel: null,
         digestsFound: 0,
         enqueued: 0
       });
-      toast.message("No job-alert digests yet", {
-        description: "Sync mail or wait for the next job-alert email, then try again."
+      completeAiJobIsland(SCAN_TOAST_ID, {
+        status: "success",
+        resultTitle: "No job-alert digests yet",
+        errorMessage: "Sync mail or wait for the next job-alert email, then try again.",
+        requiresAction: false
       });
       return;
     }
 
     if (data.queueUnavailable) {
-      toast.dismiss(SCAN_TOAST_ID);
       setScanJobAlertsState({
         status: "failed",
         stepLabel: null,
@@ -186,25 +197,26 @@ export async function startScanJobAlerts(
         enqueued: 0,
         error: "Harvest queue unavailable"
       });
-      toast.error("Harvest queue is unavailable", {
-        description: "Start the server with Redis so job alerts can be processed."
+      completeAiJobIsland(SCAN_TOAST_ID, {
+        status: "error",
+        resultTitle: "Harvest queue is unavailable",
+        errorMessage: "Start the server with Redis so job alerts can be processed.",
+        requiresAction: false
       });
       return;
     }
 
     setScanJobAlertsState({
       digestsFound: data.digestsFound,
-      enqueued: data.enqueued,
-      stepLabel: data.enqueued === 1 ? "Queued 1 digest…" : `Queued ${data.enqueued} digests…`
+      enqueued: data.enqueued
     });
+    setScanStepLabel(data.enqueued === 1 ? "Queued 1 digest…" : `Queued ${data.enqueued} digests…`);
 
     await invalidateInbox(queryClient);
 
     let newJobsFound = Math.max(0, inboxCountFromCache(queryClient) - baselineInbox);
-    setScanJobAlertsState({
-      newJobsFound,
-      stepLabel: stepForPoll(0, data.enqueued, newJobsFound)
-    });
+    setScanJobAlertsState({ newJobsFound });
+    setScanStepLabel(stepForPoll(0, data.enqueued, newJobsFound));
 
     const pollStartedAt = Date.now();
     for (let i = 0; i < POLL_AT_MS.length; i += 1) {
@@ -217,15 +229,12 @@ export async function startScanJobAlerts(
         newJobsFound,
         Math.max(0, inboxCountFromCache(queryClient) - baselineInbox)
       );
-      setScanJobAlertsState({
-        newJobsFound,
-        stepLabel: stepForPoll(i + 1, data.enqueued, newJobsFound)
-      });
+      setScanJobAlertsState({ newJobsFound });
+      setScanStepLabel(stepForPoll(i + 1, data.enqueued, newJobsFound));
     }
 
     if (!jobController.isCurrent(generation)) return;
 
-    toast.dismiss(SCAN_TOAST_ID);
     setScanJobAlertsState({
       status: "ready",
       stepLabel: null,
@@ -233,43 +242,50 @@ export async function startScanJobAlerts(
     });
 
     if (newJobsFound > 0) {
-      toast.success(newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`, {
-        description: "Matches that passed your Job preferences are under New jobs.",
-        action: (
-          <Link to="/dashboard/new-jobs" data-button>
-            Open New jobs
-          </Link>
-        ),
-        duration: 12_000
+      completeAiJobIsland(SCAN_TOAST_ID, {
+        status: "success",
+        resultTitle: newJobsFound === 1 ? "1 new job added" : `${newJobsFound} new jobs added`,
+        errorMessage: "Matches that passed your Job preferences are under New jobs.",
+        requiresAction: true,
+        resultAction: { label: "Open New jobs", to: "/dashboard/new-jobs" }
       });
     } else {
-      toast.message("Scan finished — no new inbox jobs", {
-        description:
+      completeAiJobIsland(SCAN_TOAST_ID, {
+        status: "success",
+        resultTitle: "Scan finished — no new inbox jobs",
+        errorMessage:
           "Digests were re-processed, but every listing URL is already on a tracked job (or below min match score). Deleting New jobs does not free URLs still on Tracked jobs — harvest never creates a second row for the same listing.",
-        action: (
-          <Link to="/dashboard/tracked-jobs" data-button>
-            Tracked jobs
-          </Link>
-        ),
-        duration: 14_000
+        requiresAction: false
       });
     }
   } catch (error) {
     if (!jobController.isCurrent(generation)) return;
 
     if (isAbortError(error) || controller.signal.aborted) {
-      // dismissScanJobAlertsTracking already updated state + dismissed toast
+      // dismissScanJobAlertsTracking already updated state + dismissed island
       return;
     }
 
-    toast.dismiss(SCAN_TOAST_ID);
     const message = error instanceof Error ? error.message : "Could not scan job alerts.";
     setScanJobAlertsState({
       status: "failed",
       stepLabel: null,
       error: message
     });
-    toast.error(message);
+
+    const presentation = presentAiError(message, {
+      feature: "generic",
+      severity: "hard"
+    });
+    completeAiJobIsland(SCAN_TOAST_ID, {
+      status: "error",
+      resultTitle: presentation.title,
+      errorMessage: presentation.description,
+      requiresAction: presentation.showAiSettings,
+      resultAction: presentation.showAiSettings
+        ? { label: "Settings → AI", to: "/dashboard/settings/ai" }
+        : undefined
+    });
   } finally {
     jobController.clearIf(controller);
   }

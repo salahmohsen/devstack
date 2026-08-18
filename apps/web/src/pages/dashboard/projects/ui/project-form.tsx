@@ -18,7 +18,7 @@ import { SubmitButton, useAppForm } from "@/shared/form";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
 import { AiFlowTrigger } from "@/shared/ui/ai-flow-trigger";
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 import { Icon } from "@/shared/ui/icon";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
@@ -285,7 +285,7 @@ export function ProjectForm({ initialData, open, onOpenChange, onSaved }: Projec
       }
     >
       {showLoader ? (
-        <DefaultLoader />
+        <AiLoader />
       ) : showMissing ? (
         <div className="py-8 text-center text-muted-foreground">Project not found.</div>
       ) : (

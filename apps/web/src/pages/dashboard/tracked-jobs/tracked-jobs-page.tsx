@@ -10,7 +10,7 @@ import { type ApplicationOutput } from "@tsu-stack/core";
 import { Button } from "@tsu-stack/ui/components/button";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import { useListApplicationsQuery } from "@/features/applications";
@@ -275,7 +275,7 @@ export function TrackedJobsPage() {
 
         <div className="flex min-h-0 flex-1 flex-col">
           {listQuery.isLoading && view === "board" ? (
-            <DefaultLoader />
+            <AiLoader />
           ) : view === "board" ? (
             <ApplicationsBoard applications={applications} />
           ) : (

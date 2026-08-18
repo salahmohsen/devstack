@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 import { orpcClient } from "@tsu-stack/api/client/tanstack-start/orpc";
@@ -9,28 +8,31 @@ import {
 } from "@tsu-stack/core";
 
 import {
-  AiJobRunningToastBody,
+  advanceIslandMapStep,
   cancelMastraWorkflowRun,
+  completeAiJobIsland,
   createDetachedJobController,
+  dismissAiJobIsland,
   extractRunId,
   getWorkflowErrorMessage,
+  islandStepsFromMap,
   isAbortError,
-  showAiJobRunningToast,
+  patchIslandActiveLabel,
   unwrapWorkflowEvent,
+  upsertAiJobIsland,
   workflowFailedMessage,
   workflowStepErrorMessage
 } from "@/shared/lib/ai-job";
-import { toastAiError } from "@/shared/lib/toast-ai-error";
+import { presentAiError } from "@/shared/lib/parse-ai-error";
 
 import {
   getOrganizeJobState,
   resetOrganizeJobState,
-  setOrganizeJobState,
-  useOrganizeStacksJob
+  setOrganizeJobState
 } from "@/features/stacks/lib/organize-stacks-job-store";
 
 const ORGANIZE_WORKFLOW_ID = "organize-stacks-workflow";
-/** Stable sonner id so step updates + dismiss work across navigations */
+/** Stable island id so step updates + dismiss work across navigations */
 const ORGANIZE_TOAST_ID = "organize-stacks-job";
 
 const STEP_LABELS: Record<string, string> = {
@@ -47,17 +49,9 @@ const jobController = createDetachedJobController({
   cancelRemoteRun: (runId) => cancelMastraWorkflowRun(ORGANIZE_WORKFLOW_ID, runId)
 });
 
-/** Live toast body — step text from store so shimmer is not remounted each step */
-function OrganizeRunningToastBody() {
-  const { stepLabel } = useOrganizeStacksJob();
-  return <AiJobRunningToastBody title="Organizing stacks…" stepLabel={stepLabel} />;
-}
-
-function showRunningToast() {
-  showAiJobRunningToast({
-    id: ORGANIZE_TOAST_ID,
-    onCancel: cancelOrganizeStacksJob,
-    body: <OrganizeRunningToastBody />
+function openOrganizeReview() {
+  queueMicrotask(() => {
+    setOrganizeReviewOpen(true);
   });
 }
 
@@ -109,16 +103,16 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
       if (eventType === "workflow-step-start") {
         const stepName = (payload?.stepName as string) ?? null;
         const stepLabel = stepName ? (STEP_LABELS[stepName] ?? stepName) : null;
-        // Store only — toast body is store-subscribed; re-showing would remount shimmer
         setOrganizeJobState({ stepLabel });
+        if (stepName) advanceIslandMapStep(ORGANIZE_TOAST_ID, stepName, stepLabel ?? stepName);
       }
 
-      // Live chunk progress from agent writer.custom (Task 3).
-      // Full detect-style mapping can expand later; label is already UI-ready.
+      // Live chunk progress from agent writer.custom — label only, do not advance map steps
       if (eventType === "data-organize-progress") {
         const data = (event.data ?? payload) as { label?: string } | undefined;
         if (typeof data?.label === "string" && data.label.trim()) {
           setOrganizeJobState({ stepLabel: data.label });
+          patchIslandActiveLabel(ORGANIZE_TOAST_ID, data.label);
         }
       }
 
@@ -166,7 +160,7 @@ async function runOrganizeWorkflow(signal: AbortSignal): Promise<OrganizeStacksO
 
 /**
  * Start organize-stacks as a detached job (survives route changes).
- * Single-flight: no-ops with a toast if already running.
+ * Single-flight: no-ops with a toast if already running; reopens review if ready.
  */
 export function startOrganizeStacksJob() {
   const current = getOrganizeJobState();
@@ -205,7 +199,13 @@ export function startOrganizeStacksJob() {
     startedAt: Date.now()
   });
 
-  showRunningToast();
+  upsertAiJobIsland({
+    id: ORGANIZE_TOAST_ID,
+    title: "Organizing stacks…",
+    onCancel: cancelOrganizeStacksJob,
+    steps: islandStepsFromMap(STEP_LABELS),
+    activeStepLabel: "Starting…"
+  });
 
   void (async () => {
     try {
@@ -232,8 +232,6 @@ export function startOrganizeStacksJob() {
 
       if (!jobController.isCurrent(generation)) return;
 
-      toast.dismiss(ORGANIZE_TOAST_ID);
-
       // No actions and no reorder — either truly clean, or AI soft-failed with notes
       if (actions.length === 0 && sortOrder.length === 0 && featuredStackIds.length === 0) {
         if (notes.length > 0) {
@@ -247,23 +245,30 @@ export function startOrganizeStacksJob() {
             error: null,
             dialogOpen: true
           });
-          toastAiError(null, {
+          const presentation = presentAiError(null, {
             feature: "organize",
             severity: "partial",
-            notes,
-            action: {
+            notes
+          });
+          completeAiJobIsland(ORGANIZE_TOAST_ID, {
+            status: presentation.variant === "error" ? "error" : "success",
+            resultTitle: presentation.title,
+            errorMessage: presentation.description,
+            requiresAction: true,
+            resultAction: {
               label: "Review",
-              to: "/dashboard/stacks",
-              onClick: () => {
-                setOrganizeJobState({ dialogOpen: true });
-              }
+              onClick: openOrganizeReview
             }
           });
           return;
         }
 
+        completeAiJobIsland(ORGANIZE_TOAST_ID, {
+          status: "success",
+          resultTitle: "All stacks are already organized",
+          requiresAction: false
+        });
         resetOrganizeJobState();
-        toast.success("All stacks are already organized!");
         return;
       }
 
@@ -278,50 +283,45 @@ export function startOrganizeStacksJob() {
         dialogOpen: true
       });
 
-      const changeCount = actions.length + (sortOrder.length > 0 ? 1 : 0);
       if (notes.length > 0) {
-        toastAiError(null, {
+        const presentation = presentAiError(null, {
           feature: "organize",
           severity: "partial",
-          notes,
-          action: {
+          notes
+        });
+        completeAiJobIsland(ORGANIZE_TOAST_ID, {
+          status: presentation.variant === "error" ? "error" : "success",
+          resultTitle: presentation.title,
+          errorMessage: presentation.description,
+          requiresAction: true,
+          resultAction: {
             label: "Review",
-            to: "/dashboard/stacks",
-            onClick: () => {
-              setOrganizeJobState({ dialogOpen: true });
-            }
+            onClick: openOrganizeReview
           }
         });
-      } else {
-        toast.success("Organize ready", {
-          description: `${changeCount} suggested change${changeCount === 1 ? "" : "s"} to review.`,
-          action: (
-            <Link
-              to="/dashboard/stacks"
-              data-button
-              onClick={() => {
-                setOrganizeJobState({ dialogOpen: true });
-              }}
-            >
-              Review
-            </Link>
-          ),
-          duration: 12_000
-        });
+        return;
       }
+
+      completeAiJobIsland(ORGANIZE_TOAST_ID, {
+        status: "success",
+        resultTitle: "Organize ready",
+        requiresAction: true,
+        resultAction: {
+          label: "Review",
+          onClick: openOrganizeReview
+        }
+      });
     } catch (error) {
       if (!jobController.isCurrent(generation)) return;
 
-      toast.dismiss(ORGANIZE_TOAST_ID);
-
       if (isAbortError(error) || controller.signal.aborted) {
+        dismissAiJobIsland(ORGANIZE_TOAST_ID);
         setOrganizeJobState({
           status: "canceled",
           stepLabel: null,
           runId: null,
           dialogOpen: false
         });
-        // Explicit cancel already toasts from cancelOrganizeStacksJob
         return;
       }
 
@@ -333,9 +333,19 @@ export function startOrganizeStacksJob() {
         notes: [],
         dialogOpen: false
       });
-      toastAiError(message, {
+
+      const presentation = presentAiError(message, {
         feature: "organize",
         severity: "hard"
+      });
+      completeAiJobIsland(ORGANIZE_TOAST_ID, {
+        status: "error",
+        resultTitle: presentation.title,
+        errorMessage: presentation.description,
+        requiresAction: presentation.showAiSettings,
+        resultAction: presentation.showAiSettings
+          ? { label: "Settings → AI", to: "/dashboard/settings/ai" }
+          : undefined
       });
     } finally {
       jobController.clearIf(controller);
@@ -354,14 +364,13 @@ export function cancelOrganizeStacksJob() {
   }
 
   jobController.cancel(current.runId);
-  toast.dismiss(ORGANIZE_TOAST_ID);
+  dismissAiJobIsland(ORGANIZE_TOAST_ID);
   setOrganizeJobState({
     status: "canceled",
     stepLabel: null,
     runId: null,
     dialogOpen: false
   });
-  toast.info("Organize cancelled.");
 }
 
 /** Clear ready results after apply or dismiss. */

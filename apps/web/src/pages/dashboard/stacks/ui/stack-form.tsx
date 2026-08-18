@@ -18,7 +18,7 @@ import { SubmitButton, useAppForm } from "@/shared/form";
 import { invalidateProjectsListQueries } from "@/shared/lib/invalidate-projects-list";
 import { invalidateStacksListQueries } from "@/shared/lib/invalidate-stacks-list";
 import { createZodFormValidator } from "@/shared/lib/zod-form-validator";
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 import { Icon } from "@/shared/ui/icon";
 import { useEntityFormDirty } from "@/shared/ui/use-entity-form-dirty";
 
@@ -190,7 +190,7 @@ export function StackForm({ initialData, open, onOpenChange, onSaved }: StackFor
 
   const body =
     isEdit && stackQuery.isLoading && !stack ? (
-      <DefaultLoader />
+      <AiLoader />
     ) : isEdit && !stackQuery.isLoading && !stack ? (
       <div className="py-8 text-center text-muted-foreground">Stack not found.</div>
     ) : (

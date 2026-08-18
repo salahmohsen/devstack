@@ -59,7 +59,7 @@ export function toastGlowVariant(tone: ToastTone): BadgeGlowVariant {
 export function toastGlowSurfaceClass(tone: ToastTone): string {
   const glow = toastGlowVariant(tone);
   return cn(
-    "bg-background/90 shadow-xs/5 backdrop-blur-md not-dark:bg-clip-padding",
+    "border border-white/10 bg-background/65 shadow-xs/5 backdrop-blur-xl backdrop-saturate-150 not-dark:bg-clip-padding dark:border-white/12",
     BADGE_GLOW[glow].border,
     BADGE_GLOW_VARS[glow],
     TONE_TEXT[tone]
@@ -146,15 +146,15 @@ export function ToastTypeIcon({ type }: { type?: string | null }): React.ReactEl
 
 /** Sonner root classes. `!` beats sonner's styled `background` shorthand. */
 export const sonnerToastClassName = cn(
-  "cn-toast overflow-visible bg-background/90! text-foreground backdrop-blur-md not-dark:bg-clip-padding",
+  "cn-toast overflow-visible border border-white/10! bg-background/65! text-foreground backdrop-blur-xl backdrop-saturate-150 not-dark:bg-clip-padding dark:border-white/12!",
   // Sonner locks `height` to a stale --initial-height on hover/expand and
   // transitions it — that is the toast "growing" on hover.
   "transition-[transform,opacity,box-shadow]! data-[expanded=true]:h-auto!",
-  "bg-[radial-gradient(ellipse_40%_50%_at_50%_0%,var(--btn-glow-line)_0%,transparent_100%),radial-gradient(ellipse_80%_55%_at_50%_0%,var(--btn-glow)_0%,transparent_72%)]!",
-  "bg-size-[56%_1px,100%_100%]! bg-position-[center_top,center]! bg-no-repeat!",
-  "shadow-[0_-10px_20px_-8px_var(--btn-glow),0_1px_2px_rgb(0_0_0/0.05)]!",
+  "bg-[linear-gradient(to_bottom,oklch(1_0_0/0.08),transparent_40%),radial-gradient(ellipse_40%_50%_at_50%_0%,var(--btn-glow-line)_0%,transparent_100%),radial-gradient(ellipse_80%_55%_at_50%_0%,var(--btn-glow)_0%,transparent_72%)]!",
+  "bg-size-[100%_100%,56%_1px,100%_100%]! bg-position-[center,center_top,center]! bg-no-repeat!",
+  "shadow-[0_-10px_20px_-8px_var(--btn-glow),0_8px_32px_-12px_oklch(0_0_0/0.45),0_1px_2px_rgb(0_0_0/0.05)]!",
   BADGE_GLOW_VARS.default,
-  "border-primary/20!",
+  "border-primary/15!",
   "data-[type=success]:border-green-500/30! data-[type=success]:text-success-foreground!",
   "data-[type=success]:[--btn-glow-line:rgba(34,197,94,0.95)] data-[type=success]:[--btn-glow:rgba(34,197,94,0.65)]",
   "data-[type=error]:border-red-500/30! data-[type=error]:text-destructive-foreground!",

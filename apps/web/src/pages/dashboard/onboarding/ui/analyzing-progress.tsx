@@ -4,7 +4,7 @@ import { CheckIcon } from "lucide-react";
 
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 
 const PIPELINE = [
   { id: "download", label: "Downloading resume" },
@@ -85,7 +85,7 @@ export function AnalyzingProgress({
                 {done ? (
                   <CheckIcon className="size-3.5" />
                 ) : active ? (
-                  <DefaultLoader size="sm" variant="inline" />
+                  <AiLoader size="sm" variant="inline" />
                 ) : (
                   <span className="size-1.5 rounded-full bg-muted-foreground/50" />
                 )}

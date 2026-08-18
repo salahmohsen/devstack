@@ -43,8 +43,8 @@ import { Button } from "@tsu-stack/ui/components/button";
 import { Textarea } from "@tsu-stack/ui/components/textarea";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
+import { AiLoader } from "@/shared/ui/ai-loader";
 import { SurfaceIslandLayout } from "@/shared/ui/dashboard-shell";
-import { DefaultLoader } from "@/shared/ui/default-loader";
 
 import {
   useCorrectMailClassificationMutation,
@@ -245,7 +245,7 @@ export function MailCategoryPage() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-background md:flex-row">
           {listQuery.isLoading ? (
             <div className="flex min-h-0 w-full flex-1 items-center justify-center border-b p-6 md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80">
-              <DefaultLoader />
+              <AiLoader />
             </div>
           ) : listQuery.isError ? (
             <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-2 border-b p-6 text-center md:w-72 md:flex-none md:border-r md:border-b-0 lg:w-80">
@@ -601,13 +601,13 @@ function MessageReaderBody({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {isLoadingDetail && !detail ? (
           <div className="flex min-h-24 items-center justify-center">
-            <DefaultLoader />
+            <AiLoader />
           </div>
         ) : (
           <Suspense
             fallback={
               <div className="flex min-h-24 items-center justify-center">
-                <DefaultLoader />
+                <AiLoader />
               </div>
             }
           >

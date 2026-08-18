@@ -25,7 +25,7 @@ import {
 } from "@/shared/lib/repo-list-utils";
 import { sessionUsernameFromUser } from "@/shared/lib/session-username";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 import { RepositoryRow } from "@/shared/ui/repository-row";
 
 import { useGetPortfolioListQuery } from "@/features/portfolio";
@@ -196,7 +196,7 @@ export function RepositoriesPage({
   const totals = hub?.totals ?? { all: 0, public: 0, private: 0 };
   const displayedRepos = hub?.repos ?? [];
 
-  if (hubQuery.isLoading) <DefaultLoader />;
+  if (hubQuery.isLoading) <AiLoader />;
 
   return (
     <Frame className="mx-auto h-full w-full max-w-7xl gap-5 bg-background p-5 px-3 md:px-6">

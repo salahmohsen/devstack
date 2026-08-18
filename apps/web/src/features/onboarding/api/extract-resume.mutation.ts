@@ -31,10 +31,15 @@ function isResumeImportDraft(output: Record<string, unknown>): output is ResumeI
   );
 }
 
+export type ExtractResumeStepChange = {
+  stepName: string | null;
+  label: string | null;
+};
+
 export type RunExtractResumeInput = {
   objectKey: string;
   filename?: string;
-  onStepChange?: (step: string | null) => void;
+  onStepChange?: (step: ExtractResumeStepChange) => void;
   onRunId?: (runId: string) => void;
   onPartialResults?: (draft: ResumeImportDraft) => void;
   signal?: AbortSignal;
@@ -54,7 +59,7 @@ export async function runExtractResume(input: RunExtractResumeInput): Promise<Re
   };
   signal?.addEventListener("abort", onAbort, { once: true });
 
-  onStepChange?.("Starting analysis");
+  onStepChange?.({ stepName: null, label: "Starting analysis" });
 
   try {
     const iterator = await orpcClient.onboarding.extract(
@@ -84,7 +89,8 @@ export async function runExtractResume(input: RunExtractResumeInput): Promise<Re
 
       if (eventType === "workflow-step-start") {
         const stepName = (payload?.stepName as string) ?? null;
-        onStepChange?.(stepName ? (RESUME_EXTRACT_STEP_LABELS[stepName] ?? stepName) : null);
+        const label = stepName ? (RESUME_EXTRACT_STEP_LABELS[stepName] ?? stepName) : null;
+        onStepChange?.({ stepName, label });
       }
 
       // Only the format step is the final draft. normalize also has
@@ -126,7 +132,7 @@ export async function runExtractResume(input: RunExtractResumeInput): Promise<Re
     throw new DOMException("Resume analysis cancelled.", "AbortError");
   }
 
-  onStepChange?.(null);
+  onStepChange?.({ stepName: null, label: null });
 
   if (!draft) {
     throw new Error("Resume extract finished without a draft");

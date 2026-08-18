@@ -31,7 +31,7 @@ import {
 } from "@tsu-stack/ui/components/input-group";
 import { cn } from "@tsu-stack/ui/lib/utils";
 
-import { DefaultLoader } from "@/shared/ui/default-loader";
+import { AiLoader } from "@/shared/ui/ai-loader";
 
 import { useAddApplicationNoteMutation } from "@/features/applications/api/add-application-note.mutation";
 import { useDeleteApplicationNoteMutation } from "@/features/applications/api/delete-application-note.mutation";
@@ -187,7 +187,7 @@ export function ApplicationActivitySection({
 
       {activityQuery.isLoading ? (
         <div className="flex justify-center py-4">
-          <DefaultLoader />
+          <AiLoader />
         </div>
       ) : items.length === 0 ? (
         <p className="text-sm text-muted-foreground">No activity yet.</p>
