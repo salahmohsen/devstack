@@ -1,7 +1,7 @@
 # Status morph toggle (portfolio status dot)
 
 **Date:** 2026-08-18  
-**Status:** Draft (design approved in brainstorm; awaiting spec review)  
+**Status:** Approved for implementation  
 **Branch:** `main` (implement on main; no worktree)
 
 ## Goals
@@ -38,28 +38,32 @@
 
 ### `packages/ui` — `StatusMorphToggle`
 
-App-agnostic presentational control (extract rule: reusable + no app routing/auth).
+App-agnostic **presentational** morph (not a button). Export:
 
-Suggested export: `@tsu-stack/ui/components/status-morph-toggle` (name may be `StatusMorphToggle`).
+`@tsu-stack/ui/components/status-morph-toggle` → `StatusMorphToggle`
 
-**Props (conceptual):**
+**Interaction ownership:** the parent supplies the pressable surface (`Button`). `StatusMorphToggle` must **not** render a nested `<button>` or own `onClick` / `aria-pressed` — that avoids button-in-button and matches today’s `LiveStatusDot` inside `Button`.
 
-- `active: boolean` — controlled state color source of truth from parent (after sync).
-- `onPressedChange?: (next: boolean) => void` and/or click handler — parent owns mutation.
-- `className?`, `disabled?`, sizing suitable for nesting inside icon `Button`.
-- Uses `motion/react` (`motion` already in `packages/ui`): spring morph adapted from SmoothUI (`borderRadius` full, idle ~16×16 → hover ~12×28 scaled to icon size), `useReducedMotion`, `(hover: hover) and (pointer: fine)` gate.
-- Fill via theme tokens (`bg-success` / `bg-destructive` or equivalent CSS vars) — **not** SmoothUI `--color-brand`.
+**Props:**
 
-The control may own a brief internal hover flag only; **active** remains controlled. Optimistic flip lives in the app wrapper so list rows stay in sync with `inPortfolio` props / query cache.
+- `active: boolean` — which idle color to use (and which opposite color to preview on hover).
+- `className?` — optional layout hooks.
+- Optional `size?: "sm" | "md"` (or fixed px) so idle circle fits the icon button (~`size-2` / 8–10px idle, morph proportionally). Defaults sized for icon-sm buttons.
+
+**Motion / color:**
+
+- `motion/react` spring morph adapted from SmoothUI: full `borderRadius`, idle square→circle, hover taller/narrower pill; `useReducedMotion`; enable morph only when `(hover: hover) and (pointer: fine)`.
+- Solid fills: `bg-success` when active, `bg-destructive` when inactive (and the inverse while hovering). Do **not** use Lucide `Circle` + `fill-*`; do **not** use SmoothUI `--color-brand`.
+- Internal hover flag only; `active` is controlled by the parent.
 
 ### `apps/web` — `PortfolioStatusButton`
 
 Keep in `list-item-action-buttons.tsx` (or extract beside it if the file grows):
 
-- Wrap `StatusMorphToggle` inside existing outline icon `Button` + `Tooltip`.
+- Existing outline icon `Button` + `Tooltip` own click, `disabled`, `aria-label`, `aria-pressed`.
+- Render `StatusMorphToggle` (or spinner via `IconSwap`) as the button child.
 - Tooltip copy unchanged: “On your public profile” / “Not on your public profile”.
-- Optimistic: local state initialized from `inPortfolio`, sync on prop change, flip on click before/alongside `onToggle()`.
-- `aria-pressed` reflects optimistic/active value; `aria-label` stays the hint string.
+- Optimistic: local boolean synced from `inPortfolio`, flipped in the button `onClick` before/alongside `onToggle()`; when props catch up or roll back after error, local state follows `inPortfolio`.
 
 Remove private `LiveStatusDot` once unused.
 
