@@ -7,7 +7,13 @@ import { type ExperienceOutput } from "@tsu-stack/core";
 
 import { Markdown } from "@/shared/ui/markdown";
 
-import { ItemInfoPanel, ItemInfoRow, ItemInfoSection, PanelEditButton } from "@/widgets/items-page";
+import {
+  ItemInfoPanel,
+  ItemInfoRow,
+  ItemInfoSection,
+  ItemInfoSections,
+  PanelEditButton
+} from "@/widgets/items-page";
 
 function formatRangeFull(fromDate: string | null, toDate: string | null): string {
   if (!fromDate) return "Ongoing";
@@ -46,7 +52,7 @@ export function ExperienceInfoPanel({
       updatedAt={experience.updatedAt}
       createdAt={experience.createdAt}
     >
-      <div className="space-y-8">
+      <ItemInfoSections>
         <ItemInfoSection title="Summary" icon={<AlignLeftIcon />}>
           {experience.description ? (
             <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
@@ -72,7 +78,7 @@ export function ExperienceInfoPanel({
             </ul>
           </ItemInfoSection>
         ) : null}
-      </div>
+      </ItemInfoSections>
     </ItemInfoPanel>
   );
 }

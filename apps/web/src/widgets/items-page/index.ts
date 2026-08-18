@@ -22,7 +22,8 @@ export type { ItemsFilterOption } from "@/widgets/items-page/ui/items-filter-but
 export {
   ItemInfoPanel,
   ItemInfoRow,
-  ItemInfoSection
+  ItemInfoSection,
+  ItemInfoSections
 } from "@/widgets/items-page/ui/item-info-panel";
 export {
   PanelCancelButton,

@@ -29,6 +29,7 @@ import { Markdown } from "@/shared/ui/markdown";
 import {
   ItemInfoPanel,
   ItemInfoSection,
+  ItemInfoSections,
   useDeferredInspectBody
 } from "@/widgets/items-page/ui/item-info-panel";
 import { PanelEditButton } from "@/widgets/items-page/ui/panel-header-actions";
@@ -69,7 +70,7 @@ function ProjectOverview({
   surface?: PublicSurface;
 }) {
   return (
-    <div className="flex flex-col gap-8">
+    <ItemInfoSections>
       {project.summary ? (
         <ItemInfoSection title="Summary" icon={<SparklesIcon aria-hidden="true" />}>
           <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
@@ -160,7 +161,7 @@ function ProjectOverview({
           </div>
         </ItemInfoSection>
       ) : null}
-    </div>
+    </ItemInfoSections>
   );
 }
 

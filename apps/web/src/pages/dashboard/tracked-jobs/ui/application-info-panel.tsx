@@ -65,7 +65,12 @@ import {
   type MaterialActionId
 } from "@/features/applications";
 
-import { ItemInfoPanel, ItemInfoSection, PanelEditButton } from "@/widgets/items-page";
+import {
+  ItemInfoPanel,
+  ItemInfoSection,
+  ItemInfoSections,
+  PanelEditButton
+} from "@/widgets/items-page";
 
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
@@ -461,7 +466,7 @@ export function ApplicationInfoPanel({
         updatedAt={item.updatedAt}
         createdAt={item.createdAt}
       >
-        <div className="space-y-8">
+        <ItemInfoSections>
           {!isDiscovery ? (
             <ItemInfoSection title="Apply package" icon={<PackageIcon />}>
               <ApplyPackagePanelActions app={item} />
@@ -606,7 +611,7 @@ export function ApplicationInfoPanel({
           <ItemInfoSection title="Activity" icon={<HistoryIcon />} bodyClassName="mt-3.5 ps-0">
             <ApplicationActivitySection applicationId={item.id} hideHeading />
           </ItemInfoSection>
-        </div>
+        </ItemInfoSections>
       </ItemInfoPanel>
 
       {item.resumeId ? (

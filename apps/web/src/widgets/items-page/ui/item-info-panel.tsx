@@ -102,6 +102,23 @@ export function ItemInfoPanel({
   );
 }
 
+type ItemInfoSectionsProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+/**
+ * Stack of {@link ItemInfoSection}s. When sections include icons, connectors
+ * draw a continuous vertical timeline between them.
+ */
+export function ItemInfoSections({ children, className }: ItemInfoSectionsProps) {
+  return (
+    <div data-slot="item-info-sections" className={cn("flex flex-col", className)}>
+      {children}
+    </div>
+  );
+}
+
 type ItemInfoSectionProps = {
   title: string;
   icon?: React.ReactNode;
@@ -119,11 +136,20 @@ export function ItemInfoSection({
   bodyClassName
 }: ItemInfoSectionProps) {
   return (
-    <section className={cn("min-w-0", className)}>
-      <div className="flex items-center gap-2.5">
+    <section
+      data-slot="item-info-section"
+      className={cn("group/info-section relative min-w-0 not-last:pb-8", className)}
+    >
+      {icon ? (
+        <div
+          aria-hidden
+          className="absolute top-5 bottom-0 left-2.5 w-px -translate-x-1/2 bg-border group-last/info-section:hidden"
+        />
+      ) : null}
+      <div className="relative flex items-center gap-2.5">
         {icon ? (
           <span
-            className="flex size-5 shrink-0 items-center justify-center text-muted-foreground [&_svg]:size-3.5"
+            className="relative z-10 flex size-5 shrink-0 items-center justify-center bg-background text-muted-foreground [&_svg]:size-3.5"
             aria-hidden
           >
             {icon}
@@ -133,7 +159,7 @@ export function ItemInfoSection({
       </div>
       <div
         className={cn(
-          "mt-2.5 text-sm leading-relaxed text-muted-foreground",
+          "relative mt-2.5 text-sm leading-relaxed text-muted-foreground",
           icon && "ps-7",
           bodyClassName
         )}

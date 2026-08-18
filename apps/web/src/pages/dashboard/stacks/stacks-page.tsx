@@ -53,6 +53,7 @@ import {
   GridSkeleton,
   ItemInfoPanel,
   ItemInfoSection,
+  ItemInfoSections,
   PanelEditButton,
   ItemsEmpty,
   ItemsNavProvider,
@@ -115,7 +116,7 @@ export function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit
       updatedAt={item.updatedAt}
       createdAt={item.createdAt}
     >
-      <div className="space-y-8">
+      <ItemInfoSections>
         <ItemInfoSection title="Summary" icon={<Package strokeWidth={1.75} />}>
           {item.description ? (
             <Markdown className="prose prose-sm max-w-none text-foreground dark:prose-invert">
@@ -164,7 +165,7 @@ export function StackDetailPanel({ stack, onEdit }: { stack: StackOutput; onEdit
             </p>
           </ItemInfoSection>
         ) : null}
-      </div>
+      </ItemInfoSections>
     </ItemInfoPanel>
   );
 }
