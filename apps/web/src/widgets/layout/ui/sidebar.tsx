@@ -9,6 +9,7 @@ import {
   Sidebar001Item,
   Sidebar001Section
 } from "@tsu-stack/ui/components/unlumen-ui/sidebar-001";
+import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { useCountApplicationsQuery } from "@/features/applications";
 
@@ -46,8 +47,14 @@ export const DASHBOARD_NAV_DEFAULT_WIDTH = 168;
 
 type NavItem = { href: string; label: string; matchPrefix?: string };
 
+type DashboardSidebarProps = {
+  className?: string;
+  /** Disable drag-resize (mobile sheet). Default true. */
+  resizable?: boolean;
+};
+
 /** Left nav for `/dashboard/*` only (mounted via ClipWidth when on dashboard). */
-export function DashboardSidebar() {
+export function DashboardSidebar({ className, resizable = true }: DashboardSidebarProps) {
   const pathname = useLocation().pathname;
   const { user } = useAuthSuspense();
   const isSignedIn = !!user;
@@ -66,7 +73,8 @@ export function DashboardSidebar() {
       defaultWidth={DASHBOARD_NAV_DEFAULT_WIDTH}
       minWidth={140}
       maxWidth={240}
-      className="h-full"
+      resizable={resizable}
+      className={cn("h-full", className)}
     >
       {/*
         Title starts on the same edge as the item rail ticks (header/content px-1).

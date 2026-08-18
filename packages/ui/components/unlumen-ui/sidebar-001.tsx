@@ -442,6 +442,8 @@ export type Sidebar001Props = {
   minWidth?: number;
   /** Max resize width in px. Default: 400 */
   maxWidth?: number;
+  /** When false, fills parent width and hides the drag handle (e.g. mobile sheet). */
+  resizable?: boolean;
 };
 
 export function Sidebar001({
@@ -450,7 +452,8 @@ export function Sidebar001({
   defaultEffectsEnabled = true,
   defaultWidth = 190,
   minWidth = 160,
-  maxWidth = 400
+  maxWidth = 400,
+  resizable = true
 }: Sidebar001Props) {
   const [width, setWidth] = useState(defaultWidth);
   const dragging = useRef(false);
@@ -488,20 +491,25 @@ export function Sidebar001({
     <EffectsProvider defaultEnabled={defaultEffectsEnabled}>
       <HoverProvider>
         <aside
-          className={cn("relative flex h-full shrink-0 flex-col bg-transparent", className)}
-          style={{ width }}
+          className={cn(
+            "relative flex h-full shrink-0 flex-col bg-transparent",
+            !resizable && "w-full",
+            className
+          )}
+          style={resizable ? { width } : undefined}
         >
           {children}
 
-          {/* Resize handle */}
-          <div
-            className="group/handle absolute top-0 right-0 z-20 h-full w-1 cursor-col-resize"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-          >
-            <div className="absolute top-0 right-0 h-full w-px bg-transparent transition-colors duration-150 group-hover/handle:bg-transparent" />
-          </div>
+          {resizable ? (
+            <div
+              className="group/handle absolute top-0 right-0 z-20 h-full w-1 cursor-col-resize"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+            >
+              <div className="absolute top-0 right-0 h-full w-px bg-transparent transition-colors duration-150 group-hover/handle:bg-transparent" />
+            </div>
+          ) : null}
         </aside>
       </HoverProvider>
     </EffectsProvider>

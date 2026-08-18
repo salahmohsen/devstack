@@ -39,6 +39,7 @@ import { PrimaryAppMenuLink } from "@/shared/ui/primary-app-menu-link";
 
 import { getGithubSetupStatusQueryOptions } from "@/features/github";
 
+import { DashboardMobileNavTrigger } from "@/widgets/layout/ui/dashboard-mobile-nav";
 import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
 import { NotificationsBell } from "@/widgets/layout/ui/notifications-bell";
 import { PublicScopeNav } from "@/widgets/layout/ui/public-scope-nav";
@@ -318,6 +319,7 @@ export function Topbar() {
 
   return (
     <nav className="flex min-h-(--navbar-height) min-w-0 shrink-0 items-center gap-3 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top,0px))] md:h-(--navbar-height) md:pt-2">
+      <DashboardMobileNavTrigger />
       <Link
         to="/"
         className="shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"

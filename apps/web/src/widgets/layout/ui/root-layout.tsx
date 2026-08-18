@@ -8,6 +8,7 @@ import { useMediaQuery } from "@/shared/lib/use-media-query";
 import { IntersectionProvider } from "@/shared/providers/intersection.provider";
 
 import { ClipWidth } from "@/widgets/layout/ui/clip-width";
+import { DashboardMobileNavProvider } from "@/widgets/layout/ui/dashboard-mobile-nav";
 import { DASHBOARD_NAV_DEFAULT_WIDTH, DashboardSidebar } from "@/widgets/layout/ui/sidebar";
 
 import { CommandPalette } from "./command-palette";
@@ -39,97 +40,99 @@ export function RootLayout({ children }: PropsWithChildren) {
     isDashboard || isPublicReposList ? DASHBOARD_SIDE_PANEL_WIDTH : PUBLIC_SIDE_PANEL_WIDTH;
 
   return (
-    <div
-      className={cn(
-        // Fixed viewport height + overflow-hidden: only the main Card ScrollArea scrolls
-        // (no second browser/document scrollbar beside the shell).
-        "relative isolate flex h-dvh max-h-dvh flex-col overflow-hidden",
-        "bg-container text-primary selection:bg-brand selection:text-black!",
-        // Instant open/close when the user prefers reduced motion.
-        "motion-reduce:**:data-dashboard-nav-shell:transition-none motion-reduce:**:data-side-panel-shell:transition-none"
-      )}
-    >
-      <Topbar />
-
-      <SidePanelProvider
-        value={{
-          node: sidePanel.node,
-          collapsed: sidePanel.collapsed,
-          hasContent: sidePanel.hasContent,
-          inspectOpen: sidePanel.inspectOpen,
-          requestInspectOpen: sidePanel.requestInspectOpen,
-          releaseInspectOpen: sidePanel.releaseInspectOpen,
-          toggle: sidePanel.toggle,
-          close: sidePanel.close
-        }}
+    <DashboardMobileNavProvider>
+      <div
+        className={cn(
+          // Fixed viewport height + overflow-hidden: only the main Card ScrollArea scrolls
+          // (no second browser/document scrollbar beside the shell).
+          "relative isolate flex h-dvh max-h-dvh flex-col overflow-hidden",
+          "bg-container text-primary selection:bg-brand selection:text-black!",
+          // Instant open/close when the user prefers reduced motion.
+          "motion-reduce:**:data-dashboard-nav-shell:transition-none motion-reduce:**:data-side-panel-shell:transition-none"
+        )}
       >
-        <div className="flex min-h-0 flex-1 flex-row gap-2 overflow-hidden p-2 pt-0">
-          <IntersectionProvider>
-            <ClipWidth
-              open={isDashboard}
-              contentWidth={DASHBOARD_NAV_DEFAULT_WIDTH}
-              unlockWhenOpen
-              unmountClosed
-              data-dashboard-nav-shell=""
-              // Align shell height with the main card; pe is on the aside.
-              className="hidden h-full xl:block"
-            >
-              <DashboardSidebar />
-            </ClipWidth>
-            {/*
-              One surface: main + panel share the same rounded-2xl shell.
-              Panel width animates; facing edges stay square; a 1px rule is the only seam.
-            */}
-            <div
-              className={cn(
-                "relative flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-xs/5",
-                "not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]"
-              )}
-            >
-              <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                <main className="relative flex min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-background">
-                  <div className="size-full min-h-0 min-w-0">
-                    {/* Bottom pad on mobile so lists clear the floating dock without shrinking the card shell. */}
-                    <ScrollArea
-                      scrollFade
-                      fill
-                      clampContentMinWidth={true}
-                      className="max-md:**:data-[slot=scroll-area-content]:pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
-                    >
-                      {children}
-                    </ScrollArea>
-                  </div>
-                </main>
-                <SidePanelToggle />
-              </div>
+        <Topbar />
 
+        <SidePanelProvider
+          value={{
+            node: sidePanel.node,
+            collapsed: sidePanel.collapsed,
+            hasContent: sidePanel.hasContent,
+            inspectOpen: sidePanel.inspectOpen,
+            requestInspectOpen: sidePanel.requestInspectOpen,
+            releaseInspectOpen: sidePanel.releaseInspectOpen,
+            toggle: sidePanel.toggle,
+            close: sidePanel.close
+          }}
+        >
+          <div className="flex min-h-0 flex-1 flex-row gap-2 overflow-hidden p-2 pt-0">
+            <IntersectionProvider>
               <ClipWidth
-                open={showPanel}
-                contentWidth={panelWidth}
-                overlay
-                data-side-panel-shell=""
-                className="hidden h-full xl:flex"
+                open={isDashboard}
+                contentWidth={DASHBOARD_NAV_DEFAULT_WIDTH}
+                unlockWhenOpen
+                unmountClosed
+                data-dashboard-nav-shell=""
+                // Align shell height with the main card; pe is on the aside.
+                className="hidden h-full xl:block"
               >
-                <div className="flex h-full min-h-0">
-                  <div aria-hidden className="w-px shrink-0 self-stretch bg-border" />
-                  <div className="h-full min-h-0 min-w-0 flex-1 overflow-hidden">
-                    <SidePanelSlot
-                      slotRef={sidePanel.setNode}
-                      collapsed={sidePanel.collapsed}
-                      onHasContent={sidePanel.setHasContent}
-                    />
-                  </div>
-                </div>
+                <DashboardSidebar />
               </ClipWidth>
-            </div>
-          </IntersectionProvider>
-        </div>
-      </SidePanelProvider>
+              {/*
+                One surface: main + panel share the same rounded-2xl shell.
+                Panel width animates; facing edges stay square; a 1px rule is the only seam.
+              */}
+              <div
+                className={cn(
+                  "relative flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-xs/5",
+                  "not-dark:bg-clip-padding before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]"
+                )}
+              >
+                <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                  <main className="relative flex min-h-0 w-full min-w-0 flex-1 overflow-hidden bg-background">
+                    <div className="size-full min-h-0 min-w-0">
+                      {/* Bottom pad on mobile so lists clear the floating dock without shrinking the card shell. */}
+                      <ScrollArea
+                        scrollFade
+                        fill
+                        clampContentMinWidth={true}
+                        className="max-md:**:data-[slot=scroll-area-content]:pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+                      >
+                        {children}
+                      </ScrollArea>
+                    </div>
+                  </main>
+                  <SidePanelToggle />
+                </div>
 
-      <DashboardBottomBar />
-      <MobileNav />
-      <GitHubAccessDialog />
-      <CommandPalette />
-    </div>
+                <ClipWidth
+                  open={showPanel}
+                  contentWidth={panelWidth}
+                  overlay
+                  data-side-panel-shell=""
+                  className="hidden h-full xl:flex"
+                >
+                  <div className="flex h-full min-h-0">
+                    <div aria-hidden className="w-px shrink-0 self-stretch bg-border" />
+                    <div className="h-full min-h-0 min-w-0 flex-1 overflow-hidden">
+                      <SidePanelSlot
+                        slotRef={sidePanel.setNode}
+                        collapsed={sidePanel.collapsed}
+                        onHasContent={sidePanel.setHasContent}
+                      />
+                    </div>
+                  </div>
+                </ClipWidth>
+              </div>
+            </IntersectionProvider>
+          </div>
+        </SidePanelProvider>
+
+        <DashboardBottomBar />
+        <MobileNav />
+        <GitHubAccessDialog />
+        <CommandPalette />
+      </div>
+    </DashboardMobileNavProvider>
   );
 }
