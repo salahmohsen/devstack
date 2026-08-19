@@ -106,7 +106,7 @@ function ApplicationCard({
       <div className="flex items-start justify-between gap-1.5">
         <button
           type="button"
-          className="flex min-w-0 flex-1 cursor-grab items-start gap-2 text-left active:cursor-grabbing"
+          className="flex min-w-0 flex-1 cursor-grab items-center gap-2 text-left active:cursor-grabbing"
           {...listeners}
           {...attributes}
           onClick={() => {
@@ -117,7 +117,7 @@ function ApplicationCard({
             companyName={app.companyName}
             size={28}
             selected={avatarAnimated}
-            className="mt-0.5 size-7 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+            className="size-7"
             aria-label={app.companyName}
           />
           <span className="min-w-0 flex-1">

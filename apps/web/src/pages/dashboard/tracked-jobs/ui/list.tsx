@@ -215,12 +215,12 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           <ApplicationStageBadge stage={app.stage} />
                           {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
                         </div>
-                        <div className="flex min-w-0 items-start gap-2.5">
+                        <div className="flex min-w-0 items-center gap-2.5">
                           <CompanyAvatar
                             companyName={app.companyName}
                             size={32}
                             selected={selected}
-                            className="mt-0.5 size-8 outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                            className="size-8"
                             aria-label={app.companyName}
                           />
                           <div className="min-w-0 flex-1">
