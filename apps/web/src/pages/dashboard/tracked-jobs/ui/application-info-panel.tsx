@@ -55,6 +55,7 @@ import {
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
+  CompanyAvatar,
   actionsFor,
   coverLetterDownloadUrl,
   formatCoverLetterCopy,
@@ -77,7 +78,6 @@ import {
 import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/application.slice";
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { ApplyPackagePanelActions } from "@/pages/dashboard/tracked-jobs/ui/apply-package-entry-actions";
-import { CompanyAvatar } from "@/pages/dashboard/tracked-jobs/ui/company-avatar";
 
 function formatWhen(value: Date | string | null | undefined) {
   if (!value) return "—";

@@ -30,10 +30,11 @@ import {
 import { invalidateExperiencesListQueries } from "@/shared/lib/invalidate-experiences-list";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
 import { HeaderActions } from "@/shared/ui/header-actions";
-import { ListItem } from "@/shared/ui/list-item";
+import { ListItemContent, type ListItemMeta } from "@/shared/ui/list-item-content";
 import { SortableList } from "@/shared/ui/sortable-list";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
+import { CompanyAvatar } from "@/features/applications";
 import { getPortfolioListQueryKey } from "@/features/portfolio";
 
 import {
@@ -372,47 +373,56 @@ export function ExperiencesPage() {
         siblingsDimOnHover
         containerClassName="space-y-2"
       >
-        {(experience, dragHandleProps) => (
-          <ListItem
-            selected={isItemOpen?.[experience.id] ?? false}
-            onSelect={() => openItem(experience.id, experience)}
-            dragHandleProps={dragHandleProps}
-            isSort={isSort}
-            isBatchSelected={isIdSelected(selectedIds, experience.id)}
-            batchSelectActive={batchSelectActive}
-            onToggleSelect={() => toggleSelect(experience.id)}
-            onMouseEnter={() => {
-              void queryClient.prefetchQuery(
-                orpcQueryClient.experiences.get.queryOptions({
-                  input: { id: experience.id }
-                })
-              );
-            }}
-            onEdit={() => openDialog(experience.id)}
-            onDelete={() => deleteMutation.mutate({ id: experience.id })}
-            isDeleting={deleteMutation.isPending}
-            onTogglePortfolio={() =>
-              handleTogglePortfolio(experience.id, !experience.portfolioEntryId)
+        {(experience, dragHandleProps) => {
+          const selected = isItemOpen?.[experience.id] ?? false;
+          const meta: ListItemMeta[] = [
+            { id: "organization", icon: Building2Icon, text: experience.organization },
+            {
+              id: "dates",
+              icon: CalendarIcon,
+              text: formatRange(experience.fromDate, experience.toDate)
             }
-            isTogglingPortfolio={togglingId === experience.id}
-            inPortfolio={!!experience.portfolioEntryId}
-            deleteTitle="Delete this experience?"
-            deleteDescription="This will permanently delete this experience and all its associated projects."
-            title={experience.title}
-            meta={
-              <>
-                <p className="flex items-center gap-1">
-                  <Building2Icon size={14} />
-                  <span>{experience.organization}</span>
-                </p>
-                <p className="flex items-center gap-1">
-                  <CalendarIcon size={14} />
-                  <span>{formatRange(experience.fromDate, experience.toDate)}</span>
-                </p>
-              </>
-            }
-          />
-        )}
+          ];
+          return (
+            <ListItemContent
+              title={experience.title}
+              selected={selected}
+              onSelect={() => openItem(experience.id, experience)}
+              dragHandleProps={dragHandleProps}
+              isSort={isSort}
+              isBatchSelected={isIdSelected(selectedIds, experience.id)}
+              batchSelectActive={batchSelectActive}
+              onToggleSelect={() => toggleSelect(experience.id)}
+              onMouseEnter={() => {
+                void queryClient.prefetchQuery(
+                  orpcQueryClient.experiences.get.queryOptions({
+                    input: { id: experience.id }
+                  })
+                );
+              }}
+              onEdit={() => openDialog(experience.id)}
+              onDelete={() => deleteMutation.mutate({ id: experience.id })}
+              isDeleting={deleteMutation.isPending}
+              onTogglePortfolio={() =>
+                handleTogglePortfolio(experience.id, !experience.portfolioEntryId)
+              }
+              isTogglingPortfolio={togglingId === experience.id}
+              inPortfolio={!!experience.portfolioEntryId}
+              deleteTitle="Delete this experience?"
+              deleteDescription="This will permanently delete this experience and all its associated projects."
+              meta={meta}
+              leading={
+                <CompanyAvatar
+                  companyName={experience.organization}
+                  size={40}
+                  selected={selected}
+                  className="size-10"
+                  aria-label={experience.organization}
+                />
+              }
+            />
+          );
+        }}
       </SortableList>
     );
 

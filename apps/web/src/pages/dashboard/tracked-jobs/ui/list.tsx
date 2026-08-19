@@ -4,7 +4,6 @@ import { BriefcaseIcon, Building2Icon, FileTextIcon, MapPinIcon, PlusIcon } from
 import { useMemo } from "react";
 
 import { isApplicationOpen, type ApplicationOutput } from "@tsu-stack/core";
-import { Badge } from "@tsu-stack/ui/components/badge";
 import { Button } from "@tsu-stack/ui/components/button";
 import {
   ContextMenu,
@@ -13,18 +12,21 @@ import {
 } from "@tsu-stack/ui/components/context-menu";
 import { Group, GroupSeparator } from "@tsu-stack/ui/components/group";
 import { Tabs, TabsList, TabsTrigger } from "@tsu-stack/ui/components/tabs";
-import { TruncatedText } from "@tsu-stack/ui/components/truncated-text";
-import { cn } from "@tsu-stack/ui/lib/utils";
 
 import { areAllVisibleSelected, isBatchSelectActive } from "@/shared/lib/batch-selection";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
-import { ListItem } from "@/shared/ui/list-item";
+import {
+  ListItemContent,
+  type ListItemMeta,
+  type ListItemTag
+} from "@/shared/ui/list-item-content";
 
 import {
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
   ApplicationStageBadge,
   ApplicationStatusBadge,
+  CompanyAvatar,
   getApplicationPrimaryAction,
   useDeleteApplicationsMutation
 } from "@/features/applications";
@@ -35,7 +37,6 @@ import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/applica
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
-import { CompanyAvatar } from "@/pages/dashboard/tracked-jobs/ui/company-avatar";
 
 const LIST_FILTERS = [
   { value: "open", label: "Open" },
@@ -48,6 +49,47 @@ type ApplicationsListProps = {
   isLoading?: boolean;
   listRef?: React.RefObject<HTMLUListElement | null>;
 };
+
+function trackedJobTags(app: ApplicationOutput): ListItemTag[] {
+  const tags: ListItemTag[] = [];
+  if (app.listingClosed) {
+    tags.push({
+      id: "listing-closed",
+      label: "Listing closed",
+      variant: "secondary",
+      size: "xs",
+      className: "text-muted-foreground",
+      title: "This posting is no longer on the board."
+    });
+  }
+  tags.push({
+    id: "match-score",
+    node: <ApplicationMatchScoreBadge matchScore={app.matchScore} />
+  });
+  tags.push({
+    id: "apply-method",
+    node: <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
+  });
+  tags.push({
+    id: "stage",
+    node: <ApplicationStageBadge stage={app.stage} />
+  });
+  if (app.outcome) {
+    tags.push({
+      id: "outcome",
+      node: <ApplicationStatusBadge outcome={app.outcome} />
+    });
+  }
+  return tags;
+}
+
+function trackedJobMeta(app: ApplicationOutput): ListItemMeta[] {
+  const meta: ListItemMeta[] = [{ id: "company", icon: Building2Icon, text: app.companyName }];
+  if (app.location) {
+    meta.push({ id: "location", icon: MapPinIcon, text: app.location });
+  }
+  return meta;
+}
 
 export function ApplicationsList({ applications, isLoading, listRef }: ApplicationsListProps) {
   const {
@@ -181,14 +223,25 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
               <li key={app.id}>
                 <ContextMenu>
                   <ContextMenuTrigger className="block w-full outline-none">
-                    <ListItem
+                    <ListItemContent
+                      title={app.title}
                       selected={selected}
                       onSelect={() => openView(app)}
                       isBatchSelected={batchSelected}
                       batchSelectActive={batchSelectActive}
                       batchCheckboxVisibility="active-only"
                       onToggleSelect={() => toggleSelect(app.id)}
-                      className={cn(selected && "border-primary/40")}
+                      tags={trackedJobTags(app)}
+                      meta={trackedJobMeta(app)}
+                      leading={
+                        <CompanyAvatar
+                          companyName={app.companyName}
+                          size={40}
+                          selected={selected}
+                          className="size-10"
+                          aria-label={app.companyName}
+                        />
+                      }
                       actions={
                         <ApplicationActionGroup
                           app={app}
@@ -196,68 +249,10 @@ export function ApplicationsList({ applications, isLoading, listRef }: Applicati
                           className="hidden md:flex"
                         />
                       }
-                    >
-                      {/* Tags → avatar + title/meta; mobile ends with Magic|▾ Group. */}
-                      <div className="flex min-w-0 flex-col gap-1.5">
-                        <div className="no-scrollbar flex min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain">
-                          {app.listingClosed ? (
-                            <Badge
-                              variant="secondary"
-                              size="xs"
-                              className="shrink-0 font-normal tracking-normal text-muted-foreground normal-case"
-                              title="This posting is no longer on the board."
-                            >
-                              Listing closed
-                            </Badge>
-                          ) : null}
-                          <ApplicationMatchScoreBadge matchScore={app.matchScore} />
-                          <ApplicationApplyMethodBadge applyMethod={app.applyMethod} />
-                          <ApplicationStageBadge stage={app.stage} />
-                          {app.outcome ? <ApplicationStatusBadge outcome={app.outcome} /> : null}
-                        </div>
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <CompanyAvatar
-                            companyName={app.companyName}
-                            size={40}
-                            selected={selected}
-                            className="size-10"
-                            aria-label={app.companyName}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <h3 className="min-w-0 truncate text-sm font-medium">{app.title}</h3>
-                            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
-                              <span className="inline-flex max-w-full min-w-0 items-center gap-1.5">
-                                <Building2Icon
-                                  className="size-3.5 shrink-0 text-muted-foreground"
-                                  strokeWidth={1.75}
-                                  aria-hidden
-                                />
-                                <TruncatedText>{app.companyName}</TruncatedText>
-                              </span>
-                              {app.location ? (
-                                <span className="inline-flex max-w-[min(100%,16rem)] min-w-0 items-center gap-1">
-                                  <MapPinIcon
-                                    className="size-3.5 shrink-0 text-muted-foreground"
-                                    strokeWidth={1.75}
-                                    aria-hidden
-                                  />
-                                  <TruncatedText>{app.location}</TruncatedText>
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          role="presentation"
-                          className="mt-0.5 md:hidden"
-                          onClick={(event) => event.stopPropagation()}
-                          onPointerDown={(event) => event.stopPropagation()}
-                          onKeyDown={(event) => event.stopPropagation()}
-                        >
-                          <ApplicationActionGroup app={app} variant="list" className="w-full" />
-                        </div>
-                      </div>
-                    </ListItem>
+                      mobileActions={
+                        <ApplicationActionGroup app={app} variant="list" className="w-full" />
+                      }
+                    />
                   </ContextMenuTrigger>
                   <ContextMenuPopup className="min-w-44">
                     <ApplicationItemActions

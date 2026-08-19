@@ -100,3 +100,4 @@ export {
   ApplicationStatusBadge,
   type ApplicationBadgeVariant
 } from "@/features/applications/ui/application-badges";
+export { CompanyAvatar, type CompanyAvatarProps } from "@/features/applications/ui/company-avatar";

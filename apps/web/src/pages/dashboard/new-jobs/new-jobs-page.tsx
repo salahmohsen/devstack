@@ -56,11 +56,16 @@ import {
 } from "@/shared/lib/batch-selection";
 import { expandDashboardSidePanel } from "@/shared/lib/side-panel-control";
 import { BatchSelectionBar } from "@/shared/ui/batch-selection-bar";
-import { ListItem } from "@/shared/ui/list-item";
+import {
+  ListItemContent,
+  type ListItemMeta,
+  type ListItemTag
+} from "@/shared/ui/list-item-content";
 
 import { useEntityPanelHostActive } from "@/features/agent-hub";
 import {
   ApplicationMatchScoreBadge,
+  CompanyAvatar,
   ScanJobAlertsButton,
   clearPendingOpenApplicationId,
   useAgentTakeJob,
@@ -128,6 +133,43 @@ function sourceTagLabel(tag: string): string {
     return APPLICATION_SOURCE_TAG_LABELS[tag as ApplicationSourceTag];
   }
   return tag;
+}
+
+function newJobTags(job: ApplicationOutput): ListItemTag[] {
+  const tags: ListItemTag[] = [];
+  if (job.listingClosed) {
+    tags.push({
+      id: "listing-closed",
+      label: "Listing closed",
+      variant: "secondary",
+      size: "xs",
+      className: "text-muted-foreground",
+      title: "This posting is no longer on the board."
+    });
+  }
+  if (job.matchScore != null) {
+    tags.push({
+      id: "match-score",
+      node: <ApplicationMatchScoreBadge matchScore={job.matchScore} />
+    });
+  }
+  for (const tag of (job.sourceTags ?? []).slice(0, 2)) {
+    tags.push({
+      id: `source-${tag}`,
+      label: sourceTagLabel(tag),
+      variant: "secondary",
+      size: "xs"
+    });
+  }
+  return tags;
+}
+
+function newJobMeta(job: ApplicationOutput): ListItemMeta[] {
+  const meta: ListItemMeta[] = [{ id: "company", icon: Building2Icon, text: job.companyName }];
+  if (job.location) {
+    meta.push({ id: "location", icon: MapPinIcon, text: job.location });
+  }
+  return meta;
 }
 
 /** Usable JD for Track & package — rejects empty and harvest/paywall stubs. */
@@ -573,7 +615,8 @@ export function NewJobsPage() {
                   const listingUrl = job.url ?? job.applyUrl ?? null;
                   return (
                     <li key={job.id} data-item-id={job.id}>
-                      <ListItem
+                      <ListItemContent
+                        title={job.title}
                         selected={selected}
                         onSelect={() =>
                           setViewItem((current) => {
@@ -585,47 +628,16 @@ export function NewJobsPage() {
                         isBatchSelected={batchSelected}
                         batchSelectActive={isBatchSelectActive(selectedIds)}
                         onToggleSelect={() => toggleSelect(job.id)}
-                        title={job.title}
-                        titleEnd={
-                          <>
-                            {job.listingClosed ? (
-                              <Badge
-                                variant="secondary"
-                                size="sm"
-                                className="font-normal tracking-normal text-muted-foreground normal-case"
-                                title="This posting is no longer on the board."
-                              >
-                                Listing closed
-                              </Badge>
-                            ) : null}
-                            {job.matchScore != null ? (
-                              <ApplicationMatchScoreBadge matchScore={job.matchScore} />
-                            ) : null}
-                            {(job.sourceTags ?? []).slice(0, 2).map((tag) => (
-                              <Badge
-                                key={tag}
-                                variant="secondary"
-                                size="sm"
-                                className="font-normal"
-                              >
-                                {sourceTagLabel(tag)}
-                              </Badge>
-                            ))}
-                          </>
-                        }
-                        meta={
-                          <>
-                            <p className="flex items-center gap-1">
-                              <Building2Icon size={14} aria-hidden />
-                              <span>{job.companyName}</span>
-                            </p>
-                            {job.location ? (
-                              <p className="flex items-center gap-1">
-                                <MapPinIcon size={14} aria-hidden />
-                                <span>{job.location}</span>
-                              </p>
-                            ) : null}
-                          </>
+                        tags={newJobTags(job)}
+                        meta={newJobMeta(job)}
+                        leading={
+                          <CompanyAvatar
+                            companyName={job.companyName}
+                            size={40}
+                            selected={selected}
+                            className="size-10"
+                            aria-label={job.companyName}
+                          />
                         }
                         actions={
                           <NewJobRowActions

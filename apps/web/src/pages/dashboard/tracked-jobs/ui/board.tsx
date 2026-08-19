@@ -49,6 +49,7 @@ import {
   APPLICATION_STAGE_BADGE_VARIANT,
   ApplicationApplyMethodBadge,
   ApplicationMatchScoreBadge,
+  CompanyAvatar,
   getApplicationPrimaryAction,
   useUpdateStageMutation
 } from "@/features/applications";
@@ -59,7 +60,6 @@ import { useApplicationStore } from "@/pages/dashboard/tracked-jobs/_lib/applica
 import { ApplicationActionGroup } from "@/pages/dashboard/tracked-jobs/ui/application-action-group";
 import { applicationContextSlots } from "@/pages/dashboard/tracked-jobs/ui/application-action-slots";
 import { ApplicationItemActions } from "@/pages/dashboard/tracked-jobs/ui/application-item-actions";
-import { CompanyAvatar } from "@/pages/dashboard/tracked-jobs/ui/company-avatar";
 
 type ApplicationsBoardProps = {
   applications: ApplicationOutput[];
