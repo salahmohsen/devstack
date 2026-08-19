@@ -43,6 +43,7 @@ import { DashboardMobileNavTrigger } from "@/widgets/layout/ui/dashboard-mobile-
 import { Tabs } from "@/widgets/layout/ui/github-public-tabs";
 import { NotificationsBell } from "@/widgets/layout/ui/notifications-bell";
 import { PublicScopeNav } from "@/widgets/layout/ui/public-scope-nav";
+import { SoundMuteButton } from "@/widgets/layout/ui/sound-mute-button";
 
 const MAX_TAB_SHORTCUTS = 9;
 
@@ -358,7 +359,10 @@ export function Topbar() {
           </div>
         ) : null}
 
-        <ThemeSwitcher variant="ghost" className="size-8" />
+        <div className="flex items-center gap-1">
+          <ThemeSwitcher variant="ghost" className="size-8" />
+          <SoundMuteButton />
+        </div>
 
         <div className="hidden md:contents">{accountControl}</div>
       </div>
